@@ -1,7 +1,7 @@
 pub mod accept_p2p_swap;
 pub mod add_members_to_channel;
 pub mod add_reaction;
-pub mod c2c_bot_subscribe_to_events;
+pub mod c2c_claim_prize;
 pub mod c2c_delete_community;
 pub mod c2c_freeze_community;
 pub mod c2c_install_bot;
@@ -22,7 +22,6 @@ pub mod cancel_invites;
 pub mod cancel_p2p_swap;
 pub mod change_channel_role;
 pub mod change_role;
-pub mod claim_prize;
 pub mod create_channel;
 pub mod create_user_group;
 pub mod decline_invitation;

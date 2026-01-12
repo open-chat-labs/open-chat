@@ -1,11 +1,18 @@
 <script lang="ts">
-    import { previewDimensionsObserver } from "@utils/previewDimensionsObserver";
-    import { eventListScrolling, iconSize, offlineStore, type OpenChat } from "openchat-client";
+    import { previewHeightObserver } from "@utils/previewHeightObserver";
+    import {
+        eventListScrolling,
+        iconSize,
+        offlineStore,
+        type MultiUserChatIdentifier,
+        type OpenChat,
+    } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import { rtlStore } from "../../stores/rtl";
     import GenericPreviewComponent from "./GenericPreview.svelte";
     import InstagramPreviewComponent from "./InstagramPreview.svelte";
+    import MessagePreviewComponent from "./MessagePreview.svelte";
     import SpotifyPreviewComponent from "./SpotifyPreview.svelte";
     import Tweet from "./Tweet.svelte";
     import YouTubePreview from "./YouTubePreview.svelte";
@@ -15,6 +22,7 @@
         | YoutubePreview
         | TwitterPreview
         | InstagramPreview
+        | MessagePreview
         | GenericPreview;
 
     type PreviewBase = {
@@ -42,6 +50,13 @@
         regexMatch: RegExpMatchArray;
     };
 
+    type MessagePreview = PreviewBase & {
+        kind: "message";
+        chatId: MultiUserChatIdentifier;
+        threadRootMessageIndex: number | undefined;
+        messageIndex: number;
+    };
+
     type GenericPreview = PreviewBase & {
         kind: "generic";
     };
@@ -62,6 +77,7 @@
     let previousLinks = links;
     let previews: Preview[] = $state(links.map(buildPreview));
     let shouldRenderPreviews = $state(false);
+    let rtl = $rtlStore;
 
     function arraysAreEqual(a: string[], b: string[]) {
         if (a === b) return true;
@@ -113,10 +129,57 @@
             };
         }
 
+        const messagePreview = parseMessageUrl(url);
+        if (messagePreview) {
+            return messagePreview;
+        }
+
         return {
             kind: "generic",
             url,
         };
+    }
+
+    function parseMessageUrl(urlText: string): MessagePreview | undefined {
+        const url = new URL(urlText);
+        if (!url) return;
+
+        if (
+            url.hostname !== "oc.app" &&
+            !url.hostname.endsWith(".oc.app") &&
+            url.hostname !== "localhost"
+        ) {
+            return;
+        }
+
+        let regexMatch = url.pathname.match(client.communityMessageRegex());
+        if (regexMatch) {
+            return {
+                kind: "message",
+                url: urlText,
+                chatId: {
+                    kind: "channel",
+                    communityId: regexMatch[1],
+                    channelId: Number(regexMatch[2]),
+                },
+                threadRootMessageIndex: regexMatch[4] ? Number(regexMatch[3]) : undefined,
+                messageIndex: regexMatch[4] ? Number(regexMatch[4]) : Number(regexMatch[3]),
+            };
+        }
+
+        regexMatch = url.pathname.match(client.groupMessageRegex());
+        if (regexMatch) {
+            return {
+                kind: "message",
+                url: urlText,
+                chatId: {
+                    kind: "group_chat",
+                    groupId: regexMatch[1],
+                },
+                threadRootMessageIndex: regexMatch[3] ? Number(regexMatch[2]) : undefined,
+                messageIndex: regexMatch[3] ? Number(regexMatch[3]) : Number(regexMatch[2]),
+            };
+        }
     }
 
     function renderPreview(url: string): void {
@@ -138,23 +201,22 @@
         const toUnobserve: Element[] = [];
         for (const preview of previews) {
             if (preview.container) {
-                previewDimensionsObserver.observe(preview.container, preview.url);
+                previewHeightObserver.observe(preview.container, preview.url);
                 toUnobserve.push(preview.container);
 
-                const dimensions = previewDimensionsObserver.getDimensions(preview.url);
-                if (dimensions) {
-                    preview.container.style.setProperty("min-height", `${dimensions[0]}px`);
-                    preview.container.style.setProperty("min-width", `${dimensions[1]}px`);
+                const height = previewHeightObserver.getHeight(preview.url);
+                if (height) {
+                    preview.container.style.setProperty("min-height", `${height}px`);
                 }
                 if (preview.kind === "generic") {
-                    // If we have dimensions for this preview then display the container immediately, else hide it
+                    // If we have a recorded height for this preview then display the container immediately, else hide it
                     // until we have fetched the preview (if any)
-                    const display = dimensions ? "flex" : "none";
+                    const display = height ? "flex" : "none";
                     preview.container.style.setProperty("display", display);
                 }
             }
         }
-        return () => toUnobserve.forEach((e) => previewDimensionsObserver.unobserve(e));
+        return () => toUnobserve.forEach((e) => previewHeightObserver.unobserve(e));
     });
 
     $effect(() => {
@@ -175,16 +237,16 @@
     <div
         class="preview"
         bind:this={preview.container}
-        class:visible={preview.kind !== "generic"}
+        class:visible={preview.kind !== "generic" && preview.kind !== "message"}
         class:me>
         {#if me}
-            <div class="remove-wrapper" class:rtl={$rtlStore}>
+            <div class="remove-wrapper" class:rtl>
                 <div class="remove" onclick={() => removePreview(preview)}>
                     <CloseIcon viewBox="0 0 24 24" size={$iconSize} color={"var(--button-txt)"} />
                 </div>
             </div>
         {/if}
-        <div class="inner">
+        <div class="inner" class:me>
             {#if shouldRenderPreviews}
                 {#if preview.kind === "twitter"}
                     <Tweet tweetId={preview.tweetId} />
@@ -200,6 +262,14 @@
                         {pinned}
                         fill={fill && previews.length === 1}
                         matches={preview.regexMatch} />
+                {:else if preview.kind === "message"}
+                    <MessagePreviewComponent
+                        url={preview.url}
+                        chatId={preview.chatId}
+                        threadRootMessageIndex={preview.threadRootMessageIndex}
+                        messageIndex={preview.messageIndex}
+                        {intersecting}
+                        onRendered={renderPreview} />
                 {:else}
                     <GenericPreviewComponent
                         url={preview.url}
@@ -213,11 +283,10 @@
 
 <style lang="scss">
     .preview {
+        display: none;
         margin-top: $sp4;
-        border-top: 1px solid var(--currentChat-msg-separator);
-        padding-top: $sp2;
+        border-color: var(--currentChat-msg-separator);
         flex-direction: row-reverse;
-        gap: $sp1;
         word-break: break-word;
 
         &.me {
@@ -232,6 +301,7 @@
             flex: 0;
             position: relative;
             left: 6px;
+            visibility: hidden;
 
             &.rtl {
                 right: 6px;
@@ -246,6 +316,17 @@
 
         .inner {
             flex: 1;
+            border-inline-start: $sp2 solid var(--currentChat-msg-separator);
+            padding-inline-start: 12px;
+            max-width: 100%;
+
+            &.me {
+                border-color: var(--currentChat-msg-me-separator);
+            }
         }
+    }
+
+    .preview:hover .remove-wrapper {
+        visibility: visible;
     }
 </style>

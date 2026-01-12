@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { BigButton, Container } from "component-lib";
+    import { BigButton, Container, H2, Label } from "component-lib";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import AccountGroupOutline from "svelte-material-icons/AccountGroupOutline.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
@@ -8,115 +8,117 @@
     import FlagOutline from "svelte-material-icons/FlagOutline.svelte";
     import Wallet from "svelte-material-icons/Wallet.svelte";
     import Waveform from "svelte-material-icons/Waveform.svelte";
-    import { fade } from "svelte/transition";
+    import DebugEvent from "./DebugEvent.svelte";
 
-    let filledMouseEvent = $state<MouseEvent>();
+    let selected1 = $state(1);
+    let selected2 = $state(0);
 
-    function onFilledClick(e: MouseEvent) {
-        filledMouseEvent = e;
-        window.setTimeout(() => (filledMouseEvent = undefined), 2000);
+    function onClicked(onAction: (action: string) => void) {
+        return () => onAction("Button clicked");
     }
-
-    // annoyingly if I set the button to fill - it doesn't mean that all the buttons will be the same size
-    // Not sure how to deal with that
 </script>
 
-<Container gap={"xl"} direction={"vertical"}>
-    <h3>Big button groups</h3>
+<DebugEvent>
+    {#snippet children(onAction)}
+        <Container gap={"xl"} direction={"vertical"}>
+            <H2>Big button groups</H2>
 
-    <Container
-        width={{ kind: "fixed", size: "450px" }}
-        height={{ kind: "fixed", size: "85px" }}
-        gap={"md"}>
-        <BigButton onClick={onFilledClick}>
-            {#snippet icon(color)}
-                <AccountMultiplePlus size={"1.6rem"} {color} />
-            {/snippet}
-            {#snippet modifier(color)}
-                <div class="count">21</div>
-            {/snippet}
-            Alert!!!
-        </BigButton>
-        <BigButton onClick={onFilledClick}>
-            {#snippet icon(color)}
-                <Wallet size={"1.6rem"} {color} />
-            {/snippet}
-            Wallet
-        </BigButton>
-    </Container>
+            <Container
+                width={{ kind: "fixed", size: "450px" }}
+                height={{ kind: "fixed", size: "85px" }}
+                gap={"md"}>
+                <BigButton countBadge={23} mode={"active"} onClick={onClicked(onAction)}>
+                    {#snippet icon(color)}
+                        <AccountMultiplePlus {color} />
+                    {/snippet}
+                    Alert!!!
+                </BigButton>
+                <BigButton countBadge={23} onClick={onClicked(onAction)}>
+                    {#snippet icon(color)}
+                        <Wallet {color} />
+                    {/snippet}
+                    Wallet
+                </BigButton>
+            </Container>
 
-    <Container
-        width={{ kind: "fixed", size: "450px" }}
-        height={{ kind: "fixed", size: "85px" }}
-        gap={"md"}>
-        <BigButton mode={"active"} onClick={onFilledClick}>
-            {#snippet icon(color)}
-                <Waveform size={"1.6rem"} {color} />
-            {/snippet}
-            Waveform
-        </BigButton>
-        <BigButton onClick={onFilledClick}>
-            {#snippet icon(color)}
-                <Save size={"1.6rem"} {color} />
-            {/snippet}
-            {#snippet modifier(color)}
-                <div class="count">21</div>
-            {/snippet}
-            Save content
-        </BigButton>
-        <BigButton onClick={onFilledClick}>
-            {#snippet icon(color)}
-                <Wallet size={"1.6rem"} {color} />
-            {/snippet}
-            Do the robot dance
-        </BigButton>
-    </Container>
+            <Container
+                width={{ kind: "fixed", size: "450px" }}
+                height={{ kind: "fixed", size: "85px" }}
+                gap={"md"}>
+                <BigButton
+                    mode={selected1 === 0 ? "active" : "default"}
+                    onClick={() => (selected1 = 0)}>
+                    {#snippet icon(color)}
+                        <Waveform {color} />
+                    {/snippet}
+                    Waveform
+                </BigButton>
+                <BigButton
+                    countBadge={23}
+                    mode={selected1 === 1 ? "active" : "default"}
+                    onClick={() => (selected1 = 1)}>
+                    {#snippet icon(color)}
+                        <Save {color} />
+                    {/snippet}
+                    Save content
+                </BigButton>
+                <BigButton
+                    mode={selected1 === 2 ? "active" : "default"}
+                    onClick={() => (selected1 = 2)}>
+                    {#snippet icon(color)}
+                        <Wallet {color} />
+                    {/snippet}
+                    Do the robot dance
+                </BigButton>
+            </Container>
 
-    <Container
-        width={{ kind: "fixed", size: "500px" }}
-        height={{ kind: "fixed", size: "85px" }}
-        gap={"md"}>
-        <BigButton width={{ kind: "fixed", size: "150px" }} onClick={onFilledClick}>
-            {#snippet icon(color)}
-                <AccountGroup size={"1.6rem"} {color} />
-            {/snippet}
-            Filled
-        </BigButton>
-        <BigButton mode="active" width={{ kind: "fixed", size: "150px" }} onClick={onFilledClick}>
-            {#snippet icon(color)}
-                <AccountGroupOutline size={"1.6rem"} {color} />
-            {/snippet}
-            Outlined
-        </BigButton>
-        <BigButton mode="pressed" width={{ kind: "fixed", size: "150px" }} onClick={onFilledClick}>
-            {#snippet icon(color)}
-                <AccountMultiple size={"1.6rem"} {color} />
-            {/snippet}
-            Pressed
-        </BigButton>
-        <BigButton width={{ kind: "fixed", size: "150px" }} onClick={onFilledClick}>
-            {#snippet icon(color)}
-                <FlagOutline size={"1.6rem"} {color} />
-            {/snippet}
-            Overflowing
-        </BigButton>
-    </Container>
-
-    {#if filledMouseEvent}
-        <pre transition:fade>{JSON.stringify(filledMouseEvent)}</pre>
-    {/if}
-</Container>
-
-<style lang="scss">
-    .count {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 12px;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        background-color: var(--primary);
-        color: var(--text-on-primary);
-    }
-</style>
+            <Label>Overflowing group</Label>
+            <Container
+                borderColour={"cyan"}
+                borderStyle={"dashed"}
+                borderWidth={"thick"}
+                borderRadius={"xl"}
+                padding={"xl"}
+                width={{ kind: "fixed", size: "500px" }}
+                height={{ kind: "fixed", size: "150px" }}
+                gap={"md"}>
+                <BigButton
+                    mode={selected2 === 0 ? "active" : "default"}
+                    width={{ kind: "fixed", size: "150px" }}
+                    onClick={() => (selected2 = 0)}>
+                    {#snippet icon(color)}
+                        <AccountGroup {color} />
+                    {/snippet}
+                    Button One
+                </BigButton>
+                <BigButton
+                    mode={selected2 === 1 ? "active" : "default"}
+                    width={{ kind: "fixed", size: "150px" }}
+                    onClick={() => (selected2 = 1)}>
+                    {#snippet icon(color)}
+                        <AccountGroupOutline {color} />
+                    {/snippet}
+                    Button Two
+                </BigButton>
+                <BigButton
+                    mode={selected2 === 2 ? "active" : "default"}
+                    width={{ kind: "fixed", size: "150px" }}
+                    onClick={() => (selected2 = 2)}>
+                    {#snippet icon(color)}
+                        <AccountMultiple {color} />
+                    {/snippet}
+                    Button Three
+                </BigButton>
+                <BigButton
+                    mode={selected2 === 3 ? "active" : "default"}
+                    width={{ kind: "fixed", size: "150px" }}
+                    onClick={() => (selected2 = 3)}>
+                    {#snippet icon(color)}
+                        <FlagOutline {color} />
+                    {/snippet}
+                    Button Four
+                </BigButton>
+            </Container>
+        </Container>
+    {/snippet}
+</DebugEvent>

@@ -21,11 +21,23 @@ pub struct SuccessResult {
     pub last_updated: TimestampMillis,
     pub latest_event_index: EventIndex,
     pub participants: Vec<GroupMember>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<InstalledBotDetails>>", optional)]
     pub bots: Vec<InstalledBotDetails>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<WebhookDetails>>", optional)]
     pub webhooks: Vec<WebhookDetails>,
     pub basic_members: Vec<UserId>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<UserId>>", optional)]
     pub blocked_users: Vec<UserId>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<UserId>>", optional)]
     pub invited_users: Vec<UserId>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<MessageIndex>>", optional)]
     pub pinned_messages: Vec<MessageIndex>,
+    #[serde(default, skip_serializing_if = "VersionedRules::is_empty")]
+    #[ts(as = "Option<VersionedRules>", optional)]
     pub chat_rules: VersionedRules,
 }

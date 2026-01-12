@@ -38,7 +38,6 @@ fn main() {
     generate_ts_method!(community, cancel_invites);
     generate_ts_method!(community, change_channel_role);
     generate_ts_method!(community, change_role);
-    generate_ts_method!(community, claim_prize);
     generate_ts_method!(community, create_channel);
     generate_ts_method!(community, create_user_group);
     generate_ts_method!(community, decline_invitation);

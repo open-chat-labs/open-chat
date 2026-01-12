@@ -6,12 +6,12 @@ use std::cmp::max;
 use std::collections::HashMap;
 use types::nns::CryptoAmount;
 use types::{
-    AutonomousConfig, BotCommandDefinition, BotDataEncoding, BotDefinition, BotInstallationLocation, BotSubscriptions,
-    BuildVersion, CanisterId, ChannelLatestMessageIndex, ChannelUserNotificationPayload, ChatId, CommunityId, CyclesTopUp,
-    DiamondMembershipPlanDuration, GroupChatUserNotificationPayload, MessageContent, MessageContentInitial, MessageId,
-    MessageIndex, Notification, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis, UniquePersonProof,
-    UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
-    UserNotificationPayload, UserType, is_default,
+    AutonomousConfig, BotCommandDefinition, BotDataEncoding, BotDefinition, BotDefinitionUpdate, BotInstallationLocation,
+    BotSubscriptions, BuildVersion, CanisterId, ChannelLatestMessageIndex, ChannelUserNotificationPayload, ChatId, CommunityId,
+    CyclesTopUp, DiamondMembershipPlanDuration, GroupChatUserNotificationPayload, MessageContent, MessageContentInitial,
+    MessageId, MessageIndex, Notification, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis,
+    UniquePersonProof, UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment,
+    UserId, UserNotificationPayload, UserType, is_default,
 };
 
 mod lifecycle;
@@ -33,7 +33,8 @@ pub enum UserIndexEvent {
     BotPublished(BotPublished),
     BotUpdated(BotUpdated),
     BotRemoved(BotRemoved),
-    BotUninstall(BotUninstall),
+    BotUninstall(BotInstallationLocation, UserId),
+    BotUpdateInstallation(BotInstallationLocation, BotDefinitionUpdate),
     PlatformOperatorStatusChanged(PlatformOperatorStatusChanged),
     PlatformModeratorStatusChanged(PlatformModeratorStatusChanged),
     MaxConcurrentCanisterUpgradesChanged(MaxConcurrentCanisterUpgradesChanged),
@@ -56,6 +57,7 @@ pub enum UserIndexEvent {
     UserUnblocked(UserId, UserId),
     UpdateChitBalance(UserId, ChitBalance),
     SetPremiumItemCost(SetPremiumItemCost),
+    UpdateBlockedUsernamePatterns(UpdateBlockedUsernamePatterns),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -163,12 +165,6 @@ pub struct BotRemoved {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct BotUninstall {
-    pub location: BotInstallationLocation,
-    pub bot_id: UserId,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PlatformOperatorStatusChanged {
     pub user_id: UserId,
     pub is_platform_operator: bool,
@@ -255,6 +251,8 @@ pub struct ReferralCodeAdded {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DeleteUser {
     pub user_id: UserId,
+    #[serde(default)]
+    #[deprecated]
     pub triggered_by_user: bool,
 }
 
@@ -277,6 +275,10 @@ pub struct GlobalUser {
 pub struct ChitBalance {
     pub total_earned: i32,
     pub curr_balance: i32,
+    #[serde(default)]
+    pub streak: u16,
+    #[serde(default)]
+    pub streak_ends: TimestampMillis,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -418,4 +420,10 @@ impl LocalCommunity {
 pub struct SetPremiumItemCost {
     pub item_id: u32,
     pub chit_cost: u32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UpdateBlockedUsernamePatterns {
+    pub pattern: String,
+    pub add: bool,
 }

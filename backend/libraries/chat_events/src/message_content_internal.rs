@@ -15,8 +15,8 @@ use types::{
     FileContentEventPayload, GiphyContent, GiphyImageVariant, GovernanceProposalContentEventPayload, ImageContent,
     ImageOrVideoContentEventPayload, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE, MessageContent, MessageContentEventPayload,
     MessageContentInitial, MessageContentType, MessageIndex, MessageReminderContent, MessageReminderContentEventPayload,
-    MessageReminderCreatedContent, MessageReport, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent,
-    P2PSwapContentEventPayload, P2PSwapContentInitial, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus,
+    MessageReminderCreatedContent, MessageReport, Milliseconds, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted,
+    P2PSwapContent, P2PSwapContentEventPayload, P2PSwapContentInitial, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus,
     PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload, PollVotes, PrizeContent,
     PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal,
     ProposalContent, RegisterVoteResult, ReportedMessage, ReportedMessageContentEventPayload, TextContent,
@@ -593,6 +593,10 @@ pub struct AudioContentInternal {
     pub mime_type: String,
     #[serde(rename = "b", default, skip_serializing_if = "Option::is_none")]
     pub blob_reference: Option<BlobReferenceInternal>,
+    #[serde(rename = "d", default, skip_serializing_if = "is_default")]
+    pub duration_ms: Milliseconds,
+    #[serde(rename = "s", default, skip_serializing_if = "Vec::is_empty", with = "serde_bytes")]
+    pub samples: Vec<u8>,
 }
 
 impl From<AudioContent> for AudioContentInternal {
@@ -601,6 +605,8 @@ impl From<AudioContent> for AudioContentInternal {
             caption: value.caption,
             mime_type: value.mime_type,
             blob_reference: value.blob_reference.map(|r| r.into()),
+            duration_ms: value.duration_ms.unwrap_or_default(),
+            samples: value.samples.unwrap_or_default(),
         }
     }
 }
@@ -613,6 +619,8 @@ impl MessageContentInternalSubtype for AudioContentInternal {
             caption: self.caption,
             mime_type: self.mime_type,
             blob_reference: self.blob_reference.map(|r| r.into()),
+            duration_ms: Some(self.duration_ms),
+            samples: Some(self.samples),
         }
     }
 }

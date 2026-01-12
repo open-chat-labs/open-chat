@@ -41,7 +41,7 @@
         "@rollup/plugin-replace": "^5.0.5",
         "@rollup/plugin-terser": "^0.4.4",
         "@rollup/plugin-typescript": "^11.1.2",
-        "@tauri-apps/api": "^2.7.0",
+        "@tauri-apps/api": "^2.8.0",
         "@typescript-eslint/eslint-plugin": "^8.38.0",
         "@typescript-eslint/parser": "^8.38.0",
         "auto-changelog": "open-chat-labs/auto-changelog#master",
@@ -66,8 +66,8 @@
         "turbo": "^2.1.2"
     },
     "dependencies": {
-        "@dfinity/auth-client": "^3.2.2",
-        "@icp-sdk/core": "^4.0.0",
+        "@dfinity/auth-client": "^3.4.3",
+        "@icp-sdk/core": "^4.2.3",
         "chrono-node": "^2.7.8",
         "svelte-dnd-action": "^0.9.52",
         "svelte-i18n": "^4.0.1",

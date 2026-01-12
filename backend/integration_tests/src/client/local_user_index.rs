@@ -14,7 +14,7 @@ generate_query_call!(notifications);
 generate_update_call!(bot_create_channel);
 generate_update_call!(bot_delete_channel);
 generate_update_call!(bot_send_message);
-generate_update_call!(bot_subscribe_to_events);
+generate_msgpack_update_call!(claim_prize);
 generate_msgpack_update_call!(install_bot);
 generate_msgpack_update_call!(invite_users_to_channel);
 generate_msgpack_update_call!(invite_users_to_community);
@@ -34,7 +34,7 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use types::{
         BotInstallationLocation, BotPermissions, CanisterId, ChannelId, ChatId, CommunityCanisterCommunitySummary, CommunityId,
-        Empty, UserId,
+        Empty, MessageId, MultiUserChat, UserId,
     };
 
     pub fn register_user(env: &mut PocketIc, principal: Principal, canister_id: CanisterId, public_key: Vec<u8>) -> User {
@@ -56,6 +56,7 @@ pub mod happy_path {
                 username: principal_to_username(principal),
                 referral_code,
                 public_key: public_key.clone(),
+                email: None,
             },
         );
 
@@ -328,6 +329,31 @@ pub mod happy_path {
         match response {
             local_user_index_canister::pay_for_premium_item::Response::Success(result) => result,
             response => panic!("'pay_for_premium_item' error: {response:?}"),
+        }
+    }
+
+    pub fn claim_prize(
+        env: &mut PocketIc,
+        sender: Principal,
+        local_user_index: CanisterId,
+        chat_id: MultiUserChat,
+        message_id: MessageId,
+        sign_in_proof_jwt: Option<String>,
+    ) {
+        let response = super::claim_prize(
+            env,
+            sender,
+            local_user_index,
+            &local_user_index_canister::claim_prize::Args {
+                chat_id,
+                message_id,
+                sign_in_proof_jwt,
+            },
+        );
+
+        match response {
+            local_user_index_canister::claim_prize::Response::Success => {}
+            response => panic!("'claim_prize' error: {response:?}"),
         }
     }
 

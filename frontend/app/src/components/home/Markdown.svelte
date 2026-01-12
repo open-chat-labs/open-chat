@@ -46,6 +46,8 @@
 
             // replace userIds & emojis *after* markdown parsing so that we can fully disallow html in the markdown source
             parsed = replaceUserIds(parsed);
+
+            parsed = replaceSpoilers(parsed);
         } catch (err: any) {
             client.logError("Error parsing markdown: ", err);
         }
@@ -58,6 +60,10 @@
             return "unsafe";
         }
     });
+
+    function replaceSpoilers(input: string): string {
+        return input.replace(/\|\|([^|]+?)\|\|/g, "<spoiler-span>$1</spoiler-span>");
+    }
 
     function replaceUserIds(text: string): string {
         return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {

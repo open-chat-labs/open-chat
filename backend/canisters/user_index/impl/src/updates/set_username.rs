@@ -19,7 +19,7 @@ fn set_username_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(user) = state.data.users.get_by_principal(&caller) {
         let username = args.username;
         if !username.eq_ignore_ascii_case(&user.username) {
-            match validate_username(&username) {
+            match validate_username(&username, &state.data.blocked_username_patterns) {
                 Ok(_) => {}
                 Err(UsernameValidationError::TooShort(s)) => return UsernameTooShort(s.min_length as u16),
                 Err(UsernameValidationError::TooLong(l)) => return UsernameTooLong(l.max_length as u16),
@@ -31,7 +31,7 @@ fn set_username_impl(args: Args, state: &mut RuntimeState) -> Response {
         user_to_update.username.clone_from(&username);
         let user_id = user.user_id;
         let now = state.env.now();
-        match state.data.users.update(user_to_update, now, false, None) {
+        match state.data.users.update(user_to_update, now, false, false) {
             UpdateUserResult::Success => {
                 state.push_event_to_local_user_index(
                     user_id,

@@ -3,7 +3,7 @@ use constants::calculate_summary_updates_data_removal_cutoff;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::collections::{btree_map::Entry, BTreeMap, BTreeSet};
-use types::{BotPermissions, BotSubscriptions, TimestampMillis, UserId};
+use types::{BotDefinitionUpdate, BotPermissions, BotSubscriptions, OptionUpdate, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct InstalledBots {
@@ -40,10 +40,45 @@ impl InstalledBots {
         true
     }
 
-    pub fn update(
+    pub fn update_from_definition(&mut self, update: BotDefinitionUpdate, now: TimestampMillis) -> bool {
+        let Some(bot) = self.bots.get_mut(&update.bot_id) else {
+            return false;
+        };
+
+        // The stored bot permissions are _granted_ permissions, whereas the incoming permissions are
+        // those requested by the bot. So intersect the requested permissions with the stored permissions.
+
+        match update.command_permissions {
+            OptionUpdate::NoChange => (),
+            OptionUpdate::SetToNone => bot.permissions = BotPermissions::default(),
+            OptionUpdate::SetToSome(requested) => bot.permissions = bot.permissions.intersect(&requested),
+        };
+
+        match update.autonomous_permissions {
+            OptionUpdate::NoChange => (),
+            OptionUpdate::SetToNone => bot.autonomous_permissions = None,
+            OptionUpdate::SetToSome(requested) => {
+                bot.autonomous_permissions = bot
+                    .autonomous_permissions
+                    .as_ref()
+                    .map(|existing| existing.intersect(&requested))
+            }
+        };
+
+        match update.default_subscriptions {
+            OptionUpdate::NoChange => (),
+            OptionUpdate::SetToNone => bot.default_subscriptions = None,
+            OptionUpdate::SetToSome(subs) => bot.default_subscriptions = Some(subs),
+        }
+
+        self.prune_then_insert_member_update(update.bot_id, BotUpdate::Updated, now);
+        true
+    }
+
+    pub fn update_permissions(
         &mut self,
         bot_id: UserId,
-        permissions: BotPermissions,
+        command_permissions: BotPermissions,
         autonomous_permissions: Option<BotPermissions>,
         now: TimestampMillis,
     ) -> bool {
@@ -51,7 +86,7 @@ impl InstalledBots {
             Entry::Vacant(_) => false,
             Entry::Occupied(mut o) => {
                 let bot = o.get_mut();
-                bot.permissions = permissions;
+                bot.permissions = command_permissions;
                 bot.autonomous_permissions = autonomous_permissions;
                 self.prune_then_insert_member_update(bot_id, BotUpdate::Updated, now);
                 true
@@ -122,7 +157,7 @@ pub enum BotUpdate {
     Updated = 3,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct BotInternal {
     pub added_by: UserId,
     pub permissions: BotPermissions,

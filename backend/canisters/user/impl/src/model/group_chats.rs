@@ -2,13 +2,13 @@ use crate::model::group_chat::GroupChat;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use types::{CanisterId, ChatId, MessageIndex, TimestampMillis, Timestamped};
+use types::{CanisterId, Chat, ChatId, MessageIndex, TimestampMillis, Timestamped};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct GroupChats {
     groups_created: u32,
     group_chats: HashMap<ChatId, GroupChat>,
-    pinned: Timestamped<Vec<ChatId>>,
+    pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
     removed: Vec<RemovedGroup>,
 }
 
@@ -27,12 +27,14 @@ impl GroupChats {
         self.group_chats.values().filter(move |c| c.last_updated() > since)
     }
 
-    pub fn pinned(&self) -> &Vec<ChatId> {
-        &self.pinned.value
+    pub fn pinned_chats(&self) -> HashMap<Chat, TimestampMillis> {
+        self.pinned.value.iter().map(|(k, v)| (Chat::Group(*k), *v)).collect()
     }
 
-    pub fn pinned_if_updated(&self, since: TimestampMillis) -> Option<Vec<ChatId>> {
-        self.pinned.if_set_after(since).map(|ids| ids.to_vec())
+    pub fn pinned_chats_if_updated(&self, since: TimestampMillis) -> Option<HashMap<Chat, TimestampMillis>> {
+        self.pinned
+            .if_set_after(since)
+            .map(|ids| ids.iter().map(|(k, v)| (Chat::Group(*k), *v)).collect())
     }
 
     pub fn removed_since(&self, timestamp: TimestampMillis) -> Vec<ChatId> {
@@ -95,21 +97,17 @@ impl GroupChats {
         self.group_chats.len()
     }
 
-    pub fn removed_len(&self) -> usize {
-        self.removed.len()
-    }
-
     pub fn pin(&mut self, chat_id: ChatId, now: TimestampMillis) {
-        if !self.pinned.value.contains(&chat_id) {
+        if !self.pinned.value.contains_key(&chat_id) {
             self.pinned.timestamp = now;
-            self.pinned.value.insert(0, chat_id);
+            self.pinned.value.insert(chat_id, now);
         }
     }
 
     pub fn unpin(&mut self, chat_id: &ChatId, now: TimestampMillis) {
-        if self.pinned.value.contains(chat_id) {
+        if self.pinned.value.contains_key(chat_id) {
             self.pinned.timestamp = now;
-            self.pinned.value.retain(|pinned_chat_id| pinned_chat_id != chat_id);
+            self.pinned.value.remove(chat_id);
         }
     }
 }

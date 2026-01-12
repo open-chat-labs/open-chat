@@ -1,17 +1,93 @@
 /* eslint-disable no-case-declarations */
-import { DER_COSE_OID, type Identity, type SignIdentity, unwrapDER } from "@icp-sdk/core/agent";
 import { AuthClient, type AuthClientLoginOptions } from "@dfinity/auth-client";
+import { DER_COSE_OID, unwrapDER, type Identity, type SignIdentity } from "@icp-sdk/core/agent";
 import {
     DelegationChain,
     DelegationIdentity,
     ECDSAKeyIdentity,
-    type JsonnableDelegationChain,
     WebAuthnIdentity,
+    type JsonnableDelegationChain,
 } from "@icp-sdk/core/identity";
 import DRange from "drange";
 import {
-    type AcceptedRules,
+    ARBITRUM_NETWORK,
+    AuthProvider,
+    BASE_NETWORK,
+    ChatMap,
+    ChatSet,
+    CommonResponses,
+    E8S_PER_TOKEN,
+    ETHEREUM_NETWORK,
+    ErrorCode,
+    ICP_SYMBOL,
+    IdentityStorage,
+    LARGE_GROUP_THRESHOLD,
+    LEDGER_CANISTER_CHAT,
+    MessageContextMap,
+    NoMeetingToJoin,
+    ONE_DAY,
+    ONE_HOUR,
+    ONE_MINUTE_MILLIS,
+    OPENCHAT_BOT_USER_ID,
+    OPENCHAT_VIDEO_CALL_USER_ID,
+    PremiumItem,
+    ROLE_MEMBER,
+    ROLE_NONE,
+    Stream,
+    WEBAUTHN_ORIGINATING_CANISTER,
+    anonymousUser,
+    buildDelegationIdentity,
+    canRetryMessage,
+    chatIdentifierToString,
+    chatIdentifiersEqual,
+    communityIdentifiersEqual,
+    communityRoles,
+    compareRoles,
+    contentTypeToPermission,
+    defaultChatRules,
+    deletedUser,
+    extractUserIdsFromMentions,
+    featureRestricted,
+    getContentAsFormattedText,
+    getDisplayDate,
+    getEmailSignInSession,
+    getTimeUntilSessionExpiryMs,
+    indexRangeForChat,
+    isBalanceGate,
+    isCaptionedContent,
+    isChitEarnedGate,
+    isCompositeGate,
+    isCredentialGate,
+    isEditableContent,
+    isMessageNotification,
+    isNeuronGate,
+    isPaymentGate,
+    isProposalsChat,
+    isSuccessfulEventsResponse,
+    isTransfer,
+    mergeCombinedUnreadCounts,
+    messageContextsEqual,
+    parseBigInt,
+    pinNumberFailureFromError,
+    publish,
+    random128,
+    random64,
+    removeEmailSignInSession,
+    routeForChatIdentifier,
+    routeForMessage,
+    setMinLogLevel,
+    shouldPreprocessGate,
+    storeEmailSignInSession,
+    toDer,
+    toTitleCase,
+    updateCreatedUser,
+    userIdsFromEvents,
+    userIdsFromTransactions,
+    userOrUserGroupId,
+    userOrUserGroupName,
+    userStatus,
     type AcceptP2PSwapResponse,
+    type AcceptedRules,
     type AccessGate,
     type AccessGateConfig,
     type AccessTokenType,
@@ -20,13 +96,11 @@ import {
     type Achievement,
     type AddMembersToChannelResponse,
     type AirdropChannelDetails,
-    anonymousUser,
     type ApproveAccessGatePaymentResponse,
     type ApproveTransferResponse,
     type ArchitectureRoute,
     type AttachmentContent,
     type AuthenticationPrincipal,
-    AuthProvider,
     type BlogRoute,
     type BotActionScope,
     type BotClientConfigData,
@@ -36,12 +110,10 @@ import {
     type BotDefinitionResponse,
     type BotInstallationLocation,
     type BotMessageContext,
-    buildDelegationIdentity,
     type CancelP2PSwapResponse,
     type CandidateGroupChat,
     type CandidateProposal,
     type CandidateTranslations,
-    canRetryMessage,
     type CaptionedContent,
     type ChallengeAttempt,
     type ChannelIdentifier,
@@ -49,13 +121,9 @@ import {
     type ChatEvent,
     type ChatFrozenEvent,
     type ChatIdentifier,
-    chatIdentifiersEqual,
-    chatIdentifierToString,
     type ChatListRoute,
     type ChatListScope,
-    ChatMap,
     type ChatPermissions,
-    ChatSet,
     type ChatSummary,
     type ChatUnfrozenEvent,
     type CheckUsernameResponse,
@@ -68,30 +136,23 @@ import {
     type ClaimDailyChitResponse,
     type ClientJoinCommunityResponse,
     type ClientJoinGroupResponse,
-    CommonResponses,
     type CommunitiesRoute,
     type CommunityDetailsResponse,
     type CommunityIdentifier,
-    communityIdentifiersEqual,
     type CommunityInvite,
     type CommunityPermissions,
-    communityRoles,
     type CommunitySummary,
-    compareRoles,
     type CompletedCryptocurrencyTransfer,
     type ConnectToWorkerResponse,
-    contentTypeToPermission,
     type CreateCommunityResponse,
-    type CreatedUser,
     type CreateGroupResponse,
     type CreateUserGroupResponse,
+    type CreatedUser,
     type CryptocurrencyContent,
     type CryptocurrencyDetails,
     type CryptocurrencyTransfer,
     type CurrentUserResponse,
     type DataContent,
-    defaultChatRules,
-    deletedUser,
     type DexId,
     type DiamondMembershipDuration,
     type DiamondMembershipFees,
@@ -100,12 +161,10 @@ import {
     type DirectChatIdentifier,
     type DirectChatSummary,
     type DisableInviteCodeResponse,
-    E8S_PER_TOKEN,
     type EnableInviteCodeResponse,
     type EnhancedAccessGate,
-    ErrorCode,
-    type EventsResponse,
     type EventWrapper,
+    type EventsResponse,
     type EvmChain,
     type EvmContractAddress,
     type ExpiredEventsRange,
@@ -114,18 +173,12 @@ import {
     type ExploreCommunitiesResponse,
     type ExternalBot,
     type ExternalBotCommandInstance,
-    extractUserIdsFromMentions,
     type Failure,
     type FaqRoute,
-    featureRestricted,
     type FromWorker,
     type FullWebhookDetails,
     type GenerateChallengeResponse,
     type GenerateMagicLinkResponse,
-    getContentAsFormattedText,
-    getDisplayDate,
-    getEmailSignInSession,
-    getTimeUntilSessionExpiryMs,
     type GlobalSelectedChatRoute,
     type GrantedBotPermissions,
     type GroupChatDetailsResponse,
@@ -139,25 +192,9 @@ import {
     type HandleMagicLinkResponse,
     type HomeRoute,
     type IdentityState,
-    IdentityStorage,
-    indexRangeForChat,
     type InternalBotCommandInstance,
     type InviteCodeResponse,
-    isBalanceGate,
-    isCaptionedContent,
-    isChitEarnedGate,
-    isCompositeGate,
-    isCredentialGate,
-    isEditableContent,
-    isMessageNotification,
-    isNeuronGate,
-    isPaymentGate,
-    isProposalsChat,
-    isSuccessfulEventsResponse,
-    isTransfer,
     type JoinVideoCallResponse,
-    LARGE_GROUP_THRESHOLD,
-    LEDGER_CANISTER_CHAT,
     type Level,
     type LinkIdentitiesResponse,
     type Logger,
@@ -165,14 +202,11 @@ import {
     type Member,
     type MemberRole,
     type Mention,
-    mergeCombinedUnreadCounts,
     type Message,
     type MessageActivityFeedResponse,
     type MessageActivitySummary,
     type MessageContent,
     type MessageContext,
-    MessageContextMap,
-    messageContextsEqual,
     type MessageFilter,
     type MessageFormatter,
     type MessagePermission,
@@ -183,18 +217,11 @@ import {
     type NamedAccount,
     type NervousSystemDetails,
     type NewUnconfirmedMessage,
-    NoMeetingToJoin,
     type Notification,
-    ONE_DAY,
-    ONE_HOUR,
-    ONE_MINUTE_MILLIS,
     type OneSecForwardingStatus,
     type OneSecTransferFees,
-    OPENCHAT_BOT_USER_ID,
-    OPENCHAT_VIDEO_CALL_USER_ID,
-    type OptionalChatPermissions,
     type OptionUpdate,
-    parseBigInt,
+    type OptionalChatPermissions,
     type PartitionedUserIds,
     type PayForDiamondMembershipResponse,
     type PayForPremiumItemResponse,
@@ -203,16 +230,11 @@ import {
     type PaymentGateApprovals,
     type PendingCryptocurrencyTransfer,
     type PendingCryptocurrencyWithdrawal,
-    pinNumberFailureFromError,
-    PremiumItem,
     type PreprocessedGate,
     type ProposalVoteDetails,
     type ProposeResponse,
-    type PublicProfile,
-    publish,
     type PubSubEvents,
-    random128,
-    random64,
+    type PublicProfile,
     type ReadonlyMap,
     type ReadonlySet,
     type Referral,
@@ -221,16 +243,11 @@ import {
     type RejectReason,
     type RemoteUserSentMessage,
     type RemoteUserToggledReaction,
-    removeEmailSignInSession,
     type RemoveIdentityLinkResponse,
     type RemoveMemberResponse,
     type ResetInviteCodeResponse,
     type RightPanelContent,
     type RoadmapRoute,
-    ROLE_MEMBER,
-    ROLE_NONE,
-    routeForChatIdentifier,
-    routeForMessage,
     type RouteParams,
     type Rules,
     type SaveCryptoAccountResponse,
@@ -243,16 +260,12 @@ import {
     type SetBioResponse,
     type SetDisplayNameResponse,
     type SetMemberDisplayNameResponse,
-    setMinLogLevel,
     type SetPinNumberResponse,
     type SetUsernameResponse,
     type ShareRoute,
-    shouldPreprocessGate,
     type SiwePrepareLoginResponse,
     type SiwsPrepareLoginResponse,
-    storeEmailSignInSession,
     type StreakInsurance,
-    Stream,
     type SubmitProofOfUniquePersonhoodResponse,
     type Success,
     type SwapTokensResponse,
@@ -263,30 +276,22 @@ import {
     type ThreadSummary,
     type ThreadSyncDetails,
     type TipMessageResponse,
-    toDer,
     type TokenSwapStatusResponse,
-    toTitleCase,
     type TransferSuccess,
-    updateCreatedUser,
-    type UpdatedEvent,
-    type UpdatedRules,
     type UpdateGroupResponse,
     type UpdateMarketMakerConfigArgs,
     type UpdateMarketMakerConfigResponse,
-    type UpdatesResult,
     type UpdateUserGroupResponse,
+    type UpdatedEvent,
+    type UpdatedRules,
+    type UpdatesResult,
     type User,
     type UserGroupDetails,
-    userIdsFromEvents,
-    userIdsFromTransactions,
     type UserOrUserGroup,
-    userOrUserGroupId,
-    userOrUserGroupName,
+    type UserStatus,
+    type UserSummary,
     type UsersArgs,
     type UsersResponse,
-    type UserStatus,
-    userStatus,
-    type UserSummary,
     type Verification,
     type VerifiedCredentialArgs,
     type VerifyAccountLinkingCodeResponse,
@@ -295,11 +300,10 @@ import {
     type VideoCallPresence,
     type VideoCallType,
     type WalletConfig,
-    WEBAUTHN_ORIGINATING_CANISTER,
     type WebAuthnKey,
     type WebAuthnKeyFull,
-    type WebhookDetails,
     type WebRtcMessage,
+    type WebhookDetails,
     type WhitepaperRoute,
     type WithdrawBtcResponse,
     type WithdrawCryptocurrencyResponse,
@@ -316,16 +320,18 @@ import { AndroidWebAuthnErrorCode } from "tauri-plugin-oc-api";
 import type { OpenChatConfig } from "./config";
 import { snapshot } from "./snapshot.svelte";
 import {
+    FilteredProposals,
     achievementsStore,
     allChatsStore,
     allServerChatsStore,
+    allUsersStore,
     anonUserStore,
     askForNotificationPermission,
     bitcoinAddress,
     chatListScopeStore,
-    chatsInitialisedStore,
     chatSummariesListStore,
     chatSummariesStore,
+    chatsInitialisedStore,
     chitStateStore,
     communitiesStore,
     communityFiltersStore,
@@ -341,7 +347,6 @@ import {
     exchangeRatesLookupStore,
     expiredServerEventRanges,
     favouritesStore,
-    FilteredProposals,
     filteredProposalsStore,
     hasFlag,
     identityStateStore,
@@ -360,14 +365,14 @@ import {
     nervousSystemLookup,
     nextCommunityIndexStore,
     notFoundStore,
-    notificationsSupported,
     notificationStatus,
+    notificationsSupported,
     oneSecAddress,
     pathContextStore,
-    pinnedChatsStore,
     pinNumberFailureStore,
     pinNumberRequiredStore,
     pinNumberResolverStore,
+    pinnedChatsStore,
     platformOperatorStore,
     premiumItemsStore,
     querystringCodeStore,
@@ -541,6 +546,7 @@ import {
     toMonthString,
     toShortTimeString,
 } from "./utils/date";
+import { getErc20TokenBalances } from "./utils/evm";
 import formatFileSize from "./utils/fileSize";
 import { gaTrack } from "./utils/ga";
 import { calculateMediaDimensions } from "./utils/layout";
@@ -553,18 +559,20 @@ import {
 import { groupBy, groupWhile, keepMax, partition, toRecord, toRecord2 } from "./utils/list";
 import { getUserCountryCode } from "./utils/location";
 import {
-    audioRecordingMimeType,
-    containsSocialVideoLink,
     DIAMOND_MAX_SIZES,
-    fillMessage,
     FREE_MAX_SIZES,
+    audioRecordingMimeType,
+    communityMessageRegex,
+    containsSocialVideoLink,
+    fillMessage,
+    groupMessageRegex,
     instagramRegex,
     isSocialVideoLink,
-    type MaxMediaSizes,
     messageContentFromFile,
     spotifyRegex,
     twitterLinkRegex,
     youtubeRegex,
+    type MaxMediaSizes,
 } from "./utils/media";
 import { mergeKeepingOnlyChanged } from "./utils/object";
 import { hasOwnerRights } from "./utils/permissions";
@@ -601,8 +609,7 @@ import {
     userAvatarUrl,
 } from "./utils/user";
 import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
-import { createWebAuthnIdentity, MultiWebAuthnIdentity } from "./utils/webAuthn";
-import { getErc20TokenBalances } from "./utils/evm";
+import { MultiWebAuthnIdentity, createWebAuthnIdentity } from "./utils/webAuthn";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -618,23 +625,16 @@ const EXCHANGE_RATE_UPDATE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
 
-type UnresolvedRequest = {
-    kind: string;
-    sentAt: number;
-};
-
 type PromiseResolver<T> = {
     resolve: (val: T | PromiseLike<T>, final: boolean) => void;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     reject: (reason?: any) => void;
-    timeout: number;
 };
 
 export class OpenChat {
     #worker!: Worker;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     #pending: Map<string, PromiseResolver<any>> = new Map(); // in-flight requests
-    #unresolved: Map<string, UnresolvedRequest> = new Map(); // requests that never resolved
     #connectedToWorker = false;
     #authIdentityStorage: IdentityStorage;
     #authPrincipal: string | undefined;
@@ -655,6 +655,7 @@ export class OpenChat {
     #userUpdatePoller: Poller | undefined = undefined;
     #exchangeRatePoller: Poller | undefined = undefined;
     #proposalTalliesPoller: Poller | undefined = undefined;
+    #notificationSubscriptionPoller: Poller | undefined = undefined;
     #recentlyActiveUsersTracker: RecentlyActiveUsersTracker = new RecentlyActiveUsersTracker();
     #inflightMessagePromises: Map<
         bigint,
@@ -670,8 +671,6 @@ export class OpenChat {
     #getBtcAddressPromise: Promise<string> | undefined = undefined;
     #getOneSecAddressPromise: Promise<string> | undefined = undefined;
     #evmContractAddresses: EvmContractAddress[] = [];
-    #oneSecMinterNotificationTimestamps: { chain: EvmChain; token: string; timestamp: number }[] =
-        [];
 
     currentAirdropChannel: AirdropChannelDetails | undefined = undefined;
 
@@ -704,6 +703,8 @@ export class OpenChat {
         this.#authClient
             .then((c) => c.getIdentity())
             .then((authIdentity) => this.#loadedAuthenticationIdentity(authIdentity, undefined));
+
+        window.setInterval(() => this.monitorPendingRequests(), ONE_MINUTE_MILLIS);
     }
 
     public get AuthPrincipal(): string {
@@ -711,6 +712,10 @@ export class OpenChat {
             throw new Error("Trying to access the _authPrincipal before it has been set up");
         }
         return this.#authPrincipal;
+    }
+
+    isNativeLayout() {
+        return this.isNativeApp() || localStorage.getItem("openchat_native_layout") === "true";
     }
 
     isNativeAndroid() {
@@ -1669,7 +1674,7 @@ export class OpenChat {
             spender,
             ledger,
             amount: amount - approvalFee, // The user should pay only the amount not amount+fee so it is a round number
-            expiresIn: BigInt(5 * 60 * 1000), // Allow 5 mins for the join_group call before the approval expires
+            expiresIn: BigInt(5 * ONE_MINUTE_MILLIS), // Allow 5 mins for the join_group call before the approval expires
             pin,
         })
             .then((response) => {
@@ -2496,7 +2501,8 @@ export class OpenChat {
                 return false;
             });
 
-        this.#sendRtcMessage([...selectedChatUserIdsStore.value], {
+        const messageRecipients = this.#rtcMessageRecipients(chatId);
+        this.#sendRtcMessage(messageRecipients, {
             kind: "remote_user_toggled_reaction",
             id: chatId,
             messageId: messageId,
@@ -2677,6 +2683,8 @@ export class OpenChat {
     trackEvent = trackEvent;
     twitterLinkRegex = twitterLinkRegex;
     youtubeRegex = youtubeRegex;
+    communityMessageRegex = communityMessageRegex;
+    groupMessageRegex = groupMessageRegex;
     instagramRegex = instagramRegex;
     spotifyRegex = spotifyRegex;
     metricsEqual = metricsEqual;
@@ -2844,7 +2852,7 @@ export class OpenChat {
             if (scope.kind === "favourite") {
                 pageRedirect(
                     routeForChatIdentifier(
-                        selectedCommunityIdStore.value === undefined ? "group_chat" : "community",
+                        selectedCommunityIdStore.value === undefined ? "chats" : "community",
                         chatId,
                     ),
                 );
@@ -2854,7 +2862,7 @@ export class OpenChat {
                 if (!(await this.createDirectChat(chatId))) {
                     publish("notFound");
                 } else {
-                    page(routeForChatIdentifier("direct_chat", chatId));
+                    page(routeForChatIdentifier("chats", chatId));
                 }
             } else if (chatId.kind === "group_chat" || chatId.kind === "channel") {
                 autojoin = querystringStore.value.has("autojoin");
@@ -3189,9 +3197,7 @@ export class OpenChat {
 
     getMinDissolveDelayDays(gate: AccessGate): number | undefined {
         if (isNeuronGate(gate)) {
-            return gate.minDissolveDelay
-                ? gate.minDissolveDelay / (24 * 60 * 60 * 1000)
-                : undefined;
+            return gate.minDissolveDelay ? gate.minDissolveDelay / ONE_DAY : undefined;
         }
     }
 
@@ -3403,6 +3409,8 @@ export class OpenChat {
                 return;
             }
 
+            // this should not actually happen because we should just get back the previous value
+            // is there were no updates
             if (resp.kind === "success_no_updates") {
                 selectedServerCommunityStore.update((state) => {
                     if (state) {
@@ -3923,20 +3931,6 @@ export class OpenChat {
         serverEventsStore.update(fn);
     }
 
-    async #sendMessageWebRtc(
-        clientChat: ChatSummary,
-        message: NewUnconfirmedMessage,
-        threadRootMessageIndex: number | undefined,
-    ): Promise<void> {
-        rtcConnectionsManager.sendMessage([...selectedChatUserIdsStore.value], {
-            kind: "remote_user_sent_message",
-            id: clientChat.id,
-            message: serialiseMessageForRtc(message),
-            userId: currentUserIdStore.value,
-            threadRootMessageIndex,
-        });
-    }
-
     deleteFailedMessage(
         chatId: ChatIdentifier,
         messageId: bigint,
@@ -3949,6 +3943,13 @@ export class OpenChat {
             messageId,
             threadRootMessageIndex,
         });
+    }
+
+    #rtcMessageRecipients(chatId: ChatIdentifier) {
+        // a DM should only ever be sent to the recipient regardless of selectedChatUserIdsStore
+        return chatId.kind === "direct_chat"
+            ? [chatId.userId]
+            : [...selectedChatUserIdsStore.value];
     }
 
     async #sendMessageCommon(
@@ -4004,6 +4005,8 @@ export class OpenChat {
         );
         const ledger = this.#extractLedgerFromContent(message.content);
 
+        const messageRecipients = this.#rtcMessageRecipients(chat.id);
+
         const sendMessagePromise: Promise<SendMessageResponse> = new Promise((resolve) => {
             this.#inflightMessagePromises.set(messageId, resolve);
             this.#sendStreamRequest(
@@ -4020,14 +4023,19 @@ export class OpenChat {
                     newAchievement,
                 },
                 undefined,
-                ledger !== undefined ? 2 * DEFAULT_WORKER_TIMEOUT : undefined,
             ).subscribe({
                 onResult: (response) => {
                     if (response === "accepted") {
                         localUpdates.markUnconfirmedAccepted(messageContext, messageId);
 
                         if (!isTransfer(message.content)) {
-                            this.#sendMessageWebRtc(chat, message, threadRootMessageIndex);
+                            rtcConnectionsManager.sendMessage(messageRecipients, {
+                                kind: "remote_user_sent_message",
+                                id: chat.id,
+                                message: serialiseMessageForRtc(message),
+                                userId: currentUserIdStore.value,
+                                threadRootMessageIndex,
+                            });
                         }
                         return;
                     }
@@ -5087,10 +5095,11 @@ export class OpenChat {
             });
     }
 
-    registerUser(username: string): Promise<RegisterUserResponse> {
+    registerUser(username: string, email: string | undefined): Promise<RegisterUserResponse> {
         return this.#sendRequest({
             kind: "registerUser",
             username,
+            email,
             referralCode: this.#referralCode,
         })
             .then((res) => {
@@ -5164,16 +5173,16 @@ export class OpenChat {
         return this.config.i18nFormatter("unknownUser");
     }
 
-    #subscriptionExists(p256dh_key: string): Promise<boolean> {
-        return this.#sendRequest({ kind: "subscriptionExists", p256dh_key }).catch(() => false);
+    #subscriptionExists(endpoint: string): Promise<boolean> {
+        return this.#sendRequest({ kind: "subscriptionExists", endpoint }).catch(() => false);
     }
 
     #pushSubscription(subscription: PushSubscriptionJSON): Promise<void> {
         return this.#sendRequest({ kind: "pushSubscription", subscription });
     }
 
-    #removeSubscription(subscription: PushSubscriptionJSON): Promise<void> {
-        return this.#sendRequest({ kind: "removeSubscription", subscription });
+    #removeSubscription(endpoint: string): Promise<void> {
+        return this.#sendRequest({ kind: "removeSubscription", endpoint });
     }
 
     #inviteUsersLocally(
@@ -5373,7 +5382,6 @@ export class OpenChat {
                 adopt,
             },
             false,
-            2 * DEFAULT_WORKER_TIMEOUT,
         ).catch(CommonResponses.failure);
     }
 
@@ -5786,16 +5794,18 @@ export class OpenChat {
         });
     }
 
-    async getGroupMessagesByMessageIndex(
-        chatId: MultiUserChatIdentifier,
+    async getMessagesByMessageIndex(
+        chatId: ChatIdentifier,
+        threadRootMessageIndex: number | undefined,
         messageIndexes: ReadonlySet<number>,
     ): Promise<EventsResponse<Message>> {
         const serverChat = allServerChatsStore.value.get(chatId);
 
         try {
             const resp = await this.#sendRequest({
-                kind: "getGroupMessagesByMessageIndex",
+                kind: "getMessagesByMessageIndex",
                 chatId,
+                threadRootMessageIndex,
                 messageIndexes: new Set(messageIndexes),
                 latestKnownUpdate: serverChat?.lastUpdated,
             });
@@ -6295,8 +6305,7 @@ export class OpenChat {
                 chatsResponse.groupsRemoved,
                 chatsResponse.communitiesRemoved,
                 chatsResponse.favouriteChats,
-                chatsResponse.pinnedDirectChats,
-                chatsResponse.pinnedGroupChats,
+                chatsResponse.pinnedChats,
                 chatsResponse.pinnedChannels,
                 chatsResponse.pinnedFavouriteChats,
                 chatsResponse.achievements,
@@ -6383,8 +6392,7 @@ export class OpenChat {
         groupsRemoved: string[],
         communitiesRemoved: string[],
         favourites: ChatIdentifier[] | undefined,
-        pinnedDirectChats: DirectChatIdentifier[] | undefined,
-        pinnedGroupChats: GroupChatIdentifier[] | undefined,
+        pinnedChats: ChatIdentifier[] | undefined,
         pinnedChannels: ChannelIdentifier[] | undefined,
         pinnedFavourites: ChatIdentifier[] | undefined,
         achievements: Set<string> | undefined,
@@ -6432,12 +6440,11 @@ export class OpenChat {
         if (favourites !== undefined) {
             serverFavouritesStore.set(new ChatSet(favourites));
         }
-        if (pinnedDirectChats !== undefined) {
-            serverPinnedChatsStore.update((map) => map.set("direct_chat", pinnedDirectChats));
+
+        if (pinnedChats !== undefined) {
+            serverPinnedChatsStore.update((map) => map.set("chats", [...pinnedChats.values()]));
         }
-        if (pinnedGroupChats !== undefined) {
-            serverPinnedChatsStore.update((map) => map.set("group_chat", pinnedGroupChats));
-        }
+
         if (pinnedChannels !== undefined) {
             serverPinnedChatsStore.update((map) => map.set("community", pinnedChannels));
         }
@@ -6624,12 +6631,13 @@ export class OpenChat {
         chatId: MultiUserChatIdentifier,
         messageId: bigint,
         e: MouseEvent,
+        signInProof: string | undefined,
     ): Promise<boolean> {
         if (!this.#validMouseEvent(e)) {
             return Promise.resolve(false);
         }
 
-        return this.#sendRequest({ kind: "claimPrize", chatId, messageId })
+        return this.#sendRequest({ kind: "claimPrize", chatId, messageId, signInProof })
             .then((resp) => {
                 if (resp.kind !== "success") {
                     return false;
@@ -7067,13 +7075,22 @@ export class OpenChat {
                         this.currentAirdropChannel = registry.currentAirdropChannel;
                         const cryptoMap = new Map(registry.tokenDetails.map((t) => [t.ledger, t]));
                         const nsMap = new Map(
-                            registry.nervousSystemSummary.map((ns) => [
-                                ns.governanceCanisterId,
-                                {
-                                    ...ns,
-                                    token: cryptoMap.get(ns.ledgerCanisterId)!,
+                            registry.nervousSystemSummary.reduce(
+                                (entries, ns) => {
+                                    const token = cryptoMap.get(ns.ledgerCanisterId);
+                                    if (token) {
+                                        entries.push([
+                                            ns.governanceCanisterId,
+                                            {
+                                                ...ns,
+                                                token,
+                                            },
+                                        ]);
+                                    }
+                                    return entries;
                                 },
-                            ]),
+                                [] as [string, NervousSystemDetails][],
+                            ),
                         );
 
                         nervousSystemLookup.set(nsMap);
@@ -7219,7 +7236,6 @@ export class OpenChat {
                 transactionFee: nervousSystem.token.transferFee,
             },
             false,
-            2 * DEFAULT_WORKER_TIMEOUT,
         )
             .then((resp) => {
                 if (resp.kind === "success" || resp.kind === "retrying") {
@@ -7295,7 +7311,6 @@ export class OpenChat {
                 pin,
             },
             false,
-            1000 * 60 * 3,
         ).then((resp) => {
             if (resp.kind === "error") {
                 const pinNumberFailure = pinNumberFailureFromError(resp);
@@ -7596,52 +7611,45 @@ export class OpenChat {
     #startOneSecBalanceUpdateJob() {
         oneSecAddress.subscribe((addr) => {
             if (addr !== undefined) {
-                const poller = new Poller(
-                    () => this.#checkOneSecBalances(addr),
-                    ONE_MINUTE_MILLIS,
-                    5 * ONE_MINUTE_MILLIS,
-                    true,
-                );
-                return () => poller.stop();
+                this.#oneSecEnableForwarding(currentUserIdStore.value, addr).then(() => {
+                    // Check balances in case a deposit was made before the OneSecForwarder
+                    // canister started tracking the address
+                    this.#checkOneSecBalances(addr);
+                });
             }
+        });
+    }
+
+    #oneSecEnableForwarding(userId: string, evmAddress: string) {
+        return this.#sendRequest({
+            kind: "oneSecEnableForwarding",
+            userId,
+            evmAddress,
         });
     }
 
     async #checkOneSecBalances(address: string) {
         const balances = await getErc20TokenBalances(address, this.#evmContractAddresses);
         if (balances.length > 0) {
-            const now = Date.now();
-            // Clear entries older than 15 minutes
-            this.#oneSecMinterNotificationTimestamps =
-                this.#oneSecMinterNotificationTimestamps.filter(
-                    (x) => x.timestamp > now - 15 * ONE_MINUTE_MILLIS,
-                );
-
-            // Notify the OneSec minter of any tokens with non-zero balances, skipping any which
-            // have already been notified within the last 15 minutes, since the OneSec minter will
-            // already be polling for updates to these tokens
+            // Notify the OneSec minter of any tokens with non-zero balances
             for (const balance of balances) {
-                if (
-                    !this.#oneSecMinterNotificationTimestamps.some(
-                        (x) => x.chain === balance.chain && x.token === balance.token,
-                    )
-                ) {
-                    this.#sendRequest({
-                        kind: "oneSecForwardEvmToIcp",
-                        chain: balance.chain,
-                        tokenSymbol: balance.token,
-                        address,
-                        receiver: currentUserIdStore.value,
-                    }).then(() => {
-                        this.#oneSecMinterNotificationTimestamps.push({
-                            chain: balance.chain,
-                            token: balance.token,
-                            timestamp: now,
-                        });
-                    });
-                }
+                this.#sendRequest({
+                    kind: "oneSecForwardEvmToIcp",
+                    chain: balance.chain,
+                    tokenSymbol: balance.token,
+                    address,
+                    receiver: currentUserIdStore.value,
+                });
             }
         }
+    }
+
+    oneSecGetNetworks(token: string): string[] {
+        const ethNetworks = [ETHEREUM_NETWORK, ARBITRUM_NETWORK, BASE_NETWORK].filter((n) =>
+            this.#evmContractAddresses.some((c) => c.token === token && c.chain === n),
+        );
+
+        return [ICP_SYMBOL, ...ethNetworks];
     }
 
     async getBtcAddress(): Promise<string> {
@@ -7968,6 +7976,14 @@ export class OpenChat {
         return this.#sendRequest({
             kind: "setCachedWebAuthnKey",
             key,
+        });
+    }
+
+    getSignInProof(identityKey: ECDSAKeyIdentity, delegation: DelegationChain): Promise<string> {
+        return this.#sendRequest({
+            kind: "getSignInProof",
+            identityKey: identityKey.getKeyPair(),
+            delegation: delegation.toJSON(),
         });
     }
 
@@ -8586,7 +8602,7 @@ export class OpenChat {
     }
 
     getDefaultScope(): ChatListScope {
-        if (anonUserStore.value) return { kind: "group_chat" };
+        if (anonUserStore.value) return { kind: "chats" };
 
         // sometimes we have to re-direct the user to home route "/"
         // However, with communities enabled it is not clear what this means
@@ -8595,8 +8611,7 @@ export class OpenChat {
 
         const favourites = favouritesStore.value;
         if (favourites.size > 0) return { kind: "favourite" };
-        if (serverGroupChatsStore.value.size > 0) return { kind: "group_chat" };
-        return { kind: "direct_chat" };
+        return { kind: "chats" };
     }
 
     getUserLocation(): Promise<string | undefined> {
@@ -9183,7 +9198,7 @@ export class OpenChat {
                 if (resp.nextDailyChitClaim > chitStateStore.value.nextDailyChitClaim) {
                     chitStateStore.update((state) => ({
                         chitBalance: resp.chitBalance,
-                        streakEnds: resp.nextDailyChitClaim + BigInt(1000 * 60 * 60 * 24),
+                        streakEnds: resp.nextDailyChitClaim + BigInt(ONE_DAY),
                         streak: resp.streak,
                         maxStreak: resp.maxStreak,
                         nextDailyChitClaim: resp.nextDailyChitClaim,
@@ -9445,6 +9460,7 @@ export class OpenChat {
                     signInWithEmailCanister: this.config.signInWithEmailCanister,
                     signInWithEthereumCanister: this.config.signInWithEthereumCanister,
                     signInWithSolanaCanister: this.config.signInWithSolanaCanister,
+                    oneSecForwarderCanister: this.config.oneSecForwarderCanister,
                     oneSecMinterCanister: this.config.oneSecMinterCanister,
                     websiteVersion: this.config.websiteVersion,
                     rollbarApiKey: this.config.rollbarApiKey,
@@ -9517,16 +9533,7 @@ export class OpenChat {
     }
 
     #logUnexpected(correlationId: string): void {
-        const unresolved = this.#unresolved.get(correlationId);
-        const timedOut =
-            unresolved === undefined
-                ? ""
-                : `Timed-out req of kind: ${unresolved.kind} received after ${
-                      Date.now() - unresolved.sentAt
-                  }ms`;
-        console.error(
-            `WORKER_CLIENT: unexpected correlationId received (${correlationId}). ${timedOut}`,
-        );
+        console.error(`WORKER_CLIENT: unexpected correlationId received (${correlationId})`);
     }
 
     #resolveResponse(data: WorkerResponse): void {
@@ -9534,47 +9541,30 @@ export class OpenChat {
         if (promise !== undefined) {
             promise.resolve(data.response, data.final);
             if (data.final) {
-                window.clearTimeout(promise.timeout);
                 this.#pending.delete(data.correlationId);
             }
         } else {
             this.#logUnexpected(data.correlationId);
         }
-        this.#unresolved.delete(data.correlationId);
     }
 
     #resolveError(data: WorkerError): void {
         const promise = this.#pending.get(data.correlationId);
         if (promise !== undefined) {
             promise.reject(JSON.parse(data.error));
-            window.clearTimeout(promise.timeout);
             this.#pending.delete(data.correlationId);
         } else {
             this.#logUnexpected(data.correlationId);
         }
-        this.#unresolved.delete(data.correlationId);
     }
 
-    responseHandler<Req extends WorkerRequest, T>(
-        req: Req,
+    responseHandler<T>(
         correlationId: string,
-        timeout: number,
     ): (resolve: (val: T, final: boolean) => void, reject: (reason?: unknown) => void) => void {
         return (resolve, reject) => {
-            const sentAt = Date.now();
             this.#pending.set(correlationId, {
                 resolve,
                 reject,
-                timeout: window.setTimeout(() => {
-                    reject(
-                        `WORKER_CLIENT: Request of kind ${req.kind} with correlationId ${correlationId} did not receive a response withing the ${DEFAULT_WORKER_TIMEOUT}ms timeout`,
-                    );
-                    this.#unresolved.set(correlationId, {
-                        kind: req.kind,
-                        sentAt,
-                    });
-                    this.#pending.delete(correlationId);
-                }, timeout),
             });
         };
     }
@@ -9582,27 +9572,24 @@ export class OpenChat {
     #sendStreamRequest<Req extends WorkerRequest>(
         req: Req,
         connecting = false,
-        timeout: number = DEFAULT_WORKER_TIMEOUT,
     ): Stream<WorkerResult<Req>> {
         //eslint-disable-next-line @typescript-eslint/ban-ts-comment
         //@ts-ignore
-        return new Stream<WorkerResult<Req>>(this.#sendRequestInternal(req, connecting, timeout));
+        return new Stream<WorkerResult<Req>>(this.#sendRequestInternal(req, connecting));
     }
 
     async #sendRequest<Req extends WorkerRequest>(
         req: Req,
         connecting = false,
-        timeout: number = DEFAULT_WORKER_TIMEOUT,
     ): Promise<WorkerResult<Req>> {
         //eslint-disable-next-line @typescript-eslint/ban-ts-comment
         //@ts-ignore
-        return new Promise<WorkerResult<Req>>(this.#sendRequestInternal(req, connecting, timeout));
+        return new Promise<WorkerResult<Req>>(this.#sendRequestInternal(req, connecting));
     }
 
     #sendRequestInternal<Req extends WorkerRequest, T>(
         req: Req,
         connecting: boolean,
-        timeout: number,
     ): (resolve: (val: T, final: boolean) => void, reject: (reason?: unknown) => void) => void {
         if (!connecting && !this.#connectedToWorker) {
             throw new Error("WORKER_CLIENT: the client is not yet connected to the worker");
@@ -9617,7 +9604,14 @@ export class OpenChat {
             console.error("Error sending postMessage to worker", err);
             throw err;
         }
-        return this.responseHandler(req, correlationId, timeout);
+        return this.responseHandler(correlationId);
+    }
+
+    monitorPendingRequests() {
+        const pendingRequests = this.#pending.size;
+        if (pendingRequests >= 100) {
+            this.#logger.error("Pending request count exceeded limit", { count: pendingRequests });
+        }
     }
 
     getBotConfig(): Promise<BotClientConfigData> {
@@ -9795,18 +9789,31 @@ export class OpenChat {
             }
         });
 
-        notificationStatus.subscribe((status) => {
-            switch (status) {
-                case "granted":
-                    this.#trySubscribe();
-                    break;
-                case "pending-init":
-                    break;
-                default:
-                    this.#unsubscribeNotifications();
-                    break;
-            }
-        });
+        notificationStatus.subscribe(
+            (status) => {
+                switch (status) {
+                    case "granted":
+                        this.#notificationSubscriptionPoller = new Poller(
+                            () => this.#trySubscribe(),
+                            ONE_HOUR,
+                            undefined,
+                            true,
+                        );
+                        break;
+                    case "pending-init":
+                        break;
+                    default:
+                        this.#unsubscribeNotifications();
+                        break;
+                }
+            },
+            () => {
+                if (this.#notificationSubscriptionPoller !== undefined) {
+                    this.#notificationSubscriptionPoller.stop();
+                    this.#notificationSubscriptionPoller = undefined;
+                }
+            },
+        );
 
         return true;
     }
@@ -9842,7 +9849,11 @@ export class OpenChat {
         if (pushSubscription) {
             console.debug("PUSH: found existing push subscription");
             // Check if the subscription has already been pushed to the notifications canister
-            if (await this.#subscriptionExists(this.#extract_p256dh_key(pushSubscription))) {
+            if (await this.#subscriptionExists(pushSubscription.endpoint)) {
+                this.#sendRequest({
+                    kind: "markNotificationSubscriptionActive",
+                    endpoint: pushSubscription.endpoint,
+                });
                 console.debug("PUSH: subscription exists in the backend");
                 return true;
             }
@@ -9898,21 +9909,15 @@ export class OpenChat {
         return Uint8Array.from(atob(base64String), (c) => c.charCodeAt(0));
     }
 
-    #extract_p256dh_key(subscription: PushSubscription): string {
-        const json = subscription.toJSON();
-
-        const key = json.keys!["p256dh"];
-        return key;
-    }
     async #unsubscribeNotifications(): Promise<void> {
         console.debug("PUSH: unsubscribing from notifications");
         const registration = await this.#getRegistration();
         if (registration !== undefined) {
             const pushSubscription = await registration.pushManager.getSubscription();
             if (pushSubscription) {
-                if (await this.#subscriptionExists(this.#extract_p256dh_key(pushSubscription))) {
+                if (await this.#subscriptionExists(pushSubscription.endpoint)) {
                     console.debug("PUSH: removing push subscription");
-                    await this.#removeSubscription(pushSubscription.toJSON());
+                    await this.#removeSubscription(pushSubscription.endpoint);
                 }
             }
         }
@@ -10152,11 +10157,34 @@ export class OpenChat {
         });
     }
 
-    addOneSecToken(tokenSymbol: string, infoUrl: string): Promise<boolean> {
+    chatMatchesSearch(search: string, chat: ChatSummary): boolean {
+        if (chat.kind === "group_chat" || chat.kind === "channel") {
+            return (
+                chat.name.toLowerCase().indexOf(search) >= 0 ||
+                chat.description.toLowerCase().indexOf(search) >= 0
+            );
+        }
+
+        if (chat.kind === "direct_chat") {
+            const user = allUsersStore.value.get(chat.them.userId);
+            if (user !== undefined) {
+                return (
+                    user.username.toLowerCase().indexOf(search) >= 0 ||
+                    (user.displayName !== undefined &&
+                        user.displayName.toLowerCase().indexOf(search) >= 0)
+                );
+            } else {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    updateBlockedUsernamePatterns(pattern: string, add: boolean): Promise<void> {
         return this.#sendRequest({
-            kind: "addOneSecToken",
-            tokenSymbol,
-            infoUrl,
+            kind: "updateBlockedUsernamePatterns",
+            pattern,
+            add,
         });
     }
 }

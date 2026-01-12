@@ -1,13 +1,13 @@
 use crate::{
     AccessGateConfig, ChannelId, ChatMetrics, EventIndex, EventWrapper, GroupMembership, GroupMembershipUpdates,
-    GroupPermissions, GroupSubtype, Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis, VideoCall,
+    GroupPermissions, GroupSubtype, Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis, VideoCall, is_default,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct CommunityCanisterChannelSummary {
     pub channel_id: ChannelId,
     pub last_updated: TimestampMillis,
@@ -15,10 +15,20 @@ pub struct CommunityCanisterChannelSummary {
     pub description: String,
     pub subtype: Option<GroupSubtype>,
     pub avatar_id: Option<u128>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
     pub is_public: bool,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
     pub history_visible_to_new_joiners: bool,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
     pub messages_visible_to_non_members: bool,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<EventIndex>", optional)]
     pub min_visible_event_index: EventIndex,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<MessageIndex>", optional)]
     pub min_visible_message_index: MessageIndex,
     #[ts(as = "Option<crate::EventWrapperMessage>")]
     pub latest_message: Option<EventWrapper<Message>>,
@@ -30,6 +40,8 @@ pub struct CommunityCanisterChannelSummary {
     pub metrics: ChatMetrics,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: Option<Milliseconds>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<TimestampMillis>", optional)]
     pub events_ttl_last_updated: TimestampMillis,
     pub gate_config: Option<AccessGateConfig>,
     pub membership: Option<GroupMembership>,
@@ -39,15 +51,17 @@ pub struct CommunityCanisterChannelSummary {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct CommunityCanisterChannelSummaryUpdates {
     pub channel_id: ChannelId,
     pub last_updated: TimestampMillis,
     pub name: Option<String>,
     pub description: Option<String>,
-    #[ts(as = "crate::OptionUpdateGroupSubtype")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateGroupSubtype>", optional)]
     pub subtype: OptionUpdate<GroupSubtype>,
-    #[ts(as = "crate::OptionUpdateU128")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateU128>", optional)]
     pub avatar_id: OptionUpdate<u128>,
     pub is_public: Option<bool>,
     pub messages_visible_to_non_members: Option<bool>,
@@ -58,19 +72,27 @@ pub struct CommunityCanisterChannelSummaryUpdates {
     pub latest_message_index: Option<MessageIndex>,
     pub member_count: Option<u32>,
     pub permissions_v2: Option<GroupPermissions>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>>", optional)]
     pub updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>, // (Thread root message index, event index, timestamp)
     pub metrics: Option<ChatMetrics>,
     pub date_last_pinned: Option<TimestampMillis>,
-    #[ts(as = "crate::OptionUpdateU64")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateU64>", optional)]
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub events_ttl_last_updated: Option<TimestampMillis>,
-    #[ts(as = "crate::OptionUpdateAccessGateConfig")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateAccessGateConfig>", optional)]
     pub gate_config: OptionUpdate<AccessGateConfig>,
     pub membership: Option<GroupMembershipUpdates>,
-    #[ts(as = "crate::OptionUpdateVideoCall")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateVideoCall>", optional)]
     pub video_call_in_progress: OptionUpdate<VideoCall>,
-    #[ts(as = "crate::OptionUpdateString")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateString>", optional)]
     pub external_url: OptionUpdate<String>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
     pub any_updates_missed: bool,
 }
 

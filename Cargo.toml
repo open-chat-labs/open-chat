@@ -89,6 +89,8 @@ members = [
     "backend/external_canisters/nns_governance/c2c_client",
     "backend/external_canisters/one_sec_minter/api",
     "backend/external_canisters/one_sec_minter/c2c_client",
+    "backend/external_canisters/sign_in_with_email/api",    
+    "backend/external_canisters/sign_in_with_email/c2c_client",    
     "backend/external_canisters/sns_archive/api",
     "backend/external_canisters/sns_archive/c2c_client",
     "backend/external_canisters/sns_governance/api",
@@ -179,7 +181,6 @@ async-trait = "0.1"
 aws-config = "1"
 aws-sdk-dynamodb = "1"
 aws-types = "1"
-base64 = "0.22"
 bitflags = { version = "2", features = ["serde"] }
 candid = "0.10"
 canbench-rs = "0.2"
@@ -189,6 +190,7 @@ data-encoding = "2"
 dataurl = "0.1"
 dotenv = "0.15.0"
 either = "1.15.0"
+email_address = "0.2.4"
 enum-repr = "0.2"
 envconfig = "0.11"
 event_store_canister = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
@@ -226,7 +228,10 @@ lazy_static = "1"
 num-traits = "0.2"
 openssl = "0.10"
 p256 = { version = "0.13" }
-pocket-ic = "9"
+# `pocket-ic` should be pinned to an exact version so that the PocketIC server binary version
+# `POCKET_IC_SERVER_VERSION` defined in `scripts/run-integration-tests.sh` is compatible:
+# https://docs.google.com/document/d/1VYmHUTjrgbzRHtsAyRrI5cj-gWGs7ktTnutPvUMJioU/edit
+pocket-ic = "=10.0.0"
 proc-macro2 = "1"
 prometheus = "0.14"
 proptest = "1"
@@ -248,11 +253,14 @@ serde_repr = "0.1"
 serde_tokenstream = "0.2"
 sha2 = "0.10"
 sha3 = "0.10"
-sign_in_with_email_canister = { git = "https://github.com/open-chat-labs/ic-sign-in-with-email", rev = "v0.13.0" }
-sign_in_with_email_canister_test_utils = { package = "test_utils", git = "https://github.com/open-chat-labs/ic-sign-in-with-email", rev = "v0.13.0" }
+sign_in_with_email_canister = { git = "https://github.com/open-chat-labs/ic-sign-in-with-email", rev = "v0.14.0" }
+sign_in_with_email_canister_test_utils = { package = "test_utils", git = "https://github.com/open-chat-labs/ic-sign-in-with-email", rev = "v0.14.0" }
 subenum = "1.1.2"
 syn = "2"
-tauri = "2.7.0"
+tauri = "2.8.5"
+tauri-build = "2.4.1"
+tauri-plugin-deep-link = "2.4.3"
+tauri-plugin-notification = "2.3.1"
 test-case = "3"
 test-strategy = "0.4"
 thiserror = "2"

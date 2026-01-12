@@ -23,12 +23,26 @@ pub struct SuccessResult {
     pub last_updated: TimestampMillis,
     pub latest_event_index: EventIndex,
     pub members: Vec<CommunityMember>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<InstalledBotDetails>>", optional)]
     pub bots: Vec<InstalledBotDetails>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<UserId>>", optional)]
     pub basic_members: Vec<UserId>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<UserId>>", optional)]
     pub blocked_users: Vec<UserId>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<UserId>>", optional)]
     pub invited_users: Vec<UserId>,
+    #[serde(default, skip_serializing_if = "VersionedRules::is_empty")]
+    #[ts(as = "Option<VersionedRules>", optional)]
     pub chat_rules: VersionedRules,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<UserGroupDetails>>", optional)]
     pub user_groups: Vec<UserGroupDetails>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<UserId>>", optional)]
     pub referrals: Vec<UserId>,
     pub public_channel_list_updated: TimestampMillis,
 }

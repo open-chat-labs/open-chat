@@ -12,7 +12,6 @@ import type {
     ChannelIdentifier,
     ChannelSummaryResponse,
     ChatEvent,
-    ClaimPrizeResponse,
     CommunityDetails,
     CommunityDetailsResponse,
     CommunityIdentifier,
@@ -80,6 +79,7 @@ import {
     ResponseTooLargeError,
     isSuccessfulEventsResponse,
     offline,
+    random32,
     textToCode,
     toBigInt32,
 } from "openchat-shared";
@@ -99,7 +99,6 @@ import {
     CommunityChangeRoleArgs,
     CommunityChannelSummaryArgs,
     CommunityChannelSummaryResponse,
-    CommunityClaimPrizeArgs,
     CommunityCreateChannelArgs,
     CommunityCreateChannelResponse,
     CommunityCreateUserGroupArgs,
@@ -180,7 +179,6 @@ import {
     UnitResult,
 } from "../../typebox";
 import {
-    type Database,
     getCachedCommunityDetails,
     getCachedEvents,
     getCachedEventsByIndex,
@@ -194,6 +192,7 @@ import {
     setCachedEvents,
     setCachedGroupDetails,
     setCachedMessageFromSendResponse,
+    type Database,
 } from "../../utils/caching";
 import { mergeCommunityDetails, mergeGroupChatDetails } from "../../utils/chat";
 import {
@@ -213,6 +212,7 @@ import {
     apiMessageContent,
     apiUser as apiUserV2,
     apiVideoCallPresence,
+    changeRoleResult,
     createGroupSuccess,
     deletedMessageSuccess,
     enableOrResetInviteCodeSuccess,
@@ -266,19 +266,6 @@ export class CommunityClient extends MsgpackCanisterAgent {
         private inviteCode: string | undefined,
     ) {
         super(identity, agent, communityId, "Community");
-    }
-
-    claimPrize(channelId: number, messageId: bigint): Promise<ClaimPrizeResponse> {
-        return this.executeMsgpackUpdate(
-            "claim_prize",
-            {
-                channel_id: toBigInt32(channelId),
-                message_id: messageId,
-            },
-            unitResult,
-            CommunityClaimPrizeArgs,
-            UnitResult,
-        );
     }
 
     addMembersToChannel(
@@ -344,27 +331,31 @@ export class CommunityClient extends MsgpackCanisterAgent {
         userId: string,
         newRole: MemberRole,
     ): Promise<ChangeRoleResponse> {
+        const user_id = principalStringToBytes(userId);
         return this.executeMsgpackUpdate(
             "change_channel_role",
             {
                 channel_id: toBigInt32(chatId.channelId),
-                user_id: principalStringToBytes(userId),
+                user_id,
+                user_ids: [user_id],
                 new_role: apiMemberRole(newRole),
             },
-            unitResult,
+            changeRoleResult,
             CommunityChangeChannelRoleArgs,
             UnitResult,
         );
     }
 
     changeRole(userId: string, newRole: MemberRole): Promise<ChangeCommunityRoleResponse> {
+        const user_id = principalStringToBytes(userId);
         return this.executeMsgpackUpdate(
             "change_role",
             {
-                user_id: principalStringToBytes(userId),
+                user_id,
+                user_ids: [user_id],
                 new_role: apiCommunityRole(newRole),
             },
-            unitResult,
+            changeRoleResult,
             CommunityChangeRoleArgs,
             UnitResult,
         );
@@ -382,7 +373,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 history_visible_to_new_joiners: channel.historyVisible,
                 avatar: mapOptional(channel.avatar?.blobData, (data) => {
                     return {
-                        id: DataClient.newBlobId(),
+                        id: BigInt(random32()),
                         data,
                         mime_type: "image/jpg",
                     };
@@ -734,18 +725,25 @@ export class CommunityClient extends MsgpackCanisterAgent {
 
     async getMessagesByMessageIndex(
         chatId: ChannelIdentifier,
+        threadRootMessageIndex: number | undefined,
         messageIndexes: Set<number>,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<Message>> {
-        const fromCache = await loadMessagesByMessageIndex(this.db, chatId, messageIndexes);
+        const fromCache = await loadMessagesByMessageIndex(
+            this.db,
+            chatId,
+            threadRootMessageIndex,
+            messageIndexes,
+        );
         if (fromCache.missing.size > 0) {
             console.log("Missing idxs from the cached: ", fromCache.missing);
 
             const resp = await this.getMessagesByMessageIndexFromBackend(
                 chatId,
+                threadRootMessageIndex,
                 [...fromCache.missing],
                 latestKnownUpdate,
-            ).then((resp) => this.setCachedEvents(chatId, resp));
+            ).then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex));
 
             return isSuccessfulEventsResponse(resp)
                 ? {
@@ -766,12 +764,13 @@ export class CommunityClient extends MsgpackCanisterAgent {
 
     private getMessagesByMessageIndexFromBackend(
         chatId: ChannelIdentifier,
+        threadRootMessageIndex: number | undefined,
         messageIndexes: number[],
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<Message>> {
         const args = {
             channel_id: toBigInt32(chatId.channelId),
-            thread_root_message_index: undefined,
+            thread_root_message_index: threadRootMessageIndex,
             messages: messageIndexes,
             invite_code: mapOptional(this.inviteCode, textToCode),
             latest_known_update: latestKnownUpdate,
@@ -792,7 +791,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
-        if (missing.size === 0) {
+        if (missing.size === 0 || offline()) {
             return Promise.resolve(cachedEvents);
         } else {
             return this.eventsByIndexFromBackend(
@@ -814,7 +813,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
     private setCachedEvents<T extends ChatEvent>(
         chatId: ChannelIdentifier,
         resp: EventsResponse<T>,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
     ): EventsResponse<T> {
         setCachedEvents(this.db, chatId, resp, threadRootMessageIndex).catch((err) =>
             this.config.logger.error("Error writing cached channel events", err),
@@ -967,10 +966,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
             if (fromCache.lastUpdated >= communityLastUpdated || offline()) {
                 return fromCache;
             } else {
-                const [details, anyUpdates] = await this.getCommunityDetailsUpdates(id, fromCache);
-                return anyUpdates
-                    ? details
-                    : { kind: "success_no_updates", lastUpdated: details.lastUpdated };
+                return await this.getCommunityDetailsUpdates(id, fromCache);
             }
         }
 
@@ -996,17 +992,17 @@ export class CommunityClient extends MsgpackCanisterAgent {
     private async getCommunityDetailsUpdates(
         id: CommunityIdentifier,
         previous: CommunityDetails,
-    ): Promise<[CommunityDetails, boolean]> {
-        const [details, anyUpdates] = await this.getCommunityDetailsUpdatesFromBackend(previous);
+    ): Promise<CommunityDetails> {
+        const details = await this.getCommunityDetailsUpdatesFromBackend(previous);
         if (details.lastUpdated > previous.lastUpdated) {
             await setCachedCommunityDetails(this.db, id.communityId, details);
         }
-        return [details, anyUpdates];
+        return details;
     }
 
     private async getCommunityDetailsUpdatesFromBackend(
         previous: CommunityDetails,
-    ): Promise<[CommunityDetails, boolean]> {
+    ): Promise<CommunityDetails> {
         const updatesResponse = await this.executeMsgpackQuery(
             "selected_updates_v2",
             {
@@ -1019,20 +1015,17 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
 
         if (updatesResponse.kind === "failure") {
-            return [previous, false];
+            return previous;
         }
 
         if (updatesResponse.kind === "success_no_updates") {
-            return [
-                {
-                    ...previous,
-                    lastUpdated: updatesResponse.lastUpdated,
-                },
-                false,
-            ];
+            return {
+                ...previous,
+                lastUpdated: updatesResponse.lastUpdated,
+            };
         }
 
-        return [mergeCommunityDetails(previous, updatesResponse), true];
+        return mergeCommunityDetails(previous, updatesResponse);
     }
 
     async getChannelDetails(
@@ -1412,7 +1405,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                         ? "NoChange"
                         : {
                               SetToSome: {
-                                  id: DataClient.newBlobId(),
+                                  id: BigInt(random32()),
                                   mime_type: "image/jpg",
                                   data: avatar,
                               },
@@ -1458,7 +1451,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                         ? "NoChange"
                         : {
                               SetToSome: {
-                                  id: DataClient.newBlobId(),
+                                  id: BigInt(random32()),
                                   mime_type: "image/jpg",
                                   data: avatar,
                               },
@@ -1468,7 +1461,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                         ? "NoChange"
                         : {
                               SetToSome: {
-                                  id: DataClient.newBlobId(),
+                                  id: BigInt(random32()),
                                   mime_type: "image/jpg",
                                   data: banner,
                               },

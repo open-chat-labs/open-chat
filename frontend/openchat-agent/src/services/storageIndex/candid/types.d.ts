@@ -133,7 +133,9 @@ export interface AllocatedBucketSuccessResult {
 export interface AudioContent {
   'mime_type' : string,
   'blob_reference' : [] | [BlobReference],
+  'samples' : [] | [Uint8Array | number[]],
   'caption' : [] | [string],
+  'duration_ms' : [] | [Milliseconds],
 }
 export interface AvatarChanged {
   'changed_by' : UserId,
@@ -192,12 +194,16 @@ export interface BotConfig {
   'is_oc_controlled' : boolean,
   'supports_direct_messages' : boolean,
 }
-export type BotDataEncoding = { 'Json' : null } |
+export type BotDataEncoding = { 'MsgPack' : null } |
+  { 'Json' : null } |
   { 'Candid' : null };
 export interface BotGroupConfig { 'permissions' : BotPermissions }
 export type BotInstallationLocation = { 'Group' : CanisterId } |
   { 'User' : UserId } |
   { 'Community' : CanisterId };
+export type BotInstallationLocationType = { 'Group' : null } |
+  { 'User' : null } |
+  { 'Community' : null };
 export interface BotMessageContext {
   'command' : [] | [BotCommand],
   'finalised' : boolean,
@@ -338,7 +344,12 @@ export type ChatEventType = { 'NameChanged' : null } |
   { 'MessagePollVote' : null } |
   { 'Message' : null } |
   { 'PermissionsChanged' : null } |
-  { 'MembersJoined' : null } |
+  {
+    /**
+     * Membership category
+     */
+    'MembersJoined' : null
+  } |
   { 'MessagePollEnded' : null } |
   { 'UsersUnblocked' : null } |
   { 'Unfrozen' : null } |
@@ -355,7 +366,12 @@ export type ChatEventType = { 'NameChanged' : null } |
   { 'MessageUndeleted' : null } |
   { 'RoleChanged' : null } |
   { 'BotAdded' : null } |
-  { 'Created' : null } |
+  {
+    /**
+     * Details category
+     */
+    'Created' : null
+  } |
   { 'MessageTipped' : null } |
   { 'Frozen' : null } |
   { 'MessageEdited' : null } |
@@ -367,33 +383,6 @@ export interface ChatEventWrapper {
   'expires_at' : [] | [TimestampMillis],
 }
 export type ChatId = CanisterId;
-export interface ChatMetrics {
-  'prize_winner_messages' : bigint,
-  'audio_messages' : bigint,
-  'chat_messages' : bigint,
-  'crypto_messages' : bigint,
-  'edits' : bigint,
-  'icp_messages' : bigint,
-  'last_active' : TimestampMillis,
-  'giphy_messages' : bigint,
-  'deleted_messages' : bigint,
-  'file_messages' : bigint,
-  'poll_votes' : bigint,
-  'text_messages' : bigint,
-  'message_reminders' : bigint,
-  'image_messages' : bigint,
-  'replies' : bigint,
-  'video_messages' : bigint,
-  'sns1_messages' : bigint,
-  'polls' : bigint,
-  'proposals' : bigint,
-  'reported_messages' : bigint,
-  'ckbtc_messages' : bigint,
-  'reactions' : bigint,
-  'kinic_messages' : bigint,
-  'custom_type_messages' : bigint,
-  'prize_messages' : bigint,
-}
 export interface Chit { 'streak' : number, 'balance' : number }
 export interface ChitEarned {
   'timestamp' : TimestampMillis,
@@ -406,105 +395,6 @@ export type ChitEarnedReason = { 'DailyClaim' : null } |
   { 'ExternalAchievement' : string } |
   { 'MemeContestWinner' : null } |
   { 'Referral' : ReferralStatus };
-export interface CommunityCanisterChannelSummary {
-  'latest_message_sender_display_name' : [] | [string],
-  'channel_id' : ChannelId,
-  'is_public' : boolean,
-  'gate_config' : [] | [AccessGateConfig],
-  'is_invited' : [] | [boolean],
-  'video_call_in_progress' : [] | [VideoCall],
-  'metrics' : ChatMetrics,
-  'subtype' : [] | [GroupSubtype],
-  'permissions_v2' : GroupPermissions,
-  'date_last_pinned' : [] | [TimestampMillis],
-  'external_url' : [] | [string],
-  'min_visible_event_index' : EventIndex,
-  'name' : string,
-  'latest_message_index' : [] | [MessageIndex],
-  'description' : string,
-  'events_ttl' : [] | [Milliseconds],
-  'last_updated' : TimestampMillis,
-  'avatar_id' : [] | [bigint],
-  'messages_visible_to_non_members' : boolean,
-  'membership' : [] | [GroupMembership],
-  'latest_event_index' : EventIndex,
-  'history_visible_to_new_joiners' : boolean,
-  'min_visible_message_index' : MessageIndex,
-  'member_count' : number,
-  'events_ttl_last_updated' : TimestampMillis,
-  'latest_message' : [] | [MessageEventWrapper],
-}
-export interface CommunityCanisterChannelSummaryUpdates {
-  'latest_message_sender_display_name' : [] | [string],
-  'channel_id' : ChannelId,
-  'is_public' : [] | [boolean],
-  'gate_config' : AccessGateConfigUpdate,
-  'video_call_in_progress' : VideoCallUpdates,
-  'metrics' : [] | [ChatMetrics],
-  'subtype' : GroupSubtypeUpdate,
-  'permissions_v2' : [] | [GroupPermissions],
-  'date_last_pinned' : [] | [TimestampMillis],
-  'external_url' : TextUpdate,
-  'name' : [] | [string],
-  'latest_message_index' : [] | [MessageIndex],
-  'description' : [] | [string],
-  'events_ttl' : EventsTimeToLiveUpdate,
-  'last_updated' : TimestampMillis,
-  'any_updates_missed' : boolean,
-  'avatar_id' : DocumentIdUpdate,
-  'messages_visible_to_non_members' : [] | [boolean],
-  'membership' : [] | [GroupMembershipUpdates],
-  'latest_event_index' : [] | [EventIndex],
-  'updated_events' : Array<[[] | [number], number, bigint]>,
-  'member_count' : [] | [number],
-  'events_ttl_last_updated' : [] | [TimestampMillis],
-  'latest_message' : [] | [MessageEventWrapper],
-}
-export interface CommunityCanisterCommunitySummary {
-  'is_public' : boolean,
-  'permissions' : CommunityPermissions,
-  'gate_config' : [] | [AccessGateConfig],
-  'verified' : boolean,
-  'community_id' : CommunityId,
-  'is_invited' : [] | [boolean],
-  'metrics' : ChatMetrics,
-  'name' : string,
-  'description' : string,
-  'last_updated' : TimestampMillis,
-  'channels' : Array<CommunityCanisterChannelSummary>,
-  'user_groups' : Array<UserGroup>,
-  'avatar_id' : [] | [bigint],
-  'membership' : [] | [CommunityMembership],
-  'local_user_index_canister_id' : CanisterId,
-  'frozen' : [] | [FrozenGroupInfo],
-  'latest_event_index' : EventIndex,
-  'banner_id' : [] | [bigint],
-  'member_count' : number,
-  'primary_language' : string,
-}
-export interface CommunityCanisterCommunitySummaryUpdates {
-  'is_public' : [] | [boolean],
-  'permissions' : [] | [CommunityPermissions],
-  'gate_config' : AccessGateConfigUpdate,
-  'verified' : [] | [boolean],
-  'community_id' : CommunityId,
-  'channels_updated' : Array<CommunityCanisterChannelSummaryUpdates>,
-  'metrics' : [] | [ChatMetrics],
-  'user_groups_deleted' : Uint32Array | number[],
-  'name' : [] | [string],
-  'description' : [] | [string],
-  'last_updated' : TimestampMillis,
-  'channels_removed' : Uint32Array | number[],
-  'user_groups' : Array<UserGroup>,
-  'avatar_id' : DocumentIdUpdate,
-  'channels_added' : Array<CommunityCanisterChannelSummary>,
-  'membership' : [] | [CommunityMembershipUpdates],
-  'frozen' : FrozenGroupUpdate,
-  'latest_event_index' : [] | [EventIndex],
-  'banner_id' : DocumentIdUpdate,
-  'member_count' : [] | [number],
-  'primary_language' : [] | [string],
-}
 export type CommunityEventType = { 'MemberJoined' : null } |
   { 'NameChanged' : null } |
   { 'GateUpdated' : null } |
@@ -556,19 +446,6 @@ export interface CommunityMember {
   'user_id' : UserId,
   'display_name' : [] | [string],
   'date_added' : TimestampMillis,
-}
-export interface CommunityMembership {
-  'role' : CommunityRole,
-  'lapsed' : boolean,
-  'display_name' : [] | [string],
-  'joined' : TimestampMillis,
-  'rules_accepted' : boolean,
-}
-export interface CommunityMembershipUpdates {
-  'role' : [] | [CommunityRole],
-  'lapsed' : [] | [boolean],
-  'display_name' : TextUpdate,
-  'rules_accepted' : [] | [boolean],
 }
 export type CommunityPermission = { 'RemoveMembers' : null } |
   { 'CreatePublicChannel' : null } |
@@ -676,40 +553,6 @@ export type DiamondMembershipSubscription = { 'OneYear' : null } |
   { 'Disabled' : null } |
   { 'OneMonth' : null };
 export type DirectChatCreated = {};
-export interface DirectChatSummary {
-  'read_by_them_up_to' : [] | [MessageIndex],
-  'video_call_in_progress' : [] | [VideoCall],
-  'date_created' : TimestampMillis,
-  'metrics' : ChatMetrics,
-  'them' : UserId,
-  'notifications_muted' : boolean,
-  'latest_message_index' : MessageIndex,
-  'events_ttl' : [] | [Milliseconds],
-  'last_updated' : TimestampMillis,
-  'latest_event_index' : EventIndex,
-  'read_by_me_up_to' : [] | [MessageIndex],
-  'archived' : boolean,
-  'events_ttl_last_updated' : TimestampMillis,
-  'my_metrics' : ChatMetrics,
-  'latest_message' : MessageEventWrapper,
-}
-export interface DirectChatSummaryUpdates {
-  'read_by_them_up_to' : [] | [MessageIndex],
-  'video_call_in_progress' : VideoCallUpdates,
-  'metrics' : [] | [ChatMetrics],
-  'notifications_muted' : [] | [boolean],
-  'latest_message_index' : [] | [MessageIndex],
-  'events_ttl' : EventsTimeToLiveUpdate,
-  'last_updated' : TimestampMillis,
-  'latest_event_index' : [] | [EventIndex],
-  'updated_events' : Array<[number, bigint]>,
-  'read_by_me_up_to' : [] | [MessageIndex],
-  'chat_id' : ChatId,
-  'archived' : [] | [boolean],
-  'events_ttl_last_updated' : [] | [TimestampMillis],
-  'my_metrics' : [] | [ChatMetrics],
-  'latest_message' : [] | [MessageEventWrapper],
-}
 export interface DirectMessageNotification {
   'image_url' : [] | [string],
   'sender_display_name' : [] | [string],
@@ -754,6 +597,9 @@ export type DocumentIdUpdate = { 'NoChange' : null } |
 export type DocumentUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : Document };
+/**
+ * Number of nanoseconds between two [Timestamp]s.
+ */
 export type Duration = bigint;
 export type EmptyArgs = {};
 export interface EncryptedContent {
@@ -833,6 +679,9 @@ export type GateCheckFailedReason = { 'NotLifetimeDiamondMember' : null } |
   { 'FailedVerifiedCredentialCheck' : string } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
 export type GetIndexPrincipalError = {
+    /**
+     * Any error not covered by the above variants.
+     */
     'GenericError' : { 'description' : string, 'error_code' : bigint }
   } |
   { 'IndexPrincipalNotSet' : null };
@@ -852,76 +701,6 @@ export interface GovernanceProposalsSubtype {
   'is_nns' : boolean,
   'governance_canister_id' : CanisterId,
 }
-export interface GroupCanisterGroupChatSummary {
-  'is_public' : boolean,
-  'gate_config' : [] | [AccessGateConfig],
-  'verified' : boolean,
-  'video_call_in_progress' : [] | [VideoCall],
-  'metrics' : ChatMetrics,
-  'subtype' : [] | [GroupSubtype],
-  'permissions_v2' : GroupPermissions,
-  'date_last_pinned' : [] | [TimestampMillis],
-  'min_visible_event_index' : EventIndex,
-  'name' : string,
-  'role' : GroupRole,
-  'wasm_version' : BuildVersion,
-  'notifications_muted' : boolean,
-  'latest_message_index' : [] | [MessageIndex],
-  'description' : string,
-  'events_ttl' : [] | [Milliseconds],
-  'last_updated' : TimestampMillis,
-  'joined' : TimestampMillis,
-  'avatar_id' : [] | [bigint],
-  'rules_accepted' : boolean,
-  'messages_visible_to_non_members' : boolean,
-  'membership' : [] | [GroupMembership],
-  'local_user_index_canister_id' : CanisterId,
-  'latest_threads' : Array<GroupCanisterThreadDetails>,
-  'frozen' : [] | [FrozenGroupInfo],
-  'latest_event_index' : EventIndex,
-  'history_visible_to_new_joiners' : boolean,
-  'min_visible_message_index' : MessageIndex,
-  'mentions' : Array<Mention>,
-  'chat_id' : ChatId,
-  'events_ttl_last_updated' : TimestampMillis,
-  'participant_count' : number,
-  'my_metrics' : ChatMetrics,
-  'latest_message' : [] | [MessageEventWrapper],
-}
-export interface GroupCanisterGroupChatSummaryUpdates {
-  'is_public' : [] | [boolean],
-  'gate_config' : AccessGateConfigUpdate,
-  'verified' : [] | [boolean],
-  'video_call_in_progress' : VideoCallUpdates,
-  'metrics' : [] | [ChatMetrics],
-  'subtype' : GroupSubtypeUpdate,
-  'permissions_v2' : [] | [GroupPermissions],
-  'date_last_pinned' : [] | [TimestampMillis],
-  'name' : [] | [string],
-  'role' : [] | [GroupRole],
-  'wasm_version' : [] | [BuildVersion],
-  'notifications_muted' : [] | [boolean],
-  'latest_message_index' : [] | [MessageIndex],
-  'description' : [] | [string],
-  'events_ttl' : EventsTimeToLiveUpdate,
-  'last_updated' : TimestampMillis,
-  'unfollowed_threads' : Uint32Array | number[],
-  'any_updates_missed' : boolean,
-  'avatar_id' : DocumentIdUpdate,
-  'rules_accepted' : [] | [boolean],
-  'messages_visible_to_non_members' : [] | [boolean],
-  'membership' : [] | [GroupMembershipUpdates],
-  'latest_threads' : Array<GroupCanisterThreadDetails>,
-  'frozen' : FrozenGroupUpdate,
-  'latest_event_index' : [] | [EventIndex],
-  'updated_events' : Array<[[] | [number], number, bigint]>,
-  'mentions' : Array<Mention>,
-  'chat_id' : ChatId,
-  'events_ttl_last_updated' : [] | [TimestampMillis],
-  'participant_count' : [] | [number],
-  'my_metrics' : [] | [ChatMetrics],
-  'latest_message' : [] | [MessageEventWrapper],
-}
 export interface GroupCanisterThreadDetails {
   'root_message_index' : MessageIndex,
   'last_updated' : TimestampMillis,
@@ -932,43 +711,6 @@ export interface GroupChatCreated {
   'name' : string,
   'description' : string,
   'created_by' : UserId,
-}
-export interface GroupChatSummary {
-  'is_public' : boolean,
-  'gate_config' : [] | [AccessGateConfig],
-  'video_call_in_progress' : [] | [VideoCall],
-  'metrics' : ChatMetrics,
-  'subtype' : [] | [GroupSubtype],
-  'permissions_v2' : GroupPermissions,
-  'date_last_pinned' : [] | [TimestampMillis],
-  'min_visible_event_index' : EventIndex,
-  'name' : string,
-  'role' : GroupRole,
-  'wasm_version' : BuildVersion,
-  'notifications_muted' : boolean,
-  'latest_message_index' : [] | [MessageIndex],
-  'description' : string,
-  'events_ttl' : [] | [Milliseconds],
-  'last_updated' : TimestampMillis,
-  'joined' : TimestampMillis,
-  'avatar_id' : [] | [bigint],
-  'rules_accepted' : boolean,
-  'messages_visible_to_non_members' : boolean,
-  'local_user_index_canister_id' : CanisterId,
-  'latest_threads' : Array<ThreadSyncDetails>,
-  'frozen' : [] | [FrozenGroupInfo],
-  'latest_event_index' : EventIndex,
-  'history_visible_to_new_joiners' : boolean,
-  'read_by_me_up_to' : [] | [MessageIndex],
-  'min_visible_message_index' : MessageIndex,
-  'mentions' : Array<Mention>,
-  'chat_id' : ChatId,
-  'date_read_pinned' : [] | [TimestampMillis],
-  'archived' : boolean,
-  'events_ttl_last_updated' : TimestampMillis,
-  'participant_count' : number,
-  'my_metrics' : ChatMetrics,
-  'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupDescriptionChanged {
   'new_description' : string,
@@ -996,26 +738,6 @@ export interface GroupMatch {
   'description' : string,
   'avatar_id' : [] | [bigint],
   'member_count' : number,
-}
-export interface GroupMembership {
-  'role' : GroupRole,
-  'notifications_muted' : boolean,
-  'lapsed' : boolean,
-  'joined' : TimestampMillis,
-  'rules_accepted' : boolean,
-  'latest_threads' : Array<GroupCanisterThreadDetails>,
-  'mentions' : Array<Mention>,
-  'my_metrics' : ChatMetrics,
-}
-export interface GroupMembershipUpdates {
-  'role' : [] | [GroupRole],
-  'notifications_muted' : [] | [boolean],
-  'lapsed' : [] | [boolean],
-  'unfollowed_threads' : Uint32Array | number[],
-  'rules_accepted' : [] | [boolean],
-  'latest_threads' : Array<GroupCanisterThreadDetails>,
-  'mentions' : Array<Mention>,
-  'my_metrics' : [] | [ChatMetrics],
 }
 export interface GroupMessageNotification {
   'image_url' : [] | [string],
@@ -1854,6 +1576,9 @@ export interface ThreadSyncDetails {
   'latest_event' : [] | [EventIndex],
   'latest_message' : [] | [MessageIndex],
 }
+/**
+ * Number of nanoseconds since the UNIX epoch in UTC timezone.
+ */
 export type Timestamp = bigint;
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;

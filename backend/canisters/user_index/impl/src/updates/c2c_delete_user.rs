@@ -17,6 +17,7 @@ fn c2c_delete_user_impl(args: Args, state: &mut RuntimeState) -> Response {
         state.push_event_to_all_local_user_indexes(
             UserIndexEvent::DeleteUser(DeleteUser {
                 user_id: args.user_id,
+                #[allow(deprecated)]
                 triggered_by_user: true,
             }),
             None,

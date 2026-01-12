@@ -195,11 +195,11 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
                     .nervous_systems
                     .take_newly_decided_user_submitted_proposals(governance_canister_id);
 
-                if let Some(ns) = state.data.nervous_systems.get(&governance_canister_id) {
-                    let ledger_canister_id = ns.ledger_canister_id();
-                    let amount = ns.proposal_rejection_fee().into();
-                    let fee = ns.transaction_fee().into();
-                    for proposal in decided_user_submitted_proposals {
+                for proposal in decided_user_submitted_proposals {
+                    if let Some(ns) = state.data.nervous_systems.get(&governance_canister_id) {
+                        let ledger_canister_id = ns.ledger_canister_id();
+                        let amount = ns.proposal_rejection_fee().into();
+                        let fee = ns.transaction_fee().into();
                         if proposal.adopted {
                             let job = ProcessUserRefundJob {
                                 user_id: proposal.user_id,

@@ -1,8 +1,8 @@
 <script lang="ts">
+    import type { Alignment, Position } from "component-lib";
     import { type Snippet } from "svelte";
-    import Tooltip from "./tooltip/Tooltip.svelte";
     import Help from "svelte-material-icons/HelpCircleOutline.svelte";
-    import type { Alignment, Position } from "@src/utils/alignment";
+    import Tooltip from "./tooltip/Tooltip.svelte";
 
     interface Props {
         position?: Position;

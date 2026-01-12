@@ -7,17 +7,17 @@ use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use crate::model::user_event_batch::UserEventBatch;
 use crate::model::user_index_event_batch::UserIndexEventBatch;
 use crate::model::web_push_subscriptions::WebPushSubscriptions;
-use base64::Engine;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use community_canister::LocalIndexEvent as CommunityEvent;
 use constants::{CYCLES_REQUIRED_FOR_UPGRADE, MINUTE_IN_MS};
+use ct_codecs::{Base64UrlSafeNoPadding, Encoder};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_canister::LocalIndexEvent as GroupEvent;
-use jwt::{Claims, sign_and_encode_token, verify_and_decode};
+use jwt::{sign_bytes, verify_and_decode};
 use local_user_index_canister::{ChildCanisterType, GlobalUser};
 use model::bots_map::BotsMap;
 use model::global_user_map::GlobalUserMap;
@@ -32,8 +32,9 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
+use tracing::error;
 use types::{
-    BotDataEncoding, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion, CandidPayload, CanisterId,
+    BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion, CanisterId,
     ChannelLatestMessageIndex, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
     CommunityId, Cycles, DiamondMembershipDetails, IdempotentEnvelope, MessageContent, Milliseconds, Notification,
     NotificationEnvelope, ReferralType, TimestampMillis, Timestamped, UserId, UserNotificationEnvelope,
@@ -105,7 +106,7 @@ impl RuntimeState {
                     self.data.internet_identity_canister_id,
                     self.data.website_canister_id,
                     jwt,
-                    &self.data.ic_root_key,
+                    &self.env.ic_root_key(),
                     now,
                 ) {
                     self.push_event_to_user_index(
@@ -124,7 +125,7 @@ impl RuntimeState {
                         .global_users
                         .insert_unique_person_proof(user_id, unique_person_proof);
                 } else if let Ok(claims) =
-                    verify_and_decode::<Claims<DiamondMembershipDetails>>(jwt, self.data.oc_key_pair.public_key_pem())
+                    verify_and_decode::<DiamondMembershipDetails>(jwt, self.data.oc_key_pair.public_key_pem())
                     && claims.claim_type() == "diamond_membership"
                 {
                     let expires_at = claims.custom().expires_at;
@@ -380,28 +381,36 @@ impl RuntimeState {
             timestamp: bot_notification.timestamp,
         };
 
-        let expiry = now + 300_000; // Token valid for 5 mins from now
-
-        let event_map = encodings
+        let event_map: HashMap<_, _> = encodings
             .into_iter()
-            .map(|encoding| {
+            .filter_map(|encoding| {
                 let secret_key_der = self.data.oc_key_pair.secret_key_der();
-                let jwt = match encoding {
+                let payload = match encoding {
+                    BotDataEncoding::MsgPack => Some(msgpack::serialize_to_vec(&event_wrapper).unwrap()),
+                    BotDataEncoding::Candid => Some(candid::encode_one(&event_wrapper).unwrap()),
                     BotDataEncoding::Json => {
-                        let claims = Claims::new(expiry, "BotEventJson".to_string(), event_wrapper.clone());
-                        sign_and_encode_token(secret_key_der, claims, self.env.rng()).unwrap_or_default()
+                        error!("BotDataEncoding::Json is no longer supported");
+                        None
                     }
-                    BotDataEncoding::Candid => {
-                        let payload =
-                            base64::engine::general_purpose::STANDARD.encode(candid::encode_one(&event_wrapper).unwrap());
+                }?;
 
-                        let claims = Claims::new(expiry, "BotEventCandid".to_string(), CandidPayload { payload });
-                        sign_and_encode_token(secret_key_der, claims, self.env.rng()).unwrap_or_default()
-                    }
-                };
-                (encoding, jwt)
+                let signature =
+                    Base64UrlSafeNoPadding::encode_to_string(sign_bytes(&payload, secret_key_der, self.env.rng()).unwrap())
+                        .ok()?;
+
+                Some((
+                    encoding,
+                    BotEventPayload {
+                        data: ByteBuf::from(payload),
+                        signature,
+                    },
+                ))
             })
             .collect();
+
+        if event_map.is_empty() {
+            return;
+        }
 
         self.data
             .notifications
@@ -502,6 +511,7 @@ impl RuntimeState {
                     commands: b.commands.iter().map(|c| c.name.clone()).collect(),
                 })
                 .collect(),
+            blocked_username_patterns: self.data.blocked_username_patterns.clone(),
             stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
@@ -561,8 +571,6 @@ struct Data {
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
     pub users_to_delete_queue: VecDeque<UserToDelete>,
-    #[serde(with = "serde_bytes")]
-    pub ic_root_key: Vec<u8>,
     pub events_for_remote_users: Vec<(UserId, UserEvent)>,
     pub cycles_balance_check_queue: VecDeque<CanisterId>,
     pub fire_and_forget_handler: FireAndForgetHandler,
@@ -573,6 +581,7 @@ struct Data {
     pub blocked_users: UserIdsSet,
     pub fcm_token_store: FcmTokenStore,
     pub premium_items: PremiumItems,
+    pub blocked_username_patterns: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -584,6 +593,8 @@ pub struct FailedMessageUsers {
 #[derive(Serialize, Deserialize)]
 pub struct UserToDelete {
     pub user_id: UserId,
+    #[serde(default)]
+    #[deprecated]
     pub triggered_by_user: bool,
     pub attempt: usize,
 }
@@ -604,8 +615,7 @@ impl Data {
         website_canister_id: CanisterId,
         canister_pool_target_size: u16,
         video_call_operators: Vec<Principal>,
-        oc_secret_key_der: Option<Vec<u8>>,
-        ic_root_key: Vec<u8>,
+        oc_secret_key_der: Vec<u8>,
         test_mode: bool,
     ) -> Self {
         Data {
@@ -645,15 +655,12 @@ impl Data {
             rng_seed: [0; 32],
             notification_pushers: HashSet::new(),
             video_call_operators,
-            oc_key_pair: oc_secret_key_der
-                .map(|sk| P256KeyPair::from_secret_key_der(sk).unwrap())
-                .unwrap_or_default(),
+            oc_key_pair: P256KeyPair::from_secret_key_der(oc_secret_key_der).unwrap(),
             event_store_client: EventStoreClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(MINUTE_IN_MS))
                 .build(),
             event_deduper: EventDeduper::default(),
             users_to_delete_queue: VecDeque::new(),
-            ic_root_key,
             events_for_remote_users: Vec::new(),
             cycles_balance_check_queue: VecDeque::new(),
             bots: BotsMap::default(),
@@ -664,6 +671,7 @@ impl Data {
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
             fcm_token_store: FcmTokenStore::default(),
             premium_items: PremiumItems::default(),
+            blocked_username_patterns: Vec::new(),
         }
     }
 }
@@ -727,6 +735,7 @@ pub struct Metrics {
     pub oc_secret_key_initialized: bool,
     pub cycles_balance_check_queue_len: u32,
     pub bots: Vec<BotMetrics>,
+    pub blocked_username_patterns: Vec<String>,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }

@@ -6,6 +6,61 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Simplify handling of bot installation lifecycle events ([#8776](https://github.com/open-chat-labs/open-chat/pull/8776))
+
+## [[2.0.1945](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1945-user_index)] - 2026-01-08
+
+### Added
+
+- Allow platform operators to block usernames via regex patterns ([#8719](https://github.com/open-chat-labs/open-chat/pull/8719))
+- Add endpoint for bots to query their installation locations ([#8731](https://github.com/open-chat-labs/open-chat/pull/8731))
+- Expose bot summaries and requested permissions ([#8771](https://github.com/open-chat-labs/open-chat/pull/8771))
+
+## [[2.0.1933](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1933-user_index)] - 2025-12-05
+
+### Changed
+
+- Move `ic_root_key` to `Environment` trait ([#8701](https://github.com/open-chat-labs/open-chat/pull/8701))
+- Take RNG seed and OC secret key in init args ([#8702](https://github.com/open-chat-labs/open-chat/pull/8702))
+- Temporary code to sync existing OC secret key to Identity canister ([#8704](https://github.com/open-chat-labs/open-chat/pull/8704))
+- Suspend the scam users who are impersonating the OC bot ([#8712](https://github.com/open-chat-labs/open-chat/pull/8712))
+
+### Fixed
+
+- Remove alias until canister has been upgraded ([#8711](https://github.com/open-chat-labs/open-chat/pull/8711))
+
+## [[2.0.1921](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1921-user_index)] - 2025-11-26
+
+### Changed
+
+- On registration optionally add email auth provider ([#8682](https://github.com/open-chat-labs/open-chat/pull/8682))
+
+### Removed
+
+- Remove ancient code that deleted empty and dormant accounts ([#8685](https://github.com/open-chat-labs/open-chat/pull/8685))
+
+## [[2.0.1909](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1909-user_index)] - 2025-09-24
+
+### Changed
+
+- fixed post upgrade error ([#8625](https://github.com/open-chat-labs/open-chat/pull/8625))
+- sync streak data to local user indexes ([#8613](https://github.com/open-chat-labs/open-chat/pull/8613))
+
+## [[2.0.1903](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1903-user_index)] - 2025-09-12
+
+### Changed
+
+- Keep bot event subscriptions in sync ([#8600](https://github.com/open-chat-labs/open-chat/pull/8600))
+
+## [[2.0.1895](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1895-user_index)] - 2025-09-11
+
+### Changed
+
+- Allow bots to restrict installation locations ([#8560](https://github.com/open-chat-labs/open-chat/pull/8560))
+- Keep bot event subscriptions in sync ([#8600](https://github.com/open-chat-labs/open-chat/pull/8600))
+
 ## [[2.0.1861](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1861-user_index)] - 2025-08-12
 
 ### Added

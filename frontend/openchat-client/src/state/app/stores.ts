@@ -15,6 +15,7 @@ import {
     emptyChatMetrics,
     Immutable,
     mergeListOfCombinedUnreadCounts,
+    mergePairOfCombinedUnreadCounts,
     messageContextsEqual,
     MessageMap,
     ModerationFlags,
@@ -715,8 +716,11 @@ export const selectedChatBlockedUsersStore = derived(
     notEq,
 );
 export const selectedChatLapsedMembersStore = derived(
-    selectedServerChatStore,
-    (chat) => chat?.lapsedMembers ?? (new Set() as ReadonlySet<string>),
+    [selectedServerChatStore, chatDetailsLocalUpdates.lapsed],
+    ([chat, lapsed]) => {
+        if (chat === undefined) return new Set() as ReadonlySet<string>;
+        return lapsed.get(chat.chatId)?.apply(chat.lapsedMembers) ?? chat.lapsedMembers;
+    },
     notEq,
 );
 export const selectedChatPinnedMessagesStore = derived(
@@ -1009,10 +1013,8 @@ export const chatSummariesStore = derived(
                     (c) => c.kind === "channel" && c.id.communityId === communityId,
                 );
             }
-            case "group_chat":
-                return allChats.filter((c) => c.kind === "group_chat");
-            case "direct_chat":
-                return allChats.filter((c) => c.kind === "direct_chat");
+            case "chats":
+                return allChats.filter((c) => c.kind === "direct_chat" || c.kind === "group_chat");
             case "favourite": {
                 return [...favourites.values()].reduce((favs, chatId) => {
                     const chat = allChats.get(chatId);
@@ -1164,6 +1166,16 @@ export const directVideoCallCountsStore = derived(serverDirectChatsStore, (serve
     return videoCallsInProgressForChats([...serverDirectChats.values()]);
 });
 
+export const directAndGroupVideoCallCountsStore = derived(
+    [serverDirectChatsStore, serverGroupChatsStore],
+    ([serverDirectChats, serverGroupChats]) => {
+        return videoCallsInProgressForChats([
+            ...serverDirectChats.values(),
+            ...serverGroupChats.values(),
+        ]);
+    },
+);
+
 export const eventsStore = derived(
     [
         serverEventsStore,
@@ -1252,6 +1264,13 @@ export const unreadDirectCountsStore = derived(
     [serverDirectChatsStore, messagesRead],
     ([serverDirectChats, _]) => {
         return messagesRead.combinedUnreadCountForChats(serverDirectChats);
+    },
+);
+
+export const unreadDirectAndGroupCountsStore = derived(
+    [unreadDirectCountsStore, unreadGroupCountsStore],
+    ([direct, group]) => {
+        return mergePairOfCombinedUnreadCounts(direct, group);
     },
 );
 

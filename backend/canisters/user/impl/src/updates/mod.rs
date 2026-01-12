@@ -35,6 +35,7 @@ pub mod delete_community;
 pub mod delete_direct_chat;
 pub mod delete_group;
 pub mod delete_messages;
+pub mod delete_saved_crypto_account;
 pub mod edit_message;
 pub mod end_video_call;
 pub mod generate_btc_address;

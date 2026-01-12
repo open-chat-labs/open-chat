@@ -2,7 +2,6 @@ pub mod bio;
 pub mod c2c_bot_chat_summary;
 pub mod c2c_can_issue_access_token_v2;
 pub mod c2c_groups_and_communities;
-pub mod c2c_is_empty_and_dormant;
 pub mod chit_events;
 pub mod contacts;
 pub mod deleted_message;

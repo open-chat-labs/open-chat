@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { Alignment, Position } from "component-lib";
     import {
         type AccessGate,
         type AccessGateConfig,
@@ -19,7 +20,6 @@
     import VectorCombine from "svelte-material-icons/VectorCombine.svelte";
     import Tooltip from "../../../components/tooltip/Tooltip.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import type { Alignment, Position } from "../../../utils/alignment";
     import BlueDiamond from "../../icons/BlueDiamond.svelte";
     import GoldDiamond from "../../icons/GoldDiamond.svelte";
     import Translatable from "../../Translatable.svelte";

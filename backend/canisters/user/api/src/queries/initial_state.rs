@@ -1,22 +1,21 @@
 use crate::{MessageActivitySummary, Referral, WalletConfig};
-use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
-    CanisterId, Chat, ChatId, ChitEvent, DirectChatSummary, Empty, InstalledBotDetails, PinNumberSettings, StreakInsurance,
+    CanisterId, Chat, ChitEvent, DirectChatSummary, Empty, InstalledBotDetails, PinNumberSettings, StreakInsurance,
     TimestampMillis, UserId,
 };
 
 pub type Args = Empty;
 
 #[ts_export(user, initial_state)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
 }
 
 #[ts_export(user, initial_state)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub timestamp: TimestampMillis,
     pub direct_chats: DirectChatsInitial,
@@ -45,30 +44,29 @@ pub struct SuccessResult {
     pub btc_address: Option<String>,
     pub one_sec_address: Option<String>,
     pub premium_items: Vec<u32>,
+    pub pinned_chats: Vec<Chat>,
 }
 
 #[ts_export(user, initial_state)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct DirectChatsInitial {
     pub summaries: Vec<DirectChatSummary>,
-    pub pinned: Vec<ChatId>,
 }
 
 #[ts_export(user, initial_state)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GroupChatsInitial {
     pub summaries: Vec<crate::GroupChatSummary>,
-    pub pinned: Vec<ChatId>,
 }
 
 #[ts_export(user, initial_state)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CommunitiesInitial {
     pub summaries: Vec<crate::CommunitySummary>,
 }
 
 #[ts_export(user, initial_state)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct FavouriteChatsInitial {
     pub chats: Vec<Chat>,
     pub pinned: Vec<Chat>,

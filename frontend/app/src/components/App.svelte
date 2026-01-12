@@ -4,6 +4,7 @@
     import Router from "@components/Router.svelte";
     import "@components/web-components/customEmoji";
     import "@components/web-components/profileLink";
+    import "@components/web-components/spoiler";
     import "@i18n/i18n";
     import { reviewingTranslations } from "@i18n/i18n";
     import { trackedEffect } from "@src/utils/effects.svelte";
@@ -11,7 +12,7 @@
     import { snowing } from "@stores/snow";
     import { incomingVideoCall } from "@stores/video";
     import { broadcastLoggedInUser } from "@stores/xframe";
-    import { currentTheme } from "@theme/themes";
+    import { currentTheme, setNativeTheme, writeNativeCssVariables } from "@theme/themes";
     import "@utils/markdown";
     import {
         expectNewFcmToken,
@@ -20,7 +21,6 @@
     } from "@utils/native/notification_channels";
     import "@utils/scream";
     import {
-        isCanisterUrl,
         isLandingPageRoute,
         isScrollingRoute,
         redirectLandingPageLinksIfNecessary,
@@ -53,7 +53,6 @@
     import Head from "./Head.svelte";
     import Profiler from "./Profiler.svelte";
     import Snow from "./Snow.svelte";
-    import SwitchDomain from "./SwitchDomain.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import Witch from "./Witch.svelte";
     import InstallPrompt from "./home/InstallPrompt.svelte";
@@ -62,7 +61,6 @@
     import IncomingCall from "./home/video/IncomingCall.svelte";
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
     import { portalState } from "./portalState.svelte";
-    import Upgrading from "./upgrading/Upgrading.svelte";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -73,7 +71,7 @@
     );
 
     function createOpenChatClient(): OpenChat {
-        return new OpenChat({
+        const client = new OpenChat({
             appType: import.meta.env.OC_APP_TYPE,
             icUrl: import.meta.env.OC_IC_URL,
             webAuthnOrigin: import.meta.env.OC_WEBAUTHN_ORIGIN,
@@ -98,7 +96,8 @@
             signInWithEmailCanister: import.meta.env.OC_SIGN_IN_WITH_EMAIL_CANISTER!,
             signInWithEthereumCanister: import.meta.env.OC_SIGN_IN_WITH_ETHEREUM_CANISTER!,
             signInWithSolanaCanister: import.meta.env.OC_SIGN_IN_WITH_SOLANA_CANISTER!,
-            oneSecMinterCanister: import.meta.env.OC_ONE_SEC_MINTER_CANISTER!,
+            oneSecForwarderCanister: import.meta.env.OC_ONESEC_FORWARDER_CANISTER!,
+            oneSecMinterCanister: import.meta.env.OC_ONESEC_MINTER_CANISTER!,
             i18nFormatter: $_,
             logger,
             websiteVersion: import.meta.env.OC_WEBSITE_VERSION!,
@@ -109,6 +108,16 @@
             accountLinkingCodesEnabled:
                 import.meta.env.OC_ACCOUNT_LINKING_CODES_ENABLED! === "true",
         });
+
+        if (client.isNativeLayout()) {
+            setNativeTheme();
+        } else {
+            // even if we are not using the native layout
+            // we do need the variables if we are going to use the new components
+            writeNativeCssVariables();
+        }
+
+        return client;
     }
 
     let client: OpenChat = createOpenChatClient();
@@ -128,11 +137,6 @@
     );
     let burstUrl = $derived(isFirefox ? `${burstPath}.png` : `${burstPath}.svg`);
     let burstFixed = $derived(isScrollingRoute($routeStore));
-
-    let upgrading = $derived(
-        $identityStateStore.kind === "upgrading_user" ||
-            $identityStateStore.kind === "upgrade_user",
-    );
 
     let lastScrollY = $state(window.scrollY);
 
@@ -187,7 +191,6 @@
 
         //@ts-ignore
         window.platformOperator = {
-            addOneSecToken,
             addRemoveSwapProvider,
             setGroupUpgradeConcurrency,
             setCommunityUpgradeConcurrency,
@@ -202,6 +205,7 @@
             updateMarketMakerConfig,
             withdrawFromIcpSwap,
             setPremiumItemCost,
+            updateBlockedUsernamePatterns,
             pauseEventLoop: () => client.pauseEventLoop(),
             resumeEventLoop: () => client.resumeEventLoop(),
         };
@@ -423,16 +427,6 @@
             });
     }
 
-    function addOneSecToken(tokenSymbol: string, infoUrl: string): void {
-        client.addOneSecToken(tokenSymbol, infoUrl).then((success) => {
-            if (success) {
-                console.log("OneSec token added");
-            } else {
-                console.error("Failed to add OneSec token");
-            }
-        })
-    }
-
     function addRemoveSwapProvider(swapProvider: DexId, add: boolean): void {
         client.addRemoveSwapProvider(swapProvider, add).then((success) => {
             if (success) {
@@ -576,6 +570,10 @@
         client.setPremiumItemCost(item, chitCost);
     }
 
+    function updateBlockedUsernamePatterns(pattern: string, add: boolean) {
+        client.updateBlockedUsernamePatterns(pattern, add);
+    }
+
     function calculateHeight() {
         // fix the issue with 100vh layouts in various mobile browsers
         let vh = window.innerHeight * 0.01;
@@ -661,11 +659,7 @@
 
 <NotificationsBar />
 
-{#if isCanisterUrl}
-    <SwitchDomain />
-{:else if upgrading}
-    <Upgrading />
-{:else if $identityStateStore.kind === "anon" || $identityStateStore.kind === "logging_in" || $identityStateStore.kind === "registering" || $identityStateStore.kind === "logged_in" || $identityStateStore.kind === "loading_user" || $identityStateStore.kind === "challenging"}
+{#if $identityStateStore.kind === "anon" || $identityStateStore.kind === "logging_in" || $identityStateStore.kind === "registering" || $identityStateStore.kind === "logged_in" || $identityStateStore.kind === "loading_user" || $identityStateStore.kind === "challenging"}
     {#if !$isLoading || $reviewingTranslations}
         <Router {showLandingPage} />
     {/if}

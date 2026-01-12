@@ -1,14 +1,98 @@
-type TokenId = nat;
-
-type LatestTokenRow = record {
-    record {
-        TokenId;
-        TokenId;
-    };
-    text;
-    float64;
-};
-
+type Value = float64;
+type SetReq =
+ record {
+   decimals: nat8;
+   deleted: bool;
+   details_json: text;
+   id: PKKey;
+   ledger_id: text;
+   name: text;
+   overview_json: text;
+   rank: nat32;
+   symbol: text;
+   tags: vec text;
+   unlisted: bool;
+ };
+type SetDetailsReq =
+ vec record {
+       details: vec record {
+                      text;
+                      Value;
+                    };
+       id: PKKey;
+     };
+type PKKey = nat32;
+type GetDetailsResp =
+ vec record {
+       text;
+       Value;
+     };
+type GetDetailsReq =
+ record {
+   id: PKKey;
+   select: opt vec text;
+ };
+type GetCoinsByMarketcapResp =
+ record {
+   coins: vec CoinWithDetails;
+   last: opt nat64;
+ };
+type GetCoinsByMarketcapReq =
+ record {
+   from: opt nat64;
+   full: bool;
+   select: opt vec text;
+ };
+type GetCoinFullResp =
+ record {
+   Doc;
+   vec record {
+         text;
+         Value;
+       };
+ };
+type GetCoinFullReq =
+ record {
+   id: PKKey;
+   select: opt vec text;
+ };
+type Doc =
+ record {
+   decimals: nat8;
+   deleted: bool;
+   details_json: text;
+   id: PKKey;
+   ledger_id: text;
+   name: text;
+   overview_json: text;
+   rank: nat32;
+   symbol: text;
+   tags: vec text;
+   unlisted: bool;
+ };
+type CoinWithDetails =
+ record {
+   decimals: nat8;
+   deleted: bool;
+   details: vec record {
+                  text;
+                  Value;
+                };
+   details_json: text;
+   id: PKKey;
+   ledger_id: text;
+   name: text;
+   overview_json: text;
+   rank: nat32;
+   symbol: text;
+   tags: vec text;
+   unlisted: bool;
+ };
 service : {
-    get_latest : () -> (vec LatestTokenRow) query;
-};
+  get_coin_full: (GetCoinFullReq) -> (GetCoinFullResp);
+  get_coins_by_marketcap: (GetCoinsByMarketcapReq) ->
+   (GetCoinsByMarketcapResp);
+  get_details: (GetDetailsReq) -> (GetDetailsResp);
+  set: (SetReq) -> () oneway;
+  set_details: (SetDetailsReq) -> () oneway;
+}

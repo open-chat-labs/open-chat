@@ -42,6 +42,7 @@ fn main() {
     generate_ts_method!(user, delete_direct_chat);
     generate_ts_method!(user, delete_group);
     generate_ts_method!(user, delete_messages);
+    generate_ts_method!(user, delete_saved_crypto_account);
     generate_ts_method!(user, edit_message_v2);
     generate_ts_method!(user, generate_btc_address);
     generate_ts_method!(user, generate_one_sec_address);
@@ -80,7 +81,4 @@ fn main() {
     generate_ts_method!(user, withdraw_btc);
     generate_ts_method!(user, withdraw_crypto_v2);
     generate_ts_method!(user, withdraw_via_one_sec);
-
-    candid::export_service!();
-    std::print!("{}", __export_service());
 }

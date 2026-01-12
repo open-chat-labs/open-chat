@@ -4,10 +4,11 @@ use crate::utils::tick_many;
 use crate::{CanisterIds, T, TestEnv, client, wasms};
 use candid::{CandidType, Nat, Principal};
 use constants::{CHAT_LEDGER_CANISTER_ID, CHAT_SYMBOL, CHAT_TRANSFER_FEE, SNS_GOVERNANCE_CANISTER_ID};
-use ic_ledger_types::{AccountIdentifier, BlockIndex, DEFAULT_SUBACCOUNT, Tokens};
+use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT, Tokens};
 use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
 use icrc_ledger_types::icrc1::account::Account;
 use identity_canister::WEBAUTHN_ORIGINATING_CANISTER;
+use pocket_ic::common::rest::{IcpFeatures, IcpFeaturesConfig};
 use pocket_ic::{PocketIc, PocketIcBuilder, PocketIcState};
 use rand::{Rng, SeedableRng, rngs::StdRng};
 use sha256::sha256;
@@ -49,12 +50,17 @@ fn initialize_base_state(controller: Principal, seed: Option<Hash>) -> (PocketIc
     // This thread is first, so it is the only one which will run the full initialization
     println!("Initialization starting");
 
+    let icp_features = IcpFeatures {
+        cycles_minting: Some(IcpFeaturesConfig::DefaultConfig),
+        ..Default::default()
+    };
     let mut env = PocketIcBuilder::new()
         .with_nns_subnet()
         .with_sns_subnet()
         .with_application_subnet()
         .with_application_subnet()
         .with_state(PocketIcState::new())
+        .with_icp_features(icp_features)
         .build();
 
     println!("PocketIC instance ready. Installing canisters...");
@@ -76,7 +82,8 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let nns_governance_canister_id = create_canister_with_id(env, controller, "rrkah-fqaaa-aaaaa-aaaaq-cai");
     let nns_ledger_canister_id = create_canister_with_id(env, controller, "ryjl3-tyaaa-aaaaa-aaaba-cai");
     let nns_root_canister_id = create_canister_with_id(env, controller, "r7inp-6aaaa-aaaaa-aaabq-cai");
-    let cycles_minting_canister_id = create_canister_with_id(env, controller, "rkp4c-7iaaa-aaaaa-aaaca-cai");
+    // Cycles Minting Canister is deployed during PocketIC instance creation using a built-in PocketIC feature.
+    let cycles_minting_canister_id = Principal::from_text("rkp4c-7iaaa-aaaaa-aaaca-cai").unwrap();
     let sns_wasm_canister_id = create_canister_with_id(env, controller, "qaa6y-5yaaa-aaaaa-aaafa-cai");
     let nns_index_canister_id = create_canister_with_id(env, controller, "qhbym-qaaaa-aaaaa-aaafq-cai");
     let chat_ledger_canister_id = install_icrc_ledger(
@@ -94,7 +101,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let user_index_canister_id = create_canister(env, openchat_installer_canister_id);
     let group_index_canister_id = create_canister(env, openchat_installer_canister_id);
     let notifications_index_canister_id = create_canister(env, openchat_installer_canister_id);
-    let identity_canister_id = create_canister(env, controller);
+    let identity_canister_id = create_canister(env, openchat_installer_canister_id);
     let online_users_canister_id = create_canister(env, controller);
     let airdrop_bot_canister_id = create_canister(env, controller);
     let proposals_bot_canister_id = create_canister(env, controller);
@@ -110,7 +117,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
 
     let community_canister_wasm = wasms::COMMUNITY.clone();
     let cycles_dispenser_canister_wasm = wasms::CYCLES_DISPENSER.clone();
-    let cycles_minting_canister_wasm = wasms::CYCLES_MINTING_CANISTER.clone();
     let escrow_canister_wasm = wasms::ESCROW.clone();
     let event_relay_canister_wasm = wasms::EVENT_RELAY.clone();
     let event_store_canister_wasm = wasms::EVENT_STORE.clone();
@@ -153,9 +159,9 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         registry_canister_id,
         translations_canister_id,
         website_canister_id,
+        sign_in_with_email_canister_id,
         nns_governance_canister_id,
         internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
-        ic_root_key: env.root_key().unwrap(),
         wasm_version,
         test_mode,
     };
@@ -191,6 +197,14 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         openchat_installer_canister::CanisterType::NotificationsIndex,
     );
 
+    client::openchat_installer::happy_path::upload_wasm_in_chunks(
+        env,
+        controller,
+        openchat_installer_canister_id,
+        &identity_canister_wasm.module,
+        openchat_installer_canister::CanisterType::Identity,
+    );
+
     client::openchat_installer::happy_path::install_canisters(
         env,
         controller,
@@ -198,35 +212,20 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         sha256(&user_index_canister_wasm.module),
         sha256(&group_index_canister_wasm.module),
         sha256(&notifications_index_canister_wasm.module),
+        sha256(&identity_canister_wasm.module),
         vec![VIDEO_CALL_OPERATOR],
         vec![controller],
-        wasm_version,
-    );
-
-    let identity_init_args = identity_canister::init::Args {
-        governance_principals: vec![controller],
-        user_index_canister_id,
-        cycles_dispenser_canister_id,
-        originating_canisters: vec![
+        vec![
             NNS_INTERNET_IDENTITY_CANISTER_ID,
             sign_in_with_email_canister_id,
             WEBAUTHN_ORIGINATING_CANISTER,
         ],
-        skip_captcha_whitelist: vec![
+        vec![
             NNS_INTERNET_IDENTITY_CANISTER_ID,
             sign_in_with_email_canister_id,
             WEBAUTHN_ORIGINATING_CANISTER,
         ],
-        ic_root_key: env.root_key().unwrap(),
         wasm_version,
-        test_mode,
-    };
-    install_canister(
-        env,
-        controller,
-        identity_canister_id,
-        identity_canister_wasm,
-        identity_init_args,
     );
 
     let translations_init_args = translations_canister::init::Args {
@@ -454,31 +453,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         icp_ledger_init_args,
     );
 
-    let cycles_minting_canister_init_args = CyclesMintingCanisterInitPayload {
-        ledger_canister_id: nns_ledger_canister_id,
-        governance_canister_id: nns_governance_canister_id,
-        minting_account_id: Some(minting_account.to_string()),
-        last_purged_notification: Some(0),
-    };
-    install_canister(
-        env,
-        controller,
-        cycles_minting_canister_id,
-        cycles_minting_canister_wasm,
-        cycles_minting_canister_init_args,
-    );
-
     let application_subnets = env.topology().get_app_subnets();
-    client::cmc::set_authorized_subnetwork_list(
-        env,
-        nns_governance_canister_id,
-        cycles_minting_canister_id,
-        &cycles_minting_canister::set_authorized_subnetwork_list::Args {
-            who: None,
-            subnets: application_subnets.clone(),
-        },
-    );
-
     let subnets: Vec<_> = application_subnets
         .into_iter()
         .map(|s| client::registry::happy_path::expand_onto_subnet(env, controller, registry_canister_id, s))
@@ -634,14 +609,6 @@ struct NnsLedgerCanisterInitPayload {
     initial_values: HashMap<String, Tokens>,
     send_whitelist: HashSet<CanisterId>,
     transfer_fee: Option<Tokens>,
-}
-
-#[derive(CandidType)]
-struct CyclesMintingCanisterInitPayload {
-    ledger_canister_id: CanisterId,
-    governance_canister_id: CanisterId,
-    minting_account_id: Option<String>,
-    last_purged_notification: Option<BlockIndex>,
 }
 
 #[derive(CandidType, Default)]

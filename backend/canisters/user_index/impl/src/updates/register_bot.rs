@@ -69,9 +69,7 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
             name: args.name.clone(),
             owner: owner_id,
             endpoint: args.endpoint.clone(),
-            description: args.definition.description.clone(),
-            commands: args.definition.commands.clone(),
-            autonomous_config: args.definition.autonomous_config.clone(),
+            definition: args.definition.clone(),
             last_updated: now,
             avatar,
             installations: HashMap::new(),
@@ -127,7 +125,7 @@ fn validate_request(args: &Args, owner_id: UserId, state: &RuntimeState) -> Resu
         return Err("already registered".to_string());
     }
 
-    match validate_username(&args.name) {
+    match validate_username(&args.name, &state.data.blocked_username_patterns) {
         Ok(_) => {}
         Err(UsernameValidationError::TooShort(_)) => return Err("name too short".to_string()),
         Err(UsernameValidationError::TooLong(_)) => return Err("name too long".to_string()),

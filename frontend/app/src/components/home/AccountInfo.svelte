@@ -1,13 +1,10 @@
 <script lang="ts">
     import {
-        ARBITRUM_NETWORK,
-        BASE_NETWORK,
         BTC_SYMBOL,
         CKBTC_SYMBOL,
         cryptoLookup,
         currentUserIdStore,
         currentUserStore,
-        ETHEREUM_NETWORK,
         ICP_SYMBOL,
         Lazy,
         type OneSecTransferFees,
@@ -44,12 +41,13 @@
     let selectedNetwork = $state<string>();
     let isBtc = $derived(tokenDetails.symbol === BTC_SYMBOL);
     let isBtcNetwork = $derived(selectedNetwork === BTC_SYMBOL);
-    let isOneSec = $derived(tokenDetails.oneSecEnabled);
+    let oneSecEnabled = $derived(tokenDetails.oneSecEnabled && tokenDetails.evmContractAddresses.length > 0);
+    let isOneSecNetwork = $derived(oneSecEnabled && selectedNetwork !== ICP_SYMBOL);
     let networks = $derived.by(() => {
         if (isBtc) {
             return [BTC_SYMBOL, CKBTC_SYMBOL];
-        } else if (isOneSec) {
-            return [ETHEREUM_NETWORK, ARBITRUM_NETWORK, BASE_NETWORK];
+        } else if (oneSecEnabled) {
+            return client.oneSecGetNetworks(tokenDetails.symbol);
         } else {
             return [];
         }
@@ -67,7 +65,7 @@
             return $currentUserStore.cryptoAccount;
         } else if (isBtcNetwork) {
             return btcAddress;
-        } else if (isOneSec) {
+        } else if (isOneSecNetwork) {
             return oneSecAddress;
         } else {
             return $currentUserIdStore;
@@ -79,7 +77,7 @@
         if (account === undefined) {
             if (isBtcNetwork) {
                 client.getBtcAddress().then((addr) => btcAddress = addr).catch((e) => error = e);
-            } else if (isOneSec) {
+            } else if (isOneSecNetwork) {
                 client.getOneSecAddress().then((addr) => oneSecAddress = addr).catch(e => error = e);
             }
         }
@@ -104,7 +102,7 @@
 
     let oneSecFees = $state<OneSecTransferFees[]>();
     let oneSecFeesForToken = $derived.by(() => {
-        if (!isOneSec || oneSecFees === undefined) return undefined;
+        if (!isOneSecNetwork || oneSecFees === undefined) return undefined;
         return oneSecFees.filter((f) => f.sourceToken === tokenDetails.symbol);
     });
     let oneSecProtocolFee = $derived.by(() => {
@@ -150,7 +148,7 @@
         <TruncatedAccount {centered} {account} />
     {/if}
 
-    {#if selectedNetwork === BTC_SYMBOL}
+    {#if isBtcNetwork}
         {#await btcDepositFeePromise.get()}
             <span class="label">{$_("cryptoAccount.fetchingDepositFee")}</span>
         {:then amount}
@@ -158,7 +156,7 @@
         {:catch}
             <span class="error-label">{$_("cryptoAccount.failedToFetchDepositFee")}</span>
         {/await}
-    {:else if isOneSec}
+    {:else if isOneSecNetwork}
         {#await oneSecFeesPromise.get()}
             <span class="label">{$_("cryptoAccount.fetchingDepositFee")}</span>
         {:then}

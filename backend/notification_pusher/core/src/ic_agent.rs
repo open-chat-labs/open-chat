@@ -87,7 +87,7 @@ impl IcAgent {
 
         let subscriptions_by_user = subscriptions_by_user
             .into_iter()
-            .map(|(user_id, p256dh_keys)| remove_subscriptions::UserSubscriptions { user_id, p256dh_keys })
+            .map(|(user_id, endpoints)| remove_subscriptions::UserSubscriptions { user_id, endpoints })
             .collect();
 
         let args = remove_subscriptions::Args { subscriptions_by_user };

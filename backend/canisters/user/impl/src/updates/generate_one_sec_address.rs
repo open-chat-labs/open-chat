@@ -1,9 +1,9 @@
 use crate::guards::caller_is_owner;
 use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
-use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::ONE_SEC_MINTER_CANISTER_ID;
+use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use types::Timestamped;
 use user_canister::generate_one_sec_address::{Response::*, *};

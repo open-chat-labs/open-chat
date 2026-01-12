@@ -8,11 +8,12 @@ import coil3.ImageLoader
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import coil3.request.bitmapConfig
-import com.ocplugin.app.models.ReceivedNotification
+import com.ocplugin.app.data.SenderId
+import com.ocplugin.app.models.Conversation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import androidx.core.graphics.createBitmap
-import com.ocplugin.app.models.SenderId
+import com.ocplugin.app.data.Notification
 
 fun Bitmap.toCircularBitmap(): Bitmap {
     val size = minOf(width, height)
@@ -37,17 +38,39 @@ fun Bitmap.toCircularBitmap(): Bitmap {
 @Suppress("UNUSED")
 object AvatarHelper {
 
-    suspend fun loadBitmapForReceivedNotification(context: Context, notification: ReceivedNotification): Bitmap? {
-        val url = when (notification) {
-            is ReceivedNotification.Direct ->
-                "${String.format(BuildConfig.AVATAR_BASE_URL, notification.senderId.value)}/avatar/${notification.senderAvatarId}"
-            is ReceivedNotification.Group ->
-                "${String.format(BuildConfig.AVATAR_BASE_URL, notification.groupId.value)}/avatar/${notification.groupAvatarId}"
-            is ReceivedNotification.Channel ->
-                "${String.format(BuildConfig.AVATAR_BASE_URL, notification.communityId.value)}/channel/${notification.channelId.value}/avatar/${notification.channelAvatarId}}"
+    suspend fun loadBitmapForNotification(context: Context, notification: Notification): Bitmap? {
+        val conversation = Conversation.fromNotification(notification) ?: return null
+
+        fun urlBase(entityId: String) =
+            String.format(BuildConfig.AVATAR_BASE_URL, entityId)
+
+        fun mainAvatarUrl(entityId: String, avatarId: String) =
+            "${urlBase(entityId)}/avatar/$avatarId"
+
+        fun channelAvatarUrl(entityId: String, channelId: UInt, avatarId: String) =
+            "${urlBase(entityId)}/channel/$channelId/avatar/$avatarId"
+
+        val url = when (conversation) {
+            is Conversation.Direct ->
+                notification.senderAvatarId?.let {
+                    mainAvatarUrl(conversation.senderId.value, it)
+                }
+
+            is Conversation.Group ->
+                notification.groupAvatarId?.let {
+                    mainAvatarUrl(conversation.groupId.value, it)
+                }
+
+            is Conversation.Channel -> {
+                notification.channelAvatarId?.let {
+                    channelAvatarUrl(conversation.communityId.value, conversation.channelId.value, it)
+                } ?: notification.communityAvatarId?.let {
+                    mainAvatarUrl(conversation.communityId.value, it)
+                }
+            }
         }
 
-         return loadBitmap(context, url)
+        return url?.let { loadBitmap(context, it) }
     }
 
     suspend fun loadBitmapForUser(context: Context, senderId: SenderId, avatarId: String): Bitmap? {
@@ -59,6 +82,7 @@ object AvatarHelper {
     // A coroutine based function for loading avatars off main thread, uses lightweight Coil
     // library.
     suspend fun loadBitmap(context: Context, url: String): Bitmap? {
+        Log.d(LOG_TAG, "Loading avatar for url: $url")
         return withContext(Dispatchers.IO) {
             try {
                 // TODO for global caching reuse image loader

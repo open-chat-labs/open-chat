@@ -1,10 +1,12 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 use types::{Chat, TimestampMillis, Timestamped};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct FavouriteChats {
     chats: Timestamped<Vec<Chat>>,
-    pinned: Timestamped<Vec<Chat>>,
+    pinned: Timestamped<HashMap<Chat, TimestampMillis>>,
 }
 
 impl FavouriteChats {
@@ -31,9 +33,9 @@ impl FavouriteChats {
     }
 
     pub fn pin(&mut self, chat: Chat, now: TimestampMillis) -> bool {
-        if !self.pinned.value.contains(&chat) {
+        if !self.pinned.value.contains_key(&chat) {
             self.pinned.timestamp = now;
-            self.pinned.value.insert(0, chat);
+            self.pinned.value.insert(chat, now);
             self.add(chat, now);
             true
         } else {
@@ -42,9 +44,9 @@ impl FavouriteChats {
     }
 
     pub fn unpin(&mut self, chat: &Chat, now: TimestampMillis) -> bool {
-        if self.pinned.value.contains(chat) {
+        if self.pinned.value.contains_key(chat) {
             self.pinned.timestamp = now;
-            self.pinned.value.retain(|pinned_chat| pinned_chat != chat);
+            self.pinned.value.remove(chat);
             true
         } else {
             false
@@ -59,7 +61,7 @@ impl FavouriteChats {
         &self.chats.value
     }
 
-    pub fn pinned(&self) -> &Vec<Chat> {
+    pub fn pinned(&self) -> &HashMap<Chat, TimestampMillis> {
         &self.pinned.value
     }
 
@@ -67,7 +69,7 @@ impl FavouriteChats {
         self.chats.if_set_after(since).map(|ids| ids.to_vec())
     }
 
-    pub fn pinned_if_updated(&self, since: TimestampMillis) -> Option<Vec<Chat>> {
-        self.pinned.if_set_after(since).map(|ids| ids.to_vec())
+    pub fn pinned_if_updated(&self, since: TimestampMillis) -> Option<HashMap<Chat, TimestampMillis>> {
+        self.pinned.if_set_after(since).map(|ids| ids.to_owned())
     }
 }

@@ -7,7 +7,6 @@ import type {
     CancelP2PSwapResponse,
     ChangeRoleResponse,
     ChatEvent,
-    ClaimPrizeResponse,
     ConvertToCommunityResponse,
     DeclineInvitationResponse,
     DeletedGroupMessageResponse,
@@ -63,6 +62,7 @@ import {
     MAX_MESSAGES,
     MAX_MISSING,
     offline,
+    random32,
     ResponseTooLargeError,
     textToCode,
 } from "openchat-shared";
@@ -77,8 +77,6 @@ import {
     GroupCancelInvitesArgs,
     GroupCancelP2pSwapArgs,
     GroupChangeRoleArgs,
-    GroupClaimPrizeArgs,
-    GroupClaimPrizeResponse,
     GroupConvertIntoCommunityArgs,
     GroupConvertIntoCommunityResponse,
     GroupDeletedMessageArgs,
@@ -172,7 +170,7 @@ import {
     apiMessageContent,
     apiUser as apiUserV2,
     apiVideoCallPresence,
-    claimPrizeResponse,
+    changeRoleResult,
     deletedMessageSuccess,
     enableOrResetInviteCodeSuccess,
     getEventsSuccess,
@@ -267,7 +265,7 @@ export class GroupClient extends MsgpackCanisterAgent {
 
     private setCachedEvents<T extends ChatEvent>(
         resp: EventsResponse<T>,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
     ): EventsResponse<T> {
         setCachedEvents(this.db, this.chatId, resp, threadRootMessageIndex).catch((err) =>
             this.config.logger.error("Error writing cached group events", err),
@@ -280,7 +278,7 @@ export class GroupClient extends MsgpackCanisterAgent {
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
-        if (missing.size === 0) {
+        if (missing.size === 0 || offline()) {
             return Promise.resolve(cachedEvents);
         } else {
             return this.chatEventsByIndexFromBackend(
@@ -497,13 +495,15 @@ export class GroupClient extends MsgpackCanisterAgent {
         if (new_role === undefined) {
             throw new Error(`Cannot change user's role to: ${newRole}`);
         }
+        const user_id = principalStringToBytes(userId);
         return this.executeMsgpackUpdate(
             "change_role",
             {
-                user_id: principalStringToBytes(userId),
+                user_id,
+                user_ids: [user_id],
                 new_role,
             },
-            unitResult,
+            changeRoleResult,
             GroupChangeRoleArgs,
             UnitResult,
         );
@@ -545,18 +545,6 @@ export class GroupClient extends MsgpackCanisterAgent {
                     UnitResult,
                 );
             });
-    }
-
-    claimPrize(messageId: bigint): Promise<ClaimPrizeResponse> {
-        return this.executeMsgpackUpdate(
-            "claim_prize",
-            {
-                message_id: messageId,
-            },
-            claimPrizeResponse,
-            GroupClaimPrizeArgs,
-            GroupClaimPrizeResponse,
-        );
     }
 
     sendMessage(
@@ -645,7 +633,7 @@ export class GroupClient extends MsgpackCanisterAgent {
                         ? "NoChange"
                         : {
                               SetToSome: {
-                                  id: DataClient.newBlobId(),
+                                  id: BigInt(random32()),
                                   mime_type: "image/jpg",
                                   data: avatar,
                               },
@@ -848,17 +836,24 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     async getMessagesByMessageIndex(
+        threadRootMessageIndex: number | undefined,
         messageIndexes: Set<number>,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<Message>> {
-        const fromCache = await loadMessagesByMessageIndex(this.db, this.chatId, messageIndexes);
+        const fromCache = await loadMessagesByMessageIndex(
+            this.db,
+            this.chatId,
+            threadRootMessageIndex,
+            messageIndexes,
+        );
         if (fromCache.missing.size > 0) {
             console.log("Missing idxs from the cached: ", fromCache.missing);
 
             const resp = await this.getMessagesByMessageIndexFromBackend(
+                threadRootMessageIndex,
                 [...fromCache.missing],
                 latestKnownUpdate,
-            ).then((resp) => this.setCachedEvents(resp));
+            ).then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
 
             return isSuccessfulEventsResponse(resp)
                 ? {
@@ -878,15 +873,15 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     private getMessagesByMessageIndexFromBackend(
+        threadRootMessageIndex: number | undefined,
         messageIndexes: number[],
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<Message>> {
+        console.log("group.client.ts, threadRootMessageIndex: ", threadRootMessageIndex);
         const args = {
-            thread_root_message_index: undefined,
+            thread_root_message_index: threadRootMessageIndex,
             messages: messageIndexes,
-            invite_code: undefined,
             latest_known_update: latestKnownUpdate,
-            latest_client_event_index: undefined,
         };
         return this.executeMsgpackQuery(
             "messages_by_message_index",

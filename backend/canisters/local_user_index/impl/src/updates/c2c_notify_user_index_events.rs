@@ -1,18 +1,19 @@
 use crate::guards::caller_is_user_index;
-use crate::{RuntimeState, UserEvent, UserToDelete, jobs, mutate_state};
+use crate::{CommunityEvent, GroupEvent, RuntimeState, UserEvent, UserToDelete, jobs, mutate_state};
 use canister_api_macros::update;
 use canister_time::now_millis;
 use canister_tracing_macros::trace;
-use constants::OPENCHAT_BOT_USER_ID;
 use local_user_index_canister::c2c_notify_user_index_events::*;
 use local_user_index_canister::{UserIndexEvent, UserRegistered};
-use msgpack::serialize_then_unwrap;
 use p256_key_pair::P256KeyPair;
 use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
 use std::cmp::min;
 use tracing::info;
-use types::{BotEvent, BotLifecycleEvent, BotNotification, BotRegisteredEvent, TimestampMillis, c2c_uninstall_bot};
+use types::{
+    BotEvent, BotInstallationLocation, BotLifecycleEvent, BotNotification, BotRegisteredEvent, PushIfNotContains,
+    TimestampMillis,
+};
 use user_canister::{
     DiamondMembershipPaymentReceived, DisplayNameChanged, ExternalAchievementAwarded, OpenChatBotMessageV2,
     PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserJoinedCommunityOrChannel, UserJoinedGroup,
@@ -229,6 +230,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             if state.data.local_users.contains(&ev.user_id) {
                 state.data.users_to_delete_queue.push_back(UserToDelete {
                     user_id: ev.user_id,
+                    #[allow(deprecated)]
                     triggered_by_user: ev.triggered_by_user,
                     attempt: 0,
                 });
@@ -295,16 +297,28 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 state.data.global_users.insert_unique_person_proof(user.user_id, proof);
             }
         }
-        UserIndexEvent::BotUninstall(ev) => {
-            state.data.fire_and_forget_handler.send(
-                ev.location.canister_id(),
-                "c2c_uninstall_bot_msgpack".to_string(),
-                serialize_then_unwrap(&c2c_uninstall_bot::Args {
-                    bot_id: ev.bot_id,
-                    caller: OPENCHAT_BOT_USER_ID,
-                }),
-            );
-        }
+        UserIndexEvent::BotUninstall(location, bot_id) => match location {
+            BotInstallationLocation::Community(community_id) => {
+                state.push_event_to_community(community_id.into(), CommunityEvent::BotRemoved(bot_id), **now);
+            }
+            BotInstallationLocation::Group(group_id) => {
+                state.push_event_to_group(group_id.into(), GroupEvent::BotRemoved(bot_id), **now);
+            }
+            BotInstallationLocation::User(user_id) => {
+                state.push_event_to_user(user_id.into(), UserEvent::BotRemoved(bot_id), **now);
+            }
+        },
+        UserIndexEvent::BotUpdateInstallation(location, ev) => match location {
+            BotInstallationLocation::Community(community_id) => {
+                state.push_event_to_community(community_id.into(), CommunityEvent::BotUpdated(ev), **now);
+            }
+            BotInstallationLocation::Group(group_id) => {
+                state.push_event_to_group(group_id.into(), GroupEvent::BotUpdated(ev), **now);
+            }
+            BotInstallationLocation::User(user_id) => {
+                state.push_event_to_user(user_id.into(), UserEvent::BotUpdated(Box::new(ev)), **now);
+            }
+        },
         UserIndexEvent::UserBlocked(user_id, blocked) => {
             state.data.blocked_users.insert((blocked, user_id), ());
         }
@@ -312,6 +326,13 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             state.data.blocked_users.remove(&(unblocked, user_id));
         }
         UserIndexEvent::SetPremiumItemCost(ev) => state.data.premium_items.set(ev.item_id, ev.chit_cost),
+        UserIndexEvent::UpdateBlockedUsernamePatterns(ev) => {
+            if ev.add {
+                state.data.blocked_username_patterns.push_if_not_contains(ev.pattern);
+            } else {
+                state.data.blocked_username_patterns.retain(|p| *p != ev.pattern);
+            }
+        }
     }
 }
 

@@ -7,7 +7,8 @@ use local_user_index_canister::UserEvent;
 use local_user_index_canister::c2c_user_canister::*;
 use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
-use types::{StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis, UserId};
+use types::{BotEvent, BotLifecycleEvent, Notification, StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis, UserId};
+use user_index_canister::BotInstalled;
 
 #[update(guard = "caller_is_local_user_canister", msgpack = true)]
 #[trace]
@@ -86,6 +87,21 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         }
         UserEvent::EventStoreEvent(event) => state.data.event_store_client.push(event),
         UserEvent::Notification(notification) => {
+            if let Notification::Bot(bot_notification) = &*notification
+                && let BotEvent::Lifecycle(BotLifecycleEvent::Installed(event)) = &bot_notification.event
+            {
+                state.push_event_to_user_index(
+                    crate::UserIndexEvent::BotInstalled(Box::new(BotInstalled {
+                        bot_id: bot_notification.recipients[0],
+                        location: event.location,
+                        installed_by: event.installed_by,
+                        granted_permissions: event.granted_command_permissions.clone(),
+                        granted_autonomous_permissions: event.granted_autonomous_permissions.clone(),
+                    })),
+                    **now,
+                );
+            }
+
             state.handle_notification(*notification, state.env.canister_id(), **now);
         }
     }

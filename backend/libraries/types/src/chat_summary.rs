@@ -1,7 +1,7 @@
 use crate::{
     AccessGateConfig, BuildVersion, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupMember,
     GroupPermissions, GroupRole, HydratedMention, InstalledBotDetails, Message, MessageId, MessageIndex, Milliseconds,
-    OptionUpdate, TimestampMillis, UserId, Version, WebhookDetails,
+    OptionUpdate, TimestampMillis, UserId, Version, WebhookDetails, is_default,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -10,7 +10,7 @@ use ts_export::ts_export;
 pub const MAX_THREADS_IN_SUMMARY: usize = 20;
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DirectChatSummary {
     pub them: UserId,
     pub last_updated: TimestampMillis,
@@ -21,17 +21,23 @@ pub struct DirectChatSummary {
     pub date_created: TimestampMillis,
     pub read_by_me_up_to: Option<MessageIndex>,
     pub read_by_them_up_to: Option<MessageIndex>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
     pub notifications_muted: bool,
     pub metrics: ChatMetrics,
     pub my_metrics: ChatMetrics,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
     pub archived: bool,
     pub events_ttl: Option<Milliseconds>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<TimestampMillis>", optional)]
     pub events_ttl_last_updated: TimestampMillis,
     pub video_call_in_progress: Option<VideoCall>,
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DirectChatSummaryUpdates {
     pub chat_id: ChatId,
     pub last_updated: TimestampMillis,
@@ -42,14 +48,18 @@ pub struct DirectChatSummaryUpdates {
     pub read_by_me_up_to: Option<MessageIndex>,
     pub read_by_them_up_to: Option<MessageIndex>,
     pub notifications_muted: Option<bool>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<(EventIndex, TimestampMillis)>>", optional)]
     pub updated_events: Vec<(EventIndex, TimestampMillis)>,
     pub metrics: Option<ChatMetrics>,
     pub my_metrics: Option<ChatMetrics>,
     pub archived: Option<bool>,
-    #[ts(as = "crate::OptionUpdateU64")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateU64>", optional)]
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub events_ttl_last_updated: Option<TimestampMillis>,
-    #[ts(as = "crate::OptionUpdateVideoCall")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateVideoCall>", optional)]
     pub video_call_in_progress: OptionUpdate<VideoCall>,
 }
 
@@ -82,7 +92,7 @@ pub struct PublicGroupSummary {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GroupCanisterGroupChatSummary {
     pub chat_id: ChatId,
     pub local_user_index_canister_id: CanisterId,
@@ -91,10 +101,20 @@ pub struct GroupCanisterGroupChatSummary {
     pub description: String,
     pub subtype: Option<GroupSubtype>,
     pub avatar_id: Option<u128>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
     pub is_public: bool,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
     pub history_visible_to_new_joiners: bool,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
     pub messages_visible_to_non_members: bool,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<EventIndex>", optional)]
     pub min_visible_event_index: EventIndex,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<MessageIndex>", optional)]
     pub min_visible_message_index: MessageIndex,
     #[ts(as = "Option<crate::EventWrapperMessage>")]
     pub latest_message: Option<EventWrapper<Message>>,
@@ -107,23 +127,29 @@ pub struct GroupCanisterGroupChatSummary {
     pub frozen: Option<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: Option<Milliseconds>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<TimestampMillis>", optional)]
     pub events_ttl_last_updated: TimestampMillis,
     pub gate_config: Option<AccessGateConfig>,
     pub membership: Option<GroupMembership>,
     pub video_call_in_progress: Option<VideoCall>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
     pub verified: bool,
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GroupCanisterGroupChatSummaryUpdates {
     pub chat_id: ChatId,
     pub last_updated: TimestampMillis,
     pub name: Option<String>,
     pub description: Option<String>,
-    #[ts(as = "crate::OptionUpdateGroupSubtype")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateGroupSubtype>", optional)]
     pub subtype: OptionUpdate<GroupSubtype>,
-    #[ts(as = "crate::OptionUpdateU128")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateU128>", optional)]
     pub avatar_id: OptionUpdate<u128>,
     #[ts(as = "Option<crate::EventWrapperMessage>")]
     pub latest_message: Option<EventWrapper<Message>>,
@@ -132,48 +158,76 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub participant_count: Option<u32>,
     pub wasm_version: Option<BuildVersion>,
     pub permissions_v2: Option<GroupPermissions>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>>", optional)]
     pub updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>, // (Thread root message index, event index, timestamp)
     pub metrics: Option<ChatMetrics>,
     pub is_public: Option<bool>,
     pub messages_visible_to_non_members: Option<bool>,
-    #[ts(as = "crate::OptionUpdateFrozenGroupInfo")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateFrozenGroupInfo>", optional)]
     pub frozen: OptionUpdate<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
-    #[ts(as = "crate::OptionUpdateU64")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateU64>", optional)]
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub events_ttl_last_updated: Option<TimestampMillis>,
-    #[ts(as = "crate::OptionUpdateAccessGateConfig")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateAccessGateConfig>", optional)]
     pub gate_config: OptionUpdate<AccessGateConfig>,
     pub membership: Option<GroupMembershipUpdates>,
-    #[ts(as = "crate::OptionUpdateVideoCall")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateVideoCall>", optional)]
     pub video_call_in_progress: OptionUpdate<VideoCall>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
     pub any_updates_missed: bool,
     pub verified: Option<bool>,
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GroupMembership {
     pub joined: TimestampMillis,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<GroupRole>", optional)]
     pub role: GroupRole,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<HydratedMention>>", optional)]
     pub mentions: Vec<HydratedMention>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
     pub notifications_muted: bool,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
     pub at_everyone_muted: bool,
     pub my_metrics: ChatMetrics,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<GroupCanisterThreadDetails>>", optional)]
     pub latest_threads: Vec<GroupCanisterThreadDetails>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
     pub rules_accepted: bool,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
     pub lapsed: bool,
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GroupMembershipUpdates {
     pub role: Option<GroupRole>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<HydratedMention>>", optional)]
     pub mentions: Vec<HydratedMention>,
     pub notifications_muted: Option<bool>,
     pub at_everyone_muted: Option<bool>,
     pub my_metrics: Option<ChatMetrics>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<GroupCanisterThreadDetails>>", optional)]
     pub latest_threads: Vec<GroupCanisterThreadDetails>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<MessageIndex>>", optional)]
     pub unfollowed_threads: Vec<MessageIndex>,
     pub rules_accepted: Option<bool>,
     pub lapsed: Option<bool>,
@@ -185,15 +239,31 @@ pub struct SelectedGroupUpdates {
     pub timestamp: TimestampMillis,
     pub last_updated: TimestampMillis,
     pub latest_event_index: EventIndex,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<GroupMember>>", optional)]
     pub members_added_or_updated: Vec<GroupMember>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<UserId>>", optional)]
     pub members_removed: Vec<UserId>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<InstalledBotDetails>>", optional)]
     pub bots_added_or_updated: Vec<InstalledBotDetails>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<UserId>>", optional)]
     pub bots_removed: Vec<UserId>,
     pub webhooks: Option<Vec<WebhookDetails>>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<UserId>>", optional)]
     pub blocked_users_added: Vec<UserId>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<UserId>>", optional)]
     pub blocked_users_removed: Vec<UserId>,
     pub invited_users: Option<Vec<UserId>>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<MessageIndex>>", optional)]
     pub pinned_messages_added: Vec<MessageIndex>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<MessageIndex>>", optional)]
     pub pinned_messages_removed: Vec<MessageIndex>,
     pub chat_rules: Option<VersionedRules>,
 }
@@ -215,32 +285,65 @@ impl SelectedGroupUpdates {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct ChatMetrics {
-    pub text_messages: u64,
-    pub image_messages: u64,
-    pub video_messages: u64,
-    pub audio_messages: u64,
-    pub file_messages: u64,
-    pub polls: u64,
-    pub poll_votes: u64,
-    pub crypto_messages: u64,
-    pub icp_messages: u64,
-    pub sns1_messages: u64,
-    pub ckbtc_messages: u64,
-    pub chat_messages: u64,
-    pub kinic_messages: u64,
-    pub deleted_messages: u64,
-    pub giphy_messages: u64,
-    pub prize_messages: u64,
-    pub prize_winner_messages: u64,
-    pub replies: u64,
-    pub edits: u64,
-    pub reactions: u64,
-    pub proposals: u64,
-    pub reported_messages: u64,
-    pub message_reminders: u64,
-    pub custom_type_messages: u64,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<u32>", optional)]
+    pub text_messages: u32,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<u32>", optional)]
+    pub image_messages: u32,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<u32>", optional)]
+    pub video_messages: u32,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<u32>", optional)]
+    pub audio_messages: u32,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<u32>", optional)]
+    pub file_messages: u32,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<u32>", optional)]
+    pub polls: u32,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<u32>", optional)]
+    pub poll_votes: u32,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<u32>", optional)]
+    pub crypto_messages: u32,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<u32>", optional)]
+    pub deleted_messages: u32,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<u32>", optional)]
+    pub giphy_messages: u32,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<u32>", optional)]
+    pub prize_messages: u32,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<u32>", optional)]
+    pub prize_winner_messages: u32,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<u32>", optional)]
+    pub replies: u32,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<u32>", optional)]
+    pub edits: u32,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<u32>", optional)]
+    pub reactions: u32,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<u32>", optional)]
+    pub proposals: u32,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<u32>", optional)]
+    pub reported_messages: u32,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<u32>", optional)]
+    pub message_reminders: u32,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<u32>", optional)]
+    pub custom_type_messages: u32,
     pub last_active: TimestampMillis,
 }
 
@@ -296,11 +399,17 @@ pub struct Rules {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Default)]
 pub struct VersionedRules {
     pub text: String,
     pub version: Version,
     pub enabled: bool,
+}
+
+impl VersionedRules {
+    pub fn is_empty(&self) -> bool {
+        self.text.is_empty() && self.version == Version::default() && !self.enabled
+    }
 }
 
 #[ts_export]

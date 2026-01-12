@@ -8,8 +8,8 @@ use pocket_ic::PocketIc;
 use std::ops::Deref;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    Chat, ChatEvent, ChatId, CommunityId, CryptoTransaction, EventIndex, MessageContentInitial, PendingCryptoTransaction,
-    PrizeContentInitial, ReplyContext, TextContent, icrc1,
+    Chat, ChatEvent, ChatId, CommunityId, CryptoTransaction, EventIndex, MessageContentInitial, MultiUserChat,
+    PendingCryptoTransaction, PrizeContentInitial, ReplyContext, TextContent, icrc1,
 };
 use user_canister::mark_read::ChatMessagesRead;
 
@@ -244,8 +244,24 @@ fn pending_prizes_transferred_to_community() {
     let community_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(community_id));
     assert_eq!(community_balance, amount_to_transfer - fee);
 
-    client::community::happy_path::claim_prize(env, user2.principal, community_id, channel_id, message_id);
-    client::community::happy_path::claim_prize(env, user3.principal, community_id, channel_id, message_id);
+    let local_user_index = canister_ids.local_user_index(env, community_id);
+
+    client::local_user_index::happy_path::claim_prize(
+        env,
+        user2.principal,
+        local_user_index,
+        MultiUserChat::Channel(community_id, channel_id),
+        message_id,
+        None,
+    );
+    client::local_user_index::happy_path::claim_prize(
+        env,
+        user3.principal,
+        local_user_index,
+        MultiUserChat::Channel(community_id, channel_id),
+        message_id,
+        None,
+    );
 
     let community_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(community_id));
     assert_eq!(community_balance, 0);

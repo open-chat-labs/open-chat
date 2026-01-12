@@ -1,4 +1,3 @@
-use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use types::MessageIndex;
@@ -7,9 +6,9 @@ use types::MessageIndex;
 /// Their message indexes will not necessarily match with ours, so when we mark a message as read
 /// using our own message index, we then need to convert that into their message index and tell them
 /// that it has been read. Because this map is only used to handle marking their messages as read,
-/// it only stores data for messages sent by them and we can remove entries once they have been
+/// it only stores data for messages sent by them, and we can remove entries once they have been
 /// marked as read.
-#[derive(CandidType, Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct UnreadMessageIndexMap {
     map: BTreeMap<MessageIndex, MessageIndex>,
 }

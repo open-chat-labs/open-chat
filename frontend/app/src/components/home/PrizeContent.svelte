@@ -51,18 +51,26 @@
     let progressWidth = $state(0);
     let mouseEvent = $state<MouseEvent>();
 
-    function claim(e: MouseEvent, authenticated: boolean) {
-        if (content.requiresCaptcha && !authenticated) {
-            mouseEvent = e;
-            showAuthentication = true;
-            return;
+    async function claim(e: MouseEvent, auth: { key: ECDSAKeyIdentity, delegation: DelegationChain } | undefined) {
+        let signInProof: string | undefined = undefined;
+        if (content.requiresCaptcha) {
+            if (auth) {
+                signInProof = await client.getSignInProof(
+                    auth.key,
+                    auth.delegation,
+                );
+            } else {
+                mouseEvent = e;
+                showAuthentication = true;
+                return;
+            }
         }
 
         showAuthentication = false;
         if (e.isTrusted && chatId.kind !== "direct_chat" && !me && userEligible) {
             claimsStore.add(messageId);
             client
-                .claimPrize(chatId, messageId, e)
+                .claimPrize(chatId, messageId, e, signInProof)
                 .then((success) => {
                     if (!success) {
                         toastStore.showFailureToast(i18nKey("prizes.claimFailed"));
@@ -125,13 +133,13 @@
     let spin = $derived(intersecting && !finished && !allClaimed);
     let mirror = $derived(intersecting && !$mobileWidth);
 
-    function reauthenticated(_detail: {
+    function reauthenticated(detail: {
         key: ECDSAKeyIdentity;
         delegation: DelegationChain;
         provider: AuthProvider;
     }) {
         if (mouseEvent !== undefined) {
-            claim(mouseEvent, true);
+            claim(mouseEvent, detail);
         }
     }
 </script>
@@ -276,7 +284,7 @@
                     <SecureButton
                         label={"Prize message clicked"}
                         loading={$claimsStore.has(messageId)}
-                        onClick={(e) => claim(e, false)}
+                        onClick={(e) => claim(e, undefined)}
                         {disabled}
                         hollow
                         ><Translatable

@@ -6,6 +6,89 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `bot_change_role` endpoint ([#8753](https://github.com/open-chat-labs/open-chat/pull/8753))
+- Implement resetting PIN by providing proof of re-authentication ([#8754](https://github.com/open-chat-labs/open-chat/pull/8754))
+
+### Changed
+
+- Apply user re-authentication check when claiming prizes ([#8696](https://github.com/open-chat-labs/open-chat/pull/8696))
+- Sync bot installation updates with `user_index` ([#8731](https://github.com/open-chat-labs/open-chat/pull/8731))
+- When fetching updates prioritise chats with the latest activity ([#8739](https://github.com/open-chat-labs/open-chat/pull/8739))
+- Remove `p256hd_key` from `SubscriptionRemoved` events ([#8746](https://github.com/open-chat-labs/open-chat/pull/8746))
+- Remove old crypto token fields from metrics ([#8758](https://github.com/open-chat-labs/open-chat/pull/8758))
+- Skip serializing fields from chat metrics where value is 0 ([#8760](https://github.com/open-chat-labs/open-chat/pull/8760))
+- Skip serializing chat summary fields which are their default values ([#8769](https://github.com/open-chat-labs/open-chat/pull/8769))
+- Skip serializing chat event fields which are their default values ([#8770](https://github.com/open-chat-labs/open-chat/pull/8770))
+- Simplify handling of bot installation lifecycle events ([#8776](https://github.com/open-chat-labs/open-chat/pull/8776))
+- Skip serializing chat details fields which are their default values ([#8778](https://github.com/open-chat-labs/open-chat/pull/8778))
+
+## [[2.0.1937](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1937-local_user_index)] - 2025-12-22
+
+### Added
+
+- Allow platform operators to block usernames via regex patterns ([#8719](https://github.com/open-chat-labs/open-chat/pull/8719))
+
+### Changed
+
+- Add optional `channel_id` to `bot_invite_user` ([#8724](https://github.com/open-chat-labs/open-chat/pull/8724))
+
+## [[2.0.1934](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1934-local_user_index)] - 2025-12-05
+
+### Changed
+
+- Move `ic_root_key` to `Environment` trait ([#8701](https://github.com/open-chat-labs/open-chat/pull/8701))
+- Pass in RNG seed in init args when creating Group/Community/User ([#8702](https://github.com/open-chat-labs/open-chat/pull/8702))
+- Temporarily stop pushing BotUpdated events to User canisters ([#8715](https://github.com/open-chat-labs/open-chat/pull/8715))
+
+### Removed
+
+- Remove `c2c_diamond_membership_expiry_dates` endpoint ([#8691](https://github.com/open-chat-labs/open-chat/pull/8691))
+
+## [[2.0.1922](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1922-local_user_index)] - 2025-11-26
+
+### Changed
+
+- Add `duration_ms` and `samples` to `AudioContent` ([#8669](https://github.com/open-chat-labs/open-chat/pull/8669))
+- Use the endpoint as unique identifier for notification subscriptions ([#8670](https://github.com/open-chat-labs/open-chat/pull/8670))
+- Use optional `email` on `register_user` as backup auth ([#8682](https://github.com/open-chat-labs/open-chat/pull/8682))
+
+### Removed
+
+- Remove ancient code that deleted empty and dormant accounts ([#8685](https://github.com/open-chat-labs/open-chat/pull/8685))
+
+## [[2.0.1904](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1904-local_user_index)] - 2025-09-24
+
+### Added
+
+- Add claim_prize so that all criteria can be checked on the server ([#8613](https://github.com/open-chat-labs/open-chat/pull/8613))
+
+## [[2.0.1902](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1902-local_user_index)] - 2025-09-12
+
+### Changed
+
+- Keep bot event subscriptions in sync ([#8600](https://github.com/open-chat-labs/open-chat/pull/8600))
+
+## [[2.0.1897](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1897-local_user_index)] - 2025-09-11
+
+### Fix
+
+- Fix User canister init args for new user creation ([#8606](https://github.com/open-chat-labs/open-chat/pull/8606))
+
+## [[2.0.1896](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1896-local_user_index)] - 2025-09-11
+
+### Fix
+
+- Don't trap for unsupported bot data encoding ([#8604](https://github.com/open-chat-labs/open-chat/pull/8604))
+
+## [[2.0.1893](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1893-local_user_index)] - 2025-09-11
+
+### Changed
+
+- Send BotEventWrapper as HTTP body & signature as a header ([#8570](https://github.com/open-chat-labs/open-chat/pull/8570))
+- Remove endpoint for manual bot event subscriptions ([#8594](https://github.com/open-chat-labs/open-chat/pull/8594))
+
 ## [[2.0.1879](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1879-local_user_index)] - 2025-08-27
 
 ### Changed

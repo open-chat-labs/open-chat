@@ -1,5 +1,5 @@
 {
-  "dfx": "0.29.0",
+  "dfx": "0.30.1",
   "canisters": {
     "openchat_installer": {
       "type": "custom",
@@ -134,8 +134,8 @@
     },
     "sign_in_with_email": {
       "type": "custom",
-      "candid": "https://github.com/open-chat-labs/ic-sign-in-with-email/releases/download/v0.13.0/can.did",
-      "wasm": "https://github.com/open-chat-labs/ic-sign-in-with-email/releases/download/v0.13.0/sign_in_with_email.wasm.gz"
+      "candid": "https://github.com/open-chat-labs/ic-sign-in-with-email/releases/download/v0.14.0/can.did",
+      "wasm": "https://github.com/open-chat-labs/ic-sign-in-with-email/releases/download/v0.14.0/sign_in_with_email.wasm.gz"
     },
     "sign_in_with_ethereum": {
       "type": "custom",

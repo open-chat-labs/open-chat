@@ -1,13 +1,13 @@
 use crate::{
     RuntimeState,
-    model::{MAX_AVATAR_SIZE, MAX_COMMANDS, MAX_DESCRIPTION_LEN, user_map::UpdateUserResult},
+    model::{MAX_AVATAR_SIZE, MAX_COMMANDS, MAX_DESCRIPTION_LEN, user_map::UpdateBotResult},
     mutate_state,
 };
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::{BotUpdated, UserIndexEvent};
-use types::OptionUpdate;
+use types::{BotDefinitionUpdate, OptionUpdate};
 use url::Url;
 use user_index_canister::update_bot::{Response::*, *};
 use utils::document::try_parse_data_url;
@@ -23,74 +23,83 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         return err_response;
     }
 
-    let Some(bot) = state.data.users.get_bot(&args.bot_id) else {
-        return BotNotFound;
-    };
-
-    let Some(user) = state.data.users.get_by_user_id(&args.bot_id) else {
-        return BotNotFound;
-    };
-
-    let mut bot = bot.clone();
-    let mut user = user.clone();
-    let now = state.env.now();
-
-    if let Some(principal) = args.principal {
-        user.principal = principal;
-    }
-
-    if let Some(owner_id) = args.owner {
-        bot.owner = owner_id;
-    }
-
-    if let Some(endpoint) = args.endpoint {
-        bot.endpoint = endpoint;
-    }
-
-    match args.avatar {
-        OptionUpdate::NoChange => (),
-        OptionUpdate::SetToNone => {
-            bot.avatar = None;
-            user.avatar_id = None;
-        }
-        OptionUpdate::SetToSome(avatar) => {
-            bot.avatar = try_parse_data_url(&avatar).ok();
-            user.avatar_id = bot.avatar.as_ref().map(|a| a.id);
+    let avatar = match args.avatar {
+        OptionUpdate::NoChange => OptionUpdate::NoChange,
+        OptionUpdate::SetToNone => OptionUpdate::SetToNone,
+        OptionUpdate::SetToSome(id) => {
+            if let Ok(doc) = try_parse_data_url(&id) {
+                OptionUpdate::SetToSome(doc)
+            } else {
+                return AvatarInvalid;
+            }
         }
     };
 
-    if let Some(definition) = args.definition.as_ref() {
-        bot.description = definition.description.clone();
-        bot.commands = definition.commands.clone();
-        bot.autonomous_config = definition.autonomous_config.clone();
+    let mut installation_update = BotDefinitionUpdate {
+        bot_id: args.bot_id,
+        command_permissions: OptionUpdate::NoChange,
+        autonomous_permissions: OptionUpdate::NoChange,
+        default_subscriptions: OptionUpdate::NoChange,
+    };
+
+    if let Some(definition) = args.definition.clone() {
+        let Some(bot) = state.data.users.get_bot(&args.bot_id) else {
+            return BotNotFound;
+        };
+
+        installation_update.command_permissions =
+            OptionUpdate::from(&bot.definition.command_permissions(), definition.command_permissions());
+
+        installation_update.autonomous_permissions = OptionUpdate::from(
+            &bot.definition.autonomous_config.as_ref().map(|c| c.permissions.clone()),
+            definition.autonomous_config.as_ref().map(|c| c.permissions.clone()),
+        );
+
+        installation_update.default_subscriptions = OptionUpdate::from(
+            &bot.definition.default_subscriptions,
+            definition.default_subscriptions.clone(),
+        );
     }
 
-    let owner_id = bot.owner;
-    let endpoint = bot.endpoint.clone();
-
-    bot.last_updated = now;
-
-    match state.data.users.update(user, now, false, Some(bot)) {
-        UpdateUserResult::Success => (),
-        UpdateUserResult::UsernameTaken => unreachable!(),
-        UpdateUserResult::UserNotFound => return BotNotFound,
-        UpdateUserResult::PrincipalTaken => return PrincipalAlreadyUsed,
-    }
+    match state.data.users.update_bot(
+        args.bot_id,
+        args.owner,
+        args.principal,
+        avatar,
+        args.endpoint,
+        args.definition.clone(),
+        state.env.now(),
+    ) {
+        UpdateBotResult::Success => (),
+        UpdateBotResult::UserNotFound => return BotNotFound,
+        UpdateBotResult::PrincipalTaken => return PrincipalAlreadyUsed,
+    };
 
     if let Some(definition) = args.definition {
+        let bot = state.data.users.get_bot(&args.bot_id).unwrap();
+
         state.push_event_to_all_local_user_indexes(
             UserIndexEvent::BotUpdated(BotUpdated {
                 bot_id: args.bot_id,
-                owner_id,
-                endpoint,
+                owner_id: bot.owner,
+                endpoint: bot.endpoint.clone(),
                 definition,
             }),
             None,
         );
+
+        if installation_update.has_updates() {
+            let bot = state.data.users.get_bot(&args.bot_id).unwrap();
+
+            for (location, details) in bot.installations.iter() {
+                state.data.user_index_event_sync_queue.push(
+                    details.local_user_index,
+                    UserIndexEvent::BotUpdateInstallation(*location, installation_update.clone()),
+                );
+            }
+        }
     }
 
-    // TODO: If there are any new commands or the required permissions have increased for any existing commands,
-    // then notify all the group/communities that have added this bot
     Success
 }
 

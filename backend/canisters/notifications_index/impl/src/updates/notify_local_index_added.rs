@@ -32,7 +32,7 @@ fn notify_local_index_added_impl(args: Args, state: &mut RuntimeState) -> Respon
     {
         events.push(NotificationsIndexEvent::SubscriptionAdded(SubscriptionAdded {
             user_id,
-            subscription,
+            subscription: subscription.into(),
         }));
     }
 

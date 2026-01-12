@@ -35,9 +35,6 @@ didc bind ./src/services/dexes/sonic/swaps/candid/can.did -t js > ./src/services
 didc bind ./src/services/icpcoins/candid/can.did -t ts > ./src/services/icpcoins/candid/types.d.ts
 didc bind ./src/services/icpcoins/candid/can.did -t js > ./src/services/icpcoins/candid/idl.js
 
-didc bind ./src/services/icpSwap/candid/can.did -t ts > ./src/services/icpSwap/candid/types.d.ts
-didc bind ./src/services/icpSwap/candid/can.did -t js > ./src/services/icpSwap/candid/idl.js
-
 didc bind ./src/services/icpLedgerIndex/candid/can.did -t ts > ./src/services/icpLedgerIndex/candid/types.d.ts
 didc bind ./src/services/icpLedgerIndex/candid/can.did -t js > ./src/services/icpLedgerIndex/candid/idl.js
 
@@ -49,6 +46,9 @@ didc bind ./src/services/ledgerIndex/candid/can.did -t js > ./src/services/ledge
 
 didc bind ./src/services/nnsGovernance/candid/can.did -t ts > ./src/services/nnsGovernance/candid/types.d.ts
 didc bind ./src/services/nnsGovernance/candid/can.did -t js > ./src/services/nnsGovernance/candid/idl.js
+
+didc bind ./src/services/oneSecForwarder/candid/can.did -t ts > ./src/services/oneSecForwarder/candid/types.d.ts
+didc bind ./src/services/oneSecForwarder/candid/can.did -t js > ./src/services/oneSecForwarder/candid/idl.js
 
 didc bind ./src/services/oneSecMinter/candid/can.did -t ts > ./src/services/oneSecMinter/candid/types.d.ts
 didc bind ./src/services/oneSecMinter/candid/can.did -t js > ./src/services/oneSecMinter/candid/idl.js

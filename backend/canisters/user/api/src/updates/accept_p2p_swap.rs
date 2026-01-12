@@ -1,11 +1,10 @@
-use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{AcceptSwapSuccess, MessageId, MessageIndex, PinNumberWrapper, UserId};
 
 #[ts_export(user, accept_p2p_swap)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub user_id: UserId,
     pub thread_root_message_index: Option<MessageIndex>,
@@ -14,7 +13,7 @@ pub struct Args {
 }
 
 #[ts_export(user, accept_p2p_swap)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(AcceptSwapSuccess),
     Error(OCError),

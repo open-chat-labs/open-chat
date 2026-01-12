@@ -56,6 +56,8 @@ type AudioContent = record {
     caption : opt text;
     mime_type : text;
     blob_reference : opt BlobReference;
+    duration_ms : opt Milliseconds;
+    samples : opt blob;
 };
 
 type Document = record {
@@ -80,34 +82,6 @@ type CanisterWasm = record {
     compressed : bool;
 };
 
-type ChatMetrics = record {
-    text_messages : nat64;
-    image_messages : nat64;
-    video_messages : nat64;
-    audio_messages : nat64;
-    file_messages : nat64;
-    polls : nat64;
-    poll_votes : nat64;
-    crypto_messages : nat64;
-    icp_messages : nat64;
-    sns1_messages : nat64;
-    ckbtc_messages : nat64;
-    chat_messages : nat64;
-    kinic_messages : nat64;
-    deleted_messages : nat64;
-    giphy_messages : nat64;
-    prize_messages : nat64;
-    prize_winner_messages : nat64;
-    replies : nat64;
-    edits : nat64;
-    reactions : nat64;
-    proposals : nat64;
-    reported_messages : nat64;
-    message_reminders : nat64;
-    custom_type_messages : nat64;
-    last_active : TimestampMillis;
-};
-
 type CryptoContent = record {
     recipient : UserId;
     transfer : CryptoTransaction;
@@ -120,42 +94,6 @@ type DeletedContent = record {
 };
 
 type DirectChatCreated = record {};
-
-type DirectChatSummary = record {
-    them : UserId;
-    last_updated : TimestampMillis;
-    latest_message : MessageEventWrapper;
-    latest_event_index : EventIndex;
-    latest_message_index : MessageIndex;
-    date_created : TimestampMillis;
-    read_by_me_up_to : opt MessageIndex;
-    read_by_them_up_to : opt MessageIndex;
-    notifications_muted : bool;
-    metrics : ChatMetrics;
-    my_metrics : ChatMetrics;
-    archived : bool;
-    events_ttl : opt Milliseconds;
-    events_ttl_last_updated : TimestampMillis;
-    video_call_in_progress : opt VideoCall;
-};
-
-type DirectChatSummaryUpdates = record {
-    chat_id : ChatId;
-    last_updated : TimestampMillis;
-    latest_message : opt MessageEventWrapper;
-    latest_event_index : opt EventIndex;
-    latest_message_index : opt MessageIndex;
-    read_by_me_up_to : opt MessageIndex;
-    read_by_them_up_to : opt MessageIndex;
-    notifications_muted : opt bool;
-    updated_events : vec record { nat32; nat64 };
-    metrics : opt ChatMetrics;
-    my_metrics : opt ChatMetrics;
-    archived : opt bool;
-    events_ttl : EventsTimeToLiveUpdate;
-    events_ttl_last_updated : opt TimestampMillis;
-    video_call_in_progress : VideoCallUpdates;
-};
 
 type DirectMessageNotification = record {
     sender : UserId;
@@ -258,260 +196,10 @@ type ChatEventWrapper = record {
     event : ChatEvent;
 };
 
-type GroupChatSummary = record {
-    chat_id : ChatId;
-    local_user_index_canister_id : CanisterId;
-    last_updated : TimestampMillis;
-    name : text;
-    description : text;
-    subtype : opt GroupSubtype;
-    avatar_id : opt nat;
-    is_public : bool;
-    history_visible_to_new_joiners : bool;
-    messages_visible_to_non_members: bool;
-    min_visible_event_index : EventIndex;
-    min_visible_message_index : MessageIndex;
-    latest_message : opt MessageEventWrapper;
-    latest_event_index : EventIndex;
-    latest_message_index : opt MessageIndex;
-    joined : TimestampMillis;
-    read_by_me_up_to : opt MessageIndex;
-    notifications_muted : bool;
-    participant_count : nat32;
-    role : GroupRole;
-    mentions : vec Mention;
-    permissions_v2 : GroupPermissions;
-    metrics : ChatMetrics;
-    my_metrics : ChatMetrics;
-    latest_threads : vec ThreadSyncDetails;
-    archived : bool;
-    frozen : opt FrozenGroupInfo;
-    wasm_version : BuildVersion;
-    date_last_pinned : opt TimestampMillis;
-    date_read_pinned : opt TimestampMillis;
-    events_ttl : opt Milliseconds;
-    events_ttl_last_updated : TimestampMillis;
-    gate_config : opt AccessGateConfig;
-    rules_accepted : bool;
-    video_call_in_progress : opt VideoCall;
-};
-
-type GroupCanisterGroupChatSummary = record {
-    chat_id : ChatId;
-    local_user_index_canister_id : CanisterId;
-    last_updated : TimestampMillis;
-    name : text;
-    description : text;
-    subtype : opt GroupSubtype;
-    avatar_id : opt nat;
-    is_public : bool;
-    history_visible_to_new_joiners : bool;
-    messages_visible_to_non_members: bool;
-    min_visible_event_index : EventIndex;
-    min_visible_message_index : MessageIndex;
-    latest_message : opt MessageEventWrapper;
-    latest_event_index : EventIndex;
-    latest_message_index : opt MessageIndex;
-    joined : TimestampMillis;
-    participant_count : nat32;
-    role : GroupRole;
-    mentions : vec Mention;
-    permissions_v2 : GroupPermissions;
-    notifications_muted : bool;
-    metrics : ChatMetrics;
-    my_metrics : ChatMetrics;
-    latest_threads : vec GroupCanisterThreadDetails;
-    frozen : opt FrozenGroupInfo;
-    wasm_version : BuildVersion;
-    date_last_pinned : opt TimestampMillis;
-    events_ttl : opt Milliseconds;
-    events_ttl_last_updated : TimestampMillis;
-    gate_config : opt AccessGateConfig;
-    rules_accepted : bool;
-    membership : opt GroupMembership;
-    video_call_in_progress : opt VideoCall;
-    verified : bool;
-};
-
-type GroupCanisterGroupChatSummaryUpdates = record {
-    chat_id : ChatId;
-    last_updated : TimestampMillis;
-    name : opt text;
-    description : opt text;
-    subtype : GroupSubtypeUpdate;
-    avatar_id : DocumentIdUpdate;
-    latest_message : opt MessageEventWrapper;
-    latest_event_index : opt EventIndex;
-    latest_message_index : opt MessageIndex;
-    participant_count : opt nat32;
-    role : opt GroupRole;
-    mentions : vec Mention;
-    permissions_v2 : opt GroupPermissions;
-    updated_events : vec record { opt nat32; nat32; nat64 };
-    metrics : opt ChatMetrics;
-    my_metrics : opt ChatMetrics;
-    is_public : opt bool;
-    messages_visible_to_non_members: opt bool;
-    latest_threads : vec GroupCanisterThreadDetails;
-    unfollowed_threads : vec MessageIndex;
-    notifications_muted : opt bool;
-    frozen : FrozenGroupUpdate;
-    wasm_version : opt BuildVersion;
-    date_last_pinned : opt TimestampMillis;
-    events_ttl : EventsTimeToLiveUpdate;
-    events_ttl_last_updated : opt TimestampMillis;
-    gate_config : AccessGateConfigUpdate;
-    rules_accepted : opt bool;
-    membership : opt GroupMembershipUpdates;
-    video_call_in_progress : VideoCallUpdates;
-    any_updates_missed : bool;
-    verified : opt bool;
-};
-
-type CommunityCanisterCommunitySummary = record {
-    community_id : CommunityId;
-    local_user_index_canister_id : CanisterId;
-    name : text;
-    description : text;
-    avatar_id : opt nat;
-    banner_id : opt nat;
-    is_public : bool;
-    member_count : nat32;
-    permissions : CommunityPermissions;
-    frozen : opt FrozenGroupInfo;
-    gate_config : opt AccessGateConfig;
-    primary_language : text;
-    last_updated : TimestampMillis;
-    latest_event_index : EventIndex;
-    channels : vec CommunityCanisterChannelSummary;
-    membership : opt CommunityMembership;
-    user_groups : vec UserGroup;
-    is_invited : opt bool;
-    metrics : ChatMetrics;
-    verified : bool;
-};
-
-type CommunityMembership = record {
-    joined : TimestampMillis;
-    role : CommunityRole;
-    rules_accepted : bool;
-    display_name : opt text;
-    lapsed : bool;
-};
-
 type UserGroup = record {
     user_group_id : nat32;
     name : text;
     members : nat32;
-};
-
-type CommunityCanisterChannelSummary = record {
-    channel_id : ChannelId;
-    last_updated : TimestampMillis;
-    name : text;
-    description : text;
-    subtype : opt GroupSubtype;
-    avatar_id : opt nat;
-    is_public : bool;
-    history_visible_to_new_joiners : bool;
-    messages_visible_to_non_members: bool;
-    min_visible_event_index : EventIndex;
-    min_visible_message_index : MessageIndex;
-    latest_message : opt MessageEventWrapper;
-    latest_message_sender_display_name : opt text;
-    latest_event_index : EventIndex;
-    latest_message_index : opt MessageIndex;
-    member_count : nat32;
-    permissions_v2 : GroupPermissions;
-    metrics : ChatMetrics;
-    date_last_pinned : opt TimestampMillis;
-    events_ttl : opt Milliseconds;
-    events_ttl_last_updated : TimestampMillis;
-    gate_config : opt AccessGateConfig;
-    membership : opt GroupMembership;
-    video_call_in_progress : opt VideoCall;
-    is_invited : opt bool;
-    external_url : opt text;
-};
-
-type GroupMembership = record {
-    joined : TimestampMillis;
-    role : GroupRole;
-    mentions : vec Mention;
-    notifications_muted : bool;
-    my_metrics : ChatMetrics;
-    latest_threads : vec GroupCanisterThreadDetails;
-    rules_accepted : bool;
-    lapsed : bool;
-};
-
-type CommunityCanisterCommunitySummaryUpdates = record {
-    community_id : CommunityId;
-    last_updated : TimestampMillis;
-    name : opt text;
-    description : opt text;
-    avatar_id : DocumentIdUpdate;
-    banner_id : DocumentIdUpdate;
-    is_public : opt bool;
-    member_count : opt nat32;
-    permissions : opt CommunityPermissions;
-    frozen : FrozenGroupUpdate;
-    gate_config : AccessGateConfigUpdate;
-    primary_language : opt text;
-    latest_event_index : opt EventIndex;
-    channels_added : vec CommunityCanisterChannelSummary;
-    channels_updated : vec CommunityCanisterChannelSummaryUpdates;
-    channels_removed : vec ChannelId;
-    membership : opt CommunityMembershipUpdates;
-    user_groups : vec UserGroup;
-    user_groups_deleted : vec nat32;
-    metrics : opt ChatMetrics;
-    verified : opt bool;
-};
-
-type CommunityMembershipUpdates = record {
-    role : opt CommunityRole;
-    rules_accepted : opt bool;
-    display_name : TextUpdate;
-    lapsed : opt bool;
-};
-
-type CommunityCanisterChannelSummaryUpdates = record {
-    channel_id : ChannelId;
-    last_updated : TimestampMillis;
-    name : opt text;
-    description : opt text;
-    subtype : GroupSubtypeUpdate;
-    avatar_id : DocumentIdUpdate;
-    is_public : opt bool;
-    messages_visible_to_non_members: opt bool;
-    latest_message : opt MessageEventWrapper;
-    latest_message_sender_display_name : opt text;
-    latest_event_index : opt EventIndex;
-    latest_message_index : opt MessageIndex;
-    member_count : opt nat32;
-    permissions_v2 : opt GroupPermissions;
-    updated_events : vec record { opt nat32; nat32; nat64 };
-    metrics : opt ChatMetrics;
-    date_last_pinned : opt TimestampMillis;
-    events_ttl : EventsTimeToLiveUpdate;
-    events_ttl_last_updated : opt TimestampMillis;
-    gate_config : AccessGateConfigUpdate;
-    membership : opt GroupMembershipUpdates;
-    video_call_in_progress : VideoCallUpdates;
-    external_url : TextUpdate;
-    any_updates_missed : bool;
-};
-
-type GroupMembershipUpdates = record {
-    role : opt GroupRole;
-    mentions : vec Mention;
-    notifications_muted : opt bool;
-    my_metrics : opt ChatMetrics;
-    latest_threads : vec GroupCanisterThreadDetails;
-    unfollowed_threads : vec MessageIndex;
-    rules_accepted : opt bool;
-    lapsed : opt bool;
 };
 
 type SelectedGroupUpdates = record {
@@ -2295,6 +1983,12 @@ type BotInstallationLocation = variant {
     User : UserId;
 };
 
+type BotInstallationLocationType = variant {
+    Group;
+    Community;
+    User;
+};
+
 type CommunityEventType = variant {
     NameChanged;
     GateUpdated;
@@ -2371,4 +2065,4 @@ type ChatEventType = variant {
     BotUpdated;
 };
 
-type BotDataEncoding = variant { Json; Candid };
+type BotDataEncoding = variant { Json; Candid; MsgPack };

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Container, theme as neon, type Colours } from "component-lib";
+    import { Container, H2, Pixel, Subtitle, theme as neon, type Colours } from "component-lib";
 
     type Section = {
         name: string;
@@ -14,16 +14,19 @@
     const mainColours: ColourCard[] = [
         { name: "Primary", key: "primary" },
         { name: "Secondary", key: "secondary" },
+        { name: "Tertiary", key: "tertiary" },
         { name: "Success", key: "success" },
         { name: "Warning", key: "warning" },
         { name: "Error", key: "error" },
     ];
 
-    const mutedColours: ColourCard[] = [
+    const modifiedColours: ColourCard[] = [
         { name: "Primary Muted", key: "primaryMuted" },
-        { name: "Primary Light", key: "primaryLight" },
         { name: "Secondary Muted", key: "secondaryMuted" },
-        { name: "Warning Muted", key: "warningMuted" },
+        { name: "Tertiary Muted", key: "tertiaryMuted" },
+        { name: "Primary Light", key: "primaryLight" },
+        { name: "Secondary Light", key: "secondaryLight" },
+        { name: "Tertiary Light", key: "tertiaryLight" },
     ];
 
     const typographyColours: ColourCard[] = [
@@ -46,32 +49,32 @@
             name: "Main",
             colours: mainColours,
         },
+        { name: "Modified", colours: modifiedColours },
         { name: "Backgrounds", colours: backgroundColours },
-        { name: "Muted", colours: mutedColours },
         { name: "Typography", colours: typographyColours },
     ];
 </script>
 
 {#snippet card(name: string, code: string, summary: string = code)}
-    <Container gap={"md"} direction={"vertical"}>
+    <Container minWidth={new Pixel(150)} gap={"md"} direction={"vertical"}>
         <div class="name">{name}</div>
         <div class="circle" style={`background: ${code};`}></div>
         <div class="code">{summary}</div>
     </Container>
 {/snippet}
 
-<Container direction={"vertical"}>
-    <h3>Colours / <span class="neon">Neon</span> theme</h3>
+<Container gap={"md"} direction={"vertical"}>
+    <H2>Colours / <span class="neon">Neon</span> theme</H2>
     <Container gap={"lg"} direction={"vertical"}>
         {#each allColours as { name, colours }}
             <Container
                 borderRadius={"lg"}
                 width={{ kind: "hug" }}
-                padding={["lg"]}
+                padding={"lg"}
                 borderWidth={"thin"}
                 direction={"vertical"}>
-                <h3>{name}</h3>
-                <Container gap={"xl"} padding={["lg", "zero", "xxl", "zero"]}>
+                <Subtitle fontWeight={"bold"}>{name}</Subtitle>
+                <Container gap={"xs"} padding={["lg", "zero", "xxl", "zero"]}>
                     {#each colours as { name, key }}
                         {@const colour = neon.colours[key]}
                         {@const code = colour.toString()}
@@ -83,20 +86,20 @@
         <Container
             width={{ kind: "hug" }}
             borderRadius={"lg"}
-            padding={["lg"]}
+            padding={"lg"}
             borderWidth={"thin"}
             direction={"vertical"}>
-            <h3>{"Gradients"}</h3>
+            <Subtitle fontWeight={"semi-bold"}>{"Gradients"}</Subtitle>
             <Container gap={"xl"} padding={["lg", "zero", "xxl", "zero"]}>
                 {@render card(
                     "Primary Gradient",
-                    neon.colours.primaryGradient.toString(),
-                    neon.colours.primaryGradient.summarise(),
+                    neon.colours.gradient.toString(),
+                    neon.colours.gradient.summarise(),
                 )}
                 {@render card(
                     "Primary Gradient Inverted",
-                    neon.colours.primaryGradientInverted.toString(),
-                    neon.colours.primaryGradientInverted.summarise(),
+                    neon.colours.gradientInverted.toString(),
+                    neon.colours.gradientInverted.summarise(),
                 )}
             </Container>
         </Container>
@@ -111,7 +114,7 @@
     .name {
         color: var(--text-secondary);
         align-self: center;
-        text-wrap-mode: nowrap;
+        white-space: nowrap;
     }
 
     .code {

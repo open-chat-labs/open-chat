@@ -51,8 +51,6 @@ pub struct SwapStatusCompleted {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SwapStatusChange {
     pub swap_id: u32,
-    // TODO: Delete this field once communities, groups and users have been released
-    pub created_by: Principal,
     pub offered_by: Principal,
     pub location: P2PSwapLocation,
     pub status: SwapStatus,

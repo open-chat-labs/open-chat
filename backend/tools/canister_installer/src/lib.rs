@@ -47,6 +47,11 @@ async fn install_service_canisters_impl(
         ),
         set_controllers(
             management_canister,
+            &canister_ids.identity,
+            vec![canister_ids.openchat_installer],
+        ),
+        set_controllers(
+            management_canister,
             &canister_ids.local_user_index,
             vec![canister_ids.registry],
         ),
@@ -73,9 +78,9 @@ async fn install_service_canisters_impl(
         registry_canister_id: canister_ids.registry,
         translations_canister_id: canister_ids.translations,
         website_canister_id: canister_ids.website,
+        sign_in_with_email_canister_id: canister_ids.sign_in_with_email,
         nns_governance_canister_id: canister_ids.nns_governance,
         internet_identity_canister_id: canister_ids.nns_internet_identity,
-        ic_root_key: agent.read_root_key(),
         wasm_version: version,
         test_mode,
     };
@@ -91,6 +96,7 @@ async fn install_service_canisters_impl(
     let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex, version);
     let group_index_canister_wasm = get_canister_wasm(CanisterName::GroupIndex, version);
     let notifications_index_canister_wasm = get_canister_wasm(CanisterName::NotificationsIndex, version);
+    let identity_canister_wasm = get_canister_wasm(CanisterName::Identity, version);
 
     futures::future::try_join_all([
         openchat_installer_canister_client::upload_wasm_in_chunks(
@@ -111,6 +117,12 @@ async fn install_service_canisters_impl(
             &notifications_index_canister_wasm.module,
             openchat_installer_canister::CanisterType::NotificationsIndex,
         ),
+        openchat_installer_canister_client::upload_wasm_in_chunks(
+            agent,
+            &canister_ids.openchat_installer,
+            &identity_canister_wasm.module,
+            openchat_installer_canister::CanisterType::Identity,
+        ),
     ])
     .await
     .unwrap();
@@ -122,35 +134,26 @@ async fn install_service_canisters_impl(
             user_index_wasm_hash: sha256(&user_index_canister_wasm.module),
             group_index_wasm_hash: sha256(&group_index_canister_wasm.module),
             notifications_index_wasm_hash: sha256(&notifications_index_canister_wasm.module),
+            identity_wasm_hash: sha256(&identity_canister_wasm.module),
             video_call_operators: video_call_operators.clone(),
             push_service_principals: vec![principal],
+            identity_originating_canisters: vec![
+                canister_ids.nns_internet_identity,
+                canister_ids.sign_in_with_email,
+                canister_ids.sign_in_with_ethereum,
+                canister_ids.sign_in_with_solana,
+                WEBAUTHN_ORIGINATING_CANISTER,
+            ],
+            identity_skip_captcha_whitelist: vec![
+                canister_ids.nns_internet_identity,
+                canister_ids.sign_in_with_email,
+                WEBAUTHN_ORIGINATING_CANISTER,
+            ],
             wasm_version: version,
         },
     )
     .await
     .unwrap();
-
-    let identity_canister_wasm = get_canister_wasm(CanisterName::Identity, version);
-    let identity_init_args = identity_canister::init::Args {
-        governance_principals: vec![principal],
-        user_index_canister_id: canister_ids.user_index,
-        cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
-        originating_canisters: vec![
-            canister_ids.nns_internet_identity,
-            canister_ids.sign_in_with_email,
-            canister_ids.sign_in_with_ethereum,
-            canister_ids.sign_in_with_solana,
-            WEBAUTHN_ORIGINATING_CANISTER,
-        ],
-        skip_captcha_whitelist: vec![
-            canister_ids.nns_internet_identity,
-            canister_ids.sign_in_with_email,
-            WEBAUTHN_ORIGINATING_CANISTER,
-        ],
-        ic_root_key: agent.read_root_key(),
-        wasm_version: version,
-        test_mode,
-    };
 
     let translations_canister_wasm = get_canister_wasm(CanisterName::Translations, version);
     let translations_init_args = translations_canister::init::Args {
@@ -337,12 +340,6 @@ async fn install_service_canisters_impl(
     };
 
     futures::future::join_all([
-        install_wasm(
-            management_canister,
-            &canister_ids.identity,
-            &identity_canister_wasm.module,
-            Encode!(&identity_init_args).unwrap(),
-        ),
         install_wasm(
             management_canister,
             &canister_ids.online_users,

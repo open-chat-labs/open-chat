@@ -1,4 +1,4 @@
-use candid::{CandidType, Deserialize};
+use candid::{CandidType, Deserialize, Principal};
 use serde::Serialize;
 
 mod lifecycle;
@@ -10,7 +10,7 @@ pub use lifecycle::*;
 pub use model::*;
 pub use queries::*;
 use ts_export::ts_export;
-use types::CanisterId;
+use types::{CanisterId, UserId};
 pub use updates::*;
 
 // zzzxd-webau-thnke-yr7oc-cai
@@ -42,4 +42,11 @@ pub struct WebAuthnKey {
     pub origin: String,
     pub cross_platform: bool,
     pub aaguid: [u8; 16],
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+pub struct UserIdentity {
+    pub principal: Principal,
+    pub user_id: Option<UserId>,
+    pub email: Option<String>,
 }

@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Return JWT when user signs in to use as proof of recent sign in ([#8750](https://github.com/open-chat-labs/open-chat/pull/8750))
+
+## [[2.0.1931](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1931-identity)] - 2025-12-04
+
+### Changed
+
+- Move `ic_root_key` to `Environment` trait ([#8701](https://github.com/open-chat-labs/open-chat/pull/8701))
+- Take RNG seed in init args ([#8702](https://github.com/open-chat-labs/open-chat/pull/8702))
+- Initialize Identity canister with the OC secret key ([#8703](https://github.com/open-chat-labs/open-chat/pull/8703))
+- Temporary code to sync existing OC secret key to Identity canister ([#8704](https://github.com/open-chat-labs/open-chat/pull/8704))
+- Disallow creating new identities via SignInWithEth/Sol as can be automated ([#8708](https://github.com/open-chat-labs/open-chat/pull/8708))
+
+## [[2.0.1920](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1920-identity)] - 2025-11-26
+
+### Added
+
+- Add `c2c_set_user_identities` to replace `c2c_set_user_ids` ([#8682](https://github.com/open-chat-labs/open-chat/pull/8682))
+
 ### Changed
 
 - Switch some endpoints over to using common response types ([#8450](https://github.com/open-chat-labs/open-chat/pull/8450))

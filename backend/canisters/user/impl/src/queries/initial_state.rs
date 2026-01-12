@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{RuntimeState, read_state};
+use crate::{RuntimeState, merge_maps, read_state, sorted_pinned};
 use canister_api_macros::query;
 use types::{InstalledBotDetails, UserId};
 use user_canister::initial_state::{Response::*, *};
@@ -14,15 +14,17 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
     let my_user_id: UserId = state.env.canister_id().into();
     let avatar_id = state.data.avatar.value.as_ref().map(|a| a.id);
     let blocked_users = state.data.blocked_users.value.iter().copied().collect();
+    let merged_pinned = sorted_pinned(&merge_maps(
+        &state.data.direct_chats.pinned_chats(),
+        &state.data.group_chats.pinned_chats(),
+    ));
 
     let direct_chats = DirectChatsInitial {
         summaries: state.data.direct_chats.iter().map(|d| d.to_summary(my_user_id)).collect(),
-        pinned: state.data.direct_chats.pinned().to_vec(),
     };
 
     let group_chats = GroupChatsInitial {
         summaries: state.data.group_chats.iter().map(|g| g.to_summary()).collect(),
-        pinned: state.data.group_chats.pinned().to_vec(),
     };
 
     let communities = CommunitiesInitial {
@@ -31,7 +33,7 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
 
     let favourite_chats = FavouriteChatsInitial {
         chats: state.data.favourite_chats.chats().to_vec(),
-        pinned: state.data.favourite_chats.pinned().to_vec(),
+        pinned: sorted_pinned(state.data.favourite_chats.pinned()),
     };
 
     let bots = state
@@ -74,5 +76,6 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
         btc_address: state.data.btc_address.as_ref().map(|a| a.value.clone()),
         one_sec_address: state.data.one_sec_address.as_ref().map(|a| a.value.clone()),
         premium_items: state.data.premium_items.item_ids(),
+        pinned_chats: merged_pinned,
     })
 }

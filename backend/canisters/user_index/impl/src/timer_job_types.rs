@@ -55,13 +55,6 @@ pub struct UnsuspendUser {
     pub user_id: UserId,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
-pub struct JoinUserToGroup {
-    pub user_id: UserId,
-    pub group_id: ChatId,
-    pub attempt: usize,
-}
-
 impl Job for TimerJob {
     fn execute(self) {
         match self {

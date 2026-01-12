@@ -2,10 +2,12 @@ use crate::bitflags::{decode_from_bitflags, encode_as_bitflags};
 use crate::{
     AudioContent, CanisterId, Chat, ChatEventCategory, ChatEventType, ChatId, ChatPermission, CommunityEventCategory,
     CommunityEventType, CommunityId, CommunityOrGroup, CommunityPermission, FileContent, GiphyContent, GroupRole, ImageContent,
-    MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent, TimestampMillis, UserId, VideoContent,
+    MessageContentInitial, MessageId, MessagePermission, OptionUpdate, PollContent, TextContent, TimestampMillis, UserId,
+    VideoContent, is_default,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use serde_bytes::ByteBuf;
 use std::collections::HashSet;
 use std::hash::Hash;
 use ts_export::ts_export;
@@ -18,6 +20,7 @@ pub struct BotDefinition {
     pub autonomous_config: Option<AutonomousConfig>,
     pub default_subscriptions: Option<BotSubscriptions>,
     pub data_encoding: Option<BotDataEncoding>,
+    pub restricted_locations: Option<HashSet<BotInstallationLocationType>>,
 }
 
 #[ts_export]
@@ -103,19 +106,15 @@ pub struct BotCommandOptionChoice<T> {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
 pub struct BotPermissions {
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(default, skip_serializing_if = "is_default")]
     #[ts(as = "Option::<u32>", optional)]
     community: u32,
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(default, skip_serializing_if = "is_default")]
     #[ts(as = "Option::<u32>", optional)]
     chat: u32,
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(default, skip_serializing_if = "is_default")]
     #[ts(as = "Option::<u32>", optional)]
     message: u32,
-}
-
-fn is_zero(value: &u32) -> bool {
-    *value == 0
 }
 
 impl BotPermissions {
@@ -396,7 +395,7 @@ impl BotCommandArgValue {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum BotInstallationLocation {
     Community(CommunityId),
     Group(ChatId),
@@ -419,6 +418,24 @@ impl From<Chat> for BotInstallationLocation {
             Chat::Channel(community_id, _) => BotInstallationLocation::Community(community_id),
             Chat::Group(g) => BotInstallationLocation::Group(g),
             Chat::Direct(u) => BotInstallationLocation::User(u),
+        }
+    }
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum BotInstallationLocationType {
+    Community,
+    Group,
+    User,
+}
+
+impl From<BotInstallationLocation> for BotInstallationLocationType {
+    fn from(value: BotInstallationLocation) -> Self {
+        match value {
+            BotInstallationLocation::Community(_) => BotInstallationLocationType::Community,
+            BotInstallationLocation::Group(_) => BotInstallationLocationType::Group,
+            BotInstallationLocation::User(_) => BotInstallationLocationType::User,
         }
     }
 }
@@ -494,7 +511,7 @@ pub enum BotRegistrationStatus {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
 pub struct BotSubscriptions {
     pub community: HashSet<CommunityEventType>,
     pub chat: HashSet<ChatEventType>,
@@ -545,7 +562,16 @@ impl From<&BotSubscriptions> for BotPermissions {
 
 impl BotDefinition {
     pub fn encoding(&self) -> BotDataEncoding {
-        *self.data_encoding.as_ref().unwrap_or(&BotDataEncoding::Json)
+        *self.data_encoding.as_ref().unwrap_or(&BotDataEncoding::MsgPack)
+    }
+
+    pub fn command_permissions(&self) -> Option<BotPermissions> {
+        let permissions = self
+            .commands
+            .iter()
+            .fold(BotPermissions::default(), |acc, cmd| acc.union(&cmd.permissions));
+
+        if permissions.is_empty() { None } else { Some(permissions) }
     }
 }
 
@@ -553,11 +579,29 @@ impl BotDefinition {
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 pub enum BotDataEncoding {
     #[default]
+    MsgPack,
     Json,
     Candid,
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct CandidPayload {
-    pub payload: String,
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct BotEventPayload {
+    pub data: ByteBuf,
+    pub signature: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BotDefinitionUpdate {
+    pub bot_id: UserId,
+    pub command_permissions: OptionUpdate<BotPermissions>,
+    pub autonomous_permissions: OptionUpdate<BotPermissions>,
+    pub default_subscriptions: OptionUpdate<BotSubscriptions>,
+}
+
+impl BotDefinitionUpdate {
+    pub fn has_updates(&self) -> bool {
+        self.command_permissions.has_update()
+            || self.autonomous_permissions.has_update()
+            || self.default_subscriptions.has_update()
+    }
 }

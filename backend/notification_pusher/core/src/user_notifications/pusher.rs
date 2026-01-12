@@ -1,7 +1,7 @@
 use crate::metrics::write_metrics;
 use crate::{FcmNotification, NotificationToPush, UserNotificationToPush, timestamp};
 use async_channel::{Receiver, Sender};
-use fcm_service::{FcmMessage, FcmService, Target};
+use fcm_service::{AndroidConfig, FcmMessage, FcmService, Target};
 use std::collections::{BinaryHeap, HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
@@ -97,7 +97,7 @@ impl Pusher {
                 WebPushError::EndpointNotValid(_) | WebPushError::InvalidUri | WebPushError::EndpointNotFound(_) => {
                     let _ = self.subscriptions_to_remove_sender.try_send((
                         notification.metadata.recipient,
-                        notification.subscription_info.keys.p256dh.clone(),
+                        notification.subscription_info.endpoint.clone(),
                     ));
                     if let Ok(mut map) = self.invalid_subscriptions.write() {
                         if map.len() > 10000 {
@@ -132,8 +132,13 @@ impl Pusher {
         let fcm_data = fcm_notification_to_push.fcm_data;
         let mut message = FcmMessage::new();
 
+        // Should affect only android devices...
+        let mut android_config = AndroidConfig::new();
+        android_config.set_priority(Some(fcm_service::Priority::High));
+
         message.set_data(fcm_data.map(|d| d.as_data()));
         message.set_target(Target::Token(fcm_notification_to_push.fcm_token.0));
+        message.set_android(Some(android_config));
 
         let res = self.fcm_service.send_notification(message).await;
         if res.is_err() {

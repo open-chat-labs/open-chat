@@ -22,9 +22,9 @@ import type {
     CurrentUserSummary,
     DataContent,
     DiamondMembershipStatus,
+    EventWrapper,
     EventsResponse,
     EventsSuccessResult,
-    EventWrapper,
     ExpiredEventsRange,
     ExpiredMessagesRange,
     ExternalAchievement,
@@ -45,19 +45,19 @@ import type {
     UpdatedEvent,
 } from "openchat-shared";
 import {
-    canRetryMessage,
-    chatIdentifiersEqual,
-    chatIdentifierToString,
     ChatMap,
-    isSuccessfulEventsResponse,
     MAX_EVENTS,
     MAX_MESSAGES,
     MessageContextMap,
     ONE_DAY,
+    canRetryMessage,
+    chatIdentifierToString,
+    chatIdentifiersEqual,
+    isSuccessfulEventsResponse,
     updateCreatedUser,
 } from "openchat-shared";
 
-const CACHE_VERSION = 142;
+const CACHE_VERSION = 145;
 const EARLIEST_SUPPORTED_MIGRATION = 138;
 const MAX_INDEX = 9999999999;
 
@@ -266,6 +266,9 @@ const migrations: Record<number, MigrationFunction<ChatSchema>> = {
     140: clearEvents,
     141: clearChatsAndCurrentUser,
     142: createPublicProfileStore,
+    143: clearCommunityDetailsStore,
+    144: clearChatsStore,
+    145: clearChatsStore,
 };
 
 async function migrate(
@@ -410,10 +413,7 @@ export async function getCachedChats(
     const resolvedDb = await db;
     const chats = await resolvedDb.get("chats", principal.toString());
 
-    if (
-        chats !== undefined &&
-        chats.latestUserCanisterUpdates < BigInt(Date.now() - 30 * ONE_DAY)
-    ) {
+    if (chats && chats.latestUserCanisterUpdates < BigInt(Date.now() - 30 * ONE_DAY)) {
         // If the cache was last updated more than 30 days ago, clear the cache and return undefined
         const storeNames = resolvedDb.objectStoreNames;
         for (let i = 0; i < storeNames.length; i++) {
@@ -956,12 +956,13 @@ export async function updateCachedProposalTallies(
                     event.event.kind === "message" &&
                     event.event.content.kind === "proposal_content"
                 ) {
-                    const updateCache =
+                    const updated =
                         tally.timestamp > event.event.content.proposal.tally.timestamp;
-                    event.event.content.proposal.tally = tally;
+
                     messages.push(event as EventWrapper<Message>);
 
-                    if (updateCache) {
+                    if (updated) {
+                        event.event.content.proposal.tally = tally;
                         return eventStore.put(event, cacheKey);
                     }
                 }
@@ -1138,13 +1139,13 @@ export async function openDbAndGetCachedChats(
     }
 }
 
-// for now this is only used for loading pinned messages so we can ignore the idea of
-// thread root message index, but it might come up later
 export async function loadMessagesByMessageIndex(
     db: Database,
     chatId: ChatIdentifier,
+    threadRootMessageIndex: number | undefined,
     messagesIndexes: Set<number>,
 ): Promise<{ messageEvents: EventWrapper<Message>[]; missing: Set<number> }> {
+    const store = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
     const resolvedDb = await db;
 
     const missing: Set<number> = new Set();
@@ -1152,11 +1153,15 @@ export async function loadMessagesByMessageIndex(
 
     await Promise.all<Message | undefined>(
         [...messagesIndexes].map(async (msgIdx) => {
-            const evt = await resolvedDb.getFromIndex(
-                "chat_events",
-                "messageIdx",
-                createCacheKey({ chatId }, msgIdx),
+            const cacheKey = createCacheKey(
+                {
+                    chatId,
+                    threadRootMessageIndex,
+                },
+                msgIdx,
             );
+
+            const evt = await resolvedDb.getFromIndex(store, "messageIdx", cacheKey);
             if (evt?.kind === "event" && evt.event.kind === "message") {
                 messages.push(evt as EventWrapper<Message>);
                 return evt.event;

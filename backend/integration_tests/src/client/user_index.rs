@@ -20,7 +20,6 @@ generate_update_call!(add_local_user_index_canister);
 generate_update_call!(add_platform_moderator);
 generate_update_call!(add_platform_operator);
 generate_update_call!(assign_platform_moderators_group);
-generate_msgpack_update_call!(delete_user);
 generate_msgpack_update_call!(pay_for_diamond_membership);
 generate_msgpack_update_call!(remove_bot);
 generate_update_call!(remove_platform_moderator);
@@ -38,7 +37,6 @@ generate_msgpack_update_call!(publish_bot);
 generate_msgpack_update_call!(update_bot);
 
 pub mod happy_path {
-    use crate::User;
     use crate::utils::tick_many;
     use candid::Principal;
     use constants::{CHAT_LEDGER_CANISTER_ID, CHUNK_STORE_CHUNK_SIZE, ICP_LEDGER_CANISTER_ID};
@@ -48,7 +46,7 @@ pub mod happy_path {
     use testing::rng::random_principal;
     use types::{
         BotDefinition, BotInstallationLocation, CanisterId, CanisterWasm, Chit, DiamondMembershipFees,
-        DiamondMembershipPlanDuration, Empty, OptionUpdate, SignedDelegation, TimestampMillis, UserId, UserSummary,
+        DiamondMembershipPlanDuration, Empty, OptionUpdate, TimestampMillis, UserId, UserSummary,
     };
     use user_index_canister::ChildCanisterType;
     use user_index_canister::users::UserGroup;
@@ -399,23 +397,6 @@ pub mod happy_path {
         match response {
             user_index_canister::user_registration_canister::Response::Success(local_user_index) => local_user_index,
             response => panic!("'user_registration_canister' error: {response:?}"),
-        }
-    }
-
-    pub fn delete_user(env: &mut PocketIc, user: &User, user_index_canister_id: CanisterId, delegation: SignedDelegation) {
-        let response = super::delete_user(
-            env,
-            user.principal,
-            user_index_canister_id,
-            &user_index_canister::delete_user::Args {
-                user_id: user.user_id,
-                delegation,
-            },
-        );
-
-        match response {
-            user_index_canister::delete_user::Response::Success => {}
-            response => panic!("'delete_user' error: {response:?}"),
         }
     }
 

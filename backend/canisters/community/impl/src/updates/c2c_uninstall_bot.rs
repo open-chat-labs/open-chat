@@ -5,8 +5,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
 use oc_error_codes::OCErrorCode;
-use types::{BotEvent, BotInstallationLocation, BotLifecycleEvent, BotNotification, BotUninstalledEvent, OCResult};
-use types::{BotRemoved, c2c_uninstall_bot::*};
+use types::{BotRemoved, OCResult, c2c_uninstall_bot::*};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -30,15 +29,6 @@ fn c2c_uninstall_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         user_id: args.bot_id,
         removed_by: args.caller,
     })));
-
-    state.push_bot_notification(Some(BotNotification {
-        event: BotEvent::Lifecycle(BotLifecycleEvent::Uninstalled(BotUninstalledEvent {
-            uninstalled_by: args.caller,
-            location: BotInstallationLocation::Community(state.env.canister_id().into()),
-        })),
-        recipients: vec![args.bot_id],
-        timestamp: now,
-    }));
 
     handle_activity_notification(state);
     Ok(())

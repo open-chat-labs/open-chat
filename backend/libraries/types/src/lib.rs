@@ -54,6 +54,7 @@ mod group_member;
 mod group_roles;
 mod http;
 mod idempotency;
+mod identity;
 mod indexed_event;
 mod members;
 mod mention;
@@ -69,6 +70,7 @@ mod phone_number;
 mod pin_number;
 mod polls;
 mod premium_items;
+mod prize_claim_response;
 mod proof_of_uniqueness;
 mod proposals;
 mod range_set;
@@ -138,6 +140,7 @@ pub use group_member::*;
 pub use group_roles::*;
 pub use http::*;
 pub use idempotency::*;
+pub use identity::*;
 pub use indexed_event::*;
 pub use members::*;
 pub use mention::*;
@@ -154,6 +157,7 @@ pub use phone_number::*;
 pub use pin_number::*;
 pub use polls::*;
 pub use premium_items::*;
+pub use prize_claim_response::*;
 pub use proof_of_uniqueness::*;
 pub use proposals::*;
 pub use range_set::*;
@@ -259,7 +263,7 @@ pub enum ResultLowercase<T, E> {
 }
 
 pub fn is_default<T: Default + PartialEq>(value: &T) -> bool {
-    *value == Default::default()
+    *value == T::default()
 }
 
 #[ts_export]

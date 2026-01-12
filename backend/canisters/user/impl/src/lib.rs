@@ -12,14 +12,15 @@ use crate::model::premium_items::PremiumItems;
 use crate::model::token_swaps::TokenSwaps;
 use crate::model::user_canister_event_batch::UserCanisterEventBatch;
 use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
-use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::EventPusher;
-use constants::{DAY_IN_MS, ICP_LEDGER_CANISTER_ID, LIFETIME_DIAMOND_TIMESTAMP, OPENCHAT_BOT_USER_ID};
+use chat_events::{ChatEventInternal, EventPusher};
+use constants::{ICP_LEDGER_CANISTER_ID, LIFETIME_DIAMOND_TIMESTAMP, OPENCHAT_BOT_USER_ID};
 use event_store_types::{Event, EventBuilder};
 use fire_and_forget_handler::FireAndForgetHandler;
+use ic_principal::Principal;
 use installed_bots::InstalledBots;
+use itertools::Itertools;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
@@ -32,14 +33,16 @@ use rand::prelude::StdRng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashSet};
+use std::cmp::Reverse;
+use std::collections::{BTreeMap, HashMap, HashSet};
+use std::hash::Hash;
 use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    Achievement, BotInitiator, BotNotification, BotPermissions, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEvent,
-    ChitEventType, CommunityId, Cycles, DirectChatUserNotificationPayload, Document, IdempotentEnvelope, Milliseconds,
-    Notification, NotifyChit, TimestampMillis, Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim,
-    UserCanisterStreakInsurancePayment, UserId, UserNotification,
+    Achievement, BotDefinitionUpdate, BotInitiator, BotNotification, BotPermissions, BotUpdated, BuildVersion, CanisterId,
+    Chat, ChatId, ChatMetrics, ChitEvent, ChitEventType, CommunityId, Cycles, DirectChatUserNotificationPayload, Document,
+    IdempotentEnvelope, Notification, NotifyChit, TimestampMillis, Timestamped, UniquePersonProof,
+    UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification,
 };
 use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
 use utils::env::Environment;
@@ -61,7 +64,6 @@ mod token_swaps;
 mod updates;
 
 pub const COMMUNITY_CREATION_LIMIT: u32 = 10;
-const SIX_MONTHS: Milliseconds = 183 * DAY_IN_MS;
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
@@ -232,23 +234,6 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
                 self.env.now(),
             );
         }
-    }
-
-    pub fn is_empty_and_dormant(&self) -> bool {
-        if self.data.direct_chats.len() <= 1
-            && self.data.group_chats.len() == 0
-            && self.data.communities.len() == 0
-            && self.data.diamond_membership_expires_at.is_none()
-            && self.data.unique_person_proof.is_none()
-            && self.data.group_chats.removed_len() == 0
-            && self.data.communities.removed_len() == 0
-        {
-            let now = self.env.now();
-            if self.data.user_created + SIX_MONTHS < now && self.data.chit_events.last_updated() + SIX_MONTHS < now {
-                return true;
-            }
-        }
-        false
     }
 
     pub fn push_bot_notification(&mut self, notification: Option<BotNotification>) {
@@ -447,6 +432,14 @@ Your streak is now {new_streak} days!"
         jobs::garbage_collect_stable_memory::start_job_if_required(self);
         true
     }
+
+    pub fn uninstall_bot(&mut self, bot_id: UserId) {
+        let now = self.env.now();
+
+        self.data.bots.remove(bot_id, now);
+
+        self.delete_direct_chat(bot_id, false, now);
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -640,7 +633,9 @@ impl Data {
 
         // Get the granted permissions when initiated by command or API key
         let granted = match initiator {
-            BotInitiator::Command(_) => &bot.permissions,
+            BotInitiator::Command(_) => {
+                &BotPermissions::union(&bot.permissions, &bot.autonomous_permissions.clone().unwrap_or_default())
+            }
             BotInitiator::Autonomous => match bot.autonomous_permissions.as_ref() {
                 Some(permissions) => permissions,
                 None => return false,
@@ -654,6 +649,57 @@ impl Data {
     pub fn flush_pending_events(&mut self) {
         self.user_canister_events_queue.flush();
         self.local_user_index_event_sync_queue.flush();
+    }
+
+    pub fn handle_bot_definition_updated(&mut self, update: BotDefinitionUpdate, now: TimestampMillis) {
+        let bot_id = update.bot_id;
+
+        if self.bots.update_from_definition(update, now) {
+            self.apply_bot_update(bot_id, Some(OPENCHAT_BOT_USER_ID), now);
+        }
+    }
+
+    pub fn update_bot_permissions(
+        &mut self,
+        bot_id: UserId,
+        command_permissions: BotPermissions,
+        autonomous_permissions: Option<BotPermissions>,
+        now: TimestampMillis,
+    ) -> bool {
+        if self
+            .bots
+            .update_permissions(bot_id, command_permissions, autonomous_permissions, now)
+        {
+            self.apply_bot_update(bot_id, None, now);
+            true
+        } else {
+            false
+        }
+    }
+
+    fn apply_bot_update(&mut self, bot_id: UserId, updated_by: Option<UserId>, now: TimestampMillis) {
+        let chat = self.direct_chats.get_mut(&bot_id.into()).unwrap();
+
+        // Push a chat event
+        if let Some(updated_by) = updated_by {
+            chat.events.push_main_event(
+                ChatEventInternal::BotUpdated(Box::new(BotUpdated {
+                    user_id: bot_id,
+                    updated_by,
+                })),
+                now,
+            );
+        }
+
+        // Re-apply event subscriptions given the changes to permissions and/or subscriptions
+        let bot = self.bots.get(&bot_id).unwrap();
+
+        let permissions = &bot.autonomous_permissions.clone().unwrap_or_default();
+        let permitted_categories = permissions.permitted_chat_event_categories_to_read();
+        let subscriptions = bot.default_subscriptions.clone().unwrap_or_default();
+
+        chat.events
+            .subscribe_bot_to_events(bot_id, subscriptions.chat, &permitted_categories);
     }
 }
 
@@ -728,6 +774,24 @@ fn run_regular_jobs() {
 
 fn flush_pending_events() {
     mutate_state(|state| state.data.flush_pending_events());
+}
+
+fn sorted_pinned<T: Clone>(map: &HashMap<T, TimestampMillis>) -> Vec<T> {
+    map.iter()
+        .map(|(key, &ts)| (key.clone(), ts))
+        .sorted_by_key(|(_, ts)| Reverse(*ts))
+        .map(|(key, _)| key)
+        .collect()
+}
+
+fn merge_maps<K, V>(a: &HashMap<K, V>, b: &HashMap<K, V>) -> HashMap<K, V>
+where
+    K: Eq + Hash + Clone,
+    V: Clone,
+{
+    let mut merged = a.clone();
+    merged.extend(b.iter().map(|(k, v)| (k.clone(), v.clone())));
+    merged
 }
 
 #[derive(Serialize, Debug)]

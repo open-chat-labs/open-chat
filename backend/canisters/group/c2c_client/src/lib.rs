@@ -16,11 +16,12 @@ generate_c2c_call!(summary_updates);
 
 // Updates
 generate_c2c_call!(c2c_bot_add_reaction);
+generate_c2c_call!(c2c_bot_change_role);
 generate_c2c_call!(c2c_bot_delete_messages);
 generate_c2c_call!(c2c_bot_invite_users);
 generate_c2c_call!(c2c_bot_remove_user);
 generate_c2c_call!(c2c_bot_send_message);
-generate_c2c_call!(c2c_bot_subscribe_to_events);
+generate_c2c_call!(c2c_claim_prize);
 generate_c2c_call!(c2c_delete_group);
 generate_c2c_call!(c2c_export_group);
 generate_c2c_call!(c2c_export_group_events);

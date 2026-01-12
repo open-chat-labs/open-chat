@@ -1,4 +1,5 @@
 mod add_fcm_token;
+mod mark_subscription_active;
 mod notify_local_index_added;
 mod push_subscription;
 mod remove_subscription;

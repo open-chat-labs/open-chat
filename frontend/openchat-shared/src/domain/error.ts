@@ -238,6 +238,10 @@ export enum ErrorCode {
     LinkingCodeNotFound = 342,
     MaxLinkedIdentitiesLimitReached = 343,
     ItemNotFound = 344,
+    AmountNotSpecified = 345,
+    ProfileBackgroundTooBig = 346,
+    LedgerNotFound = 347,
+    PrizeUserNotElligible = 348,
 
     // InternalError
     C2CError = 500,

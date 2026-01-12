@@ -1,3 +1,4 @@
+import { decodeIcrcAccount } from "@dfinity/ledger-icrc";
 import type { Principal } from "@icp-sdk/core/principal";
 import type {
     AcceptP2PSwapResponse,
@@ -6,14 +7,15 @@ import type {
     AudioContent,
     BlobReference,
     BotDefinition,
+    BotInstallationLocationType,
     BotMessageContext,
+    ChangeRoleResponse,
     ChannelIdentifier,
     ChannelSummary,
     ChatEvent,
     ChatIdentifier,
     ChatMembership,
     ChatPermissions,
-    ClaimPrizeResponse,
     CommandArg,
     CommandDefinition,
     CommandParam,
@@ -63,6 +65,7 @@ import type {
     MessageReminderCreatedContent,
     Metrics,
     MultiUserChatIdentifier,
+    NumberArray32,
     OCError,
     P2PSwapContent,
     P2PSwapContentInitial,
@@ -108,7 +111,7 @@ import type {
     VideoCallPresence,
     VideoCallType,
     VideoContent,
-    WebhookDetails,
+    WebhookDetails, VersionedRules,
 } from "openchat-shared";
 import {
     CommonResponses,
@@ -135,6 +138,7 @@ import type {
     AcceptSwapSuccess,
     AccountICRC1,
     BotDefinition as ApiBotDefinition,
+    BotInstallationLocationType as ApiBotInstallationLocationType,
     BotCommandDefinition as ApiCommandDefinition,
     BotCommandParam as ApiCommandParam,
     BotCommandParamType as ApiCommandParamType,
@@ -143,7 +147,6 @@ import type {
     WebhookDetails as ApiWebhookDetails,
     BotCommandArg,
     BotDataEncoding,
-    CommunityClaimPrizeResponse,
     CommunityCreateChannelSuccessResult,
     CommunityDeletedMessageSuccessResult,
     CommunityEnableInviteCodeSuccessResult,
@@ -155,7 +158,6 @@ import type {
     CommunityThreadPreviewsSuccessResult,
     CommunityUndeleteMessagesSuccessResult,
     CommunityUpdateChannelSuccessResult,
-    GroupClaimPrizeResponse,
     GroupDeletedMessageSuccessResult,
     GroupEnableInviteCodeSuccessResult,
     GroupInviteCodeSuccessResult,
@@ -180,6 +182,8 @@ import type {
     ChatMetrics as TChatMetrics,
     CommunityCanisterChannelSummary as TCommunityCanisterChannelSummary,
     CommunityCanisterCommunitySummary as TCommunityCanisterCommunitySummary,
+    CommunityChangeChannelRoleResponse as TCommunityChangeChannelRoleResponse,
+    CommunityChangeRoleResponse as TCommunityChangeRoleResponse,
     CommunityPermissionRole as TCommunityPermissionRole,
     CommunityPermissions as TCommunityPermissions,
     CommunityRole as TCommunityRole,
@@ -199,6 +203,7 @@ import type {
     GiphyImageVariant as TGiphyImageVariant,
     GroupCanisterGroupChatSummary as TGroupCanisterGroupChatSummary,
     GroupCanisterThreadDetails as TGroupCanisterThreadDetails,
+    GroupChangeRoleResponse as TGroupChangeRoleResponse,
     GroupMember as TGroupMember,
     GroupMembership as TGroupMembership,
     GroupPermissionRole as TGroupPermissionRole,
@@ -268,7 +273,6 @@ import {
 } from "../../utils/mapping";
 import type { ApiPrincipal } from "../index";
 import { ensureReplicaIsUpToDate } from "./replicaUpToDateChecker";
-
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
 export async function getEventsSuccess(
@@ -287,8 +291,8 @@ export async function getEventsSuccess(
     return (
         error ?? {
             events: value.events.map(eventWrapper),
-            expiredEventRanges: value.expired_event_ranges.map(expiredEventsRange),
-            expiredMessageRanges: value.expired_message_ranges.map(expiredMessagesRange),
+            expiredEventRanges: value.expired_event_ranges?.map(expiredEventsRange) ?? [],
+            expiredMessageRanges: value.expired_message_ranges?.map(expiredMessagesRange) ?? [],
             latestEventIndex: value.latest_event_index,
         }
     );
@@ -543,13 +547,13 @@ export function message(value: TMessage): Message {
         repliesTo: mapOptional(value.replies_to, replyContext),
         messageId: toBigInt64(value.message_id),
         messageIndex: value.message_index,
-        reactions: reactions(value.reactions),
-        tips: tips(value.tips),
-        edited: value.edited,
-        forwarded: value.forwarded,
+        reactions: reactions(value.reactions ?? []),
+        tips: tips(value.tips ?? []),
+        edited: value.edited ?? false,
+        forwarded: value.forwarded ?? false,
         deleted: content.kind === "deleted_content",
         thread: mapOptional(value.thread_summary, threadSummary),
-        blockLevelMarkdown: value.block_level_markdown,
+        blockLevelMarkdown: value.block_level_markdown ?? false,
         senderContext: mapOptional(value.sender_context, senderContext),
     };
 }
@@ -1420,34 +1424,32 @@ export function permissionRole(value: TGroupPermissionRole): PermissionRole {
 
 export function chatMetrics(value: TChatMetrics): Metrics {
     return {
-        audioMessages: Number(value.audio_messages),
-        edits: Number(value.edits),
-        icpMessages: Number(value.icp_messages),
-        sns1Messages: Number(value.sns1_messages),
-        ckbtcMessages: Number(value.ckbtc_messages),
-        giphyMessages: Number(value.giphy_messages),
-        deletedMessages: Number(value.deleted_messages),
-        fileMessages: Number(value.file_messages),
-        pollVotes: Number(value.poll_votes),
-        textMessages: Number(value.text_messages),
-        imageMessages: Number(value.image_messages),
-        replies: Number(value.replies),
-        videoMessages: Number(value.video_messages),
-        polls: Number(value.polls),
-        reactions: Number(value.reactions),
-        reportedMessages: Number(value.reported_messages),
+        audioMessages: value.audio_messages ?? 0,
+        edits: value.edits ?? 0,
+        cryptoMessages: value.crypto_messages ?? 0,
+        giphyMessages: value.giphy_messages ?? 0,
+        deletedMessages: value.deleted_messages ?? 0,
+        fileMessages: value.file_messages ?? 0,
+        pollVotes: value.poll_votes ?? 0,
+        textMessages: value.text_messages ?? 0,
+        imageMessages: value.image_messages ?? 0,
+        replies: value.replies ?? 0,
+        videoMessages: value.video_messages ?? 0,
+        polls: value.polls ?? 0,
+        reactions: value.reactions ?? 0,
+        reportedMessages: value.reported_messages ?? 0,
     };
 }
 
-export function memberRole(value: TGroupRole | TCommunityRole): MemberRole {
+export function memberRole(value: TGroupRole | TCommunityRole | undefined): MemberRole {
+    if (value === undefined || value === "Participant" || value === "Member") {
+        return ROLE_MEMBER;
+    }
     if (value === "Admin") {
         return ROLE_ADMIN;
     }
     if (value === "Moderator") {
         return ROLE_MODERATOR;
-    }
-    if (value === "Participant" || value === "Member") {
-        return ROLE_MEMBER;
     }
     if (value === "Owner") {
         return ROLE_OWNER;
@@ -2008,40 +2010,7 @@ export function apiPendingCryptocurrencyWithdrawal(
                     ledger: principalStringToBytes(domain.ledger),
                     token_symbol: domain.token,
                     to: {
-                        Account: [...hexStringToBytes(domain.to)] as [
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                        ],
+                        Account: [...hexStringToBytes(domain.to)] as NumberArray32,
                     },
                     amount: apiICP(domain.amountE8s),
                     fee: undefined,
@@ -2057,7 +2026,7 @@ export function apiPendingCryptocurrencyWithdrawal(
                 ICRC1: {
                     ledger: principalStringToBytes(domain.ledger),
                     token_symbol: domain.token,
-                    to: principalToIcrcAccount(domain.to),
+                    to: addressToIcrcAccount(domain.to),
                     amount: domain.amountE8s,
                     fee: domain.feeE8s ?? BigInt(0),
                     memo: mapOptional(domain.memo, bigintToBytes),
@@ -2110,10 +2079,10 @@ export function groupChatSummary(value: TGroupCanisterGroupChatSummary): GroupCh
         latestMessage,
         name: value.name,
         description: value.description,
-        public: value.is_public,
-        historyVisible: value.history_visible_to_new_joiners,
-        minVisibleEventIndex: value.min_visible_event_index,
-        minVisibleMessageIndex: value.min_visible_message_index,
+        public: value.is_public ?? false,
+        historyVisible: value.history_visible_to_new_joiners ?? false,
+        minVisibleEventIndex: value.min_visible_event_index ?? 0,
+        minVisibleMessageIndex: value.min_visible_message_index ?? 0,
         latestEventIndex: value.latest_event_index,
         latestMessageIndex: value.latest_message_index,
         lastUpdated: value.last_updated,
@@ -2135,12 +2104,12 @@ export function groupChatSummary(value: TGroupCanisterGroupChatSummary): GroupCh
         },
         level: "group",
         eventsTTL: value.events_ttl,
-        eventsTtlLastUpdated: value.events_ttl_last_updated,
+        eventsTtlLastUpdated: value.events_ttl_last_updated ?? BigInt(0),
         membership: mapGroupMembership(value.membership, latestMessage),
         localUserIndex: principalBytesToString(value.local_user_index_canister_id),
         isInvited: false, // this is only applicable when we are not a member
-        messagesVisibleToNonMembers: value.messages_visible_to_non_members,
-        verified: value.verified,
+        messagesVisibleToNonMembers: value.messages_visible_to_non_members ?? false,
+        verified: value.verified ?? false,
     };
 }
 
@@ -2156,13 +2125,13 @@ function mapGroupMembership(
         joined: value.joined,
         role: memberRole(value.role),
         mentions: mentions(value.mentions),
-        latestThreads: value.latest_threads.map(threadSyncDetails),
+        latestThreads: value.latest_threads?.map(threadSyncDetails) ?? [],
         myMetrics: chatMetrics(value.my_metrics),
-        notificationsMuted: value.notifications_muted,
-        atEveryoneMuted: value.at_everyone_muted,
+        notificationsMuted: value.notifications_muted ?? false,
+        atEveryoneMuted: value.at_everyone_muted ?? false,
         readByMeUpTo: latestMessage?.event.messageIndex,
         archived: false,
-        rulesAccepted: value.rules_accepted,
+        rulesAccepted: value.rules_accepted ?? false,
         lapsed: value.lapsed ?? false,
     };
 }
@@ -2175,7 +2144,7 @@ export function communitySummary(value: TCommunityCanisterCommunitySummary): Com
         id: { kind: "community", communityId },
         name: value.name,
         description: value.description,
-        public: value.is_public,
+        public: value.is_public ?? false,
         historyVisible: false,
         latestEventIndex: value.latest_event_index,
         lastUpdated: value.last_updated,
@@ -2212,10 +2181,10 @@ export function communitySummary(value: TCommunityCanisterCommunitySummary): Com
         },
         channels: value.channels.map((c) => communityChannelSummary(c, communityId)),
         primaryLanguage: value.primary_language,
-        userGroups: new Map(value.user_groups.map(userGroup)),
+        userGroups: new Map(value.user_groups?.map(userGroup) ?? []),
         localUserIndex,
         isInvited: value.is_invited ?? false,
-        verified: value.verified,
+        verified: value.verified ?? false,
     };
 }
 
@@ -2242,10 +2211,10 @@ export function communityChannelSummary(
         latestMessage,
         name: value.name,
         description: value.description,
-        public: value.is_public,
-        historyVisible: value.history_visible_to_new_joiners,
-        minVisibleEventIndex: value.min_visible_event_index,
-        minVisibleMessageIndex: value.min_visible_message_index,
+        public: value.is_public ?? false,
+        historyVisible: value.history_visible_to_new_joiners ?? false,
+        minVisibleEventIndex: value.min_visible_event_index ?? 0,
+        minVisibleMessageIndex: value.min_visible_message_index ?? 0,
         latestEventIndex: value.latest_event_index,
         latestMessageIndex: value.latest_message_index,
         lastUpdated: value.last_updated,
@@ -2266,11 +2235,11 @@ export function communityChannelSummary(
         },
         level: "channel",
         eventsTTL: value.events_ttl,
-        eventsTtlLastUpdated: value.events_ttl_last_updated,
+        eventsTtlLastUpdated: value.events_ttl_last_updated ?? BigInt(0),
         videoCallInProgress: mapOptional(value.video_call_in_progress, videoCallInProgress),
         membership: mapGroupMembership(value.membership, latestMessage),
         isInvited: value.is_invited ?? false,
-        messagesVisibleToNonMembers: value.messages_visible_to_non_members,
+        messagesVisibleToNonMembers: value.messages_visible_to_non_members ?? false,
         externalUrl: value.external_url,
     };
 }
@@ -2390,8 +2359,8 @@ export function mention(value: TMention): Mention {
     };
 }
 
-export function mentions(value: TMention[]): Mention[] {
-    return value.filter((m) => m.thread_root_message_index === undefined).map(mention);
+export function mentions(value: TMention[] | undefined): Mention[] {
+    return (value ?? []).filter((m) => m.thread_root_message_index === undefined).map(mention);
 }
 
 export function expiredEventsRange([start, end]: [number, number]): ExpiredEventsRange {
@@ -2475,15 +2444,14 @@ export function groupDetailsSuccess(
     const bots = "bots" in value ? value.bots : [];
     return {
         members,
-        blockedUsers: new Set(value.blocked_users.map(principalBytesToString)),
-        invitedUsers: new Set(value.invited_users.map(principalBytesToString)),
-        pinnedMessages: new Set(value.pinned_messages),
-        rules: value.chat_rules,
+        blockedUsers: new Set(value.blocked_users?.map(principalBytesToString) ?? []),
+        invitedUsers: new Set(value.invited_users?.map(principalBytesToString) ?? []),
+        pinnedMessages: new Set(value.pinned_messages ?? []),
+        rules: value.chat_rules ?? emptyRules(),
         timestamp: value.timestamp,
-        bots: bots.map(installedBotDetails),
-        webhooks: value.webhooks.map((v) =>
-            webhookDetails(v, blobUrlPattern, canisterId, channelId),
-        ),
+        bots: bots?.map(installedBotDetails) ?? [],
+        webhooks: value.webhooks?.map((v) =>
+            webhookDetails(v, blobUrlPattern, canisterId, channelId)) ?? [],
     };
 }
 
@@ -2497,13 +2465,13 @@ export function groupDetailsUpdatesResponse(
         if ("Success" in value) {
             return {
                 kind: "success",
-                membersAddedOrUpdated: value.Success.members_added_or_updated.map(member),
-                membersRemoved: new Set(value.Success.members_removed.map(principalBytesToString)),
+                membersAddedOrUpdated: value.Success.members_added_or_updated?.map(member) ?? [],
+                membersRemoved: new Set(value.Success.members_removed?.map(principalBytesToString) ?? []),
                 blockedUsersAdded: new Set(
-                    value.Success.blocked_users_added.map(principalBytesToString),
+                    value.Success.blocked_users_added?.map(principalBytesToString) ?? [],
                 ),
                 blockedUsersRemoved: new Set(
-                    value.Success.blocked_users_removed.map(principalBytesToString),
+                    value.Success.blocked_users_removed?.map(principalBytesToString) ?? [],
                 ),
                 pinnedMessagesAdded: new Set(value.Success.pinned_messages_added),
                 pinnedMessagesRemoved: new Set(value.Success.pinned_messages_removed),
@@ -2513,8 +2481,8 @@ export function groupDetailsUpdatesResponse(
                     (invited_users) => new Set(invited_users.map(principalBytesToString)),
                 ),
                 timestamp: value.Success.timestamp,
-                botsAddedOrUpdated: value.Success.bots_added_or_updated.map(installedBotDetails),
-                botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
+                botsAddedOrUpdated: value.Success.bots_added_or_updated?.map(installedBotDetails) ?? [],
+                botsRemoved: new Set(value.Success.bots_removed?.map(principalBytesToString) ?? []),
                 webhooks: mapOptional(value.Success.webhooks, (whs) =>
                     whs.map((v) => webhookDetails(v, blobUrlPattern, canisterId, channelId)),
                 ),
@@ -2535,7 +2503,7 @@ export function member(value: TGroupMember): Member {
         role: memberRole(value.role),
         userId: principalBytesToString(value.user_id),
         displayName: undefined,
-        lapsed: value.lapsed,
+        lapsed: value.lapsed ?? false,
     };
 }
 
@@ -2657,18 +2625,6 @@ export function enableOrResetInviteCodeSuccess(
         kind: "success",
         code: codeToText(value.code),
     };
-}
-
-export function claimPrizeResponse(
-    value: GroupClaimPrizeResponse | CommunityClaimPrizeResponse,
-): ClaimPrizeResponse {
-    if (typeof value === "object") {
-        if ("TransferFailed" in value || "FailedAfterTransfer" in value) {
-            console.warn("ClaimPrize failed with ", value);
-            return CommonResponses.failure();
-        }
-    }
-    return unitResult(value);
 }
 
 export function acceptP2PSwapSuccess(value: AcceptSwapSuccess): AcceptP2PSwapResponse {
@@ -2797,6 +2753,7 @@ export function externalBotDefinition(value: ApiBotDefinition): BotDefinition {
             chat: s.chat,
         })),
         dataEncoding: mapOptional(value.data_encoding, dataEncoding),
+        restrictedLocations: mapOptional(value.restricted_locations, restrictedLocations),
     };
 }
 
@@ -2812,8 +2769,32 @@ export function externalBotCommand(command: ApiCommandDefinition): CommandDefini
     };
 }
 
-export function dataEncoding(data_encoding: BotDataEncoding): "json" | "candid" {
-    return data_encoding === "Candid" ? "candid" : "json";
+export function dataEncoding(data_encoding: BotDataEncoding): "json" | "candid" | "msgpack" {
+    switch (data_encoding) {
+        case "Json":
+            return "json";
+        case "Candid":
+            return "candid";
+        case "MsgPack":
+            return "msgpack";
+    }
+}
+
+export function restrictedLocations(
+    locations: ApiBotInstallationLocationType[],
+): BotInstallationLocationType[] {
+    return locations.map((location) => {
+        switch (location) {
+            case "Community":
+                return "community";
+            case "Group":
+                return "group_chat";
+            case "User":
+                return "direct_chat";
+            default:
+                throw new Error(`Unknown location type: ${location}`);
+        }
+    });
 }
 
 export function externalBotParam(param: ApiCommandParam): CommandParam {
@@ -2868,6 +2849,18 @@ export function principalToIcrcAccount(principal: string): AccountICRC1 {
     return {
         owner: principalStringToBytes(principal),
         subaccount: undefined,
+    };
+}
+
+export function addressToIcrcAccount(address: string): AccountICRC1 {
+    const icrcAccount = decodeIcrcAccount(address);
+
+    return {
+        owner: icrcAccount.owner.toUint8Array(),
+        subaccount:
+            icrcAccount?.subaccount !== undefined
+                ? ([...icrcAccount.subaccount] as NumberArray32)
+                : undefined,
     };
 }
 
@@ -2927,3 +2920,31 @@ export function videoCallInProgress(value: VideoCall): VideoCallInProgress {
         joinedByCurrentUser: value.joined_by_current_user,
     };
 }
+
+export function changeRoleResult(
+    value:
+        | TCommunityChangeRoleResponse
+        | TCommunityChangeChannelRoleResponse
+        | TGroupChangeRoleResponse,
+): ChangeRoleResponse {
+    if (value === "Success") {
+        return CommonResponses.success();
+    }
+
+    // Handle PartialSuccess by returning the first error found
+    if ("PartialSuccess" in value) {
+        for (const error of Object.values(value.PartialSuccess as Record<string, TOCError>)) {
+            return mapResult({ Error: error }, CommonResponses.success);
+        }
+        return CommonResponses.success();
+    }
+
+    return mapResult(value, CommonResponses.success);
+}
+ function emptyRules(): VersionedRules {
+    return {
+        text: "",
+        enabled: false,
+        version: 0,
+    };
+ }

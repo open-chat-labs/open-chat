@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { scrollLimits } from "component-lib";
     import {
         allUsersStore,
         type BotMatch,
@@ -14,7 +15,6 @@
         emptyCombinedUnreadCounts,
         type GroupMatch,
         type GroupSearchResponse,
-        iconSize,
         mobileWidth,
         numberOfThreadsStore,
         OpenChat,
@@ -25,19 +25,15 @@
         selectedChatIdStore,
         selectedCommunitySummaryStore,
         unreadCommunityChannelCountsStore,
-        unreadDirectCountsStore,
+        unreadDirectAndGroupCountsStore,
         unreadFavouriteCountsStore,
-        unreadGroupCountsStore,
         type UserSummary,
     } from "openchat-client";
     import page from "page";
     import { getContext, tick } from "svelte";
-    import Close from "svelte-material-icons/Close.svelte";
-    import Compass from "svelte-material-icons/CompassOutline.svelte";
     import { menuCloser } from "../../actions/closeMenu";
     import { i18nKey } from "../../i18n/i18n";
     import { chatListView } from "../../stores/chatListView";
-    import { exploreGroupsDismissed } from "../../stores/settings";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import FilteredUsername from "../FilteredUsername.svelte";
@@ -46,9 +42,8 @@
     import ChatListSectionButton from "./ChatListSectionButton.svelte";
     import ChatSummary from "./ChatSummary.svelte";
     import BrowseChannels from "./communities/details/BrowseChannels.svelte";
-    import DirectChatsHeader from "./communities/DirectChatsHeader.svelte";
+    import DirectAndGroupChatsHeader from "./communities/DirectAndGroupChatsHeader.svelte";
     import FavouriteChatsHeader from "./communities/FavouriteChatsHeader.svelte";
-    import GroupChatsHeader from "./communities/GroupChatsHeader.svelte";
     import PreviewWrapper from "./communities/PreviewWrapper.svelte";
     import SelectedCommunityHeader from "./communities/SelectedCommunityHeader.svelte";
     import Badges from "./profile/Badges.svelte";
@@ -56,6 +51,7 @@
     import ThreadPreviews from "./thread/ThreadPreviews.svelte";
     import ActiveCallSummary from "./video/ActiveCallSummary.svelte";
 
+    const TO_SHOW = 30;
     const client = getContext<OpenChat>("client");
 
     let groupSearchResults: Promise<GroupSearchResponse> | undefined = $state(undefined);
@@ -63,22 +59,17 @@
         $state(undefined);
     let searchTerm: string = $state("");
     let searchResultsAvailable: boolean = $state(false);
-    let chatsScrollTop = $state<number | undefined>();
     let previousScope: ChatListScope = $chatListScopeStore;
     let previousView: "chats" | "threads" = $chatListView;
+    let chatsToShow = $state(TO_SHOW);
+    let rendering = $state(false);
 
-    // TODO this doesn't work properly and I think it's to do with the way
-    // effect dependencies are worked out when you have conditional code
-    // Probably can just be done in a more explicit way but it's not urgent
-    $effect.pre(() => {
-        if (
-            chatListScopesEqual(previousScope, $chatListScopeStore) &&
-            $chatListView !== "chats" &&
-            previousView === "chats"
-        ) {
-            chatsScrollTop = chatListElement?.scrollTop;
-        }
-    });
+    function insideBottom() {
+        if (rendering) return;
+        rendering = true;
+        chatsToShow = Math.min(allMatchingChats.length, chatsToShow + TO_SHOW / 2);
+        tick().then(() => (rendering = false));
+    }
 
     $effect(() => {
         if (!chatListScopesEqual(previousScope, $chatListScopeStore)) {
@@ -105,29 +96,6 @@
         }
     }
 
-    function chatMatchesSearch(chat: ChatSummaryType): boolean {
-        if (chat.kind === "group_chat" || chat.kind === "channel") {
-            return (
-                chat.name.toLowerCase().indexOf(lowercaseSearch) >= 0 ||
-                chat.description.toLowerCase().indexOf(lowercaseSearch) >= 0
-            );
-        }
-
-        if (chat.kind === "direct_chat") {
-            const user = $allUsersStore.get(chat.them.userId);
-            if (user !== undefined) {
-                return (
-                    user.username.toLowerCase().indexOf(lowercaseSearch) >= 0 ||
-                    (user.displayName !== undefined &&
-                        user.displayName.toLowerCase().indexOf(lowercaseSearch) >= 0)
-                );
-            } else {
-                return false;
-            }
-        }
-        return false;
-    }
-
     function chatWith(userId: string): void {
         publish("chatWith", { kind: "direct_chat", userId });
     }
@@ -147,8 +115,6 @@
         searchTerm = "";
     }
 
-    let chatListElement: HTMLElement | undefined;
-
     function setView(view: "chats" | "threads"): void {
         chatListView.set(view);
 
@@ -160,18 +126,12 @@
     function onScopeChanged() {
         previousScope = $chatListScopeStore;
         chatListView.set("chats");
-        chatsScrollTop = 0;
         onViewChanged();
     }
 
     function onViewChanged() {
         previousView = $chatListView;
-        const scrollTop = previousView === "chats" ? chatsScrollTop ?? 0 : 0;
-        tick().then(() => {
-            if (chatListElement !== undefined) {
-                chatListElement.scrollTop = scrollTop;
-            }
-        });
+        chatsToShow = TO_SHOW;
     }
 
     function userOrBotKey(match: UserSummary | BotMatch): string {
@@ -190,19 +150,11 @@
     );
     let user = $derived($allUsersStore.get($currentUserIdStore));
     let lowercaseSearch = $derived(searchTerm.toLowerCase());
-    let showExploreGroups = $derived(
-        ($chatListScopeStore.kind === "none" || $chatListScopeStore.kind === "group_chat") &&
-            !$exploreGroupsDismissed &&
-            !searchResultsAvailable,
-    );
-    let showBrowseChannnels = $derived($chatListScopeStore.kind === "community");
+    let showBrowseChannels = $derived($chatListScopeStore.kind === "community");
     let unreadCounts = $derived.by(() => {
         switch ($chatListScopeStore.kind) {
-            case "group_chat": {
-                return $unreadGroupCountsStore;
-            }
-            case "direct_chat": {
-                return $unreadDirectCountsStore;
+            case "chats": {
+                return $unreadDirectAndGroupCountsStore;
             }
             case "favourite": {
                 return $unreadFavouriteCountsStore;
@@ -228,21 +180,20 @@
             chatListView.set("chats");
         }
     });
-    let chats = $derived(
+    let allMatchingChats = $derived(
         searchTerm !== ""
-            ? $chatSummariesListStore.filter(chatMatchesSearch)
+            ? $chatSummariesListStore.filter((c) => client.chatMatchesSearch(lowercaseSearch, c))
             : $chatSummariesListStore,
     );
+    let chats = $derived(allMatchingChats.slice(0, chatsToShow));
 </script>
 
 <!-- svelte-ignore missing_declaration -->
 {#if user}
-    {#if $chatListScopeStore.kind === "favourite"}
+    {#if $chatListScopeStore.kind === "chats"}
+        <DirectAndGroupChatsHeader {canMarkAllRead} />
+    {:else if $chatListScopeStore.kind === "favourite"}
         <FavouriteChatsHeader {canMarkAllRead} />
-    {:else if $chatListScopeStore.kind === "group_chat"}
-        <GroupChatsHeader {canMarkAllRead} />
-    {:else if $chatListScopeStore.kind === "direct_chat"}
-        <DirectChatsHeader {canMarkAllRead} />
     {:else if $selectedCommunitySummaryStore && $chatListScopeStore.kind === "community"}
         <SelectedCommunityHeader community={$selectedCommunitySummaryStore} {canMarkAllRead} />
     {/if}
@@ -268,16 +219,23 @@
         </div>
     {/if}
 
-    <div use:menuCloser bind:this={chatListElement} class="body">
+    <div class="body">
         {#if $chatListView === "threads"}
             <ThreadPreviews />
         {:else}
-            <div class="chat-summaries">
+            <div
+                use:scrollLimits={{
+                    threshold: 200,
+                    onEnd: insideBottom,
+                }}
+                use:menuCloser
+                class="chat-summaries">
                 {#if searchResultsAvailable && chats.length > 0}
                     <h3 class="search-subtitle">
                         <Translatable resourceKey={i18nKey("yourChats")} />
                     </h3>
                 {/if}
+
                 {#each chats as chatSummary (chatIdentifierToString(chatSummary.id))}
                     <ChatSummary
                         {chatSummary}
@@ -371,20 +329,7 @@
                     </div>
                 {/if}
             </div>
-            {#if showExploreGroups}
-                <div class="explore-groups" onclick={() => page("/groups?explore=true")}>
-                    <div class="disc">
-                        <Compass size={$iconSize} color={"var(--icon-txt)"} />
-                    </div>
-                    <div class="label">
-                        <Translatable resourceKey={i18nKey("exploreGroups")} />
-                    </div>
-                    <div onclick={() => exploreGroupsDismissed.set(true)} class="close">
-                        <Close viewBox="0 -3 24 24" size={$iconSize} color={"var(--button-txt)"} />
-                    </div>
-                </div>
-            {/if}
-            {#if showBrowseChannnels}
+            {#if showBrowseChannels}
                 <BrowseChannels {searchTerm} />
             {/if}
         {/if}
@@ -413,14 +358,16 @@
 
 <style lang="scss">
     .body {
-        overflow: auto;
+        overflow: hidden;
         flex: auto;
-        @include nice-scrollbar();
         position: relative;
+        display: flex;
+        flex-direction: column;
     }
     .chat-summaries {
-        overflow: auto;
+        @include nice-scrollbar();
         overflow-x: hidden;
+        flex: 1 1 auto;
     }
 
     .join {

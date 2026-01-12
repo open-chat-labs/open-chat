@@ -1,10 +1,10 @@
 import {
     ChatMap,
+    NOOP,
     type ChatIdentifier,
     type ChatListScope,
     type GrantedBotPermissions,
     type Member,
-    NOOP,
     type VersionedRules,
     type WebhookDetails,
 } from "openchat-shared";
@@ -20,6 +20,7 @@ const localSet = <V>() => new LocalSet<V>();
 export class ChatDetailsUpdatesManager {
     members = writable<ChatMap<LocalMap<string, Member>>>(new ChatMap(), undefined, notEq);
     blockedUsers = writable<ChatMap<LocalSet<string>>>(new ChatMap(), undefined, notEq);
+    lapsed = writable<ChatMap<LocalSet<string>>>(new ChatMap(), undefined, notEq);
     pinnedMessages = writable<ChatMap<LocalSet<number>>>(new ChatMap(), undefined, notEq);
     invitedUsers = writable<ChatMap<LocalSet<string>>>(new ChatMap(), undefined, notEq);
     bots = writable<ChatMap<LocalMap<string, GrantedBotPermissions>>>(
@@ -74,7 +75,16 @@ export class ChatDetailsUpdatesManager {
     }
 
     removeMember(id: ChatIdentifier, userId: string): UndoLocalUpdate {
-        return this.#updateForChat(id, this.members, localMap, (map) => map.remove(userId));
+        const undoMembers = this.#updateForChat(id, this.members, localMap, (map) =>
+            map.remove(userId),
+        );
+        const undoLapsed = this.#updateForChat(id, this.lapsed, localSet, (set) =>
+            set.remove(userId),
+        );
+        return () => {
+            undoLapsed();
+            undoMembers();
+        };
     }
 
     addMember(id: ChatIdentifier, member: Member): UndoLocalUpdate {

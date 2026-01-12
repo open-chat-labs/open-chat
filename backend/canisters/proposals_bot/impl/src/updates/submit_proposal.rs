@@ -161,7 +161,7 @@ pub(crate) async fn submit_proposal(
                                 )
                             }
                         });
-                        info!(proposal_id, user_id = user_id_string, "Proposal submitted");
+                        info!(proposal_id, user_id = user_id_string, %governance_canister_id, "Proposal submitted");
                         Success
                     }
                     manage_neuron_response::Command::Error(error) => {

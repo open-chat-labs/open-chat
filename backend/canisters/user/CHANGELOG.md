@@ -6,9 +6,48 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Added delete_crypto_account ([#8652](https://github.com/open-chat-labs/open-chat/pull/8652))
+- Implement resetting PIN by providing proof of re-authentication ([#8754](https://github.com/open-chat-labs/open-chat/pull/8754))
+
+### Changed
+
+- Removed pinned from direct and group chat initial_state and updates ([#8631](https://github.com/open-chat-labs/open-chat/pull/8631))
+- Add `duration_ms` and `samples` to `AudioContent` ([#8669](https://github.com/open-chat-labs/open-chat/pull/8669))
+- Take RNG seed in init args ([#8702](https://github.com/open-chat-labs/open-chat/pull/8702))
+- One-time sync of bot installations with LUI ([#8731](https://github.com/open-chat-labs/open-chat/pull/8731))
+- Granted bot permissions are union of command and autonomous permissions ([#8732](https://github.com/open-chat-labs/open-chat/pull/8732))
+- Remove old crypto token fields from metrics ([#8758](https://github.com/open-chat-labs/open-chat/pull/8758))
+- Skip serializing fields from chat metrics where value is 0 ([#8760](https://github.com/open-chat-labs/open-chat/pull/8760))
+- Skip serializing chat summary fields which are their default values ([#8769](https://github.com/open-chat-labs/open-chat/pull/8769))
+- Skip serializing chat event fields which are their default values ([#8770](https://github.com/open-chat-labs/open-chat/pull/8770))
+- Simplify handling of bot installation lifecycle events ([#8776](https://github.com/open-chat-labs/open-chat/pull/8776))
+
+### Removed
+
+- Remove ancient code that deleted empty and dormant accounts ([#8685](https://github.com/open-chat-labs/open-chat/pull/8685))
+
 ### Fixed
 
-- Fix BotLifecycleEvent::Uninstalled location ([8533](https://github.com/open-chat-labs/open-chat/pull/8533))
+- Update `delete_saved_crypto_account` to make it work with Typebox ([#8681](https://github.com/open-chat-labs/open-chat/pull/8681))
+- Update event filter to allow BotUpdated events ([#8715](https://github.com/open-chat-labs/open-chat/pull/8715))
+
+## [[2.0.1908-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1908-user)] - 2025-09-24
+
+### Changed
+
+- Added pinned_chats to the initial_state and updates responses ([#8619](https://github.com/open-chat-labs/open-chat/pull/8619))
+
+## [[2.0.1901-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1901-user)] - 2025-09-12
+
+### Changed
+
+- Keep bot event subscriptions in sync ([#8600](https://github.com/open-chat-labs/open-chat/pull/8600))
+
+### Fixed
+
+- Fix BotLifecycleEvent::Uninstalled location ([#8533](https://github.com/open-chat-labs/open-chat/pull/8533))
 
 ## [[2.0.1877-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1877-user)] - 2025-08-20
 

@@ -2,8 +2,8 @@
 import { HttpAgent, type Identity } from "@icp-sdk/core/agent";
 import type { Principal } from "@icp-sdk/core/principal";
 import type {
-    AcceptedRules,
     AcceptP2PSwapResponse,
+    AcceptedRules,
     AccessGateConfig,
     AccessTokenType,
     AccountTransactionResult,
@@ -43,19 +43,19 @@ import type {
     CommunitySummary,
     CommunitySummaryResponse,
     ConvertToCommunityResponse,
-    CreatedUser,
     CreateGroupResponse,
     CreateUserGroupResponse,
+    CreatedUser,
     CryptocurrencyDetails,
     CurrentUserResponse,
     DataContent,
     DeclineInvitationResponse,
-    DeletedDirectMessageResponse,
-    DeletedGroupMessageResponse,
     DeleteFrozenGroupResponse,
     DeleteGroupResponse,
     DeleteMessageResponse,
     DeleteUserGroupsResponse,
+    DeletedDirectMessageResponse,
+    DeletedGroupMessageResponse,
     DexId,
     DiamondMembershipDuration,
     DiamondMembershipFees,
@@ -65,8 +65,8 @@ import type {
     DisableInviteCodeResponse,
     EditMessageResponse,
     EnableInviteCodeResponse,
-    EventsResponse,
     EventWrapper,
+    EventsResponse,
     EvmChain,
     ExchangeTokenSwapArgs,
     ExploreBotsResponse,
@@ -112,8 +112,8 @@ import type {
     MultiUserChatIdentifier,
     OneSecForwardingStatus,
     OneSecTransferFees,
-    OptionalChatPermissions,
     OptionUpdate,
+    OptionalChatPermissions,
     PayForDiamondMembershipResponse,
     PayForPremiumItemResponse,
     PayForStreakInsuranceResponse,
@@ -145,8 +145,8 @@ import type {
     SetMemberDisplayNameResponse,
     SetMessageReminderResponse,
     SetPinNumberResponse,
-    SetUsernameResponse,
     SetUserUpgradeConcurrencyResponse,
+    SetUsernameResponse,
     SetVideoCallPresenceResponse,
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
@@ -172,22 +172,22 @@ import type {
     UnpinChatResponse,
     UnpinMessageResponse,
     UnsuspendUserResponse,
-    UpdatedEvent,
-    UpdatedRules,
     UpdateGroupResponse,
     UpdateMarketMakerConfigArgs,
     UpdateMarketMakerConfigResponse,
+    UpdateUserGroupResponse,
+    UpdatedEvent,
+    UpdatedRules,
     UpdatesResult,
     UpdatesSuccessResponse,
-    UpdateUserGroupResponse,
     User,
     UserCanisterCommunitySummary,
     UserCanisterCommunitySummaryUpdates,
     UserCanisterGroupChatSummary,
     UserCanisterGroupChatSummaryUpdates,
+    UserSummary,
     UsersArgs,
     UsersResponse,
-    UserSummary,
     Verification,
     VerifiedCredentialArgs,
     VideoCallParticipantsResponse,
@@ -199,23 +199,23 @@ import type {
 } from "openchat-shared";
 import {
     ANON_USER_ID,
-    applyOptionUpdate,
-    chatIdentifiersEqual,
     ChatMap,
     CommonResponses,
     DestinationInvalidError,
-    getOrAdd,
-    isError,
-    isSuccessfulEventsResponse,
     Lazy,
     MAX_ACTIVITY_EVENTS,
     MessageContextMap,
-    messageContextToString,
     MessageMap,
-    offline,
     ONE_MINUTE_MILLIS,
     Stream,
     UnsupportedValueError,
+    applyOptionUpdate,
+    chatIdentifiersEqual,
+    getOrAdd,
+    isError,
+    isSuccessfulEventsResponse,
+    messageContextToString,
+    offline,
     waitAll,
 } from "openchat-shared";
 import type { AgentConfig } from "../config";
@@ -223,13 +223,12 @@ import { CachePrimer } from "../utils/cachePrimer";
 import {
     cacheLocalUserIndexForUser,
     clearCache,
-    type Database,
     deleteEventsForChat,
     getActivityFeedEvents,
+    getCachePrimerTimestamps,
     getCachedBots,
     getCachedChats,
     getCachedExternalAchievements,
-    getCachePrimerTimestamps,
     getLocalUserIndexForUser,
     initDb,
     loadFailedMessages,
@@ -241,14 +240,15 @@ import {
     setCachedExternalAchievements,
     setCachedMessageIfNotExists,
     updateCachedProposalTallies,
+    type Database,
 } from "../utils/caching";
 import {
     buildBlobUrl,
     buildUserAvatarUrl,
     getUpdatedEvents,
     mergeDirectChatUpdates,
-    mergeGroupChats,
     mergeGroupChatUpdates,
+    mergeGroupChats,
 } from "../utils/chat";
 import {
     isSuccessfulCommunitySummaryResponse,
@@ -283,15 +283,16 @@ import { DexesAgent } from "./dexes";
 import { callBotCommandEndpoint } from "./externalBot/externalBot";
 import { GroupClient } from "./group/group.client";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
-import { IcpCoinsClient } from "./icpcoins/icpCoinsClient";
 import { IcpLedgerIndexClient } from "./icpLedgerIndex/icpLedgerIndex.client";
 import { IcpSwapClient } from "./icpSwap/icpSwapClient";
+import { IcpCoinsClient } from "./icpcoins/icpCoinsClient";
 import { LedgerClient } from "./ledger/ledger.client";
 import { LedgerIndexClient } from "./ledgerIndex/ledgerIndex.client";
 import { LocalUserIndexClient } from "./localUserIndex/localUserIndex.client";
 import { MarketMakerClient } from "./marketMaker/marketMaker.client";
 import { NnsGovernanceClient } from "./nnsGovernance/nns.governance.client";
 import { NotificationsClient } from "./notifications/notifications.client";
+import { OneSecForwarderClient } from "./oneSecForwarder/oneSecForwarder.client";
 import { OneSecMinterClient } from "./oneSecMinter/oneSecMinter.client";
 import { OnlineClient } from "./online/online.client";
 import { ProposalsBotClient } from "./proposalsBot/proposalsBot.client";
@@ -337,6 +338,7 @@ export class OpenChatAgent extends EventTarget {
     private _signInWithEthereumClient: Lazy<SignInWithEthereumClient>;
     private _signInWithSolanaClient: Lazy<SignInWithSolanaClient>;
     private _translationsClient: Lazy<TranslationsClient>;
+    private _oneSecForwarderClient: Lazy<OneSecForwarderClient>;
     private _oneSecMinterClient: Lazy<OneSecMinterClient>;
 
     constructor(private identity: Identity, private config: AgentConfig) {
@@ -370,7 +372,7 @@ export class OpenChatAgent extends EventTarget {
         this._dataClient = new DataClient(identity, this._agent, config);
         this._exchangeRateClients = [
             new IcpCoinsClient(identity, this._agent),
-            new IcpSwapClient(identity, this._agent),
+            new IcpSwapClient(),
         ];
         this._localUserIndexClients = {};
         this._ledgerClients = {};
@@ -414,6 +416,9 @@ export class OpenChatAgent extends EventTarget {
         );
         this._translationsClient = new Lazy(
             () => new TranslationsClient(identity, this._agent, config.translationsCanister),
+        );
+        this._oneSecForwarderClient = new Lazy(
+            () => new OneSecForwarderClient(identity, this._agent, config.oneSecForwarderCanister),
         );
         this._oneSecMinterClient = new Lazy(
             () => new OneSecMinterClient(identity, this._agent, config.oneSecMinterCanister),
@@ -1714,8 +1719,7 @@ export class OpenChatAgent extends EventTarget {
 
         let avatarId: UpdatableOption<bigint>;
         let blockedUsers: Updatable<string[]>;
-        let pinnedGroupChats: Updatable<GroupChatIdentifier[]>;
-        let pinnedDirectChats: Updatable<DirectChatIdentifier[]>;
+        let pinnedChats: Updatable<ChatIdentifier[]>;
         let pinnedFavouriteChats: Updatable<ChatIdentifier[]>;
         let pinnedChannels: Updatable<ChannelIdentifier[]>;
         let favouriteChats: Updatable<ChatIdentifier[]>;
@@ -1770,8 +1774,7 @@ export class OpenChatAgent extends EventTarget {
 
             avatarId = new UpdatableOption(userResponse.avatarId, true);
             blockedUsers = new Updatable(userResponse.blockedUsers, true);
-            pinnedGroupChats = new Updatable(userResponse.groupChats.pinned, true);
-            pinnedDirectChats = new Updatable(userResponse.directChats.pinned, true);
+            pinnedChats = new Updatable(userResponse.pinnedChats, true);
             pinnedFavouriteChats = new Updatable(userResponse.favouriteChats.pinned, true);
             pinnedChannels = new Updatable(
                 userResponse.communities.summaries.flatMap((c) => c.pinned),
@@ -1812,8 +1815,7 @@ export class OpenChatAgent extends EventTarget {
 
             avatarId = new UpdatableOption(current.avatarId);
             blockedUsers = new Updatable(current.blockedUsers);
-            pinnedGroupChats = new Updatable(current.pinnedGroupChats);
-            pinnedDirectChats = new Updatable(current.pinnedDirectChats);
+            pinnedChats = new Updatable(current.pinnedChats);
             pinnedFavouriteChats = new Updatable(current.pinnedFavouriteChats);
             pinnedChannels = new Updatable(current.pinnedChannels);
             favouriteChats = new Updatable(current.favouriteChats);
@@ -1858,8 +1860,7 @@ export class OpenChatAgent extends EventTarget {
 
                     avatarId.applyOptionUpdate(userResponse.avatarId);
                     blockedUsers.updateIfNotUndefined(userResponse.blockedUsers);
-                    pinnedGroupChats.updateIfNotUndefined(userResponse.groupChats.pinned);
-                    pinnedDirectChats.updateIfNotUndefined(userResponse.directChats.pinned);
+                    pinnedChats.updateIfNotUndefined(userResponse.pinnedChats);
                     pinnedFavouriteChats.updateIfNotUndefined(userResponse.favouriteChats.pinned);
                     this.applyPinnedChannelUpdates(pinnedChannels, userResponse);
                     favouriteChats.updateIfNotUndefined(userResponse.favouriteChats.chats);
@@ -2062,8 +2063,7 @@ export class OpenChatAgent extends EventTarget {
             communities,
             avatarId: avatarId.value,
             blockedUsers: blockedUsers.value,
-            pinnedGroupChats: pinnedGroupChats.value,
-            pinnedDirectChats: pinnedDirectChats.value,
+            pinnedChats: pinnedChats.value,
             pinnedFavouriteChats: pinnedFavouriteChats.value,
             pinnedChannels: pinnedChannels.value,
             favouriteChats: favouriteChats.value,
@@ -2148,8 +2148,7 @@ export class OpenChatAgent extends EventTarget {
             updatedEvents: updatedEvents.toMap() as Map<string, UpdatedEvent[]>,
             avatarId: avatarId.toOptionUpdate(),
             blockedUsers: blockedUsers.valueIfUpdated(),
-            pinnedGroupChats: pinnedGroupChats.valueIfUpdated(),
-            pinnedDirectChats: pinnedDirectChats.valueIfUpdated(),
+            pinnedChats: pinnedChats.valueIfUpdated(),
             pinnedChannels: pinnedChannels.valueIfUpdated(),
             pinnedFavouriteChats: pinnedFavouriteChats.valueIfUpdated(),
             favouriteChats: favouriteChats.valueIfUpdated(),
@@ -2736,16 +2735,16 @@ export class OpenChatAgent extends EventTarget {
         return this._onlineClient.markAsOnline();
     }
 
-    subscriptionExists(p256dh_key: string): Promise<boolean> {
-        return this._notificationClient.subscriptionExists(p256dh_key);
+    subscriptionExists(endpoint: string): Promise<boolean> {
+        return this._notificationClient.subscriptionExists(endpoint);
     }
 
     pushSubscription(subscription: PushSubscriptionJSON): Promise<void> {
         return this._notificationClient.pushSubscription(subscription);
     }
 
-    removeSubscription(subscription: PushSubscriptionJSON): Promise<void> {
-        return this._notificationClient.removeSubscription(subscription);
+    removeSubscription(endpoint: string): Promise<void> {
+        return this._notificationClient.removeSubscription(endpoint);
     }
 
     fcmTokenExists(fcmToken: string): Promise<boolean> {
@@ -2784,6 +2783,10 @@ export class OpenChatAgent extends EventTarget {
                     muteAtEveryone,
                 );
         }
+    }
+
+    markNotificationSubscriptionActive(endpoint: string): Promise<void> {
+        return this._notificationClient.markSubscriptionActive(endpoint);
     }
 
     getGroupDetails(
@@ -2883,12 +2886,17 @@ export class OpenChatAgent extends EventTarget {
 
     async registerUser(
         username: string,
+        email: string | undefined,
         referralCode: string | undefined,
     ): Promise<RegisterUserResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
         const localUserIndex = await this._userIndexClient.userRegistrationCanister();
-        return this.getLocalUserIndexClient(localUserIndex).registerUser(username, referralCode);
+        return this.getLocalUserIndexClient(localUserIndex).registerUser(
+            username,
+            email,
+            referralCode,
+        );
     }
 
     getUserStorageLimits(): Promise<StorageStatus> {
@@ -2920,8 +2928,9 @@ export class OpenChatAgent extends EventTarget {
         return this.getLedgerIndexClient(ledgerIndex).getAccountTransactions(principal, fromId);
     }
 
-    getGroupMessagesByMessageIndex(
-        chatId: MultiUserChatIdentifier,
+    getMessagesByMessageIndex(
+        chatId: ChatIdentifier,
+        threadRootMessageIndex: number | undefined,
         messageIndexes: Set<number>,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<Message>> {
@@ -2930,6 +2939,7 @@ export class OpenChatAgent extends EventTarget {
                 return this.rehydrateEventResponse(
                     chatId,
                     this.getGroupClient(chatId.groupId).getMessagesByMessageIndex(
+                        threadRootMessageIndex,
                         messageIndexes,
                         latestKnownUpdate,
                     ),
@@ -2941,6 +2951,18 @@ export class OpenChatAgent extends EventTarget {
                     chatId,
                     this.communityClient(chatId.communityId).getMessagesByMessageIndex(
                         chatId,
+                        threadRootMessageIndex,
+                        messageIndexes,
+                        latestKnownUpdate,
+                    ),
+                    undefined,
+                    latestKnownUpdate,
+                );
+            case "direct_chat":
+                return this.rehydrateEventResponse(
+                    chatId,
+                    this.userClient.getMessagesByMessageIndex(
+                        threadRootMessageIndex,
                         messageIndexes,
                         latestKnownUpdate,
                     ),
@@ -3347,18 +3369,19 @@ export class OpenChatAgent extends EventTarget {
         return removeFailedMessage(this.db, chatId, messageId, threadRootMessageIndex);
     }
 
-    claimPrize(chatId: MultiUserChatIdentifier, messageId: bigint): Promise<ClaimPrizeResponse> {
+    async claimPrize(
+        chatId: MultiUserChatIdentifier,
+        messageId: bigint,
+        signInProof: string | undefined,
+    ): Promise<ClaimPrizeResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
-        switch (chatId.kind) {
-            case "group_chat":
-                return this.getGroupClient(chatId.groupId).claimPrize(messageId);
-            case "channel":
-                return this.communityClient(chatId.communityId).claimPrize(
-                    chatId.channelId,
-                    messageId,
-                );
-        }
+        const localUserIndex = await (chatId.kind === "group_chat"
+            ? this.getGroupClient(chatId.groupId).localUserIndex()
+            : this.communityClient(chatId.communityId).localUserIndex());
+
+        const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
+        return localUserIndexClient.claimPrize(chatId, messageId, signInProof);
     }
 
     payForDiamondMembership(
@@ -3849,6 +3872,25 @@ export class OpenChatAgent extends EventTarget {
             }
         }
 
+        const equivalentSymbols = [
+            ["btc", "ckbtc"],
+            ["eth", "cketh"],
+        ];
+
+        // If any symbols within a group of equivalent symbols are missing exchange rates,
+        // copy them over from other symbols within the group
+        for (const group of equivalentSymbols) {
+            const symbolWithExchangeRates = group.find((s) => grouped[s] !== undefined);
+            if (symbolWithExchangeRates) {
+                const exchangeRates = grouped[symbolWithExchangeRates];
+                for (const symbol of group) {
+                    if (grouped[symbol] === undefined) {
+                        grouped[symbol] = exchangeRates;
+                    }
+                }
+            }
+        }
+
         return toRecord2(
             Object.entries(grouped),
             ([token, _]) => token,
@@ -4074,6 +4116,14 @@ export class OpenChatAgent extends EventTarget {
         return this._oneSecMinterClient
             .get()
             .getForwardingStatus(tokenSymbol, chain, address, receiver);
+    }
+
+    async oneSecEnableForwarding(userId: string, evmAddress: string): Promise<void> {
+        const client = this._oneSecForwarderClient.get();
+        const forwarding = await client.isForwarding(evmAddress);
+        if (!forwarding) {
+            await client.enableForwarding(userId);
+        }
     }
 
     generateMagicLink(email: string, sessionKey: Uint8Array): Promise<GenerateMagicLinkResponse> {
@@ -4647,7 +4697,7 @@ export class OpenChatAgent extends EventTarget {
         return this.getLocalUserIndexClient(localUserIndex).payForPremiumItem(item);
     }
 
-    async setPremiumItemCost(item: PremiumItem, chitCost: number): Promise<void> {
+    setPremiumItemCost(item: PremiumItem, chitCost: number): Promise<void> {
         return this._userIndexClient.setPremiumItemCost(item, chitCost);
     }
 
@@ -4659,8 +4709,8 @@ export class OpenChatAgent extends EventTarget {
         );
     }
 
-    addOneSecToken(tokenSymbol: string, infoUrl: string): Promise<boolean> {
-        return this._registryClient.addOneSecToken(tokenSymbol, infoUrl);
+    updateBlockedUsernamePatterns(pattern: string, add: boolean): Promise<void> {
+        return this._userIndexClient.updateBlockedUsernamePatterns(pattern, add);
     }
 }
 

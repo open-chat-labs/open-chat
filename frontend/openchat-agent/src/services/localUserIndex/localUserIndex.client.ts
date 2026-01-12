@@ -8,6 +8,7 @@ import type {
     ChatEventsArgsInner,
     ChatEventsBatchResponse,
     ChatEventsResponse,
+    ClaimPrizeResponse,
     EventsSuccessResult,
     EventWrapper,
     GrantedBotPermissions,
@@ -38,6 +39,8 @@ import {
     LocalUserIndexActiveProposalTalliesResponse,
     LocalUserIndexChatEventsArgs,
     LocalUserIndexChatEventsResponse,
+    LocalUserIndexClaimPrizeArgs,
+    LocalUserIndexClaimPrizeResponse,
     LocalUserIndexGroupAndCommunitySummaryUpdatesV2Args,
     LocalUserIndexGroupAndCommunitySummaryUpdatesV2Response,
     LocalUserIndexInstallBotArgs,
@@ -81,6 +84,7 @@ import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import {
     apiChatIdentifier,
     apiExternalBotPermissions,
+    apiMultiUserChat,
     isSuccess,
     joinGroupResponse,
 } from "../common/chatMappersV2";
@@ -279,12 +283,14 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
 
     registerUser(
         username: string,
+        email: string | undefined,
         referralCode: string | undefined,
     ): Promise<RegisterUserResponse> {
         return this.executeMsgpackUpdate(
             "register_user",
             {
                 username,
+                email,
                 referral_code: referralCode,
                 public_key: new Uint8Array((this.identity as SignIdentity).getPublicKey().toDer()),
             },
@@ -509,6 +515,23 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
             isSuccess,
             LocalUserIndexReinstateMissedDailyClaimsArgs,
             UnitResult,
+        );
+    }
+
+    claimPrize(id: MultiUserChatIdentifier, messageId: bigint, signInProof: string | undefined): Promise<ClaimPrizeResponse> {
+        return this.executeMsgpackUpdate(
+            "claim_prize",
+            {
+                chat_id: apiMultiUserChat(id),
+                message_id: messageId,
+                sign_in_proof_jwt: signInProof
+            },
+            (resp) => {
+                console.log("Resp: ", resp);
+                return resp === "Success" ? { kind: "success" } : { kind: "failure" };
+            },
+            LocalUserIndexClaimPrizeArgs,
+            LocalUserIndexClaimPrizeResponse,
         );
     }
 }

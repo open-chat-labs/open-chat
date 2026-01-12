@@ -1,4 +1,6 @@
+import { encodeIcrcAccount } from "@dfinity/ledger-icrc";
 import { DelegationChain } from "@icp-sdk/core/identity";
+import { Principal } from "@icp-sdk/core/principal";
 import type {
     Achievement,
     ArchiveChatResponse,
@@ -535,20 +537,12 @@ export function createCommunitySuccess(
 function groupChatsInitial(value: UserInitialStateGroupChatsInitial): GroupChatsInitial {
     return {
         summaries: value.summaries.map(userCanisterGroupSummary),
-        pinned: value.pinned.map((c) => ({
-            kind: "group_chat",
-            groupId: principalBytesToString(c),
-        })),
     };
 }
 
 function directChatsInitial(value: UserInitialStateDirectChatsInitial): DirectChatsInitial {
     return {
         summaries: value.summaries.map(directChatSummary),
-        pinned: value.pinned.map((c) => ({
-            kind: "direct_chat",
-            userId: principalBytesToString(c),
-        })),
     };
 }
 
@@ -653,6 +647,7 @@ export function initialStateResponse(value: UserInitialStateResponse): InitialSt
             oneSecAddress: result.one_sec_address,
             streakInsurance: mapOptional(result.streak_insurance, streakInsurance),
             premiumItems: new Set(result.premium_items),
+            pinnedChats: result.pinned_chats.map(chatIdentifier),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${value}`);
@@ -766,9 +761,6 @@ export function favouriteChatsUpdates(
 export function groupChatsUpdates(value: UserUpdatesGroupChatsUpdates): GroupChatsUpdates {
     return {
         added: value.added.map(userCanisterGroupSummary),
-        pinned: mapOptional(value.pinned, (p) =>
-            p.map((p) => ({ kind: "group_chat", groupId: principalBytesToString(p) })),
-        ),
         updated: value.updated.map(userCanisterGroupSummaryUpdates),
         removed: value.removed.map(principalBytesToString),
     };
@@ -777,9 +769,6 @@ export function groupChatsUpdates(value: UserUpdatesGroupChatsUpdates): GroupCha
 export function directChatsUpdates(value: UserUpdatesDirectChatsUpdates): DirectChatsUpdates {
     return {
         added: value.added.map(directChatSummary),
-        pinned: mapOptional(value.pinned, (p) =>
-            p.map((p) => ({ kind: "direct_chat", userId: principalBytesToString(p) })),
-        ),
         updated: value.updated.map(directChatSummaryUpdates),
         removed: value.removed.map(principalBytesToString),
     };
@@ -824,6 +813,7 @@ export function getUpdatesResponse(value: UserUpdatesResponse): UpdatesResponse 
             oneSecAddress: value.Success.one_sec_address,
             streakInsurance: optionUpdateV2(result.streak_insurance, streakInsurance),
             premiumItems: mapOptional(result.premium_items, (items) => new Set(items)),
+            pinnedChats: mapOptional(result.pinned_chats, (pinned) => pinned.map(chatIdentifier)),
         };
     }
 
@@ -870,7 +860,7 @@ function directChatSummaryUpdates(value: TDirectChatSummaryUpdates): DirectChatS
         latestEventIndex: value.latest_event_index,
         latestMessageIndex: value.latest_message_index,
         notificationsMuted: value.notifications_muted,
-        updatedEvents: value.updated_events.map(updatedEvent),
+        updatedEvents: value.updated_events?.map(updatedEvent) ?? [],
         eventsTTL: optionUpdateV2(value.events_ttl, identity),
         eventsTtlLastUpdated: value.events_ttl_last_updated,
         metrics: mapOptional(value.metrics, chatMetrics),
@@ -899,16 +889,16 @@ function directChatSummary(value: TDirectChatSummary): DirectChatSummary {
         readByThemUpTo: value.read_by_them_up_to,
         dateCreated: value.date_created,
         eventsTTL: value.events_ttl,
-        eventsTtlLastUpdated: value.events_ttl_last_updated,
+        eventsTtlLastUpdated: value.events_ttl_last_updated ?? BigInt(0),
         metrics: chatMetrics(value.metrics),
         videoCallInProgress: mapOptional(value.video_call_in_progress, videoCallInProgress),
         membership: {
             ...nullMembership(),
             role: ROLE_OWNER,
             myMetrics: chatMetrics(value.my_metrics),
-            notificationsMuted: value.notifications_muted,
+            notificationsMuted: value.notifications_muted ?? false,
             readByMeUpTo: value.read_by_me_up_to,
-            archived: value.archived,
+            archived: value.archived ?? false,
             rulesAccepted: false,
         },
     };
@@ -959,10 +949,10 @@ export function withdrawCryptoResponse(
 }
 
 function formatIcrc1Account(value: AccountICRC1): string {
-    const owner = principalBytesToString(value.owner);
-    const subaccount = mapOptional(value.subaccount, bytesToHexString);
-
-    return subaccount !== undefined ? `${owner}:${subaccount}` : owner;
+    return encodeIcrcAccount({
+        owner: Principal.fromText(principalBytesToString(value.owner)),
+        subaccount: value?.subaccount,
+    });
 }
 
 export function swapTokensSuccess(value: UserSwapTokensSuccessResult): SwapTokensResponse {

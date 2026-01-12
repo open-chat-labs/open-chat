@@ -113,7 +113,7 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
     const id = Date.now().toString();
     console.debug("SW: push notification received", id);
     if (!event.data) {
-        console.debug("SW: notification data is empty", id);
+        console.error("SW: notification data is empty", id);
         return;
     }
 
@@ -124,7 +124,6 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
 
     const webPushNotification = decodeWebPushNotification(bytes, timestamp);
     if (webPushNotification === undefined) {
-        console.debug("SW: unable to decode notification", id);
         return;
     }
 
@@ -186,13 +185,19 @@ function decodeWebPushNotification(bytes: Uint8Array, timestamp: bigint): Notifi
         const deserialized = deserializeFromMsgPack(bytes);
         const validated = typeboxValidate(deserialized, TNotification);
         return toNotification(validated, timestamp);
-    } catch {
+    } catch (e) {
         // Failed to decode using MsgPack
+        console.error("SW: unable to decode notification", e);
     }
 }
 
 function toUint8Array(base64String: string): Uint8Array {
-    return Uint8Array.from(atob(base64String), (c) => c.charCodeAt(0));
+    try {
+        return Uint8Array.from(atob(base64String), (c) => c.charCodeAt(0));
+    } catch (e) {
+        console.error("SW: unable to decode base64 string", base64String, e);
+        throw e;
+    }
 }
 
 function buildNotification(n: Notification): [string, NotificationOptions] {
@@ -324,14 +329,14 @@ function defaultMessage(messageType: string): string {
 function notificationPath(n: Notification): string {
     switch (n.kind) {
         case "direct_notification":
-            return routeForChatIdentifier("direct_chat", n.chatId);
+            return routeForChatIdentifier("chats", n.chatId);
 
         case "direct_reaction":
         case "direct_message_tipped":
-            return routeForMessage("direct_chat", { chatId: n.chatId }, n.messageIndex);
+            return routeForMessage("chats", { chatId: n.chatId }, n.messageIndex);
 
         case "group_notification":
-            return routeForMessageContext("group_chat", {
+            return routeForMessageContext("chats", {
                 chatId: n.chatId,
                 threadRootMessageIndex: n.threadRootMessageIndex,
             });
@@ -339,7 +344,7 @@ function notificationPath(n: Notification): string {
         case "group_reaction":
         case "group_message_tipped":
             return routeForMessage(
-                "group_chat",
+                "chats",
                 {
                     chatId: n.chatId,
                     threadRootMessageIndex: n.threadRootMessageIndex,

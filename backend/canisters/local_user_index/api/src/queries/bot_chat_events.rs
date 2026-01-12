@@ -1,5 +1,5 @@
 use crate::chat_events::EventsSelectionCriteria;
-use candid::Deserialize;
+use candid::{CandidType, Deserialize};
 use oc_error_codes::OCError;
 use serde::Serialize;
 use ts_export::ts_export;
@@ -8,7 +8,6 @@ use types::{
     GiphyContent, ImageContent, MessageId, MessageIndex, PollContent, Reaction, ReplyContext, SenderContext, TextContent,
     ThreadSummary, TimestampMillis, Tips, UserId, VideoContent,
 };
-use user_canister::token_swap_status::CandidType;
 
 #[ts_export(local_user_index, bot_chat_events)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]

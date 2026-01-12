@@ -3,6 +3,7 @@ import {
     NotificationsIndexAddFcmTokenArgs,
     NotificationsIndexFcmTokenExistsArgs,
     NotificationsIndexFcmTokenExistsResponse,
+    NotificationsIndexMarkSubscriptionActiveArgs,
     NotificationsIndexPushSubscriptionArgs,
     NotificationsIndexPushSubscriptionResponse,
     NotificationsIndexRemoveSubscriptionArgs,
@@ -20,12 +21,10 @@ export class NotificationsClient extends MsgpackCanisterAgent {
         super(identity, agent, canisterId, "Notifications");
     }
 
-    subscriptionExists(p256dh_key: string): Promise<boolean> {
+    subscriptionExists(endpoint: string): Promise<boolean> {
         return this.executeMsgpackQuery(
             "subscription_exists",
-            {
-                p256dh_key,
-            },
+            { endpoint },
             subscriptionExistsResponse,
             NotificationsIndexSubscriptionExistsArgs,
             NotificationsIndexSubscriptionExistsResponse,
@@ -51,12 +50,10 @@ export class NotificationsClient extends MsgpackCanisterAgent {
         );
     }
 
-    removeSubscription(subscription: PushSubscriptionJSON): Promise<void> {
+    removeSubscription(endpoint: string): Promise<void> {
         return this.executeMsgpackUpdate(
             "remove_subscription",
-            {
-                p256dh_key: subscription.keys!["p256dh"],
-            },
+            { endpoint },
             toVoid,
             NotificationsIndexRemoveSubscriptionArgs,
             SuccessOnly,
@@ -87,6 +84,16 @@ export class NotificationsClient extends MsgpackCanisterAgent {
             },
             NotificationsIndexAddFcmTokenArgs,
             UnitResult,
+        );
+    }
+
+    markSubscriptionActive(endpoint: string): Promise<void> {
+        return this.executeMsgpackUpdate(
+            "mark_subscription_active",
+            { endpoint },
+            toVoid,
+            NotificationsIndexMarkSubscriptionActiveArgs,
+            SuccessOnly,
         );
     }
 }

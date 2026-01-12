@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { getContext, setContext, type Snippet } from "svelte";
     import {
+        ColourVars,
         getAlignmentCss,
         getBorderRadiusCss,
         getBorderStyleCss,
@@ -8,15 +8,33 @@
         getFlexStyle,
         getGapCss,
         getPaddingCss,
-        type BorderRadiusSize,
+        Pixel,
         type BorderWidthSize,
         type CrossAxisAlignment,
         type Direction,
         type MainAxisAlignment,
         type Padding,
+        type Radius,
         type SizeMode,
         type SpacingSize,
-    } from "../theme";
+    } from "component-lib";
+    import { getContext, setContext, type Snippet } from "svelte";
+
+    /**
+     * Some notes on usage. This component uses the Figma concepts of Hug and Fill which need to be understood to use it properly.
+     * Width and height are expressed using a SizeMode. SizeMode can be "hug", "fill" or "fixed".
+     * Hug is used to express that a container's width (e.g.) should be dictated by the intrinsic width of its children.
+     * Fill is used to express that a child should use all available space as dictated by its parent.
+     * Fixed is used to express that the container should simply occupy a fixed width.
+     *
+     * This is powerful and flexible system but it has some implications that need to be understood:
+     *
+     * The overall width/height _must_ be defined by either the parent or the children. You cannot declare that each is
+     * relying on the other to define the size. For example, if you have a parent container that has "hug" width this
+     * means that its width will be defined by the widths of its children. But if those children have "fill" width this
+     * means that their widths will be defined by the width of the parent and we have a deadly embrace and may well get
+     * unexpected results. This can always be resolved but only if you understand what is going on.
+     */
 
     interface Props {
         children: Snippet;
@@ -24,7 +42,7 @@
         gap?: SpacingSize;
         padding?: Padding;
         borderWidth?: BorderWidthSize;
-        borderRadius?: BorderRadiusSize;
+        borderRadius?: Radius;
         borderStyle?: string;
         borderColour?: string;
         width?: SizeMode;
@@ -32,22 +50,42 @@
         colour?: string;
         mainAxisAlignment?: MainAxisAlignment;
         crossAxisAlignment?: CrossAxisAlignment;
+        mainAxisSelfAlignment?: MainAxisAlignment;
+        crossAxisSelfAlignment?: CrossAxisAlignment;
+        minWidth?: Pixel;
+        minHeight?: Pixel;
+        shadow?: string;
+        backgroundColour?: string;
+        onClick?: () => void;
+        supplementalClass?: string;
+        allowOverflow?: boolean;
+        tag?: "div" | "main" | "section"; // this could be just about anything but let's try to limit it
     }
 
     let {
         children,
         direction = "horizontal",
         gap = "zero",
-        padding = ["zero"],
+        padding = "zero",
         borderWidth = "zero",
         borderRadius = "zero",
         width = { kind: "fill" },
         height = { kind: "hug" },
         colour,
         borderStyle = "solid",
-        borderColour = "var(--background-2)",
+        borderColour = ColourVars.background2,
         mainAxisAlignment = "start",
         crossAxisAlignment = "start",
+        mainAxisSelfAlignment,
+        crossAxisSelfAlignment,
+        minWidth = new Pixel(0),
+        minHeight = new Pixel(0),
+        shadow,
+        backgroundColour = "unset",
+        onClick,
+        supplementalClass,
+        allowOverflow = false,
+        tag = "div",
     }: Props = $props();
 
     // you might expect this to be done inside onMount but
@@ -63,15 +101,32 @@
     let widthCss = $derived(getFlexStyle("width", width, parentDirection));
     let heightCss = $derived(getFlexStyle("height", height, parentDirection));
     let colourCss = $derived(colour ? `background-color: ${colour}` : "");
-    let alignmentCss = $derived(getAlignmentCss(mainAxisAlignment, crossAxisAlignment));
-    let style = $derived(
-        `${alignmentCss}; ${colourCss}; ${heightCss}; ${widthCss}; ${borderStyleCss}; ${borderRadiusCss}; ${borderWidthCss}; ${paddingCss}; ${gapCss};`,
+    let alignmentCss = $derived(
+        getAlignmentCss(
+            mainAxisAlignment,
+            crossAxisAlignment,
+            mainAxisSelfAlignment,
+            crossAxisSelfAlignment,
+        ),
     );
+    let style = $derived(
+        `background-color: ${backgroundColour}; box-shadow: ${shadow}; min-width: ${minWidth}; min-height: ${minHeight}; ${alignmentCss}; ${colourCss}; ${heightCss}; ${widthCss}; ${borderStyleCss}; ${borderRadiusCss}; ${borderWidthCss}; ${paddingCss}; ${gapCss};`,
+    );
+    // TODO I think it might be nice to do a lot of this flex sizing with classes rather than inline styles
+    // although I'm not sure I can say *why*
 </script>
 
-<div {style} class={`container ${direction}`}>
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<svelte:element
+    this={tag}
+    class:clickable={onClick !== undefined}
+    class:overflow={allowOverflow}
+    onclick={onClick}
+    {style}
+    class={`container ${direction} ${supplementalClass ?? ""}`}>
     {@render children()}
-</div>
+</svelte:element>
 
 <style lang="scss">
     .container {
@@ -82,6 +137,10 @@
             padding ease-in-out 200ms,
             gap ease-in-out 200ms;
 
+        &.overflow {
+            overflow: visible;
+        }
+
         &.horizontal {
             display: flex;
             flex-direction: row;
@@ -90,6 +149,10 @@
         &.vertical {
             display: flex;
             flex-direction: column;
+        }
+
+        &.clickable {
+            cursor: pointer;
         }
     }
 

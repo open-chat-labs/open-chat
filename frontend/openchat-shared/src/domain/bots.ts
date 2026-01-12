@@ -39,6 +39,8 @@ export type BotInstallationLocation =
     | GroupChatIdentifier
     | DirectChatIdentifier;
 
+export type BotInstallationLocationType = "community" | "group_chat" | "direct_chat";
+
 export type BotsResponse = {
     timestamp: bigint;
     bots: ExternalBot[];
@@ -304,6 +306,7 @@ export function emptyBotInstance(ownerId: string): ExternalBot {
             autonomousConfig: undefined,
             defaultSubscriptions: undefined,
             dataEncoding: undefined,
+            restrictedLocations: undefined,
         },
         registrationStatus: { kind: "private" },
     };
@@ -341,7 +344,8 @@ export type BotDefinition = {
     commands: CommandDefinition[];
     autonomousConfig: AutonomousBotConfig | undefined;
     defaultSubscriptions: BotSubscriptions | undefined;
-    dataEncoding: "json" | "candid" | undefined;
+    dataEncoding: "json" | "candid" | "msgpack" | undefined;
+    restrictedLocations: BotInstallationLocationType[] | undefined;
 };
 
 export type AutonomousBotConfig = {
@@ -514,25 +518,24 @@ export function argIsValid(schema: CommandParam, arg: CommandArg): boolean {
     } else if (schema.kind === "boolean" && arg.kind === "boolean") {
         return !schema.required || arg.value !== undefined;
     } else if (schema.kind === "string" && arg.kind === "string") {
-        // TODO - this is not quite right because it doesn't account for choices.
-        // if we specify choices then the value of the arg must match one of the choices.
-        // this means that we can currently do things like /faq some_old_nonsense
-        return (
-            !schema.required ||
-            (arg.value !== undefined &&
-                arg.value.length > schema.minLength &&
-                arg.value.length < schema.maxLength)
-        );
-    } else if (schema.kind === "integer" && arg.kind === "integer") {
-        return (
-            (!schema.required && arg.value === null) ||
-            (arg.value !== null && arg.value >= schema.minValue && arg.value <= schema.maxValue)
-        );
-    } else if (schema.kind === "decimal" && arg.kind === "decimal") {
-        return (
-            (!schema.required && arg.value === null) ||
-            (arg.value !== null && arg.value >= schema.minValue && arg.value <= schema.maxValue)
-        );
+        if (!schema.required && arg.value === undefined) return true;
+        if (arg.value === undefined) return false;
+        if (schema.choices.length > 0) {
+            return schema.choices.map((c) => c.value).includes(arg.value);
+        } else {
+            return arg.value.length >= schema.minLength && arg.value.length <= schema.maxLength;
+        }
+    } else if (
+        (schema.kind === "integer" && arg.kind === "integer") ||
+        (schema.kind === "decimal" && arg.kind === "decimal")
+    ) {
+        if (!schema.required && arg.value === null) return true;
+        if (arg.value === null) return false;
+        if (schema.choices.length > 0) {
+            return schema.choices.map((c) => c.value).includes(arg.value);
+        } else {
+            return arg.value >= schema.minValue && arg.value <= schema.maxValue;
+        }
     } else if (schema.kind === "dateTime" && arg.kind === "dateTime") {
         return !schema.required || (arg.value !== undefined && arg.value !== null);
     }
@@ -549,13 +552,25 @@ export function i18nKey(key: string, params?: InterpolationValues): ResourceKey 
     };
 }
 
-// This is used for all names: bot, command, param
+// This is used for bot and command names
 export function validBotComponentName(name: string, min: number): ResourceKey[] {
     const errors = [];
     if (name.length < min) {
         errors.push(i18nKey("bots.builder.errors.minLength", { n: min }));
     }
     const regex = /^[a-zA-Z0-9_]+$/;
+    if (!regex.test(name)) {
+        errors.push(i18nKey("bots.builder.errors.alphaOnly"));
+    }
+    return errors;
+}
+
+export function validBotParamName(name: string, min: number): ResourceKey[] {
+    const errors = [];
+    if (name.length < min) {
+        errors.push(i18nKey("bots.builder.errors.minLength", { n: min }));
+    }
+    const regex = /^[a-zA-Z0-9_ ]+$/;
     if (!regex.test(name)) {
         errors.push(i18nKey("bots.builder.errors.alphaOnly"));
     }
@@ -656,7 +671,7 @@ function validateParameter(
     errors: ValidationErrors,
 ): boolean {
     let valid = true;
-    const nameErrors = validBotComponentName(param.name, MIN_PARAM_NAME_LENGTH);
+    const nameErrors = validBotParamName(param.name, MIN_PARAM_NAME_LENGTH);
     if (nameErrors.length > 0) {
         errors.addErrors(`${errorPath}_name`, nameErrors);
         valid = false;

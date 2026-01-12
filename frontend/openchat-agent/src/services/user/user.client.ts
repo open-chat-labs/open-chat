@@ -5,6 +5,7 @@ import {
     MAX_MESSAGES,
     MAX_MISSING,
     offline,
+    random32,
     ResponseTooLargeError,
     Stream,
     toBigInt32,
@@ -37,6 +38,7 @@ import {
     type EventsResponse,
     type EventsSuccessResult,
     type EventWrapper,
+    type EvmChain,
     type ExchangeTokenSwapArgs,
     type GrantedBotPermissions,
     type GroupChatIdentifier,
@@ -78,7 +80,6 @@ import {
     type WalletConfig,
     type WithdrawBtcResponse,
     type WithdrawCryptocurrencyResponse,
-    type EvmChain,
     type WithdrawViaOneSecResponse,
 } from "openchat-shared";
 import type { AgentConfig } from "../../config";
@@ -133,6 +134,8 @@ import {
     UserMarkReadChatMessagesRead,
     UserMessageActivityFeedArgs,
     UserMessageActivityFeedResponse,
+    UserMessagesByMessageIndexArgs,
+    UserMessagesByMessageIndexResponse,
     UserMuteNotificationsArgs,
     UserNamedAccount,
     UserPayForStreakInsuranceArgs,
@@ -181,6 +184,7 @@ import {
     getCachedEventsByIndex,
     getCachedEventsWindowByMessageIndex,
     getCachedPublicProfile,
+    loadMessagesByMessageIndex,
     mergeSuccessResponses,
     recordFailedMessage,
     removeFailedMessage,
@@ -212,6 +216,7 @@ import {
     createGroupSuccess,
     deletedMessageSuccess,
     getEventsSuccess,
+    getMessagesSuccess,
     isSuccess,
     mapResult,
     undeleteMessageSuccess,
@@ -261,11 +266,11 @@ export class UserClient extends MsgpackCanisterAgent {
         this.chatId = { kind: "direct_chat", userId: userId };
     }
 
-    private setCachedEvents(
+    private setCachedEvents<T extends ChatEvent>(
         chatId: ChatIdentifier,
-        resp: EventsResponse<ChatEvent>,
+        resp: EventsResponse<T>,
         threadRootMessageIndex?: number,
-    ): EventsResponse<ChatEvent> {
+    ): EventsResponse<T> {
         setCachedEvents(this.db, chatId, resp, threadRootMessageIndex).catch((err) =>
             this.config.logger.error("Error writing cached group events", err),
         );
@@ -278,7 +283,7 @@ export class UserClient extends MsgpackCanisterAgent {
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
-        if (missing.size === 0) {
+        if (missing.size === 0 || offline()) {
             return Promise.resolve(cachedEvents);
         } else {
             return this.chatEventsByIndexFromBackend(
@@ -351,14 +356,14 @@ export class UserClient extends MsgpackCanisterAgent {
                 history_visible_to_new_joiners: community.historyVisible,
                 avatar: mapOptional(community.avatar?.blobData, (data) => {
                     return {
-                        id: DataClient.newBlobId(),
+                        id: BigInt(random32()),
                         data,
                         mime_type: "image/jpg",
                     };
                 }),
                 banner: mapOptional(community.banner?.blobData, (data) => {
                     return {
-                        id: DataClient.newBlobId(),
+                        id: BigInt(random32()),
                         data,
                         mime_type: "image/jpg",
                     };
@@ -370,7 +375,9 @@ export class UserClient extends MsgpackCanisterAgent {
                 default_channel_rules: defaultChannelRules,
                 primary_language: community.primaryLanguage,
             },
-            (resp) => mapResult(resp, createCommunitySuccess),
+            (resp) => {
+                return mapResult(resp, createCommunitySuccess);
+            },
             UserCreateCommunityArgs,
             UserCreateCommunityResponse,
         );
@@ -386,7 +393,7 @@ export class UserClient extends MsgpackCanisterAgent {
                 history_visible_to_new_joiners: group.historyVisible,
                 avatar: mapOptional(group.avatar?.blobData, (data) => {
                     return {
-                        id: DataClient.newBlobId(),
+                        id: BigInt(random32()),
                         data,
                         mime_type: "image/jpg",
                     };
@@ -649,8 +656,66 @@ export class UserClient extends MsgpackCanisterAgent {
         );
     }
 
+    async getMessagesByMessageIndex(
+        threadRootMessageIndex: number | undefined,
+        messageIndexes: Set<number>,
+        latestKnownUpdate: bigint | undefined,
+    ): Promise<EventsResponse<Message>> {
+        const fromCache = await loadMessagesByMessageIndex(
+            this.db,
+            this.chatId,
+            threadRootMessageIndex,
+            messageIndexes,
+        );
+        if (fromCache.missing.size > 0) {
+            console.log("Missing idxs from the cached: ", fromCache.missing);
+
+            const resp = await this.getMessagesByMessageIndexFromBackend(
+                threadRootMessageIndex,
+                [...fromCache.missing],
+                latestKnownUpdate,
+            ).then((resp) => this.setCachedEvents(this.chatId, resp, threadRootMessageIndex));
+
+            return isSuccessfulEventsResponse(resp)
+                ? {
+                      events: [...fromCache.messageEvents, ...resp.events],
+                      expiredEventRanges: [],
+                      expiredMessageRanges: [],
+                      latestEventIndex: resp.latestEventIndex,
+                  }
+                : resp;
+        }
+        return {
+            events: fromCache.messageEvents,
+            expiredEventRanges: [],
+            expiredMessageRanges: [],
+            latestEventIndex: undefined,
+        };
+    }
+
+    private getMessagesByMessageIndexFromBackend(
+        threadRootMessageIndex: number | undefined,
+        messageIndexes: number[],
+        latestKnownUpdate: bigint | undefined,
+    ): Promise<EventsResponse<Message>> {
+        const args = {
+            user_id: principalStringToBytes(this.userId),
+            thread_root_message_index: threadRootMessageIndex,
+            messages: messageIndexes,
+            latest_known_update: latestKnownUpdate,
+        };
+        return this.executeMsgpackQuery(
+            "messages_by_message_index",
+            args,
+            (resp) =>
+                mapResult(resp, (value) => getMessagesSuccess(value, this.principal, this.chatId)),
+            UserMessagesByMessageIndexArgs,
+            UserMessagesByMessageIndexResponse,
+        );
+    }
+
     setAvatar(bytes: Uint8Array): Promise<BlobReference> {
-        const blobId = DataClient.newBlobId();
+        const blobId = BigInt(random32());
         return this.executeMsgpackUpdate(
             "set_avatar",
             {
@@ -675,7 +740,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     setProfileBackground(bytes: Uint8Array): Promise<BlobReference> {
-        const blobId = DataClient.newBlobId();
+        const blobId = BigInt(random32());
         return this.executeMsgpackUpdate(
             "set_profile_background",
             {

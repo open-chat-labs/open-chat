@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{RuntimeState, read_state};
+use crate::{RuntimeState, merge_maps, read_state, sorted_pinned};
 use canister_api_macros::query;
 use installed_bots::BotUpdate;
 use std::collections::HashSet;
@@ -101,11 +101,19 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         }
     }
 
+    let direct_pinned = state.data.direct_chats.pinned_chats_if_updated(updates_since);
+    let group_pinned = state.data.group_chats.pinned_chats_if_updated(updates_since);
+    let merged_pinned = match (&direct_pinned, &group_pinned) {
+        (Some(direct), Some(group)) => Some(sorted_pinned(&merge_maps(direct, group))),
+        (Some(direct), None) => Some(sorted_pinned(&merge_maps(direct, &state.data.group_chats.pinned_chats()))),
+        (None, Some(group)) => Some(sorted_pinned(&merge_maps(&state.data.direct_chats.pinned_chats(), group))),
+        _ => None,
+    };
+
     let direct_chats = DirectChatsUpdates {
         added: direct_chats_added,
         updated: direct_chats_updated,
         removed: state.data.direct_chats.removed_since(updates_since),
-        pinned: state.data.direct_chats.pinned_if_updated(updates_since),
     };
 
     let group_chats_removed = state.data.group_chats.removed_since(updates_since);
@@ -123,7 +131,6 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         added: group_chats_added,
         updated: group_chats_updated,
         removed: group_chats_removed,
-        pinned: state.data.group_chats.pinned_if_updated(updates_since),
     };
 
     let communities_removed = state.data.communities.removed_since(updates_since);
@@ -145,7 +152,11 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
 
     let favourite_chats = FavouriteChatsUpdates {
         chats: state.data.favourite_chats.chats_if_updated(updates_since),
-        pinned: state.data.favourite_chats.pinned_if_updated(updates_since),
+        pinned: state
+            .data
+            .favourite_chats
+            .pinned_if_updated(updates_since)
+            .map(|m| sorted_pinned(&m)),
     };
 
     let pin_number_settings = if pin_number_updated {
@@ -230,5 +241,6 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         btc_address: btc_address_if_updated,
         one_sec_address: one_sec_address_if_updated,
         premium_items,
+        pinned_chats: merged_pinned,
     })
 }

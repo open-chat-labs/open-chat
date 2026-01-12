@@ -3,12 +3,12 @@ use chat_events::{ChatInternal, ChatMetricsInternal};
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
-use types::{ChatId, MessageIndex, TimestampMillis, Timestamped, UserId, UserType};
+use types::{Chat, ChatId, MessageIndex, TimestampMillis, Timestamped, UserId, UserType};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct DirectChats {
     direct_chats: HashMap<ChatId, DirectChat>,
-    pinned: Timestamped<Vec<ChatId>>,
+    pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
     metrics: ChatMetricsInternal,
     chats_removed: BTreeSet<(TimestampMillis, ChatId)>,
     // This is needed so that when a group is imported into a community we can quickly update the
@@ -59,12 +59,14 @@ impl DirectChats {
             .collect()
     }
 
-    pub fn pinned(&self) -> &Vec<ChatId> {
-        &self.pinned.value
+    pub fn pinned_chats(&self) -> HashMap<Chat, TimestampMillis> {
+        self.pinned.value.iter().map(|(k, v)| (Chat::Direct(*k), *v)).collect()
     }
 
-    pub fn pinned_if_updated(&self, since: TimestampMillis) -> Option<Vec<ChatId>> {
-        self.pinned.if_set_after(since).map(|ids| ids.to_vec())
+    pub fn pinned_chats_if_updated(&self, since: TimestampMillis) -> Option<HashMap<Chat, TimestampMillis>> {
+        self.pinned
+            .if_set_after(since)
+            .map(|ids| ids.iter().map(|(k, v)| (Chat::Direct(*k), *v)).collect())
     }
 
     pub fn any_updated(&self, since: TimestampMillis) -> bool {
@@ -125,16 +127,16 @@ impl DirectChats {
     }
 
     pub fn pin(&mut self, chat_id: ChatId, now: TimestampMillis) {
-        if !self.pinned.value.contains(&chat_id) {
+        if !self.pinned.value.contains_key(&chat_id) {
             self.pinned.timestamp = now;
-            self.pinned.value.insert(0, chat_id);
+            self.pinned.value.insert(chat_id, now);
         }
     }
 
     pub fn unpin(&mut self, chat_id: &ChatId, now: TimestampMillis) {
-        if self.pinned.value.contains(chat_id) {
+        if self.pinned.value.contains_key(chat_id) {
             self.pinned.timestamp = now;
-            self.pinned.value.retain(|pinned_chat_id| pinned_chat_id != chat_id);
+            self.pinned.value.remove(chat_id);
         }
     }
 

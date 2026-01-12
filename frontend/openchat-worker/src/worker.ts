@@ -88,11 +88,11 @@ async function initialize(
     if (ocIdentityExists) {
         const sessionKey = await ECDSAKeyIdentity.generate();
 
-        const identity = await identityAgent.getOpenChatIdentity(sessionKey);
+        const getIdentityResult = await identityAgent.getOpenChatIdentity(sessionKey);
 
-        if (identity !== undefined && typeof identity !== "string") {
-            await ocIdentityStorage.set(sessionKey, identity.getDelegation(), authPrincipalString);
-            return { kind: "success", identity };
+        if (getIdentityResult !== undefined && typeof getIdentityResult.identity !== "string") {
+            await ocIdentityStorage.set(sessionKey, getIdentityResult.identity.getDelegation(), authPrincipalString);
+            return { kind: "success", identity: getIdentityResult.identity };
         }
     }
 
@@ -709,7 +709,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.registerUser(payload.username, payload.referralCode),
+                    agent.registerUser(payload.username, payload.email, payload.referralCode),
                 );
                 break;
 
@@ -717,7 +717,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.subscriptionExists(payload.p256dh_key),
+                    agent.subscriptionExists(payload.endpoint),
                 );
                 break;
 
@@ -733,7 +733,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.removeSubscription(payload.subscription).then(() => undefined),
+                    agent.removeSubscription(payload.endpoint).then(() => undefined),
                 );
                 break;
 
@@ -746,6 +746,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     agent.addFcmToken(payload.fcmToken, payload.onResponseError),
+                );
+                break;
+
+            case "markNotificationSubscriptionActive":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.markNotificationSubscriptionActive(payload.endpoint),
                 );
                 break;
 
@@ -963,12 +971,13 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "getGroupMessagesByMessageIndex":
+            case "getMessagesByMessageIndex":
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.getGroupMessagesByMessageIndex(
+                    agent.getMessagesByMessageIndex(
                         payload.chatId,
+                        payload.threadRootMessageIndex,
                         payload.messageIndexes,
                         payload.latestKnownUpdate,
                     ),
@@ -1193,7 +1202,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.claimPrize(payload.chatId, payload.messageId),
+                    agent.claimPrize(payload.chatId, payload.messageId, payload.signInProof),
                 );
                 break;
 
@@ -2047,6 +2056,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "getSignInProof":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    getSignInProof(payload.identityKey, payload.delegation)
+                );
+                break;
+
             case "installBot":
                 executeThenReply(
                     payload,
@@ -2179,6 +2196,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "oneSecEnableForwarding":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.oneSecEnableForwarding(payload.userId, payload.evmAddress),
+                );
+                break;
+
             case "oneSecGetTransferFees":
                 executeThenReply(payload, correlationId, agent.oneSecGetTransferFees());
                 break;
@@ -2209,15 +2234,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "addOneSecToken":
+            case "updateBlockedUsernamePatterns":
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.addOneSecToken(
-                        payload.tokenSymbol,
-                        payload.infoUrl,
-                    ),
-                );
+                    agent.updateBlockedUsernamePatterns(payload.pattern, payload.add));
                 break;
 
             default:
@@ -2332,4 +2353,16 @@ async function deleteUser(
     const identityAgent = await IdentityAgent.create(identity, identityCanister, icUrl, undefined);
     const response = await identityAgent.deleteUser();
     return response.kind === "success";
+}
+
+async function getSignInProof(identityKey: CryptoKeyPair, delegation: JsonnableDelegationChain): Promise<string | undefined> {
+    const identity = DelegationIdentity.fromDelegation(
+        await ECDSAKeyIdentity.fromKeyPair(identityKey),
+        DelegationChain.fromJSON(delegation),
+    );
+    const identityAgent = await IdentityAgent.create(identity, identityCanister, icUrl, undefined);
+    const sessionKey = await ECDSAKeyIdentity.generate();
+
+    const getIdentityResult = await identityAgent.getOpenChatIdentity(sessionKey);
+    return getIdentityResult?.signInProofJwt;
 }

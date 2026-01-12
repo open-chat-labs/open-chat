@@ -1,6 +1,6 @@
 <script lang="ts">
+    import type { Alignment, Position } from "component-lib";
     import { getAllContexts, mount, onDestroy, type Snippet } from "svelte";
-    import type { Alignment, Position } from "../utils/alignment";
     import MenuWrapper from "./portal/MenuWrapper.svelte";
     import { portalState } from "./portalState.svelte";
 

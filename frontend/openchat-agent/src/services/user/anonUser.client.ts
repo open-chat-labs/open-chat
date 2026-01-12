@@ -106,7 +106,6 @@ export class AnonUserClient {
             avatarId: undefined,
             directChats: {
                 summaries: [],
-                pinned: [],
             },
             favouriteChats: {
                 chats: [],
@@ -135,6 +134,7 @@ export class AnonUserClient {
             bitcoinAddress: undefined,
             oneSecAddress: undefined,
             premiumItems: new Set(),
+            pinnedChats: [],
         });
     }
 
@@ -179,6 +179,14 @@ export class AnonUserClient {
         _threadRootMessageIndex: number | undefined,
         _latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
+        throw new AnonymousOperationError();
+    }
+
+    async getMessagesByMessageIndex(
+        _threadRootMessageIndex: number | undefined,
+        _messageIndexes: Set<number>,
+        _latestKnownUpdate: bigint | undefined,
+    ): Promise<EventsResponse<Message>> {
         throw new AnonymousOperationError();
     }
 

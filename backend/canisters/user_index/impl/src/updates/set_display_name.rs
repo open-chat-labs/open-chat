@@ -17,7 +17,7 @@ fn set_display_name_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     if let Some(user) = state.data.users.get_by_principal(&caller) {
         if let Some(display_name) = args.display_name.as_ref() {
-            match validate_display_name(display_name) {
+            match validate_display_name(display_name, &state.data.blocked_username_patterns) {
                 Ok(_) => {}
                 Err(UsernameValidationError::TooShort(s)) => return DisplayNameTooShort(s.min_length as u16),
                 Err(UsernameValidationError::TooLong(l)) => return DisplayNameTooLong(l.max_length as u16),
@@ -29,7 +29,7 @@ fn set_display_name_impl(args: Args, state: &mut RuntimeState) -> Response {
         let mut user_to_update = user.clone();
         user_to_update.display_name.clone_from(&args.display_name);
         let user_id = user.user_id;
-        match state.data.users.update(user_to_update, now, false, None) {
+        match state.data.users.update(user_to_update, now, false, false) {
             UpdateUserResult::Success => {
                 state.push_event_to_local_user_index(
                     user_id,

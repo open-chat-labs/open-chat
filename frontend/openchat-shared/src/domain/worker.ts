@@ -168,7 +168,11 @@ import type {
 import type { CommunityInvite, GroupInvite } from "./inviteCodes";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
 import type { ToggleMuteNotificationResponse } from "./notifications";
-import type { WithdrawViaOneSecResponse } from "./oneSec";
+import type {
+    OneSecForwardingStatus,
+    OneSecTransferFees,
+    WithdrawViaOneSecResponse,
+} from "./oneSec";
 import type { MinutesOnline } from "./online";
 import type { OptionUpdate } from "./optionUpdate";
 import type {
@@ -224,7 +228,6 @@ import type {
     UserSummary,
 } from "./user";
 import type { Verification } from "./wallet";
-import type { OneSecForwardingStatus, OneSecTransferFees } from "./oneSec";
 
 /**
  * Worker request types
@@ -307,7 +310,7 @@ export type WorkerRequest =
     | SetBio
     | GetBio
     | WithdrawCrypto
-    | GroupMessagesByMessageIndex
+    | MessagesByMessageIndex
     | GetInviteCode
     | EnableInviteCode
     | ResetInviteCode
@@ -468,12 +471,32 @@ export type WorkerRequest =
     | ReinstateMissedDailyClaims
     | VerifyAccountLinkingCode
     | FinaliseAccountLinkingWithCode
+    | GetSignInProof
     | PayForPremiumItem
     | SetPremiumItemCost
+    | OneSecEnableForwarding
     | OneSecGetTransferFees
     | OneSecForwardEvmToIcp
     | OneSecGetForwardingStatus
-    | AddOneSecToken;
+    | UpdateBlockedUsernamePatterns
+    | MarkNotificationSubscriptionActive;
+
+type MarkNotificationSubscriptionActive = {
+    kind: "markNotificationSubscriptionActive";
+    endpoint: string;
+};
+
+type UpdateBlockedUsernamePatterns = {
+    kind: "updateBlockedUsernamePatterns";
+    pattern: string;
+    add: boolean;
+};
+
+type OneSecEnableForwarding = {
+    kind: "oneSecEnableForwarding";
+    userId: string;
+    evmAddress: string;
+};
 
 type OneSecGetTransferFees = {
     kind: "oneSecGetTransferFees";
@@ -493,12 +516,6 @@ type OneSecGetForwardingStatus = {
     chain: EvmChain;
     address: string;
     receiver: string;
-};
-
-type AddOneSecToken = {
-    kind: "addOneSecToken";
-    tokenSymbol: string;
-    infoUrl: string;
 };
 
 type SetPremiumItemCost = {
@@ -866,11 +883,12 @@ type GetInviteCode = {
     kind: "getInviteCode";
 };
 
-type GroupMessagesByMessageIndex = {
-    chatId: MultiUserChatIdentifier;
+type MessagesByMessageIndex = {
+    chatId: ChatIdentifier;
+    threadRootMessageIndex: number | undefined;
     messageIndexes: Set<number>;
     latestKnownUpdate: bigint | undefined;
-    kind: "getGroupMessagesByMessageIndex";
+    kind: "getMessagesByMessageIndex";
 };
 
 type WithdrawCrypto = {
@@ -1028,7 +1046,7 @@ type InviteUsers = {
 };
 
 type RemoveSub = {
-    subscription: PushSubscriptionJSON;
+    endpoint: string;
     kind: "removeSubscription";
 };
 
@@ -1038,7 +1056,7 @@ type PushSub = {
 };
 
 type SubscriptionExists = {
-    p256dh_key: string;
+    endpoint: string;
     kind: "subscriptionExists";
 };
 
@@ -1055,6 +1073,7 @@ type AddFcmToken = {
 
 type RegisterUser = {
     username: string;
+    email: string | undefined;
     referralCode: string | undefined;
     kind: "registerUser";
 };
@@ -1672,6 +1691,12 @@ type FinaliseAccountLinkingWithCode = {
     webAuthnKey?: WebAuthnKeyFull;
 };
 
+type GetSignInProof = {
+    kind: "getSignInProof";
+    identityKey: CryptoKeyPair;
+    delegation: JsonnableDelegationChain;
+};
+
 /**
  * Worker error type
  */
@@ -1900,6 +1925,7 @@ type DeleteFailedMessage = {
 type ClaimPrize = {
     chatId: MultiUserChatIdentifier;
     messageId: bigint;
+    signInProof: string | undefined;
     kind: "claimPrize";
 };
 
@@ -2324,7 +2350,7 @@ export type WorkerResult<T> = T extends Init
     ? string
     : T extends WithdrawCrypto
     ? WithdrawCryptocurrencyResponse
-    : T extends GroupMessagesByMessageIndex
+    : T extends MessagesByMessageIndex
     ? EventsResponse<Message>
     : T extends GetInviteCode
     ? InviteCodeResponse
@@ -2614,14 +2640,20 @@ export type WorkerResult<T> = T extends Init
     ? void
     : T extends CreateAccountLinkingCode
     ? AccountLinkingCode | undefined
+    : T extends GetSignInProof
+    ? string
     : T extends ReinstateMissedDailyClaims
     ? boolean
+    : T extends OneSecEnableForwarding
+    ? void
     : T extends OneSecGetTransferFees
     ? OneSecTransferFees[]
     : T extends OneSecForwardEvmToIcp
     ? OneSecForwardingStatus
     : T extends OneSecGetForwardingStatus
     ? OneSecForwardingStatus
-    : T extends AddOneSecToken
-    ? boolean
+    : T extends UpdateBlockedUsernamePatterns
+    ? void
+    : T extends MarkNotificationSubscriptionActive
+    ? void
     : never;

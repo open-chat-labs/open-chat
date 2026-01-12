@@ -40,13 +40,13 @@ impl WebPushSubscriptions {
         }
     }
 
-    pub fn remove(&mut self, user_id: UserId, p256dh_key: &str) -> bool {
+    pub fn remove(&mut self, user_id: UserId, endpoint: &str) -> bool {
         if let Occupied(mut e) = self.subscriptions.entry(user_id) {
             let subs = e.get_mut();
             if let Some(index) = subs
                 .iter()
                 .enumerate()
-                .find(|(_, s)| s.keys.p256dh.as_str() == p256dh_key)
+                .find(|(_, s)| s.endpoint.as_str() == endpoint || s.keys.p256dh.as_str() == endpoint)
                 .map(|(i, _)| i)
             {
                 subs.remove(index);

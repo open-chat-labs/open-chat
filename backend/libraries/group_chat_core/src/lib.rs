@@ -7,22 +7,23 @@ use chat_events::{
 use group_community_common::MemberUpdate;
 use itertools::Itertools;
 use lazy_static::lazy_static;
-use oc_error_codes::OCErrorCode;
+use oc_error_codes::{OCError, OCErrorCode};
 use regex_lite::Regex;
 use search::simple::Query;
 use serde::{Deserialize, Serialize};
 use std::cmp::{Reverse, max, min};
-use std::collections::{BTreeMap, BTreeSet, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use types::{
     AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, BotNotification, Caller, Chat,
-    CustomPermission, Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsCaller, EventsResponse,
-    ExternalUrlUpdated, GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole,
-    GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention, MAX_RETURNED_MENTIONS, MemberLeft,
-    MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned,
-    MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OCResult, OptionUpdate, OptionalGroupPermissions,
-    OptionalMessagePermissions, PermissionsChanged, Reaction, ReserveP2PSwapSuccess, RoleChanged, Rules, SelectedGroupUpdates,
-    SenderContext, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited,
-    Version, Versioned, VersionedRules, VideoCall, VideoCallPresence, VoteOperation, WebhookDetails,
+    CustomPermission, DiamondMembershipStatus, Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsCaller,
+    EventsResponse, ExternalUrlUpdated, GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions,
+    GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention,
+    MAX_RETURNED_MENTIONS, MemberLeft, MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessageMatch,
+    MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OCResult, OptionUpdate,
+    OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged, Reaction, ReserveP2PSwapSuccess, RoleChanged,
+    Rules, SelectedGroupUpdates, SenderContext, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType,
+    UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall, VideoCallPresence, VoteOperation,
+    WebhookDetails,
 };
 use utils::document::validate_avatar;
 use utils::text_validation::{
@@ -1060,38 +1061,50 @@ impl GroupChatCore {
 
     pub fn change_role(
         &mut self,
-        caller: UserId,
-        target_user: UserId,
+        changed_by: UserId,
+        target_users: Vec<UserId>,
         new_role: GroupRole,
-        is_caller_platform_moderator: bool,
-        is_user_platform_moderator: bool,
         now: TimestampMillis,
-    ) -> OCResult<ChangeRoleSuccess> {
-        let prev_role = self.members.change_role(
-            caller,
-            target_user,
-            new_role.into(),
-            &self.permissions,
-            is_caller_platform_moderator,
-            is_user_platform_moderator,
-            now,
-        )?;
-
-        let event = RoleChanged {
-            user_ids: vec![target_user],
-            old_role: prev_role.into(),
-            new_role,
-            changed_by: caller,
+    ) -> ChangeRoleResults {
+        let mut results = ChangeRoleResults {
+            users: HashMap::new(),
+            bot_notification: None,
         };
 
-        let result = self
-            .events
-            .push_main_event(ChatEventInternal::RoleChanged(Box::new(event)), now);
+        let new_role_internal = new_role.into();
 
-        Ok(ChangeRoleSuccess {
-            prev_role,
-            bot_notification: result.bot_notification,
-        })
+        for target_user in target_users {
+            let result = self.members.change_role(target_user, new_role_internal, now);
+
+            results.users.insert(target_user, result);
+        }
+
+        // Push a single RoleChanged event for all successful role changes
+        let successful_changes: Vec<_> = results
+            .users
+            .iter()
+            .filter_map(|(&user_id, result)| match result {
+                Ok(prev_role) => Some((user_id, *prev_role)),
+                _ => None,
+            })
+            .collect();
+
+        if !successful_changes.is_empty() {
+            let event = RoleChanged {
+                user_ids: successful_changes.iter().map(|(user_id, _)| *user_id).collect(),
+                old_role: successful_changes[0].1.into(),
+                new_role,
+                changed_by,
+            };
+
+            let result = self
+                .events
+                .push_main_event(ChatEventInternal::RoleChanged(Box::new(event)), now);
+
+            results.bot_notification = result.bot_notification;
+        }
+
+        results
     }
 
     pub fn pin_message(
@@ -1747,11 +1760,28 @@ impl GroupChatCore {
         user_id: UserId,
         message_id: MessageId,
         now: TimestampMillis,
+        is_unique_person: bool,
+        diamond_status: DiamondMembershipStatus,
+        total_chit_earned: u32,
+        streak: u16,
+        streak_ends: TimestampMillis,
+        user_reauthenticated: bool,
     ) -> OCResult<ReservePrizeSuccess> {
         let member = self.members.get_verified_member(user_id)?;
         let min_visible_event_index = member.min_visible_event_index();
 
-        self.events.reserve_prize(user_id, min_visible_event_index, message_id, now)
+        self.events.reserve_prize(
+            user_id,
+            min_visible_event_index,
+            message_id,
+            now,
+            is_unique_person,
+            diamond_status,
+            total_chit_earned,
+            streak,
+            streak_ends,
+            user_reauthenticated,
+        )
     }
 
     pub fn reserve_p2p_swap(
@@ -2155,5 +2185,10 @@ impl AtEveryoneMention {
 
 pub struct LeaveGroupSuccess {
     pub member: GroupMemberInternal,
+    pub bot_notification: Option<BotNotification>,
+}
+
+pub struct ChangeRoleResults {
+    pub users: HashMap<UserId, Result<GroupRoleInternal, OCError>>,
     pub bot_notification: Option<BotNotification>,
 }

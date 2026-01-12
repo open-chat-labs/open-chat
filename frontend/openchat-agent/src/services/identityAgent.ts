@@ -86,21 +86,29 @@ export class IdentityAgent {
         return createIdentityResponse.kind;
     }
 
-    async getOpenChatIdentity(sessionKey: SignIdentity): Promise<DelegationIdentity | undefined> {
+    async getOpenChatIdentity(sessionKey: SignIdentity): Promise<{ identity: DelegationIdentity, signInProofJwt: string } | undefined> {
         const sessionKeyDer = toDer(sessionKey);
         const prepareDelegationResponse = await this._identityClient.prepareDelegation(
             sessionKeyDer,
             this._isIIPrincipal,
         );
 
-        return prepareDelegationResponse.kind === "success"
-            ? this.getDelegation(
-                  prepareDelegationResponse.userKey,
-                  sessionKey,
-                  sessionKeyDer,
-                  prepareDelegationResponse.expiration,
-              )
-            : undefined;
+        if (prepareDelegationResponse.kind === "success") {
+            const identity = await this.getDelegation(
+                prepareDelegationResponse.userKey,
+                sessionKey,
+                sessionKeyDer,
+                prepareDelegationResponse.expiration,
+            );
+
+            if (identity !== undefined) {
+                return {
+                    identity,
+                    signInProofJwt: prepareDelegationResponse.proofJwt,
+                }
+            }
+        }
+        return undefined;
     }
 
     generateChallenge(): Promise<GenerateChallengeResponse> {
@@ -152,21 +160,27 @@ export class IdentityAgent {
         sessionKeyDer: Uint8Array,
         expiration: bigint,
     ): Promise<DelegationIdentity | undefined> {
-        const getDelegationResponse = await this._identityClient.getDelegation(
-            sessionKeyDer,
-            expiration,
-        );
+        // Retry up to 5 times because we call this immediately after calling prepare_delegation, so we may end up
+        // getting a "not_found" response if we hit a node which is slightly behind.
+        for (let attempt = 0; attempt < 5; attempt++) {
+            const getDelegationResponse = await this._identityClient.getDelegation(
+                sessionKeyDer,
+                expiration,
+            );
 
-        if (getDelegationResponse.kind !== "success") {
-            return undefined;
+            switch (getDelegationResponse.kind) {
+                case "success":
+                    return buildDelegationIdentity(
+                        userKey,
+                        sessionKey,
+                        getDelegationResponse.delegation,
+                        getDelegationResponse.signature,
+                    );
+
+                case "error":
+                    return undefined;
+            }
         }
-
-        return buildDelegationIdentity(
-            userKey,
-            sessionKey,
-            getDelegationResponse.delegation,
-            getDelegationResponse.signature,
-        );
     }
 
     private async hydrateWebAuthnKey(credentialId: Uint8Array): Promise<WebAuthnKeyFull> {

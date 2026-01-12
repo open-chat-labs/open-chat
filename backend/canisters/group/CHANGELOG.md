@@ -6,9 +6,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `c2c_bot_change_role` endpoint ([#8753](https://github.com/open-chat-labs/open-chat/pull/8753))
+
+### Changed
+
+- Add `duration_ms` and `samples` to `AudioContent` ([#8669](https://github.com/open-chat-labs/open-chat/pull/8669))
+- Apply user re-authentication check when claiming prizes ([#8696](https://github.com/open-chat-labs/open-chat/pull/8696))
+- Move `ic_root_key` to `Environment` trait ([#8701](https://github.com/open-chat-labs/open-chat/pull/8701))
+- Take RNG seed in init args ([#8702](https://github.com/open-chat-labs/open-chat/pull/8702))
+- One-time sync of bot installations with LUI ([#8731](https://github.com/open-chat-labs/open-chat/pull/8731))
+- Granted bot permissions are union of command and autonomous permissions ([#8732](https://github.com/open-chat-labs/open-chat/pull/8732))
+- Support changing role of multiple members in one call ([#8738](https://github.com/open-chat-labs/open-chat/pull/8738))
+- Remove old crypto token fields from metrics ([#8758](https://github.com/open-chat-labs/open-chat/pull/8758))
+- Skip serializing fields from chat metrics where value is 0 ([#8760](https://github.com/open-chat-labs/open-chat/pull/8760))
+- Skip serializing chat summary fields which are their default values ([#8769](https://github.com/open-chat-labs/open-chat/pull/8769))
+- Skip serializing chat event fields which are their default values ([#8770](https://github.com/open-chat-labs/open-chat/pull/8770))
+- Simplify handling of bot installation lifecycle events ([#8776](https://github.com/open-chat-labs/open-chat/pull/8776))
+- Skip serializing chat details fields which are their default values ([#8778](https://github.com/open-chat-labs/open-chat/pull/8778))
+
+### Removed
+
+- Remove the deprecated `claim_prize` endpoint ([#8680](https://github.com/open-chat-labs/open-chat/pull/8680))
+- Remove ability for platform moderators to assume ownership ([#8734](https://github.com/open-chat-labs/open-chat/pull/8734))
+
+## [[2.0.1905](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1905-group)] - 2025-09-24
+
+### Added
+
+- Add c2c_claim_prize to be called by the local_user_index ([#8613](https://github.com/open-chat-labs/open-chat/pull/8613))
+
+## [[2.0.1900](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1900-group)] - 2025-09-12
+
 ### Changed
 
 - Remove legacy group membership fields from backend ([#8508](https://github.com/open-chat-labs/open-chat/pull/8508))
+- Remove endpoint for manual bot event subscriptions ([#8594](https://github.com/open-chat-labs/open-chat/pull/8594))
+- Keep bot event subscriptions in sync ([#8600](https://github.com/open-chat-labs/open-chat/pull/8600))
 
 ## [[2.0.1874](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1874-group)] - 2025-08-20
 

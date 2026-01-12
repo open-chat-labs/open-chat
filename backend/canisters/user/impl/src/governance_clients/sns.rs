@@ -1,5 +1,5 @@
 use crate::governance_clients::sns::manage_neuron::RegisterVote;
-use candid::Principal;
+use ic_principal::Principal;
 use sns_governance_canister::types::neuron::DissolveState;
 use sns_governance_canister::types::{GovernanceError, ManageNeuronRegisterVoteOnly, manage_neuron, manage_neuron_response};
 use tracing::error;
