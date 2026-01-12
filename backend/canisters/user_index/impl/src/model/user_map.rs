@@ -50,6 +50,8 @@ pub struct Bot {
     pub definition: BotDefinition,
     pub last_updated: TimestampMillis,
     pub installations: HashMap<BotInstallationLocation, InstalledBotDetails>,
+    #[serde(default)]
+    pub installation_events: Vec<BotInstallationEvent>,
     pub registration_status: BotRegistrationStatus,
 }
 
@@ -77,6 +79,14 @@ impl Bot {
         installed_by: UserId,
         installed_at: TimestampMillis,
     ) {
+        self.installation_events.push(BotInstallationEvent::Installed(BotInstalled {
+            location,
+            granted_permissions: granted_permissions.clone(),
+            granted_autonomous_permissions: granted_autonomous_permissions.clone(),
+            installed_by,
+            timestamp: installed_at,
+        }));
+
         if let Some(installation) = self.installations.get_mut(&location) {
             installation.local_user_index = local_user_index;
             installation.granted_permissions = granted_permissions;
@@ -97,8 +107,22 @@ impl Bot {
         }
     }
 
-    pub fn remove_installation(&mut self, location: &BotInstallationLocation) -> Option<InstalledBotDetails> {
-        self.installations.remove(location)
+    pub fn remove_installation(
+        &mut self,
+        location: BotInstallationLocation,
+        uninstalled_by: UserId,
+        removed_at: TimestampMillis,
+    ) -> Option<InstalledBotDetails> {
+        let removed = self.installations.remove(&location)?;
+
+        self.installation_events
+            .push(BotInstallationEvent::Uninstalled(BotUninstalled {
+                location,
+                uninstalled_by,
+                timestamp: removed_at,
+            }));
+
+        Some(removed)
     }
 
     pub fn to_schema(&self, id: UserId) -> BotDetails {
@@ -126,6 +150,65 @@ pub struct InstalledBotDetails {
     pub granted_permissions: BotPermissions,
     pub granted_autonomous_permissions: BotPermissions,
     pub updated_at: TimestampMillis,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum BotInstallationEvent {
+    #[serde(rename = "i")]
+    Installed(BotInstalled),
+    #[serde(rename = "u")]
+    Uninstalled(BotUninstalled),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BotInstalled {
+    #[serde(rename = "l")]
+    pub location: BotInstallationLocation,
+    #[serde(rename = "p")]
+    pub granted_permissions: BotPermissions,
+    #[serde(rename = "a")]
+    pub granted_autonomous_permissions: BotPermissions,
+    #[serde(rename = "u")]
+    pub installed_by: UserId,
+    #[serde(rename = "t")]
+    pub timestamp: TimestampMillis,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BotUninstalled {
+    #[serde(rename = "l")]
+    pub location: BotInstallationLocation,
+    #[serde(rename = "u")]
+    pub uninstalled_by: UserId,
+    #[serde(rename = "t")]
+    pub timestamp: TimestampMillis,
+}
+
+impl From<BotInstallationEvent> for user_index_canister::bot_installations::BotInstallationEvent {
+    fn from(value: BotInstallationEvent) -> Self {
+        match value {
+            BotInstallationEvent::Installed(bot_installed) => {
+                user_index_canister::bot_installations::BotInstallationEvent::Installed(
+                    user_index_canister::bot_installations::BotInstalled {
+                        location: bot_installed.location,
+                        granted_permissions: bot_installed.granted_permissions,
+                        granted_autonomous_permissions: bot_installed.granted_autonomous_permissions,
+                        installed_by: bot_installed.installed_by,
+                        timestamp: bot_installed.timestamp,
+                    },
+                )
+            }
+            BotInstallationEvent::Uninstalled(bot_uninstalled) => {
+                user_index_canister::bot_installations::BotInstallationEvent::Uninstalled(
+                    user_index_canister::bot_installations::BotUninstalled {
+                        location: bot_uninstalled.location,
+                        uninstalled_by: bot_uninstalled.uninstalled_by,
+                        timestamp: bot_uninstalled.timestamp,
+                    },
+                )
+            }
+        }
+    }
 }
 
 impl UserMap {
@@ -398,7 +481,7 @@ impl UserMap {
         granted_permissions: BotPermissions,
         granted_autonomous_permissions: BotPermissions,
         installed_by: UserId,
-        now: TimestampMillis,
+        installed_at: TimestampMillis,
     ) -> bool {
         if let Some(bot) = self.bots.get_mut(&bot_id) {
             bot.add_installation(
@@ -407,7 +490,7 @@ impl UserMap {
                 granted_permissions,
                 granted_autonomous_permissions,
                 installed_by,
-                now,
+                installed_at,
             );
             true
         } else {
@@ -415,9 +498,15 @@ impl UserMap {
         }
     }
 
-    pub fn remove_bot_installation(&mut self, bot_id: UserId, location: &BotInstallationLocation) -> bool {
+    pub fn remove_bot_installation(
+        &mut self,
+        bot_id: UserId,
+        location: BotInstallationLocation,
+        uninstalled_by: UserId,
+        uninstalled_at: TimestampMillis,
+    ) -> bool {
         if let Some(bot) = self.bots.get_mut(&bot_id) {
-            bot.remove_installation(location).is_some()
+            bot.remove_installation(location, uninstalled_by, uninstalled_at).is_some()
         } else {
             false
         }
