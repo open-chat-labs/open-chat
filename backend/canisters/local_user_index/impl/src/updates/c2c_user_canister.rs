@@ -86,8 +86,8 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             state.push_event_to_user_index(UserIndexEvent::SetMaxStreak(user_id, max_streak), **now);
         }
         UserEvent::EventStoreEvent(event) => state.data.event_store_client.push(event),
-        UserEvent::Notification(notification) => {
-            if let Notification::Bot(bot_notification) = &*notification
+        UserEvent::Notification(mut notification) => {
+            if let Notification::Bot(bot_notification) = &mut *notification
                 && let BotEvent::Lifecycle(BotLifecycleEvent::Installed(event)) = &bot_notification.event
             {
                 state.push_event_to_user_index(
@@ -100,6 +100,14 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                     })),
                     **now,
                 );
+
+                // Some bots request all their installation locations when they startup while simultaneously receiving
+                // bot installation lifecycle notifications and so they will need to merge installation location
+                // records from both sources, only keeping the latest. In order to do that, the timestamps must come from the
+                // same canister, namely the LocalUserIndex.
+                // In this case, the BotLifecycleEvent::Installed notification comes from the orginating location canister
+                // so we give it the LocalUserIndex timestamp instead.
+                bot_notification.timestamp = **now;
             }
 
             state.handle_notification(*notification, state.env.canister_id(), **now);
