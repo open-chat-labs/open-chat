@@ -7,7 +7,7 @@
         videoMicOn,
         videoSpeakerView,
     } from "@src/stores/settings";
-    import { Container, H2, Switch } from "component-lib";
+    import { Body, BodySmall, Column, Container, H2, Switch } from "component-lib";
     import {
         adultEnabledStore,
         hideMessagesFromDirectBlocked,
@@ -18,16 +18,41 @@
         underReviewEnabledStore,
         type ModerationFlag,
     } from "openchat-client";
-    import { getContext } from "svelte";
+    import { getContext, onDestroy } from "svelte";
+    import { Ringtone } from "../../../stores/video";
     import Setting from "../../Setting.svelte";
     import Translatable from "../../Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
+    import VideoCallRingtone from "../profile/VideoCallRingtone.svelte";
 
     const client = getContext<OpenChat>("client");
 
     function toggleModerationFlag(flag: ModerationFlag) {
         client.setModerationFlags($moderationFlagsEnabledStore ^ flag);
     }
+
+    let ringtones: Ringtone[] = [
+        new Ringtone("boring", "Boring"),
+        new Ringtone("pleasant", "Pleasant"),
+        new Ringtone("boomboom", "Boom boom"),
+        new Ringtone("garage", "Two step flava"),
+        new Ringtone("siren", "Siren"),
+    ];
+
+    function onTogglePlay(ringtone: Ringtone) {
+        ringtones.forEach((r) => {
+            if (r === ringtone) {
+                r.toggle();
+            } else {
+                r.stop();
+            }
+        });
+        ringtones = ringtones;
+    }
+
+    onDestroy(() => {
+        ringtones.forEach((r) => r.stop());
+    });
 </script>
 
 <SlidingPageContent title={i18nKey("Chats & video calls")} subtitle={i18nKey("General options")}>
@@ -83,6 +108,21 @@
                     <Translatable resourceKey={i18nKey("profile.videoSpeakerView")}></Translatable>
                 </Switch>
             </Setting>
+
+            <Column gap={"sm"}>
+                <Body fontWeight={"bold"}>
+                    <Translatable resourceKey={i18nKey("Video call ringtone")}></Translatable>
+                </Body>
+                <BodySmall colour={"textSecondary"}>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            "Choose which rington you would like to hear when receiving an incoming video call.",
+                        )}></Translatable>
+                </BodySmall>
+            </Column>
+            {#each ringtones as ringtone}
+                <VideoCallRingtone {onTogglePlay} {ringtone} />
+            {/each}
         </Container>
         <Container gap={"xl"} direction={"vertical"}>
             <H2 colour={"primary"}>

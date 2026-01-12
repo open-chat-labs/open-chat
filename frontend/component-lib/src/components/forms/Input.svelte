@@ -96,7 +96,7 @@
     </Container>
     {#if subtext}
         <Row width={"hug"} gap={"xs"} padding={["zero", "xl"]}>
-            <Caption width={"hug"} colour={error ? "error" : "textSecondary"}>
+            <Caption width={required ? "hug" : "fill"} colour={error ? "error" : "textSecondary"}>
                 {@render subtext()}
             </Caption>
             {#if required}

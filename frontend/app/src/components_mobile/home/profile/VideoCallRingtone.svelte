@@ -1,12 +1,11 @@
 <script lang="ts">
-    import { iconSize } from "openchat-client";
+    import { BodySmall, ColourVars, Column, IconButton, Radio, Row } from "component-lib";
     import { onMount } from "svelte";
     import PauseCircleOutline from "svelte-material-icons/PauseCircleOutline.svelte";
     import PlayCircleOutline from "svelte-material-icons/PlayCircleOutline.svelte";
     import WaveSurfer from "wavesurfer.js";
     import { Ringtone, selectedRingtone } from "../../../stores/video";
     import { currentTheme } from "../../../theme/themes";
-    import Radio from "../../Radio.svelte";
 
     interface Props {
         ringtone: Ringtone;
@@ -30,7 +29,7 @@
             barGap: 2,
             container: waveform,
             waveColor: $currentTheme["txt-light"],
-            progressColor: $currentTheme.accent,
+            progressColor: $currentTheme.primary,
             media: ringtone.audio,
         });
 
@@ -51,38 +50,31 @@
     }
 </script>
 
-<div class="wrapper">
-    <Radio onChange={selectRingtone} {checked} id={ringtone.name} group="video-ringtone">
-        <div class="ringtone">
-            <div class="name">{ringtone.name}</div>
-            <div onclick={togglePlay} class="play">
+<Column>
+    <Row crossAxisAlignment={"center"} mainAxisAlignment={"spaceBetween"}>
+        <Radio
+            value={$selectedRingtone}
+            onChange={selectRingtone}
+            {checked}
+            id={ringtone.name}
+            group="video-ringtone">
+            <BodySmall>{ringtone.name}</BodySmall>
+        </Radio>
+        <IconButton size={"sm"} onclick={togglePlay}>
+            {#snippet icon()}
                 {#if ringtone.playing}
-                    <PauseCircleOutline size={$iconSize} color={"var(--icon-selected)"} />
+                    <PauseCircleOutline color={ColourVars.primary} />
                 {:else}
-                    <PlayCircleOutline size={$iconSize} color={"var(--icon-txt)"} />
+                    <PlayCircleOutline color={ColourVars.textPrimary} />
                 {/if}
-            </div>
-        </div>
-    </Radio>
+            {/snippet}
+        </IconButton>
+    </Row>
     <div bind:this={waveform} class="waveform"></div>
-</div>
+</Column>
 
 <style lang="scss">
-    .wrapper {
-        border: var(--bw) solid var(--bd);
-        border-radius: var(--rd);
-        padding: $sp3;
-        margin-bottom: $sp3;
-    }
-
-    .ringtone {
-        display: flex;
-        gap: $sp4;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .play {
-        cursor: pointer;
+    .waveform {
+        width: 100%;
     }
 </style>

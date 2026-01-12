@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
-    import { interpolate } from "../i18n/i18n";
-    import { translatable } from "../actions/translatable";
     import type { ResourceKey } from "openchat-client";
+    import { _ } from "svelte-i18n";
+    import { translatable } from "../actions/translatable";
+    import { interpolate } from "../i18n/i18n";
 
     interface Props {
         resourceKey: ResourceKey;
@@ -14,3 +14,9 @@
 <span use:translatable={{ key: resourceKey }}>
     {interpolate($_, resourceKey)}
 </span>
+
+<style lang="scss">
+    span {
+        word-break: break-all;
+    }
+</style>

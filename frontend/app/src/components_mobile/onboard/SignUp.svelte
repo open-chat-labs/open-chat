@@ -112,7 +112,7 @@
                 error = "register.referralCodeExpired";
                 badCode = true;
             } else if (resp.kind === "success") {
-                error = undefined;
+                // error = undefined;
                 createdUser = {
                     kind: "created_user",
                     username,
