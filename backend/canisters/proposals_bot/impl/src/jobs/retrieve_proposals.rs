@@ -1,6 +1,7 @@
 use crate::jobs::{push_proposals, update_proposals};
 use crate::proposals::{REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE, RawProposal};
-use crate::timer_job_types::{ProcessUserRefundJob, SubmitProposalJob, TimerJob, TopUpNeuronJob, VoteOnNnsProposalJob};
+use crate::timer_job_types::{ProcessUserRefundJob, SubmitProposalJob, TopUpNeuronJob};
+use crate::updates::submit_proposal::LinkedNnsProposal;
 use crate::{RuntimeState, mutate_state};
 use canister_timer_jobs::Job;
 use constants::{MINUTE_IN_MS, SNS_GOVERNANCE_CANISTER_ID};
@@ -10,7 +11,7 @@ use proposals_bot_canister::{ExecuteGenericNervousSystemFunction, ProposalToSubm
 use sns_governance_canister::types::ProposalData;
 use std::collections::HashSet;
 use std::time::Duration;
-use types::{C2CError, CanisterId, NnsNeuronId, Proposal, ProposalId, SnsNeuronId};
+use types::{C2CError, CanisterId, NnsNeuronId, NnsProposal, Proposal, SnsNeuronId};
 use utils::canister::delay_if_should_retry_failed_c2c_call;
 
 pub const NNS_TOPIC_NEURON_MANAGEMENT: i32 = 1;
@@ -140,29 +141,17 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
                         if let Proposal::NNS(nns) = proposal
                             && NNS_TOPICS_TO_PUSH_SNS_PROPOSALS_FOR.contains(&nns.topic)
                             && state.data.nns_proposals_requiring_manual_vote.insert(nns.id)
-                        {
-                            // Set up a job to reject the proposal 10 minutes before its deadline.
-                            // In parallel, we will submit an SNS proposal instructing the SNS governance
-                            // canister to adopt the proposal. So the resulting vote on the NNS proposal will
-                            // depend on the outcome of the SNS proposal.
-                            state.data.timer_jobs.enqueue_job(
-                                TimerJob::VoteOnNnsProposal(VoteOnNnsProposalJob {
-                                    nns_governance_canister_id: governance_canister_id,
-                                    neuron_id,
-                                    proposal_id: nns.id,
-                                    vote: false,
-                                }),
-                                nns.deadline.saturating_sub(10 * MINUTE_IN_MS),
-                                now,
-                            );
-
-                            if let Some(oc_neuron_id) = state
+                            && let Some(oc_neuron_id) = state
                                 .data
                                 .nervous_systems
                                 .get_neuron_id_for_submitting_proposals(&SNS_GOVERNANCE_CANISTER_ID)
-                            {
-                                submit_oc_proposal_for_nns_proposal(nns.id, neuron_id, nns.title.clone(), oc_neuron_id);
-                            }
+                        {
+                            submit_oc_proposal_for_nns_proposal(
+                                nns,
+                                state.data.nns_governance_canister_id,
+                                neuron_id,
+                                oc_neuron_id,
+                            );
                         }
                     }
                 }
@@ -248,11 +237,14 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
 }
 
 fn submit_oc_proposal_for_nns_proposal(
-    nns_proposal_id: ProposalId,
+    nns_proposal: &NnsProposal,
+    nns_governance_canister_id: CanisterId,
     nns_neuron_id: NnsNeuronId,
-    nns_proposal_title: String,
     oc_neuron_id: SnsNeuronId,
 ) {
+    let nns_proposal_id = nns_proposal.id;
+    let nns_proposal_title = nns_proposal.title.clone();
+
     // If this proposal passes, the proposal will call `manage_neuron` on the NNS governance
     // canister instructing it to vote to approve the NNS proposal
     let manage_neuron_args = ManageNeuron {
@@ -284,6 +276,12 @@ The [OpenChat named neuron](https://dashboard.internetcomputer.org/neuron/176821
             }),
         },
         user_id_and_payment: None,
+        linked_nns_proposal: Some(LinkedNnsProposal {
+            nns_governance_canister_id,
+            nns_neuron_id,
+            proposal_id: nns_proposal_id,
+            deadline: nns_proposal.deadline,
+        }),
     };
 
     job.execute();
