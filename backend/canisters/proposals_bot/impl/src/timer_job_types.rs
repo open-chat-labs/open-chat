@@ -61,6 +61,8 @@ pub struct VoteOnNnsProposalJob {
     pub vote: bool,
 }
 
+// When this job runs it will query the tally of the specified SNS proposal, then based
+// on that tally it will vote to either approve or reject the linked NNS proposal
 #[derive(Serialize, Deserialize, Clone)]
 pub struct CheckSnsProposalTallyThenVoteOnNnsProposalJob {
     pub sns_governance_canister_id: CanisterId,
