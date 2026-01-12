@@ -231,7 +231,7 @@ p256 = { version = "0.13" }
 # `pocket-ic` should be pinned to an exact version so that the PocketIC server binary version
 # `POCKET_IC_SERVER_VERSION` defined in `scripts/run-integration-tests.sh` is compatible:
 # https://docs.google.com/document/d/1VYmHUTjrgbzRHtsAyRrI5cj-gWGs7ktTnutPvUMJioU/edit
-pocket-ic = "=10.0.0"
+pocket-ic = "=11.0.0"
 proc-macro2 = "1"
 prometheus = "0.14"
 proptest = "1"
