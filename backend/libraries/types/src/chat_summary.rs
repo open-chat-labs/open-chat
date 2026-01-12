@@ -239,15 +239,31 @@ pub struct SelectedGroupUpdates {
     pub timestamp: TimestampMillis,
     pub last_updated: TimestampMillis,
     pub latest_event_index: EventIndex,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<GroupMember>>", optional)]
     pub members_added_or_updated: Vec<GroupMember>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<UserId>>", optional)]
     pub members_removed: Vec<UserId>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<InstalledBotDetails>>", optional)]
     pub bots_added_or_updated: Vec<InstalledBotDetails>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<UserId>>", optional)]
     pub bots_removed: Vec<UserId>,
     pub webhooks: Option<Vec<WebhookDetails>>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<UserId>>", optional)]
     pub blocked_users_added: Vec<UserId>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<UserId>>", optional)]
     pub blocked_users_removed: Vec<UserId>,
     pub invited_users: Option<Vec<UserId>>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<MessageIndex>>", optional)]
     pub pinned_messages_added: Vec<MessageIndex>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<MessageIndex>>", optional)]
     pub pinned_messages_removed: Vec<MessageIndex>,
     pub chat_rules: Option<VersionedRules>,
 }
@@ -383,11 +399,17 @@ pub struct Rules {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Default)]
 pub struct VersionedRules {
     pub text: String,
     pub version: Version,
     pub enabled: bool,
+}
+
+impl VersionedRules {
+    pub fn is_empty(&self) -> bool {
+        self.text.is_empty() && self.version == Version::default() && !self.enabled
+    }
 }
 
 #[ts_export]
