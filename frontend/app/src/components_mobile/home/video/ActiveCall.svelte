@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { DailyThemeConfig } from "@daily-co/daily-js";
     import daily, { type DailyCall } from "@daily-co/daily-js";
+    import { Column, Sheet, Title } from "component-lib";
     import {
         allUsersStore,
         chatIdentifiersEqual,
@@ -32,10 +33,6 @@
     import type { Theme } from "../../../theme/types";
     import { removeQueryStringParam } from "../../../utils/urls";
     import AreYouSure from "../../AreYouSure.svelte";
-    import Button from "../../Button.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
-    import ModalContent from "../../ModalContent.svelte";
-    import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
     import ActiveCallHeader from "./ActiveCallHeader.svelte";
 
@@ -316,43 +313,23 @@
 {/if}
 
 {#if hostEnded}
-    <Overlay>
-        <ModalContent hideHeader>
-            {#snippet body()}
-                <div class="host-ended">
-                    <Translatable resourceKey={i18nKey("videoCall.hostEnded")} />
-                </div>
-            {/snippet}
-            {#snippet footer()}
-                <ButtonGroup align={"center"}>
-                    <Button onClick={() => (hostEnded = false)}>
-                        <Translatable resourceKey={i18nKey("close")} />
-                    </Button>
-                </ButtonGroup>
-            {/snippet}
-        </ModalContent>
-    </Overlay>
+    <Sheet onDismiss={() => (hostEnded = false)}>
+        <Column mainAxisAlignment={"center"} crossAxisAlignment={"center"} padding={"xxxl"}>
+            <Title width={"hug"} fontWeight={"bold"}>
+                <Translatable resourceKey={i18nKey("videoCall.hostEnded")} />
+            </Title>
+        </Column>
+    </Sheet>
 {/if}
 
 {#if denied}
-    <Overlay>
-        <ModalContent hideHeader>
-            {#snippet body()}
-                <div class="denied">
-                    <Translatable resourceKey={i18nKey("videoCall.denied")} />
-                </div>
-            {/snippet}
-            {#snippet footer()}
-                <span>
-                    <ButtonGroup align={"center"}>
-                        <Button onClick={() => (denied = false)}>
-                            <Translatable resourceKey={i18nKey("close")} />
-                        </Button>
-                    </ButtonGroup>
-                </span>
-            {/snippet}
-        </ModalContent>
-    </Overlay>
+    <Sheet onDismiss={() => (denied = false)}>
+        <Column mainAxisAlignment={"center"} crossAxisAlignment={"center"} padding={"xxxl"}>
+            <Title width={"hug"} fontWeight={"bold"}>
+                <Translatable resourceKey={i18nKey("videoCall.denied")} />
+            </Title>
+        </Column>
+    </Sheet>
 {/if}
 
 <div

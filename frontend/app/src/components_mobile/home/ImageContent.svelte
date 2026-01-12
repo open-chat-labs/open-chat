@@ -1,16 +1,14 @@
 <script lang="ts">
     import type { ImageContent, MemeFighterContent } from "openchat-client";
-    import ArrowCollapse from "svelte-material-icons/ArrowCollapse.svelte";
     import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
     import { lowBandwidth } from "../../stores/settings";
     import { isTouchDevice } from "../../utils/devices";
     import Button from "../Button.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import Overlay from "../Overlay.svelte";
     import Translatable from "../Translatable.svelte";
     import ContentCaption from "./ContentCaption.svelte";
+    import ZoomedImage from "./ZoomedImage.svelte";
 
     interface Props {
         content: ImageContent | MemeFighterContent;
@@ -39,8 +37,6 @@
     let imgElement: HTMLImageElement | undefined = $state();
     let zoom = $state(false);
     let landscape = $derived(content.height < content.width);
-    let zoomedWidth: number = $state(0);
-    let zoomedHeight: number = $state(0);
 
     function normaliseContent(content: ImageContent | MemeFighterContent) {
         switch (content.kind) {
@@ -76,33 +72,8 @@
 
     function toggleZoom() {
         zoom = !zoom;
-        if (zoom) {
-            recalculateZoomedDimensions();
-        }
     }
 
-    function recalculateZoomedDimensions() {
-        const contentAspectRatio = content.width / content.height;
-        let imageWidth = Math.max(400, content.width);
-        let imageHeight = Math.max(400, content.height);
-        if (landscape) {
-            imageWidth = Math.min(window.innerWidth, imageWidth);
-            imageHeight = imageWidth / contentAspectRatio;
-            if (imageHeight > window.innerHeight) {
-                imageHeight = window.innerHeight;
-                imageWidth = imageHeight * contentAspectRatio;
-            }
-        } else {
-            imageHeight = Math.min(window.innerHeight, imageHeight);
-            imageWidth = imageHeight * contentAspectRatio;
-            if (imageWidth > window.innerWidth) {
-                imageWidth = window.innerWidth;
-                imageHeight = imageWidth / contentAspectRatio;
-            }
-        }
-        zoomedWidth = imageWidth;
-        zoomedHeight = imageHeight;
-    }
     let normalised = $derived(normaliseContent(content));
     let hidden = $state(false);
     $effect(() => {
@@ -116,10 +87,6 @@
         }
     }
 </script>
-
-<svelte:window
-    onresize={recalculateZoomedDimensions}
-    onorientationchange={recalculateZoomedDimensions} />
 
 {#if normalised.url !== undefined}
     <div class="img-wrapper">
@@ -159,32 +126,8 @@
 
 <ContentCaption caption={normalised.caption} {edited} {blockLevelMarkdown} />
 
-{#if zoomable && zoom}
-    <Overlay onClose={() => (zoom = false)} dismissible alignBottomOnMobile={false}>
-        <ModalContent hideHeader hideFooter fill fitToContent fixedWidth={false}>
-            {#snippet body()}
-                <span class="body">
-                    <img
-                        class="zoomed"
-                        class:landscape
-                        width={zoomedWidth}
-                        height={zoomedHeight}
-                        onclick={onClick}
-                        ondblclick={onDoubleClick}
-                        onerror={onError}
-                        src={normalised.url}
-                        alt={normalised.caption} />
-                    <div
-                        class="expand"
-                        class:rtl={$rtlStore}
-                        class:zoomed={zoom}
-                        onclick={toggleZoom}>
-                        <ArrowCollapse size={"1em"} color={"#fff"} />
-                    </div>
-                </span>
-            {/snippet}
-        </ModalContent>
-    </Overlay>
+{#if zoomable && zoom && normalised.url !== undefined}
+    <ZoomedImage onClose={toggleZoom} url={normalised.url} />
 {/if}
 
 <style lang="scss">
