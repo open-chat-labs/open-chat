@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Skip serializing chat event fields which are their default values ([#8770](https://github.com/open-chat-labs/open-chat/pull/8770))
 - Simplify handling of bot installation lifecycle events ([#8776](https://github.com/open-chat-labs/open-chat/pull/8776))
 - Skip serializing chat details fields which are their default values ([#8778](https://github.com/open-chat-labs/open-chat/pull/8778))
+- Use LUI timestamp for bot lifecycle events ([#8785](https://github.com/open-chat-labs/open-chat/pull/8785))
 
 ## [[2.0.1937](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1937-local_user_index)] - 2025-12-22
 
