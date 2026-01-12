@@ -34,7 +34,7 @@ fn c2c_local_user_index_impl(args: Args, state: &mut RuntimeState) -> Response {
             .idempotency_checker
             .check(caller, event.created_at, event.idempotency_id)
         {
-            handle_event(event.value, caller, &now, state);
+            handle_event(event.value, event.created_at, caller, &now, state);
         }
     }
 
@@ -43,6 +43,7 @@ fn c2c_local_user_index_impl(args: Args, state: &mut RuntimeState) -> Response {
 
 fn handle_event<F: FnOnce() -> TimestampMillis>(
     event: LocalUserIndexEvent,
+    event_timestamp: TimestampMillis,
     caller: Principal,
     now: &LazyCell<TimestampMillis, F>,
     state: &mut RuntimeState,
@@ -172,11 +173,14 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 ev.granted_permissions,
                 ev.granted_autonomous_permissions,
                 ev.installed_by,
-                **now,
+                event_timestamp,
             );
         }
         LocalUserIndexEvent::BotUninstalled(ev) => {
-            state.data.users.remove_bot_installation(ev.bot_id, &ev.location);
+            state
+                .data
+                .users
+                .remove_bot_installation(ev.bot_id, ev.location, ev.uninstalled_by, event_timestamp);
         }
         LocalUserIndexEvent::UserBlocked(user_id, blocked) => {
             state.data.blocked_users.insert((blocked, user_id), ());
