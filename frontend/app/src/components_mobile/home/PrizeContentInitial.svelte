@@ -49,6 +49,7 @@
                             ),
                             colour: "primary",
                         },
+                        { text: i18nKey(" "), colour: "textPrimary" },
                         {
                             text: i18nKey("Prize"),
                             colour: "textPrimary",

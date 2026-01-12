@@ -14,9 +14,3 @@
 <span use:translatable={{ key: resourceKey }}>
     {interpolate($_, resourceKey)}
 </span>
-
-<style lang="scss">
-    span {
-        word-break: break-all;
-    }
-</style>
