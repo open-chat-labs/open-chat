@@ -1,4 +1,4 @@
-use crate::updates::submit_proposal::submit_proposal;
+use crate::updates::submit_proposal::{LinkedNnsProposal, submit_proposal};
 use crate::{UserIdAndPayment, mutate_state};
 use canister_timer_jobs::Job;
 use constants::{MINUTE_IN_MS, SECOND_IN_MS};
@@ -7,9 +7,9 @@ use proposals_bot_canister::ProposalToSubmit;
 use serde::{Deserialize, Serialize};
 use sns_governance_canister::types::manage_neuron::claim_or_refresh::By;
 use sns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
-use sns_governance_canister::types::{Empty, ManageNeuron, manage_neuron_response};
+use sns_governance_canister::types::{Empty, ManageNeuron, get_proposal_response, manage_neuron_response};
 use tracing::error;
-use types::{CanisterId, NnsNeuronId, ProposalId, SnsNeuronId, UserId};
+use types::{CanisterId, NnsNeuronId, ProposalId, SnsNeuronId, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -18,6 +18,7 @@ pub enum TimerJob {
     TopUpNeuron(TopUpNeuronJob),
     RefreshNeuron(RefreshNeuronJob),
     VoteOnNnsProposal(VoteOnNnsProposalJob),
+    CheckSnsProposalTallyThenVoteOnNnsProposal(CheckSnsProposalTallyThenVoteOnNnsProposalJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -26,6 +27,7 @@ pub struct SubmitProposalJob {
     pub neuron_id: SnsNeuronId,
     pub proposal: ProposalToSubmit,
     pub user_id_and_payment: Option<UserIdAndPayment>,
+    pub linked_nns_proposal: Option<LinkedNnsProposal>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -59,6 +61,16 @@ pub struct VoteOnNnsProposalJob {
     pub vote: bool,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct CheckSnsProposalTallyThenVoteOnNnsProposalJob {
+    pub sns_governance_canister_id: CanisterId,
+    pub sns_proposal_id: ProposalId,
+    pub nns_governance_canister_id: CanisterId,
+    pub nns_neuron_id: NnsNeuronId,
+    pub nns_proposal_id: ProposalId,
+    pub nns_proposal_deadline: TimestampMillis,
+}
+
 impl Job for TimerJob {
     fn execute(self) {
         match self {
@@ -67,6 +79,7 @@ impl Job for TimerJob {
             TimerJob::TopUpNeuron(job) => job.execute(),
             TimerJob::RefreshNeuron(job) => job.execute(),
             TimerJob::VoteOnNnsProposal(job) => job.execute(),
+            TimerJob::CheckSnsProposalTallyThenVoteOnNnsProposal(job) => job.execute(),
         }
     }
 }
@@ -79,6 +92,7 @@ impl Job for SubmitProposalJob {
                 self.governance_canister_id,
                 self.neuron_id,
                 self.proposal,
+                self.linked_nns_proposal,
             )
             .await;
         });
@@ -210,6 +224,52 @@ impl Job for VoteOnNnsProposalJob {
                         .data
                         .timer_jobs
                         .enqueue_job(TimerJob::VoteOnNnsProposal(self), now + MINUTE_IN_MS, now);
+                }),
+            }
+        })
+    }
+}
+
+impl Job for CheckSnsProposalTallyThenVoteOnNnsProposalJob {
+    fn execute(self) {
+        ic_cdk::futures::spawn(async move {
+            match sns_governance_canister_c2c_client::get_proposal(
+                self.sns_governance_canister_id,
+                &sns_governance_canister::get_proposal::Args {
+                    proposal_id: Some(sns_governance_canister::types::ProposalId {
+                        id: self.sns_proposal_id,
+                    }),
+                },
+            )
+            .await
+            {
+                Ok(response) => match response.result.unwrap() {
+                    get_proposal_response::Result::Proposal(proposal) => {
+                        VoteOnNnsProposalJob {
+                            nns_governance_canister_id: self.nns_governance_canister_id,
+                            neuron_id: self.nns_neuron_id,
+                            proposal_id: self.nns_proposal_id,
+                            vote: proposal.latest_tally.is_some_and(|t| t.yes > t.no),
+                        }
+                        .execute();
+                    }
+                    get_proposal_response::Result::Error(error) => {
+                        error!(
+                            ?error,
+                            sns_proposal_id = self.sns_proposal_id,
+                            "Failed to lookup SNS proposal with linked NNS proposal"
+                        )
+                    }
+                },
+                Err(_) => mutate_state(|state| {
+                    let now = state.env.now();
+                    if now < self.nns_proposal_deadline {
+                        state.data.timer_jobs.enqueue_job(
+                            TimerJob::CheckSnsProposalTallyThenVoteOnNnsProposal(self),
+                            now + (10 * SECOND_IN_MS),
+                            now,
+                        );
+                    }
                 }),
             }
         })
