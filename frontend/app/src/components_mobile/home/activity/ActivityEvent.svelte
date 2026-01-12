@@ -1,13 +1,5 @@
 <script lang="ts">
-    import {
-        Avatar,
-        Body,
-        BodySmall,
-        Caption,
-        Container,
-        CountBadge,
-        Subtitle,
-    } from "component-lib";
+    import { Avatar, Body, BodySmall, Container, CountBadge, Subtitle } from "component-lib";
     import type { Message, MessageActivityEvent, ResourceKey } from "openchat-client";
     import {
         allUsersStore,
@@ -147,7 +139,9 @@
     }
 
     function formatLatestMessage(event: MessageActivityEvent, username: string): string {
-        if (event.message === undefined) return "TODO - not sure what this means";
+        // TODO - not sure what this means
+        if (event.message === undefined) return "...";
+
         const latestMessageText = client.getContentAsText($_, event.message.content);
         return `${username} / ${latestMessageText}`;
     }
@@ -179,45 +173,56 @@
 
 <Container padding={"lg"} gap={"md"} supplementalClass={"activity-event"} {onClick}>
     <Avatar size={"lg"} url={client.userAvatarUrl(sender)}></Avatar>
-    <Container direction={"vertical"}>
-        <Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
-            <Subtitle fontWeight={"bold"}>
-                <Markdown text={interpolate($_, eventSummary)} />
-            </Subtitle>
-            <Caption colour={"textSecondary"} width={"hug"}>
-                {client.formatMessageDate(
-                    event.timestamp,
-                    $_("today"),
-                    $_("yesterday"),
-                    true,
-                    true,
-                )}
-            </Caption>
+    <Container gap={"sm"} direction={"vertical"}>
+        <!-- Title, time, chat path & activity indicator -->
+        <Container direction={"vertical"}>
+            <!-- Title and time -->
+            <Container direction={"horizontal"} gap={"lg"} crossAxisAlignment={"center"}>
+                <Subtitle fontWeight={"bold"}>
+                    <Markdown text={interpolate($_, eventSummary)} />
+                </Subtitle>
+                <BodySmall colour={"textSecondary"} width={"hug"}>
+                    <!-- TODO relative time -->
+                    {client.formatMessageDate(
+                        event.timestamp,
+                        $_("today"),
+                        $_("yesterday"),
+                        true,
+                        true,
+                    )}
+                </BodySmall>
+            </Container>
+            <!-- Chat breadcrumb & indicator-->
+            <Container direction={"horizontal"} gap={"lg"}>
+                <BodySmall width={"fill"} colour={"primary"}>{chatName}</BodySmall>
+                <!-- TODO investigate if possible to show  indicators next to new notifications -->
+                <!-- <NotificationIndicator></NotificationIndicator> -->
+            </Container>
         </Container>
-        <BodySmall width={"hug"} colour={"primary"}>{chatName}</BodySmall>
-        <Body colour={"textSecondary"}>
-            {#if event.message !== undefined}
-                <Markdown text={lastMessage} oneLine twoLine suppressLinks />
-            {:else}
-                <Translatable resourceKey={i18nKey("activity.missingMessage")} />
-            {/if}
-        </Body>
-        <Container
-            padding={["sm", "zero", "zero", "zero"]}
-            gap={"sm"}
-            mainAxisAlignment={"spaceBetween"}
-            crossAxisAlignment={"end"}>
+        <!-- Message and reactions -->
+        <Container gap={"xs"} direction={"vertical"}>
+            <Body colour={"textSecondary"}>
+                {#if event.message !== undefined}
+                    <Markdown text={lastMessage} oneLine twoLine suppressLinks />
+                {:else}
+                    <Translatable resourceKey={i18nKey("activity.missingMessage")} />
+                {/if}
+            </Body>
+
             {#if event.activity === "reaction" && event.message !== undefined && event.message.reactions.length > 0}
-                <Container gap={"xs"} crossAxisAlignment={"center"} width={"hug"}>
+                <Container supplementalClass="reactions" width={"hug"}>
                     {@const more = event.message.reactions.length - MAX_REACTIONS}
                     {#each event.message.reactions.slice(0, MAX_REACTIONS) as reaction (reaction.reaction)}
-                        <Reaction alignTooltip={"end"} {reaction} intersecting />
+                        <Reaction alignTooltip={"end"} {reaction} intersecting size="large" />
                     {/each}
                     {#if more > 0}
-                        <CountBadge mode="additive">+{more}</CountBadge>
+                        <div class="plus-badge">
+                            <Body width="hug" fontWeight="bold">+{Math.abs(more)}</Body>
+                        </div>
                     {/if}
                 </Container>
             {/if}
+
             {#if event.activity === "tip" && tips.length > 0}
                 <Container gap={"xs"} crossAxisAlignment={"center"} width={"hug"}>
                     {@const more = tips.length - MAX_REACTIONS}
@@ -225,7 +230,7 @@
                         <Tip alignTooltip={"end"} {tip} />
                     {/each}
                     {#if more > 0}
-                        <CountBadge mode="additive">+{more}</CountBadge>
+                        <CountBadge mode="additive" size="large">+{more}</CountBadge>
                     {/if}
                 </Container>
             {/if}
@@ -234,10 +239,6 @@
 </Container>
 
 <style lang="scss">
-    :global(.activity-event) {
-        border-bottom: var(--bw-thin) solid var(--background-1);
-    }
-
     :global(.activity-event a) {
         color: inherit;
     }
@@ -250,5 +251,30 @@
     :global(.activity-event .message-reaction) {
         margin-bottom: 0;
         padding: 0;
+    }
+
+    :global {
+        .reactions {
+            margin-left: -0.125rem;
+
+            > .tooltip_wrapper:not(:first-child),
+            > .plus-badge,
+            > .badge {
+                margin-left: -0.35rem;
+            }
+
+            > .plus-badge {
+                z-index: 1;
+                display: flex;
+                min-width: 2.75rem;
+                height: 2.25rem;
+                align-items: center;
+                justify-content: center;
+                background-color: var(--background-2);
+
+                border-radius: var(--rad-circle);
+                border: var(--bw-thick) solid var(--background-0);
+            }
+        }
     }
 </style>

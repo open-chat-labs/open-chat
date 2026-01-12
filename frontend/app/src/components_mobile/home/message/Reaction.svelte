@@ -11,10 +11,13 @@
 
     const client = getContext<OpenChat>("client");
 
+    type ReactionSize = "normal" | "large";
+
     interface Props {
-        alignTooltip?: Alignment;
         reaction: Reaction;
         intersecting: boolean;
+        size?: ReactionSize;
+        alignTooltip?: Alignment;
         onClick?: (r: Reaction) => void;
     }
 
@@ -23,12 +26,19 @@
     });
 
     let reactionCode = $state("unknown");
-    let { reaction, intersecting, onClick, alignTooltip = "middle" }: Props = $props();
+    let {
+        reaction,
+        intersecting,
+        onClick,
+        size = "normal",
+        alignTooltip = "middle",
+    }: Props = $props();
     let customEmoji = $state(getCustomEmoji(reaction.reaction));
     let selected = $derived(reaction.userIds.has($currentUserIdStore));
     let usernames = $derived(
         buildReactionUsernames($allUsersStore, reaction.userIds, $currentUserIdStore),
     );
+    let moreThanOne = $derived(reaction.userIds.size > 1);
 
     function getCustomEmoji(reaction: string): CustomEmoji | undefined {
         const match = reaction.match(/^@(?:CustomEmoji|CE)\(([\w-]+)\)$/);
@@ -66,27 +76,32 @@
 
 <Tooltip position={"top"} align={alignTooltip}>
     <Container
+        supplementalClass={`reaction ${size}`}
         onClick={() => onClick?.(reaction)}
-        borderRadius={"lg"}
         width={"hug"}
-        padding={["zero", "xs"]}
+        minWidth={"2.25rem"}
+        padding={["xxs", moreThanOne ? "sm" : "xs", "xxs", "xs"]}
         background={selected ? ColourVars.disabledButton : ColourVars.background2}
         crossAxisAlignment={"center"}
-        gap={"xs"}
-        borderWidth={"thin"}
+        mainAxisAlignment={"center"}
+        gap={"xxs"}
+        borderRadius={"circle"}
+        borderWidth={intersecting ? "thick" : undefined}
         borderColour={ColourVars.background0}>
         {#if customEmoji !== undefined}
             {#if intersecting}
-                <custom-emoji data-id={customEmoji.code}></custom-emoji>
+                <custom-emoji class="emoji" data-id={customEmoji.code}></custom-emoji>
             {:else}
                 ...
             {/if}
         {:else}
-            {reaction.reaction}
+            <div class="emoji">{reaction.reaction}</div>
         {/if}
-        <ChatFootnote>
-            {reaction.userIds.size > 999 ? "999+" : reaction.userIds.size}
-        </ChatFootnote>
+        {#if moreThanOne}
+            <ChatFootnote fontWeight="bold">
+                {reaction.userIds.size > 999 ? "999+" : reaction.userIds.size}
+            </ChatFootnote>
+        {/if}
     </Container>
     {#snippet popup()}
         <div class="reaction-tooltip-emoji">
@@ -109,6 +124,27 @@
 </Tooltip>
 
 <style lang="scss">
+    :global(.reaction.normal) {
+        --emoji-font-size: 1rem;
+        --reaction-min-width: 1.75rem;
+        --reaction-height: 1.25rem;
+    }
+
+    :global(.reaction.large) {
+        --emoji-font-size: 1.25rem;
+        --reaction-min-width: 2rem;
+        --reaction-height: 1.5rem;
+    }
+
+    .emoji {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: var(--emoji-font-size);
+        min-width: var(--reaction-min-width);
+        height: var(--reaction-height);
+    }
+
     .reaction-tooltip-emoji {
         @include font-size(fs-180);
         margin-bottom: $sp1;

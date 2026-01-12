@@ -7923,7 +7923,8 @@ export class OpenChat {
 
             if (!cachedWebAuthnKey) {
                 return Promise.reject({
-                    code: AndroidWebAuthnErrorCode.NoWebAuthnKey,
+                    code: AndroidWebAuthnErrorCode.FailedToCacheWebAuthnKey,
+                    msg: "failed to cache webauthn key",
                 });
             }
 

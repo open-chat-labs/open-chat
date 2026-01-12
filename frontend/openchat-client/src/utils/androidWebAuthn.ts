@@ -40,14 +40,15 @@ export async function createAndroidWebAuthnPasskeyIdentity(
             .then((credential: Credential<SignUpCredential> | null) => {
                 if (!credential) {
                     reject({
-                        code: AndroidWebAuthnErrorCode.NoPasskey,
-                        msg: "no passkey available",
+                        code: AndroidWebAuthnErrorCode.CreatePasskeyeFailed,
+                        msg: "failed to create passkey",
                     });
                 } else {
                     const credentialId = new Uint8Array(credential.rawId);
                     const attObject = borc.decodeFirst(
                         new Uint8Array(credential.response.attestationObject),
                     );
+
                     const identity = new WebAuthnIdentity(
                         credentialId,
                         new Uint8Array(authDataToCose(attObject.authData)),
@@ -70,6 +71,7 @@ export async function createAndroidWebAuthnPasskeyIdentity(
                 }
             })
             .catch((err: string) => {
+                console.error("Error creating a passkey: ", err);
                 reject(decodePluginError(err));
             });
     });
@@ -91,8 +93,8 @@ async function getExistingAndroidWebAuthnPasskey(
             .then((credential: Credential<SignInCredential> | null) => {
                 if (!credential) {
                     reject({
-                        code: AndroidWebAuthnErrorCode.NoPasskey,
-                        msg: "Passkey credential not available",
+                        code: AndroidWebAuthnErrorCode.AuthNoPasskey,
+                        msg: "passkey is not available",
                     });
                 } else {
                     resolve(credential);

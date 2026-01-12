@@ -69,6 +69,7 @@
             case ErrorCode.MaxLinkedIdentitiesLimitReached:
                 return "maxLinkedIdentitiesLimitReached";
             default:
+                // TODO add error strings for the codes returned by the android code
                 return "string" === typeof code ? code : "default";
         }
     }
@@ -242,7 +243,7 @@
     </Container>
 {/snippet}
 
-<Container gap={"xl"} direction={"vertical"}>
+<Container supplementalClass="login_screen" gap={"xl"} direction={"vertical"}>
     <Container
         supplementalClass={"login_mockup"}
         height={{ size: step === "choose-auth" ? "23rem" : "11rem" }}
@@ -268,6 +269,11 @@
 <style lang="scss">
     :global(.container.login_mockup) {
         background-position: bottom !important;
+    }
+
+    :global(.login_screen) {
+        // Allows the login screen buttons to appear above the phone's nav
+        padding-bottom: 6rem !important;
     }
 
     .line {

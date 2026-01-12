@@ -44,6 +44,10 @@
             opacity ease-in-out var(--speed);
         overflow: hidden;
 
+        // Changing the opacity here will expose any content under the sliding
+        // page, in cases where another sliding page is stacked on top!
+        // E.g. profile -> app settings -> about OpenChat
+        // TODO fix the above!
         &:not(.top) {
             transform: scale(0.93);
             opacity: 0.8;
