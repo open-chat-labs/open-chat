@@ -6,11 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Submit an SNS proposal for each relevant NNS proposal ([#5446](https://github.com/open-chat-labs/open-chat/pull/5446))
+
 ### Changed
 
 - Expose `liquid_cycles_balance` in metrics ([#8350](https://github.com/open-chat-labs/open-chat/pull/8350))
 - Add delay before retrying c2c call under certain error conditions ([#8355](https://github.com/open-chat-labs/open-chat/pull/8355))
 - Refactor to make `user_id` optional when submitting proposals ([#8558](https://github.com/open-chat-labs/open-chat/pull/8558))
+- Vote on linked NNS proposal based on SNS proposal tally ([#8786](https://github.com/open-chat-labs/open-chat/pull/8786))
 
 ## [[2.0.1820](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1820-proposals_bot)] - 2025-07-03
 

@@ -2904,7 +2904,7 @@ export class OpenChat {
                 } else {
                     page(routeForChatIdentifier("chats", chatId));
                 }
-            } else if (chatId.kind === "group_chat" || chatId.kind === "channel") {
+            } else if (chatId.kind === "group_chat") {
                 autojoin = querystringStore.value.has("autojoin");
                 const code = querystringStore.value.get("code");
                 if (code) {
@@ -7148,13 +7148,22 @@ export class OpenChat {
                         this.currentAirdropChannel = registry.currentAirdropChannel;
                         const cryptoMap = new Map(registry.tokenDetails.map((t) => [t.ledger, t]));
                         const nsMap = new Map(
-                            registry.nervousSystemSummary.map((ns) => [
-                                ns.governanceCanisterId,
-                                {
-                                    ...ns,
-                                    token: cryptoMap.get(ns.ledgerCanisterId)!,
+                            registry.nervousSystemSummary.reduce(
+                                (entries, ns) => {
+                                    const token = cryptoMap.get(ns.ledgerCanisterId);
+                                    if (token) {
+                                        entries.push([
+                                            ns.governanceCanisterId,
+                                            {
+                                                ...ns,
+                                                token,
+                                            },
+                                        ]);
+                                    }
+                                    return entries;
                                 },
-                            ]),
+                                [] as [string, NervousSystemDetails][],
+                            ),
                         );
 
                         nervousSystemLookup.set(nsMap);

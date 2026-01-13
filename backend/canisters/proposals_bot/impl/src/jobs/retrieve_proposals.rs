@@ -1,14 +1,17 @@
 use crate::jobs::{push_proposals, update_proposals};
 use crate::proposals::{REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE, RawProposal};
-use crate::timer_job_types::{ProcessUserRefundJob, TimerJob, TopUpNeuronJob, VoteOnNnsProposalJob};
+use crate::timer_job_types::{ProcessUserRefundJob, SubmitProposalJob, TopUpNeuronJob};
+use crate::updates::submit_proposal::LinkedNnsProposal;
 use crate::{RuntimeState, mutate_state};
 use canister_timer_jobs::Job;
-use constants::MINUTE_IN_MS;
-use nns_governance_canister::types::{ListProposalInfo, ProposalInfo};
+use constants::{MINUTE_IN_MS, SNS_GOVERNANCE_CANISTER_ID};
+use nns_governance_canister::types::manage_neuron::{Command, RegisterVote};
+use nns_governance_canister::types::{ListProposalInfo, ManageNeuron, ProposalInfo};
+use proposals_bot_canister::{ExecuteGenericNervousSystemFunction, ProposalToSubmit, ProposalToSubmitAction};
 use sns_governance_canister::types::ProposalData;
 use std::collections::HashSet;
 use std::time::Duration;
-use types::{C2CError, CanisterId, Proposal};
+use types::{C2CError, CanisterId, NnsNeuronId, NnsProposal, Proposal, SnsNeuronId};
 use utils::canister::delay_if_should_retry_failed_c2c_call;
 
 pub const NNS_TOPIC_NEURON_MANAGEMENT: i32 = 1;
@@ -138,20 +141,16 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
                         if let Proposal::NNS(nns) = proposal
                             && NNS_TOPICS_TO_PUSH_SNS_PROPOSALS_FOR.contains(&nns.topic)
                             && state.data.nns_proposals_requiring_manual_vote.insert(nns.id)
+                            && let Some(oc_neuron_id) = state
+                                .data
+                                .nervous_systems
+                                .get_neuron_id_for_submitting_proposals(&SNS_GOVERNANCE_CANISTER_ID)
                         {
-                            // Set up a job to reject the proposal 10 minutes before its deadline.
-                            // In parallel, we will submit an SNS proposal instructing the SNS governance
-                            // canister to adopt the proposal. So the resulting vote on the NNS proposal will
-                            // depend on the outcome of the SNS proposal.
-                            state.data.timer_jobs.enqueue_job(
-                                TimerJob::VoteOnNnsProposal(VoteOnNnsProposalJob {
-                                    nns_governance_canister_id: governance_canister_id,
-                                    neuron_id,
-                                    proposal_id: nns.id,
-                                    vote: false,
-                                }),
-                                nns.deadline.saturating_sub(10 * MINUTE_IN_MS),
-                                now,
+                            submit_oc_proposal_for_nns_proposal(
+                                nns,
+                                state.data.nns_governance_canister_id,
+                                neuron_id,
+                                oc_neuron_id,
                             );
                         }
                     }
@@ -235,4 +234,55 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
             });
         }
     }
+}
+
+fn submit_oc_proposal_for_nns_proposal(
+    nns_proposal: &NnsProposal,
+    nns_governance_canister_id: CanisterId,
+    nns_neuron_id: NnsNeuronId,
+    oc_neuron_id: SnsNeuronId,
+) {
+    let nns_proposal_id = nns_proposal.id;
+    let nns_proposal_title = nns_proposal.title.clone();
+
+    // If this proposal passes, the proposal will call `manage_neuron` on the NNS governance
+    // canister instructing it to vote to approve the NNS proposal
+    let manage_neuron_args = ManageNeuron {
+        id: Some(nns_neuron_id.into()),
+        neuron_id_or_subaccount: None,
+        command: Some(Command::RegisterVote(RegisterVote {
+            proposal: Some(nns_proposal_id.into()),
+            vote: 1,
+        })),
+    };
+
+    let payload = candid::encode_one(manage_neuron_args).unwrap();
+    let nns_proposal_url = format!("https://dashboard.internetcomputer.org/proposal/{nns_proposal_id}");
+
+    let job = SubmitProposalJob {
+        governance_canister_id: SNS_GOVERNANCE_CANISTER_ID,
+        neuron_id: oc_neuron_id,
+        proposal: ProposalToSubmit {
+            title: format!("Instruct the OpenChat NNS named neuron to approve NNS proposal {nns_proposal_id}"),
+            summary: format!(
+                "NNS proposal title: \"{nns_proposal_title}\"
+
+The [OpenChat named neuron](https://dashboard.internetcomputer.org/neuron/17682165960669268263) will vote to either approve or reject [NNS proposal {nns_proposal_id}]({nns_proposal_url}) based on the outcome of this proposal."
+            ),
+            url: nns_proposal_url,
+            action: ProposalToSubmitAction::ExecuteGenericNervousSystemFunction(ExecuteGenericNervousSystemFunction {
+                function_id: 102000,
+                payload,
+            }),
+        },
+        user_id_and_payment: None,
+        linked_nns_proposal: Some(LinkedNnsProposal {
+            nns_governance_canister_id,
+            nns_neuron_id,
+            proposal_id: nns_proposal_id,
+            deadline: nns_proposal.deadline,
+        }),
+    };
+
+    job.execute();
 }

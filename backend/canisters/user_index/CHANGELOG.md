@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Simplify handling of bot installation lifecycle events ([#8776](https://github.com/open-chat-labs/open-chat/pull/8776))
+- Store bot installation events and return these from `bot_installations` ([#8784](https://github.com/open-chat-labs/open-chat/pull/8784))
+- Rename and fix `bot_installation_events` endpoint ([#8790](https://github.com/open-chat-labs/open-chat/pull/8790))
 
 ## [[2.0.1945](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1945-user_index)] - 2026-01-08
 

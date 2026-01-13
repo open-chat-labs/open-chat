@@ -1283,7 +1283,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     agent
-                        .communityClient(payload.chatId.communityId)
+                        .communityClient
                         .addMembersToChannel(
                             payload.chatId,
                             payload.userIds,
@@ -1297,7 +1297,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.communityClient(payload.id.communityId).blockUser(payload.userId),
+                    agent.communityClient.blockUser(payload.id.communityId, payload.userId),
                 );
                 break;
 
@@ -1306,7 +1306,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     agent
-                        .communityClient(payload.chatId.communityId)
+                        .communityClient
                         .changeChannelRole(payload.chatId, payload.userId, payload.newRole),
                 );
                 break;
@@ -1316,8 +1316,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     agent
-                        .communityClient(payload.id.communityId)
-                        .changeRole(payload.userId, payload.newRole),
+                        .communityClient
+                        .changeRole(payload.id.communityId, payload.userId, payload.newRole),
                 );
                 break;
 
@@ -1326,7 +1326,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     agent
-                        .communityClient(payload.chatId.communityId)
+                        .communityClient
                         .declineInvitation(payload.chatId),
                 );
                 break;
@@ -1335,7 +1335,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.communityClient(payload.id.communityId).removeMember(payload.userId),
+                    agent.communityClient.removeMember(payload.id.communityId, payload.userId),
                 );
                 break;
 
@@ -1343,7 +1343,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.communityClient(payload.id.communityId).unblockUser(payload.userId),
+                    agent.communityClient.unblockUser(payload.id.communityId, payload.userId),
                 );
                 break;
 
@@ -1352,8 +1352,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     agent
-                        .communityClient(payload.communityId)
+                        .communityClient
                         .updateCommunity(
+                            payload.communityId,
                             payload.name,
                             payload.description,
                             payload.rules,
@@ -1410,8 +1411,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     agent
-                        .communityClient(payload.id.communityId)
-                        .getCommunityDetails(payload.id, payload.communityLastUpdated),
+                        .communityClient
+                        .getCommunityDetails(payload.id.communityId, payload.communityLastUpdated),
                 );
                 break;
 
@@ -1464,8 +1465,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     agent
-                        .communityClient(payload.communityId.communityId)
-                        .importGroup(payload.groupId),
+                        .communityClient
+                        .importGroup(payload.communityId.communityId, payload.groupId),
                 );
                 break;
 
