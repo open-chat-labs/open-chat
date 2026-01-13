@@ -318,7 +318,7 @@ export class OpenChatAgent extends EventTarget {
     private _dataClient: DataClient;
     private _localUserIndexClient: LocalUserIndexClient;
     private _ledgerClient: LedgerClient;
-    private _ledgerIndexClients: Record<string, LedgerIndexClient>;
+    private _ledgerIndexClient: LedgerIndexClient;
     private _groupClient: GroupClient;
     private _communityClient: CommunityClient;
     private _exchangeRateClients: ExchangeRateClient[];
@@ -376,7 +376,7 @@ export class OpenChatAgent extends EventTarget {
         ];
         this._localUserIndexClient = new LocalUserIndexClient(identity, this._agent, this.db);
         this._ledgerClient = new LedgerClient(identity, this._agent);
-        this._ledgerIndexClients = {};
+        this._ledgerIndexClient = new LedgerIndexClient(identity, this._agent);
         this._groupClient = new GroupClient(identity, this._agent, config, this.db);
         this._communityClient = new CommunityClient(identity, this._agent, config, this.db);
 
@@ -478,17 +478,6 @@ export class OpenChatAgent extends EventTarget {
             return this._userClient;
         }
         throw new Error("Attempted to use the user client before it has been initialised");
-    }
-
-    getLedgerIndexClient(ledgerIndex: string): LedgerIndexClient {
-        if (!this._ledgerIndexClients[ledgerIndex]) {
-            this._ledgerIndexClients[ledgerIndex] = new LedgerIndexClient(
-                this.identity,
-                this._agent,
-                ledgerIndex,
-            );
-        }
-        return this._ledgerIndexClients[ledgerIndex];
     }
 
     private getCommunityReferral(communityId: string): Promise<string | undefined> {
@@ -2873,7 +2862,7 @@ export class OpenChatAgent extends EventTarget {
                 ledgerIndex,
             ).getAccountTransactions(principal, fromId);
         }
-        return this.getLedgerIndexClient(ledgerIndex).getAccountTransactions(principal, fromId);
+        return this._ledgerIndexClient.getAccountTransactions(ledgerIndex, principal, fromId);
     }
 
     getMessagesByMessageIndex(

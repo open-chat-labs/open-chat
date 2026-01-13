@@ -8,17 +8,17 @@ import { apiOptional } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
 
 export class LedgerIndexClient extends CandidCanisterAgent<LedgerIndexService> {
-    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId, idlFactory, "LedgerIndex");
+    constructor(identity: Identity, agent: HttpAgent) {
+        super(identity, agent, undefined, idlFactory, "LedgerIndex");
     }
 
-    getAccountTransactions(principal: string, fromId?: bigint): Promise<AccountTransactionResult> {
+    getAccountTransactions(ledgerIndex: string, accountPrincipal: string, fromId?: bigint): Promise<AccountTransactionResult> {
         return this.handleQueryResponse(
             () =>
-                this.service.get_account_transactions({
+                this.service.get_account_transactions.withOptions({ canisterId: ledgerIndex })({
                     max_results: 100n,
                     start: apiOptional(identity, fromId),
-                    account: { owner: Principal.fromText(principal), subaccount: [] },
+                    account: { owner: Principal.fromText(accountPrincipal), subaccount: [] },
                 }),
             accountTransactions,
         );
