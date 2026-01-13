@@ -1,6 +1,7 @@
 import { Actor, type ActorSubclass, HttpAgent, type Identity } from "@icp-sdk/core/agent";
-import { toCanisterResponseError } from "../error";
 import type { IDL } from "@icp-sdk/core/candid";
+import { Principal } from "@icp-sdk/core/principal";
+import { toCanisterResponseError } from "../error";
 import { CanisterAgent } from "./base";
 
 export abstract class CandidCanisterAgent<T> extends CanisterAgent {
@@ -9,7 +10,7 @@ export abstract class CandidCanisterAgent<T> extends CanisterAgent {
     constructor(
         identity: Identity,
         agent: HttpAgent,
-        canisterId: string,
+        canisterId: string | undefined,
         factory: IDL.InterfaceFactory,
         canisterName: string,
     ) {
@@ -17,7 +18,7 @@ export abstract class CandidCanisterAgent<T> extends CanisterAgent {
 
         this.service = Actor.createActor<T>(factory, {
             agent,
-            canisterId,
+            canisterId: canisterId ?? Principal.anonymous(),
         });
     }
 

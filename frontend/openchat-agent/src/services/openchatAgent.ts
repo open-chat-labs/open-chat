@@ -317,7 +317,7 @@ export class OpenChatAgent extends EventTarget {
     private _registryClient: RegistryClient;
     private _dataClient: DataClient;
     private _localUserIndexClient: LocalUserIndexClient;
-    private _ledgerClients: Record<string, LedgerClient>;
+    private _ledgerClient: LedgerClient;
     private _ledgerIndexClients: Record<string, LedgerIndexClient>;
     private _groupClient: GroupClient;
     private _communityClient: CommunityClient;
@@ -375,7 +375,7 @@ export class OpenChatAgent extends EventTarget {
             new IcpSwapClient(),
         ];
         this._localUserIndexClient = new LocalUserIndexClient(identity, this._agent, this.db);
-        this._ledgerClients = {};
+        this._ledgerClient = new LedgerClient(identity, this._agent);
         this._ledgerIndexClients = {};
         this._groupClient = new GroupClient(identity, this._agent, config, this.db);
         this._communityClient = new CommunityClient(identity, this._agent, config, this.db);
@@ -478,13 +478,6 @@ export class OpenChatAgent extends EventTarget {
             return this._userClient;
         }
         throw new Error("Attempted to use the user client before it has been initialised");
-    }
-
-    getLedgerClient(ledger: string): LedgerClient {
-        if (!this._ledgerClients[ledger]) {
-            this._ledgerClients[ledger] = new LedgerClient(this.identity, this._agent, ledger);
-        }
-        return this._ledgerClients[ledger];
     }
 
     getLedgerIndexClient(ledgerIndex: string): LedgerIndexClient {
@@ -2861,7 +2854,7 @@ export class OpenChatAgent extends EventTarget {
     refreshAccountBalance(ledger: string, principal: string): Promise<bigint> {
         if (offline()) return Promise.resolve(0n);
 
-        return this.getLedgerClient(ledger).accountBalance(principal);
+        return this._ledgerClient.accountBalance(ledger, principal);
     }
 
     getAccountTransactions(
