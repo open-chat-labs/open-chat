@@ -202,7 +202,7 @@ import {
     toVoid,
 } from "../../utils/mapping";
 import { setChitInfoInCache } from "../../utils/userCache";
-import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
+import { SingleCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 import {
     acceptP2PSwapSuccess,
     apiChatIdentifier,
@@ -250,7 +250,7 @@ import {
     withdrawCryptoResponse,
 } from "./mappersV2";
 
-export class UserClient extends MsgpackCanisterAgent {
+export class UserClient extends SingleCanisterMsgpackAgent {
     userId: string;
     private chatId: DirectChatIdentifier;
 
@@ -306,7 +306,7 @@ export class UserClient extends MsgpackCanisterAgent {
         toAdd: ChatIdentifier[],
         toRemove: ChatIdentifier[],
     ): Promise<ManageFavouritesResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "manage_favourite_chats",
             {
                 to_add: toAdd.map(apiChatIdentifier),
@@ -319,7 +319,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     getInitialState(): Promise<InitialStateResponse> {
-        return this.executeMsgpackQuery(
+        return this.query(
             "initial_state",
             {},
             initialStateResponse,
@@ -332,7 +332,7 @@ export class UserClient extends MsgpackCanisterAgent {
         const args = {
             updates_since: updatesSince,
         };
-        return this.executeMsgpackQuery(
+        return this.query(
             "updates",
             args,
             getUpdatesResponse,
@@ -347,7 +347,7 @@ export class UserClient extends MsgpackCanisterAgent {
         defaultChannels: string[],
         defaultChannelRules: Rules,
     ): Promise<CreateCommunityResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "create_community",
             {
                 is_public: community.public,
@@ -384,7 +384,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "create_group",
             {
                 is_public: group.public,
@@ -411,7 +411,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     deleteGroup(chatId: string): Promise<DeleteGroupResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "delete_group",
             {
                 chat_id: principalStringToBytes(chatId),
@@ -423,7 +423,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     deleteCommunity(id: CommunityIdentifier): Promise<DeleteCommunityResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "delete_community",
             {
                 community_id: principalStringToBytes(id.communityId),
@@ -470,7 +470,7 @@ export class UserClient extends MsgpackCanisterAgent {
             latest_known_update: latestKnownUpdate,
             latest_client_event_index: undefined,
         };
-        return this.executeMsgpackQuery(
+        return this.query(
             "events_by_index",
             args,
             (resp) =>
@@ -554,7 +554,7 @@ export class UserClient extends MsgpackCanisterAgent {
             mid_point: messageIndex,
             latest_known_update: latestKnownUpdate,
         };
-        return this.executeMsgpackQuery(
+        return this.query(
             "events_window",
             args,
             (resp) =>
@@ -646,7 +646,7 @@ export class UserClient extends MsgpackCanisterAgent {
             latest_client_event_index: undefined,
         };
 
-        return this.executeMsgpackQuery(
+        return this.query(
             "events",
             args,
             (resp) =>
@@ -704,7 +704,7 @@ export class UserClient extends MsgpackCanisterAgent {
             messages: messageIndexes,
             latest_known_update: latestKnownUpdate,
         };
-        return this.executeMsgpackQuery(
+        return this.query(
             "messages_by_message_index",
             args,
             (resp) =>
@@ -716,7 +716,7 @@ export class UserClient extends MsgpackCanisterAgent {
 
     setAvatar(bytes: Uint8Array): Promise<BlobReference> {
         const blobId = BigInt(random32());
-        return this.executeMsgpackUpdate(
+        return this.update(
             "set_avatar",
             {
                 avatar: {
@@ -741,7 +741,7 @@ export class UserClient extends MsgpackCanisterAgent {
 
     setProfileBackground(bytes: Uint8Array): Promise<BlobReference> {
         const blobId = BigInt(random32());
-        return this.executeMsgpackUpdate(
+        return this.update(
             "set_profile_background",
             {
                 profile_background: {
@@ -780,7 +780,7 @@ export class UserClient extends MsgpackCanisterAgent {
                     message_id: message.messageId,
                     block_level_markdown: blockLevelMarkdown,
                 };
-                return this.executeMsgpackUpdate(
+                return this.update(
                     "edit_message_v2",
                     req,
                     unitResult,
@@ -821,7 +821,7 @@ export class UserClient extends MsgpackCanisterAgent {
                 pin,
                 block_level_markdown: newEvent.event.blockLevelMarkdown,
             };
-            return this.executeMsgpackUpdate(
+            return this.update(
                 "send_message_v2",
                 req,
                 (resp) => sendMessageResponse(resp, newEvent.event.sender, chatId.userId),
@@ -902,7 +902,7 @@ export class UserClient extends MsgpackCanisterAgent {
             message_filter_failed: messageFilterFailed,
             pin,
         };
-        return this.executeMsgpackUpdate(
+        return this.update(
             "send_message_with_transfer_to_group",
             req,
             (resp) => sendMessageWithTransferToGroupResponse(resp, event.event.sender, recipientId),
@@ -912,7 +912,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     loadSavedCryptoAccounts(): Promise<NamedAccount[]> {
-        return this.executeMsgpackQuery(
+        return this.query(
             "saved_crypto_accounts",
             {},
             savedCryptoAccountsResponse,
@@ -922,7 +922,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     saveCryptoAccount({ name, account }: NamedAccount): Promise<SaveCryptoAccountResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "save_crypto_account",
             {
                 name,
@@ -995,7 +995,7 @@ export class UserClient extends MsgpackCanisterAgent {
             message_filter_failed: messageFilterFailed,
             pin,
         };
-        return this.executeMsgpackUpdate(
+        return this.update(
             "send_message_with_transfer_to_channel",
             req,
             (resp) =>
@@ -1006,7 +1006,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     blockUser(userId: string): Promise<BlockUserResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "block_user",
             {
                 user_id: principalStringToBytes(userId),
@@ -1018,7 +1018,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     unblockUser(userId: string): Promise<UnblockUserResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "unblock_user",
             {
                 user_id: principalStringToBytes(userId),
@@ -1030,7 +1030,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "leave_group",
             {
                 chat_id: principalStringToBytes(chatId),
@@ -1042,7 +1042,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     leaveCommunity(id: CommunityIdentifier): Promise<LeaveCommunityResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "leave_community",
             {
                 community_id: principalStringToBytes(id.communityId),
@@ -1118,7 +1118,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "mark_read",
             this.markMessageArgs(request),
             (_) => "success",
@@ -1134,7 +1134,7 @@ export class UserClient extends MsgpackCanisterAgent {
         decimals: number,
         pin: string | undefined,
     ): Promise<TipMessageResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "tip_message",
             {
                 chat: apiChatIdentifier(messageContext.chatId),
@@ -1160,7 +1160,7 @@ export class UserClient extends MsgpackCanisterAgent {
         reaction: string,
         threadRootMessageIndex: number | undefined,
     ): Promise<AddRemoveReactionResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "add_reaction",
             {
                 user_id: principalStringToBytes(otherUserId),
@@ -1180,7 +1180,7 @@ export class UserClient extends MsgpackCanisterAgent {
         reaction: string,
         threadRootMessageIndex?: number,
     ): Promise<AddRemoveReactionResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "remove_reaction",
             {
                 user_id: principalStringToBytes(otherUserId),
@@ -1199,7 +1199,7 @@ export class UserClient extends MsgpackCanisterAgent {
         messageId: bigint,
         threadRootMessageIndex?: number,
     ): Promise<DeleteMessageResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "delete_messages",
             {
                 user_id: principalStringToBytes(otherUserId),
@@ -1217,7 +1217,7 @@ export class UserClient extends MsgpackCanisterAgent {
         messageId: bigint,
         threadRootMessageIndex?: number,
     ): Promise<UndeleteMessageResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "undelete_messages",
             {
                 user_id: principalStringToBytes(otherUserId),
@@ -1240,7 +1240,7 @@ export class UserClient extends MsgpackCanisterAgent {
             search_term: searchTerm,
             max_results: maxResults,
         };
-        return this.executeMsgpackQuery(
+        return this.query(
             "search_messages",
             args,
             (resp) => mapResult(resp, (value) => searchDirectChatSuccess(value, chatId)),
@@ -1256,7 +1256,7 @@ export class UserClient extends MsgpackCanisterAgent {
         const args = {
             chat_id: principalStringToBytes(chatId),
         };
-        return this.executeMsgpackUpdate(
+        return this.update(
             mute ? "mute_notifications" : "unmute_notifications",
             args,
             unitResult,
@@ -1266,7 +1266,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     dismissRecommendation(chatId: string): Promise<void> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "add_hot_group_exclusions",
             {
                 duration: undefined,
@@ -1279,7 +1279,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     getBio(): Promise<string> {
-        return this.executeMsgpackQuery(
+        return this.query(
             "bio",
             {},
             (value) => value.Success,
@@ -1300,7 +1300,7 @@ export class UserClient extends MsgpackCanisterAgent {
                 }
 
                 if (!isOffline) {
-                    const liveProfile = await this.executeMsgpackQuery(
+                    const liveProfile = await this.query(
                         "public_profile",
                         {},
                         publicProfileResponse,
@@ -1317,7 +1317,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     setBio(bio: string): Promise<SetBioResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "set_bio",
             { text: bio },
             unitResult,
@@ -1331,7 +1331,7 @@ export class UserClient extends MsgpackCanisterAgent {
         pin: string | undefined,
     ): Promise<WithdrawCryptocurrencyResponse> {
         const req = apiPendingCryptocurrencyWithdrawal(domain, pin);
-        return this.executeMsgpackUpdate(
+        return this.update(
             "withdraw_crypto_v2",
             req,
             withdrawCryptoResponse,
@@ -1363,7 +1363,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     pinChat(chatId: ChatIdentifier, favourite: boolean): Promise<PinChatResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "pin_chat_v2",
             {
                 chat: this.toChatInList(chatId, favourite),
@@ -1375,7 +1375,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     unpinChat(chatId: ChatIdentifier, favourite: boolean): Promise<UnpinChatResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "unpin_chat_v2",
             {
                 chat: this.toChatInList(chatId, favourite),
@@ -1387,7 +1387,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     archiveChat(chatId: ChatIdentifier): Promise<ArchiveChatResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "archive_unarchive_chats",
             {
                 to_archive: [apiChatIdentifier(chatId)],
@@ -1400,7 +1400,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     unarchiveChat(chatId: ChatIdentifier): Promise<ArchiveChatResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "archive_unarchive_chats",
             {
                 to_archive: [],
@@ -1413,7 +1413,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     getDeletedMessage(userId: string, messageId: bigint): Promise<DeletedDirectMessageResponse> {
-        return this.executeMsgpackQuery(
+        return this.query(
             "deleted_message",
             {
                 user_id: principalStringToBytes(userId),
@@ -1432,7 +1432,7 @@ export class UserClient extends MsgpackCanisterAgent {
         notes?: string,
         threadRootMessageIndex?: number,
     ): Promise<SetMessageReminderResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "set_message_reminder_v2",
             {
                 chat: apiChatIdentifier(chatId),
@@ -1448,7 +1448,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     cancelMessageReminder(reminderId: bigint): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "cancel_message_reminder",
             {
                 reminder_id: reminderId,
@@ -1463,7 +1463,7 @@ export class UserClient extends MsgpackCanisterAgent {
         const indexes: [Uint8Array, number][] = Object.entries(communityIndexes).map(
             ([id, idx]) => [principalStringToBytes(id), idx],
         );
-        return this.executeMsgpackUpdate(
+        return this.update(
             "set_community_indexes",
             { indexes },
             (_) => true,
@@ -1478,7 +1478,7 @@ export class UserClient extends MsgpackCanisterAgent {
         messageId: bigint,
         deleteMessage: boolean,
     ): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "report_message",
             {
                 them: principalStringToBytes(chatId.userId),
@@ -1501,7 +1501,7 @@ export class UserClient extends MsgpackCanisterAgent {
         exchangeArgs: ExchangeTokenSwapArgs,
         pin: string | undefined,
     ): Promise<SwapTokensResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "swap_tokens",
             {
                 swap_id: swapId,
@@ -1532,7 +1532,7 @@ export class UserClient extends MsgpackCanisterAgent {
         const args = {
             swap_id: swapId,
         };
-        return this.executeMsgpackQuery(
+        return this.query(
             "token_swap_status",
             args,
             tokenSwapStatusResponse,
@@ -1548,7 +1548,7 @@ export class UserClient extends MsgpackCanisterAgent {
         expiresIn: bigint | undefined,
         pin: string | undefined,
     ): Promise<ApproveTransferResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "approve_transfer",
             {
                 spender: {
@@ -1567,7 +1567,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     deleteDirectChat(userId: string, blockUser: boolean): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "delete_direct_chat",
             {
                 user_id: principalStringToBytes(userId),
@@ -1585,7 +1585,7 @@ export class UserClient extends MsgpackCanisterAgent {
         messageId: bigint,
         pin: string | undefined,
     ): Promise<AcceptP2PSwapResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "accept_p2p_swap",
             {
                 user_id: principalStringToBytes(userId),
@@ -1600,7 +1600,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     cancelP2PSwap(userId: string, messageId: bigint): Promise<CancelP2PSwapResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "cancel_p2p_swap",
             {
                 user_id: principalStringToBytes(userId),
@@ -1613,7 +1613,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     joinVideoCall(userId: string, messageId: bigint): Promise<JoinVideoCallResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "join_video_call",
             {
                 user_id: principalStringToBytes(userId),
@@ -1626,7 +1626,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     localUserIndex(): Promise<string> {
-        return this.executeMsgpackQuery(
+        return this.query(
             "local_user_index",
             {},
             (resp) => principalBytesToString(resp.Success),
@@ -1639,7 +1639,7 @@ export class UserClient extends MsgpackCanisterAgent {
         verification: Verification,
         newPin: string | undefined,
     ): Promise<SetPinNumberResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "set_pin_number",
             {
                 verification: apiVerification(verification),
@@ -1652,7 +1652,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     chitEvents({ from, to, max, ascending }: ChitEventsRequest): Promise<ChitEventsResponse> {
-        return this.executeMsgpackQuery(
+        return this.query(
             "chit_events",
             {
                 from,
@@ -1668,7 +1668,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     markAchievementsSeen(lastSeen: bigint): Promise<void> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "mark_achievements_seen",
             {
                 last_seen: lastSeen,
@@ -1682,7 +1682,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     claimDailyChit(utcOffsetMins: number | undefined): Promise<ClaimDailyChitResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "claim_daily_chit",
             {
                 utc_offset_mins: mapOptional(utcOffsetMins, identity),
@@ -1700,7 +1700,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     configureWallet(walletConfig: WalletConfig): Promise<void> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "configure_wallet",
             {
                 config: apiWalletConfig(walletConfig),
@@ -1712,7 +1712,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     markActivityFeedRead(readUpTo: bigint): Promise<void> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "mark_message_activity_feed_read",
             { read_up_to: readUpTo },
             toVoid,
@@ -1722,7 +1722,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     messageActivityFeed(since: bigint): Promise<MessageActivityFeedResponse> {
-        return this.executeMsgpackQuery(
+        return this.query(
             "message_activity_feed",
             { since },
             messageActivityFeedResponse,
@@ -1732,7 +1732,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     updateInstalledBot(botId: string, grantedPermissions: GrantedBotPermissions): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "update_bot",
             {
                 bot_id: principalStringToBytes(botId),
@@ -1749,7 +1749,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     generateBtcAddress(): Promise<string> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "generate_btc_address",
             {},
             (resp) => {
@@ -1765,7 +1765,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     generateOneSecAddress(): Promise<string> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "generate_one_sec_address",
             {},
             (resp) => {
@@ -1781,7 +1781,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     updateBtcBalance(): Promise<boolean> {
-        return this.executeMsgpackUpdate("update_btc_balance", {}, isSuccess, TEmpty, UnitResult);
+        return this.update("update_btc_balance", {}, isSuccess, TEmpty, UnitResult);
     }
 
     withdrawBtc(
@@ -1789,7 +1789,7 @@ export class UserClient extends MsgpackCanisterAgent {
         amount: bigint,
         pin: string | undefined,
     ): Promise<WithdrawBtcResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "withdraw_btc",
             {
                 address,
@@ -1810,7 +1810,7 @@ export class UserClient extends MsgpackCanisterAgent {
         amount: bigint,
         pin: string | undefined,
     ): Promise<WithdrawViaOneSecResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "withdraw_via_one_sec",
             {
                 ledger_canister_id: principalStringToBytes(ledger),
@@ -1831,7 +1831,7 @@ export class UserClient extends MsgpackCanisterAgent {
         expectedPrice: bigint,
         pin: string | undefined,
     ): Promise<PayForStreakInsuranceResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "pay_for_streak_insurance",
             {
                 additional_days: additionalDays,
@@ -1845,7 +1845,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     updateChatSettings(userId: string, eventsTtl: OptionUpdate<bigint>): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "update_chat_settings",
             {
                 user_id: principalStringToBytes(userId),

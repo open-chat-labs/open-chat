@@ -57,9 +57,9 @@ import { consolidateBytes, mapOptional, principalStringToBytes } from "../../uti
 import type { DelegationIdentity } from "@icp-sdk/core/identity";
 import { signedDelegation } from "../../utils/id";
 import { unitResult, mapResult } from "../common/chatMappersV2";
-import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
+import { SingleCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 
-export class IdentityClient extends MsgpackCanisterAgent {
+export class IdentityClient extends SingleCanisterMsgpackAgent {
     constructor(identity: Identity, agent: HttpAgent, identityCanister: string) {
         super(identity, agent, identityCanister, "Identity");
     }
@@ -78,7 +78,7 @@ export class IdentityClient extends MsgpackCanisterAgent {
             max_time_to_live: undefined,
             challenge_attempt: challengeAttempt,
         };
-        return this.executeMsgpackUpdate(
+        return this.update(
             "create_identity",
             args,
             createIdentityResponse,
@@ -88,7 +88,7 @@ export class IdentityClient extends MsgpackCanisterAgent {
     }
 
     checkAuthPrincipal(): Promise<CheckAuthPrincipalResponse> {
-        return this.executeMsgpackQuery(
+        return this.query(
             "check_auth_principal_v2",
             {},
             checkAuthPrincipalResponse,
@@ -106,7 +106,7 @@ export class IdentityClient extends MsgpackCanisterAgent {
             is_ii_principal: isIIPrincipal,
             max_time_to_live: undefined,
         };
-        return this.executeMsgpackUpdate(
+        return this.update(
             "prepare_delegation",
             args,
             prepareDelegationResponse,
@@ -120,7 +120,7 @@ export class IdentityClient extends MsgpackCanisterAgent {
             session_key: sessionKey,
             expiration,
         };
-        return this.executeMsgpackQuery(
+        return this.query(
             "get_delegation",
             args,
             getDelegationResponse,
@@ -130,7 +130,7 @@ export class IdentityClient extends MsgpackCanisterAgent {
     }
 
     generateChallenge(): Promise<GenerateChallengeResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "generate_challenge",
             {},
             generateChallengeResponse,
@@ -144,7 +144,7 @@ export class IdentityClient extends MsgpackCanisterAgent {
         webAuthnKey: WebAuthnKeyFull | undefined,
         isIIPrincipal: boolean | undefined,
     ): Promise<InitiateIdentityLinkResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "initiate_identity_link",
             {
                 link_to_principal: principalStringToBytes(linkToPrincipal),
@@ -159,7 +159,7 @@ export class IdentityClient extends MsgpackCanisterAgent {
     }
 
     approveIdentityLink(linkInitiatedBy: string): Promise<ApproveIdentityLinkResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "approve_identity_link",
             {
                 link_initiated_by: principalStringToBytes(linkInitiatedBy),
@@ -173,7 +173,7 @@ export class IdentityClient extends MsgpackCanisterAgent {
     }
 
     removeIdentityLink(linked_principal: string): Promise<RemoveIdentityLinkResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "remove_identity_link",
             {
                 linked_principal: principalStringToBytes(linked_principal),
@@ -185,7 +185,7 @@ export class IdentityClient extends MsgpackCanisterAgent {
     }
 
     deleteUser(): Promise<Success | OCError> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "delete_user",
             {
                 public_key: this.publicKey(),
@@ -198,7 +198,7 @@ export class IdentityClient extends MsgpackCanisterAgent {
     }
 
     getAuthenticationPrincipals(): Promise<AuthenticationPrincipalsResponse> {
-        return this.executeMsgpackQuery(
+        return this.query(
             "auth_principals",
             {},
             authPrincipalsResponse,
@@ -211,7 +211,7 @@ export class IdentityClient extends MsgpackCanisterAgent {
         const args = {
             credential_id: credentialId,
         };
-        return this.executeMsgpackQuery(
+        return this.query(
             "lookup_webauthn_pubkey",
             args,
             (resp) => {
@@ -225,7 +225,7 @@ export class IdentityClient extends MsgpackCanisterAgent {
     }
 
     createAccountLinkingCode(): Promise<AccountLinkingCode | undefined> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "create_account_linking_code",
             {},
             (resp) => {
@@ -239,7 +239,7 @@ export class IdentityClient extends MsgpackCanisterAgent {
     }
 
     verifyAccountLinkingCode(code: string): Promise<VerifyAccountLinkingCodeResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "verify_account_linking_code",
             { code },
             (resp) => mapResult(resp, (username) => ({ kind: "success", username })),
@@ -261,7 +261,7 @@ export class IdentityClient extends MsgpackCanisterAgent {
             max_time_to_live: undefined,
             webauthn_key: mapOptional(webAuthnKey, apiWebAuthnKey),
         };
-        return this.executeMsgpackUpdate(
+        return this.update(
             "finalise_account_linking_with_code",
             args,
             (resp) => resp,

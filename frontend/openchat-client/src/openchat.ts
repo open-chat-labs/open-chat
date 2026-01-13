@@ -2864,7 +2864,7 @@ export class OpenChat {
                 } else {
                     page(routeForChatIdentifier("chats", chatId));
                 }
-            } else if (chatId.kind === "group_chat" || chatId.kind === "channel") {
+            } else if (chatId.kind === "group_chat") {
                 autojoin = querystringStore.value.has("autojoin");
                 const code = querystringStore.value.get("code");
                 if (code) {
