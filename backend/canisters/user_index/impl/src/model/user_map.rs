@@ -187,12 +187,12 @@ pub struct BotUninstalled {
     pub timestamp: TimestampMillis,
 }
 
-impl From<BotInstallationEvent> for user_index_canister::bot_installations::BotInstallationEvent {
+impl From<BotInstallationEvent> for user_index_canister::bot_installation_events::BotInstallationEvent {
     fn from(value: BotInstallationEvent) -> Self {
         match value {
             BotInstallationEvent::Installed(bot_installed) => {
-                user_index_canister::bot_installations::BotInstallationEvent::Installed(
-                    user_index_canister::bot_installations::BotInstalled {
+                user_index_canister::bot_installation_events::BotInstallationEvent::Installed(
+                    user_index_canister::bot_installation_events::BotInstalled {
                         location: bot_installed.location,
                         api_gateway: bot_installed.api_gateway,
                         granted_permissions: bot_installed.granted_permissions,
@@ -203,8 +203,8 @@ impl From<BotInstallationEvent> for user_index_canister::bot_installations::BotI
                 )
             }
             BotInstallationEvent::Uninstalled(bot_uninstalled) => {
-                user_index_canister::bot_installations::BotInstallationEvent::Uninstalled(
-                    user_index_canister::bot_installations::BotUninstalled {
+                user_index_canister::bot_installation_events::BotInstallationEvent::Uninstalled(
+                    user_index_canister::bot_installation_events::BotUninstalled {
                         location: bot_uninstalled.location,
                         uninstalled_by: bot_uninstalled.uninstalled_by,
                         timestamp: bot_uninstalled.timestamp,
@@ -458,6 +458,10 @@ impl UserMap {
 
     pub fn get_by_username(&self, username: &str) -> Option<&User> {
         self.username_to_user_id.get(username).and_then(|u| self.users.get(u))
+    }
+
+    pub fn get_user_id_by_principal(&self, principal: &Principal) -> Option<UserId> {
+        self.principal_to_user_id.get(principal).copied()
     }
 
     pub fn get_bot(&self, user_id: &UserId) -> Option<&Bot> {
