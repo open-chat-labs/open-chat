@@ -277,8 +277,9 @@
     // We should *only* do this if the thread is not open
     let previousChatId: ChatIdentifier | undefined = undefined;
     $effect(() => {
-        void $threadOpenStore;
+        // void $threadOpenStore;
         if (
+            !$threadOpenStore &&
             $chatsInitialisedStore &&
             $messageIndexStore !== undefined &&
             chatIdentifiersEqual($selectedChatIdStore, previousChatId)

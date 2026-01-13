@@ -30,10 +30,6 @@
 
     onMount(() => {
         tick().then(() => container?.classList.add("faded"));
-        window.addEventListener("popstate", dismissInternal);
-        return () => {
-            window.removeEventListener("popstate", dismissInternal);
-        };
     });
 
     function dismissInternal() {

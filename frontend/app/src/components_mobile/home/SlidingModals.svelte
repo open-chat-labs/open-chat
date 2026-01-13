@@ -1,8 +1,11 @@
 <script lang="ts">
+    import { activeVideoCall } from "@src/stores/video";
     import { communityPreviewState, groupPreviewState } from "@src/utils/preview.svelte";
+    import { removeQueryStringParam, stripThreadFromUrl } from "@src/utils/urls";
     import { portalState } from "component-lib";
     import {
         OpenChat,
+        pageReplace,
         selectedChatMembersStore,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
@@ -217,14 +220,30 @@
 
     let modalStack = $state<SlidingModalType[]>([]);
     let top = $derived(modalStack[modalStack.length - 1]);
+
     function push(modal: SlidingModalType) {
         if (!modalStack.find((m) => m.kind === modal.kind)) {
+            // push a dummy state entry into the history stack for each modal
+            // This is so that the back button works
+            history.pushState({ ...history.state, isModal: true }, "");
             modalStack.push(modal);
         }
     }
 
+    function popstate() {
+        if (modalStack.length > 0) {
+            if (top?.kind === "open_thread") {
+                pageReplace(stripThreadFromUrl(removeQueryStringParam("open")));
+                activeVideoCall.threadOpen(false);
+            }
+            modalStack.pop();
+        }
+    }
+
     function pop() {
-        return modalStack.pop();
+        // we simply need to call history.back() as that will trigger
+        // popstate which will take care of popping the modalStack
+        history.back();
     }
 
     function closeThread() {
@@ -238,12 +257,8 @@
             // Expect user to press back in the app, handle that behaviour here.
             expectBackPress(() => {
                 try {
-                    console.log("Back gesture detected");
-                    if (pop() === undefined) {
-                        // if there was nothing in the modal stack let's fallback to the history api
-                        history.back();
-                        portalState.close();
-                    }
+                    pop();
+                    portalState.close();
                 } catch {}
             }).catch(console.error);
         }
@@ -464,7 +479,9 @@
             subscribe("userProfileChatsAndVideo", () =>
                 push({ kind: "user_profile_chats_and_video" }),
             ),
+            () => window.removeEventListener("popstate", popstate),
         ];
+        window.addEventListener("popstate", popstate, { capture: true });
         return () => {
             unsubs.forEach((u) => u());
         };

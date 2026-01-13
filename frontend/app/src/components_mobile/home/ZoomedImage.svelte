@@ -11,7 +11,7 @@
 </script>
 
 <div class="image-frame">
-    <div class="bg" style={`background-image: url(${url})`}></div>
+    <div onclick={onClose} class="bg" style={`background-image: url(${url})`}></div>
     <img class="fg" src={url} alt="" />
     <div class="close">
         <IconButton onclick={onClose}>
@@ -63,8 +63,9 @@
         }
         .close {
             position: absolute;
-            top: 2rem;
-            right: 2rem;
+            z-index: 2;
+            top: calc(var(--status-bar-height) + var(--sp-md));
+            right: var(--sp-md);
         }
     }
 </style>

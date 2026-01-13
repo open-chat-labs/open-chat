@@ -284,8 +284,7 @@ a {
     background-image: url("assets/flags.png") !important;
 }
 
-@media (-webkit-min-device-pixel-ratio: 2),
-(min-resolution: 192dpi) {
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
     .iti__flag {
         background-image: url("assets/flags@2x.png") !important;
     }
@@ -470,7 +469,7 @@ body.native-android {
     // We need to adjust the main content to account for the status bar height!
     // This is a workaround for the Android status bar issue
     // where the content is pushed down by the status bar height.
-    &:not(.landing-page, .onboarding)>main {
+    &:not(.landing-page, .onboarding) > main {
         // height: calc(100vh - var(--status-bar-height));
         // we also need to account for the safe area at the bottom
         padding-top: var(--status-bar-height) !important;
@@ -481,11 +480,11 @@ body.native-android {
             background-color: #1b1c20;
         }
 
-        >.wrapper {
+        > .wrapper {
             top: var(--status-bar-height);
         }
 
-        >.main {
+        > .main {
             margin-top: var(--status-bar-height);
             padding-top: var(--status-bar-height);
             height: calc(100vh - var(--status-bar-height));
@@ -574,12 +573,6 @@ $speed: 200ms;
     }
 }
 
-@include defineTransitionNameFor(".bottom_nav_bar", "bottom_nav_bar");
-@include defineTransitionNameFor(".anchored_sheet", "anchored_sheet");
-@include defineTransitionNameFor(".sliding_page", "sliding_modal");
-@include defineTransitionNameFor(".sheet_overlay .sheet_content", "sheet_content");
-@include defineTransitionNameFor(".anon-footer", "anon_footer");
-
 // Ensure, elements are positioned as they should be!
 html::view-transition-group(bottom_nav_bar),
 html::view-transition-group(floating_button),
@@ -597,8 +590,17 @@ html::view-transition-group(root) {
     z-index: 1;
 }
 
+@include defineTransitionNameFor(".bottom_nav_bar", "bottom_nav_bar");
+@include defineTransitionNameFor(".anchored_sheet", "anchored_sheet");
+@include defineTransitionNameFor(".anon-footer", "anon_footer");
+
+// Sliding pages do not use view transitions
+
 // Root animations!
 html:active-view-transition-type(slide_left) {
+    /* @include defineTransitionNameFor(".sliding_page", "sliding_modal");
+    @include defineTransitionNameFor(".sheet_overlay .sheet_content", "sheet_content"); */
+
     &::view-transition-old(root) {
         animation:
             $speed ease-in-out both slide-to-left,
@@ -613,6 +615,9 @@ html:active-view-transition-type(slide_left) {
 }
 
 html:active-view-transition-type(slide_right) {
+    /* @include defineTransitionNameFor(".sliding_page", "sliding_modal");
+    @include defineTransitionNameFor(".sheet_overlay .sheet_content", "sheet_content"); */
+
     &::view-transition-old(root) {
         animation:
             $speed ease-in-out both slide-to-right,

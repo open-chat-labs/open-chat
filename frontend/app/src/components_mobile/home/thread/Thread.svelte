@@ -1,6 +1,4 @@
 <script lang="ts">
-    import { activeVideoCall } from "@src/stores/video";
-    import { removeQueryStringParam, stripThreadFromUrl } from "@src/utils/urls";
     import { ColourVars, Container } from "component-lib";
     import type {
         AttachmentContent,
@@ -25,7 +23,6 @@
         localUpdates,
         messageContextsEqual,
         messagesRead,
-        pageReplace,
         publish,
         selectedChatBlockedUsersStore,
         selectedChatExpandedDeletedMessageStore,
@@ -100,8 +97,6 @@
     );
 
     function onCloseThread() {
-        pageReplace(stripThreadFromUrl(removeQueryStringParam("open")));
-        activeVideoCall.threadOpen(false);
         publish("closeThread");
     }
 
