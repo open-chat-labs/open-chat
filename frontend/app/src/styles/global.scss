@@ -575,8 +575,7 @@ $speed: 200ms;
 
 // Ensure, elements are positioned as they should be!
 html::view-transition-group(bottom_nav_bar),
-html::view-transition-group(floating_button),
-html::view-transition-group(sliding_modal) {
+html::view-transition-group(floating_button) {
     z-index: 100;
 }
 
@@ -590,17 +589,16 @@ html::view-transition-group(root) {
     z-index: 1;
 }
 
-@include defineTransitionNameFor(".bottom_nav_bar", "bottom_nav_bar");
-@include defineTransitionNameFor(".anchored_sheet", "anchored_sheet");
-@include defineTransitionNameFor(".anon-footer", "anon_footer");
-
-// Sliding pages do not use view transitions
+html:active-view-transition-type(slide_left, slide_right) {
+    @include defineTransitionNameFor(".bottom_nav_bar", "bottom_nav_bar");
+    @include defineTransitionNameFor(".anchored_sheet", "anchored_sheet");
+    @include defineTransitionNameFor(".anon-footer", "anon_footer");
+    @include defineTransitionNameFor(".sliding_page.top", "sliding_modal");
+    @include defineTransitionNameFor(".sheet_overlay .sheet_content", "sheet_content");
+}
 
 // Root animations!
 html:active-view-transition-type(slide_left) {
-    /* @include defineTransitionNameFor(".sliding_page", "sliding_modal");
-    @include defineTransitionNameFor(".sheet_overlay .sheet_content", "sheet_content"); */
-
     &::view-transition-old(root) {
         animation:
             $speed ease-in-out both slide-to-left,
@@ -615,9 +613,6 @@ html:active-view-transition-type(slide_left) {
 }
 
 html:active-view-transition-type(slide_right) {
-    /* @include defineTransitionNameFor(".sliding_page", "sliding_modal");
-    @include defineTransitionNameFor(".sheet_overlay .sheet_content", "sheet_content"); */
-
     &::view-transition-old(root) {
         animation:
             $speed ease-in-out both slide-to-right,

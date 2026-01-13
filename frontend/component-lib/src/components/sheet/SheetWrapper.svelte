@@ -80,6 +80,7 @@
 <style lang="scss">
     :global(.sheet_overlay) {
         animation: var(--speed) ease-out fade-out;
+        view-transition-class: sheet_content;
     }
 
     :global(.sheet_overlay.block) {
