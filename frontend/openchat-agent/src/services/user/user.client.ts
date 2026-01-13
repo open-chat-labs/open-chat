@@ -937,13 +937,7 @@ export class UserClient extends SingleCanisterMsgpackAgent {
     }
 
     deleteCryptoAccount(account: string): Promise<DeleteCryptoAccountResponse> {
-        return this.executeMsgpackUpdate(
-            "delete_crypto_account",
-            account,
-            unitResult,
-            Type.String(),
-            UnitResult,
-        );
+        return this.update("delete_crypto_account", account, unitResult, Type.String(), UnitResult);
     }
 
     sendMessageWithTransferToChannel(
@@ -1291,13 +1285,7 @@ export class UserClient extends SingleCanisterMsgpackAgent {
     }
 
     getBio(): Promise<string> {
-        return this.query(
-            "bio",
-            {},
-            (value) => value.Success,
-            TEmpty,
-            UserBioResponse,
-        );
+        return this.query("bio", {}, (value) => value.Success, TEmpty, UserBioResponse);
     }
 
     getPublicProfile(): Stream<PublicProfile> {
@@ -1329,13 +1317,7 @@ export class UserClient extends SingleCanisterMsgpackAgent {
     }
 
     setBio(bio: string): Promise<SetBioResponse> {
-        return this.update(
-            "set_bio",
-            { text: bio },
-            unitResult,
-            UserSetBioArgs,
-            UnitResult,
-        );
+        return this.update("set_bio", { text: bio }, unitResult, UserSetBioArgs, UnitResult);
     }
 
     withdrawCryptocurrency(
