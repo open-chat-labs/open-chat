@@ -2,7 +2,7 @@ use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{BotInstallationLocation, BotPermissions, TimestampMillis, UserId};
+use types::{BotInstallationLocation, BotPermissions, CanisterId, TimestampMillis, UserId};
 
 #[ts_export(user_index, bot_installations)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -35,6 +35,7 @@ pub enum BotInstallationEvent {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BotInstalled {
     pub location: BotInstallationLocation,
+    pub api_gateway: CanisterId,
     pub granted_permissions: BotPermissions,
     pub granted_autonomous_permissions: BotPermissions,
     pub installed_by: UserId,

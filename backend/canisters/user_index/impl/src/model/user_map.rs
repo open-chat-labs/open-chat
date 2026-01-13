@@ -81,6 +81,7 @@ impl Bot {
     ) {
         self.installation_events.push(BotInstallationEvent::Installed(BotInstalled {
             location,
+            api_gateway: local_user_index,
             granted_permissions: granted_permissions.clone(),
             granted_autonomous_permissions: granted_autonomous_permissions.clone(),
             installed_by,
@@ -164,6 +165,8 @@ pub enum BotInstallationEvent {
 pub struct BotInstalled {
     #[serde(rename = "l")]
     pub location: BotInstallationLocation,
+    #[serde(rename = "g")]
+    pub api_gateway: CanisterId,
     #[serde(rename = "p")]
     pub granted_permissions: BotPermissions,
     #[serde(rename = "a")]
@@ -191,6 +194,7 @@ impl From<BotInstallationEvent> for user_index_canister::bot_installations::BotI
                 user_index_canister::bot_installations::BotInstallationEvent::Installed(
                     user_index_canister::bot_installations::BotInstalled {
                         location: bot_installed.location,
+                        api_gateway: bot_installed.api_gateway,
                         granted_permissions: bot_installed.granted_permissions,
                         granted_autonomous_permissions: bot_installed.granted_autonomous_permissions,
                         installed_by: bot_installed.installed_by,
