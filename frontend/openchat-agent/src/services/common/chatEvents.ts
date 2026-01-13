@@ -1,14 +1,21 @@
-import {
-    type ChannelIdentifier,
-    type ChatEvent,
-    type ChatIdentifier,
-    type DirectChatIdentifier,
-    type EventsResponse, type EventsSuccessResult,
-    type GroupChatIdentifier,
-    type IndexRange, isSuccessfulEventsResponse, MAX_MISSING,
-    type Message, offline, ResponseTooLargeError
+import type {
+    ChannelIdentifier,
+    ChatEvent,
+    ChatIdentifier,
+    DirectChatIdentifier,
+    EventsResponse,
+    EventsSuccessResult,
+    GroupChatIdentifier,
+    IndexRange,
+    Message,
 } from "openchat-shared";
-import { MAX_EVENTS } from "openchat-shared";
+import {
+    isSuccessfulEventsResponse,
+    MAX_EVENTS,
+    MAX_MISSING,
+    offline,
+    ResponseTooLargeError
+} from "openchat-shared";
 import {
     type Database,
     getCachedEvents,
