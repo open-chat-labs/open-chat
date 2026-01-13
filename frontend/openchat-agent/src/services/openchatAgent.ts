@@ -465,6 +465,14 @@ export class OpenChatAgent extends EventTarget {
         return this;
     }
 
+    get communityClient(): CommunityClient {
+        return this._communityClient;
+    }
+
+    get groupClient(): GroupClient {
+        return this._groupClient;
+    }
+
     get userClient(): UserClient | AnonUserClient {
         if (this._userClient) {
             return this._userClient;
