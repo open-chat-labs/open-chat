@@ -1143,7 +1143,7 @@ export async function loadMessagesByMessageIndex(
     db: Database,
     chatId: ChatIdentifier,
     threadRootMessageIndex: number | undefined,
-    messagesIndexes: Set<number>,
+    messagesIndexes: number[],
 ): Promise<{ messageEvents: EventWrapper<Message>[]; missing: Set<number> }> {
     const store = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
     const resolvedDb = await db;
@@ -1152,7 +1152,7 @@ export async function loadMessagesByMessageIndex(
     const messages: EventWrapper<Message>[] = [];
 
     await Promise.all<Message | undefined>(
-        [...messagesIndexes].map(async (msgIdx) => {
+        messagesIndexes.map(async (msgIdx) => {
             const cacheKey = createCacheKey(
                 {
                     chatId,

@@ -236,7 +236,6 @@ import {
     type PubSubEvents,
     type PublicProfile,
     type ReadonlyMap,
-    type ReadonlySet,
     type Referral,
     type RegisterProposalVoteResponse,
     type RegisterUserResponse,
@@ -5797,7 +5796,7 @@ export class OpenChat {
     async getMessagesByMessageIndex(
         chatId: ChatIdentifier,
         threadRootMessageIndex: number | undefined,
-        messageIndexes: ReadonlySet<number>,
+        messageIndexes: number[],
     ): Promise<EventsResponse<Message>> {
         const serverChat = allServerChatsStore.value.get(chatId);
 
@@ -5806,7 +5805,7 @@ export class OpenChat {
                 kind: "getMessagesByMessageIndex",
                 chatId,
                 threadRootMessageIndex,
-                messageIndexes: new Set(messageIndexes),
+                messageIndexes,
                 latestKnownUpdate: serverChat?.lastUpdated,
             });
             if (isSuccessfulEventsResponse(resp)) {

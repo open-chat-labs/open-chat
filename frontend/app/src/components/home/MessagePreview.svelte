@@ -47,7 +47,7 @@
         const result = await client.getMessagesByMessageIndex(
             chatId,
             threadRootMessageIndex,
-            new Set([messageIndex]),
+            [messageIndex],
         );
 
         if (!isSuccessfulEventsResponse(result)) {

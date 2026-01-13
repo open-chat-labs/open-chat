@@ -1,12 +1,9 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import {
-    isSuccessfulEventsResponse,
     MAX_EVENTS,
     MAX_MESSAGES,
-    MAX_MISSING,
     offline,
     random32,
-    ResponseTooLargeError,
     Stream,
     toBigInt32,
     type AcceptP2PSwapResponse,
@@ -36,13 +33,11 @@ import {
     type DirectChatIdentifier,
     type EditMessageResponse,
     type EventsResponse,
-    type EventsSuccessResult,
     type EventWrapper,
     type EvmChain,
     type ExchangeTokenSwapArgs,
     type GrantedBotPermissions,
     type GroupChatIdentifier,
-    type IndexRange,
     type InitialStateResponse,
     type JoinVideoCallResponse,
     type LeaveCommunityResponse,
@@ -180,15 +175,9 @@ import {
     UserWithdrawViaOneSecArgs,
 } from "../../typebox";
 import {
-    getCachedEvents,
-    getCachedEventsByIndex,
-    getCachedEventsWindowByMessageIndex,
     getCachedPublicProfile,
-    loadMessagesByMessageIndex,
-    mergeSuccessResponses,
     recordFailedMessage,
     removeFailedMessage,
-    setCachedEvents,
     setCachedMessageFromSendResponse,
     setCachedPublicProfile,
     type Database,
@@ -203,6 +192,7 @@ import {
 } from "../../utils/mapping";
 import { setChitInfoInCache } from "../../utils/userCache";
 import { SingleCanisterMsgpackAgent } from "../canisterAgent/msgpack";
+import type { IChatEventsReader } from "../common/chatEvents";
 import {
     acceptP2PSwapSuccess,
     apiChatIdentifier,
@@ -222,10 +212,6 @@ import {
     undeleteMessageSuccess,
     unitResult,
 } from "../common/chatMappersV2";
-import {
-    chunkedChatEventsFromBackend,
-    chunkedChatEventsWindowFromBackend,
-} from "../common/chunked";
 import { DataClient } from "../data/data.client";
 import {
     apiExchangeArgs,
@@ -250,9 +236,8 @@ import {
     withdrawCryptoResponse,
 } from "./mappersV2";
 
-export class UserClient extends SingleCanisterMsgpackAgent {
+export class UserClient extends SingleCanisterMsgpackAgent implements IChatEventsReader<DirectChatIdentifier> {
     userId: string;
-    private chatId: DirectChatIdentifier;
 
     constructor(
         userId: string,
@@ -263,43 +248,6 @@ export class UserClient extends SingleCanisterMsgpackAgent {
     ) {
         super(identity, agent, userId, "User");
         this.userId = userId;
-        this.chatId = { kind: "direct_chat", userId: userId };
-    }
-
-    private setCachedEvents<T extends ChatEvent>(
-        chatId: ChatIdentifier,
-        resp: EventsResponse<T>,
-        threadRootMessageIndex?: number,
-    ): EventsResponse<T> {
-        setCachedEvents(this.db, chatId, resp, threadRootMessageIndex).catch((err) =>
-            this.config.logger.error("Error writing cached group events", err),
-        );
-        return resp;
-    }
-
-    private handleMissingEvents(
-        chatId: DirectChatIdentifier,
-        [cachedEvents, missing]: [EventsSuccessResult<ChatEvent>, Set<number>],
-        threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
-        if (missing.size === 0 || offline()) {
-            return Promise.resolve(cachedEvents);
-        } else {
-            return this.chatEventsByIndexFromBackend(
-                [...missing],
-                chatId,
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            )
-                .then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex))
-                .then((resp) => {
-                    if (isSuccessfulEventsResponse(resp)) {
-                        return mergeSuccessResponses(cachedEvents, resp);
-                    }
-                    return resp;
-                });
-        }
     }
 
     manageFavouriteChats(
@@ -434,32 +382,9 @@ export class UserClient extends SingleCanisterMsgpackAgent {
         );
     }
 
-    getCachedEventsByIndex(
-        eventIndexes: number[],
-        chatId: DirectChatIdentifier,
-        threadRootMessageIndex: number | undefined,
-    ) {
-        return getCachedEventsByIndex(this.db, eventIndexes, {
-            chatId,
-            threadRootMessageIndex,
-        });
-    }
-
     chatEventsByIndex(
-        eventIndexes: number[],
         chatId: DirectChatIdentifier,
-        threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
-        return this.getCachedEventsByIndex(eventIndexes, chatId, threadRootMessageIndex).then(
-            (res) =>
-                this.handleMissingEvents(chatId, res, threadRootMessageIndex, latestKnownUpdate),
-        );
-    }
-
-    private chatEventsByIndexFromBackend(
         eventIndexes: number[],
-        chatId: DirectChatIdentifier,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
@@ -474,80 +399,21 @@ export class UserClient extends SingleCanisterMsgpackAgent {
             "events_by_index",
             args,
             (resp) =>
-                mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
+                mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
             UserEventsByIndexArgs,
             UserEventsResponse,
         );
     }
 
     async chatEventsWindow(
-        eventIndexRange: IndexRange,
         chatId: DirectChatIdentifier,
         messageIndex: number,
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
-        const [cachedEvents, missing, totalMiss] = await getCachedEventsWindowByMessageIndex(
-            this.db,
-            eventIndexRange,
-            { chatId },
-            messageIndex,
-        );
-        if (totalMiss || missing.size >= MAX_MISSING) {
-            // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
-            console.log(
-                "We didn't get enough back from the cache, going to the api",
-                missing.size,
-                totalMiss,
-            );
-            return this.chatEventsWindowFromBackend(chatId, messageIndex, latestKnownUpdate)
-                .then((resp) => this.setCachedEvents(chatId, resp))
-                .catch((err) => {
-                    if (err instanceof ResponseTooLargeError) {
-                        console.log(
-                            "Response size too large, we will try to split the window request into a a few chunks",
-                        );
-                        return chunkedChatEventsWindowFromBackend(
-                            (index: number, ascending: boolean, chunkSize: number) =>
-                                this.chatEventsFromBackend(
-                                    chatId,
-                                    index,
-                                    ascending,
-                                    undefined,
-                                    latestKnownUpdate,
-                                    chunkSize,
-                                ),
-                            (index: number, chunkSize: number) =>
-                                this.chatEventsWindowFromBackend(
-                                    chatId,
-                                    index,
-                                    latestKnownUpdate,
-                                    chunkSize,
-                                ),
-                            eventIndexRange,
-                            messageIndex,
-                        ).then((resp) => this.setCachedEvents(chatId, resp));
-                    } else {
-                        throw err;
-                    }
-                });
-        } else {
-            return this.handleMissingEvents(
-                chatId,
-                [cachedEvents, missing],
-                undefined,
-                latestKnownUpdate,
-            );
-        }
-    }
-
-    private async chatEventsWindowFromBackend(
-        chatId: DirectChatIdentifier,
-        messageIndex: number,
+        threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
         maxEvents: number = MAX_EVENTS,
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
-            thread_root_message_index: undefined,
+            thread_root_message_index: threadRootMessageIndex,
             user_id: principalStringToBytes(chatId.userId),
             max_messages: MAX_MESSAGES,
             max_events: maxEvents,
@@ -558,76 +424,13 @@ export class UserClient extends SingleCanisterMsgpackAgent {
             "events_window",
             args,
             (resp) =>
-                mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
+                mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
             UserEventsWindowArgs,
             UserEventsResponse,
         );
     }
 
     async chatEvents(
-        eventIndexRange: IndexRange,
-        chatId: DirectChatIdentifier,
-        startIndex: number,
-        ascending: boolean,
-        threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
-        const [cachedEvents, missing] = await getCachedEvents(
-            this.db,
-            eventIndexRange,
-            { chatId, threadRootMessageIndex },
-            startIndex,
-            ascending,
-        );
-
-        // we may or may not have all of the requested events
-        if (missing.size >= MAX_MISSING) {
-            // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
-            console.log("We didn't get enough back from the cache, going to the api");
-            return this.chatEventsFromBackend(
-                chatId,
-                startIndex,
-                ascending,
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            )
-                .then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex))
-                .catch((err) => {
-                    if (err instanceof ResponseTooLargeError) {
-                        console.log(
-                            "Response size too large, we will try to split the payload into a a few chunks",
-                        );
-                        return chunkedChatEventsFromBackend(
-                            (index: number, chunkSize: number) =>
-                                this.chatEventsFromBackend(
-                                    chatId,
-                                    index,
-                                    ascending,
-                                    threadRootMessageIndex,
-                                    latestKnownUpdate,
-                                    chunkSize,
-                                ),
-                            eventIndexRange,
-                            startIndex,
-                            ascending,
-                        ).then((resp) =>
-                            this.setCachedEvents(chatId, resp, threadRootMessageIndex),
-                        );
-                    } else {
-                        throw err;
-                    }
-                });
-        } else {
-            return this.handleMissingEvents(
-                chatId,
-                [cachedEvents, missing],
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            );
-        }
-    }
-
-    private chatEventsFromBackend(
         chatId: DirectChatIdentifier,
         startIndex: number,
         ascending: boolean,
@@ -650,56 +453,20 @@ export class UserClient extends SingleCanisterMsgpackAgent {
             "events",
             args,
             (resp) =>
-                mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
+                mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
             UserEventsArgs,
             UserEventsResponse,
         );
     }
 
-    async getMessagesByMessageIndex(
-        threadRootMessageIndex: number | undefined,
-        messageIndexes: Set<number>,
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<Message>> {
-        const fromCache = await loadMessagesByMessageIndex(
-            this.db,
-            this.chatId,
-            threadRootMessageIndex,
-            messageIndexes,
-        );
-        if (fromCache.missing.size > 0) {
-            console.log("Missing idxs from the cached: ", fromCache.missing);
-
-            const resp = await this.getMessagesByMessageIndexFromBackend(
-                threadRootMessageIndex,
-                [...fromCache.missing],
-                latestKnownUpdate,
-            ).then((resp) => this.setCachedEvents(this.chatId, resp, threadRootMessageIndex));
-
-            return isSuccessfulEventsResponse(resp)
-                ? {
-                      events: [...fromCache.messageEvents, ...resp.events],
-                      expiredEventRanges: [],
-                      expiredMessageRanges: [],
-                      latestEventIndex: resp.latestEventIndex,
-                  }
-                : resp;
-        }
-        return {
-            events: fromCache.messageEvents,
-            expiredEventRanges: [],
-            expiredMessageRanges: [],
-            latestEventIndex: undefined,
-        };
-    }
-
-    private getMessagesByMessageIndexFromBackend(
+    async messagesByMessageIndex(
+        chatId: DirectChatIdentifier,
         threadRootMessageIndex: number | undefined,
         messageIndexes: number[],
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<Message>> {
         const args = {
-            user_id: principalStringToBytes(this.userId),
+            user_id: principalStringToBytes(chatId.userId),
             thread_root_message_index: threadRootMessageIndex,
             messages: messageIndexes,
             latest_known_update: latestKnownUpdate,
@@ -708,7 +475,7 @@ export class UserClient extends SingleCanisterMsgpackAgent {
             "messages_by_message_index",
             args,
             (resp) =>
-                mapResult(resp, (value) => getMessagesSuccess(value, this.principal, this.chatId)),
+                mapResult(resp, (value) => getMessagesSuccess(value, this.principal, chatId)),
             UserMessagesByMessageIndexArgs,
             UserMessagesByMessageIndexResponse,
         );
@@ -798,7 +565,7 @@ export class UserClient extends SingleCanisterMsgpackAgent {
         pin: string | undefined,
         onRequestAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
-        removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
+        removeFailedMessage(this.db, chatId, event.event.messageId, threadRootMessageIndex);
 
         const dataClient = new DataClient(this.identity, this.agent, this.config);
         const uploadContentPromise = event.event.forwarded
@@ -856,7 +623,7 @@ export class UserClient extends SingleCanisterMsgpackAgent {
         messageFilterFailed: bigint | undefined,
         pin: string | undefined,
     ): Promise<[SendMessageResponse, Message]> {
-        removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
+        removeFailedMessage(this.db, groupId, event.event.messageId, threadRootMessageIndex);
         return this.sendMessageWithTransferToGroupToBackend(
             groupId,
             recipientId,
@@ -935,7 +702,7 @@ export class UserClient extends SingleCanisterMsgpackAgent {
     }
 
     sendMessageWithTransferToChannel(
-        id: ChannelIdentifier,
+        chatId: ChannelIdentifier,
         recipientId: string | undefined,
         sender: CreatedUser,
         event: EventWrapper<Message>,
@@ -945,9 +712,9 @@ export class UserClient extends SingleCanisterMsgpackAgent {
         messageFilterFailed: bigint | undefined,
         pin: string | undefined,
     ): Promise<[SendMessageResponse, Message]> {
-        removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
+        removeFailedMessage(this.db, chatId, event.event.messageId, threadRootMessageIndex);
         return this.sendMessageWithTransferToChannelToBackend(
-            id,
+            chatId,
             recipientId,
             sender,
             event,
@@ -957,9 +724,9 @@ export class UserClient extends SingleCanisterMsgpackAgent {
             messageFilterFailed,
             pin,
         )
-            .then(setCachedMessageFromSendResponse(this.db, id, event, threadRootMessageIndex))
+            .then(setCachedMessageFromSendResponse(this.db, chatId, event, threadRootMessageIndex))
             .catch((err) => {
-                recordFailedMessage(this.db, id, event);
+                recordFailedMessage(this.db, chatId, event);
                 throw err;
             });
     }
