@@ -18,12 +18,13 @@ import { toCanisterResponseError } from "../error";
 import { CanisterAgent } from "./base";
 import { utf8ToBytes } from "@noble/hashes/utils";
 
-export abstract class MsgpackCanisterAgent extends CanisterAgent {
-    constructor(identity: Identity, agent: HttpAgent, canisterId: string, canisterName: string) {
-        super(identity, agent, canisterId, canisterName);
+abstract class MsgpackCanisterAgent extends CanisterAgent {
+    constructor(identity: Identity, agent: HttpAgent, canisterName: string) {
+        super(identity, agent, canisterName);
     }
 
     protected async executeMsgpackQuery<In extends TSchema, Resp extends TSchema, Out>(
+        canisterId: string,
         methodName: string,
         args: Static<In>,
         mapper: (from: Static<Resp>, timestamp: bigint) => Out | Promise<Out>,
@@ -33,11 +34,12 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
         const start = performance.now();
         let isError = false;
         try {
+            const canisterIdPrincipal = Principal.fromText(canisterId);
             const payload = MsgpackCanisterAgent.prepareMsgpackArgs(args, requestValidator);
 
             return await this.executeQuery(
                 () =>
-                    this.agent.query(this.canisterId, {
+                    this.agent.query(canisterIdPrincipal, {
                         methodName: methodName + "_msgpack",
                         arg: payload,
                     }),
@@ -66,7 +68,7 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
                             resp.signatures,
                         );
                         uncertifiedRejectErrorCode.callContext = {
-                            canisterId: Principal.fromText(this.canisterId),
+                            canisterId: canisterIdPrincipal,
                             methodName,
                             httpDetails: resp.httpDetails,
                         };
@@ -84,6 +86,7 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
     }
 
     protected async executeMsgpackUpdate<In extends TSchema, Resp extends TSchema, Out>(
+        canisterId: string,
         methodName: string,
         args: Static<In>,
         mapper: (from: Static<Resp>) => Out | Promise<Out>,
@@ -94,21 +97,22 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
         const start = performance.now();
         let isError = false;
         try {
+            const canisterIdPrincipal = Principal.fromText(canisterId);
             const payload = MsgpackCanisterAgent.prepareMsgpackArgs(args, requestValidator);
 
-            const { requestId, response } = await this.agent.call(this.canisterId, {
+            const { requestId, response } = await this.agent.call(canisterIdPrincipal, {
                 methodName: methodName + "_msgpack",
                 arg: payload,
                 callSync: onRequestAccepted === undefined,
             });
-            const canisterId = Principal.fromText(this.canisterId);
+
 
             if (isV3ResponseBody(response.body)) {
                 // const certTime = this.agent.replicaTime;
                 const certificate = await Certificate.create({
                     certificate: response.body.certificate,
                     rootKey: this.agent.rootKey!,
-                    canisterId: Principal.from(canisterId),
+                    canisterId: canisterIdPrincipal,
                     blsVerify: undefined,
                 });
                 const path = [utf8ToBytes("request_status"), requestId];
@@ -160,7 +164,7 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
                             error_code,
                         );
                         certifiedRejectErrorCode.callContext = {
-                            canisterId,
+                            canisterId: canisterIdPrincipal,
                             methodName,
                             httpDetails: response,
                         };
@@ -177,7 +181,7 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
                     error_code,
                 );
                 certifiedRejectErrorCode.callContext = {
-                    canisterId,
+                    canisterId: canisterIdPrincipal,
                     methodName,
                     httpDetails: response,
                 };
@@ -190,7 +194,7 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
                     onRequestAccepted();
                 }
 
-                const { reply } = await polling.pollForResponse(this.agent, canisterId, requestId);
+                const { reply } = await polling.pollForResponse(this.agent, canisterIdPrincipal, requestId);
                 return Promise.resolve(
                     mapper(MsgpackCanisterAgent.deserializeResponse(reply, responseValidator)),
                 );
@@ -221,3 +225,64 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
         return typeboxValidate(response, validator);
     }
 }
+
+export abstract class SingleCanisterMsgpackAgent extends MsgpackCanisterAgent {
+    protected readonly canisterId: string;
+
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string, canisterName: string) {
+        super(identity, agent, canisterName);
+
+        this.canisterId = canisterId;
+    }
+
+    protected query<In extends TSchema, Resp extends TSchema, Out>(
+        methodName: string,
+        args: Static<In>,
+        mapper: (from: Static<Resp>, timestamp: bigint) => Out | Promise<Out>,
+        requestValidator: In,
+        responseValidator: Resp,
+    ): Promise<Out> {
+        return this.executeMsgpackQuery(this.canisterId, methodName, args, mapper, requestValidator, responseValidator);
+    }
+
+    protected async update<In extends TSchema, Resp extends TSchema, Out>(
+        methodName: string,
+        args: Static<In>,
+        mapper: (from: Static<Resp>) => Out | Promise<Out>,
+        requestValidator: In,
+        responseValidator: Resp,
+        onRequestAccepted?: () => void,
+    ): Promise<Out> {
+        return this.executeMsgpackUpdate(this.canisterId, methodName, args, mapper, requestValidator, responseValidator, onRequestAccepted);
+    }
+}
+
+export abstract class MultiCanisterMsgpackAgent extends MsgpackCanisterAgent {
+    constructor(identity: Identity, agent: HttpAgent, canisterName: string) {
+        super(identity, agent, canisterName);
+    }
+
+    protected query<In extends TSchema, Resp extends TSchema, Out>(
+        canisterId: string,
+        methodName: string,
+        args: Static<In>,
+        mapper: (from: Static<Resp>, timestamp: bigint) => Out | Promise<Out>,
+        requestValidator: In,
+        responseValidator: Resp,
+    ): Promise<Out> {
+        return this.executeMsgpackQuery(canisterId, methodName, args, mapper, requestValidator, responseValidator);
+    }
+
+    protected async update<In extends TSchema, Resp extends TSchema, Out>(
+        canisterId: string,
+        methodName: string,
+        args: Static<In>,
+        mapper: (from: Static<Resp>) => Out | Promise<Out>,
+        requestValidator: In,
+        responseValidator: Resp,
+        onRequestAccepted?: () => void,
+    ): Promise<Out> {
+        return this.executeMsgpackUpdate(canisterId, methodName, args, mapper, requestValidator, responseValidator, onRequestAccepted);
+    }
+}
+

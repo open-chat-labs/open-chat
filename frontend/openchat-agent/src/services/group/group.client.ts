@@ -20,8 +20,6 @@ import type {
     FollowThreadResponse,
     FullWebhookDetails,
     GrantedBotPermissions,
-    GroupCanisterSummaryResponse,
-    GroupCanisterSummaryUpdatesResponse,
     GroupChatDetails,
     GroupChatDetailsResponse,
     GroupChatIdentifier,
@@ -56,7 +54,6 @@ import type {
     VideoCallPresence,
 } from "openchat-shared";
 import {
-    DestinationInvalidError,
     isSuccessfulEventsResponse,
     MAX_EVENTS,
     MAX_MESSAGES,
@@ -64,7 +61,6 @@ import {
     offline,
     random32,
     ResponseTooLargeError,
-    textToCode,
 } from "openchat-shared";
 import type { AgentConfig } from "../../config";
 import {
@@ -118,9 +114,6 @@ import {
     GroupSendMessageArgs,
     GroupSendMessageResponse,
     GroupSetVideoCallPresenceArgs,
-    GroupSummaryResponse,
-    GroupSummaryUpdatesArgs,
-    GroupSummaryUpdatesResponse,
     GroupThreadPreviewsArgs,
     GroupThreadPreviewsResponse,
     GroupToggleMuteNotificationsArgs,
@@ -162,7 +155,7 @@ import {
     principalBytesToString,
     principalStringToBytes,
 } from "../../utils/mapping";
-import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
+import { MultiCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 import {
     acceptP2PSwapSuccess,
     apiAccessGateConfig,
@@ -202,78 +195,59 @@ import {
     apiRole,
     apiUpdatedRules,
     convertToCommunitySuccess,
-    groupChatSummary,
-    summaryUpdatesResponse,
 } from "./mappersV2";
 
-export class GroupClient extends MsgpackCanisterAgent {
+export class GroupClient extends MultiCanisterMsgpackAgent {
+    private readonly _inviteCodes: Map<string, bigint> = new Map();
+
     constructor(
         identity: Identity,
         agent: HttpAgent,
         private config: AgentConfig,
-        private chatId: GroupChatIdentifier,
         private db: Database,
-        private inviteCode: string | undefined,
     ) {
-        super(identity, agent, chatId.groupId, "Group");
+        super(identity, agent, "Group");
     }
 
-    summary(): Promise<GroupCanisterSummaryResponse> {
-        return this.executeMsgpackQuery(
-            "summary",
-            {},
-            (resp) => mapResult(resp, (value) => groupChatSummary(value.summary)),
-            TEmpty,
-            GroupSummaryResponse,
-        ).catch((err) => {
-            if (err instanceof DestinationInvalidError) {
-                return { kind: "canister_not_found" };
-            } else {
-                throw err;
-            }
-        });
+    setInviteCode(groupId: string, inviteCode: bigint) {
+        this._inviteCodes.set(groupId, inviteCode);
     }
 
-    summaryUpdates(updatesSince: bigint): Promise<GroupCanisterSummaryUpdatesResponse> {
-        const args = { updates_since: updatesSince };
-
-        return this.executeMsgpackQuery(
-            "summary_updates",
-            args,
-            summaryUpdatesResponse,
-            GroupSummaryUpdatesArgs,
-            GroupSummaryUpdatesResponse,
-        );
+    inviteCode(groupId: string): bigint | undefined {
+        return this._inviteCodes.get(groupId);
     }
 
-    getCachedEventsByIndex(eventIndexes: number[], threadRootMessageIndex: number | undefined) {
+    getCachedEventsByIndex(groupId: string, eventIndexes: number[], threadRootMessageIndex: number | undefined) {
         return getCachedEventsByIndex(this.db, eventIndexes, {
-            chatId: this.chatId,
+            chatId: this.groupIdToChatId(groupId),
             threadRootMessageIndex,
         });
     }
 
     chatEventsByIndex(
+        groupId: string,
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
-        return this.getCachedEventsByIndex(eventIndexes, threadRootMessageIndex).then((res) =>
-            this.handleMissingEvents(res, threadRootMessageIndex, latestKnownUpdate),
+        return this.getCachedEventsByIndex(groupId, eventIndexes, threadRootMessageIndex).then((res) =>
+            this.handleMissingEvents(groupId, res, threadRootMessageIndex, latestKnownUpdate),
         );
     }
 
     private setCachedEvents<T extends ChatEvent>(
+        groupId: string,
         resp: EventsResponse<T>,
         threadRootMessageIndex: number | undefined,
     ): EventsResponse<T> {
-        setCachedEvents(this.db, this.chatId, resp, threadRootMessageIndex).catch((err) =>
+        setCachedEvents(this.db, this.groupIdToChatId(groupId), resp, threadRootMessageIndex).catch((err) =>
             this.config.logger.error("Error writing cached group events", err),
         );
         return resp;
     }
 
     private handleMissingEvents(
+        groupId: string,
         [cachedEvents, missing]: [EventsSuccessResult<ChatEvent>, Set<number>],
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
@@ -282,11 +256,12 @@ export class GroupClient extends MsgpackCanisterAgent {
             return Promise.resolve(cachedEvents);
         } else {
             return this.chatEventsByIndexFromBackend(
+                groupId,
                 [...missing],
                 threadRootMessageIndex,
                 latestKnownUpdate,
             )
-                .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex))
+                .then((resp) => this.setCachedEvents(groupId, resp, threadRootMessageIndex))
                 .then((resp) => {
                     if (isSuccessfulEventsResponse(resp)) {
                         return mergeSuccessResponses(cachedEvents, resp);
@@ -297,6 +272,7 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     chatEventsByIndexFromBackend(
+        groupId: string,
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
@@ -307,17 +283,19 @@ export class GroupClient extends MsgpackCanisterAgent {
             latest_known_update: latestKnownUpdate,
             latest_client_event_index: undefined,
         };
-        return this.executeMsgpackQuery(
+        return this.query(
+            groupId,
             "events_by_index",
             args,
             (resp) =>
-                mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
+                mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.groupIdToChatId(groupId))),
             GroupEventsByIndexArgs,
             GroupEventsResponse,
         );
     }
 
     async chatEventsWindow(
+        groupId: string,
         eventIndexRange: IndexRange,
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
@@ -327,7 +305,7 @@ export class GroupClient extends MsgpackCanisterAgent {
         const [cachedEvents, missing, totalMiss] = await getCachedEventsWindowByMessageIndex(
             this.db,
             eventIndexRange,
-            { chatId: this.chatId, threadRootMessageIndex },
+            { chatId: this.groupIdToChatId(groupId), threadRootMessageIndex },
             messageIndex,
             maxEvents,
         );
@@ -340,12 +318,13 @@ export class GroupClient extends MsgpackCanisterAgent {
                 totalMiss,
             );
             return this.chatEventsWindowFromBackend(
+                groupId,
                 messageIndex,
                 threadRootMessageIndex,
                 latestKnownUpdate,
                 maxEvents,
             )
-                .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex))
+                .then((resp) => this.setCachedEvents(groupId, resp, threadRootMessageIndex))
                 .catch((err) => {
                     if (err instanceof ResponseTooLargeError) {
                         console.log(
@@ -354,6 +333,7 @@ export class GroupClient extends MsgpackCanisterAgent {
                         return chunkedChatEventsWindowFromBackend(
                             (index: number, ascending: boolean, chunkSize: number) =>
                                 this.chatEventsFromBackend(
+                                    groupId,
                                     index,
                                     ascending,
                                     threadRootMessageIndex,
@@ -362,6 +342,7 @@ export class GroupClient extends MsgpackCanisterAgent {
                                 ),
                             (index: number, chunkSize: number) =>
                                 this.chatEventsWindowFromBackend(
+                                    groupId,
                                     index,
                                     threadRootMessageIndex,
                                     latestKnownUpdate,
@@ -369,13 +350,14 @@ export class GroupClient extends MsgpackCanisterAgent {
                                 ),
                             eventIndexRange,
                             messageIndex,
-                        ).then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
+                        ).then((resp) => this.setCachedEvents(groupId, resp, threadRootMessageIndex));
                     } else {
                         throw err;
                     }
                 });
         } else {
             return this.handleMissingEvents(
+                groupId,
                 [cachedEvents, missing],
                 threadRootMessageIndex,
                 latestKnownUpdate,
@@ -384,6 +366,7 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     private async chatEventsWindowFromBackend(
+        groupId: string,
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
@@ -397,17 +380,19 @@ export class GroupClient extends MsgpackCanisterAgent {
             latest_known_update: latestKnownUpdate,
             latest_client_event_index: undefined,
         };
-        return this.executeMsgpackQuery(
+        return this.query(
+            groupId,
             "events_window",
             args,
             (resp) =>
-                mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
+                mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.groupIdToChatId(groupId))),
             GroupEventsWindowArgs,
             GroupEventsResponse,
         );
     }
 
     async chatEvents(
+        groupId: string,
         eventIndexRange: IndexRange,
         startIndex: number,
         ascending: boolean,
@@ -417,7 +402,7 @@ export class GroupClient extends MsgpackCanisterAgent {
         const [cachedEvents, missing] = await getCachedEvents(
             this.db,
             eventIndexRange,
-            { chatId: this.chatId, threadRootMessageIndex },
+            { chatId: this.groupIdToChatId(groupId), threadRootMessageIndex },
             startIndex,
             ascending,
         );
@@ -427,12 +412,13 @@ export class GroupClient extends MsgpackCanisterAgent {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
             console.log("We didn't get enough back from the cache, going to the api", missing.size);
             return this.chatEventsFromBackend(
+                groupId,
                 startIndex,
                 ascending,
                 threadRootMessageIndex,
                 latestKnownUpdate,
             )
-                .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex))
+                .then((resp) => this.setCachedEvents(groupId, resp, threadRootMessageIndex))
                 .catch((err) => {
                     if (err instanceof ResponseTooLargeError) {
                         console.log(
@@ -441,6 +427,7 @@ export class GroupClient extends MsgpackCanisterAgent {
                         return chunkedChatEventsFromBackend(
                             (index: number, chunkSize: number) =>
                                 this.chatEventsFromBackend(
+                                    groupId,
                                     index,
                                     ascending,
                                     threadRootMessageIndex,
@@ -450,13 +437,14 @@ export class GroupClient extends MsgpackCanisterAgent {
                             eventIndexRange,
                             startIndex,
                             ascending,
-                        ).then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
+                        ).then((resp) => this.setCachedEvents(groupId, resp, threadRootMessageIndex));
                     } else {
                         throw err;
                     }
                 });
         } else {
             return this.handleMissingEvents(
+                groupId,
                 [cachedEvents, missing],
                 threadRootMessageIndex,
                 latestKnownUpdate,
@@ -465,6 +453,7 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     private chatEventsFromBackend(
+        groupId: string,
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
@@ -480,23 +469,25 @@ export class GroupClient extends MsgpackCanisterAgent {
             latest_known_update: latestKnownUpdate,
             latest_client_event_index: undefined,
         };
-        return this.executeMsgpackQuery(
+        return this.query(
+            groupId,
             "events",
             args,
             (resp) =>
-                mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.chatId)),
+                mapResult(resp, (value) => getEventsSuccess(value, this.principal, this.groupIdToChatId(groupId))),
             GroupEventsArgs,
             GroupEventsResponse,
         );
     }
 
-    changeRole(userId: string, newRole: MemberRole): Promise<ChangeRoleResponse> {
+    changeRole(groupId: string, userId: string, newRole: MemberRole): Promise<ChangeRoleResponse> {
         const new_role = apiRole(newRole);
         if (new_role === undefined) {
             throw new Error(`Cannot change user's role to: ${newRole}`);
         }
         const user_id = principalStringToBytes(userId);
-        return this.executeMsgpackUpdate(
+        return this.update(
+            groupId,
             "change_role",
             {
                 user_id,
@@ -509,8 +500,9 @@ export class GroupClient extends MsgpackCanisterAgent {
         );
     }
 
-    removeMember(userId: string): Promise<RemoveMemberResponse> {
-        return this.executeMsgpackUpdate(
+    removeMember(groupId: string, userId: string): Promise<RemoveMemberResponse> {
+        return this.update(
+            groupId,
             "remove_participant",
             {
                 user_id: principalStringToBytes(userId),
@@ -522,13 +514,14 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     editMessage(
+        groupId: string,
         message: Message,
         threadRootMessageIndex: number | undefined,
         blockLevelMarkdown: boolean | undefined,
         newAchievement: boolean,
     ): Promise<EditMessageResponse> {
         return new DataClient(this.identity, this.agent, this.config)
-            .uploadData(message.content, [this.chatId.groupId])
+            .uploadData(message.content, [groupId])
             .then((content) => {
                 const args = {
                     thread_root_message_index: threadRootMessageIndex,
@@ -537,7 +530,8 @@ export class GroupClient extends MsgpackCanisterAgent {
                     block_level_markdown: blockLevelMarkdown,
                     new_achievement: newAchievement,
                 };
-                return this.executeMsgpackUpdate(
+                return this.update(
+                    groupId,
                     "edit_message_v2",
                     args,
                     unitResult,
@@ -548,6 +542,7 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     sendMessage(
+        groupId: string,
         senderName: string,
         senderDisplayName: string | undefined,
         mentioned: User[],
@@ -558,13 +553,15 @@ export class GroupClient extends MsgpackCanisterAgent {
         newAchievement: boolean,
         onRequestAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
+        const chatId = this.groupIdToChatId(groupId);
+
         // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
-        removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
+        removeFailedMessage(this.db, chatId, event.event.messageId, threadRootMessageIndex);
 
         const dataClient = new DataClient(this.identity, this.agent, this.config);
         const uploadContentPromise = event.event.forwarded
-            ? dataClient.forwardData(event.event.content, [this.chatId.groupId])
-            : dataClient.uploadData(event.event.content, [this.chatId.groupId]);
+            ? dataClient.forwardData(event.event.content, [groupId])
+            : dataClient.uploadData(event.event.content, [groupId]);
 
         return uploadContentPromise.then((content) => {
             const newEvent =
@@ -586,7 +583,8 @@ export class GroupClient extends MsgpackCanisterAgent {
                 new_achievement: newAchievement,
             };
 
-            return this.executeMsgpackUpdate(
+            return this.update(
+                groupId,
                 "send_message_v2",
                 args,
                 (resp) => mapResult(resp, sendMessageSuccess),
@@ -598,20 +596,21 @@ export class GroupClient extends MsgpackCanisterAgent {
                     const retVal: [SendMessageResponse, Message] = [resp, newEvent.event];
                     setCachedMessageFromSendResponse(
                         this.db,
-                        this.chatId,
+                        chatId,
                         newEvent,
                         threadRootMessageIndex,
                     )(retVal);
                     return retVal;
                 })
                 .catch((err) => {
-                    recordFailedMessage(this.db, this.chatId, newEvent, threadRootMessageIndex);
+                    recordFailedMessage(this.db, chatId, newEvent, threadRootMessageIndex);
                     throw err;
                 });
         });
     }
 
     updateGroup(
+        groupId: string,
         name?: string,
         description?: string,
         rules?: UpdatedRules,
@@ -622,7 +621,8 @@ export class GroupClient extends MsgpackCanisterAgent {
         isPublic?: boolean,
         messagesVisibleToNonMembers?: boolean,
     ): Promise<UpdateGroupResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            groupId,
             "update_group_v2",
             {
                 name,
@@ -656,6 +656,7 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     addReaction(
+        groupId: string,
         messageId: bigint,
         reaction: string,
         username: string,
@@ -663,7 +664,8 @@ export class GroupClient extends MsgpackCanisterAgent {
         threadRootMessageIndex: number | undefined,
         newAchievement: boolean,
     ): Promise<AddRemoveReactionResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            groupId,
             "add_reaction",
             {
                 thread_root_message_index: threadRootMessageIndex,
@@ -680,11 +682,13 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     removeReaction(
+        groupId: string,
         messageId: bigint,
         reaction: string,
         threadRootMessageIndex?: number,
     ): Promise<AddRemoveReactionResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            groupId,
             "remove_reaction",
             {
                 thread_root_message_index: threadRootMessageIndex,
@@ -698,12 +702,14 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     deleteMessage(
+        groupId: string,
         messageId: bigint,
         threadRootMessageIndex: number | undefined,
         asPlatformModerator: boolean | undefined,
         newAchievement: boolean,
     ): Promise<DeleteMessageResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            groupId,
             "delete_messages",
             {
                 thread_root_message_index: threadRootMessageIndex,
@@ -718,10 +724,12 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     undeleteMessage(
+        groupId: string,
         messageId: bigint,
         threadRootMessageIndex?: number,
     ): Promise<UndeleteMessageResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            groupId,
             "undelete_messages",
             {
                 thread_root_message_index: threadRootMessageIndex,
@@ -733,8 +741,9 @@ export class GroupClient extends MsgpackCanisterAgent {
         );
     }
 
-    blockUser(userId: string): Promise<BlockUserResponse> {
-        return this.executeMsgpackUpdate(
+    blockUser(groupId: string, userId: string): Promise<BlockUserResponse> {
+        return this.update(
+            groupId,
             "block_user",
             {
                 user_id: principalStringToBytes(userId),
@@ -745,8 +754,9 @@ export class GroupClient extends MsgpackCanisterAgent {
         );
     }
 
-    unblockUser(userId: string): Promise<UnblockUserResponse> {
-        return this.executeMsgpackUpdate(
+    unblockUser(groupId: string, userId: string): Promise<UnblockUserResponse> {
+        return this.update(
+            groupId,
             "unblock_user",
             {
                 user_id: principalStringToBytes(userId),
@@ -757,55 +767,58 @@ export class GroupClient extends MsgpackCanisterAgent {
         );
     }
 
-    async getGroupDetails(chatLastUpdated: bigint): Promise<GroupChatDetailsResponse> {
-        const fromCache = await getCachedGroupDetails(this.db, this.chatId.groupId);
+    async getGroupDetails(groupId: string, chatLastUpdated: bigint): Promise<GroupChatDetailsResponse> {
+        const fromCache = await getCachedGroupDetails(this.db, groupId);
         if (fromCache !== undefined) {
             if (fromCache.timestamp >= chatLastUpdated || offline()) {
                 return fromCache;
             } else {
-                return this.getGroupDetailsUpdates(fromCache);
+                return this.getGroupDetailsUpdates(groupId, fromCache);
             }
         }
 
-        const response = await this.getGroupDetailsFromBackend();
+        const response = await this.getGroupDetailsFromBackend(groupId);
         if (typeof response === "object" && "members" in response) {
-            await setCachedGroupDetails(this.db, this.chatId.groupId, response);
+            await setCachedGroupDetails(this.db, groupId, response);
         }
         return response;
     }
 
-    private getGroupDetailsFromBackend(): Promise<GroupChatDetailsResponse> {
-        return this.executeMsgpackQuery(
+    private getGroupDetailsFromBackend(groupId: string): Promise<GroupChatDetailsResponse> {
+        return this.query(
+            groupId,
             "selected_initial",
             {},
             (resp) =>
                 mapResult(resp, (value) =>
-                    groupDetailsSuccess(value, this.config.blobUrlPattern, this.chatId.groupId),
+                    groupDetailsSuccess(value, this.config.blobUrlPattern, groupId),
                 ),
             TEmpty,
             GroupSelectedInitialResponse,
         );
     }
 
-    private async getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails> {
-        const response = await this.getGroupDetailsUpdatesFromBackend(previous);
+    private async getGroupDetailsUpdates(groupId: string, previous: GroupChatDetails): Promise<GroupChatDetails> {
+        const response = await this.getGroupDetailsUpdatesFromBackend(groupId, previous);
         if (response.timestamp > previous.timestamp) {
-            await setCachedGroupDetails(this.db, this.chatId.groupId, response);
+            await setCachedGroupDetails(this.db, groupId, response);
         }
         return response;
     }
 
     private async getGroupDetailsUpdatesFromBackend(
+        groupId: string,
         previous: GroupChatDetails,
     ): Promise<GroupChatDetails> {
         const args = {
             updates_since: previous.timestamp,
         };
-        const updatesResponse = await this.executeMsgpackQuery(
+        const updatesResponse = await this.query(
+            groupId,
             "selected_updates_v2",
             args,
             (value) =>
-                groupDetailsUpdatesResponse(value, this.config.blobUrlPattern, this.chatId.groupId),
+                groupDetailsUpdatesResponse(value, this.config.blobUrlPattern, groupId),
             GroupSelectedUpdatesArgs,
             GroupSelectedUpdatesResponse,
         );
@@ -824,9 +837,10 @@ export class GroupClient extends MsgpackCanisterAgent {
         return mergeGroupChatDetails(previous, updatesResponse);
     }
 
-    getPublicSummary(): Promise<PublicGroupSummaryResponse> {
-        const args = { invite_code: mapOptional(this.inviteCode, textToCode) };
-        return this.executeMsgpackQuery(
+    getPublicSummary(groupId: string): Promise<PublicGroupSummaryResponse> {
+        const args = { invite_code: this.inviteCode(groupId) };
+        return this.query(
+            groupId,
             "public_summary",
             args,
             (resp) => mapResult(resp, publicSummarySuccess),
@@ -836,13 +850,14 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     async getMessagesByMessageIndex(
+        groupId: string,
         threadRootMessageIndex: number | undefined,
         messageIndexes: Set<number>,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<Message>> {
         const fromCache = await loadMessagesByMessageIndex(
             this.db,
-            this.chatId,
+            this.groupIdToChatId(groupId),
             threadRootMessageIndex,
             messageIndexes,
         );
@@ -850,10 +865,11 @@ export class GroupClient extends MsgpackCanisterAgent {
             console.log("Missing idxs from the cached: ", fromCache.missing);
 
             const resp = await this.getMessagesByMessageIndexFromBackend(
+                groupId,
                 threadRootMessageIndex,
                 [...fromCache.missing],
                 latestKnownUpdate,
-            ).then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
+            ).then((resp) => this.setCachedEvents(groupId, resp, threadRootMessageIndex));
 
             return isSuccessfulEventsResponse(resp)
                 ? {
@@ -873,6 +889,7 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     private getMessagesByMessageIndexFromBackend(
+        groupId: string,
         threadRootMessageIndex: number | undefined,
         messageIndexes: number[],
         latestKnownUpdate: bigint | undefined,
@@ -883,21 +900,24 @@ export class GroupClient extends MsgpackCanisterAgent {
             messages: messageIndexes,
             latest_known_update: latestKnownUpdate,
         };
-        return this.executeMsgpackQuery(
+        return this.query(
+            groupId,
             "messages_by_message_index",
             args,
             (resp) =>
-                mapResult(resp, (value) => getMessagesSuccess(value, this.principal, this.chatId)),
+                mapResult(resp, (value) => getMessagesSuccess(value, this.principal, this.groupIdToChatId(groupId))),
             GroupMessagesByMessageIndexArgs,
             GroupMessagesByMessageIndexResponse,
         );
     }
 
     getDeletedMessage(
+        groupId: string,
         messageId: bigint,
         threadRootMessageIndex?: number,
     ): Promise<DeletedGroupMessageResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            groupId,
             "deleted_message",
             {
                 message_id: messageId,
@@ -909,8 +929,9 @@ export class GroupClient extends MsgpackCanisterAgent {
         );
     }
 
-    pinMessage(messageIndex: number): Promise<PinMessageResponse> {
-        return this.executeMsgpackUpdate(
+    pinMessage(groupId: string, messageIndex: number): Promise<PinMessageResponse> {
+        return this.update(
+            groupId,
             "pin_message_v2",
             {
                 message_index: messageIndex,
@@ -921,8 +942,9 @@ export class GroupClient extends MsgpackCanisterAgent {
         );
     }
 
-    unpinMessage(messageIndex: number): Promise<UnpinMessageResponse> {
-        return this.executeMsgpackUpdate(
+    unpinMessage(groupId: string, messageIndex: number): Promise<UnpinMessageResponse> {
+        return this.update(
+            groupId,
             "unpin_message",
             {
                 message_index: messageIndex,
@@ -934,13 +956,15 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     registerPollVote(
+        groupId: string,
         messageIdx: number,
         answerIdx: number,
         voteType: "register" | "delete",
         threadRootMessageIndex: number | undefined,
         newAchievement: boolean,
     ): Promise<RegisterPollVoteResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            groupId,
             "register_poll_vote",
             {
                 thread_root_message_index: threadRootMessageIndex,
@@ -956,6 +980,7 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     searchGroupChat(
+        groupId: string,
         searchTerm: string,
         userIds: string[],
         maxResults: number,
@@ -965,17 +990,19 @@ export class GroupClient extends MsgpackCanisterAgent {
             max_results: maxResults,
             users: userIds.map(principalStringToBytes),
         };
-        return this.executeMsgpackQuery(
+        return this.query(
+            groupId,
             "search_messages",
             args,
-            (res) => searchGroupChatResponse(res, this.chatId),
+            (res) => searchGroupChatResponse(res, this.groupIdToChatId(groupId)),
             GroupSearchMessagesArgs,
             GroupSearchMessagesResponse,
         );
     }
 
-    getInviteCode(): Promise<InviteCodeResponse> {
-        return this.executeMsgpackQuery(
+    getInviteCode(groupId: string): Promise<InviteCodeResponse> {
+        return this.query(
+            groupId,
             "invite_code",
             {},
             (resp) => mapResult(resp, inviteCodeSuccess),
@@ -984,8 +1011,9 @@ export class GroupClient extends MsgpackCanisterAgent {
         );
     }
 
-    enableInviteCode(): Promise<EnableInviteCodeResponse> {
-        return this.executeMsgpackUpdate(
+    enableInviteCode(groupId: string): Promise<EnableInviteCodeResponse> {
+        return this.update(
+            groupId,
             "enable_invite_code",
             {},
             (resp) => mapResult(resp, enableOrResetInviteCodeSuccess),
@@ -994,12 +1022,13 @@ export class GroupClient extends MsgpackCanisterAgent {
         );
     }
 
-    disableInviteCode(): Promise<DisableInviteCodeResponse> {
-        return this.executeMsgpackUpdate("disable_invite_code", {}, unitResult, TEmpty, UnitResult);
+    disableInviteCode(groupId: string): Promise<DisableInviteCodeResponse> {
+        return this.update(groupId, "disable_invite_code", {}, unitResult, TEmpty, UnitResult);
     }
 
-    resetInviteCode(): Promise<ResetInviteCodeResponse> {
-        return this.executeMsgpackUpdate(
+    resetInviteCode(groupId: string): Promise<ResetInviteCodeResponse> {
+        return this.update(
+            groupId,
             "reset_invite_code",
             {},
             (resp) => mapResult(resp, enableOrResetInviteCodeSuccess),
@@ -1009,26 +1038,30 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     threadPreviews(
+        groupId: string,
         threadRootMessageIndexes: number[],
         latestClientThreadUpdate: bigint | undefined,
     ): Promise<ThreadPreviewsResponse> {
-        return this.executeMsgpackQuery(
+        return this.query(
+            groupId,
             "thread_previews",
             {
                 threads: threadRootMessageIndexes,
                 latest_client_thread_update: latestClientThreadUpdate,
             },
-            (resp) => mapResult(resp, (value) => threadPreviewsSuccess(value, this.chatId)),
+            (resp) => mapResult(resp, (value) => threadPreviewsSuccess(value, this.groupIdToChatId(groupId))),
             GroupThreadPreviewsArgs,
             GroupThreadPreviewsResponse,
         );
     }
 
     registerProposalVote(
+        groupId: string,
         messageIdx: number,
         adopt: boolean,
     ): Promise<RegisterProposalVoteResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            groupId,
             "register_proposal_vote",
             {
                 adopt,
@@ -1041,10 +1074,12 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     registerProposalVoteV2(
+        groupId: string,
         messageIdx: number,
         adopt: boolean,
     ): Promise<RegisterProposalVoteResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            groupId,
             "register_proposal_vote_v2",
             {
                 adopt,
@@ -1056,8 +1091,9 @@ export class GroupClient extends MsgpackCanisterAgent {
         );
     }
 
-    localUserIndex(): Promise<string> {
-        return this.executeMsgpackQuery(
+    localUserIndex(groupId: string): Promise<string> {
+        return this.query(
+            groupId,
             "local_user_index",
             {},
             (resp) => principalBytesToString(resp.Success),
@@ -1066,15 +1102,17 @@ export class GroupClient extends MsgpackCanisterAgent {
         );
     }
 
-    declineInvitation(): Promise<DeclineInvitationResponse> {
-        return this.executeMsgpackUpdate("decline_invitation", {}, unitResult, TEmpty, UnitResult);
+    declineInvitation(groupId: string): Promise<DeclineInvitationResponse> {
+        return this.update(groupId, "decline_invitation", {}, unitResult, TEmpty, UnitResult);
     }
 
     toggleMuteNotifications(
+        groupId: string,
         mute: boolean | undefined,
         muteAtEveryone: boolean | undefined,
     ): Promise<ToggleMuteNotificationResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            groupId,
             "toggle_mute_notifications",
             { mute, mute_at_everyone: muteAtEveryone },
             unitResult,
@@ -1083,8 +1121,9 @@ export class GroupClient extends MsgpackCanisterAgent {
         );
     }
 
-    convertToCommunity(historyVisible: boolean, rules: Rules): Promise<ConvertToCommunityResponse> {
-        return this.executeMsgpackUpdate(
+    convertToCommunity(groupId: string, historyVisible: boolean, rules: Rules): Promise<ConvertToCommunityResponse> {
+        return this.update(
+            groupId,
             "convert_into_community",
             {
                 history_visible_to_new_joiners: historyVisible,
@@ -1099,6 +1138,7 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     followThread(
+        groupId: string,
         threadRootMessageIndex: number,
         follow: boolean,
         newAchievement: boolean,
@@ -1107,7 +1147,8 @@ export class GroupClient extends MsgpackCanisterAgent {
             thread_root_message_index: threadRootMessageIndex,
             new_achievement: newAchievement,
         };
-        return this.executeMsgpackUpdate(
+        return this.update(
+            groupId,
             follow ? "follow_thread" : "unfollow_thread",
             args,
             unitResult,
@@ -1117,11 +1158,13 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     reportMessage(
+        groupId: string,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         deleteMessage: boolean,
     ): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            groupId,
             "report_message",
             {
                 thread_root_message_index: threadRootMessageIndex,
@@ -1135,12 +1178,14 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     acceptP2PSwap(
+        groupId: string,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         pin: string | undefined,
         newAchievement: boolean,
     ): Promise<AcceptP2PSwapResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            groupId,
             "accept_p2p_swap",
             {
                 thread_root_message_index: threadRootMessageIndex,
@@ -1155,10 +1200,12 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     cancelP2PSwap(
+        groupId: string,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
     ): Promise<CancelP2PSwapResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            groupId,
             "cancel_p2p_swap",
             {
                 thread_root_message_index: threadRootMessageIndex,
@@ -1170,8 +1217,9 @@ export class GroupClient extends MsgpackCanisterAgent {
         );
     }
 
-    joinVideoCall(messageId: bigint, newAchievement: boolean): Promise<JoinVideoCallResponse> {
-        return this.executeMsgpackUpdate(
+    joinVideoCall(groupId: string, messageId: bigint, newAchievement: boolean): Promise<JoinVideoCallResponse> {
+        return this.update(
+            groupId,
             "join_video_call",
             {
                 message_id: messageId,
@@ -1184,11 +1232,13 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     setVideoCallPresence(
+        groupId: string,
         messageId: bigint,
         presence: VideoCallPresence,
         newAchievement: boolean,
     ): Promise<SetVideoCallPresenceResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            groupId,
             "set_video_call_presence",
             {
                 message_id: messageId,
@@ -1202,10 +1252,12 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     videoCallParticipants(
+        groupId: string,
         messageId: bigint,
         updatesSince?: bigint,
     ): Promise<VideoCallParticipantsResponse> {
-        return this.executeMsgpackQuery(
+        return this.query(
+            groupId,
             "video_call_participants",
             {
                 message_id: messageId,
@@ -1217,8 +1269,9 @@ export class GroupClient extends MsgpackCanisterAgent {
         );
     }
 
-    cancelInvites(userIds: string[]): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+    cancelInvites(groupId: string, userIds: string[]): Promise<boolean> {
+        return this.update(
+            groupId,
             "cancel_invites",
             {
                 user_ids: userIds.map(principalStringToBytes),
@@ -1229,8 +1282,9 @@ export class GroupClient extends MsgpackCanisterAgent {
         );
     }
 
-    updateInstalledBot(botId: string, grantedPermissions: GrantedBotPermissions): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+    updateInstalledBot(groupId: string, botId: string, grantedPermissions: GrantedBotPermissions): Promise<boolean> {
+        return this.update(
+            groupId,
             "update_bot",
             {
                 bot_id: principalStringToBytes(botId),
@@ -1247,10 +1301,12 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     registerWebhook(
+        groupId: string,
         name: string,
         avatar: string | undefined,
     ): Promise<FullWebhookDetails | undefined> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            groupId,
             "register_webhook",
             {
                 name,
@@ -1265,7 +1321,7 @@ export class GroupClient extends MsgpackCanisterAgent {
                             avatar_id: resp.Success.avatar_id,
                         },
                         this.config.blobUrlPattern,
-                        this.chatId.groupId,
+                        groupId,
                     );
 
                     return {
@@ -1281,11 +1337,13 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     updateWebhook(
+        groupId: string,
         id: string,
         name: string | undefined,
         avatar: OptionUpdate<string>,
     ): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            groupId,
             "update_webhook",
             {
                 id: principalStringToBytes(id),
@@ -1298,8 +1356,9 @@ export class GroupClient extends MsgpackCanisterAgent {
         );
     }
 
-    regenerateWebhook(id: string): Promise<string | undefined> {
-        return this.executeMsgpackUpdate(
+    regenerateWebhook(groupId: string, id: string): Promise<string | undefined> {
+        return this.update(
+            groupId,
             "regenerate_webhook",
             {
                 id: principalStringToBytes(id),
@@ -1314,8 +1373,9 @@ export class GroupClient extends MsgpackCanisterAgent {
         );
     }
 
-    deleteWebhook(id: string): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+    deleteWebhook(groupId: string, id: string): Promise<boolean> {
+        return this.update(
+            groupId,
             "delete_webhook",
             {
                 id: principalStringToBytes(id),
@@ -1326,8 +1386,9 @@ export class GroupClient extends MsgpackCanisterAgent {
         );
     }
 
-    getWebhook(id: string): Promise<string | undefined> {
-        return this.executeMsgpackQuery(
+    getWebhook(groupId: string, id: string): Promise<string | undefined> {
+        return this.query(
+            groupId,
             "webhook",
             {
                 id: principalStringToBytes(id),
@@ -1344,15 +1405,23 @@ export class GroupClient extends MsgpackCanisterAgent {
         );
     }
 
-    activeProposalTallies(): Promise<[number, Tally][] | OCError> {
-        return this.executeMsgpackQuery(
+    activeProposalTallies(groupId: string): Promise<[number, Tally][] | OCError> {
+        return this.query(
+            groupId,
             "active_proposal_tallies",
             {
-                invite_code: mapOptional(this.inviteCode, textToCode),
+                invite_code: this.inviteCode(groupId),
             },
             (resp) => mapResult(resp, (value) => proposalTallies(value.tallies)),
             GroupActiveProposalTalliesArgs,
             ActiveProposalTalliesResponse,
         );
+    }
+
+    private groupIdToChatId(groupId: string): GroupChatIdentifier {
+        return {
+            kind: "group_chat",
+            groupId,
+        }
     }
 }

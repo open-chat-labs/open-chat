@@ -13,7 +13,7 @@ export abstract class CandidCanisterAgent<T> extends CanisterAgent {
         factory: IDL.InterfaceFactory,
         canisterName: string,
     ) {
-        super(identity, agent, canisterId, canisterName);
+        super(identity, agent, canisterName);
 
         this.service = Actor.createActor<T>(factory, {
             agent,

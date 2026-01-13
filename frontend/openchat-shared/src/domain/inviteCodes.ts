@@ -1,4 +1,4 @@
-import type { MultiUserChatIdentifier } from "./chat";
+import type { GroupChatIdentifier } from "./chat";
 import type { CommunityIdentifier } from "./community";
 
 export function codeToText(code: bigint): string {
@@ -11,7 +11,7 @@ export function textToCode(codeStr: string): bigint {
 }
 
 export type GroupInvite = {
-    chatId: MultiUserChatIdentifier;
+    chatId: GroupChatIdentifier;
     code: string;
 };
 

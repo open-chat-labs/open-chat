@@ -1,5 +1,5 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
-import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
+import { SingleCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 import { principalStringToBytes } from "../../utils/mapping";
 import { lastOnlineResponse, markAsOnlineResponse } from "./mappers";
 import type { MinutesOnline } from "openchat-shared";
@@ -10,7 +10,7 @@ import {
     OnlineUsersMarkAsOnlineResponse,
 } from "../../typebox";
 
-export class OnlineClient extends MsgpackCanisterAgent {
+export class OnlineClient extends SingleCanisterMsgpackAgent {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
         super(identity, agent, canisterId, "OnlineUsers");
     }
@@ -19,7 +19,7 @@ export class OnlineClient extends MsgpackCanisterAgent {
         const args = {
             user_ids: userIds.map(principalStringToBytes),
         };
-        return this.executeMsgpackQuery(
+        return this.query(
             "last_online",
             args,
             lastOnlineResponse,
@@ -29,7 +29,7 @@ export class OnlineClient extends MsgpackCanisterAgent {
     }
 
     markAsOnline(): Promise<MinutesOnline> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "mark_as_online",
             {},
             markAsOnlineResponse,
