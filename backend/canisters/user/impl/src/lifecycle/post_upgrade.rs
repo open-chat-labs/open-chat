@@ -44,6 +44,8 @@ fn post_upgrade(args: Args) {
                 timestamp: now,
             }));
         }
+
+        state.data.token_swaps.clear_pin_attempts();
     });
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
