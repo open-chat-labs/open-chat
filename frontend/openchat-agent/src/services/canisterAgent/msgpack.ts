@@ -106,7 +106,6 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
                 callSync: onRequestAccepted === undefined,
             });
 
-
             if (isV3ResponseBody(response.body)) {
                 // const certTime = this.agent.replicaTime;
                 const certificate = await Certificate.create({
