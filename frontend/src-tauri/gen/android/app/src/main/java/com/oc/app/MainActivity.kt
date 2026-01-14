@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.PermissionRequest
+import android.webkit.WebChromeClient
 import android.webkit.WebView
 import androidx.activity.addCallback
 import androidx.core.view.ViewCompat
@@ -22,7 +24,7 @@ import kotlinx.coroutines.launch
 class MainActivity : TauriActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         try {
             // Makes sure inputs are visible on soft keyboard toggle
             handleViewportSizeOnSoftKeyboardToggle()
@@ -33,7 +35,7 @@ class MainActivity : TauriActivity() {
 
         onBackPressedDispatcher.addCallback(this) { interceptBack() }
     }
-    
+
     private fun interceptBack() {
         Log.d(LOG_TAG, "Back pressed/swiped intercepted in MainActivity")
 
@@ -61,9 +63,9 @@ class MainActivity : TauriActivity() {
         if (notificationPayload != null) {
             ProcessLifecycleOwner.get().lifecycleScope.launch {
                 NotificationsManager.releaseNotificationsAfterTapOrDismissed(
-                        this@MainActivity,
-                        notificationPayload,
-                        true
+                    this@MainActivity,
+                    notificationPayload,
+                    true
                 )
             }
         }
@@ -71,6 +73,13 @@ class MainActivity : TauriActivity() {
 
     override fun onWebViewCreate(webView: WebView) {
         super.onWebViewCreate(webView)
+
+        webView.webChromeClient = object : WebChromeClient() {
+            override fun onPermissionRequest(request: PermissionRequest) {
+                // Grant camera & mic to the WebView
+                request.grant(request.resources)
+            }
+        }
 
         // Check if the device is set for gesture or button navigation!
         ViewCompat.setOnApplyWindowInsetsListener(webView) { _, insets ->
@@ -83,12 +92,12 @@ class MainActivity : TauriActivity() {
 
             // Detect if the app is using gesture navigation!
             val isGestureNavigation = bottomDp <= 36
-            
+
             OCPluginCompanion.triggerRef(
-                "gesture-navigation", 
+                "gesture-navigation",
                 JSObject().put("isGestureNavigation", isGestureNavigation)
             )
-            
+
             insets
         }
     }
@@ -119,7 +128,7 @@ class MainActivity : TauriActivity() {
             insets
         }
     }
-    
+
     private fun findWebView(view: View): WebView? {
         if (view is WebView) return view
 
