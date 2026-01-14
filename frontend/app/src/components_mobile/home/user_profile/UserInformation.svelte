@@ -138,7 +138,7 @@
 
 <SlidingPageContent title={i18nKey("Edit profile")}>
     <Container
-        padding={["zero", "lg", "lg", "lg"]}
+        padding={["xxl", "lg"]}
         gap={"lg"}
         height={"fill"}
         crossAxisAlignment={"center"}

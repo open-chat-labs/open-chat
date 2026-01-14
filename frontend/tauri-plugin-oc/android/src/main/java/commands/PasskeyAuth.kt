@@ -2,6 +2,8 @@ package com.ocplugin.app.commands
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.KeyguardManager
+import android.content.Context
 import android.util.Base64
 import android.util.Log
 import androidx.credentials.CreatePublicKeyCredentialRequest
@@ -21,8 +23,6 @@ import androidx.credentials.exceptions.GetCredentialInterruptedException
 import androidx.credentials.exceptions.GetCredentialUnknownException
 import androidx.credentials.exceptions.publickeycredential.CreatePublicKeyCredentialDomException
 import androidx.credentials.exceptions.publickeycredential.GetPublicKeyCredentialDomException
-import androidx.credentials.exceptions.domerrors.NotAllowedError
-import androidx.credentials.exceptions.domerrors.TimeoutError
 import app.tauri.annotation.InvokeArg
 import app.tauri.plugin.Invoke
 import app.tauri.plugin.JSObject
@@ -67,6 +67,14 @@ class PasskeyAuth(private val activity: Activity) {
     @SuppressLint("PublicKeyCredential")
     fun handleSignUp(invoke: Invoke) {
         val args = invoke.parseArgs(SignUpArgs::class.java)
+
+        // Preflight check for screen lock
+        val km = activity.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+        if (!km.isDeviceSecure) {
+            invoke.reject(errResponse("NO_SCREEN_LOCK", "Please set a lock screen in your Android settings to create a passkey."))
+            return
+        }
+
         CoroutineScope(Dispatchers.Main).launch {
             try {
                 val challenge = generateRandomChallenge()
@@ -156,21 +164,21 @@ class PasskeyAuth(private val activity: Activity) {
             catch (e: CreatePublicKeyCredentialDomException) {
                 val message = e.message ?: ""
                 val (code, msg) = when {
-                    message.contains("screen lock is missing", ignoreCase = true) -> {
+                    message.contains("50166") || message.contains("screen lock", true) -> {
                         "NO_SCREEN_LOCK" to "User must set a screen lock to use this app"
                     }
-                    message.contains("not allowed", ignoreCase = true) -> {
+                    message.contains("not allowed", true) -> {
                         "SECURITY_DENIED" to "Request denied, check domain settings" // check RP_ID
                     }
                     // Specific to Registration: The passkey already exists!
-                    message.contains("exclude", ignoreCase = true) -> {
+                    message.contains("exclude", true) -> {
                         "PASSKEY_ALREADY_EXISTS" to "A passkey for this account already exists on this device."
                     }
                     else -> {
                         "DOM_PASSKEY_ERROR" to "hardware security error: $message" // perhaps timeout
                     }
                 }
-                Log.d(LOG_TAG, "Passkey DOM error: $code ($msg)")
+                Log.d(LOG_TAG, "Passkey DOM error: $code ($message)")
                 invoke.reject(errResponse(code, msg))
             }
 

@@ -608,9 +608,7 @@
         gap={"sm"}
         mainAxisAlignment={"spaceBetween"}
         crossAxisAlignment={recording ? "center" : "end"}
-        background={editingEvent !== undefined ? ColourVars.gradient : ColourVars.background0}
-        padding={["sm", "md", "lg"]}
-        minHeight={"5rem"}>
+        background={editingEvent !== undefined ? ColourVars.gradient : ColourVars.background0}>
         {#if frozen}
             <div class="frozen">
                 <Translatable resourceKey={i18nKey("chatFrozen")} />

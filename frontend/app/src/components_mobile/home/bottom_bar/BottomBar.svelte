@@ -176,7 +176,7 @@
 
 <Container
     supplementalClass={"bottom_nav_bar"}
-    padding={["sm", "lg", "zero", "lg"]}
+    padding={["sm", "lg", "md", "lg"]}
     borderWidth={"thick"}
     minWidth={"100%"}
     {onSwipe}
@@ -214,18 +214,6 @@
         border-left: none !important;
         border-right: none !important;
         border-bottom: none !important;
-    }
-
-    :global {
-        body.native-android {
-            &:not(.with-button-nav) .bottom_nav_bar {
-                padding-bottom: var(--android-inset-without-buttons) !important;
-            }
-
-            &.with-button-nav .bottom_nav_bar {
-                padding-bottom: var(--android-inset-with-buttons) !important;
-            }
-        }
     }
 
     .selection {

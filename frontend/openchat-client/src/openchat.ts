@@ -8370,7 +8370,7 @@ export class OpenChat {
     }
 
     #selectFirstCommunity(): boolean {
-        const first = sortedCommunitiesStore.value.find((c) => !c.membership.archived);
+        const first = sortedCommunitiesStore.value?.find((c) => !c.membership.archived);
         if (first !== undefined) {
             pageRedirect(`/community/${first.id.communityId}`);
             return true;

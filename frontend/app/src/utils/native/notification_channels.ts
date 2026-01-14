@@ -8,7 +8,7 @@ const PUSH_NOTIFICATION_EVENT = "push-notification";
 const NEW_FCM_TOKEN_EVENT = "fcm-token";
 const NOTIFICATION_TAP_EVENT = "notification-tap";
 const BACK_PRESS_EVENT = "back-pressed";
-const NAVIGATION_TYPE_EVENT = "gesture-navigation";
+const WINDOW_INSET_CHANGE_EVENT = "window-inset-change";
 
 type PushNotification = {
     id: number;
@@ -196,14 +196,28 @@ export async function expectBackPress(handler: () => void): Promise<PluginListen
 
 /**
  * Data shape epxected to be received from the native code, informing us of the
- * navigation type that the Android app is using.
+ * navigation type that the Android app is using, and if the software keyboard
+ * is open/visible.
  */
-export interface NavigationType {
+export interface WindowInsetChange {
+    isKeyboardOpen: boolean;
     isGestureNavigation: boolean;
+    navHeightDp: number;
+    statusBarHeightDp: number;
+    keyboardHeightDp: number;
+    apiLevel: number;
+    osVersion: string;
 }
 
-export async function expectNavigationType(
-    handler: (data: NavigationType) => void,
+/**
+ * Use this function to detect keyboard open/close, or device nav type (buttons
+ * or gestures)
+ *
+ * @param handler runs when insets change, nav type or keyboard open
+ * @returns
+ */
+export async function expectWindowInsetChange(
+    handler: (data: WindowInsetChange) => void,
 ): Promise<PluginListener> {
-    return addPluginListener(TAURI_PLUGIN_NAME, NAVIGATION_TYPE_EVENT, handler);
+    return addPluginListener(TAURI_PLUGIN_NAME, WINDOW_INSET_CHANGE_EVENT, handler);
 }

@@ -2,7 +2,13 @@
     <!-- Base application theme. -->
     <style name="Theme.open_chat" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Customize your theme here. -->
+        <item name="android:windowBackground">@color/background_0</item>
+        <item name="android:colorBackground">@color/background_0</item>
+        
+        <item name="android:statusBarColor">@color/background_0</item>
+        <item name="android:windowLightStatusBar">false</item>
+        
         <item name="android:navigationBarColor">@color/background_1</item>
-        <!-- <item name="android:windowLightNavigationBar">false</item> -->
+        <item name="android:windowLightNavigationBar">false</item> 
     </style>
 </resources>

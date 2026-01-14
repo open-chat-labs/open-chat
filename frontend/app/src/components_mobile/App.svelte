@@ -10,7 +10,7 @@
     import { broadcastLoggedInUser } from "@stores/xframe";
     import "@utils/markdown";
     import {
-        expectNavigationType,
+        expectWindowInsetChange,
         expectNewFcmToken,
         expectNotificationTap,
         expectPushNotifications,
@@ -111,11 +111,26 @@
         });
 
         if (client.isNativeApp()) {
-            expectNavigationType((data) => {
-                const buttonNavClass = "with-button-nav";
+            expectWindowInsetChange((data) => {
+                console.log(data);
+
+                data.isKeyboardOpen
+                    ? document.body.classList.add("keyboard-visible")
+                    : document.body.classList.remove("keyboard-visible");
+
                 data.isGestureNavigation
-                    ? document.body.classList.remove(buttonNavClass)
-                    : document.body.classList.add(buttonNavClass);
+                    ? document.body.classList.add("has-gesture-nav")
+                    : document.body.classList.remove("has-gesture-nav");
+
+                document.documentElement.style.setProperty(
+                    "--device-status-bar-height",
+                    `${data.statusBarHeightDp}px`,
+                );
+
+                document.documentElement.style.setProperty(
+                    "--device-nav-height",
+                    `${data.navHeightDp}px`,
+                );
             }).catch(console.error);
         }
 

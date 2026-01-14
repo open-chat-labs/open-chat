@@ -26,7 +26,7 @@
         <MenuItem onclick={help}>Get help</MenuItem>
     {/snippet}
     <Container
-        padding={["zero", "lg", "lg", "lg"]}
+        padding={["xxl", "lg", "huge"]}
         gap={"lg"}
         height={"fill"}
         crossAxisAlignment={"center"}

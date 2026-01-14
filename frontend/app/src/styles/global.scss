@@ -443,51 +443,48 @@ a {
     }
 }
 
-// TODO get the status bar height programatically from the device
-body.native-android {
-    --status-bar-height: 40px; // This is the height we'll take as relevant!
-
+html,
+body {
     // Prevent pinch-zooming on Android devices
     // Note: tested meta viewport `user-scalable=no`, but seems like Tauri
     // webview does not respect it
-    touch-action: pan-x pan-y;
     height: 100%;
+    touch-action: pan-x pan-y;
     background: var(--background-0);
+}
 
-    // Status bar on Android devices
-    &:not(.onboarding):before {
-        content: "";
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: var(--status-bar-height);
-        background-color: var(--background-0);
-        z-index: 1;
+body.native-android {
+
+    // Set the status bar height via CSS to avoid issues with bg colour not
+    // matching the headers bg.
+    > main,
+    .sliding_page {
+        padding-top: var(--device-status-bar-height) !important;
     }
 
-    // We need to adjust the main content to account for the status bar height!
-    // This is a workaround for the Android status bar issue
-    // where the content is pushed down by the status bar height.
-    &:not(.landing-page, .onboarding) > main {
-        // height: calc(100vh - var(--status-bar-height));
-        // we also need to account for the safe area at the bottom
-        padding-top: var(--status-bar-height) !important;
+    // Set paddings when device uses gesture navigation
+    &.has-gesture-nav {
+        .bottom_nav_bar {
+            padding-bottom: calc(var(--sp-lg) + var(--device-nav-height)) !important;
+        }
+
+        .footer {
+            padding-bottom: var(--device-nav-height) !important;
+        }
     }
 
-    &.landing-page {
-        &:before {
-            background-color: #1b1c20;
+    // Set paddings when device uses 2 or 3 button navigation
+    &:not(.has-gesture-nav) {
+        .footer {
+            padding-bottom: var(--sp-md) !important;
         }
+    }
 
-        > .wrapper {
-            top: var(--status-bar-height);
-        }
-
-        > .main {
-            margin-top: var(--status-bar-height);
-            padding-top: var(--status-bar-height);
-            height: calc(100vh - var(--status-bar-height));
+    // Case when keyboard is visible, we want to have a bit of padding between
+    // the top of the keyboard and any UI elements.
+    &.keyboard-visible {
+        .footer {
+            padding-bottom: var(--sp-sm) !important;
         }
     }
 }

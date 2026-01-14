@@ -298,7 +298,9 @@
     height={"fill"}
     parentDirection={"vertical"}
     gap={"xl"}
-    direction={"vertical"}>
+    direction={"vertical"}
+    padding={["zero", "zero", "huge"]}>
+    <!-- TODO Explore does not have a hedear -->
     <SectionHeader onAction={createCommunity} onBack={() => history.back()}>
         {#snippet title()}
             <Translatable resourceKey={i18nKey("communities.exploreMobile")} />

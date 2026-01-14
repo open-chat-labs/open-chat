@@ -133,7 +133,7 @@
 <SlidingPageContent
     title={i18nKey("Streak insurance")}
     subtitle={i18nKey("Make sure your streak stays intact")}>
-    <Container padding={"xl"} gap={"xl"} direction={"vertical"}>
+    <Container height={"fill"} padding={["xl", "xl", "huge"]} gap={"xl"} direction={"vertical"}>
         <StreakHeadline />
 
         <Body>

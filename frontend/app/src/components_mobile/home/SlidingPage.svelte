@@ -38,7 +38,6 @@
         bottom: 0;
         @include z-index("sliding-page");
         display: flex;
-        padding-top: var(--status-bar-height);
         transition:
             transform ease-in-out var(--speed),
             opacity ease-in-out var(--speed);
@@ -64,8 +63,6 @@
         bottom: 0;
         @include z-index("sliding-page");
         display: flex;
-        padding-top: var(--status-bar-height);
-        margin-top: var(--status-bar-height);
         background-color: var(--background-0);
         opacity: 0.5;
     }

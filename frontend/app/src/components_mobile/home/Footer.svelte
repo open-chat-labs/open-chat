@@ -199,9 +199,9 @@
     }
 
     .footer {
-        position: relative;
-        flex: 0 0 toRem(80);
         width: 100%;
+        position: relative;
+        padding: var(--sp-xs) var(--sp-md) var(--sp-zero);
     }
 
     .footer-overlay {
