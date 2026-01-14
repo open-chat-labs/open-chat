@@ -19,11 +19,12 @@ import {
 import {
     type Database,
     getCachedEvents,
-    getCachedEventsByIndex, getCachedEventsWindowByMessageIndex, loadMessagesByMessageIndex,
+    getCachedEventsByIndex,
+    getCachedEventsWindowByMessageIndex,
+    loadMessagesByMessageIndex,
     mergeSuccessResponses,
     setCachedEvents
 } from "../../utils/caching";
-import {chunkedChatEventsFromBackend, chunkedChatEventsWindowFromBackend} from "./chunked";
 
 export interface IChatEventsReader<C extends ChatIdentifier = ChatIdentifier> {
     chatEvents(
@@ -145,7 +146,7 @@ export class CachedChatEventsReader {
         // we may or may not have all the requested events
         if (missing.size >= MAX_MISSING) {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
-            console.log("We didn't get enough back from the cache, going to the api");
+            console.debug("We didn't get enough back from the cache, going to the api");
             return reader.chatEvents(
                 chatId,
                 startIndex,
@@ -160,7 +161,7 @@ export class CachedChatEventsReader {
                 })
                 .catch((err) => {
                     if (err instanceof ResponseTooLargeError) {
-                        console.log(
+                        console.debug(
                             "Response size too large, we will try to split the payload into a a few chunks",
                         );
                         return chunkedChatEventsFromBackend(
@@ -227,7 +228,7 @@ export class CachedChatEventsReader {
         );
         if (totalMiss || missing.size >= MAX_MISSING) {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
-            console.log(
+            console.debug(
                 "We didn't get enough back from the cache, going to the api",
                 missing.size,
                 totalMiss,
@@ -245,7 +246,7 @@ export class CachedChatEventsReader {
                 })
                 .catch((err) => {
                     if (err instanceof ResponseTooLargeError) {
-                        console.log(
+                        console.debug(
                             "Response size too large, we will try to split the window request into a a few chunks",
                         );
                         return chunkedChatEventsWindowFromBackend(
@@ -302,7 +303,7 @@ export class CachedChatEventsReader {
             messageIndexes,
         );
         if (fromCache.missing.size > 0) {
-            console.log("Missing idxs from the cached: ", fromCache.missing);
+            console.debug("Missing idxs from the cached: ", fromCache.missing);
 
             const resp = await reader.messagesByMessageIndex(
                 chatId,
@@ -365,4 +366,144 @@ export class CachedChatEventsReader {
             case "channel": return this.communityClient;
         }
     }
+}
+
+function mergeEventsResponse<T extends ChatEvent>(
+    a: EventsSuccessResult<T>,
+    b: EventsSuccessResult<T>,
+): EventsSuccessResult<T> {
+    return {
+        events: [...a.events, ...b.events],
+        expiredEventRanges: [...a.expiredEventRanges, ...b.expiredEventRanges],
+        expiredMessageRanges: [...a.expiredMessageRanges, ...b.expiredMessageRanges],
+        latestEventIndex: Math.max(a.latestEventIndex ?? 0, b.latestEventIndex ?? 0),
+    };
+}
+
+async function chunkedChatEventsFromBackend(
+    eventsFn: (index: number, chunkSize: number) => Promise<EventsResponse<ChatEvent>>,
+    [minIndex, maxIndex]: IndexRange,
+    startIndex: number,
+    ascending: boolean,
+): Promise<EventsResponse<ChatEvent>> {
+    const chunkSize = MAX_EVENTS / 5;
+    let index = startIndex;
+
+    let aggregatedResponse: EventsSuccessResult<ChatEvent> = {
+        events: [],
+        expiredEventRanges: [],
+        expiredMessageRanges: [],
+        latestEventIndex: undefined,
+    };
+
+    while (
+        aggregatedResponse.events.length < MAX_EVENTS &&
+        index >= minIndex &&
+        index <= maxIndex
+        ) {
+        try {
+            const resp = await eventsFn(index, chunkSize);
+
+            // if we get any failures we will need to bail otherwise things are going to get very messed up
+            if (!isSuccessfulEventsResponse(resp)) return resp;
+
+            aggregatedResponse = ascending
+                ? mergeEventsResponse(aggregatedResponse, resp)
+                : mergeEventsResponse(resp, aggregatedResponse);
+            if (resp.events.length > 0) {
+                index = ascending
+                    ? resp.events[resp.events.length - 1].index + 1
+                    : resp.events[0].index - 1;
+            }
+        } catch (err) {
+            if (err instanceof ResponseTooLargeError) {
+                // Possible that we still have a size problem. If so, just log the error and bail out
+                // if we see this condition we will have to think again but I'd rather avoid the complexity if we don't need it
+                console.error("Response size still too large with chunk size: ", chunkSize);
+            }
+            throw err;
+        }
+    }
+
+    return aggregatedResponse;
+}
+
+async function chunkedChatEventsWindowFromBackend(
+    eventsFn: (
+        index: number,
+        ascending: boolean,
+        chunkSize: number,
+    ) => Promise<EventsResponse<ChatEvent>>,
+    eventsWindowFn: (index: number, chunkSize: number) => Promise<EventsResponse<ChatEvent>>,
+    [minIndex, maxIndex]: IndexRange,
+    messageIndex: number,
+    chunkSize = MAX_EVENTS / 5,
+): Promise<EventsResponse<ChatEvent>> {
+    let highIndex = messageIndex;
+    let lowIndex = messageIndex;
+
+    let aggregatedResponse: EventsSuccessResult<ChatEvent> = {
+        events: [],
+        expiredEventRanges: [],
+        expiredMessageRanges: [],
+        latestEventIndex: undefined,
+    };
+
+    while (
+        aggregatedResponse.events.length < MAX_EVENTS &&
+        (lowIndex >= minIndex || highIndex <= maxIndex)
+        ) {
+        try {
+            if (lowIndex === highIndex) {
+                // these will be equal on the first iteration
+                const resp = await eventsWindowFn(lowIndex, chunkSize);
+
+                // if we get any failures we will need to bail otherwise things are going to get very messed up
+                if (!isSuccessfulEventsResponse(resp)) return resp;
+
+                aggregatedResponse = mergeEventsResponse(aggregatedResponse, resp);
+            } else {
+                // in this branch we want to concurrently expand the window in both directions and then merge in the results
+                if (lowIndex >= minIndex) {
+                    const above = await eventsFn(lowIndex, false, chunkSize);
+
+                    if (!isSuccessfulEventsResponse(above)) return above;
+
+                    aggregatedResponse = mergeEventsResponse(above, aggregatedResponse);
+                }
+
+                if (highIndex <= maxIndex) {
+                    const below = await eventsFn(highIndex, true, chunkSize);
+
+                    if (!isSuccessfulEventsResponse(below)) return below;
+
+                    aggregatedResponse = mergeEventsResponse(aggregatedResponse, below);
+                }
+            }
+
+            if (aggregatedResponse.events.length > 0) {
+                lowIndex = aggregatedResponse.events[0].index - 1;
+                highIndex =
+                    aggregatedResponse.events[aggregatedResponse.events.length - 1].index + 1;
+            }
+        } catch (err) {
+            if (err instanceof ResponseTooLargeError) {
+                // Possible that we still have a size problem. If so, just log the error and bail out
+                // if we see this condition we will have to think again but I'd rather avoid the complexity if we don't need it
+                console.error("Response size still too large with chunk size: ", chunkSize);
+                if (chunkSize >= 50) {
+                    return chunkedChatEventsWindowFromBackend(
+                        eventsFn,
+                        eventsWindowFn,
+                        [minIndex, maxIndex],
+                        messageIndex,
+                        chunkSize / 10
+                    );
+                }
+            }
+            throw err;
+        }
+    }
+
+    return aggregatedResponse;
 }
