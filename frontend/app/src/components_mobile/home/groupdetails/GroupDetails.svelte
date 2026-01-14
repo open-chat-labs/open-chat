@@ -14,6 +14,7 @@
         H2,
         IconButton,
         ReadMore,
+        Row,
     } from "component-lib";
     import type { CommunityMap, CommunitySummary, MultiUserChat, OpenChat } from "openchat-client";
     import {
@@ -35,6 +36,7 @@
     import { getContext } from "svelte";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
+    import At from "svelte-material-icons/At.svelte";
     import BellOff from "svelte-material-icons/BellOffOutline.svelte";
     import Bell from "svelte-material-icons/BellOutline.svelte";
     import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
@@ -66,6 +68,7 @@
     let { chat }: Props = $props();
 
     let muted = $derived($selectedChatSummaryStore?.membership.notificationsMuted);
+    let atEveryoneMuted = $derived($selectedChatSummaryStore?.membership.atEveryoneMuted);
     let importToCommunities: CommunityMap<CommunitySummary> | undefined = $state();
     let canImportToCommunity = $derived(!$anonUserStore && client.canImportToCommunity(chat.id));
     let canConvert = $derived(
@@ -121,11 +124,16 @@
         }
     }
 
-    function toggleMuteNotifications() {
+    function toggleMuteNotifications(
+        mute: boolean | undefined,
+        muteAtEveryone: boolean | undefined,
+    ) {
         publish("toggleMuteNotifications", {
             chatId: chat.id,
-            mute: !$selectedChatSummaryStore?.membership.notificationsMuted,
-            muteAtEveryone: undefined,
+            mute,
+            muteAtEveryone,
+            // mute: !$selectedChatSummaryStore?.membership.notificationsMuted,
+            // muteAtEveryone: undefined,
         });
     }
 
@@ -252,8 +260,9 @@
                 </Container>
 
                 {#if !$anonUserStore}
-                    <Container gap={"sm"}>
-                        <BigButton onClick={toggleFavourites}>
+                    <Row gap={"sm"}>
+                        {@const width = { size: "6rem" }}
+                        <BigButton {width} onClick={toggleFavourites}>
                             {#snippet icon(color, size)}
                                 {#if !$favouritesStore.has(chat.id)}
                                     <HeartPlus {color} {size} />
@@ -267,7 +276,13 @@
                                 <Translatable resourceKey={i18nKey("Add favourite")} />
                             {/if}
                         </BigButton>
-                        <BigButton onClick={toggleMuteNotifications}>
+                        <BigButton
+                            {width}
+                            onClick={() =>
+                                toggleMuteNotifications(
+                                    !$selectedChatSummaryStore?.membership.notificationsMuted,
+                                    undefined,
+                                )}>
                             {#snippet icon(color, size)}
                                 {#if muted}
                                     <Bell {color} {size} />
@@ -278,13 +293,28 @@
                             <Translatable
                                 resourceKey={i18nKey(muted ? "Unmute chat" : "Mute chat")} />
                         </BigButton>
-                        <BigButton onClick={shareGroup}>
+                        <BigButton
+                            {width}
+                            onClick={() =>
+                                toggleMuteNotifications(
+                                    undefined,
+                                    !$selectedChatSummaryStore?.membership.atEveryoneMuted,
+                                )}>
+                            {#snippet icon(color, size)}
+                                <At {color} {size} />
+                            {/snippet}
+                            <Translatable
+                                resourceKey={i18nKey(
+                                    atEveryoneMuted ? "Unmute @everyone" : "Mute @everyone",
+                                )} />
+                        </BigButton>
+                        <BigButton {width} onClick={shareGroup}>
                             {#snippet icon(color, size)}
                                 <Share {color} {size} />
                             {/snippet}
                             <Translatable resourceKey={i18nKey("Share chat")} />
                         </BigButton>
-                    </Container>
+                    </Row>
                 {/if}
 
                 <ReadMore>

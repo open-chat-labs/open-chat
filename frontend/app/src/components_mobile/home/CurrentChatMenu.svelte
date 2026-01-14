@@ -210,27 +210,6 @@
         <Translatable resourceKey={i18nKey("groupDetails", undefined, selectedChatSummary.level)} />
     </MenuItem>
 
-    {#if notificationsSupported}
-        {#if selectedChatSummary.membership.notificationsMuted === true}
-            <MenuItem onclick={() => toggleMuteNotifications(false, undefined)}>
-                <Translatable resourceKey={i18nKey("unmuteNotifications")} />
-            </MenuItem>
-        {:else}
-            <MenuItem onclick={() => toggleMuteNotifications(true, undefined)}>
-                <Translatable resourceKey={i18nKey("muteNotifications")} />
-            </MenuItem>
-        {/if}
-        {#if selectedChatSummary.membership.atEveryoneMuted === true}
-            <MenuItem onclick={() => toggleMuteNotifications(undefined, false)}>
-                <Translatable resourceKey={i18nKey("unmuteAtEveryone")} />
-            </MenuItem>
-        {:else}
-            <MenuItem onclick={() => toggleMuteNotifications(undefined, true)}>
-                <Translatable resourceKey={i18nKey("muteAtEveryone")} />
-            </MenuItem>
-        {/if}
-    {/if}
-
     {#if canMakeProposals}
         <MenuItem onclick={makeProposal}>
             <Translatable resourceKey={i18nKey("proposal.makeProposal")} />
