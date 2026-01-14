@@ -116,7 +116,7 @@
                 <BodySmall colour={"textSecondary"}>
                     <Translatable
                         resourceKey={i18nKey(
-                            "Choose which rington you would like to hear when receiving an incoming video call.",
+                            "Choose which ringtone you would like to hear when receiving an incoming video call.",
                         )}></Translatable>
                 </BodySmall>
             </Column>
