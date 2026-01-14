@@ -8,7 +8,8 @@
             "namespace": "android_app",
             "package_name": "com.oc.app",
             "sha256_cert_fingerprints": [
-                "C5:F5:1D:E2:56:14:54:74:01:9E:5B:5E:11:CF:85:A6:A9:EC:B5:B3:F4:E3:7A:A3:FC:E0:04:05:99:7B:CB:90"
+                "C5:F5:1D:E2:56:14:54:74:01:9E:5B:5E:11:CF:85:A6:A9:EC:B5:B3:F4:E3:7A:A3:FC:E0:04:05:99:7B:CB:90",
+                "3A:9D:2C:F2:DA:05:6A:24:8F:31:13:6E:DB:94:79:B1:46:40:B5:85:B5:FC:BD:50:B1:C9:E2:19:1F:9E:E5:AD"
             ]
         }
     },
