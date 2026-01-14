@@ -13,8 +13,8 @@ async fn withdraw_crypto_v2(args: Args) -> Response {
     execute_update_async(|| withdraw_crypto_impl(args)).await
 }
 
-async fn withdraw_crypto_impl(args: Args) -> Response {
-    if let Err(error) = mutate_state(|state| state.data.pin_number.verify(args.pin.as_deref(), state.env.now())) {
+async fn withdraw_crypto_impl(mut args: Args) -> Response {
+    if let Err(error) = mutate_state(|state| state.data.pin_number.verify(args.pin.as_mut(), state.env.now())) {
         return Error(error.into());
     }
 

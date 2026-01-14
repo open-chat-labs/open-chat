@@ -19,8 +19,8 @@ async fn set_pin_number_impl(args: Args) -> Response {
     if read_state(|state| state.data.pin_number.enabled()) {
         match args.verification {
             PinNumberVerification::None => return Response::Error(OCErrorCode::PinRequired.into()),
-            PinNumberVerification::PIN(attempt) => {
-                if let Err(error) = mutate_state(|state| state.data.pin_number.verify(Some(&attempt), state.env.now())) {
+            PinNumberVerification::PIN(mut attempt) => {
+                if let Err(error) = mutate_state(|state| state.data.pin_number.verify(Some(&mut attempt), state.env.now())) {
                     return Response::Error(error.into());
                 }
             }
@@ -59,7 +59,7 @@ async fn set_pin_number_impl(args: Args) -> Response {
 
     mutate_state(|state| {
         let now = state.env.now();
-        state.data.pin_number.set(args.new.map(|p| p.into()), now);
+        state.data.pin_number.set(args.new.map(|mut p| p.consume()), now);
         state.award_achievement_and_notify(Achievement::SetPin, now);
     });
     Response::Success

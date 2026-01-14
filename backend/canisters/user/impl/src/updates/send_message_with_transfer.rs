@@ -13,7 +13,7 @@ use types::icrc1::Account;
 use types::{
     Achievement, C2CError, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, MAX_TEXT_LENGTH,
     MAX_TEXT_LENGTH_USIZE, MessageContentInitial, MessageId, MessageIndex, OCResult, P2PSwapLocation, PendingCryptoTransaction,
-    TimestampMillis, UserId, icrc1,
+    PinNumberWrapper, TimestampMillis, UserId, icrc1,
 };
 use user_canister::send_message_with_transfer_to_channel;
 use user_canister::send_message_with_transfer_to_group;
@@ -45,7 +45,7 @@ async fn send_message_with_transfer_to_channel_impl(
             args.thread_root_message_index,
             args.message_id,
             &args.content,
-            args.pin.map(|p| p.into()),
+            args.pin,
             now,
             state,
         )
@@ -153,7 +153,7 @@ async fn send_message_with_transfer_to_group_impl(
             args.thread_root_message_index,
             args.message_id,
             &args.content,
-            args.pin.map(|p| p.into()),
+            args.pin,
             now,
             state,
         )
@@ -241,7 +241,7 @@ fn prepare(
     thread_root_message_index: Option<MessageIndex>,
     message_id: MessageId,
     content: &MessageContentInitial,
-    pin: Option<String>,
+    mut pin: Option<PinNumberWrapper>,
     now: TimestampMillis,
     state: &mut RuntimeState,
 ) -> OCResult<PrepareResult> {
@@ -253,7 +253,7 @@ fn prepare(
         return Err(OCErrorCode::TextTooLong.with_message(MAX_TEXT_LENGTH));
     }
 
-    if let Err(error) = state.data.pin_number.verify(pin.as_deref(), now) {
+    if let Err(error) = state.data.pin_number.verify(pin.as_mut(), now) {
         return Err(error.into());
     }
 
