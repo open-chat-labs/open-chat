@@ -204,8 +204,6 @@ import {
     DestinationInvalidError,
     Lazy,
     MAX_ACTIVITY_EVENTS,
-    MessageContextMap,
-    MessageMap,
     ONE_MINUTE_MILLIS,
     Stream,
     UnsupportedValueError,
@@ -277,6 +275,7 @@ import {
 } from "../utils/userCache";
 import { BitcoinClient } from "./bitcoin/bitcoin.client";
 import { CkbtcMinterClient } from "./ckbtcMinter/ckbtcMinter.client";
+import { CachedChatEventsReader } from "./common/chatEvents";
 import { measure } from "./common/profiling";
 import { CommunityClient } from "./community/community.client";
 import { DataClient } from "./data/data.client";
@@ -312,7 +311,7 @@ export class OpenChatAgent extends EventTarget {
     private _userIndexClient: UserIndexClient;
     private _onlineClient: OnlineClient;
     private _groupIndexClient: GroupIndexClient;
-    private _userClient?: UserClient | AnonUserClient;
+    private _userClient: UserClient | AnonUserClient;
     private _notificationClient: NotificationsClient;
     private _registryClient: RegistryClient;
     private _dataClient: DataClient;
@@ -327,6 +326,7 @@ export class OpenChatAgent extends EventTarget {
     private db: Database;
     private _logger: Logger;
     private _cachePrimer: CachePrimer | undefined = undefined;
+    private _chatEventsReader: CachedChatEventsReader;
 
     // Lazy loaded clients which may never end up being used
     private _bitcoinClient: Lazy<BitcoinClient>;
@@ -347,6 +347,7 @@ export class OpenChatAgent extends EventTarget {
         this._agent = createHttpAgentSync(identity, config.icUrl);
         this.db = initDb(this.principal);
         this._onlineClient = new OnlineClient(identity, this._agent, config.onlineCanister);
+        this._userClient = AnonUserClient.create();
         this._userIndexClient = new UserIndexClient(
             identity,
             this._agent,
@@ -383,6 +384,13 @@ export class OpenChatAgent extends EventTarget {
         if (config.groupInvite !== undefined) {
             this.groupInvite = config.groupInvite;
         }
+
+        this._chatEventsReader = new CachedChatEventsReader(
+            this._userClient,
+            this._groupClient,
+            this._communityClient,
+            this.db
+        );
 
         this._bitcoinClient = new Lazy(
             () => new BitcoinClient(this.identity, this._agent, this.config.bitcoinMainnetEnabled),
@@ -451,17 +459,18 @@ export class OpenChatAgent extends EventTarget {
     }
 
     createUserClient(userId: string): OpenChatAgent {
-        if (userId === ANON_USER_ID) {
-            this._userClient = AnonUserClient.create();
-        } else {
-            this._userClient = new UserClient(
+        const userClient = userId === ANON_USER_ID
+            ? AnonUserClient.create()
+            : new UserClient(
                 userId,
                 this.identity,
                 this._agent,
                 this.config,
                 this.db,
             );
-        }
+
+        this._userClient = userClient;
+        this._chatEventsReader.setUserClient(userClient);
         return this;
     }
 
@@ -843,61 +852,23 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    chatEventsWindow(
+    async chatEventsWindow(
         eventIndexRange: IndexRange,
         chatId: ChatIdentifier,
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
-        console.debug("CHAT EVENTS: Getting events window", {
-            chatId,
-            threadRootMessageIndex,
-            messageIndex,
-        });
-
-        switch (chatId.kind) {
-            case "direct_chat":
-                return this.directChatEventsWindow(
-                    eventIndexRange,
-                    chatId,
-                    messageIndex,
-                    latestKnownUpdate,
-                );
-            case "group_chat":
-                return this.groupChatEventsWindow(
-                    eventIndexRange,
-                    chatId,
-                    messageIndex,
-                    threadRootMessageIndex,
-                    latestKnownUpdate,
-                );
-            case "channel":
-                return this.channelEventsWindow(
-                    eventIndexRange,
-                    chatId,
-                    messageIndex,
-                    threadRootMessageIndex,
-                    latestKnownUpdate,
-                );
-        }
-    }
-
-    private directChatEventsWindow(
-        eventIndexRange: IndexRange,
-        chatId: DirectChatIdentifier,
-        messageIndex: number,
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
-            this.userClient.chatEventsWindow(
-                eventIndexRange,
+            this._chatEventsReader.chatEventsWindow(
                 chatId,
+                eventIndexRange,
                 messageIndex,
+                threadRootMessageIndex,
                 latestKnownUpdate,
             ),
-            undefined,
+            threadRootMessageIndex,
             latestKnownUpdate,
         );
     }
@@ -910,165 +881,10 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
-        console.debug("CHAT EVENTS: Getting chat events", {
-            chatId,
-            threadRootMessageIndex,
-            startIndex,
-            ascending,
-        });
-
-        if (chatId.kind === "group_chat") {
-            return this.groupChatEvents(
-                eventIndexRange,
-                chatId,
-                startIndex,
-                ascending,
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            );
-        } else if (chatId.kind === "direct_chat") {
-            return this.directChatEvents(
-                eventIndexRange,
-                chatId,
-                startIndex,
-                ascending,
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            );
-        } else if (chatId.kind === "channel") {
-            return this.channelEvents(
-                eventIndexRange,
-                chatId,
-                startIndex,
-                ascending,
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            );
-        }
-        throw new UnsupportedValueError("Unexpect chat type", chatId);
-    }
-
-    private directChatEvents(
-        eventIndexRange: IndexRange,
-        chatId: DirectChatIdentifier,
-        startIndex: number,
-        ascending: boolean,
-        threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
-            this.userClient.chatEvents(
-                eventIndexRange,
+            this._chatEventsReader.chatEvents(
                 chatId,
-                startIndex,
-                ascending,
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            ),
-            threadRootMessageIndex,
-            latestKnownUpdate,
-        );
-    }
-
-    private directChatEventsByEventIndex(
-        chatId: DirectChatIdentifier,
-        eventIndexes: number[],
-        threadRootMessageIndex: number | undefined,
-        // If threadRootMessageIndex is defined, then this should be the latest event index for that thread
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
-        return this.rehydrateEventResponse(
-            chatId,
-            this.userClient.chatEventsByIndex(
-                eventIndexes,
-                chatId,
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            ),
-            threadRootMessageIndex,
-            latestKnownUpdate,
-        );
-    }
-
-    private channelEventsWindow(
-        eventIndexRange: IndexRange,
-        chatId: ChannelIdentifier,
-        messageIndex: number,
-        threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
-        return this.rehydrateEventResponse(
-            chatId,
-            this._communityClient.eventsWindow(
-                chatId,
-                eventIndexRange,
-                messageIndex,
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            ),
-            threadRootMessageIndex,
-            latestKnownUpdate,
-        );
-    }
-
-    private groupChatEventsWindow(
-        eventIndexRange: IndexRange,
-        chatId: GroupChatIdentifier,
-        messageIndex: number,
-        threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
-        const rawEvents = this._groupClient.chatEventsWindow(
-            chatId.groupId,
-            eventIndexRange,
-            messageIndex,
-            threadRootMessageIndex,
-            latestKnownUpdate,
-        );
-        return this.rehydrateEventResponse(
-            chatId,
-            rawEvents,
-            threadRootMessageIndex,
-            latestKnownUpdate,
-        );
-    }
-
-    private channelEvents(
-        eventIndexRange: IndexRange,
-        chatId: ChannelIdentifier,
-        startIndex: number,
-        ascending: boolean,
-        threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
-        return this.rehydrateEventResponse(
-            chatId,
-            this._communityClient.events(
-                chatId,
-                eventIndexRange,
-                startIndex,
-                ascending,
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            ),
-            threadRootMessageIndex,
-            latestKnownUpdate,
-        );
-    }
-
-    private groupChatEvents(
-        eventIndexRange: IndexRange,
-        chatId: GroupChatIdentifier,
-        startIndex: number,
-        ascending: boolean,
-        threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
-        return this.rehydrateEventResponse(
-            chatId,
-            this._groupClient.chatEvents(
-                chatId.groupId,
                 eventIndexRange,
                 startIndex,
                 ascending,
@@ -1086,67 +902,10 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
-        console.debug("CHAT EVENTS: Getting chat events by index", {
-            chatId,
-            threadRootMessageIndex,
-            eventIndexes,
-        });
-
-        switch (chatId.kind) {
-            case "group_chat":
-                return this.groupChatEventsByEventIndex(
-                    chatId,
-                    eventIndexes,
-                    threadRootMessageIndex,
-                    latestKnownUpdate,
-                );
-            case "direct_chat":
-                return this.directChatEventsByEventIndex(
-                    chatId,
-                    eventIndexes,
-                    threadRootMessageIndex,
-                    latestKnownUpdate,
-                );
-            case "channel":
-                return this.channelEventsByEventIndex(
-                    chatId,
-                    eventIndexes,
-                    threadRootMessageIndex,
-                    latestKnownUpdate,
-                );
-        }
-    }
-
-    private channelEventsByEventIndex(
-        chatId: ChannelIdentifier,
-        eventIndexes: number[],
-        threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
-            this._communityClient.eventsByIndex(
+            this._chatEventsReader.chatEventsByIndex(
                 chatId,
-                eventIndexes,
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            ),
-            threadRootMessageIndex,
-            latestKnownUpdate,
-        );
-    }
-
-    private groupChatEventsByEventIndex(
-        chatId: GroupChatIdentifier,
-        eventIndexes: number[],
-        threadRootMessageIndex: number | undefined,
-        // If threadRootMessageIndex is defined, then this should be the latest event index for that thread
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
-        return this.rehydrateEventResponse(
-            chatId,
-            this._groupClient.chatEventsByIndex(
-                chatId.groupId,
                 eventIndexes,
                 threadRootMessageIndex,
                 latestKnownUpdate,
@@ -1273,7 +1032,6 @@ export class OpenChatAgent extends EventTarget {
 
         const mapped = await contextMap.asyncMap((ctx, idxs) => {
             const chatId = ctx.chatId;
-            const chatKind = chatId.kind;
 
             // Note that the latestKnownUpdate relates to the *currentChat*, not necessarily the chat for this messageContext
             // So only include it if the context matches the current chat
@@ -1282,21 +1040,9 @@ export class OpenChatAgent extends EventTarget {
                 ? latestKnownUpdate
                 : undefined;
 
-            if (chatKind === "direct_chat") {
-                return this.userClient
-                    .chatEventsByIndex(idxs, chatId, ctx.threadRootMessageIndex, latestUpdate)
-                    .then((resp) => this.messagesFromEventsResponse(ctx, resp));
-            } else if (chatKind === "group_chat") {
-                return this._groupClient
-                    .chatEventsByIndex(chatId.groupId, idxs, ctx.threadRootMessageIndex, latestUpdate)
-                    .then((resp) => this.messagesFromEventsResponse(ctx, resp));
-            } else if (chatKind === "channel") {
-                return this._communityClient
-                    .eventsByIndex(chatId, idxs, ctx.threadRootMessageIndex, latestUpdate)
-                    .then((resp) => this.messagesFromEventsResponse(ctx, resp));
-            } else {
-                throw new UnsupportedValueError("unknown chatid kind supplied", chatId);
-            }
+            return this._chatEventsReader
+                .chatEventsByIndex(chatId, idxs, ctx.threadRootMessageIndex, latestUpdate)
+                .then((resp) => this.messagesFromEventsResponse(ctx, resp));
         });
 
         return mapped;
@@ -2868,46 +2614,20 @@ export class OpenChatAgent extends EventTarget {
     getMessagesByMessageIndex(
         chatId: ChatIdentifier,
         threadRootMessageIndex: number | undefined,
-        messageIndexes: Set<number>,
+        messageIndexes: number[],
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<Message>> {
-        switch (chatId.kind) {
-            case "group_chat":
-                return this.rehydrateEventResponse(
-                    chatId,
-                    this._groupClient.getMessagesByMessageIndex(
-                        chatId.groupId,
-                        threadRootMessageIndex,
-                        messageIndexes,
-                        latestKnownUpdate,
-                    ),
-                    undefined,
-                    latestKnownUpdate,
-                );
-            case "channel":
-                return this.rehydrateEventResponse(
-                    chatId,
-                    this._communityClient.getMessagesByMessageIndex(
-                        chatId,
-                        threadRootMessageIndex,
-                        messageIndexes,
-                        latestKnownUpdate,
-                    ),
-                    undefined,
-                    latestKnownUpdate,
-                );
-            case "direct_chat":
-                return this.rehydrateEventResponse(
-                    chatId,
-                    this.userClient.getMessagesByMessageIndex(
-                        threadRootMessageIndex,
-                        messageIndexes,
-                        latestKnownUpdate,
-                    ),
-                    undefined,
-                    latestKnownUpdate,
-                );
-        }
+        return this.rehydrateEventResponse(
+            chatId,
+            this._chatEventsReader.messagesByMessageIndex(
+                chatId,
+                threadRootMessageIndex,
+                messageIndexes,
+                latestKnownUpdate,
+            ),
+            threadRootMessageIndex,
+            latestKnownUpdate,
+        );
     }
 
     pinMessage(chatId: MultiUserChatIdentifier, messageIndex: number): Promise<PinMessageResponse> {
@@ -4263,136 +3983,30 @@ export class OpenChatAgent extends EventTarget {
         });
     }
 
-    /**
-     * Hydration is a two phase process. First we load all the messages that we have in the cache
-     * and resolve. Secondly we then optionally load any missing messages from the backend and
-     * resolve again.
-     */
     async hydrateActivityFeedEvents(
         activityEvents: MessageActivityEvent[],
         callback: (events: MessageActivityEvent[], final: boolean) => void,
     ) {
-        const eventIndexesByMessageContext = activityEvents.reduce((map, event) => {
-            const eventIndexes = map.get(event.messageContext) ?? [];
-            eventIndexes.push(event.eventIndex);
-            map.set(event.messageContext, eventIndexes);
+        const messageIndexesByMessageContext = activityEvents.reduce((map, event) => {
+            const messageIndexes = map.get(event.messageContext) ?? [];
+            messageIndexes.push(event.messageIndex);
+            map.set(event.messageContext, messageIndexes);
             return map;
         }, new AsyncMessageContextMap<number>());
 
-        const [withCachedMessages, missing] = await this.getMessagesByMessageContext(
-            eventIndexesByMessageContext,
-            activityEvents,
-            "cached",
-        );
+        await messageIndexesByMessageContext.asyncMap((async (cxt, indexes) => {
+            const response = await this.getMessagesByMessageIndex(cxt.chatId, cxt.threadRootMessageIndex, indexes, undefined);
 
-        const anyMissing = [...missing.values()].some((s) => s.size > 0);
-        callback(withCachedMessages, !anyMissing);
-
-        if (anyMissing) {
-            this.getMessagesByMessageContext(
-                new AsyncMessageContextMap(
-                    missing.map((_, v) => [...v]).toMap() as Map<string, number[]>,
-                ),
-                withCachedMessages,
-                "missing",
-            ).then(([withServerMessages]) => callback(withServerMessages, true));
-        }
-    }
-
-    async getMessagesByMessageContext(
-        eventIndexesByMessageContext: AsyncMessageContextMap<number>,
-        activityEvents: MessageActivityEvent[],
-        mode: "cached" | "missing",
-    ): Promise<[MessageActivityEvent[], MessageContextMap<Set<number>>]> {
-        const allMissing = new MessageContextMap<Set<number>>();
-
-        const messagesByMessageContext = await eventIndexesByMessageContext.asyncMap(
-            (ctx, idxs) => {
-                const chatId = ctx.chatId;
-                const chatKind = chatId.kind;
-
-                function addMissing(context: MessageContext, missing: Set<number>) {
-                    if (missing.size > 0) {
-                        const current = allMissing.get(context) ?? new Set<number>();
-                        missing.forEach((n) => current.add(n));
-                        allMissing.set(context, current);
-                    }
-                }
-
-                if (chatKind === "direct_chat") {
-                    switch (mode) {
-                        case "cached":
-                            return this.userClient
-                                .getCachedEventsByIndex(idxs, chatId, ctx.threadRootMessageIndex)
-                                .then(([resp, missing]) => {
-                                    addMissing(ctx, missing);
-                                    return this.messagesFromEventsResponse(ctx, resp);
-                                });
-                        case "missing":
-                            return this.userClient
-                                .chatEventsByIndex(
-                                    // getMissing(ctx),
-                                    idxs,
-                                    chatId,
-                                    ctx.threadRootMessageIndex,
-                                    undefined,
-                                )
-                                .then((resp) => this.messagesFromEventsResponse(ctx, resp));
-                    }
-                } else if (chatKind === "group_chat") {
-                    const client = this._groupClient;
-                    switch (mode) {
-                        case "cached":
-                            return client
-                                .getCachedEventsByIndex(chatId.groupId, idxs, ctx.threadRootMessageIndex)
-                                .then(([resp, missing]) => {
-                                    addMissing(ctx, missing);
-                                    return this.messagesFromEventsResponse(ctx, resp);
-                                });
-                        case "missing":
-                            return client
-                                .chatEventsByIndex(
-                                    chatId.groupId,
-                                    // getMissing(ctx),
-                                    idxs,
-                                    ctx.threadRootMessageIndex,
-                                    undefined,
-                                )
-                                .then((resp) => this.messagesFromEventsResponse(ctx, resp));
-                    }
-                } else if (chatKind === "channel") {
-                    const client = this._communityClient;
-                    switch (mode) {
-                        case "cached":
-                            return client
-                                .getCachedEventsByIndex(chatId, idxs, ctx.threadRootMessageIndex)
-                                .then(([resp, missing]) => {
-                                    addMissing(ctx, missing);
-                                    return this.messagesFromEventsResponse(ctx, resp);
-                                });
-                        case "missing":
-                            return client
-                                .eventsByIndex(chatId, idxs, ctx.threadRootMessageIndex, undefined)
-                                .then((resp) => this.messagesFromEventsResponse(ctx, resp));
-                    }
-                } else {
-                    throw new UnsupportedValueError("unknown chatid kind supplied", chatId);
-                }
-            },
-        );
-
-        const lookup = [...messagesByMessageContext.values()].reduce((lookup, events) => {
-            events.forEach((ev) => lookup.set(ev.event.messageId, ev.event));
-            return lookup;
-        }, new MessageMap<Message>());
-
-        return [
-            activityEvents.map((ev) => ({
-                ...ev,
-                message: ev.message ?? lookup.get(ev.messageId),
-            })),
-            allMissing,
-        ];
+            if (isSuccessfulEventsResponse(response)) {
+                const lookup = toRecord2(response.events, (m) => m.event.messageIndex, (m) => m.event);
+                callback(activityEvents.map((ev) => ({
+                    ...ev,
+                    message: lookup[ev.messageIndex] ?? ev.message,
+                })), false);
+            }
+            return [cxt, []];
+        }));
+        callback([], true);
     }
 
     getChannelSummary(channelId: ChannelIdentifier): Promise<ChannelSummaryResponse> {

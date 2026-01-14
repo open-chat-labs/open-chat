@@ -886,7 +886,7 @@ type GetInviteCode = {
 type MessagesByMessageIndex = {
     chatId: ChatIdentifier;
     threadRootMessageIndex: number | undefined;
-    messageIndexes: Set<number>;
+    messageIndexes: number[];
     latestKnownUpdate: bigint | undefined;
     kind: "getMessagesByMessageIndex";
 };
