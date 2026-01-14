@@ -68,6 +68,17 @@
         action={(yes) => ugs.saveGroup(client, yes)} />
 {/if}
 
+{#if ugs.confirming}
+    <AreYouSure
+        message={i18nKey(
+            `confirmMakeGroup${ugs.candidateGroup.public ? "Public" : "Private"}`,
+            undefined,
+            ugs.candidateGroup.level,
+            true,
+        )}
+        action={(yes) => ugs.saveGroup(client, yes)} />
+{/if}
+
 {#if confirmExit}
     <AreYouSure
         title={i18nKey("Unsaved changes")}
@@ -311,7 +322,7 @@
     </Container>
     {#if ugs.editMode}
         <FloatingButton
-            disabled={!ugs.valid}
+            disabled={!ugs.valid || !ugs.hasChanges(client)}
             loading={ugs.busy}
             pos={{ bottom: "lg", right: "lg" }}
             onClick={() => ugs.saveGroup(client)}>

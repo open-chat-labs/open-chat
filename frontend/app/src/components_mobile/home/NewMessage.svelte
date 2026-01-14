@@ -1,19 +1,24 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { Body, Container, ListAction } from "component-lib";
+    import { Avatar, Body, BodySmall, Container, ListAction, Row } from "component-lib";
     import {
         allUsersStore,
         anonUserStore,
+        chatListScopeStore,
         compareChats,
         OpenChat,
         publish,
+        routeForChatIdentifier,
         serverDirectChatsStore,
         type BotMatch,
+        type GroupMatch,
         type GroupSearchResponse,
         type UserSummary,
     } from "openchat-client";
+    import page from "page";
     import { getContext } from "svelte";
     import AccountMultiplePlusOutline from "svelte-material-icons/AccountMultiplePlusOutline.svelte";
+    import FilteredUsername from "../FilteredUsername.svelte";
     import MatchingUser from "../MatchingUser.svelte";
     import Translatable from "../Translatable.svelte";
     import ChatListSearch from "./ChatListSearch.svelte";
@@ -64,10 +69,42 @@
         });
         publish("closeModalStack");
     }
+
+    function selectGroup(match: GroupMatch) {
+        page(routeForChatIdentifier($chatListScopeStore.kind, match.chatId));
+        publish("closeModalStack");
+    }
 </script>
 
 {#snippet matched_user(user: UserSummary | BotMatch)}
     <MatchingUser {searchTerm} {user} onSelect={directChatWith} />
+{/snippet}
+
+{#snippet matched_group(match: GroupMatch)}
+    <Container
+        padding={["sm", "zero"]}
+        crossAxisAlignment={"center"}
+        gap={"lg"}
+        onClick={() => selectGroup(match)}>
+        <Avatar
+            size={"md"}
+            url={client.groupAvatarUrl({
+                ...match,
+                id: match.chatId,
+            })} />
+        <Container direction={"vertical"}>
+            <Row gap={"xs"} crossAxisAlignment={"center"}>
+                <FilteredUsername {searchTerm} username={match.name} />
+            </Row>
+            <BodySmall colour={"textSecondary"}>
+                {#if match.description !== ""}
+                    {match.description}
+                {:else}
+                    <Translatable resourceKey={i18nKey("Public group")} />
+                {/if}
+            </BodySmall>
+        </Container>
+    </Container>
 {/snippet}
 
 <SlidingPageContent title={i18nKey("New message")}>
@@ -91,6 +128,20 @@
                             {@render matched_user(match)}
                         {/each}
                     </Container>
+                {/if}
+            {/await}
+        {/if}
+
+        {#if groupSearchResults !== undefined}
+            {#await groupSearchResults then resp}
+                {#if resp.kind === "success"}
+                    {#if resp.matches.length > 0}
+                        <Container direction={"vertical"} padding={["zero", "md"]}>
+                            {#each resp.matches as match (match.chatId.groupId)}
+                                {@render matched_group(match)}
+                            {/each}
+                        </Container>
+                    {/if}
                 {/if}
             {/await}
         {/if}

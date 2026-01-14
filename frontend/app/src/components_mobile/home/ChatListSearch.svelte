@@ -68,13 +68,7 @@
             try {
                 searching = true;
                 const term = searchTerm.toLowerCase();
-                switch ($chatListScopeStore.kind) {
-                    case "none":
-                        legacySearch(term);
-                        break;
-                    case "chats":
-                        userAndBotSearch(term);
-                }
+                searchQuery(term);
             } catch (err) {
                 console.warn("search failed with: ", err);
                 searching = false;
@@ -98,13 +92,6 @@
         return 0;
     }
 
-    async function userAndBotSearch(term: string) {
-        userAndBotsSearchResults = Promise.all([searchUsers(term), searchBots(term)]).then(
-            ([users, bots]) => [...users, ...bots].sort(sortUsersOrBots),
-        );
-        await userAndBotsSearchResults.then(postSearch);
-    }
-
     function searchBots(term: string): Promise<BotMatch[]> {
         // This location is rather hacky because we can't have a direct chat with ourselves
         // but it signals to the explore_bots endpoint that we want to see bots that are
@@ -123,12 +110,18 @@
         return client.searchUsers(term, 10);
     }
 
-    async function legacySearch(term: string) {
-        groupSearchResults = client.searchGroups(term, 10);
-        userAndBotsSearchResults = client.searchUsers(term, 10);
+    async function searchQuery(term: string) {
+        groupSearchResults = client.searchGroups(term, 10).then((res) => {
+            console.log(res);
+            return res;
+        });
+        userAndBotsSearchResults = Promise.all([searchUsers(term), searchBots(term)]).then(
+            ([users, bots]) => [...users, ...bots].sort(sortUsersOrBots),
+        );
         Promise.all([groupSearchResults, userAndBotsSearchResults]).then(postSearch);
     }
     let placeholder = $derived(getPlaceholder($chatListScopeStore.kind));
+
     $effect(() => {
         if (searchTerm === "") {
             searching = false;
@@ -139,4 +132,9 @@
     });
 </script>
 
-<Search {placeholder} {searching} value={searchTerm} onSearch={performSearch} />
+<Search
+    onClear={() => (searchTerm = "")}
+    {placeholder}
+    {searching}
+    value={searchTerm}
+    onSearch={performSearch} />

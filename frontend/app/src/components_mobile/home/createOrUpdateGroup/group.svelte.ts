@@ -145,6 +145,22 @@ export class UpdateGroupState extends UpdateGroupOrCommunityState {
         }
     }
 
+    hasChanges(client: OpenChat) {
+        return (
+            this.#visibilityChanged ||
+            this.#nameChanged ||
+            this.#descriptionChanged ||
+            this.#visibleToNonMembersChanged ||
+            this.#ttlChanged ||
+            this.rulesChanged ||
+            this.accessGatesChanged(client) ||
+            client.haveGroupPermissionsChanged(
+                this.original.permissions,
+                this.candidate.permissions,
+            )
+        );
+    }
+
     get #visibilityChanged() {
         return this.original.public !== this.candidate.public;
     }
