@@ -7953,7 +7953,7 @@ export class OpenChat {
         };
         if (assumeIdentity) {
             this.#webAuthnKey = webAuthnKey;
-            this.#authIdentityStorage.set(sessionKey, delegationChain);
+            await this.#authIdentityStorage.set(sessionKey, delegationChain);
             await this.#loadedAuthenticationIdentity(identity, AuthProvider.PASSKEY, registering);
         }
         return [sessionKey, delegationChain, webAuthnKey];
@@ -8091,8 +8091,8 @@ export class OpenChat {
             );
             const delegation = identity.getDelegation();
             if (assumeIdentity) {
-                this.#authIdentityStorage.set(sessionKey, delegation);
-                this.#loadedAuthenticationIdentity(identity, AuthProvider.EMAIL);
+                await this.#authIdentityStorage.set(sessionKey, delegation)
+                await this.#loadedAuthenticationIdentity(identity, AuthProvider.EMAIL);
             }
             return {
                 kind: "success",
@@ -8154,7 +8154,7 @@ export class OpenChat {
                 const delegation = identity.getDelegation();
                 if (assumeIdentity) {
                     await this.#authIdentityStorage.set(sessionKey, delegation);
-                    this.#loadedAuthenticationIdentity(
+                    await this.#loadedAuthenticationIdentity(
                         identity,
                         token === "eth" ? AuthProvider.ETH : AuthProvider.SOL,
                     );
@@ -9421,17 +9421,20 @@ export class OpenChat {
     isEventKindHidden = isEventKindHidden;
     mergeCombinedUnreadCounts = mergeCombinedUnreadCounts;
 
-    // This is stuff that used to be in agentWorker
-
     #connectToWorker(
         authPrincipal: string,
         authProvider: AuthProvider | undefined,
     ): Promise<ConnectToWorkerResponse> {
         console.debug("WORKER_CLIENT: loading worker with version: ", this.config.websiteVersion);
-        const workerUrl = `/worker.js?v=${this.config.websiteVersion}`;
-        this.#worker = new Worker(new URL(workerUrl, import.meta.url), {
-            type: "module",
-        });
+        if (this.#worker === undefined) {
+            const workerUrl = `/worker.js?v=${this.config.websiteVersion}`;
+            this.#worker = new Worker(new URL(workerUrl, import.meta.url), {
+                type: "module",
+            });
+        } else {
+            // Clear any outstanding pending requests
+            this.#pending.clear();
+        }
         const initResponse = new Promise<ConnectToWorkerResponse>((resolve) => {
             this.#sendRequest(
                 {
