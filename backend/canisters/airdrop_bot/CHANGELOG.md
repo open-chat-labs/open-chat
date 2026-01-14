@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1953](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1953-airdrop_bot)] - 2026-01-14
+
+### Changed
+
+- Skip serializing chat summary fields which are their default values ([#8769](https://github.com/open-chat-labs/open-chat/pull/8769))
+
 ## [[2.0.1866](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1866-airdrop_bot)] - 2025-08-12
 
 ### Changed

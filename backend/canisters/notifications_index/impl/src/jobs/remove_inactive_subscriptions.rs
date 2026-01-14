@@ -14,13 +14,6 @@ pub fn start_job() {
 fn run() {
     mutate_state(|state| {
         let now = state.env.now();
-
-        // Allow 90 days since we started tracking active subscriptions
-        // Timestamp is 1st April 2026
-        if now < 1767484800000 {
-            return;
-        }
-
         let cutoff = now.saturating_sub(90 * DAY_IN_MS);
         let removed = state.data.subscriptions.remove_inactive(cutoff);
 
