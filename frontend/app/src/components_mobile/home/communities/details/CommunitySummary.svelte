@@ -16,6 +16,7 @@
     import type { CommunitySummary, OpenChat } from "openchat-client";
     import {
         allUsersStore,
+        anonUserStore,
         defaultChatRules,
         publish,
         ROLE_NONE,
@@ -155,20 +156,22 @@
                     </Container>
                 </Container>
 
-                <Container gap={"sm"}>
-                    <BigButton onClick={() => communityState.muteAllChannels()}>
-                        {#snippet icon(color, size)}
-                            <BellOff {color} {size} />
-                        {/snippet}
-                        <Translatable resourceKey={i18nKey("Mute all channels")} />
-                    </BigButton>
-                    <BigButton onClick={() => communityState.share()}>
-                        {#snippet icon(color, size)}
-                            <Share {color} {size} />
-                        {/snippet}
-                        <Translatable resourceKey={i18nKey("Share")} />
-                    </BigButton>
-                </Container>
+                {#if !$anonUserStore}
+                    <Container gap={"sm"}>
+                        <BigButton onClick={() => communityState.muteAllChannels()}>
+                            {#snippet icon(color, size)}
+                                <BellOff {color} {size} />
+                            {/snippet}
+                            <Translatable resourceKey={i18nKey("Mute all channels")} />
+                        </BigButton>
+                        <BigButton onClick={() => communityState.share()}>
+                            {#snippet icon(color, size)}
+                                <Share {color} {size} />
+                            {/snippet}
+                            <Translatable resourceKey={i18nKey("Share")} />
+                        </BigButton>
+                    </Container>
+                {/if}
             </Container>
 
             <StatusCard mode="information" title={accessibilityTitle} body={accessibilityInfo}>

@@ -18,6 +18,7 @@
     import type { CommunityMap, CommunitySummary, MultiUserChat, OpenChat } from "openchat-client";
     import {
         allUsersStore,
+        anonUserStore,
         chatIdentifiersEqual,
         communitiesStore,
         defaultChatRules,
@@ -66,9 +67,9 @@
 
     let muted = $derived($selectedChatSummaryStore?.membership.notificationsMuted);
     let importToCommunities: CommunityMap<CommunitySummary> | undefined = $state();
-    let canImportToCommunity = $derived(client.canImportToCommunity(chat.id));
+    let canImportToCommunity = $derived(!$anonUserStore && client.canImportToCommunity(chat.id));
     let canConvert = $derived(
-        chat.kind === "group_chat" && client.canConvertGroupToCommunity(chat.id),
+        !$anonUserStore && chat.kind === "group_chat" && client.canConvertGroupToCommunity(chat.id),
     );
     let ownerMember = $derived(
         [...$selectedChatMembersStore.values()].find((m) => m.role === ROLE_OWNER),
@@ -80,7 +81,8 @@
             $activeVideoCall !== undefined &&
             chatIdentifiersEqual($activeVideoCall.chatId, chat.id),
     );
-    let canEdit = $derived(client.canEditGroupDetails(chat.id));
+    let canEdit = $derived(!$anonUserStore && client.canEditGroupDetails(chat.id));
+    let canStartVideoCalls = $derived(!$anonUserStore && client.canStartVideoCalls(chat.id));
     let rules = $derived($selectedChatRulesStore ?? defaultChatRules(chat.level));
     let avatarUrl = $derived(client.groupAvatarUrl(chat, $selectedCommunitySummaryStore));
     let busy = $state(false);
@@ -90,6 +92,7 @@
             ? client.combineRulesText($selectedChatRulesStore, $selectedCommunityRulesStore)
             : "",
     );
+
     function toggleFavourites() {
         if ($favouritesStore.has(chat.id)) {
             client.removeFromFavourites(chat.id);
@@ -210,11 +213,13 @@
                         <ArrowLeft {color} />
                     {/snippet}
                 </IconButton>
-                <IconButton onclick={startVideoCall} size={"md"} mode={"dark"}>
-                    {#snippet icon(color)}
-                        <Video {color} />
-                    {/snippet}
-                </IconButton>
+                {#if canStartVideoCalls}
+                    <IconButton onclick={startVideoCall} size={"md"} mode={"dark"}>
+                        {#snippet icon(color)}
+                            <Video {color} />
+                        {/snippet}
+                    </IconButton>
+                {/if}
                 {#if canEdit}
                     <IconButton onclick={editGroup} size={"md"} mode={"dark"}>
                         {#snippet icon(color)}
@@ -246,38 +251,41 @@
                     </Container>
                 </Container>
 
-                <Container gap={"sm"}>
-                    <BigButton onClick={toggleFavourites}>
-                        {#snippet icon(color, size)}
-                            {#if !$favouritesStore.has(chat.id)}
-                                <HeartPlus {color} {size} />
+                {#if !$anonUserStore}
+                    <Container gap={"sm"}>
+                        <BigButton onClick={toggleFavourites}>
+                            {#snippet icon(color, size)}
+                                {#if !$favouritesStore.has(chat.id)}
+                                    <HeartPlus {color} {size} />
+                                {:else}
+                                    <HeartMinus {color} {size} />
+                                {/if}
+                            {/snippet}
+                            {#if $favouritesStore.has(chat.id)}
+                                <Translatable resourceKey={i18nKey("Remove favourite")} />
                             {:else}
-                                <HeartMinus {color} {size} />
+                                <Translatable resourceKey={i18nKey("Add favourite")} />
                             {/if}
-                        {/snippet}
-                        {#if $favouritesStore.has(chat.id)}
-                            <Translatable resourceKey={i18nKey("Remove favourite")} />
-                        {:else}
-                            <Translatable resourceKey={i18nKey("Add favourite")} />
-                        {/if}
-                    </BigButton>
-                    <BigButton onClick={toggleMuteNotifications}>
-                        {#snippet icon(color, size)}
-                            {#if muted}
-                                <Bell {color} {size} />
-                            {:else}
-                                <BellOff {color} {size} />
-                            {/if}
-                        {/snippet}
-                        <Translatable resourceKey={i18nKey(muted ? "Unmute chat" : "Mute chat")} />
-                    </BigButton>
-                    <BigButton onClick={shareGroup}>
-                        {#snippet icon(color, size)}
-                            <Share {color} {size} />
-                        {/snippet}
-                        <Translatable resourceKey={i18nKey("Share chat")} />
-                    </BigButton>
-                </Container>
+                        </BigButton>
+                        <BigButton onClick={toggleMuteNotifications}>
+                            {#snippet icon(color, size)}
+                                {#if muted}
+                                    <Bell {color} {size} />
+                                {:else}
+                                    <BellOff {color} {size} />
+                                {/if}
+                            {/snippet}
+                            <Translatable
+                                resourceKey={i18nKey(muted ? "Unmute chat" : "Mute chat")} />
+                        </BigButton>
+                        <BigButton onClick={shareGroup}>
+                            {#snippet icon(color, size)}
+                                <Share {color} {size} />
+                            {/snippet}
+                            <Translatable resourceKey={i18nKey("Share chat")} />
+                        </BigButton>
+                    </Container>
+                {/if}
 
                 <ReadMore>
                     <Body fontWeight={"light"}>
@@ -373,7 +381,7 @@
             </Container>
         {/if}
 
-        {#if client.canDeleteGroup(chat.id)}
+        {#if !$anonUserStore && client.canDeleteGroup(chat.id)}
             <Separator />
 
             <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
@@ -396,7 +404,7 @@
                     <Translatable resourceKey={i18nKey("Delete group")}></Translatable>
                 </Button>
             </Container>
-        {:else if client.canLeaveGroup(chat.id)}
+        {:else if !$anonUserStore && client.canLeaveGroup(chat.id)}
             <Separator />
 
             <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>

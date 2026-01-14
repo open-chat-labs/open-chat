@@ -19,6 +19,7 @@
     } from "component-lib";
     import {
         allUsersStore,
+        anonUserStore,
         botIsInstallable,
         definitionToPermissions,
         installationLocationFrom,
@@ -62,7 +63,7 @@
     let { bot, collection = $bindable(), grantedPermissions }: Props = $props();
 
     let canManageBots = $derived(
-        collection !== undefined ? client.canManageBots(collection.id) : true,
+        !$anonUserStore && (collection !== undefined ? client.canManageBots(collection.id) : true),
     );
     let busy = $state(false);
     let isPublic = $derived(bot.registrationStatus.kind === "public");
@@ -171,16 +172,19 @@
                 <ArrowLeft {color} />
             {/snippet}
         </IconButton>
-        <IconButton onclick={likeBot} size={"md"} mode={"dark"}>
-            {#snippet icon(color)}
-                <ThumbUp {color} />
-            {/snippet}
-        </IconButton>
-        <IconButton onclick={tipBot} size={"md"} mode={"dark"}>
-            {#snippet icon(color)}
-                <Bitcoin {color} />
-            {/snippet}
-        </IconButton>
+
+        {#if !$anonUserStore}
+            <IconButton onclick={likeBot} size={"md"} mode={"dark"}>
+                {#snippet icon(color)}
+                    <ThumbUp {color} />
+                {/snippet}
+            </IconButton>
+            <IconButton onclick={tipBot} size={"md"} mode={"dark"}>
+                {#snippet icon(color)}
+                    <Bitcoin {color} />
+                {/snippet}
+            </IconButton>
+        {/if}
     </Container>
     <Container
         supplementalClass={"bot_avatar_and_name"}
@@ -312,23 +316,25 @@
         </Container>
     {/if}
 
-    <Container
-        padding={["zero", "md"]}
-        mainAxisAlignment={"spaceBetween"}
-        crossAxisAlignment={"center"}>
-        <CommonButton onClick={likeBot} mode={"active"} size={"small_text"}>
-            {#snippet icon(color, size)}
-                <ThumbUp {color} {size} />
-            {/snippet}
-            <Translatable resourceKey={i18nKey("I like this")} />
-        </CommonButton>
-        <CommonButton onClick={tipBot} mode={"active"} size={"medium"}>
-            {#snippet icon(color, size)}
-                <Bitcoin {color} {size} />
-            {/snippet}
-            <Translatable resourceKey={i18nKey("Tip the creator")} />
-        </CommonButton>
-    </Container>
+    {#if !$anonUserStore}
+        <Container
+            padding={["zero", "md"]}
+            mainAxisAlignment={"spaceBetween"}
+            crossAxisAlignment={"center"}>
+            <CommonButton onClick={likeBot} mode={"active"} size={"small_text"}>
+                {#snippet icon(color, size)}
+                    <ThumbUp {color} {size} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("I like this")} />
+            </CommonButton>
+            <CommonButton onClick={tipBot} mode={"active"} size={"medium"}>
+                {#snippet icon(color, size)}
+                    <Bitcoin {color} {size} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("Tip the creator")} />
+            </CommonButton>
+        </Container>
+    {/if}
 </Container>
 
 {#snippet permList(

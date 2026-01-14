@@ -584,6 +584,7 @@
                     <MenuTrigger
                         constrainMask={scrollingId}
                         maskUI
+                        disabled={!showChatMenu || !intersecting}
                         centered
                         mobileMode={"longpress"}>
                         {#snippet menuItems()}
