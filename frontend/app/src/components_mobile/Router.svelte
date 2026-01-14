@@ -106,12 +106,25 @@
 
     let route: Component | undefined = $state(undefined);
 
+    const svt = (document as any).startViewTransition;
+    const supportsObjectForm = (() => {
+        if (!svt) return false;
+
+        try {
+            // Attempt a no-op object form call
+            svt({ update: () => {} });
+            return true;
+        } catch {
+            return false;
+        }
+    })();
+
     function parsePathParams(fn: (ctx: PageJS.Context) => RouteParams) {
         return (ctx: PageJS.Context, next: () => any) => {
             const params = fn(ctx);
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            if (ctx.init || !(document as any).startViewTransition) {
+            if (ctx.init || !svt || !supportsObjectForm) {
                 client.setRouteParams(ctx, params);
                 scrollToTop();
                 next();
