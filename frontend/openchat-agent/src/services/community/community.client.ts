@@ -357,7 +357,11 @@ export class CommunityClient extends MultiCanisterMsgpackAgent {
         );
     }
 
-    changeRole(communityId: string, userId: string, newRole: MemberRole): Promise<ChangeCommunityRoleResponse> {
+    changeRole(
+        communityId: string,
+        userId: string,
+        newRole: MemberRole,
+    ): Promise<ChangeCommunityRoleResponse> {
         const user_id = principalStringToBytes(userId);
         return this.update(
             communityId,
@@ -1233,8 +1237,8 @@ export class CommunityClient extends MultiCanisterMsgpackAgent {
         newAchievement: boolean,
     ): Promise<RegisterPollVoteResponse> {
         return this.update(
-            "register_poll_vote",
             chatId.communityId,
+            "register_poll_vote",
             {
                 channel_id: toBigInt32(chatId.channelId),
                 thread_root_message_index: threadRootMessageIndex,
@@ -1316,7 +1320,10 @@ export class CommunityClient extends MultiCanisterMsgpackAgent {
         );
     }
 
-    summaryUpdates(communityId: string, updatesSince: bigint): Promise<CommunitySummaryUpdatesResponse> {
+    summaryUpdates(
+        communityId: string,
+        updatesSince: bigint,
+    ): Promise<CommunitySummaryUpdatesResponse> {
         return this.query(
             communityId,
             "summary_updates",
@@ -1527,7 +1534,11 @@ export class CommunityClient extends MultiCanisterMsgpackAgent {
         );
     }
 
-    createUserGroup(communityId: string, name: string, users: string[]): Promise<CreateUserGroupResponse> {
+    createUserGroup(
+        communityId: string,
+        name: string,
+        users: string[],
+    ): Promise<CreateUserGroupResponse> {
         return this.update(
             communityId,
             "create_user_group",
@@ -1581,7 +1592,10 @@ export class CommunityClient extends MultiCanisterMsgpackAgent {
         );
     }
 
-    deleteUserGroups(communityId: string, userGroupIds: number[]): Promise<DeleteUserGroupsResponse> {
+    deleteUserGroups(
+        communityId: string,
+        userGroupIds: number[],
+    ): Promise<DeleteUserGroupsResponse> {
         return this.update(
             communityId,
             "delete_user_groups",
@@ -1737,7 +1751,10 @@ export class CommunityClient extends MultiCanisterMsgpackAgent {
         );
     }
 
-    cancelInvites(chatId: CommunityIdentifier | ChannelIdentifier, userIds: string[]): Promise<boolean> {
+    cancelInvites(
+        chatId: CommunityIdentifier | ChannelIdentifier,
+        userIds: string[],
+    ): Promise<boolean> {
         return this.update(
             chatId.communityId,
             "cancel_invites",
@@ -1751,7 +1768,11 @@ export class CommunityClient extends MultiCanisterMsgpackAgent {
         );
     }
 
-    updateInstalledBot(communityId: string, botId: string, grantedPermissions: GrantedBotPermissions): Promise<boolean> {
+    updateInstalledBot(
+        communityId: string,
+        botId: string,
+        grantedPermissions: GrantedBotPermissions,
+    ): Promise<boolean> {
         return this.update(
             communityId,
             "update_bot",
