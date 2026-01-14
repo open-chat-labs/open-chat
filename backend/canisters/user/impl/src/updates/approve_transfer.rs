@@ -14,8 +14,8 @@ async fn approve_transfer(args: Args) -> Response {
     execute_update_async(|| approve_transfer_impl(args)).await.into()
 }
 
-pub(crate) async fn approve_transfer_impl(args: Args) -> OCResult {
-    let now_nanos = mutate_state(|state| prepare(&args, state))?;
+pub(crate) async fn approve_transfer_impl(mut args: Args) -> OCResult {
+    let now_nanos = mutate_state(|state| prepare(&mut args, state))?;
 
     match icrc_ledger_canister_c2c_client::icrc2_approve(
         args.ledger_canister_id,
@@ -39,10 +39,10 @@ pub(crate) async fn approve_transfer_impl(args: Args) -> OCResult {
     }
 }
 
-fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<TimestampNanos> {
+fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<TimestampNanos> {
     state.data.verify_not_suspended()?;
     let now = state.env.now();
-    state.data.pin_number.verify(args.pin.as_deref(), now)?;
+    state.data.pin_number.verify(args.pin.as_mut(), now)?;
 
     Ok(now * NANOS_PER_MILLISECOND)
 }
