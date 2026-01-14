@@ -1237,8 +1237,8 @@ export class CommunityClient extends MultiCanisterMsgpackAgent {
         newAchievement: boolean,
     ): Promise<RegisterPollVoteResponse> {
         return this.update(
-            "register_poll_vote",
             chatId.communityId,
+            "register_poll_vote",
             {
                 channel_id: toBigInt32(chatId.channelId),
                 thread_root_message_index: threadRootMessageIndex,
