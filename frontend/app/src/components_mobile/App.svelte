@@ -8,6 +8,10 @@
     import { snowing } from "@stores/snow";
     import { incomingVideoCall } from "@stores/video";
     import { broadcastLoggedInUser } from "@stores/xframe";
+    import {
+        androidInterfaceSizes,
+        setStatusAndNavBarSizesForNativeApp,
+    } from "@stores/androidInterfaceSizes";
     import "@utils/markdown";
     import {
         expectNewFcmToken,
@@ -110,32 +114,6 @@
                 import.meta.env.OC_ACCOUNT_LINKING_CODES_ENABLED! === "true",
         });
 
-        if (client.isNativeApp()) {
-            expectWindowInsetChange((data) => {
-                console.log(data);
-
-                data.isKeyboardOpen
-                    ? document.body.classList.add("keyboard-visible")
-                    : document.body.classList.remove("keyboard-visible");
-
-                data.isGestureNavigation
-                    ? document.body.classList.add("has-gesture-nav")
-                    : document.body.classList.remove("has-gesture-nav");
-
-                document.documentElement.style.setProperty(
-                    "--device-status-bar-height",
-                    `${data.statusBarHeightDp}px`,
-                );
-
-                document.documentElement.style.setProperty(
-                    "--device-nav-height",
-                    `${data.navHeightDp}px`,
-                );
-            }).catch(console.error);
-        } else {
-            document.documentElement.style.setProperty("--device-status-bar-height", `${0}px`);
-        }
-
         return client;
     }
 
@@ -189,6 +167,28 @@
             unsubKeyboard();
         };
     });
+
+    if (client.isNativeApp()) {
+        expectWindowInsetChange((data) => {
+            // Setting these values in store should also set the CSS vars!
+            androidInterfaceSizes.set({
+                statusBarHeight: data.statusBarHeightDp,
+                navBarHeight: data.navHeightDp,
+            });
+
+            data.isKeyboardOpen
+                ? document.body.classList.add("keyboard-visible")
+                : document.body.classList.remove("keyboard-visible");
+
+            data.isGestureNavigation
+                ? document.body.classList.add("has-gesture-nav")
+                : document.body.classList.remove("has-gesture-nav");
+        }).catch(console.error);
+
+        // We need to set the status bar height from the store, in case that
+        // the webview was refreshed, but inset change didn't happen.
+        setStatusAndNavBarSizesForNativeApp();
+    }
 
     // Sets up push notifications and FCM token management for native apps
     function setupNativeApp() {

@@ -131,18 +131,17 @@ class MainActivity : TauriActivity() {
                 rootView.updatePadding(bottom = if (isGestureNavigation) 0 else navInsets.bottom)
             }
             
+            val insetData = JSObject()
+                .put("isKeyboardOpen", imeVisible)
+                .put("isGestureNavigation", isGestureNavigation)
+                .put("navHeightDp", navHeightDp)
+                .put("statusBarHeightDp", statusBarInsets.top / density)
+                .put("keyboardHeightDp", imeHeight / density)
+                .put("apiLevel", Build.VERSION.SDK_INT)
+                .put("osVersion", Build.VERSION.RELEASE)
+                
             // Report inset changes to Svelte...
-            OCPluginCompanion.triggerRef(
-                "window-inset-change", 
-                JSObject()
-                    .put("isKeyboardOpen", imeVisible)
-                    .put("isGestureNavigation", isGestureNavigation)
-                    .put("navHeightDp", navHeightDp)
-                    .put("statusBarHeightDp", statusBarInsets.top / density) 
-                    .put("keyboardHeightDp", imeHeight / density)
-                    .put("apiLevel", Build.VERSION.SDK_INT)
-                    .put("osVersion", Build.VERSION.RELEASE)
-            )
+            OCPluginCompanion.triggerRef("window-inset-change", insetData)
 
             // Important: return the insets unchanged
             insets
