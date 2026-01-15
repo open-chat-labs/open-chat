@@ -30,21 +30,58 @@ export function getConvertedTokenValue(
     }
 }
 
+/* Trying to find a formatting algo that seems to make sense for all values
+ *  - values > 1 we fix to 2dp.
+ *  - small values we show the first significant digits up to a max of 8 so it works for very
+ *    low value tokens
+ */
+function formatDecimals(val?: number, max = 8) {
+    if (val === undefined) return undefined;
+
+    if (val === 0) return "0.00";
+
+    const abs = Math.abs(val);
+
+    // Large-ish numbers: fixed 2dp
+    if (abs >= 1) {
+        return val.toFixed(2);
+    }
+
+    // Small numbers: show significance, up to max dp
+    // Find first non-zero decimal digit
+    const order = Math.floor(Math.log10(abs)); // negative
+    const decimals = Math.min(max, Math.max(2, -order + 1));
+
+    return val.toFixed(decimals);
+}
+
 export function formatConvertedValue(c: ConversionToken, val?: number): string {
     switch (c) {
         case "usd":
             if (val !== undefined) {
-                return `$${val.toFixed(2)}`;
+                return `$${formatDecimals(val)}`;
             }
             return "???";
-        case "icp":
-            return val?.toFixed(3) ?? "???";
-        case "btc":
-            return val?.toFixed(6) ?? "???";
-        case "eth":
-            return val?.toFixed(6) ?? "???";
+        default:
+            return formatDecimals(val) ?? "???";
     }
 }
+
+// export function formatConvertedValue(c: ConversionToken, val?: number): string {
+//     switch (c) {
+//         case "usd":
+//             if (val !== undefined) {
+//                 return `$${val.toFixed(2)}`;
+//             }
+//             return "???";
+//         case "icp":
+//             return val?.toFixed(3) ?? "???";
+//         case "btc":
+//             return val?.toFixed(6) ?? "???";
+//         case "eth":
+//             return val?.toFixed(6) ?? "???";
+//     }
+// }
 
 export function convertAndFormat(c: ConversionToken, t: EnhancedTokenDetails): string {
     return formatConvertedValue(c, getConvertedTokenValue(c, t));

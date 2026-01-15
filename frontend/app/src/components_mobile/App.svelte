@@ -10,10 +10,10 @@
     import { broadcastLoggedInUser } from "@stores/xframe";
     import "@utils/markdown";
     import {
-        expectWindowInsetChange,
         expectNewFcmToken,
         expectNotificationTap,
         expectPushNotifications,
+        expectWindowInsetChange,
     } from "@utils/native/notification_channels";
     import "@utils/scream";
     import { synonymousUrlRegex } from "@utils/urls";
@@ -132,6 +132,8 @@
                     `${data.navHeightDp}px`,
                 );
             }).catch(console.error);
+        } else {
+            document.documentElement.style.setProperty("--device-status-bar-height", `${0}px`);
         }
 
         return client;

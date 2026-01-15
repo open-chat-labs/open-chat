@@ -1,11 +1,12 @@
 <script lang="ts">
+    import { Button, ColourVars, Column, IconButton } from "component-lib";
     import type { ImageContent, MemeFighterContent } from "openchat-client";
     import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
     import { lowBandwidth } from "../../stores/settings";
     import { isTouchDevice } from "../../utils/devices";
-    import Button from "../Button.svelte";
     import Translatable from "../Translatable.svelte";
     import ContentCaption from "./ContentCaption.svelte";
     import ZoomedImage from "./ZoomedImage.svelte";
@@ -20,6 +21,7 @@
         intersecting?: boolean;
         edited: boolean;
         blockLevelMarkdown?: boolean;
+        onRemove?: () => void;
     }
 
     let {
@@ -32,6 +34,7 @@
         intersecting = true,
         edited,
         blockLevelMarkdown = false,
+        onRemove,
     }: Props = $props();
 
     let imgElement: HTMLImageElement | undefined = $state();
@@ -89,16 +92,19 @@
 </script>
 
 {#if normalised.url !== undefined}
-    <div class="img-wrapper">
+    <Column>
         {#if hidden}
-            <div class="mask">
+            <Column
+                height={"fill"}
+                padding={"xl"}
+                supplementalClass={"image_content_mask"}
+                mainAxisAlignment={"center"}
+                crossAxisAlignment={"center"}>
                 {#if !reply && !draft}
-                    <div class="reveal">
-                        <Button onClick={() => (hidden = false)}
-                            ><Translatable resourceKey={i18nKey(normalised.loadMsg)} /></Button>
-                    </div>
+                    <Button height={"hug"} width={"fill"} onClick={() => (hidden = false)}
+                        ><Translatable resourceKey={i18nKey(normalised.loadMsg)} /></Button>
                 {/if}
-            </div>
+            </Column>
         {/if}
         <img
             bind:this={imgElement}
@@ -121,7 +127,16 @@
                 <ArrowExpand size={"1em"} color={"#fff"} />
             </div>
         {/if}
-    </div>
+        {#if draft}
+            <div class="close">
+                <IconButton onclick={onRemove}>
+                    {#snippet icon()}
+                        <Close color={ColourVars.textPrimary} />
+                    {/snippet}
+                </IconButton>
+            </div>
+        {/if}
+    </Column>
 {/if}
 
 <ContentCaption caption={normalised.caption} {edited} {blockLevelMarkdown} />
@@ -131,13 +146,7 @@
 {/if}
 
 <style lang="scss">
-    $radius: $sp3;
-
-    .img-wrapper {
-        position: relative;
-    }
-
-    .mask {
+    :global(.container.image_content_mask) {
         position: absolute;
         top: 0;
         left: 0;
@@ -148,16 +157,12 @@
         background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.5));
     }
 
-    .reveal {
-        position: absolute;
-        top: calc(50% - 20px);
-        width: 100%;
-        text-align: center;
-    }
+    $radius: $sp3;
 
-    .body {
-        display: flex;
-        position: relative;
+    .close {
+        position: absolute;
+        top: var(--sp-md);
+        right: var(--sp-md);
     }
 
     .expand {
@@ -188,10 +193,6 @@
 
     img.zoomable.unzoomed {
         cursor: zoom-in;
-    }
-
-    img.zoomed {
-        border-radius: var(--modal-rd);
     }
 
     img.unzoomed {

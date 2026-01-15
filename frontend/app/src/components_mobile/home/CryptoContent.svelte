@@ -10,8 +10,8 @@
         Subtitle,
         type Padding,
     } from "component-lib";
-    import type { CryptocurrencyContent, MessageContext, OpenChat } from "openchat-client";
-    import { currentUserIdStore, enhancedCryptoLookup, localUpdates } from "openchat-client";
+    import type { CryptocurrencyContent, OpenChat } from "openchat-client";
+    import { currentUserIdStore, enhancedCryptoLookup } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Alert from "svelte-material-icons/AlertRhombusOutline.svelte";
@@ -29,11 +29,11 @@
         me?: boolean;
         reply?: boolean;
         senderId: string;
-        ctx: MessageContext;
         draft?: boolean;
+        onRemove?: () => void;
     }
 
-    let { content, me = false, reply = false, senderId, draft = false, ctx }: Props = $props();
+    let { content, me = false, reply = false, senderId, draft = false, onRemove }: Props = $props();
 
     let tokenState = $derived(new TokenState($enhancedCryptoLookup.get(content.transfer.ledger)!));
     let transferText = $derived(
@@ -41,9 +41,6 @@
     );
     let transactionLinkText = $derived(client.buildTransactionLink($_, content.transfer));
 
-    function removeDraft() {
-        localUpdates.draftMessages.delete(ctx);
-    }
     let padding = $derived<Padding>(draft ? ["sm", "lg", "sm", "sm"] : ["sm", "zero"]);
 </script>
 
@@ -73,7 +70,7 @@
             {/if}
         </Column>
         {#if draft}
-            <IconButton onclick={removeDraft}>
+            <IconButton onclick={onRemove}>
                 {#snippet icon()}
                     <Close color={ColourVars.textSecondary} />
                 {/snippet}

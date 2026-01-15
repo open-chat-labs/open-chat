@@ -1,11 +1,6 @@
 <script lang="ts">
     import { BodySmall, ColourVars, Column, IconButton, Row, Subtitle } from "component-lib";
-    import {
-        localUpdates,
-        mobileWidth,
-        type GiphyContent,
-        type MessageContext,
-    } from "openchat-client";
+    import { mobileWidth, type GiphyContent } from "openchat-client";
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
@@ -23,7 +18,7 @@
         intersecting?: boolean;
         edited: boolean;
         blockLevelMarkdown?: boolean;
-        ctx: MessageContext;
+        onRemove?: () => void;
     }
 
     let {
@@ -35,7 +30,7 @@
         intersecting = true,
         edited,
         blockLevelMarkdown = false,
-        ctx,
+        onRemove,
     }: Props = $props();
 
     let withCaption = $derived(content.caption !== undefined && content.caption !== "");
@@ -46,10 +41,6 @@
     );
 
     let hidden = $derived($lowBandwidth);
-
-    function removeDraft() {
-        localUpdates.draftMessages.delete(ctx);
-    }
 </script>
 
 {#if draft}
@@ -68,7 +59,7 @@
                 <Translatable resourceKey={i18nKey("Sharing a GIF")} />
             </BodySmall>
         </Column>
-        <IconButton onclick={removeDraft}>
+        <IconButton onclick={onRemove}>
             {#snippet icon()}
                 <Close color={ColourVars.textSecondary} />
             {/snippet}

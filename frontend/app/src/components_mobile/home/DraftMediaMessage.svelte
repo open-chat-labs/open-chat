@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Row } from "component-lib";
     import type { AttachmentContent, MessageContext } from "openchat-client";
-    import { currentUserIdStore } from "openchat-client";
+    import { currentUserIdStore, localUpdates } from "openchat-client";
     import AudioContent from "./AudioContent.svelte";
     import CryptoContent from "./CryptoContent.svelte";
     import FileContent from "./FileContent.svelte";
@@ -17,6 +17,10 @@
     }
 
     let { content, ctx }: Props = $props();
+
+    function removeDraft() {
+        localUpdates.draftMessages.delete(ctx);
+    }
 </script>
 
 <Row>
@@ -25,15 +29,15 @@
     {:else if content.kind === "audio_content"}
         <AudioContent edited={false} {content} />
     {:else if content.kind === "image_content"}
-        <ImageContent edited={false} fill={false} {content} draft />
+        <ImageContent onRemove={removeDraft} edited={false} fill={false} {content} draft />
     {:else if content.kind === "giphy_content"}
-        <GiphyContent {ctx} edited={false} fill={false} {content} draft />
+        <GiphyContent onRemove={removeDraft} edited={false} fill={false} {content} draft />
     {:else if content.kind === "crypto_content"}
-        <CryptoContent me {ctx} {content} draft senderId={$currentUserIdStore} />
+        <CryptoContent onRemove={removeDraft} me {content} draft senderId={$currentUserIdStore} />
     {:else if content.kind === "p2p_swap_content_initial"}
-        <P2PSwapContentInitial {ctx} {content} />
+        <P2PSwapContentInitial onRemove={removeDraft} {content} />
     {:else if content.kind === "prize_content_initial"}
-        <PrizeContentInitial {ctx} {content} />
+        <PrizeContentInitial onRemove={removeDraft} {content} />
     {:else if content.kind === "file_content"}
         <div class="file-preview">
             <FileContent edited={false} me {content} draft />

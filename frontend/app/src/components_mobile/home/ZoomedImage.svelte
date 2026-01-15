@@ -64,7 +64,7 @@
         .close {
             position: absolute;
             z-index: 2;
-            top: calc(var(--status-bar-height) + var(--sp-md));
+            top: calc(var(--device-status-bar-height) + var(--sp-md));
             right: var(--sp-md);
         }
     }

@@ -17,7 +17,6 @@
     interface Props {
         length?: number;
         code?: string[];
-        type?: PincodeType;
         onClear?: () => void;
         onComplete?: (code: string[], value: string) => void;
         subtext?: ResourceKey;
@@ -26,7 +25,6 @@
     let {
         length = 6,
         code = $bindable([]),
-        type = "numeric",
         onClear,
         onComplete,
         subtext = i18nKey("Only use numbers for your PIN"),
@@ -109,7 +107,7 @@
 <div class="pincode" bind:this={ref} onpaste={handlePaste}>
     <Container crossAxisAlignment={"end"} mainAxisAlignment={"spaceAround"} gap={"sm"}>
         {#each characters as char}
-            <PincodeInput onUpdate={onUpdateCharacter} onClear={onClearCharacter} {type} {char} />
+            <PincodeInput onUpdate={onUpdateCharacter} onClear={onClearCharacter} {char} />
         {/each}
     </Container>
     <BodySmall width={"hug"} colour={"textSecondary"}>

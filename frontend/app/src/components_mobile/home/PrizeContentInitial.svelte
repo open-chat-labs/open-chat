@@ -8,8 +8,8 @@
         Row,
         Subtitle,
     } from "component-lib";
-    import type { MessageContext, PrizeContentInitial } from "openchat-client";
-    import { enhancedCryptoLookup, localUpdates } from "openchat-client";
+    import type { PrizeContentInitial } from "openchat-client";
+    import { enhancedCryptoLookup } from "openchat-client";
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import MulticolourText from "../MulticolourText.svelte";
@@ -19,16 +19,12 @@
 
     interface Props {
         content: PrizeContentInitial;
-        ctx: MessageContext;
+        onRemove?: () => void;
     }
 
-    let { content, ctx }: Props = $props();
+    let { content, onRemove }: Props = $props();
 
     let tokenState = $derived(new TokenState($enhancedCryptoLookup.get(content.transfer.ledger)!));
-
-    function removeDraft() {
-        localUpdates.draftMessages.delete(ctx);
-    }
 </script>
 
 <Column gap={"xs"}>
@@ -60,7 +56,7 @@
                 <Translatable resourceKey={i18nKey("You are sending a prize draw message")} />
             </BodySmall>
         </Column>
-        <IconButton onclick={removeDraft}>
+        <IconButton onclick={onRemove}>
             {#snippet icon()}
                 <Close color={ColourVars.textSecondary} />
             {/snippet}

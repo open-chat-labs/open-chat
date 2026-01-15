@@ -450,11 +450,9 @@ body {
     // webview does not respect it
     height: 100%;
     touch-action: pan-x pan-y;
-    background: var(--background-0);
 }
 
 body.native-android {
-
     // Set the status bar height via CSS to avoid issues with bg colour not
     // matching the headers bg.
     > main,
@@ -469,6 +467,10 @@ body.native-android {
         }
 
         .footer {
+            padding-bottom: var(--device-nav-height) !important;
+        }
+
+        .sheet_content {
             padding-bottom: var(--device-nav-height) !important;
         }
     }

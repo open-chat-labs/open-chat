@@ -8,8 +8,8 @@
         Row,
         Subtitle,
     } from "component-lib";
-    import type { MessageContext, P2PSwapContentInitial } from "openchat-client";
-    import { enhancedCryptoLookup, localUpdates } from "openchat-client";
+    import type { P2PSwapContentInitial } from "openchat-client";
+    import { enhancedCryptoLookup } from "openchat-client";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -18,17 +18,13 @@
 
     interface Props {
         content: P2PSwapContentInitial;
-        ctx: MessageContext;
+        onRemove?: () => void;
     }
 
-    let { content, ctx }: Props = $props();
+    let { content, onRemove }: Props = $props();
 
     let fromState = $derived(new TokenState($enhancedCryptoLookup.get(content.token0.ledger)!));
     let toState = $derived(new TokenState($enhancedCryptoLookup.get(content.token1.ledger)!));
-
-    function removeDraft() {
-        localUpdates.draftMessages.delete(ctx);
-    }
 </script>
 
 {#snippet token(label: string, state: TokenState, amount: bigint, showClose: boolean = false)}
@@ -58,7 +54,7 @@
             </BodySmall>
         </Column>
         {#if showClose}
-            <IconButton onclick={removeDraft}>
+            <IconButton onclick={onRemove}>
                 {#snippet icon()}
                     <Close color={ColourVars.textSecondary} />
                 {/snippet}

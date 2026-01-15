@@ -24,7 +24,7 @@
             <Translatable resourceKey={i18nKey("pinNumber.enterPin")} />
         </Subtitle>
         <Column gap={"lg"}>
-            <Pincode type="numeric" length={6} onComplete={onPinComplete} />
+            <Pincode length={6} onComplete={onPinComplete} />
             <ForgotPinLabel {onForgot} />
         </Column>
     </Column>

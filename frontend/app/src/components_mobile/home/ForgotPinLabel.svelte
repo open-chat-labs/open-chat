@@ -1,6 +1,6 @@
 <script lang="ts">
-    import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     interface Props {
         onForgot: () => void;
@@ -18,6 +18,7 @@
 
 <style lang="scss">
     .forgot {
+        width: 100%;
         text-align: center;
         @include font(light, normal, fs-80);
         margin: $sp3 0;
