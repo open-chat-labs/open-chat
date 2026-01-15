@@ -108,11 +108,8 @@
 
     const svt = (document as any).startViewTransition;
     const supportsObjectForm = (() => {
-        if (!svt) return false;
-
         try {
-            // Attempt a no-op object form call
-            svt({ update: () => {} });
+            (document as any).startViewTransition({ update: () => {} });
             return true;
         } catch {
             return false;
@@ -123,7 +120,6 @@
         return (ctx: PageJS.Context, next: () => any) => {
             const params = fn(ctx);
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             if (ctx.init || !svt || !supportsObjectForm) {
                 client.setRouteParams(ctx, params);
                 scrollToTop();

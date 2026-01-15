@@ -8,8 +8,8 @@
         OpenChat,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
-        type MultiUserChatIdentifier,
         type MessageContent,
+        type MultiUserChatIdentifier,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -43,11 +43,9 @@
     let rendered = $state(false);
 
     async function loadPreview(): Promise<Preview | undefined> {
-        let result = await client.getMessagesByMessageIndex(
-            chatId,
-            threadRootMessageIndex,
-            new Set([messageIndex]),
-        );
+        let result = await client.getMessagesByMessageIndex(chatId, threadRootMessageIndex, [
+            messageIndex,
+        ]);
 
         if (!isSuccessfulEventsResponse(result)) {
             return;
