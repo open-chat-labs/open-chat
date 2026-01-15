@@ -51,20 +51,15 @@ const ocIdentityStorage = IdentityStorage.createForOcIdentity();
 let initPayload: Init | undefined = undefined;
 let identityAgent: IdentityAgent | undefined = undefined;
 let authPrincipalString: string | undefined = undefined;
-let logger: Logger | undefined = undefined;
+let logger: Logger = console;
 let agent: OpenChatAgent | undefined = undefined;
-let identityCanister: string = "";
-let icUrl: string = "";
 
-async function initialize(
+async function initializeAuthIdentity(
     expectedAuthPrincipal: string,
     authProvider: AuthProvider | undefined,
-    _identityCanister: string,
-    _icUrl: string,
+    identityCanister: string,
+    icUrl: string,
 ): Promise<GetOpenChatIdentityResponse> {
-    identityCanister = _identityCanister;
-    icUrl = _icUrl;
-
     const authProviderIdentity = (await authIdentityStorage.get()) ?? new AnonymousIdentity();
     const authPrincipal = authProviderIdentity.getPrincipal();
     authPrincipalString = authPrincipal.toString();
@@ -154,7 +149,7 @@ function handleAgentEvent(ev: Event): void {
 
 const sendError = (correlationId: string, payload?: unknown) => {
     return (error: unknown) => {
-        logger?.error("WORKER: error caused by payload: ", error, payload);
+        logger.error("WORKER: error caused by payload: ", error, payload);
         postMessage({
             kind: "worker_error",
             correlationId,
@@ -195,7 +190,7 @@ function executeThenReply(
 }
 
 function sendResponse(correlationId: string, response: WorkerResponseInner, final = true): void {
-    logger?.debug("WORKER: sending response: ", correlationId);
+    logger.debug("WORKER: sending response: ", correlationId);
     postMessage({
         kind: "worker_response",
         correlationId,
@@ -212,15 +207,15 @@ function sendEvent(msg: Omit<WorkerEvent, "kind">): void {
 }
 
 self.addEventListener("error", (err: ErrorEvent) => {
-    logger?.error("WORKER: unhandled error: ", err);
+    logger.error("WORKER: unhandled error: ", err);
 });
 
 self.addEventListener("unhandledrejection", (err: PromiseRejectionEvent) => {
-    logger?.error("WORKER: unhandled promise rejection: ", err);
+    logger.error("WORKER: unhandled promise rejection: ", err);
 });
 
 self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) => {
-    (logger ?? console).debug("WORKER: received ", msg.data.kind, msg.data.correlationId);
+    logger.debug("WORKER: received ", msg.data.kind, msg.data.correlationId);
     const payload = msg.data;
     const kind = payload.kind;
     const correlationId = payload.correlationId;
@@ -228,15 +223,25 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
     try {
         if (kind === "init") {
             initPayload = payload;
-            const init = payload;
+            logger = inititaliseLogger(initPayload.rollbarApiKey, initPayload.websiteVersion, initPayload.env);
+            sendResponse(correlationId, undefined)
+            return;
+        }
+
+        const config = initPayload;
+        if (config === undefined) {
+            throw new Error("Worker not initialised");
+        }
+
+        if (kind === "setAuthIdentity") {
             executeThenReply(
                 payload,
                 correlationId,
-                initialize(
-                    init.authPrincipal,
-                    init.authProvider,
-                    init.identityCanister,
-                    init.icUrl,
+                initializeAuthIdentity(
+                    payload.authPrincipal,
+                    payload.authProvider,
+                    config.identityCanister,
+                    config.icUrl
                 ).then((resp) => {
                     const id = resp.kind === "success" ? resp.identity : new AnonymousIdentity();
                     console.debug(
@@ -244,10 +249,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         id.getPrincipal().toString(),
                         id?.getPrincipal().isAnonymous(),
                     );
-                    logger = inititaliseLogger(init.rollbarApiKey, init.websiteVersion, init.env);
-                    logger?.debug("WORKER: constructing agent instance");
+
+                    logger.debug("WORKER: constructing agent instance");
                     agent = new OpenChatAgent(id, {
-                        ...init,
+                        ...config,
                         logger,
                     });
                     agent.addEventListener("openchat_event", handleAgentEvent);
@@ -257,11 +262,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             return;
         }
 
-        if (initPayload === undefined) {
-            throw new Error("Worker not initialised");
-        }
-
-        if (payload.kind === "generateIdentityChallenge") {
+        if (kind === "generateIdentityChallenge") {
             if (identityAgent === undefined) {
                 throw new Error("IdentityAgent not initialized");
             }
@@ -278,8 +279,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     (resp) => {
                         const id = typeof resp !== "string" ? resp : new AnonymousIdentity();
                         agent = new OpenChatAgent(id, {
-                            ...initPayload!,
-                            logger: logger!,
+                            ...config,
+                            logger,
                         });
                         agent.addEventListener("openchat_event", handleAgentEvent);
                         return typeof resp !== "string" ? "success" : resp;
@@ -289,17 +290,18 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             return;
         }
 
+        if (kind === "setMinLogLevel") {
+            setMinLogLevel(payload.minLogLevel);
+            sendResponse(correlationId, undefined);
+            return;
+        }
+
         if (!agent) {
             logger?.debug("WORKER: agent does not exist: ", msg.data);
             return;
         }
 
         switch (kind) {
-            case "setMinLogLevel":
-                setMinLogLevel(payload.minLogLevel);
-                sendResponse(correlationId, undefined);
-                break;
-
             case "getCurrentUser":
                 streamReplies(payload, correlationId, agent.getCurrentUser());
                 break;
@@ -1982,6 +1984,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.initiatorWebAuthnKey,
                         payload.approverKey,
                         payload.approverDelegation,
+                        config.identityCanister,
+                        config.icUrl,
                     ),
                 );
                 break;
@@ -2053,7 +2057,12 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    deleteUser(payload.identityKey, payload.delegation),
+                    deleteUser(
+                        payload.identityKey,
+                        payload.delegation,
+                        config.identityCanister,
+                        config.icUrl,
+                    ),
                 );
                 break;
 
@@ -2061,7 +2070,12 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    getSignInProof(payload.identityKey, payload.delegation)
+                    getSignInProof(
+                        payload.identityKey,
+                        payload.delegation,
+                        config.identityCanister,
+                        config.icUrl,
+                    ),
                 );
                 break;
 
@@ -2163,8 +2177,12 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    verifyAccountLinkingCode(payload.code, payload.tempKey) ??
-                        Promise.resolve(undefined),
+                    verifyAccountLinkingCode(
+                        payload.code,
+                        payload.tempKey,
+                        config.identityCanister,
+                        config.icUrl
+                    ),
                 );
                 break;
 
@@ -2177,6 +2195,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.principal,
                         payload.publicKey,
                         payload.webAuthnKey,
+                        config.identityCanister,
+                        config.icUrl,
                     ) ?? Promise.resolve(undefined),
                 );
                 break;
@@ -2254,6 +2274,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 async function verifyAccountLinkingCode(
     code: string,
     tempKey: CryptoKeyPair,
+    identityCanister: string,
+    icUrl: string,
 ): Promise<VerifyAccountLinkingCodeResponse> {
     const ecdsaIdentity = await ECDSAKeyIdentity.fromKeyPair(tempKey);
     const identityAgent = await IdentityAgent.create(ecdsaIdentity, identityCanister, icUrl, false);
@@ -2265,7 +2287,9 @@ async function finaliseAccountLinkingWithCode(
     tempKey: CryptoKeyPair,
     principal: string,
     publicKey: Uint8Array,
-    webAuthnKey?: WebAuthnKeyFull,
+    webAuthnKey: WebAuthnKeyFull | undefined,
+    identityCanister: string,
+    icUrl: string,
 ): Promise<FinaliseAccountLinkingResponse> {
     const ecdsaIdentity = await ECDSAKeyIdentity.fromKeyPair(tempKey);
     const identityAgent = await IdentityAgent.create(ecdsaIdentity, identityCanister, icUrl, false);
@@ -2295,6 +2319,8 @@ async function linkIdentities(
     initiatorWebAuthnKey: WebAuthnKey | undefined,
     approverKey: CryptoKeyPair,
     approverDelegation: JsonnableDelegationChain,
+    identityCanister: string,
+    icUrl: string,
 ): Promise<LinkIdentitiesResponse> {
     const initiatorIdentity = DelegationIdentity.fromDelegation(
         await ECDSAKeyIdentity.fromKeyPair(initiatorKey),
@@ -2346,6 +2372,8 @@ async function removeIdentityLink(linked_principal: string): Promise<RemoveIdent
 async function deleteUser(
     identityKey: CryptoKeyPair,
     delegation: JsonnableDelegationChain,
+    identityCanister: string,
+    icUrl: string,
 ): Promise<boolean> {
     const identity = DelegationIdentity.fromDelegation(
         await ECDSAKeyIdentity.fromKeyPair(identityKey),
@@ -2356,7 +2384,11 @@ async function deleteUser(
     return response.kind === "success";
 }
 
-async function getSignInProof(identityKey: CryptoKeyPair, delegation: JsonnableDelegationChain): Promise<string | undefined> {
+async function getSignInProof(
+    identityKey: CryptoKeyPair,
+    delegation: JsonnableDelegationChain,
+    identityCanister: string,
+    icUrl: string,): Promise<string | undefined> {
     const identity = DelegationIdentity.fromDelegation(
         await ECDSAKeyIdentity.fromKeyPair(identityKey),
         DelegationChain.fromJSON(delegation),

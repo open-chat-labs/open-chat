@@ -1,10 +1,7 @@
-import { AuthProvider } from "./auth";
 import type { GroupInvite } from "./inviteCodes";
 
 export type AgentConfig = {
     appType?: "android" | "ios" | "web";
-    authPrincipal: string;
-    authProvider: AuthProvider | undefined;
     icUrl: string;
     iiDerivationOrigin?: string;
     openStorageIndexCanister: string;

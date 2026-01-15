@@ -1,10 +1,8 @@
 import type { Logger } from "openchat-shared";
-import { AuthProvider, type GroupInvite } from "openchat-shared";
+import { type GroupInvite } from "openchat-shared";
 
 export type AgentConfig = {
     appType?: "android" | "ios" | "web";
-    authPrincipal: string;
-    authProvider: AuthProvider | undefined;
     icUrl: string;
     iiDerivationOrigin?: string;
     openStorageIndexCanister: string;

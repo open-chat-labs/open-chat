@@ -8,6 +8,7 @@ import Rollbar, { type LogArgument } from "rollbar";
 import { offline } from "./network";
 import { NOOP } from "../constants";
 import { AnonymousOperationError } from "../domain";
+import type { LogLevel } from "../domain/logging";
 
 let rollbar: Rollbar | undefined;
 
@@ -55,7 +56,7 @@ const DEFAULT_DEBUG = console.debug;
 const DEFAULT_LOG = console.log;
 const DEFAULT_WARN = console.warn;
 
-export function setMinLogLevel(level: "debug" | "log" | "warn" | "error") {
+export function setMinLogLevel(level: LogLevel) {
     const levelAsInt = level === "debug" ? 0 : level === "log" ? 1 : level === "warn" ? 2 : 3;
     const debugEnabled = levelAsInt <= 0;
     const logEnabled = levelAsInt <= 1;
