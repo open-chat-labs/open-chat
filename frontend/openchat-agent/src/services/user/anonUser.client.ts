@@ -32,7 +32,6 @@ import type {
     ExchangeTokenSwapArgs,
     GrantedBotPermissions,
     GroupChatIdentifier,
-    IndexRange,
     InitialStateResponse,
     JoinVideoCallResponse,
     LeaveCommunityResponse,
@@ -75,8 +74,9 @@ import type {
     WithdrawViaOneSecResponse,
 } from "openchat-shared";
 import { ANON_USER_ID, AnonymousOperationError, CommonResponses } from "openchat-shared";
+import type { IChatEventsReader } from "../common/chatEvents";
 
-export class AnonUserClient {
+export class AnonUserClient implements IChatEventsReader<DirectChatIdentifier> {
     public get userId(): string {
         return ANON_USER_ID;
     }
@@ -166,42 +166,35 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
-    getCachedEventsByIndex(
-        _eventIndexes: number[],
-        _chatId: DirectChatIdentifier,
-        _threadRootMessageIndex: number | undefined,
-    ): Promise<[EventsResponse<ChatEvent>, Set<number>]> {
-        throw new AnonymousOperationError();
-    }
-
     chatEventsByIndex(
-        _eventIndexes: number[],
         _chatId: DirectChatIdentifier,
+        _eventIndexes: number[],
         _threadRootMessageIndex: number | undefined,
         _latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
         throw new AnonymousOperationError();
     }
 
-    async getMessagesByMessageIndex(
+    async messagesByMessageIndex(
+        _chatId: DirectChatIdentifier,
         _threadRootMessageIndex: number | undefined,
-        _messageIndexes: Set<number>,
+        _messageIndexes: number[],
         _latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<Message>> {
         throw new AnonymousOperationError();
     }
 
     async chatEventsWindow(
-        _eventIndexRange: IndexRange,
         _chatId: DirectChatIdentifier,
+        _threadRootMessageIndex: number | undefined,
         _messageIndex: number,
         _latestKnownUpdate: bigint | undefined,
+        _maxEvents: number
     ): Promise<EventsResponse<ChatEvent>> {
         throw new AnonymousOperationError();
     }
 
     async chatEvents(
-        _eventIndexRange: IndexRange,
         _chatId: DirectChatIdentifier,
         _startIndex: number,
         _ascending: boolean,

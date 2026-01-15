@@ -11,14 +11,6 @@ pub struct TokenSwaps {
 }
 
 impl TokenSwaps {
-    pub fn clear_pin_attempts(&mut self) {
-        for swap in self.swaps.values_mut() {
-            if let Some(pin) = swap.args.pin.as_mut() {
-                pin.consume();
-            }
-        }
-    }
-
     pub fn push_new(
         &mut self,
         args: user_canister::swap_tokens::Args,

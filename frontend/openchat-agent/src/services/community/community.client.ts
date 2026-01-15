@@ -30,7 +30,6 @@ import type {
     EnableInviteCodeResponse,
     EventWrapper,
     EventsResponse,
-    EventsSuccessResult,
     ExploreChannelsResponse,
     FollowThreadResponse,
     FullWebhookDetails,
@@ -39,7 +38,6 @@ import type {
     GroupChatDetailsResponse,
     GroupChatIdentifier,
     ImportGroupResponse,
-    IndexRange,
     InviteCodeResponse,
     JoinVideoCallResponse,
     LeaveGroupResponse,
@@ -75,9 +73,6 @@ import {
     DestinationInvalidError,
     MAX_EVENTS,
     MAX_MESSAGES,
-    MAX_MISSING,
-    ResponseTooLargeError,
-    isSuccessfulEventsResponse,
     offline,
     random32,
     toBigInt32,
@@ -179,16 +174,10 @@ import {
 } from "../../typebox";
 import {
     getCachedCommunityDetails,
-    getCachedEvents,
-    getCachedEventsByIndex,
-    getCachedEventsWindowByMessageIndex,
     getCachedGroupDetails,
-    loadMessagesByMessageIndex,
-    mergeSuccessResponses,
     recordFailedMessage,
     removeFailedMessage,
     setCachedCommunityDetails,
-    setCachedEvents,
     setCachedGroupDetails,
     setCachedMessageFromSendResponse,
     type Database,
@@ -202,6 +191,7 @@ import {
     principalStringToBytes,
 } from "../../utils/mapping";
 import { MultiCanisterMsgpackAgent } from "../canisterAgent/msgpack";
+import type { IChatEventsReader } from "../common/chatEvents";
 import {
     acceptP2PSwapSuccess,
     apiAccessGateConfig,
@@ -233,10 +223,6 @@ import {
     videoCallParticipantsSuccess,
     webhookDetails,
 } from "../common/chatMappersV2";
-import {
-    chunkedChatEventsFromBackend,
-    chunkedChatEventsWindowFromBackend,
-} from "../common/chunked";
 import { DataClient } from "../data/data.client";
 import { apiOptionalGroupPermissions, apiUpdatedRules } from "../group/mappersV2";
 import {
@@ -255,7 +241,7 @@ import {
     updateCommunitySuccess,
 } from "./mappersV2";
 
-export class CommunityClient extends MultiCanisterMsgpackAgent {
+export class CommunityClient extends MultiCanisterMsgpackAgent implements IChatEventsReader<ChannelIdentifier> {
     private readonly _inviteCodes: Map<string, bigint> = new Map();
 
     constructor(
@@ -517,70 +503,7 @@ export class CommunityClient extends MultiCanisterMsgpackAgent {
         );
     }
 
-    async events(
-        chatId: ChannelIdentifier,
-        eventIndexRange: IndexRange,
-        startIndex: number,
-        ascending: boolean,
-        threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
-        const [cachedEvents, missing] = await getCachedEvents(
-            this.db,
-            eventIndexRange,
-            { chatId, threadRootMessageIndex },
-            startIndex,
-            ascending,
-        );
-
-        // we may or may not have all of the requested events
-        if (missing.size >= MAX_MISSING) {
-            // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
-            console.log("We didn't get enough back from the cache, going to the api");
-            return this.eventsFromBackend(
-                chatId,
-                startIndex,
-                ascending,
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            )
-                .then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex))
-                .catch((err) => {
-                    if (err instanceof ResponseTooLargeError) {
-                        console.log(
-                            "Response size too large, we will try to split the payload into a a few chunks",
-                        );
-                        return chunkedChatEventsFromBackend(
-                            (index: number, chunkSize: number) =>
-                                this.eventsFromBackend(
-                                    chatId,
-                                    index,
-                                    ascending,
-                                    threadRootMessageIndex,
-                                    latestKnownUpdate,
-                                    chunkSize,
-                                ),
-                            eventIndexRange,
-                            startIndex,
-                            ascending,
-                        ).then((resp) =>
-                            this.setCachedEvents(chatId, resp, threadRootMessageIndex),
-                        );
-                    } else {
-                        throw err;
-                    }
-                });
-        } else {
-            return this.handleMissingEvents(
-                chatId,
-                [cachedEvents, missing],
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            );
-        }
-    }
-
-    eventsFromBackend(
+    async chatEvents(
         chatId: ChannelIdentifier,
         startIndex: number,
         ascending: boolean,
@@ -608,30 +531,7 @@ export class CommunityClient extends MultiCanisterMsgpackAgent {
         );
     }
 
-    getCachedEventsByIndex(
-        chatId: ChannelIdentifier,
-        eventIndexes: number[],
-        threadRootMessageIndex: number | undefined,
-    ) {
-        return getCachedEventsByIndex(this.db, eventIndexes, {
-            chatId,
-            threadRootMessageIndex,
-        });
-    }
-
-    eventsByIndex(
-        chatId: ChannelIdentifier,
-        eventIndexes: number[],
-        threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
-        return this.getCachedEventsByIndex(chatId, eventIndexes, threadRootMessageIndex).then(
-            (res) =>
-                this.handleMissingEvents(chatId, res, threadRootMessageIndex, latestKnownUpdate),
-        );
-    }
-
-    private eventsByIndexFromBackend(
+    chatEventsByIndex(
         chatId: ChannelIdentifier,
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
@@ -654,76 +554,7 @@ export class CommunityClient extends MultiCanisterMsgpackAgent {
         );
     }
 
-    async eventsWindow(
-        chatId: ChannelIdentifier,
-        eventIndexRange: IndexRange,
-        messageIndex: number,
-        threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
-        const [cachedEvents, missing, totalMiss] = await getCachedEventsWindowByMessageIndex(
-            this.db,
-            eventIndexRange,
-            { chatId, threadRootMessageIndex },
-            messageIndex,
-        );
-        if (totalMiss || missing.size >= MAX_MISSING) {
-            // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
-            console.log(
-                "We didn't get enough back from the cache, going to the api",
-                missing.size,
-                totalMiss,
-            );
-            return this.eventsWindowFromBackend(
-                chatId,
-                messageIndex,
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            )
-                .then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex))
-                .catch((err) => {
-                    if (err instanceof ResponseTooLargeError) {
-                        console.log(
-                            "Response size too large, we will try to split the window request into a a few chunks",
-                        );
-                        return chunkedChatEventsWindowFromBackend(
-                            (index: number, ascending: boolean, chunkSize: number) =>
-                                this.eventsFromBackend(
-                                    chatId,
-                                    index,
-                                    ascending,
-                                    threadRootMessageIndex,
-                                    latestKnownUpdate,
-                                    chunkSize,
-                                ),
-                            (index: number, chunkSize: number) =>
-                                this.eventsWindowFromBackend(
-                                    chatId,
-                                    index,
-                                    threadRootMessageIndex,
-                                    latestKnownUpdate,
-                                    chunkSize,
-                                ),
-                            eventIndexRange,
-                            messageIndex,
-                        ).then((resp) =>
-                            this.setCachedEvents(chatId, resp, threadRootMessageIndex),
-                        );
-                    } else {
-                        throw err;
-                    }
-                });
-        } else {
-            return this.handleMissingEvents(
-                chatId,
-                [cachedEvents, missing],
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            );
-        }
-    }
-
-    private async eventsWindowFromBackend(
+    async chatEventsWindow(
         chatId: ChannelIdentifier,
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
@@ -749,46 +580,7 @@ export class CommunityClient extends MultiCanisterMsgpackAgent {
         );
     }
 
-    async getMessagesByMessageIndex(
-        chatId: ChannelIdentifier,
-        threadRootMessageIndex: number | undefined,
-        messageIndexes: Set<number>,
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<Message>> {
-        const fromCache = await loadMessagesByMessageIndex(
-            this.db,
-            chatId,
-            threadRootMessageIndex,
-            messageIndexes,
-        );
-        if (fromCache.missing.size > 0) {
-            console.log("Missing idxs from the cached: ", fromCache.missing);
-
-            const resp = await this.getMessagesByMessageIndexFromBackend(
-                chatId,
-                threadRootMessageIndex,
-                [...fromCache.missing],
-                latestKnownUpdate,
-            ).then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex));
-
-            return isSuccessfulEventsResponse(resp)
-                ? {
-                      events: [...fromCache.messageEvents, ...resp.events],
-                      expiredEventRanges: [],
-                      expiredMessageRanges: [],
-                      latestEventIndex: resp.latestEventIndex,
-                  }
-                : resp;
-        }
-        return {
-            events: fromCache.messageEvents,
-            expiredEventRanges: [],
-            expiredMessageRanges: [],
-            latestEventIndex: undefined,
-        };
-    }
-
-    private getMessagesByMessageIndexFromBackend(
+    async messagesByMessageIndex(
         chatId: ChannelIdentifier,
         threadRootMessageIndex: number | undefined,
         messageIndexes: number[],
@@ -810,42 +602,6 @@ export class CommunityClient extends MultiCanisterMsgpackAgent {
             CommunityMessagesByMessageIndexArgs,
             CommunityMessagesByMessageIndexResponse,
         );
-    }
-
-    private handleMissingEvents(
-        chatId: ChannelIdentifier,
-        [cachedEvents, missing]: [EventsSuccessResult<ChatEvent>, Set<number>],
-        threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
-        if (missing.size === 0 || offline()) {
-            return Promise.resolve(cachedEvents);
-        } else {
-            return this.eventsByIndexFromBackend(
-                chatId,
-                [...missing],
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            )
-                .then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex))
-                .then((resp) => {
-                    if (isSuccessfulEventsResponse(resp)) {
-                        return mergeSuccessResponses(cachedEvents, resp);
-                    }
-                    return resp;
-                });
-        }
-    }
-
-    private setCachedEvents<T extends ChatEvent>(
-        chatId: ChannelIdentifier,
-        resp: EventsResponse<T>,
-        threadRootMessageIndex: number | undefined,
-    ): EventsResponse<T> {
-        setCachedEvents(this.db, chatId, resp, threadRootMessageIndex).catch((err) =>
-            this.config.logger.error("Error writing cached channel events", err),
-        );
-        return resp;
     }
 
     getInviteCode(communityId: string): Promise<InviteCodeResponse> {

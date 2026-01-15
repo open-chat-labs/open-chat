@@ -1,5 +1,6 @@
 import type { JsonnableDelegationChain } from "@icp-sdk/core/identity";
 import type { AccessGateConfig, Rules, UpdatedRules, VerifiedCredentialArgs } from "./access";
+import type { AuthProvider } from "./auth";
 import type {
     CkbtcMinterDepositInfo,
     CkbtcMinterWithdrawalInfo,
@@ -166,6 +167,7 @@ import type {
     WebAuthnKeyFull,
 } from "./identity";
 import type { CommunityInvite, GroupInvite } from "./inviteCodes";
+import type { LogLevel } from "./logging";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
 import type { ToggleMuteNotificationResponse } from "./notifications";
 import type {
@@ -239,6 +241,7 @@ export type CorrelatedWorkerRequest = WorkerRequest & {
 };
 
 export type WorkerRequest =
+    | SetAuthIdentity
     | SetMinLogLevel
     | DismissRecommendations
     | SearchGroups
@@ -532,9 +535,15 @@ type PayForPremiumItem = {
     userId: string;
 };
 
+type SetAuthIdentity = {
+    kind: "setAuthIdentity";
+    authPrincipal: string;
+    authProvider: AuthProvider | undefined;
+};
+
 type SetMinLogLevel = {
     kind: "setMinLogLevel";
-    minLogLevel: "debug" | "log" | "warn" | "error";
+    minLogLevel: LogLevel;
 };
 
 type PayForStreakInsurance = {
@@ -893,7 +902,7 @@ type GetInviteCode = {
 type MessagesByMessageIndex = {
     chatId: ChatIdentifier;
     threadRootMessageIndex: number | undefined;
-    messageIndexes: Set<number>;
+    messageIndexes: number[];
     latestKnownUpdate: bigint | undefined;
     kind: "getMessagesByMessageIndex";
 };
@@ -2188,11 +2197,13 @@ type CancelInvites = {
     userIds: string[];
 };
 
-export type ConnectToWorkerResponse = GetOpenChatIdentityResponse["kind"];
+export type SetAuthIdentityResponse = GetOpenChatIdentityResponse["kind"];
 
 // prettier-ignore
 export type WorkerResult<T> = T extends Init
-    ? ConnectToWorkerResponse
+    ? void
+    : T extends SetAuthIdentity
+    ? SetAuthIdentityResponse
     : T extends SetMinLogLevel
     ? void
     : T extends GenerateIdentityChallenge
