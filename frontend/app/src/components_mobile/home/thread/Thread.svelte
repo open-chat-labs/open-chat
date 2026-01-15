@@ -41,7 +41,6 @@
     import ChatEvent from "../ChatEvent.svelte";
     import ChatEventList from "../ChatEventList.svelte";
     import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
-    import DropTarget from "../DropTarget.svelte";
     import Footer from "../Footer.svelte";
     import MemeBuilder from "../MemeBuilder.svelte";
     import TimelineDate from "../TimelineDate.svelte";
@@ -300,120 +299,113 @@
         onClose={() => (creatingCryptoTransfer = undefined)} />
 {/if}
 
-<DropTarget {chat} mode={"thread"} {onFileSelected}>
-    <Container background={ColourVars.background0} height={"fill"} direction={"vertical"}>
-        <ThreadHeader {threadRootMessageIndex} {onCloseThread} {rootEvent} chatSummary={chat} />
-        <ChatEventList
-            threadRootEvent={rootEvent}
-            rootSelector={"thread-messages"}
-            maintainScroll={false}
-            bind:this={chatEventList}
-            scrollTopButtonEnabled
-            {readonly}
-            unreadMessages={0}
-            firstUnreadMention={undefined}
-            footer
-            visible
-            {events}
-            {chat}
-            bind:initialised
-            bind:messagesDiv
-            bind:messagesDivHeight>
-            {#snippet children({
-                isAccepted,
-                isConfirmed,
-                isFailed,
-                isReadByMe,
-                messageObserver,
-                labelObserver,
-                focusIndex,
-            })}
-                {#if loading}
-                    <Loading />
-                {:else}
-                    {#each timeline as timelineItem}
-                        {#if timelineItem.kind === "timeline_date"}
-                            <TimelineDate
-                                observer={labelObserver}
-                                timestamp={timelineItem.timestamp} />
-                        {:else}
-                            {#each timelineItem.group as userGroup}
-                                {#each userGroup as evt, i (eventKey(evt))}
-                                    <ChatEvent
-                                        chatId={chat.id}
-                                        chatType={chat.kind}
-                                        event={evt}
-                                        first={i + 1 === userGroup.length}
-                                        last={i === 0}
-                                        me={evt.event.sender === $currentUserIdStore}
-                                        accepted={isAccepted($unconfirmedStore, evt)}
-                                        confirmed={isConfirmed($unconfirmedStore, evt)}
-                                        failed={isFailed($failedMessagesStore, evt)}
-                                        readByMe={evt.event.messageId ===
-                                            rootEvent.event.messageId ||
-                                            !isFollowedByMe ||
-                                            isReadByMe($messagesRead, evt)}
-                                        observer={messageObserver}
-                                        focused={evt.event.kind === "message" &&
-                                            focusIndex === evt.event.messageIndex}
-                                        {readonly}
-                                        {threadRootMessage}
-                                        pinned={false}
-                                        supportsEdit={evt.event.messageId !==
-                                            rootEvent.event.messageId}
-                                        supportsReply={evt.event.messageId !==
-                                            rootEvent.event.messageId}
-                                        canPin={client.canPinMessages(chat.id)}
-                                        canBlockUsers={client.canBlockUsers(chat.id)}
-                                        canDelete={client.canDeleteOtherUsersMessages(chat.id)}
-                                        publicGroup={(chat.kind === "group_chat" ||
-                                            chat.kind === "channel") &&
-                                            chat.public}
-                                        editing={editingEvent === evt}
-                                        canSendAny
-                                        {canReact}
-                                        canInvite={false}
-                                        canReplyInThread={false}
-                                        collapsed={false}
-                                        {onRemovePreview}
-                                        {onGoToMessageIndex}
-                                        onReplyTo={replyTo}
-                                        onEditEvent={() => editEvent(evt)}
-                                        onExpandMessage={() => toggleMessageExpansion(evt, true)}
-                                        onCollapseMessage={() =>
-                                            toggleMessageExpansion(evt, false)} />
-                                {/each}
+<Container background={ColourVars.background0} height={"fill"} direction={"vertical"}>
+    <ThreadHeader {threadRootMessageIndex} {onCloseThread} {rootEvent} chatSummary={chat} />
+    <ChatEventList
+        threadRootEvent={rootEvent}
+        rootSelector={"thread-messages"}
+        maintainScroll={false}
+        bind:this={chatEventList}
+        scrollTopButtonEnabled
+        {readonly}
+        unreadMessages={0}
+        firstUnreadMention={undefined}
+        footer
+        visible
+        {events}
+        {chat}
+        bind:initialised
+        bind:messagesDiv
+        bind:messagesDivHeight>
+        {#snippet children({
+            isAccepted,
+            isConfirmed,
+            isFailed,
+            isReadByMe,
+            messageObserver,
+            labelObserver,
+            focusIndex,
+        })}
+            {#if loading}
+                <Loading />
+            {:else}
+                {#each timeline as timelineItem}
+                    {#if timelineItem.kind === "timeline_date"}
+                        <TimelineDate observer={labelObserver} timestamp={timelineItem.timestamp} />
+                    {:else}
+                        {#each timelineItem.group as userGroup}
+                            {#each userGroup as evt, i (eventKey(evt))}
+                                <ChatEvent
+                                    chatId={chat.id}
+                                    chatType={chat.kind}
+                                    event={evt}
+                                    first={i + 1 === userGroup.length}
+                                    last={i === 0}
+                                    me={evt.event.sender === $currentUserIdStore}
+                                    accepted={isAccepted($unconfirmedStore, evt)}
+                                    confirmed={isConfirmed($unconfirmedStore, evt)}
+                                    failed={isFailed($failedMessagesStore, evt)}
+                                    readByMe={evt.event.messageId === rootEvent.event.messageId ||
+                                        !isFollowedByMe ||
+                                        isReadByMe($messagesRead, evt)}
+                                    observer={messageObserver}
+                                    focused={evt.event.kind === "message" &&
+                                        focusIndex === evt.event.messageIndex}
+                                    {readonly}
+                                    {threadRootMessage}
+                                    pinned={false}
+                                    supportsEdit={evt.event.messageId !== rootEvent.event.messageId}
+                                    supportsReply={evt.event.messageId !==
+                                        rootEvent.event.messageId}
+                                    canPin={client.canPinMessages(chat.id)}
+                                    canBlockUsers={client.canBlockUsers(chat.id)}
+                                    canDelete={client.canDeleteOtherUsersMessages(chat.id)}
+                                    publicGroup={(chat.kind === "group_chat" ||
+                                        chat.kind === "channel") &&
+                                        chat.public}
+                                    editing={editingEvent === evt}
+                                    canSendAny
+                                    {canReact}
+                                    canInvite={false}
+                                    canReplyInThread={false}
+                                    collapsed={false}
+                                    {onRemovePreview}
+                                    {onGoToMessageIndex}
+                                    onReplyTo={replyTo}
+                                    onEditEvent={() => editEvent(evt)}
+                                    onExpandMessage={() => toggleMessageExpansion(evt, true)}
+                                    onCollapseMessage={() => toggleMessageExpansion(evt, false)} />
                             {/each}
-                        {/if}
-                    {/each}
-                {/if}
-            {/snippet}
-        </ChatEventList>
+                        {/each}
+                    {/if}
+                {/each}
+            {/if}
+        {/snippet}
+    </ChatEventList>
 
-        {#if !readonly}
-            <Footer
-                {chat}
-                {attachment}
-                {editingEvent}
-                {replyingTo}
-                {textContent}
-                user={$currentUserStore}
-                preview={false}
-                lapsed={false}
-                mode={"thread"}
-                {blocked}
-                {messageContext}
-                {onCancelReply}
-                onClearAttachment={clearAttachment}
-                onCancelEdit={cancelEditEvent}
-                {onSetTextContent}
-                {onStartTyping}
-                {onStopTyping}
-                {onFileSelected}
-                {onSendMessage}
-                onMakeMeme={makeMeme}
-                onTokenTransfer={tokenTransfer}
-                onCreateP2PSwapMessage={createP2PSwapMessage} />
-        {/if}
-    </Container>
-</DropTarget>
+    {#if !readonly}
+        <Footer
+            {chat}
+            {attachment}
+            {editingEvent}
+            {replyingTo}
+            {textContent}
+            user={$currentUserStore}
+            preview={false}
+            lapsed={false}
+            mode={"thread"}
+            {blocked}
+            {messageContext}
+            {onCancelReply}
+            onClearAttachment={clearAttachment}
+            onCancelEdit={cancelEditEvent}
+            {onSetTextContent}
+            {onStartTyping}
+            {onStopTyping}
+            {onFileSelected}
+            {onSendMessage}
+            onMakeMeme={makeMeme}
+            onTokenTransfer={tokenTransfer}
+            onCreateP2PSwapMessage={createP2PSwapMessage} />
+    {/if}
+</Container>
