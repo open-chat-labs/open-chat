@@ -14,7 +14,6 @@ import {
     setCommunityReferral,
 } from "openchat-agent";
 import {
-    AuthProvider,
     IdentityStorage,
     inititaliseLogger,
     MessagesReadFromServer,
@@ -56,7 +55,7 @@ let agent: OpenChatAgent | undefined = undefined;
 
 async function initializeAuthIdentity(
     expectedAuthPrincipal: string,
-    authProvider: AuthProvider | undefined,
+    isIIPrincipal: boolean,
     identityCanister: string,
     icUrl: string,
 ): Promise<GetOpenChatIdentityResponse> {
@@ -67,7 +66,7 @@ async function initializeAuthIdentity(
         authProviderIdentity as SignIdentity,
         identityCanister,
         icUrl,
-        authProvider === undefined ? undefined : authProvider === AuthProvider.II,
+        isIIPrincipal,
     );
 
     if (authPrincipal.isAnonymous() || authPrincipalString !== expectedAuthPrincipal) {
@@ -239,7 +238,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 correlationId,
                 initializeAuthIdentity(
                     payload.authPrincipal,
-                    payload.authProvider,
+                    payload.isIIPrincipal,
                     config.identityCanister,
                     config.icUrl
                 ).then((resp) => {
