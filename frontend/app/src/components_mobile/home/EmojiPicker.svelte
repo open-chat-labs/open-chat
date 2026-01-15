@@ -158,5 +158,13 @@
         --input-padding: var(--sp-sm) var(--sp-lg);
         --indicator-color: var(--primary);
         --num-columns: 8 !important;
+
+        @media (max-width: 390px) {
+            --num-columns: 7 !important;
+        }
+
+        @media (max-width: 340px) {
+            --num-columns: 6 !important;
+        }
     }
 </style>
