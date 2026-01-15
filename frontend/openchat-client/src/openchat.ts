@@ -70,7 +70,6 @@ import {
     parseBigInt,
     pinNumberFailureFromError,
     publish,
-    random128,
     random64,
     removeEmailSignInSession,
     routeForChatIdentifier,
@@ -143,7 +142,6 @@ import {
     type CommunityPermissions,
     type CommunitySummary,
     type CompletedCryptocurrencyTransfer,
-    type ConnectToWorkerResponse,
     type CreateCommunityResponse,
     type CreateGroupResponse,
     type CreateUserGroupResponse,
@@ -175,7 +173,6 @@ import {
     type ExternalBotCommandInstance,
     type Failure,
     type FaqRoute,
-    type FromWorker,
     type FullWebhookDetails,
     type GenerateChallengeResponse,
     type GenerateMagicLinkResponse,
@@ -198,6 +195,7 @@ import {
     type Level,
     type LinkIdentitiesResponse,
     type Logger,
+    type LogLevel,
     type MarkReadRequest,
     type Member,
     type MemberRole,
@@ -306,10 +304,6 @@ import {
     type WhitepaperRoute,
     type WithdrawBtcResponse,
     type WithdrawCryptocurrencyResponse,
-    type WorkerError,
-    type WorkerRequest,
-    type WorkerResponse,
-    type WorkerResult,
 } from "openchat-shared";
 import page from "page";
 import { tick } from "svelte";
@@ -317,7 +311,6 @@ import { locale } from "svelte-i18n";
 import { get } from "svelte/store";
 import { AndroidWebAuthnErrorCode } from "tauri-plugin-oc-api";
 import type { OpenChatConfig } from "./config";
-import { snapshot } from "./snapshot.svelte";
 import {
     FilteredProposals,
     achievementsStore,
@@ -609,6 +602,7 @@ import {
 } from "./utils/user";
 import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 import { MultiWebAuthnIdentity, createWebAuthnIdentity } from "./utils/webAuthn";
+import { WorkerAgent } from "./workerAgent";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -624,17 +618,8 @@ const EXCHANGE_RATE_UPDATE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
 
-type PromiseResolver<T> = {
-    resolve: (val: T | PromiseLike<T>, final: boolean) => void;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    reject: (reason?: any) => void;
-};
-
 export class OpenChat {
-    #worker!: Worker;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    #pending: Map<string, PromiseResolver<any>> = new Map(); // in-flight requests
-    #connectedToWorker = false;
+    #worker: WorkerAgent;
     #authIdentityStorage: IdentityStorage;
     #authPrincipal: string | undefined;
     #ocIdentityStorage: IdentityStorage;
@@ -674,7 +659,9 @@ export class OpenChat {
     currentAirdropChannel: AirdropChannelDetails | undefined = undefined;
 
     constructor(private config: OpenChatConfig) {
+        this.#worker = new WorkerAgent(config);
         this.#logger = config.logger;
+
         this.#appType = config.appType;
         this.#vapidPublicKey = config.vapidPublicKey;
         locale.subscribe((v) => (this.#locale = v ?? "en"));
@@ -703,7 +690,7 @@ export class OpenChat {
             .then((c) => c.getIdentity())
             .then((authIdentity) => this.#loadedAuthenticationIdentity(authIdentity, undefined));
 
-        window.setInterval(() => this.monitorPendingRequests(), ONE_MINUTE_MILLIS);
+        this.#setMinLogLevel((localStorage.getItem(configKeys.minLogLevel) ?? "warn") as LogLevel);
     }
 
     public get AuthPrincipal(): string {
@@ -727,7 +714,7 @@ export class OpenChat {
     }
 
     clearCachedData() {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "clearCachedData",
         });
     }
@@ -741,7 +728,7 @@ export class OpenChat {
         delegation: JsonnableDelegationChain,
     ): Promise<boolean> {
         if (!anonUserStore.value) {
-            return this.#sendRequest({
+            return this.#worker.send({
                 kind: "deleteUser",
                 identityKey,
                 delegation,
@@ -805,10 +792,14 @@ export class OpenChat {
         this.#authPrincipal = anon ? undefined : authPrincipal;
         this.updateIdentityState(anon ? { kind: "anon" } : { kind: "loading_user", registering });
 
-        const connectToWorkerResponse = await this.#connectToWorker(authPrincipal, authProvider);
+        const setAuthIdentityResponse = await this.#worker.send({
+            kind: "setAuthIdentity",
+            authPrincipal,
+            authProvider,
+        }, );
 
         if (!anon) {
-            if (connectToWorkerResponse === "oc_identity_not_found") {
+            if (setAuthIdentityResponse === "oc_identity_not_found") {
                 if (
                     authProvider !== AuthProvider.II &&
                     authProvider !== AuthProvider.EMAIL &&
@@ -818,7 +809,7 @@ export class OpenChat {
                     return;
                 }
 
-                await this.#sendRequest({
+                await this.#worker.send({
                     kind: "createOpenChatIdentity",
                     webAuthnCredentialId: this.#webAuthnKey?.credentialId,
                     challengeAttempt: undefined,
@@ -938,7 +929,7 @@ export class OpenChat {
             return false;
         }
 
-        const resp = await this.#sendRequest({
+        const resp = await this.#worker.send({
             kind: "createOpenChatIdentity",
             webAuthnCredentialId: undefined,
             challengeAttempt,
@@ -965,7 +956,7 @@ export class OpenChat {
             return;
         }
 
-        this.#sendRequest({ kind: "loadFailedMessages" }).then((res) =>
+        this.#worker.send({ kind: "loadFailedMessages" }).then((res) =>
             localUpdates.initialiseFailedMessages(
                 MessageContextMap.fromMap(res).map((_, rec) => {
                     const m = new Map<bigint, EventWrapper<Message>>();
@@ -997,7 +988,7 @@ export class OpenChat {
                     this.logout();
                 }
             });
-        this.#sendRequest({ kind: "getAllCachedUsers" }).then((u) => userStore.addMany(u));
+        this.#worker.send({ kind: "getAllCachedUsers" }).then((u) => userStore.addMany(u));
     }
 
     userIsDiamond(userId: string): boolean {
@@ -1027,7 +1018,7 @@ export class OpenChat {
     #updateNervousSystemFunctions(governanceCanisterId: string) {
         if (get(offlineStore)) return;
 
-        this.#sendRequest({
+        this.#worker.send({
             kind: "listNervousSystemFunctions",
             snsGovernanceCanisterId: governanceCanisterId,
         }).then((val) => {
@@ -1039,7 +1030,7 @@ export class OpenChat {
     }
 
     sendMarkReadRequest(req: MarkReadRequest) {
-        return this.#sendRequest({ kind: "markMessagesRead", payload: req });
+        return this.#worker.send({ kind: "markMessagesRead", payload: req });
     }
 
     maxMediaSizes(): MaxMediaSizes {
@@ -1077,7 +1068,7 @@ export class OpenChat {
         initialiseMostRecentSentMessageTimes(isDiamondStore.value);
         const id = this.#ocIdentity;
 
-        this.#sendRequest({ kind: "createUserClient", userId: user.userId });
+        this.#worker.send({ kind: "createUserClient", userId: user.userId });
         startSwCheckPoller();
         if (id !== undefined) {
             this.#startSession(id).then(() => this.logout());
@@ -1092,7 +1083,7 @@ export class OpenChat {
             this.#startOnlinePoller();
             this.#startBtcBalanceUpdateJob();
             this.#startOneSecBalanceUpdateJob();
-            this.#sendRequest({ kind: "getUserStorageLimits" })
+            this.#worker.send({ kind: "getUserStorageLimits" })
                 .then((storage) => {
                     storageStore.set(storage);
                 })
@@ -1150,7 +1141,7 @@ export class OpenChat {
         if (!anonUserStore.value) {
             new Poller(
                 () =>
-                    (this.#sendRequest({ kind: "markAsOnline" }) ?? Promise.resolve()).then(
+                    (this.#worker.send({ kind: "markAsOnline" }) ?? Promise.resolve()).then(
                         (minutesOnline) => minutesOnlineStore.set(minutesOnline),
                     ),
                 MARK_ONLINE_INTERVAL,
@@ -1194,7 +1185,7 @@ export class OpenChat {
     }
 
     generateIdentityChallenge(): Promise<GenerateChallengeResponse> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "generateIdentityChallenge",
             identityCanister: this.config.identityCanister,
             icUrl: this.config.icUrl ?? window.location.origin,
@@ -1281,7 +1272,7 @@ export class OpenChat {
     previewChat(chatId: MultiUserChatIdentifier): Promise<Success | Failure | GroupMoved> {
         switch (chatId.kind) {
             case "group_chat":
-                return this.#sendRequest({ kind: "getPublicGroupSummary", chatId })
+                return this.#worker.send({ kind: "getPublicGroupSummary", chatId })
                     .then((resp) => {
                         if (resp.kind === "success" && !resp.group.frozen) {
                             localUpdates.addGroupPreview(resp.group);
@@ -1295,7 +1286,7 @@ export class OpenChat {
                         return CommonResponses.failure();
                     });
             case "channel":
-                return this.#sendRequest({ kind: "getChannelSummary", chatId })
+                return this.#worker.send({ kind: "getChannelSummary", chatId })
                     .then((resp) => {
                         if (resp.kind === "channel") {
                             localUpdates.addGroupPreview(resp);
@@ -1313,7 +1304,7 @@ export class OpenChat {
         muteAtEveryone: boolean | undefined,
     ): Promise<boolean> {
         const undo = localUpdates.updateNotificationsMuted(chatId, mute, muteAtEveryone);
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "toggleMuteNotifications",
             id: chatId,
             mute,
@@ -1344,7 +1335,7 @@ export class OpenChat {
             localUpdates.updateNotificationsMuted(c.id, mute, muteAtEveryone),
         );
 
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "toggleMuteNotifications",
             id: communityId,
             mute,
@@ -1367,7 +1358,7 @@ export class OpenChat {
         if (chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
             this.selectDefaultChat();
         }
-        return this.#sendRequest({ kind: "archiveChat", chatId })
+        return this.#worker.send({ kind: "archiveChat", chatId })
             .then((resp) => {
                 if (resp.kind !== "success") {
                     undo();
@@ -1382,7 +1373,7 @@ export class OpenChat {
 
     unarchiveChat(chatId: ChatIdentifier): Promise<boolean> {
         const undo = localUpdates.updateArchived(chatId, false);
-        return this.#sendRequest({ kind: "unarchiveChat", chatId })
+        return this.#worker.send({ kind: "unarchiveChat", chatId })
             .then((resp) => {
                 if (resp.kind !== "success") {
                     undo();
@@ -1405,7 +1396,7 @@ export class OpenChat {
     pinChat(chatId: ChatIdentifier): Promise<boolean> {
         const scope = chatListScopeStore.value.kind;
         const undo = localUpdates.pinToScope(chatId, scope);
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "pinChat",
             chatId,
             favourite: scope === "favourite",
@@ -1425,7 +1416,7 @@ export class OpenChat {
     unpinChat(chatId: ChatIdentifier): Promise<boolean> {
         const scope = chatListScopeStore.value.kind;
         const undo = localUpdates.unpinFromScope(chatId, scope);
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "unpinChat",
             chatId,
             favourite: scope === "favourite",
@@ -1445,7 +1436,7 @@ export class OpenChat {
     blockUserFromDirectChat(userId: string): Promise<boolean> {
         const undo = localUpdates.blockDirectUser(userId);
         rtcConnectionsManager.disconnectFromUser(userId);
-        return this.#sendRequest({ kind: "blockUserFromDirectChat", userId })
+        return this.#worker.send({ kind: "blockUserFromDirectChat", userId })
             .then((resp) => {
                 if (resp.kind === "success") {
                     userStore.blockUser(userId);
@@ -1462,7 +1453,7 @@ export class OpenChat {
 
     unblockUserFromDirectChat(userId: string): Promise<boolean> {
         const undo = localUpdates.unblockDirectUser(userId);
-        return this.#sendRequest({ kind: "unblockUserFromDirectChat", userId })
+        return this.#worker.send({ kind: "unblockUserFromDirectChat", userId })
             .then((resp) => {
                 if (resp.kind === "success") {
                     userStore.unblockUser(userId);
@@ -1487,20 +1478,20 @@ export class OpenChat {
             });
         }
 
-        return this.#sendRequest({ kind: "setUserAvatar", data })
+        return this.#worker.send({ kind: "setUserAvatar", data })
             .then((_resp) => true)
             .catch(() => false);
     }
 
     setUserProfileBackground(data: Uint8Array): Promise<bigint | undefined> {
-        return this.#sendRequest({ kind: "setProfileBackground", data })
+        return this.#worker.send({ kind: "setProfileBackground", data })
             .then((resp) => resp.blobId)
             .catch(() => undefined);
     }
 
     deleteGroup(chatId: MultiUserChatIdentifier): Promise<boolean> {
         // TODO we don't use the local updates mechanism here at the moment for some reason. Probably should.
-        return this.#sendRequest({ kind: "deleteGroup", chatId })
+        return this.#worker.send({ kind: "deleteGroup", chatId })
             .then((resp) => {
                 if (resp.kind === "success") {
                     this.removeChat(chatId);
@@ -1518,7 +1509,7 @@ export class OpenChat {
     deleteDirectChat(userId: string, blockUser: boolean): Promise<boolean> {
         const chatId: ChatIdentifier = { kind: "direct_chat", userId };
         const undo = localUpdates.removeChat(chatId);
-        return this.#sendRequest({ kind: "deleteDirectChat", userId, blockUser })
+        return this.#worker.send({ kind: "deleteDirectChat", userId, blockUser })
             .then((success) => {
                 if (!success) {
                     undo();
@@ -1535,7 +1526,7 @@ export class OpenChat {
         chatId: MultiUserChatIdentifier,
     ): Promise<"success" | "failure" | "owner_cannot_leave"> {
         const undo = localUpdates.removeChat(chatId);
-        return this.#sendRequest({ kind: "leaveGroup", chatId })
+        return this.#worker.send({ kind: "leaveGroup", chatId })
             .then((resp) => {
                 if (resp.kind === "success") {
                     return "success";
@@ -1599,7 +1590,7 @@ export class OpenChat {
 
     markActivityFeedRead(readUpTo: bigint) {
         const undo = localUpdates.setMessageActivityFeedReadUpTo(readUpTo);
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "markActivityFeedRead",
             readUpTo,
         }).catch(undo);
@@ -1608,7 +1599,7 @@ export class OpenChat {
     subscribeToMessageActivityFeed(
         subscribeFn: (value: MessageActivityFeedResponse, final: boolean) => void,
     ) {
-        this.#sendStreamRequest({
+        this.#worker.stream({
             kind: "messageActivityFeed",
             since: messageActivitySummaryStore.value.readUpToTimestamp,
         }).subscribe({
@@ -1636,7 +1627,7 @@ export class OpenChat {
             pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "approveTransfer",
             spender,
             ledger,
@@ -1668,7 +1659,7 @@ export class OpenChat {
         { amount, approvalFee }: PaymentGateApproval,
         pin: string | undefined,
     ): Promise<ApproveAccessGatePaymentResponse> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "approveTransfer",
             spender,
             ledger,
@@ -1701,7 +1692,7 @@ export class OpenChat {
             return approveResponse;
         }
 
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "joinGroup",
             chatId: chat.id,
             credentialArgs: this.#buildVerifiedCredentialArgs(credentials),
@@ -1800,7 +1791,7 @@ export class OpenChat {
 
         const undo = localUpdates.updateCommunityDisplayName(id, displayName);
 
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "setMemberDisplayName",
             communityId: id.communityId,
             displayName,
@@ -1831,7 +1822,7 @@ export class OpenChat {
 
         const newAchievement = !achievementsStore.value.has("followed_thread");
 
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "followThread",
             chatId,
             threadRootMessageIndex,
@@ -2290,7 +2281,7 @@ export class OpenChat {
 
         const newAchievement = !achievementsStore.value.has("voted_on_poll");
 
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "registerPollVote",
             chatId,
             messageIdx,
@@ -2342,7 +2333,7 @@ export class OpenChat {
 
         const newAchievement = !achievementsStore.value.has("deleted_message");
 
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "deleteMessage",
             chatId: id,
             messageId,
@@ -2382,7 +2373,7 @@ export class OpenChat {
 
         undeletingMessagesStore.add(msg.messageId);
 
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "undeleteMessage",
             chatType: chat.kind,
             chatId,
@@ -2415,13 +2406,13 @@ export class OpenChat {
 
         const result =
             chatId.kind === "group_chat" || chatId.kind === "channel"
-                ? this.#sendRequest({
+                ? this.#worker.send({
                       kind: "getDeletedGroupMessage",
                       chatId,
                       messageId,
                       threadRootMessageIndex,
                   })
-                : this.#sendRequest({
+                : this.#worker.send({
                       kind: "getDeletedDirectMessage",
                       userId: chatId.userId,
                       messageId,
@@ -2470,7 +2461,7 @@ export class OpenChat {
 
         const result = (
             kind == "add"
-                ? this.#sendRequest({
+                ? this.#worker.send({
                       kind: "addReaction",
                       chatId,
                       messageId,
@@ -2480,7 +2471,7 @@ export class OpenChat {
                       threadRootMessageIndex,
                       newAchievement,
                   })
-                : this.#sendRequest({
+                : this.#worker.send({
                       kind: "removeReaction",
                       chatId,
                       messageId,
@@ -2524,7 +2515,7 @@ export class OpenChat {
         const chatId = chat.id;
         const threadRootMessageIndex = threadRootEvent.event.messageIndex;
 
-        const eventsResponse: EventsResponse<ChatEvent> = await this.#sendRequest({
+        const eventsResponse: EventsResponse<ChatEvent> = await this.#worker.send({
             kind: "chatEventsWindow",
             eventIndexRange: [0, threadRootEvent.event.thread.latestEventIndex],
             chatId,
@@ -2577,7 +2568,7 @@ export class OpenChat {
             }
 
             const range = indexRangeForChat(clientChat);
-            const eventsResponse: EventsResponse<ChatEvent> = await this.#sendRequest({
+            const eventsResponse: EventsResponse<ChatEvent> = await this.#worker.send({
                 kind: "chatEventsWindow",
                 eventIndexRange: range,
                 chatId,
@@ -2725,7 +2716,7 @@ export class OpenChat {
     blockCommunityUser(id: CommunityIdentifier, userId: string): Promise<boolean> {
         const blockUndo = localUpdates.blockCommunityUser(id, userId);
         const membersUndo = localUpdates.removeCommunityMember(id, userId);
-        return this.#sendRequest({ kind: "blockCommunityUser", id, userId })
+        return this.#worker.send({ kind: "blockCommunityUser", id, userId })
             .then((resp) => {
                 if (resp.kind !== "success") {
                     blockUndo();
@@ -2743,7 +2734,7 @@ export class OpenChat {
 
     unblockCommunityUser(id: CommunityIdentifier, userId: string): Promise<boolean> {
         const undo = localUpdates.unblockCommunityUser(id, userId);
-        return this.#sendRequest({ kind: "unblockCommunityUser", id, userId })
+        return this.#worker.send({ kind: "unblockCommunityUser", id, userId })
             .then((resp) => {
                 if (resp.kind !== "success") {
                     undo();
@@ -2759,7 +2750,7 @@ export class OpenChat {
 
     blockUser(chatId: MultiUserChatIdentifier, userId: string): Promise<boolean> {
         const undo = this.#blockUserLocally(chatId, userId);
-        return this.#sendRequest({ kind: "blockUserFromGroupChat", chatId, userId })
+        return this.#worker.send({ kind: "blockUserFromGroupChat", chatId, userId })
             .then((resp) => {
                 if (resp.kind !== "success") {
                     undo();
@@ -2775,7 +2766,7 @@ export class OpenChat {
 
     unblockUser(chatId: MultiUserChatIdentifier, userId: string): Promise<boolean> {
         const undo = this.#unblockUserLocally(chatId, userId, false);
-        return this.#sendRequest({ kind: "unblockUserFromGroupChat", chatId, userId })
+        return this.#worker.send({ kind: "unblockUserFromGroupChat", chatId, userId })
             .then((resp) => {
                 if (resp.kind !== "success") {
                     undo();
@@ -3060,7 +3051,7 @@ export class OpenChat {
             return Promise.resolve();
         }
 
-        const eventsResponse: EventsResponse<ChatEvent> = await this.#sendRequest({
+        const eventsResponse: EventsResponse<ChatEvent> = await this.#worker.send({
             kind: "chatEvents",
             chatType: chat.kind,
             chatId,
@@ -3269,7 +3260,7 @@ export class OpenChat {
         startIndex: number,
         ascending: boolean,
     ): Promise<EventsResponse<ChatEvent>> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "chatEvents",
             chatType: serverChat.kind,
             chatId: serverChat.id,
@@ -3384,7 +3375,7 @@ export class OpenChat {
 
     async #loadCommunityDetails(community: CommunitySummary): Promise<void> {
         const id = community.id;
-        const resp: CommunityDetailsResponse = await this.#sendRequest({
+        const resp: CommunityDetailsResponse = await this.#worker.send({
             kind: "getCommunityDetails",
             id,
             communityLastUpdated: community.lastUpdated,
@@ -3446,7 +3437,7 @@ export class OpenChat {
         switch (serverChat.kind) {
             case "group_chat":
             case "channel":
-                const resp: GroupChatDetailsResponse = await this.#sendRequest({
+                const resp: GroupChatDetailsResponse = await this.#worker.send({
                     kind: "getGroupDetails",
                     chatId: serverChat.id,
                     chatLastUpdated: serverChat.lastUpdated,
@@ -3585,14 +3576,14 @@ export class OpenChat {
             currentChatEvents.length === 0
                 ? Promise.resolve()
                 : (serverChat.kind === "direct_chat"
-                      ? this.#sendRequest({
+                      ? this.#worker.send({
                             kind: "chatEventsByEventIndex",
                             chatId: serverChat.them,
                             eventIndexes: currentChatEvents,
                             threadRootMessageIndex: undefined,
                             latestKnownUpdate: serverChat.lastUpdated,
                         }).catch(CommonResponses.failure)
-                      : this.#sendRequest({
+                      : this.#worker.send({
                             kind: "chatEventsByEventIndex",
                             chatId: serverChat.id,
                             eventIndexes: currentChatEvents,
@@ -3619,7 +3610,7 @@ export class OpenChat {
         const threadEventPromise =
             currentThreadEvents.length === 0
                 ? Promise.resolve()
-                : this.#sendRequest({
+                : this.#worker.send({
                       kind: "chatEventsByEventIndex",
                       chatId: serverChat.id,
                       eventIndexes: currentThreadEvents,
@@ -3686,7 +3677,7 @@ export class OpenChat {
 
     unpinMessage(chatId: MultiUserChatIdentifier, messageIndex: number): Promise<boolean> {
         const undo = localUpdates.unpinMessage(chatId, messageIndex);
-        return this.#sendRequest({ kind: "unpinMessage", chatId, messageIndex })
+        return this.#worker.send({ kind: "unpinMessage", chatId, messageIndex })
             .then((resp) => {
                 if (resp.kind !== "success") {
                     undo();
@@ -3702,7 +3693,7 @@ export class OpenChat {
 
     pinMessage(chatId: MultiUserChatIdentifier, messageIndex: number): Promise<boolean> {
         const undo = localUpdates.pinMessage(chatId, messageIndex);
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "pinMessage",
             chatId,
             messageIndex,
@@ -3788,7 +3779,7 @@ export class OpenChat {
                 if (event.event.kind === "message") {
                     const { content, messageIndex, messageId } = event.event;
                     if (anyFailedMessages && localUpdates.deleteFailedMessage(context, messageId)) {
-                        this.#sendRequest({
+                        this.#worker.send({
                             kind: "deleteFailedMessage",
                             chatId,
                             messageId,
@@ -3936,7 +3927,7 @@ export class OpenChat {
         threadRootMessageIndex?: number,
     ): Promise<void> {
         localUpdates.deleteFailedMessage({ chatId, threadRootMessageIndex }, messageId);
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "deleteFailedMessage",
             chatId,
             messageId,
@@ -4008,7 +3999,7 @@ export class OpenChat {
 
         const sendMessagePromise: Promise<SendMessageResponse> = new Promise((resolve) => {
             this.#inflightMessagePromises.set(messageId, resolve);
-            this.#sendStreamRequest(
+            this.#worker.stream(
                 {
                     kind: "sendMessage",
                     chatType: chat.kind,
@@ -4021,7 +4012,6 @@ export class OpenChat {
                     pin,
                     newAchievement,
                 },
-                undefined,
             ).subscribe({
                 onResult: (response) => {
                     if (response === "accepted") {
@@ -4475,7 +4465,7 @@ export class OpenChat {
 
             const newAchievement = !achievementsStore.value.has("edited_message");
 
-            return this.#sendRequest({
+            return this.#worker.send({
                 kind: "editMessage",
                 chatId: chat.id,
                 msg,
@@ -4515,7 +4505,7 @@ export class OpenChat {
         };
         const undo = localUpdates.markLinkRemoved(msg.messageId, msg.content);
 
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "editMessage",
             chatId: messageContext.chatId,
             msg,
@@ -4576,7 +4566,7 @@ export class OpenChat {
         const latestEventIndex = Math.max(eventIndex, serverChat.latestEventIndex);
 
         // Load the event
-        this.#sendRequest({
+        this.#worker.send({
             kind: "chatEvents",
             chatType: serverChat.kind,
             chatId,
@@ -4633,7 +4623,7 @@ export class OpenChat {
             return;
         }
 
-        this.#sendRequest({
+        this.#worker.send({
             kind: "rehydrateMessage",
             chatId: serverChat.id,
             message: messageEvent,
@@ -4867,14 +4857,14 @@ export class OpenChat {
     }
 
     checkUsername(username: string, isBot: boolean): Promise<CheckUsernameResponse> {
-        return this.#sendRequest({ kind: "checkUsername", username, isBot }).then((resp) => {
+        return this.#worker.send({ kind: "checkUsername", username, isBot }).then((resp) => {
             console.log("Resp: ", resp);
             return resp;
         });
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
-        return this.#sendRequest({ kind: "searchUsers", searchTerm, maxResults })
+        return this.#worker.send({ kind: "searchUsers", searchTerm, maxResults })
             .then((resp) => {
                 userStore.addMany(resp);
                 return resp;
@@ -5031,7 +5021,7 @@ export class OpenChat {
     }
 
     registerBot(principal: string, bot: ExternalBot): Promise<boolean> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "registerBot",
             principal,
             bot,
@@ -5049,7 +5039,7 @@ export class OpenChat {
     }
 
     removeBot(botId: string): Promise<boolean> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "removeBot",
             botId,
         })
@@ -5073,7 +5063,7 @@ export class OpenChat {
         endpoint?: string,
         definition?: BotDefinition,
     ): Promise<boolean> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "updateRegisteredBot",
             id,
             principal,
@@ -5095,7 +5085,7 @@ export class OpenChat {
     }
 
     registerUser(username: string, email: string | undefined): Promise<RegisterUserResponse> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "registerUser",
             username,
             email,
@@ -5126,7 +5116,7 @@ export class OpenChat {
     getCurrentUser(): Promise<CurrentUserResponse> {
         return new Promise((resolve, reject) => {
             let resolved = false;
-            this.#sendStreamRequest({ kind: "getCurrentUser" }).subscribe({
+            this.#worker.stream({ kind: "getCurrentUser" }).subscribe({
                 onResult: (user) => {
                     if (user.kind === "created_user") {
                         userCreatedStore.set(true);
@@ -5173,15 +5163,15 @@ export class OpenChat {
     }
 
     #subscriptionExists(endpoint: string): Promise<boolean> {
-        return this.#sendRequest({ kind: "subscriptionExists", endpoint }).catch(() => false);
+        return this.#worker.send({ kind: "subscriptionExists", endpoint }).catch(() => false);
     }
 
     #pushSubscription(subscription: PushSubscriptionJSON): Promise<void> {
-        return this.#sendRequest({ kind: "pushSubscription", subscription });
+        return this.#worker.send({ kind: "pushSubscription", subscription });
     }
 
     #removeSubscription(endpoint: string): Promise<void> {
-        return this.#sendRequest({ kind: "removeSubscription", endpoint });
+        return this.#worker.send({ kind: "removeSubscription", endpoint });
     }
 
     #inviteUsersLocally(
@@ -5217,11 +5207,11 @@ export class OpenChat {
     }
 
     checkFcmTokenExists(fcmToken: string): Promise<boolean> {
-        return this.#sendRequest({ kind: "fcmTokenExists", fcmToken });
+        return this.#worker.send({ kind: "fcmTokenExists", fcmToken });
     }
 
     addFcmToken(fcmToken: string, onResponseError?: (error: string | null) => void): Promise<void> {
-        return this.#sendRequest({ kind: "addFcmToken", fcmToken, onResponseError });
+        return this.#worker.send({ kind: "addFcmToken", fcmToken, onResponseError });
     }
 
     inviteUsers(
@@ -5229,7 +5219,7 @@ export class OpenChat {
         userIds: string[],
     ): Promise<boolean> {
         const undo = this.#inviteUsersLocally(id, userIds);
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "inviteUsers",
             id,
             userIds,
@@ -5252,7 +5242,7 @@ export class OpenChat {
         userIds: string[],
     ): Promise<boolean> {
         this.#uninviteUsersLocally(id, userIds);
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "cancelInvites",
             id,
             userIds,
@@ -5273,7 +5263,7 @@ export class OpenChat {
         chatId: ChannelIdentifier,
         userIds: string[],
     ): Promise<AddMembersToChannelResponse> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "addMembersToChannel",
             chatId,
             userIds,
@@ -5286,7 +5276,7 @@ export class OpenChat {
 
     removeCommunityMember(id: CommunityIdentifier, userId: string): Promise<RemoveMemberResponse> {
         const undo = localUpdates.removeCommunityMember(id, userId);
-        return this.#sendRequest({ kind: "removeCommunityMember", id, userId })
+        return this.#worker.send({ kind: "removeCommunityMember", id, userId })
             .then((resp) => {
                 if (resp.kind !== "success") {
                     undo();
@@ -5301,7 +5291,7 @@ export class OpenChat {
 
     removeMember(chatId: MultiUserChatIdentifier, userId: string): Promise<RemoveMemberResponse> {
         const undo = localUpdates.removeChatMember(chatId, userId);
-        return this.#sendRequest({ kind: "removeMember", chatId, userId })
+        return this.#worker.send({ kind: "removeMember", chatId, userId })
             .then((resp) => {
                 if (resp.kind !== "success") {
                     undo();
@@ -5328,7 +5318,7 @@ export class OpenChat {
             undo = localUpdates.updateCommunityMember(id, userId, { ...m, role: newRole });
         }
 
-        return this.#sendRequest({ kind: "changeCommunityRole", id, userId, newRole })
+        return this.#worker.send({ kind: "changeCommunityRole", id, userId, newRole })
             .then((resp) => {
                 return resp.kind === "success";
             })
@@ -5355,7 +5345,7 @@ export class OpenChat {
             selectedChatMembersStore.value.get(userId),
             (m) => ({ ...m, role: newRole }),
         );
-        return this.#sendRequest({ kind: "changeRole", chatId, userId, newRole })
+        return this.#worker.send({ kind: "changeRole", chatId, userId, newRole })
             .then((resp) => {
                 return resp.kind === "success";
             })
@@ -5373,14 +5363,13 @@ export class OpenChat {
         messageIndex: number,
         adopt: boolean,
     ): Promise<RegisterProposalVoteResponse> {
-        return this.#sendRequest(
+        return this.#worker.send(
             {
                 kind: "registerProposalVote",
                 chatId,
                 messageIndex,
                 adopt,
             },
-            false,
         ).catch(CommonResponses.failure);
     }
 
@@ -5390,7 +5379,7 @@ export class OpenChat {
         proposalId: bigint,
         isNns: boolean,
     ): Promise<ProposalVoteDetails> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "getProposalVoteDetails",
             governanceCanisterId,
             proposalId,
@@ -5412,14 +5401,14 @@ export class OpenChat {
 
         recommendedGroupExclusions.value.forEach((c) => exclusions.add(c));
 
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "getRecommendedGroups",
             exclusions: [...exclusions],
         }).catch(() => []);
     }
 
     searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
-        return this.#sendRequest({ kind: "searchGroups", searchTerm, maxResults });
+        return this.#worker.send({ kind: "searchGroups", searchTerm, maxResults });
     }
 
     exploreBots(
@@ -5429,7 +5418,7 @@ export class OpenChat {
         location: BotInstallationLocation | undefined,
         excludeInstalled: boolean,
     ): Promise<ExploreBotsResponse> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "exploreBots",
             searchTerm,
             pageIndex,
@@ -5446,7 +5435,7 @@ export class OpenChat {
         flags: number,
         languages: string[],
     ): Promise<ExploreCommunitiesResponse> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "exploreCommunities",
             searchTerm,
             pageIndex,
@@ -5462,7 +5451,7 @@ export class OpenChat {
         pageIndex: number,
         pageSize: number,
     ): Promise<ExploreChannelsResponse> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "exploreChannels",
             id,
             searchTerm,
@@ -5473,12 +5462,12 @@ export class OpenChat {
 
     dismissRecommendation(chatId: GroupChatIdentifier): Promise<void> {
         recommendedGroupExclusions.add(chatIdentifierToString(chatId));
-        return this.#sendRequest({ kind: "dismissRecommendation", chatId });
+        return this.#worker.send({ kind: "dismissRecommendation", chatId });
     }
 
     set groupInvite(value: GroupInvite) {
         this.config.groupInvite = value;
-        this.#sendRequest({
+        this.#worker.send({
             kind: "groupInvite",
             value,
         });
@@ -5486,7 +5475,7 @@ export class OpenChat {
 
     setCommunityInvite(value: CommunityInvite): Promise<void> {
         this.config.communityInvite = value;
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "communityInvite",
             value,
         });
@@ -5495,7 +5484,7 @@ export class OpenChat {
     setCommunityReferral(communityId: CommunityIdentifier, referredBy: string) {
         // make sure that we can't refer ourselves
         if (currentUserIdStore.value !== referredBy) {
-            return this.#sendRequest({
+            return this.#worker.send({
                 kind: "setCommunityReferral",
                 communityId,
                 referredBy,
@@ -5512,7 +5501,7 @@ export class OpenChat {
         switch (chatId.kind) {
             case "channel":
             case "group_chat":
-                return this.#sendRequest({
+                return this.#worker.send({
                     kind: "searchGroupChat",
                     chatId,
                     searchTerm,
@@ -5520,7 +5509,7 @@ export class OpenChat {
                     maxResults,
                 });
             case "direct_chat":
-                return this.#sendRequest({
+                return this.#worker.send({
                     kind: "searchDirectChat",
                     chatId,
                     searchTerm,
@@ -5552,7 +5541,7 @@ export class OpenChat {
         const promise: Promise<bigint> = new Promise((resolve) => {
             this.#refreshBalanceSemaphore
                 .execute(() => {
-                    return this.#sendRequest({
+                    return this.#worker.send({
                         kind: "refreshAccountBalance",
                         ledger,
                         principal: user.userId,
@@ -5573,7 +5562,7 @@ export class OpenChat {
     }
 
     refreshTranslationsBalance(): Promise<bigint> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "refreshAccountBalance",
             ledger: LEDGER_CANISTER_CHAT,
             principal: this.config.translationsCanister,
@@ -5584,7 +5573,7 @@ export class OpenChat {
         ledgerIndex: string,
         fromId?: bigint,
     ): Promise<AccountTransactionResult> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "getAccountTransactions",
             ledgerIndex: ledgerIndex,
             fromId,
@@ -5612,7 +5601,7 @@ export class OpenChat {
             new ChatMap<[ThreadSyncDetails[], bigint | undefined]>(),
         );
 
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "threadPreviews",
             threadsByChat: request.toMap() as Map<
                 string,
@@ -5659,7 +5648,7 @@ export class OpenChat {
             });
         }
 
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "getUsers",
             users: { userGroups },
             allowStale,
@@ -5686,7 +5675,7 @@ export class OpenChat {
     }
 
     getUser(userId: string, allowStale = false): Promise<UserSummary | undefined> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "getUser",
             userId,
             allowStale,
@@ -5728,11 +5717,11 @@ export class OpenChat {
     }
 
     getPublicProfile(userId?: string): Stream<PublicProfile | undefined> {
-        return this.#sendStreamRequest({ kind: "getPublicProfile", userId });
+        return this.#worker.stream({ kind: "getPublicProfile", userId });
     }
 
     setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
-        return this.#sendRequest({ kind: "setUsername", userId, username }).then((resp) => {
+        return this.#worker.send({ kind: "setUsername", userId, username }).then((resp) => {
             if (resp === "success") {
                 currentUserStore.set({
                     ...currentUserStore.value,
@@ -5748,7 +5737,7 @@ export class OpenChat {
         userId: string,
         displayName: string | undefined,
     ): Promise<SetDisplayNameResponse> {
-        return this.#sendRequest({ kind: "setDisplayName", userId, displayName }).then((resp) => {
+        return this.#worker.send({ kind: "setDisplayName", userId, displayName }).then((resp) => {
             if (resp === "success") {
                 currentUserStore.set({
                     ...currentUserStore.value,
@@ -5761,11 +5750,11 @@ export class OpenChat {
     }
 
     setBio(bio: string): Promise<SetBioResponse> {
-        return this.#sendRequest({ kind: "setBio", bio });
+        return this.#worker.send({ kind: "setBio", bio });
     }
 
     getBio(userId?: string): Promise<string> {
-        return this.#sendRequest({ kind: "getBio", userId });
+        return this.#worker.send({ kind: "getBio", userId });
     }
 
     getProfileBackgroundImage(_userId?: string): Promise<DataContent | undefined> {
@@ -5781,7 +5770,7 @@ export class OpenChat {
             pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
-        return this.#sendRequest({ kind: "withdrawCryptocurrency", domain, pin }).then((resp) => {
+        return this.#worker.send({ kind: "withdrawCryptocurrency", domain, pin }).then((resp) => {
             if (resp.kind === "error") {
                 const pinNumberFailure = pinNumberFailureFromError(resp);
                 if (pinNumberFailure !== undefined) {
@@ -5801,7 +5790,7 @@ export class OpenChat {
         const serverChat = allServerChatsStore.value.get(chatId);
 
         try {
-            const resp = await this.#sendRequest({
+            const resp = await this.#worker.send({
                 kind: "getMessagesByMessageIndex",
                 chatId,
                 threadRootMessageIndex,
@@ -5818,25 +5807,25 @@ export class OpenChat {
     }
 
     getInviteCode(id: GroupChatIdentifier | CommunityIdentifier): Promise<InviteCodeResponse> {
-        return this.#sendRequest({ kind: "getInviteCode", id }).catch(CommonResponses.failure);
+        return this.#worker.send({ kind: "getInviteCode", id }).catch(CommonResponses.failure);
     }
 
     enableInviteCode(
         id: GroupChatIdentifier | CommunityIdentifier,
     ): Promise<EnableInviteCodeResponse> {
-        return this.#sendRequest({ kind: "enableInviteCode", id }).catch(CommonResponses.failure);
+        return this.#worker.send({ kind: "enableInviteCode", id }).catch(CommonResponses.failure);
     }
 
     disableInviteCode(
         id: GroupChatIdentifier | CommunityIdentifier,
     ): Promise<DisableInviteCodeResponse> {
-        return this.#sendRequest({ kind: "disableInviteCode", id }).catch(CommonResponses.failure);
+        return this.#worker.send({ kind: "disableInviteCode", id }).catch(CommonResponses.failure);
     }
 
     resetInviteCode(
         id: GroupChatIdentifier | CommunityIdentifier,
     ): Promise<ResetInviteCodeResponse> {
-        return this.#sendRequest({ kind: "resetInviteCode", id }).catch(CommonResponses.failure);
+        return this.#worker.send({ kind: "resetInviteCode", id }).catch(CommonResponses.failure);
     }
 
     updateGroup(
@@ -5852,7 +5841,7 @@ export class OpenChat {
         messagesVisibleToNonMembers?: boolean,
         externalUrl?: string,
     ): Promise<UpdateGroupResponse> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "updateGroup",
             chatId,
             name,
@@ -5907,7 +5896,7 @@ export class OpenChat {
     }
 
     createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
-        return this.#sendRequest({ kind: "createGroupChat", candidate }).then((resp) => {
+        return this.#worker.send({ kind: "createGroupChat", candidate }).then((resp) => {
             if (resp.kind === "success") {
                 const group = groupChatFromCandidate(resp.canisterId, candidate);
                 localUpdates.addChat(group);
@@ -5921,19 +5910,19 @@ export class OpenChat {
     }
 
     freezeCommunity(id: CommunityIdentifier, reason: string | undefined): Promise<boolean> {
-        return this.#sendRequest({ kind: "freezeCommunity", id, reason })
+        return this.#worker.send({ kind: "freezeCommunity", id, reason })
             .then((resp) => resp === "success")
             .catch(() => false);
     }
 
     unfreezeCommunity(id: CommunityIdentifier): Promise<boolean> {
-        return this.#sendRequest({ kind: "unfreezeCommunity", id })
+        return this.#worker.send({ kind: "unfreezeCommunity", id })
             .then((resp) => resp === "success")
             .catch(() => false);
     }
 
     freezeGroup(chatId: GroupChatIdentifier, reason: string | undefined): Promise<boolean> {
-        return this.#sendRequest({ kind: "freezeGroup", chatId, reason })
+        return this.#worker.send({ kind: "freezeGroup", chatId, reason })
             .then((resp) => {
                 if (typeof resp !== "string") {
                     this.#onChatFrozen(chatId, resp);
@@ -5945,7 +5934,7 @@ export class OpenChat {
     }
 
     unfreezeGroup(chatId: GroupChatIdentifier): Promise<boolean> {
-        return this.#sendRequest({ kind: "unfreezeGroup", chatId })
+        return this.#worker.send({ kind: "unfreezeGroup", chatId })
             .then((resp) => {
                 if (typeof resp !== "string") {
                     this.#onChatFrozen(chatId, resp);
@@ -5957,25 +5946,25 @@ export class OpenChat {
     }
 
     deleteFrozenGroup(chatId: GroupChatIdentifier): Promise<boolean> {
-        return this.#sendRequest({ kind: "deleteFrozenGroup", chatId })
+        return this.#worker.send({ kind: "deleteFrozenGroup", chatId })
             .then((resp) => resp === "success")
             .catch(() => false);
     }
 
     addHotGroupExclusion(chatId: GroupChatIdentifier): Promise<boolean> {
-        return this.#sendRequest({ kind: "addHotGroupExclusion", chatId })
+        return this.#worker.send({ kind: "addHotGroupExclusion", chatId })
             .then((resp) => resp === "success")
             .catch(() => false);
     }
 
     removeHotGroupExclusion(chatId: GroupChatIdentifier): Promise<boolean> {
-        return this.#sendRequest({ kind: "removeHotGroupExclusion", chatId })
+        return this.#worker.send({ kind: "removeHotGroupExclusion", chatId })
             .then((resp) => resp === "success")
             .catch(() => false);
     }
 
     addRemoveSwapProvider(swapProvider: DexId, add: boolean): Promise<boolean> {
-        return this.#sendRequest({ kind: "addRemoveSwapProvider", swapProvider, add });
+        return this.#worker.send({ kind: "addRemoveSwapProvider", swapProvider, add });
     }
 
     addMessageFilter(regex: string): Promise<boolean> {
@@ -5986,15 +5975,15 @@ export class OpenChat {
             return Promise.resolve(false);
         }
 
-        return this.#sendRequest({ kind: "addMessageFilter", regex });
+        return this.#worker.send({ kind: "addMessageFilter", regex });
     }
 
     removeMessageFilter(id: bigint): Promise<boolean> {
-        return this.#sendRequest({ kind: "removeMessageFilter", id }).catch(() => false);
+        return this.#worker.send({ kind: "removeMessageFilter", id }).catch(() => false);
     }
 
     suspendUser(userId: string, reason: string): Promise<boolean> {
-        return this.#sendRequest({ kind: "suspendUser", userId, reason })
+        return this.#worker.send({ kind: "suspendUser", userId, reason })
             .then((resp) => {
                 if (resp === "success") {
                     userStore.userSuspended(userId, true);
@@ -6005,7 +5994,7 @@ export class OpenChat {
     }
 
     unsuspendUser(userId: string): Promise<boolean> {
-        return this.#sendRequest({ kind: "unsuspendUser", userId })
+        return this.#worker.send({ kind: "unsuspendUser", userId })
             .then((resp) => {
                 if (resp === "success") {
                     userStore.userSuspended(userId, false);
@@ -6016,37 +6005,37 @@ export class OpenChat {
     }
 
     setCommunityModerationFlags(communityId: string, flags: number): Promise<boolean> {
-        return this.#sendRequest({ kind: "setCommunityModerationFlags", communityId, flags })
+        return this.#worker.send({ kind: "setCommunityModerationFlags", communityId, flags })
             .then((resp) => resp === "success")
             .catch(() => false);
     }
 
     setGroupUpgradeConcurrency(value: number): Promise<boolean> {
-        return this.#sendRequest({ kind: "setGroupUpgradeConcurrency", value })
+        return this.#worker.send({ kind: "setGroupUpgradeConcurrency", value })
             .then((resp) => resp === "success")
             .catch(() => false);
     }
 
     setCommunityUpgradeConcurrency(value: number): Promise<boolean> {
-        return this.#sendRequest({ kind: "setCommunityUpgradeConcurrency", value })
+        return this.#worker.send({ kind: "setCommunityUpgradeConcurrency", value })
             .then((resp) => resp === "success")
             .catch(() => false);
     }
 
     setUserUpgradeConcurrency(value: number): Promise<boolean> {
-        return this.#sendRequest({ kind: "setUserUpgradeConcurrency", value })
+        return this.#worker.send({ kind: "setUserUpgradeConcurrency", value })
             .then((resp) => resp === "success")
             .catch(() => false);
     }
 
     markLocalGroupIndexFull(canisterId: string, full: boolean): Promise<boolean> {
-        return this.#sendRequest({ kind: "markLocalGroupIndexFull", canisterId, full }).catch(
+        return this.#worker.send({ kind: "markLocalGroupIndexFull", canisterId, full }).catch(
             () => false,
         );
     }
 
     setDiamondMembershipFees(fees: DiamondMembershipFees[]): Promise<boolean> {
-        return this.#sendRequest({ kind: "setDiamondMembershipFees", fees }).catch(() => false);
+        return this.#worker.send({ kind: "setDiamondMembershipFees", fees }).catch(() => false);
     }
 
     setAirdropConfig(
@@ -6055,7 +6044,7 @@ export class OpenChat {
         communityId?: string,
         communityName?: string,
     ): Promise<boolean> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "setAirdropConfig",
             channelId,
             channelName,
@@ -6065,14 +6054,14 @@ export class OpenChat {
     }
 
     setTokenEnabled(ledger: string, enabled: boolean): Promise<boolean> {
-        return this.#sendRequest({ kind: "setTokenEnabled", ledger, enabled });
+        return this.#worker.send({ kind: "setTokenEnabled", ledger, enabled });
     }
 
     stakeNeuronForSubmittingProposals(
         governanceCanisterId: string,
         stake: bigint,
     ): Promise<boolean> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "stakeNeuronForSubmittingProposals",
             governanceCanisterId,
             stake,
@@ -6085,7 +6074,7 @@ export class OpenChat {
         governanceCanisterId: string,
         amount: bigint,
     ): Promise<boolean> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "topUpNeuronForSubmittingProposals",
             governanceCanisterId,
             amount,
@@ -6490,7 +6479,7 @@ export class OpenChat {
 
     async #loadBots() {
         return new Promise<void>((resolve) => {
-            this.#sendStreamRequest({
+            this.#worker.stream({
                 kind: "getBots",
                 initialLoad: !this.#botsLoaded,
             }).subscribe({
@@ -6514,7 +6503,7 @@ export class OpenChat {
         const updateRegistryTask = initialLoad ? this.#updateRegistry() : undefined;
 
         return new Promise<void>((resolve) => {
-            this.#sendStreamRequest({
+            this.#worker.stream({
                 kind: "getUpdates",
                 initialLoad,
             }).subscribe({
@@ -6557,7 +6546,7 @@ export class OpenChat {
         this.#lastOnlineDatesPending.clear();
 
         try {
-            const response = await this.#sendRequest({ kind: "lastOnline", userIds });
+            const response = await this.#worker.send({ kind: "lastOnline", userIds });
             // for any userIds that did not come back in the response set the lastOnline value to 0
             // we still want to capture a value so that we don't keep trying to look up the same user over and over
             const updates = userIds.reduce(
@@ -6636,7 +6625,7 @@ export class OpenChat {
             return Promise.resolve(false);
         }
 
-        return this.#sendRequest({ kind: "claimPrize", chatId, messageId, signInProof })
+        return this.#worker.send({ kind: "claimPrize", chatId, messageId, signInProof })
             .then((resp) => {
                 if (resp.kind !== "success") {
                     return false;
@@ -6666,7 +6655,7 @@ export class OpenChat {
 
         const newAchievement = !achievementsStore.value.has("accepted_swap_offer");
 
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "acceptP2PSwap",
             chatId,
             threadRootMessageIndex,
@@ -6707,7 +6696,7 @@ export class OpenChat {
         const undo = localUpdates.setP2PSwapStatus(messageId, {
             kind: "p2p_swap_cancelled",
         });
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "cancelP2PSwap",
             chatId,
             threadRootMessageIndex,
@@ -6732,7 +6721,7 @@ export class OpenChat {
     joinVideoCall(chatId: ChatIdentifier, messageId: bigint): Promise<JoinVideoCallResponse> {
         const newAchievement = !achievementsStore.value.has("joined_call");
 
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "joinVideoCall",
             chatId,
             messageId,
@@ -6747,7 +6736,7 @@ export class OpenChat {
     ): Promise<boolean> {
         const newAchievement = !achievementsStore.value.has("joined_call");
 
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "setVideoCallPresence",
             chatId,
             messageId,
@@ -6791,7 +6780,7 @@ export class OpenChat {
         hidden: Record<string, UserSummary>;
         lastUpdated: bigint;
     }> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "videoCallParticipants",
             chatId,
             messageId,
@@ -6866,13 +6855,13 @@ export class OpenChat {
     }
 
     diamondMembershipFees(): Promise<DiamondMembershipFees[]> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "diamondMembershipFees",
         }).catch(() => []);
     }
 
     reportedMessages(userId: string | undefined): Promise<string> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "reportedMessages",
             userId,
         });
@@ -6884,7 +6873,7 @@ export class OpenChat {
         recurring: boolean,
         expectedPriceE8s: bigint,
     ): Promise<PayForDiamondMembershipResponse> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "payForDiamondMembership",
             userId: currentUserIdStore.value,
             ledger,
@@ -6912,7 +6901,7 @@ export class OpenChat {
         notes?: string,
         threadRootMessageIndex?: number,
     ): Promise<boolean> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "setMessageReminder",
             chatId,
             eventIndex,
@@ -6931,7 +6920,7 @@ export class OpenChat {
         content: MessageReminderCreatedContent,
     ): Promise<boolean> {
         const undo = localUpdates.markCancelledReminder(messageId, content);
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "cancelMessageReminder",
             reminderId: content.reminderId,
         }).catch(() => {
@@ -6946,7 +6935,7 @@ export class OpenChat {
         messageId: bigint,
         deleteMessage: boolean,
     ): Promise<boolean> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "reportMessage",
             chatId,
             threadRootMessageIndex,
@@ -6956,7 +6945,7 @@ export class OpenChat {
     }
 
     declineInvitation(chatId: MultiUserChatIdentifier): Promise<boolean> {
-        return this.#sendRequest({ kind: "declineInvitation", chatId })
+        return this.#worker.send({ kind: "declineInvitation", chatId })
             .then((res) => {
                 return res.kind === "success";
             })
@@ -6966,7 +6955,7 @@ export class OpenChat {
     updateMarketMakerConfig(
         config: UpdateMarketMakerConfigArgs,
     ): Promise<UpdateMarketMakerConfigResponse> {
-        return this.#sendRequest({ kind: "updateMarketMakerConfig", ...config });
+        return this.#worker.send({ kind: "updateMarketMakerConfig", ...config });
     }
 
     displayName(user?: UserSummary): string {
@@ -6986,7 +6975,7 @@ export class OpenChat {
             moderationFlagsEnabled: flags,
         });
 
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "setModerationFlags",
             flags,
         })
@@ -7022,7 +7011,7 @@ export class OpenChat {
         const decimals = cryptoLookup.value.get(transfer.ledger)?.decimals ?? 0;
         const undo = localUpdates.markTip(messageId, transfer.ledger, userId, totalTip);
 
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "tipMessage",
             messageContext,
             messageId,
@@ -7051,13 +7040,13 @@ export class OpenChat {
     }
 
     loadSavedCryptoAccounts(): Promise<NamedAccount[]> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "loadSavedCryptoAccounts",
         }).catch(() => []);
     }
 
     saveCryptoAccount(namedAccount: NamedAccount): Promise<SaveCryptoAccountResponse> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "saveCryptoAccount",
             namedAccount,
         }).catch(() => ({ kind: "failure" }));
@@ -7066,7 +7055,7 @@ export class OpenChat {
     async #updateRegistry(): Promise<void> {
         let resolved = false;
         return new Promise((resolve) => {
-            this.#sendStreamRequest({
+            this.#worker.stream({
                 kind: "updateRegistry",
             }).subscribe({
                 onResult: ([registry, updated]) => {
@@ -7127,7 +7116,7 @@ export class OpenChat {
     }
 
     #updateExchangeRates(): Promise<void> {
-        return this.#sendRequest({ kind: "exchangeRates" })
+        return this.#worker.send({ kind: "exchangeRates" })
             .then((exchangeRates) =>
                 exchangeRatesLookupStore.set(new Map(Object.entries(exchangeRates))),
             )
@@ -7223,7 +7212,7 @@ export class OpenChat {
             return Promise.resolve(false);
         }
 
-        return this.#sendRequest(
+        return this.#worker.send(
             {
                 kind: "submitProposal",
                 currentUserId: currentUserIdStore.value,
@@ -7234,7 +7223,6 @@ export class OpenChat {
                 proposalRejectionFee: nervousSystem.proposalRejectionFee,
                 transactionFee: nervousSystem.token.transferFee,
             },
-            false,
         )
             .then((resp) => {
                 if (resp.kind === "success" || resp.kind === "retrying") {
@@ -7248,7 +7236,7 @@ export class OpenChat {
     }
 
     refreshSwappableTokens(): Promise<Set<string>> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "canSwap",
             tokenLedgers: new Set([...cryptoLookup.value.keys()]),
         }).then((tokens) => {
@@ -7262,7 +7250,7 @@ export class OpenChat {
             (t) => t !== inputTokenLedger,
         );
 
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "getTokenSwaps",
             inputTokenLedger,
             outputTokenLedgers,
@@ -7274,7 +7262,7 @@ export class OpenChat {
         outputTokenLedger: string,
         amountIn: bigint,
     ): Promise<[DexId, bigint][]> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "getTokenSwapQuotes",
             inputTokenLedger,
             outputTokenLedger,
@@ -7298,7 +7286,7 @@ export class OpenChat {
 
         const lookup = cryptoLookup.value;
 
-        return this.#sendRequest(
+        return this.#worker.send(
             {
                 kind: "swapTokens",
                 swapId,
@@ -7309,7 +7297,6 @@ export class OpenChat {
                 dex,
                 pin,
             },
-            false,
         ).then((resp) => {
             if (resp.kind === "error") {
                 const pinNumberFailure = pinNumberFailureFromError(resp);
@@ -7323,7 +7310,7 @@ export class OpenChat {
     }
 
     tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "tokenSwapStatus",
             swapId,
         });
@@ -7345,7 +7332,7 @@ export class OpenChat {
         key: string,
         value: string,
     ): Promise<ProposeResponse> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "proposeTranslation",
             locale,
             key,
@@ -7361,7 +7348,7 @@ export class OpenChat {
     }
 
     getProposedTranslationCorrections(): Promise<CandidateTranslations[]> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "getProposedTranslations",
         })
             .then((res) => (res.kind === "success" ? res.proposed : []))
@@ -7369,7 +7356,7 @@ export class OpenChat {
     }
 
     rejectTranslationCorrection(id: bigint, reason: RejectReason): Promise<boolean> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "rejectTranslation",
             id,
             reason,
@@ -7379,7 +7366,7 @@ export class OpenChat {
     }
 
     approveTranslationCorrection(id: bigint): Promise<boolean> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "approveTranslation",
             id,
         })
@@ -7514,7 +7501,7 @@ export class OpenChat {
                     throw new Error(`Unable to get the local user index for channel: ${chat.id}`);
                 }
             case "direct_chat":
-                return this.#sendRequest({
+                return this.#worker.send({
                     kind: "getLocalUserIndexForUser",
                     userId: flipDirect ? currentUserIdStore.value : chat.them.userId,
                 });
@@ -7551,7 +7538,7 @@ export class OpenChat {
             );
         }
         return this.#getLocalUserIndex(chat).then((localUserIndex) => {
-            return this.#sendRequest({
+            return this.#worker.send({
                 kind: "getAccessToken",
                 accessTokenType: { kind: "mark_video_call_ended", chatId },
                 localUserIndex,
@@ -7576,7 +7563,7 @@ export class OpenChat {
         }
 
         return this.#getLocalUserIndex(chat).then((localUserIndex) => {
-            return this.#sendRequest({
+            return this.#worker.send({
                 kind: "getAccessToken",
                 chatId,
                 accessTokenType,
@@ -7620,7 +7607,7 @@ export class OpenChat {
     }
 
     #oneSecEnableForwarding(userId: string, evmAddress: string) {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "oneSecEnableForwarding",
             userId,
             evmAddress,
@@ -7632,7 +7619,7 @@ export class OpenChat {
         if (balances.length > 0) {
             // Notify the OneSec minter of any tokens with non-zero balances
             for (const balance of balances) {
-                this.#sendRequest({
+                this.#worker.send({
                     kind: "oneSecForwardEvmToIcp",
                     chain: balance.chain,
                     tokenSymbol: balance.token,
@@ -7659,7 +7646,7 @@ export class OpenChat {
         if (this.#getBtcAddressPromise !== undefined) {
             return this.#getBtcAddressPromise;
         }
-        this.#getBtcAddressPromise = this.#sendRequest({
+        this.#getBtcAddressPromise = this.#worker.send({
             kind: "generateBtcAddress",
         });
         const address = await this.#getBtcAddressPromise.finally(
@@ -7677,7 +7664,7 @@ export class OpenChat {
         if (this.#getOneSecAddressPromise !== undefined) {
             return this.#getOneSecAddressPromise;
         }
-        this.#getOneSecAddressPromise = this.#sendRequest({
+        this.#getOneSecAddressPromise = this.#worker.send({
             kind: "generateOneSecAddress",
         });
         const address = await this.#getOneSecAddressPromise.finally(
@@ -7694,7 +7681,7 @@ export class OpenChat {
             pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
-        const response = await this.#sendRequest({
+        const response = await this.#worker.send({
             kind: "withdrawBtc",
             address,
             amount,
@@ -7723,7 +7710,7 @@ export class OpenChat {
             pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
-        const response = await this.#sendRequest({
+        const response = await this.#worker.send({
             kind: "withdrawViaOneSec",
             ledger,
             tokenSymbol,
@@ -7743,7 +7730,7 @@ export class OpenChat {
     }
 
     async #updateBtcBalance(address: string): Promise<void> {
-        await this.#sendRequest({
+        await this.#worker.send({
             kind: "updateBtcBalance",
             userId: currentUserIdStore.value,
             bitcoinAddress: address,
@@ -7751,20 +7738,20 @@ export class OpenChat {
     }
 
     getCkbtcMinterDepositInfo(): Promise<CkbtcMinterDepositInfo> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "ckbtcMinterDepositInfo",
         });
     }
 
     getCkbtcMinterWithdrawalInfo(amount: bigint): Promise<CkbtcMinterWithdrawalInfo> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "ckbtcMinterWithdrawalInfo",
             amount,
         });
     }
 
     oneSecGetTransferFees(): Promise<OneSecTransferFees[]> {
-        return this.#sendRequest({ kind: "oneSecGetTransferFees" });
+        return this.#worker.send({ kind: "oneSecGetTransferFees" });
     }
 
     oneSecForwardEvmToIcp(
@@ -7772,7 +7759,7 @@ export class OpenChat {
         chain: EvmChain,
         address: string,
     ): Promise<OneSecForwardingStatus> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "oneSecForwardEvmToIcp",
             tokenSymbol,
             chain,
@@ -7786,7 +7773,7 @@ export class OpenChat {
         chain: EvmChain,
         address: string,
     ): Promise<OneSecForwardingStatus> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "oneSecGetForwardingStatus",
             tokenSymbol,
             chain,
@@ -7920,7 +7907,7 @@ export class OpenChat {
     > {
         const webAuthnKey =
             this.#webAuthnKey ??
-            (await this.#sendRequest({
+            (await this.#worker.send({
                 kind: "currentUserWebAuthnKey",
             }));
         if (webAuthnKey === undefined) throw new Error("WebAuthnKey not set");
@@ -7960,7 +7947,7 @@ export class OpenChat {
     }
 
     async lookupWebAuthnPubKey(credentialId: Uint8Array): Promise<Uint8Array> {
-        const pubKey = await this.#sendRequest({
+        const pubKey = await this.#worker.send({
             kind: "lookupWebAuthnPubKey",
             credentialId,
         });
@@ -7972,14 +7959,14 @@ export class OpenChat {
     }
 
     #storeWebAuthnKeyInCache(key: WebAuthnKeyFull): Promise<void> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "setCachedWebAuthnKey",
             key,
         });
     }
 
     getSignInProof(identityKey: ECDSAKeyIdentity, delegation: DelegationChain): Promise<string> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "getSignInProof",
             identityKey: identityKey.getKeyPair(),
             delegation: delegation.toJSON(),
@@ -7992,7 +7979,7 @@ export class OpenChat {
     ): Promise<GenerateMagicLinkResponse> {
         const sessionKeyDer = toDer(sessionKey);
 
-        const resp = await this.#sendRequest({
+        const resp = await this.#worker.send({
             kind: "generateMagicLink",
             email,
             sessionKey: sessionKeyDer,
@@ -8019,14 +8006,14 @@ export class OpenChat {
     }
 
     getExternalAchievements() {
-        return this.#sendRequest({ kind: "getExternalAchievements" }).catch((err) => {
+        return this.#worker.send({ kind: "getExternalAchievements" }).catch((err) => {
             console.error("getExternalAchievements error", err);
             return [];
         });
     }
 
     markAchievementsSeen() {
-        this.#sendRequest({ kind: "markAchievementsSeen" }).catch((err) => {
+        this.#worker.send({ kind: "markAchievementsSeen" }).catch((err) => {
             console.error("markAchievementsSeen", err);
         });
     }
@@ -8076,7 +8063,7 @@ export class OpenChat {
         | { kind: "not_found" }
     > {
         const sessionKeyDer = toDer(sessionKey);
-        const getDelegationResponse = await this.#sendRequest({
+        const getDelegationResponse = await this.#worker.send({
             kind: "getSignInWithEmailDelegation",
             email,
             sessionKey: sessionKeyDer,
@@ -8104,14 +8091,14 @@ export class OpenChat {
     }
 
     siwePrepareLogin(address: string): Promise<SiwePrepareLoginResponse> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "siwePrepareLogin",
             address,
         });
     }
 
     siwsPrepareLogin(address: string): Promise<SiwsPrepareLoginResponse> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "siwsPrepareLogin",
             address,
         });
@@ -8128,7 +8115,7 @@ export class OpenChat {
     > {
         const sessionKey = await ECDSAKeyIdentity.generate();
         const sessionKeyDer = toDer(sessionKey);
-        const loginResponse = await this.#sendRequest({
+        const loginResponse = await this.#worker.send({
             kind: "loginWithWallet",
             token,
             address,
@@ -8137,7 +8124,7 @@ export class OpenChat {
         });
 
         if (loginResponse.kind === "success") {
-            const getDelegationResponse = await this.#sendRequest({
+            const getDelegationResponse = await this.#worker.send({
                 kind: "getDelegationWithWallet",
                 token,
                 address,
@@ -8192,7 +8179,7 @@ export class OpenChat {
         }
 
         if (Object.keys(updates).length > 0) {
-            this.#sendRequest({ kind: "setCommunityIndexes", indexes: updates }).catch(() => false);
+            this.#worker.send({ kind: "setCommunityIndexes", indexes: updates }).catch(() => false);
         }
     }
 
@@ -8210,7 +8197,7 @@ export class OpenChat {
                 await this.setCommunityReferral(id, referredBy);
             }
 
-            const resp = await this.#sendRequest({
+            const resp = await this.#worker.send({
                 kind: "getCommunitySummary",
                 communityId: id.communityId,
             });
@@ -8273,7 +8260,7 @@ export class OpenChat {
         communityId: CommunityIdentifier,
     ): Promise<ChannelIdentifier | undefined> {
         const group = chatSummariesStore.value.get(groupId);
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "importGroupToCommunity",
             groupId,
             communityId,
@@ -8298,7 +8285,7 @@ export class OpenChat {
         credential: string,
         iiPrincipal: string,
     ): Promise<SubmitProofOfUniquePersonhoodResponse> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "submitProofOfUniquePersonhood",
             iiPrincipal,
             credential,
@@ -8332,7 +8319,7 @@ export class OpenChat {
             return approveResponse;
         }
 
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "joinCommunity",
             id: community.id,
             credentialArgs: this.#buildVerifiedCredentialArgs(credentials),
@@ -8370,7 +8357,7 @@ export class OpenChat {
 
         const undo = localUpdates.removeCommunity(id);
 
-        return this.#sendRequest({ kind: "deleteCommunity", id })
+        return this.#worker.send({ kind: "deleteCommunity", id })
             .then((resp) => {
                 if (resp.kind !== "success") {
                     undo?.();
@@ -8389,7 +8376,7 @@ export class OpenChat {
 
         const undo = localUpdates.removeCommunity(id);
 
-        return this.#sendRequest({ kind: "leaveCommunity", id })
+        return this.#worker.send({ kind: "leaveCommunity", id })
             .then((resp) => {
                 if (resp.kind !== "success") {
                     undo?.();
@@ -8407,7 +8394,7 @@ export class OpenChat {
         rules: Rules,
         defaultChannels: string[],
     ): Promise<CreateCommunityResponse> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "createCommunity",
             community: candidate,
             rules,
@@ -8434,7 +8421,7 @@ export class OpenChat {
 
     addToFavourites(chatId: ChatIdentifier): Promise<boolean> {
         const undo = localUpdates.favourite(chatId);
-        return this.#sendRequest({ kind: "addToFavourites", chatId })
+        return this.#worker.send({ kind: "addToFavourites", chatId })
             .then((resp) => {
                 if (resp.kind !== "success") {
                     undo();
@@ -8453,7 +8440,7 @@ export class OpenChat {
             publish("selectedChatInvalid");
         }
 
-        return this.#sendRequest({ kind: "removeFromFavourites", chatId })
+        return this.#worker.send({ kind: "removeFromFavourites", chatId })
             .then((resp) => {
                 if (resp.kind !== "success") {
                     undo();
@@ -8478,7 +8465,7 @@ export class OpenChat {
         isPublic: boolean | undefined,
         primaryLanguage: string | undefined,
     ): Promise<boolean> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "updateCommunity",
             communityId: community.id.communityId,
             name,
@@ -8512,7 +8499,7 @@ export class OpenChat {
         group: GroupChatSummary,
         rules: Rules,
     ): Promise<ChannelIdentifier | undefined> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "convertGroupToCommunity",
             chatId: group.id,
             historyVisible: group.historyVisible,
@@ -8524,7 +8511,7 @@ export class OpenChat {
 
     deleteUserGroup(id: CommunityIdentifier, userGroup: UserGroupDetails): Promise<boolean> {
         const undo = localUpdates.deleteUserGroup(id, userGroup.id);
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "deleteUserGroups",
             communityId: id.communityId,
             userGroupIds: [userGroup.id],
@@ -8545,7 +8532,7 @@ export class OpenChat {
         id: CommunityIdentifier,
         userGroup: UserGroupDetails,
     ): Promise<CreateUserGroupResponse> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "createUserGroup",
             communityId: id.communityId,
             name: userGroup.name,
@@ -8575,7 +8562,7 @@ export class OpenChat {
         toAdd: Set<string>,
         toRemove: Set<string>,
     ): Promise<UpdateUserGroupResponse> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "updateUserGroup",
             communityId: id.communityId,
             userGroupId: userGroup.id,
@@ -8645,7 +8632,7 @@ export class OpenChat {
     ): Promise<SetPinNumberResponse> {
         pinNumberFailureStore.set(undefined);
 
-        return this.#sendRequest({ kind: "setPinNumber", verification, newPin }).then((resp) => {
+        return this.#worker.send({ kind: "setPinNumber", verification, newPin }).then((resp) => {
             if (resp.kind === "success") {
                 pinNumberRequiredStore.set(newPin !== undefined);
             } else if (resp.kind === "error") {
@@ -8716,7 +8703,7 @@ export class OpenChat {
     }
 
     getBotDefinition(endpoint: string): Promise<BotDefinitionResponse> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "getBotDefinition",
             endpoint,
         }).catch((err) => {
@@ -8729,7 +8716,7 @@ export class OpenChat {
     }
 
     #callBotCommandEndpoint(endpoint: string, token: string): Promise<BotCommandResponse> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "callBotCommandEndpoint",
             endpoint,
             token,
@@ -8741,7 +8728,7 @@ export class OpenChat {
         name: string,
         avatar: string | undefined,
     ): Promise<FullWebhookDetails | undefined> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "registerWebhook",
             chatId,
             name,
@@ -8778,7 +8765,7 @@ export class OpenChat {
 
         const undo = localUpdates.updateWebhook(chatId, webhook);
 
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "updateWebhook",
             chatId,
             id: webhook.id,
@@ -8799,7 +8786,7 @@ export class OpenChat {
     }
 
     regenerateWebhook(chatId: MultiUserChatIdentifier, id: string): Promise<string | undefined> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "regenerateWebhook",
             chatId,
             id,
@@ -8812,7 +8799,7 @@ export class OpenChat {
     deleteWebhook(chatId: MultiUserChatIdentifier, id: string): Promise<boolean> {
         const undo = localUpdates.removeWebhookFromChat(chatId, id);
 
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "deleteWebhook",
             chatId,
             id,
@@ -8831,7 +8818,7 @@ export class OpenChat {
     }
 
     getWebhook(chatId: MultiUserChatIdentifier, id: string): Promise<string | undefined> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "getWebhook",
             chatId,
             id,
@@ -8935,7 +8922,7 @@ export class OpenChat {
     ): Promise<[string, bigint]> {
         const messageId = this.#messageIdFromBotActionScope(scope);
         return this.#getLocalUserIndexForBotActionScope(scope).then((localUserIndex) => {
-            return this.#sendRequest({
+            return this.#worker.send({
                 kind: "getAccessToken",
                 accessTokenType: {
                     kind: "bot_action_by_command",
@@ -8974,7 +8961,7 @@ export class OpenChat {
         grantedPermissions: GrantedBotPermissions,
     ): Promise<boolean> {
         const undo = this.#installBotLocally(id, botId, grantedPermissions);
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "installBot",
             id,
             botId,
@@ -8998,7 +8985,7 @@ export class OpenChat {
         botId: string,
         grantedPermissions: GrantedBotPermissions,
     ): Promise<boolean> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "updateInstalledBot",
             id,
             botId,
@@ -9037,7 +9024,7 @@ export class OpenChat {
 
     uninstallBot(id: BotInstallationLocation, botId: string): Promise<boolean> {
         const undo = this.#uninstallBotLocally(id, botId);
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "uninstallBot",
             id,
             botId,
@@ -9192,7 +9179,7 @@ export class OpenChat {
         const userId = currentUserIdStore.value;
         const utcOffsetMins = -new Date().getTimezoneOffset();
 
-        return this.#sendRequest({ kind: "claimDailyChit", utcOffsetMins }).then((resp) => {
+        return this.#worker.send({ kind: "claimDailyChit", utcOffsetMins }).then((resp) => {
             if (resp.kind === "success") {
                 if (resp.nextDailyChitClaim > chitStateStore.value.nextDailyChitClaim) {
                     chitStateStore.update((state) => ({
@@ -9222,11 +9209,11 @@ export class OpenChat {
     }
 
     chitLeaderboard(): Promise<ChitLeaderboardResponse> {
-        return this.#sendRequest({ kind: "chitLeaderboard" });
+        return this.#worker.send({ kind: "chitLeaderboard" });
     }
 
     chitEvents(req: ChitEventsRequest): Promise<ChitEventsResponse> {
-        return this.#sendRequest(req).catch((err) => {
+        return this.#worker.send(req).catch((err) => {
             this.logError("Failed to load chit events", err);
             return {
                 events: [],
@@ -9257,7 +9244,7 @@ export class OpenChat {
     }
 
     createAccountLinkingCode(): Promise<AccountLinkingCode | undefined> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "createAccountLinkingCode",
         });
     }
@@ -9266,7 +9253,7 @@ export class OpenChat {
         code: string,
         tempKey: ECDSAKeyIdentity,
     ): Promise<VerifyAccountLinkingCodeResponse> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "verifyAccountLinkingCode",
             code,
             tempKey: tempKey.getKeyPair(),
@@ -9279,7 +9266,7 @@ export class OpenChat {
         publicKey: Uint8Array,
         webAuthnKey?: WebAuthnKeyFull,
     ): Promise<DelegationIdentity> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "finaliseAccountLinkingWithCode",
             tempKey: tempKey.getKeyPair(),
             principal,
@@ -9291,7 +9278,7 @@ export class OpenChat {
     getAuthenticationPrincipals(): Promise<
         (AuthenticationPrincipal & { provider: AuthProvider })[]
     > {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "getAuthenticationPrincipals",
         }).then((principals) => {
             return principals.map((p) => {
@@ -9304,7 +9291,7 @@ export class OpenChat {
     }
 
     getLinkedIIPrincipal(): Promise<string | undefined> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "getAuthenticationPrincipals",
         })
             .then((resp) => {
@@ -9342,7 +9329,7 @@ export class OpenChat {
         approverKey: ECDSAKeyIdentity,
         approverDelegation: DelegationChain,
     ): Promise<LinkIdentitiesResponse> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "linkIdentities",
             initiatorKey: initiatorKey.getKeyPair(),
             initiatorDelegation: initiatorDelegation.toJSON(),
@@ -9354,7 +9341,7 @@ export class OpenChat {
     }
 
     removeIdentityLink(linked_principal: string): Promise<RemoveIdentityLinkResponse> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "removeIdentityLink",
             linked_principal,
         });
@@ -9390,7 +9377,7 @@ export class OpenChat {
 
     setWalletConfig(config: WalletConfig): Promise<boolean> {
         const undo = localUpdates.updateWalletConfig(config);
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "configureWallet",
             config,
         })
@@ -9408,7 +9395,7 @@ export class OpenChat {
         amount: bigint | undefined,
         fee: bigint | undefined,
     ): Promise<boolean> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "withdrawFromIcpSwap",
             userId,
             swapId,
@@ -9421,199 +9408,13 @@ export class OpenChat {
     isEventKindHidden = isEventKindHidden;
     mergeCombinedUnreadCounts = mergeCombinedUnreadCounts;
 
-    #connectToWorker(
-        authPrincipal: string,
-        authProvider: AuthProvider | undefined,
-    ): Promise<ConnectToWorkerResponse> {
-        console.debug("WORKER_CLIENT: loading worker with version: ", this.config.websiteVersion);
-        if (this.#worker === undefined) {
-            const workerUrl = `/worker.js?v=${this.config.websiteVersion}`;
-            this.#worker = new Worker(new URL(workerUrl, import.meta.url), {
-                type: "module",
-            });
-        } else {
-            // Clear any outstanding pending requests
-            this.#pending.clear();
-        }
-        const initResponse = new Promise<ConnectToWorkerResponse>((resolve) => {
-            this.#sendRequest(
-                {
-                    kind: "init",
-                    authPrincipal,
-                    authProvider,
-                    icUrl: this.config.icUrl ?? window.location.origin,
-                    iiDerivationOrigin: this.config.iiDerivationOrigin,
-                    openStorageIndexCanister: this.config.openStorageIndexCanister,
-                    groupIndexCanister: this.config.groupIndexCanister,
-                    notificationsCanister: this.config.notificationsCanister,
-                    identityCanister: this.config.identityCanister,
-                    onlineCanister: this.config.onlineCanister,
-                    userIndexCanister: this.config.userIndexCanister,
-                    translationsCanister: this.config.translationsCanister,
-                    registryCanister: this.config.registryCanister,
-                    internetIdentityUrl: this.config.internetIdentityUrl,
-                    nfidUrl: this.config.nfidUrl,
-                    userGeekApiKey: this.config.userGeekApiKey,
-                    enableMultiCrypto: this.config.enableMultiCrypto,
-                    blobUrlPattern: this.config.blobUrlPattern,
-                    canisterUrlPath: this.config.canisterUrlPath,
-                    proposalBotCanister: this.config.proposalBotCanister,
-                    marketMakerCanister: this.config.marketMakerCanister,
-                    signInWithEmailCanister: this.config.signInWithEmailCanister,
-                    signInWithEthereumCanister: this.config.signInWithEthereumCanister,
-                    signInWithSolanaCanister: this.config.signInWithSolanaCanister,
-                    oneSecForwarderCanister: this.config.oneSecForwarderCanister,
-                    oneSecMinterCanister: this.config.oneSecMinterCanister,
-                    websiteVersion: this.config.websiteVersion,
-                    rollbarApiKey: this.config.rollbarApiKey,
-                    env: this.config.env,
-                    bitcoinMainnetEnabled: this.config.bitcoinMainnetEnabled,
-                    groupInvite: this.config.groupInvite,
-                    communityInvite: this.config.communityInvite,
-                    accountLinkingCodesEnabled: this.config.accountLinkingCodesEnabled,
-                },
-                true,
-            ).then((resp) => {
-                resolve(resp);
-                this.#connectedToWorker = true;
-                this.#setMinLogLevel(
-                    (localStorage.getItem(configKeys.minLogLevel) ?? "warn") as
-                        | "debug"
-                        | "log"
-                        | "warn"
-                        | "error",
-                );
-            });
-        });
-
-        this.#worker.onmessage = (ev: MessageEvent<FromWorker>) => {
-            if (!ev.data) {
-                console.debug("WORKER_CLIENT: event message with no data received");
-                return;
-            }
-
-            const data = ev.data;
-
-            if (data.kind === "worker_event") {
-                if (data.event.subkind === "messages_read_from_server") {
-                    const { chatId, readByMeUpTo, threadsRead, dateReadPinned } = data.event;
-                    withPausedStores(() => {
-                        messagesRead.syncWithServer(
-                            chatId,
-                            readByMeUpTo,
-                            threadsRead,
-                            dateReadPinned,
-                        );
-                    });
-                }
-                if (data.event.subkind === "storage_updated") {
-                    storageStore.set(data.event.status);
-                }
-                if (data.event.subkind === "users_loaded") {
-                    userStore.addMany(data.event.users);
-                }
-            } else if (data.kind === "worker_response") {
-                console.debug("WORKER_CLIENT: response: ", ev);
-                this.#resolveResponse(data);
-            } else if (data.kind === "worker_error") {
-                console.debug("WORKER_CLIENT: error: ", ev);
-                this.#resolveError(data);
-            } else {
-                console.debug("WORKER_CLIENT: unknown message: ", ev);
-            }
-        };
-        return initResponse;
-    }
-
-    #setMinLogLevel(minLogLevel: "debug" | "log" | "warn" | "error"): void {
+    #setMinLogLevel(minLogLevel: LogLevel): void {
         setMinLogLevel(minLogLevel);
 
-        this.#sendRequest({
+        this.#worker.send({
             kind: "setMinLogLevel",
             minLogLevel,
         });
-    }
-
-    #logUnexpected(correlationId: string): void {
-        console.error(`WORKER_CLIENT: unexpected correlationId received (${correlationId})`);
-    }
-
-    #resolveResponse(data: WorkerResponse): void {
-        const promise = this.#pending.get(data.correlationId);
-        if (promise !== undefined) {
-            promise.resolve(data.response, data.final);
-            if (data.final) {
-                this.#pending.delete(data.correlationId);
-            }
-        } else {
-            this.#logUnexpected(data.correlationId);
-        }
-    }
-
-    #resolveError(data: WorkerError): void {
-        const promise = this.#pending.get(data.correlationId);
-        if (promise !== undefined) {
-            promise.reject(JSON.parse(data.error));
-            this.#pending.delete(data.correlationId);
-        } else {
-            this.#logUnexpected(data.correlationId);
-        }
-    }
-
-    responseHandler<T>(
-        correlationId: string,
-    ): (resolve: (val: T, final: boolean) => void, reject: (reason?: unknown) => void) => void {
-        return (resolve, reject) => {
-            this.#pending.set(correlationId, {
-                resolve,
-                reject,
-            });
-        };
-    }
-
-    #sendStreamRequest<Req extends WorkerRequest>(
-        req: Req,
-        connecting = false,
-    ): Stream<WorkerResult<Req>> {
-        //eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        //@ts-ignore
-        return new Stream<WorkerResult<Req>>(this.#sendRequestInternal(req, connecting));
-    }
-
-    async #sendRequest<Req extends WorkerRequest>(
-        req: Req,
-        connecting = false,
-    ): Promise<WorkerResult<Req>> {
-        //eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        //@ts-ignore
-        return new Promise<WorkerResult<Req>>(this.#sendRequestInternal(req, connecting));
-    }
-
-    #sendRequestInternal<Req extends WorkerRequest, T>(
-        req: Req,
-        connecting: boolean,
-    ): (resolve: (val: T, final: boolean) => void, reject: (reason?: unknown) => void) => void {
-        if (!connecting && !this.#connectedToWorker) {
-            throw new Error("WORKER_CLIENT: the client is not yet connected to the worker");
-        }
-        const correlationId = random128().toString();
-        try {
-            this.#worker.postMessage({
-                ...snapshot(req),
-                correlationId,
-            });
-        } catch (err) {
-            console.error("Error sending postMessage to worker", err);
-            throw err;
-        }
-        return this.responseHandler(correlationId);
-    }
-
-    monitorPendingRequests() {
-        const pendingRequests = this.#pending.size;
-        if (pendingRequests >= 100) {
-            this.#logger.error("Pending request count exceeded limit", { count: pendingRequests });
-        }
     }
 
     getBotConfig(): Promise<BotClientConfigData> {
@@ -9647,7 +9448,7 @@ export class OpenChat {
     }
 
     setPremiumItemCost(item: PremiumItem, chitCost: number): Promise<void> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "setPremiumItemCost",
             item,
             chitCost,
@@ -9655,7 +9456,7 @@ export class OpenChat {
     }
 
     payForPremiumItem(item: PremiumItem): Promise<PayForPremiumItemResponse> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "payForPremiumItem",
             item,
             userId: currentUserIdStore.value,
@@ -9705,7 +9506,7 @@ export class OpenChat {
             daysInsured: serverStreakInsuranceStore.value.daysInsured + additionalDays,
         };
 
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "payForStreakInsurance",
             additionalDays,
             expectedPrice,
@@ -9727,7 +9528,7 @@ export class OpenChat {
         chat: DirectChatSummary,
         eventsTtl: OptionUpdate<bigint>,
     ): Promise<boolean> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "updateDirectChatSettings",
             userId: chat.them.userId,
             eventsTtl,
@@ -9747,7 +9548,7 @@ export class OpenChat {
     async #updateProposalTallies(chatId: MultiUserChatIdentifier) {
         if (get(offlineStore)) return;
 
-        const updatedMessages = await this.#sendRequest({
+        const updatedMessages = await this.#worker.send({
             kind: "updateProposalTallies",
             chatId,
         });
@@ -9852,7 +9653,7 @@ export class OpenChat {
             console.debug("PUSH: found existing push subscription");
             // Check if the subscription has already been pushed to the notifications canister
             if (await this.#subscriptionExists(pushSubscription.endpoint)) {
-                this.#sendRequest({
+                this.#worker.send({
                     kind: "markNotificationSubscriptionActive",
                     endpoint: pushSubscription.endpoint,
                 });
@@ -10152,7 +9953,7 @@ export class OpenChat {
     }
 
     reinstateMissedDailyClaims(userId: string, days: number[]): Promise<boolean> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "reinstateMissedDailyClaims",
             userId,
             days,
@@ -10183,7 +9984,7 @@ export class OpenChat {
     }
 
     updateBlockedUsernamePatterns(pattern: string, add: boolean): Promise<void> {
-        return this.#sendRequest({
+        return this.#worker.send({
             kind: "updateBlockedUsernamePatterns",
             pattern,
             add,
