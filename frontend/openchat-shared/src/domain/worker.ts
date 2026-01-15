@@ -1,6 +1,5 @@
 import type { JsonnableDelegationChain } from "@icp-sdk/core/identity";
 import type { AccessGateConfig, Rules, UpdatedRules, VerifiedCredentialArgs } from "./access";
-import type { AuthProvider } from "./auth";
 import type {
     CkbtcMinterDepositInfo,
     CkbtcMinterWithdrawalInfo,
@@ -538,7 +537,7 @@ type PayForPremiumItem = {
 type SetAuthIdentity = {
     kind: "setAuthIdentity";
     authPrincipal: string;
-    authProvider: AuthProvider | undefined;
+    isIIPrincipal: boolean;
 };
 
 type SetMinLogLevel = {

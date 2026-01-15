@@ -817,7 +817,7 @@ export class OpenChat {
         const setAuthIdentityResponse = await this.#worker.send({
             kind: "setAuthIdentity",
             authPrincipal,
-            authProvider,
+            isIIPrincipal: authProvider == AuthProvider.II,
         });
 
         if (!anon) {
