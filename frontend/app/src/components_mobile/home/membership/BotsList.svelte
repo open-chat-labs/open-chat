@@ -93,7 +93,9 @@
     }
 </script>
 
-<SlidingPageContent title={i18nKey("Thing bots")} subtitle={i18nKey(collection.name)}>
+<SlidingPageContent
+    title={i18nKey("{level} bots", undefined, collection.level)}
+    subtitle={i18nKey(collection.name)}>
     <Container
         height={"fill"}
         gap={"xl"}

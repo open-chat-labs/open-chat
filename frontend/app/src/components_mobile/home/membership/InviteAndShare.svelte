@@ -29,8 +29,14 @@
     }
 </script>
 
-<SlidingPageContent title={i18nKey("Invite to thing")} subtitle={i18nKey(collection.name)}>
-    <Container height={"fill"} mainAxisAlignment={"spaceBetween"} direction={"vertical"}>
+<SlidingPageContent
+    title={i18nKey("Invite to {level}", undefined, collection.level, true)}
+    subtitle={i18nKey(collection.name)}>
+    <Container
+        padding={["zero", "zero", "xl", "zero"]}
+        height={"fill"}
+        mainAxisAlignment={"spaceBetween"}
+        direction={"vertical"}>
         <Container
             height={"fill"}
             gap={"lg"}
@@ -39,7 +45,7 @@
             {#if canInvite && view === "invite"}
                 <InviteList {membersState} />
             {:else}
-                <Share {membersState} />
+                <Share level={collection.level} {membersState} />
             {/if}
         </Container>
         {#if canInvite}
@@ -60,7 +66,13 @@
                     {#snippet icon(color)}
                         <ShareIcon {color} />
                     {/snippet}
-                    <Translatable resourceKey={i18nKey("Share this thing")} />
+                    <Translatable
+                        resourceKey={i18nKey(
+                            "Share this {level}",
+                            undefined,
+                            collection.level,
+                            true,
+                        )} />
                 </BigButton>
             </Container>
         {/if}

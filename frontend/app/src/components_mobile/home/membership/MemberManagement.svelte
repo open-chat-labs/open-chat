@@ -68,7 +68,11 @@
 {/snippet}
 
 <SlidingPageContent title={i18nKey("Member management")} subtitle={i18nKey(collection.name)}>
-    <Container height={"fill"} mainAxisAlignment={"spaceBetween"} direction={"vertical"}>
+    <Container
+        padding={["zero", "zero", "xxl", "zero"]}
+        height={"fill"}
+        mainAxisAlignment={"spaceBetween"}
+        direction={"vertical"}>
         <Container
             height={"fill"}
             gap={"lg"}
@@ -98,6 +102,7 @@
                 </Container>
             {:else if view === "lapsed"}
                 <LapsedList
+                    level={collection.level}
                     onReset={() => (view = "members")}
                     count={lapsed.length}
                     searchTerm={searchTermEntered}
@@ -107,6 +112,7 @@
                 <AddList {membersState} />
             {:else if view === "blocked"}
                 <BlockedList
+                    level={collection.level}
                     onReset={() => (view = "members")}
                     count={blocked.length}
                     searchTerm={searchTermEntered}

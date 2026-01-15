@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { i18nKey } from "@src/i18n/i18n";
+    import { i18nKey, interpolate } from "@src/i18n/i18n";
     import {
         ColourVars,
         CommonButton,
@@ -17,16 +17,18 @@
     import Translatable from "../../Translatable.svelte";
 
     import { canShare } from "@src/utils/share";
-    import { OpenChat } from "openchat-client";
+    import { OpenChat, type Level } from "openchat-client";
     import { getContext, onMount } from "svelte";
+    import { _ } from "svelte-i18n";
     import type { MemberManagement } from "./membersState.svelte";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
         membersState: MemberManagement;
+        level: Level;
     }
-    let { membersState }: Props = $props();
+    let { membersState, level }: Props = $props();
 
     onMount(() => membersState.initialiseSharing());
 
@@ -83,8 +85,19 @@
     {#if showLink}
         <StatusCard
             mode={"warning"}
-            title={"Anyone with this link can join the thing"}
-            body={"Anyone with this link can preview and join the community. This means that access gates are ignored. As a Diamond member you can also earn referral rewards."}>
+            title={interpolate(
+                $_,
+                i18nKey("Anyone with this link can join the {level}", undefined, level, true),
+            )}
+            body={interpolate(
+                $_,
+                i18nKey(
+                    "Anyone with this link can preview and join the {level}. This means that access gates are ignored. As a Diamond member you can also earn referral rewards.",
+                    undefined,
+                    level,
+                    true,
+                ),
+            )}>
         </StatusCard>
         <Container gap={"xs"} direction={"vertical"}>
             <CopyCard

@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { i18nKey } from "@src/i18n/i18n";
+    import { i18nKey, interpolate } from "@src/i18n/i18n";
     import { Body, Container } from "component-lib";
-    import { currentUserIdStore, type UserSummary } from "openchat-client";
+    import { currentUserIdStore, type Level, type UserSummary } from "openchat-client";
+    import { _ } from "svelte-i18n";
     import AccountCancel from "svelte-material-icons/AccountCancelOutline.svelte";
     import Account from "svelte-material-icons/AccountGroupOutline.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -16,8 +17,9 @@
         searchTerm?: string;
         count: number;
         onReset: () => void;
+        level: Level;
     }
-    let { users, membersState, searchTerm, count, onReset }: Props = $props();
+    let { users, membersState, searchTerm, count, onReset, level }: Props = $props();
     let virtualise = $derived(users.length > 50);
 </script>
 
@@ -42,7 +44,15 @@
             reset={{ onClick: onReset, icon: membersIcon, text: "View all members" }}
             padding={["huge", "xxl"]}
             title={"No blocked members"}
-            subtitle={"You don't seem to have blocked any users from this group"}>
+            subtitle={interpolate(
+                $_,
+                i18nKey(
+                    "You don't seem to have blocked any users from this {level}",
+                    undefined,
+                    level,
+                    true,
+                ),
+            )}>
             {#snippet icon(color, size)}
                 <AccountCancel {color} {size} />
             {/snippet}

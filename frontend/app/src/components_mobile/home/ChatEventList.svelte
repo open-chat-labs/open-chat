@@ -885,8 +885,8 @@
     }
 
     .mentions {
-        bottom: 140px;
-        bottom: calc(140px + var(--sp-md));
+        bottom: 160px;
+        bottom: calc(160px + var(--sp-md));
 
         .mention-count {
             @include font(bold, normal, fs-140);
