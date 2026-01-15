@@ -455,7 +455,7 @@ body {
 body.native-android {
     // Set the status bar height via CSS to avoid issues with bg colour not
     // matching the headers bg.
-    > main,
+    &:not(.onboarding) > main,
     .sliding_page {
         padding-top: var(--device-status-bar-height) !important;
     }
