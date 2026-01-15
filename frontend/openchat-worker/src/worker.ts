@@ -1,4 +1,4 @@
-import { AnonymousIdentity, SignIdentity } from "@icp-sdk/core/agent";
+import { AnonymousIdentity } from "@icp-sdk/core/agent";
 import {
     DelegationChain,
     DelegationIdentity,
@@ -14,6 +14,7 @@ import {
     setCommunityReferral,
 } from "openchat-agent";
 import {
+    buildIdentityFromJson,
     IdentityStorage,
     inititaliseLogger,
     MessagesReadFromServer,
@@ -35,7 +36,7 @@ import {
     type WebAuthnKeyFull,
     type WorkerEvent,
     type WorkerRequest,
-    type WorkerResponseInner,
+    type WorkerResponseInner, type JsonnableIdentityKeyAndChain,
 } from "openchat-shared";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -44,7 +45,6 @@ BigInt.prototype.toJSON = function () {
     return this.toString();
 };
 
-const authIdentityStorage = IdentityStorage.createForAuthIdentity();
 const ocIdentityStorage = IdentityStorage.createForOcIdentity();
 
 let initPayload: Init | undefined = undefined;
@@ -54,24 +54,26 @@ let logger: Logger = console;
 let agent: OpenChatAgent | undefined = undefined;
 
 async function initializeAuthIdentity(
-    expectedAuthPrincipal: string,
+    authIdentity: JsonnableIdentityKeyAndChain | undefined,
     isIIPrincipal: boolean,
     identityCanister: string,
     icUrl: string,
 ): Promise<GetOpenChatIdentityResponse> {
-    const authProviderIdentity = (await authIdentityStorage.get()) ?? new AnonymousIdentity();
-    const authPrincipal = authProviderIdentity.getPrincipal();
+    if (authIdentity === undefined) {
+        authPrincipalString = undefined;
+        return { kind: "auth_identity_not_found" };
+    }
+
+    const identity = await buildIdentityFromJson(authIdentity);
+    const authPrincipal = identity.getPrincipal();
+
     authPrincipalString = authPrincipal.toString();
     identityAgent = await IdentityAgent.create(
-        authProviderIdentity as SignIdentity,
+        identity,
         identityCanister,
         icUrl,
         isIIPrincipal,
     );
-
-    if (authPrincipal.isAnonymous() || authPrincipalString !== expectedAuthPrincipal) {
-        return { kind: "auth_identity_not_found" };
-    }
 
     const ocIdentity = await ocIdentityStorage.get(authPrincipalString);
     if (ocIdentity !== undefined) {
@@ -97,7 +99,7 @@ async function createOpenChatIdentity(
     webAuthnCredentialId: Uint8Array | undefined,
     challengeAttempt: ChallengeAttempt | undefined,
 ): Promise<DelegationIdentity | CreateOpenChatIdentityError> {
-    if (identityAgent === undefined || authPrincipalString === undefined) {
+    if (identityAgent === undefined) {
         throw new Error("IdentityAgent not initialized");
     }
 
@@ -237,7 +239,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 payload,
                 correlationId,
                 initializeAuthIdentity(
-                    payload.authPrincipal,
+                    payload.identity,
                     payload.isIIPrincipal,
                     config.identityCanister,
                     config.icUrl
@@ -1873,8 +1875,12 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    identityAgent?.lookupWebAuthnPubKey(payload.credentialId) ??
-                        Promise.resolve(undefined),
+                    IdentityAgent.create(
+                        new AnonymousIdentity(),
+                        config.identityCanister,
+                        config.icUrl,
+                        undefined
+                    ).then((ia) => ia.lookupWebAuthnPubKey(payload.credentialId)),
                 );
                 break;
 
