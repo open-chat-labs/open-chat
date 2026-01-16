@@ -166,19 +166,23 @@ export function initiateIdentityLinkResponse(
 
 export function authPrincipalsResponse(
     value: IdentityAuthPrincipalsResponse,
+    currentAuthPrincipal: string,
 ): AuthenticationPrincipalsResponse {
     if (value === "NotFound") {
         return [];
     }
 
     if ("Success" in value) {
-        return value.Success.map((p) => ({
-            principal: principalBytesToString(p.principal),
-            originatingCanister: principalBytesToString(p.originating_canister),
-            isIIPrincipal: p.is_ii_principal,
-            isCurrentIdentity: p.is_current_identity,
-            webAuthnKey: mapOptional(p.webauthn_key, webAuthnKey),
-        }));
+        return value.Success.map((p) => {
+            const principal = principalBytesToString(p.principal);
+            return {
+                principal,
+                originatingCanister: principalBytesToString(p.originating_canister),
+                isIIPrincipal: p.is_ii_principal,
+                isCurrentIdentity: principal === currentAuthPrincipal,
+                webAuthnKey: mapOptional(p.webauthn_key, webAuthnKey),
+            };
+        });
     }
 
     throw new UnsupportedValueError("Unexpected ApiAuthPrincipalResponse type received", value);

@@ -6485,7 +6485,6 @@ export const IdentityAuthPrincipalsUserPrincipal = Type.Object({
     principal: TSPrincipal,
     originating_canister: TSPrincipal,
     is_ii_principal: Type.Boolean(),
-    is_current_identity: Type.Boolean(),
     webauthn_key: Type.Optional(IdentityWebAuthnKey),
     last_used: Type.BigInt(),
 });

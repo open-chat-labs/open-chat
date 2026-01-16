@@ -143,8 +143,8 @@ export class IdentityAgent {
         return this._identityClient.deleteUser();
     }
 
-    getAuthenticationPrincipals(): Promise<AuthenticationPrincipalsResponse> {
-        return this._identityClient.getAuthenticationPrincipals();
+    getAuthenticationPrincipals(currentAuthPrincipal: string): Promise<AuthenticationPrincipalsResponse> {
+        return this._identityClient.getAuthenticationPrincipals(currentAuthPrincipal);
     }
 
     async lookupWebAuthnPubKey(credentialId: Uint8Array): Promise<Uint8Array | undefined> {
