@@ -2005,13 +2005,13 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "getAuthenticationPrincipals":
-                if (identityAgent === undefined) {
+                if (identityAgent === undefined || authPrincipalString === undefined) {
                     throw new Error("IdentityAgent not initialized");
                 }
                 executeThenReply(
                     payload,
                     correlationId,
-                    identityAgent.getAuthenticationPrincipals(),
+                    identityAgent.getAuthenticationPrincipals(authPrincipalString),
                 );
                 break;
 
