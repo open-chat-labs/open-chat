@@ -10,8 +10,6 @@ then
     exit 1
 fi
 
-./scripts/check-docker-is-running.sh || exit 1
-
 RELEASE_VERSION=$1
 EXPECTED_WASM_HASH=$2
 
@@ -26,12 +24,12 @@ echo "Tag: $TAG_ID"
 echo "Commit Id: $GIT_COMMIT_ID"
 echo "Canister name: $CANISTER_NAME"
 
-docker build -t openchat --build-arg git_commit_id=$GIT_COMMIT_ID --build-arg canister_name=$CANISTER_NAME --platform linux/amd64 . || exit 1
+if [ ! -z "$(git status --porcelain)" ]; then
+  echo "Working directory contains uncommitted changes, please try again with a clean working directory"
+  exit 1
+fi
 
-container_id=$(docker create openchat)
-rm -rf wasms
-docker cp $container_id:/build/wasms wasms
-docker rm --volumes $container_id
+./scripts/docker-build-all-wasms.sh || exit 1
 
 WASM_HASH=$(sha256sum "./wasms/${CANISTER_NAME}.wasm.gz" | sed 's/ .*$//')
 
