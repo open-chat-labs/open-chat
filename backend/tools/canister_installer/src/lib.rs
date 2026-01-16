@@ -140,8 +140,6 @@ async fn install_service_canisters_impl(
             identity_originating_canisters: vec![
                 canister_ids.nns_internet_identity,
                 canister_ids.sign_in_with_email,
-                canister_ids.sign_in_with_ethereum,
-                canister_ids.sign_in_with_solana,
                 WEBAUTHN_ORIGINATING_CANISTER,
             ],
             identity_skip_captcha_whitelist: vec![
