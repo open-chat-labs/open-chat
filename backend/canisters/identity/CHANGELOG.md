@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Expose more details in metrics ([#8803](https://github.com/open-chat-labs/open-chat/pull/8803))
+- Remove `is_current_identity` from `auth_principals` response ([#8804](https://github.com/open-chat-labs/open-chat/pull/8804))
 
 ## [[2.0.1944](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1944-identity)] - 2026-01-07
 
