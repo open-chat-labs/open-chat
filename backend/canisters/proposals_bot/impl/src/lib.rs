@@ -57,6 +57,7 @@ impl RuntimeState {
             nervous_systems: self.data.nervous_systems.metrics(),
             governance_principals: self.data.governance_principals.iter().copied().collect(),
             finished_proposals_to_process: self.data.finished_proposals_to_process.iter().copied().collect(),
+            nns_neuron_to_vote_with: self.data.nns_neuron_to_vote_with,
             registry_synced_up_to: self.data.registry_synced_up_to,
             stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
@@ -132,6 +133,7 @@ pub struct Metrics {
     pub nervous_systems: Vec<NervousSystemMetrics>,
     pub governance_principals: Vec<Principal>,
     pub finished_proposals_to_process: Vec<(CanisterId, ProposalId)>,
+    pub nns_neuron_to_vote_with: Option<NnsNeuronId>,
     pub registry_synced_up_to: TimestampMillis,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
