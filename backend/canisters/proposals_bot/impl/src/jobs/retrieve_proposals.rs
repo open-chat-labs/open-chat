@@ -134,7 +134,8 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
             mutate_state(|state| {
                 let now = state.env.now();
 
-                if governance_canister_id == state.data.nns_governance_canister_id
+                if !state.data.test_mode
+                    && governance_canister_id == state.data.nns_governance_canister_id
                     && let Some(neuron_id) = state.data.nns_neuron_to_vote_with
                 {
                     for proposal in proposals.iter() {
