@@ -27,7 +27,8 @@
     }: Props = $props();
 
     let parentDirection = getContext<Direction>("direction");
-    let spinnerColour = secondary ? "var(--gradient-secondary)" : "var(--text-on-primary)";
+    let spinnerColour =
+        secondary && !disabled ? "var(--gradient-secondary)" : "var(--text-on-primary)";
     let iconColour = secondary ? "var(--gradient-secondary)" : "var(--text-on-primary)";
     let widthCss = $derived(getFlexStyle("width", width, parentDirection));
     let heightCss = $derived(getFlexStyle("height", height, parentDirection));

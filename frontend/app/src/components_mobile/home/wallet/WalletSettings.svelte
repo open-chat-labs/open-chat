@@ -15,8 +15,8 @@
         Switch,
     } from "component-lib";
     import {
-        cryptoTokensSorted as accountsSorted,
         cryptoLookup,
+        cryptoTokensSorted,
         DEFAULT_TOKENS,
         OpenChat,
         pinNumberRequiredStore,
@@ -196,7 +196,7 @@
                         onClick={() => (showTokenSelector = true)}>Configure</CommonButton>
                 </Container>
                 {@const tokens = config.tokens}
-                {@const selected = $accountsSorted.filter((a) => tokens.has(a.ledger))}
+                {@const selected = $cryptoTokensSorted.filter((a) => tokens.has(a.ledger))}
                 <Container wrap gap={"sm"}>
                     {#each selected as token}
                         {@render selectedToken(token)}

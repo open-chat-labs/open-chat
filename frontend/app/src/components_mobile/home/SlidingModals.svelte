@@ -479,14 +479,14 @@
             subscribe("userProfileChatsAndVideo", () =>
                 push({ kind: "user_profile_chats_and_video" }),
             ),
-            () => window.removeEventListener("popstate", popstate),
         ];
-        window.addEventListener("popstate", popstate, { capture: true });
         return () => {
             unsubs.forEach((u) => u());
         };
     });
 </script>
+
+<svelte:window onpopstate={popstate} />
 
 {#each modalStack as page}
     <SlidingPage speed={page.kind === "open_thread" ? 500 : 300} top={page === top}>

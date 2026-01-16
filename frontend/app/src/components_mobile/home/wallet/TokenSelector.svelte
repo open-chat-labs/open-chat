@@ -2,7 +2,7 @@
     import { interpolate } from "@src/i18n/i18n";
     import { ColourVars, Container, Option, Search, Sheet, Subtitle } from "component-lib";
     import type { EnhancedTokenDetails, ResourceKey } from "openchat-client";
-    import { cryptoTokensSorted as accountsSorted } from "openchat-client";
+    import { cryptoTokensSorted } from "openchat-client";
     import type { Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import Translatable from "../../Translatable.svelte";
@@ -33,7 +33,7 @@
     let searchTerm = $state<string>("");
     let searchTermLower = $derived(searchTerm?.toLowerCase());
     let filteredTokens = $derived(
-        $accountsSorted.filter(
+        $cryptoTokensSorted.filter(
             (token) =>
                 token.enabled &&
                 (extraFilter === undefined || extraFilter(token)) &&

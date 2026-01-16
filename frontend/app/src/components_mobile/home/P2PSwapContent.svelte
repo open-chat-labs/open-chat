@@ -167,6 +167,8 @@
                 .then((resp) => {
                     if (resp.kind !== "success") {
                         showFailureToast(resp, false);
+                    } else {
+                        client.refreshAccountBalance(content.token1.ledger);
                     }
                 });
         }
@@ -187,6 +189,8 @@
                 .then((resp) => {
                     if (resp.kind !== "success") {
                         showFailureToast(resp, true);
+                    } else {
+                        client.refreshAccountBalance(content.token1.ledger);
                     }
                 });
         }

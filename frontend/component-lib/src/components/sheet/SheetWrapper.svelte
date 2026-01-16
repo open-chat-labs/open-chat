@@ -51,7 +51,7 @@
     }
 </script>
 
-<svelte:window onkeydown={onKeyDown} />
+<svelte:window onpopstate={dismissInternal} onkeydown={onKeyDown} />
 
 <!-- Yes this *should* be set to height:hug because we don't want it to take up more space than it needs -->
 <!-- When you feel like changing it to height:fill - DON'T -->

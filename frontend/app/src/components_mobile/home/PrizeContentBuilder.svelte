@@ -309,7 +309,7 @@
 
 <SlidingPageContent title={i18nKey("Create a prize")}>
     <Column height={"fill"} gap={"xxl"} padding={["lg", "xxl"]}>
-        <CryptoSelector filter={(t) => t.balance > 0} {draftAmount} showRefresh bind:ledger />
+        <CryptoSelector {draftAmount} showRefresh bind:ledger />
 
         <Column gap={"xs"}>
             <TokenInput

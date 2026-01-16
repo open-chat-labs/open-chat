@@ -29,9 +29,13 @@
         draftAmount,
         showRefresh = false,
     }: Props = $props();
-    let token = $derived($enhancedCryptoLookup.get(ledger));
+    let token = $derived($enhancedCryptoLookup.get(ledger)!);
     let showTokenSelector = $state(false);
-    let tokenState = $derived(token ? new TokenState(token, "usd") : undefined);
+    let tokenState = $derived.by(() => {
+        const ts = new TokenState(token);
+        client.refreshAccountBalance(ledger);
+        return ts;
+    });
 
     $effect(() => {
         if (draftAmount !== undefined && tokenState !== undefined) {

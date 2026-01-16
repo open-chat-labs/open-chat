@@ -157,6 +157,8 @@
                 toastStore.showFailureToast(i18nKey("tip.failure"));
             } else if (resp.kind !== "success") {
                 toastStore.showFailureToast(pinNumberErrorMessageStore);
+            } else if (resp.kind === "success") {
+                client.refreshAccountBalance(ledger, false);
             }
         });
 

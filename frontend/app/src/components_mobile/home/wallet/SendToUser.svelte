@@ -206,7 +206,7 @@
                 </Body>
             </Container>
         </Container>
-        <Container padding={["sm", "xl", "zero", "xl"]}>
+        <Container padding={["sm", "xl", "xl", "xl"]}>
             <Button onClick={onComplete}>
                 {#snippet icon(color)}
                     <ChevronRight {color} />

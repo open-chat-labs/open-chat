@@ -24,6 +24,7 @@
         chatListScopeStore,
         chatsInitialisedStore,
         chatSummariesListStore,
+        cryptoBalanceStore,
         identityStateStore,
         localUpdates,
         offlineStore,
@@ -505,6 +506,7 @@
         }
         return cls.join(" ");
     });
+    $inspect($cryptoBalanceStore).with(console.trace);
 </script>
 
 {#if showProfileCard !== undefined}

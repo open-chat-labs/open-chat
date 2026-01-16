@@ -37,7 +37,11 @@
         onClick,
     }: Props = $props();
 
-    let tokenState = $derived(new TokenState(token, selectedConversion));
+    let tokenState = $derived.by(() => {
+        const ts = new TokenState(token, selectedConversion);
+        client.refreshAccountBalance(token.ledger, true);
+        return ts;
+    });
     let manualWalletConfig = $derived($walletConfigStore.kind === "manual_wallet");
 </script>
 
