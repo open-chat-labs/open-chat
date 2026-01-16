@@ -28,6 +28,7 @@ import {
     type FinaliseAccountLinkingResponse,
     type GetOpenChatIdentityResponse,
     type Init,
+    type JsonnableIdentityKeyAndChain,
     type LinkIdentitiesResponse,
     type Logger,
     type RemoveIdentityLinkResponse,
@@ -36,7 +37,7 @@ import {
     type WebAuthnKeyFull,
     type WorkerEvent,
     type WorkerRequest,
-    type WorkerResponseInner, type JsonnableIdentityKeyAndChain,
+    type WorkerResponseInner,
 } from "openchat-shared";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
