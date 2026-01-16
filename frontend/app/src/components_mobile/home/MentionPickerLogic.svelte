@@ -3,6 +3,8 @@
     import { currentUserIdStore } from "openchat-client";
     import { getContext, onMount, type Snippet } from "svelte";
 
+    const MAX_USERS = 200;
+
     const client = getContext<OpenChat>("client");
 
     type Direction = "up" | "down";
@@ -114,7 +116,8 @@
                     return compareMatchNames(a.username, b.username);
                 }
                 return a.kind === "user_group" ? -1 : 1;
-            }),
+            })
+            .slice(0, MAX_USERS),
     );
     let height = $derived(filtered.length * itemHeight + borderWidth);
     let style = $derived(
