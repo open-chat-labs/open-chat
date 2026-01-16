@@ -92,7 +92,7 @@
 </script>
 
 {#if normalised.url !== undefined}
-    <Column>
+    <Column maxWidth={"100%"} width={"hug"}>
         {#if hidden}
             <Column
                 height={"fill"}
@@ -129,7 +129,7 @@
         {/if}
         {#if draft}
             <div class="close">
-                <IconButton onclick={onRemove}>
+                <IconButton mode={"dark"} onclick={onRemove}>
                     {#snippet icon()}
                         <Close color={ColourVars.textPrimary} />
                     {/snippet}
