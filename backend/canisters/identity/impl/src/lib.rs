@@ -187,6 +187,8 @@ impl RuntimeState {
             user_principals: self.data.user_principals.user_principals_count(),
             auth_principals: self.data.user_principals.auth_principals_count(),
             originating_canisters: self.data.user_principals.originating_canisters().clone(),
+            enabled_originating_canisters: self.data.originating_canisters.iter().copied().collect(),
+            skip_captcha_whitelist: self.data.skip_captcha_whitelist.iter().copied().collect(),
             stable_memory_sizes: memory::memory_sizes(),
             oc_public_key: self.data.oc_key_pair.public_key_pem().to_string(),
             canister_ids: CanisterIds {
@@ -313,6 +315,8 @@ pub struct Metrics {
     pub user_principals: u32,
     pub auth_principals: u32,
     pub originating_canisters: HashMap<CanisterId, u32>,
+    pub enabled_originating_canisters: Vec<CanisterId>,
+    pub skip_captcha_whitelist: Vec<CanisterId>,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub oc_public_key: String,
     pub canister_ids: CanisterIds,
