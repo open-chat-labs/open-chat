@@ -166,17 +166,19 @@ export function initiateIdentityLinkResponse(
 
 export function authPrincipalsResponse(
     value: IdentityAuthPrincipalsResponse,
+    currentAuthPrincipal: string,
 ): AuthenticationPrincipalsResponse {
     if (value === "NotFound") {
         return [];
     }
 
     if ("Success" in value) {
+        const principal = principalBytesToString(p.principal);
         return value.Success.map((p) => ({
-            principal: principalBytesToString(p.principal),
+            principal,
             originatingCanister: principalBytesToString(p.originating_canister),
             isIIPrincipal: p.is_ii_principal,
-            isCurrentIdentity: p.is_current_identity,
+            isCurrentIdentity: principal === currentAuthPrincipal,
             webAuthnKey: mapOptional(p.webauthn_key, webAuthnKey),
         }));
     }
