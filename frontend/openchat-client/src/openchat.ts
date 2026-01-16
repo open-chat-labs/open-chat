@@ -6538,7 +6538,7 @@ export class OpenChat {
                 this.#initWebRtc();
                 startMessagesReadTracker(this);
                 this.refreshSwappableTokens();
-                window.setTimeout(() => this.#refreshBalancesInSeries(), 1000);
+                window.setTimeout(() => this.refreshBalancesInSeries(), 1000);
             }
         }
 
@@ -7339,7 +7339,7 @@ export class OpenChat {
             .catch(() => undefined);
     }
 
-    async #refreshBalancesInSeries() {
+    async refreshBalancesInSeries() {
         const config = walletConfigStore.value;
         for (const t of [...cryptoLookup.value.values()]) {
             if (config.kind === "auto_wallet" || config.tokens.has(t.ledger)) {

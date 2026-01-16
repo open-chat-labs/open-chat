@@ -21,7 +21,7 @@
     ];
 
     function onRefreshWallet() {
-        console.log("Not sure what this does yet");
+        client.refreshBalancesInSeries();
     }
 
     onMount(async () => {
