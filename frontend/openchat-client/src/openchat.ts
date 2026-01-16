@@ -1,6 +1,6 @@
 /* eslint-disable no-case-declarations */
 import { AuthClient, type AuthClientLoginOptions } from "@dfinity/auth-client";
-import { DER_COSE_OID, unwrapDER, type Identity, type SignIdentity } from "@icp-sdk/core/agent";
+import { AnonymousIdentity, DER_COSE_OID, unwrapDER, type Identity, type SignIdentity } from "@icp-sdk/core/agent";
 import {
     DelegationChain,
     DelegationIdentity,
@@ -37,7 +37,7 @@ import {
     Stream,
     WEBAUTHN_ORIGINATING_CANISTER,
     anonymousUser,
-    buildDelegationIdentity,
+    buildDelegationChain,
     canRetryMessage,
     chatIdentifierToString,
     chatIdentifiersEqual,
@@ -311,6 +311,7 @@ import {
     type WhitepaperRoute,
     type WithdrawBtcResponse,
     type WithdrawCryptocurrencyResponse,
+    type IdentityKeyAndChain,
 } from "openchat-shared";
 import page from "page";
 import { tick } from "svelte";
@@ -699,7 +700,7 @@ export class OpenChat {
         });
 
         this.#authClient
-            .then((c) => c.getIdentity())
+            .then((_) => this.#authIdentityStorage.getKeyAndChain())
             .then((authIdentity) => this.#loadedAuthenticationIdentity(authIdentity, undefined));
 
         this.#setMinLogLevel((localStorage.getItem(configKeys.minLogLevel) ?? "warn") as LogLevel);
@@ -803,20 +804,28 @@ export class OpenChat {
     }
 
     async #loadedAuthenticationIdentity(
-        id: Identity,
+        identityKeyAndChain: IdentityKeyAndChain | undefined,
         authProvider: AuthProvider | undefined,
         registering: boolean = false,
     ) {
+        const anon = identityKeyAndChain === undefined;
+        const identity = anon
+            ? new AnonymousIdentity()
+            : DelegationIdentity.fromDelegation(identityKeyAndChain.key, identityKeyAndChain.delegation);
         currentUserStore.set(anonymousUser());
         chatsInitialisedStore.set(false);
-        const anon = id.getPrincipal().isAnonymous();
-        const authPrincipal = id.getPrincipal().toString();
+        const authPrincipal = identity.getPrincipal().toString();
         this.#authPrincipal = anon ? undefined : authPrincipal;
         this.updateIdentityState(anon ? { kind: "anon" } : { kind: "loading_user", registering });
 
         const setAuthIdentityResponse = await this.#worker.send({
             kind: "setAuthIdentity",
-            authPrincipal,
+            identity: identityKeyAndChain
+                ? {
+                    key: identityKeyAndChain.key.getKeyPair(),
+                    delegation: identityKeyAndChain.delegation.toJSON(),
+                }
+                : undefined,
             isIIPrincipal: authProvider == AuthProvider.II,
         });
 
@@ -872,7 +881,8 @@ export class OpenChat {
         this.#authClient.then((c) => {
             c.login({
                 ...this.getAuthClientOptions(authProvider),
-                onSuccess: () => this.#loadedAuthenticationIdentity(c.getIdentity(), authProvider),
+                onSuccess: () => this.#authIdentityStorage.getKeyAndChain()
+                    .then((identity) => this.#loadedAuthenticationIdentity(identity, authProvider)),
                 onError: (err) => {
                     this.updateIdentityState({ kind: "anon" });
                     console.warn("Login error from auth client: ", err);
@@ -8149,12 +8159,11 @@ export class OpenChat {
         registering: boolean = false,
     ): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
         const sessionKey = await ECDSAKeyIdentity.generate();
-        const delegationChain = await DelegationChain.create(
+        const delegation = await DelegationChain.create(
             initialKey,
             sessionKey.getPublicKey(),
             new Date(Date.now() + 30 * ONE_DAY),
         );
-        const identity = DelegationIdentity.fromDelegation(sessionKey, delegationChain);
         // In the sign in case, we must defer getting the webAuthnIdentity until after it has been used to sign the
         // delegation, before that point we don't know which identity the user will choose.
         const webAuthnIdentity = webAuthnIdentityFn();
@@ -8164,10 +8173,10 @@ export class OpenChat {
         };
         if (assumeIdentity) {
             this.#webAuthnKey = webAuthnKey;
-            await this.#authIdentityStorage.set(sessionKey, delegationChain);
-            await this.#loadedAuthenticationIdentity(identity, AuthProvider.PASSKEY, registering);
+            await this.#authIdentityStorage.set(sessionKey, delegation);
+            await this.#loadedAuthenticationIdentity({ key: sessionKey, delegation }, AuthProvider.PASSKEY, registering);
         }
-        return [sessionKey, delegationChain, webAuthnKey];
+        return [sessionKey, delegation, webAuthnKey];
     }
 
     async lookupWebAuthnPubKey(credentialId: Uint8Array): Promise<Uint8Array> {
@@ -8296,16 +8305,19 @@ export class OpenChat {
             expiration,
         });
         if (getDelegationResponse.kind === "success") {
-            const identity = buildDelegationIdentity(
+            const delegation = buildDelegationChain(
                 userKey,
-                sessionKey,
                 getDelegationResponse.delegation,
                 getDelegationResponse.signature,
             );
-            const delegation = identity.getDelegation();
             if (assumeIdentity) {
+<<<<<<< HEAD
                 await this.#authIdentityStorage.set(sessionKey, delegation);
                 await this.#loadedAuthenticationIdentity(identity, AuthProvider.EMAIL);
+=======
+                await this.#authIdentityStorage.set(sessionKey, delegation)
+                await this.#loadedAuthenticationIdentity({ key: sessionKey, delegation }, AuthProvider.EMAIL);
+>>>>>>> master
             }
             return {
                 kind: "success",
@@ -8358,17 +8370,15 @@ export class OpenChat {
                 expiration: loginResponse.expiration,
             });
             if (getDelegationResponse.kind === "success") {
-                const identity = buildDelegationIdentity(
+                const delegation = buildDelegationChain(
                     loginResponse.userKey,
-                    sessionKey,
                     getDelegationResponse.delegation,
                     getDelegationResponse.signature,
                 );
-                const delegation = identity.getDelegation();
                 if (assumeIdentity) {
                     await this.#authIdentityStorage.set(sessionKey, delegation);
                     await this.#loadedAuthenticationIdentity(
-                        identity,
+                        { key: sessionKey, delegation },
                         token === "eth" ? AuthProvider.ETH : AuthProvider.SOL,
                     );
                 }

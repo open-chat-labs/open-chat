@@ -4002,12 +4002,11 @@ export class OpenChatAgent extends EventTarget {
                     (m) => m.event.messageIndex,
                     (m) => m.event,
                 );
+
                 activityEvents.forEach((ev) => {
                     ev.message = lookup[ev.messageIndex] ?? ev.message;
                 });
                 callback(activityEvents, false);
-            } else {
-                console.log("non success", response);
             }
             return [cxt, []];
         });

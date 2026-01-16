@@ -1,11 +1,12 @@
-import { SignIdentity } from "@icp-sdk/core/agent";
 import { IdbStorage } from "@dfinity/auth-client";
+import { SignIdentity } from "@icp-sdk/core/agent";
 import {
     DelegationChain,
     DelegationIdentity,
     ECDSAKeyIdentity,
     isDelegationValid,
 } from "@icp-sdk/core/identity";
+import type { IdentityKeyAndChain } from "../domain";
 
 const KEY_STORAGE_AUTH_PRINCIPAL = "auth_principal";
 const KEY_STORAGE_KEY = "identity";
@@ -27,6 +28,13 @@ export class IdentityStorage {
     }
 
     async get(authPrincipal?: string): Promise<SignIdentity | undefined> {
+        const keyAndChain = await this.getKeyAndChain(authPrincipal);
+        return keyAndChain === undefined
+            ? undefined
+            : DelegationIdentity.fromDelegation(keyAndChain.key, keyAndChain.delegation);
+    }
+
+    async getKeyAndChain(authPrincipal?: string): Promise<IdentityKeyAndChain | undefined> {
         if (authPrincipal !== undefined) {
             const storedAuthPrincipal = await this.storage.get<string>(KEY_STORAGE_AUTH_PRINCIPAL);
             if (storedAuthPrincipal == null) return undefined;
@@ -36,20 +44,23 @@ export class IdentityStorage {
             }
         }
 
-        const key = await this.storage.get<CryptoKeyPair>(KEY_STORAGE_KEY);
-        if (key == null) return undefined;
+        const cryptoKey = await this.storage.get<CryptoKeyPair>(KEY_STORAGE_KEY);
+        if (cryptoKey == null) return undefined;
 
         const chainJson = await this.storage.get<string>(KEY_STORAGE_DELEGATION);
         if (chainJson == null) return undefined;
-        const chain = DelegationChain.fromJSON(chainJson);
+        const delegationChain = DelegationChain.fromJSON(chainJson);
 
-        if (!isDelegationValid(chain)) {
+        if (!isDelegationValid(delegationChain)) {
             this.remove();
             return undefined;
         }
 
-        const id = await ECDSAKeyIdentity.fromKeyPair(key);
-        return DelegationIdentity.fromDelegation(id, chain);
+        const key = await ECDSAKeyIdentity.fromKeyPair(cryptoKey);
+        return {
+            key,
+            delegation: delegationChain,
+        };
     }
 
     async set(

@@ -156,6 +156,7 @@ import type {
     GenerateChallengeResponse,
     GetDelegationResponse,
     GetOpenChatIdentityResponse,
+    JsonnableIdentityKeyAndChain,
     LinkIdentitiesResponse,
     PrepareDelegationResponse,
     RemoveIdentityLinkResponse,
@@ -536,7 +537,7 @@ type PayForPremiumItem = {
 
 type SetAuthIdentity = {
     kind: "setAuthIdentity";
-    authPrincipal: string;
+    identity: JsonnableIdentityKeyAndChain | undefined;
     isIIPrincipal: boolean;
 };
 
