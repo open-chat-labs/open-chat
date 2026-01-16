@@ -79,6 +79,7 @@ impl UserPrincipals {
             auth_principals: vec![auth_principal],
             user_id: None,
         });
+        self.user_principal_lookup.insert(principal, index);
         self.auth_principals.insert(
             auth_principal,
             AuthPrincipalInternal {
@@ -287,7 +288,7 @@ impl UserPrincipals {
     fn user_principal_mut(&mut self, auth_principal: &Principal) -> Option<&mut UserPrincipalInternal> {
         self.auth_principals
             .get(auth_principal)
-            .and_then(|p| self.user_principals.get_mut(p.user_principal_index as usize))
+            .and_then(|p| self.user_principals.get_mut(usize::try_from(p.user_principal_index).unwrap()))
     }
 
     fn user_principal_by_index(&self, user_principal_index: u32) -> Option<UserPrincipal> {
