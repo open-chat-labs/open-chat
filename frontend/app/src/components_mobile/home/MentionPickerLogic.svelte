@@ -27,6 +27,7 @@
                 boolean,
                 string,
                 number,
+                number,
             ]
         >;
     }
@@ -115,17 +116,12 @@
                 return a.kind === "user_group" ? -1 : 1;
             }),
     );
+    let height = $derived(filtered.length * itemHeight + borderWidth);
     let style = $derived(
         direction === "up"
-            ? `bottom: ${offset}px; height: ${
-                  filtered.length * itemHeight + borderWidth
-              }px; max-height: ${maxHeight}`
-            : `top: ${offset}px; height: ${
-                  filtered.length * itemHeight + borderWidth
-              }px; max-height: ${maxHeight}`,
+            ? `bottom: ${offset}px; height: ${height}px; max-height: ${maxHeight}`
+            : `top: ${offset}px; height: ${height}px; max-height: ${maxHeight}`,
     );
-
-    $inspect(filtered.length, itemHeight, borderWidth);
 
     function userOrGroupKey(u: UserOrUserGroup): string {
         switch (u.kind) {
@@ -139,4 +135,14 @@
     }
 </script>
 
-{@render children(userOrGroupKey, mention, filtered, direction, inline, border, style, index)}
+{@render children(
+    userOrGroupKey,
+    mention,
+    filtered,
+    direction,
+    inline,
+    border,
+    style,
+    index,
+    height,
+)}

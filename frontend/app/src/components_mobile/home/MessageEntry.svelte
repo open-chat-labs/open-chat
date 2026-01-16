@@ -581,7 +581,7 @@
 {/if}
 
 {#if showMentionPicker}
-    <MentionPicker supportsUserGroups offset={80} onMention={mention} prefix={mentionPrefix} />
+    <MentionPicker supportsUserGroups offset={70} onMention={mention} prefix={mentionPrefix} />
 {/if}
 
 {#if showCommandSelector}

@@ -4,6 +4,7 @@
     import { allUsersStore, iconSize, selectedCommunityMembersStore } from "openchat-client";
     import { getContext } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
+    import VirtualList from "../VirtualList.svelte";
     import MentionPickerLogic from "./MentionPickerLogic.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -43,7 +44,17 @@
     {usersOnly}
     {inline}
     {onMention}>
-    {#snippet children(userOrGroupKey, mention, filtered, direction, inline, border, style, index)}
+    {#snippet children(
+        userOrGroupKey,
+        mention,
+        filtered,
+        direction,
+        inline,
+        border,
+        style,
+        index,
+        height,
+    )}
         {#if filtered.length > 0}
             <div
                 class="mention-picker"
@@ -53,48 +64,53 @@
                 class:border
                 {style}>
                 <Column
+                    parentDirection={"horizontal"}
                     borderRadius={"md"}
                     backgroundColor={ColourVars.background1}
                     width={"fill"}
-                    height={"fill"}>
-                    {#each filtered as item, itemIndex (userOrGroupKey(item))}
-                        <MenuItem selected={itemIndex === index} onclick={() => mention(item)}>
-                            {#snippet icon()}
-                                {#if item.kind === "user_group" || item.kind === "everyone"}
-                                    <div class="group-icon">
-                                        <AccountMultiple
-                                            color={"var(--menu-disabled-txt)"}
-                                            size={$iconSize} />
-                                    </div>
-                                {:else}
-                                    <Avatar
-                                        url={client.userAvatarUrl($allUsersStore.get(item.userId))}
-                                        size={"sm"} />
-                                {/if}
-                            {/snippet}
-                            <Row gap={"xs"} crossAxisAlignment={"center"}>
-                                {#if item.kind === "user_group"}
-                                    <Body width={"hug"}>
-                                        {item.name}
-                                    </Body>
-                                {:else if item.kind === "everyone"}
-                                    <Body width={"hug"}>
-                                        {"everyone"}
-                                    </Body>
-                                {:else}
-                                    <Body width={"hug"}>
-                                        {client.getDisplayName(
-                                            item.userId,
-                                            $selectedCommunityMembersStore,
-                                        )}
-                                    </Body>
-                                    <Body colour={"textSecondary"} width={"hug"}>
-                                        @{item.username}
-                                    </Body>
-                                {/if}
-                            </Row>
-                        </MenuItem>
-                    {/each}
+                    height={{ size: `${height}px` }}>
+                    <VirtualList keyFn={userOrGroupKey} items={filtered}>
+                        {#snippet children(item, itemIndex)}
+                            <MenuItem selected={itemIndex === index} onclick={() => mention(item)}>
+                                {#snippet icon()}
+                                    {#if item.kind === "user_group" || item.kind === "everyone"}
+                                        <div class="group-icon">
+                                            <AccountMultiple
+                                                color={"var(--menu-disabled-txt)"}
+                                                size={$iconSize} />
+                                        </div>
+                                    {:else}
+                                        <Avatar
+                                            url={client.userAvatarUrl(
+                                                $allUsersStore.get(item.userId),
+                                            )}
+                                            size={"sm"} />
+                                    {/if}
+                                {/snippet}
+                                <Row gap={"xs"} crossAxisAlignment={"center"}>
+                                    {#if item.kind === "user_group"}
+                                        <Body width={"hug"}>
+                                            {item.name}
+                                        </Body>
+                                    {:else if item.kind === "everyone"}
+                                        <Body width={"hug"}>
+                                            {"everyone"}
+                                        </Body>
+                                    {:else}
+                                        <Body width={"hug"}>
+                                            {client.getDisplayName(
+                                                item.userId,
+                                                $selectedCommunityMembersStore,
+                                            )}
+                                        </Body>
+                                        <Body colour={"textSecondary"} width={"hug"}>
+                                            @{item.username}
+                                        </Body>
+                                    {/if}
+                                </Row>
+                            </MenuItem>
+                        {/snippet}
+                    </VirtualList>
                 </Column>
             </div>
         {/if}
@@ -108,6 +124,7 @@
         max-height: calc(var(--vh, 1vh) * 50);
         overflow: auto;
         z-index: 10000;
+        width: toRem(250);
 
         &.inline {
             position: relative;
