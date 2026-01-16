@@ -1,4 +1,9 @@
-import { Delegation } from "@icp-sdk/core/identity";
+import {
+    Delegation,
+    type DelegationChain,
+    type ECDSAKeyIdentity,
+    type JsonnableDelegationChain
+} from "@icp-sdk/core/identity";
 import type { Identity, Signature } from "@icp-sdk/core/agent";
 import type { Address } from "openchat-agent/src/services/signInWithSolana/candid/types";
 import type { OCError } from "./error";
@@ -157,3 +162,13 @@ export type AccountLinkingCode = {
 export type VerifyAccountLinkingCodeResponse = { kind: "success"; username: string } | OCError;
 
 export type FinaliseAccountLinkingResponse = { kind: "success" } | OCError;
+
+export type IdentityKeyAndChain = {
+    key: ECDSAKeyIdentity;
+    delegation: DelegationChain;
+}
+
+export type JsonnableIdentityKeyAndChain = {
+    key: CryptoKeyPair;
+    delegation: JsonnableDelegationChain;
+}
