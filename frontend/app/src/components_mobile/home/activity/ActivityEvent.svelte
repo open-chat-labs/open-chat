@@ -173,24 +173,21 @@
 
 <Container padding={"lg"} gap={"md"} supplementalClass={"activity-event"} {onClick}>
     <Avatar size={"lg"} url={client.userAvatarUrl(sender)}></Avatar>
-    <Container gap={"sm"} direction={"vertical"}>
+    <Container direction={"vertical"}>
         <!-- Title, time, chat path & activity indicator -->
         <Container direction={"vertical"}>
             <!-- Title and time -->
-            <Container direction={"horizontal"} gap={"lg"} crossAxisAlignment={"center"}>
-                <Subtitle fontWeight={"bold"}>
-                    <Markdown text={interpolate($_, eventSummary)} />
-                </Subtitle>
-                <BodySmall colour={"textSecondary"} width={"hug"}>
-                    <!-- TODO relative time -->
-                    {client.formatMessageDate(
-                        event.timestamp,
-                        $_("today"),
-                        $_("yesterday"),
-                        true,
-                        true,
-                    )}
-                </BodySmall>
+            <Container direction={"horizontal"} gap={"lg"}>
+                <Container width={"fill"}>
+                    <Subtitle fontWeight={"bold"}>
+                        <Markdown text={interpolate($_, eventSummary)} />
+                    </Subtitle>
+                </Container>
+                <Container width={"hug"} padding={["xs", "zero"]}>
+                    <Body colour={"textSecondary"} width={"hug"}>
+                        {client.toRelativeTime(event.timestamp)}
+                    </Body>
+                </Container>
             </Container>
             <!-- Chat breadcrumb & indicator-->
             <Container direction={"horizontal"} gap={"lg"}>
