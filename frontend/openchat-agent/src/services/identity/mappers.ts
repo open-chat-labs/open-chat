@@ -173,14 +173,16 @@ export function authPrincipalsResponse(
     }
 
     if ("Success" in value) {
-        const principal = principalBytesToString(p.principal);
-        return value.Success.map((p) => ({
-            principal,
-            originatingCanister: principalBytesToString(p.originating_canister),
-            isIIPrincipal: p.is_ii_principal,
-            isCurrentIdentity: principal === currentAuthPrincipal,
-            webAuthnKey: mapOptional(p.webauthn_key, webAuthnKey),
-        }));
+        return value.Success.map((p) => {
+            const principal = principalBytesToString(p.principal);
+            return {
+                principal,
+                originatingCanister: principalBytesToString(p.originating_canister),
+                isIIPrincipal: p.is_ii_principal,
+                isCurrentIdentity: principal === currentAuthPrincipal,
+                webAuthnKey: mapOptional(p.webauthn_key, webAuthnKey),
+            };
+        });
     }
 
     throw new UnsupportedValueError("Unexpected ApiAuthPrincipalResponse type received", value);
