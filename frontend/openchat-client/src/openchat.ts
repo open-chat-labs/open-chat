@@ -8311,13 +8311,8 @@ export class OpenChat {
                 getDelegationResponse.signature,
             );
             if (assumeIdentity) {
-<<<<<<< HEAD
-                await this.#authIdentityStorage.set(sessionKey, delegation);
-                await this.#loadedAuthenticationIdentity(identity, AuthProvider.EMAIL);
-=======
                 await this.#authIdentityStorage.set(sessionKey, delegation)
                 await this.#loadedAuthenticationIdentity({ key: sessionKey, delegation }, AuthProvider.EMAIL);
->>>>>>> master
             }
             return {
                 kind: "success",
