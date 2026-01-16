@@ -7,8 +7,11 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use types::{CanisterId, PushIfNotContains, TimestampMillis, UserId, is_default};
 
 #[derive(Serialize, Deserialize, Default)]
+#[serde(from = "UserPrincipalsTrimmed")]
 pub struct UserPrincipals {
     user_principals: Vec<UserPrincipalInternal>,
+    #[serde(skip)]
+    user_principal_lookup: HashMap<Principal, u32>,
     auth_principals: HashMap<Principal, AuthPrincipalInternal>,
     originating_canisters: HashMap<CanisterId, u32>,
     temp_keys: HashMap<Principal, TempKey>,
@@ -104,6 +107,15 @@ impl UserPrincipals {
                 auth_principal,
             },
         );
+    }
+
+    pub fn get_caller_user_principal(&self, caller: Principal) -> Option<UserPrincipal> {
+        let principal = self.unwrap_temp_key_or(caller);
+        if let Some(index) = self.user_principal_lookup.get(&principal) {
+            self.user_principal_by_index(*index)
+        } else {
+            self.get_by_auth_principal(&principal)
+        }
     }
 
     pub fn link_auth_principal_with_existing_user(
@@ -213,19 +225,15 @@ impl UserPrincipals {
         &self.originating_canisters
     }
 
-    // This is O(number of users) so we may need to revisit this in the future, but it is only
-    // called once per user so is fine for now.
-    pub fn set_user_id(&mut self, principal: Principal, user_id: Option<UserId>) -> Option<u32> {
-        if let Some((index, user)) = self
-            .user_principals
-            .iter_mut()
-            .enumerate()
-            .find(|(_, u)| u.principal == principal)
+    pub fn set_user_id(&mut self, user_principal: Principal, user_id: Option<UserId>) -> bool {
+        if let Some(user) = self
+            .user_principal_index(&user_principal)
+            .and_then(|i| self.user_principals.get_mut(i as usize))
         {
             user.user_id = user_id;
-            Some(index as u32)
+            true
         } else {
-            None
+            false
         }
     }
 
@@ -240,6 +248,10 @@ impl UserPrincipals {
                 index: i as u32,
                 user_id: Some(user_id),
             })
+    }
+
+    pub fn user_principal_index(&self, user_principal: &Principal) -> Option<u32> {
+        self.user_principal_lookup.get(user_principal).copied()
     }
 
     // This is O(number of users) so only use in rare cases
@@ -310,6 +322,31 @@ impl From<&AuthPrincipalInternal> for AuthPrincipal {
             webauthn_credential_id: value.webauthn_credential_id.as_ref().map(|c| c.to_vec()),
             is_ii_principal: value.is_ii_principal,
             last_used: value.last_used,
+        }
+    }
+}
+
+#[derive(Deserialize, Default)]
+struct UserPrincipalsTrimmed {
+    user_principals: Vec<UserPrincipalInternal>,
+    auth_principals: HashMap<Principal, AuthPrincipalInternal>,
+    originating_canisters: HashMap<CanisterId, u32>,
+    temp_keys: HashMap<Principal, TempKey>,
+}
+
+impl From<UserPrincipalsTrimmed> for UserPrincipals {
+    fn from(value: UserPrincipalsTrimmed) -> Self {
+        UserPrincipals {
+            user_principal_lookup: value
+                .user_principals
+                .iter()
+                .enumerate()
+                .map(|(index, up)| (up.principal, index as u32))
+                .collect(),
+            user_principals: value.user_principals,
+            auth_principals: value.auth_principals,
+            originating_canisters: value.originating_canisters,
+            temp_keys: value.temp_keys,
         }
     }
 }
