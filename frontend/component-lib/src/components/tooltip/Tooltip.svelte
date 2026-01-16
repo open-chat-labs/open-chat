@@ -29,9 +29,10 @@
     onDestroy(closeTooltip);
 
     function click(e: MouseEvent | TouchEvent) {
-        if (!props.enable === false) return;
+        if (!props.enable) return;
 
         e.stopPropagation();
+
         if (open) {
             closeTooltip();
         } else {

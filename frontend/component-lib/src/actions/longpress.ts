@@ -59,6 +59,10 @@ export function longpress(node: HTMLElement, onlongpress?: (e: TouchEvent) => vo
             }
             handler(e);
         }, 500);
+
+        // This is so that the first (deepest) longpress wins and short-circuits the process
+        // I'm not 100% sure that this isn't going to have some nasty side effect
+        e.stopImmediatePropagation();
     }
 
     function onTouchMove(e: TouchEvent) {
