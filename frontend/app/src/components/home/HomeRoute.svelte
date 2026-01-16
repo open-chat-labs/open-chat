@@ -22,7 +22,6 @@
     // let native = $derived(false);
     let registering = $derived(
         $identityStateStore.kind === "registering" ||
-            $identityStateStore.kind === "challenging" ||
             ($identityStateStore.kind === "loading_user" && $identityStateStore.registering),
     );
 

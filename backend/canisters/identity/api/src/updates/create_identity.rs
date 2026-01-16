@@ -1,4 +1,4 @@
-use crate::{ChallengeAttempt, WebAuthnKey};
+use crate::WebAuthnKey;
 use candid::{CandidType, Deserialize};
 use serde::Serialize;
 use ts_export::ts_export;
@@ -14,7 +14,6 @@ pub struct Args {
     pub webauthn_key: Option<WebAuthnKey>,
     pub is_ii_principal: Option<bool>,
     pub max_time_to_live: Option<Nanoseconds>,
-    pub challenge_attempt: Option<ChallengeAttempt>,
 }
 
 #[ts_export(identity, create_identity)]
@@ -24,8 +23,6 @@ pub enum Response {
     AlreadyRegistered,
     PublicKeyInvalid(String),
     OriginatingCanisterInvalid(CanisterId),
-    ChallengeRequired,
-    ChallengeFailed,
 }
 
 pub type SuccessResult = crate::prepare_delegation::SuccessResult;

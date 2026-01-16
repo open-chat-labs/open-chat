@@ -2,7 +2,6 @@ import type {
     IdentityAuthPrincipalsResponse,
     IdentityCheckAuthPrincipalV2Response,
     IdentityCreateIdentityResponse,
-    IdentityGenerateChallengeResponse,
     IdentityGetDelegationResponse,
     IdentityInitiateIdentityLinkResponse,
     IdentityPrepareDelegationResponse,
@@ -14,7 +13,6 @@ import type {
     AuthenticationPrincipalsResponse,
     CheckAuthPrincipalResponse,
     CreateIdentityResponse,
-    GenerateChallengeResponse,
     GetDelegationResponse,
     InitiateIdentityLinkResponse,
     PrepareDelegationWithProofResponse,
@@ -31,12 +29,6 @@ export function createIdentityResponse(
 ): CreateIdentityResponse {
     if (value === "AlreadyRegistered") {
         return { kind: "already_registered" };
-    }
-    if (value === "ChallengeFailed") {
-        return { kind: "challenge_failed" };
-    }
-    if (value === "ChallengeRequired") {
-        return { kind: "challenge_required" };
     }
     if ("Success" in value) {
         return {
@@ -113,25 +105,6 @@ export function signedDelegation(signedDelegation: SignedDelegation): GetDelegat
         ),
         signature: consolidateBytes(signedDelegation.signature) as unknown as Signature,
     };
-}
-
-export function generateChallengeResponse(
-    value: IdentityGenerateChallengeResponse,
-): GenerateChallengeResponse {
-    if (value === "AlreadyRegistered") {
-        return { kind: "already_registered" };
-    }
-    if (value === "Throttled") {
-        return { kind: "throttled" };
-    }
-    if ("Success" in value) {
-        return {
-            kind: "success",
-            key: value.Success.key,
-            pngBase64: value.Success.png_base64,
-        };
-    }
-    throw new UnsupportedValueError("Unexpected ApiGenerateChallengeResponse type received", value);
 }
 
 export function initiateIdentityLinkResponse(

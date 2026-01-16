@@ -4,10 +4,8 @@ import { DelegationIdentity } from "@icp-sdk/core/identity";
 import type {
     ApproveIdentityLinkResponse,
     AuthenticationPrincipalsResponse,
-    ChallengeAttempt,
     CheckAuthPrincipalResponse,
     CreateOpenChatIdentityError,
-    GenerateChallengeResponse,
     InitiateIdentityLinkResponse,
     OCError,
     RemoveIdentityLinkResponse,
@@ -56,7 +54,6 @@ export class IdentityAgent {
     async createOpenChatIdentity(
         sessionKey: SignIdentity,
         webAuthnCredentialId: Uint8Array | undefined,
-        challengeAttempt: ChallengeAttempt | undefined,
     ): Promise<DelegationIdentity | CreateOpenChatIdentityError> {
         const webAuthnKey =
             webAuthnCredentialId !== undefined
@@ -68,7 +65,6 @@ export class IdentityAgent {
             sessionKeyDer,
             webAuthnKey,
             this._isIIPrincipal,
-            challengeAttempt,
         );
 
         if (createIdentityResponse.kind === "success") {
@@ -109,10 +105,6 @@ export class IdentityAgent {
             }
         }
         return undefined;
-    }
-
-    generateChallenge(): Promise<GenerateChallengeResponse> {
-        return this._identityClient.generateChallenge();
     }
 
     async initiateIdentityLink(

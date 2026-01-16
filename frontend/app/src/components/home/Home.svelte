@@ -95,7 +95,6 @@
     import GateCheckFailed from "./access/AccessGateCheckFailed.svelte";
     import AccessGateEvaluator from "./access/AccessGateEvaluator.svelte";
     import AnonFooter from "./AnonFooter.svelte";
-    import ChallengeModal from "./ChallengeModal.svelte";
     import ChitEarned from "./ChitEarned.svelte";
     import HallOfFame from "./ChitHallOfFame.svelte";
     import Convert from "./communities/Convert.svelte";
@@ -936,8 +935,6 @@
         } else if ($identityStateStore.kind === "logged_in" && modal.kind === "registering") {
             console.log("We are now logged in so we are closing the register modal");
             closeModal();
-        } else if ($identityStateStore.kind === "challenging") {
-            modal = { kind: "challenge" };
         }
         if (
             $identityStateStore.kind === "logged_in" &&
@@ -1103,8 +1100,6 @@
             {/if}
         {:else if modal.kind === "claim_daily_chit"}
             <DailyChitModal onLeaderboard={leaderboard} onClose={closeModal} />
-        {:else if modal.kind === "challenge"}
-            <ChallengeModal on:close={closeModal} />
         {:else if modal.kind === "verify_humanity"}
             <VerifyHumanity onClose={closeModal} onSuccess={closeModal} />
         {:else if modal.kind === "suspending"}

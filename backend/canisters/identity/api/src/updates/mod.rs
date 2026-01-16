@@ -6,7 +6,6 @@ pub mod create_account_linking_code;
 pub mod create_identity;
 pub mod delete_user;
 pub mod finalise_account_linking_with_code;
-pub mod generate_challenge;
 pub mod get_encryption_key;
 pub mod initiate_identity_link;
 pub mod initiate_identity_link_via_qr_code;

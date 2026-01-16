@@ -22,7 +22,6 @@ import {
     StorageUpdated,
     Stream,
     UsersLoaded,
-    type ChallengeAttempt,
     type CorrelatedWorkerRequest,
     type CreateOpenChatIdentityError,
     type FinaliseAccountLinkingResponse,
@@ -98,7 +97,6 @@ async function initializeAuthIdentity(
 
 async function createOpenChatIdentity(
     webAuthnCredentialId: Uint8Array | undefined,
-    challengeAttempt: ChallengeAttempt | undefined,
 ): Promise<DelegationIdentity | CreateOpenChatIdentityError> {
     if (identityAgent === undefined) {
         throw new Error("IdentityAgent not initialized");
@@ -109,7 +107,6 @@ async function createOpenChatIdentity(
     const response = await identityAgent.createOpenChatIdentity(
         sessionKey,
         webAuthnCredentialId,
-        challengeAttempt,
     );
 
     if (typeof response !== "string") {
@@ -264,20 +261,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             return;
         }
 
-        if (kind === "generateIdentityChallenge") {
-            if (identityAgent === undefined) {
-                throw new Error("IdentityAgent not initialized");
-            }
-
-            executeThenReply(payload, correlationId, identityAgent.generateChallenge());
-            return;
-        }
-
         if (kind === "createOpenChatIdentity") {
             executeThenReply(
                 payload,
                 correlationId,
-                createOpenChatIdentity(payload.webAuthnCredentialId, payload.challengeAttempt).then(
+                createOpenChatIdentity(payload.webAuthnCredentialId).then(
                     (resp) => {
                         const id = typeof resp !== "string" ? resp : new AnonymousIdentity();
                         agent = new OpenChatAgent(id, {
