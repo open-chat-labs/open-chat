@@ -16,22 +16,6 @@ pub use updates::*;
 // zzzxd-webau-thnke-yr7oc-cai
 pub const WEBAUTHN_ORIGINATING_CANISTER: CanisterId = CanisterId::from_slice(&[129, 5, 38, 118, 168, 152, 143, 220, 33, 1]);
 
-pub type ChallengeKey = u32;
-
-#[ts_export(identity)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct Challenge {
-    pub key: ChallengeKey,
-    pub png_base64: String,
-}
-
-#[ts_export(identity)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct ChallengeAttempt {
-    pub key: ChallengeKey,
-    pub chars: String,
-}
-
 #[ts_export(identity)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct WebAuthnKey {

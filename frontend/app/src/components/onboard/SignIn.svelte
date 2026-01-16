@@ -56,10 +56,7 @@
         if ($identityStateStore.kind === "anon" && loginState === "logging-in") {
             onClose();
         }
-        if (
-            $identityStateStore.kind === "logged_in" ||
-            $identityStateStore.kind === "challenging"
-        ) {
+        if ($identityStateStore.kind === "logged_in") {
             onClose();
         }
     });

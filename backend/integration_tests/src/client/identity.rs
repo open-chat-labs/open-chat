@@ -43,7 +43,6 @@ pub mod happy_path {
                 session_key,
                 is_ii_principal: Some(is_ii_principal),
                 max_time_to_live: None,
-                challenge_attempt: None,
             },
         );
 

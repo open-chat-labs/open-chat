@@ -142,11 +142,6 @@ async fn install_service_canisters_impl(
                 canister_ids.sign_in_with_email,
                 WEBAUTHN_ORIGINATING_CANISTER,
             ],
-            identity_skip_captcha_whitelist: vec![
-                canister_ids.nns_internet_identity,
-                canister_ids.sign_in_with_email,
-                WEBAUTHN_ORIGINATING_CANISTER,
-            ],
             wasm_version: version,
         },
     )
