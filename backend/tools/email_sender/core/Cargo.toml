@@ -1,0 +1,10 @@
+[package]
+name = "email_sender_core"
+version.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-trait.workspace = true
+email_magic_links.path = "../../../libraries/email_magic_links"

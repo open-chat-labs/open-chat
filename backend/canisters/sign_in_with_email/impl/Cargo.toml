@@ -1,0 +1,37 @@
+[package]
+name = "sign_in_with_email_canister_impl"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+base64.workspace = true
+candid.workspace = true
+email_address.workspace = true
+email_magic_links.path = "../../../libraries/email_magic_links"
+email_sender_aws = { path = "../../../tools/email_sender/aws", optional = true }
+email_sender_core.path = "../../../tools/email_sender/core"
+email_utils.path = "../../../libraries/email_utils"
+getrandom.workspace = true
+hex.workspace = true
+ic-canister-sig-creation.workspace = true
+ic-cdk.workspace = true
+ic-cdk-timers.workspace = true
+ic-certification.workspace = true
+ic-http-certification.workspace = true
+ic-stable-structures.workspace = true
+querystring.workspace = true
+rand.workspace = true
+rmp-serde.workspace = true
+rsa = { workspace = true, features = ["serde"] }
+serde.workspace = true
+sign_in_with_email_canister.path = "../api"
+
+[features]
+default = ["aws"]
+aws = ["email_sender_aws"]

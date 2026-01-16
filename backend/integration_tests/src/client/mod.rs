@@ -9,7 +9,7 @@ use serde::Serialize;
 use serde::de::DeserializeOwned;
 use std::time::Duration;
 use testing::rng::random_internet_identity_principal;
-use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration, SignedDelegation};
+use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration, HttpRequest, HttpResponse, SignedDelegation};
 
 mod macros;
 
@@ -248,4 +248,12 @@ pub fn unwrap_msgpack_response<R: DeserializeOwned>(response: Result<Vec<u8>, Re
         Ok(bytes) => msgpack::deserialize_then_unwrap(&bytes),
         Err(error) => panic!("{error}"),
     }
+}
+
+pub fn http_request(env: &PocketIc, sender: Principal, canister_id: Principal, args: &HttpRequest) -> HttpResponse {
+    execute_query(env, sender, canister_id, "http_request", args)
+}
+
+pub fn http_request_update(env: &mut PocketIc, sender: Principal, canister_id: Principal, args: &HttpRequest) -> HttpResponse {
+    execute_update(env, sender, canister_id, "http_request_update", args)
 }

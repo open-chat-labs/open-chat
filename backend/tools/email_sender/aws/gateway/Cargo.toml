@@ -1,0 +1,15 @@
+[package]
+name = "email_sender_aws_gateway"
+version.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+aws-config.workspace = true
+aws_lambda_events = { workspace = true, features = ["lambda_function_urls"] }
+aws-sdk-sns.workspace = true
+lambda_runtime.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true

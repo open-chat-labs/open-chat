@@ -1,0 +1,67 @@
+type AwsEmailSenderConfigPublic = record {
+  region : text;
+  function_url : text;
+  access_key : text;
+};
+type Delegation = record { pubkey : blob; expiration : nat64 };
+type EmailSenderConfigPublic = variant { Aws : AwsEmailSenderConfigPublic };
+type EmailSenderConfigResponse = record {
+  email_sender_rsa_public_key : text;
+  email_sender_config : opt EmailSenderConfigPublic;
+};
+type EncryptedAwsEmailSenderConfig = record {
+  region : text;
+  function_url : text;
+  access_key : text;
+  secret_key_encrypted : text;
+};
+type EncryptedEmailSenderConfig = variant {
+  Aws : EncryptedAwsEmailSenderConfig;
+};
+type GenerateMagicLinkArgs = record {
+  session_key : blob;
+  email : text;
+  max_time_to_live : opt nat64;
+};
+type GenerateMagicLinkResponse = variant {
+  Blocked : nat64;
+  EmailInvalid;
+  FailedToSendEmail : text;
+  Success : GenerateMagicLinkSuccess;
+};
+type GenerateMagicLinkSuccess = record {
+  created : nat64;
+  user_key : blob;
+  code : text;
+  expiration : nat64;
+};
+type GetDelegationArgs = record {
+  session_key : blob;
+  email : text;
+  expiration : nat64;
+};
+type GetDelegationResponse = variant { NotFound; Success : SignedDelegation };
+type GetPrincipalArgs = record {
+  email : text;
+};
+type HandleMagicLinkArgs = record { link : text };
+type HandleMagicLinkResponse = variant {
+  CodeIncorrect;
+  Success;
+  LinkExpired;
+  LinkInvalid : text;
+};
+type InitArgs = record { salt : opt blob; email_sender_public_key_pem : text; whitelisted_principals: vec principal };
+type SignedDelegation = record { signature : blob; delegation : Delegation };
+type UpgradeArgs = record {
+  email_sender_public_key_pem : opt text;
+  email_sender_config : opt EncryptedEmailSenderConfig;
+};
+service : {
+  email_sender_config : () -> (EmailSenderConfigResponse) query;
+  generate_magic_link : (GenerateMagicLinkArgs) -> (GenerateMagicLinkResponse);
+  get_delegation : (GetDelegationArgs) -> (GetDelegationResponse) query;
+  get_principal : (GetPrincipalArgs) -> (principal) query;
+  handle_magic_link : (HandleMagicLinkArgs) -> (HandleMagicLinkResponse);
+  rsa_public_key : () -> (opt text) query;
+}
