@@ -19,6 +19,6 @@ docker rm --volumes $container_id
 
 cd wasms
 for wasm in *; do
-    shasum -a 256 "$wasm"
+    sha256sum "$wasm"
 done
 cd ..
