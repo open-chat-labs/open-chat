@@ -1,7 +1,14 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { emojiDatabase } from "@src/utils/emojis";
-    import { ChatFootnote, ColourVars, Container, Tooltip, type Alignment } from "component-lib";
+    import {
+        ChatFootnote,
+        ColourVars,
+        Container,
+        Tooltip,
+        type Alignment,
+        Body,
+    } from "component-lib";
     import type { NativeEmoji } from "emoji-picker-element/shared";
     import type { CustomEmoji, Reaction, UserLookup } from "openchat-client";
     import { allUsersStore, currentUserIdStore, customEmojis, OpenChat } from "openchat-client";
@@ -80,7 +87,7 @@
         onClick={() => onClick?.(reaction)}
         width={"hug"}
         minWidth={"2.25rem"}
-        padding={["xxs", moreThanOne ? "sm" : "xs", "xxs", "xs"]}
+        padding={["xxs", moreThanOne ? "sm" : "xxs", "xxs", "xxs"]}
         background={selected ? ColourVars.disabledButton : ColourVars.background2}
         crossAxisAlignment={"center"}
         mainAxisAlignment={"center"}
@@ -98,9 +105,16 @@
             <div class="emoji">{reaction.reaction}</div>
         {/if}
         {#if moreThanOne}
-            <ChatFootnote fontWeight="bold">
-                {reaction.userIds.size > 999 ? "999+" : reaction.userIds.size}
-            </ChatFootnote>
+            {@const reactionCount = reaction.userIds.size > 999 ? "999+" : reaction.userIds.size}
+            {#if size == "normal"}
+                <ChatFootnote fontWeight="bold">
+                    {reactionCount}
+                </ChatFootnote>
+            {:else}
+                <Body fontWeight="bold">
+                    {reactionCount}
+                </Body>
+            {/if}
         {/if}
     </Container>
     {#snippet popup()}

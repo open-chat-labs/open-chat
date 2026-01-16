@@ -548,6 +548,9 @@ import {
     toLongDateString,
     toMonthString,
     toShortTimeString,
+    toRelativeTime,
+    formatDateLong,
+    getSmartDateHeader,
 } from "./utils/date";
 import { getErc20TokenBalances } from "./utils/evm";
 import formatFileSize from "./utils/fileSize";
@@ -1986,6 +1989,19 @@ export class OpenChat {
 
     toLongDateString(date: Date): string {
         return toLongDateString(date, this.#locale);
+    }
+
+    toRelativeTime(timestamp: bigint): string {
+        // TODO i18n
+        return toRelativeTime(timestamp);
+    }
+
+    formatDateLong(timestamp: bigint): string {
+        return formatDateLong(timestamp, this.#locale);
+    }
+
+    getSmartDateHeader(timestamp: bigint, today: string, yesterday: string): string {
+        return getSmartDateHeader(timestamp, this.#locale, { today, yesterday });
     }
 
     /**
