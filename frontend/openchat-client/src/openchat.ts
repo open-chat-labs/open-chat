@@ -1,6 +1,12 @@
 /* eslint-disable no-case-declarations */
 import { AuthClient, type AuthClientLoginOptions } from "@dfinity/auth-client";
-import { AnonymousIdentity, DER_COSE_OID, unwrapDER, type Identity, type SignIdentity } from "@icp-sdk/core/agent";
+import {
+    AnonymousIdentity,
+    DER_COSE_OID,
+    unwrapDER,
+    type Identity,
+    type SignIdentity,
+} from "@icp-sdk/core/agent";
 import {
     DelegationChain,
     DelegationIdentity,
@@ -194,6 +200,7 @@ import {
     type GuidelinesRoute,
     type HandleMagicLinkResponse,
     type HomeRoute,
+    type IdentityKeyAndChain,
     type IdentityState,
     type InternalBotCommandInstance,
     type InviteCodeResponse,
@@ -311,7 +318,6 @@ import {
     type WhitepaperRoute,
     type WithdrawBtcResponse,
     type WithdrawCryptocurrencyResponse,
-    type IdentityKeyAndChain,
 } from "openchat-shared";
 import page from "page";
 import { tick } from "svelte";
@@ -811,7 +817,10 @@ export class OpenChat {
         const anon = identityKeyAndChain === undefined;
         const identity = anon
             ? new AnonymousIdentity()
-            : DelegationIdentity.fromDelegation(identityKeyAndChain.key, identityKeyAndChain.delegation);
+            : DelegationIdentity.fromDelegation(
+                  identityKeyAndChain.key,
+                  identityKeyAndChain.delegation,
+              );
         currentUserStore.set(anonymousUser());
         chatsInitialisedStore.set(false);
         const authPrincipal = identity.getPrincipal().toString();
@@ -822,9 +831,9 @@ export class OpenChat {
             kind: "setAuthIdentity",
             identity: identityKeyAndChain
                 ? {
-                    key: identityKeyAndChain.key.getKeyPair(),
-                    delegation: identityKeyAndChain.delegation.toJSON(),
-                }
+                      key: identityKeyAndChain.key.getKeyPair(),
+                      delegation: identityKeyAndChain.delegation.toJSON(),
+                  }
                 : undefined,
             isIIPrincipal: authProvider == AuthProvider.II,
         });
@@ -881,8 +890,12 @@ export class OpenChat {
         this.#authClient.then((c) => {
             c.login({
                 ...this.getAuthClientOptions(authProvider),
-                onSuccess: () => this.#authIdentityStorage.getKeyAndChain()
-                    .then((identity) => this.#loadedAuthenticationIdentity(identity, authProvider)),
+                onSuccess: () =>
+                    this.#authIdentityStorage
+                        .getKeyAndChain()
+                        .then((identity) =>
+                            this.#loadedAuthenticationIdentity(identity, authProvider),
+                        ),
                 onError: (err) => {
                     this.updateIdentityState({ kind: "anon" });
                     console.warn("Login error from auth client: ", err);
@@ -8146,10 +8159,29 @@ export class OpenChat {
             }));
         if (webAuthnKey === undefined) throw new Error("WebAuthnKey not set");
 
-        const cose = unwrapDER(webAuthnKey.publicKey, DER_COSE_OID);
-        const webAuthnIdentity = new WebAuthnIdentity(webAuthnKey.credentialId, cose, undefined);
-
-        return await this.#finaliseWebAuthnSignin(webAuthnIdentity, () => webAuthnIdentity, false);
+        if (this.isNativeAndroid()) {
+            // Not 100% sure that this is right
+            const webAuthnIdentity = new AndroidWebAuthnPasskeyIdentity((credentialId) =>
+                this.lookupWebAuthnPubKey(credentialId),
+            );
+            return await this.#finaliseWebAuthnSignin(
+                webAuthnIdentity,
+                () => webAuthnIdentity.identity(),
+                false,
+            );
+        } else {
+            const cose = unwrapDER(webAuthnKey.publicKey, DER_COSE_OID);
+            const webAuthnIdentity = new WebAuthnIdentity(
+                webAuthnKey.credentialId,
+                cose,
+                undefined,
+            );
+            return await this.#finaliseWebAuthnSignin(
+                webAuthnIdentity,
+                () => webAuthnIdentity,
+                false,
+            );
+        }
     }
 
     async #finaliseWebAuthnSignin(
@@ -8174,7 +8206,11 @@ export class OpenChat {
         if (assumeIdentity) {
             this.#webAuthnKey = webAuthnKey;
             await this.#authIdentityStorage.set(sessionKey, delegation);
-            await this.#loadedAuthenticationIdentity({ key: sessionKey, delegation }, AuthProvider.PASSKEY, registering);
+            await this.#loadedAuthenticationIdentity(
+                { key: sessionKey, delegation },
+                AuthProvider.PASSKEY,
+                registering,
+            );
         }
         return [sessionKey, delegation, webAuthnKey];
     }
@@ -8311,8 +8347,11 @@ export class OpenChat {
                 getDelegationResponse.signature,
             );
             if (assumeIdentity) {
-                await this.#authIdentityStorage.set(sessionKey, delegation)
-                await this.#loadedAuthenticationIdentity({ key: sessionKey, delegation }, AuthProvider.EMAIL);
+                await this.#authIdentityStorage.set(sessionKey, delegation);
+                await this.#loadedAuthenticationIdentity(
+                    { key: sessionKey, delegation },
+                    AuthProvider.EMAIL,
+                );
             }
             return {
                 kind: "success",
