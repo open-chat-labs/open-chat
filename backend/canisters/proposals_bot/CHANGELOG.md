@@ -18,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Vote on linked NNS proposal based on SNS proposal tally ([#8786](https://github.com/open-chat-labs/open-chat/pull/8786))
 - Expose `nns_neuron_to_vote_with` in metrics ([#8805](https://github.com/open-chat-labs/open-chat/pull/8805))
 
+### Fixed
+
+- Don't submit OC proposals to vote on NNS proposals when in test mode ([#8807](https://github.com/open-chat-labs/open-chat/pull/8807))
+
 ## [[2.0.1820](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1820-proposals_bot)] - 2025-07-03
 
 ### Fixed
