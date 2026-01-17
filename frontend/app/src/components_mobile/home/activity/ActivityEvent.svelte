@@ -20,12 +20,15 @@
     const MAX_REACTIONS = 4;
     const client = getContext<OpenChat>("client");
 
+    type Event = Omit<MessageActivityEvent, "message">;
+
     interface Props {
-        event: MessageActivityEvent;
+        event: Event;
+        message?: Message;
         onClick: () => void;
     }
 
-    let { event, onClick }: Props = $props();
+    let { event, onClick, message }: Props = $props();
 
     function getChatName(ctx: MessageContext): string | undefined {
         const chat = client.lookupChatSummary(ctx.chatId);
@@ -57,19 +60,19 @@
         return undefined;
     }
 
-    function otherReactors(ev: MessageActivityEvent): Set<string> {
-        if (ev.message === undefined) return new Set();
+    function otherReactors(ev: Event): Set<string> {
+        if (message === undefined) return new Set();
         return new Set(
-            ev.message.reactions.flatMap((r) =>
+            message.reactions.flatMap((r) =>
                 [...r.userIds].filter((u) => u !== ev.userId && u !== $currentUserIdStore),
             ),
         );
     }
 
-    function otherTippers(ev: MessageActivityEvent): Set<string> {
-        if (ev.message === undefined) return new Set();
+    function otherTippers(ev: Event): Set<string> {
+        if (message === undefined) return new Set();
         return new Set(
-            Object.values(ev.message.tips).flatMap((tips) => {
+            Object.values(message.tips).flatMap((tips) => {
                 return Object.keys(tips).filter((u) => u !== ev.userId);
             }),
         );
@@ -114,7 +117,7 @@
         }
     }
 
-    function buildEventSummary(event: MessageActivityEvent, username: string) {
+    function buildEventSummary(event: Event, username: string) {
         switch (event.activity) {
             case "reaction":
                 return pluraliseMessage("reaction", username, otherReactors(event));
@@ -127,7 +130,7 @@
             case "crypto":
                 return i18nKey("activity.crypto", { username });
             case "poll_vote":
-                const numVoters = numberOfPeopleVoting(event.message);
+                const numVoters = numberOfPeopleVoting(message);
                 if (numVoters > 1) {
                     return i18nKey("activity.pollVoteN", { username, number: numVoters - 1 });
                 } else {
@@ -138,11 +141,11 @@
         }
     }
 
-    function formatLatestMessage(event: MessageActivityEvent, username: string): string {
+    function formatLatestMessage(username: string): string {
         // TODO - not sure what this means
-        if (event.message === undefined) return "...";
+        if (message === undefined) return "...";
 
-        const latestMessageText = client.getContentAsText($_, event.message.content);
+        const latestMessageText = client.getContentAsText($_, message.content);
         return `${username} / ${latestMessageText}`;
     }
 
@@ -157,18 +160,18 @@
             : $_("activity.anon"),
     );
     let messageUsername = $derived(
-        event.message
+        message
             ? buildDisplayName(
                   $allUsersStore,
-                  event.message.sender,
-                  event.message.sender === $currentUserIdStore ? "me" : "user",
+                  message.sender,
+                  message.sender === $currentUserIdStore ? "me" : "user",
               )
             : $_("activity.anon"),
     );
-    let lastMessage = $derived(formatLatestMessage(event, messageUsername));
+    let lastMessage = $derived(formatLatestMessage(messageUsername));
     let eventSummary = $derived(buildEventSummary(event, eventUsername));
     let chatName = $derived(getChatName(event.messageContext));
-    let tips = $derived(event?.message?.tips ? Object.entries(event.message.tips) : []);
+    let tips = $derived(message?.tips ? Object.entries(message.tips) : []);
 </script>
 
 <Container padding={"lg"} gap={"md"} supplementalClass={"activity-event"} {onClick}>
@@ -199,17 +202,17 @@
         <!-- Message and reactions -->
         <Container gap={"xs"} direction={"vertical"}>
             <Body colour={"textSecondary"}>
-                {#if event.message !== undefined}
+                {#if message !== undefined}
                     <Markdown text={lastMessage} oneLine twoLine suppressLinks />
                 {:else}
                     <Translatable resourceKey={i18nKey("activity.missingMessage")} />
                 {/if}
             </Body>
 
-            {#if event.activity === "reaction" && event.message !== undefined && event.message.reactions.length > 0}
+            {#if event.activity === "reaction" && message !== undefined && message.reactions.length > 0}
                 <Container supplementalClass="reactions" width={"hug"}>
-                    {@const more = event.message.reactions.length - MAX_REACTIONS}
-                    {#each event.message.reactions.slice(0, MAX_REACTIONS) as reaction (reaction.reaction)}
+                    {@const more = message.reactions.length - MAX_REACTIONS}
+                    {#each message.reactions.slice(0, MAX_REACTIONS) as reaction (reaction.reaction)}
                         <Reaction alignTooltip={"end"} {reaction} intersecting size="large" />
                     {/each}
                     {#if more > 0}

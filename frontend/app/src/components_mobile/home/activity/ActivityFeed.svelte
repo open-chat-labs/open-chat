@@ -1,6 +1,7 @@
 <script lang="ts">
     import { activityFeedState } from "@src/runes/activity.svelte";
-    import { Body, BodySmall, Container, Logo, SectionHeader } from "component-lib";
+    import { trackedEffect } from "@src/utils/effects.svelte";
+    import { Body, Container, Logo, SectionHeader } from "component-lib";
     import {
         messageActivitySummaryStore,
         messageContextToChatListScope,
@@ -11,17 +12,15 @@
     } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import VirtualList from "../../VirtualList.svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import NothingToSee from "../NothingToSee.svelte";
     import ActivityEvent from "./ActivityEvent.svelte";
-    import { _ } from "svelte-i18n";
 
     const client = getContext<OpenChat>("client");
-
-    let initialised = $state(false);
 
     let uptodate = $derived.by(() => {
         return $messageActivitySummaryStore.latestTimestamp <= activityFeedState.latestTimestamp;
@@ -58,12 +57,16 @@
     );
 
     function loadActivity() {
+        let firstResponse = true;
         client.subscribeToMessageActivityFeed((resp, final) => {
-            activityFeedState.activityEvents = resp.events;
+            if (firstResponse) {
+                activityFeedState.activityEvents = resp.events;
+                firstResponse = false;
+            }
+            activityFeedState.populateMessages(resp.events);
             if (activityFeedState.activityEvents.length > 0 && final) {
                 client.markActivityFeedRead(activityFeedState.latestTimestamp);
             }
-            initialised = true;
         });
     }
 
@@ -90,8 +93,8 @@
         }
     }
 
-    $effect(() => {
-        if (!uptodate || !initialised) {
+    trackedEffect("activityFeed", () => {
+        if (!uptodate || !activityFeedState.initialised) {
             loadActivity();
         }
     });
@@ -107,14 +110,14 @@
 </SectionHeader>
 
 <Container
-    mainAxisAlignment={initialised ? undefined : "center"}
-    crossAxisAlignment={initialised ? undefined : "center"}
+    mainAxisAlignment={activityFeedState.initialised ? undefined : "center"}
+    crossAxisAlignment={activityFeedState.initialised ? undefined : "center"}
     height={"fill"}
     closeMenuOnScroll
     direction={"vertical"}>
-    {#if !initialised}
+    {#if !activityFeedState.initialised}
         <FancyLoader size={"3rem"} />
-    {:else if activityFeedState.activityEvents.length === 0 && initialised}
+    {:else if activityFeedState.activityEvents.length === 0 && activityFeedState.initialised}
         <NothingToSee title={"No activity yet"} subtitle={"Check back later for new activity"} />
     {:else}
         <VirtualList keyFn={eventKey} items={activityItems}>
@@ -128,7 +131,10 @@
                             >{item.formattedTime}</Body>
                     </Container>
                 {:else}
-                    <ActivityEvent event={item.event} onClick={() => selectEvent(item.event)} />
+                    <ActivityEvent
+                        message={activityFeedState.getMessage(item.event.messageId)}
+                        event={item.event}
+                        onClick={() => selectEvent(item.event)} />
                 {/if}
             {/snippet}
         </VirtualList>

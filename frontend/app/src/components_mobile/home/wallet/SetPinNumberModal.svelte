@@ -152,7 +152,6 @@
                         subtext={type.kind === "change"
                             ? i18nKey("pinNumber.currentPin")
                             : undefined}
-                        type="numeric"
                         length={6}
                         bind:code={currPinArray} />
                 </Container>
@@ -160,7 +159,6 @@
             {#if type.kind !== "clear"}
                 <Pincode
                     subtext={type.kind === "change" ? i18nKey("pinNumber.newPin") : undefined}
-                    type="numeric"
                     length={6}
                     bind:code={newPinArray} />
             {/if}

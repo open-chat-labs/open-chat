@@ -110,7 +110,7 @@
 {:else if content.kind === "blocked_content"}
     <BlockedContent />
 {:else if content.kind === "crypto_content"}
-    <CryptoContent ctx={messageContext} {senderId} {content} {me} />
+    <CryptoContent {senderId} {content} {me} />
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
 {:else if content.kind === "bot_placeholder_content"}
@@ -130,15 +130,7 @@
 {:else if content.kind === "poll_content"}
     <PollContent {readonly} {me} {content} {senderId} {onRegisterVote} />
 {:else if content.kind === "giphy_content"}
-    <GiphyContent
-        ctx={messageContext}
-        {edited}
-        {intersecting}
-        {fill}
-        {content}
-        {reply}
-        {height}
-        {blockLevelMarkdown} />
+    <GiphyContent {edited} {intersecting} {fill} {content} {reply} {height} {blockLevelMarkdown} />
 {:else if content.kind === "proposal_content"}
     <ProposalContent
         {content}
