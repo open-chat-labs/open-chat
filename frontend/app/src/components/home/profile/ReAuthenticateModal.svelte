@@ -12,6 +12,7 @@
             key: ECDSAKeyIdentity;
             delegation: DelegationChain;
             provider: AuthProvider;
+            signInProofJwt: string;
         }) => void;
         onCancel: () => void;
     }

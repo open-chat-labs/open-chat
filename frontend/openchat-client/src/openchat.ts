@@ -2978,14 +2978,17 @@ export class OpenChat {
                 } else {
                     page(routeForChatIdentifier("chats", chatId));
                 }
-            } else if (chatId.kind === "group_chat") {
+            } else if (chatId.kind === "group_chat" || chatId.kind === "channel") {
                 autojoin = querystringStore.value.has("autojoin");
-                const code = querystringStore.value.get("code");
-                if (code) {
-                    this.groupInvite = {
-                        chatId,
-                        code,
-                    };
+
+                if (chatId.kind === "group_chat") {
+                    const code = querystringStore.value.get("code");
+                    if (code) {
+                        this.groupInvite = {
+                            chatId,
+                            code,
+                        };
+                    }
                 }
                 const preview = await this.previewChat(chatId);
                 if (preview.kind === "group_moved") {
