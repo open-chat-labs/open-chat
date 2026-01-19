@@ -213,6 +213,7 @@ import {
     getOrAdd,
     isError,
     isSuccessfulEventsResponse,
+    messageContextsEqual,
     messageContextToString,
     offline,
     textToCode,
@@ -4011,7 +4012,9 @@ export class OpenChatAgent extends EventTarget {
                 );
 
                 activityEvents.forEach((ev) => {
-                    ev.message = lookup[ev.messageIndex] ?? ev.message;
+                    if (messageContextsEqual(cxt, ev.messageContext)) {
+                        ev.message = lookup[ev.messageIndex] ?? ev.message;
+                    }
                 });
                 callback(activityEvents, false);
             }
