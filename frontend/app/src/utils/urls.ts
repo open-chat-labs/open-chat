@@ -10,7 +10,9 @@ export function isAbsoluteUrl(url: string): boolean {
 
 export const openChatFriendlyUrl =
     import.meta.env.OC_DFX_NETWORK === "ic_test" ? "https://test.oc.app" : "https://oc.app";
-export const synonymousUrlRegex = new RegExp(`^(${window.location.origin}|${openChatFriendlyUrl})`);
+export const synonymousUrlRegex = new RegExp(
+    `^(${import.meta.env.OC_BASE_ORIGIN!}|${openChatFriendlyUrl})`,
+);
 
 export function addQueryStringParam(name: string, val: string): string {
     const path = window.location.pathname;

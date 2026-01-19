@@ -43,7 +43,7 @@ function clean() {
             }
             const customDomains = process.env.OC_CUSTOM_DOMAINS;
             if (customDomains !== undefined) {
-                const origins = customDomains.split(",").map((d) => `https://${d}`)
+                const origins = customDomains.split(",").map((d) => `https://${d}`);
                 fs.writeFileSync(
                     "build/.well-known/ii-alternative-origins",
                     JSON.stringify({
@@ -54,10 +54,7 @@ function clean() {
                     "build/.well-known/ic-domains",
                     customDomains.split(",").join("\n"),
                 );
-                fs.writeFileSync(
-                    "build/.well-known/webauthn",
-                    JSON.stringify({ origins })
-                );
+                fs.writeFileSync("build/.well-known/webauthn", JSON.stringify({ origins }));
             }
             copyFile(".", "build", ".ic-assets.json5");
             copyFile(".", "build/.well-known", "assetlinks.json");
@@ -226,6 +223,7 @@ export default {
                 process.env.OC_ACCOUNT_LINKING_CODES_ENABLED,
             ),
             "import.meta.env.OC_ALCHEMY_API_KEY": JSON.stringify(process.env.OC_ALCHEMY_API_KEY),
+            "import.meta.env.OC_BASE_ORIGIN": JSON.stringify(process.env.OC_BASE_ORIGIN),
         }),
 
         html({

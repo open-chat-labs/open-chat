@@ -728,7 +728,7 @@ export class OpenChat {
 
     canonicalOrigin() {
         if (this.isNativeApp()) {
-            return "https://oc.app";
+            return this.config.baseOrigin;
         } else {
             return window.location.origin;
         }

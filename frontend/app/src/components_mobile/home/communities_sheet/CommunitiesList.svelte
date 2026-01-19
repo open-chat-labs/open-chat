@@ -3,6 +3,8 @@
     import {
         Avatar,
         BodySmall,
+        ColourVars,
+        Column,
         Container,
         CountBadge,
         Label,
@@ -11,19 +13,25 @@
     } from "component-lib";
     import {
         allUsersStore,
-        type CommunitySummary,
         currentUserIdStore,
         OpenChat,
         sortedCommunitiesStore,
+        type CommunitySummary,
         type UnreadCounts,
     } from "openchat-client";
     import { getContext } from "svelte";
+    import { dragHandle, dragHandleZone, type DndEvent } from "svelte-dnd-action";
     import AccountGroupOutline from "svelte-material-icons/AccountGroupOutline.svelte";
     import Compass from "svelte-material-icons/CompassOutline.svelte";
+    import Swap from "svelte-material-icons/MenuSwapOutline.svelte";
+    import { flip } from "svelte/animate";
     import DiamondUpgradeBox from "../DiamondUpgradeBox.svelte";
+
+    type CommunityItem = CommunitySummary & { _id: string };
 
     const client = getContext<OpenChat>("client");
 
+    const flipDurationMs = 300;
     let user = $derived($allUsersStore.get($currentUserIdStore) ?? client.nullUser("unknown"));
     let diamond = $derived(user?.diamondStatus !== "inactive");
 
@@ -35,6 +43,19 @@
     }
 
     let props: Props = $props();
+
+    let communityItems = $state<CommunityItem[]>([]);
+    $effect(() => {
+        communityItems = $sortedCommunitiesStore.map((c) => ({ ...c, _id: c.id.communityId }));
+    });
+
+    function handleDndConsider(e: CustomEvent<DndEvent<CommunityItem>>) {
+        communityItems = e.detail.items;
+    }
+
+    function handleDndFinalize(e: CustomEvent<DndEvent<CommunityItem>>) {
+        client.updateCommunityIndexes(e.detail.items);
+    }
 </script>
 
 {#snippet communityRow(community: CommunitySummary)}
@@ -42,6 +63,7 @@
     {@const count = counts.unmuted}
     {@const mentions = counts.mentions}
     <Container
+        supplementalClass={"community_row"}
         height={"hug"}
         onClick={() => props.onSelect(community)}
         crossAxisAlignment={"center"}
@@ -72,16 +94,15 @@
                 </BodySmall>
             </Container>
         </Container>
+
+        <div use:dragHandle aria-label="drag-handle for {community.name}" class="handle">
+            <Swap color={ColourVars.textSecondary} />
+        </div>
     </Container>
 {/snippet}
 
-<Container
-    padding={["sm", "xl", "xxxl"]}
-    width={"fill"}
-    gap={"xxl"}
-    direction={"vertical"}
-    height={"hug"}>
-    <Container width={"fill"} gap={"lg"} direction={"vertical"} height={"hug"}>
+<Column padding={["sm", "xl", "xxxl"]} width={"fill"} gap={"xxl"} height={"hug"}>
+    <Column width={"fill"} gap={"lg"} height={"hug"}>
         <ListAction onClick={() => props.onExplore()}>
             {#snippet icon(color)}
                 <Compass {color} />
@@ -101,12 +122,29 @@
                 Create a community
             </ListAction>
         {/if}
-    </Container>
+    </Column>
     <Container width={"fill"} gap={"lg"} direction={"vertical"}>
         <Label fontWeight={"bold"} colour={"textSecondary"}>Your communities</Label>
-
-        {#each $sortedCommunitiesStore as community}
-            {@render communityRow(community)}
-        {/each}
+        <div
+            class={"dropzone"}
+            use:dragHandleZone={{
+                items: communityItems,
+                flipDurationMs,
+                dropTargetStyle: {},
+            }}
+            onconsider={handleDndConsider}
+            onfinalize={handleDndFinalize}>
+            {#each communityItems as community (community._id)}
+                <div animate:flip={{ duration: flipDurationMs }}>
+                    {@render communityRow(community)}
+                </div>
+            {/each}
+        </div>
     </Container>
-</Container>
+</Column>
+
+<style lang="scss">
+    .dropzone {
+        width: 100%;
+    }
+</style>

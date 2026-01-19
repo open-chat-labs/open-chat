@@ -4,14 +4,14 @@
     import "@i18n/i18n";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { detectNeedsSafeInset, setupKeyboardTracking } from "@src/utils/safe_area";
-    import { rtlStore } from "@stores/rtl";
-    import { snowing } from "@stores/snow";
-    import { incomingVideoCall } from "@stores/video";
-    import { broadcastLoggedInUser } from "@stores/xframe";
     import {
         androidInterfaceSizes,
         setStatusAndNavBarSizesForNativeApp,
     } from "@stores/androidInterfaceSizes";
+    import { rtlStore } from "@stores/rtl";
+    import { snowing } from "@stores/snow";
+    import { incomingVideoCall } from "@stores/video";
+    import { broadcastLoggedInUser } from "@stores/xframe";
     import "@utils/markdown";
     import {
         expectNewFcmToken,
@@ -57,23 +57,6 @@
         import.meta.env.OC_BUILD_ENV!,
     );
 
-    // Open external links in a browser!
-    window.addEventListener("click", (event) => {
-        // TODO add any oc paths here that we wish to open in a browser
-        const forbiddenPaths: Set<string> = new Set([]);
-        const target = event.target as HTMLElement | null;
-        const link = target?.closest("a") as HTMLAnchorElement | null;
-
-        if (link && link.href) {
-            const url = new URL(link.href);
-
-            if (!synonymousUrlRegex.test(link.href) || forbiddenPaths.has(url.pathname)) {
-                event.preventDefault();
-                openUrl({ url: url.toString() });
-            }
-        }
-    });
-
     function createOpenChatClient(): OpenChat {
         const client = new OpenChat({
             appType: import.meta.env.OC_APP_TYPE,
@@ -112,7 +95,30 @@
             vapidPublicKey: import.meta.env.OC_VAPID_PUBLIC_KEY!,
             accountLinkingCodesEnabled:
                 import.meta.env.OC_ACCOUNT_LINKING_CODES_ENABLED! === "true",
+            baseOrigin: import.meta.env.OC_BASE_ORIGIN!,
         });
+
+        if (client.isNativeApp()) {
+            // Open external links in a browser!
+            window.addEventListener("click", (event) => {
+                // TODO add any oc paths here that we wish to open in a browser
+                const forbiddenPaths: Set<string> = new Set([]);
+                const target = event.target as HTMLElement | null;
+                const link = target?.closest("a") as HTMLAnchorElement | null;
+
+                if (link && link.href) {
+                    const url = new URL(link.href, import.meta.env.OC_BASE_ORIGIN);
+                    const isOCLink = synonymousUrlRegex.test(link.href);
+
+                    console.log("Click is local: ", isOCLink, import.meta.env.OC_BASE_ORIGIN);
+
+                    if (!isOCLink || forbiddenPaths.has(url.pathname)) {
+                        event.preventDefault();
+                        openUrl({ url: url.toString() });
+                    }
+                }
+            });
+        }
 
         return client;
     }

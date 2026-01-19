@@ -44,6 +44,7 @@ export OC_USERGEEK_APIKEY="this-is-a-fake-apikey"
 export OC_METERED_APIKEY="this-is-a-fake-apikey"
 export OC_ONESEC_FORWARDER_CANISTER="this-is-a-fake-canister-id"
 export OC_ONESEC_MINTER_CANISTER="this-is-a-fake-canister-id"
+export OC_BASE_ORIGIN=https://oc.app
 
 npx rollup -c
 

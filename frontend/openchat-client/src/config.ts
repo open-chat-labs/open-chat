@@ -39,4 +39,5 @@ export type OpenChatConfig = {
     communityInvite?: CommunityInvite;
     vapidPublicKey: string;
     accountLinkingCodesEnabled: boolean;
+    baseOrigin: string;
 };

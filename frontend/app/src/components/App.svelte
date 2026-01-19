@@ -106,6 +106,7 @@
             vapidPublicKey: import.meta.env.OC_VAPID_PUBLIC_KEY!,
             accountLinkingCodesEnabled:
                 import.meta.env.OC_ACCOUNT_LINKING_CODES_ENABLED! === "true",
+            baseOrigin: import.meta.env.OC_BASE_ORIGIN!,
         });
 
         return client;

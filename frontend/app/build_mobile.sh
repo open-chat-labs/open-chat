@@ -29,6 +29,7 @@ export OC_VAPID_PUBLIC_KEY=BD8RU5tDBbFTDFybDoWhFzlL5+mYptojI6qqqqiit68KSt17+vt33
 export OC_VIDEO_BRIDGE_URL=http://$(ipconfig getifaddr en0):5050
 export OC_WALLET_CONNECT_PROJECT_ID=b9aafebed2abfaf8341afd9428c947d5
 export OC_WEBSITE_VERSION=
+export OC_BASE_ORIGIN=http://localhost:5001
 
 # Run dev app
 npx vite --strictPort --port $OC_DEV_PORT

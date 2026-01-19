@@ -587,6 +587,7 @@ export class GlobalLocalState {
                 };
             },
             "updateCommunityIndex",
+            "never", // only we can set this so we never need to undo it
         );
     }
 
@@ -703,6 +704,7 @@ export class GlobalLocalState {
             val: CommunitySummaryUpdates,
         ) => (v: CommunitySummaryUpdates) => CommunitySummaryUpdates,
         functionName: string,
+        timeout?: number | "never",
     ): UndoLocalUpdate {
         return modifyWritableMap(
             id,
@@ -710,6 +712,7 @@ export class GlobalLocalState {
             communitySummaryLocalUpdates,
             () => new CommunitySummaryUpdates(),
             `${functionName}_${id.communityId}`,
+            timeout,
         );
     }
 

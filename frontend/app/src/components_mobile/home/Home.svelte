@@ -387,17 +387,18 @@
             });
     }
 
-    function copyUrl() {
-        const url = window.location.href;
-
-        navigator.clipboard.writeText(url).then(
-            () => {
-                toastStore.showSuccessToast(i18nKey("urlCopiedToClipboard"));
-            },
-            () => {
-                toastStore.showFailureToast(i18nKey("failedToCopyUrlToClipboard", { url }));
-            },
-        );
+    async function copyUrl() {
+        try {
+            const url = new URL(
+                `${window.location.pathname}${window.location.search}${window.location.hash}`,
+                client.canonicalOrigin(),
+            );
+            await navigator.clipboard.writeText(url.toString());
+            toastStore.showSuccessToast(i18nKey("urlCopiedToClipboard"));
+        } catch (err) {
+            console.error("Failed to copy url to clipboard", err);
+            toastStore.showFailureToast(i18nKey("failedToCopyUrlToClipboard"));
+        }
     }
 
     async function createDirectChat(chatId: DirectChatIdentifier): Promise<boolean> {
