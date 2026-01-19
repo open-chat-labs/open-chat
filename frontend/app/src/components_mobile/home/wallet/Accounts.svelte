@@ -2,16 +2,16 @@
     import { BodySmall, Container, Sheet } from "component-lib";
     import {
         walletTokensSorted as accountsSorted,
-        publish,
         i18nKey,
+        publish,
         type OpenChat,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
+    import Translatable from "../../Translatable.svelte";
     import RestrictedFeature from "../profile/RestrictedFeature.svelte";
     import WalletToken from "./WalletToken.svelte";
     import type { ConversionToken } from "./walletState.svelte";
-    import Translatable from "@src/components/Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
