@@ -36,7 +36,7 @@
         width = "fill",
         height = "hug",
         ellipsisTruncate = false,
-        colour = "textPrimary",
+        colour,
         labelFor,
         align = "unset",
         uppercase = false,
@@ -47,9 +47,8 @@
     let parentDirection = getContext<Direction>("direction");
     let widthCss = $derived(getFlexStyle("width", width, parentDirection));
     let heightCss = $derived(getFlexStyle("height", height, parentDirection));
-    let style = $derived(
-        `${heightCss}; ${widthCss}; color: ${getColourVar()}; text-align:${align};`,
-    );
+    let textColorCss = $derived(colour ? `color: ${ColourVars[colour]};` : "");
+    let style = $derived(`${heightCss}; ${widthCss}; ${textColorCss} text-align:${align};`);
     let tag = $derived(getTag());
 
     function getTag() {
@@ -69,9 +68,6 @@
             default:
                 return "span";
         }
-    }
-    function getColourVar() {
-        return ColourVars[colour];
     }
 </script>
 
@@ -175,6 +171,10 @@
     .buttonSmall {
         font-size: var(--typo-buttonSmall-sz);
         line-height: var(--typo-buttonSmall-lh);
+    }
+    .buttonRegular {
+        font-size: var(--typo-buttonRegular-sz);
+        line-height: var(--typo-buttonRegular-lh);
     }
 
     .light {

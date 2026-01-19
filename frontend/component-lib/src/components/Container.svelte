@@ -1,7 +1,7 @@
 <script module lang="ts">
     export type ContainerProps = Props;
 
-    type Overflow = "auto" | "visible" | "hidden";
+    type Overflow = "auto" | "visible" | "hidden" | "initial";
 
     interface Props {
         children: Snippet;

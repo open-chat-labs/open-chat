@@ -4,6 +4,7 @@ pub fn run() {
     #[cfg(debug_assertions)]
     let devtools = tauri_plugin_devtools::init();
 
+    #[allow(unused_mut)]
     let mut builder = tauri::Builder::default();
 
     #[cfg(debug_assertions)]

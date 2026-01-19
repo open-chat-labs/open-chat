@@ -20,8 +20,12 @@
         { id: "eth", label: "ETH" },
     ];
 
+    let refreshing = $state(false);
     function onRefreshWallet() {
-        client.refreshBalancesInSeries();
+        refreshing = true;
+        client.refreshBalancesInSeries().then(() => {
+            refreshing = false;
+        });
     }
 
     onMount(async () => {
@@ -48,9 +52,16 @@
     {/snippet}
 </SectionHeader>
 
-<Container gap={"lg"} height={"fill"} padding={"lg"} closeMenuOnScroll direction={"vertical"}>
-    <TokenToggle options={conversionOptions} bind:selected={selectedConversion} />
-    <OverallBalance {onRefreshWallet} {selectedConversion} />
-    <Accounts bind:selectedConversion />
+<Container height={"fill"} closeMenuOnScroll direction={"vertical"}>
+    <Container
+        height={"fill"}
+        direction={"vertical"}
+        gap={"lg"}
+        padding={["lg", "zero", "zero"]}
+        overflow="auto">
+        <TokenToggle options={conversionOptions} bind:selected={selectedConversion} />
+        <OverallBalance {onRefreshWallet} refreshingWallet={refreshing} {selectedConversion} />
+        <Accounts bind:selectedConversion />
+    </Container>
     <BottomBar {selectedConversion} />
 </Container>

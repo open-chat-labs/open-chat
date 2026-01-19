@@ -2052,6 +2052,13 @@
     },
     "viewer": "viewer",
     "wallet": "Wallet",
+    "appWallet": {
+        "header": {
+            "asset": "Asset",
+            "holdings": "Holdings",
+            "total": "Total"
+        }
+    },
     "walletSettings": "Wallet settings",
     "webhook": {
         "avatarLabel": "Avatar",

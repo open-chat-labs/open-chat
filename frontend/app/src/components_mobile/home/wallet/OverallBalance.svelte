@@ -2,7 +2,7 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { hideTokenBalances } from "@src/stores/settings";
     import { sum } from "@src/utils/math";
-    import { Body, BodySmall, CommonButton, Container, H1 } from "component-lib";
+    import { Body, BodySmall, ColourVars, CommonButton2, Container, H1 } from "component-lib";
     import {
         type EnhancedTokenDetails,
         walletTokensSorted as accountsSorted,
@@ -15,10 +15,11 @@
 
     interface Props {
         selectedConversion: ConversionToken;
+        refreshingWallet: boolean;
         onRefreshWallet: () => void;
     }
 
-    let { selectedConversion, onRefreshWallet }: Props = $props();
+    let { selectedConversion, refreshingWallet, onRefreshWallet }: Props = $props();
 
     function calculateTotal(
         accounts: EnhancedTokenDetails[],
@@ -39,28 +40,33 @@
     let total = $derived(calculateTotal($accountsSorted, selectedConversion));
 </script>
 
-<Container
-    padding={"lg"}
-    mainAxisAlignment={"center"}
-    crossAxisAlignment={"center"}
-    direction={"vertical"}
-    gap={"sm"}>
-    <BodySmall width={"hug"} fontWeight={"bold"} colour={"textSecondary"}>
-        <Translatable resourceKey={i18nKey("Total balance")} />
-    </BodySmall>
-    <H1 blur={$hideTokenBalances} width={"hug"} fontWeight={"bold"}>
-        {selectedConversion === "usd" ? "$" : ""}
-        {total}
-    </H1>
-    <Container mainAxisAlignment={"center"} crossAxisAlignment={"center"}>
-        <CommonButton onClick={onRefreshWallet} mode={"active"} size={"small_text"}>
+<Container padding={["md", "lg"]} crossAxisAlignment={"center"} direction={"vertical"} gap={"lg"}>
+    <!-- Balance -->
+    <Container crossAxisAlignment={"center"} direction={"vertical"} overflow="visible">
+        <BodySmall width={"hug"} fontWeight={"bold"} colour={"textSecondary"}>
+            <Translatable resourceKey={i18nKey("Total balance")} />
+        </BodySmall>
+        <H1 blur={$hideTokenBalances} width={"hug"} fontWeight={"bold"}>
+            {selectedConversion === "usd" ? "$" : ""}
+            {total}
+        </H1>
+    </Container>
+    <!-- Buttons -->
+    <Container
+        mainAxisAlignment={"center"}
+        crossAxisAlignment={"center"}
+        padding={["sm", "zero"]}
+        borderColour={ColourVars.background2}
+        borderWidth="thick"
+        borderRadius="md">
+        <CommonButton2 onClick={onRefreshWallet} loading={refreshingWallet} width="fill">
             {#snippet icon(color, size)}
                 <Reload {color} {size} />
             {/snippet}
             <Translatable resourceKey={i18nKey("Refresh wallet")} />
-        </CommonButton>
+        </CommonButton2>
         <Body width={"hug"}>/</Body>
-        <CommonButton onClick={hideTokenBalances.toggle} mode={"active"} size={"small_text"}>
+        <CommonButton2 onClick={hideTokenBalances.toggle} width="fill">
             {#snippet icon(color, size)}
                 {#if $hideTokenBalances}
                     <EyeOff {color} {size} />
@@ -70,6 +76,6 @@
             {/snippet}
             <Translatable
                 resourceKey={i18nKey($hideTokenBalances ? "Show balances" : "Hide balances")} />
-        </CommonButton>
+        </CommonButton2>
     </Container>
 </Container>

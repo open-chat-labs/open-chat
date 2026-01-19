@@ -46,6 +46,7 @@ export class TypographicStyles {
         public chatFootnote: TypographicStyle,
         public chatCaption: TypographicStyle,
         public buttonSmall: TypographicStyle,
+        public buttonRegular: TypographicStyle,
     ) {}
 
     cssVariables(): CssVariable[] {
@@ -65,6 +66,7 @@ export class TypographicStyles {
             ...this.chatFootnote.cssVariables("chatFootnote"),
             ...this.chatCaption.cssVariables("chatCaption"),
             ...this.buttonSmall.cssVariables("buttonSmall"),
+            ...this.buttonRegular.cssVariables("buttonRegular"),
         ];
     }
 }

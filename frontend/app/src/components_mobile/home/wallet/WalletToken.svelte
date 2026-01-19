@@ -5,7 +5,6 @@
         Avatar,
         Body,
         BodySmall,
-        Caption,
         ColourVars,
         Container,
         MenuItem,
@@ -52,26 +51,29 @@
         onClick={onClick ? () => onClick(tokenState) : undefined}
         mainAxisAlignment={"spaceBetween"}
         crossAxisAlignment={"center"}
-        padding={"sm"}>
+        padding={["md", "sm", "md", "lg"]}>
         <Avatar url={token.logo}></Avatar>
         <Container direction={"vertical"}>
             <Body width={"hug"} fontWeight={"bold"}>{token.symbol}</Body>
-            <Caption width={"hug"} colour={"textSecondary"} fontWeight={"bold"}
-                >{tokenState.formattedUnitValue}</Caption>
+            <BodySmall width={"hug"} colour={"textSecondary"} fontWeight={"bold"}
+                >{tokenState.formattedUnitValue}</BodySmall>
         </Container>
-        <BodySmall blur={$hideTokenBalances} align={"end"} width={"hug"} fontWeight={"bold"}
-            >{tokenState.formattedTokenBalance}</BodySmall>
+        <Body blur={$hideTokenBalances} align={"end"} width={{ size: "6rem" }} fontWeight={"bold"}>
+            {tokenState.formattedTokenBalance}
+        </Body>
         <Body
             blur={$hideTokenBalances}
             align={"end"}
-            width={"hug"}
+            width={{ size: "6rem" }}
             colour={"primary"}
-            fontWeight={"bold"}>{tokenState.formattedConvertedValue}</Body>
+            fontWeight={"bold"}>
+            {tokenState.formattedConvertedValue}
+        </Body>
         {#if withMenu}
             {#if tokenState.refreshingBalance}
                 <Reload color={ColourVars.textSecondary} />
             {:else}
-                <MenuRight color={ColourVars.textSecondary} />
+                <MenuRight size="1.25rem" color={ColourVars.textSecondary} />
             {/if}
         {/if}
     </Container>

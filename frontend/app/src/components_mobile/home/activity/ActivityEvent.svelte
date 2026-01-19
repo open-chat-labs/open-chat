@@ -174,7 +174,7 @@
     let tips = $derived(message?.tips ? Object.entries(message.tips) : []);
 </script>
 
-<Container padding={"lg"} gap={"md"} supplementalClass={"activity-event"} {onClick}>
+<Container padding={["md", "lg"]} gap={"md"} supplementalClass={"activity-event"} {onClick}>
     <Avatar size={"lg"} url={client.userAvatarUrl(sender)}></Avatar>
     <Container direction={"vertical"}>
         <!-- Title, time, chat path & activity indicator -->

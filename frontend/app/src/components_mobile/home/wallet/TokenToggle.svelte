@@ -6,7 +6,7 @@
 </script>
 
 <script lang="ts">
-    import { CommonButton, Container, transition } from "component-lib";
+    import { Container, transition, Chip } from "component-lib";
 
     interface Props {
         options: Option[];
@@ -22,16 +22,19 @@
     }
 </script>
 
-<Container height={{ size: "2rem" }} mainAxisAlignment={"spaceBetween"} gap={"sm"}>
-    {#each options as { id, label }}
-        {@const isSelected = selected === id}
-        <CommonButton
-            height={"fill"}
-            width={isSelected ? { share: 1.3 } : { share: 1 }}
-            onClick={() => selectOption(id)}
-            mode={isSelected ? "active" : "default"}
-            size={"small"}>
-            {label}
-        </CommonButton>
+<!-- Same snippet is used in ChatListFilters -->
+{#snippet button({ id, label }: Option)}
+    {@const isSelected = selected === id}
+    <Chip
+        width={isSelected ? { share: 1.3 } : { share: 1 }}
+        mode={isSelected ? "rounded" : "unselected"}
+        onClick={() => selectOption(id)}>
+        {label}
+    </Chip>
+{/snippet}
+
+<Container mainAxisAlignment={"spaceBetween"} gap={"sm"} padding={["zero", "lg"]}>
+    {#each options as opt}
+        {@render button(opt)}
     {/each}
 </Container>

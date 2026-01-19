@@ -121,14 +121,15 @@
         <NothingToSee title={"No activity yet"} subtitle={"Check back later for new activity"} />
     {:else}
         <VirtualList keyFn={eventKey} items={activityItems}>
-            {#snippet children(item, idx)}
+            {#snippet children(item)}
                 {#if item.kind === "header"}
                     <!-- TODO make the time header stick to top-->
                     <Container
                         supplementalClass="activity_time_header"
-                        padding={[idx > 0 ? "xxl" : "xl", "zero", "zero"]}>
-                        <Body colour={"textSecondary"} fontWeight={"semi-bold"}
-                            >{item.formattedTime}</Body>
+                        padding={["xl", "zero", "zero"]}>
+                        <Body colour={"textSecondary"} fontWeight={"semi-bold"}>
+                            {item.formattedTime}
+                        </Body>
                     </Container>
                 {:else}
                     <ActivityEvent

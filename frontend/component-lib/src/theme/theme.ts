@@ -66,6 +66,7 @@ export class Theme {
             new TypographicStyle(Rem.fromPixels(10), Rem.fromPixels(12)), // chatFootnote
             new TypographicStyle(Rem.fromPixels(12), Rem.fromPixels(16)), // chatCaption
             new TypographicStyle(Rem.fromPixels(12), Rem.fromPixels(12)), // buttonSmall
+            new TypographicStyle(Rem.fromPixels(14), Rem.fromPixels(14)), // buttonRegular
         );
 
         this.fontWeights = new FontWeights();

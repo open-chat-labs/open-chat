@@ -92,7 +92,7 @@
         title={tokenSelector.title} />
 {/if}
 
-<Container gap={"sm"}>
+<Container gap={"sm"} padding={["xs", "sm", "sm", "sm"]}>
     <BigButton {width} mode={"active"}>
         {#snippet icon(color)}
             <List {color} />
