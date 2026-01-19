@@ -1208,12 +1208,6 @@ export class OpenChat {
         ]).then(() => window.location.replace("/"));
     }
 
-    async previouslySignedIn(): Promise<boolean> {
-        const KEY_STORAGE_IDENTITY = "identity";
-        const identity = await this.#authIdentityStorage.storage.get(KEY_STORAGE_IDENTITY);
-        return userCreatedStore.value && identity !== null;
-    }
-
     generateIdentityChallenge(): Promise<GenerateChallengeResponse> {
         return this.#worker
             .send({
