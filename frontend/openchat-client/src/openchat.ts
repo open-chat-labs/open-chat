@@ -548,15 +548,15 @@ import { configKeys } from "./utils/config";
 import { verifyCredential } from "./utils/credentials";
 import { formatTokens, validateTokenInput } from "./utils/cryptoFormatter";
 import {
+    formatDateLong,
     formatMessageDate,
+    getSmartDateHeader,
     toDateString,
     toDatetimeString,
     toLongDateString,
     toMonthString,
-    toShortTimeString,
     toRelativeTime,
-    formatDateLong,
-    getSmartDateHeader,
+    toShortTimeString,
 } from "./utils/date";
 import { getErc20TokenBalances } from "./utils/evm";
 import formatFileSize from "./utils/fileSize";
