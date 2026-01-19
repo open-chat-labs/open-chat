@@ -84,7 +84,6 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub registry_synced_up_to: TimestampMillis,
     pub fire_and_forget_handler: FireAndForgetHandler,
-    #[serde(default, alias = "nns_proposals_scheduled_to_vote_on")]
     pub nns_proposals_requiring_manual_vote: HashSet<ProposalId>,
     pub nns_neuron_to_vote_with: Option<NnsNeuronId>,
     pub rng_seed: [u8; 32],

@@ -4211,6 +4211,25 @@ export const UserCancelP2pSwapArgs = Type.Object({
     message_id: MessageId,
 });
 
+export type UserSetPinNumberPinNumberVerification = Static<
+    typeof UserSetPinNumberPinNumberVerification
+>;
+export const UserSetPinNumberPinNumberVerification = Type.Union([
+    Type.Literal("None"),
+    Type.Object({
+        PIN: PinNumberWrapper,
+    }),
+    Type.Object({
+        Reauthenticated: Type.String(),
+    }),
+]);
+
+export type UserSetPinNumberArgs = Static<typeof UserSetPinNumberArgs>;
+export const UserSetPinNumberArgs = Type.Object({
+    new: Type.Optional(PinNumberWrapper),
+    verification: UserSetPinNumberPinNumberVerification,
+});
+
 export type UserSwapTokensExchangeSwapArgs = Static<typeof UserSwapTokensExchangeSwapArgs>;
 export const UserSwapTokensExchangeSwapArgs = Type.Object({
     swap_canister_id: TSPrincipal,
@@ -7601,28 +7620,6 @@ export const UserCreateGroupResponse = Type.Union([
         Error: OCError,
     }),
 ]);
-
-export type UserSetPinNumberPinNumberVerification = Static<
-    typeof UserSetPinNumberPinNumberVerification
->;
-export const UserSetPinNumberPinNumberVerification = Type.Union([
-    Type.Literal("None"),
-    Type.Object({
-        PIN: PinNumberWrapper,
-    }),
-    Type.Object({
-        Delegation: SignedDelegation,
-    }),
-    Type.Object({
-        Reauthenticated: Type.String(),
-    }),
-]);
-
-export type UserSetPinNumberArgs = Static<typeof UserSetPinNumberArgs>;
-export const UserSetPinNumberArgs = Type.Object({
-    new: Type.Optional(PinNumberWrapper),
-    verification: UserSetPinNumberPinNumberVerification,
-});
 
 export type UserSendMessageWithTransferToGroupSuccessResult = Static<
     typeof UserSendMessageWithTransferToGroupSuccessResult

@@ -11,6 +11,7 @@ import type {
     AddRemoveReactionResponse,
     ApproveTransferResponse,
     ArchiveChatResponse,
+    AuthenticationPrincipalsResponse,
     BlobReference,
     BlockUserResponse,
     BotCommandResponse,
@@ -297,6 +298,7 @@ import { OneSecMinterClient } from "./oneSecMinter/oneSecMinter.client";
 import { OnlineClient } from "./online/online.client";
 import { ProposalsBotClient } from "./proposalsBot/proposalsBot.client";
 import { RegistryClient } from "./registry/registry.client";
+import { IdentityClient } from "./identity/identity.client";
 import { SignInWithEmailClient } from "./signInWithEmail/signInWithEmail.client";
 import { SignInWithEthereumClient } from "./signInWithEthereum/signInWithEthereum.client";
 import { SignInWithSolanaClient } from "./signInWithSolana/signInWithSolana.client";
@@ -314,6 +316,7 @@ export class OpenChatAgent extends EventTarget {
     private _userClient: UserClient | AnonUserClient;
     private _notificationClient: NotificationsClient;
     private _registryClient: RegistryClient;
+    private _identityClient: IdentityClient;
     private _dataClient: DataClient;
     private _localUserIndexClient: LocalUserIndexClient;
     private _ledgerClient: LedgerClient;
@@ -341,7 +344,11 @@ export class OpenChatAgent extends EventTarget {
     private _oneSecForwarderClient: Lazy<OneSecForwarderClient>;
     private _oneSecMinterClient: Lazy<OneSecMinterClient>;
 
-    constructor(private identity: Identity, private config: AgentConfig) {
+    constructor(
+        private identity: Identity,
+        private authPrincipal: string,
+        private config: AgentConfig,
+    ) {
         super();
         this._logger = config.logger;
         this._agent = createHttpAgentSync(identity, config.icUrl);
@@ -370,6 +377,7 @@ export class OpenChatAgent extends EventTarget {
             config.registryCanister,
             config.blobUrlPattern,
         );
+        this._identityClient = new IdentityClient(identity, this._agent, config.identityCanister);
         this._dataClient = new DataClient(identity, this._agent, config);
         this._exchangeRateClients = [
             new IcpCoinsClient(identity, this._agent),
@@ -2564,6 +2572,10 @@ export class OpenChatAgent extends EventTarget {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.userClient.setBio(bio);
+    }
+
+    getAuthenticationPrincipals(): Promise<AuthenticationPrincipalsResponse> {
+        return this._identityClient.getAuthenticationPrincipals(this.authPrincipal);
     }
 
     async registerUser(

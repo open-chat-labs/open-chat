@@ -51,19 +51,12 @@
     let progressWidth = $state(0);
     let mouseEvent = $state<MouseEvent>();
 
-    async function claim(e: MouseEvent, auth: { key: ECDSAKeyIdentity, delegation: DelegationChain } | undefined) {
-        let signInProof: string | undefined = undefined;
-        if (content.requiresCaptcha) {
-            if (auth) {
-                signInProof = await client.getSignInProof(
-                    auth.key,
-                    auth.delegation,
-                );
-            } else {
-                mouseEvent = e;
-                showAuthentication = true;
-                return;
-            }
+    async function claim(e: MouseEvent, auth: { signInProofJwt: string } | undefined) {
+        const signInProof = auth?.signInProofJwt;
+        if (signInProof === undefined && content.requiresCaptcha) {
+            mouseEvent = e;
+            showAuthentication = true;
+            return;
         }
 
         showAuthentication = false;
@@ -137,6 +130,7 @@
         key: ECDSAKeyIdentity;
         delegation: DelegationChain;
         provider: AuthProvider;
+        signInProofJwt: string;
     }) {
         if (mouseEvent !== undefined) {
             claim(mouseEvent, detail);
