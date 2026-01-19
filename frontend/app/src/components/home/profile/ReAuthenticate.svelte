@@ -30,6 +30,7 @@
             key: ECDSAKeyIdentity;
             delegation: DelegationChain;
             provider: AuthProvider;
+            signInProofJwt: string;
         }) => void;
     }
 
@@ -63,7 +64,7 @@
         }
 
         if (ev instanceof EmailPollerSuccess) {
-            authComplete(AuthProvider.EMAIL, ev.detail);
+            authComplete(ev.detail.key, ev.detail.delegation, AuthProvider.EMAIL);
         }
     }
 
@@ -80,11 +81,11 @@
         if (provider === AuthProvider.PASSKEY) {
             try {
                 const [key, delegation] = await client.reSignInWithCurrentWebAuthnIdentity();
-                onSuccess({
+                await authComplete(
                     key,
                     delegation,
                     provider,
-                });
+                );
             } catch (err) {
                 console.error("An error occurred doing passkey auth: ", err);
                 error = "identity.failure.loginApprover";
@@ -126,11 +127,11 @@
                                 if (principal !== client.AuthPrincipal) {
                                     error = "identity.failure.principalMismatch";
                                 } else {
-                                    onSuccess({
-                                        key: identity,
-                                        delegation: DelegationChain.fromJSON(delegation),
+                                    await authComplete(
+                                        identity,
+                                        DelegationChain.fromJSON(delegation),
                                         provider,
-                                    });
+                                    );
                                 }
                             }
                         },
@@ -147,20 +148,23 @@
         }
     }
 
-    function authComplete(
-        provider: AuthProvider.ETH | AuthProvider.SOL | AuthProvider.EMAIL,
-        detail: { kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain },
+    async function authComplete(
+        key: ECDSAKeyIdentity,
+        delegation: DelegationChain,
+        provider: AuthProvider,
     ) {
-        const identity = DelegationIdentity.fromDelegation(detail.key, detail.delegation);
+        const identity = DelegationIdentity.fromDelegation(key, delegation);
         const principal = identity.getPrincipal().toString();
         if (principal !== client.AuthPrincipal) {
             authStep = "choose_provider";
             error = "identity.failure.principalMismatch";
         } else {
+            const signInProofJwt = await client.getSignInProof(key, delegation);
             onSuccess({
-                key: detail.key,
-                delegation: detail.delegation,
+                key,
+                delegation,
                 provider,
+                signInProofJwt,
             });
         }
     }
@@ -179,7 +183,7 @@
             {:then { default: SigninWithEth }}
                 <SigninWithEth
                     assumeIdentity={false}
-                    onConnected={(ev) => authComplete(AuthProvider.ETH, ev)} />
+                    onConnected={(ev) => authComplete(ev.key, ev.delegation, AuthProvider.ETH)} />
             {/await}
         </div>
     {:else if authStep === "choose_sol_wallet"}
@@ -189,7 +193,7 @@
             {:then { default: SigninWithSol }}
                 <SigninWithSol
                     assumeIdentity={false}
-                    onConnected={(ev) => authComplete(AuthProvider.SOL, ev)} />
+                    onConnected={(ev) => authComplete(ev.key, ev.delegation, AuthProvider.SOL)} />
             {/await}
         </div>
     {:else if authStep === "signing_in_with_email"}

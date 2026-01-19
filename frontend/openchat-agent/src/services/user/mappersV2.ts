@@ -1,5 +1,4 @@
 import { encodeIcrcAccount } from "@dfinity/ledger-icrc";
-import { DelegationChain } from "@icp-sdk/core/identity";
 import { Principal } from "@icp-sdk/core/principal";
 import type {
     Achievement,
@@ -116,7 +115,6 @@ import type {
     UserWalletConfig,
     UserWithdrawCryptoResponse,
 } from "../../typebox";
-import { signedDelegation } from "../../utils/id";
 import {
     bytesToBigint,
     bytesToHexString,
@@ -1061,11 +1059,11 @@ export function claimDailyChitResponse(value: UserClaimDailyChitResponse): Claim
 
 export function apiVerification(domain: Verification): UserSetPinNumberPinNumberVerification {
     switch (domain.kind) {
-        case "delegation_verification":
-            return { Delegation: signedDelegation(DelegationChain.fromJSON(domain.delegation)) };
         case "no_verification":
             return "None";
         case "pin_verification":
             return { PIN: domain.pin };
+        case "reauthenticated":
+            return { Reauthenticated: domain.signInProofJwt };
     }
 }
