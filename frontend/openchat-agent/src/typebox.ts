@@ -136,12 +136,6 @@ export const ProposalsBotCanisterInstallMode = Type.Union([
 export type ProposalsBotTreasury = Static<typeof ProposalsBotTreasury>;
 export const ProposalsBotTreasury = Type.Union([Type.Literal("ICP"), Type.Literal("SNS")]);
 
-export type IdentityChallenge = Static<typeof IdentityChallenge>;
-export const IdentityChallenge = Type.Object({
-    key: Type.Number(),
-    png_base64: Type.String(),
-});
-
 export type IdentityRemoveIdentityLinkResponse = Static<typeof IdentityRemoveIdentityLinkResponse>;
 export const IdentityRemoveIdentityLinkResponse = Type.Union([
     Type.Literal("Success"),
@@ -156,21 +150,6 @@ export type IdentityVerifyAccountLinkingCodeArgs = Static<
 export const IdentityVerifyAccountLinkingCodeArgs = Type.Object({
     code: Type.String(),
 });
-
-export type IdentityChallengeAttempt = Static<typeof IdentityChallengeAttempt>;
-export const IdentityChallengeAttempt = Type.Object({
-    key: Type.Number(),
-    chars: Type.String(),
-});
-
-export type IdentityGenerateChallengeResponse = Static<typeof IdentityGenerateChallengeResponse>;
-export const IdentityGenerateChallengeResponse = Type.Union([
-    Type.Object({
-        Success: IdentityChallenge,
-    }),
-    Type.Literal("AlreadyRegistered"),
-    Type.Literal("Throttled"),
-]);
 
 export type OnlineUsersMinutesOnlineArgs = Static<typeof OnlineUsersMinutesOnlineArgs>;
 export const OnlineUsersMinutesOnlineArgs = Type.Object({
@@ -3731,8 +3710,6 @@ export const IdentityCreateIdentityResponse = Type.Union([
     Type.Object({
         OriginatingCanisterInvalid: TSPrincipal,
     }),
-    Type.Literal("ChallengeRequired"),
-    Type.Literal("ChallengeFailed"),
 ]);
 
 export type IdentityCreateIdentityArgs = Static<typeof IdentityCreateIdentityArgs>;
@@ -3742,7 +3719,6 @@ export const IdentityCreateIdentityArgs = Type.Object({
     webauthn_key: Type.Optional(IdentityWebAuthnKey),
     is_ii_principal: Type.Optional(Type.Boolean()),
     max_time_to_live: Type.Optional(Type.BigInt()),
-    challenge_attempt: Type.Optional(IdentityChallengeAttempt),
 });
 
 export type OnlineUsersLastOnlineArgs = Static<typeof OnlineUsersLastOnlineArgs>;

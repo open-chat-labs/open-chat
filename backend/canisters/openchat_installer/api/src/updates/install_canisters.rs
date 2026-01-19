@@ -12,7 +12,6 @@ pub struct Args {
     pub video_call_operators: Vec<Principal>,
     pub push_service_principals: Vec<Principal>,
     pub identity_originating_canisters: Vec<CanisterId>,
-    pub identity_skip_captcha_whitelist: Vec<CanisterId>,
     pub wasm_version: BuildVersion,
 }
 

@@ -24,7 +24,6 @@ pub mod happy_path {
         video_call_operators: Vec<Principal>,
         push_service_principals: Vec<Principal>,
         identity_originating_canisters: Vec<CanisterId>,
-        identity_skip_captcha_whitelist: Vec<CanisterId>,
         wasm_version: BuildVersion,
     ) {
         let response = super::install_canisters(
@@ -39,7 +38,6 @@ pub mod happy_path {
                 video_call_operators,
                 push_service_principals,
                 identity_originating_canisters,
-                identity_skip_captcha_whitelist,
                 wasm_version,
             },
         );

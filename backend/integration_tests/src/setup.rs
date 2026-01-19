@@ -220,11 +220,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
             sign_in_with_email_canister_id,
             WEBAUTHN_ORIGINATING_CANISTER,
         ],
-        vec![
-            NNS_INTERNET_IDENTITY_CANISTER_ID,
-            sign_in_with_email_canister_id,
-            WEBAUTHN_ORIGINATING_CANISTER,
-        ],
         wasm_version,
     );
 

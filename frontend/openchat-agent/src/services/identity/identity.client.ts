@@ -7,7 +7,6 @@ import {
     IdentityCreateIdentityArgs,
     IdentityCreateIdentityResponse,
     IdentityDeleteUserArgs,
-    IdentityGenerateChallengeResponse,
     IdentityGetDelegationArgs,
     IdentityGetDelegationResponse,
     IdentityInitiateIdentityLinkArgs,
@@ -28,10 +27,8 @@ import {
 import type {
     ApproveIdentityLinkResponse,
     AuthenticationPrincipalsResponse,
-    ChallengeAttempt,
     CheckAuthPrincipalResponse,
     CreateIdentityResponse,
-    GenerateChallengeResponse,
     GetDelegationResponse,
     InitiateIdentityLinkResponse,
     OCError,
@@ -47,7 +44,6 @@ import {
     authPrincipalsResponse,
     checkAuthPrincipalResponse,
     createIdentityResponse,
-    generateChallengeResponse,
     getDelegationResponse,
     initiateIdentityLinkResponse,
     prepareDelegationResponse,
@@ -68,7 +64,6 @@ export class IdentityClient extends SingleCanisterMsgpackAgent {
         sessionKey: Uint8Array,
         webAuthnKey: WebAuthnKeyFull | undefined,
         isIIPrincipal: boolean | undefined,
-        challengeAttempt: ChallengeAttempt | undefined,
     ): Promise<CreateIdentityResponse> {
         const args = {
             public_key: this.publicKey(),
@@ -76,7 +71,6 @@ export class IdentityClient extends SingleCanisterMsgpackAgent {
             session_key: sessionKey,
             is_ii_principal: isIIPrincipal,
             max_time_to_live: undefined,
-            challenge_attempt: challengeAttempt,
         };
         return this.update(
             "create_identity",
@@ -126,16 +120,6 @@ export class IdentityClient extends SingleCanisterMsgpackAgent {
             getDelegationResponse,
             IdentityGetDelegationArgs,
             IdentityGetDelegationResponse,
-        );
-    }
-
-    generateChallenge(): Promise<GenerateChallengeResponse> {
-        return this.update(
-            "generate_challenge",
-            {},
-            generateChallengeResponse,
-            Empty,
-            IdentityGenerateChallengeResponse,
         );
     }
 
