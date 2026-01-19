@@ -24,7 +24,7 @@ fn c2c_uninstall_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         }
     }
 
-    state.uninstall_bot(args.bot_id, true);
+    state.uninstall_bot(args.bot_id);
 
     Ok(())
 }

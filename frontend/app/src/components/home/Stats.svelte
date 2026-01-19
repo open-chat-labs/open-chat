@@ -54,7 +54,6 @@
         return percentages.slice(from, to).reduce((total, n) => total + percToDegree(n), 0);
     }
 
-    let cryptoMessages = $derived(stats.icpMessages + stats.sns1Messages + stats.ckbtcMessages);
     $effect(() => {
         if (previousStats === undefined || !client.metricsEqual(stats, previousStats)) {
             totalMessages =
@@ -64,7 +63,7 @@
                 stats.audioMessages +
                 stats.fileMessages +
                 stats.polls +
-                cryptoMessages +
+                stats.cryptoMessages +
                 stats.giphyMessages;
 
             slice(stats.textMessages, textPerc);
@@ -73,7 +72,7 @@
             slice(stats.audioMessages, audioPerc);
             slice(stats.fileMessages, filePerc);
             slice(stats.polls, pollPerc);
-            slice(cryptoMessages, cryptoPerc);
+            slice(stats.cryptoMessages, cryptoPerc);
             slice(stats.giphyMessages, giphyPerc);
             previousStats = stats;
         }
@@ -205,7 +204,7 @@
         <div class="crypto legend">
             <div class="key"></div>
             <div class="label">
-                <span class="stat">{cryptoMessages.toLocaleString()}</span><Translatable
+                <span class="stat">{stats.cryptoMessages.toLocaleString()}</span><Translatable
                     resourceKey={i18nKey("stats.cryptoTransfers")} />
             </div>
         </div>

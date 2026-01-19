@@ -14,6 +14,7 @@ fn main() {
     generate_ts_method!(local_user_index, group_and_community_summary_updates_v2);
 
     generate_ts_method!(local_user_index, bot_add_reaction);
+    generate_ts_method!(local_user_index, bot_change_role);
     generate_ts_method!(local_user_index, bot_remove_user);
     generate_ts_method!(local_user_index, bot_chat_events);
     generate_ts_method!(local_user_index, bot_chat_summary);

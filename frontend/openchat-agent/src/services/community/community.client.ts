@@ -30,7 +30,6 @@ import type {
     EnableInviteCodeResponse,
     EventWrapper,
     EventsResponse,
-    EventsSuccessResult,
     ExploreChannelsResponse,
     FollowThreadResponse,
     FullWebhookDetails,
@@ -39,7 +38,6 @@ import type {
     GroupChatDetailsResponse,
     GroupChatIdentifier,
     ImportGroupResponse,
-    IndexRange,
     InviteCodeResponse,
     JoinVideoCallResponse,
     LeaveGroupResponse,
@@ -75,11 +73,8 @@ import {
     DestinationInvalidError,
     MAX_EVENTS,
     MAX_MESSAGES,
-    MAX_MISSING,
-    ResponseTooLargeError,
-    isSuccessfulEventsResponse,
     offline,
-    textToCode,
+    random32,
     toBigInt32,
 } from "openchat-shared";
 import type { AgentConfig } from "../../config";
@@ -179,16 +174,10 @@ import {
 } from "../../typebox";
 import {
     getCachedCommunityDetails,
-    getCachedEvents,
-    getCachedEventsByIndex,
-    getCachedEventsWindowByMessageIndex,
     getCachedGroupDetails,
-    loadMessagesByMessageIndex,
-    mergeSuccessResponses,
     recordFailedMessage,
     removeFailedMessage,
     setCachedCommunityDetails,
-    setCachedEvents,
     setCachedGroupDetails,
     setCachedMessageFromSendResponse,
     type Database,
@@ -201,7 +190,8 @@ import {
     principalBytesToString,
     principalStringToBytes,
 } from "../../utils/mapping";
-import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
+import { MultiCanisterMsgpackAgent } from "../canisterAgent/msgpack";
+import type { IChatEventsReader } from "../common/chatEvents";
 import {
     acceptP2PSwapSuccess,
     apiAccessGateConfig,
@@ -211,6 +201,7 @@ import {
     apiMessageContent,
     apiUser as apiUserV2,
     apiVideoCallPresence,
+    changeRoleResult,
     createGroupSuccess,
     deletedMessageSuccess,
     enableOrResetInviteCodeSuccess,
@@ -232,10 +223,6 @@ import {
     videoCallParticipantsSuccess,
     webhookDetails,
 } from "../common/chatMappersV2";
-import {
-    chunkedChatEventsFromBackend,
-    chunkedChatEventsWindowFromBackend,
-} from "../common/chunked";
 import { DataClient } from "../data/data.client";
 import { apiOptionalGroupPermissions, apiUpdatedRules } from "../group/mappersV2";
 import {
@@ -254,16 +241,24 @@ import {
     updateCommunitySuccess,
 } from "./mappersV2";
 
-export class CommunityClient extends MsgpackCanisterAgent {
+export class CommunityClient extends MultiCanisterMsgpackAgent implements IChatEventsReader<ChannelIdentifier> {
+    private readonly _inviteCodes: Map<string, bigint> = new Map();
+
     constructor(
         identity: Identity,
         agent: HttpAgent,
         private config: AgentConfig,
-        private communityId: string,
         private db: Database,
-        private inviteCode: string | undefined,
     ) {
-        super(identity, agent, communityId, "Community");
+        super(identity, agent, "Community");
+    }
+
+    setInviteCode(communityId: string, inviteCode: bigint) {
+        this._inviteCodes.set(communityId, inviteCode);
+    }
+
+    inviteCode(communityId: string): bigint | undefined {
+        return this._inviteCodes.get(communityId);
     }
 
     addMembersToChannel(
@@ -272,7 +267,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
         username: string,
         displayName: string | undefined,
     ): Promise<AddMembersToChannelResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            chatId.communityId,
             "add_members_to_channel",
             {
                 channel_id: toBigInt32(chatId.channelId),
@@ -295,7 +291,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
         threadRootMessageIndex: number | undefined,
         newAchievement: boolean,
     ): Promise<AddRemoveReactionResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            chatId.communityId,
             "add_reaction",
             {
                 channel_id: toBigInt32(chatId.channelId),
@@ -312,8 +309,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
     }
 
-    blockUser(userId: string): Promise<BlockCommunityUserResponse> {
-        return this.executeMsgpackUpdate(
+    blockUser(communityId: string, userId: string): Promise<BlockCommunityUserResponse> {
+        return this.update(
+            communityId,
             "block_user",
             {
                 user_id: principalStringToBytes(userId),
@@ -329,34 +327,45 @@ export class CommunityClient extends MsgpackCanisterAgent {
         userId: string,
         newRole: MemberRole,
     ): Promise<ChangeRoleResponse> {
-        return this.executeMsgpackUpdate(
+        const user_id = principalStringToBytes(userId);
+        return this.update(
+            chatId.communityId,
             "change_channel_role",
             {
                 channel_id: toBigInt32(chatId.channelId),
-                user_id: principalStringToBytes(userId),
+                user_id,
+                user_ids: [user_id],
                 new_role: apiMemberRole(newRole),
             },
-            unitResult,
+            changeRoleResult,
             CommunityChangeChannelRoleArgs,
             UnitResult,
         );
     }
 
-    changeRole(userId: string, newRole: MemberRole): Promise<ChangeCommunityRoleResponse> {
-        return this.executeMsgpackUpdate(
+    changeRole(
+        communityId: string,
+        userId: string,
+        newRole: MemberRole,
+    ): Promise<ChangeCommunityRoleResponse> {
+        const user_id = principalStringToBytes(userId);
+        return this.update(
+            communityId,
             "change_role",
             {
-                user_id: principalStringToBytes(userId),
+                user_id,
+                user_ids: [user_id],
                 new_role: apiCommunityRole(newRole),
             },
-            unitResult,
+            changeRoleResult,
             CommunityChangeRoleArgs,
             UnitResult,
         );
     }
 
-    createChannel(channel: CandidateChannel): Promise<CreateGroupResponse> {
-        return this.executeMsgpackUpdate(
+    createChannel(communityId: string, channel: CandidateChannel): Promise<CreateGroupResponse> {
+        return this.update(
+            communityId,
             "create_channel",
             {
                 is_public: channel.public,
@@ -367,7 +376,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 history_visible_to_new_joiners: channel.historyVisible,
                 avatar: mapOptional(channel.avatar?.blobData, (data) => {
                     return {
-                        id: DataClient.newBlobId(),
+                        id: BigInt(random32()),
                         data,
                         mime_type: "image/jpg",
                     };
@@ -384,7 +393,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
     }
 
     declineInvitation(chatId: ChannelIdentifier): Promise<DeclineInvitationResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            chatId.communityId,
             "decline_invitation",
             {
                 channel_id: toBigInt32(chatId.channelId),
@@ -396,7 +406,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
     }
 
     deleteChannel(chatId: ChannelIdentifier): Promise<DeleteGroupResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            chatId.communityId,
             "delete_channel",
             {
                 channel_id: toBigInt32(chatId.channelId),
@@ -412,7 +423,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
         messageId: bigint,
         threadRootMessageIndex?: number,
     ): Promise<DeletedGroupMessageResponse> {
-        return this.executeMsgpackQuery(
+        return this.query(
+            chatId.communityId,
             "deleted_message",
             {
                 channel_id: toBigInt32(chatId.channelId),
@@ -432,7 +444,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
         asPlatformModerator: boolean | undefined,
         newAchievement: boolean,
     ): Promise<DeleteMessageResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            chatId.communityId,
             "delete_messages",
             {
                 channel_id: toBigInt32(chatId.channelId),
@@ -447,8 +460,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
     }
 
-    disableInviteCode(): Promise<DisableInviteCodeResponse> {
-        return this.executeMsgpackUpdate("disable_invite_code", {}, unitResult, TEmpty, UnitResult);
+    disableInviteCode(communityId: string): Promise<DisableInviteCodeResponse> {
+        return this.update(communityId, "disable_invite_code", {}, unitResult, TEmpty, UnitResult);
     }
 
     editMessage(
@@ -461,7 +474,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
         return new DataClient(this.identity, this.agent, this.config)
             .uploadData(message.content, [chatId.communityId])
             .then((content) => {
-                return this.executeMsgpackUpdate(
+                return this.update(
+                    chatId.communityId,
                     "edit_message",
                     {
                         channel_id: toBigInt32(chatId.channelId),
@@ -478,8 +492,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
             });
     }
 
-    enableInviteCode(): Promise<EnableInviteCodeResponse> {
-        return this.executeMsgpackUpdate(
+    enableInviteCode(communityId: string): Promise<EnableInviteCodeResponse> {
+        return this.update(
+            communityId,
             "enable_invite_code",
             {},
             (resp) => mapResult(resp, enableOrResetInviteCodeSuccess),
@@ -488,70 +503,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
     }
 
-    async events(
-        chatId: ChannelIdentifier,
-        eventIndexRange: IndexRange,
-        startIndex: number,
-        ascending: boolean,
-        threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
-        const [cachedEvents, missing] = await getCachedEvents(
-            this.db,
-            eventIndexRange,
-            { chatId, threadRootMessageIndex },
-            startIndex,
-            ascending,
-        );
-
-        // we may or may not have all of the requested events
-        if (missing.size >= MAX_MISSING) {
-            // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
-            console.log("We didn't get enough back from the cache, going to the api");
-            return this.eventsFromBackend(
-                chatId,
-                startIndex,
-                ascending,
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            )
-                .then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex))
-                .catch((err) => {
-                    if (err instanceof ResponseTooLargeError) {
-                        console.log(
-                            "Response size too large, we will try to split the payload into a a few chunks",
-                        );
-                        return chunkedChatEventsFromBackend(
-                            (index: number, chunkSize: number) =>
-                                this.eventsFromBackend(
-                                    chatId,
-                                    index,
-                                    ascending,
-                                    threadRootMessageIndex,
-                                    latestKnownUpdate,
-                                    chunkSize,
-                                ),
-                            eventIndexRange,
-                            startIndex,
-                            ascending,
-                        ).then((resp) =>
-                            this.setCachedEvents(chatId, resp, threadRootMessageIndex),
-                        );
-                    } else {
-                        throw err;
-                    }
-                });
-        } else {
-            return this.handleMissingEvents(
-                chatId,
-                [cachedEvents, missing],
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            );
-        }
-    }
-
-    eventsFromBackend(
+    async chatEvents(
         chatId: ChannelIdentifier,
         startIndex: number,
         ascending: boolean,
@@ -569,7 +521,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
             latest_known_update: latestKnownUpdate,
             latest_client_event_index: undefined,
         };
-        return this.executeMsgpackQuery(
+        return this.query(
+            chatId.communityId,
             "events",
             args,
             (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
@@ -578,30 +531,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
     }
 
-    getCachedEventsByIndex(
-        chatId: ChannelIdentifier,
-        eventIndexes: number[],
-        threadRootMessageIndex: number | undefined,
-    ) {
-        return getCachedEventsByIndex(this.db, eventIndexes, {
-            chatId,
-            threadRootMessageIndex,
-        });
-    }
-
-    eventsByIndex(
-        chatId: ChannelIdentifier,
-        eventIndexes: number[],
-        threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
-        return this.getCachedEventsByIndex(chatId, eventIndexes, threadRootMessageIndex).then(
-            (res) =>
-                this.handleMissingEvents(chatId, res, threadRootMessageIndex, latestKnownUpdate),
-        );
-    }
-
-    private eventsByIndexFromBackend(
+    chatEventsByIndex(
         chatId: ChannelIdentifier,
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
@@ -614,7 +544,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
             latest_known_update: latestKnownUpdate,
             latest_client_event_index: [] as [] | [number],
         };
-        return this.executeMsgpackQuery(
+        return this.query(
+            chatId.communityId,
             "events_by_index",
             args,
             (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
@@ -623,76 +554,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
     }
 
-    async eventsWindow(
-        chatId: ChannelIdentifier,
-        eventIndexRange: IndexRange,
-        messageIndex: number,
-        threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
-        const [cachedEvents, missing, totalMiss] = await getCachedEventsWindowByMessageIndex(
-            this.db,
-            eventIndexRange,
-            { chatId, threadRootMessageIndex },
-            messageIndex,
-        );
-        if (totalMiss || missing.size >= MAX_MISSING) {
-            // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
-            console.log(
-                "We didn't get enough back from the cache, going to the api",
-                missing.size,
-                totalMiss,
-            );
-            return this.eventsWindowFromBackend(
-                chatId,
-                messageIndex,
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            )
-                .then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex))
-                .catch((err) => {
-                    if (err instanceof ResponseTooLargeError) {
-                        console.log(
-                            "Response size too large, we will try to split the window request into a a few chunks",
-                        );
-                        return chunkedChatEventsWindowFromBackend(
-                            (index: number, ascending: boolean, chunkSize: number) =>
-                                this.eventsFromBackend(
-                                    chatId,
-                                    index,
-                                    ascending,
-                                    threadRootMessageIndex,
-                                    latestKnownUpdate,
-                                    chunkSize,
-                                ),
-                            (index: number, chunkSize: number) =>
-                                this.eventsWindowFromBackend(
-                                    chatId,
-                                    index,
-                                    threadRootMessageIndex,
-                                    latestKnownUpdate,
-                                    chunkSize,
-                                ),
-                            eventIndexRange,
-                            messageIndex,
-                        ).then((resp) =>
-                            this.setCachedEvents(chatId, resp, threadRootMessageIndex),
-                        );
-                    } else {
-                        throw err;
-                    }
-                });
-        } else {
-            return this.handleMissingEvents(
-                chatId,
-                [cachedEvents, missing],
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            );
-        }
-    }
-
-    private async eventsWindowFromBackend(
+    async chatEventsWindow(
         chatId: ChannelIdentifier,
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
@@ -708,7 +570,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
             latest_known_update: latestKnownUpdate,
             latest_client_event_index: undefined,
         };
-        return this.executeMsgpackQuery(
+        return this.query(
+            chatId.communityId,
             "events_window",
             args,
             (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
@@ -717,46 +580,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
     }
 
-    async getMessagesByMessageIndex(
-        chatId: ChannelIdentifier,
-        threadRootMessageIndex: number | undefined,
-        messageIndexes: Set<number>,
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<Message>> {
-        const fromCache = await loadMessagesByMessageIndex(
-            this.db,
-            chatId,
-            threadRootMessageIndex,
-            messageIndexes,
-        );
-        if (fromCache.missing.size > 0) {
-            console.log("Missing idxs from the cached: ", fromCache.missing);
-
-            const resp = await this.getMessagesByMessageIndexFromBackend(
-                chatId,
-                threadRootMessageIndex,
-                [...fromCache.missing],
-                latestKnownUpdate,
-            ).then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex));
-
-            return isSuccessfulEventsResponse(resp)
-                ? {
-                      events: [...fromCache.messageEvents, ...resp.events],
-                      expiredEventRanges: [],
-                      expiredMessageRanges: [],
-                      latestEventIndex: resp.latestEventIndex,
-                  }
-                : resp;
-        }
-        return {
-            events: fromCache.messageEvents,
-            expiredEventRanges: [],
-            expiredMessageRanges: [],
-            latestEventIndex: undefined,
-        };
-    }
-
-    private getMessagesByMessageIndexFromBackend(
+    async messagesByMessageIndex(
         chatId: ChannelIdentifier,
         threadRootMessageIndex: number | undefined,
         messageIndexes: number[],
@@ -766,11 +590,12 @@ export class CommunityClient extends MsgpackCanisterAgent {
             channel_id: toBigInt32(chatId.channelId),
             thread_root_message_index: threadRootMessageIndex,
             messages: messageIndexes,
-            invite_code: mapOptional(this.inviteCode, textToCode),
+            invite_code: this.inviteCode(chatId.communityId),
             latest_known_update: latestKnownUpdate,
             latest_client_event_index: undefined,
         };
-        return this.executeMsgpackQuery(
+        return this.query(
+            chatId.communityId,
             "messages_by_message_index",
             args,
             (resp) => mapResult(resp, (value) => getMessagesSuccess(value, this.principal, chatId)),
@@ -779,44 +604,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
     }
 
-    private handleMissingEvents(
-        chatId: ChannelIdentifier,
-        [cachedEvents, missing]: [EventsSuccessResult<ChatEvent>, Set<number>],
-        threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
-        if (missing.size === 0 || offline()) {
-            return Promise.resolve(cachedEvents);
-        } else {
-            return this.eventsByIndexFromBackend(
-                chatId,
-                [...missing],
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            )
-                .then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex))
-                .then((resp) => {
-                    if (isSuccessfulEventsResponse(resp)) {
-                        return mergeSuccessResponses(cachedEvents, resp);
-                    }
-                    return resp;
-                });
-        }
-    }
-
-    private setCachedEvents<T extends ChatEvent>(
-        chatId: ChannelIdentifier,
-        resp: EventsResponse<T>,
-        threadRootMessageIndex: number | undefined,
-    ): EventsResponse<T> {
-        setCachedEvents(this.db, chatId, resp, threadRootMessageIndex).catch((err) =>
-            this.config.logger.error("Error writing cached channel events", err),
-        );
-        return resp;
-    }
-
-    getInviteCode(): Promise<InviteCodeResponse> {
-        return this.executeMsgpackQuery(
+    getInviteCode(communityId: string): Promise<InviteCodeResponse> {
+        return this.query(
+            communityId,
             "invite_code",
             {},
             (resp) => mapResult(resp, inviteCodeSuccess),
@@ -826,7 +616,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
     }
 
     leaveChannel(chatId: ChannelIdentifier): Promise<LeaveGroupResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            chatId.communityId,
             "leave_channel",
             {
                 channel_id: toBigInt32(chatId.channelId),
@@ -837,8 +628,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
     }
 
-    localUserIndex(): Promise<string> {
-        return this.executeMsgpackQuery(
+    localUserIndex(communityId: string): Promise<string> {
+        return this.query(
+            communityId,
             "local_user_index",
             {},
             (resp) => principalBytesToString(resp.Success),
@@ -848,7 +640,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
     }
 
     unpinMessage(chatId: ChannelIdentifier, messageIndex: number): Promise<UnpinMessageResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            chatId.communityId,
             "unpin_message",
             {
                 channel_id: toBigInt32(chatId.channelId),
@@ -861,7 +654,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
     }
 
     pinMessage(chatId: ChannelIdentifier, messageIndex: number): Promise<PinMessageResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            chatId.communityId,
             "pin_message",
             {
                 channel_id: toBigInt32(chatId.channelId),
@@ -873,8 +667,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
     }
 
-    removeMember(userId: string): Promise<RemoveMemberResponse> {
-        return this.executeMsgpackUpdate(
+    removeMember(communityId: string, userId: string): Promise<RemoveMemberResponse> {
+        return this.update(
+            communityId,
             "remove_member",
             {
                 user_id: principalStringToBytes(userId),
@@ -889,7 +684,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
         chatId: ChannelIdentifier,
         userId: string,
     ): Promise<RemoveMemberResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            chatId.communityId,
             "remove_member_from_channel",
             {
                 channel_id: toBigInt32(chatId.channelId),
@@ -907,7 +703,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
         reaction: string,
         threadRootMessageIndex: number | undefined,
     ): Promise<AddRemoveReactionResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            chatId.communityId,
             "remove_reaction",
             {
                 channel_id: toBigInt32(chatId.channelId),
@@ -921,8 +718,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
     }
 
-    resetInviteCode(): Promise<ResetInviteCodeResponse> {
-        return this.executeMsgpackUpdate(
+    resetInviteCode(communityId: string): Promise<ResetInviteCodeResponse> {
+        return this.update(
+            communityId,
             "reset_invite_code",
             {},
             (resp) => mapResult(resp, enableOrResetInviteCodeSuccess),
@@ -937,7 +735,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
         users: string[],
         searchTerm: string,
     ): Promise<SearchGroupChatResponse> {
-        return this.executeMsgpackQuery(
+        return this.query(
+            chatId.communityId,
             "search_channel",
             {
                 channel_id: toBigInt32(chatId.channelId),
@@ -952,30 +751,31 @@ export class CommunityClient extends MsgpackCanisterAgent {
     }
 
     async getCommunityDetails(
-        id: CommunityIdentifier,
+        communityId: string,
         communityLastUpdated: bigint,
     ): Promise<CommunityDetailsResponse> {
-        const fromCache = await getCachedCommunityDetails(this.db, id.communityId);
+        const fromCache = await getCachedCommunityDetails(this.db, communityId);
         if (fromCache != null) {
             if (fromCache.lastUpdated >= communityLastUpdated || offline()) {
                 return fromCache;
             } else {
-                return await this.getCommunityDetailsUpdates(id, fromCache);
+                return await this.getCommunityDetailsUpdates(communityId, fromCache);
             }
         }
 
-        const response = await this.getCommunityDetailsFromBackend();
+        const response = await this.getCommunityDetailsFromBackend(communityId);
         if (response.kind === "success") {
-            await setCachedCommunityDetails(this.db, id.communityId, response);
+            await setCachedCommunityDetails(this.db, communityId, response);
         }
         return response;
     }
 
-    private getCommunityDetailsFromBackend(): Promise<CommunityDetailsResponse> {
-        return this.executeMsgpackQuery(
+    private getCommunityDetailsFromBackend(communityId: string): Promise<CommunityDetailsResponse> {
+        return this.query(
+            communityId,
             "selected_initial",
             {
-                invite_code: mapOptional(this.inviteCode, textToCode),
+                invite_code: this.inviteCode(communityId),
             },
             communityDetailsResponse,
             CommunitySelectedInitialArgs,
@@ -984,24 +784,26 @@ export class CommunityClient extends MsgpackCanisterAgent {
     }
 
     private async getCommunityDetailsUpdates(
-        id: CommunityIdentifier,
+        communityId: string,
         previous: CommunityDetails,
     ): Promise<CommunityDetails> {
-        const details = await this.getCommunityDetailsUpdatesFromBackend(previous);
+        const details = await this.getCommunityDetailsUpdatesFromBackend(communityId, previous);
         if (details.lastUpdated > previous.lastUpdated) {
-            await setCachedCommunityDetails(this.db, id.communityId, details);
+            await setCachedCommunityDetails(this.db, communityId, details);
         }
         return details;
     }
 
     private async getCommunityDetailsUpdatesFromBackend(
+        communityId: string,
         previous: CommunityDetails,
     ): Promise<CommunityDetails> {
-        const updatesResponse = await this.executeMsgpackQuery(
+        const updatesResponse = await this.query(
+            communityId,
             "selected_updates_v2",
             {
                 updates_since: previous.lastUpdated,
-                invite_code: mapOptional(this.inviteCode, textToCode),
+                invite_code: this.inviteCode(communityId),
             },
             communityDetailsUpdatesResponse,
             CommunitySelectedUpdatesArgs,
@@ -1046,7 +848,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
     private getChannelDetailsFromBackend(
         chatId: ChannelIdentifier,
     ): Promise<GroupChatDetailsResponse> {
-        return this.executeMsgpackQuery(
+        return this.query(
+            chatId.communityId,
             "selected_channel_initial",
             {
                 channel_id: toBigInt32(chatId.channelId),
@@ -1081,7 +884,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
         chatId: ChannelIdentifier,
         previous: GroupChatDetails,
     ): Promise<GroupChatDetails> {
-        const updatesResponse = await this.executeMsgpackQuery(
+        const updatesResponse = await this.query(
+            chatId.communityId,
             "selected_channel_updates_v2",
             {
                 channel_id: toBigInt32(chatId.channelId),
@@ -1154,7 +958,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 block_level_markdown: newEvent.event.blockLevelMarkdown,
                 new_achievement: newAchievement,
             };
-            return this.executeMsgpackUpdate(
+            return this.update(
+                chatId.communityId,
                 "send_message",
                 args,
                 (resp) => mapResult(resp, sendMessageSuccess),
@@ -1187,7 +992,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
         threadRootMessageIndex: number | undefined,
         newAchievement: boolean,
     ): Promise<RegisterPollVoteResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            chatId.communityId,
             "register_poll_vote",
             {
                 channel_id: toBigInt32(chatId.channelId),
@@ -1204,13 +1010,14 @@ export class CommunityClient extends MsgpackCanisterAgent {
     }
 
     channelSummary(chatId: ChannelIdentifier): Promise<ChannelSummaryResponse> {
-        return this.executeMsgpackQuery(
+        return this.query(
+            chatId.communityId,
             "channel_summary",
             {
                 channel_id: toBigInt32(chatId.channelId),
-                invite_code: mapOptional(this.inviteCode, textToCode),
+                invite_code: this.inviteCode(chatId.communityId),
             },
-            (resp) => communityChannelSummaryResponse(resp, this.communityId),
+            (resp) => communityChannelSummaryResponse(resp, chatId.communityId),
             CommunityChannelSummaryArgs,
             CommunityChannelSummaryResponse,
         ).catch((err) => {
@@ -1222,23 +1029,25 @@ export class CommunityClient extends MsgpackCanisterAgent {
         });
     }
 
-    importGroup(id: GroupChatIdentifier): Promise<ImportGroupResponse> {
-        return this.executeMsgpackUpdate(
+    importGroup(communityId: string, id: GroupChatIdentifier): Promise<ImportGroupResponse> {
+        return this.update(
+            communityId,
             "import_group",
             {
                 group_id: principalStringToBytes(id.groupId),
             },
-            (resp) => mapResult(resp, (value) => importGroupSuccess(value, this.communityId)),
+            (resp) => mapResult(resp, (value) => importGroupSuccess(value, communityId)),
             CommunityImportGroupArgs,
             CommunityImportGroupResponse,
         );
     }
 
-    summary(): Promise<CommunitySummaryResponse> {
-        return this.executeMsgpackQuery(
+    summary(communityId: string): Promise<CommunitySummaryResponse> {
+        return this.query(
+            communityId,
             "summary",
             {
-                invite_code: mapOptional(this.inviteCode, textToCode),
+                invite_code: this.inviteCode(communityId),
             },
             summaryResponse,
             CommunitySummaryArgs,
@@ -1247,30 +1056,36 @@ export class CommunityClient extends MsgpackCanisterAgent {
     }
 
     exploreChannels(
+        communityId: string,
         searchTerm: string | undefined,
         pageSize: number,
         pageIndex: number,
     ): Promise<ExploreChannelsResponse> {
-        return this.executeMsgpackQuery(
+        return this.query(
+            communityId,
             "explore_channels",
             {
                 page_size: pageSize,
                 page_index: pageIndex,
                 search_term: searchTerm,
-                invite_code: mapOptional(this.inviteCode, textToCode),
+                invite_code: this.inviteCode(communityId),
             },
-            (resp) => exploreChannelsResponse(resp, this.communityId),
+            (resp) => exploreChannelsResponse(resp, communityId),
             CommunityExploreChannelsArgs,
             CommunityExploreChannelsResponse,
         );
     }
 
-    summaryUpdates(updatesSince: bigint): Promise<CommunitySummaryUpdatesResponse> {
-        return this.executeMsgpackQuery(
+    summaryUpdates(
+        communityId: string,
+        updatesSince: bigint,
+    ): Promise<CommunitySummaryUpdatesResponse> {
+        return this.query(
+            communityId,
             "summary_updates",
             {
                 updates_since: updatesSince,
-                invite_code: mapOptional(this.inviteCode, textToCode),
+                invite_code: this.inviteCode(communityId),
             },
             summaryUpdatesResponse,
             CommunitySummaryUpdatesArgs,
@@ -1279,14 +1094,15 @@ export class CommunityClient extends MsgpackCanisterAgent {
     }
 
     toggleMuteChannelNotifications(
-        chatId: ChannelIdentifier | undefined,
+        chatId: CommunityIdentifier | ChannelIdentifier,
         mute: boolean | undefined,
         muteAtEveryone: boolean | undefined,
     ): Promise<ToggleMuteNotificationResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            chatId.communityId,
             "toggle_mute_notifications",
             {
-                channel_id: chatId ? toBigInt32(chatId.channelId) : undefined,
+                channel_id: chatId.kind === "channel" ? toBigInt32(chatId.channelId) : undefined,
                 mute,
                 mute_at_everyone: muteAtEveryone,
             },
@@ -1296,8 +1112,9 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
     }
 
-    unblockUser(userId: string): Promise<UnblockCommunityUserResponse> {
-        return this.executeMsgpackUpdate(
+    unblockUser(communityId: string, userId: string): Promise<UnblockCommunityUserResponse> {
+        return this.update(
+            communityId,
             "unblock_user",
             {
                 user_id: principalStringToBytes(userId),
@@ -1313,7 +1130,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
         messageId: bigint,
         threadRootMessageIndex?: number,
     ): Promise<UndeleteMessageResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            chatId.communityId,
             "undelete_messages",
             {
                 channel_id: toBigInt32(chatId.channelId),
@@ -1331,7 +1149,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
         threadRootMessageIndexes: number[],
         latestClientThreadUpdate: bigint | undefined,
     ): Promise<ThreadPreviewsResponse> {
-        return this.executeMsgpackQuery(
+        return this.query(
+            chatId.communityId,
             "thread_previews",
             {
                 channel_id: toBigInt32(chatId.channelId),
@@ -1345,14 +1164,15 @@ export class CommunityClient extends MsgpackCanisterAgent {
     }
 
     registerProposalVote(
-        channelId: number,
+        chatId: ChannelIdentifier,
         messageIdx: number,
         adopt: boolean,
     ): Promise<RegisterProposalVoteResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            chatId.communityId,
             "register_proposal_vote",
             {
-                channel_id: toBigInt32(channelId),
+                channel_id: toBigInt32(chatId.channelId),
                 adopt,
                 message_index: messageIdx,
             },
@@ -1375,7 +1195,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
         messagesVisibleToNonMembers?: boolean,
         externalUrl?: string,
     ): Promise<UpdateGroupResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            chatId.communityId,
             "update_channel",
             {
                 channel_id: toBigInt32(chatId.channelId),
@@ -1399,7 +1220,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                         ? "NoChange"
                         : {
                               SetToSome: {
-                                  id: DataClient.newBlobId(),
+                                  id: BigInt(random32()),
                                   mime_type: "image/jpg",
                                   data: avatar,
                               },
@@ -1413,6 +1234,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
     }
 
     updateCommunity(
+        communityId: string,
         name?: string,
         description?: string,
         rules?: UpdatedRules,
@@ -1423,7 +1245,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
         isPublic?: boolean,
         primaryLanguage?: string,
     ): Promise<UpdateCommunityResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            communityId,
             "update_community",
             {
                 name,
@@ -1445,7 +1268,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                         ? "NoChange"
                         : {
                               SetToSome: {
-                                  id: DataClient.newBlobId(),
+                                  id: BigInt(random32()),
                                   mime_type: "image/jpg",
                                   data: avatar,
                               },
@@ -1455,7 +1278,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                         ? "NoChange"
                         : {
                               SetToSome: {
-                                  id: DataClient.newBlobId(),
+                                  id: BigInt(random32()),
                                   mime_type: "image/jpg",
                                   data: banner,
                               },
@@ -1467,8 +1290,13 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
     }
 
-    createUserGroup(name: string, users: string[]): Promise<CreateUserGroupResponse> {
-        return this.executeMsgpackUpdate(
+    createUserGroup(
+        communityId: string,
+        name: string,
+        users: string[],
+    ): Promise<CreateUserGroupResponse> {
+        return this.update(
+            communityId,
             "create_user_group",
             {
                 name,
@@ -1481,12 +1309,14 @@ export class CommunityClient extends MsgpackCanisterAgent {
     }
 
     updateUserGroup(
+        communityId: string,
         userGroupId: number,
         name: string | undefined,
         usersToAdd: string[],
         usersToRemove: string[],
     ): Promise<UpdateUserGroupResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            communityId,
             "update_user_group",
             {
                 user_group_id: userGroupId,
@@ -1501,10 +1331,12 @@ export class CommunityClient extends MsgpackCanisterAgent {
     }
 
     setMemberDisplayName(
+        communityId: string,
         displayName: string | undefined,
         newAchievement: boolean,
     ): Promise<SetMemberDisplayNameResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            communityId,
             "set_member_display_name",
             {
                 display_name: displayName,
@@ -1516,8 +1348,12 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
     }
 
-    deleteUserGroups(userGroupIds: number[]): Promise<DeleteUserGroupsResponse> {
-        return this.executeMsgpackUpdate(
+    deleteUserGroups(
+        communityId: string,
+        userGroupIds: number[],
+    ): Promise<DeleteUserGroupsResponse> {
+        return this.update(
+            communityId,
             "delete_user_groups",
             {
                 user_group_ids: userGroupIds,
@@ -1529,17 +1365,18 @@ export class CommunityClient extends MsgpackCanisterAgent {
     }
 
     followThread(
-        channelId: number,
+        chatId: ChannelIdentifier,
         threadRootMessageIndex: number,
         follow: boolean,
         newAchievement: boolean,
     ): Promise<FollowThreadResponse> {
         const args = {
-            channel_id: toBigInt32(channelId),
+            channel_id: toBigInt32(chatId.channelId),
             thread_root_message_index: threadRootMessageIndex,
             new_achievement: newAchievement,
         };
-        return this.executeMsgpackUpdate(
+        return this.update(
+            chatId.communityId,
             follow ? "follow_thread" : "unfollow_thread",
             args,
             unitResult,
@@ -1549,15 +1386,16 @@ export class CommunityClient extends MsgpackCanisterAgent {
     }
 
     reportMessage(
-        channelId: number,
+        chatId: ChannelIdentifier,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         deleteMessage: boolean,
     ): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            chatId.communityId,
             "report_message",
             {
-                channel_id: toBigInt32(channelId),
+                channel_id: toBigInt32(chatId.channelId),
                 thread_root_message_index: threadRootMessageIndex,
                 message_id: messageId,
                 delete: deleteMessage,
@@ -1569,16 +1407,17 @@ export class CommunityClient extends MsgpackCanisterAgent {
     }
 
     acceptP2PSwap(
-        channelId: number,
+        chatId: ChannelIdentifier,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         pin: string | undefined,
         newAchievement: boolean,
     ): Promise<AcceptP2PSwapResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            chatId.communityId,
             "accept_p2p_swap",
             {
-                channel_id: toBigInt32(channelId),
+                channel_id: toBigInt32(chatId.channelId),
                 thread_root_message_index: threadRootMessageIndex,
                 message_id: messageId,
                 pin,
@@ -1591,14 +1430,15 @@ export class CommunityClient extends MsgpackCanisterAgent {
     }
 
     cancelP2PSwap(
-        channelId: number,
+        chatId: ChannelIdentifier,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
     ): Promise<CancelP2PSwapResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            chatId.communityId,
             "cancel_p2p_swap",
             {
-                channel_id: toBigInt32(channelId),
+                channel_id: toBigInt32(chatId.channelId),
                 thread_root_message_index: threadRootMessageIndex,
                 message_id: messageId,
             },
@@ -1609,15 +1449,16 @@ export class CommunityClient extends MsgpackCanisterAgent {
     }
 
     joinVideoCall(
-        channelId: number,
+        chatId: ChannelIdentifier,
         messageId: bigint,
         newAchievement: boolean,
     ): Promise<JoinVideoCallResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            chatId.communityId,
             "join_video_call",
             {
                 message_id: messageId,
-                channel_id: toBigInt32(channelId),
+                channel_id: toBigInt32(chatId.channelId),
                 new_achievement: newAchievement,
             },
             unitResult,
@@ -1627,15 +1468,16 @@ export class CommunityClient extends MsgpackCanisterAgent {
     }
 
     setVideoCallPresence(
-        channelId: number,
+        chatId: ChannelIdentifier,
         messageId: bigint,
         presence: VideoCallPresence,
         newAchievement: boolean,
     ): Promise<SetVideoCallPresenceResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            chatId.communityId,
             "set_video_call_presence",
             {
-                channel_id: toBigInt32(channelId),
+                channel_id: toBigInt32(chatId.channelId),
                 message_id: messageId,
                 presence: apiVideoCallPresence(presence),
                 new_achievement: newAchievement,
@@ -1647,14 +1489,15 @@ export class CommunityClient extends MsgpackCanisterAgent {
     }
 
     videoCallParticipants(
-        channelId: number,
+        chatId: ChannelIdentifier,
         messageId: bigint,
         updatesSince?: bigint,
     ): Promise<VideoCallParticipantsResponse> {
-        return this.executeMsgpackQuery(
+        return this.query(
+            chatId.communityId,
             "video_call_participants",
             {
-                channel_id: toBigInt32(channelId),
+                channel_id: toBigInt32(chatId.channelId),
                 message_id: messageId,
                 updated_since: updatesSince,
             },
@@ -1664,11 +1507,15 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
     }
 
-    cancelInvites(channelId: number | undefined, userIds: string[]): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+    cancelInvites(
+        chatId: CommunityIdentifier | ChannelIdentifier,
+        userIds: string[],
+    ): Promise<boolean> {
+        return this.update(
+            chatId.communityId,
             "cancel_invites",
             {
-                channel_id: mapOptional(channelId, (cid) => toBigInt32(cid)),
+                channel_id: chatId.kind === "channel" ? toBigInt32(chatId.channelId) : undefined,
                 user_ids: userIds.map(principalStringToBytes),
             },
             (resp) => resp === "Success",
@@ -1677,8 +1524,13 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
     }
 
-    updateInstalledBot(botId: string, grantedPermissions: GrantedBotPermissions): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+    updateInstalledBot(
+        communityId: string,
+        botId: string,
+        grantedPermissions: GrantedBotPermissions,
+    ): Promise<boolean> {
+        return this.update(
+            communityId,
             "update_bot",
             {
                 bot_id: principalStringToBytes(botId),
@@ -1695,14 +1547,15 @@ export class CommunityClient extends MsgpackCanisterAgent {
     }
 
     registerWebhook(
-        channelId: number,
+        chatId: ChannelIdentifier,
         name: string,
         avatar: string | undefined,
     ): Promise<FullWebhookDetails | undefined> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            chatId.communityId,
             "register_webhook",
             {
-                channel_id: toBigInt32(channelId),
+                channel_id: toBigInt32(chatId.channelId),
                 name,
                 avatar,
             },
@@ -1715,8 +1568,8 @@ export class CommunityClient extends MsgpackCanisterAgent {
                             avatar_id: resp.Success.avatar_id,
                         },
                         this.config.blobUrlPattern,
-                        this.communityId,
-                        channelId,
+                        chatId.communityId,
+                        chatId.channelId,
                     );
 
                     return {
@@ -1732,15 +1585,16 @@ export class CommunityClient extends MsgpackCanisterAgent {
     }
 
     updateWebhook(
-        channelId: number,
+        chatId: ChannelIdentifier,
         id: string,
         name: string | undefined,
         avatar: OptionUpdate<string>,
     ): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            chatId.communityId,
             "update_webhook",
             {
-                channel_id: toBigInt32(channelId),
+                channel_id: toBigInt32(chatId.channelId),
                 id: principalStringToBytes(id),
                 name,
                 avatar: apiOptionUpdateV2(identity, avatar),
@@ -1751,11 +1605,12 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
     }
 
-    regenerateWebhook(channelId: number, id: string): Promise<string | undefined> {
-        return this.executeMsgpackUpdate(
+    regenerateWebhook(chatId: ChannelIdentifier, id: string): Promise<string | undefined> {
+        return this.update(
+            chatId.communityId,
             "regenerate_webhook",
             {
-                channel_id: toBigInt32(channelId),
+                channel_id: toBigInt32(chatId.channelId),
                 id: principalStringToBytes(id),
             },
             (resp) => {
@@ -1768,11 +1623,12 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
     }
 
-    deleteWebhook(channelId: number, id: string): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+    deleteWebhook(chatId: ChannelIdentifier, id: string): Promise<boolean> {
+        return this.update(
+            chatId.communityId,
             "delete_webhook",
             {
-                channel_id: toBigInt32(channelId),
+                channel_id: toBigInt32(chatId.channelId),
                 id: principalStringToBytes(id),
             },
             isSuccess,
@@ -1781,11 +1637,12 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
     }
 
-    getWebhook(channelId: number, id: string): Promise<string | undefined> {
-        return this.executeMsgpackQuery(
+    getWebhook(chatId: ChannelIdentifier, id: string): Promise<string | undefined> {
+        return this.query(
+            chatId.communityId,
             "webhook",
             {
-                channel_id: toBigInt32(channelId),
+                channel_id: toBigInt32(chatId.channelId),
                 id: principalStringToBytes(id),
             },
             (resp) => {
@@ -1800,12 +1657,13 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
     }
 
-    activeProposalTallies(channelId: number): Promise<[number, Tally][] | OCError> {
-        return this.executeMsgpackQuery(
+    activeProposalTallies(chatId: ChannelIdentifier): Promise<[number, Tally][] | OCError> {
+        return this.query(
+            chatId.communityId,
             "active_proposal_tallies",
             {
-                channel_id: toBigInt32(channelId),
-                invite_code: mapOptional(this.inviteCode, textToCode),
+                channel_id: toBigInt32(chatId.channelId),
+                invite_code: this.inviteCode(chatId.communityId),
             },
             (resp) => mapResult(resp, (value) => proposalTallies(value.tallies)),
             CommunityActiveProposalTalliesArgs,

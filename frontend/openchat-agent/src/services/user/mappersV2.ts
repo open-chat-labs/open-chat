@@ -1,5 +1,4 @@
 import { encodeIcrcAccount } from "@dfinity/ledger-icrc";
-import { DelegationChain } from "@icp-sdk/core/identity";
 import { Principal } from "@icp-sdk/core/principal";
 import type {
     Achievement,
@@ -116,7 +115,6 @@ import type {
     UserWalletConfig,
     UserWithdrawCryptoResponse,
 } from "../../typebox";
-import { signedDelegation } from "../../utils/id";
 import {
     bytesToBigint,
     bytesToHexString,
@@ -741,36 +739,36 @@ export function userCanisterCommunitySummaryUpdates(
     };
 }
 
-export function communitiesUpdates(value: UserUpdatesCommunitiesUpdates): CommunitiesUpdates {
+export function communitiesUpdates(value: UserUpdatesCommunitiesUpdates | undefined): CommunitiesUpdates {
     return {
-        added: value.added.map(userCanisterCommunitySummary),
-        updated: value.updated.map(userCanisterCommunitySummaryUpdates),
-        removed: value.removed.map(principalBytesToString),
+        added: value?.added.map(userCanisterCommunitySummary) ?? [],
+        updated: value?.updated.map(userCanisterCommunitySummaryUpdates) ?? [],
+        removed: value?.removed.map(principalBytesToString) ?? [],
     };
 }
 
 export function favouriteChatsUpdates(
-    value: UserUpdatesFavouriteChatsUpdates,
+    value: UserUpdatesFavouriteChatsUpdates | undefined,
 ): FavouriteChatsUpdates {
     return {
-        chats: mapOptional(value.chats, (c) => c.map(chatIdentifier)),
-        pinned: mapOptional(value.pinned, (c) => c.map(chatIdentifier)),
+        chats: mapOptional(value?.chats, (c) => c.map(chatIdentifier)),
+        pinned: mapOptional(value?.pinned, (c) => c.map(chatIdentifier)),
     };
 }
 
-export function groupChatsUpdates(value: UserUpdatesGroupChatsUpdates): GroupChatsUpdates {
+export function groupChatsUpdates(value: UserUpdatesGroupChatsUpdates | undefined): GroupChatsUpdates {
     return {
-        added: value.added.map(userCanisterGroupSummary),
-        updated: value.updated.map(userCanisterGroupSummaryUpdates),
-        removed: value.removed.map(principalBytesToString),
+        added: value?.added.map(userCanisterGroupSummary) ?? [],
+        updated: value?.updated.map(userCanisterGroupSummaryUpdates) ?? [],
+        removed: value?.removed.map(principalBytesToString) ?? [],
     };
 }
 
-export function directChatsUpdates(value: UserUpdatesDirectChatsUpdates): DirectChatsUpdates {
+export function directChatsUpdates(value: UserUpdatesDirectChatsUpdates | undefined): DirectChatsUpdates {
     return {
-        added: value.added.map(directChatSummary),
-        updated: value.updated.map(directChatSummaryUpdates),
-        removed: value.removed.map(principalBytesToString),
+        added: value?.added.map(directChatSummary) ?? [],
+        updated: value?.updated.map(directChatSummaryUpdates) ?? [],
+        removed: value?.removed.map(principalBytesToString) ?? [],
     };
 }
 
@@ -794,21 +792,21 @@ export function getUpdatesResponse(value: UserUpdatesResponse): UpdatesResponse 
             suspended: result.suspended,
             pinNumberSettings: optionUpdateV2(result.pin_number_settings, pinNumberSettings),
             achievementsLastSeen: result.achievements_last_seen,
-            achievements: result.achievements.map(chitEarned),
+            achievements: result.achievements?.map(chitEarned) ?? [],
             streakEnds: result.streak_ends,
             streak: result.streak,
             maxStreak: result.max_streak,
             nextDailyClaim: result.next_daily_claim,
             chitBalance: result.chit_balance,
             totalChitEarned: result.total_chit_earned,
-            referrals: result.referrals.map(referral),
+            referrals: result.referrals?.map(referral) ?? [],
             walletConfig: mapOptional(result.wallet_config, walletConfig),
             messageActivitySummary: mapOptional(
                 result.message_activity_summary,
                 messageActivitySummary,
             ),
-            botsAddedOrUpdated: value.Success.bots_added_or_updated.map(installedBotDetails),
-            botsRemoved: value.Success.bots_removed.map(principalBytesToString),
+            botsAddedOrUpdated: value.Success.bots_added_or_updated?.map(installedBotDetails) ?? [],
+            botsRemoved: value.Success.bots_removed?.map(principalBytesToString) ?? [],
             bitcoinAddress: value.Success.btc_address,
             oneSecAddress: value.Success.one_sec_address,
             streakInsurance: optionUpdateV2(result.streak_insurance, streakInsurance),
@@ -860,7 +858,7 @@ function directChatSummaryUpdates(value: TDirectChatSummaryUpdates): DirectChatS
         latestEventIndex: value.latest_event_index,
         latestMessageIndex: value.latest_message_index,
         notificationsMuted: value.notifications_muted,
-        updatedEvents: value.updated_events.map(updatedEvent),
+        updatedEvents: value.updated_events?.map(updatedEvent) ?? [],
         eventsTTL: optionUpdateV2(value.events_ttl, identity),
         eventsTtlLastUpdated: value.events_ttl_last_updated,
         metrics: mapOptional(value.metrics, chatMetrics),
@@ -889,16 +887,16 @@ function directChatSummary(value: TDirectChatSummary): DirectChatSummary {
         readByThemUpTo: value.read_by_them_up_to,
         dateCreated: value.date_created,
         eventsTTL: value.events_ttl,
-        eventsTtlLastUpdated: value.events_ttl_last_updated,
+        eventsTtlLastUpdated: value.events_ttl_last_updated ?? BigInt(0),
         metrics: chatMetrics(value.metrics),
         videoCallInProgress: mapOptional(value.video_call_in_progress, videoCallInProgress),
         membership: {
             ...nullMembership(),
             role: ROLE_OWNER,
             myMetrics: chatMetrics(value.my_metrics),
-            notificationsMuted: value.notifications_muted,
+            notificationsMuted: value.notifications_muted ?? false,
             readByMeUpTo: value.read_by_me_up_to,
-            archived: value.archived,
+            archived: value.archived ?? false,
             rulesAccepted: false,
         },
     };
@@ -1061,11 +1059,11 @@ export function claimDailyChitResponse(value: UserClaimDailyChitResponse): Claim
 
 export function apiVerification(domain: Verification): UserSetPinNumberPinNumberVerification {
     switch (domain.kind) {
-        case "delegation_verification":
-            return { Delegation: signedDelegation(DelegationChain.fromJSON(domain.delegation)) };
         case "no_verification":
             return "None";
         case "pin_verification":
             return { PIN: domain.pin };
+        case "reauthenticated":
+            return { Reauthenticated: domain.signInProofJwt };
     }
 }

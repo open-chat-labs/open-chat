@@ -3,6 +3,7 @@ import {
     NotificationsIndexAddFcmTokenArgs,
     NotificationsIndexFcmTokenExistsArgs,
     NotificationsIndexFcmTokenExistsResponse,
+    NotificationsIndexMarkSubscriptionActiveArgs,
     NotificationsIndexPushSubscriptionArgs,
     NotificationsIndexPushSubscriptionResponse,
     NotificationsIndexRemoveSubscriptionArgs,
@@ -12,21 +13,18 @@ import {
     UnitResult,
 } from "../../typebox";
 import { toVoid } from "../../utils/mapping";
-import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
+import { SingleCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 import { subscriptionExistsResponse } from "./mappers";
 
-export class NotificationsClient extends MsgpackCanisterAgent {
+export class NotificationsClient extends SingleCanisterMsgpackAgent {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
         super(identity, agent, canisterId, "Notifications");
     }
 
-    subscriptionExists(endpoint: string, p256dh_key: string): Promise<boolean> {
-        return this.executeMsgpackQuery(
+    subscriptionExists(endpoint: string): Promise<boolean> {
+        return this.query(
             "subscription_exists",
-            {
-                endpoint,
-                p256dh_key,
-            },
+            { endpoint },
             subscriptionExistsResponse,
             NotificationsIndexSubscriptionExistsArgs,
             NotificationsIndexSubscriptionExistsResponse,
@@ -43,7 +41,7 @@ export class NotificationsClient extends MsgpackCanisterAgent {
                 },
             },
         };
-        return this.executeMsgpackUpdate(
+        return this.update(
             "push_subscription",
             request,
             toVoid,
@@ -52,13 +50,10 @@ export class NotificationsClient extends MsgpackCanisterAgent {
         );
     }
 
-    removeSubscription(subscription: PushSubscriptionJSON): Promise<void> {
-        return this.executeMsgpackUpdate(
+    removeSubscription(endpoint: string): Promise<void> {
+        return this.update(
             "remove_subscription",
-            {
-                endpoint: subscription.endpoint!,
-                p256dh_key: subscription.keys!["p256dh"],
-            },
+            { endpoint },
             toVoid,
             NotificationsIndexRemoveSubscriptionArgs,
             SuccessOnly,
@@ -66,7 +61,7 @@ export class NotificationsClient extends MsgpackCanisterAgent {
     }
 
     fcmTokenExists(fcmToken: string): Promise<boolean> {
-        return this.executeMsgpackQuery(
+        return this.query(
             "fcm_token_exists",
             { fcm_token: fcmToken },
             (response) => response as boolean,
@@ -76,7 +71,7 @@ export class NotificationsClient extends MsgpackCanisterAgent {
     }
 
     addFcmToken(fcmToken: string, onResponseError?: (error: string | null) => void): Promise<void> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "add_fcm_token",
             { fcm_token: fcmToken },
             (response) => {
@@ -89,6 +84,16 @@ export class NotificationsClient extends MsgpackCanisterAgent {
             },
             NotificationsIndexAddFcmTokenArgs,
             UnitResult,
+        );
+    }
+
+    markSubscriptionActive(endpoint: string): Promise<void> {
+        return this.update(
+            "mark_subscription_active",
+            { endpoint },
+            toVoid,
+            NotificationsIndexMarkSubscriptionActiveArgs,
+            SuccessOnly,
         );
     }
 }

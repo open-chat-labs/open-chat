@@ -265,7 +265,6 @@
                 {:else if preview.kind === "message"}
                     <MessagePreviewComponent
                         url={preview.url}
-                        {me}
                         chatId={preview.chatId}
                         threadRootMessageIndex={preview.threadRootMessageIndex}
                         messageIndex={preview.messageIndex}

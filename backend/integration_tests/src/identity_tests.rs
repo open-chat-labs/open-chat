@@ -3,6 +3,7 @@ use crate::env::ENV;
 use crate::{CanisterIds, TestEnv, client};
 use candid::Principal;
 use constants::NANOS_PER_MILLISECOND;
+use itertools::Itertools;
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use rand::random;
@@ -145,6 +146,47 @@ fn flag_ii_principal(is_ii_principal: bool) {
 
     assert_eq!(auth_principals_response.len(), 1);
     assert_eq!(auth_principals_response.first().unwrap().is_ii_principal, is_ii_principal);
+}
+
+#[test]
+fn auth_principals_returns_all_linked_principals() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let (_, user_auth) = register_user_and_include_auth(env, canister_ids);
+
+    let mut auth_principals = vec![user_auth.auth_principal()];
+
+    for _ in 0..3 {
+        let (auth_principal, public_key, _) = sign_in_with_email(env, canister_ids);
+
+        client::identity::happy_path::initiate_identity_link(
+            env,
+            auth_principal,
+            canister_ids.identity,
+            public_key,
+            false,
+            user_auth.auth_principal(),
+        );
+        client::identity::happy_path::approve_identity_link(
+            env,
+            user_auth.auth_principal(),
+            canister_ids.identity,
+            user_auth.auth_delegation.clone(),
+            user_auth.auth_public_key.clone(),
+            auth_principal,
+        );
+
+        auth_principals.push(auth_principal);
+    }
+
+    for principal in [user_auth.oc_principal()].into_iter().chain(auth_principals.clone()) {
+        let auth_principals_response = client::identity::happy_path::auth_principals(env, principal, canister_ids.identity);
+        assert_eq!(
+            auth_principals_response.into_iter().map(|p| p.principal).collect_vec(),
+            auth_principals
+        );
+    }
 }
 
 pub(crate) fn sign_in_with_email(env: &mut PocketIc, canister_ids: &CanisterIds) -> (Principal, Vec<u8>, SignedDelegation) {

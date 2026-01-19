@@ -9,6 +9,7 @@ use types::{CompletedCryptoTransaction, FailedCryptoTransaction, MessageId, Mult
 pub struct Args {
     pub chat_id: MultiUserChat,
     pub message_id: MessageId,
+    pub sign_in_proof_jwt: Option<String>,
 }
 
 #[ts_export(local_user_index, claim_prize)]

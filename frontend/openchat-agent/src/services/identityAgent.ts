@@ -4,10 +4,8 @@ import { DelegationIdentity } from "@icp-sdk/core/identity";
 import type {
     ApproveIdentityLinkResponse,
     AuthenticationPrincipalsResponse,
-    ChallengeAttempt,
     CheckAuthPrincipalResponse,
     CreateOpenChatIdentityError,
-    GenerateChallengeResponse,
     InitiateIdentityLinkResponse,
     OCError,
     RemoveIdentityLinkResponse,
@@ -56,7 +54,6 @@ export class IdentityAgent {
     async createOpenChatIdentity(
         sessionKey: SignIdentity,
         webAuthnCredentialId: Uint8Array | undefined,
-        challengeAttempt: ChallengeAttempt | undefined,
     ): Promise<DelegationIdentity | CreateOpenChatIdentityError> {
         const webAuthnKey =
             webAuthnCredentialId !== undefined
@@ -68,7 +65,6 @@ export class IdentityAgent {
             sessionKeyDer,
             webAuthnKey,
             this._isIIPrincipal,
-            challengeAttempt,
         );
 
         if (createIdentityResponse.kind === "success") {
@@ -86,25 +82,29 @@ export class IdentityAgent {
         return createIdentityResponse.kind;
     }
 
-    async getOpenChatIdentity(sessionKey: SignIdentity): Promise<DelegationIdentity | undefined> {
+    async getOpenChatIdentity(sessionKey: SignIdentity): Promise<{ identity: DelegationIdentity, signInProofJwt: string } | undefined> {
         const sessionKeyDer = toDer(sessionKey);
         const prepareDelegationResponse = await this._identityClient.prepareDelegation(
             sessionKeyDer,
             this._isIIPrincipal,
         );
 
-        return prepareDelegationResponse.kind === "success"
-            ? this.getDelegation(
-                  prepareDelegationResponse.userKey,
-                  sessionKey,
-                  sessionKeyDer,
-                  prepareDelegationResponse.expiration,
-              )
-            : undefined;
-    }
+        if (prepareDelegationResponse.kind === "success") {
+            const identity = await this.getDelegation(
+                prepareDelegationResponse.userKey,
+                sessionKey,
+                sessionKeyDer,
+                prepareDelegationResponse.expiration,
+            );
 
-    generateChallenge(): Promise<GenerateChallengeResponse> {
-        return this._identityClient.generateChallenge();
+            if (identity !== undefined) {
+                return {
+                    identity,
+                    signInProofJwt: prepareDelegationResponse.proofJwt,
+                }
+            }
+        }
+        return undefined;
     }
 
     async initiateIdentityLink(
@@ -135,8 +135,8 @@ export class IdentityAgent {
         return this._identityClient.deleteUser();
     }
 
-    getAuthenticationPrincipals(): Promise<AuthenticationPrincipalsResponse> {
-        return this._identityClient.getAuthenticationPrincipals();
+    getAuthenticationPrincipals(currentAuthPrincipal: string): Promise<AuthenticationPrincipalsResponse> {
+        return this._identityClient.getAuthenticationPrincipals(currentAuthPrincipal);
     }
 
     async lookupWebAuthnPubKey(credentialId: Uint8Array): Promise<Uint8Array | undefined> {
@@ -152,21 +152,27 @@ export class IdentityAgent {
         sessionKeyDer: Uint8Array,
         expiration: bigint,
     ): Promise<DelegationIdentity | undefined> {
-        const getDelegationResponse = await this._identityClient.getDelegation(
-            sessionKeyDer,
-            expiration,
-        );
+        // Retry up to 5 times because we call this immediately after calling prepare_delegation, so we may end up
+        // getting a "not_found" response if we hit a node which is slightly behind.
+        for (let attempt = 0; attempt < 5; attempt++) {
+            const getDelegationResponse = await this._identityClient.getDelegation(
+                sessionKeyDer,
+                expiration,
+            );
 
-        if (getDelegationResponse.kind !== "success") {
-            return undefined;
+            switch (getDelegationResponse.kind) {
+                case "success":
+                    return buildDelegationIdentity(
+                        userKey,
+                        sessionKey,
+                        getDelegationResponse.delegation,
+                        getDelegationResponse.signature,
+                    );
+
+                case "error":
+                    return undefined;
+            }
         }
-
-        return buildDelegationIdentity(
-            userKey,
-            sessionKey,
-            getDelegationResponse.delegation,
-            getDelegationResponse.signature,
-        );
     }
 
     private async hydrateWebAuthnKey(credentialId: Uint8Array): Promise<WebAuthnKeyFull> {

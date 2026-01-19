@@ -593,7 +593,7 @@
         "auto": "Automatisch",
         "autoInfo": "Organisieren Sie Ihr Portemonnaie automatisch. Alle Token mit einem Token-Guthaben ungleich Null oder einem Dollarwert, der über dem unten eingegebenen Mindestdollarwert liegt, werden angezeigt.",
         "comingSoon": "(kommt bald)",
-        "configureWallet": "Konfigurieren Sie Ihr Wallet",
+        "configureWallet": "Konfigurieren Sie Ihre Wallet",
         "configureWalletFailure": "Leider konnten wir Ihre Wallet-Konfiguration nicht speichern",
         "failedToFetchDepositFee": "Die Einzahlungsgebühr konnte nicht abgerufen werden",
         "failedToGenerateAddress": "Adresse konnte nicht generiert werden",

@@ -1,4 +1,9 @@
-import { Delegation } from "@icp-sdk/core/identity";
+import {
+    Delegation,
+    type DelegationChain,
+    type ECDSAKeyIdentity,
+    type JsonnableDelegationChain,
+} from "@icp-sdk/core/identity";
 import type { Identity, Signature } from "@icp-sdk/core/agent";
 import type { Address } from "openchat-agent/src/services/signInWithSolana/candid/types";
 import type { OCError } from "./error";
@@ -16,8 +21,6 @@ export type GetOpenChatIdentityResponse =
 export type CreateIdentityResponse =
     | PrepareDelegationSuccess
     | { kind: "already_registered" }
-    | { kind: "challenge_failed" }
-    | { kind: "challenge_required" }
     | { kind: "public_key_invalid" }
     | { kind: "originating_canister_invalid" };
 
@@ -36,10 +39,22 @@ export type PrepareDelegationResponse =
     | { kind: "not_found" }
     | { kind: "error"; error: string };
 
+export type PrepareDelegationWithProofResponse =
+    | PrepareDelegationWithProofSuccess
+    | { kind: "not_found" }
+    | { kind: "error"; error: string };
+
 export type PrepareDelegationSuccess = {
     kind: "success";
     userKey: Uint8Array;
     expiration: bigint;
+};
+
+export type PrepareDelegationWithProofSuccess = {
+    kind: "success";
+    userKey: Uint8Array;
+    expiration: bigint;
+    proofJwt: string;
 };
 
 export type GetDelegationResponse =
@@ -71,26 +86,10 @@ export type SiwsMessage = {
     expirationTime: bigint;
 };
 
-export type ChallengeAttempt = { key: number; chars: string };
 export type CreateOpenChatIdentityError =
     | "already_registered"
-    | "challenge_failed"
-    | "challenge_required"
     | "public_key_invalid"
     | "originating_canister_invalid";
-
-export type GenerateChallengeResponse =
-    | { kind: "throttled" }
-    | { kind: "already_registered" }
-    | { kind: "failed" }
-    | ChallengeSuccess;
-
-export type ChallengeSuccess = { kind: "success" } & Challenge;
-
-export type Challenge = {
-    key: number;
-    pngBase64: string;
-};
 
 export type CreateOpenChatIdentityResponse = "success" | CreateOpenChatIdentityError;
 
@@ -145,3 +144,13 @@ export type AccountLinkingCode = {
 export type VerifyAccountLinkingCodeResponse = { kind: "success"; username: string } | OCError;
 
 export type FinaliseAccountLinkingResponse = { kind: "success" } | OCError;
+
+export type IdentityKeyAndChain = {
+    key: ECDSAKeyIdentity;
+    delegation: DelegationChain;
+};
+
+export type JsonnableIdentityKeyAndChain = {
+    key: CryptoKeyPair;
+    delegation: JsonnableDelegationChain;
+};

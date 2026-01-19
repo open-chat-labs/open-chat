@@ -4,8 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
-use types::{BotEvent, BotInstallationLocation, BotInstalledEvent, BotLifecycleEvent, BotNotification, c2c_install_bot::*};
-use types::{OCResult, UserType};
+use types::{OCResult, UserType, c2c_install_bot::*};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -50,17 +49,6 @@ fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             &permissions.permitted_chat_event_categories_to_read(),
         );
     }
-
-    state.push_bot_notification(Some(BotNotification {
-        event: BotEvent::Lifecycle(BotLifecycleEvent::Installed(BotInstalledEvent {
-            installed_by: args.caller,
-            location: BotInstallationLocation::User(args.caller.into()),
-            granted_command_permissions: args.granted_permissions,
-            granted_autonomous_permissions: args.granted_autonomous_permissions.unwrap_or_default(),
-        })),
-        recipients: vec![args.bot_id],
-        timestamp: now,
-    }));
 
     Ok(())
 }

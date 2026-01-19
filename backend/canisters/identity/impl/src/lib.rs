@@ -1,5 +1,4 @@
 use crate::model::account_linking_codes::AccountLinkingCodes;
-use crate::model::challenges::Challenges;
 use crate::model::encryption_key_requests::EncryptionKeyRequests;
 use crate::model::identity_link_requests::IdentityLinkRequests;
 use crate::model::identity_link_via_qr_code_requests::IdentityLinkViaQrCodeRequests;
@@ -187,13 +186,9 @@ impl RuntimeState {
             user_principals: self.data.user_principals.user_principals_count(),
             auth_principals: self.data.user_principals.auth_principals_count(),
             originating_canisters: self.data.user_principals.originating_canisters().clone(),
+            enabled_originating_canisters: self.data.originating_canisters.iter().copied().collect(),
             stable_memory_sizes: memory::memory_sizes(),
-            oc_public_key: self
-                .data
-                .oc_key_pair
-                .as_ref()
-                .map(|k| k.public_key_pem().to_string())
-                .unwrap_or_default(),
+            oc_public_key: self.data.oc_key_pair.public_key_pem().to_string(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -210,7 +205,6 @@ struct Data {
     cycles_dispenser_canister_id: CanisterId,
     sign_in_with_email_canister_id: CanisterId,
     originating_canisters: HashSet<CanisterId>,
-    skip_captcha_whitelist: HashSet<CanisterId>,
     user_principals: UserPrincipals,
     identity_link_requests: IdentityLinkRequests,
     identity_link_via_qr_code_requests: IdentityLinkViaQrCodeRequests,
@@ -218,10 +212,9 @@ struct Data {
     #[serde(skip)]
     signature_map: SignatureMap,
     encryption_key_requests: EncryptionKeyRequests,
-    oc_key_pair: Option<P256KeyPair>,
+    oc_key_pair: P256KeyPair,
     salt: Salt,
     rng_seed: [u8; 32],
-    challenges: Challenges,
     test_mode: bool,
     account_linking_codes: AccountLinkingCodes,
 }
@@ -234,7 +227,6 @@ impl Data {
         cycles_dispenser_canister_id: CanisterId,
         sign_in_with_email_canister_id: CanisterId,
         originating_canisters: Vec<CanisterId>,
-        skip_captcha_whitelist: Vec<CanisterId>,
         oc_secret_key_der: Vec<u8>,
         salt: [u8; 32],
         test_mode: bool,
@@ -245,7 +237,6 @@ impl Data {
             cycles_dispenser_canister_id,
             sign_in_with_email_canister_id,
             originating_canisters: originating_canisters.into_iter().collect(),
-            skip_captcha_whitelist: skip_captcha_whitelist.into_iter().collect(),
             user_principals: UserPrincipals::default(),
             identity_link_requests: IdentityLinkRequests::default(),
             identity_link_via_qr_code_requests: IdentityLinkViaQrCodeRequests::default(),
@@ -253,9 +244,8 @@ impl Data {
             signature_map: SignatureMap::default(),
             encryption_key_requests: EncryptionKeyRequests::default(),
             salt: Salt::new(salt),
-            oc_key_pair: Some(P256KeyPair::from_secret_key_der(oc_secret_key_der).unwrap()),
+            oc_key_pair: P256KeyPair::from_secret_key_der(oc_secret_key_der).unwrap(),
             rng_seed: [0; 32],
-            challenges: Challenges::default(),
             test_mode,
             account_linking_codes: AccountLinkingCodes::default(),
         }
@@ -279,10 +269,6 @@ impl Data {
     pub fn update_root_hash(&mut self) {
         let prefixed_root_hash = ic_certification::labeled_hash(LABEL_SIG, &self.signature_map.root_hash());
         certified_data_set(&prefixed_root_hash[..]);
-    }
-
-    pub fn requires_captcha(&self, originating_canister_id: &CanisterId) -> bool {
-        !self.skip_captcha_whitelist.contains(originating_canister_id)
     }
 }
 
@@ -318,6 +304,7 @@ pub struct Metrics {
     pub user_principals: u32,
     pub auth_principals: u32,
     pub originating_canisters: HashMap<CanisterId, u32>,
+    pub enabled_originating_canisters: Vec<CanisterId>,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub oc_public_key: String,
     pub canister_ids: CanisterIds,

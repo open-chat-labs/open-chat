@@ -1,11 +1,13 @@
 use crate::{RuntimeState, mutate_state};
+use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use constants::{DAY_IN_MS, NANOS_PER_MILLISECOND};
+use constants::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 use ic_canister_sig_creation::signature_map::CanisterSigInputs;
 use ic_canister_sig_creation::{DELEGATION_SIG_DOMAIN, delegation_signature_msg};
 use identity_canister::prepare_delegation::{Response::*, *};
-use types::Nanoseconds;
+use jwt::Claims;
+use types::{Nanoseconds, UserSignedInClaims};
 
 const DEFAULT_EXPIRATION_PERIOD: Nanoseconds = 30 * DAY_IN_MS * NANOS_PER_MILLISECOND;
 const MAX_EXPIRATION_PERIOD: Nanoseconds = 90 * DAY_IN_MS * NANOS_PER_MILLISECOND;
@@ -30,7 +32,9 @@ fn prepare_delegation_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let seed = state.data.calculate_seed(user.index);
 
-    Success(prepare_delegation_inner(seed, args.session_key, args.max_time_to_live, state))
+    let result = prepare_delegation_inner(seed, args.session_key, args.max_time_to_live, state);
+
+    Success(result)
 }
 
 pub(crate) fn prepare_delegation_inner(
@@ -49,8 +53,18 @@ pub(crate) fn prepare_delegation_inner(
     });
     state.data.update_root_hash();
 
+    let public_key = state.der_encode_canister_sig_key(seed);
+    let principal = Principal::self_authenticating(&public_key);
+    let claims = Claims::new(
+        state.env.now() + 5 * MINUTE_IN_MS,
+        "user_signed_in".to_string(),
+        UserSignedInClaims { principal },
+    );
+    let proof_jwt = jwt::sign_and_encode_token(state.data.oc_key_pair.secret_key_der(), claims, state.env.rng()).unwrap();
+
     SuccessResult {
-        user_key: state.der_encode_canister_sig_key(seed),
+        user_key: public_key,
         expiration,
+        proof_jwt,
     }
 }

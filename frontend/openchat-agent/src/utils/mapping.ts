@@ -27,10 +27,10 @@ export function optionUpdate<A, B>(
 }
 
 export function optionUpdateV2<A, B>(
-    value: ApiOptionUpdateV2<A>,
+    value: ApiOptionUpdateV2<A> | undefined,
     mapper: (a: A) => B,
 ): OptionUpdate<B> {
-    if (value === "NoChange") return undefined;
+    if (value === undefined || value === "NoChange") return undefined;
     if (value === "SetToNone") return "set_to_none";
     if ("SetToSome" in value) return { value: mapper(value.SetToSome) };
     throw new UnsupportedValueError("Unexpected ApiOptionUpdate type returned", value);

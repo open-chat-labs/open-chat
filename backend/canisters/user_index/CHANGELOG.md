@@ -6,9 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1947](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1947-user_index)] - 2026-01-14
+
+### Changed
+
+- Simplify handling of bot installation lifecycle events ([#8776](https://github.com/open-chat-labs/open-chat/pull/8776))
+- Store bot installation events and return these from `bot_installations` ([#8784](https://github.com/open-chat-labs/open-chat/pull/8784))
+- Rename and fix `bot_installation_events` endpoint ([#8790](https://github.com/open-chat-labs/open-chat/pull/8790))
+
+## [[2.0.1945](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1945-user_index)] - 2026-01-08
+
 ### Added
 
 - Allow platform operators to block usernames via regex patterns ([#8719](https://github.com/open-chat-labs/open-chat/pull/8719))
+- Add endpoint for bots to query their installation locations ([#8731](https://github.com/open-chat-labs/open-chat/pull/8731))
+- Expose bot summaries and requested permissions ([#8771](https://github.com/open-chat-labs/open-chat/pull/8771))
 
 ## [[2.0.1933](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1933-user_index)] - 2025-12-05
 

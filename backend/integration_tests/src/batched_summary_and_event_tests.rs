@@ -124,9 +124,45 @@ fn get_batched_summaries_succeeds() {
 
     let responses = get_summary_updates(env, user1.principal, local_user_index, requests);
 
-    assert_is_summary_with_id(responses.first().unwrap(), group_id1.into(), false);
-    assert_is_summary_with_id(responses.get(1).unwrap(), group_id2.into(), false);
-    assert_is_summary_with_id(responses.get(2).unwrap(), community_id.into(), true);
+    let is_group_summary_with_id = |group_id: ChatId| {
+        move |response: &SummaryUpdatesResponse| {
+            if let SummaryUpdatesResponse::SuccessGroup(g) = response { g.chat_id == group_id } else { false }
+        }
+    };
+
+    let is_community_summary_with_id = |community_id: CommunityId| {
+        move |response: &SummaryUpdatesResponse| {
+            if let SummaryUpdatesResponse::SuccessCommunity(c) = response {
+                c.community_id == community_id
+            } else {
+                false
+            }
+        }
+    };
+
+    let is_group_summary_updates_with_id = |group_id: ChatId| {
+        move |response: &SummaryUpdatesResponse| {
+            if let SummaryUpdatesResponse::SuccessGroupUpdates(g) = response {
+                g.chat_id == group_id
+            } else {
+                false
+            }
+        }
+    };
+
+    let is_community_summary_updates_with_id = |community_id: CommunityId| {
+        move |response: &SummaryUpdatesResponse| {
+            if let SummaryUpdatesResponse::SuccessCommunityUpdates(c) = response {
+                c.community_id == community_id
+            } else {
+                false
+            }
+        }
+    };
+
+    assert_summary_updates_response(&responses, is_group_summary_with_id(group_id1));
+    assert_summary_updates_response(&responses, is_group_summary_with_id(group_id2));
+    assert_summary_updates_response(&responses, is_community_summary_with_id(community_id));
 
     env.advance_time(Duration::from_secs(1));
 
@@ -158,8 +194,8 @@ fn get_batched_summaries_succeeds() {
     let responses = get_summary_updates(env, user1.principal, local_user_index, requests);
 
     assert_eq!(responses.len(), 2);
-    assert_is_summary_updates_with_id(responses.first().unwrap(), group_id1.into(), false);
-    assert_is_summary_updates_with_id(responses.last().unwrap(), community_id.into(), true);
+    assert_summary_updates_response(&responses, is_group_summary_updates_with_id(group_id1));
+    assert_summary_updates_response(&responses, is_community_summary_updates_with_id(community_id));
 }
 
 fn get_summary_updates(
@@ -192,24 +228,8 @@ fn assert_is_message_with_text(response: &EventsResponse, text: &str) {
     panic!("{response:?}")
 }
 
-fn assert_is_summary_with_id(response: &SummaryUpdatesResponse, canister_id: CanisterId, is_community: bool) {
-    match response {
-        SummaryUpdatesResponse::SuccessCommunity(c) if is_community => {
-            assert_eq!(CanisterId::from(c.community_id), canister_id)
-        }
-        SummaryUpdatesResponse::SuccessGroup(c) if !is_community => assert_eq!(CanisterId::from(c.chat_id), canister_id),
-        _ => panic!(),
-    }
-}
-
-fn assert_is_summary_updates_with_id(response: &SummaryUpdatesResponse, canister_id: CanisterId, is_community: bool) {
-    match response {
-        SummaryUpdatesResponse::SuccessCommunityUpdates(c) if is_community => {
-            assert_eq!(CanisterId::from(c.community_id), canister_id)
-        }
-        SummaryUpdatesResponse::SuccessGroupUpdates(c) if !is_community => assert_eq!(CanisterId::from(c.chat_id), canister_id),
-        _ => panic!(),
-    }
+fn assert_summary_updates_response<F: Fn(&SummaryUpdatesResponse) -> bool>(responses: &[SummaryUpdatesResponse], filter: F) {
+    assert!(responses.iter().any(filter));
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {

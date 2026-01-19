@@ -2,7 +2,6 @@ import type {
     ConvertToCommunityResponse,
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
-    GroupCanisterSummaryUpdatesResponse,
     GroupMembershipUpdates,
     MemberRole,
     OptionalChatPermissions,
@@ -21,7 +20,6 @@ import {
 import type {
     GroupConvertIntoCommunitySuccessResult,
     GroupRole,
-    GroupSummaryUpdatesResponse,
     GroupCanisterGroupChatSummary as TGroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates as TGroupCanisterGroupChatSummaryUpdates,
     GroupMembershipUpdates as TGroupMembershipUpdates,
@@ -42,7 +40,6 @@ import {
     chatMetrics,
     groupPermissions,
     groupSubtype,
-    mapResult,
     memberRole,
     mentions,
     messageEvent,
@@ -76,10 +73,10 @@ export function groupChatSummary(
         description: value.description,
         subtype: mapOptional(value.subtype, groupSubtype),
         avatarId: value.avatar_id,
-        public: value.is_public,
-        historyVisible: value.history_visible_to_new_joiners,
-        minVisibleEventIndex: value.min_visible_event_index,
-        minVisibleMessageIndex: value.min_visible_message_index,
+        public: value.is_public ?? false,
+        historyVisible: value.history_visible_to_new_joiners ?? false,
+        minVisibleEventIndex: value.min_visible_event_index ?? 0,
+        minVisibleMessageIndex: value.min_visible_message_index ?? 0,
         latestMessage: mapOptional(value.latest_message, messageEvent),
         latestEventIndex: value.latest_event_index,
         latestMessageIndex: value.latest_message_index,
@@ -93,18 +90,18 @@ export function groupChatSummary(
             expiry: undefined,
         },
         eventsTTL: value.events_ttl,
-        eventsTtlLastUpdated: value.events_ttl_last_updated,
+        eventsTtlLastUpdated: value.events_ttl_last_updated ?? BigInt(0),
         localUserIndex: principalBytesToString(value.local_user_index_canister_id),
         videoCallInProgress: mapOptional(value.video_call_in_progress, videoCallInProgress),
-        messagesVisibleToNonMembers: value.messages_visible_to_non_members,
+        messagesVisibleToNonMembers: value.messages_visible_to_non_members ?? false,
         membership: mapOptional(value.membership, (m) => ({
             joined: m.joined,
             role: memberRole(m.role),
-            notificationsMuted: m.notifications_muted,
-            atEveryoneMuted: m.at_everyone_muted,
-            lapsed: m.lapsed,
-            rulesAccepted: m.rules_accepted,
-            latestThreads: m.latest_threads.map(threadSyncDetails),
+            notificationsMuted: m.notifications_muted ?? false,
+            atEveryoneMuted: m.at_everyone_muted ?? false,
+            lapsed: m.lapsed ?? false,
+            rulesAccepted: m.rules_accepted ?? false,
+            latestThreads: m.latest_threads?.map(threadSyncDetails) ?? [],
             mentions: mentions(m.mentions),
             myMetrics: chatMetrics(m.my_metrics),
         })) ?? {
@@ -118,17 +115,8 @@ export function groupChatSummary(
             rulesAccepted: false,
             lapsed: false,
         },
-        verified: value.verified,
+        verified: value.verified ?? false,
     };
-}
-
-export function summaryUpdatesResponse(
-    value: GroupSummaryUpdatesResponse,
-): GroupCanisterSummaryUpdatesResponse {
-    if (value === "SuccessNoUpdates") {
-        return { kind: "success_no_updates" };
-    }
-    return mapResult(value, (s) => groupChatSummaryUpdates(s.updates));
 }
 
 export function groupMembershipUpdates(value: TGroupMembershipUpdates): GroupMembershipUpdates {
@@ -138,8 +126,8 @@ export function groupMembershipUpdates(value: TGroupMembershipUpdates): GroupMem
         notificationsMuted: value.notifications_muted,
         atEveryoneMuted: value.at_everyone_muted,
         myMetrics: mapOptional(value.my_metrics, chatMetrics),
-        latestThreads: value.latest_threads.map(threadSyncDetails),
-        unfollowedThreads: Array.from(value.unfollowed_threads),
+        latestThreads: value.latest_threads?.map(threadSyncDetails) ?? [],
+        unfollowedThreads: value.unfollowed_threads ?? [],
         rulesAccepted: value.rules_accepted,
         lapsed: value.lapsed,
     };
@@ -163,7 +151,7 @@ export function groupChatSummaryUpdates(
         permissions: mapOptional(value.permissions_v2, groupPermissions),
         metrics: mapOptional(value.metrics, chatMetrics),
         frozen: optionUpdateV2(value.frozen, (_) => true),
-        updatedEvents: value.updated_events.map(updatedEvent),
+        updatedEvents: value.updated_events?.map(updatedEvent) ?? [],
         dateLastPinned: value.date_last_pinned,
         gateConfig: optionUpdateV2(value.gate_config, accessGateConfig),
         eventsTTL: optionUpdateV2(value.events_ttl, identity),

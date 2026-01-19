@@ -22,13 +22,13 @@ async fn accept_p2p_swap(args: Args) -> Response {
     execute_update_async(|| accept_p2p_swap_impl(args)).await
 }
 
-async fn accept_p2p_swap_impl(args: Args) -> Response {
+async fn accept_p2p_swap_impl(mut args: Args) -> Response {
     let PrepareResult {
         my_user_id,
         escrow_canister_id,
         reserve_success,
         now,
-    } = match mutate_state(|state| prepare(&args, state)) {
+    } = match mutate_state(|state| prepare(&mut args, state)) {
         Ok(ok) => ok,
         Err(response) => return Error(response),
     };
@@ -114,9 +114,9 @@ struct PrepareResult {
     now: TimestampMillis,
 }
 
-fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
+fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     state.data.verify_not_suspended()?;
-    state.data.pin_number.verify(args.pin.as_deref(), state.env.now())?;
+    state.data.pin_number.verify(args.pin.as_mut(), state.env.now())?;
 
     if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
         let my_user_id = state.env.canister_id().into();

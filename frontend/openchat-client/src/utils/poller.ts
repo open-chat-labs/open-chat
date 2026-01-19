@@ -17,7 +17,7 @@ export class Poller {
     private status: PollerEnvironment = { background: false, offline: false };
 
     constructor(
-        private fn: () => Promise<void>,
+        private fn: () => Promise<unknown>,
         private interval: number,
         // If idleInterval is undefined then the job will not run while the app is idle
         private idleInterval?: number,

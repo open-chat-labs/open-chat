@@ -1,0 +1,1 @@
+export type LogLevel = "debug" | "log" | "warn" | "error";

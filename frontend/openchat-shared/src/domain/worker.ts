@@ -150,12 +150,11 @@ import type {
 import type {
     AccountLinkingCode,
     AuthenticationPrincipalsResponse,
-    ChallengeAttempt,
     CreateOpenChatIdentityResponse,
     FinaliseAccountLinkingResponse,
-    GenerateChallengeResponse,
     GetDelegationResponse,
     GetOpenChatIdentityResponse,
+    JsonnableIdentityKeyAndChain,
     LinkIdentitiesResponse,
     PrepareDelegationResponse,
     RemoveIdentityLinkResponse,
@@ -166,6 +165,7 @@ import type {
     WebAuthnKeyFull,
 } from "./identity";
 import type { CommunityInvite, GroupInvite } from "./inviteCodes";
+import type { LogLevel } from "./logging";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
 import type { ToggleMuteNotificationResponse } from "./notifications";
 import type {
@@ -238,6 +238,7 @@ export type CorrelatedWorkerRequest = WorkerRequest & {
 };
 
 export type WorkerRequest =
+    | SetAuthIdentity
     | SetMinLogLevel
     | DismissRecommendations
     | SearchGroups
@@ -293,7 +294,6 @@ export type WorkerRequest =
     | ChatEvents
     | CreateUserClient
     | Init
-    | GenerateIdentityChallenge
     | CreateOpenChatIdentity
     | CurrentUser
     | SetGroupInvite
@@ -471,13 +471,20 @@ export type WorkerRequest =
     | ReinstateMissedDailyClaims
     | VerifyAccountLinkingCode
     | FinaliseAccountLinkingWithCode
+    | GetSignInProof
     | PayForPremiumItem
     | SetPremiumItemCost
     | OneSecEnableForwarding
     | OneSecGetTransferFees
     | OneSecForwardEvmToIcp
     | OneSecGetForwardingStatus
-    | UpdateBlockedUsernamePatterns;
+    | UpdateBlockedUsernamePatterns
+    | MarkNotificationSubscriptionActive;
+
+type MarkNotificationSubscriptionActive = {
+    kind: "markNotificationSubscriptionActive";
+    endpoint: string;
+};
 
 type UpdateBlockedUsernamePatterns = {
     kind: "updateBlockedUsernamePatterns";
@@ -523,9 +530,15 @@ type PayForPremiumItem = {
     userId: string;
 };
 
+type SetAuthIdentity = {
+    kind: "setAuthIdentity";
+    identity: JsonnableIdentityKeyAndChain | undefined;
+    isIIPrincipal: boolean;
+};
+
 type SetMinLogLevel = {
     kind: "setMinLogLevel";
-    minLogLevel: "debug" | "log" | "warn" | "error";
+    minLogLevel: LogLevel;
 };
 
 type PayForStreakInsurance = {
@@ -879,7 +892,7 @@ type GetInviteCode = {
 type MessagesByMessageIndex = {
     chatId: ChatIdentifier;
     threadRootMessageIndex: number | undefined;
-    messageIndexes: Set<number>;
+    messageIndexes: number[];
     latestKnownUpdate: bigint | undefined;
     kind: "getMessagesByMessageIndex";
 };
@@ -1039,7 +1052,7 @@ type InviteUsers = {
 };
 
 type RemoveSub = {
-    subscription: PushSubscriptionJSON;
+    endpoint: string;
     kind: "removeSubscription";
 };
 
@@ -1050,7 +1063,6 @@ type PushSub = {
 
 type SubscriptionExists = {
     endpoint: string;
-    p256dh_key: string;
     kind: "subscriptionExists";
 };
 
@@ -1312,14 +1324,9 @@ export type Init = Omit<AgentConfig, "logger"> & {
     kind: "init";
 };
 
-type GenerateIdentityChallenge = {
-    kind: "generateIdentityChallenge";
-};
-
 type CreateOpenChatIdentity = {
     kind: "createOpenChatIdentity";
     webAuthnCredentialId: Uint8Array | undefined;
-    challengeAttempt: ChallengeAttempt | undefined;
 };
 
 type CurrentUser = {
@@ -1685,6 +1692,12 @@ type FinaliseAccountLinkingWithCode = {
     webAuthnKey?: WebAuthnKeyFull;
 };
 
+type GetSignInProof = {
+    kind: "getSignInProof";
+    identityKey: CryptoKeyPair;
+    delegation: JsonnableDelegationChain;
+};
+
 /**
  * Worker error type
  */
@@ -1707,7 +1720,6 @@ export type WorkerResponseInner =
     | string[]
     | Uint8Array
     | [number, number]
-    | GenerateChallengeResponse
     | CreateOpenChatIdentityResponse
     | CreateGroupResponse
     | DisableInviteCodeResponse
@@ -1913,6 +1925,7 @@ type DeleteFailedMessage = {
 type ClaimPrize = {
     chatId: MultiUserChatIdentifier;
     messageId: bigint;
+    signInProof: string | undefined;
     kind: "claimPrize";
 };
 
@@ -2168,15 +2181,15 @@ type CancelInvites = {
     userIds: string[];
 };
 
-export type ConnectToWorkerResponse = GetOpenChatIdentityResponse["kind"];
+export type SetAuthIdentityResponse = GetOpenChatIdentityResponse["kind"];
 
 // prettier-ignore
 export type WorkerResult<T> = T extends Init
-    ? ConnectToWorkerResponse
+    ? void
+    : T extends SetAuthIdentity
+    ? SetAuthIdentityResponse
     : T extends SetMinLogLevel
     ? void
-    : T extends GenerateIdentityChallenge
-    ? GenerateChallengeResponse
     : T extends CreateOpenChatIdentity
     ? CreateOpenChatIdentityResponse
     : T extends PinMessage
@@ -2627,6 +2640,8 @@ export type WorkerResult<T> = T extends Init
     ? void
     : T extends CreateAccountLinkingCode
     ? AccountLinkingCode | undefined
+    : T extends GetSignInProof
+    ? string
     : T extends ReinstateMissedDailyClaims
     ? boolean
     : T extends OneSecEnableForwarding
@@ -2638,5 +2653,7 @@ export type WorkerResult<T> = T extends Init
     : T extends OneSecGetForwardingStatus
     ? OneSecForwardingStatus
     : T extends UpdateBlockedUsernamePatterns
+    ? void
+    : T extends MarkNotificationSubscriptionActive
     ? void
     : never;

@@ -147,8 +147,14 @@ impl From<ChatEventType> for ChatEventCategory {
 pub struct EventsResponse {
     #[ts(as = "Vec<crate::EventWrapperChatEvent>")]
     pub events: Vec<EventWrapper<ChatEvent>>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<EventIndex>>", optional)]
     pub unauthorized: Vec<EventIndex>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<(EventIndex, EventIndex)>>", optional)]
     pub expired_event_ranges: Vec<(EventIndex, EventIndex)>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<(MessageIndex, MessageIndex)>>", optional)]
     pub expired_message_ranges: Vec<(MessageIndex, MessageIndex)>,
     pub latest_event_index: EventIndex,
     pub chat_last_updated: TimestampMillis,

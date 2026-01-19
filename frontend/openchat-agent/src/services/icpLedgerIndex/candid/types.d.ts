@@ -17,7 +17,16 @@ export type GetAccountIdentifierTransactionsResult = {
   } |
   { 'Err' : GetAccountIdentifierTransactionsError };
 export interface GetAccountTransactionsArgs {
+  /**
+   * Maximum number of transactions to fetch.
+   */
   'max_results' : bigint,
+  /**
+   * The txid of the last transaction seen by the client.
+   * If None then the results will start from the most recent
+   * txid. If set then the results will start from the next
+   * most recent txid after start (start won't be included).
+   */
   'start' : [] | [bigint],
   'account' : Account,
 }

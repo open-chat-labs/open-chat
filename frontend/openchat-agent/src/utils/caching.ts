@@ -57,7 +57,7 @@ import {
     updateCreatedUser,
 } from "openchat-shared";
 
-const CACHE_VERSION = 144;
+const CACHE_VERSION = 145;
 const EARLIEST_SUPPORTED_MIGRATION = 138;
 const MAX_INDEX = 9999999999;
 
@@ -268,6 +268,7 @@ const migrations: Record<number, MigrationFunction<ChatSchema>> = {
     142: createPublicProfileStore,
     143: clearCommunityDetailsStore,
     144: clearChatsStore,
+    145: clearChatsStore,
 };
 
 async function migrate(
@@ -412,10 +413,7 @@ export async function getCachedChats(
     const resolvedDb = await db;
     const chats = await resolvedDb.get("chats", principal.toString());
 
-    if (
-        chats !== undefined &&
-        chats.latestUserCanisterUpdates < BigInt(Date.now() - 30 * ONE_DAY)
-    ) {
+    if (chats && chats.latestUserCanisterUpdates < BigInt(Date.now() - 30 * ONE_DAY)) {
         // If the cache was last updated more than 30 days ago, clear the cache and return undefined
         const storeNames = resolvedDb.objectStoreNames;
         for (let i = 0; i < storeNames.length; i++) {
@@ -1145,7 +1143,7 @@ export async function loadMessagesByMessageIndex(
     db: Database,
     chatId: ChatIdentifier,
     threadRootMessageIndex: number | undefined,
-    messagesIndexes: Set<number>,
+    messagesIndexes: number[],
 ): Promise<{ messageEvents: EventWrapper<Message>[]; missing: Set<number> }> {
     const store = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
     const resolvedDb = await db;
@@ -1154,7 +1152,7 @@ export async function loadMessagesByMessageIndex(
     const messages: EventWrapper<Message>[] = [];
 
     await Promise.all<Message | undefined>(
-        [...messagesIndexes].map(async (msgIdx) => {
+        messagesIndexes.map(async (msgIdx) => {
             const cacheKey = createCacheKey(
                 {
                     chatId,

@@ -1276,9 +1276,7 @@ export function mergeChatMetrics(a: Metrics, b: Metrics): Metrics {
     return {
         audioMessages: a.audioMessages + b.audioMessages,
         edits: a.edits + b.edits,
-        icpMessages: a.icpMessages + b.icpMessages,
-        sns1Messages: a.sns1Messages + b.sns1Messages,
-        ckbtcMessages: a.ckbtcMessages + b.ckbtcMessages,
+        cryptoMessages: a.cryptoMessages + b.cryptoMessages,
         giphyMessages: a.giphyMessages + b.giphyMessages,
         deletedMessages: a.deletedMessages + b.deletedMessages,
         reportedMessages: a.reportedMessages + b.reportedMessages,

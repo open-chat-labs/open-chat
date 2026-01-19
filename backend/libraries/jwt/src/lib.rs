@@ -80,15 +80,7 @@ pub fn verify(jwt: &str, public_key_pem: &str) -> Result<String, Box<dyn Error>>
     Ok(claims_json.to_string())
 }
 
-pub fn extract_and_decode<T: DeserializeOwned>(jwt: &str) -> Result<T, Box<dyn Error>> {
-    let mut parts = jwt.split('.');
-    let _header_json = parts.next().ok_or("Invalid jwt")?;
-    let claims_json = parts.next().ok_or("Invalid jwt")?;
-
-    decode_from_json(claims_json)
-}
-
-pub fn verify_and_decode<T: DeserializeOwned>(jwt: &str, public_key_pem: &str) -> Result<T, Box<dyn Error>> {
+pub fn verify_and_decode<T: DeserializeOwned>(jwt: &str, public_key_pem: &str) -> Result<Claims<T>, Box<dyn Error>> {
     let claims_json = verify(jwt, public_key_pem)?;
 
     decode_from_json(&claims_json)
@@ -118,7 +110,7 @@ fn encode_bytes(bytes: &[u8]) -> Result<String, ct_codecs::Error> {
     Base64UrlSafeNoPadding::encode_to_string(bytes)
 }
 
-pub fn decode_from_json<T: DeserializeOwned>(s: &str) -> Result<T, Box<dyn Error>> {
+fn decode_from_json<T: DeserializeOwned>(s: &str) -> Result<T, Box<dyn Error>> {
     let bytes = decode_to_bytes(s)?;
     Ok(serde_json::from_slice(&bytes)?)
 }

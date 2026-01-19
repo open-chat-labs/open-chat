@@ -2174,9 +2174,7 @@ export type MessageAction = "emoji" | "file" | undefined;
 export type Metrics = {
     audioMessages: number;
     edits: number;
-    icpMessages: number;
-    sns1Messages: number;
-    ckbtcMessages: number;
+    cryptoMessages: number;
     giphyMessages: number;
     deletedMessages: number;
     reportedMessages: number;

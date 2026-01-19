@@ -1,14 +1,17 @@
 use crate::model::nervous_systems::ValidateSubmitProposalPaymentError;
-use crate::timer_job_types::{ProcessUserRefundJob, SubmitProposalJob, TimerJob};
+use crate::timer_job_types::{
+    CheckSnsProposalTallyThenVoteOnNnsProposalJob, ProcessUserRefundJob, SubmitProposalJob, TimerJob,
+};
 use crate::{RuntimeState, UserIdAndPayment, mutate_state, read_state};
-use candid::Principal;
+use candid::{Deserialize, Principal};
 use canister_api_macros::update;
 use canister_timer_jobs::Job;
 use canister_tracing_macros::trace;
-use constants::SECOND_IN_MS;
+use constants::{MINUTE_IN_MS, SECOND_IN_MS};
 use ledger_utils::icrc2::process_transaction;
 use proposals_bot_canister::submit_proposal::{Response::*, *};
 use proposals_bot_canister::{ProposalToSubmit, ProposalToSubmitAction, Treasury};
+use serde::Serialize;
 use sns_governance_canister::types::manage_neuron::Command;
 use sns_governance_canister::types::proposal::Action;
 use sns_governance_canister::types::{
@@ -16,7 +19,7 @@ use sns_governance_canister::types::{
     TransferSnsTreasuryFunds, UpgradeSnsControlledCanister, UpgradeSnsToNextVersion, manage_neuron_response,
 };
 use tracing::{error, info};
-use types::{CanisterId, MultiUserChat, SnsNeuronId, UserDetails, UserId, icrc2};
+use types::{CanisterId, MultiUserChat, NnsNeuronId, SnsNeuronId, TimestampMillis, UserDetails, UserId, icrc2};
 use user_index_canister_c2c_client::lookup_user;
 
 const OC_ROOT_URL: &str = "https://oc.app/";
@@ -70,6 +73,7 @@ async fn submit_proposal_impl(args: Args) -> Response {
         args.governance_canister_id,
         neuron_id,
         proposal,
+        None,
     )
     .await
 }
@@ -134,6 +138,7 @@ pub(crate) async fn submit_proposal(
     governance_canister_id: CanisterId,
     neuron_id: SnsNeuronId,
     proposal: ProposalToSubmit,
+    linked_nns_proposal: Option<LinkedNnsProposal>,
 ) -> Response {
     let make_proposal_args = sns_governance_canister::manage_neuron::Args {
         subaccount: neuron_id.to_vec(),
@@ -158,6 +163,23 @@ pub(crate) async fn submit_proposal(
                                     governance_canister_id,
                                     user_id,
                                     proposal_id,
+                                )
+                            }
+                            if let Some(nns_proposal) = linked_nns_proposal {
+                                let now = state.env.now();
+                                state.data.timer_jobs.enqueue_job(
+                                    TimerJob::CheckSnsProposalTallyThenVoteOnNnsProposal(
+                                        CheckSnsProposalTallyThenVoteOnNnsProposalJob {
+                                            sns_governance_canister_id: governance_canister_id,
+                                            sns_proposal_id: proposal_id,
+                                            nns_governance_canister_id: nns_proposal.nns_governance_canister_id,
+                                            nns_neuron_id: nns_proposal.nns_neuron_id,
+                                            nns_proposal_id: nns_proposal.proposal_id,
+                                            nns_proposal_deadline: nns_proposal.deadline,
+                                        },
+                                    ),
+                                    nns_proposal.deadline.saturating_sub(10 * MINUTE_IN_MS),
+                                    now,
                                 )
                             }
                         });
@@ -192,6 +214,7 @@ pub(crate) async fn submit_proposal(
                         neuron_id,
                         proposal,
                         user_id_and_payment,
+                        linked_nns_proposal,
                     })),
                     state,
                 )
@@ -246,4 +269,12 @@ fn convert_proposal_action(action: ProposalToSubmitAction) -> Action {
 fn enqueue_job(job: TimerJob, state: &mut RuntimeState) {
     let now = state.env.now();
     state.data.timer_jobs.enqueue_job(job, now + (10 * SECOND_IN_MS), now)
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct LinkedNnsProposal {
+    pub nns_governance_canister_id: CanisterId,
+    pub nns_neuron_id: NnsNeuronId,
+    pub proposal_id: u64,
+    pub deadline: TimestampMillis,
 }

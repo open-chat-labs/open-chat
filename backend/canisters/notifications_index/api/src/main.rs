@@ -12,6 +12,7 @@ fn main() {
     generate_ts_method!(notifications_index, subscription_exists);
 
     generate_ts_method!(notifications_index, add_fcm_token);
+    generate_ts_method!(notifications_index, mark_subscription_active);
     generate_ts_method!(notifications_index, push_subscription);
     generate_ts_method!(notifications_index, remove_subscription);
     generate_ts_method!(notifications_index, remove_subscriptions_for_user);

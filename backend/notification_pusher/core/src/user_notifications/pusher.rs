@@ -14,7 +14,7 @@ const ONE_MINUTE: Milliseconds = 60 * 1000;
 pub struct Pusher {
     receiver: Receiver<NotificationToPush>,
     web_push_client: HyperWebPushClient,
-    subscriptions_to_remove_sender: Sender<(UserId, (String, String))>,
+    subscriptions_to_remove_sender: Sender<(UserId, String)>,
     invalid_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
     throttled_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
     fcm_service: Arc<FcmService>,
@@ -23,7 +23,7 @@ pub struct Pusher {
 impl Pusher {
     pub fn new(
         receiver: Receiver<NotificationToPush>,
-        subscriptions_to_remove_sender: Sender<(UserId, (String, String))>,
+        subscriptions_to_remove_sender: Sender<(UserId, String)>,
         invalid_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
         throttled_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
         fcm_service: Arc<FcmService>,
@@ -97,10 +97,7 @@ impl Pusher {
                 WebPushError::EndpointNotValid(_) | WebPushError::InvalidUri | WebPushError::EndpointNotFound(_) => {
                     let _ = self.subscriptions_to_remove_sender.try_send((
                         notification.metadata.recipient,
-                        (
-                            notification.subscription_info.endpoint.clone(),
-                            notification.subscription_info.keys.p256dh.clone(),
-                        ),
+                        notification.subscription_info.endpoint.clone(),
                     ));
                     if let Ok(mut map) = self.invalid_subscriptions.write() {
                         if map.len() > 10000 {

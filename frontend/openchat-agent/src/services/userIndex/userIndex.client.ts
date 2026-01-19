@@ -103,7 +103,7 @@ import {
     setUserDiamondStatusInCache,
     setUsernameInCache,
 } from "../../utils/userCache";
-import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
+import { SingleCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 import {
     apiBotDefinition,
     apiBotInstallLocation,
@@ -126,7 +126,7 @@ import {
     userSearchResponse,
 } from "./mappers";
 
-export class UserIndexClient extends MsgpackCanisterAgent {
+export class UserIndexClient extends SingleCanisterMsgpackAgent {
     constructor(
         identity: Identity,
         agent: HttpAgent,
@@ -149,7 +149,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
                 }
 
                 if (!isOffline) {
-                    const liveUser = await this.executeMsgpackQuery(
+                    const liveUser = await this.query(
                         "current_user",
                         {},
                         currentUserResponse,
@@ -168,7 +168,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
     }
 
     setModerationFlags(flags: number): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "set_moderation_flags",
             {
                 moderation_flags_enabled: flags,
@@ -180,7 +180,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
     }
 
     userRegistrationCanister(): Promise<string> {
-        return this.executeMsgpackQuery(
+        return this.query(
             "user_registration_canister",
             {},
             userRegistrationCanisterResponse,
@@ -194,7 +194,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
             search_term: searchTerm,
             max_results: maxResults,
         };
-        return this.executeMsgpackQuery(
+        return this.query(
             "search",
             args,
             userSearchResponse,
@@ -294,7 +294,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
             users_suspended_since: suspendedUsersSyncedUpTo,
         };
 
-        return this.executeMsgpackQuery(
+        return this.query(
             "users",
             args,
             usersApiResponse,
@@ -421,7 +421,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
             username: username,
             is_bot: isBot,
         };
-        return this.executeMsgpackQuery(
+        return this.query(
             "check_username",
             args,
             checkUsernameResponse,
@@ -431,7 +431,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
     }
 
     setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "set_username",
             { username },
             setUsernameResponse,
@@ -449,7 +449,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
         userId: string,
         displayName: string | undefined,
     ): Promise<SetDisplayNameResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "set_display_name",
             {
                 display_name: displayName,
@@ -466,7 +466,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
     }
 
     suspendUser(userId: string, reason: string): Promise<SuspendUserResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "suspend_user",
             {
                 user_id: principalStringToBytes(userId),
@@ -479,7 +479,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
     }
 
     unsuspendUser(userId: string): Promise<UnsuspendUserResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "unsuspend_user",
             {
                 user_id: principalStringToBytes(userId),
@@ -497,7 +497,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
         recurring: boolean,
         expectedPriceE8s: bigint,
     ): Promise<PayForDiamondMembershipResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "pay_for_diamond_membership",
             {
                 ledger,
@@ -519,7 +519,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
     }
 
     setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "set_user_upgrade_concurrency",
             { value },
             () => "success",
@@ -529,7 +529,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
     }
 
     getPlatformModeratorGroup(): Promise<string> {
-        return this.executeMsgpackQuery(
+        return this.query(
             "platform_moderators_group",
             {},
             (res) => principalBytesToString(res.Success),
@@ -539,7 +539,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
     }
 
     diamondMembershipFees(): Promise<DiamondMembershipFees[]> {
-        return this.executeMsgpackQuery(
+        return this.query(
             "diamond_membership_fees",
             {},
             diamondMembershipFeesResponse,
@@ -573,7 +573,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
             },
         };
 
-        return this.executeMsgpackUpdate(
+        return this.update(
             "set_diamond_membership_fees",
             args,
             (res) => res === "Success",
@@ -583,7 +583,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
     }
 
     reportedMessages(userId: string | undefined): Promise<string> {
-        return this.executeMsgpackQuery(
+        return this.query(
             "reported_messages",
             {
                 user_id: mapOptional(userId, principalStringToBytes),
@@ -595,7 +595,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
     }
 
     chitLeaderboard(): Promise<ChitLeaderboardResponse> {
-        return this.executeMsgpackQuery(
+        return this.query(
             "chit_leaderboard",
             {},
             chitLeaderboardResponse,
@@ -612,7 +612,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
             user_ii_principal: principalStringToBytes(iiPrincipal),
             credential_jwt: credential,
         };
-        return this.executeMsgpackUpdate(
+        return this.update(
             "submit_proof_of_unique_personhood",
             args,
             submitProofOfUniquePersonhoodResponse,
@@ -622,7 +622,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
     }
 
     getExternalAchievements(updatesSince: bigint): Promise<ExternalAchievementsResponse> {
-        return this.executeMsgpackQuery(
+        return this.query(
             "external_achievements",
             { updates_since: updatesSince },
             externalAchievementsResponse,
@@ -638,7 +638,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
         location: BotInstallationLocation | undefined,
         excludeInstalled: boolean,
     ): Promise<ExploreBotsResponse> {
-        return this.executeMsgpackQuery(
+        return this.query(
             "explore_bots",
             {
                 search_term: searchTerm,
@@ -656,7 +656,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
     registerBot(principal: string, bot: ExternalBot): Promise<boolean> {
         const location =
             bot.registrationStatus.kind === "private" ? bot.registrationStatus.location : undefined;
-        return this.executeMsgpackUpdate(
+        return this.update(
             "register_bot",
             {
                 principal: principalStringToBytes(principal),
@@ -677,7 +677,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
     }
 
     removeBot(botId: string): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "remove_bot",
             {
                 bot_id: principalStringToBytes(botId),
@@ -699,7 +699,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
         endpoint?: string,
         definition?: BotDefinition,
     ): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "update_bot",
             {
                 bot_id: principalStringToBytes(id),
@@ -722,7 +722,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
     }
 
     getBots(current: BotsResponse | undefined): Promise<BotsResponse> {
-        return this.executeMsgpackQuery(
+        return this.query(
             "bot_updates",
             {
                 updated_since: current?.timestamp ?? 0n,
@@ -734,7 +734,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
     }
 
     setPremiumItemCost(item: PremiumItem, chitCost: number): Promise<void> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "set_premium_item_cost",
             {
                 item_id: item,
@@ -747,7 +747,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
     }
 
     updateBlockedUsernamePatterns(pattern: string, add: boolean): Promise<void> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "update_blocked_username_patterns",
             {
                 pattern,

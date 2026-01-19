@@ -1,5 +1,5 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
-import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
+import { SingleCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 import {
     type CandidateProposal,
     nowNanos,
@@ -24,7 +24,7 @@ import {
 } from "../../typebox";
 import { principalToIcrcAccount } from "../common/chatMappersV2";
 
-export class ProposalsBotClient extends MsgpackCanisterAgent {
+export class ProposalsBotClient extends SingleCanisterMsgpackAgent {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
         super(identity, agent, canisterId, "ProposalsBot");
     }
@@ -52,7 +52,7 @@ export class ProposalsBotClient extends MsgpackCanisterAgent {
                 created: nowNanos(),
             },
         };
-        return this.executeMsgpackUpdate(
+        return this.update(
             "submit_proposal",
             args,
             submitProposalResponse,
@@ -69,7 +69,7 @@ export class ProposalsBotClient extends MsgpackCanisterAgent {
             governance_canister_id: principalStringToBytes(governanceCanisterId),
             stake,
         };
-        return this.executeMsgpackUpdate(
+        return this.update(
             "stake_neuron_for_submitting_proposals",
             args,
             stakeNeuronForSubmittingProposalsResponse,
@@ -83,7 +83,7 @@ export class ProposalsBotClient extends MsgpackCanisterAgent {
             governance_canister_id: principalStringToBytes(governanceCanisterId),
             amount,
         };
-        return this.executeMsgpackUpdate(
+        return this.update(
             "top_up_neuron",
             args,
             topUpNeuronResponse,

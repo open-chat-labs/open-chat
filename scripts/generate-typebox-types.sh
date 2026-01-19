@@ -6,11 +6,24 @@ cd $SCRIPT_DIR/..
 
 rm -rf ./tsBindings
 
-for canister_path in ./backend/canisters/*/
-do
-  canister_path=${canister_path%*/}
-  canister_name=${canister_path##*/}
+canister_names=(
+  community
+  group
+  group_index
+  identity
+  local_user_index
+  notifications_index
+  online_users
+  proposals_bot
+  registry
+  storage_bucket
+  storage_index
+  translations
+  user
+  user_index
+)
 
+for canister_name in "${canister_names[@]}"; do
   cargo run -p ${canister_name}_canister > /dev/null
 done
 

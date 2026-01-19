@@ -8,9 +8,9 @@ fn auth_principals(_args: Args) -> Response {
 }
 
 fn auth_principals_impl(state: &RuntimeState) -> Response {
-    let auth_principal = state.caller_auth_principal();
+    let caller = state.env.caller();
 
-    if let Some(user_principal) = state.data.user_principals.get_by_auth_principal(&auth_principal) {
+    if let Some(user_principal) = state.data.user_principals.get_caller_user_principal(caller) {
         Success(
             user_principal
                 .auth_principals
@@ -20,7 +20,6 @@ fn auth_principals_impl(state: &RuntimeState) -> Response {
                         principal: p,
                         originating_canister: a.originating_canister,
                         is_ii_principal: a.is_ii_principal,
-                        is_current_identity: p == auth_principal,
                         webauthn_key: a
                             .webauthn_credential_id
                             .and_then(|id| state.data.webauthn_keys.get(id.clone()).map(|k| k.hydrate(id))),

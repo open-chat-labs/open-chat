@@ -7,7 +7,8 @@ use local_user_index_canister::UserEvent;
 use local_user_index_canister::c2c_user_canister::*;
 use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
-use types::{StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis, UserId};
+use types::{BotEvent, BotLifecycleEvent, Notification, StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis, UserId};
+use user_index_canister::BotInstalled;
 
 #[update(guard = "caller_is_local_user_canister", msgpack = true)]
 #[trace]
@@ -85,7 +86,30 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             state.push_event_to_user_index(UserIndexEvent::SetMaxStreak(user_id, max_streak), **now);
         }
         UserEvent::EventStoreEvent(event) => state.data.event_store_client.push(event),
-        UserEvent::Notification(notification) => {
+        UserEvent::Notification(mut notification) => {
+            if let Notification::Bot(bot_notification) = &mut *notification
+                && let BotEvent::Lifecycle(BotLifecycleEvent::Installed(event)) = &bot_notification.event
+            {
+                state.push_event_to_user_index(
+                    crate::UserIndexEvent::BotInstalled(Box::new(BotInstalled {
+                        bot_id: bot_notification.recipients[0],
+                        location: event.location,
+                        installed_by: event.installed_by,
+                        granted_permissions: event.granted_command_permissions.clone(),
+                        granted_autonomous_permissions: event.granted_autonomous_permissions.clone(),
+                    })),
+                    **now,
+                );
+
+                // Some bots request all their installation locations when they startup while simultaneously receiving
+                // bot installation lifecycle notifications and so they will need to merge installation location
+                // records from both sources, only keeping the latest. In order to do that, the timestamps must come from the
+                // same canister, namely the LocalUserIndex.
+                // In this case, the BotLifecycleEvent::Installed notification comes from the orginating location canister
+                // so we give it the LocalUserIndex timestamp instead.
+                bot_notification.timestamp = **now;
+            }
+
             state.handle_notification(*notification, state.env.canister_id(), **now);
         }
     }

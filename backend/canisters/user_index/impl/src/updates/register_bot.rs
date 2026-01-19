@@ -73,6 +73,7 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
             last_updated: now,
             avatar,
             installations: HashMap::new(),
+            installation_events: Vec::new(),
             registration_status: BotRegistrationStatus::Private(args.permitted_install_location),
         }),
     );

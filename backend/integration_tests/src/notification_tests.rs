@@ -1,10 +1,14 @@
 use crate::env::ENV;
-use crate::utils::tick_many;
+use crate::utils::{now_millis, tick_many};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
+use constants::{DAY_IN_MS, NANOS_PER_MILLISECOND};
 use itertools::Itertools;
-use pocket_ic::PocketIc;
+use pocket_ic::{PocketIc, Time};
+use rand::{RngCore, thread_rng};
+use std::collections::VecDeque;
 use std::ops::Deref;
+use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{Empty, MessageContentInitial, NotificationSubscription, TextContent};
@@ -226,7 +230,7 @@ fn only_store_up_to_10_subscriptions_per_user() {
             canister_ids.notifications_index,
             i.to_string(),
             i.to_string(),
-            format!("https://xyz.com/{i}"),
+            i.to_string(),
         );
     }
 
@@ -253,12 +257,137 @@ fn only_store_up_to_10_subscriptions_per_user() {
         subscriptions
             .into_iter()
             .filter_map(|s| match s {
-                NotificationSubscription::WebPush(si) => Some(si.keys.p256dh),
+                NotificationSubscription::WebPush(si) => Some(si.endpoint),
                 _ => None,
             })
             .collect_vec(),
         (10..20).map(|i| i.to_string()).collect_vec()
     );
+}
+
+#[test]
+fn subscriptions_removed_based_on_last_active() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let TestData { user1, .. } = init_test_data(env, canister_ids);
+
+    for i in 0..10 {
+        client::notifications_index::happy_path::push_subscription(
+            env,
+            user1.principal,
+            canister_ids.notifications_index,
+            i.to_string(),
+            i.to_string(),
+            i.to_string(),
+        );
+        env.advance_time(Duration::from_secs(1));
+    }
+
+    let mut random_ordering: VecDeque<_> = (0..10).sorted_by_cached_key(|_| thread_rng().next_u64()).collect();
+
+    for i in random_ordering.iter() {
+        client::notifications_index::happy_path::mark_subscription_active(
+            env,
+            user1.principal,
+            canister_ids.notifications_index,
+            i.to_string(),
+        );
+        env.advance_time(Duration::from_secs(1));
+    }
+
+    for i in 10..20 {
+        client::notifications_index::happy_path::push_subscription(
+            env,
+            user1.principal,
+            canister_ids.notifications_index,
+            i.to_string(),
+            i.to_string(),
+            i.to_string(),
+        );
+        env.advance_time(Duration::from_secs(1));
+
+        let removed = random_ordering.pop_front().unwrap();
+        assert!(!client::notifications_index::happy_path::subscription_exists(
+            env,
+            user1.principal,
+            canister_ids.notifications_index,
+            removed.to_string()
+        ));
+
+        if let Some(next) = random_ordering.iter().next() {
+            assert!(client::notifications_index::happy_path::subscription_exists(
+                env,
+                user1.principal,
+                canister_ids.notifications_index,
+                next.to_string()
+            ));
+        }
+    }
+}
+
+#[test]
+fn inactive_subscriptions_removed() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let TestData { user1, .. } = init_test_data(env, canister_ids);
+
+    // We only remove inactive subscriptions after the timestamp below
+    if now_millis(env) < 1767484800000 {
+        env.set_time(Time::from_nanos_since_unix_epoch(1767484800000 * NANOS_PER_MILLISECOND));
+    }
+
+    let rand1 = random_string();
+    let rand2 = random_string();
+
+    client::notifications_index::happy_path::push_subscription(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        rand1.clone(),
+        rand1.clone(),
+        rand1.clone(),
+    );
+
+    env.advance_time(Duration::from_millis(DAY_IN_MS));
+
+    client::notifications_index::happy_path::push_subscription(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        rand2.clone(),
+        rand2.clone(),
+        rand2.clone(),
+    );
+
+    env.advance_time(Duration::from_millis(89 * DAY_IN_MS + 1));
+    env.tick();
+    env.tick();
+
+    assert!(!client::notifications_index::happy_path::subscription_exists(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        rand1
+    ));
+    assert!(client::notifications_index::happy_path::subscription_exists(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        rand2.clone()
+    ));
+
+    env.advance_time(Duration::from_millis(DAY_IN_MS));
+    env.tick();
+    env.tick();
+
+    assert!(!client::notifications_index::happy_path::subscription_exists(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        rand2
+    ));
 }
 
 #[test]

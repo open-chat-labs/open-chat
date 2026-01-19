@@ -1,6 +1,6 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import type { DexId, RegistryUpdatesResponse } from "openchat-shared";
-import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
+import { SingleCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 import { updatesResponse } from "./mappers";
 import { mapOptional, principalStringToBytes } from "../../utils/mapping";
 import {
@@ -18,7 +18,7 @@ import {
 } from "../../typebox";
 import { apiDexId } from "../common/chatMappersV2";
 
-export class RegistryClient extends MsgpackCanisterAgent {
+export class RegistryClient extends SingleCanisterMsgpackAgent {
     private readonly blobUrlPattern: string;
 
     constructor(identity: Identity, agent: HttpAgent, canisterId: string, blobUrlPattern: string) {
@@ -31,7 +31,7 @@ export class RegistryClient extends MsgpackCanisterAgent {
         const args = {
             since,
         };
-        return this.executeMsgpackQuery(
+        return this.query(
             "updates",
             args,
             (resp) => updatesResponse(resp, this.blobUrlPattern, this.canisterId),
@@ -41,7 +41,7 @@ export class RegistryClient extends MsgpackCanisterAgent {
     }
 
     addRemoveSwapProvider(swapProvider: DexId, add: boolean): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "add_remove_swap_provider",
             {
                 swap_provider: apiDexId(swapProvider),
@@ -54,7 +54,7 @@ export class RegistryClient extends MsgpackCanisterAgent {
     }
 
     addMessageFilter(regex: string): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "add_message_filter",
             { regex },
             (resp) => {
@@ -72,7 +72,7 @@ export class RegistryClient extends MsgpackCanisterAgent {
     }
 
     removeMessageFilter(id: bigint): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "remove_message_filter",
             { id },
             (resp) => typeof resp === "object" && "Success" in resp,
@@ -87,7 +87,7 @@ export class RegistryClient extends MsgpackCanisterAgent {
         communityId?: string,
         communityName?: string,
     ): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "set_airdrop_config",
             {
                 enabled: true,
@@ -103,7 +103,7 @@ export class RegistryClient extends MsgpackCanisterAgent {
     }
 
     setTokenEnabled(ledger: string, enabled: boolean): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "set_token_enabled",
             {
                 ledger_canister_id: principalStringToBytes(ledger),

@@ -1,9 +1,9 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
-    BotInstallationLocation, CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, MessageContent, MessageContentInitial,
-    MessageId, MessageIndex, NotifyChit, PremiumItemPurchase, StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis,
-    UniquePersonProof, User, UserId,
+    BotInstallationLocation, BotPermissions, CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, MessageContent,
+    MessageContentInitial, MessageId, MessageIndex, NotifyChit, PremiumItemPurchase, StreakInsuranceClaim,
+    StreakInsurancePayment, TimestampMillis, UniquePersonProof, User, UserId,
 };
 
 mod lifecycle;
@@ -113,6 +113,10 @@ pub struct BotInstalled {
     pub bot_id: UserId,
     pub location: BotInstallationLocation,
     pub installed_by: UserId,
+    #[serde(default)]
+    pub granted_permissions: BotPermissions,
+    #[serde(default)]
+    pub granted_autonomous_permissions: BotPermissions,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

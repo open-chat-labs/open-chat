@@ -3,7 +3,9 @@ use crate::{RuntimeState, read_state};
 use candid::Principal;
 use canister_api_macros::query;
 use local_user_index_canister::group_and_community_summary_updates_v2::{Response::*, *};
+use std::cmp::Ordering;
 use types::{C2CError, CanisterId, TimestampMillis, UserId};
+use utils::min_heap::MinBinaryHeap;
 
 #[query(composite = true, guard = "caller_is_openchat_user", msgpack = true)]
 async fn group_and_community_summary_updates_v2(args: Args) -> Response {
@@ -47,42 +49,70 @@ struct PrepareResult {
 }
 
 fn prepare(args: Args, state: &RuntimeState) -> PrepareResult {
-    let mut c2c_args = Vec::new();
+    let mut canisters_with_latest_activity: MinBinaryHeap<RequestByLatestActivity> =
+        MinBinaryHeap::with_capacity(args.max_c2c_calls);
     let mut excess_updates = Vec::new();
     let mut not_found = Vec::new();
     let user_id = state.calling_user_id();
+
     for request in args.requests {
-        match should_include_request(&request, user_id, state) {
-            Some(true) if c2c_args.len() < args.max_c2c_calls => c2c_args.push(request),
-            Some(true) => excess_updates.push(request.canister_id),
-            Some(false) => {} // No updates
-            None => not_found.push(request.canister_id),
+        match has_new_activity(&request, user_id, state) {
+            HasNewActivityResult::Yes(latest_activity) => {
+                if canisters_with_latest_activity.len() >= args.max_c2c_calls
+                    && canisters_with_latest_activity.peek().unwrap().latest_activity > latest_activity
+                {
+                    excess_updates.push(request.canister_id);
+                } else {
+                    if canisters_with_latest_activity.len() >= args.max_c2c_calls {
+                        canisters_with_latest_activity.pop();
+                    }
+                    canisters_with_latest_activity.push(RequestByLatestActivity {
+                        latest_activity,
+                        request,
+                    });
+                }
+            }
+            HasNewActivityResult::No => {} // No updates
+            HasNewActivityResult::NotFound => not_found.push(request.canister_id),
         }
     }
 
     PrepareResult {
         caller: state.env.caller(),
         timestamp: state.env.now(),
-        c2c_args,
+        c2c_args: canisters_with_latest_activity.drain().map(|r| r.request).collect(),
         excess_updates,
         not_found,
     }
 }
 
-fn should_include_request(request: &SummaryUpdatesArgs, user_id: UserId, state: &RuntimeState) -> Option<bool> {
+enum HasNewActivityResult {
+    Yes(TimestampMillis),
+    No,
+    NotFound,
+}
+
+fn has_new_activity(request: &SummaryUpdatesArgs, user_id: UserId, state: &RuntimeState) -> HasNewActivityResult {
     if request.is_community {
-        state.data.local_communities.get(&request.canister_id.into()).map(|c| {
-            request
-                .updates_since
-                .is_none_or(|since| c.latest_activity(Some(user_id)) > since)
-        })
+        let Some(community) = state.data.local_communities.get(&request.canister_id.into()) else {
+            return HasNewActivityResult::NotFound;
+        };
+
+        let latest_activity = community.latest_activity(Some(user_id));
+        if request.updates_since.is_none_or(|since| latest_activity > since) {
+            return HasNewActivityResult::Yes(latest_activity);
+        }
     } else {
-        state.data.local_groups.get(&request.canister_id.into()).map(|g| {
-            request
-                .updates_since
-                .is_none_or(|since| g.latest_activity(Some(user_id)) > since)
-        })
+        let Some(group) = state.data.local_groups.get(&request.canister_id.into()) else {
+            return HasNewActivityResult::NotFound;
+        };
+
+        let latest_activity = group.latest_activity(Some(user_id));
+        if request.updates_since.is_none_or(|since| latest_activity > since) {
+            return HasNewActivityResult::Yes(latest_activity);
+        }
     }
+    HasNewActivityResult::No
 }
 
 pub(crate) async fn make_c2c_call(args: SummaryUpdatesArgs, principal: Principal) -> (CanisterId, SummaryUpdatesResponse) {
@@ -141,5 +171,33 @@ fn map_response<R: Into<SummaryUpdatesResponse>>(response: Result<R, C2CError>) 
     match response {
         Ok(result) => result.into(),
         Err(error) => SummaryUpdatesResponse::Error(error.into()),
+    }
+}
+
+struct RequestByLatestActivity {
+    latest_activity: TimestampMillis,
+    request: SummaryUpdatesArgs,
+}
+
+impl PartialEq<Self> for RequestByLatestActivity {
+    fn eq(&self, other: &Self) -> bool {
+        self.latest_activity == other.latest_activity && self.request == other.request
+    }
+}
+
+impl Eq for RequestByLatestActivity {}
+
+impl PartialOrd<Self> for RequestByLatestActivity {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for RequestByLatestActivity {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match self.latest_activity.cmp(&other.latest_activity) {
+            Ordering::Equal => self.request.canister_id.cmp(&other.request.canister_id),
+            other => other,
+        }
     }
 }

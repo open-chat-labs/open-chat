@@ -54,6 +54,7 @@ mod group_member;
 mod group_roles;
 mod http;
 mod idempotency;
+mod identity;
 mod indexed_event;
 mod members;
 mod mention;
@@ -139,6 +140,7 @@ pub use group_member::*;
 pub use group_roles::*;
 pub use http::*;
 pub use idempotency::*;
+pub use identity::*;
 pub use indexed_event::*;
 pub use members::*;
 pub use mention::*;
@@ -261,7 +263,7 @@ pub enum ResultLowercase<T, E> {
 }
 
 pub fn is_default<T: Default + PartialEq>(value: &T) -> bool {
-    *value == Default::default()
+    *value == T::default()
 }
 
 #[ts_export]

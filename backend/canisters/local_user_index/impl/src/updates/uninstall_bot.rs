@@ -3,7 +3,7 @@ use canister_api_macros::update;
 use canister_client::generate_c2c_call;
 use canister_tracing_macros::trace;
 use local_user_index_canister::uninstall_bot::*;
-use types::c2c_uninstall_bot;
+use types::{BotEvent, BotLifecycleEvent, BotNotification, BotUninstalledEvent, c2c_uninstall_bot};
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
@@ -29,13 +29,28 @@ async fn uninstall_bot(args: Args) -> Response {
     }
 
     mutate_state(|state| {
+        let now = state.env.now();
+
         state.push_event_to_user_index(
             UserIndexEvent::BotUninstalled(Box::new(user_index_canister::BotUninstalled {
                 bot_id: args.bot_id,
                 location: args.location,
                 uninstalled_by: user_id,
             })),
-            state.env.now(),
+            now,
+        );
+
+        state.push_bot_notification(
+            BotNotification {
+                event: BotEvent::Lifecycle(BotLifecycleEvent::Uninstalled(BotUninstalledEvent {
+                    uninstalled_by: user_id,
+                    location: args.location,
+                })),
+                recipients: vec![args.bot_id],
+                timestamp: now,
+            },
+            state.env.canister_id(),
+            now,
         );
     });
 

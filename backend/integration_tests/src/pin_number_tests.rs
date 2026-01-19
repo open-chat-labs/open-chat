@@ -5,6 +5,7 @@ use crate::{TestEnv, client};
 use constants::{ICP_SYMBOL, ICP_TRANSFER_FEE, MINUTE_IN_MS};
 use ledger_utils::create_pending_transaction;
 use oc_error_codes::OCErrorCode;
+use rand::random;
 use std::ops::Deref;
 use std::str::FromStr;
 use std::time::Duration;
@@ -36,9 +37,7 @@ fn can_set_pin_number_by_providing_current() {
 }
 
 #[test_case(true)]
-// TODO reinstate this once the backend check is working properly
-// #[test_case(false)]
-fn can_set_pin_number_by_providing_recent_delegation(within_5_minutes: bool) {
+fn can_set_pin_number_by_reauthenticating(within_5_minutes: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
@@ -51,6 +50,10 @@ fn can_set_pin_number_by_providing_recent_delegation(within_5_minutes: bool) {
     assert!(initial_state1.pin_number_settings.is_some());
     assert!(initial_state1.pin_number_settings.unwrap().attempts_blocked_until.is_none());
 
+    let session_key = random::<[u8; 32]>().to_vec();
+    let prepare_delegation_response =
+        client::identity::happy_path::prepare_delegation(env, user_auth.auth_principal(), canister_ids.identity, session_key);
+
     let advance_by = if within_5_minutes { Duration::from_secs(299) } else { Duration::from_secs(301) };
     env.advance_time(advance_by);
 
@@ -60,7 +63,7 @@ fn can_set_pin_number_by_providing_recent_delegation(within_5_minutes: bool) {
         user.canister(),
         &user_canister::set_pin_number::Args {
             new: None,
-            verification: PinNumberVerification::Delegation(user_auth.oc_delegation),
+            verification: PinNumberVerification::Reauthenticated(prepare_delegation_response.proof_jwt),
         },
     );
 
@@ -75,7 +78,7 @@ fn can_set_pin_number_by_providing_recent_delegation(within_5_minutes: bool) {
     } else {
         assert!(matches!(
             set_pin_number_response,
-            user_canister::set_pin_number::Response::Error(e) if e.matches_code(OCErrorCode::DelegationTooOld)
+            user_canister::set_pin_number::Response::Error(e) if e.matches_code(OCErrorCode::InvalidSignature)
         ));
         assert!(initial_state2.pin_number_settings.is_some());
     }

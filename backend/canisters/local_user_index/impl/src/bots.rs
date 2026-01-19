@@ -1,5 +1,4 @@
 use crate::RuntimeState;
-use jwt::Claims;
 use rand::Rng;
 use types::{
     BotActionByCommandClaims, BotActionChatDetails, BotActionCommunityDetails, BotActionScope, BotChatContext,
@@ -91,25 +90,15 @@ pub fn extract_access_context_from_community_or_group_context(
 fn extract_access_context_from_jwt(jwt: &str, bot: &User, state: &mut RuntimeState) -> Result<BotAccessContext, String> {
     const INVALID_MESSAGE: &str = "Not a valid access token JWT";
 
-    let claims_str = jwt::verify(jwt, state.data.oc_key_pair.public_key_pem()).map_err(|_| INVALID_MESSAGE.to_string())?;
+    let claims = jwt::verify_and_decode::<BotActionByCommandClaims>(jwt, state.data.oc_key_pair.public_key_pem())
+        .map_err(|_| INVALID_MESSAGE.to_string())?;
 
-    let (exp_ms, scope, initiator, bot_id) =
-        if let Ok(claims) = jwt::decode_from_json::<Claims<BotActionByCommandClaims>>(&claims_str) {
-            let exp = claims.exp_ms();
-            let bot_action_claims = claims.into_custom();
-            (
-                exp,
-                bot_action_claims.scope,
-                BotInitiator::Command(bot_action_claims.command),
-                bot_action_claims.bot,
-            )
-        } else {
-            return Err(INVALID_MESSAGE.to_string());
-        };
-
-    if exp_ms < state.env.now() {
+    if claims.exp_ms() < state.env.now() {
         return Err("Access token expired".to_string());
     }
+
+    let bot_action_claims = claims.into_custom();
+    let bot_id = bot_action_claims.bot;
 
     if bot.user_id != bot_id {
         return Err(INVALID_MESSAGE.to_string());
@@ -118,7 +107,7 @@ fn extract_access_context_from_jwt(jwt: &str, bot: &User, state: &mut RuntimeSta
     Ok(BotAccessContext {
         bot_id,
         bot_name: bot.username.clone(),
-        initiator,
-        scope,
+        initiator: BotInitiator::Command(bot_action_claims.command),
+        scope: bot_action_claims.scope,
     })
 }

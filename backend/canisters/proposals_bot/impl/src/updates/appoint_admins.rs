@@ -26,6 +26,7 @@ fn appoint_admins(args: Args) -> Response {
 async fn appoint_group_admin(group_id: ChatId, user_id: UserId) {
     let args = group_canister::change_role::Args {
         user_id,
+        user_ids: vec![user_id],
         new_role: GroupRole::Admin,
     };
 
@@ -36,6 +37,7 @@ async fn appoint_channel_admin(community_id: CommunityId, channel_id: ChannelId,
     let args = community_canister::change_channel_role::Args {
         channel_id,
         user_id,
+        user_ids: vec![user_id],
         new_role: GroupRole::Admin,
     };
 

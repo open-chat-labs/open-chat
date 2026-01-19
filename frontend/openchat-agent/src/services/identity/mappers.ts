@@ -2,7 +2,6 @@ import type {
     IdentityAuthPrincipalsResponse,
     IdentityCheckAuthPrincipalV2Response,
     IdentityCreateIdentityResponse,
-    IdentityGenerateChallengeResponse,
     IdentityGetDelegationResponse,
     IdentityInitiateIdentityLinkResponse,
     IdentityPrepareDelegationResponse,
@@ -14,11 +13,9 @@ import type {
     AuthenticationPrincipalsResponse,
     CheckAuthPrincipalResponse,
     CreateIdentityResponse,
-    GenerateChallengeResponse,
     GetDelegationResponse,
     InitiateIdentityLinkResponse,
-    PrepareDelegationResponse,
-    PrepareDelegationSuccess,
+    PrepareDelegationWithProofResponse,
     RemoveIdentityLinkResponse,
     WebAuthnKeyFull,
 } from "openchat-shared";
@@ -33,14 +30,12 @@ export function createIdentityResponse(
     if (value === "AlreadyRegistered") {
         return { kind: "already_registered" };
     }
-    if (value === "ChallengeFailed") {
-        return { kind: "challenge_failed" };
-    }
-    if (value === "ChallengeRequired") {
-        return { kind: "challenge_required" };
-    }
     if ("Success" in value) {
-        return prepareDelegationSuccess(value.Success);
+        return {
+            kind: "success",
+            userKey: consolidateBytes(value.Success.user_key),
+            expiration: value.Success.expiration,
+        };
     }
     if ("PublicKeyInvalid" in value) {
         return { kind: "public_key_invalid" };
@@ -74,12 +69,17 @@ export function checkAuthPrincipalResponse(
 
 export function prepareDelegationResponse(
     value: IdentityPrepareDelegationResponse,
-): PrepareDelegationResponse {
+): PrepareDelegationWithProofResponse {
     if (value === "NotFound") {
         return { kind: "not_found" };
     }
     if ("Success" in value) {
-        return prepareDelegationSuccess(value.Success);
+        return {
+            kind: "success",
+            userKey: consolidateBytes(value.Success.user_key),
+            expiration: value.Success.expiration,
+            proofJwt: value.Success.proof_jwt,
+        };
     }
     throw new UnsupportedValueError("Unexpected ApiPrepareDelegationResponse type received", value);
 }
@@ -105,36 +105,6 @@ export function signedDelegation(signedDelegation: SignedDelegation): GetDelegat
         ),
         signature: consolidateBytes(signedDelegation.signature) as unknown as Signature,
     };
-}
-
-function prepareDelegationSuccess(value: {
-    user_key: Uint8Array | number[];
-    expiration: bigint;
-}): PrepareDelegationSuccess {
-    return {
-        kind: "success",
-        userKey: consolidateBytes(value.user_key),
-        expiration: value.expiration,
-    };
-}
-
-export function generateChallengeResponse(
-    value: IdentityGenerateChallengeResponse,
-): GenerateChallengeResponse {
-    if (value === "AlreadyRegistered") {
-        return { kind: "already_registered" };
-    }
-    if (value === "Throttled") {
-        return { kind: "throttled" };
-    }
-    if ("Success" in value) {
-        return {
-            kind: "success",
-            key: value.Success.key,
-            pngBase64: value.Success.png_base64,
-        };
-    }
-    throw new UnsupportedValueError("Unexpected ApiGenerateChallengeResponse type received", value);
 }
 
 export function initiateIdentityLinkResponse(
@@ -169,19 +139,23 @@ export function initiateIdentityLinkResponse(
 
 export function authPrincipalsResponse(
     value: IdentityAuthPrincipalsResponse,
+    currentAuthPrincipal: string,
 ): AuthenticationPrincipalsResponse {
     if (value === "NotFound") {
         return [];
     }
 
     if ("Success" in value) {
-        return value.Success.map((p) => ({
-            principal: principalBytesToString(p.principal),
-            originatingCanister: principalBytesToString(p.originating_canister),
-            isIIPrincipal: p.is_ii_principal,
-            isCurrentIdentity: p.is_current_identity,
-            webAuthnKey: mapOptional(p.webauthn_key, webAuthnKey),
-        }));
+        return value.Success.map((p) => {
+            const principal = principalBytesToString(p.principal);
+            return {
+                principal,
+                originatingCanister: principalBytesToString(p.originating_canister),
+                isIIPrincipal: p.is_ii_principal,
+                isCurrentIdentity: principal === currentAuthPrincipal,
+                webAuthnKey: mapOptional(p.webauthn_key, webAuthnKey),
+            };
+        });
     }
 
     throw new UnsupportedValueError("Unexpected ApiAuthPrincipalResponse type received", value);

@@ -29,10 +29,6 @@ export class DataClient extends EventTarget {
         );
     }
 
-    static newBlobId(): bigint {
-        return random128();
-    }
-
     storageStatus(): Promise<StorageStatus> {
         return this.storageIndexClient.user().then((resp) => {
             if (resp.kind === "user") {
