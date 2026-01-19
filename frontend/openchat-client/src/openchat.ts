@@ -124,7 +124,6 @@ import {
     type CandidateProposal,
     type CandidateTranslations,
     type CaptionedContent,
-    type ChallengeAttempt,
     type ChannelIdentifier,
     type ChannelSummary,
     type ChatEvent,
@@ -186,7 +185,6 @@ import {
     type Failure,
     type FaqRoute,
     type FullWebhookDetails,
-    type GenerateChallengeResponse,
     type GenerateMagicLinkResponse,
     type GlobalSelectedChatRoute,
     type GrantedBotPermissions,
@@ -843,19 +841,9 @@ export class OpenChat {
 
         if (!anon) {
             if (setAuthIdentityResponse === "oc_identity_not_found") {
-                if (
-                    authProvider !== AuthProvider.II &&
-                    authProvider !== AuthProvider.EMAIL &&
-                    authProvider !== AuthProvider.PASSKEY
-                ) {
-                    this.updateIdentityState({ kind: "challenging" });
-                    return;
-                }
-
                 await this.#worker.send({
                     kind: "createOpenChatIdentity",
                     webAuthnCredentialId: this.#webAuthnKey?.credentialId,
-                    challengeAttempt: undefined,
                 });
             }
 
@@ -970,31 +958,6 @@ export class OpenChat {
                 window.setTimeout(timeout, Math.min(MAX_TIMEOUT_MS, durationUntilLogoutMs));
             }
         });
-    }
-
-    async submitChallenge(challengeAttempt: ChallengeAttempt): Promise<boolean> {
-        if (this.#authPrincipal === undefined) {
-            return false;
-        }
-
-        const resp = await this.#worker
-            .send({
-                kind: "createOpenChatIdentity",
-                webAuthnCredentialId: undefined,
-                challengeAttempt,
-            })
-            .catch(() => "challenge_failed");
-
-        if (resp !== "success") {
-            return false;
-        }
-
-        this.#ocIdentity = await this.#ocIdentityStorage
-            .get(this.#authPrincipal)
-            .catch(() => undefined);
-
-        this.#loadUser();
-        return true;
     }
 
     async #loadUser() {
@@ -1237,22 +1200,6 @@ export class OpenChat {
             this.#authClient.then((c) => c.logout()),
             this.#ocIdentityStorage.remove(),
         ]).then(() => window.location.replace("/"));
-    }
-
-    async previouslySignedIn(): Promise<boolean> {
-        const KEY_STORAGE_IDENTITY = "identity";
-        const identity = await this.#authIdentityStorage.storage.get(KEY_STORAGE_IDENTITY);
-        return userCreatedStore.value && identity !== null;
-    }
-
-    generateIdentityChallenge(): Promise<GenerateChallengeResponse> {
-        return this.#worker
-            .send({
-                kind: "generateIdentityChallenge",
-                identityCanister: this.config.identityCanister,
-                icUrl: this.config.icUrl ?? window.location.origin,
-            })
-            .catch(() => ({ kind: "failed" }));
     }
 
     unreadThreadMessageCount(

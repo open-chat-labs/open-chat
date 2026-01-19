@@ -150,10 +150,8 @@ import type {
 import type {
     AccountLinkingCode,
     AuthenticationPrincipalsResponse,
-    ChallengeAttempt,
     CreateOpenChatIdentityResponse,
     FinaliseAccountLinkingResponse,
-    GenerateChallengeResponse,
     GetDelegationResponse,
     GetOpenChatIdentityResponse,
     JsonnableIdentityKeyAndChain,
@@ -297,7 +295,6 @@ export type WorkerRequest =
     | ChatEvents
     | CreateUserClient
     | Init
-    | GenerateIdentityChallenge
     | CreateOpenChatIdentity
     | CurrentUser
     | SetGroupInvite
@@ -1334,14 +1331,9 @@ export type Init = Omit<AgentConfig, "logger"> & {
     kind: "init";
 };
 
-type GenerateIdentityChallenge = {
-    kind: "generateIdentityChallenge";
-};
-
 type CreateOpenChatIdentity = {
     kind: "createOpenChatIdentity";
     webAuthnCredentialId: Uint8Array | undefined;
-    challengeAttempt: ChallengeAttempt | undefined;
 };
 
 type CurrentUser = {
@@ -1735,7 +1727,6 @@ export type WorkerResponseInner =
     | string[]
     | Uint8Array
     | [number, number]
-    | GenerateChallengeResponse
     | CreateOpenChatIdentityResponse
     | CreateGroupResponse
     | DisableInviteCodeResponse
@@ -2206,8 +2197,6 @@ export type WorkerResult<T> = T extends Init
     ? SetAuthIdentityResponse
     : T extends SetMinLogLevel
     ? void
-    : T extends GenerateIdentityChallenge
-    ? GenerateChallengeResponse
     : T extends CreateOpenChatIdentity
     ? CreateOpenChatIdentityResponse
     : T extends PinMessage

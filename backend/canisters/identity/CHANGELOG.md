@@ -6,9 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove all code relating to captchas ([#8809](https://github.com/open-chat-labs/open-chat/pull/8809))
+
+## [[2.0.1959](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1959-identity)] - 2026-01-19
+
 ### Changed
 
 - Remove `is_current_identity` from `auth_principals` response ([#8804](https://github.com/open-chat-labs/open-chat/pull/8804))
+- Support calling `auth_principals` with either auth identity or OC identity ([#8810](https://github.com/open-chat-labs/open-chat/pull/8810))
 
 ## [[2.0.1956](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1956-identity)] - 2026-01-16
 

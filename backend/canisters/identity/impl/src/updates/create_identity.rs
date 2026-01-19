@@ -33,17 +33,6 @@ fn create_identity_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
     };
 
-    let now = state.env.now();
-    if state.data.requires_captcha(&originating_canister) {
-        let Some(attempt) = args.challenge_attempt else {
-            return ChallengeRequired;
-        };
-
-        if !state.data.challenges.check(&attempt, now) {
-            return ChallengeFailed;
-        }
-    }
-
     let webauthn_credential_id = if let Some(webauthn_key) = webauthn_key {
         let now = state.env.now();
         let credential_id = webauthn_key.credential_id.clone();

@@ -22,7 +22,6 @@ import {
     StorageUpdated,
     Stream,
     UsersLoaded,
-    type ChallengeAttempt,
     type CorrelatedWorkerRequest,
     type CreateOpenChatIdentityError,
     type FinaliseAccountLinkingResponse,
@@ -66,15 +65,9 @@ async function initializeAuthIdentity(
     }
 
     const identity = await buildIdentityFromJson(authIdentity);
-    const authPrincipal = identity.getPrincipal();
+    authPrincipalString = identity.getPrincipal().toString();
 
-    authPrincipalString = authPrincipal.toString();
-    identityAgent = await IdentityAgent.create(
-        identity,
-        identityCanister,
-        icUrl,
-        isIIPrincipal,
-    );
+    identityAgent = await IdentityAgent.create(identity, identityCanister, icUrl, isIIPrincipal);
 
     const ocIdentity = await ocIdentityStorage.get(authPrincipalString);
     if (ocIdentity !== undefined) {
@@ -88,7 +81,11 @@ async function initializeAuthIdentity(
         const getIdentityResult = await identityAgent.getOpenChatIdentity(sessionKey);
 
         if (getIdentityResult !== undefined && typeof getIdentityResult.identity !== "string") {
-            await ocIdentityStorage.set(sessionKey, getIdentityResult.identity.getDelegation(), authPrincipalString);
+            await ocIdentityStorage.set(
+                sessionKey,
+                getIdentityResult.identity.getDelegation(),
+                authPrincipalString,
+            );
             return { kind: "success", identity: getIdentityResult.identity };
         }
     }
@@ -98,7 +95,6 @@ async function initializeAuthIdentity(
 
 async function createOpenChatIdentity(
     webAuthnCredentialId: Uint8Array | undefined,
-    challengeAttempt: ChallengeAttempt | undefined,
 ): Promise<DelegationIdentity | CreateOpenChatIdentityError> {
     if (identityAgent === undefined) {
         throw new Error("IdentityAgent not initialized");
@@ -109,7 +105,6 @@ async function createOpenChatIdentity(
     const response = await identityAgent.createOpenChatIdentity(
         sessionKey,
         webAuthnCredentialId,
-        challengeAttempt,
     );
 
     if (typeof response !== "string") {
@@ -225,8 +220,12 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
     try {
         if (kind === "init") {
             initPayload = payload;
-            logger = inititaliseLogger(initPayload.rollbarApiKey, initPayload.websiteVersion, initPayload.env);
-            sendResponse(correlationId, undefined)
+            logger = inititaliseLogger(
+                initPayload.rollbarApiKey,
+                initPayload.websiteVersion,
+                initPayload.env,
+            );
+            sendResponse(correlationId, undefined);
             return;
         }
 
@@ -243,7 +242,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload.identity,
                     payload.isIIPrincipal,
                     config.identityCanister,
-                    config.icUrl
+                    config.icUrl,
                 ).then((resp) => {
                     const id = resp.kind === "success" ? resp.identity : new AnonymousIdentity();
                     console.debug(
@@ -253,7 +252,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     );
 
                     logger.debug("WORKER: constructing agent instance");
-                    agent = new OpenChatAgent(id, {
+                    agent = new OpenChatAgent(id, authPrincipalString ?? "", {
                         ...config,
                         logger,
                     });
@@ -264,23 +263,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             return;
         }
 
-        if (kind === "generateIdentityChallenge") {
-            if (identityAgent === undefined) {
-                throw new Error("IdentityAgent not initialized");
-            }
-
-            executeThenReply(payload, correlationId, identityAgent.generateChallenge());
-            return;
-        }
-
         if (kind === "createOpenChatIdentity") {
             executeThenReply(
                 payload,
                 correlationId,
-                createOpenChatIdentity(payload.webAuthnCredentialId, payload.challengeAttempt).then(
+                createOpenChatIdentity(payload.webAuthnCredentialId).then(
                     (resp) => {
                         const id = typeof resp !== "string" ? resp : new AnonymousIdentity();
-                        agent = new OpenChatAgent(id, {
+                        agent = new OpenChatAgent(id, authPrincipalString ?? "", {
                             ...config,
                             logger,
                         });
@@ -1286,14 +1276,12 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent
-                        .communityClient
-                        .addMembersToChannel(
-                            payload.chatId,
-                            payload.userIds,
-                            payload.username,
-                            payload.displayName,
-                        ),
+                    agent.communityClient.addMembersToChannel(
+                        payload.chatId,
+                        payload.userIds,
+                        payload.username,
+                        payload.displayName,
+                    ),
                 );
                 break;
 
@@ -1309,9 +1297,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent
-                        .communityClient
-                        .changeChannelRole(payload.chatId, payload.userId, payload.newRole),
+                    agent.communityClient.changeChannelRole(
+                        payload.chatId,
+                        payload.userId,
+                        payload.newRole,
+                    ),
                 );
                 break;
 
@@ -1319,9 +1309,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent
-                        .communityClient
-                        .changeRole(payload.id.communityId, payload.userId, payload.newRole),
+                    agent.communityClient.changeRole(
+                        payload.id.communityId,
+                        payload.userId,
+                        payload.newRole,
+                    ),
                 );
                 break;
 
@@ -1329,9 +1321,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent
-                        .communityClient
-                        .declineInvitation(payload.chatId),
+                    agent.communityClient.declineInvitation(payload.chatId),
                 );
                 break;
 
@@ -1355,20 +1345,18 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent
-                        .communityClient
-                        .updateCommunity(
-                            payload.communityId,
-                            payload.name,
-                            payload.description,
-                            payload.rules,
-                            payload.permissions,
-                            payload.avatar,
-                            payload.banner,
-                            payload.gateConfig,
-                            payload.isPublic,
-                            payload.primaryLanguage,
-                        ),
+                    agent.communityClient.updateCommunity(
+                        payload.communityId,
+                        payload.name,
+                        payload.description,
+                        payload.rules,
+                        payload.permissions,
+                        payload.avatar,
+                        payload.banner,
+                        payload.gateConfig,
+                        payload.isPublic,
+                        payload.primaryLanguage,
+                    ),
                 );
                 break;
 
@@ -1414,9 +1402,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent
-                        .communityClient
-                        .getCommunityDetails(payload.id.communityId, payload.communityLastUpdated),
+                    agent.communityClient.getCommunityDetails(
+                        payload.id.communityId,
+                        payload.communityLastUpdated,
+                    ),
                 );
                 break;
 
@@ -1468,9 +1457,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent
-                        .communityClient
-                        .importGroup(payload.communityId.communityId, payload.groupId),
+                    agent.communityClient.importGroup(
+                        payload.communityId.communityId,
+                        payload.groupId,
+                    ),
                 );
                 break;
 
@@ -1888,7 +1878,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         new AnonymousIdentity(),
                         config.identityCanister,
                         config.icUrl,
-                        undefined
+                        undefined,
                     ).then((ia) => ia.lookupWebAuthnPubKey(payload.credentialId)),
                 );
                 break;
@@ -2013,14 +2003,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "getAuthenticationPrincipals":
-                if (identityAgent === undefined || authPrincipalString === undefined) {
-                    throw new Error("IdentityAgent not initialized");
-                }
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    identityAgent.getAuthenticationPrincipals(authPrincipalString),
-                );
+                executeThenReply(payload, correlationId, agent.getAuthenticationPrincipals());
                 break;
 
             case "configureWallet":
@@ -2195,7 +2178,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.code,
                         payload.tempKey,
                         config.identityCanister,
-                        config.icUrl
+                        config.icUrl,
                     ),
                 );
                 break;
@@ -2273,7 +2256,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.updateBlockedUsernamePatterns(payload.pattern, payload.add));
+                    agent.updateBlockedUsernamePatterns(payload.pattern, payload.add),
+                );
                 break;
 
             default:
@@ -2402,7 +2386,8 @@ async function getSignInProof(
     identityKey: CryptoKeyPair,
     delegation: JsonnableDelegationChain,
     identityCanister: string,
-    icUrl: string,): Promise<string | undefined> {
+    icUrl: string,
+): Promise<string | undefined> {
     const identity = DelegationIdentity.fromDelegation(
         await ECDSAKeyIdentity.fromKeyPair(identityKey),
         DelegationChain.fromJSON(delegation),

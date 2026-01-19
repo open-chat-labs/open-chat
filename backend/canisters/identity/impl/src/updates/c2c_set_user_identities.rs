@@ -20,17 +20,16 @@ fn c2c_set_user_identities_impl(args: Args, state: &mut RuntimeState) -> Respons
     let sign_in_with_email_canister_id = state.data.sign_in_with_email_canister_id;
 
     for user in args.users {
-        let Some(index) = state.data.user_principals.set_user_id(user.principal, user.user_id) else {
-            continue;
-        };
-
-        if let Some(email) = user.email {
+        if state.data.user_principals.set_user_id(user.principal, user.user_id)
+            && let Some(email) = user.email
+            && let Some(index) = state.data.user_principals.user_principal_index(&user.principal)
+        {
             ic_cdk::futures::spawn(link_email_auth_principal_to_user_identity(
                 sign_in_with_email_canister_id,
                 email,
                 index,
             ));
-        };
+        }
     }
 
     Response::Success
@@ -57,7 +56,7 @@ async fn link_email_auth_principal_to_user_identity(
                     user_principal_index,
                     0,
                 ) {
-                    error!("Principal for email {} is already linked to another user", email);
+                    error!("Principal for email {email} is already linked to another user");
                 }
             });
         }
