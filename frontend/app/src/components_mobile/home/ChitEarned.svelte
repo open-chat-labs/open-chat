@@ -1,5 +1,6 @@
 <script lang="ts">
     import { shakeElements } from "@src/utils/shake";
+    import { BodySmall, Column } from "component-lib";
     import { subscribe, type ChitEvent, type OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { Confetti } from "svelte-confetti";
@@ -105,16 +106,16 @@
 
     onMount(() => {
         // - Useful for testing
-        // trigger([
-        //     {
-        //         amount: 100_000,
-        //         timestamp: BigInt(Date.now()),
-        //         reason: {
-        //             kind: "achievement_unlocked",
-        //             type: "streak_365",
-        //         },
-        //     },
-        // ]);
+        trigger([
+            {
+                amount: 100_000,
+                timestamp: BigInt(Date.now()),
+                reason: {
+                    kind: "achievement_unlocked",
+                    type: "edited_message",
+                },
+            },
+        ]);
         return subscribe("chitEarned", trigger);
     });
 </script>
@@ -148,11 +149,11 @@
             <div class="chit">
                 {`+${amount.toLocaleString()} CHIT`}
             </div>
-            <div class="msgs">
+            <Column crossAxisAlignment={"center"}>
                 {#each labels as label}
-                    <div class="msg">{label}</div>
+                    <BodySmall width={"hug"}>{label}</BodySmall>
                 {/each}
-            </div>
+            </Column>
         </div>
     </div>
 </div>
@@ -189,9 +190,9 @@
     }
 
     .chit {
-        border-radius: var(--rd);
-        background: var(--button-bg);
-        color: var(--button-txt);
+        border-radius: var(--rad-md);
+        background: var(--gradient);
+        color: var(--text-on-primary);
         width: fit-content;
         padding: $sp2 $sp3;
     }
@@ -201,14 +202,6 @@
         flex-direction: column;
         gap: $sp3;
         align-items: center;
-    }
-
-    .msgs,
-    .msg {
-        text-align: center;
-        @include mobile() {
-            @include font(book, normal, fs-90);
-        }
     }
 
     .overlay {
