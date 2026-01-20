@@ -90,6 +90,7 @@
     );
     let verified = $derived(chatSummary.kind === "group_chat" && chatSummary.verified);
     let unreadMessages = $state<number>(0);
+    let unreadMentions = $state<number>(0);
     let chat = $derived(normaliseChatSummary($now, chatSummary, $typersByContext));
     let lastMessage = $derived(formatLatestMessage(chatSummary, $allUsersStore));
     let displayDate = $derived(client.getDisplayDate(chatSummary));
@@ -132,10 +133,19 @@
                 chatSummary.latestMessage?.event.messageIndex,
             );
 
+            unreadMentions = getUnreadMentionCount(chatSummary);
+
             if (chatSummary.membership.archived && unreadMessages > 0 && !chat.bot) {
                 unarchiveChat();
             }
         });
+    }
+
+    function getUnreadMentionCount(chat: ChatSummary): number {
+        if (chat.kind === "direct_chat") return 0;
+        return chat.membership.mentions.filter(
+            (m) => !client.isMessageRead({ chatId: chat.id }, m.messageIndex, m.messageId),
+        ).length;
     }
 
     function getLastMessageIcon() {
@@ -537,6 +547,9 @@
                                 {/if}
                             </Body>
                         </Row>
+                        {#if unreadMentions > 0}
+                            <CountBadge>@</CountBadge>
+                        {/if}
                         {#if unreadMessages > 0}
                             <CountBadge {muted}
                                 >{unreadMessages > 999 ? "999+" : unreadMessages}
