@@ -106,16 +106,16 @@
 
     onMount(() => {
         // - Useful for testing
-        trigger([
-            {
-                amount: 100_000,
-                timestamp: BigInt(Date.now()),
-                reason: {
-                    kind: "achievement_unlocked",
-                    type: "edited_message",
-                },
-            },
-        ]);
+        // trigger([
+        //     {
+        //         amount: 100_000,
+        //         timestamp: BigInt(Date.now()),
+        //         reason: {
+        //             kind: "achievement_unlocked",
+        //             type: "edited_message",
+        //         },
+        //     },
+        // ]);
         return subscribe("chitEarned", trigger);
     });
 </script>
