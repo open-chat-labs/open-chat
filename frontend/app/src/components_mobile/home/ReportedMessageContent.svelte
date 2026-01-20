@@ -1,11 +1,11 @@
 <script lang="ts">
+    import { TextArea } from "component-lib";
     import type { OpenChat, ReportedMessageContent } from "openchat-client";
     import { allUsersStore } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
     import Legend from "../Legend.svelte";
-    import TextArea from "../TextArea.svelte";
     import Markdown from "./Markdown.svelte";
 
     interface Props {
