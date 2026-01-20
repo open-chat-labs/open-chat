@@ -78,9 +78,5 @@
         &:hover .copy {
             opacity: 1;
         }
-
-        @include mobile() {
-            margin-top: $sp4;
-        }
     }
 </style>

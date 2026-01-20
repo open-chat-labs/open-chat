@@ -87,11 +87,9 @@
         }
 
         &.full-width-on-mobile {
-            @include mobile() {
-                width: 100%;
-                height: auto;
-                margin: 0;
-            }
+            width: 100%;
+            height: auto;
+            margin: 0;
         }
     }
 </style>

@@ -64,7 +64,7 @@
         position: absolute;
         @include z-index("toast");
         padding: $sp4;
-        // width: 75%;
+        width: 100%;
         max-width: 800px;
         margin: 0 $sp4;
         display: flex;
@@ -72,9 +72,6 @@
         justify-content: center;
         align-items: center;
         border: 1px solid var(--bd);
-        @include mobile() {
-            width: 100%;
-        }
         background-color: var(--modal-bg);
         box-shadow: var(--modal-sh);
         color: var(--txt);

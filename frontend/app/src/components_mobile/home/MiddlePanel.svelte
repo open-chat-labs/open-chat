@@ -101,7 +101,7 @@
 
 <style lang="scss">
     section {
-        min-width: 390px;
+        min-width: unset;
         overflow: auto;
         overflow-x: hidden;
         flex: 13;
@@ -110,10 +110,6 @@
         height: 100%;
         flex-direction: column;
         display: flex;
-
-        @include mobile() {
-            min-width: unset;
-        }
 
         &.halloween::after {
             @include cobweb();

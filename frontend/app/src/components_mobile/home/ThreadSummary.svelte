@@ -78,7 +78,6 @@
 </div>
 
 <style lang="scss">
-    $avatar-width: 53px;
     $avatar-width-mob: 43px;
 
     .unread-count {
@@ -98,10 +97,7 @@
         }
 
         &.indent {
-            margin-left: $avatar-width;
-            @include mobile() {
-                margin-left: $avatar-width-mob;
-            }
+            margin-left: $avatar-width-mob;
         }
     }
 

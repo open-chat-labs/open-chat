@@ -97,10 +97,6 @@
         position: relative;
         margin-bottom: $sp3;
 
-        @include mobile() {
-            margin-bottom: $sp3;
-        }
-
         :global(.sdt-component-wrap),
         :global(.sdt-input-wrap) {
             width: 100%;

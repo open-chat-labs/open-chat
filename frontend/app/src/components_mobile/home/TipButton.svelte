@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { spring } from "svelte/motion";
     import type { ResourceKey } from "openchat-client";
+    import { spring } from "svelte/motion";
     import Translatable from "../Translatable.svelte";
 
     interface Props {
@@ -53,12 +53,6 @@
         }
 
         @include font(book, normal, fs-120);
-
-        @include mobile() {
-            $size: 100px;
-            height: $size;
-            width: $size;
-        }
 
         &:disabled {
             background: transparent;

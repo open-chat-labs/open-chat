@@ -404,9 +404,7 @@
         border-radius: $sp3;
         margin-bottom: $sp2;
         overflow: hidden;
-        @include mobile() {
-            margin-top: 0;
-        }
+        margin-top: 0;
 
         .claimed {
             $red: rgba(234, 41, 41, 1);
@@ -431,10 +429,7 @@
     }
     .image {
         height: auto;
-        width: 360px;
-        @include mobile() {
-            width: 100%;
-        }
+        width: 100%;
     }
 
     .restricted {

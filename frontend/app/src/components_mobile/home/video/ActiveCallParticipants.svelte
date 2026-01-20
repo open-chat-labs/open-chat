@@ -156,35 +156,3 @@
         {/if}
     </Container>
 </SlidingPageContent>
-
-<style lang="scss">
-    .tabs {
-        display: flex;
-        align-items: center;
-        @include font(medium, normal, fs-90);
-        color: var(--txt-light);
-        gap: $sp5;
-        border-bottom: 1px solid var(--bd);
-        cursor: pointer;
-        margin: 0 $sp4 $sp5 $sp4;
-
-        @include mobile() {
-            gap: $sp4;
-        }
-
-        .tab {
-            padding-bottom: 10px;
-            margin-bottom: -2px;
-            border-bottom: 3px solid transparent;
-            white-space: nowrap;
-            &.selected {
-                color: var(--txt);
-                border-bottom: 3px solid var(--txt);
-            }
-        }
-    }
-    .loader {
-        width: 80px;
-        margin: auto auto;
-    }
-</style>

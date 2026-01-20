@@ -34,10 +34,8 @@
         max-height: var(--override-height, 80vh);
         @include nice-scrollbar();
 
-        @include mobile() {
-            &.centered {
-                width: 70vw;
-            }
+        &.centered {
+            width: 70vw;
         }
 
         &.shadow {

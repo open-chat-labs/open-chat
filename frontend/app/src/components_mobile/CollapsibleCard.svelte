@@ -89,17 +89,13 @@
     }
 
     .header {
-        padding: 1rem 0;
+        padding: toRem(18) 0;
         display: flex;
         cursor: pointer;
         justify-content: space-between;
         align-items: center;
         @include font(bold, normal, fs-100);
         color: var(--collapsible-closed-header-txt);
-
-        @include mobile() {
-            padding: toRem(18) 0;
-        }
 
         &.open {
             color: var(--txt);
@@ -118,11 +114,7 @@
     }
 
     .body {
-        padding-bottom: $sp4;
-
-        @include mobile() {
-            padding-bottom: $sp3;
-        }
+        padding-bottom: $sp3;
 
         &.static {
             display: none;

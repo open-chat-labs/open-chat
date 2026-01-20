@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { onMount } from "svelte";
     import jsQR from "jsqr-es6";
     import type { Point } from "jsqr-es6/dist/locator";
+    import { onMount } from "svelte";
 
     interface Props {
         autoscan?: boolean;
@@ -116,11 +116,8 @@
         margin-bottom: $sp4;
         border: 4px dashed var(--bd);
         border-radius: $sp4;
-
-        @include mobile() {
-            max-height: 300px;
-            width: 100%;
-            object-fit: cover;
-        }
+        max-height: 300px;
+        width: 100%;
+        object-fit: cover;
     }
 </style>

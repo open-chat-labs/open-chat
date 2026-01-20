@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { Caption, ColourVars, IconButton, Row } from "component-lib";
     import {
-        iconSize,
         type ChatSummary,
         type MessageMatch,
         type OpenChat,
@@ -11,8 +11,6 @@
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import ChevronUp from "svelte-material-icons/ChevronUp.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import SectionHeader from "../SectionHeader.svelte";
     import MentionPicker from "./MentionPicker.svelte";
 
     interface Props {
@@ -244,13 +242,18 @@
         onMention={mention} />
 {/if}
 
-<SectionHeader flush entry bind:height={searchBoxHeight}>
-    <div onclick={onClose}>
-        <HoverIcon>
-            <Close size={$iconSize} color={"var(--icon-txt)"} />
-        </HoverIcon>
-    </div>
-    <div class="wrapper">
+<Row gap={"sm"} crossAxisAlignment={"center"} padding={"md"}>
+    <IconButton onclick={onClose}>
+        {#snippet icon(color)}
+            <Close {color} />
+        {/snippet}
+    </IconButton>
+    <Row
+        gap={"sm"}
+        crossAxisAlignment={"center"}
+        padding={["sm", "md"]}
+        borderRadius={"circle"}
+        backgroundColor={ColourVars.textTertiary}>
         <input
             bind:this={inputElement}
             oninput={onInput}
@@ -264,57 +267,41 @@
         {#if searching}
             <div class="searching"></div>
         {:else}
-            <div class="count">{count}</div>
+            <Caption width={"hug"} colour={"textSecondary"}>
+                {count}
+            </Caption>
         {/if}
-    </div>
-    <div onclick={onNext}>
-        <HoverIcon compact>
-            <ChevronUp size="1.8em" color={"var(--icon-txt)"} />
-        </HoverIcon>
-    </div>
-    <div onclick={onPrevious}>
-        <HoverIcon compact>
-            <ChevronDown size="1.8em" color={"var(--icon-txt)"} />
-        </HoverIcon>
-    </div>
-</SectionHeader>
+    </Row>
+    <IconButton onclick={onNext}>
+        {#snippet icon(color)}
+            <ChevronUp {color} />
+        {/snippet}
+    </IconButton>
+    <IconButton onclick={onPrevious}>
+        {#snippet icon(color)}
+            <ChevronDown {color} />
+        {/snippet}
+    </IconButton>
+</Row>
 
 <style lang="scss">
-    .wrapper {
-        width: 100%;
-        margin: 0 5px;
-        flex: 1;
-        display: flex;
-        gap: 4px;
-        @include input();
-        background-color: var(--chatSearch-bg);
-        box-shadow: var(--chatSearch-sh);
-        border: var(--bw) solid var(--chatSearch-bd);
-        border-radius: var(--rad-circle);
-    }
-
     input {
         flex: 1;
         width: 100%;
         outline: none;
         border: none;
-        @include font(book, normal, fs-100);
-        color: var(--txt);
+        color: var(--text-secondary);
         background-color: transparent;
+        font-size: var(--typo-body-sz);
+        line-height: var(--typo-body-lh);
 
         &::placeholder {
-            color: var(--placeholder);
+            color: var(--text-placeholder);
         }
     }
 
     .searching {
         @include loading-spinner(1em, 0.5em, var(--button-spinner));
-        margin-right: 8px;
-    }
-
-    .count {
-        @include font(light, normal, fs-70);
-        color: var(--txt);
-        align-self: center;
+        margin-right: 0.5rem;
     }
 </style>

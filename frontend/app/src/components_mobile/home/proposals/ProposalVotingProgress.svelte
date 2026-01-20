@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { rtlStore } from "../../../stores/rtl";
-    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
-    import { getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
+    import { getContext } from "svelte";
+    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
+    import { rtlStore } from "../../../stores/rtl";
     import { now500 } from "../../../stores/time";
     import Translatable from "../../Translatable.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
 
     interface Props {
         adoptPercent: number;
@@ -84,13 +84,11 @@
         position: relative;
         background: var(--chatSummary-bg-selected);
         border-radius: $sp3;
-        margin-top: 24px;
+        margin-top: 0;
         overflow: hidden;
-        @include mobile() {
-            margin-top: 0;
-        }
 
-        .adopt, .reject {
+        .adopt,
+        .reject {
             position: absolute;
             top: 0;
             bottom: 0;
@@ -121,15 +119,12 @@
     }
     .remaining {
         margin: 0 auto;
-        margin-top: 10px;
+        margin-top: $sp4;
         text-align: center;
         @include font(book, normal, fs-80);
         color: var(--txt-light);
         .label {
             font-weight: 700;
-        }
-        @include mobile() {
-            margin-top: $sp4;
         }
     }
 </style>

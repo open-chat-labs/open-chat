@@ -92,7 +92,7 @@
         }
 
         &.padded {
-            padding: $sp4;
+            padding: $sp3 toRem(10);
             transition:
                 background-color ease-in-out 100ms,
                 border-color ease-in-out 100ms;
@@ -101,10 +101,6 @@
                     background-color: var(--members-hv);
                 }
             } */
-
-            @include mobile() {
-                padding: $sp3 toRem(10);
-            }
         }
     }
 

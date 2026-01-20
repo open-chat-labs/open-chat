@@ -2111,14 +2111,9 @@
 
     .interpretation {
         display: grid;
-        grid-template-columns: 1fr 2fr;
-        gap: $sp4;
         margin-bottom: $sp4;
-
-        @include mobile() {
-            grid-template-columns: 1fr;
-            gap: $sp3;
-        }
+        grid-template-columns: 1fr;
+        gap: $sp3;
 
         :nth-child(2n-1) {
             font-weight: bold;
