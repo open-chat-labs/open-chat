@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
-    import { Column, defaultBackgroundGradient } from "component-lib";
+    import { Column, defaultBackgroundGradient, Row } from "component-lib";
     import {
         AuthProvider,
         chitBands,
@@ -9,7 +9,6 @@
         currentUserStore,
         isDiamondStore,
         isLifetimeDiamondStore,
-        mobileWidth,
         publish,
         type ChatIdentifier,
         type DiamondMembershipStatus,
@@ -26,7 +25,6 @@
     import { rtlStore } from "../../stores/rtl";
     import { now500 } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
-    import ButtonGroup from "../ButtonGroup.svelte";
     import Diamond from "../icons/Diamond.svelte";
     import SpinningToken from "../icons/SpinningToken.svelte";
     import Verified from "../icons/Verified.svelte";
@@ -133,7 +131,6 @@
     );
     let showAuthentication = $state(false);
     let spin = $derived(intersecting && !finished && !allClaimed);
-    let mirror = $derived(intersecting && !$mobileWidth);
 
     function reauthenticated(detail: {
         key: ECDSAKeyIdentity;
@@ -180,7 +177,7 @@
             {/if}
         </div>
         <div class="prize-coin">
-            <SpinningToken {logo} {spin} {mirror} />
+            <SpinningToken {logo} {spin} mirror={false} />
         </div>
     </Column>
     <div class="bottom">
@@ -283,13 +280,12 @@
             {/if}
 
             {#if !me}
-                <ButtonGroup align="fill">
+                <Row>
                     <SecureButton
                         label={"Prize message clicked"}
                         loading={$claimsStore.has(messageId)}
                         onClick={(e) => claim(e, undefined)}
                         {disabled}
-                        hollow
                         ><Translatable
                             resourceKey={i18nKey(
                                 claimedByYou
@@ -300,7 +296,7 @@
                                         ? "prizes.allClaimed"
                                         : "prizes.claim",
                             )} /></SecureButton>
-                </ButtonGroup>
+                </Row>
             {/if}
         </div>
     </div>

@@ -8,7 +8,6 @@
         communitiesStore,
         currentUserIdStore,
         currentUserStore,
-        mobileWidth,
         NoMeetingToJoin,
         OpenChat,
         selectedChatSummaryStore,
@@ -337,8 +336,8 @@
     class="video-call-container"
     class:visible={$activeVideoCall &&
         $activeVideoCall.view !== "minimised" &&
-        !(threadOpen && $mobileWidth) &&
-        !(participantsOpen && $mobileWidth) &&
+        !threadOpen &&
+        !participantsOpen &&
         chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatSummaryStore?.id)}>
     {#if chat !== undefined}
         <ActiveCallHeader {onClearSelection} onAskToSpeak={askToSpeak} {chat} {askedToSpeak} />

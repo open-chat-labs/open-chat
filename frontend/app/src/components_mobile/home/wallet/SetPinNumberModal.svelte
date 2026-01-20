@@ -35,7 +35,7 @@
     let busy = $state(false);
     let currPinArray: string[] = $state([]);
     let newPinArray: string[] = $state([]);
-    let delegation: DelegationChain | undefined = $state(undefined);
+    let signInProofJwt: string | undefined = $state(undefined);
 
     onMount(() => {
         pinNumberFailureStore.set(undefined);
@@ -46,10 +46,10 @@
     }
 
     function getVerification(): Verification {
-        if (delegation !== undefined) {
+        if (signInProofJwt !== undefined) {
             return {
-                kind: "delegation_verification",
-                delegation: delegation.toJSON(),
+                kind: "reauthenticated",
+                signInProofJwt,
             };
         }
 
@@ -88,10 +88,12 @@
         key: ECDSAKeyIdentity;
         delegation: DelegationChain;
         provider: AuthProvider;
+        signInProofJwt: string;
     }) {
         if (type.kind !== "forgot") return;
 
-        delegation = detail.delegation;
+        signInProofJwt = detail.signInProofJwt;
+
         switch (type.while.kind) {
             case "clear":
                 type = { kind: "clear" };
@@ -116,14 +118,14 @@
         type.kind === "change" ? undefined : i18nKey(`pinNumber.${type.kind}PinMessage`),
     );
     let action = $derived(i18nKey(`pinNumber.${type.kind}Pin`));
-    let verificationValid = $derived(isPinValid(currPinArray) || delegation !== undefined);
+    let verificationValid = $derived(isPinValid(currPinArray) || signInProofJwt !== undefined);
     let changeValid = $derived(
         type.kind === "change" && isPinValid(newPinArray) && verificationValid,
     );
     let setValid = $derived(type.kind === "set" && isPinValid(newPinArray));
     let clearValid = $derived(type.kind === "clear" && verificationValid);
     let isValid = $derived(type.kind === "forgot" || changeValid || setValid || clearValid);
-    let showCurrentPin = $derived(type.kind !== "set" && delegation === undefined);
+    let showCurrentPin = $derived(type.kind !== "set" && signInProofJwt === undefined);
     let errorMessage = $derived($pinNumberErrorMessageStore);
 </script>
 

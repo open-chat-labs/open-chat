@@ -5,25 +5,20 @@
         chatIdentifiersEqual,
         directChatBotsStore,
         filteredProposalsStore,
-        mobileWidth,
         publish,
         rightPanelMode,
         rightPanelWidth,
         routeStore,
         selectedChatIdStore,
         selectedChatSummaryStore,
-        showLeft,
         showMiddle,
-        showNav,
         type ChatIdentifier,
     } from "openchat-client";
     import { tick } from "svelte";
-    import { fade } from "svelte/transition";
     import { activeVideoCall, type ActiveVideoCall } from "../../stores/video";
     import { currentTheme } from "../../theme/themes";
     import ExploreCommunities from "./communities/explore/Explore.svelte";
     import CurrentChat from "./CurrentChat.svelte";
-    import NoChatSelected from "./NoChatSelected.svelte";
 
     let middlePanel: HTMLElement | undefined;
 
@@ -84,14 +79,11 @@
     function resize() {
         alignVideoCall($activeVideoCall, $selectedChatIdStore, $rightPanelWidth);
     }
-    let noChat = $derived($routeStore.kind !== "global_chat_selected_route");
     $effect(() => {
         if (middlePanel) {
             resize();
         }
     });
-
-    let offset = $derived($showNav && !$mobileWidth && !$showLeft);
 </script>
 
 <svelte:window onresize={resize} onorientationchange={resize} />
@@ -99,26 +91,15 @@
 <section
     bind:this={middlePanel}
     class:visible={$showMiddle}
-    class:offset
     class:halloween={$currentTheme.name === "halloween"}>
     {#if $routeStore.kind === "communities_route"}
         <ExploreCommunities />
-    {:else if $selectedChatIdStore === undefined}
-        {#if noChat}
-            <div class="no-chat" in:fade>
-                <NoChatSelected />
-            </div>
-        {/if}
     {:else if $selectedChatSummaryStore !== undefined}
         <CurrentChat chat={$selectedChatSummaryStore} filteredProposals={$filteredProposalsStore} />
     {/if}
 </section>
 
 <style lang="scss">
-    .no-chat {
-        height: 100%;
-    }
-
     section {
         min-width: 390px;
         overflow: auto;
@@ -132,13 +113,6 @@
 
         @include mobile() {
             min-width: unset;
-        }
-
-        &.offset {
-            margin-inline-start: toRem(80);
-            @include mobile() {
-                margin-inline-start: toRem(60);
-            }
         }
 
         &.halloween::after {

@@ -11,7 +11,6 @@
     import {
         allUsersStore,
         byContext,
-        mobileWidth,
         selectedCommunitySummaryStore,
         UserStatus,
     } from "openchat-client";
@@ -45,13 +44,10 @@
         );
 
         const msgTxt = rootEvent ? client.getContentAsText($_, rootEvent.event.content) : "";
-        const subtext =
-            someoneTyping ?? ($mobileWidth ? `${$_("thread.title")}: ${msgTxt}` : msgTxt);
+        const subtext = someoneTyping ?? `${$_("thread.title")}: ${msgTxt}`;
         if (chatSummary.kind === "direct_chat") {
             return {
-                title: $mobileWidth
-                    ? $allUsersStore.get(chatSummary.them.userId)?.username
-                    : $_("thread.title"),
+                title: $allUsersStore.get(chatSummary.them.userId)?.username,
                 avatarUrl: client.userAvatarUrl($allUsersStore.get(chatSummary.them.userId)),
                 userId: chatSummary.them.userId,
                 subtext,
@@ -59,7 +55,7 @@
             };
         }
         return {
-            title: $mobileWidth ? chatSummary.name : $_("thread.title"),
+            title: chatSummary.name,
             userStatus: UserStatus.None,
             avatarUrl: client.groupAvatarUrl(chatSummary, $selectedCommunitySummaryStore),
             userId: undefined,

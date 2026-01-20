@@ -1,9 +1,5 @@
-<script lang="ts">
-    import { getFlexStyle, type Direction, type SizeMode } from "component-lib";
-    import { getContext, type Snippet } from "svelte";
-    import Spinner from "../Spinner.svelte";
-
-    interface Props {
+<script module lang="ts">
+    export interface ButtonProps {
         children?: Snippet;
         disabled?: boolean;
         loading?: boolean;
@@ -14,6 +10,13 @@
         height?: SizeMode;
         danger?: boolean;
     }
+</script>
+
+<script lang="ts">
+    import { getFlexStyle, type Direction, type SizeMode } from "component-lib";
+    import { getContext, type Snippet } from "svelte";
+    import Spinner from "../Spinner.svelte";
+
     let {
         children,
         icon,
@@ -24,7 +27,7 @@
         width = "fill",
         height = "hug",
         danger = false,
-    }: Props = $props();
+    }: ButtonProps = $props();
 
     let parentDirection = getContext<Direction>("direction");
     let spinnerColour =

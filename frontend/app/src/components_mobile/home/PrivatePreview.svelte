@@ -1,9 +1,8 @@
 <script lang="ts">
     import { Container } from "component-lib";
-    import { mobileWidth } from "openchat-client";
     import { onMount } from "svelte";
 
-    let number = $mobileWidth ? 5 : 7;
+    const number = 5;
     let messages: [number, unknown[]][] = [];
 
     function rand(min: number, max: number): number {

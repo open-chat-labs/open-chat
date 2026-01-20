@@ -1,15 +1,14 @@
 <script lang="ts">
     import {
-        ButtonSmall,
         ButtonRegular,
+        ButtonSmall,
         ColourVars,
-        getFlexStyle,
         Container,
-        type ColourVarKeys,
+        getFlexStyle,
         type Direction,
         type SizeMode,
     } from "component-lib";
-    import { getContext, onMount, type Snippet } from "svelte";
+    import { getContext, type Snippet } from "svelte";
     import Spinner from "../Spinner.svelte";
 
     type Variant = "primary" | "secondary";
@@ -43,7 +42,6 @@
     let iconColour = $derived(getIconColour());
     let iconSize = $derived(getIconSize());
     let widthCss = $derived(getFlexStyle("width", width, parentDirection));
-    let spinnerColour = variant === "primary" ? "var(--primary)" : "var(--text-primary)";
     let style = $derived(`--speed: ${SPEED}ms; ${widthCss};`);
 
     function getIconColour(): string {

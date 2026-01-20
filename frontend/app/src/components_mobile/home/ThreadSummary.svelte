@@ -1,16 +1,10 @@
 <script lang="ts">
+    import { Avatar } from "component-lib";
     import type { ChatIdentifier, OpenChat, ThreadSummary } from "openchat-client";
-    import {
-        allUsersStore,
-        AvatarSize,
-        messagesRead,
-        mobileWidth,
-        threadsFollowedByMeStore,
-    } from "openchat-client";
+    import { allUsersStore, messagesRead, threadsFollowedByMeStore } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
-    import Avatar from "../Avatar.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -50,10 +44,7 @@
     <a href={url} class="thread-summary" class:selected>
         <div class="thread-avatars">
             {#each [...threadSummary.participantIds].slice(0, 5) as participantId}
-                <Avatar
-                    url={client.userAvatarUrl($allUsersStore.get(participantId))}
-                    userId={participantId}
-                    size={AvatarSize.Tiny} />
+                <Avatar url={client.userAvatarUrl($allUsersStore.get(participantId))} size={"xs"} />
             {/each}
             {#if threadSummary.participantIds.size > 5}
                 <div class="thread-extra">
@@ -70,19 +61,7 @@
                             threadSummary.numberOfReplies === 1
                                 ? $_("thread.reply")
                                 : $_("thread.replies"),
-                        message: $mobileWidth
-                            ? ""
-                            : $_("thread.lastMessage", {
-                                  values: {
-                                      date: client.formatMessageDate(
-                                          threadSummary.latestEventTimestamp,
-                                          $_("today"),
-                                          $_("yesterday"),
-                                          true,
-                                          true,
-                                      ),
-                                  },
-                              }),
+                        message: "",
                     },
                 })}
                 <div class:selected class="arrow">&#8595;</div></span>

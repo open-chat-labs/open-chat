@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { allUsersStore, AvatarSize, iconSize, type OpenChat } from "openchat-client";
+    import { Avatar } from "component-lib";
+    import { allUsersStore, iconSize, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import ThumbDown from "svelte-material-icons/ThumbDown.svelte";
     import ThumbUp from "svelte-material-icons/ThumbUp.svelte";
@@ -7,7 +8,6 @@
     import { fly } from "svelte/transition";
     import { i18nKey } from "../../../i18n/i18n";
     import { activeVideoCall, type RequestToSpeak } from "../../../stores/video";
-    import Avatar from "../../Avatar.svelte";
     import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -40,10 +40,7 @@
         }}
         class="message">
         <div class="avatar">
-            <Avatar
-                url={client.userAvatarUrl($allUsersStore.get(request.userId))}
-                userId={request.userId}
-                size={AvatarSize.Small} />
+            <Avatar url={client.userAvatarUrl($allUsersStore.get(request.userId))} size={"sm"} />
         </div>
         <Translatable
             resourceKey={i18nKey("videoCall.accessRequest", {

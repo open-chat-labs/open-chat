@@ -56,7 +56,6 @@
     import Toast from "../Toast.svelte";
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
     import AnonFooter from "./AnonFooter.svelte";
-    import ChallengeModal from "./ChallengeModal.svelte";
     import ChitEarned from "./ChitEarned.svelte";
     import LeftPanel from "./LeftPanel.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
@@ -109,8 +108,7 @@
         | { kind: "no_access" }
         | { kind: "hall_of_fame" }
         | { kind: "make_proposal"; chat: MultiUserChat; nervousSystem: NervousSystemDetails }
-        | { kind: "not_found" }
-        | { kind: "challenge" };
+        | { kind: "not_found" };
 
     let modal: ModalType = $state({ kind: "none" });
     let confirmActionEvent: ConfirmActionEvent | undefined = $state();
@@ -468,9 +466,6 @@
     let showOnboarding = $derived(client.isHomeRoute($routeStore) && $anonUserStore);
 
     trackedEffect("identity-state", () => {
-        if ($identityStateStore.kind === "challenging") {
-            modal = { kind: "challenge" };
-        }
         if (
             $identityStateStore.kind === "logged_in" &&
             $identityStateStore.postLogin?.kind === "join_group" &&
@@ -559,8 +554,6 @@
         <VerifyHumanity onClose={closeModal} onSuccess={closeModal} />
     {:else if modal.kind === "no_access"}
         <NoAccess onClose={closeNoAccess} />
-    {:else if modal.kind === "challenge"}
-        <ChallengeModal on:close={closeModal} />
     {:else if modal.kind === "make_proposal"}
         <MakeProposalModal
             selectedMultiUserChat={modal.chat}

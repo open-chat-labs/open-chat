@@ -1,7 +1,6 @@
 <script lang="ts">
     import { ColourVars, Column, MenuItem } from "component-lib";
     import type { NativeEmoji } from "emoji-picker-element/shared";
-    import { mobileWidth } from "openchat-client";
     import { untrack } from "svelte";
     import { emojiDatabase } from "../../utils/emojis";
 
@@ -23,7 +22,7 @@
     let matches: EmojiSummary[] = $state([]);
 
     // this is definitely a bit horrible. It seems to be necessary when we use the virtual list.
-    let ITEM_HEIGHT = $derived($mobileWidth ? 43.2 : 49.59);
+    const ITEM_HEIGHT = 43.2;
     $effect(() => {
         if (query !== undefined) {
             search(query);

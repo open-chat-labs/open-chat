@@ -1,8 +1,8 @@
 <script lang="ts">
-    import Avatar from "@src/components/Avatar.svelte";
     import Markdown from "@src/components/home/Markdown.svelte";
+    import { Avatar } from "component-lib";
     import type { ExternalBotLike, GrantedBotPermissions, OpenChat } from "openchat-client";
-    import { AvatarSize, allUsersStore, currentUserIdStore, mobileWidth } from "openchat-client";
+    import { allUsersStore, currentUserIdStore } from "openchat-client";
     import { getContext, type Snippet } from "svelte";
     import BotAvatar from "../BotAvatar.svelte";
     import BotCommands from "../BotCommands.svelte";
@@ -27,7 +27,7 @@
         padded = false,
         onClick,
         children,
-        showAvatar = !$mobileWidth,
+        showAvatar = false,
         showCommands = true,
     }: Props = $props();
     let owner = $derived($allUsersStore.get(bot.ownerId));
@@ -56,7 +56,7 @@
             </h4>
             {#if owner}
                 <div class="owner">
-                    <Avatar url={client.userAvatarUrl(owner)} size={AvatarSize.Tiny} />
+                    <Avatar url={client.userAvatarUrl(owner)} size={"xs"} />
                     <span class="username">{owner.username}</span>
                 </div>
             {/if}

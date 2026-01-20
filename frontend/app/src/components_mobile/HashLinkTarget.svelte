@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { mobileWidth } from "openchat-client";
     import type { Snippet } from "svelte";
     import Copy from "svelte-material-icons/ContentCopy.svelte";
 
@@ -14,8 +13,6 @@
     let matches = $derived([...id.matchAll(/(\d+-?)/g)]);
 
     let depth = $derived(matches.length);
-
-    let size = $derived($mobileWidth ? "14px" : "16px");
 </script>
 
 <div class="wrapper">
@@ -29,7 +26,7 @@
         <h5 class="link-target" {id}>{@render children?.()}</h5>
     {/if}
     <div class="copy" onclick={(e) => onCopyUrl(e, id)}>
-        <Copy {size} color={"var(--landing-txt)"} />
+        <Copy size={"1rem"} color={"var(--landing-txt)"} />
     </div>
 </div>
 

@@ -1,10 +1,9 @@
 <script lang="ts">
-    import { Caption, ColourVars, Container, Tooltip } from "component-lib";
-    import { allUsersStore, AvatarSize, OpenChat, type CommandArg } from "openchat-client";
+    import { Avatar, Caption, ColourVars, Container, Tooltip } from "component-lib";
+    import { allUsersStore, OpenChat, type CommandArg } from "openchat-client";
     import type { BotContextCommand } from "openchat-shared";
     import { getContext } from "svelte";
     import CogOutline from "svelte-material-icons/CogOutline.svelte";
-    import Avatar from "../Avatar.svelte";
     import Typing from "../Typing.svelte";
     import Markdown from "../home/Markdown.svelte";
 
@@ -55,7 +54,7 @@
 
 <Container crossAxisAlignment={"center"} gap={"xs"} supplementalClass={"bot-context"}>
     {#if user}
-        <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={AvatarSize.Tiny} />
+        <Avatar url={client.userAvatarUrl(user)} size={"xs"} />
     {/if}
     <Caption colour={"textSecondary"}>
         <Markdown {text} />

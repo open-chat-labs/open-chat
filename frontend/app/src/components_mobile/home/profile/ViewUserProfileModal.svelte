@@ -9,7 +9,6 @@
         type UserSummary,
         blockedUsersStore,
         currentUserIdStore,
-        mobileWidth,
         platformModeratorStore,
         publish,
         selectedChatBlockedUsersStore,
@@ -191,12 +190,6 @@
         onClose();
     }
 
-    function onWindowResize() {
-        if (!modal) {
-            onClose();
-        }
-    }
-
     function unsuspendUser() {
         client.unsuspendUser(userId).then((success) => {
             if (success) {
@@ -214,7 +207,6 @@
     }
     let me = $derived(userId === $currentUserIdStore);
     let isSuspended = $derived(user?.suspended ?? false);
-    let modal = $derived($mobileWidth);
     let canBlock = $derived(
         canBlockUser(
             $selectedChatSummaryStore,
@@ -234,8 +226,6 @@
         ),
     );
 </script>
-
-<svelte:window onresize={onWindowResize} />
 
 {#if profile !== undefined}
     <Sheet onDismiss={onClose}>

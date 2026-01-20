@@ -1,11 +1,18 @@
 <script lang="ts">
-    import { BodySmall, ColourVars, Column, IconButton, Row, Subtitle } from "component-lib";
-    import { mobileWidth, type GiphyContent } from "openchat-client";
+    import {
+        BodySmall,
+        Button,
+        ColourVars,
+        Column,
+        IconButton,
+        Row,
+        Subtitle,
+    } from "component-lib";
+    import { type GiphyContent } from "openchat-client";
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
     import { lowBandwidth } from "../../stores/settings";
-    import Button from "../Button.svelte";
     import Translatable from "../Translatable.svelte";
     import ContentCaption from "./ContentCaption.svelte";
 
@@ -34,7 +41,7 @@
     }: Props = $props();
 
     let withCaption = $derived(content.caption !== undefined && content.caption !== "");
-    let image = $derived($mobileWidth ? content.mobile : content.desktop);
+    let image = $derived(content.mobile);
     let landscape = $derived(image.height < image.width);
     let style = $derived(
         `${height === undefined ? "" : `height: ${height}px;`} max-width: ${image.width}px;`,
@@ -79,17 +86,18 @@
                 class:reply
                 class:rtl={$rtlStore}>
             </div>
-        {:else if $mobileWidth || hidden}
-            {#if hidden && !$mobileWidth}
-                <div class="mask">
-                    {#if !reply}
-                        <div class="reveal">
-                            <Button onClick={() => (hidden = false)}
-                                ><Translatable resourceKey={i18nKey("loadGif")} /></Button>
-                        </div>
-                    {/if}
-                </div>
-            {/if}
+        {:else if hidden}
+            <Column
+                height={"fill"}
+                padding={"xl"}
+                supplementalClass={"image_content_mask"}
+                mainAxisAlignment={"center"}
+                crossAxisAlignment={"center"}>
+                {#if !reply && !draft}
+                    <Button height={"hug"} width={"fill"} onClick={() => (hidden = false)}
+                        ><Translatable resourceKey={i18nKey("loadGif")} /></Button>
+                {/if}
+            </Column>
             <img
                 class:landscape
                 class:fill

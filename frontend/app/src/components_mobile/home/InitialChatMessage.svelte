@@ -1,7 +1,7 @@
 <script lang="ts">
+    import { Avatar } from "component-lib";
     import {
         allUsersStore,
-        AvatarSize,
         botState,
         type ChatSummary,
         type CommandDefinition,
@@ -15,7 +15,6 @@
     } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import Avatar from "../Avatar.svelte";
     import BotCommands from "../bots/BotCommands.svelte";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
     import ProposalBot from "../ProposalBot.svelte";
@@ -97,7 +96,7 @@
             </h4>
         </WithVerifiedBadge>
         <div class="pop">
-            <Avatar url={state.avatarUrl} size={AvatarSize.Large} name={(chat as any).name} />
+            <Avatar url={state.avatarUrl} size={"huge"} name={(chat as any).name} />
         </div>
         {#if state.description && state.description.length > 0}
             <Markdown inline={false} text={state.description} />

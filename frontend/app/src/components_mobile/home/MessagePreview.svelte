@@ -1,8 +1,8 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
+    import { Avatar } from "component-lib";
     import {
         allUsersStore,
-        AvatarSize,
         eventListScrolling,
         isSuccessfulEventsResponse,
         OpenChat,
@@ -13,7 +13,6 @@
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import Avatar from "../Avatar.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
 
     type Preview = {
@@ -91,8 +90,7 @@
                     <div class="title">
                         <Avatar
                             url={client.userAvatarUrl($allUsersStore.get(preview.senderId))}
-                            userId={preview.senderId}
-                            size={AvatarSize.Tiny} />
+                            size={"xs"} />
                         <h4
                             class="username"
                             class:text-content={preview.content.kind === "text_content"}>

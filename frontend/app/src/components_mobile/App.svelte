@@ -315,7 +315,7 @@
 <NotificationsBar />
 
 <!-- should we perhaps just _always_ render the router -->
-{#if $identityStateStore.kind === "anon" || $identityStateStore.kind === "logging_in" || $identityStateStore.kind === "registering" || $identityStateStore.kind === "logged_in" || $identityStateStore.kind === "loading_user" || $identityStateStore.kind === "challenging"}
+{#if $identityStateStore.kind === "anon" || $identityStateStore.kind === "logging_in" || $identityStateStore.kind === "registering" || $identityStateStore.kind === "logged_in" || $identityStateStore.kind === "loading_user"}
     {#if !$isLoading}
         <Router />
     {/if}
