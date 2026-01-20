@@ -9,6 +9,7 @@
         Form,
         Input,
         Sheet,
+        StatusCard,
         Subtitle,
         Switch,
     } from "component-lib";
@@ -17,7 +18,6 @@
     import { AuthProvider, identityStateStore, selectedAuthProviderStore } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
-    import AlertBox from "../AlertBox.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import FindUser from "../FindUser.svelte";
     import TermsContent from "../TermsContent.svelte";
@@ -182,14 +182,13 @@
 
 <Container padding={["md", "zero", "xxl", "zero"]}>
     {#if badCode}
-        <AlertBox>
-            <h4 class="main">
-                <Translatable resourceKey={i18nKey("register.referralCodeInvalid")} />
-            </h4>
-            <p class="sub">
+        <StatusCard
+            mode={"warning"}
+            title={interpolate($_, i18nKey("register.doYouWantToProceed"))}>
+            {#snippet body()}
                 <Translatable resourceKey={i18nKey("register.doYouWantToProceed")} />
-            </p>
-        </AlertBox>
+            {/snippet}
+        </StatusCard>
     {:else}
         <Form onSubmit={register}>
             <Container gap={"xl"} direction={"vertical"}>

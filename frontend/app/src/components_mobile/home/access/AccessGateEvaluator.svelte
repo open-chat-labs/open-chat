@@ -4,7 +4,6 @@
         currentUserStore,
         isBalanceGate,
         isCompositeGate,
-        isCredentialGate,
         isDiamondGate,
         isLeafGate,
         isLifetimeDiamondGate,
@@ -39,7 +38,6 @@
     import AccessGateExpiry from "./AccessGateExpiry.svelte";
     import AccessGateSummary from "./AccessGateSummary.svelte";
     import BalanceGateEvaluator from "./BalanceGateEvaluator.svelte";
-    import CredentialGateEvaluator from "./CredentialGateEvaluator.svelte";
     import DiamondGateEvaluator from "./DiamondGateEvaluator.svelte";
     import NeuronGateEvaluator from "./NeuronGateEvaluator.svelte";
     import PaymentGateEvaluator from "./PaymentGateEvaluator.svelte";
@@ -191,13 +189,7 @@
     subtitle={i18nKey(gate.collectionName)}>
     <Column gap={"xl"} padding={"xl"}>
         {#if evaluatingGate !== undefined}
-            {#if isCredentialGate(evaluatingGate)}
-                <CredentialGateEvaluator
-                    {onClose}
-                    onCredentialReceived={credentialReceived}
-                    gate={evaluatingGate}
-                    level={evaluatingGate.level} />
-            {:else if isUniquePersonGate(evaluatingGate)}
+            {#if isUniquePersonGate(evaluatingGate)}
                 <UniqueHumanGateEvaluator
                     onCredentialReceived={credentialReceived}
                     {onClose}

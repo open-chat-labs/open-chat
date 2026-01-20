@@ -1,11 +1,9 @@
 <script lang="ts">
-    import { Column, Sheet, Title } from "component-lib";
+    import { ColourVars, Column, Sheet, StatusCard } from "component-lib";
     import { type ResourceKey } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { interpolate } from "../i18n/i18n";
-    import AlertBox from "./AlertBox.svelte";
     import Markdown from "./home/Markdown.svelte";
-    import Translatable from "./Translatable.svelte";
 
     interface Props {
         title: ResourceKey;
@@ -18,11 +16,13 @@
 
 <Sheet onDismiss={onClose}>
     <Column gap={"xl"} padding={"xl"}>
-        <Title fontWeight={"bold"}>
-            <Translatable resourceKey={title}></Translatable>
-        </Title>
-        <AlertBox>
-            <Markdown text={interpolate($_, warning)} />
-        </AlertBox>
+        <StatusCard
+            background={ColourVars.background0}
+            mode="warning"
+            title={interpolate($_, title)}>
+            {#snippet body()}
+                <Markdown text={interpolate($_, warning)} />
+            {/snippet}
+        </StatusCard>
     </Column>
 </Sheet>
