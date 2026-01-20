@@ -2,7 +2,6 @@ import type {
     ConvertToCommunityResponse,
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
-    GroupCanisterSummaryUpdatesResponse,
     GroupMembershipUpdates,
     MemberRole,
     OptionalChatPermissions,
@@ -21,7 +20,6 @@ import {
 import type {
     GroupConvertIntoCommunitySuccessResult,
     GroupRole,
-    GroupSummaryUpdatesResponse,
     GroupCanisterGroupChatSummary as TGroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates as TGroupCanisterGroupChatSummaryUpdates,
     GroupMembershipUpdates as TGroupMembershipUpdates,
@@ -42,7 +40,6 @@ import {
     chatMetrics,
     groupPermissions,
     groupSubtype,
-    mapResult,
     memberRole,
     mentions,
     messageEvent,
@@ -120,15 +117,6 @@ export function groupChatSummary(
         },
         verified: value.verified ?? false,
     };
-}
-
-export function summaryUpdatesResponse(
-    value: GroupSummaryUpdatesResponse,
-): GroupCanisterSummaryUpdatesResponse {
-    if (value === "SuccessNoUpdates") {
-        return { kind: "success_no_updates" };
-    }
-    return mapResult(value, (s) => groupChatSummaryUpdates(s.updates));
 }
 
 export function groupMembershipUpdates(value: TGroupMembershipUpdates): GroupMembershipUpdates {

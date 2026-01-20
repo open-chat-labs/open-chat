@@ -21,6 +21,7 @@ import type {
 } from "openchat-shared";
 import {
     CommonResponses,
+    emptyRules,
     ROLE_ADMIN,
     ROLE_MEMBER,
     ROLE_MODERATOR,
@@ -365,23 +366,23 @@ export function communityDetailsResponse(
                     role: memberRole(m.role),
                     userId: principalBytesToString(m.user_id),
                     displayName: m.display_name,
-                    lapsed: m.lapsed,
+                    lapsed: m.lapsed ?? false,
                 }))
                 .concat(
-                    value.Success.basic_members.map((id) => ({
+                    value.Success.basic_members?.map((id) => ({
                         role: ROLE_MEMBER,
                         userId: principalBytesToString(id),
                         displayName: undefined,
                         lapsed: false,
-                    })),
+                    })) ?? [],
                 ),
-            blockedUsers: new Set(value.Success.blocked_users.map(principalBytesToString)),
-            invitedUsers: new Set(value.Success.invited_users.map(principalBytesToString)),
-            rules: value.Success.chat_rules,
+            blockedUsers: new Set(value.Success.blocked_users?.map(principalBytesToString) ?? []),
+            invitedUsers: new Set(value.Success.invited_users?.map(principalBytesToString) ?? []),
+            rules: value.Success.chat_rules ?? emptyRules(),
             lastUpdated: value.Success.timestamp,
-            userGroups: new Map(value.Success.user_groups.map(userGroupDetails)),
-            referrals: new Set(value.Success.referrals.map(principalBytesToString)),
-            bots: value.Success.bots.map(installedBotDetails),
+            userGroups: new Map(value.Success.user_groups?.map(userGroupDetails) ?? []),
+            referrals: new Set(value.Success.referrals?.map(principalBytesToString) ?? []),
+            bots: value.Success.bots?.map(installedBotDetails) ?? [],
         };
     } else {
         console.warn("CommunityDetails failed with", value);
@@ -408,18 +409,18 @@ export function communityDetailsUpdatesResponse(
         if ("Success" in value) {
             return {
                 kind: "success",
-                membersAddedOrUpdated: value.Success.members_added_or_updated.map((m) => ({
+                membersAddedOrUpdated: value.Success.members_added_or_updated?.map((m) => ({
                     role: memberRole(m.role),
                     userId: principalBytesToString(m.user_id),
                     displayName: m.display_name,
-                    lapsed: m.lapsed,
-                })),
-                membersRemoved: new Set(value.Success.members_removed.map(principalBytesToString)),
+                    lapsed: m.lapsed ?? false,
+                })) ?? [],
+                membersRemoved: new Set(value.Success.members_removed?.map(principalBytesToString) ?? []),
                 blockedUsersAdded: new Set(
-                    value.Success.blocked_users_added.map(principalBytesToString),
+                    value.Success.blocked_users_added?.map(principalBytesToString) ?? [],
                 ),
                 blockedUsersRemoved: new Set(
-                    value.Success.blocked_users_removed.map(principalBytesToString),
+                    value.Success.blocked_users_removed?.map(principalBytesToString) ?? [],
                 ),
                 rules: value.Success.chat_rules,
                 invitedUsers: mapOptional(
@@ -427,14 +428,14 @@ export function communityDetailsUpdatesResponse(
                     (invited_users) => new Set(invited_users.map(principalBytesToString)),
                 ),
                 lastUpdated: value.Success.timestamp,
-                userGroups: value.Success.user_groups.map(userGroupDetails).map(([_, g]) => g),
+                userGroups: value.Success.user_groups?.map(userGroupDetails).map(([_, g]) => g) ?? [],
                 userGroupsDeleted: new Set(value.Success.user_groups_deleted),
                 referralsRemoved: new Set(
-                    value.Success.referrals_removed.map(principalBytesToString),
+                    value.Success.referrals_removed?.map(principalBytesToString) ?? [],
                 ),
-                referralsAdded: new Set(value.Success.referrals_added.map(principalBytesToString)),
-                botsAddedOrUpdated: value.Success.bots_added_or_updated.map(installedBotDetails),
-                botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
+                referralsAdded: new Set(value.Success.referrals_added?.map(principalBytesToString) ?? []),
+                botsAddedOrUpdated: value.Success.bots_added_or_updated?.map(installedBotDetails) ?? [],
+                botsRemoved: new Set(value.Success.bots_removed?.map(principalBytesToString) ?? []),
             };
         } else if ("SuccessNoUpdates" in value) {
             return {

@@ -28,7 +28,6 @@ pub enum LocalUserIndexEvent {
     NotifyStreakInsurancePayment(Box<StreakInsurancePayment>),
     NotifyStreakInsuranceClaim(Box<StreakInsuranceClaim>),
     BotInstalled(Box<BotInstalled>),
-    BotInstallationUpdated(Box<BotInstallationUpdated>),
     BotUninstalled(Box<BotUninstalled>),
     UserBlocked(UserId, UserId),
     UserUnblocked(UserId, UserId),
@@ -117,14 +116,6 @@ pub struct BotInstalled {
     #[serde(default)]
     pub granted_permissions: BotPermissions,
     #[serde(default)]
-    pub granted_autonomous_permissions: BotPermissions,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct BotInstallationUpdated {
-    pub bot_id: UserId,
-    pub location: BotInstallationLocation,
-    pub granted_permissions: BotPermissions,
     pub granted_autonomous_permissions: BotPermissions,
 }
 

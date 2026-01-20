@@ -13,7 +13,6 @@ pub struct DirectChats {
     chats_removed: BTreeSet<(TimestampMillis, ChatId)>,
     // This is needed so that when a group is imported into a community we can quickly update the
     // replies to point to the community
-    #[serde(default)]
     private_replies_to_groups: BTreeMap<ChatId, Vec<(UserId, MessageIndex)>>,
 }
 

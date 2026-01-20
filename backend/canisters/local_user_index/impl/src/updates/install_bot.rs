@@ -4,7 +4,10 @@ use canister_client::generate_c2c_call;
 use canister_tracing_macros::trace;
 use local_user_index_canister::install_bot::*;
 use oc_error_codes::{OCError, OCErrorCode};
-use types::{BotRegistrationStatus, BotSubscriptions, OCResult, UserId, c2c_install_bot};
+use types::{
+    BotEvent, BotInstalledEvent, BotLifecycleEvent, BotNotification, BotRegistrationStatus, BotSubscriptions, OCResult, UserId,
+    c2c_install_bot,
+};
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
@@ -35,15 +38,32 @@ async fn install_bot_impl(args: Args) -> OCResult {
     }
 
     mutate_state(|state| {
+        let now = state.env.now();
+
         state.push_event_to_user_index(
             UserIndexEvent::BotInstalled(Box::new(user_index_canister::BotInstalled {
                 bot_id: args.bot_id,
                 location: args.location,
                 installed_by: user_id,
-                granted_permissions: args.granted_permissions,
-                granted_autonomous_permissions: args.granted_autonomous_permissions.unwrap_or_default(),
+                granted_permissions: args.granted_permissions.clone(),
+                granted_autonomous_permissions: args.granted_autonomous_permissions.clone().unwrap_or_default(),
             })),
-            state.env.now(),
+            now,
+        );
+
+        state.push_bot_notification(
+            BotNotification {
+                event: BotEvent::Lifecycle(BotLifecycleEvent::Installed(BotInstalledEvent {
+                    installed_by: user_id,
+                    location: args.location,
+                    granted_command_permissions: args.granted_permissions,
+                    granted_autonomous_permissions: args.granted_autonomous_permissions.unwrap_or_default(),
+                })),
+                recipients: vec![args.bot_id],
+                timestamp: now,
+            },
+            state.env.canister_id(),
+            now,
         );
     });
 

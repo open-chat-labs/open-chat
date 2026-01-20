@@ -1,16 +1,14 @@
 use crate::jobs::import_groups::finalize_group_import;
 use crate::lifecycle::init_state;
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
-use crate::{Data, mutate_state, read_state};
+use crate::{Data, read_state};
 use canister_api_macros::post_upgrade;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use community_canister::post_upgrade::Args;
-use installed_bots::BotInternal;
 use instruction_counts_log::InstructionCountFunctionId;
 use stable_memory::get_reader;
 use tracing::info;
-use types::{BotEvent, BotInstallationLocation, BotInstalledEvent, BotLifecycleEvent, BotNotification, UserId};
 use utils::env::canister::CanisterEnv;
 
 #[post_upgrade(msgpack = true)]
@@ -34,25 +32,6 @@ fn post_upgrade(args: Args) {
     for group_id in completed_imports {
         finalize_group_import(group_id);
     }
-
-    // TODO: Remove this after next release
-    mutate_state(|state| {
-        let now = state.env.now();
-        let bots: Vec<(UserId, BotInternal)> = state.data.bots.iter().map(|(k, v)| (*k, (*v).clone())).collect();
-
-        for (bot_id, bot) in bots {
-            state.push_bot_notification(Some(BotNotification {
-                event: BotEvent::Lifecycle(BotLifecycleEvent::Installed(BotInstalledEvent {
-                    installed_by: bot.added_by,
-                    location: BotInstallationLocation::Community(state.env.canister_id().into()),
-                    granted_command_permissions: bot.permissions,
-                    granted_autonomous_permissions: bot.autonomous_permissions.unwrap_or_default(),
-                })),
-                recipients: vec![bot_id],
-                timestamp: now,
-            }));
-        }
-    });
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");

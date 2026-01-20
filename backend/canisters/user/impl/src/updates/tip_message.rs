@@ -21,8 +21,8 @@ async fn tip_message(args: Args) -> Response {
     execute_update_async(|| tip_message_impl(args)).await
 }
 
-async fn tip_message_impl(args: Args) -> Response {
-    let (prepare_result, now_nanos) = match mutate_state(|state| prepare(&args, state)) {
+async fn tip_message_impl(mut args: Args) -> Response {
+    let (prepare_result, now_nanos) = match mutate_state(|state| prepare(&mut args, state)) {
         Ok(ok) => ok,
         Err(response) => return Error(response),
     };
@@ -80,7 +80,7 @@ enum PrepareResult {
     Channel(CommunityId, community_canister::c2c_tip_message::Args),
 }
 
-fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<(PrepareResult, TimestampNanos)> {
+fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<(PrepareResult, TimestampNanos)> {
     let my_user_id: UserId = state.env.canister_id().into();
     state.data.verify_not_suspended()?;
 
@@ -91,7 +91,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<(PrepareResult, Ti
     } else {
         let now = state.env.now();
         let now_nanos = now * NANOS_PER_MILLISECOND;
-        state.data.pin_number.verify(args.pin.as_deref(), now)?;
+        state.data.pin_number.verify(args.pin.as_mut(), now)?;
 
         match args.chat {
             Chat::Direct(chat_id) if state.data.direct_chats.exists(&chat_id) => Ok((

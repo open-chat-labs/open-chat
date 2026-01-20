@@ -2,7 +2,6 @@ import type {
     IdentityAuthPrincipalsResponse,
     IdentityCheckAuthPrincipalV2Response,
     IdentityCreateIdentityResponse,
-    IdentityGenerateChallengeResponse,
     IdentityGetDelegationResponse,
     IdentityInitiateIdentityLinkResponse,
     IdentityPrepareDelegationResponse,
@@ -14,7 +13,6 @@ import type {
     AuthenticationPrincipalsResponse,
     CheckAuthPrincipalResponse,
     CreateIdentityResponse,
-    GenerateChallengeResponse,
     GetDelegationResponse,
     InitiateIdentityLinkResponse,
     PrepareDelegationWithProofResponse,
@@ -31,12 +29,6 @@ export function createIdentityResponse(
 ): CreateIdentityResponse {
     if (value === "AlreadyRegistered") {
         return { kind: "already_registered" };
-    }
-    if (value === "ChallengeFailed") {
-        return { kind: "challenge_failed" };
-    }
-    if (value === "ChallengeRequired") {
-        return { kind: "challenge_required" };
     }
     if ("Success" in value) {
         return {
@@ -115,25 +107,6 @@ export function signedDelegation(signedDelegation: SignedDelegation): GetDelegat
     };
 }
 
-export function generateChallengeResponse(
-    value: IdentityGenerateChallengeResponse,
-): GenerateChallengeResponse {
-    if (value === "AlreadyRegistered") {
-        return { kind: "already_registered" };
-    }
-    if (value === "Throttled") {
-        return { kind: "throttled" };
-    }
-    if ("Success" in value) {
-        return {
-            kind: "success",
-            key: value.Success.key,
-            pngBase64: value.Success.png_base64,
-        };
-    }
-    throw new UnsupportedValueError("Unexpected ApiGenerateChallengeResponse type received", value);
-}
-
 export function initiateIdentityLinkResponse(
     value: IdentityInitiateIdentityLinkResponse,
 ): InitiateIdentityLinkResponse {
@@ -166,19 +139,23 @@ export function initiateIdentityLinkResponse(
 
 export function authPrincipalsResponse(
     value: IdentityAuthPrincipalsResponse,
+    currentAuthPrincipal: string,
 ): AuthenticationPrincipalsResponse {
     if (value === "NotFound") {
         return [];
     }
 
     if ("Success" in value) {
-        return value.Success.map((p) => ({
-            principal: principalBytesToString(p.principal),
-            originatingCanister: principalBytesToString(p.originating_canister),
-            isIIPrincipal: p.is_ii_principal,
-            isCurrentIdentity: p.is_current_identity,
-            webAuthnKey: mapOptional(p.webauthn_key, webAuthnKey),
-        }));
+        return value.Success.map((p) => {
+            const principal = principalBytesToString(p.principal);
+            return {
+                principal,
+                originatingCanister: principalBytesToString(p.originating_canister),
+                isIIPrincipal: p.is_ii_principal,
+                isCurrentIdentity: principal === currentAuthPrincipal,
+                webAuthnKey: mapOptional(p.webauthn_key, webAuthnKey),
+            };
+        });
     }
 
     throw new UnsupportedValueError("Unexpected ApiAuthPrincipalResponse type received", value);

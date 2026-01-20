@@ -140,13 +140,6 @@ async fn install_service_canisters_impl(
             identity_originating_canisters: vec![
                 canister_ids.nns_internet_identity,
                 canister_ids.sign_in_with_email,
-                canister_ids.sign_in_with_ethereum,
-                canister_ids.sign_in_with_solana,
-                WEBAUTHN_ORIGINATING_CANISTER,
-            ],
-            identity_skip_captcha_whitelist: vec![
-                canister_ids.nns_internet_identity,
-                canister_ids.sign_in_with_email,
                 WEBAUTHN_ORIGINATING_CANISTER,
             ],
             wasm_version: version,
@@ -309,7 +302,7 @@ async fn install_service_canisters_impl(
     };
 
     let sign_in_with_email_wasm = get_canister_wasm(CanisterName::SignInWithEmail, version);
-    let sign_in_with_email_init_args = sign_in_with_email_canister_test_utils::default_init_args();
+    let sign_in_with_email_init_args = sign_in_with_email_test_utils::default_init_args();
 
     let sign_in_with_ethereum_wasm = get_canister_wasm(CanisterName::SignInWithEthereum, version);
     let sign_in_with_ethereum_init_args = siwe::SettingsInput {

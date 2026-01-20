@@ -27,7 +27,6 @@ import type {
 import {
     MAX_MISSING,
     premiumPrices,
-    textToCode,
     toBigInt32,
     UnsupportedValueError,
 } from "openchat-shared";
@@ -76,11 +75,12 @@ import {
     setCachePrimerTimestamp,
 } from "../../utils/caching";
 import {
+    identity,
     mapOptional,
     maybePrincipalStringToBytes,
     principalStringToBytes,
 } from "../../utils/mapping";
-import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
+import { MultiCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 import {
     apiChatIdentifier,
     apiExternalBotPermissions,
@@ -104,12 +104,13 @@ import {
     withdrawFromIcpSwapResponse,
 } from "./mappers";
 
-export class LocalUserIndexClient extends MsgpackCanisterAgent {
-    constructor(identity: Identity, agent: HttpAgent, canisterId: string, private db: Database) {
-        super(identity, agent, canisterId, "LocalUserIndex");
+export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
+    constructor(identity: Identity, agent: HttpAgent, private db: Database) {
+        super(identity, agent, "LocalUserIndex");
     }
 
     groupAndCommunitySummaryUpdates(
+        localUserIndex: string,
         requests: GroupAndCommunitySummaryUpdatesArgs[],
         maxC2cCalls = 50,
     ): Promise<GroupAndCommunitySummaryUpdatesResponseBatch> {
@@ -123,7 +124,8 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
             max_c2c_calls: maxC2cCalls,
         };
 
-        return this.executeMsgpackQuery(
+        return this.query(
+            localUserIndex,
             "group_and_community_summary_updates_v2",
             args,
             groupAndCommunitySummaryUpdates,
@@ -133,6 +135,7 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
     }
 
     async chatEvents(
+        localUserIndex: string,
         requests: ChatEventsArgs[],
         cachePrimer = false,
     ): Promise<ChatEventsResponse[]> {
@@ -175,7 +178,7 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
         }
 
         if (requestsToBackend.length > 0) {
-            const batchResponse = await this.getChatEventsFromBackend(requestsToBackend);
+            const batchResponse = await this.getChatEventsFromBackend(localUserIndex, requestsToBackend);
 
             for (let i = 0; i < batchResponse.responses.length; i++) {
                 const request = requestsToBackend[i];
@@ -253,12 +256,13 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
         throw new UnsupportedValueError("Unexpected ChatEventsArgs type", args);
     }
 
-    private getChatEventsFromBackend(requests: ChatEventsArgs[]): Promise<ChatEventsBatchResponse> {
+    private getChatEventsFromBackend(localUserIndex: string, requests: ChatEventsArgs[]): Promise<ChatEventsBatchResponse> {
         const args = {
             requests: requests.map(chatEventsArgs),
         };
 
-        return this.executeMsgpackQuery(
+        return this.query(
+            localUserIndex,
             "chat_events",
             args,
             (resp) => chatEventsBatchResponse(this.principal, requests, resp),
@@ -268,9 +272,11 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
     }
 
     activeProposalTallies(
+        localUserIndex: string,
         chatIds: MultiUserChatIdentifier[],
     ): Promise<Map<MultiUserChatIdentifier, [number, Tally][]>> {
-        return this.executeMsgpackQuery(
+        return this.query(
+            localUserIndex,
             "active_proposal_tallies",
             {
                 chat_ids: chatIds.map(apiChatIdentifier) as TMultiUserChat[],
@@ -282,11 +288,13 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
     }
 
     registerUser(
+        localUserIndex: string,
         username: string,
         email: string | undefined,
         referralCode: string | undefined,
     ): Promise<RegisterUserResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            localUserIndex,
             "register_user",
             {
                 username,
@@ -301,16 +309,18 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
     }
 
     joinCommunity(
+        localUserIndex: string,
         communityId: string,
-        inviteCode: string | undefined,
+        inviteCode: bigint | undefined,
         credentialArgs: VerifiedCredentialArgs | undefined,
         referredBy?: string,
     ): Promise<JoinCommunityResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            localUserIndex,
             "join_community",
             {
                 community_id: principalStringToBytes(communityId),
-                invite_code: mapOptional(inviteCode, textToCode),
+                invite_code: mapOptional(inviteCode, identity),
                 verified_credential_args: mapOptional(credentialArgs, apiVerifiedCredentialArgs),
                 referred_by: maybePrincipalStringToBytes(referredBy),
             },
@@ -321,15 +331,17 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
     }
 
     joinGroup(
+        localUserIndex: string,
         chatId: string,
-        inviteCode: string | undefined,
+        inviteCode: bigint | undefined,
         credentialArgs: VerifiedCredentialArgs | undefined,
     ): Promise<JoinGroupResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            localUserIndex,
             "join_group",
             {
                 chat_id: principalStringToBytes(chatId),
-                invite_code: mapOptional(inviteCode, textToCode),
+                invite_code: inviteCode,
                 verified_credential_args: mapOptional(credentialArgs, apiVerifiedCredentialArgs),
             },
             joinGroupResponse,
@@ -339,17 +351,19 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
     }
 
     joinChannel(
+        localUserIndex: string,
         id: ChannelIdentifier,
-        inviteCode: string | undefined,
+        inviteCode: bigint | undefined,
         credentialArgs: VerifiedCredentialArgs | undefined,
         referredBy?: string,
     ): Promise<JoinGroupResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            localUserIndex,
             "join_channel",
             {
                 community_id: principalStringToBytes(id.communityId),
                 channel_id: toBigInt32(id.channelId),
-                invite_code: mapOptional(inviteCode, textToCode),
+                invite_code: mapOptional(inviteCode, identity),
                 verified_credential_args: mapOptional(credentialArgs, apiVerifiedCredentialArgs),
                 referred_by: maybePrincipalStringToBytes(referredBy),
             },
@@ -361,8 +375,9 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
         );
     }
 
-    inviteUsersToCommunity(communityId: string, userIds: string[]): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+    inviteUsersToCommunity(localUserIndex: string, communityId: string, userIds: string[]): Promise<boolean> {
+        return this.update(
+            localUserIndex,
             "invite_users_to_community",
             {
                 community_id: principalStringToBytes(communityId),
@@ -374,8 +389,9 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
         );
     }
 
-    inviteUsersToGroup(chatId: string, userIds: string[]): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+    inviteUsersToGroup(localUserIndex: string, chatId: string, userIds: string[]): Promise<boolean> {
+        return this.update(
+            localUserIndex,
             "invite_users_to_group",
             {
                 group_id: principalStringToBytes(chatId),
@@ -388,11 +404,13 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
     }
 
     inviteUsersToChannel(
+        localUserIndex: string,
         communityId: string,
         channelId: number,
         userIds: string[],
     ): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            localUserIndex,
             "invite_users_to_channel",
             {
                 community_id: principalStringToBytes(communityId),
@@ -417,11 +435,13 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
     }
 
     installBot(
+        localUserIndex: string,
         location: BotInstallationLocation,
         botId: string,
         grantedPermissions: GrantedBotPermissions,
     ): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            localUserIndex,
             "install_bot",
             {
                 location: this.#apiBotInstallationLocation(location),
@@ -441,8 +461,9 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
         );
     }
 
-    uninstallBot(location: BotInstallationLocation, botId: string): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+    uninstallBot(localUserIndex: string, location: BotInstallationLocation, botId: string): Promise<boolean> {
+        return this.update(
+            localUserIndex,
             "uninstall_bot",
             {
                 location: this.#apiBotInstallationLocation(location),
@@ -459,8 +480,9 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
         );
     }
 
-    getAccessToken(accessType: AccessTokenType): Promise<string | undefined> {
-        return this.executeMsgpackQuery(
+    getAccessToken(localUserIndex: string, accessType: AccessTokenType): Promise<string | undefined> {
+        return this.query(
+            localUserIndex,
             "access_token_v2",
             apiAccessTokenType(accessType),
             accessTokenResponse,
@@ -470,13 +492,15 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
     }
 
     withdrawFromIcpSwap(
+        localUserIndex: string,
         userId: string,
         swapId: bigint,
         inputToken: boolean,
         amount: bigint | undefined,
         fee: bigint | undefined,
     ): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+        return this.update(
+            localUserIndex,
             "withdraw_from_icpswap",
             {
                 user_id: principalStringToBytes(userId),
@@ -491,8 +515,9 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
         );
     }
 
-    payForPremiumItem(item: PremiumItem): Promise<PayForPremiumItemResponse> {
-        return this.executeMsgpackUpdate(
+    payForPremiumItem(localUserIndex: string, item: PremiumItem): Promise<PayForPremiumItemResponse> {
+        return this.update(
+            localUserIndex,
             "pay_for_premium_item",
             {
                 item_id: item,
@@ -505,8 +530,9 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
         );
     }
 
-    reinstateMissedDailyClaims(userId: string, days: number[]): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+    reinstateMissedDailyClaims(localUserIndex: string, userId: string, days: number[]): Promise<boolean> {
+        return this.update(
+            localUserIndex,
             "reinstate_missed_daily_claims",
             {
                 user_id: principalStringToBytes(userId),
@@ -518,8 +544,9 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
         );
     }
 
-    claimPrize(id: MultiUserChatIdentifier, messageId: bigint, signInProof: string | undefined): Promise<ClaimPrizeResponse> {
-        return this.executeMsgpackUpdate(
+    claimPrize(localUserIndex: string, id: MultiUserChatIdentifier, messageId: bigint, signInProof: string | undefined): Promise<ClaimPrizeResponse> {
+        return this.update(
+            localUserIndex,
             "claim_prize",
             {
                 chat_id: apiMultiUserChat(id),

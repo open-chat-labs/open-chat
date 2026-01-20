@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1949](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1949-community)] - 2026-01-14
+
 ### Added
 
 - Add `c2c_bot_change_channel_role` endpoint ([#8753](https://github.com/open-chat-labs/open-chat/pull/8753))
@@ -22,6 +24,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove old crypto token fields from metrics ([#8758](https://github.com/open-chat-labs/open-chat/pull/8758))
 - Skip serializing fields from chat metrics where value is 0 ([#8760](https://github.com/open-chat-labs/open-chat/pull/8760))
 - Skip serializing chat summary fields which are their default values ([#8769](https://github.com/open-chat-labs/open-chat/pull/8769))
+- Skip serializing chat event fields which are their default values ([#8770](https://github.com/open-chat-labs/open-chat/pull/8770))
+- Simplify handling of bot installation lifecycle events ([#8776](https://github.com/open-chat-labs/open-chat/pull/8776))
+- Skip serializing chat details fields which are their default values ([#8778](https://github.com/open-chat-labs/open-chat/pull/8778))
 
 ### Removed
 

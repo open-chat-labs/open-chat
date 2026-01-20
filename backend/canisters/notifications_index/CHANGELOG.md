@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1954](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1954-notifications_index)] - 2026-01-14
+
 ### Changed
 
 - Remove `p256hd_key` from `SubscriptionRemoved` events ([#8746](https://github.com/open-chat-labs/open-chat/pull/8746))

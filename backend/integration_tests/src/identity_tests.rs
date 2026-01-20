@@ -3,6 +3,7 @@ use crate::env::ENV;
 use crate::{CanisterIds, TestEnv, client};
 use candid::Principal;
 use constants::NANOS_PER_MILLISECOND;
+use itertools::Itertools;
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use rand::random;
@@ -147,6 +148,47 @@ fn flag_ii_principal(is_ii_principal: bool) {
     assert_eq!(auth_principals_response.first().unwrap().is_ii_principal, is_ii_principal);
 }
 
+#[test]
+fn auth_principals_returns_all_linked_principals() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let (_, user_auth) = register_user_and_include_auth(env, canister_ids);
+
+    let mut auth_principals = vec![user_auth.auth_principal()];
+
+    for _ in 0..3 {
+        let (auth_principal, public_key, _) = sign_in_with_email(env, canister_ids);
+
+        client::identity::happy_path::initiate_identity_link(
+            env,
+            auth_principal,
+            canister_ids.identity,
+            public_key,
+            false,
+            user_auth.auth_principal(),
+        );
+        client::identity::happy_path::approve_identity_link(
+            env,
+            user_auth.auth_principal(),
+            canister_ids.identity,
+            user_auth.auth_delegation.clone(),
+            user_auth.auth_public_key.clone(),
+            auth_principal,
+        );
+
+        auth_principals.push(auth_principal);
+    }
+
+    for principal in [user_auth.oc_principal()].into_iter().chain(auth_principals.clone()) {
+        let auth_principals_response = client::identity::happy_path::auth_principals(env, principal, canister_ids.identity);
+        assert_eq!(
+            auth_principals_response.into_iter().map(|p| p.principal).collect_vec(),
+            auth_principals
+        );
+    }
+}
+
 pub(crate) fn sign_in_with_email(env: &mut PocketIc, canister_ids: &CanisterIds) -> (Principal, Vec<u8>, SignedDelegation) {
     let email = format!("{}@test.com", random_string());
     let session_key = random::<[u8; 32]>().to_vec();
@@ -155,20 +197,20 @@ pub(crate) fn sign_in_with_email(env: &mut PocketIc, canister_ids: &CanisterIds)
         env,
         Principal::anonymous(),
         canister_ids.sign_in_with_email,
-        &sign_in_with_email_canister::GenerateMagicLinkArgs {
+        &sign_in_with_email_canister::generate_magic_link::Args {
             email: email.clone(),
             session_key: session_key.clone(),
             max_time_to_live: None,
         },
     );
 
-    let sign_in_with_email_canister::GenerateMagicLinkResponse::Success(generate_magic_link_success) =
+    let sign_in_with_email_canister::generate_magic_link::Response::Success(generate_magic_link_success) =
         generate_magic_link_response
     else {
         panic!("{generate_magic_link_response:?}");
     };
 
-    let magic_link = sign_in_with_email_canister_test_utils::generate_magic_link(
+    let magic_link = sign_in_with_email_test_utils::generate_magic_link(
         &email,
         session_key.clone(),
         generate_magic_link_success.created * NANOS_PER_MILLISECOND,
@@ -180,27 +222,27 @@ pub(crate) fn sign_in_with_email(env: &mut PocketIc, canister_ids: &CanisterIds)
         env,
         Principal::anonymous(),
         canister_ids.sign_in_with_email,
-        &sign_in_with_email_canister::HandleMagicLinkArgs {
+        &sign_in_with_email_canister::handle_magic_link::Args {
             link: format!("{}&c={}", magic_link.build_querystring(), magic_link.magic_link.code()),
         },
     );
     assert!(matches!(
         handle_magic_link_response,
-        sign_in_with_email_canister::HandleMagicLinkResponse::Success
+        sign_in_with_email_canister::handle_magic_link::Response::Success
     ));
 
     let get_delegation_response = client::sign_in_with_email::get_delegation(
         env,
         Principal::anonymous(),
         canister_ids.sign_in_with_email,
-        &sign_in_with_email_canister::GetDelegationArgs {
+        &sign_in_with_email_canister::get_delegation::Args {
             email: email.to_string(),
             session_key,
             expiration: generate_magic_link_success.expiration,
         },
     );
 
-    let sign_in_with_email_canister::GetDelegationResponse::Success(delegation) = get_delegation_response else {
+    let sign_in_with_email_canister::get_delegation::Response::Success(delegation) = get_delegation_response else {
         panic!("{get_delegation_response:?}");
     };
 

@@ -2,7 +2,7 @@ use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
 use oc_error_codes::{OCError, OCErrorCode};
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
-use types::{Milliseconds, PinNumberSettings, TimestampMillis, Timestamped};
+use types::{Milliseconds, PinNumberSettings, PinNumberWrapper, TimestampMillis, Timestamped};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct PinNumber {
@@ -16,18 +16,18 @@ impl PinNumber {
         self.attempts.clear();
     }
 
-    pub fn verify(&mut self, attempt: Option<&str>, now: TimestampMillis) -> Result<(), VerifyPinError> {
+    pub fn verify(&mut self, attempt: Option<&mut PinNumberWrapper>, now: TimestampMillis) -> Result<(), VerifyPinError> {
         if let Some(value) = self.value.as_ref() {
             let delay = self.delay_until_next_attempt(now);
             if delay > 0 {
                 return Err(VerifyPinError::TooManyFailedAttempted(delay));
             }
 
-            let Some(attempt) = attempt else {
+            let Some(attempt) = attempt.map(|p| p.consume()) else {
                 return Err(VerifyPinError::PinRequired);
             };
 
-            if attempt != value {
+            if attempt != *value {
                 self.attempts.push(now);
                 return Err(VerifyPinError::PinIncorrect(self.delay_until_next_attempt(now)));
             }

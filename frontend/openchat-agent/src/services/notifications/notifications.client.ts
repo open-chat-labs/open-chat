@@ -13,16 +13,16 @@ import {
     UnitResult,
 } from "../../typebox";
 import { toVoid } from "../../utils/mapping";
-import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
+import { SingleCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 import { subscriptionExistsResponse } from "./mappers";
 
-export class NotificationsClient extends MsgpackCanisterAgent {
+export class NotificationsClient extends SingleCanisterMsgpackAgent {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
         super(identity, agent, canisterId, "Notifications");
     }
 
     subscriptionExists(endpoint: string): Promise<boolean> {
-        return this.executeMsgpackQuery(
+        return this.query(
             "subscription_exists",
             { endpoint },
             subscriptionExistsResponse,
@@ -41,7 +41,7 @@ export class NotificationsClient extends MsgpackCanisterAgent {
                 },
             },
         };
-        return this.executeMsgpackUpdate(
+        return this.update(
             "push_subscription",
             request,
             toVoid,
@@ -51,7 +51,7 @@ export class NotificationsClient extends MsgpackCanisterAgent {
     }
 
     removeSubscription(endpoint: string): Promise<void> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "remove_subscription",
             { endpoint },
             toVoid,
@@ -61,7 +61,7 @@ export class NotificationsClient extends MsgpackCanisterAgent {
     }
 
     fcmTokenExists(fcmToken: string): Promise<boolean> {
-        return this.executeMsgpackQuery(
+        return this.query(
             "fcm_token_exists",
             { fcm_token: fcmToken },
             (response) => response as boolean,
@@ -71,7 +71,7 @@ export class NotificationsClient extends MsgpackCanisterAgent {
     }
 
     addFcmToken(fcmToken: string, onResponseError?: (error: string | null) => void): Promise<void> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "add_fcm_token",
             { fcm_token: fcmToken },
             (response) => {
@@ -88,7 +88,7 @@ export class NotificationsClient extends MsgpackCanisterAgent {
     }
 
     markSubscriptionActive(endpoint: string): Promise<void> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "mark_subscription_active",
             { endpoint },
             toVoid,

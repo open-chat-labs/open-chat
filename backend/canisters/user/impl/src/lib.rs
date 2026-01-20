@@ -39,11 +39,10 @@ use std::hash::Hash;
 use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    Achievement, BotDefinitionUpdate, BotEvent, BotInitiator, BotInstallationLocation, BotLifecycleEvent, BotNotification,
-    BotPermissions, BotUninstalledEvent, BotUpdated, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEvent,
-    ChitEventType, CommunityId, Cycles, DirectChatUserNotificationPayload, Document, IdempotentEnvelope, Notification,
-    NotifyChit, TimestampMillis, Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim,
-    UserCanisterStreakInsurancePayment, UserId, UserNotification,
+    Achievement, BotDefinitionUpdate, BotInitiator, BotNotification, BotPermissions, BotUpdated, BuildVersion, CanisterId,
+    Chat, ChatId, ChatMetrics, ChitEvent, ChitEventType, CommunityId, Cycles, DirectChatUserNotificationPayload, Document,
+    IdempotentEnvelope, Notification, NotifyChit, TimestampMillis, Timestamped, UniquePersonProof,
+    UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification,
 };
 use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
 use utils::env::Environment;
@@ -434,25 +433,12 @@ Your streak is now {new_streak} days!"
         true
     }
 
-    pub fn uninstall_bot(&mut self, bot_id: UserId, notify_bot: bool) {
+    pub fn uninstall_bot(&mut self, bot_id: UserId) {
         let now = self.env.now();
 
         self.data.bots.remove(bot_id, now);
 
         self.delete_direct_chat(bot_id, false, now);
-
-        if notify_bot {
-            let user_id: UserId = self.env.canister_id().into();
-
-            self.push_bot_notification(Some(BotNotification {
-                event: BotEvent::Lifecycle(BotLifecycleEvent::Uninstalled(BotUninstalledEvent {
-                    uninstalled_by: user_id,
-                    location: BotInstallationLocation::User(user_id.into()),
-                })),
-                recipients: vec![bot_id],
-                timestamp: now,
-            }));
-        }
     }
 }
 

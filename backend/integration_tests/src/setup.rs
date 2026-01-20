@@ -220,11 +220,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
             sign_in_with_email_canister_id,
             WEBAUTHN_ORIGINATING_CANISTER,
         ],
-        vec![
-            NNS_INTERNET_IDENTITY_CANISTER_ID,
-            sign_in_with_email_canister_id,
-            WEBAUTHN_ORIGINATING_CANISTER,
-        ],
         wasm_version,
     );
 
@@ -393,7 +388,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         event_store_init_args,
     );
 
-    let sign_in_with_email_init_args = sign_in_with_email_canister_test_utils::default_init_args();
+    let sign_in_with_email_init_args = sign_in_with_email_test_utils::default_init_args();
     install_canister(
         env,
         controller,

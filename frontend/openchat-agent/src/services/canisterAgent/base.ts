@@ -20,7 +20,6 @@ export abstract class CanisterAgent {
     constructor(
         protected identity: Identity,
         protected agent: HttpAgent,
-        protected canisterId: string,
         protected canisterName: string,
     ) {}
 

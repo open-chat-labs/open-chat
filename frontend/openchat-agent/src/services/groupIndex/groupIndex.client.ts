@@ -49,7 +49,7 @@ import {
     GroupIndexUnfreezeGroupResponse,
 } from "../../typebox";
 import { principalStringToBytes } from "../../utils/mapping";
-import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
+import { SingleCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 import {
     addHotGroupExclusionResponse,
     deleteFrozenGroupResponse,
@@ -66,7 +66,7 @@ import {
     unfreezeGroupResponse,
 } from "./mappers";
 
-export class GroupIndexClient extends MsgpackCanisterAgent {
+export class GroupIndexClient extends SingleCanisterMsgpackAgent {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
         super(identity, agent, canisterId, "GroupIndex");
     }
@@ -76,7 +76,7 @@ export class GroupIndexClient extends MsgpackCanisterAgent {
             count: 30,
             exclusions: exclusions.map(principalStringToBytes),
         };
-        return this.executeMsgpackQuery(
+        return this.query(
             "recommended_groups",
             args,
             recommendedGroupsResponse,
@@ -91,7 +91,7 @@ export class GroupIndexClient extends MsgpackCanisterAgent {
             page_index: 0,
             page_size: maxResults,
         };
-        return this.executeMsgpackQuery(
+        return this.query(
             "explore_groups",
             args,
             exploreGroupsResponse,
@@ -101,7 +101,7 @@ export class GroupIndexClient extends MsgpackCanisterAgent {
     }
 
     lookupChannelByGroupId(id: GroupChatIdentifier): Promise<ChannelIdentifier | undefined> {
-        return this.executeMsgpackQuery(
+        return this.query(
             "lookup_channel_by_group_id",
             {
                 group_id: principalStringToBytes(id.groupId),
@@ -126,7 +126,7 @@ export class GroupIndexClient extends MsgpackCanisterAgent {
             page_index: pageIndex,
             search_term: searchTerm,
         };
-        return this.executeMsgpackQuery(
+        return this.query(
             "explore_communities",
             args,
             exploreCommunitiesResponse,
@@ -136,7 +136,7 @@ export class GroupIndexClient extends MsgpackCanisterAgent {
     }
 
     freezeGroup(chatId: string, reason: string | undefined): Promise<FreezeGroupResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "freeze_group",
             {
                 chat_id: principalStringToBytes(chatId),
@@ -152,7 +152,7 @@ export class GroupIndexClient extends MsgpackCanisterAgent {
         id: CommunityIdentifier,
         reason: string | undefined,
     ): Promise<FreezeCommunityResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "freeze_community",
             {
                 community_id: principalStringToBytes(id.communityId),
@@ -165,7 +165,7 @@ export class GroupIndexClient extends MsgpackCanisterAgent {
     }
 
     unfreezeCommunity(id: CommunityIdentifier): Promise<UnfreezeCommunityResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "unfreeze_community",
             {
                 community_id: principalStringToBytes(id.communityId),
@@ -177,7 +177,7 @@ export class GroupIndexClient extends MsgpackCanisterAgent {
     }
 
     unfreezeGroup(chatId: string): Promise<UnfreezeGroupResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "unfreeze_group",
             { chat_id: principalStringToBytes(chatId) },
             unfreezeGroupResponse,
@@ -187,7 +187,7 @@ export class GroupIndexClient extends MsgpackCanisterAgent {
     }
 
     deleteFrozenGroup(chatId: string): Promise<DeleteFrozenGroupResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "delete_frozen_group",
             { chat_id: principalStringToBytes(chatId) },
             deleteFrozenGroupResponse,
@@ -197,7 +197,7 @@ export class GroupIndexClient extends MsgpackCanisterAgent {
     }
 
     addHotGroupExclusion(chatId: string): Promise<AddHotGroupExclusionResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "add_hot_group_exclusion",
             { chat_id: principalStringToBytes(chatId) },
             addHotGroupExclusionResponse,
@@ -207,7 +207,7 @@ export class GroupIndexClient extends MsgpackCanisterAgent {
     }
 
     removeHotGroupExclusion(chatId: string): Promise<RemoveHotGroupExclusionResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "remove_hot_group_exclusion",
             { chat_id: principalStringToBytes(chatId) },
             removeHotGroupExclusionResponse,
@@ -220,7 +220,7 @@ export class GroupIndexClient extends MsgpackCanisterAgent {
         communityId: string,
         flags: number,
     ): Promise<SetCommunityModerationFlagsResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "set_community_moderation_flags",
             {
                 community_id: principalStringToBytes(communityId),
@@ -233,7 +233,7 @@ export class GroupIndexClient extends MsgpackCanisterAgent {
     }
 
     setGroupUpgradeConcurrency(value: number): Promise<SetGroupUpgradeConcurrencyResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "set_group_upgrade_concurrency",
             { value },
             setUpgradeConcurrencyResponse,
@@ -243,7 +243,7 @@ export class GroupIndexClient extends MsgpackCanisterAgent {
     }
 
     setCommunityUpgradeConcurrency(value: number): Promise<SetGroupUpgradeConcurrencyResponse> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "set_community_upgrade_concurrency",
             { value },
             setUpgradeConcurrencyResponse,
@@ -253,7 +253,7 @@ export class GroupIndexClient extends MsgpackCanisterAgent {
     }
 
     markLocalGroupIndexFull(canisterId: string, full: boolean): Promise<boolean> {
-        return this.executeMsgpackUpdate(
+        return this.update(
             "mark_local_index_full",
             {
                 canister_id: principalStringToBytes(canisterId),

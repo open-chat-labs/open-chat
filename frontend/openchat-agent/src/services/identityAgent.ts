@@ -4,10 +4,8 @@ import { DelegationIdentity } from "@icp-sdk/core/identity";
 import type {
     ApproveIdentityLinkResponse,
     AuthenticationPrincipalsResponse,
-    ChallengeAttempt,
     CheckAuthPrincipalResponse,
     CreateOpenChatIdentityError,
-    GenerateChallengeResponse,
     InitiateIdentityLinkResponse,
     OCError,
     RemoveIdentityLinkResponse,
@@ -56,7 +54,6 @@ export class IdentityAgent {
     async createOpenChatIdentity(
         sessionKey: SignIdentity,
         webAuthnCredentialId: Uint8Array | undefined,
-        challengeAttempt: ChallengeAttempt | undefined,
     ): Promise<DelegationIdentity | CreateOpenChatIdentityError> {
         const webAuthnKey =
             webAuthnCredentialId !== undefined
@@ -68,7 +65,6 @@ export class IdentityAgent {
             sessionKeyDer,
             webAuthnKey,
             this._isIIPrincipal,
-            challengeAttempt,
         );
 
         if (createIdentityResponse.kind === "success") {
@@ -111,10 +107,6 @@ export class IdentityAgent {
         return undefined;
     }
 
-    generateChallenge(): Promise<GenerateChallengeResponse> {
-        return this._identityClient.generateChallenge();
-    }
-
     async initiateIdentityLink(
         linkToPrincipal: string,
         webAuthnCredentialId: Uint8Array | undefined,
@@ -143,8 +135,8 @@ export class IdentityAgent {
         return this._identityClient.deleteUser();
     }
 
-    getAuthenticationPrincipals(): Promise<AuthenticationPrincipalsResponse> {
-        return this._identityClient.getAuthenticationPrincipals();
+    getAuthenticationPrincipals(currentAuthPrincipal: string): Promise<AuthenticationPrincipalsResponse> {
+        return this._identityClient.getAuthenticationPrincipals(currentAuthPrincipal);
     }
 
     async lookupWebAuthnPubKey(credentialId: Uint8Array): Promise<Uint8Array | undefined> {

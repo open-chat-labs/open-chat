@@ -29,7 +29,7 @@ async fn send_message_v2(args: Args) -> Response {
     execute_update_async(|| send_message_v2_impl(args)).await
 }
 
-async fn send_message_v2_impl(args: Args) -> Response {
+async fn send_message_v2_impl(mut args: Args) -> Response {
     let PrepareOk {
         my_user_id,
         now,
@@ -68,7 +68,7 @@ async fn send_message_v2_impl(args: Args) -> Response {
                     return Error(OCErrorCode::InvalidRequest.with_message("Transaction is not to the user's account"));
                 }
 
-                if let Err(error) = mutate_state(|state| state.data.pin_number.verify(args.pin.as_deref(), now)) {
+                if let Err(error) = mutate_state(|state| state.data.pin_number.verify(args.pin.as_mut(), now)) {
                     return Error(error.into());
                 }
 

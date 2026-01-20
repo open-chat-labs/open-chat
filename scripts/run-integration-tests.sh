@@ -7,7 +7,7 @@ cd $SCRIPT_DIR/..
 WASM_SRC=${1:-build}
 TEST_THREADS=${2:-6}
 TESTNAME=$3
-POCKET_IC_SERVER_VERSION="10.0.0"
+POCKET_IC_SERVER_VERSION="11.0.0"
 
 if [[ $OSTYPE == "linux-gnu"* ]] || [[ $RUNNER_OS == "Linux" ]]
 then
@@ -40,7 +40,6 @@ cd ../..
 ./scripts/download-nns-canister-wasm.sh sns_wasm sns-wasm-canister
 ./scripts/download-nns-canister-wasm.sh icrc_ledger ic-icrc1-ledger
 ./scripts/download-canister-wasm-dfx.sh event_store || exit 1
-./scripts/download-canister-wasm-dfx.sh sign_in_with_email || exit 1
 
 function cleanup() {
   rm -rf ./backend/integration_tests/pocket_ic_state

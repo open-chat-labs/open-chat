@@ -42,41 +42,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 
 [[package]]
-name = "aead"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d122413f284cf2d62fb1b7db97e02edb8cda96d769b16e443a4f6195e35662b0"
-dependencies = [
- "crypto-common",
- "generic-array",
-]
-
-[[package]]
-name = "aes"
-version = "0.8.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b169f7a6d4742236a0a00c541b845991d0ac43e546831af1249753ab4c3aa3a0"
-dependencies = [
- "cfg-if",
- "cipher",
- "cpufeatures",
-]
-
-[[package]]
-name = "aes-gcm"
-version = "0.10.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "831010a0f742e1209b3bcea8fab6a8e149051ba6099432c8cb2cc117dec3ead1"
-dependencies = [
- "aead",
- "aes",
- "cipher",
- "ctr",
- "ghash",
- "subtle",
-]
-
-[[package]]
 name = "ahash"
 version = "0.8.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -154,7 +119,7 @@ dependencies = [
  "user_canister_c2c_client",
  "user_index_canister",
  "user_index_canister_c2c_client",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -714,6 +679,19 @@ dependencies = [
  "http 0.2.12",
  "regex-lite",
  "tracing",
+]
+
+[[package]]
+name = "aws-sign-v4"
+version = "0.3.0"
+source = "git+https://github.com/hpeebles/aws-sign-v4?rev=33b65dfde0676544a23c41608da77bd0a117d9ce#33b65dfde0676544a23c41608da77bd0a117d9ce"
+dependencies = [
+ "hex",
+ "hmac",
+ "http 1.3.1",
+ "sha2 0.10.9",
+ "time",
+ "url",
 ]
 
 [[package]]
@@ -1345,9 +1323,9 @@ dependencies = [
 
 [[package]]
 name = "candid"
-version = "0.10.17"
+version = "0.10.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eaac522d18020d5fbc8320ecb12a9b13b2137ae31133da2d42fa256a825507c4"
+checksum = "8037a01ec09d6c06883a38bad4f47b8d06158ad360b841e0ae5707c9884dfaf6"
 dependencies = [
  "anyhow",
  "binread",
@@ -1368,9 +1346,9 @@ dependencies = [
 
 [[package]]
 name = "candid_derive"
-version = "0.10.17"
+version = "0.10.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a1b4fddbd462182050989068d53604a91a3d0f117c3c8316c6818023df00add"
+checksum = "fb45f4d5eff3805598ee633dd80f8afb306c023249d34b5b7dfdc2080ea1df2e"
 dependencies = [
  "lazy_static",
  "proc-macro2",
@@ -1453,9 +1431,9 @@ dependencies = [
  "registry_canister",
  "registry_canister_client",
  "sha256",
- "sign_in_with_email_canister 0.14.0",
+ "sign_in_with_email_canister",
+ "sign_in_with_email_test_utils",
  "storage_index_canister",
- "test_utils",
  "tokio",
  "translations_canister",
  "types",
@@ -1542,7 +1520,7 @@ dependencies = [
  "proposals_bot_canister",
  "registry_canister",
  "sha256",
- "sign_in_with_email_canister 0.14.0",
+ "sign_in_with_email_canister",
  "storage_index_canister",
  "storage_index_canister_client",
  "tokio",
@@ -1735,16 +1713,6 @@ dependencies = [
  "serde",
  "wasm-bindgen",
  "windows-link",
-]
-
-[[package]]
-name = "cipher"
-version = "0.4.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "773f3b9af64447d2ce9850330c473515014aa235e6a783b02db81ff39e4a3dad"
-dependencies = [
- "crypto-common",
- "inout",
 ]
 
 [[package]]
@@ -2007,7 +1975,7 @@ dependencies = [
  "user_canister_c2c_client",
  "user_index_canister",
  "user_index_canister_c2c_client",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -2217,7 +2185,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1bfb12502f3fc46cca1bb51ac28df9d618d813cdc3d2f25b9fe775a34af26bb3"
 dependencies = [
  "generic-array",
- "rand_core 0.6.4",
  "typenum",
 ]
 
@@ -2283,15 +2250,6 @@ checksum = "32a2785755761f3ddc1492979ce1e48d2c00d09311c39e4466429188f3dd6501"
 dependencies = [
  "quote",
  "syn 2.0.106",
-]
-
-[[package]]
-name = "ctr"
-version = "0.9.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0369ee1ad671834580515889b80f2ea915f23b8be8d0daa4bbaf2ac5c7590835"
-dependencies = [
- "cipher",
 ]
 
 [[package]]
@@ -2368,7 +2326,7 @@ dependencies = [
  "stable_memory",
  "tracing",
  "types",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -2878,6 +2836,61 @@ dependencies = [
 ]
 
 [[package]]
+name = "email_magic_links"
+version = "0.1.0"
+dependencies = [
+ "clap 4.5.45",
+ "email_utils",
+ "hex",
+ "ic_principal",
+ "rand 0.8.5",
+ "rmp-serde",
+ "rsa",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "sha256",
+ "sign_in_with_email_canister",
+]
+
+[[package]]
+name = "email_sender_aws"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "aws-sign-v4",
+ "candid",
+ "email_magic_links",
+ "email_sender_core",
+ "http 1.3.1",
+ "ic-cdk",
+ "ic_principal",
+ "serde_json",
+ "serde_urlencoded",
+ "time",
+]
+
+[[package]]
+name = "email_sender_core"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "email_magic_links",
+]
+
+[[package]]
+name = "email_utils"
+version = "0.1.0"
+dependencies = [
+ "email_address",
+ "rsa",
+ "serde",
+ "serde_bytes",
+ "sha2 0.10.9",
+ "sign_in_with_email_canister",
+]
+
+[[package]]
 name = "embed-resource"
 version = "3.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3067,7 +3080,7 @@ dependencies = [
  "stable_memory",
  "tracing",
  "types",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -3146,7 +3159,7 @@ dependencies = [
  "stable_memory",
  "tracing",
  "types",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -3216,7 +3229,7 @@ source = "git+https://github.com/ivan-jukic/fcm-service?branch=main#92d02c9b1bc7
 dependencies = [
  "chrono",
  "gcp_auth",
- "reqwest",
+ "reqwest 0.13.1",
  "serde",
  "serde_json",
  "tokio",
@@ -3277,7 +3290,7 @@ dependencies = [
  "serde_bytes",
  "tracing",
  "types",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -3683,16 +3696,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ghash"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f0d8a4362ccb29cb0b265253fb0a2728f592895ee6854fd9bc13f2ffda266ff1"
-dependencies = [
- "opaque-debug",
- "polyval",
-]
-
-[[package]]
 name = "gimli"
 version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3900,7 +3903,7 @@ dependencies = [
  "user_canister_c2c_client",
  "user_index_canister",
  "user_index_canister_c2c_client",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -3927,7 +3930,7 @@ dependencies = [
  "stable_memory_map",
  "test-strategy",
  "types",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -3940,7 +3943,7 @@ dependencies = [
  "serde",
  "serde_repr",
  "types",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -4023,7 +4026,7 @@ dependencies = [
  "user_canister_c2c_client",
  "user_index_canister",
  "user_index_canister_c2c_client",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -4540,7 +4543,7 @@ dependencies = [
  "pkcs8",
  "rand 0.8.5",
  "rangemap",
- "reqwest",
+ "reqwest 0.12.28",
  "sec1",
  "serde",
  "serde_bytes",
@@ -4566,7 +4569,7 @@ dependencies = [
  "hex",
  "ic-cdk",
  "ic-certification 3.0.3",
- "ic-representation-independent-hash",
+ "ic-representation-independent-hash 3.0.3",
  "lazy_static",
  "serde",
  "serde_bytes",
@@ -4611,7 +4614,7 @@ dependencies = [
  "ic-cdk-executor",
  "ic-cdk-macros",
  "ic-error-types",
- "ic-management-canister-types",
+ "ic-management-canister-types 0.3.3",
  "ic0",
  "serde",
  "serde_bytes",
@@ -4712,6 +4715,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "ic-http-certification"
+version = "2.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ff0b97e949845039149dc5e7ea6a7c12ee4333bb402e37bc507904643c7b3e41"
+dependencies = [
+ "candid",
+ "http 0.2.12",
+ "ic-certification 2.6.0",
+ "ic-representation-independent-hash 2.6.0",
+ "serde",
+ "thiserror 1.0.69",
+ "urlencoding",
+]
+
+[[package]]
 name = "ic-ledger-types"
 version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4735,6 +4753,27 @@ dependencies = [
  "candid",
  "serde",
  "serde_bytes",
+]
+
+[[package]]
+name = "ic-management-canister-types"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3149217e24186df3f13dc45eee14cdb3e5cad07d0b2b67bd53555c1c55462957"
+dependencies = [
+ "candid",
+ "serde",
+ "serde_bytes",
+]
+
+[[package]]
+name = "ic-representation-independent-hash"
+version = "2.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08ae59483e377cd9aad94ec339ed1d2583b0d5929cab989328dac2d853b2f570"
+dependencies = [
+ "leb128",
+ "sha2 0.10.9",
 ]
 
 [[package]]
@@ -5192,14 +5231,14 @@ dependencies = [
  "serde",
  "serde_bytes",
  "sha256",
- "sign_in_with_email_canister 0.1.0",
+ "sign_in_with_email_canister",
  "sign_in_with_email_canister_c2c_client",
  "stable_memory",
  "tracing",
  "types",
  "user_index_canister",
  "user_index_canister_c2c_client",
- "utils 0.1.0",
+ "utils",
  "x509-parser",
 ]
 
@@ -5412,15 +5451,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "inout"
-version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "879f10e63c20629ecabbb64a8010319738c66a5cd0c29b02d63d272b03751d01"
-dependencies = [
- "generic-array",
-]
-
-[[package]]
 name = "installed_bots"
 version = "0.1.0"
 dependencies = [
@@ -5429,7 +5459,7 @@ dependencies = [
  "serde",
  "serde_repr",
  "types",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -5486,22 +5516,22 @@ dependencies = [
  "proposals_bot_canister",
  "rand 0.8.5",
  "registry_canister",
- "reqwest",
+ "reqwest 0.12.28",
  "serde",
  "serde_json",
  "sha256",
- "sign_in_with_email_canister 0.14.0",
+ "sign_in_with_email_canister",
+ "sign_in_with_email_test_utils",
  "stable_memory_map",
  "storage_bucket_canister",
  "storage_index_canister",
  "test-case",
- "test_utils",
  "testing",
  "translations_canister",
  "types",
  "user_canister",
  "user_index_canister",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -6099,7 +6129,7 @@ dependencies = [
  "user_ids_set",
  "user_index_canister",
  "user_index_canister_c2c_client",
- "utils 0.1.0",
+ "utils",
  "x509-parser",
 ]
 
@@ -6141,25 +6171,6 @@ dependencies = [
  "objc2 0.6.2",
  "objc2-foundation 0.3.1",
  "time",
-]
-
-[[package]]
-name = "magic_links"
-version = "0.14.0"
-source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.14.0#8d70a55185238d0623e0c5f7914c5ed489813bdc"
-dependencies = [
- "aes-gcm",
- "clap 4.5.45",
- "hex",
- "ic_principal",
- "rand 0.8.5",
- "rmp-serde",
- "rsa",
- "serde",
- "serde_json",
- "serde_with",
- "sign_in_with_email_canister 0.14.0",
- "utils 0.14.0",
 ]
 
 [[package]]
@@ -6214,7 +6225,7 @@ dependencies = [
  "tracing",
  "types",
  "user_index_canister_c2c_client",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -6519,7 +6530,7 @@ dependencies = [
  "stable_memory",
  "tracing",
  "types",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -6623,7 +6634,7 @@ dependencies = [
  "notifications_index_canister_client",
  "openssl",
  "prometheus",
- "reqwest",
+ "reqwest 0.12.28",
  "rustls 0.23.31",
  "serde",
  "serde_json",
@@ -6701,7 +6712,7 @@ dependencies = [
  "types",
  "user_index_canister",
  "user_index_canister_c2c_client",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -6763,6 +6774,7 @@ dependencies = [
  "num-iter",
  "num-traits",
  "rand 0.8.5",
+ "serde",
  "smallvec",
  "zeroize",
 ]
@@ -7200,7 +7212,7 @@ dependencies = [
  "types",
  "user_index_canister",
  "user_index_canister_c2c_client",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -7276,7 +7288,7 @@ dependencies = [
  "tracing",
  "types",
  "user_index_canister",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -7759,9 +7771,9 @@ dependencies = [
 
 [[package]]
 name = "pocket-ic"
-version = "10.0.0"
+version = "11.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c9b78f339182efb981ceca2ac360aa280609f8d8c785e5a7eeda488f53497a8"
+checksum = "67394a1de5e9bd67e92eef90c9034fbd28f26cfcb64854f187f3979191d6380c"
 dependencies = [
  "backoff",
  "base64 0.13.1",
@@ -7769,10 +7781,11 @@ dependencies = [
  "flate2",
  "hex",
  "ic-certification 3.0.3",
- "ic-management-canister-types",
+ "ic-management-canister-types 0.5.0",
  "ic-transport-types",
- "reqwest",
+ "reqwest 0.12.28",
  "schemars 0.8.22",
+ "semver",
  "serde",
  "serde_bytes",
  "serde_cbor",
@@ -7802,18 +7815,6 @@ dependencies = [
  "pin-project-lite",
  "rustix 1.0.8",
  "windows-sys 0.60.2",
-]
-
-[[package]]
-name = "polyval"
-version = "0.6.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d1fe60d06143b2430aa532c94cfe9e29783047f06c0d7fd359a9a51b729fa25"
-dependencies = [
- "cfg-if",
- "cpufeatures",
- "opaque-debug",
- "universal-hash",
 ]
 
 [[package]]
@@ -8056,7 +8057,7 @@ dependencies = [
  "tracing",
  "types",
  "user_index_canister_c2c_client",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -8127,6 +8128,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "007d8adb5ddab6f8e3f491ac63566a7d5002cc7ed73901f72057943fa71ae1ae"
 
 [[package]]
+name = "querystring"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9318ead08c799aad12a55a3e78b82e0b6167271ffd1f627b758891282f739187"
+
+[[package]]
 name = "quick-error"
 version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8176,6 +8183,7 @@ version = "0.11.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49df843a9161c85bb8aae55f101bc0bac8bcafd637a620d9122fd7e0b2f7422e"
 dependencies = [
+ "aws-lc-rs",
  "bytes",
  "getrandom 0.3.3",
  "lru-slab",
@@ -8569,14 +8577,14 @@ dependencies = [
  "types",
  "user_index_canister",
  "user_index_canister_c2c_client",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
 name = "reqwest"
-version = "0.12.23"
+version = "0.12.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d429f34c8092b2d42c7c93cec323bb4adeb7c67698f70839adec842ec10c7ceb"
+checksum = "eddd3ca559203180a307f12d114c268abf583f59b03cb906fd0b3ff8646c1147"
 dependencies = [
  "base64 0.22.1",
  "bytes",
@@ -8620,6 +8628,46 @@ dependencies = [
  "wasm-streams",
  "web-sys",
  "webpki-roots",
+]
+
+[[package]]
+name = "reqwest"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "04e9018c9d814e5f30cc16a0f03271aeab3571e609612d9fe78c1aa8d11c2f62"
+dependencies = [
+ "base64 0.22.1",
+ "bytes",
+ "encoding_rs",
+ "futures-core",
+ "h2 0.4.12",
+ "http 1.3.1",
+ "http-body 1.0.1",
+ "http-body-util",
+ "hyper 1.7.0",
+ "hyper-rustls 0.27.7",
+ "hyper-util",
+ "js-sys",
+ "log",
+ "mime",
+ "percent-encoding",
+ "pin-project-lite",
+ "quinn",
+ "rustls 0.23.31",
+ "rustls-pki-types",
+ "rustls-platform-verifier",
+ "serde",
+ "serde_json",
+ "sync_wrapper",
+ "tokio",
+ "tokio-rustls 0.26.2",
+ "tower",
+ "tower-http",
+ "tower-service",
+ "url",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
 ]
 
 [[package]]
@@ -8680,6 +8728,7 @@ dependencies = [
  "pkcs1",
  "pkcs8",
  "rand_core 0.6.4",
+ "serde",
  "sha2 0.10.9",
  "signature",
  "spki",
@@ -8839,6 +8888,33 @@ dependencies = [
  "web-time",
  "zeroize",
 ]
+
+[[package]]
+name = "rustls-platform-verifier"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "be59af91596cac372a6942530653ad0c3a246cdd491aaa9dcaee47f88d67d5a0"
+dependencies = [
+ "core-foundation 0.10.1",
+ "core-foundation-sys",
+ "jni",
+ "log",
+ "once_cell",
+ "rustls 0.23.31",
+ "rustls-native-certs 0.8.1",
+ "rustls-platform-verifier-android",
+ "rustls-webpki 0.103.4",
+ "security-framework 3.3.0",
+ "security-framework-sys",
+ "webpki-root-certs",
+ "windows-sys 0.59.0",
+]
+
+[[package]]
+name = "rustls-platform-verifier-android"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f87165f0995f63a9fbeea62b64d10b4d9d8e78ec6d7d51fb2125fda7bb36788f"
 
 [[package]]
 name = "rustls-webpki"
@@ -9369,19 +9445,9 @@ checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
 name = "sign_in_with_email_canister"
 version = "0.1.0"
 dependencies = [
- "candid",
- "candid_gen",
- "serde",
-]
-
-[[package]]
-name = "sign_in_with_email_canister"
-version = "0.14.0"
-source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.14.0#8d70a55185238d0623e0c5f7914c5ed489813bdc"
-dependencies = [
  "base64 0.22.1",
  "candid",
- "rand_core 0.6.4",
+ "candid_gen",
  "rsa",
  "serde",
  "serde_bytes",
@@ -9394,8 +9460,47 @@ dependencies = [
  "candid",
  "canister_client",
  "ic-cdk",
- "sign_in_with_email_canister 0.1.0",
+ "sign_in_with_email_canister",
+ "tracing",
  "types",
+]
+
+[[package]]
+name = "sign_in_with_email_canister_impl"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "candid",
+ "email_address",
+ "email_magic_links",
+ "email_sender_aws",
+ "email_sender_core",
+ "email_utils",
+ "getrandom 0.2.16",
+ "hex",
+ "ic-canister-sig-creation",
+ "ic-cdk",
+ "ic-cdk-timers",
+ "ic-certification 2.6.0",
+ "ic-http-certification",
+ "ic-stable-structures 0.7.0",
+ "querystring",
+ "rand 0.8.5",
+ "rmp-serde",
+ "rsa",
+ "serde",
+ "sign_in_with_email_canister",
+]
+
+[[package]]
+name = "sign_in_with_email_test_utils"
+version = "0.1.0"
+dependencies = [
+ "email_magic_links",
+ "rand 0.8.5",
+ "rsa",
+ "sign_in_with_email_canister",
+ "utils",
 ]
 
 [[package]]
@@ -9836,7 +9941,7 @@ dependencies = [
  "timer_job_queues",
  "tracing",
  "types",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -9847,7 +9952,7 @@ dependencies = [
  "storage_bucket_canister",
  "storage_bucket_canister_c2c_client",
  "types",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -9920,7 +10025,7 @@ dependencies = [
  "timer_job_queues",
  "tracing",
  "types",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -10262,7 +10367,7 @@ dependencies = [
  "percent-encoding",
  "plist",
  "raw-window-handle",
- "reqwest",
+ "reqwest 0.12.28",
  "serde",
  "serde_json",
  "serde_repr",
@@ -10605,18 +10710,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "test_utils"
-version = "0.14.0"
-source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.14.0#8d70a55185238d0623e0c5f7914c5ed489813bdc"
-dependencies = [
- "magic_links",
- "rand 0.8.5",
- "rsa",
- "sign_in_with_email_canister 0.14.0",
- "utils 0.14.0",
-]
-
-[[package]]
 name = "testing"
 version = "0.1.0"
 dependencies = [
@@ -10949,9 +11042,9 @@ dependencies = [
 
 [[package]]
 name = "tower-http"
-version = "0.6.6"
+version = "0.6.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "adc82fd73de2a9722ac5da747f12383d2bfdb93591ee6c58486e0097890f05f2"
+checksum = "d4e6559d53cc268e5031cd8429d05415bc4cb4aefc4aa5d6cc35fbf5b924a1f8"
 dependencies = [
  "bitflags 2.9.2",
  "bytes",
@@ -11139,7 +11232,7 @@ dependencies = [
  "types",
  "user_index_canister",
  "user_index_canister_c2c_client",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -11367,16 +11460,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ebc1c04c71510c7f702b52b7c350734c9ff1295c464a03335b00bb84fc54f853"
 
 [[package]]
-name = "universal-hash"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc1de2c688dc15305988b563c3854064043356019f97a4b46276fe734c4f07ea"
-dependencies = [
- "crypto-common",
- "subtle",
-]
-
-[[package]]
 name = "untrusted"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -11524,7 +11607,7 @@ dependencies = [
  "user_canister_c2c_client",
  "user_index_canister",
  "user_index_canister_c2c_client",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -11650,7 +11733,7 @@ dependencies = [
  "user_canister_c2c_client",
  "user_ids_set",
  "user_index_canister",
- "utils 0.1.0",
+ "utils",
 ]
 
 [[package]]
@@ -11685,7 +11768,7 @@ dependencies = [
  "getrandom 0.2.16",
  "ic-cdk",
  "ic-cdk-timers",
- "ic-management-canister-types",
+ "ic-management-canister-types 0.3.3",
  "itertools 0.14.0",
  "msgpack",
  "oc_error_codes",
@@ -11699,19 +11782,6 @@ dependencies = [
  "tracing",
  "twox-hash",
  "types",
-]
-
-[[package]]
-name = "utils"
-version = "0.14.0"
-source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.14.0#8d70a55185238d0623e0c5f7914c5ed489813bdc"
-dependencies = [
- "email_address",
- "rsa",
- "serde",
- "serde_bytes",
- "sha2 0.10.9",
- "sign_in_with_email_canister 0.14.0",
 ]
 
 [[package]]
@@ -12008,6 +12078,15 @@ dependencies = [
  "pkg-config",
  "soup3-sys",
  "system-deps",
+]
+
+[[package]]
+name = "webpki-root-certs"
+version = "1.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "36a29fc0408b113f68cf32637857ab740edfafdf460c326cd2afaa2d84cc05dc"
+dependencies = [
+ "rustls-pki-types",
 ]
 
 [[package]]
