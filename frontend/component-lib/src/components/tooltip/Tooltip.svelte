@@ -18,6 +18,7 @@
 
     let props: Props = $props();
     let popup = $derived(props.popup);
+    let enable = $derived(props.enable ?? true);
     let children = $derived(props.children);
     let fill = $derived(props.fill ?? false);
 
@@ -29,7 +30,7 @@
     onDestroy(closeTooltip);
 
     function click(e: MouseEvent | TouchEvent) {
-        if (!props.enable) return;
+        if (!enable) return;
 
         e.stopPropagation();
 
