@@ -4,6 +4,7 @@
     import {
         BodySmall,
         Button,
+        Column,
         Container,
         Form,
         Input,
@@ -213,7 +214,9 @@
                 </Input>
 
                 {#if referringUser !== undefined}
-                    <UserPill onDeleteUser={deleteUser} userOrGroup={referringUser} />
+                    <Column padding={["zero", "md"]}>
+                        <UserPill onDeleteUser={deleteUser} userOrGroup={referringUser} />
+                    </Column>
                 {:else}
                     <FindUser
                         placeholderKey={"register.findReferrer"}

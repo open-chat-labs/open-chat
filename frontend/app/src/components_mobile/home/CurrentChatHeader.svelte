@@ -10,12 +10,14 @@
         chatListScopeStore,
         publish,
         restrictToSelectedChat,
+        routeForChatIdentifier,
         selectedChatIdStore,
         selectedCommunitySummaryStore,
         byContext as typersByContext,
         type OpenChat,
         type TypersByKey,
     } from "openchat-client";
+    import page from "page";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Video from "svelte-material-icons/VideoOutline.svelte";
@@ -146,6 +148,20 @@
         });
     }
 
+    function navigateToCommunity(e: Event) {
+        if ($selectedCommunitySummaryStore !== undefined) {
+            page(`/community/${$selectedCommunitySummaryStore.id.communityId}`);
+            e.stopPropagation();
+        }
+    }
+
+    function navigateToChannel(e: Event) {
+        if ($selectedCommunitySummaryStore !== undefined) {
+            page(routeForChatIdentifier("community", selectedChatSummary.id));
+            e.stopPropagation();
+        }
+    }
+
     let chat = $derived(normaliseChatSummary($now, selectedChatSummary, $typersByContext));
 </script>
 
@@ -179,11 +195,11 @@
                 <WithVerifiedBadge {verified} size={"small"}>
                     <Container gap={"xs"}>
                         {#if $selectedCommunitySummaryStore !== undefined && $chatListScopeStore.kind === "favourite"}
-                            <span>
+                            <span onclick={navigateToCommunity} class="pointer">
                                 {$selectedCommunitySummaryStore.name}
                             </span>
                             <span>{">"}</span>
-                            <span>
+                            <span onclick={navigateToChannel} class="pointer">
                                 {chat.name}
                             </span>
                         {:else}

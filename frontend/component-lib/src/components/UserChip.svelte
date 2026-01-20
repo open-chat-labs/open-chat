@@ -7,7 +7,7 @@
 
     interface Props {
         children?: Snippet;
-        avatarUrl: string;
+        avatarUrl?: string;
         onRemove?: () => void;
     }
     let { children, onRemove, avatarUrl }: Props = $props();
@@ -24,7 +24,9 @@
     borderRadius={"circle"}
     borderWidth={"thick"}
     onClick={onRemove}>
-    <Avatar size={"sm"} url={avatarUrl}></Avatar>
+    {#if avatarUrl}
+        <Avatar size={"sm"} url={avatarUrl}></Avatar>
+    {/if}
     <Label colour={"secondaryLight"} width={"hug"}>
         {@render children?.()}
     </Label>
