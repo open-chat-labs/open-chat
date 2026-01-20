@@ -224,7 +224,7 @@ import { CachePrimer } from "../utils/cachePrimer";
 import {
     cacheLocalUserIndexForUser,
     clearCache,
-    deleteEventsForChat,
+    deleteEventsForChatOrCommunity,
     getActivityFeedEvents,
     getCachePrimerTimestamps,
     getCachedBots,
@@ -1540,15 +1540,21 @@ export class OpenChatAgent extends EventTarget {
                     directChatUpdates = userResponse.directChats.updated;
                     directChatsRemoved = userResponse.directChats.removed;
                     directChatsRemoved.forEach((id) => {
-                        deleteEventsForChat(this.db, id);
+                        deleteEventsForChatOrCommunity(this.db, id);
                     });
 
                     groupsAdded = userResponse.groupChats.added;
                     groupsRemoved = userResponse.groupChats.removed;
+                    groupsRemoved.forEach((id) => {
+                        deleteEventsForChatOrCommunity(this.db, id);
+                    });
                     userCanisterGroupUpdates = userResponse.groupChats.updated;
 
                     communitiesAdded = userResponse.communities.added;
                     communitiesRemoved = userResponse.communities.removed;
+                    communitiesRemoved.forEach((id) => {
+                        deleteEventsForChatOrCommunity(this.db, id);
+                    });
                     userCanisterCommunityUpdates = userResponse.communities.updated;
 
                     avatarId.applyOptionUpdate(userResponse.avatarId);

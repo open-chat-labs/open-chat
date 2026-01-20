@@ -464,15 +464,13 @@ export async function setCachedChats(
     await tx.done;
 }
 
-export async function deleteEventsForChat(db: Database, chatId: string) {
+export async function deleteEventsForChatOrCommunity(db: Database, chatOrCommunityId: string) {
     try {
         const tx = (await db).transaction("chat_events", "readwrite", { durability: "relaxed" });
         const store = tx.objectStore("chat_events");
-        const cursor = await store.openCursor(IDBKeyRange.lowerBound(chatId));
-        while (cursor?.key !== undefined) {
-            if (cursor.key.startsWith(chatId)) {
-                await store.delete(cursor.key);
-            }
+        const cursor = await store.openCursor(IDBKeyRange.lowerBound(chatOrCommunityId));
+        while (cursor?.key !== undefined && cursor.key.startsWith(chatOrCommunityId)) {
+            await store.delete(cursor.key);
             await cursor.continue();
         }
         await tx.done;
@@ -956,8 +954,7 @@ export async function updateCachedProposalTallies(
                     event.event.kind === "message" &&
                     event.event.content.kind === "proposal_content"
                 ) {
-                    const updated =
-                        tally.timestamp > event.event.content.proposal.tally.timestamp;
+                    const updated = tally.timestamp > event.event.content.proposal.tally.timestamp;
 
                     messages.push(event as EventWrapper<Message>);
 
