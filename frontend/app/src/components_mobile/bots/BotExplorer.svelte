@@ -4,14 +4,13 @@
     import {
         i18nKey,
         type BotInstallationLocation,
-        type BotMatch as BotMatchType,
         type ExternalBotLike,
         type OpenChat,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { botSearchState } from "../../stores/search.svelte";
-    import BotProperties from "./install/BotProperties.svelte";
+    import BotCard from "../home/communities/explore/BotCard.svelte";
 
     const client = getContext<OpenChat>("client");
     const PAGE_SIZE = 50;
@@ -21,11 +20,10 @@
         onSelect: (match: ExternalBotLike | undefined) => void;
         fill?: boolean;
         maxHeight?: string;
-        installingBot?: BotMatchType | undefined;
         excludeInstalled?: boolean;
     }
 
-    let { location, onSelect, maxHeight, installingBot, excludeInstalled }: Props = $props();
+    let { location, onSelect, maxHeight, excludeInstalled }: Props = $props();
 
     function onSearchEntered(reset = false) {
         if (reset) {
@@ -67,12 +65,7 @@
 
 <div class="matches" style={maxHeight ? `max-height: ${maxHeight}` : ""}>
     {#each botSearchState.results as match}
-        <BotProperties
-            showAvatar
-            padded
-            installing={match === installingBot}
-            onClick={onSelect}
-            bot={match} />
+        <BotCard onSelect={() => onSelect(match)} bot={match} />
     {/each}
 </div>
 

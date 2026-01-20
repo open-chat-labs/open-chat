@@ -1,7 +1,6 @@
 <script lang="ts">
     import {
         Body,
-        BodySmall,
         Button,
         Chip,
         ColourVars,
@@ -17,7 +16,6 @@
         transition,
     } from "component-lib";
     import {
-        allUsersStore,
         anonUserStore,
         botState,
         exploreCommunitiesFiltersStore,
@@ -38,7 +36,6 @@
     import CloudOffOutline from "svelte-material-icons/CloudOffOutline.svelte";
     import EyeOutline from "svelte-material-icons/EyeOutline.svelte";
     import Filter from "svelte-material-icons/FilterVariant.svelte";
-    import RobotSolid from "svelte-material-icons/Robot.svelte";
     import Robot from "svelte-material-icons/RobotOutline.svelte";
     import { fade } from "svelte/transition";
     import { i18nKey, interpolate } from "../../../../i18n/i18n";
@@ -47,13 +44,12 @@
         communitySearchState,
         SearchState,
     } from "../../../../stores/search.svelte";
-    import BotAvatar from "../../../bots/BotAvatar.svelte";
     import FancyLoader from "../../../icons/FancyLoader.svelte";
     import Translatable from "../../../Translatable.svelte";
     import AnonFooter from "../../AnonFooter.svelte";
-    import Markdown from "../../Markdown.svelte";
     import NothingToSee from "../../NothingToSee.svelte";
     import { updateCommunityState } from "../createOrUpdate/community.svelte";
+    import BotCard from "./BotCard.svelte";
     import BotFilters from "./BotFilters.svelte";
     import CommunityCard from "./CommunityCard.svelte";
     import CommunityMatchComponent from "./CommunityMatch.svelte";
@@ -253,42 +249,6 @@
     </Sheet>
 {/if}
 
-{#snippet botCard(bot: BotMatch)}
-    {@const isPublic = botState.externalBots.get(bot.id)?.registrationStatus?.kind === "public"}
-    {@const owner = $allUsersStore.get(bot.ownerId)}
-    <Container
-        onClick={() => publish("showBot", { bot: botState.externalBots.get(bot.id)! })}
-        padding={["sm", "zero"]}
-        direction={"vertical"}>
-        <Container overflow={"hidden"} gap={"md"}>
-            <BotAvatar size={"xxl"} {bot}>
-                <div class="robot">
-                    <RobotSolid size={"1rem"} color={ColourVars.textOnPrimary} />
-                </div>
-            </BotAvatar>
-            <Container gap={"xs"} direction={"vertical"}>
-                <Container crossAxisAlignment={"center"} gap={"sm"}>
-                    <div class={`img ${isPublic ? "public" : "private"}`}></div>
-                    <Subtitle fontWeight={"bold"}>
-                        {bot.name}
-                    </Subtitle>
-                </Container>
-                <BodySmall colour={"textSecondary"}>
-                    <Markdown oneLine text={bot.definition.description} />
-                </BodySmall>
-                {#if owner}
-                    <Container gap={"xs"}>
-                        <BodySmall width={"hug"}>Owned by</BodySmall>
-                        <BodySmall width={"hug"} fontWeight={"bold"} colour={"secondary"}>
-                            @{owner.username}
-                        </BodySmall>
-                    </Container>
-                {/if}
-            </Container>
-        </Container>
-    </Container>
-{/snippet}
-
 {#snippet communityCard(community: CommunityMatch)}
     <CommunityMatchComponent onClick={() => showCommunity(community)} {community} />
 {/snippet}
@@ -416,7 +376,10 @@
                     direction={"vertical"}
                     gap={"lg"}>
                     {#each botSearchState.results as bot (bot.id)}
-                        {@render botCard(bot)}
+                        <BotCard
+                            onSelect={(id) =>
+                                publish("showBot", { bot: botState.externalBots.get(id)! })}
+                            {bot} />
                     {/each}
                 </Container>
             {/if}
