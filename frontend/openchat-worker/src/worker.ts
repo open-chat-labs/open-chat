@@ -102,10 +102,7 @@ async function createOpenChatIdentity(
 
     const sessionKey = await ECDSAKeyIdentity.generate();
 
-    const response = await identityAgent.createOpenChatIdentity(
-        sessionKey,
-        webAuthnCredentialId,
-    );
+    const response = await identityAgent.createOpenChatIdentity(sessionKey, webAuthnCredentialId);
 
     if (typeof response !== "string") {
         await ocIdentityStorage.set(sessionKey, response.getDelegation(), authPrincipalString);
@@ -267,17 +264,15 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             executeThenReply(
                 payload,
                 correlationId,
-                createOpenChatIdentity(payload.webAuthnCredentialId).then(
-                    (resp) => {
-                        const id = typeof resp !== "string" ? resp : new AnonymousIdentity();
-                        agent = new OpenChatAgent(id, authPrincipalString ?? "", {
-                            ...config,
-                            logger,
-                        });
-                        agent.addEventListener("openchat_event", handleAgentEvent);
-                        return typeof resp !== "string" ? "success" : resp;
-                    },
-                ),
+                createOpenChatIdentity(payload.webAuthnCredentialId).then((resp) => {
+                    const id = typeof resp !== "string" ? resp : new AnonymousIdentity();
+                    agent = new OpenChatAgent(id, authPrincipalString ?? "", {
+                        ...config,
+                        logger,
+                    });
+                    agent.addEventListener("openchat_event", handleAgentEvent);
+                    return typeof resp !== "string" ? "success" : resp;
+                }),
             );
             return;
         }
@@ -332,7 +327,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "chatEvents":
-                executeThenReply(
+                streamReplies(
                     payload,
                     correlationId,
                     agent.chatEvents(
@@ -379,7 +374,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "chatEventsWindow":
-                executeThenReply(
+                streamReplies(
                     payload,
                     correlationId,
                     agent.chatEventsWindow(
@@ -393,7 +388,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "chatEventsByEventIndex":
-                executeThenReply(
+                streamReplies(
                     payload,
                     correlationId,
                     agent.chatEventsByEventIndex(
@@ -966,7 +961,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "getMessagesByMessageIndex":
-                executeThenReply(
+                streamReplies(
                     payload,
                     correlationId,
                     agent.getMessagesByMessageIndex(

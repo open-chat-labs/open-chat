@@ -52,4 +52,41 @@ export class Stream<T> {
         this.onError = subscription.onError;
         this.onEnd = subscription.onEnd;
     }
+
+    map<TOut>(mapFn: (val: T) => TOut): Stream<TOut> {
+        return new Stream<TOut>((resolve, reject) => {
+            this.subscribe({
+                onResult: (val, final) => resolve(mapFn(val), final),
+                onError: reject,
+            });
+        });
+    }
+
+    mapAsync<TOut>(mapFn: (val: T) => Promise<TOut>): Stream<TOut> {
+        return new Stream<TOut>((resolve, reject) => {
+            this.subscribe({
+                onResult: (val, final) =>
+                    mapFn(val)
+                        .then((mapped) => resolve(mapped, final))
+                        .catch(reject),
+                onError: reject,
+            });
+        });
+    }
+
+    toPromise(aggFn?: (curr: T, next: T) => T): Promise<T> {
+        return new Promise<T>((resolve, reject) => {
+            let agg: T | undefined;
+            this.subscribe({
+                onResult: (val: T, final: boolean) => {
+                    agg = agg === undefined || aggFn === undefined ? val : aggFn(agg, val);
+
+                    if (final) {
+                        resolve(agg);
+                    }
+                },
+                onError: reject,
+            });
+        });
+    }
 }

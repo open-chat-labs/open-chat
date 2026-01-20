@@ -14,7 +14,8 @@ import {
     MAX_EVENTS,
     MAX_MISSING,
     offline,
-    ResponseTooLargeError
+    ResponseTooLargeError,
+    Stream,
 } from "openchat-shared";
 import {
     type Database,
@@ -23,7 +24,7 @@ import {
     getCachedEventsWindowByMessageIndex,
     loadMessagesByMessageIndex,
     mergeSuccessResponses,
-    setCachedEvents
+    setCachedEvents,
 } from "../../utils/caching";
 
 export interface IChatEventsReader<C extends ChatIdentifier = ChatIdentifier> {
@@ -78,8 +79,8 @@ export class CachedChatEventsReader {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-        maxEvents: number = MAX_EVENTS
-    ): Promise<EventsResponse<ChatEvent>> {
+        maxEvents: number = MAX_EVENTS,
+    ): Stream<EventsResponse<ChatEvent>> {
         const reader = this.eventsReader(chatId.kind);
         return this.chatEventsViaCache(
             reader,
@@ -89,7 +90,7 @@ export class CachedChatEventsReader {
             ascending,
             threadRootMessageIndex,
             latestKnownUpdate,
-            maxEvents
+            maxEvents,
         );
     }
 
@@ -97,10 +98,16 @@ export class CachedChatEventsReader {
         chatId: ChatIdentifier,
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined
-    ): Promise<EventsResponse<ChatEvent>> {
+        latestKnownUpdate: bigint | undefined,
+    ): Stream<EventsResponse<ChatEvent>> {
         const reader = this.eventsReader(chatId.kind);
-        return this.chatEventsByIndexViaCache(reader, chatId, eventIndexes, threadRootMessageIndex, latestKnownUpdate);
+        return this.chatEventsByIndexViaCache(
+            reader,
+            chatId,
+            eventIndexes,
+            threadRootMessageIndex,
+            latestKnownUpdate,
+        );
     }
 
     chatEventsWindow(
@@ -109,23 +116,37 @@ export class CachedChatEventsReader {
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-        maxEvents: number = MAX_EVENTS
-    ): Promise<EventsResponse<ChatEvent>> {
+        maxEvents: number = MAX_EVENTS,
+    ): Stream<EventsResponse<ChatEvent>> {
         const reader = this.eventsReader(chatId.kind);
-        return this.chatEventsWindowViaCache(reader, chatId, eventIndexRange, messageIndex, threadRootMessageIndex, latestKnownUpdate, maxEvents);
+        return this.chatEventsWindowViaCache(
+            reader,
+            chatId,
+            eventIndexRange,
+            messageIndex,
+            threadRootMessageIndex,
+            latestKnownUpdate,
+            maxEvents,
+        );
     }
 
     messagesByMessageIndex(
         chatId: ChatIdentifier,
         threadRootMessageIndex: number | undefined,
         messageIndexes: number[],
-        latestKnownUpdate: bigint | undefined
-    ): Promise<EventsResponse<Message>> {
+        latestKnownUpdate: bigint | undefined,
+    ): Stream<EventsResponse<Message>> {
         const reader = this.eventsReader(chatId.kind);
-        return this.messagesByMessageIndexViaCache(reader, chatId, threadRootMessageIndex, messageIndexes, latestKnownUpdate);
+        return this.messagesByMessageIndexViaCache(
+            reader,
+            chatId,
+            threadRootMessageIndex,
+            messageIndexes,
+            latestKnownUpdate,
+        );
     }
 
-    private async chatEventsViaCache(
+    private chatEventsViaCache(
         reader: IChatEventsReader,
         chatId: ChatIdentifier,
         eventIndexRange: IndexRange,
@@ -134,66 +155,73 @@ export class CachedChatEventsReader {
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
         maxEvents: number,
-    ): Promise<EventsResponse<ChatEvent>> {
-        const [cachedEvents, missing] = await getCachedEvents(
-            this.db,
-            eventIndexRange,
-            { chatId, threadRootMessageIndex },
-            startIndex,
-            ascending,
-        );
+    ): Stream<EventsResponse<ChatEvent>> {
+        return new Stream(async (resolve, reject) => {
+            try {
+                const [cachedEvents, missing] = await getCachedEvents(
+                    this.db,
+                    eventIndexRange,
+                    { chatId, threadRootMessageIndex },
+                    startIndex,
+                    ascending,
+                );
 
-        // we may or may not have all the requested events
-        if (missing.size >= MAX_MISSING) {
-            // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
-            console.debug("We didn't get enough back from the cache, going to the api");
-            return reader.chatEvents(
-                chatId,
-                startIndex,
-                ascending,
-                threadRootMessageIndex,
-                latestKnownUpdate,
-                maxEvents
-            )
-                .then((resp) => {
-                    setCachedEvents(this.db, chatId, resp, threadRootMessageIndex);
-                    return resp;
-                })
-                .catch((err) => {
-                    if (err instanceof ResponseTooLargeError) {
-                        console.debug(
-                            "Response size too large, we will try to split the payload into a a few chunks",
-                        );
-                        return chunkedChatEventsFromBackend(
-                            (index: number, chunkSize: number) =>
-                                reader.chatEvents(
-                                    chatId,
-                                    index,
-                                    ascending,
-                                    threadRootMessageIndex,
-                                    latestKnownUpdate,
-                                    chunkSize,
-                                ),
-                            eventIndexRange,
+                // we may or may not have all the requested events
+                if (missing.size >= MAX_MISSING) {
+                    // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
+                    console.debug("We didn't get enough back from the cache, going to the api");
+                    reader
+                        .chatEvents(
+                            chatId,
                             startIndex,
                             ascending,
-                        ).then((resp) => {
+                            threadRootMessageIndex,
+                            latestKnownUpdate,
+                            maxEvents,
+                        )
+                        .then((resp) => {
                             setCachedEvents(this.db, chatId, resp, threadRootMessageIndex);
-                            return resp;
+                            resolve(resp, true);
+                        })
+                        .catch((err) => {
+                            if (err instanceof ResponseTooLargeError) {
+                                console.debug(
+                                    "Response size too large, we will try to split the payload into a a few chunks",
+                                );
+                                return chunkedChatEventsFromBackend(
+                                    (index: number, chunkSize: number) =>
+                                        reader.chatEvents(
+                                            chatId,
+                                            index,
+                                            ascending,
+                                            threadRootMessageIndex,
+                                            latestKnownUpdate,
+                                            chunkSize,
+                                        ),
+                                    eventIndexRange,
+                                    startIndex,
+                                    ascending,
+                                ).then((resp) => {
+                                    setCachedEvents(this.db, chatId, resp, threadRootMessageIndex);
+                                    resolve(resp, true);
+                                });
+                            } else {
+                                throw err;
+                            }
                         });
-                    } else {
-                        throw err;
-                    }
-                });
-        } else {
-            return this.handleMissingEvents(
-                reader,
-                chatId,
-                [cachedEvents, missing],
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            );
-        }
+                } else {
+                    this.handleMissingEvents(
+                        reader,
+                        chatId,
+                        [cachedEvents, missing],
+                        threadRootMessageIndex,
+                        latestKnownUpdate,
+                    ).then((resp) => resolve(resp, true));
+                }
+            } catch (err) {
+                reject(err);
+            }
+        });
     }
 
     private chatEventsByIndexViaCache(
@@ -202,15 +230,27 @@ export class CachedChatEventsReader {
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>>
-    {
-        return getCachedEventsByIndex(this.db, eventIndexes, { chatId, threadRootMessageIndex }).then(
-            (res) =>
-                this.handleMissingEvents(reader, chatId, res, threadRootMessageIndex, latestKnownUpdate),
-        );
+    ): Stream<EventsResponse<ChatEvent>> {
+        return new Stream((resolve, reject) => {
+            getCachedEventsByIndex(this.db, eventIndexes, {
+                chatId,
+                threadRootMessageIndex,
+            })
+                .then((resp) =>
+                    this.handleMissingEvents(
+                        reader,
+                        chatId,
+                        resp,
+                        threadRootMessageIndex,
+                        latestKnownUpdate,
+                    ),
+                )
+                .then((resp) => resolve(resp, true))
+                .catch(reject);
+        });
     }
 
-    private async chatEventsWindowViaCache(
+    private chatEventsWindowViaCache(
         reader: IChatEventsReader,
         chatId: ChatIdentifier,
         eventIndexRange: IndexRange,
@@ -218,118 +258,138 @@ export class CachedChatEventsReader {
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
         maxEvents: number,
-    ): Promise<EventsResponse<ChatEvent>>
-    {
-        const [cachedEvents, missing, totalMiss] = await getCachedEventsWindowByMessageIndex(
-            this.db,
-            eventIndexRange,
-            { chatId, threadRootMessageIndex },
-            messageIndex,
-        );
-        if (totalMiss || missing.size >= MAX_MISSING) {
-            // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
-            console.debug(
-                "We didn't get enough back from the cache, going to the api",
-                missing.size,
-                totalMiss,
-            );
-            return reader.chatEventsWindow(
-                chatId,
-                messageIndex,
-                threadRootMessageIndex,
-                latestKnownUpdate,
-                maxEvents,
-            )
-                .then((resp) => {
-                    setCachedEvents(this.db, chatId, resp, threadRootMessageIndex);
-                    return resp;
-                })
-                .catch((err) => {
-                    if (err instanceof ResponseTooLargeError) {
-                        console.debug(
-                            "Response size too large, we will try to split the window request into a a few chunks",
-                        );
-                        return chunkedChatEventsWindowFromBackend(
-                            (index: number, ascending: boolean, chunkSize: number) =>
-                                reader.chatEvents(
-                                    chatId,
-                                    index,
-                                    ascending,
-                                    threadRootMessageIndex,
-                                    latestKnownUpdate,
-                                    chunkSize,
-                                ),
-                            (index: number, chunkSize: number) =>
-                                reader.chatEventsWindow(
-                                    chatId,
-                                    index,
-                                    threadRootMessageIndex,
-                                    latestKnownUpdate,
-                                    chunkSize,
-                                ),
-                            eventIndexRange,
+    ): Stream<EventsResponse<ChatEvent>> {
+        return new Stream(async (resolve, reject) => {
+            try {
+                const [cachedEvents, missing, totalMiss] =
+                    await getCachedEventsWindowByMessageIndex(
+                        this.db,
+                        eventIndexRange,
+                        { chatId, threadRootMessageIndex },
+                        messageIndex,
+                    );
+                if (totalMiss || missing.size >= MAX_MISSING) {
+                    // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
+                    console.debug(
+                        "We didn't get enough back from the cache, going to the api",
+                        missing.size,
+                        totalMiss,
+                    );
+                    reader
+                        .chatEventsWindow(
+                            chatId,
                             messageIndex,
-                        ).then((resp) => {
+                            threadRootMessageIndex,
+                            latestKnownUpdate,
+                            maxEvents,
+                        )
+                        .then((resp) => {
                             setCachedEvents(this.db, chatId, resp, threadRootMessageIndex);
-                            return resp;
+                            resolve(resp, true);
+                        })
+                        .catch((err) => {
+                            if (err instanceof ResponseTooLargeError) {
+                                console.debug(
+                                    "Response size too large, we will try to split the window request into a a few chunks",
+                                );
+                                return chunkedChatEventsWindowFromBackend(
+                                    (index: number, ascending: boolean, chunkSize: number) =>
+                                        reader.chatEvents(
+                                            chatId,
+                                            index,
+                                            ascending,
+                                            threadRootMessageIndex,
+                                            latestKnownUpdate,
+                                            chunkSize,
+                                        ),
+                                    (index: number, chunkSize: number) =>
+                                        reader.chatEventsWindow(
+                                            chatId,
+                                            index,
+                                            threadRootMessageIndex,
+                                            latestKnownUpdate,
+                                            chunkSize,
+                                        ),
+                                    eventIndexRange,
+                                    messageIndex,
+                                ).then((resp) => {
+                                    setCachedEvents(this.db, chatId, resp, threadRootMessageIndex);
+                                    resolve(resp, true);
+                                });
+                            } else {
+                                throw err;
+                            }
                         });
-                    } else {
-                        throw err;
-                    }
-                });
-        } else {
-            return this.handleMissingEvents(
-                reader,
-                chatId,
-                [cachedEvents, missing],
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            );
-        }
+                } else {
+                    this.handleMissingEvents(
+                        reader,
+                        chatId,
+                        [cachedEvents, missing],
+                        threadRootMessageIndex,
+                        latestKnownUpdate,
+                    ).then((resp) => resolve(resp, true));
+                }
+            } catch (err) {
+                reject(err);
+            }
+        });
     }
 
-    private async messagesByMessageIndexViaCache(
+    private messagesByMessageIndexViaCache(
         reader: IChatEventsReader,
         chatId: ChatIdentifier,
         threadRootMessageIndex: number | undefined,
         messageIndexes: number[],
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<Message>>
-    {
-        const fromCache = await loadMessagesByMessageIndex(
-            this.db,
-            chatId,
-            threadRootMessageIndex,
-            messageIndexes,
-        );
-        if (fromCache.missing.size > 0) {
-            console.debug("Missing idxs from the cached: ", fromCache.missing);
+    ): Stream<EventsResponse<Message>> {
+        return new Stream(async (resolve, reject) => {
+            try {
+                const fromCache = await loadMessagesByMessageIndex(
+                    this.db,
+                    chatId,
+                    threadRootMessageIndex,
+                    messageIndexes,
+                );
+                if (fromCache.missing.size > 0) {
+                    console.debug("Missing idxs from the cached: ", fromCache.missing);
 
-            const resp = await reader.messagesByMessageIndex(
-                chatId,
-                threadRootMessageIndex,
-                [...fromCache.missing],
-                latestKnownUpdate,
-            ).then((resp) => {
-                setCachedEvents(this.db, chatId, resp, threadRootMessageIndex);
-                return resp;
-            });
+                    const resp = await reader
+                        .messagesByMessageIndex(
+                            chatId,
+                            threadRootMessageIndex,
+                            [...fromCache.missing],
+                            latestKnownUpdate,
+                        )
+                        .then((resp) => {
+                            setCachedEvents(this.db, chatId, resp, threadRootMessageIndex);
+                            return resp;
+                        });
 
-            return isSuccessfulEventsResponse(resp)
-                ? {
-                    events: [...fromCache.messageEvents, ...resp.events],
-                    expiredEventRanges: [],
-                    expiredMessageRanges: [],
-                    latestEventIndex: resp.latestEventIndex,
+                    resolve(
+                        isSuccessfulEventsResponse(resp)
+                            ? {
+                                  events: [...fromCache.messageEvents, ...resp.events],
+                                  expiredEventRanges: [],
+                                  expiredMessageRanges: [],
+                                  latestEventIndex: resp.latestEventIndex,
+                              }
+                            : resp,
+                        true,
+                    );
                 }
-                : resp;
-        }
-        return {
-            events: fromCache.messageEvents,
-            expiredEventRanges: [],
-            expiredMessageRanges: [],
-            latestEventIndex: undefined,
-        };
+                resolve(
+                    {
+                        events: fromCache.messageEvents,
+                        expiredEventRanges: [],
+                        expiredMessageRanges: [],
+                        latestEventIndex: undefined,
+                    },
+                    true,
+                );
+            } catch (err) {
+                reject(err);
+            }
+        });
     }
 
     private async handleMissingEvents(
@@ -342,12 +402,8 @@ export class CachedChatEventsReader {
         if (missing.size === 0 || offline()) {
             return Promise.resolve(cachedEvents);
         } else {
-            return reader.chatEventsByIndex(
-                chatId,
-                [...missing],
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            )
+            return reader
+                .chatEventsByIndex(chatId, [...missing], threadRootMessageIndex, latestKnownUpdate)
                 .then((resp) => {
                     setCachedEvents(this.db, chatId, resp, threadRootMessageIndex);
 
@@ -361,9 +417,12 @@ export class CachedChatEventsReader {
 
     private eventsReader(kind: ChatIdentifier["kind"]): IChatEventsReader {
         switch (kind) {
-            case "direct_chat": return this.userClient;
-            case "group_chat": return this.groupClient;
-            case "channel": return this.communityClient;
+            case "direct_chat":
+                return this.userClient;
+            case "group_chat":
+                return this.groupClient;
+            case "channel":
+                return this.communityClient;
         }
     }
 }
@@ -400,7 +459,7 @@ async function chunkedChatEventsFromBackend(
         aggregatedResponse.events.length < MAX_EVENTS &&
         index >= minIndex &&
         index <= maxIndex
-        ) {
+    ) {
         try {
             const resp = await eventsFn(index, chunkSize);
 
@@ -452,7 +511,7 @@ async function chunkedChatEventsWindowFromBackend(
     while (
         aggregatedResponse.events.length < MAX_EVENTS &&
         (lowIndex >= minIndex || highIndex <= maxIndex)
-        ) {
+    ) {
         try {
             if (lowIndex === highIndex) {
                 // these will be equal on the first iteration
@@ -497,7 +556,7 @@ async function chunkedChatEventsWindowFromBackend(
                         eventsWindowFn,
                         [minIndex, maxIndex],
                         messageIndex,
-                        chunkSize / 10
+                        chunkSize / 10,
                     );
                 }
             }
