@@ -10,10 +10,10 @@
     import { WalletConnectWalletAdapter } from "@solana/wallet-adapter-walletconnect";
     import { Connection, clusterApiUrl } from "@solana/web3.js";
     import base58 from "bs58";
+    import { Button } from "component-lib";
     import type { OpenChat, SiwsMessage } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { initialize, walletStore } from "../../stores/solana/walletStore";
-    import Button from "../Button.svelte";
 
     const client = getContext<OpenChat>("client");
     const localStorageKey = "walletAdapter";
@@ -111,8 +111,8 @@
         <div class={`icon center ${connecting === name ? "connecting" : ""}`}>
             <img src={icon} alt={`${name} icon`} />
         </div>
-        <Button fill onClick={() => connectWallet(name)}>
-            <span class="name">{name}</span>
+        <Button onClick={() => connectWallet(name)}>
+            {name}
         </Button>
     </div>
 {/each}

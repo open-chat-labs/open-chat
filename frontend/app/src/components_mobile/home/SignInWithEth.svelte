@@ -3,9 +3,9 @@
     import { mainnet } from "@wagmi/chains";
     import { coinbaseWallet, metaMask, walletConnect } from "@wagmi/connectors";
     import { createConfig, http, signMessage, type Connector } from "@wagmi/core";
+    import { Button } from "component-lib";
     import { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
-    import Button from "../Button.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -86,8 +86,8 @@
                 <img alt={connector.name} src={icons[connector.id] ?? connector.icon} />
             {/if}
         </div>
-        <Button fill onClick={() => connectWith(connector)}>
-            <span class="name">{connector.name}</span>
+        <Button onClick={() => connectWith(connector)}>
+            {connector.name}
         </Button>
     </div>
 {/each}

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Body, BodySmall, ColourVars, Column, Row } from "component-lib";
     import { OpenChat, Poller, Version } from "openchat-client";
     import { getContext, onDestroy } from "svelte";
     import { i18nKey } from "../i18n/i18n";
@@ -65,41 +66,30 @@
 </script>
 
 {#if showBanner}
-    <div class="upgrade-banner">
-        <div class="inner">
-            <span class="message"
-                ><Translatable resourceKey={i18nKey("updateRequired", { countdown })} /></span>
-            <span class="update-now">
-                <a href="/" onclick={reload}><Translatable resourceKey={i18nKey("updateNow")} /></a>
-            </span>
-        </div>
-        <div class="versions">
-            {clientVersion.toText()} -> {serverVersion.toText()}
-        </div>
-    </div>
+    <Column
+        mainAxisAlignment={"center"}
+        crossAxisAlignment={"center"}
+        backgroundColor={ColourVars.warning}
+        padding={"lg"}
+        supplementalClass={"upgrade_banner"}>
+        <Row wrap>
+            <Body width={"hug"} fontWeight={"bold"}>
+                <Translatable resourceKey={i18nKey("updateRequired", { countdown })} />
+            </Body>
+        </Row>
+        <BodySmall width={"hug"} fontWeight={"light"}>
+            <a href="/" onclick={reload}><Translatable resourceKey={i18nKey("updateNow")} /></a>
+        </BodySmall>
+    </Column>
 {/if}
 
 <style lang="scss">
-    .upgrade-banner {
+    :global(.container.upgrade_banner) {
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
         @include z-index("upgrade-banner");
-        background-color: var(--notificationBar-bg);
-        color: var(--notificationBar-txt);
-        padding: $sp3;
-        text-align: center;
-        @include box-shadow(2);
-    }
-
-    .inner {
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-
-    .update-now {
-        margin-left: $sp4;
     }
 
     a {
@@ -107,9 +97,5 @@
         text-underline-offset: $sp1;
         cursor: pointer;
         color: inherit;
-    }
-
-    .versions {
-        @include font(light, normal, fs-70);
     }
 </style>
