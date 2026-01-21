@@ -43,25 +43,23 @@
         {displayName}
     </BodySmall>
     {#if repliesTo.content !== undefined}
-        <div class="inert">
-            <ChatMessageContent
-                showPreviews
-                {me}
-                {readonly}
-                messageContext={repliesTo.sourceContext}
-                {intersecting}
-                messageId={repliesTo.messageId}
-                messageIndex={repliesTo.messageIndex}
-                senderId={repliesTo.senderId}
-                edited={false}
-                fill={false}
-                failed={false}
-                blockLevelMarkdown={true}
-                truncate
-                reply
-                {onRemovePreview}
-                content={repliesTo.content} />
-        </div>
+        <ChatMessageContent
+            showPreviews
+            {me}
+            {readonly}
+            messageContext={repliesTo.sourceContext}
+            {intersecting}
+            messageId={repliesTo.messageId}
+            messageIndex={repliesTo.messageIndex}
+            senderId={repliesTo.senderId}
+            edited={false}
+            fill={false}
+            failed={false}
+            blockLevelMarkdown={true}
+            truncate
+            reply
+            {onRemovePreview}
+            content={repliesTo.content} />
         {#if debug}
             <pre>EventIdx: {repliesTo.eventIndex}</pre>
             <pre>MsgId: {repliesTo.messageId}</pre>

@@ -1,10 +1,10 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
+    import { Column, IconButton, Row, Subtitle } from "component-lib";
     import { botState, type EphemeralMessageEvent } from "openchat-client";
     import { onMount } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { Tween } from "svelte/motion";
-    import HoverIcon from "../HoverIcon.svelte";
     import Translatable from "../Translatable.svelte";
     import ChatMessageContent from "../home/ChatMessageContent.svelte";
     import BotAvatar from "./BotAvatar.svelte";
@@ -51,21 +51,19 @@
 
 {#if bot}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="ephemeral-msg">
+    <Column>
         <div onmousedown={pause} onmouseup={resume} class="content">
-            <div class="header">
+            <Row padding={["md", "zero"]} gap={"sm"} crossAxisAlignment={"center"}>
                 <BotAvatar size={"xs"} {bot} />
-                <div class="title">
+                <Subtitle fontWeight={"bold"}>
                     <Translatable resourceKey={i18nKey(`${bot.name} /${event.commandName}`)} />
-                </div>
-                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <span class="close" onclick={closeClicked}>
-                    <HoverIcon>
-                        <Close size={"1em"} color={"var(--icon-txt)"} />
-                    </HoverIcon>
-                </span>
-            </div>
+                </Subtitle>
+                <IconButton size={"sm"} onclick={closeClicked}>
+                    {#snippet icon(color)}
+                        <Close size={"1em"} {color} />
+                    {/snippet}
+                </IconButton>
+            </Row>
             <ChatMessageContent
                 failed={false}
                 messageId={event.message.messageId}
@@ -80,40 +78,19 @@
                 showPreviews={false}
                 content={event.message.messageContent} />
         </div>
-        <div class="countdown">
+        <Row height={{ size: "0.75rem" }}>
             <div style={`width: ${perc.current}%`} class="bar"></div>
-        </div>
-    </div>
+        </Row>
+    </Column>
 {/if}
 
 <style lang="scss">
-    .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: $sp3;
-        margin-bottom: $sp4;
-
-        .title {
-            flex: auto;
-            @include font(bold, normal, fs-110);
-        }
-    }
-    .ephemeral-msg {
-        width: 100%;
-
-        .content {
-            padding: $sp4;
-        }
+    .content {
+        padding: $sp4;
     }
 
-    .countdown {
+    .bar {
         height: toRem(10);
-        width: 100%;
-
-        .bar {
-            height: toRem(10);
-            background-color: var(--warn);
-        }
+        background-color: var(--warn);
     }
 </style>

@@ -152,8 +152,8 @@
     }
 
     let replyRadius = $derived<Radius>([
-        first ? "sm" : adjustInnerRadius(borderRadius[0] as BorderRadiusSize),
-        first ? "sm" : adjustInnerRadius(borderRadius[1] as BorderRadiusSize),
+        first && !me ? "sm" : adjustInnerRadius(borderRadius[0] as BorderRadiusSize),
+        first && !me ? "sm" : adjustInnerRadius(borderRadius[1] as BorderRadiusSize),
         "sm",
         "sm",
     ]);

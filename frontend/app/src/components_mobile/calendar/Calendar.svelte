@@ -1,11 +1,10 @@
 <script lang="ts">
-    import { Container, Subtitle } from "component-lib";
+    import { ColourVars, Container, IconButton, Subtitle } from "component-lib";
     import { type Snippet } from "svelte";
     import { locale } from "svelte-i18n";
     import PrevIcon from "svelte-material-icons/ChevronLeft.svelte";
     import NextIcon from "svelte-material-icons/ChevronRight.svelte";
     import { translationCodes } from "../../i18n/i18n";
-    import HoverIcon from "../HoverIcon.svelte";
     import { calendarState, type DateRange } from "./calendarState.svelte";
     import { getMonthCalendar, getTitleText, isSameDay } from "./utils";
     import { weekDays } from "./weekdays";
@@ -67,9 +66,11 @@
 
 <div class={"calendar-wrapper"}>
     <Container crossAxisAlignment={"center"} mainAxisAlignment={"spaceBetween"}>
-        <HoverIcon onclick={previousMonth}>
-            <PrevIcon size={"2rem"} color={"var(--primary"} />
-        </HoverIcon>
+        <IconButton size={"lg"} onclick={previousMonth}>
+            {#snippet icon()}
+                <PrevIcon color={ColourVars.primary} />
+            {/snippet}
+        </IconButton>
         {#if monthTitleTemplate}
             {@render monthTitleTemplate()}
         {:else}
@@ -77,9 +78,11 @@
                 {calendarState.monthTitle}
             </Subtitle>
         {/if}
-        <HoverIcon onclick={nextMonth}>
-            <NextIcon size={"2rem"} color={"var(--primary"} />
-        </HoverIcon>
+        <IconButton size={"lg"} onclick={nextMonth}>
+            {#snippet icon()}
+                <NextIcon color={ColourVars.primary} />
+            {/snippet}
+        </IconButton>
     </Container>
     <div class="week-days-row">
         {#each $weekDays as [day, d]}
