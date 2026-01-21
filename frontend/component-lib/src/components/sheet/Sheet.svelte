@@ -5,19 +5,15 @@
     interface Props {
         onDismiss?: () => void;
         children?: Snippet;
-        block?: boolean;
-        transparent?: boolean;
-        animate?: boolean;
     }
 
-    let { onDismiss, children, block, transparent, animate }: Props = $props();
+    let { onDismiss, children }: Props = $props();
 
     const context = getAllContexts();
     let mounted: Record<string, any> | undefined = undefined;
 
     async function internalClose() {
         if (mounted) {
-            await mounted.beforeClose();
             unmount(mounted);
             mounted = undefined;
         }
@@ -29,9 +25,6 @@
             props: {
                 children,
                 onDismiss,
-                block,
-                transparent,
-                animate,
             },
             context,
         });

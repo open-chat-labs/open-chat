@@ -72,7 +72,7 @@
     }
 
     function clickInternal(e: MouseEvent) {
-        if (onClick) {
+        if (onClick && !loading) {
             e.stopPropagation();
             e.preventDefault();
             onClick(e);

@@ -257,7 +257,7 @@ body.needs-safe-inset:not(.keyboard):not(.native-android) {
         }
     }
 
-    .sheet_content {
+    .transient_sheet {
         padding-bottom: var(--safe-inset) !important;
     }
 }
@@ -470,7 +470,7 @@ body.native-android {
             padding-bottom: var(--device-nav-height) !important;
         }
 
-        .sheet_content {
+        .transient_sheet {
             padding-bottom: var(--device-nav-height) !important;
         }
     }
@@ -583,7 +583,7 @@ html::view-transition-group(anon_footer) {
     z-index: 99;
 }
 
-html::view-transition-group(sheet_content),
+html::view-transition-group(transient_sheet),
 html::view-transition-group(root) {
     z-index: 1;
 }
@@ -593,7 +593,7 @@ html:active-view-transition-type(slide_left, slide_right) {
     @include defineTransitionNameFor(".anchored_sheet", "anchored_sheet");
     @include defineTransitionNameFor(".anon-footer", "anon_footer");
     @include defineTransitionNameFor(".sliding_page.top", "sliding_modal");
-    @include defineTransitionNameFor(".sheet_overlay .sheet_content", "sheet_content");
+    @include defineTransitionNameFor(".transient_sheet", "transient_sheet");
 }
 
 // Root animations!

@@ -41,6 +41,7 @@
         return true;
     });
 
+    // @ts-ignore
     async function connectWith(connector: Connector) {
         try {
             connecting = connector;
@@ -89,6 +90,7 @@
         <Button onClick={() => connectWith(connector)}>
             {connector.name}
         </Button>
+        -->
     </div>
 {/each}
 

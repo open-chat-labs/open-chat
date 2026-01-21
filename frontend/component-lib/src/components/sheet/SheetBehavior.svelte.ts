@@ -1,0 +1,296 @@
+import { fraction } from "../../utils/fraction";
+
+// Transient sheets fully open and close. Anchored sheets have a collapsed/minimised
+// and expanded/maximised view, and never go out of view.
+type SheetType = "transient" | "anchored";
+
+export class SheetBehavior {
+    _sheetType: SheetType = "transient";
+
+    // Config for the dragger class!
+    maxViewportHeightFraction = fraction(0.7);
+    openThreshold = fraction(0.2);
+    closeThreshold = fraction(0.9);
+    speed = 250;
+
+    // State vars
+    sheet = $state<HTMLElement | undefined>();
+    handle = $state<HTMLElement | undefined>();
+    dragged = $state(false);
+    isExpanded = $state(false);
+
+    // TODO perhaps we could use Svelte Tween, instead of tracking animation
+    openFactor = $state(0);
+
+    // Local vars
+    _startY: undefined | number;
+    _startHeight: undefined | number;
+
+    // Max height to which we expand the sheet as a fraction of the viewport.s
+    _expandedHeight = 0;
+
+    // If the collapsed height is kept at zero value, we consider the sheet
+    // using this dragger class a transient one (toggles on/off); but if this
+    // value is set, then we consider the sheet to be persistent with minimised
+    // and expanded states.
+    _collapsedHeight = 0;
+
+    // Callbacks, used as public vars
+    onCollapsed: (() => void) | undefined = undefined;
+    onExpanded: (() => void) | undefined = undefined;
+
+    // Vars below are used during the snapping phase, to update the openFactor
+    // value. The _animation itself is a CSS transition, but openFactor is used
+    // to fade the content in/out.
+    _animating = false;
+    _animationStart = 0;
+    _animationFrom = 0;
+    _animationTo: 0 | 1 = 1;
+    _animationDuration = 0;
+
+    //
+    // Public methods
+    //
+
+    constructor(init?: { sheetType?: SheetType; instantShow?: boolean }) {
+        if (init?.sheetType) this._sheetType = init?.sheetType;
+    }
+
+    init(instantShow = false) {
+        this._calcExpandedSheetHeight();
+        this._switch({
+            transient: () => {
+                // By default, transient sheets start expanded when they render!
+                this._setSheetTransform(this._expandedHeight);
+                requestAnimationFrame(() => this.expand(instantShow));
+            },
+            anchored: () => {
+                // By default anchored sheet is collapsed
+                // TODO make the default height configurable
+                // TODO plugin instantShow
+                this._collapsedHeight = this.sheet?.offsetHeight ?? 100;
+            },
+        });
+    }
+
+    collapse() {
+        this.isExpanded = false;
+        if (this._sheetType == "transient" || this._collapsedHeight > 0) {
+            this._snapTo(0);
+        }
+    }
+
+    expand(instant?: boolean) {
+        this.isExpanded = true;
+        if (instant) {
+            this.openFactor = 1;
+            this._switch({
+                transient: () => this._setSheetTransform(0),
+                anchored: () => this._setSheetHeight(this._expandedHeight),
+            });
+        } else {
+            this._snapTo(1);
+        }
+    }
+
+    // Only track movement in y dimension!
+    onDragStart(e: PointerEvent) {
+        // Remove any transition that may be attached to the sheet...
+        this._unsetSheetTransition();
+
+        // Set handle as the target for future drag events!
+        this.handle?.setPointerCapture(e.pointerId);
+
+        // If the user grabs handle in the middle of _animation!
+        this.dragged = true;
+        this._animating = false;
+        this._startY = e.clientY;
+        this._startHeight = this.sheet?.getBoundingClientRect().height;
+    }
+
+    onDrag(e: PointerEvent) {
+        // Bound value to 0..1
+        const bounded = (num: number) => Math.min(1, Math.max(0, num));
+
+        if (!this.handle?.hasPointerCapture(e.pointerId) || this._startY == null) return;
+
+        // How much did we drag...
+        const delta = this._startY - e.clientY;
+
+        this._switch({
+            transient: () => {
+                // The number will actually be inverted!
+                if (delta > 0) return;
+
+                // Calc the fraction of the sheet that's collapsed
+                this.openFactor = bounded(
+                    (this._expandedHeight - Math.abs(delta)) / this._expandedHeight,
+                );
+
+                // For transient sheet we set transform
+                this._setSheetTransform(Math.abs(delta));
+            },
+            anchored: () => {
+                if (!this._startHeight) return;
+
+                const currentHeight = Math.min(
+                    this._expandedHeight,
+                    Math.max(this._collapsedHeight, this._startHeight + delta),
+                );
+
+                // Calc the fraction of the sheet that's collapsed/expanded
+                this.openFactor = bounded(
+                    (currentHeight - this._collapsedHeight) /
+                        (this._expandedHeight - this._collapsedHeight),
+                );
+
+                // For anchored sheet we set height
+                this._setSheetHeight(currentHeight);
+            },
+        });
+    }
+
+    onDragStop(e: PointerEvent) {
+        if (this.handle?.hasPointerCapture(e.pointerId)) {
+            this.handle.releasePointerCapture(e.pointerId);
+        }
+
+        this._startY = undefined;
+        this._startHeight = undefined;
+        this.dragged = false;
+
+        this._switch({
+            transient: () => {
+                // We only consider closing the transient sheets
+                this.openFactor <= this.closeThreshold ? this.collapse() : this.expand();
+            },
+            anchored: () => {
+                // Anchored sheets may be open or closed
+                if (this.isExpanded) {
+                    this.openFactor <= this.closeThreshold ? this.collapse() : this.expand();
+                } else {
+                    this.openFactor >= this.openThreshold ? this.expand() : this.collapse();
+                }
+            },
+        });
+    }
+
+    //
+    // Private methods
+    //
+
+    // Must be called when component mounts! This function makes sure that the
+    // sheet expands to the desired height, and that we remember what this
+    // height should be compared to the avilable viewport.
+    _calcExpandedSheetHeight() {
+        this._expandedHeight = Math.round(
+            (window.visualViewport?.height ?? window.innerHeight) * this.maxViewportHeightFraction,
+        );
+
+        this._setSheetHeight(this._expandedHeight);
+    }
+
+    _switch<T>({ transient, anchored }: { transient: () => T; anchored: () => T }): T {
+        switch (this._sheetType) {
+            case "transient":
+                return transient();
+            case "anchored":
+                return anchored();
+        }
+    }
+
+    // Transition transform for transient sheets
+    _setSheetTransform(delta: number) {
+        if (this.sheet) this.sheet.style.transform = `translateY(${delta}px)`;
+    }
+
+    // Transition height for anchored sheets
+    // TODO transition scaleY instead of height, or translateY as alternative though a bit trickier.
+    _setSheetHeight(height: number) {
+        if (this.sheet) this.sheet.style.height = `${height}px`;
+    }
+
+    _setSheetTransition(duration: number) {
+        if (this.sheet) {
+            // Depending on the sheet type, we transition different properties
+            const prop = "transient" === this._sheetType ? "transform" : "height";
+
+            // TODO set transition curve configurable
+            this.sheet.style.transition = `${prop} ${duration}ms cubic-bezier(0.2, 0, 0, 1)`;
+        }
+    }
+
+    _unsetSheetTransition() {
+        if (this.sheet) this.sheet.style.transition = "none";
+    }
+
+    // Snap duration depends on how much the sheet is currently open, and whether
+    // we're trying to collapse or expand it. If we're at the beginning of either
+    // open or close threshold, we want to run the snap _animation
+    _snapDuration(factor: number, target: 0 | 1) {
+        let duration: number;
+        if (target === 1) {
+            duration = ((1 - factor) / (1 - this.openThreshold)) * this.speed;
+        } else {
+            duration = (factor / this.closeThreshold) * this.speed;
+        }
+        return Math.max(0, Math.min(this.speed, duration));
+    }
+
+    // This function sets the CSS height transition for the sheet, and starts
+    // the _animation tracker function.
+    _snapTo(target: 0 | 1) {
+        this._animating = true;
+        this._animationStart = performance.now();
+        this._animationFrom = this.openFactor;
+        this._animationTo = target;
+        this._animationDuration = this._snapDuration(this._animationFrom, target);
+
+        this._switch({
+            transient: () => {
+                // Either set translation to zero, or full height of the sheet
+                this._setSheetTransform(target == 1 ? 0 : this._expandedHeight);
+            },
+            anchored: () => {
+                this._setSheetHeight(target === 1 ? this._expandedHeight : this._collapsedHeight);
+
+                // With anchored sheets, shorten the duration for the content
+                // fade ins, so that they would finish by the time CSS
+                // transition is done.
+                this._animationDuration *= 0.9;
+            },
+        });
+
+        this._setSheetTransition(this._animationDuration);
+        requestAnimationFrame(this._trackAnimation.bind(this));
+    }
+
+    // Just tracks along the expected CSS _animation duration and updates the
+    // openFactor value. It does NOT animate the sheet transition!
+    _trackAnimation(now: number) {
+        if (!this._animating) return;
+
+        const elapsed = now - this._animationStart;
+        const t =
+            this._animationDuration === 0 ? 1 : Math.min(elapsed / this._animationDuration, 1);
+
+        this.openFactor = this._animationFrom + (this._animationTo - this._animationFrom) * t;
+
+        if (t < 1) {
+            requestAnimationFrame(this._trackAnimation.bind(this));
+        } else {
+            this.openFactor = this._animationTo;
+            this._animating = false;
+
+            if (this.openFactor === 0) {
+                if ("function" === typeof this.onCollapsed) {
+                    this.onCollapsed();
+                }
+            } else {
+                if ("function" === typeof this.onExpanded) {
+                    this.onExpanded();
+                }
+            }
+        }
+    }
+}

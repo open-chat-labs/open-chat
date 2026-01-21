@@ -3,12 +3,12 @@
     import { hideTokenBalances } from "@src/stores/settings";
     import {
         Avatar,
-        Body,
         BodySmall,
         ColourVars,
         Container,
         MenuItem,
         MenuTrigger,
+        Subtitle,
     } from "component-lib";
     import { OpenChat, walletConfigStore, type EnhancedTokenDetails } from "openchat-client";
     import { getContext } from "svelte";
@@ -54,21 +54,25 @@
         padding={["md", "sm", "md", "lg"]}>
         <Avatar url={token.logo}></Avatar>
         <Container direction={"vertical"}>
-            <Body width={"hug"} fontWeight={"bold"}>{token.symbol}</Body>
+            <Subtitle width={"hug"} fontWeight={"bold"}>{token.symbol}</Subtitle>
             <BodySmall width={"hug"} colour={"textSecondary"} fontWeight={"bold"}
                 >{tokenState.formattedUnitValue}</BodySmall>
         </Container>
-        <Body blur={$hideTokenBalances} align={"end"} width={{ size: "6rem" }} fontWeight={"bold"}>
+        <Subtitle
+            blur={$hideTokenBalances}
+            align={"end"}
+            width={{ size: "6rem" }}
+            fontWeight={"bold"}>
             {tokenState.formattedTokenBalance}
-        </Body>
-        <Body
+        </Subtitle>
+        <Subtitle
             blur={$hideTokenBalances}
             align={"end"}
             width={{ size: "6rem" }}
             colour={"primary"}
             fontWeight={"bold"}>
             {tokenState.formattedConvertedValue}
-        </Body>
+        </Subtitle>
         {#if withMenu}
             {#if tokenState.refreshingBalance}
                 <Reload color={ColourVars.textSecondary} />

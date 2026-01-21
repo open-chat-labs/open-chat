@@ -2,7 +2,7 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { hideTokenBalances } from "@src/stores/settings";
     import { sum } from "@src/utils/math";
-    import { Body, BodySmall, ColourVars, CommonButton2, Container, H1 } from "component-lib";
+    import { BodySmall, ColourVars, CommonButton2, Container, H1, Subtitle } from "component-lib";
     import {
         type EnhancedTokenDetails,
         walletTokensSorted as accountsSorted,
@@ -65,7 +65,7 @@
             {/snippet}
             <Translatable resourceKey={i18nKey("Refresh wallet")} />
         </CommonButton2>
-        <Body width={"hug"}>/</Body>
+        <Subtitle width={"hug"} colour="textTertiary" fontWeight="bold">/</Subtitle>
         <CommonButton2 onClick={hideTokenBalances.toggle} width="fill">
             {#snippet icon(color, size)}
                 {#if $hideTokenBalances}

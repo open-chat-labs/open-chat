@@ -4,3 +4,4 @@ export * from "./portalState";
 export * from "./position";
 export * from "./transition";
 export * from "./url";
+export * from "./fraction";
