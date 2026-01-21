@@ -53,6 +53,7 @@ import {
     canRetryMessage,
     chatIdentifierToString,
     chatIdentifiersEqual,
+    emptyEventsResponse,
     isSuccessfulEventsResponse,
     updateCreatedUser,
 } from "openchat-shared";
@@ -67,6 +68,7 @@ export type EnhancedWrapper<T extends ChatEvent> = EventWrapper<T> & {
     kind: "event";
     chatId: ChatIdentifier;
     messageKey: string | undefined;
+    dirty?: boolean;
 };
 
 export interface ChatSchema extends DBSchema {
@@ -446,19 +448,28 @@ export async function setCachedChats(
     const eventsStore = tx.objectStore("chat_events");
     const threadsStore = tx.objectStore("thread_events");
 
-    const deleteRequests = [...updatedEvents.entries()].flatMap(([chatId, indexes]) => {
-        return indexes.map((i) => {
+    const markDirtyRequests = [...updatedEvents.entries()].flatMap(([chatId, indexes]) => {
+        return indexes.map(async (i) => {
             const key = createCacheKey(
                 { chatId, threadRootMessageIndex: i.threadRootMessageIndex },
                 i.eventIndex,
             );
-            return i.threadRootMessageIndex === undefined
-                ? eventsStore.delete(key)
-                : threadsStore.delete(key);
+            const store = i.threadRootMessageIndex === undefined ? eventsStore : threadsStore;
+
+            const event = await store.get(key);
+            if (event?.kind === "event" && !event.dirty) {
+                await store.put(
+                    {
+                        ...event,
+                        dirty: true,
+                    },
+                    key,
+                );
+            }
         });
     });
 
-    const promises = [chatsStore.put(stateToCache, principal.toString()), ...deleteRequests];
+    const promises = [chatsStore.put(stateToCache, principal.toString()), ...markDirtyRequests];
 
     await Promise.all(promises);
     await tx.done;
@@ -488,11 +499,11 @@ export async function getCachedEvents(
     maxEvents = MAX_EVENTS,
     maxMessages = MAX_MESSAGES,
     maxMissing = 50,
-): Promise<[EventsSuccessResult<ChatEvent>, Set<number>]> {
+): Promise<[EventsSuccessResult<ChatEvent>, Set<number>, Set<number>]> {
     console.debug("CACHE: ", context, eventIndexRange, startIndex, ascending);
     const start = Date.now();
 
-    const [events, expiredEventRanges, missing] = await iterateCachedEvents(
+    const [events, expiredEventRanges, missing, dirty] = await iterateCachedEvents(
         await db,
         eventIndexRange,
         context,
@@ -517,6 +528,7 @@ export async function getCachedEvents(
             latestEventIndex: undefined,
         },
         missing,
+        dirty,
     ];
 }
 
@@ -528,23 +540,14 @@ export async function getCachedEventsWindowByMessageIndex(
     maxEvents = MAX_EVENTS,
     maxMessages = MAX_MESSAGES,
     maxMissing = 50,
-): Promise<[EventsSuccessResult<ChatEvent>, Set<number>, boolean]> {
+): Promise<[EventsSuccessResult<ChatEvent>, Set<number>, Set<number>, boolean]> {
     const eventIndex = await getNearestCachedEventIndexForMessageIndex(db, context, messageIndex);
 
     if (eventIndex === undefined) {
-        return [
-            {
-                events: [],
-                expiredEventRanges: [],
-                expiredMessageRanges: [],
-                latestEventIndex: undefined,
-            },
-            new Set(),
-            true,
-        ];
+        return [emptyEventsResponse(), new Set(), new Set(), true];
     }
 
-    const [events, missing] = await getCachedEventsWindow(
+    const [events, missing, dirty] = await getCachedEventsWindow(
         db,
         eventIndexRange,
         context,
@@ -554,7 +557,7 @@ export async function getCachedEventsWindowByMessageIndex(
         maxMissing,
     );
 
-    return [events, missing, false];
+    return [events, missing, dirty, false];
 }
 
 export async function getCachedEventsWindow(
@@ -565,13 +568,13 @@ export async function getCachedEventsWindow(
     maxEvents = MAX_EVENTS,
     maxMessages = MAX_MESSAGES,
     maxMissing = 50,
-): Promise<[EventsSuccessResult<ChatEvent>, Set<number>]> {
+): Promise<[EventsSuccessResult<ChatEvent>, Set<number>, Set<number>]> {
     console.debug("CACHE: window: ", eventIndexRange, startIndex);
     const start = Date.now();
     const resolvedDb = await db;
 
     const promises = [] as Promise<
-        [EnhancedWrapper<ChatEvent>[], ExpiredEventsRange[], Set<number>]
+        [EnhancedWrapper<ChatEvent>[], ExpiredEventsRange[], Set<number>, Set<number>]
     >[];
     if (eventIndexRange[0] <= startIndex - 1) {
         promises.push(
@@ -602,24 +605,21 @@ export async function getCachedEventsWindow(
         );
     }
 
-    const results: EventsSuccessResult<ChatEvent> = {
-        events: [],
-        expiredEventRanges: [],
-        expiredMessageRanges: [],
-        latestEventIndex: undefined,
-    };
+    const results: EventsSuccessResult<ChatEvent> = emptyEventsResponse();
     const combinedMissing = new Set<number>();
-    for (const [events, expiredEventRanges, missing] of await Promise.all(promises)) {
+    const combinedDirty = new Set<number>();
+    for (const [events, expiredEventRanges, missing, dirty] of await Promise.all(promises)) {
         events.forEach((e) => results.events.push(e));
         expiredEventRanges.forEach((r) => results.expiredEventRanges.push(r));
         missing.forEach((m) => combinedMissing.add(m));
+        dirty.forEach((d) => combinedDirty.add(d));
     }
 
     if (combinedMissing.size === 0) {
         console.debug("CACHE: hit: ", results.events.length, Date.now() - start);
     }
 
-    return [results, combinedMissing];
+    return [results, combinedMissing, combinedDirty];
 }
 
 export async function getCachedEventByIndex(
@@ -651,10 +651,11 @@ export async function getCachedEventsByIndex(
     db: Database,
     eventIndexes: number[],
     context: MessageContext,
-): Promise<[EventsSuccessResult<ChatEvent>, Set<number>]> {
+): Promise<[EventsSuccessResult<ChatEvent>, Set<number>, Set<number>]> {
     const events: EnhancedWrapper<ChatEvent>[] = [];
     const expiredEventRanges: ExpiredEventsRange[] = [];
     const missing = new Set<number>();
+    const dirty = new Set<number>();
     const resolvedDb = await db;
     const now = Date.now();
     await Promise.all(
@@ -664,6 +665,9 @@ export async function getCachedEventsByIndex(
                 missing.add(idx);
             } else if (evt.kind === "event") {
                 events.push(evt);
+                if (evt.dirty) {
+                    dirty.add(evt.index);
+                }
             } else {
                 expiredEventRanges.push(evt);
             }
@@ -677,6 +681,7 @@ export async function getCachedEventsByIndex(
             latestEventIndex: undefined,
         },
         missing,
+        dirty,
     ];
 }
 
@@ -732,26 +737,6 @@ async function getCachedEventIndexByMessageIndex(
         return value.index;
     }
     return undefined;
-}
-
-export function mergeSuccessResponses(
-    a: EventsSuccessResult<ChatEvent>,
-    b: EventsSuccessResult<ChatEvent>,
-): EventsSuccessResult<ChatEvent> {
-    return {
-        events: [...a.events, ...b.events].sort((a, b) => getIndex(a) - getIndex(b)),
-        expiredEventRanges: [...a.expiredEventRanges, ...b.expiredEventRanges],
-        expiredMessageRanges: [...a.expiredMessageRanges, ...b.expiredMessageRanges],
-        latestEventIndex:
-            a.latestEventIndex === undefined && b.latestEventIndex === undefined
-                ? undefined
-                : Math.max(a.latestEventIndex ?? -1, b.latestEventIndex ?? -1),
-    };
-}
-
-function getIndex(event: EventWrapper<ChatEvent> | ExpiredEventsRange): number {
-    if ("index" in event) return event.index;
-    return event.start;
 }
 
 // we need to strip out the blobData promise from any media content because that cannot be serialised
@@ -1224,13 +1209,14 @@ async function iterateCachedEvents(
     maxEvents: number,
     maxMessages: number,
     maxMissing: number,
-): Promise<[EnhancedWrapper<ChatEvent>[], ExpiredEventsRange[], Set<number>]> {
+): Promise<[EnhancedWrapper<ChatEvent>[], ExpiredEventsRange[], Set<number>, Set<number>]> {
     const bound = ascending ? eventIndexRange[1] : eventIndexRange[0];
     const iterator = await EventsIterator.create(db, context, startIndex, ascending, bound);
 
     const events: EnhancedWrapper<ChatEvent>[] = [];
     const expiredEventRanges: ExpiredEventsRange[] = [];
     const missing = new Set<number>();
+    const dirty = new Set<number>();
     let messageCount = 0;
     let expectedNextIndex: number = startIndex;
 
@@ -1284,6 +1270,10 @@ async function iterateCachedEvents(
         if (next.kind === "event") {
             events.push(next);
 
+            if (next.dirty) {
+                dirty.add(next.index);
+            }
+
             if (next.event.kind === "message") {
                 if (++messageCount == maxMessages) {
                     break;
@@ -1294,7 +1284,7 @@ async function iterateCachedEvents(
         }
     }
 
-    return [events, expiredEventRanges, missing];
+    return [events, expiredEventRanges, missing, dirty];
 }
 
 function mergeRanges(left: ExpiredEventsRange, right: ExpiredEventsRange): ExpiredEventsRange {

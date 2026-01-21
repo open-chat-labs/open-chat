@@ -10,6 +10,7 @@ import type {
     Message,
 } from "openchat-shared";
 import {
+    emptyEventsResponse,
     isSuccessfulEventsResponse,
     MAX_EVENTS,
     MAX_MISSING,
@@ -23,7 +24,6 @@ import {
     getCachedEventsByIndex,
     getCachedEventsWindowByMessageIndex,
     loadMessagesByMessageIndex,
-    mergeSuccessResponses,
     setCachedEvents,
 } from "../../utils/caching";
 
@@ -158,7 +158,7 @@ export class CachedChatEventsReader {
     ): Stream<EventsResponse<ChatEvent>> {
         return new Stream(async (resolve, reject) => {
             try {
-                const [cachedEvents, missing] = await getCachedEvents(
+                const [cachedEvents, missing, dirty] = await getCachedEvents(
                     this.db,
                     eventIndexRange,
                     { chatId, threadRootMessageIndex },
@@ -210,13 +210,15 @@ export class CachedChatEventsReader {
                             }
                         });
                 } else {
-                    this.handleMissingEvents(
+                    await this.handleMissingEvents(
                         reader,
                         chatId,
-                        [cachedEvents, missing],
+                        [cachedEvents, missing, dirty],
                         threadRootMessageIndex,
                         latestKnownUpdate,
-                    ).then((resp) => resolve(resp, true));
+                        resolve,
+                        reject,
+                    );
                 }
             } catch (err) {
                 reject(err);
@@ -243,9 +245,10 @@ export class CachedChatEventsReader {
                         resp,
                         threadRootMessageIndex,
                         latestKnownUpdate,
+                        resolve,
+                        reject,
                     ),
                 )
-                .then((resp) => resolve(resp, true))
                 .catch(reject);
         });
     }
@@ -261,14 +264,14 @@ export class CachedChatEventsReader {
     ): Stream<EventsResponse<ChatEvent>> {
         return new Stream(async (resolve, reject) => {
             try {
-                const [cachedEvents, missing, totalMiss] =
+                const [cachedEvents, missing, dirty, totalMiss] =
                     await getCachedEventsWindowByMessageIndex(
                         this.db,
                         eventIndexRange,
                         { chatId, threadRootMessageIndex },
                         messageIndex,
                     );
-                if (totalMiss || missing.size >= MAX_MISSING) {
+                if (totalMiss || missing.size + dirty.size >= MAX_MISSING) {
                     // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
                     console.debug(
                         "We didn't get enough back from the cache, going to the api",
@@ -324,10 +327,12 @@ export class CachedChatEventsReader {
                     this.handleMissingEvents(
                         reader,
                         chatId,
-                        [cachedEvents, missing],
+                        [cachedEvents, missing, dirty],
                         threadRootMessageIndex,
                         latestKnownUpdate,
-                    ).then((resp) => resolve(resp, true));
+                        resolve,
+                        reject,
+                    );
                 }
             } catch (err) {
                 reject(err);
@@ -395,24 +400,30 @@ export class CachedChatEventsReader {
     private async handleMissingEvents(
         reader: IChatEventsReader,
         chatId: ChatIdentifier,
-        [cachedEvents, missing]: [EventsSuccessResult<ChatEvent>, Set<number>],
+        [cachedEvents, missing, dirty]: [EventsSuccessResult<ChatEvent>, Set<number>, Set<number>],
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
-        if (missing.size === 0 || offline()) {
-            return Promise.resolve(cachedEvents);
-        } else {
-            return reader
-                .chatEventsByIndex(chatId, [...missing], threadRootMessageIndex, latestKnownUpdate)
-                .then((resp) => {
-                    setCachedEvents(this.db, chatId, resp, threadRootMessageIndex);
+        resolve: (val: EventsResponse<ChatEvent>, final: boolean) => void,
+        reject?: (reason?: unknown) => void,
+    ): Promise<void> {
+        const toFetch = offline() ? [] : [...missing, ...dirty];
 
-                    if (isSuccessfulEventsResponse(resp)) {
-                        return mergeSuccessResponses(cachedEvents, resp);
-                    }
-                    return resp;
-                });
+        if (toFetch.length === 0) {
+            resolve(cachedEvents, true);
+            return;
         }
+
+        if (missing.size === 0) {
+            resolve(cachedEvents, false);
+        }
+
+        return reader
+            .chatEventsByIndex(chatId, toFetch, threadRootMessageIndex, latestKnownUpdate)
+            .then((resp) => {
+                setCachedEvents(this.db, chatId, resp, threadRootMessageIndex);
+                resolve(resp, true);
+            })
+            .catch(reject);
     }
 
     private eventsReader(kind: ChatIdentifier["kind"]): IChatEventsReader {
@@ -448,12 +459,7 @@ async function chunkedChatEventsFromBackend(
     const chunkSize = MAX_EVENTS / 5;
     let index = startIndex;
 
-    let aggregatedResponse: EventsSuccessResult<ChatEvent> = {
-        events: [],
-        expiredEventRanges: [],
-        expiredMessageRanges: [],
-        latestEventIndex: undefined,
-    };
+    let aggregatedResponse: EventsSuccessResult<ChatEvent> = emptyEventsResponse();
 
     while (
         aggregatedResponse.events.length < MAX_EVENTS &&
@@ -501,12 +507,7 @@ async function chunkedChatEventsWindowFromBackend(
     let highIndex = messageIndex;
     let lowIndex = messageIndex;
 
-    let aggregatedResponse: EventsSuccessResult<ChatEvent> = {
-        events: [],
-        expiredEventRanges: [],
-        expiredMessageRanges: [],
-        latestEventIndex: undefined,
-    };
+    let aggregatedResponse: EventsSuccessResult<ChatEvent> = emptyEventsResponse();
 
     while (
         aggregatedResponse.events.length < MAX_EVENTS &&

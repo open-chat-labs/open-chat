@@ -53,22 +53,46 @@ export class Stream<T> {
         this.onEnd = subscription.onEnd;
     }
 
-    map<TOut>(mapFn: (val: T) => TOut): Stream<TOut> {
+    map<TOut>(mapFn: (val: T, index: number) => TOut): Stream<TOut> {
         return new Stream<TOut>((resolve, reject) => {
+            let index = 0;
             this.subscribe({
-                onResult: (val, final) => resolve(mapFn(val), final),
+                onResult: (val, final) => resolve(mapFn(val, index++), final),
                 onError: reject,
             });
         });
     }
 
-    mapAsync<TOut>(mapFn: (val: T) => Promise<TOut>): Stream<TOut> {
+    mapAsync<TOut>(mapFn: (val: T, index: number) => Promise<TOut>): Stream<TOut> {
         return new Stream<TOut>((resolve, reject) => {
+            let index = 0;
             this.subscribe({
                 onResult: (val, final) =>
-                    mapFn(val)
+                    mapFn(val, index++)
                         .then((mapped) => resolve(mapped, final))
                         .catch(reject),
+                onError: reject,
+            });
+        });
+    }
+
+    aggregate<TOut>(
+        callbackFn: (previousValue: TOut, currentValue: T, currentIndex: number) => TOut,
+        initialValue: TOut,
+    ): Stream<TOut> {
+        return new Stream<TOut>((resolve, reject) => {
+            let agg = initialValue;
+            let index = 0;
+            this.subscribe({
+                onResult: (val, final) => {
+                    try {
+                        agg = callbackFn(agg, val, index++);
+                    } catch (err) {
+                        reject(err);
+                        throw err;
+                    }
+                    resolve(agg, final);
+                },
                 onError: reject,
             });
         });
