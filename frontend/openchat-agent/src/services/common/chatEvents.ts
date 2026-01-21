@@ -167,7 +167,7 @@ export class CachedChatEventsReader {
                 );
 
                 // we may or may not have all the requested events
-                if (missing.size >= MAX_MISSING) {
+                if (missing.size + dirty.size > MAX_MISSING) {
                     // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
                     console.debug("We didn't get enough back from the cache, going to the api");
                     reader
@@ -271,7 +271,7 @@ export class CachedChatEventsReader {
                         { chatId, threadRootMessageIndex },
                         messageIndex,
                     );
-                if (totalMiss || missing.size + dirty.size >= MAX_MISSING) {
+                if (totalMiss || missing.size + dirty.size > MAX_MISSING) {
                     // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
                     console.debug(
                         "We didn't get enough back from the cache, going to the api",

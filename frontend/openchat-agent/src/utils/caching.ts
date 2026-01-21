@@ -1247,7 +1247,7 @@ async function iterateCachedEvents(
 
             for (let i = expectedNextIndex; i < startIndex; i++) {
                 missing.add(i);
-                if (missing.size > maxMissing) {
+                if (missing.size + dirty.size > maxMissing) {
                     break;
                 }
             }
@@ -1259,7 +1259,7 @@ async function iterateCachedEvents(
 
             for (let i = expectedNextIndex; i > startIndex; i--) {
                 missing.add(i);
-                if (missing.size > maxMissing) {
+                if (missing.size + dirty.size > maxMissing) {
                     break;
                 }
             }
