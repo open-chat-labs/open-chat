@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { BodySmall } from "component-lib";
+    import { BodySmall, Column } from "component-lib";
     import {
         currentUserIdStore,
         OpenChat,
@@ -38,7 +38,7 @@
     );
 </script>
 
-<div class="quote">
+<Column supplementalClass={"replies_to"}>
     <BodySmall fontWeight={"bold"}>
         {displayName}
     </BodySmall>
@@ -68,11 +68,12 @@
     {:else}
         {"TODO - we don't have the message content for this"}
     {/if}
-</div>
+</Column>
 
 <style lang="scss">
-    .quote {
-        border-left: 4px solid var(--primary-light);
-        padding-left: var(--sp-md);
+    :global(.container.replies_to) {
+        border-left: 4px solid var(--primary-light) !important;
+        padding-left: var(--sp-md) !important;
+        pointer-events: none;
     }
 </style>

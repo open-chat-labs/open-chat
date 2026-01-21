@@ -20,7 +20,6 @@
         expectWindowInsetChange,
     } from "@utils/native/notification_channels";
     import "@utils/scream";
-    import { synonymousUrlRegex } from "@utils/urls";
     import { portalState } from "component-lib";
     import {
         type ChatIdentifier,
@@ -107,12 +106,10 @@
                 const link = target?.closest("a") as HTMLAnchorElement | null;
 
                 if (link && link.href) {
-                    const url = new URL(link.href, import.meta.env.OC_BASE_ORIGIN);
-                    const isOCLink = synonymousUrlRegex.test(link.href);
-
-                    console.log("Click is local: ", isOCLink, import.meta.env.OC_BASE_ORIGIN);
-
-                    if (!isOCLink || forbiddenPaths.has(url.pathname)) {
+                    const url = new URL(link.href);
+                    // the markdown plugin will have set the target to _blank for external link (hopefully!)
+                    if (link.target === "_blank" || forbiddenPaths.has(url.pathname)) {
+                        // this is an external link
                         event.preventDefault();
                         openUrl({ url: url.toString() });
                     }
