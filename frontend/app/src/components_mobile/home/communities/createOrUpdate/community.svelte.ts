@@ -195,6 +195,11 @@ class UpdateCommunityState extends UpdateGroupOrCommunityState {
             this.confirming = false;
             this.showingVerificationWarning = false;
 
+            const permissionsDirty = client.haveCommunityPermissionsChanged(
+                this.original?.permissions,
+                this.candidate.permissions,
+            );
+
             const community = $state.snapshot(this.candidateCommunity);
             const communityRules = $state.snapshot(this.#rules);
             return client
@@ -203,8 +208,7 @@ class UpdateCommunityState extends UpdateGroupOrCommunityState {
                     this.#nameChanged ? community.name : undefined,
                     this.#descriptionChanged ? community.description : undefined,
                     this.rulesChanged ? communityRules : undefined,
-                    undefined, // todo - come back and sort out permissions
-                    // permissionsDirty ? community.permissions : undefined,
+                    permissionsDirty ? community.permissions : undefined,
                     this.#avatarChanged ? community.avatar.blobData : undefined,
                     this.#bannerChanged ? community.banner.blobData : undefined,
                     this.accessGatesChanged(client) ? community.gateConfig : undefined,
