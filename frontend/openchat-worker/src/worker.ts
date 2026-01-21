@@ -102,10 +102,7 @@ async function createOpenChatIdentity(
 
     const sessionKey = await ECDSAKeyIdentity.generate();
 
-    const response = await identityAgent.createOpenChatIdentity(
-        sessionKey,
-        webAuthnCredentialId,
-    );
+    const response = await identityAgent.createOpenChatIdentity(sessionKey, webAuthnCredentialId);
 
     if (typeof response !== "string") {
         await ocIdentityStorage.set(sessionKey, response.getDelegation(), authPrincipalString);
@@ -144,7 +141,7 @@ function handleAgentEvent(ev: Event): void {
     }
 }
 
-const sendError = (correlationId: string, payload?: unknown) => {
+const sendError = (correlationId: number, payload?: unknown) => {
     return (error: unknown) => {
         logger.error("WORKER: error caused by payload: ", error, payload);
         postMessage({
@@ -157,7 +154,7 @@ const sendError = (correlationId: string, payload?: unknown) => {
 
 function streamReplies(
     payload: WorkerRequest,
-    correlationId: string,
+    correlationId: number,
     chain: Stream<WorkerResponseInner>,
 ) {
     const start = Date.now();
@@ -178,7 +175,7 @@ function streamReplies(
 
 function executeThenReply(
     payload: WorkerRequest,
-    correlationId: string,
+    correlationId: number,
     promise: Promise<WorkerResponseInner>,
 ) {
     promise
@@ -186,7 +183,7 @@ function executeThenReply(
         .catch(sendError(correlationId, payload));
 }
 
-function sendResponse(correlationId: string, response: WorkerResponseInner, final = true): void {
+function sendResponse(correlationId: number, response: WorkerResponseInner, final = true): void {
     logger.debug("WORKER: sending response: ", correlationId);
     postMessage({
         kind: "worker_response",
@@ -267,17 +264,15 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             executeThenReply(
                 payload,
                 correlationId,
-                createOpenChatIdentity(payload.webAuthnCredentialId).then(
-                    (resp) => {
-                        const id = typeof resp !== "string" ? resp : new AnonymousIdentity();
-                        agent = new OpenChatAgent(id, authPrincipalString ?? "", {
-                            ...config,
-                            logger,
-                        });
-                        agent.addEventListener("openchat_event", handleAgentEvent);
-                        return typeof resp !== "string" ? "success" : resp;
-                    },
-                ),
+                createOpenChatIdentity(payload.webAuthnCredentialId).then((resp) => {
+                    const id = typeof resp !== "string" ? resp : new AnonymousIdentity();
+                    agent = new OpenChatAgent(id, authPrincipalString ?? "", {
+                        ...config,
+                        logger,
+                    });
+                    agent.addEventListener("openchat_event", handleAgentEvent);
+                    return typeof resp !== "string" ? "success" : resp;
+                }),
             );
             return;
         }
