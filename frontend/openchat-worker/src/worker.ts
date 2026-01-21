@@ -141,11 +141,12 @@ function handleAgentEvent(ev: Event): void {
     }
 }
 
-const sendError = (correlationId: number, payload?: unknown) => {
+const sendError = (kind: string, correlationId: number, payload?: unknown) => {
     return (error: unknown) => {
-        logger.error("WORKER: error caused by payload: ", error, payload);
+        logger.error("WORKER: error caused by payload: ", kind, error, payload);
         postMessage({
             kind: "worker_error",
+            requestKind: kind,
             correlationId,
             error: JSON.stringify(error, Object.getOwnPropertyNames(error)),
         });
@@ -154,6 +155,7 @@ const sendError = (correlationId: number, payload?: unknown) => {
 
 function streamReplies(
     payload: WorkerRequest,
+    kind: string,
     correlationId: number,
     chain: Stream<WorkerResponseInner>,
 ) {
@@ -167,26 +169,33 @@ function streamReplies(
                 Date.now(),
                 final,
             );
-            sendResponse(correlationId, value, final);
+            sendResponse(kind, correlationId, value, final);
         },
-        onError: sendError(correlationId, payload),
+        onError: sendError(kind, correlationId, payload),
     });
 }
 
 function executeThenReply(
     payload: WorkerRequest,
+    kind: string,
     correlationId: number,
     promise: Promise<WorkerResponseInner>,
 ) {
     promise
-        .then((response) => sendResponse(correlationId, response))
-        .catch(sendError(correlationId, payload));
+        .then((response) => sendResponse(kind, correlationId, response))
+        .catch(sendError(kind, correlationId, payload));
 }
 
-function sendResponse(correlationId: number, response: WorkerResponseInner, final = true): void {
+function sendResponse(
+    kind: string,
+    correlationId: number,
+    response: WorkerResponseInner,
+    final = true,
+): void {
     logger.debug("WORKER: sending response: ", correlationId);
     postMessage({
         kind: "worker_response",
+        requestKind: kind,
         correlationId,
         response,
         final,
@@ -222,7 +231,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 initPayload.websiteVersion,
                 initPayload.env,
             );
-            sendResponse(correlationId, undefined);
+            sendResponse(kind, correlationId, undefined);
             return;
         }
 
@@ -234,6 +243,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
         if (kind === "setAuthIdentity") {
             executeThenReply(
                 payload,
+                kind,
                 correlationId,
                 initializeAuthIdentity(
                     payload.identity,
@@ -263,6 +273,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
         if (kind === "createOpenChatIdentity") {
             executeThenReply(
                 payload,
+                kind,
                 correlationId,
                 createOpenChatIdentity(payload.webAuthnCredentialId).then((resp) => {
                     const id = typeof resp !== "string" ? resp : new AnonymousIdentity();
@@ -279,7 +290,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
         if (kind === "setMinLogLevel") {
             setMinLogLevel(payload.minLogLevel);
-            sendResponse(correlationId, undefined);
+            sendResponse(kind, correlationId, undefined);
             return;
         }
 
@@ -1606,15 +1617,15 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
         }
 
         if (action === undefined) {
-            sendResponse(correlationId, undefined);
+            sendResponse(kind, correlationId, undefined);
         } else if (action instanceof Stream) {
-            streamReplies(payload, correlationId, action);
+            streamReplies(payload, kind, correlationId, action);
         } else {
-            executeThenReply(payload, correlationId, action);
+            executeThenReply(payload, kind, correlationId, action);
         }
     } catch (err) {
-        logger?.debug("WORKER: unhandled error: ", err);
-        sendError(correlationId)(err);
+        logger?.debug("WORKER: unhandled error: ", err, kind);
+        sendError(kind, correlationId)(err);
     }
 });
 
