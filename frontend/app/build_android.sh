@@ -36,7 +36,7 @@ export OC_PUBLIC_TRANSLATE_API_KEY="$OC_APP_TRANSLATE_API_KEY"
 export OC_II_DERIVATION_ORIGIN=https://6hsbt-vqaaa-aaaaf-aaafq-cai.ic0.app
 # export OC_CUSTOM_DOMAINS=oc.app,webtest.oc.app
 export OC_CANISTER_URL_PATH=https://{canisterId}.raw.icp0.io
-export OC_WEBSITE_VERSION=2.0.0-mobile-rc29
+export OC_WEBSITE_VERSION=2.0.0-mobile-rc30
 
 # This is injected by the CI env
 export OC_ROLLBAR_ACCESS_TOKEN="this-is-a-fake-token"
