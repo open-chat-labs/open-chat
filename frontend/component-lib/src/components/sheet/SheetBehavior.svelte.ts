@@ -191,14 +191,26 @@ export class SheetBehavior {
         this._switch({
             transient: () => {
                 // We only consider closing the transient sheets
-                this.openFactor <= this.closeThreshold ? this.collapse() : this.expand();
+                if (this.openFactor <= this.closeThreshold) {
+                    this.collapse();
+                } else {
+                    this.expand();
+                }
             },
             anchored: () => {
                 // Anchored sheets may be open or closed
                 if (this.isExpanded) {
-                    this.openFactor <= this.closeThreshold ? this.collapse() : this.expand();
+                    if (this.openFactor <= this.closeThreshold) {
+                        this.collapse();
+                    } else {
+                        this.expand();
+                    }
                 } else {
-                    this.openFactor >= this.openThreshold ? this.expand() : this.collapse();
+                    if (this.openFactor >= this.openThreshold) {
+                        this.expand();
+                    } else {
+                        this.collapse();
+                    }
                 }
             },
         });
@@ -251,9 +263,10 @@ export class SheetBehavior {
                 return cases.transient();
             case "anchored":
                 return cases.anchored();
-            default:
+            default: {
                 const _unknown: never = this._sheetType;
                 throw new Error(`Unhandled sheet type: ${_unknown}`);
+            }
         }
     }
 

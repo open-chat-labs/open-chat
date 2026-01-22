@@ -37,6 +37,10 @@
     function getCollapsedContentOpacity(): number {
         return 1 - sheetBehavior.openFactor / openThreshold;
     }
+
+    export function collapse() {
+        return sheetBehavior.collapse();
+    }
 </script>
 
 <!-- TODO | There is still duplication in this file and SheetWrapper as they have

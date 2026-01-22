@@ -33,7 +33,7 @@
     let unreadRight = $state<HTMLElement>();
 
     function selectCommunity(community: CommunitySummary) {
-        anchoredSheet.collapseInstant();
+        anchoredSheet.collapse();
         activityFeedShowing.set(false);
         page(`/community/${community.id.communityId}`);
     }
@@ -94,7 +94,7 @@
 
     function createCommunity() {
         // Delaying collapse, allows the create community screen to animate in first!
-        setTimeout(() => anchoredSheet.collapseInstant(), 500);
+        setTimeout(() => anchoredSheet.collapse(), 500);
         updateCommunityState.createCommunity(client);
     }
 
