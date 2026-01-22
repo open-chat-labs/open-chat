@@ -33,7 +33,7 @@
     let unreadRight = $state<HTMLElement>();
 
     function selectCommunity(community: CommunitySummary) {
-        anchoredSheet.collapse();
+        anchoredSheet.collapse(true);
         activityFeedShowing.set(false);
         page(`/community/${community.id.communityId}`);
     }

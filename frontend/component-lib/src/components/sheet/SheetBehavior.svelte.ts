@@ -91,12 +91,22 @@ export class SheetBehavior {
         };
     }
 
-    collapse(): Promise<void> {
+    collapse(instant?: boolean): Promise<void> {
         return new Promise<void>((resolve) => {
             this._animationResolver = resolve;
             this.isExpanded = false;
             if (this._sheetType == "transient" || this._collapsedHeight > 0) {
-                this._snapTo(0);
+                if (instant) {
+                    this._setOpenFactor(0);
+                    this._clearSheetTransition();
+                    console.log("COLLAPSE INSTANT");
+                    this._switch({
+                        transient: () => this._setSheetTransform(this._expandedHeight),
+                        anchored: () => this._setSheetHeight(this._collapsedHeight),
+                    });
+                } else {
+                    this._snapTo(0);
+                }
             }
         });
     }
@@ -107,6 +117,7 @@ export class SheetBehavior {
             this.isExpanded = true;
             if (instant) {
                 this._setOpenFactor(1);
+                this._clearSheetTransition();
                 this._switch({
                     transient: () => this._setSheetTransform(0),
                     anchored: () => this._setSheetHeight(this._expandedHeight),
