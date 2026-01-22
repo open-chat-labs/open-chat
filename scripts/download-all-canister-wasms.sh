@@ -40,7 +40,6 @@ pids=()
 ./download-canister-wasm.sh user_index $WASM_SRC & pids+=($!)
 
 ./download-canister-wasm-dfx.sh event_store  & pids+=($!)
-./download-canister-wasm-dfx.sh sign_in_with_email & pids+=($!)
 ./download-canister-wasm-dfx.sh sign_in_with_ethereum & pids+=($!)
 ./download-canister-wasm-dfx.sh sign_in_with_solana & pids+=($!)
 
