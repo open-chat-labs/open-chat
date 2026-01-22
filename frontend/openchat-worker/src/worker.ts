@@ -1347,7 +1347,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "lookupWebAuthnPubKey":
-                IdentityAgent.create(
+                action = IdentityAgent.create(
                     new AnonymousIdentity(),
                     config.identityCanister,
                     config.icUrl,
@@ -1425,7 +1425,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "linkIdentities":
-                linkIdentities(
+                action = linkIdentities(
                     payload.initiatorKey,
                     payload.initiatorDelegation,
                     payload.initiatorIsIIPrincipal,
@@ -1438,7 +1438,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "removeIdentityLink":
-                removeIdentityLink(payload.linked_principal);
+                action = removeIdentityLink(payload.linked_principal);
                 break;
 
             case "getAuthenticationPrincipals":
@@ -1454,7 +1454,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "setCommunityReferral":
-                setCommunityReferral(
+                action = setCommunityReferral(
                     payload.communityId.communityId,
                     payload.referredBy,
                     Date.now(),
@@ -1478,7 +1478,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "deleteUser":
-                deleteUser(
+                action = deleteUser(
                     payload.identityKey,
                     payload.delegation,
                     config.identityCanister,
@@ -1487,7 +1487,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "getSignInProof":
-                getSignInProof(
+                action = getSignInProof(
                     payload.identityKey,
                     payload.delegation,
                     config.identityCanister,
@@ -1618,10 +1618,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
         if (action === undefined) {
             sendResponse(kind, correlationId, undefined);
-        } else if (action instanceof Stream) {
-            streamReplies(payload, kind, correlationId, action);
-        } else {
+        } else if (action instanceof Promise) {
             executeThenReply(payload, kind, correlationId, action);
+        } else {
+            streamReplies(payload, kind, correlationId, action);
         }
     } catch (err) {
         logger?.debug("WORKER: unhandled error: ", err, kind);
