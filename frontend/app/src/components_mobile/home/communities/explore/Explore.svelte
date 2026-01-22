@@ -211,6 +211,12 @@
     function showCommunity(community: CommunityMatch) {
         selectedCommunity = community;
     }
+
+    function scrolledToBottom(fromEnd: number) {
+        if (fromEnd < 100 && more && !searching) {
+            search(false);
+        }
+    }
 </script>
 
 {#if selectedCommunity !== undefined}
@@ -255,6 +261,7 @@
 
 <Container
     bind:ref={scrollableElement}
+    onInsideEnd={scrolledToBottom}
     height={"fill"}
     parentDirection={"vertical"}
     gap={"xl"}
