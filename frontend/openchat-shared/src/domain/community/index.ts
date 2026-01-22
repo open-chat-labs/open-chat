@@ -134,8 +134,6 @@ export type UpdateCommunityResponse =
     | OCError
     | Offline;
 
-export type ToggleMuteCommunityNotificationsResponse = Success | OCError | Offline;
-
 export type CreateCommunityResponse =
     | Offline
     | Failure
