@@ -864,25 +864,29 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    async chatEventsWindow(
+    chatEventsWindow(
         eventIndexRange: IndexRange,
         chatId: ChatIdentifier,
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
-        return this.rehydrateEventResponse(
-            chatId,
-            this._chatEventsReader.chatEventsWindow(
+    ): Stream<EventsResponse<ChatEvent>> {
+        return this._chatEventsReader
+            .chatEventsWindow(
                 chatId,
                 eventIndexRange,
                 messageIndex,
                 threadRootMessageIndex,
                 latestKnownUpdate,
-            ),
-            threadRootMessageIndex,
-            latestKnownUpdate,
-        );
+            )
+            .mapAsync((resp) =>
+                this.rehydrateEventResponse(
+                    chatId,
+                    resp,
+                    threadRootMessageIndex,
+                    latestKnownUpdate,
+                ),
+            );
     }
 
     chatEvents(
@@ -892,20 +896,24 @@ export class OpenChatAgent extends EventTarget {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
-        return this.rehydrateEventResponse(
-            chatId,
-            this._chatEventsReader.chatEvents(
+    ): Stream<EventsResponse<ChatEvent>> {
+        return this._chatEventsReader
+            .chatEvents(
                 chatId,
                 eventIndexRange,
                 startIndex,
                 ascending,
                 threadRootMessageIndex,
                 latestKnownUpdate,
-            ),
-            threadRootMessageIndex,
-            latestKnownUpdate,
-        );
+            )
+            .mapAsync((resp) =>
+                this.rehydrateEventResponse(
+                    chatId,
+                    resp,
+                    threadRootMessageIndex,
+                    latestKnownUpdate,
+                ),
+            );
     }
 
     chatEventsByEventIndex(
@@ -913,18 +921,17 @@ export class OpenChatAgent extends EventTarget {
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
-        return this.rehydrateEventResponse(
-            chatId,
-            this._chatEventsReader.chatEventsByIndex(
-                chatId,
-                eventIndexes,
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            ),
-            threadRootMessageIndex,
-            latestKnownUpdate,
-        );
+    ): Stream<EventsResponse<ChatEvent>> {
+        return this._chatEventsReader
+            .chatEventsByIndex(chatId, eventIndexes, threadRootMessageIndex, latestKnownUpdate)
+            .mapAsync((resp) =>
+                this.rehydrateEventResponse(
+                    chatId,
+                    resp,
+                    threadRootMessageIndex,
+                    latestKnownUpdate,
+                ),
+            );
     }
 
     async getDeletedGroupMessage(
@@ -1058,6 +1065,7 @@ export class OpenChatAgent extends EventTarget {
 
             return this._chatEventsReader
                 .chatEventsByIndex(chatId, idxs, ctx.threadRootMessageIndex, latestUpdate)
+                .toPromise()
                 .then((resp) => this.messagesFromEventsResponse(ctx, resp));
         });
 
@@ -1125,12 +1133,10 @@ export class OpenChatAgent extends EventTarget {
 
     private async rehydrateEventResponse<T extends ChatEvent>(
         currentChatId: ChatIdentifier,
-        eventsPromise: Promise<EventsResponse<T>>,
+        resp: EventsResponse<T>,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<T>> {
-        const resp = await eventsPromise;
-
         if (!isSuccessfulEventsResponse(resp)) {
             return resp;
         }
@@ -2635,18 +2641,22 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         messageIndexes: number[],
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<Message>> {
-        return this.rehydrateEventResponse(
-            chatId,
-            this._chatEventsReader.messagesByMessageIndex(
+    ): Stream<EventsResponse<Message>> {
+        return this._chatEventsReader
+            .messagesByMessageIndex(
                 chatId,
                 threadRootMessageIndex,
                 messageIndexes,
                 latestKnownUpdate,
-            ),
-            threadRootMessageIndex,
-            latestKnownUpdate,
-        );
+            )
+            .mapAsync((resp) =>
+                this.rehydrateEventResponse(
+                    chatId,
+                    resp,
+                    threadRootMessageIndex,
+                    latestKnownUpdate,
+                ),
+            );
     }
 
     pinMessage(chatId: MultiUserChatIdentifier, messageIndex: number): Promise<PinMessageResponse> {
@@ -4008,7 +4018,7 @@ export class OpenChatAgent extends EventTarget {
                 cxt.threadRootMessageIndex,
                 indexes,
                 undefined,
-            );
+            ).toPromise();
 
             if (isSuccessfulEventsResponse(response)) {
                 const lookup = toRecord2(
