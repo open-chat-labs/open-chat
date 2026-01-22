@@ -863,6 +863,14 @@ export function isSuccessfulEventsResponse<T extends ChatEvent>(
     return response !== undefined && typeof response === "object" && "events" in response;
 }
 
+export function assertSuccessfulEventsResponse<T extends ChatEvent>(
+    response: EventsResponse<T> | undefined,
+): asserts response is EventsSuccessResult<T> {
+    if (!isSuccessfulEventsResponse(response)) {
+        throw new Error("Events response error: " + JSON.stringify(response));
+    }
+}
+
 export type ChatEvent =
     | Message
     | DirectChatCreated
@@ -2510,3 +2518,12 @@ export type ChatEventType =
     | "BotAdded"
     | "BotRemoved"
     | "BotUpdated";
+
+export function emptyEventsResponse<T extends ChatEvent>(): EventsSuccessResult<T> {
+    return {
+        events: [],
+        expiredEventRanges: [],
+        expiredMessageRanges: [],
+        latestEventIndex: undefined,
+    };
+}

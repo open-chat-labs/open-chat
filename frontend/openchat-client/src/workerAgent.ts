@@ -5,20 +5,21 @@ import type {
     WorkerError,
     WorkerRequest,
     WorkerResponse,
-    WorkerResult
+    WorkerResult,
 } from "openchat-shared";
-import { ONE_MINUTE_MILLIS, Stream, random64 } from "openchat-shared";
+import { ONE_MINUTE_MILLIS, Stream } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { snapshot } from "./snapshot.svelte";
-import { messagesRead , storageStore} from "./state";
+import { messagesRead, storageStore } from "./state";
 import { userStore } from "./state/users/state";
 import { withPausedStores } from "./utils/stores";
 
 export class WorkerAgent {
     readonly #worker: Worker;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    readonly #inflightRequests: Map<string, PromiseResolver<any>> = new Map();
+    readonly #inflightRequests: Map<number, PromiseResolver<any>> = new Map();
     readonly #logger: Logger;
+    nextCorrelationId: number = 0;
 
     constructor(config: OpenChatConfig) {
         console.debug("WORKER_CLIENT: loading worker with version: ", config.websiteVersion);
@@ -117,7 +118,7 @@ export class WorkerAgent {
     }
 
     responseHandler<T>(
-        correlationId: string,
+        correlationId: number,
     ): (resolve: (val: T, final: boolean) => void, reject: (reason?: unknown) => void) => void {
         return (resolve, reject) => {
             this.#inflightRequests.set(correlationId, {
@@ -130,7 +131,7 @@ export class WorkerAgent {
     #sendRequestInternal<Req extends WorkerRequest, T>(
         req: Req,
     ): (resolve: (val: T, final: boolean) => void, reject: (reason?: unknown) => void) => void {
-        const correlationId = random64().toString();
+        const correlationId = this.nextCorrelationId++;
         try {
             this.#worker.postMessage({
                 ...snapshot(req),
@@ -158,7 +159,7 @@ export class WorkerAgent {
                 this.#inflightRequests.delete(data.correlationId);
             }
         } else {
-            this.#logUnexpected(data.correlationId);
+            this.#logUnexpected(data.requestKind, data.correlationId);
         }
     }
 
@@ -168,12 +169,12 @@ export class WorkerAgent {
             promise.reject(JSON.parse(data.error));
             this.#inflightRequests.delete(data.correlationId);
         } else {
-            this.#logUnexpected(data.correlationId);
+            this.#logUnexpected(data.requestKind, data.correlationId);
         }
     }
 
-    #logUnexpected(correlationId: string): void {
-        console.error(`WORKER_CLIENT: unexpected correlationId received (${correlationId})`);
+    #logUnexpected(kind: string, correlationId: number): void {
+        console.error(`WORKER_CLIENT: unexpected correlationId received (${correlationId})`, kind);
     }
 }
 

@@ -54,6 +54,7 @@ import {
     defaultChatPermissions,
     defaultChatRules,
     deletedUser,
+    emptyEventsResponse,
     extractUserIdsFromMentions,
     featureRestricted,
     getContentAsFormattedText,
@@ -515,6 +516,7 @@ import {
     isLapsed,
     isPreviewing,
     makeRtcConnections,
+    mergeEventStreamResponses,
     mergeSendMessageResponse,
     mergeServerEvents,
     messageIsReadByThem,
@@ -2579,7 +2581,7 @@ export class OpenChat {
         const threadRootMessageIndex = threadRootEvent.event.messageIndex;
 
         const eventsResponse: EventsResponse<ChatEvent> = await this.#worker
-            .send({
+            .stream({
                 kind: "chatEventsWindow",
                 eventIndexRange: [0, threadRootEvent.event.thread.latestEventIndex],
                 chatId,
@@ -2587,13 +2589,14 @@ export class OpenChat {
                 threadRootMessageIndex: threadRootEvent.event.messageIndex,
                 latestKnownUpdate: chat.lastUpdated,
             })
+            .aggregate(mergeEventStreamResponses, emptyEventsResponse())
+            .mapAsync((resp) => this.#handleEventsResponse(chat, threadRootMessageIndex, resp))
+            .toPromise()
             .catch(CommonResponses.failure);
 
         if (!isSuccessfulEventsResponse(eventsResponse)) {
             return undefined;
         }
-
-        await this.#handleThreadEventsResponse(chatId, threadRootMessageIndex, eventsResponse);
 
         publish("loadedMessageWindow", {
             context: { chatId, threadRootMessageIndex: threadRootEvent.event.messageIndex },
@@ -2634,7 +2637,7 @@ export class OpenChat {
 
             const range = indexRangeForChat(clientChat);
             const eventsResponse: EventsResponse<ChatEvent> = await this.#worker
-                .send({
+                .stream({
                     kind: "chatEventsWindow",
                     eventIndexRange: range,
                     chatId,
@@ -2642,22 +2645,25 @@ export class OpenChat {
                     threadRootMessageIndex: undefined,
                     latestKnownUpdate: serverChat?.lastUpdated,
                 })
+                .aggregate(mergeEventStreamResponses, emptyEventsResponse())
+                .mapAsync((resp, index) =>
+                    this.#handleEventsResponse(clientChat, undefined, resp, index > 0),
+                )
+                .toPromise()
                 .catch(CommonResponses.failure);
 
             if (!isSuccessfulEventsResponse(eventsResponse)) {
                 return undefined;
             }
 
-            if (await this.#handleEventsResponse(clientChat, eventsResponse, false)) {
-                publish("loadedMessageWindow", {
-                    context: {
-                        chatId: clientChat.id,
-                        threadRootMessageIndex: threadRootEvent?.event.messageIndex,
-                    },
-                    messageIndex,
-                    initialLoad,
-                });
-            }
+            publish("loadedMessageWindow", {
+                context: {
+                    chatId: clientChat.id,
+                    threadRootMessageIndex: threadRootEvent?.event.messageIndex,
+                },
+                messageIndex,
+                initialLoad,
+            });
 
             return messageIndex;
         }
@@ -2665,10 +2671,11 @@ export class OpenChat {
 
     async #handleEventsResponse(
         chat: ChatSummary,
+        threadRootMessageIndex: number | undefined,
         resp: EventsResponse<ChatEvent>,
         keepCurrentEvents = true,
-    ): Promise<boolean> {
-        if (!isSuccessfulEventsResponse(resp)) return false;
+    ): Promise<EventsResponse<ChatEvent>> {
+        if (!isSuccessfulEventsResponse(resp)) return resp;
 
         if (!keepCurrentEvents) {
             serverEventsStore.set([]);
@@ -2676,7 +2683,12 @@ export class OpenChat {
 
         await this.#updateUserStoreFromEvents(resp.events);
 
-        this.#addServerEventsToStores(chat.id, resp.events, undefined, resp.expiredEventRanges);
+        this.#addServerEventsToStores(
+            chat.id,
+            resp.events,
+            threadRootMessageIndex,
+            resp.expiredEventRanges,
+        );
 
         if (!get(offlineStore)) {
             makeRtcConnections(
@@ -2689,7 +2701,7 @@ export class OpenChat {
             );
         }
 
-        return true;
+        return resp;
     }
 
     async #updateUserStoreFromCommunityState(): Promise<void> {
@@ -3132,7 +3144,7 @@ export class OpenChat {
         }
 
         const eventsResponse: EventsResponse<ChatEvent> = await this.#worker
-            .send({
+            .stream({
                 kind: "chatEvents",
                 chatType: chat.kind,
                 chatId,
@@ -3142,22 +3154,12 @@ export class OpenChat {
                 threadRootMessageIndex,
                 latestKnownUpdate: chat.lastUpdated,
             })
+            .aggregate(mergeEventStreamResponses, emptyEventsResponse())
+            .mapAsync((resp) => this.#handleEventsResponse(chat, threadRootMessageIndex, resp))
+            .toPromise()
             .catch(CommonResponses.failure);
 
         if (isSuccessfulEventsResponse(eventsResponse)) {
-            await this.#handleThreadEventsResponse(chatId, threadRootMessageIndex, eventsResponse);
-
-            if (!get(offlineStore)) {
-                makeRtcConnections(
-                    currentUserIdStore.value,
-                    chat,
-                    threadEventsStore.value,
-                    userStore.allUsers,
-                    userStore.blockedUsers,
-                    this.config.meteredApiKey,
-                );
-            }
-
             if (ascending) {
                 publish("loadedNewMessages", { chatId, threadRootMessageIndex });
             } else {
@@ -3167,20 +3169,6 @@ export class OpenChat {
                 });
             }
         }
-    }
-
-    async #handleThreadEventsResponse(
-        chatId: ChatIdentifier,
-        threadRootMessageIndex: number,
-        resp: EventsResponse<ChatEvent>,
-    ): Promise<EventWrapper<ChatEvent>[]> {
-        if (!isSuccessfulEventsResponse(resp)) return [];
-
-        await this.#updateUserStoreFromEvents(resp.events);
-
-        this.#addServerEventsToStores(chatId, resp.events, threadRootMessageIndex, []);
-
-        return resp.events;
     }
 
     removePreviewedChat(chatId: ChatIdentifier) {
@@ -3325,11 +3313,7 @@ export class OpenChat {
             ? await this.#loadEvents(serverChat, criteria[0], criteria[1])
             : undefined;
 
-        if (!isSuccessfulEventsResponse(eventsResponse)) {
-            return;
-        }
-
-        if (await this.#handleEventsResponse(serverChat, eventsResponse)) {
+        if (isSuccessfulEventsResponse(eventsResponse)) {
             publish("loadedPreviousMessages", {
                 context: { chatId, threadRootMessageIndex: threadRootEvent?.event.messageIndex },
                 initialLoad,
@@ -3343,7 +3327,7 @@ export class OpenChat {
         ascending: boolean,
     ): Promise<EventsResponse<ChatEvent>> {
         return this.#worker
-            .send({
+            .stream({
                 kind: "chatEvents",
                 chatType: serverChat.kind,
                 chatId: serverChat.id,
@@ -3353,6 +3337,9 @@ export class OpenChat {
                 threadRootMessageIndex: undefined,
                 latestKnownUpdate: serverChat.lastUpdated,
             })
+            .aggregate(mergeEventStreamResponses, emptyEventsResponse())
+            .mapAsync((resp) => this.#handleEventsResponse(serverChat, undefined, resp))
+            .toPromise()
             .catch(CommonResponses.failure);
     }
 
@@ -3404,21 +3391,18 @@ export class OpenChat {
         }
 
         const criteria = this.#newMessageCriteria(serverChat);
-
-        const eventsResponse = criteria
-            ? await this.#loadEvents(serverChat, criteria[0], criteria[1])
-            : undefined;
-
-        if (!isSuccessfulEventsResponse(eventsResponse)) {
+        if (criteria === undefined) {
             return;
         }
 
-        await this.#handleEventsResponse(serverChat, eventsResponse);
+        const eventsResponse = await this.#loadEvents(serverChat, criteria[0], criteria[1]);
 
-        publish("loadedNewMessages", {
-            chatId,
-            threadRootMessageIndex: threadRootEvent?.event.messageIndex,
-        });
+        if (isSuccessfulEventsResponse(eventsResponse)) {
+            publish("loadedNewMessages", {
+                chatId,
+                threadRootMessageIndex: threadRootEvent?.event.messageIndex,
+            });
+        }
     }
 
     morePreviousMessagesAvailable(
@@ -3665,22 +3649,24 @@ export class OpenChat {
                 ? Promise.resolve()
                 : (serverChat.kind === "direct_chat"
                       ? this.#worker
-                            .send({
+                            .stream({
                                 kind: "chatEventsByEventIndex",
                                 chatId: serverChat.them,
                                 eventIndexes: currentChatEvents,
                                 threadRootMessageIndex: undefined,
                                 latestKnownUpdate: serverChat.lastUpdated,
                             })
+                            .toPromise()
                             .catch(CommonResponses.failure)
                       : this.#worker
-                            .send({
+                            .stream({
                                 kind: "chatEventsByEventIndex",
                                 chatId: serverChat.id,
                                 eventIndexes: currentChatEvents,
                                 threadRootMessageIndex: undefined,
                                 latestKnownUpdate: serverChat.lastUpdated,
                             })
+                            .toPromise()
                             .catch(CommonResponses.failure)
                   ).then((resp) => {
                       if (isSuccessfulEventsResponse(resp)) {
@@ -3696,23 +3682,24 @@ export class OpenChat {
                               }
                           });
                       }
-                      return this.#handleEventsResponse(serverChat, resp);
+                      return this.#handleEventsResponse(serverChat, undefined, resp);
                   });
 
         const threadEventPromise =
             currentThreadEvents.length === 0
                 ? Promise.resolve()
                 : this.#worker
-                      .send({
+                      .stream({
                           kind: "chatEventsByEventIndex",
                           chatId: serverChat.id,
                           eventIndexes: currentThreadEvents,
                           threadRootMessageIndex: selectedThreadRootMessageIndex,
                           latestKnownUpdate: serverChat.lastUpdated,
                       })
+                      .toPromise()
                       .then((resp) =>
-                          this.#handleThreadEventsResponse(
-                              serverChat.id,
+                          this.#handleEventsResponse(
+                              serverChat,
                               selectedThreadRootMessageIndex!,
                               resp,
                           ),
@@ -4671,7 +4658,7 @@ export class OpenChat {
 
         // Load the event
         this.#worker
-            .send({
+            .stream({
                 kind: "chatEvents",
                 chatType: serverChat.kind,
                 chatId,
@@ -4681,6 +4668,8 @@ export class OpenChat {
                 threadRootMessageIndex,
                 latestKnownUpdate: serverChat.lastUpdated,
             })
+            .aggregate(mergeEventStreamResponses, emptyEventsResponse())
+            .toPromise()
             .then((resp) => {
                 if (!isSuccessfulEventsResponse(resp)) return resp;
                 if (!this.isChatPrivate(serverChat)) return resp;
@@ -4737,7 +4726,7 @@ export class OpenChat {
                 latestKnownUpdate: serverChat.lastUpdated,
             })
             .then((m) => {
-                this.#handleEventsResponse(serverChat, {
+                this.#handleEventsResponse(serverChat, undefined, {
                     events: [m],
                     expiredEventRanges: [],
                     expiredMessageRanges: [],
@@ -5937,13 +5926,18 @@ export class OpenChat {
         const serverChat = allServerChatsStore.value.get(chatId);
 
         try {
-            const resp = await this.#worker.send({
-                kind: "getMessagesByMessageIndex",
-                chatId,
-                threadRootMessageIndex,
-                messageIndexes,
-                latestKnownUpdate: serverChat?.lastUpdated,
-            });
+            const resp = await this.#worker
+                .stream({
+                    kind: "getMessagesByMessageIndex",
+                    chatId,
+                    threadRootMessageIndex,
+                    messageIndexes,
+                    latestKnownUpdate: serverChat?.lastUpdated,
+                })
+                .aggregate(mergeEventStreamResponses, emptyEventsResponse<Message>())
+                .toPromise()
+                .catch(CommonResponses.failure);
+
             if (isSuccessfulEventsResponse(resp)) {
                 await this.#updateUserStoreFromEvents(resp.events);
             }
