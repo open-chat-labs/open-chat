@@ -20,13 +20,13 @@ const BATCH_SIZE = 20;
 const FAILURE = { kind: "failure" };
 
 export class CachePrimer {
-    private pending: QueuedChat[] = [];
-    private usersLoaded: Set<string> = new Set();
-    private jobActive: boolean = false;
-    private proposalTalliesJobActive: boolean = false;
-    private inProgress: Set<string> = new Set();
-    private blockedChats: Set<string> = new Set();
-    private proposalChats: Map<string, MultiUserChatIdentifier[]> = new Map();
+    #pending: QueuedChat[] = [];
+    #usersLoaded: Set<string> = new Set();
+    #jobActive: boolean = false;
+    #proposalTalliesJobActive: boolean = false;
+    #inProgress: Set<string> = new Set();
+    #blockedChats: Set<string> = new Set();
+    #proposalChats: Map<string, MultiUserChatIdentifier[]> = new Map();
     #isFirstIteration: boolean = true;
 
     constructor(
@@ -79,18 +79,18 @@ export class CachePrimer {
             );
         }
 
-        debug("processed updated chats, queue length: " + this.pending.length);
+        debug("processed updated chats, queue length: " + this.#pending.length);
 
         // Sort by `lastUpdated` ascending
-        this.pending.sort((a, b) => (a.lastUpdated > b.lastUpdated ? 1 : -1));
+        this.#pending.sort((a, b) => (a.lastUpdated > b.lastUpdated ? 1 : -1));
 
-        if (!this.jobActive && this.pending.length > 0) {
-            this.jobActive = true;
+        if (!this.#jobActive && this.#pending.length > 0) {
+            this.#jobActive = true;
             setTimeout(() => this.processNextBatch(), 0);
         }
 
-        if (!this.proposalTalliesJobActive && this.proposalChats.size > 0) {
-            this.proposalTalliesJobActive = true;
+        if (!this.#proposalTalliesJobActive && this.#proposalChats.size > 0) {
+            this.#proposalTalliesJobActive = true;
             this.processProposalTallies();
         }
 
@@ -103,15 +103,15 @@ export class CachePrimer {
         overwriteIfExists: boolean = false,
     ) {
         const chatIdString = chatIdentifierToString(chat.id);
-        if (this.inProgress.has(chatIdString) || this.blockedChats.has(chatIdString)) {
+        if (this.#inProgress.has(chatIdString) || this.#blockedChats.has(chatIdString)) {
             return;
         }
 
         if (chat.kind !== "direct_chat" && chat.subtype?.kind === "governance_proposals") {
-            let proposalChatIds = this.proposalChats.get(localUserIndex);
+            let proposalChatIds = this.#proposalChats.get(localUserIndex);
             if (proposalChatIds === undefined) {
                 proposalChatIds = [];
-                this.proposalChats.set(localUserIndex, proposalChatIds);
+                this.#proposalChats.set(localUserIndex, proposalChatIds);
             }
             proposalChatIds.push(chat.id);
         }
@@ -123,20 +123,20 @@ export class CachePrimer {
 
         const normalized = normalizeChat(chat, localUserIndex);
         if (overwriteIfExists) {
-            const index = this.pending.findIndex((c) => chatIdentifiersEqual(c.chatId, chat.id));
+            const index = this.#pending.findIndex((c) => chatIdentifiersEqual(c.chatId, chat.id));
             if (index > -1) {
-                this.pending[index] = normalized;
+                this.#pending[index] = normalized;
                 return;
             }
         }
-        this.pending.push(normalized);
+        this.#pending.push(normalized);
     }
 
     async processNextBatch(): Promise<void> {
         try {
             const next = this.getNextBatch();
             if (next === undefined) {
-                this.pending = [];
+                this.#pending = [];
                 debug("queue empty");
                 return;
             }
@@ -160,8 +160,8 @@ export class CachePrimer {
 
                     const { userIds } = userIdsFromEvents(response.result.events);
                     for (const userId of userIds) {
-                        if (!this.usersLoaded.has(userId)) {
-                            this.usersLoaded.add(userId);
+                        if (!this.#usersLoaded.has(userId)) {
+                            this.#usersLoaded.add(userId);
                             userIds.add(userId);
                         }
                     }
@@ -196,8 +196,8 @@ export class CachePrimer {
                     if (response.kind === "success") {
                         const { userIds } = userIdsFromEvents(response.result.events);
                         for (const userId of userIds) {
-                            if (!this.usersLoaded.has(userId)) {
-                                this.usersLoaded.add(userId);
+                            if (!this.#usersLoaded.has(userId)) {
+                                this.#usersLoaded.add(userId);
                                 userIds.add(userId);
                             }
                         }
@@ -212,10 +212,10 @@ export class CachePrimer {
 
             debug(`batch of size ${batch.length} completed`);
         } finally {
-            this.inProgress.clear();
-            if (this.pending.length === 0) {
+            this.#inProgress.clear();
+            if (this.#pending.length === 0) {
                 debug("runner stopped");
-                this.jobActive = false;
+                this.#jobActive = false;
             } else {
                 setTimeout(() => this.processNextBatch(), 500);
             }
@@ -227,8 +227,8 @@ export class CachePrimer {
         let localUserIndexForBatch: string | undefined = undefined;
 
         // Iterate backwards to reduce the number of items having to be moved each time we `splice` the array
-        for (let i = this.pending.length - 1; i >= 0; i--) {
-            const next = this.pending[i];
+        for (let i = this.#pending.length - 1; i >= 0; i--) {
+            const next = this.#pending[i];
 
             if (localUserIndexForBatch === undefined) {
                 localUserIndexForBatch = next.localUserIndex;
@@ -236,8 +236,8 @@ export class CachePrimer {
                 continue;
             }
 
-            this.pending.splice(i, 1);
-            this.inProgress.add(chatIdentifierToString(next.chatId));
+            this.#pending.splice(i, 1);
+            this.#inProgress.add(chatIdentifierToString(next.chatId));
 
             batch.push(this.getEventsArgs(next));
 
@@ -294,7 +294,7 @@ export class CachePrimer {
             if (error instanceof ResponseTooLargeError) {
                 if (batch.length === 1) {
                     // Block this chat to avoid retrying it indefinitely
-                    this.blockedChats.add(chatIdentifierToString(batch[0].context.chatId));
+                    this.#blockedChats.add(chatIdentifierToString(batch[0].context.chatId));
                 } else {
                     // Split the batch into individual requests and try again
                     return (
@@ -310,7 +310,7 @@ export class CachePrimer {
 
     private async processProposalTallies() {
         try {
-            for (const [localUserIndex, chatIds] of this.proposalChats) {
+            for (const [localUserIndex, chatIds] of this.#proposalChats) {
                 await this.updateProposalTallies(localUserIndex, chatIds);
             }
         } finally {
@@ -326,7 +326,7 @@ export class CachePrimer {
     }
 
     private removeFromPending(excludeFn: (value: ChatIdentifier) => boolean) {
-        retain(this.pending, (c) => !excludeFn(c.chatId));
+        retain(this.#pending, (c) => !excludeFn(c.chatId));
     }
 }
 
