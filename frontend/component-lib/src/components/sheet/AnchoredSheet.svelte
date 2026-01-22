@@ -47,9 +47,9 @@
      TODO | very similar CSS and HTML attached to them.
 -->
 <button
+    bind:this={sheetBehavior.backdrop}
     class="backdrop"
     class:active={sheetBehavior.openFactor > 0.2}
-    style={`opacity: ${sheetBehavior.openFactor};`}
     onclick={() => sheetBehavior.collapse()}
     aria-label="close sheet">
 </button>
@@ -100,6 +100,7 @@
         z-index: 1;
         background-color: var(--backdrop);
         pointer-events: none;
+        opacity: 0;
 
         &.active {
             pointer-events: auto;

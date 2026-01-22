@@ -37,9 +37,9 @@
 -->
 
 <button
+    bind:this={sheetBehavior.backdrop}
     class="backdrop"
-    class:active={sheetBehavior.openFactor > 0.01}
-    style={`opacity: ${sheetBehavior.openFactor};`}
+    class:active={sheetBehavior.openFactor > 0.2}
     onclick={() => sheetBehavior.collapse()}
     aria-label="close sheet">
 </button>

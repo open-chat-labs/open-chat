@@ -16,6 +16,7 @@ export class SheetBehavior {
     // State vars
     sheet = $state<HTMLElement | undefined>();
     handle = $state<HTMLElement | undefined>();
+    backdrop = $state<HTMLElement | undefined>();
     dragged = $state(false);
     isExpanded = $state(false);
 
@@ -93,9 +94,6 @@ export class SheetBehavior {
     collapse(): Promise<void> {
         return new Promise<void>((resolve) => {
             this._animationResolver = resolve;
-
-            if (!this.isExpanded) return resolve();
-
             this.isExpanded = false;
             if (this._sheetType == "transient" || this._collapsedHeight > 0) {
                 this._snapTo(0);
@@ -106,12 +104,9 @@ export class SheetBehavior {
     expand(instant?: boolean): Promise<void> {
         return new Promise<void>((resolve) => {
             this._animationResolver = resolve;
-
-            if (this.isExpanded) return resolve();
-
             this.isExpanded = true;
             if (instant) {
-                this.openFactor = 1;
+                this._setOpenFactor(1);
                 this._switch({
                     transient: () => this._setSheetTransform(0),
                     anchored: () => this._setSheetHeight(this._expandedHeight),
@@ -152,8 +147,8 @@ export class SheetBehavior {
                 if (delta > 0) return;
 
                 // Calc the fraction of the sheet that's collapsed
-                this.openFactor = bounded(
-                    (this._expandedHeight - Math.abs(delta)) / this._expandedHeight,
+                this._setOpenFactor(
+                    bounded((this._expandedHeight - Math.abs(delta)) / this._expandedHeight),
                 );
 
                 // For transient sheet we set transform
@@ -168,9 +163,11 @@ export class SheetBehavior {
                 );
 
                 // Calc the fraction of the sheet that's collapsed/expanded
-                this.openFactor = bounded(
-                    (currentHeight - this._collapsedHeight) /
-                        (this._expandedHeight - this._collapsedHeight),
+                this._setOpenFactor(
+                    bounded(
+                        (currentHeight - this._collapsedHeight) /
+                            (this._expandedHeight - this._collapsedHeight),
+                    ),
                 );
 
                 // For anchored sheet we set height
@@ -303,6 +300,15 @@ export class SheetBehavior {
         if (this.sheet) this.sheet.style.transition = "none";
     }
 
+    private _setBackdropOpacity() {
+        if (this.backdrop) this.backdrop.style.opacity = `${this.openFactor}`;
+    }
+
+    private _setOpenFactor(val: number) {
+        this.openFactor = val;
+        this._setBackdropOpacity();
+    }
+
     // Snap duration depends on how much the sheet is currently open - openessFactor -,
     // it's expanded height compared to max allowed height - scaleByHeightFactor -,
     // and whether we're trying to collapse or expand it.
@@ -363,12 +369,12 @@ export class SheetBehavior {
         const t =
             this._animationDuration === 0 ? 1 : Math.min(elapsed / this._animationDuration, 1);
 
-        this.openFactor = this._animationFrom + (this._animationTo - this._animationFrom) * t;
+        this._setOpenFactor(this._animationFrom + (this._animationTo - this._animationFrom) * t);
 
         if (t < 1) {
             requestAnimationFrame(this._trackAnimation);
         } else {
-            this.openFactor = this._animationTo;
+            this._setOpenFactor(this._animationTo);
             this._animating = false;
 
             if (this.openFactor === 0) {
