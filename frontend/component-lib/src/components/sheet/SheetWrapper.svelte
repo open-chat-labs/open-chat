@@ -73,7 +73,7 @@
             view-transition-class: transient_sheet;
 
             position: fixed !important;
-            z-index: 20;
+            z-index: 30;
             bottom: 0;
             left: 0;
             width: 100%;
@@ -84,7 +84,7 @@
         all: unset;
         inset: 0;
         position: fixed;
-        z-index: 20; // puts it above all content
+        z-index: 30; // puts it above all content
         background-color: var(--backdrop);
         pointer-events: none;
 
