@@ -11,7 +11,7 @@ export class SheetBehavior {
     maxViewportHeightFraction = fraction(0.7);
     openThreshold = fraction(0.2);
     closeThreshold = fraction(0.9);
-    speed = 250;
+    speed = 500;
 
     // State vars
     sheet = $state<HTMLElement | undefined>();
@@ -26,7 +26,11 @@ export class SheetBehavior {
     _startY: undefined | number;
     _startHeight: undefined | number;
 
-    // Max height to which we expand the sheet as a fraction of the viewport.s
+    // Max allowed height for a sheet, which is calculated as a function of
+    // the available viewport, and fraction of the viewport the sheet can take.
+    _maxHeight = 0;
+
+    // Max height to which we expand the sheet
     _expandedHeight = 0;
 
     // If the collapsed height is kept at zero value, we consider the sheet
@@ -52,8 +56,8 @@ export class SheetBehavior {
     // Public methods
     //
 
-    constructor(init?: { sheetType?: SheetType; instantShow?: boolean }) {
-        if (init?.sheetType) this._sheetType = init?.sheetType;
+    constructor(sheetType?: SheetType) {
+        if (sheetType) this._sheetType = sheetType;
     }
 
     init(instantShow = false) {
@@ -183,11 +187,26 @@ export class SheetBehavior {
     // sheet expands to the desired height, and that we remember what this
     // height should be compared to the avilable viewport.
     _calcExpandedSheetHeight() {
-        this._expandedHeight = Math.round(
+        this._maxHeight = Math.round(
             (window.visualViewport?.height ?? window.innerHeight) * this.maxViewportHeightFraction,
         );
 
-        this._setSheetHeight(this._expandedHeight);
+        if (this._sheetType === "transient") {
+            // Current height of the transient sheet...
+            const sheetHeight = this.sheet?.offsetHeight ?? this._maxHeight;
+
+            // Transient sheets height should be between their natural height
+            // and the max height determined by the max viewport height fraction.
+            this._expandedHeight = Math.min(sheetHeight, this._maxHeight);
+
+            // Indicate max height for a transient sheet!
+            this._setSheetMaxHeight(this._maxHeight);
+        } else {
+            // Anchored sheets are a bit trickier, since we don't know the
+            // height of the expanded content, we need to use the max viewport
+            // fraction.
+            this._expandedHeight = this._maxHeight;
+        }
     }
 
     _switch<T>({ transient, anchored }: { transient: () => T; anchored: () => T }): T {
@@ -210,6 +229,10 @@ export class SheetBehavior {
         if (this.sheet) this.sheet.style.height = `${height}px`;
     }
 
+    _setSheetMaxHeight(maxHeight: number) {
+        if (this.sheet) this.sheet.style.maxHeight = `${maxHeight}px`;
+    }
+
     _setSheetTransition(duration: number) {
         if (this.sheet) {
             // Depending on the sheet type, we transition different properties
@@ -224,17 +247,25 @@ export class SheetBehavior {
         if (this.sheet) this.sheet.style.transition = "none";
     }
 
-    // Snap duration depends on how much the sheet is currently open, and whether
-    // we're trying to collapse or expand it. If we're at the beginning of either
-    // open or close threshold, we want to run the snap _animation
-    _snapDuration(factor: number, target: 0 | 1) {
+    // Snap duration depends on how much the sheet is currently open - openessFactor -,
+    // it's expanded height compared to max allowed height - scaleByHeightFactor -,
+    // and whether we're trying to collapse or expand it.
+    _snapDuration(openessFactor: number, target: 0 | 1) {
         let duration: number;
+
+        // This factor will perserve the perceived speed of opening the modal.
+        // In case the modal needs to open to 50% of the max height, it will
+        // take half the speed; and if it needs to open fully it will take
+        // full speed.
+        const scaleByHeightFactor = this._expandedHeight / this._maxHeight;
+
         if (target === 1) {
-            duration = ((1 - factor) / (1 - this.openThreshold)) * this.speed;
+            duration = ((1 - openessFactor) / (1 - this.openThreshold)) * this.speed;
         } else {
-            duration = (factor / this.closeThreshold) * this.speed;
+            duration = (openessFactor / this.closeThreshold) * this.speed;
         }
-        return Math.max(0, Math.min(this.speed, duration));
+
+        return scaleByHeightFactor * Math.max(0, Math.min(this.speed, duration));
     }
 
     // This function sets the CSS height transition for the sheet, and starts

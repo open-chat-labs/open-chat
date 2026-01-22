@@ -28,6 +28,10 @@
 
 <svelte:window onpopstate={dismissInternal} onkeydown={onKeyDown} />
 
+<!-- TODO | There is still duplication in this file and AnchoredSheet as they
+     TODO | have very similar CSS and HTML attached to them.
+-->
+
 <button
     class="backdrop"
     class:active={sheetBehavior.openFactor > 0.01}
