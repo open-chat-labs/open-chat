@@ -1718,6 +1718,14 @@ export class OpenChatAgent extends EventTarget {
         }
 
         if (!anyUpdates) {
+            if (this._cachePrimer?.isFirstIteration) {
+                this._cachePrimer.processUpdates(
+                    currentDirectChats,
+                    currentGroups,
+                    currentCommunities,
+                );
+            }
+
             const duration = performance.now() - start;
             console.debug(
                 `GetUpdates completed with no updates in ${duration}ms. Number of queries: ${totalQueryCount}`,
@@ -1810,8 +1818,6 @@ export class OpenChatAgent extends EventTarget {
                             (userIds) => this._userIndexClient.populateUserCache(userIds),
                         )),
                 );
-            } else {
-                this._cachePrimer.processState(state);
             }
         }
 
@@ -1838,6 +1844,15 @@ export class OpenChatAgent extends EventTarget {
         const communitiesAddedUpdated = communities
             .filter((c) => communitiesAddedUpdatedIds.has(c.id.communityId))
             .map((c) => this.hydrateCommunity(c));
+
+        this._cachePrimer?.processUpdates(
+            directChatsAddedUpdated,
+            groupsAddedUpdated,
+            communitiesAddedUpdated,
+            directChatsRemoved,
+            groupsRemoved,
+            communitiesRemoved,
+        );
 
         const duration = performance.now() - start;
         console.debug(

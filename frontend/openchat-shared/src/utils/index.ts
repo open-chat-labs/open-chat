@@ -1,3 +1,4 @@
+export * from "./array";
 export * from "./bandwidthMonitor";
 export * from "./bigint";
 export * from "./chat";
