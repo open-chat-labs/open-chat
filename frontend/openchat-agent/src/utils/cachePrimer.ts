@@ -2,12 +2,17 @@ import {
     type ChatEventsArgs,
     type ChatEventsResponse,
     type ChatIdentifier,
+    chatIdentifiersEqual,
     chatIdentifierToString,
-    type ChatStateFull,
     type ChatSummary,
+    type CommunitySummary,
+    type DirectChatSummary,
+    type GroupChatSummary,
     MAX_MESSAGES,
     type MultiUserChatIdentifier,
+    ONE_MINUTE_MILLIS,
     ResponseTooLargeError,
+    retain,
     userIdsFromEvents,
 } from "openchat-shared";
 
@@ -22,33 +27,65 @@ export class CachePrimer {
     private inProgress: Set<string> = new Set();
     private blockedChats: Set<string> = new Set();
     private proposalChats: Map<string, MultiUserChatIdentifier[]> = new Map();
+    #isFirstIteration: boolean = true;
 
     constructor(
         private userCanisterLocalUserIndex: string,
         private lastUpdatedTimestamps: Record<string, bigint>,
-        private getEventsBatch: (localUserIndex: string, requests: ChatEventsArgs[]) => Promise<ChatEventsResponse[]>,
-        private updateProposalTallies: (localUserIndex: string, chatIds: MultiUserChatIdentifier[]) => Promise<void>,
-        private loadUsers: (userIds: string[]) => void
+        private getEventsBatch: (
+            localUserIndex: string,
+            requests: ChatEventsArgs[],
+        ) => Promise<ChatEventsResponse[]>,
+        private updateProposalTallies: (
+            localUserIndex: string,
+            chatIds: MultiUserChatIdentifier[],
+        ) => Promise<void>,
+        private loadUsers: (userIds: string[]) => void,
     ) {
         debug("initialized");
     }
 
-    processState(state: ChatStateFull) {
-        this.pending = [];
-        this.proposalChats.clear();
+    get isFirstIteration(): boolean {
+        return this.#isFirstIteration;
+    }
 
-        state.directChats.forEach((c) => this.processChat(c, this.userCanisterLocalUserIndex));
-        state.groupChats.forEach((c) => this.processChat(c, c.localUserIndex));
-        for (const community of state.communities) {
-            community.channels.forEach((c) => this.processChat(c, community.localUserIndex));
+    processUpdates(
+        directChats: DirectChatSummary[],
+        groupChats: GroupChatSummary[],
+        communities: CommunitySummary[],
+        directChatsRemoved?: string[],
+        groupsRemoved?: string[],
+        communitiesRemoved?: string[],
+    ) {
+        directChatsRemoved?.forEach((userId) =>
+            this.removeFromPending((c) => c.kind === "direct_chat" && c.userId === userId),
+        );
+        groupsRemoved?.forEach((groupId) =>
+            this.removeFromPending((c) => c.kind === "group_chat" && c.groupId === groupId),
+        );
+        communitiesRemoved?.forEach((communityId) =>
+            this.removeFromPending((c) => c.kind === "channel" && c.communityId === communityId),
+        );
+
+        const overwriteIfExists = !this.#isFirstIteration;
+
+        directChats.forEach((c) =>
+            this.processChat(c, this.userCanisterLocalUserIndex, overwriteIfExists),
+        );
+        groupChats.forEach((c) => this.processChat(c, c.localUserIndex, overwriteIfExists));
+        for (const community of communities) {
+            community.channels.forEach((c) =>
+                this.processChat(c, community.localUserIndex, overwriteIfExists),
+            );
         }
 
-        debug("processed state, queue length: " + this.pending.length);
+        debug("processed updated chats, queue length: " + this.pending.length);
+
+        // Sort by `lastUpdated` ascending
+        this.pending.sort((a, b) => (a.lastUpdated > b.lastUpdated ? 1 : -1));
 
         if (!this.jobActive && this.pending.length > 0) {
             this.jobActive = true;
-            // Sort by `lastUpdated` ascending
-            this.pending.sort((a, b) => a.lastUpdated > b.lastUpdated ? 1 : -1);
             setTimeout(() => this.processNextBatch(), 0);
         }
 
@@ -56,17 +93,18 @@ export class CachePrimer {
             this.proposalTalliesJobActive = true;
             this.processProposalTallies();
         }
+
+        this.#isFirstIteration = false;
     }
 
-    private processChat(chat: ChatSummary, localUserIndex: string) {
+    private processChat(
+        chat: ChatSummary,
+        localUserIndex: string,
+        overwriteIfExists: boolean = false,
+    ) {
         const chatIdString = chatIdentifierToString(chat.id);
         if (this.inProgress.has(chatIdString) || this.blockedChats.has(chatIdString)) {
             return;
-        }
-
-        const lastUpdated = this.lastUpdatedTimestamps[chatIdString];
-        if (this.shouldEnqueueChat(chat, lastUpdated)) {
-            this.pending.push(normalizeChat(chat, localUserIndex));
         }
 
         if (chat.kind !== "direct_chat" && chat.subtype?.kind === "governance_proposals") {
@@ -77,6 +115,21 @@ export class CachePrimer {
             }
             proposalChatIds.push(chat.id);
         }
+
+        const lastUpdated = this.lastUpdatedTimestamps[chatIdString];
+        if (!this.shouldEnqueueChat(chat, lastUpdated)) {
+            return;
+        }
+
+        const normalized = normalizeChat(chat, localUserIndex);
+        if (overwriteIfExists) {
+            const index = this.pending.findIndex((c) => chatIdentifiersEqual(c.chatId, chat.id));
+            if (index > -1) {
+                this.pending[index] = normalized;
+                return;
+            }
+        }
+        this.pending.push(normalized);
     }
 
     async processNextBatch(): Promise<void> {
@@ -101,7 +154,8 @@ export class CachePrimer {
 
                 if (response.kind === "success") {
                     if (request.latestKnownUpdate !== undefined) {
-                        this.lastUpdatedTimestamps[chatIdentifierToString(request.context.chatId)] = request.latestKnownUpdate;
+                        this.lastUpdatedTimestamps[chatIdentifierToString(request.context.chatId)] =
+                            request.latestKnownUpdate;
                     }
 
                     const { userIds } = userIdsFromEvents(response.result.events);
@@ -127,7 +181,7 @@ export class CachePrimer {
                             context: request.context,
                             args: {
                                 kind: "by_index",
-                                events: [...repliesToLoad]
+                                events: [...repliesToLoad],
                             },
                             latestKnownUpdate: request.latestKnownUpdate,
                         });
@@ -185,7 +239,7 @@ export class CachePrimer {
             this.pending.splice(i, 1);
             this.inProgress.add(chatIdentifierToString(next.chatId));
 
-            batch.push(...this.getEventsArgs(next));
+            batch.push(this.getEventsArgs(next));
 
             if (batch.length >= BATCH_SIZE) {
                 break;
@@ -195,15 +249,17 @@ export class CachePrimer {
         return localUserIndexForBatch !== undefined ? [localUserIndexForBatch, batch] : undefined;
     }
 
-    private getEventsArgs(chat: QueuedChat): ChatEventsArgs[] {
+    private getEventsArgs(chat: QueuedChat): ChatEventsArgs {
         const context = { chatId: chat.chatId };
         const latestKnownUpdate = chat.lastUpdated;
-        const eventIndexRange: [number, number] = [chat.minVisibleEventIndex, chat.latestEventIndex];
+        const eventIndexRange: [number, number] = [
+            chat.minVisibleEventIndex,
+            chat.latestEventIndex,
+        ];
         const unreadCount = chat.latestMessageIndex - chat.readByMeUpTo;
-        const args = [] as ChatEventsArgs[];
 
         if (unreadCount > MAX_MESSAGES / 2) {
-            args.push({
+            return {
                 context,
                 args: {
                     kind: "window",
@@ -211,26 +267,27 @@ export class CachePrimer {
                     eventIndexRange,
                 },
                 latestKnownUpdate,
-            });
+            };
+        } else {
+            return {
+                context,
+                args: {
+                    kind: "page",
+                    ascending: false,
+                    startIndex: chat.latestEventIndex,
+                    eventIndexRange,
+                },
+                latestKnownUpdate,
+            };
         }
-
-        args.push({
-            context,
-            args: {
-                kind: "page",
-                ascending: false,
-                startIndex: chat.latestEventIndex,
-                eventIndexRange,
-            },
-            latestKnownUpdate,
-        });
-
-        return args;
     }
 
     // Get events for a batch of chats, if the response fails because it is too large, retry each request individually,
     // if any responses are still too large, mark those chats as blocked to avoid retrying them indefinitely.
-    private async fetchEvents(localUserIndex: string, batch: ChatEventsArgs[]): Promise<ChatEventsResponse[]> {
+    private async fetchEvents(
+        localUserIndex: string,
+        batch: ChatEventsArgs[],
+    ): Promise<ChatEventsResponse[]> {
         try {
             return await this.getEventsBatch(localUserIndex, batch);
         } catch (error) {
@@ -240,7 +297,11 @@ export class CachePrimer {
                     this.blockedChats.add(chatIdentifierToString(batch[0].context.chatId));
                 } else {
                     // Split the batch into individual requests and try again
-                    return (await Promise.all(batch.map((args) => this.fetchEvents(localUserIndex, [args])))).flat();
+                    return (
+                        await Promise.all(
+                            batch.map((args) => this.fetchEvents(localUserIndex, [args])),
+                        )
+                    ).flat();
                 }
             }
             return Array(batch.length).fill(FAILURE);
@@ -253,12 +314,19 @@ export class CachePrimer {
                 await this.updateProposalTallies(localUserIndex, chatIds);
             }
         } finally {
-            setTimeout(() => this.processNextBatch(), 60_000);
+            setTimeout(() => this.processNextBatch(), ONE_MINUTE_MILLIS);
         }
     }
 
     private shouldEnqueueChat(chat: ChatSummary, lastUpdated: bigint | undefined): boolean {
-        return !chat.membership.archived && (lastUpdated === undefined || chat.lastUpdated > lastUpdated);
+        return (
+            !chat.membership.archived &&
+            (lastUpdated === undefined || chat.lastUpdated > lastUpdated)
+        );
+    }
+
+    private removeFromPending(excludeFn: (value: ChatIdentifier) => boolean) {
+        retain(this.pending, (c) => !excludeFn(c.chatId));
     }
 }
 
@@ -288,4 +356,4 @@ type QueuedChat = {
     latestMessageIndex: number;
     readByMeUpTo: number;
     minVisibleEventIndex: number;
-}
+};
