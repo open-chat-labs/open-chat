@@ -120,7 +120,6 @@ import type {
     JoinCommunityResponse,
     LeaveCommunityResponse,
     SetMemberDisplayNameResponse,
-    ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
     UnfreezeCommunityResponse,
     UpdateCommunityResponse,
@@ -356,14 +355,7 @@ export type WorkerRequest =
     | BlockCommunityUser
     | ChangeChannelRole
     | DeclineChannelInvitation
-    | ChannelEvents
-    | ChannelEventsByIndex
-    | ChannelEventsWindow
-    | ChannelMessagesByMessageIndex
     | RemoveCommunityMember
-    | SelectedChannelInitial
-    | SelectedChannelUpdates
-    | ToggleMuteCommunityNotifications
     | UnblockCommunityUser
     | UpdateCommunity
     | CreateCommunity
@@ -530,13 +522,13 @@ type PayForPremiumItem = {
     userId: string;
 };
 
-type SetAuthIdentity = {
+export type SetAuthIdentity = {
     kind: "setAuthIdentity";
     identity: JsonnableIdentityKeyAndChain | undefined;
     isIIPrincipal: boolean;
 };
 
-type SetMinLogLevel = {
+export type SetMinLogLevel = {
     kind: "setMinLogLevel";
     minLogLevel: LogLevel;
 };
@@ -1324,7 +1316,7 @@ export type Init = Omit<AgentConfig, "logger"> & {
     kind: "init";
 };
 
-type CreateOpenChatIdentity = {
+export type CreateOpenChatIdentity = {
     kind: "createOpenChatIdentity";
     webAuthnCredentialId: Uint8Array | undefined;
 };
@@ -1801,7 +1793,6 @@ export type WorkerResponseInner =
     | SetMessageReminderResponse
     | BlockCommunityUserResponse
     | ChangeCommunityRoleResponse
-    | ToggleMuteCommunityNotificationsResponse
     | UnblockCommunityUserResponse
     | UpdateCommunityResponse
     | CreateCommunityResponse
@@ -2006,60 +1997,10 @@ type DeclineChannelInvitation = {
     chatId: ChannelIdentifier;
 };
 
-type ChannelEvents = {
-    kind: "channelEvents";
-    chatId: ChannelIdentifier;
-    startIndex: number;
-    ascending: boolean;
-    threadRootMessageIndex: number | undefined;
-    latestKnownUpdate: bigint | undefined;
-};
-
-type ChannelEventsByIndex = {
-    kind: "channelEventsByIndex";
-    chatId: ChannelIdentifier;
-    eventIndexes: number[];
-    threadRootMessageIndex: number | undefined;
-    latestKnownUpdate: bigint | undefined;
-};
-
-type ChannelEventsWindow = {
-    kind: "channelEventsWindow";
-    chatId: ChannelIdentifier;
-    messageIndex: number;
-    threadRootMessageIndex: number | undefined;
-    latestKnownUpdate: bigint | undefined;
-};
-
-type ChannelMessagesByMessageIndex = {
-    kind: "channelMessagesByMessageIndex";
-    chatId: ChannelIdentifier;
-    messageIndexes: number[];
-    latestKnownUpdate: bigint | undefined;
-    threadRootMessageIndex: number | undefined;
-};
-
 type RemoveCommunityMember = {
     kind: "removeCommunityMember";
     id: CommunityIdentifier;
     userId: string;
-};
-
-type SelectedChannelInitial = {
-    kind: "selectedChannelInitial";
-    chatId: ChannelIdentifier;
-};
-
-type SelectedChannelUpdates = {
-    kind: "selectedChannelUpdates";
-    chatId: ChannelIdentifier;
-    updatesSince: bigint;
-};
-
-type ToggleMuteCommunityNotifications = {
-    kind: "toggleMuteCommunityNotifications";
-    communityId: string;
-    mute: boolean;
 };
 
 type UnblockCommunityUser = {
@@ -2440,18 +2381,8 @@ export type WorkerResult<T> = T extends Init
     ? ChangeCommunityRoleResponse
     : T extends DeclineChannelInvitation
     ? DeclineInvitationResponse
-    : T extends ChannelEvents
-    ? EventsResponse<ChatEvent>
-    : T extends ChannelEventsByIndex
-    ? EventsResponse<ChatEvent>
-    : T extends ChannelEventsWindow
-    ? EventsResponse<ChatEvent>
-    : T extends ChannelMessagesByMessageIndex
-    ? EventsResponse<Message>
     : T extends RemoveCommunityMember
     ? RemoveMemberResponse
-    : T extends ToggleMuteCommunityNotifications
-    ? ToggleMuteCommunityNotificationsResponse
     : T extends UnblockCommunityUser
     ? UnblockCommunityUserResponse
     : T extends UpdateCommunity
