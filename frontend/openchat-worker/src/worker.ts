@@ -1347,7 +1347,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "lookupWebAuthnPubKey":
-                IdentityAgent.create(
+                action = IdentityAgent.create(
                     new AnonymousIdentity(),
                     config.identityCanister,
                     config.icUrl,
