@@ -234,7 +234,7 @@ import type { Verification } from "./wallet";
  */
 
 export type CorrelatedWorkerRequest = WorkerRequest & {
-    correlationId: string;
+    correlationId: number;
 };
 
 export type WorkerRequest =
@@ -1703,7 +1703,8 @@ type GetSignInProof = {
  */
 export type WorkerError = {
     kind: "worker_error";
-    correlationId: string;
+    requestKind: string;
+    correlationId: number;
     error: string;
 };
 
@@ -1877,7 +1878,8 @@ export type WorkerResponse = Response<WorkerResponseInner>;
 
 type Response<T> = {
     kind: "worker_response";
-    correlationId: string;
+    requestKind: string;
+    correlationId: number;
     response: T;
     final: boolean;
 };
