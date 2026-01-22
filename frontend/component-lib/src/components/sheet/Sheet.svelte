@@ -14,6 +14,7 @@
 
     async function internalClose() {
         if (mounted) {
+            await mounted.closeBeforeUnmount();
             unmount(mounted);
             mounted = undefined;
         }

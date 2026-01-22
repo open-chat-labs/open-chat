@@ -14,8 +14,12 @@
     sheetBehavior.onCollapsed = dismissInternal;
 
     $effect(() => {
-        sheetBehavior.init();
+        return sheetBehavior.init();
     });
+
+    export async function closeBeforeUnmount(): Promise<void> {
+        return sheetBehavior.collapse();
+    }
 
     function dismissInternal() {
         if (onDismiss !== undefined) onDismiss?.();
@@ -46,7 +50,6 @@
     direction={"vertical"}
     parentDirection={"vertical"}
     overflow={"hidden"}
-    padding={["zero", "zero", "sm", "zero"]}
     borderRadius={["md", "md", "zero", "zero"]}
     width={"fill"}
     background={ColourVars.background1}>

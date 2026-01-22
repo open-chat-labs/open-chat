@@ -28,7 +28,7 @@
     sheetBehavior.closeThreshold = closeThreshold;
 
     $effect(() => {
-        sheetBehavior.init();
+        return sheetBehavior.init();
     });
 
     // Fading collapsed content in/out works in reverse compared to fading in

@@ -5,10 +5,10 @@ import { fraction } from "../../utils/fraction";
 type SheetType = "transient" | "anchored";
 
 export class SheetBehavior {
-    _sheetType: SheetType = "transient";
+    private _sheetType: SheetType = "transient";
 
     // Config for the dragger class!
-    maxViewportHeightFraction = fraction(0.7);
+    maxViewportHeightFraction = fraction(0.8);
     openThreshold = fraction(0.2);
     closeThreshold = fraction(0.9);
     speed = 500;
@@ -23,21 +23,21 @@ export class SheetBehavior {
     openFactor = $state(0);
 
     // Local vars
-    _startY: undefined | number;
-    _startHeight: undefined | number;
+    private _startY: undefined | number;
+    private _startHeight: undefined | number;
 
     // Max allowed height for a sheet, which is calculated as a function of
     // the available viewport, and fraction of the viewport the sheet can take.
-    _maxHeight = 0;
+    private _maxHeight = 0;
 
     // Max height to which we expand the sheet
-    _expandedHeight = 0;
+    private _expandedHeight = 0;
 
     // If the collapsed height is kept at zero value, we consider the sheet
     // using this dragger class a transient one (toggles on/off); but if this
     // value is set, then we consider the sheet to be persistent with minimised
     // and expanded states.
-    _collapsedHeight = 0;
+    private _collapsedHeight = 0;
 
     // Callbacks, used as public vars
     onCollapsed: (() => void) | undefined = undefined;
@@ -46,11 +46,12 @@ export class SheetBehavior {
     // Vars below are used during the snapping phase, to update the openFactor
     // value. The _animation itself is a CSS transition, but openFactor is used
     // to fade the content in/out.
-    _animating = false;
-    _animationStart = 0;
-    _animationFrom = 0;
-    _animationTo: 0 | 1 = 1;
-    _animationDuration = 0;
+    private _animating = false;
+    private _animationStart = 0;
+    private _animationFrom = 0;
+    private _animationTo: 0 | 1 = 1;
+    private _animationDuration = 0;
+    private _animationResolver?: () => void;
 
     //
     // Public methods
@@ -60,8 +61,8 @@ export class SheetBehavior {
         if (sheetType) this._sheetType = sheetType;
     }
 
-    init(instantShow = false) {
-        this._calcExpandedSheetHeight();
+    init(instantShow = false): () => void {
+        this._calcSheetHeight();
         this._switch({
             transient: () => {
                 // By default, transient sheets start expanded when they render!
@@ -75,32 +76,56 @@ export class SheetBehavior {
                 this._collapsedHeight = this.sheet?.offsetHeight ?? 100;
             },
         });
+
+        // Factor in viewport resizes
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener("resize", this._handleViewportChange);
+        }
+
+        // Return unmount fn
+        return () => {
+            if (window.visualViewport) {
+                window.visualViewport.removeEventListener("resize", this._handleViewportChange);
+            }
+        };
     }
 
-    collapse() {
-        this.isExpanded = false;
-        if (this._sheetType == "transient" || this._collapsedHeight > 0) {
-            this._snapTo(0);
-        }
+    collapse(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            this._animationResolver = resolve;
+
+            if (!this.isExpanded) return resolve();
+
+            this.isExpanded = false;
+            if (this._sheetType == "transient" || this._collapsedHeight > 0) {
+                this._snapTo(0);
+            }
+        });
     }
 
-    expand(instant?: boolean) {
-        this.isExpanded = true;
-        if (instant) {
-            this.openFactor = 1;
-            this._switch({
-                transient: () => this._setSheetTransform(0),
-                anchored: () => this._setSheetHeight(this._expandedHeight),
-            });
-        } else {
-            this._snapTo(1);
-        }
+    expand(instant?: boolean): Promise<void> {
+        return new Promise<void>((resolve) => {
+            this._animationResolver = resolve;
+
+            if (this.isExpanded) return resolve();
+
+            this.isExpanded = true;
+            if (instant) {
+                this.openFactor = 1;
+                this._switch({
+                    transient: () => this._setSheetTransform(0),
+                    anchored: () => this._setSheetHeight(this._expandedHeight),
+                });
+            } else {
+                this._snapTo(1);
+            }
+        });
     }
 
     // Only track movement in y dimension!
     onDragStart(e: PointerEvent) {
         // Remove any transition that may be attached to the sheet...
-        this._unsetSheetTransition();
+        this._clearSheetTransition();
 
         // Set handle as the target for future drag events!
         this.handle?.setPointerCapture(e.pointerId);
@@ -159,9 +184,9 @@ export class SheetBehavior {
             this.handle.releasePointerCapture(e.pointerId);
         }
 
+        this.dragged = false;
         this._startY = undefined;
         this._startHeight = undefined;
-        this.dragged = false;
 
         this._switch({
             transient: () => {
@@ -183,15 +208,26 @@ export class SheetBehavior {
     // Private methods
     //
 
+    // Using lambda here, since they preserve 'this' context
+    private _handleViewportChange = () => {
+        // Viewport changed, figure out new heights!s
+        this._calcSheetHeight();
+
+        // Expand to the set height immediatelly
+        if (this.isExpanded) this.expand(true);
+    };
+
     // Must be called when component mounts! This function makes sure that the
     // sheet expands to the desired height, and that we remember what this
     // height should be compared to the avilable viewport.
-    _calcExpandedSheetHeight() {
+    private _calcSheetHeight() {
         this._maxHeight = Math.round(
             (window.visualViewport?.height ?? window.innerHeight) * this.maxViewportHeightFraction,
         );
 
         if (this._sheetType === "transient") {
+            this._clearSheetMaxHeight();
+
             // Current height of the transient sheet...
             const sheetHeight = this.sheet?.offsetHeight ?? this._maxHeight;
 
@@ -209,31 +245,38 @@ export class SheetBehavior {
         }
     }
 
-    _switch<T>({ transient, anchored }: { transient: () => T; anchored: () => T }): T {
+    private _switch<T>(cases: { transient: () => T; anchored: () => T }): T {
         switch (this._sheetType) {
             case "transient":
-                return transient();
+                return cases.transient();
             case "anchored":
-                return anchored();
+                return cases.anchored();
+            default:
+                const _unknown: never = this._sheetType;
+                throw new Error(`Unhandled sheet type: ${_unknown}`);
         }
     }
 
     // Transition transform for transient sheets
-    _setSheetTransform(delta: number) {
+    private _setSheetTransform(delta: number) {
         if (this.sheet) this.sheet.style.transform = `translateY(${delta}px)`;
     }
 
     // Transition height for anchored sheets
     // TODO transition scaleY instead of height, or translateY as alternative though a bit trickier.
-    _setSheetHeight(height: number) {
+    private _setSheetHeight(height: number) {
         if (this.sheet) this.sheet.style.height = `${height}px`;
     }
 
-    _setSheetMaxHeight(maxHeight: number) {
+    private _setSheetMaxHeight(maxHeight: number) {
         if (this.sheet) this.sheet.style.maxHeight = `${maxHeight}px`;
     }
 
-    _setSheetTransition(duration: number) {
+    private _clearSheetMaxHeight() {
+        if (this.sheet) this.sheet.style.maxHeight = "none";
+    }
+
+    private _setSheetTransition(duration: number) {
         if (this.sheet) {
             // Depending on the sheet type, we transition different properties
             const prop = "transient" === this._sheetType ? "transform" : "height";
@@ -243,14 +286,14 @@ export class SheetBehavior {
         }
     }
 
-    _unsetSheetTransition() {
+    private _clearSheetTransition() {
         if (this.sheet) this.sheet.style.transition = "none";
     }
 
     // Snap duration depends on how much the sheet is currently open - openessFactor -,
     // it's expanded height compared to max allowed height - scaleByHeightFactor -,
     // and whether we're trying to collapse or expand it.
-    _snapDuration(openessFactor: number, target: 0 | 1) {
+    private _snapDuration(openessFactor: number, target: 0 | 1) {
         let duration: number;
 
         // This factor will perserve the perceived speed of opening the modal.
@@ -270,7 +313,7 @@ export class SheetBehavior {
 
     // This function sets the CSS height transition for the sheet, and starts
     // the _animation tracker function.
-    _snapTo(target: 0 | 1) {
+    private _snapTo(target: 0 | 1) {
         this._animating = true;
         this._animationStart = performance.now();
         this._animationFrom = this.openFactor;
@@ -293,12 +336,14 @@ export class SheetBehavior {
         });
 
         this._setSheetTransition(this._animationDuration);
-        requestAnimationFrame(this._trackAnimation.bind(this));
+        requestAnimationFrame(this._trackAnimation);
     }
 
     // Just tracks along the expected CSS _animation duration and updates the
     // openFactor value. It does NOT animate the sheet transition!
-    _trackAnimation(now: number) {
+    //
+    // As before, using a lambda here to preserve 'this'.
+    private _trackAnimation = (now: number) => {
         if (!this._animating) return;
 
         const elapsed = now - this._animationStart;
@@ -308,7 +353,7 @@ export class SheetBehavior {
         this.openFactor = this._animationFrom + (this._animationTo - this._animationFrom) * t;
 
         if (t < 1) {
-            requestAnimationFrame(this._trackAnimation.bind(this));
+            requestAnimationFrame(this._trackAnimation);
         } else {
             this.openFactor = this._animationTo;
             this._animating = false;
@@ -322,6 +367,9 @@ export class SheetBehavior {
                     this.onExpanded();
                 }
             }
+
+            // Resolve when animation ends!
+            if (this._animationResolver) this._animationResolver();
         }
-    }
+    };
 }

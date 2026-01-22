@@ -33,7 +33,7 @@
     };
     const iconSize = "var(--icon-md)";
 
-    const SPEED = 300;
+    const SPEED = 150;
     let internalMode = $state<InternalMode>("default");
     let parentDirection = getContext<Direction>("direction");
     let widthCss = $derived(getFlexStyle("width", width, parentDirection));
@@ -125,7 +125,8 @@
             color: var(--primary);
         }
 
-        &.pressed {
+        &.pressed,
+        &:active {
             background: var(--background-2);
         }
     }

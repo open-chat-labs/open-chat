@@ -7,7 +7,7 @@
     import { _ } from "svelte-i18n";
     import Translatable from "../../Translatable.svelte";
     import NothingToSee from "../NothingToSee.svelte";
-    import WalletToken from "./WalletToken.svelte";
+    import SelectTokenItem from "./SelectTokenItem.svelte";
 
     interface Props {
         onDismiss: () => void;
@@ -48,50 +48,62 @@
     <Container
         height={{ size: "100%" }}
         supplementalClass={"token_selector"}
-        padding={"lg"}
-        gap={"xl"}
+        gap={"xxl"}
         direction={"vertical"}>
-        <Container padding={["zero", "sm"]} gap={"md"} crossAxisAlignment={"center"}>
+        <!-- title -->
+        <Container padding={["md", "xxl", "zero"]} gap={"md"} crossAxisAlignment={"center"}>
             {@render icon?.(ColourVars.textSecondary, "1.4rem")}
             <Subtitle fontWeight={"bold"}>
                 <Translatable resourceKey={title}></Translatable>
             </Subtitle>
         </Container>
 
-        <Search
-            {searching}
-            id={"search_component"}
-            placeholder={interpolate($_, placeholder)}
-            bind:value={searchTerm} />
+        <!-- search & list -->
+        <Container direction={"vertical"} overflow="hidden" supplementalClass="token_search_select">
+            <Container padding={["zero", "lg", "xs"]}>
+                <Search
+                    {searching}
+                    id={"search_component"}
+                    placeholder={interpolate($_, placeholder)}
+                    bind:value={searchTerm} />
+            </Container>
 
-        <Container gap={"sm"} supplementalClass={"token_selector"} direction={"vertical"}>
-            {#if filteredTokens.length === 0}
-                <NothingToSee
-                    height={{ size: "6" }}
-                    padding={"zero"}
-                    reset={{ onClick: onDismiss, text: "Close" }}
-                    title={"No matching tokens"}
-                    subtitle={searchTerm !== ""
-                        ? "Try relaxing your search criteria"
-                        : "You may not have any tokens that support this operation"} />
-            {:else}
-                {#each filteredTokens as token}
-                    <Option
-                        onClick={() => onSelect(token)}
-                        padding={["zero", "md", "zero", "zero"]}
-                        value={token}
-                        selected={selected.has(token.ledger)}>
-                        <WalletToken withMenu={false} selectedConversion={"usd"} {token} />
-                    </Option>
-                {/each}
-            {/if}
+            <Container
+                gap={"xs"}
+                supplementalClass={"token_selector"}
+                direction={"vertical"}
+                padding={["xxl", "lg"]}>
+                {#if filteredTokens.length === 0}
+                    <NothingToSee
+                        height={{ size: "6" }}
+                        padding={"zero"}
+                        reset={{ onClick: onDismiss, text: "Close" }}
+                        title={"No matching tokens"}
+                        subtitle={searchTerm !== ""
+                            ? "Try relaxing your search criteria"
+                            : "You may not have any tokens that support this operation"} />
+                {:else}
+                    {#each filteredTokens as token}
+                        <Option
+                            onClick={() => onSelect(token)}
+                            padding={["zero", "md", "zero", "zero"]}
+                            value={token}
+                            selected={selected.has(token.ledger)}>
+                            <SelectTokenItem selectedConversion={"usd"} {token} />
+                        </Option>
+                    {/each}
+                {/if}
+            </Container>
         </Container>
     </Container>
 </Sheet>
 
 <style lang="scss">
     // this is a bit unfortunate
-    :global(.container.token_selector) {
-        flex: auto !important;
+    :global {
+        .container.token_search_select,
+        .container.token_selector {
+            flex: 1 !important;
+        }
     }
 </style>
