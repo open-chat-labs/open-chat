@@ -1618,10 +1618,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
         if (action === undefined) {
             sendResponse(kind, correlationId, undefined);
-        } else if (action instanceof Stream) {
-            streamReplies(payload, kind, correlationId, action);
-        } else {
+        } else if (action instanceof Promise) {
             executeThenReply(payload, kind, correlationId, action);
+        } else {
+            streamReplies(payload, kind, correlationId, action);
         }
     } catch (err) {
         logger?.debug("WORKER: unhandled error: ", err, kind);
