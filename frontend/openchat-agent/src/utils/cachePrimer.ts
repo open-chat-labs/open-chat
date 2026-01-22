@@ -23,7 +23,7 @@ export class CachePrimer {
     #pending: QueuedChat[] = [];
     #usersLoaded: Set<string> = new Set();
     #jobActive: boolean = false;
-    #proposalTalliesJobActive: boolean = false;
+    #proposalTalliesJobStarted: boolean = false;
     #inProgress: Set<string> = new Set();
     #blockedChats: Set<string> = new Set();
     #proposalChats: Map<string, MultiUserChatIdentifier[]> = new Map();
@@ -89,8 +89,8 @@ export class CachePrimer {
             setTimeout(() => this.processNextBatch(), 0);
         }
 
-        if (!this.#proposalTalliesJobActive && this.#proposalChats.size > 0) {
-            this.#proposalTalliesJobActive = true;
+        if (!this.#proposalTalliesJobStarted && this.#proposalChats.size > 0) {
+            this.#proposalTalliesJobStarted = true;
             this.processProposalTallies();
         }
 
@@ -314,7 +314,7 @@ export class CachePrimer {
                 await this.updateProposalTallies(localUserIndex, chatIds);
             }
         } finally {
-            setTimeout(() => this.processNextBatch(), ONE_MINUTE_MILLIS);
+            setTimeout(() => this.processProposalTallies(), ONE_MINUTE_MILLIS);
         }
     }
 
