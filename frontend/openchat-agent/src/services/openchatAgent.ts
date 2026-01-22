@@ -1849,6 +1849,7 @@ export class OpenChatAgent extends EventTarget {
             directChatsAddedUpdated,
             groupsAddedUpdated,
             communitiesAddedUpdated,
+            updatedEvents,
             directChatsRemoved,
             groupsRemoved,
             communitiesRemoved,
