@@ -1703,6 +1703,7 @@ type GetSignInProof = {
  */
 export type WorkerError = {
     kind: "worker_error";
+    requestKind: string;
     correlationId: number;
     error: string;
 };
@@ -1877,6 +1878,7 @@ export type WorkerResponse = Response<WorkerResponseInner>;
 
 type Response<T> = {
     kind: "worker_response";
+    requestKind: string;
     correlationId: number;
     response: T;
     final: boolean;

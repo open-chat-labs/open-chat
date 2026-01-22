@@ -159,7 +159,7 @@ export class WorkerAgent {
                 this.#inflightRequests.delete(data.correlationId);
             }
         } else {
-            this.#logUnexpected(data.correlationId);
+            this.#logUnexpected(data.requestKind, data.correlationId);
         }
     }
 
@@ -169,12 +169,12 @@ export class WorkerAgent {
             promise.reject(JSON.parse(data.error));
             this.#inflightRequests.delete(data.correlationId);
         } else {
-            this.#logUnexpected(data.correlationId);
+            this.#logUnexpected(data.requestKind, data.correlationId);
         }
     }
 
-    #logUnexpected(correlationId: number): void {
-        console.error(`WORKER_CLIENT: unexpected correlationId received (${correlationId})`);
+    #logUnexpected(kind: string, correlationId: number): void {
+        console.error(`WORKER_CLIENT: unexpected correlationId received (${correlationId})`, kind);
     }
 }
 
