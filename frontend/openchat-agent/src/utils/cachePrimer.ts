@@ -1,9 +1,11 @@
 import {
     type ChatEventsArgs,
+    type ChatEventsArgsInner,
     type ChatEventsResponse,
     type ChatIdentifier,
     chatIdentifiersEqual,
     chatIdentifierToString,
+    type ChatMap,
     type ChatSummary,
     type CommunitySummary,
     type DirectChatSummary,
@@ -13,6 +15,7 @@ import {
     ONE_MINUTE_MILLIS,
     ResponseTooLargeError,
     retain,
+    type UpdatedEvent,
     userIdsFromEvents,
 } from "openchat-shared";
 
@@ -53,6 +56,7 @@ export class CachePrimer {
         directChats: DirectChatSummary[],
         groupChats: GroupChatSummary[],
         communities: CommunitySummary[],
+        updatedEvents?: ChatMap<UpdatedEvent[]>,
         directChatsRemoved?: string[],
         groupsRemoved?: string[],
         communitiesRemoved?: string[],
@@ -67,15 +71,13 @@ export class CachePrimer {
             this.removeFromPending((c) => c.kind === "channel" && c.communityId === communityId),
         );
 
-        const overwriteIfExists = !this.#isFirstIteration;
-
         directChats.forEach((c) =>
-            this.processChat(c, this.userCanisterLocalUserIndex, overwriteIfExists),
+            this.processChat(c, this.userCanisterLocalUserIndex, updatedEvents?.get(c.id)),
         );
-        groupChats.forEach((c) => this.processChat(c, c.localUserIndex, overwriteIfExists));
+        groupChats.forEach((c) => this.processChat(c, c.localUserIndex, updatedEvents?.get(c.id)));
         for (const community of communities) {
             community.channels.forEach((c) =>
-                this.processChat(c, community.localUserIndex, overwriteIfExists),
+                this.processChat(c, community.localUserIndex, updatedEvents?.get(c.id)),
             );
         }
 
@@ -100,10 +102,14 @@ export class CachePrimer {
     private processChat(
         chat: ChatSummary,
         localUserIndex: string,
-        overwriteIfExists: boolean = false,
+        updatedEvents: UpdatedEvent[] | undefined,
     ) {
         const chatIdString = chatIdentifierToString(chat.id);
-        if (this.#inProgress.has(chatIdString) || this.#blockedChats.has(chatIdString)) {
+        if (
+            this.#inProgress.has(chatIdString) ||
+            this.#blockedChats.has(chatIdString) ||
+            (chat.kind === "channel" && chat.externalUrl !== undefined)
+        ) {
             return;
         }
 
@@ -116,20 +122,41 @@ export class CachePrimer {
             proposalChatIds.push(chat.id);
         }
 
-        const lastUpdated = this.lastUpdatedTimestamps[chatIdString];
-        if (!this.shouldEnqueueChat(chat, lastUpdated)) {
+        const cacheLastUpdated = this.lastUpdatedTimestamps[chatIdString];
+        const eventsArgs = this.getEventsArgs(chat, cacheLastUpdated);
+        const dirtyEventIndexes =
+            (updatedEvents?.length ?? 0) > 0
+                ? updatedEvents
+                      ?.filter((e) => e.threadRootMessageIndex === undefined)
+                      .map((e) => e.eventIndex)
+                : undefined;
+
+        if (eventsArgs === undefined && dirtyEventIndexes === undefined) {
             return;
         }
 
-        const normalized = normalizeChat(chat, localUserIndex);
-        if (overwriteIfExists) {
-            const index = this.#pending.findIndex((c) => chatIdentifiersEqual(c.chatId, chat.id));
-            if (index > -1) {
-                this.#pending[index] = normalized;
+        if (!this.#isFirstIteration) {
+            const existing = this.#pending.find((c) => chatIdentifiersEqual(c.chatId, chat.id));
+            if (existing !== undefined) {
+                existing.eventsArgs = eventsArgs;
+
+                const combinedDirtyEventIndexes = new Set<number>();
+                existing.dirtyEventIndexes?.forEach((i) => combinedDirtyEventIndexes.add(i));
+                dirtyEventIndexes?.forEach((i) => combinedDirtyEventIndexes.add(i));
+
+                if (combinedDirtyEventIndexes.size > 0) {
+                    existing.dirtyEventIndexes = [...combinedDirtyEventIndexes];
+                }
                 return;
             }
         }
-        this.#pending.push(normalized);
+        this.#pending.push({
+            chatId: chat.id,
+            localUserIndex,
+            lastUpdated: chat.lastUpdated,
+            eventsArgs,
+            dirtyEventIndexes,
+        });
     }
 
     async processNextBatch(): Promise<void> {
@@ -145,7 +172,7 @@ export class CachePrimer {
 
             const responses = await this.fetchEvents(localUserIndex, batch);
 
-            const userIds = new Set<string>();
+            const missingUserIds = new Set<string>();
             const loadRepliesBatch: ChatEventsArgs[] = [];
 
             for (let i = 0; i < responses.length; i++) {
@@ -162,7 +189,7 @@ export class CachePrimer {
                     for (const userId of userIds) {
                         if (!this.#usersLoaded.has(userId)) {
                             this.#usersLoaded.add(userId);
-                            userIds.add(userId);
+                            missingUserIds.add(userId);
                         }
                     }
 
@@ -198,16 +225,16 @@ export class CachePrimer {
                         for (const userId of userIds) {
                             if (!this.#usersLoaded.has(userId)) {
                                 this.#usersLoaded.add(userId);
-                                userIds.add(userId);
+                                missingUserIds.add(userId);
                             }
                         }
                     }
                 }
             }
 
-            if (userIds.size > 0) {
-                debug(`loading ${userIds.size} users`);
-                this.loadUsers([...userIds]);
+            if (missingUserIds.size > 0) {
+                debug(`loading ${missingUserIds.size} users`);
+                this.loadUsers([...missingUserIds]);
             }
 
             debug(`batch of size ${batch.length} completed`);
@@ -239,7 +266,26 @@ export class CachePrimer {
             this.#pending.splice(i, 1);
             this.#inProgress.add(chatIdentifierToString(next.chatId));
 
-            batch.push(this.getEventsArgs(next));
+            const context = { chatId: next.chatId };
+            const latestKnownUpdate = next.lastUpdated;
+
+            if (next.eventsArgs !== undefined) {
+                batch.push({
+                    context,
+                    args: next.eventsArgs,
+                    latestKnownUpdate,
+                });
+            }
+            if (next.dirtyEventIndexes !== undefined) {
+                batch.push({
+                    context,
+                    args: {
+                        kind: "by_index",
+                        events: next.dirtyEventIndexes,
+                    },
+                    latestKnownUpdate,
+                });
+            }
 
             if (batch.length >= BATCH_SIZE) {
                 break;
@@ -249,35 +295,31 @@ export class CachePrimer {
         return localUserIndexForBatch !== undefined ? [localUserIndexForBatch, batch] : undefined;
     }
 
-    private getEventsArgs(chat: QueuedChat): ChatEventsArgs {
-        const context = { chatId: chat.chatId };
-        const latestKnownUpdate = chat.lastUpdated;
-        const eventIndexRange: [number, number] = [
-            chat.minVisibleEventIndex,
-            chat.latestEventIndex,
-        ];
-        const unreadCount = chat.latestMessageIndex - chat.readByMeUpTo;
+    private getEventsArgs(
+        chat: ChatSummary,
+        cacheLastUpdated: bigint | undefined,
+    ): ChatEventsArgsInner | undefined {
+        if (chat.membership.archived || (cacheLastUpdated ?? 0) >= chat.lastUpdated) {
+            return undefined;
+        }
+
+        const minVisibleEventIndex = chat.kind === "direct_chat" ? 0 : chat.minVisibleEventIndex;
+        const readByMeUpTo = chat.membership.readByMeUpTo ?? 0;
+        const eventIndexRange: [number, number] = [minVisibleEventIndex, chat.latestEventIndex];
+        const unreadCount = (chat.latestMessageIndex ?? 0) - readByMeUpTo;
 
         if (unreadCount > MAX_MESSAGES / 2) {
             return {
-                context,
-                args: {
-                    kind: "window",
-                    midPoint: chat.readByMeUpTo + 1,
-                    eventIndexRange,
-                },
-                latestKnownUpdate,
+                kind: "window",
+                midPoint: readByMeUpTo + 1,
+                eventIndexRange,
             };
         } else {
             return {
-                context,
-                args: {
-                    kind: "page",
-                    ascending: false,
-                    startIndex: chat.latestEventIndex,
-                    eventIndexRange,
-                },
-                latestKnownUpdate,
+                kind: "page",
+                ascending: false,
+                startIndex: chat.latestEventIndex,
+                eventIndexRange,
             };
         }
     }
@@ -318,13 +360,6 @@ export class CachePrimer {
         }
     }
 
-    private shouldEnqueueChat(chat: ChatSummary, lastUpdated: bigint | undefined): boolean {
-        return (
-            !chat.membership.archived &&
-            (lastUpdated === undefined || chat.lastUpdated > lastUpdated)
-        );
-    }
-
     private removeFromPending(excludeFn: (value: ChatIdentifier) => boolean) {
         retain(this.#pending, (c) => !excludeFn(c.chatId));
     }
@@ -334,26 +369,10 @@ function debug(message: string) {
     console.debug("CachePrimer - " + message);
 }
 
-function normalizeChat(chat: ChatSummary, localUserIndex: string): QueuedChat {
-    return {
-        chatId: chat.id,
-        kind: chat.kind,
-        localUserIndex,
-        lastUpdated: chat.lastUpdated,
-        latestEventIndex: chat.latestEventIndex,
-        latestMessageIndex: chat.latestMessageIndex ?? 0,
-        readByMeUpTo: chat.membership.readByMeUpTo ?? 0,
-        minVisibleEventIndex: chat.kind === "direct_chat" ? 0 : chat.minVisibleEventIndex,
-    };
-}
-
 type QueuedChat = {
     chatId: ChatIdentifier;
-    kind: ChatSummary["kind"];
     localUserIndex: string;
     lastUpdated: bigint;
-    latestEventIndex: number;
-    latestMessageIndex: number;
-    readByMeUpTo: number;
-    minVisibleEventIndex: number;
+    eventsArgs?: ChatEventsArgsInner;
+    dirtyEventIndexes?: number[];
 };
