@@ -24,12 +24,7 @@ import type {
     Tally,
     VerifiedCredentialArgs,
 } from "openchat-shared";
-import {
-    MAX_MISSING,
-    premiumPrices,
-    toBigInt32,
-    UnsupportedValueError,
-} from "openchat-shared";
+import { MAX_MISSING, premiumPrices, toBigInt32, UnsupportedValueError } from "openchat-shared";
 import {
     BotInstallationLocation as ApiBotInstallationLocation,
     LocalUserIndexAccessTokenV2Args,
@@ -147,9 +142,24 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
         for (let i = 0; i < requests.length; i++) {
             const request = requests[i];
 
-            const [cached, missing] = await this.getEventsFromCache(request.context, request.args);
+            const [cached, missing, dirty, totalMiss] = await this.getEventsFromCache(
+                request.context,
+                request.args,
+            );
 
-            if (missing.size === 0) {
+            if (missing.size + dirty.size > MAX_MISSING || totalMiss) {
+                requestsToBackend.push(request);
+            } else if (missing.size + dirty.size > 0) {
+                partialCachedResults[i] = cached.events;
+                requestsToBackend.push({
+                    context: request.context,
+                    args: {
+                        kind: "by_index",
+                        events: [...missing, ...dirty],
+                    },
+                    latestKnownUpdate: request.latestKnownUpdate,
+                });
+            } else {
                 // Insert the response into the index matching the request
                 responses[i] = {
                     kind: "success",
@@ -162,23 +172,14 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
                         request.latestKnownUpdate,
                     );
                 }
-            } else if (missing.size > MAX_MISSING) {
-                requestsToBackend.push(request);
-            } else {
-                partialCachedResults[i] = cached.events;
-                requestsToBackend.push({
-                    context: request.context,
-                    args: {
-                        kind: "by_index",
-                        events: [...missing],
-                    },
-                    latestKnownUpdate: request.latestKnownUpdate,
-                });
             }
         }
 
         if (requestsToBackend.length > 0) {
-            const batchResponse = await this.getChatEventsFromBackend(localUserIndex, requestsToBackend);
+            const batchResponse = await this.getChatEventsFromBackend(
+                localUserIndex,
+                requestsToBackend,
+            );
 
             for (let i = 0; i < batchResponse.responses.length; i++) {
                 const request = requestsToBackend[i];
@@ -222,12 +223,12 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
         return responses;
     }
 
-    private async getEventsFromCache(
+    private getEventsFromCache(
         context: MessageContext,
         args: ChatEventsArgsInner,
-    ): Promise<[EventsSuccessResult<ChatEvent>, Set<number>]> {
+    ): Promise<[EventsSuccessResult<ChatEvent>, Set<number>, Set<number>, boolean?]> {
         if (args.kind === "page") {
-            return await getCachedEvents(
+            return getCachedEvents(
                 this.db,
                 args.eventIndexRange,
                 context,
@@ -239,7 +240,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
             );
         }
         if (args.kind === "window") {
-            const [cached, missing] = await getCachedEventsWindowByMessageIndex(
+            return getCachedEventsWindowByMessageIndex(
                 this.db,
                 args.eventIndexRange,
                 context,
@@ -248,15 +249,17 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
                 undefined,
                 1,
             );
-            return [cached, missing];
         }
         if (args.kind === "by_index") {
-            return await getCachedEventsByIndex(this.db, args.events, context);
+            return getCachedEventsByIndex(this.db, args.events, context);
         }
         throw new UnsupportedValueError("Unexpected ChatEventsArgs type", args);
     }
 
-    private getChatEventsFromBackend(localUserIndex: string, requests: ChatEventsArgs[]): Promise<ChatEventsBatchResponse> {
+    private getChatEventsFromBackend(
+        localUserIndex: string,
+        requests: ChatEventsArgs[],
+    ): Promise<ChatEventsBatchResponse> {
         const args = {
             requests: requests.map(chatEventsArgs),
         };
@@ -375,7 +378,11 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
         );
     }
 
-    inviteUsersToCommunity(localUserIndex: string, communityId: string, userIds: string[]): Promise<boolean> {
+    inviteUsersToCommunity(
+        localUserIndex: string,
+        communityId: string,
+        userIds: string[],
+    ): Promise<boolean> {
         return this.update(
             localUserIndex,
             "invite_users_to_community",
@@ -389,7 +396,11 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
         );
     }
 
-    inviteUsersToGroup(localUserIndex: string, chatId: string, userIds: string[]): Promise<boolean> {
+    inviteUsersToGroup(
+        localUserIndex: string,
+        chatId: string,
+        userIds: string[],
+    ): Promise<boolean> {
         return this.update(
             localUserIndex,
             "invite_users_to_group",
@@ -461,7 +472,11 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
         );
     }
 
-    uninstallBot(localUserIndex: string, location: BotInstallationLocation, botId: string): Promise<boolean> {
+    uninstallBot(
+        localUserIndex: string,
+        location: BotInstallationLocation,
+        botId: string,
+    ): Promise<boolean> {
         return this.update(
             localUserIndex,
             "uninstall_bot",
@@ -480,7 +495,10 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
         );
     }
 
-    getAccessToken(localUserIndex: string, accessType: AccessTokenType): Promise<string | undefined> {
+    getAccessToken(
+        localUserIndex: string,
+        accessType: AccessTokenType,
+    ): Promise<string | undefined> {
         return this.query(
             localUserIndex,
             "access_token_v2",
@@ -515,7 +533,10 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
         );
     }
 
-    payForPremiumItem(localUserIndex: string, item: PremiumItem): Promise<PayForPremiumItemResponse> {
+    payForPremiumItem(
+        localUserIndex: string,
+        item: PremiumItem,
+    ): Promise<PayForPremiumItemResponse> {
         return this.update(
             localUserIndex,
             "pay_for_premium_item",
@@ -530,7 +551,11 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
         );
     }
 
-    reinstateMissedDailyClaims(localUserIndex: string, userId: string, days: number[]): Promise<boolean> {
+    reinstateMissedDailyClaims(
+        localUserIndex: string,
+        userId: string,
+        days: number[],
+    ): Promise<boolean> {
         return this.update(
             localUserIndex,
             "reinstate_missed_daily_claims",
@@ -544,14 +569,19 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
         );
     }
 
-    claimPrize(localUserIndex: string, id: MultiUserChatIdentifier, messageId: bigint, signInProof: string | undefined): Promise<ClaimPrizeResponse> {
+    claimPrize(
+        localUserIndex: string,
+        id: MultiUserChatIdentifier,
+        messageId: bigint,
+        signInProof: string | undefined,
+    ): Promise<ClaimPrizeResponse> {
         return this.update(
             localUserIndex,
             "claim_prize",
             {
                 chat_id: apiMultiUserChat(id),
                 message_id: messageId,
-                sign_in_proof_jwt: signInProof
+                sign_in_proof_jwt: signInProof,
             },
             (resp) => {
                 console.log("Resp: ", resp);

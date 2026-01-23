@@ -52,4 +52,65 @@ export class Stream<T> {
         this.onError = subscription.onError;
         this.onEnd = subscription.onEnd;
     }
+
+    map<TOut>(mapFn: (val: T, index: number) => TOut): Stream<TOut> {
+        return new Stream<TOut>((resolve, reject) => {
+            let index = 0;
+            this.subscribe({
+                onResult: (val, final) => resolve(mapFn(val, index++), final),
+                onError: reject,
+            });
+        });
+    }
+
+    mapAsync<TOut>(mapFn: (val: T, index: number) => Promise<TOut>): Stream<TOut> {
+        return new Stream<TOut>((resolve, reject) => {
+            let index = 0;
+            this.subscribe({
+                onResult: (val, final) =>
+                    mapFn(val, index++)
+                        .then((mapped) => resolve(mapped, final))
+                        .catch(reject),
+                onError: reject,
+            });
+        });
+    }
+
+    aggregate<TOut>(
+        callbackFn: (previousValue: TOut, currentValue: T, currentIndex: number) => TOut,
+        initialValue: TOut,
+    ): Stream<TOut> {
+        return new Stream<TOut>((resolve, reject) => {
+            let agg = initialValue;
+            let index = 0;
+            this.subscribe({
+                onResult: (val, final) => {
+                    try {
+                        agg = callbackFn(agg, val, index++);
+                    } catch (err) {
+                        reject(err);
+                        throw err;
+                    }
+                    resolve(agg, final);
+                },
+                onError: reject,
+            });
+        });
+    }
+
+    toPromise(aggFn?: (curr: T, next: T) => T): Promise<T> {
+        return new Promise<T>((resolve, reject) => {
+            let agg: T | undefined;
+            this.subscribe({
+                onResult: (val: T, final: boolean) => {
+                    agg = agg === undefined || aggFn === undefined ? val : aggFn(agg, val);
+
+                    if (final) {
+                        resolve(agg);
+                    }
+                },
+                onError: reject,
+            });
+        });
+    }
 }
