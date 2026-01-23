@@ -168,7 +168,7 @@ export class CachePrimer {
 
             const responses = await this.fetchEvents(localUserIndex, batch);
 
-            const userIds = new Set<string>();
+            const missingUserIds = new Set<string>();
             const loadRepliesBatch: ChatEventsArgs[] = [];
 
             for (let i = 0; i < responses.length; i++) {
@@ -185,7 +185,7 @@ export class CachePrimer {
                     for (const userId of userIds) {
                         if (!this.#usersLoaded.has(userId)) {
                             this.#usersLoaded.add(userId);
-                            userIds.add(userId);
+                            missingUserIds.add(userId);
                         }
                     }
 
@@ -221,16 +221,16 @@ export class CachePrimer {
                         for (const userId of userIds) {
                             if (!this.#usersLoaded.has(userId)) {
                                 this.#usersLoaded.add(userId);
-                                userIds.add(userId);
+                                missingUserIds.add(userId);
                             }
                         }
                     }
                 }
             }
 
-            if (userIds.size > 0) {
-                debug(`loading ${userIds.size} users`);
-                this.loadUsers([...userIds]);
+            if (missingUserIds.size > 0) {
+                debug(`loading ${missingUserIds.size} users`);
+                this.loadUsers([...missingUserIds]);
             }
 
             debug(`batch of size ${batch.length} completed`);
