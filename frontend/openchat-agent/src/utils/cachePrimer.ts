@@ -105,7 +105,11 @@ export class CachePrimer {
         updatedEvents: UpdatedEvent[] | undefined,
     ) {
         const chatIdString = chatIdentifierToString(chat.id);
-        if (this.#inProgress.has(chatIdString) || this.#blockedChats.has(chatIdString)) {
+        if (
+            this.#inProgress.has(chatIdString) ||
+            this.#blockedChats.has(chatIdString) ||
+            (chat.kind === "channel" && chat.externalUrl !== undefined)
+        ) {
             return;
         }
 
