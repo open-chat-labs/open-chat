@@ -71,27 +71,13 @@ export class CachePrimer {
             this.removeFromPending((c) => c.kind === "channel" && c.communityId === communityId),
         );
 
-        const overwriteIfExists = !this.#isFirstIteration;
-
         directChats.forEach((c) =>
-            this.processChat(
-                c,
-                this.userCanisterLocalUserIndex,
-                updatedEvents?.get(c.id),
-                overwriteIfExists,
-            ),
+            this.processChat(c, this.userCanisterLocalUserIndex, updatedEvents?.get(c.id)),
         );
-        groupChats.forEach((c) =>
-            this.processChat(c, c.localUserIndex, updatedEvents?.get(c.id), overwriteIfExists),
-        );
+        groupChats.forEach((c) => this.processChat(c, c.localUserIndex, updatedEvents?.get(c.id)));
         for (const community of communities) {
             community.channels.forEach((c) =>
-                this.processChat(
-                    c,
-                    community.localUserIndex,
-                    updatedEvents?.get(c.id),
-                    overwriteIfExists,
-                ),
+                this.processChat(c, community.localUserIndex, updatedEvents?.get(c.id)),
             );
         }
 
@@ -117,7 +103,6 @@ export class CachePrimer {
         chat: ChatSummary,
         localUserIndex: string,
         updatedEvents: UpdatedEvent[] | undefined,
-        overwriteIfExists: boolean,
     ) {
         const chatIdString = chatIdentifierToString(chat.id);
         if (this.#inProgress.has(chatIdString) || this.#blockedChats.has(chatIdString)) {
@@ -146,7 +131,7 @@ export class CachePrimer {
             return;
         }
 
-        if (overwriteIfExists) {
+        if (!this.#isFirstIteration) {
             const existing = this.#pending.find((c) => chatIdentifiersEqual(c.chatId, chat.id));
             if (existing !== undefined) {
                 existing.eventsArgs = eventsArgs;

@@ -1717,13 +1717,10 @@ export class OpenChatAgent extends EventTarget {
             anyUpdates = true;
         }
 
+        const cachePrimer = this._cachePrimer;
         if (!anyUpdates) {
-            if (this._cachePrimer?.isFirstIteration) {
-                this._cachePrimer.processUpdates(
-                    currentDirectChats,
-                    currentGroups,
-                    currentCommunities,
-                );
+            if (cachePrimer?.isFirstIteration) {
+                cachePrimer.processUpdates(currentDirectChats, currentGroups, currentCommunities);
             }
 
             const duration = performance.now() - start;
@@ -1845,15 +1842,21 @@ export class OpenChatAgent extends EventTarget {
             .filter((c) => communitiesAddedUpdatedIds.has(c.id.communityId))
             .map((c) => this.hydrateCommunity(c));
 
-        this._cachePrimer?.processUpdates(
-            directChatsAddedUpdated,
-            groupsAddedUpdated,
-            communitiesAddedUpdated,
-            updatedEvents,
-            directChatsRemoved,
-            groupsRemoved,
-            communitiesRemoved,
-        );
+        if (cachePrimer !== undefined) {
+            if (cachePrimer.isFirstIteration) {
+                cachePrimer.processUpdates(directChats, groupChats, communities, updatedEvents);
+            } else {
+                cachePrimer.processUpdates(
+                    directChatsAddedUpdated,
+                    groupsAddedUpdated,
+                    communitiesAddedUpdated,
+                    updatedEvents,
+                    directChatsRemoved,
+                    groupsRemoved,
+                    communitiesRemoved,
+                );
+            }
+        }
 
         const duration = performance.now() - start;
         console.debug(
