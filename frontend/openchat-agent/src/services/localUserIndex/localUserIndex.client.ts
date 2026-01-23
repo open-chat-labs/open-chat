@@ -142,12 +142,24 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
         for (let i = 0; i < requests.length; i++) {
             const request = requests[i];
 
-            const [cached, missing, dirty] = await this.getEventsFromCache(
+            const [cached, missing, dirty, totalMiss] = await this.getEventsFromCache(
                 request.context,
                 request.args,
             );
 
-            if (missing.size === 0) {
+            if (missing.size + dirty.size > MAX_MISSING || totalMiss) {
+                requestsToBackend.push(request);
+            } else if (missing.size + dirty.size > 0) {
+                partialCachedResults[i] = cached.events;
+                requestsToBackend.push({
+                    context: request.context,
+                    args: {
+                        kind: "by_index",
+                        events: [...missing, ...dirty],
+                    },
+                    latestKnownUpdate: request.latestKnownUpdate,
+                });
+            } else {
                 // Insert the response into the index matching the request
                 responses[i] = {
                     kind: "success",
@@ -160,18 +172,6 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
                         request.latestKnownUpdate,
                     );
                 }
-            } else if (missing.size > MAX_MISSING) {
-                requestsToBackend.push(request);
-            } else {
-                partialCachedResults[i] = cached.events;
-                requestsToBackend.push({
-                    context: request.context,
-                    args: {
-                        kind: "by_index",
-                        events: [...missing, ...dirty],
-                    },
-                    latestKnownUpdate: request.latestKnownUpdate,
-                });
             }
         }
 
@@ -223,12 +223,12 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
         return responses;
     }
 
-    private async getEventsFromCache(
+    private getEventsFromCache(
         context: MessageContext,
         args: ChatEventsArgsInner,
-    ): Promise<[EventsSuccessResult<ChatEvent>, Set<number>, Set<number>]> {
+    ): Promise<[EventsSuccessResult<ChatEvent>, Set<number>, Set<number>, boolean?]> {
         if (args.kind === "page") {
-            return await getCachedEvents(
+            return getCachedEvents(
                 this.db,
                 args.eventIndexRange,
                 context,
@@ -240,7 +240,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
             );
         }
         if (args.kind === "window") {
-            const [cached, missing, dirty] = await getCachedEventsWindowByMessageIndex(
+            return getCachedEventsWindowByMessageIndex(
                 this.db,
                 args.eventIndexRange,
                 context,
@@ -249,10 +249,9 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
                 undefined,
                 1,
             );
-            return [cached, missing, dirty];
         }
         if (args.kind === "by_index") {
-            return await getCachedEventsByIndex(this.db, args.events, context);
+            return getCachedEventsByIndex(this.db, args.events, context);
         }
         throw new UnsupportedValueError("Unexpected ChatEventsArgs type", args);
     }
