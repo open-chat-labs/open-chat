@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { BodySmall, ColourVars, Container, Row, type Padding } from "component-lib";
+    import { Body, BodySmall, ColourVars, Container, Row, type Padding } from "component-lib";
     import {
         BTC_SYMBOL,
         CKBTC_SYMBOL,
@@ -19,6 +19,8 @@
     import Translatable from "../Translatable.svelte";
     import NetworkSelector from "./NetworkSelector.svelte";
     import TruncatedAccount from "./TruncatedAccount.svelte";
+    import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";
+    import RobotConfusedOutline from "svelte-material-icons/RobotConfusedOutline.svelte";
 
     interface Props {
         ledger: string;
@@ -135,7 +137,28 @@
     });
 </script>
 
-<Container gap={"xs"} direction={"vertical"}>
+{#snippet fetchingDepositFee()}
+    <!-- TODO add loading spinner ? -->
+    <Body colour={"textSecondary"}>
+        {$_("cryptoAccount.fetchingDepositFee")}
+    </Body>
+{/snippet}
+
+{#snippet fetchingFeeError()}
+    <Body colour={"error"}>
+        {$_("cryptoAccount.failedToFetchDepositFee")}
+    </Body>
+    <RobotConfusedOutline color={ColourVars.error} size="1.25rem" />
+{/snippet}
+
+{#snippet displayFee(values: { amount: string; token: string })}
+    <Body colour={"warning"}>
+        {$_("cryptoAccount.networkFee", { values })}
+    </Body>
+    <AlertCircleOutline color={ColourVars.warning} size="1.25rem" />
+{/snippet}
+
+<Container gap={"xxs"} direction={"vertical"}>
     <Container
         borderRadius={["lg", "lg", "zero", "zero"]}
         {background}
@@ -160,70 +183,56 @@
     </Container>
 
     {#if isBtcNetwork}
-        <Row {background} padding={["lg", "xl"]}>
+        <Row {background} padding={["lg", "xl"]} crossAxisAlignment="center">
             {#await btcDepositFeePromise.get()}
-                <BodySmall colour={"textSecondary"}>
-                    {$_("cryptoAccount.fetchingDepositFee")}
-                </BodySmall>
+                {@render fetchingDepositFee()}
             {:then amount}
-                <BodySmall colour={"textSecondary"}>
-                    {$_("cryptoAccount.networkFee", {
-                        values: { amount, token: tokenDetails.symbol },
-                    })}
-                </BodySmall>
+                {@render displayFee({ amount, token: tokenDetails.symbol })}
             {:catch}
-                <BodySmall colour={"error"}>
-                    {$_("cryptoAccount.failedToFetchDepositFee")}
-                </BodySmall>
+                {@render fetchingFeeError()}
             {/await}
         </Row>
     {:else if isOneSecNetwork}
-        <Row {background} padding={["lg", "xl"]}>
+        <Row {background} padding={["lg", "xl"]} crossAxisAlignment="center">
             {#await oneSecFeesPromise.get()}
-                <BodySmall colour={"textSecondary"}>
-                    {$_("cryptoAccount.fetchingDepositFee")}
-                </BodySmall>
+                {@render fetchingDepositFee()}
             {:then}
                 {#if oneSecTotalFee !== undefined}
-                    <BodySmall colour={"textSecondary"}>
-                        {$_("cryptoAccount.networkFee", {
-                            values: { amount: oneSecTotalFee, token: tokenDetails.symbol },
-                        })}
-                    </BodySmall>
+                    {@render displayFee({ amount: oneSecTotalFee, token: tokenDetails.symbol })}
                 {:else}
-                    <BodySmall colour={"error"}>
-                        {$_("cryptoAccount.failedToFetchDepositFee")}
-                    </BodySmall>
+                    {@render fetchingFeeError()}
                 {/if}
             {:catch}
-                <BodySmall colour={"error"}>
-                    {$_("cryptoAccount.failedToFetchDepositFee")}
-                </BodySmall>
+                {@render fetchingFeeError()}
             {/await}
         </Row>
     {/if}
 
     <Container
-        borderRadius={["zero", "zero", "lg", "lg"]}
         {background}
         direction={"vertical"}
-        padding={["lg", "xl"]}>
-        <BodySmall colour={"textSecondary"} fontWeight={"bold"}>
-            <Translatable
-                resourceKey={i18nKey("tokenTransfer.yourAccount", { token: tokenName })} />
-        </BodySmall>
+        padding={["lg", "xl"]}
+        crossAxisAlignment="center"
+        borderRadius={["zero", "zero", "lg", "lg"]}>
         {#if account === undefined}
             {#if error !== undefined}
-                <BodySmall colour={"error"}>
-                    {$_("cryptoAccount.failedToGenerateAddress")}
-                </BodySmall>
+                <Body colour={"error"}>
+                    {$_("cryptoAccount.failedToGenera4teAddress")}
+                </Body>
+                <RobotConfusedOutline color={ColourVars.error} size="1.25rem" />
             {:else}
-                <BodySmall colour={"textSecondary"}>
+                <!-- TODO add spinner? -->
+                <Body colour={"textSecondary"}>
                     {$_("generating")}
-                </BodySmall>
+                </Body>
             {/if}
         {:else}
-            <TruncatedAccount {account} />
+            <TruncatedAccount {account}>
+                <BodySmall colour={"textSecondary"} fontWeight={"bold"}>
+                    <Translatable
+                        resourceKey={i18nKey("tokenTransfer.yourAccount", { token: tokenName })} />
+                </BodySmall>
+            </TruncatedAccount>
         {/if}
     </Container>
 
