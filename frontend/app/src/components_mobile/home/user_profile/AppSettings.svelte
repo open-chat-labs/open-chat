@@ -97,7 +97,7 @@
                 Icon={Delete}
                 title={i18nKey("Delete account")}
                 info={i18nKey(
-                    "You've decided not to be a member of OpenChat anymore. We'd hate to see you go... Perhaps we can havve a CHAT about it?",
+                    "You've decided not to be a member of OpenChat anymore. We'd hate to see you go and are here to help if you need it?",
                 )} />
         </Container>
     </Container>
