@@ -27,7 +27,7 @@
     {#if content.kind === "video_content"}
         <VideoContent edited={false} fill={false} {content} draft />
     {:else if content.kind === "audio_content"}
-        <AudioContent edited={false} {content} />
+        <AudioContent onRemove={removeDraft} edited={false} {content} draft />
     {:else if content.kind === "image_content"}
         <ImageContent onRemove={removeDraft} edited={false} fill={false} {content} draft />
     {:else if content.kind === "giphy_content"}

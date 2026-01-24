@@ -2,6 +2,7 @@
     import { Caption, ColourVars, Container, IconButton } from "component-lib";
     import type { AudioContent } from "openchat-client";
     import { onMount } from "svelte";
+    import Close from "svelte-material-icons/Close.svelte";
     import Pause from "svelte-material-icons/PauseCircleOutline.svelte";
     import Play from "svelte-material-icons/PlayCircleOutline.svelte";
     import WaveSurfer from "wavesurfer.js";
@@ -11,9 +12,11 @@
         content: AudioContent;
         edited: boolean;
         blockLevelMarkdown?: boolean;
+        onRemove?: () => void;
+        draft?: boolean;
     }
 
-    let { content, edited, blockLevelMarkdown = false }: Props = $props();
+    let { content, edited, blockLevelMarkdown = false, onRemove, draft = false }: Props = $props();
 
     let currentTime = $state<string>();
     let waveformDiv: HTMLDivElement | undefined;
@@ -104,6 +107,16 @@
     </Container>
 
     <div bind:this={waveformDiv} class="waveform"></div>
+
+    {#if draft}
+        <div class="close">
+            <IconButton mode={"dark"} onclick={onRemove}>
+                {#snippet icon()}
+                    <Close color={ColourVars.textPrimary} />
+                {/snippet}
+            </IconButton>
+        </div>
+    {/if}
 </Container>
 
 <ContentCaption caption={content.caption} {edited} {blockLevelMarkdown} />
