@@ -129,6 +129,12 @@ export class SheetBehavior {
     }
 
     // Only track movement in y dimension!
+    //
+    // TODO Fix flicking weirdness!
+    // Trying to tap on a clickable item if the sheet was flicked to open, may
+    // require two taps. It would seem that in some cases the webview enters
+    // momentum/scroll state, which it stays in, and requires an additional tap
+    // to cancel, therefore blocking interactions with UI elements.
     onDragStart(e: PointerEvent) {
         // Remove any transition that may be attached to the sheet...
         this._clearSheetTransition();
