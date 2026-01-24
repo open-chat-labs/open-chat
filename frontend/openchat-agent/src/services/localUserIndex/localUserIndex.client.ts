@@ -186,7 +186,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
                 const response = batchResponse.responses[i];
 
                 if (response.kind === "success") {
-                    setCachedEvents(
+                    await setCachedEvents(
                         this.db,
                         request.context.chatId,
                         response.result,
