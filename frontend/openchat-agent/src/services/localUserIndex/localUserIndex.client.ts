@@ -145,6 +145,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
             const [cached, missing, dirty, totalMiss] = await this.getEventsFromCache(
                 request.context,
                 request.args,
+                !cachePrimer,
             );
 
             if (missing.size + dirty.size > MAX_MISSING || totalMiss) {
@@ -226,6 +227,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
     private getEventsFromCache(
         context: MessageContext,
         args: ChatEventsArgsInner,
+        allowDirty: boolean,
     ): Promise<[EventsSuccessResult<ChatEvent>, Set<number>, Set<number>, boolean?]> {
         if (args.kind === "page") {
             return getCachedEvents(
@@ -237,6 +239,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
                 undefined,
                 undefined,
                 1,
+                allowDirty,
             );
         }
         if (args.kind === "window") {
@@ -248,10 +251,11 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
                 undefined,
                 undefined,
                 1,
+                allowDirty,
             );
         }
         if (args.kind === "by_index") {
-            return getCachedEventsByIndex(this.db, args.events, context);
+            return getCachedEventsByIndex(this.db, args.events, context, allowDirty);
         }
         throw new UnsupportedValueError("Unexpected ChatEventsArgs type", args);
     }
