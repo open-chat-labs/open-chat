@@ -824,6 +824,8 @@ export class OpenChat {
                   identityKeyAndChain.key,
                   identityKeyAndChain.delegation,
               );
+        // Stop the chats poller until we have finished loading the new identity
+        this.#chatsPoller?.stop();
         currentUserStore.set(anonymousUser());
         chatsInitialisedStore.set(false);
         const authPrincipal = identity.getPrincipal().toString();
@@ -6503,12 +6505,6 @@ export class OpenChat {
             }
         }
 
-        // horribly enough - we need to slightly defer this so that all the cascade of derived stuff is complete
-        // I am hopeful that we can remove this when we aren't manually synchronising runes & stores
-        tick().then(() => {
-            chatsInitialisedStore.set(true);
-        });
-
         this.#closeNotificationsIfNecessary();
 
         if (chatsResponse.newAchievements.length > 0) {
@@ -6523,6 +6519,12 @@ export class OpenChat {
                 this.refreshSwappableTokens();
                 window.setTimeout(() => this.refreshBalancesInSeries(), 1000);
             }
+
+            // horribly enough - we need to slightly defer this so that all the cascade of derived stuff is complete
+            // I am hopeful that we can remove this when we aren't manually synchronising runes & stores
+            tick().then(() => {
+                chatsInitialisedStore.set(true);
+            });
         }
 
         if (chatsResponse.bitcoinAddress !== undefined) {

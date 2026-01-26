@@ -6,3 +6,14 @@ export function retain<T>(arr: T[], filter: (val: T) => boolean) {
         }
     }
 }
+
+export function max<T>(arr: T[], mapper: (val: T) => number): number {
+    let max = 0;
+    for (const item of arr) {
+        const value = mapper(item);
+        if (value > max) {
+            max = value;
+        }
+    }
+    return max;
+}

@@ -226,7 +226,7 @@ import {
     clearCache,
     deleteEventsForChatOrCommunity,
     getActivityFeedEvents,
-    getCachePrimerTimestamps,
+    getCachePrimerEventIndexes,
     getCachedBots,
     getCachedChats,
     getCachedExternalAchievements,
@@ -1396,6 +1396,7 @@ export class OpenChatAgent extends EventTarget {
 
     private async _getUpdates(
         current: ChatStateFull | undefined,
+        initialLoad: boolean,
     ): Promise<UpdatesResult | undefined> {
         const start = performance.now();
         let totalQueryCount = 0;
@@ -1670,10 +1671,19 @@ export class OpenChatAgent extends EventTarget {
         }
 
         const previousUpdatesTimestamp = mapOptional(current?.latestUserCanisterUpdates, Number);
-        const summaryUpdatesResponses = await this.#getSummaryUpdatesFromLocalUserIndexes(
+        const summaryUpdatesResponsePromises = this.#getSummaryUpdatesFromLocalUserIndexes(
             byLocalUserIndex,
             previousUpdatesTimestamp,
         );
+
+        if (initialLoad) {
+            // Set up the cache primer on the first iteration but don't process anything until the
+            // next iteration. This is because we want OC's initialization to be as fast as
+            // possible, so don't want resources going to the CachePrimer until it is complete.
+            this.#initializeCachePrimer(userCanisterLocalUserIndex);
+        }
+
+        const summaryUpdatesResponses = await summaryUpdatesResponsePromises;
 
         totalQueryCount += summaryUpdatesResponses.success.length;
         totalQueryCount += summaryUpdatesResponses.errors.length;
@@ -1720,7 +1730,7 @@ export class OpenChatAgent extends EventTarget {
 
         const cachePrimer = this._cachePrimer;
         if (!anyUpdates) {
-            if (cachePrimer?.isFirstIteration) {
+            if (!initialLoad && cachePrimer?.isFirstIteration) {
                 cachePrimer.processUpdates(currentDirectChats, currentGroups, currentCommunities);
             }
 
@@ -1796,27 +1806,6 @@ export class OpenChatAgent extends EventTarget {
 
         if (this.userClient.userId !== ANON_USER_ID) {
             setCachedChats(this.db, this.principal, state, updatedEvents);
-
-            if (this._cachePrimer === undefined) {
-                // Set up the cache primer on the first iteration but don't process anything yet, since we want OC's
-                // initialization to be as fast as possible and so don't want resources going to the CachePrimer yet.
-                getCachePrimerTimestamps(this.db).then(
-                    (ts) =>
-                        (this._cachePrimer = new CachePrimer(
-                            state.userCanisterLocalUserIndex,
-                            ts,
-                            (localUserIndex, requests) =>
-                                this._localUserIndexClient.chatEvents(
-                                    localUserIndex,
-                                    requests,
-                                    true,
-                                ),
-                            (localUserIndex, proposalChatIds) =>
-                                this.#updateCachedProposalTallies(localUserIndex, proposalChatIds),
-                            (userIds) => this._userIndexClient.populateUserCache(userIds),
-                        )),
-                );
-            }
         }
 
         const directChatsAddedUpdatedIds = new Set([
@@ -1843,7 +1832,7 @@ export class OpenChatAgent extends EventTarget {
             .filter((c) => communitiesAddedUpdatedIds.has(c.id.communityId))
             .map((c) => this.hydrateCommunity(c));
 
-        if (cachePrimer !== undefined) {
+        if (!initialLoad && cachePrimer !== undefined) {
             if (cachePrimer.isFirstIteration) {
                 cachePrimer.processUpdates(directChats, groupChats, communities, updatedEvents);
             } else {
@@ -1892,6 +1881,20 @@ export class OpenChatAgent extends EventTarget {
             suspensionChanged,
             premiumItems: premiumItems.valueIfUpdated(),
         };
+    }
+
+    #initializeCachePrimer(userCanisterLocalUserIndex: string): Promise<CachePrimer> {
+        return getCachePrimerEventIndexes(this.db).then((idx) => {
+            return (this._cachePrimer = new CachePrimer(
+                userCanisterLocalUserIndex,
+                idx,
+                (localUserIndex, requests) =>
+                    this._localUserIndexClient.chatEvents(localUserIndex, requests, true),
+                (localUserIndex, proposalChatIds) =>
+                    this.#updateCachedProposalTallies(localUserIndex, proposalChatIds),
+                (userIds) => this._userIndexClient.populateUserCache(userIds),
+            ));
+        });
     }
 
     async #getSummaryUpdatesFromLocalUserIndexes(
@@ -2009,7 +2012,7 @@ export class OpenChatAgent extends EventTarget {
             }
             if (!isOffline) {
                 try {
-                    const updates = await this._getUpdates(cachedState);
+                    const updates = await this._getUpdates(cachedState, initialLoad);
                     resolve(updates, true);
                 } catch (err) {
                     reject(err);
