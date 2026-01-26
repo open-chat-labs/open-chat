@@ -257,7 +257,8 @@ body.needs-safe-inset:not(.keyboard):not(.native-android) {
         }
     }
 
-    .transient_sheet {
+    .transient_sheet,
+    .anon-footer {
         padding-bottom: var(--safe-inset) !important;
     }
 }
