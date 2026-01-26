@@ -17,6 +17,7 @@
     import {
         allUsersStore,
         anonUserStore,
+        chatSummariesListStore,
         defaultChatRules,
         publish,
         ROLE_NONE,
@@ -27,6 +28,7 @@
     import { getContext } from "svelte";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
+    import At from "svelte-material-icons/At.svelte";
     import BellOff from "svelte-material-icons/BellOff.svelte";
     import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
     import NewChannel from "svelte-material-icons/FormatListGroupPlus.svelte";
@@ -71,6 +73,13 @@
     let canEdit = $derived(communityState.canEditCommunity());
     let rules = $derived($selectedCommunityRulesStore ?? defaultChatRules("community"));
 
+    let isCommunityMuted = $derived(
+        $chatSummariesListStore.every((c) => c.membership.notificationsMuted),
+    );
+    let isAtEveryoneMutedForCommunity = $derived(
+        $chatSummariesListStore.every((c) => c.membership.atEveryoneMuted),
+    );
+
     function newChannel(embedded: boolean) {
         if (canCreateChannel) {
             updateGroupState.initialise(client.createCandidateGroup("channel", embedded));
@@ -90,6 +99,10 @@
             kind: "leave_community",
             communityId: community.id,
         });
+    }
+
+    function muteAllChannels(muteAtEveryone: boolean) {
+        communityState.muteAllChannels(muteAtEveryone);
     }
 </script>
 
@@ -158,11 +171,21 @@
 
                 {#if !$anonUserStore}
                     <Container gap={"sm"}>
-                        <BigButton onClick={() => communityState.muteAllChannels()}>
+                        <BigButton
+                            disabled={isCommunityMuted}
+                            onClick={() => muteAllChannels(false)}>
                             {#snippet icon(color, size)}
                                 <BellOff {color} {size} />
                             {/snippet}
-                            <Translatable resourceKey={i18nKey("Mute all channels")} />
+                            <Translatable resourceKey={i18nKey("Mute all")} />
+                        </BigButton>
+                        <BigButton
+                            disabled={isAtEveryoneMutedForCommunity}
+                            onClick={() => muteAllChannels(true)}>
+                            {#snippet icon(color, size)}
+                                <At {color} {size} />
+                            {/snippet}
+                            <Translatable resourceKey={i18nKey("Mute @everyone")} />
                         </BigButton>
                         <BigButton onClick={() => communityState.share()}>
                             {#snippet icon(color, size)}

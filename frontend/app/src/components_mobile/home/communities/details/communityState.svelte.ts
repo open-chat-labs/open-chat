@@ -59,8 +59,8 @@ export class CommunityState {
         return this.client.communityAvatarUrl(this.community.id.communityId, this.community.avatar);
     }
 
-    muteAllChannels() {
-        return this.client.muteAllChannels(this.community.id, false);
+    muteAllChannels(muteAtEveryone: boolean) {
+        return this.client.muteAllChannels(this.community.id, muteAtEveryone);
     }
 
     share() {
