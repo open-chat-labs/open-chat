@@ -239,6 +239,7 @@
             }
             modalStack.pop();
         }
+        historyDepth = historyDepth - 1;
     }
 
     function pop() {
@@ -253,13 +254,28 @@
         }
     }
 
+    let historyDepth = $state(0);
+
+    // $inspect(historyDepth).with(console.trace);
+
     onMount(() => {
+        const originalPushState = history.pushState;
+        history.pushState = function (...args) {
+            historyDepth = historyDepth + 1;
+            return originalPushState.apply(history, args);
+        };
+
         if (client.isNativeApp()) {
             // Expect user to press back in the app, handle that behaviour here.
             expectBackPress(() => {
                 try {
-                    pop();
-                    portalState.close();
+                    // if we're back where we started, minimise
+                    if (historyDepth <= 0) {
+                        minimizeApp().catch(console.error);
+                    } else {
+                        pop();
+                        portalState.close();
+                    }
                 } catch {}
             }).catch(console.error);
         }
@@ -482,6 +498,7 @@
             ),
         ];
         return () => {
+            history.pushState = originalPushState;
             unsubs.forEach((u) => u());
         };
     });

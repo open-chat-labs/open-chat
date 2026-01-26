@@ -8508,7 +8508,7 @@ export class OpenChat {
             ? communitiesStore.value.get(mostRecentId)
             : undefined;
         if (mostRecentCommunity !== undefined) {
-            pageRedirect(`/community/${mostRecentCommunity.id.communityId}`);
+            page(`/community/${mostRecentCommunity.id.communityId}`);
             return true;
         }
         return false;
@@ -8517,7 +8517,7 @@ export class OpenChat {
     #selectFirstCommunity(): boolean {
         const first = sortedCommunitiesStore.value?.find((c) => !c.membership.archived);
         if (first !== undefined) {
-            pageRedirect(`/community/${first.id.communityId}`);
+            page(`/community/${first.id.communityId}`);
             return true;
         }
         return false;
@@ -8879,7 +8879,7 @@ export class OpenChat {
 
     setChatListScopeAndRedirect(route: RouteParams): boolean {
         if (route.kind === "home_route") {
-            page(routeForScope(this.getDefaultScope()));
+            pageReplace(routeForScope(this.getDefaultScope()));
             return true;
         }
         return false;
