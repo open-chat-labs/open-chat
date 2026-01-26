@@ -508,6 +508,7 @@ export async function getCachedEvents(
     maxEvents = MAX_EVENTS,
     maxMessages = MAX_MESSAGES,
     maxMissing = 50,
+    allowDirty = true,
 ): Promise<[EventsSuccessResult<ChatEvent>, Set<number>, Set<number>]> {
     console.debug("CACHE: ", context, eventIndexRange, startIndex, ascending);
     const start = Date.now();
@@ -521,6 +522,7 @@ export async function getCachedEvents(
         maxEvents,
         maxMessages,
         maxMissing,
+        allowDirty,
     );
 
     if (missing.size === 0) {
@@ -549,6 +551,7 @@ export async function getCachedEventsWindowByMessageIndex(
     maxEvents = MAX_EVENTS,
     maxMessages = MAX_MESSAGES,
     maxMissing = 50,
+    allowDirty = true,
 ): Promise<[EventsSuccessResult<ChatEvent>, Set<number>, Set<number>, boolean]> {
     const eventIndex = await getNearestCachedEventIndexForMessageIndex(db, context, messageIndex);
 
@@ -564,6 +567,7 @@ export async function getCachedEventsWindowByMessageIndex(
         maxEvents,
         maxMessages,
         maxMissing,
+        allowDirty,
     );
 
     return [events, missing, dirty, false];
@@ -577,6 +581,7 @@ export async function getCachedEventsWindow(
     maxEvents = MAX_EVENTS,
     maxMessages = MAX_MESSAGES,
     maxMissing = 50,
+    allowDirty = true,
 ): Promise<[EventsSuccessResult<ChatEvent>, Set<number>, Set<number>]> {
     console.debug("CACHE: window: ", eventIndexRange, startIndex);
     const start = Date.now();
@@ -596,6 +601,7 @@ export async function getCachedEventsWindow(
                 maxEvents / 2,
                 maxMessages / 2,
                 maxMissing / 2,
+                allowDirty,
             ),
         );
     }
@@ -610,6 +616,7 @@ export async function getCachedEventsWindow(
                 maxEvents / 2,
                 maxMessages / 2,
                 maxMissing / 2,
+                allowDirty,
             ),
         );
     }
@@ -635,7 +642,8 @@ async function getCachedEventByIndex(
     db: IDBPDatabase<ChatSchema>,
     eventIndex: number,
     context: MessageContext,
-    now: number = Date.now(),
+    now: number,
+    allowDirty: boolean,
 ): Promise<EnhancedWrapper<ChatEvent> | ExpiredEventsRange | undefined> {
     const storeName =
         context.threadRootMessageIndex === undefined ? "chat_events" : "thread_events";
@@ -648,7 +656,7 @@ async function getCachedEventByIndex(
     );
 
     if (
-        (event?.kind === "event" && event.index === eventIndex) ||
+        (event?.kind === "event" && event.index === eventIndex && (!event.dirty || allowDirty)) ||
         (event?.kind === "expired_events_range" && event.start <= eventIndex)
     ) {
         return event;
@@ -660,6 +668,7 @@ export async function getCachedEventsByIndex(
     db: Database,
     eventIndexes: number[],
     context: MessageContext,
+    allowDirty = true,
 ): Promise<[EventsSuccessResult<ChatEvent>, Set<number>, Set<number>]> {
     const events: EventWrapper<ChatEvent>[] = [];
     const expiredEventRanges: ExpiredEventsRange[] = [];
@@ -669,7 +678,7 @@ export async function getCachedEventsByIndex(
     const now = Date.now();
     await Promise.all(
         eventIndexes.map(async (idx) => {
-            const evt = await getCachedEventByIndex(resolvedDb, idx, context, now);
+            const evt = await getCachedEventByIndex(resolvedDb, idx, context, now, allowDirty);
             if (evt === undefined) {
                 missing.add(idx);
             } else if (evt.kind === "event") {
@@ -1223,6 +1232,7 @@ async function iterateCachedEvents(
     maxEvents: number,
     maxMessages: number,
     maxMissing: number,
+    allowDirty: boolean,
 ): Promise<[EventWrapper<ChatEvent>[], ExpiredEventsRange[], Set<number>, Set<number>]> {
     const bound = ascending ? eventIndexRange[1] : eventIndexRange[0];
     const iterator = await EventsIterator.create(db, context, startIndex, ascending, bound);
@@ -1282,11 +1292,15 @@ async function iterateCachedEvents(
         }
 
         if (next.kind === "event") {
-            events.push(convertCachedEvent(next));
-
             if (next.dirty) {
-                dirty.add(next.index);
+                if (allowDirty) {
+                    dirty.add(next.index);
+                } else {
+                    missing.add(next.index);
+                    continue;
+                }
             }
+            events.push(convertCachedEvent(next));
 
             if (next.event.kind === "message") {
                 if (++messageCount == maxMessages) {
