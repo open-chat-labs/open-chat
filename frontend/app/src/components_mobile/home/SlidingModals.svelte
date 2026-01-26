@@ -221,6 +221,7 @@
 
     let modalStack = $state<SlidingModalType[]>([]);
     let top = $derived(modalStack[modalStack.length - 1]);
+    let historyDepth = $state(0);
 
     function push(modal: SlidingModalType) {
         if (!modalStack.find((m) => m.kind === modal.kind)) {
@@ -253,10 +254,6 @@
             pop();
         }
     }
-
-    let historyDepth = $state(0);
-
-    // $inspect(historyDepth).with(console.trace);
 
     onMount(() => {
         const originalPushState = history.pushState;
