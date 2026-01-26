@@ -8,6 +8,7 @@
         type ChatListScope,
         chatListScopesEqual,
         chatListScopeStore,
+        chatsInitialisedStore,
         chatSummariesListStore,
         type ChatSummary as ChatSummaryType,
         type CombinedUnreadCounts,
@@ -135,7 +136,7 @@
             <ChatListFilters bind:filter={$chatListFilterStore as ChatListFilter} />
         {/if}
 
-        {#if chats.length === 0}
+        {#if chats.length === 0 && $chatsInitialisedStore}
             <NoMatchingChats onReset={() => chatListFilterStore.set("all")} />
         {:else}
             <!-- threads -->
@@ -176,14 +177,6 @@
 {/if}
 
 <style lang="scss">
-    .join {
-        position: sticky;
-        bottom: 0;
-        padding: $sp3 $sp4;
-        background-color: var(--entry-bg);
-        width: 100%;
-    }
-
     .floating {
         position: absolute;
         bottom: var(--sp-md);
