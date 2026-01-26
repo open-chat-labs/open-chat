@@ -91,12 +91,22 @@ export class SheetBehavior {
         };
     }
 
-    collapse(): Promise<void> {
+    collapse(instant?: boolean): Promise<void> {
         return new Promise<void>((resolve) => {
             this._animationResolver = resolve;
             this.isExpanded = false;
             if (this._sheetType == "transient" || this._collapsedHeight > 0) {
-                this._snapTo(0);
+                if (instant) {
+                    this._setOpenFactor(0);
+                    this._clearSheetTransition();
+                    console.log("COLLAPSE INSTANT");
+                    this._switch({
+                        transient: () => this._setSheetTransform(this._expandedHeight),
+                        anchored: () => this._setSheetHeight(this._collapsedHeight),
+                    });
+                } else {
+                    this._snapTo(0);
+                }
             }
         });
     }
@@ -107,6 +117,7 @@ export class SheetBehavior {
             this.isExpanded = true;
             if (instant) {
                 this._setOpenFactor(1);
+                this._clearSheetTransition();
                 this._switch({
                     transient: () => this._setSheetTransform(0),
                     anchored: () => this._setSheetHeight(this._expandedHeight),
@@ -118,6 +129,12 @@ export class SheetBehavior {
     }
 
     // Only track movement in y dimension!
+    //
+    // TODO Fix flicking weirdness!
+    // Trying to tap on a clickable item if the sheet was flicked to open, may
+    // require two taps. It would seem that in some cases the webview enters
+    // momentum/scroll state, which it stays in, and requires an additional tap
+    // to cancel, therefore blocking interactions with UI elements.
     onDragStart(e: PointerEvent) {
         // Remove any transition that may be attached to the sheet...
         this._clearSheetTransition();

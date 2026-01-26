@@ -38,8 +38,8 @@
         return 1 - sheetBehavior.openFactor / openThreshold;
     }
 
-    export function collapse() {
-        return sheetBehavior.collapse();
+    export function collapse(instant?: boolean) {
+        return sheetBehavior.collapse(instant);
     }
 </script>
 

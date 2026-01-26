@@ -37,10 +37,12 @@
 </script>
 
 <Container crossAxisAlignment={"center"} gap={"md"}>
-    {@render children?.()}
-    <Body colour={"textPrimary"} fontWeight={"bold"}>
-        {collapseAccount(account)}
-    </Body>
+    <Container direction="vertical" gap="xs">
+        {@render children?.()}
+        <Body colour={"textPrimary"} fontWeight={"bold"}>
+            {collapseAccount(account)}
+        </Body>
+    </Container>
     {#if !disableCopy}
         <IconButton padding={"zero"} onclick={copy}>
             {#snippet icon()}
