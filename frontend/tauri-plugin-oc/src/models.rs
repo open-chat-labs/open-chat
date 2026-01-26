@@ -46,6 +46,9 @@ pub struct ShowNotificationRequest {
 pub struct SvelteReadyRequest;
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct MinimizeAppRequest;
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReleaseNotificationsRequest {
     pub sender_id: Option<String>,

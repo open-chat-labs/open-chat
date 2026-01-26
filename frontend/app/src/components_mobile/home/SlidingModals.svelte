@@ -34,6 +34,7 @@
         type UserGroupDetails,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
+    import { minimizeApp } from "tauri-plugin-oc-api";
     import { expectBackPress } from "../../utils/native/notification_channels";
     import type { Share as ShareType } from "../../utils/share";
     import BotBuilderModal from "../bots/BotBuilderModal.svelte";

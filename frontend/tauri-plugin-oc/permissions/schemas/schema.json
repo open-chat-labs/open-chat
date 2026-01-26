@@ -307,6 +307,18 @@
           "markdownDescription": "Denies the get_fcm_token command without any pre-configured scope."
         },
         {
+          "description": "Enables the minimize_app command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-minimize-app",
+          "markdownDescription": "Enables the minimize_app command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the minimize_app command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-minimize-app",
+          "markdownDescription": "Denies the minimize_app command without any pre-configured scope."
+        },
+        {
           "description": "Enables the open_url command without any pre-configured scope.",
           "type": "string",
           "const": "allow-open-url",
@@ -403,10 +415,10 @@
           "markdownDescription": "Denies the svelte_ready command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`\n- `allow-release-notifications`",
+          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`\n- `allow-release-notifications`\n- `allow-minimize-app`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`\n- `allow-release-notifications`"
+          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`\n- `allow-release-notifications`\n- `allow-minimize-app`"
         }
       ]
     }

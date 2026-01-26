@@ -48,3 +48,8 @@ pub(crate) async fn release_notifications<R: Runtime>(
 ) {
     app.oc().release_notifications(payload)
 }
+
+#[command]
+pub(crate) async fn minimize_app<R: Runtime>(app: AppHandle<R>) {
+    app.oc().minimize_app()
+}

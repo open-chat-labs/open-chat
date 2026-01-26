@@ -69,6 +69,11 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
     fun releaseNotifications(invoke: Invoke) {
         ReleaseNotifications(activity).handler(invoke)
     }
+
+    @Command
+    fun minimizeApp(invoke: Invoke) {
+        MinimizeApp(activity).handler(invoke)
+    }
 }
 
 object OCPluginCompanion {

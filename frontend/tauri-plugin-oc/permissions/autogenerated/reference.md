@@ -13,6 +13,7 @@ Default permissions for the plugin
 - `allow-show-notification`
 - `allow-svelte-ready`
 - `allow-release-notifications`
+- `allow-minimize-app`
 
 ## Permission Table
 
@@ -45,6 +46,32 @@ Enables the get_fcm_token command without any pre-configured scope.
 <td>
 
 Denies the get_fcm_token command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-minimize-app`
+
+</td>
+<td>
+
+Enables the minimize_app command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-minimize-app`
+
+</td>
+<td>
+
+Denies the minimize_app command without any pre-configured scope.
 
 </td>
 </tr>
