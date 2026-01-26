@@ -24,7 +24,13 @@ import type {
     Tally,
     VerifiedCredentialArgs,
 } from "openchat-shared";
-import { MAX_MISSING, premiumPrices, toBigInt32, UnsupportedValueError } from "openchat-shared";
+import {
+    max,
+    MAX_MISSING,
+    premiumPrices,
+    toBigInt32,
+    UnsupportedValueError,
+} from "openchat-shared";
 import {
     BotInstallationLocation as ApiBotInstallationLocation,
     LocalUserIndexAccessTokenV2Args,
@@ -67,7 +73,7 @@ import {
     getCachedEventsByIndex,
     getCachedEventsWindowByMessageIndex,
     setCachedEvents,
-    setCachePrimerTimestamp,
+    setCachePrimerEventIndex,
 } from "../../utils/caching";
 import {
     identity,
@@ -167,10 +173,10 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
                     result: cached,
                 };
                 if (cachePrimer && request.latestKnownUpdate !== undefined) {
-                    setCachePrimerTimestamp(
+                    setCachePrimerEventIndex(
                         this.db,
                         request.context.chatId,
-                        request.latestKnownUpdate,
+                        max(cached.events, (e) => e.index),
                     );
                 }
             }
@@ -194,10 +200,10 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
                         request.context.threadRootMessageIndex,
                     );
                     if (cachePrimer) {
-                        setCachePrimerTimestamp(
+                        setCachePrimerEventIndex(
                             this.db,
                             request.context.chatId,
-                            batchResponse.timestamp,
+                            max(response.result.events, (e) => e.index),
                         );
                     }
                 }

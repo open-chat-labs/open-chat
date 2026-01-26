@@ -226,7 +226,7 @@ import {
     clearCache,
     deleteEventsForChatOrCommunity,
     getActivityFeedEvents,
-    getCachePrimerTimestamps,
+    getCachePrimerEventIndexes,
     getCachedBots,
     getCachedChats,
     getCachedExternalAchievements,
@@ -1799,11 +1799,11 @@ export class OpenChatAgent extends EventTarget {
             if (this._cachePrimer === undefined) {
                 // Set up the cache primer on the first iteration but don't process anything yet, since we want OC's
                 // initialization to be as fast as possible and so don't want resources going to the CachePrimer yet.
-                getCachePrimerTimestamps(this.db).then(
-                    (ts) =>
+                getCachePrimerEventIndexes(this.db).then(
+                    (idx) =>
                         (this._cachePrimer = new CachePrimer(
                             state.userCanisterLocalUserIndex,
-                            ts,
+                            idx,
                             (localUserIndex, requests) =>
                                 this._localUserIndexClient.chatEvents(
                                     localUserIndex,

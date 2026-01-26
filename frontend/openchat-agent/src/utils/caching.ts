@@ -58,7 +58,7 @@ import {
     updateCreatedUser,
 } from "openchat-shared";
 
-const CACHE_VERSION = 147;
+const CACHE_VERSION = 148;
 const EARLIEST_SUPPORTED_MIGRATION = 138;
 const MAX_INDEX = 9999999999;
 
@@ -126,7 +126,7 @@ export interface ChatSchema extends DBSchema {
 
     cachePrimer: {
         key: string;
-        value: bigint;
+        value: number;
     };
 
     currentUser: {
@@ -280,6 +280,7 @@ const migrations: Record<number, MigrationFunction<ChatSchema>> = {
     145: clearChatsStore,
     146: clearCachePrimerStore,
     147: clearEvents,
+    148: clearCachePrimerStore,
 };
 
 async function migrate(
@@ -1015,16 +1016,25 @@ export async function setCachedMessageIfNotExists(
     await tx.done;
 }
 
-export function getCachePrimerTimestamps(db: Database): Promise<Record<string, bigint>> {
+export function getCachePrimerEventIndexes(db: Database): Promise<Record<string, number>> {
     return readAll(db, "cachePrimer");
 }
 
-export async function setCachePrimerTimestamp(
+export async function setCachePrimerEventIndex(
     db: Database,
     chatId: ChatIdentifier,
-    timestamp: bigint,
+    eventIndexLoadedUpTo: number,
 ): Promise<void> {
-    await (await db).put("cachePrimer", timestamp, chatIdentifierToString(chatId));
+    const key = chatIdentifierToString(chatId);
+    const tx = (await db).transaction(["cachePrimer"], "readwrite", {
+        durability: "relaxed",
+    });
+    const store = tx.objectStore("cachePrimer");
+    const existing = await store.get(key);
+    if (existing === undefined || existing < eventIndexLoadedUpTo) {
+        await store.put(eventIndexLoadedUpTo, key);
+    }
+    await tx.done;
 }
 
 function messageToEvent(

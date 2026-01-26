@@ -18,6 +18,7 @@ import {
     type UpdatedEvent,
     userIdsFromEvents,
 } from "openchat-shared";
+import { mapOptional } from "./mapping";
 
 const BATCH_SIZE = 20;
 const FAILURE = { kind: "failure" };
@@ -34,7 +35,7 @@ export class CachePrimer {
 
     constructor(
         private userCanisterLocalUserIndex: string,
-        private lastUpdatedTimestamps: Record<string, bigint>,
+        private eventIndexesLoadedUpTo: Record<string, number>,
         private getEventsBatch: (
             localUserIndex: string,
             requests: ChatEventsArgs[],
@@ -122,8 +123,8 @@ export class CachePrimer {
             proposalChatIds.push(chat.id);
         }
 
-        const cacheLastUpdated = this.lastUpdatedTimestamps[chatIdString];
-        const eventsArgs = this.getEventsArgs(chat, cacheLastUpdated);
+        const eventIndexLoadedUpTo = this.eventIndexesLoadedUpTo[chatIdString];
+        const eventsArgs = this.getEventsArgs(chat, eventIndexLoadedUpTo);
         const dirtyEventIndexes =
             (updatedEvents?.length ?? 0) > 0
                 ? updatedEvents
@@ -144,9 +145,10 @@ export class CachePrimer {
                 existing.dirtyEventIndexes?.forEach((i) => combinedDirtyEventIndexes.add(i));
                 dirtyEventIndexes?.forEach((i) => combinedDirtyEventIndexes.add(i));
 
-                if (combinedDirtyEventIndexes.size > 0) {
-                    existing.dirtyEventIndexes = [...combinedDirtyEventIndexes];
-                }
+                existing.dirtyEventIndexes = this.filterDirtyEvents(
+                    existing.eventsArgs,
+                    mapOptional(combinedDirtyEventIndexes, (i) => [...i]),
+                );
                 return;
             }
         }
@@ -155,7 +157,7 @@ export class CachePrimer {
             localUserIndex,
             lastUpdated: chat.lastUpdated,
             eventsArgs,
-            dirtyEventIndexes,
+            dirtyEventIndexes: this.filterDirtyEvents(eventsArgs, dirtyEventIndexes),
         });
     }
 
@@ -180,11 +182,6 @@ export class CachePrimer {
                 const response = responses[i];
 
                 if (response.kind === "success") {
-                    if (request.latestKnownUpdate !== undefined) {
-                        this.lastUpdatedTimestamps[chatIdentifierToString(request.context.chatId)] =
-                            request.latestKnownUpdate;
-                    }
-
                     const { userIds } = userIdsFromEvents(response.result.events);
                     for (const userId of userIds) {
                         if (!this.#usersLoaded.has(userId)) {
@@ -194,6 +191,7 @@ export class CachePrimer {
                     }
 
                     const repliesToLoad = new Set<number>();
+                    let maxEventIndex = 0;
                     for (const event of response.result.events) {
                         if (event.event.kind === "message") {
                             const repliesTo = event.event.repliesTo;
@@ -201,6 +199,13 @@ export class CachePrimer {
                                 repliesToLoad.add(repliesTo.eventIndex);
                             }
                         }
+                        if (event.index > maxEventIndex) {
+                            maxEventIndex = event.index;
+                        }
+                    }
+                    const chatIdString = chatIdentifierToString(request.context.chatId);
+                    if (maxEventIndex > (this.eventIndexesLoadedUpTo[chatIdString] ?? 0)) {
+                        this.eventIndexesLoadedUpTo[chatIdString] = maxEventIndex;
                     }
 
                     if (repliesToLoad.size > 0) {
@@ -297,15 +302,29 @@ export class CachePrimer {
 
     private getEventsArgs(
         chat: ChatSummary,
-        cacheLastUpdated: bigint | undefined,
+        eventIndexLoadedUpTo: number | undefined,
     ): ChatEventsArgsInner | undefined {
-        if (chat.membership.archived || (cacheLastUpdated ?? 0) >= chat.lastUpdated) {
+        if (chat.membership.archived || (eventIndexLoadedUpTo ?? 0) >= chat.latestEventIndex) {
             return undefined;
         }
 
         const minVisibleEventIndex = chat.kind === "direct_chat" ? 0 : chat.minVisibleEventIndex;
-        const readByMeUpTo = chat.membership.readByMeUpTo ?? 0;
         const eventIndexRange: [number, number] = [minVisibleEventIndex, chat.latestEventIndex];
+        const earliestMissingEvent =
+            eventIndexLoadedUpTo === undefined
+                ? minVisibleEventIndex
+                : Math.max(minVisibleEventIndex, eventIndexLoadedUpTo + 1);
+
+        if (chat.latestEventIndex - earliestMissingEvent < MAX_MESSAGES) {
+            return {
+                kind: "page",
+                ascending: true,
+                startIndex: earliestMissingEvent,
+                eventIndexRange,
+            };
+        }
+
+        const readByMeUpTo = chat.membership.readByMeUpTo ?? 0;
         const unreadCount = (chat.latestMessageIndex ?? 0) - readByMeUpTo;
 
         if (unreadCount > MAX_MESSAGES / 2) {
@@ -362,6 +381,42 @@ export class CachePrimer {
 
     private removeFromPending(excludeFn: (value: ChatIdentifier) => boolean) {
         retain(this.#pending, (c) => !excludeFn(c.chatId));
+    }
+
+    private filterDirtyEvents(
+        eventArgs: ChatEventsArgsInner | undefined,
+        dirtyEventIndexes: number[] | undefined,
+    ): number[] | undefined {
+        if (eventArgs === undefined || dirtyEventIndexes === undefined) return dirtyEventIndexes;
+
+        const filter = this.getDirtyEventsFilter(eventArgs);
+        retain(dirtyEventIndexes, filter);
+        return dirtyEventIndexes.length > 0 ? dirtyEventIndexes : undefined;
+    }
+
+    private getDirtyEventsFilter(eventArgs: ChatEventsArgsInner): (index: number) => boolean {
+        switch (eventArgs.kind) {
+            case "page": {
+                if (eventArgs.ascending) {
+                    return (i) =>
+                        i < eventArgs.startIndex || i > eventArgs.startIndex + MAX_MESSAGES;
+                } else {
+                    return (i) =>
+                        i < eventArgs.startIndex - MAX_MESSAGES || i > eventArgs.startIndex;
+                }
+            }
+            case "window": {
+                return (_) => true;
+            }
+            case "by_index": {
+                const set = new Set(eventArgs.events);
+                return (i) => {
+                    const alreadyExists = set.has(i);
+                    if (!alreadyExists) set.add(i);
+                    return !alreadyExists;
+                };
+            }
+        }
     }
 }
 
