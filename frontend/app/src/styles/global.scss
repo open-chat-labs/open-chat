@@ -471,7 +471,8 @@ body.native-android {
             padding-bottom: var(--device-nav-height) !important;
         }
 
-        .transient_sheet {
+        .transient_sheet,
+        .anon-footer {
             padding-bottom: var(--device-nav-height) !important;
         }
     }
