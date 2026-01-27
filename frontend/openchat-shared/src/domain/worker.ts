@@ -152,7 +152,7 @@ import type {
     CreateOpenChatIdentityResponse,
     FinaliseAccountLinkingResponse,
     GetDelegationResponse,
-    GetOpenChatIdentityResponse,
+    GetOpenChatIdentityError,
     JsonnableIdentityKeyAndChain,
     LinkIdentitiesResponse,
     PrepareDelegationResponse,
@@ -238,6 +238,7 @@ export type CorrelatedWorkerRequest = WorkerRequest & {
 
 export type WorkerRequest =
     | SetAuthIdentity
+    | Logout
     | SetMinLogLevel
     | DismissRecommendations
     | SearchGroups
@@ -526,6 +527,10 @@ export type SetAuthIdentity = {
     kind: "setAuthIdentity";
     identity: JsonnableIdentityKeyAndChain | undefined;
     isIIPrincipal: boolean;
+};
+
+export type Logout = {
+    kind: "logout";
 };
 
 export type SetMinLogLevel = {
@@ -1713,6 +1718,7 @@ export type WorkerResponseInner =
     | string[]
     | Uint8Array
     | [number, number]
+    | SetAuthIdentityResponse
     | CreateOpenChatIdentityResponse
     | CreateGroupResponse
     | DisableInviteCodeResponse
@@ -2124,13 +2130,21 @@ type CancelInvites = {
     userIds: string[];
 };
 
-export type SetAuthIdentityResponse = GetOpenChatIdentityResponse["kind"];
+export type SetAuthIdentityResponse = GetOpenChatIdentitySuccess | GetOpenChatIdentityError;
+
+export type GetOpenChatIdentitySuccess = {
+    kind: "success";
+    ocIdentityPrincipal: string;
+    ocIdentityExpiry: number;
+};
 
 // prettier-ignore
 export type WorkerResult<T> = T extends Init
     ? void
     : T extends SetAuthIdentity
     ? SetAuthIdentityResponse
+    : T extends Logout
+    ? void
     : T extends SetMinLogLevel
     ? void
     : T extends CreateOpenChatIdentity

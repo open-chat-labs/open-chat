@@ -7,6 +7,7 @@ import {
 } from "@icp-sdk/core/identity";
 import { Principal } from "@icp-sdk/core/principal";
 import {
+    type AgentConfig,
     getBotDefinition,
     IdentityAgent,
     OpenChatAgent,
@@ -15,6 +16,7 @@ import {
 } from "openchat-agent";
 import {
     buildIdentityFromJson,
+    getSessionExpiryMs,
     IdentityStorage,
     inititaliseLogger,
     MessagesReadFromServer,
@@ -31,6 +33,7 @@ import {
     type JsonnableIdentityKeyAndChain,
     type LinkIdentitiesResponse,
     type Logger,
+    type Logout,
     type RemoveIdentityLinkResponse,
     type SetAuthIdentity,
     type SetMinLogLevel,
@@ -40,6 +43,7 @@ import {
     type WorkerEvent,
     type WorkerRequest,
     type WorkerResponseInner,
+    type SetAuthIdentityResponse,
 } from "openchat-shared";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -49,8 +53,9 @@ BigInt.prototype.toJSON = function () {
 };
 
 const ocIdentityStorage = IdentityStorage.createForOcIdentity();
+const anonymousIdentity = new AnonymousIdentity();
 
-let initPayload: Init | undefined = undefined;
+let agentConfig: AgentConfig | undefined = undefined;
 let identityAgent: IdentityAgent | undefined = undefined;
 let authPrincipalString: string | undefined = undefined;
 let logger: Logger = console;
@@ -228,17 +233,16 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
     try {
         if (kind === "init") {
-            initPayload = payload;
-            logger = inititaliseLogger(
-                initPayload.rollbarApiKey,
-                initPayload.websiteVersion,
-                initPayload.env,
-            );
+            agentConfig = {
+                ...payload,
+                logger,
+            };
+            logger = inititaliseLogger(payload.rollbarApiKey, payload.websiteVersion, payload.env);
             sendResponse(kind, correlationId, undefined);
             return;
         }
 
-        const config = initPayload;
+        const config = agentConfig;
         if (config === undefined) {
             throw new Error("Worker not initialised");
         }
@@ -254,20 +258,24 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     config.identityCanister,
                     config.icUrl,
                 ).then((resp) => {
-                    const id = resp.kind === "success" ? resp.identity : new AnonymousIdentity();
-                    console.debug(
-                        "anon: init worker",
-                        id.getPrincipal().toString(),
-                        id?.getPrincipal().isAnonymous(),
-                    );
+                    const id = resp.kind === "success" ? resp.identity : anonymousIdentity;
+                    const principal = id.getPrincipal().toString();
+
+                    const response: SetAuthIdentityResponse =
+                        resp.kind === "success"
+                            ? {
+                                  kind: "success",
+                                  ocIdentityPrincipal: principal,
+                                  ocIdentityExpiry: getSessionExpiryMs(resp.identity),
+                              }
+                            : resp;
+
+                    console.debug("anon: init worker", principal, response.kind !== "success");
 
                     logger.debug("WORKER: constructing agent instance");
-                    agent = new OpenChatAgent(id, authPrincipalString ?? "", {
-                        ...config,
-                        logger,
-                    });
+                    agent = new OpenChatAgent(id, authPrincipalString ?? "", config);
                     agent.addEventListener("openchat_event", handleAgentEvent);
-                    return resp.kind;
+                    return response;
                 }),
             );
             return;
@@ -280,13 +288,26 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 correlationId,
                 createOpenChatIdentity(payload.webAuthnCredentialId).then((resp) => {
                     const id = typeof resp !== "string" ? resp : new AnonymousIdentity();
-                    agent = new OpenChatAgent(id, authPrincipalString ?? "", {
-                        ...config,
-                        logger,
-                    });
+                    agent = new OpenChatAgent(id, authPrincipalString ?? "", config);
                     agent.addEventListener("openchat_event", handleAgentEvent);
-                    return typeof resp !== "string" ? "success" : resp;
+                    return typeof resp !== "string"
+                        ? {
+                              kind: "success",
+                              ocIdentityPrincipal: resp.getPrincipal().toString(),
+                              ocIdentityExpiry: getSessionExpiryMs(resp),
+                          }
+                        : resp;
                 }),
+            );
+            return;
+        }
+
+        if (kind === "logout") {
+            executeThenReply(
+                payload,
+                kind,
+                correlationId,
+                ocIdentityStorage.remove().then((_) => (agent = undefined)),
             );
             return;
         }
@@ -318,10 +339,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 function getAction(
     payload: Exclude<
         WorkerRequest,
-        Init | SetAuthIdentity | CreateOpenChatIdentity | SetMinLogLevel
+        Init | SetAuthIdentity | CreateOpenChatIdentity | Logout | SetMinLogLevel
     >,
     agent: OpenChatAgent,
-    config: Init,
+    config: AgentConfig,
 ): Promise<WorkerResponseInner> | Stream<WorkerResponseInner> {
     const kind = payload.kind;
     switch (kind) {

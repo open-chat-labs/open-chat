@@ -1,4 +1,4 @@
-import type { Identity } from "@icp-sdk/core/agent";
+import { Principal } from "@icp-sdk/core/principal";
 import type { OpenChatConfig } from "../config";
 import { Usergeek } from "usergeek-ic-js";
 
@@ -13,9 +13,9 @@ export function initialiseTracking({ icUrl, userGeekApiKey }: OpenChatConfig): v
     }
 }
 
-export function startTrackingSession(identity: Identity): void {
+export function startTrackingSession(identityPrincipal: string): void {
     if (shouldTrack) {
-        Usergeek.setPrincipal(identity.getPrincipal());
+        Usergeek.setPrincipal(Principal.fromText(identityPrincipal));
         Usergeek.trackSession();
     }
 }
