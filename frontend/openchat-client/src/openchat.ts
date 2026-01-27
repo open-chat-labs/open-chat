@@ -54,11 +54,6 @@ import {
     getContentAsFormattedText,
     getDisplayDate,
     getEmailSignInSession,
-<<<<<<< HEAD
-    getTimeUntilSessionExpiryMs,
-    i18nKey,
-=======
->>>>>>> master
     indexRangeForChat,
     isBalanceGate,
     isCaptionedContent,
