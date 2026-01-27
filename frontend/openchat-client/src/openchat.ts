@@ -813,6 +813,7 @@ export class OpenChat {
 
         this.#startRegistryPoller();
 
+        let createdUser: CreatedUser | undefined;
         if (!anon) {
             let ocIdentity: GetOpenChatIdentitySuccess | undefined;
             if (setAuthIdentityResponse.kind === "success") {
@@ -833,10 +834,28 @@ export class OpenChat {
             if (ocIdentity !== undefined) {
                 this.#startSession(ocIdentity.ocIdentityPrincipal, ocIdentity.ocIdentityExpiry);
             }
-            await this.#loadUser();
-        } else {
-            this.onCreatedUser(anonymousUser());
+
+            createdUser = await this.getCurrentUser()
+                .then((user) => {
+                    switch (user.kind) {
+                        case "created_user":
+                            return user;
+                        case "unknown_user":
+                            this.updateIdentityState({ kind: "registering" });
+                            return undefined;
+                    }
+                })
+                .catch((e) => {
+                    if (e.code === 403) {
+                        // This happens locally if you run a new instance of the IC and have an identity based on the
+                        // previous version's root key in the cache
+                        this.logout();
+                    }
+                    return undefined;
+                });
         }
+
+        this.onCreatedUser(createdUser ?? anonymousUser());
     }
 
     logError(message: unknown, error: unknown, ...optionalParams: unknown[]): void {
@@ -938,42 +957,6 @@ export class OpenChat {
         });
     }
 
-    async #loadUser(): Promise<void> {
-        this.#worker.send({ kind: "loadFailedMessages" }).then((res) =>
-            localUpdates.initialiseFailedMessages(
-                MessageContextMap.fromMap(res).map((_, rec) => {
-                    const m = new Map<bigint, EventWrapper<Message>>();
-                    for (const [k, v] of Object.entries(rec)) {
-                        m.set(BigInt(k), v);
-                    }
-                    return m;
-                }),
-            ),
-        );
-
-        this.getCurrentUser()
-            .then((user) => {
-                switch (user.kind) {
-                    case "unknown_user":
-                        this.onCreatedUser(anonymousUser());
-                        console.log("So this should not really happen now");
-                        this.updateIdentityState({ kind: "registering" });
-                        break;
-                    case "created_user":
-                        this.onCreatedUser(user);
-                        break;
-                }
-            })
-            .catch((e) => {
-                if (e.code === 403) {
-                    // This happens locally if you run a new instance of the IC and have an identity based on the
-                    // previous version's root key in the cache
-                    this.logout();
-                }
-            });
-        this.#worker.send({ kind: "getAllCachedUsers" }).then((u) => userStore.addMany(u));
-    }
-
     userIsDiamond(userId: string): boolean {
         const user = userStore.get(userId);
         if (user === undefined || user.kind === "bot") return false;
@@ -1058,6 +1041,7 @@ export class OpenChat {
         this.#startChatsPoller();
         this.#startBotsPoller();
         this.#startUserUpdatePoller();
+        this.#worker.send({ kind: "getAllCachedUsers" }).then((u) => userStore.addMany(u));
 
         initNotificationStores();
         if (!anonUserStore.value) {
@@ -1072,6 +1056,17 @@ export class OpenChat {
                 .catch((err) => {
                     console.warn("Unable to retrieve user storage limits", err);
                 });
+            this.#worker.send({ kind: "loadFailedMessages" }).then((res) =>
+                localUpdates.initialiseFailedMessages(
+                    MessageContextMap.fromMap(res).map((_, rec) => {
+                        const m = new Map<bigint, EventWrapper<Message>>();
+                        for (const [k, v] of Object.entries(rec)) {
+                            m.set(BigInt(k), v);
+                        }
+                        return m;
+                    }),
+                ),
+            );
             this.updateIdentityState({ kind: "logged_in" });
             publish("userLoggedIn", user.userId);
         }
