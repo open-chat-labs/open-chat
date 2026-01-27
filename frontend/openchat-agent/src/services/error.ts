@@ -1,7 +1,7 @@
 import { HttpErrorCode, type Identity, ProtocolError } from "@icp-sdk/core/agent";
 import { ResponseTooLargeError } from "openchat-shared";
 import {
-    getTimeUntilSessionExpiryMs,
+    getSessionExpiryMs,
     HttpError,
     SessionExpiryError,
     AuthError,
@@ -62,7 +62,7 @@ export function toCanisterResponseError(
         if (error.cause.code instanceof HttpErrorCode) {
             code = error.cause.code.status;
         }
-        const timeUntilSessionExpiryMs = getTimeUntilSessionExpiryMs(identity);
+        const timeUntilSessionExpiryMs = getSessionExpiryMs(identity) - Date.now();
         if (timeUntilSessionExpiryMs < 0) {
             console.debug(
                 "SESSION: we received a 400 response and the session has timed out: ",

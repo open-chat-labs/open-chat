@@ -1,12 +1,6 @@
 /* eslint-disable no-case-declarations */
 import { AuthClient, type AuthClientLoginOptions } from "@dfinity/auth-client";
-import {
-    AnonymousIdentity,
-    DER_COSE_OID,
-    unwrapDER,
-    type Identity,
-    type SignIdentity,
-} from "@icp-sdk/core/agent";
+import { AnonymousIdentity, DER_COSE_OID, unwrapDER, type SignIdentity } from "@icp-sdk/core/agent";
 import {
     DelegationChain,
     DelegationIdentity,
@@ -60,8 +54,11 @@ import {
     getContentAsFormattedText,
     getDisplayDate,
     getEmailSignInSession,
+<<<<<<< HEAD
     getTimeUntilSessionExpiryMs,
     i18nKey,
+=======
+>>>>>>> master
     indexRangeForChat,
     isBalanceGate,
     isCaptionedContent,
@@ -317,6 +314,7 @@ import {
     type WhitepaperRoute,
     type WithdrawBtcResponse,
     type WithdrawCryptocurrencyResponse,
+    type GetOpenChatIdentitySuccess,
 } from "openchat-shared";
 import page from "page";
 import { tick } from "svelte";
@@ -643,10 +641,8 @@ export class OpenChat {
     #worker: WorkerAgent;
     #authIdentityStorage: IdentityStorage;
     #authPrincipal: string | undefined;
-    #ocIdentityStorage: IdentityStorage;
     #authClient: Promise<AuthClient>;
     #webAuthnKey: WebAuthnKey | undefined = undefined;
-    #ocIdentity: Identity | undefined;
     #userLocation: string | undefined;
     #logger: Logger;
     #lastOnlineDatesPending = new Set<string>();
@@ -699,7 +695,6 @@ export class OpenChat {
         initialiseTracking(config);
 
         this.#authIdentityStorage = IdentityStorage.createForAuthIdentity();
-        this.#ocIdentityStorage = IdentityStorage.createForOcIdentity();
         this.#authClient = AuthClient.create({
             idleOptions: {
                 disableIdle: true,
@@ -843,20 +838,51 @@ export class OpenChat {
             isIIPrincipal: authProvider == AuthProvider.II,
         });
 
+        this.#startRegistryPoller();
+
+        let createdUser: CreatedUser | undefined;
         if (!anon) {
-            if (setAuthIdentityResponse === "oc_identity_not_found") {
-                await this.#worker.send({
+            let ocIdentity: GetOpenChatIdentitySuccess | undefined;
+            if (setAuthIdentityResponse.kind === "success") {
+                ocIdentity = setAuthIdentityResponse;
+            } else if (setAuthIdentityResponse.kind === "oc_identity_not_found") {
+                const createOpenChatIdentityResponse = await this.#worker.send({
                     kind: "createOpenChatIdentity",
                     webAuthnCredentialId: this.#webAuthnKey?.credentialId,
                 });
+                if (
+                    typeof createOpenChatIdentityResponse === "object" &&
+                    createOpenChatIdentityResponse.kind === "success"
+                ) {
+                    ocIdentity = createOpenChatIdentityResponse;
+                }
             }
 
-            this.#ocIdentity = await this.#ocIdentityStorage.get(authPrincipal);
-        } else {
-            await this.#ocIdentityStorage.remove();
+            if (ocIdentity !== undefined) {
+                this.#startSession(ocIdentity.ocIdentityPrincipal, ocIdentity.ocIdentityExpiry);
+            }
+
+            createdUser = await this.getCurrentUser()
+                .then((user) => {
+                    switch (user.kind) {
+                        case "created_user":
+                            return user;
+                        case "unknown_user":
+                            this.updateIdentityState({ kind: "registering" });
+                            return undefined;
+                    }
+                })
+                .catch((e) => {
+                    if (e.code === 403) {
+                        // This happens locally if you run a new instance of the IC and have an identity based on the
+                        // previous version's root key in the cache
+                        this.logout();
+                    }
+                    return undefined;
+                });
         }
 
-        await this.#loadUser();
+        this.onCreatedUser(createdUser ?? anonymousUser());
     }
 
     logError(message: unknown, error: unknown, ...optionalParams: unknown[]): void {
@@ -925,17 +951,11 @@ export class OpenChat {
     //     return `popup=1,toolbar=0,location=0,menubar=0,width=${width},height=${height},left=${left},top=${top}`;
     // }
 
-    #startSession(identity: Identity): Promise<void> {
-        if (anonUserStore.value) {
-            return new Promise((_) => {
-                console.debug("ANON: creating an anon session which will never expire");
-            });
-        }
-
-        startTrackingSession(identity);
+    #startSession(ocIdentityPrincipal: string, ocIdentityExpiry: number): Promise<void> {
+        startTrackingSession(ocIdentityPrincipal);
 
         return new Promise((resolve) => {
-            const durationUntilSessionExpireMS = getTimeUntilSessionExpiryMs(identity);
+            const durationUntilSessionExpireMS = ocIdentityExpiry - Date.now();
             const durationUntilLogoutMs = durationUntilSessionExpireMS - ONE_MINUTE_MILLIS;
             // eslint-disable-next-line @typescript-eslint/no-this-alias
             const self = this;
@@ -962,50 +982,6 @@ export class OpenChat {
                 window.setTimeout(timeout, Math.min(MAX_TIMEOUT_MS, durationUntilLogoutMs));
             }
         });
-    }
-
-    async #loadUser() {
-        this.#startRegistryPoller();
-
-        if (this.#ocIdentity === undefined) {
-            // short-circuit if we *know* that the user is anonymous
-            this.onCreatedUser(anonymousUser());
-            return;
-        }
-
-        this.#worker.send({ kind: "loadFailedMessages" }).then((res) =>
-            localUpdates.initialiseFailedMessages(
-                MessageContextMap.fromMap(res).map((_, rec) => {
-                    const m = new Map<bigint, EventWrapper<Message>>();
-                    for (const [k, v] of Object.entries(rec)) {
-                        m.set(BigInt(k), v);
-                    }
-                    return m;
-                }),
-            ),
-        );
-
-        this.getCurrentUser()
-            .then((user) => {
-                switch (user.kind) {
-                    case "unknown_user":
-                        this.onCreatedUser(anonymousUser());
-                        console.log("So this should not really happen now");
-                        this.updateIdentityState({ kind: "registering" });
-                        break;
-                    case "created_user":
-                        this.onCreatedUser(user);
-                        break;
-                }
-            })
-            .catch((e) => {
-                if (e.code === 403) {
-                    // This happens locally if you run a new instance of the IC and have an identity based on the
-                    // previous version's root key in the cache
-                    this.logout();
-                }
-            });
-        this.#worker.send({ kind: "getAllCachedUsers" }).then((u) => userStore.addMany(u));
     }
 
     userIsDiamond(userId: string): boolean {
@@ -1093,17 +1069,14 @@ export class OpenChat {
         currentUserStore.set(user);
         this.#setDiamondStatus(user.diamondStatus);
         initialiseMostRecentSentMessageTimes(isDiamondStore.value);
-        const id = this.#ocIdentity;
 
         this.#worker.send({ kind: "createUserClient", userId: user.userId });
         startSwCheckPoller();
-        if (id !== undefined) {
-            this.#startSession(id).then(() => this.logout());
-        }
 
         this.#startChatsPoller();
         this.#startBotsPoller();
         this.#startUserUpdatePoller();
+        this.#worker.send({ kind: "getAllCachedUsers" }).then((u) => userStore.addMany(u));
 
         initNotificationStores();
         if (!anonUserStore.value) {
@@ -1118,6 +1091,17 @@ export class OpenChat {
                 .catch((err) => {
                     console.warn("Unable to retrieve user storage limits", err);
                 });
+            this.#worker.send({ kind: "loadFailedMessages" }).then((res) =>
+                localUpdates.initialiseFailedMessages(
+                    MessageContextMap.fromMap(res).map((_, rec) => {
+                        const m = new Map<bigint, EventWrapper<Message>>();
+                        for (const [k, v] of Object.entries(rec)) {
+                            m.set(BigInt(k), v);
+                        }
+                        return m;
+                    }),
+                ),
+            );
             this.updateIdentityState({ kind: "logged_in" });
             publish("userLoggedIn", user.userId);
         }
@@ -1201,8 +1185,8 @@ export class OpenChat {
 
     async logout(): Promise<void> {
         await Promise.all([
+            this.#worker.send({ kind: "logout" }),
             this.#authClient.then((c) => c.logout()),
-            this.#ocIdentityStorage.remove(),
         ]).then(() => window.location.replace("/"));
     }
 

@@ -4,17 +4,21 @@ import {
     type ECDSAKeyIdentity,
     type JsonnableDelegationChain,
 } from "@icp-sdk/core/identity";
-import type { Identity, Signature } from "@icp-sdk/core/agent";
+import type { Signature, SignIdentity } from "@icp-sdk/core/agent";
 import type { Address } from "openchat-agent/src/services/signInWithSolana/candid/types";
 import type { OCError } from "./error";
 import type { Success } from "./response";
+import type { GetOpenChatIdentitySuccess } from "./worker";
 
 export type HasIdentity = {
     id: string;
 };
 
 export type GetOpenChatIdentityResponse =
-    | { kind: "success"; identity: Identity }
+    | { kind: "success"; identity: SignIdentity }
+    | GetOpenChatIdentityError;
+
+export type GetOpenChatIdentityError =
     | { kind: "auth_identity_not_found" }
     | { kind: "oc_identity_not_found" };
 
@@ -91,7 +95,9 @@ export type CreateOpenChatIdentityError =
     | "public_key_invalid"
     | "originating_canister_invalid";
 
-export type CreateOpenChatIdentityResponse = "success" | CreateOpenChatIdentityError;
+export type CreateOpenChatIdentityResponse =
+    | GetOpenChatIdentitySuccess
+    | CreateOpenChatIdentityError;
 
 export type InitiateIdentityLinkResponse =
     | "success"
