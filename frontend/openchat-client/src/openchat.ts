@@ -6596,7 +6596,7 @@ export class OpenChat {
                         if (resp !== undefined) {
                             await this.#handleChatsResponse(
                                 updateRegistryTask,
-                                !chatsInitialisedStore.value,
+                                initialLoad,
                                 resp as UpdatesResult,
                             );
                         }
