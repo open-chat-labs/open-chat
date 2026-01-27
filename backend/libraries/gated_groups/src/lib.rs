@@ -278,7 +278,7 @@ async fn check_sns_neuron_gate(gate: &SnsNeuronGate, user_id: UserId) -> CheckIf
             let mut valid_neurons = response.neurons;
             if let Some(dd) = gate.min_dissolve_delay {
                 let now = canister_time::now_millis();
-                valid_neurons.retain(|n| dissolve_delay_seconds(n, now / 1000) > (dd / 1000));
+                valid_neurons.retain(|n| dissolve_delay_seconds(n, now / 1000) >= (dd / 1000));
             }
 
             if valid_neurons.is_empty() {
