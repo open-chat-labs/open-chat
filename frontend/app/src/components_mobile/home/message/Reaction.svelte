@@ -1,14 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { emojiDatabase } from "@src/utils/emojis";
-    import {
-        ChatFootnote,
-        ColourVars,
-        Container,
-        Tooltip,
-        type Alignment,
-        Body,
-    } from "component-lib";
+    import { Body, ChatFootnote, ColourVars, Row, Tooltip, type Alignment } from "component-lib";
     import type { NativeEmoji } from "emoji-picker-element/shared";
     import type { CustomEmoji, Reaction, UserLookup } from "openchat-client";
     import { allUsersStore, currentUserIdStore, customEmojis, OpenChat } from "openchat-client";
@@ -82,10 +75,11 @@
 </script>
 
 <Tooltip position={"top"} align={alignTooltip}>
-    <Container
+    <Row
         supplementalClass={`reaction ${size}`}
         onClick={() => onClick?.(reaction)}
         width={"hug"}
+        height={{ size: "1.75rem" }}
         minWidth={"2.25rem"}
         padding={["xxs", moreThanOne ? "sm" : "xxs", "xxs", "xxs"]}
         background={selected ? ColourVars.disabledButton : ColourVars.background2}
@@ -93,7 +87,7 @@
         mainAxisAlignment={"center"}
         gap={"xxs"}
         borderRadius={"circle"}
-        borderWidth={intersecting ? "thick" : undefined}
+        borderWidth={"thick"}
         borderColour={ColourVars.background0}>
         {#if customEmoji !== undefined}
             {#if intersecting}
@@ -116,7 +110,7 @@
                 </Body>
             {/if}
         {/if}
-    </Container>
+    </Row>
     {#snippet popup()}
         <div class="reaction-tooltip-emoji">
             {#if customEmoji !== undefined}

@@ -24,6 +24,7 @@ import type {
     MessagePermission,
 } from "./permission";
 import type { BotMatch } from "./search/search";
+import type { Level } from "./structure";
 
 export const MIN_BOT_NAME_LENGTH = 5;
 export const MIN_COMMAND_NAME_LENGTH = 3;
@@ -545,12 +546,18 @@ export function argIsValid(schema: CommandParam, arg: CommandArg): boolean {
     return false;
 }
 
-export function i18nKey(key: string, params?: InterpolationValues): ResourceKey {
+export function i18nKey(
+    key: string,
+    params?: InterpolationValues,
+    level?: Level,
+    lowercase = false,
+): ResourceKey {
     return {
         kind: "resource_key",
         key,
         params,
-        lowercase: false,
+        level,
+        lowercase,
     };
 }
 

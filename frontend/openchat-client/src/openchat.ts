@@ -54,6 +54,7 @@ import {
     getContentAsFormattedText,
     getDisplayDate,
     getEmailSignInSession,
+    i18nKey,
     indexRangeForChat,
     isBalanceGate,
     isCaptionedContent,
@@ -179,6 +180,7 @@ import {
     type FaqRoute,
     type FullWebhookDetails,
     type GenerateMagicLinkResponse,
+    type GetOpenChatIdentitySuccess,
     type GlobalSelectedChatRoute,
     type GrantedBotPermissions,
     type GroupChatDetailsResponse,
@@ -309,7 +311,6 @@ import {
     type WhitepaperRoute,
     type WithdrawBtcResponse,
     type WithdrawCryptocurrencyResponse,
-    type GetOpenChatIdentitySuccess,
 } from "openchat-shared";
 import page from "page";
 import { tick } from "svelte";

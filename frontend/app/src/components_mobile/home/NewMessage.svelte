@@ -104,6 +104,7 @@
 
 {#snippet matched_group(match: GroupMatch | GroupChatSummary)}
     {@const id = match.kind === "group_chat" ? match.id : match.chatId}
+    {@const isPublic = match.kind === "group_chat" ? match.public : true}
     <Container
         padding={["sm", "zero"]}
         crossAxisAlignment={"center"}
@@ -122,8 +123,10 @@
             <BodySmall colour={"textSecondary"}>
                 {#if match.description !== ""}
                     {match.description}
-                {:else}
+                {:else if isPublic}
                     <Translatable resourceKey={i18nKey("Public group")} />
+                {:else}
+                    <Translatable resourceKey={i18nKey("Private group")} />
                 {/if}
             </BodySmall>
         </Container>
