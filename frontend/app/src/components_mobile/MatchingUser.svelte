@@ -61,7 +61,7 @@
     crossAxisAlignment={"center"}
     gap={"lg"}
     onClick={() => onSelect(user)}>
-    <Avatar size={"md"} url={match.avatarUrl} />
+    <Avatar size={"md"} url={match.avatarUrl}></Avatar>
     <Container direction={"vertical"}>
         <Container crossAxisAlignment={"center"} gap={"xs"}>
             <FilteredUsername

@@ -494,6 +494,7 @@
             "createGroupFailed": "Sorry we were unable to create the user group",
             "deleteFailed": "Sorry we were unable to delete this community",
             "deleteUserGroupFailed": "Sorry we were unable to delete the user group",
+            "error": "Sorry an unexpected error occurred",
             "failure": "Sorry we were unable to create your community",
             "importFailed": "Sorry we were unable to import your group",
             "inviteUsers": "Sorry we were unable to invite these users",

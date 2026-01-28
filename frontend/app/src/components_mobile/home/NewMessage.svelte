@@ -1,6 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { Avatar, Body, BodySmall, Container, ListAction, Row } from "component-lib";
+    import { Avatar, Body, BodySmall, Column, Container, ListAction, Row } from "component-lib";
     import {
         allUsersStore,
         anonUserStore,
@@ -10,7 +10,9 @@
         publish,
         routeForChatIdentifier,
         serverDirectChatsStore,
+        serverGroupChatsStore,
         type BotMatch,
+        type GroupChatSummary,
         type GroupMatch,
         type GroupSearchResponse,
         type UserSummary,
@@ -27,19 +29,38 @@
 
     const client = getContext<OpenChat>("client");
 
-    let userAndBotSearchResults: Promise<(UserSummary | BotMatch)[]> | undefined =
+    let userAndBotsSearchResults: Promise<(UserSummary | BotMatch)[]> | undefined =
         $state(undefined);
     let groupSearchResults: Promise<GroupSearchResponse> | undefined = $state(undefined);
     let searchTerm: string = $state("");
+    let searchTermLower = $derived(searchTerm.toLocaleLowerCase());
     let searchResultsAvailable: boolean = $state(false);
 
     let dms = $derived(
         [...$serverDirectChatsStore.values()]
             .sort(compareChats)
             .map((c) => $allUsersStore.get(c.them.userId))
-            .filter((u) => u?.kind !== "bot")
+            .filter((u) => u?.kind !== "bot" && userMatches(u))
             .slice(0, 30),
     );
+
+    let myGroups = $derived(
+        [...$serverGroupChatsStore.values()].sort(compareChats).filter(groupMatches).slice(0, 30),
+    );
+
+    function userMatches(user?: UserSummary): boolean {
+        return (
+            user !== undefined &&
+            (searchTermLower === "" ||
+                user.username.toLocaleLowerCase().includes(searchTermLower) ||
+                (user.displayName !== undefined &&
+                    user.displayName.toLocaleLowerCase().includes(searchTermLower)))
+        );
+    }
+
+    function groupMatches(group: GroupChatSummary): boolean {
+        return searchTermLower === "" || group.name.toLocaleLowerCase().includes(searchTermLower);
+    }
 
     function newGroup() {
         if ($anonUserStore) {
@@ -70,8 +91,9 @@
         publish("closeModalStack");
     }
 
-    function selectGroup(match: GroupMatch) {
-        page(routeForChatIdentifier($chatListScopeStore.kind, match.chatId));
+    function selectGroup(match: GroupMatch | GroupChatSummary) {
+        const id = match.kind === "group_chat" ? match.id : match.chatId;
+        page(routeForChatIdentifier($chatListScopeStore.kind, id));
         publish("closeModalStack");
     }
 </script>
@@ -80,7 +102,8 @@
     <MatchingUser {searchTerm} {user} onSelect={directChatWith} />
 {/snippet}
 
-{#snippet matched_group(match: GroupMatch)}
+{#snippet matched_group(match: GroupMatch | GroupChatSummary)}
+    {@const id = match.kind === "group_chat" ? match.id : match.chatId}
     <Container
         padding={["sm", "zero"]}
         crossAxisAlignment={"center"}
@@ -90,7 +113,7 @@
             size={"md"}
             url={client.groupAvatarUrl({
                 ...match,
-                id: match.chatId,
+                id,
             })} />
         <Container direction={"vertical"}>
             <Row gap={"xs"} crossAxisAlignment={"center"}>
@@ -108,26 +131,26 @@
 {/snippet}
 
 <SlidingPageContent title={i18nKey("New message")}>
-    <Container
-        padding={["xxl", "lg"]}
-        width={"fill"}
-        gap={"xxl"}
-        direction={"vertical"}
-        height={"hug"}>
+    <Column padding={["xxl", "lg"]} width={"fill"} gap={"xxl"} height={"hug"}>
         <ChatListSearch
-            bind:userAndBotsSearchResults={userAndBotSearchResults}
+            bind:userAndBotsSearchResults
             bind:groupSearchResults
             bind:searchResultsAvailable
             bind:searchTerm />
 
-        {#if userAndBotSearchResults !== undefined}
-            {#await userAndBotSearchResults then resp}
+        {#if userAndBotsSearchResults !== undefined}
+            {#await userAndBotsSearchResults then resp}
                 {#if resp.length > 0}
-                    <Container direction={"vertical"} padding={["zero", "md"]}>
-                        {#each resp as match (userOrBotKey(match))}
-                            {@render matched_user(match)}
-                        {/each}
-                    </Container>
+                    <Column padding={["zero", "md"]} gap={"lg"}>
+                        <Body fontWeight={"bold"}>
+                            <Translatable resourceKey={i18nKey("Matching users and bots")} />
+                        </Body>
+                        <Column gap={"sm"}>
+                            {#each resp as match (userOrBotKey(match))}
+                                {@render matched_user(match)}
+                            {/each}
+                        </Column>
+                    </Column>
                 {/if}
             {/await}
         {/if}
@@ -136,15 +159,21 @@
             {#await groupSearchResults then resp}
                 {#if resp.kind === "success"}
                     {#if resp.matches.length > 0}
-                        <Container direction={"vertical"} padding={["zero", "md"]}>
-                            {#each resp.matches as match (match.chatId.groupId)}
-                                {@render matched_group(match)}
-                            {/each}
-                        </Container>
+                        <Column padding={["zero", "md"]} gap={"lg"}>
+                            <Body fontWeight={"bold"}>
+                                <Translatable resourceKey={i18nKey("Matching public groups")} />
+                            </Body>
+                            <Column gap={"sm"}>
+                                {#each resp.matches as match (match.chatId.groupId)}
+                                    {@render matched_group(match)}
+                                {/each}
+                            </Column>
+                        </Column>
                     {/if}
                 {/if}
             {/await}
         {/if}
+
         <Container
             width={"fill"}
             gap={"lg"}
@@ -160,20 +189,34 @@
         </Container>
 
         {#if dms.length > 0}
-            <Container padding={["zero", "md"]} gap={"lg"} direction={"vertical"}>
+            <Column padding={["zero", "md"]} gap={"lg"}>
                 <Body fontWeight={"bold"}>
                     <Translatable resourceKey={i18nKey("Frequently contacted on OpenChat")}
                     ></Translatable>
                 </Body>
 
-                <Container gap={"md"} direction={"vertical"}>
+                <Column gap={"sm"}>
                     {#each dms as user (user?.userId)}
                         {#if user}
                             {@render matched_user(user)}
                         {/if}
                     {/each}
-                </Container>
-            </Container>
+                </Column>
+            </Column>
         {/if}
-    </Container>
+
+        {#if myGroups.length > 0}
+            <Column padding={["zero", "md"]} gap={"lg"}>
+                <Body fontWeight={"bold"}>
+                    <Translatable resourceKey={i18nKey("My group chats")}></Translatable>
+                </Body>
+
+                <Column gap={"sm"}>
+                    {#each myGroups as group (group.id.groupId)}
+                        {@render matched_group(group)}
+                    {/each}
+                </Column>
+            </Column>
+        {/if}
+    </Column>
 </SlidingPageContent>
