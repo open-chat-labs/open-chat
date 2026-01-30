@@ -18,6 +18,7 @@ import {
     type UpdatedEvent,
     userIdsFromEvents,
 } from "openchat-shared";
+import { chunk } from "./list";
 import { mapOptional } from "./mapping";
 
 const BATCH_SIZE = 20;
@@ -372,7 +373,9 @@ export class CachePrimer {
     private async processProposalTallies() {
         try {
             for (const [localUserIndex, chatIds] of this.#proposalChats) {
-                await this.updateProposalTallies(localUserIndex, chatIds);
+                for (const batch of chunk(chatIds, 10)) {
+                    await this.updateProposalTallies(localUserIndex, batch);
+                }
             }
         } finally {
             setTimeout(() => this.processProposalTallies(), ONE_MINUTE_MILLIS);
