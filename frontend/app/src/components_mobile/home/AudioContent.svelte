@@ -3,13 +3,12 @@
 </script>
 
 <script lang="ts">
-    import { Caption, ColourVars, Column, Container, IconButton, Row } from "component-lib";
+    import { Body, Caption, ColourVars, Column, Container, IconButton, Row } from "component-lib";
     import type { AudioContent } from "openchat-client";
     import { onMount } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Pause from "svelte-material-icons/PauseCircleOutline.svelte";
     import Play from "svelte-material-icons/PlayCircleOutline.svelte";
-    import PlaySpeed from "svelte-material-icons/PlaySpeed.svelte";
     import WaveSurfer from "wavesurfer.js";
     import ContentCaption from "./ContentCaption.svelte";
 
@@ -19,9 +18,17 @@
         blockLevelMarkdown?: boolean;
         onRemove?: () => void;
         draft?: boolean;
+        me: boolean;
     }
 
-    let { content, edited, blockLevelMarkdown = false, onRemove, draft = false }: Props = $props();
+    let {
+        content,
+        edited,
+        blockLevelMarkdown = false,
+        onRemove,
+        draft = false,
+        me,
+    }: Props = $props();
 
     let currentTime = $state<string>();
     let waveformDiv: HTMLDivElement | undefined;
@@ -73,11 +80,11 @@
             wavesurfer = WaveSurfer.create({
                 height: 50,
                 barHeight: 0.9,
-                width: 250,
+                width: "100%",
                 container: waveformDiv,
-                waveColor: "#ffffff",
-                progressColor: "#23A2EE",
-                cursorColor: "#23A2EE",
+                waveColor: me ? "#feb3bf" : "#ffffff",
+                progressColor: me ? "#ffffff" : "#23A2EE",
+                cursorColor: me ? "#ffffff" : "#23A2EE",
                 cursorWidth: width,
                 barWidth: width,
                 barRadius: 3,
@@ -111,16 +118,15 @@
     });
 </script>
 
-<Container crossAxisAlignment={"center"} gap={"md"}>
-    <Container
+<Row minWidth={"300px"} width={"fill"} padding={"sm"} crossAxisAlignment={"center"} gap={"sm"}>
+    <Column
         mainAxisAlignment={"center"}
         crossAxisAlignment={"center"}
         width={{ size: "3.5rem" }}
-        direction={"vertical"}
         gap={"zero"}>
-        <IconButton size={"lg"} onclick={togglePlay} mode={"transparent"}>
+        <IconButton padding={["xs", "sm"]} size={"lg"} onclick={togglePlay} mode={"transparent"}>
             {#snippet icon()}
-                {@const color = ColourVars.textPrimary}
+                {@const color = me ? ColourVars.textPrimary : ColourVars.textSecondary}
                 {#if playing}
                     <Pause {color} />
                 {:else}
@@ -129,28 +135,29 @@
             {/snippet}
         </IconButton>
         <Container mainAxisAlignment={"center"} crossAxisAlignment={"end"} gap={"xxs"}>
-            <Caption fontWeight={"bold"} colour={"secondary"} width={"hug"}>
+            <Caption fontWeight={"bold"} colour={me ? "textPrimary" : "secondary"} width={"hug"}>
                 {currentTime ?? "0:00"}
             </Caption>
             <Caption width={"hug"}>/</Caption>
-            <Caption width={"hug"}>
+            <Caption colour={me ? "primaryLight" : "textSecondary"} width={"hug"}>
                 {formatTime(duration)}
             </Caption>
         </Container>
-    </Container>
-
-    <Column padding={"sm"} crossAxisAlignment={"end"} gap={"xs"}>
-        <div bind:this={waveformDiv} class="waveform"></div>
-        <Row
-            mainAxisAlignment={"end"}
-            onClick={cycleSpeed}
-            gap={"xs"}
-            width={"hug"}
-            crossAxisAlignment={"center"}>
-            <PlaySpeed color={ColourVars.textPrimary} />
-            <Caption>{speed}</Caption>
-        </Row>
     </Column>
+    <div bind:this={waveformDiv} class="waveform"></div>
+    <Row
+        backgroundColor={me ? ColourVars.primaryLight : ColourVars.textTertiary}
+        borderRadius={"xl"}
+        mainAxisAlignment={"center"}
+        onClick={cycleSpeed}
+        gap={"xs"}
+        width={{ size: "3rem" }}
+        padding={["xs", "md"]}
+        crossAxisAlignment={"center"}>
+        <Body width={"hug"} fontWeight={"bold"} colour={me ? "myChatBubble" : "textPrimary"}>
+            x{speed}
+        </Body>
+    </Row>
 
     {#if draft}
         <div class="close">
@@ -161,7 +168,7 @@
             </IconButton>
         </div>
     {/if}
-</Container>
+</Row>
 
 <ContentCaption caption={content.caption} {edited} {blockLevelMarkdown} />
 
