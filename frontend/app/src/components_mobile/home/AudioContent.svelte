@@ -3,15 +3,7 @@
 </script>
 
 <script lang="ts">
-    import {
-        BodySmall,
-        Caption,
-        ColourVars,
-        Column,
-        Container,
-        IconButton,
-        Row,
-    } from "component-lib";
+    import { Caption, ColourVars, Column, Container, IconButton, Row } from "component-lib";
     import type { AudioContent } from "openchat-client";
     import { onMount } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
@@ -156,7 +148,7 @@
             width={"hug"}
             crossAxisAlignment={"center"}>
             <PlaySpeed color={ColourVars.textPrimary} />
-            <BodySmall fontWeight={"bold"}>{speed}</BodySmall>
+            <Caption>{speed}</Caption>
         </Row>
     </Column>
 
