@@ -3,12 +3,21 @@
 </script>
 
 <script lang="ts">
-    import { Caption, ColourVars, Container, IconButton } from "component-lib";
+    import {
+        BodySmall,
+        Caption,
+        ColourVars,
+        Column,
+        Container,
+        IconButton,
+        Row,
+    } from "component-lib";
     import type { AudioContent } from "openchat-client";
     import { onMount } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Pause from "svelte-material-icons/PauseCircleOutline.svelte";
     import Play from "svelte-material-icons/PlayCircleOutline.svelte";
+    import PlaySpeed from "svelte-material-icons/PlaySpeed.svelte";
     import WaveSurfer from "wavesurfer.js";
     import ContentCaption from "./ContentCaption.svelte";
 
@@ -26,6 +35,7 @@
     let waveformDiv: HTMLDivElement | undefined;
     let playing = $state(false);
     let duration = $derived(Number(content.durationMs) / 1000);
+    let speed = $state(1);
 
     function togglePlay() {
         wavesurfer?.playPause();
@@ -41,6 +51,27 @@
         const secondsRemainder = Math.round(seconds) % 60;
         const paddedSeconds = `0${secondsRemainder}`.slice(-2);
         return `${minutes}:${paddedSeconds}`;
+    }
+
+    $effect(() => {
+        wavesurfer?.setPlaybackRate(speed, true);
+    });
+
+    function cycleSpeed() {
+        switch (speed) {
+            case 1:
+                speed = 1.5;
+                break;
+            case 1.5:
+                speed = 2;
+                break;
+            case 2:
+                speed = 1;
+                break;
+            default:
+                speed = 1;
+                break;
+        }
     }
 
     const width = 3;
@@ -116,7 +147,18 @@
         </Container>
     </Container>
 
-    <div bind:this={waveformDiv} class="waveform"></div>
+    <Column padding={"sm"} crossAxisAlignment={"end"} gap={"xs"}>
+        <div bind:this={waveformDiv} class="waveform"></div>
+        <Row
+            mainAxisAlignment={"end"}
+            onClick={cycleSpeed}
+            gap={"xs"}
+            width={"hug"}
+            crossAxisAlignment={"center"}>
+            <PlaySpeed color={ColourVars.textPrimary} />
+            <BodySmall fontWeight={"bold"}>{speed}</BodySmall>
+        </Row>
+    </Column>
 
     {#if draft}
         <div class="close">
