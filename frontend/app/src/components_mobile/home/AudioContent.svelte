@@ -1,3 +1,7 @@
+<script module lang="ts">
+    let current: WaveSurfer | undefined = undefined;
+</script>
+
 <script lang="ts">
     import { Caption, ColourVars, Container, IconButton } from "component-lib";
     import type { AudioContent } from "openchat-client";
@@ -71,7 +75,13 @@
 
             wavesurfer.on("timeupdate", (t) => (currentTime = formatTime(t)));
 
-            wavesurfer.on("play", () => (playing = true));
+            wavesurfer.on("play", () => {
+                if (wavesurfer !== current) {
+                    current?.pause();
+                    current = wavesurfer;
+                }
+                playing = true;
+            });
 
             wavesurfer.on("pause", () => (playing = false));
         }
