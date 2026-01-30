@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Body, BodySmall, ColourVars, Container, Row, type Padding } from "component-lib";
+    import { BodySmall, ColourVars, Container, Row, type Padding } from "component-lib";
     import {
         BTC_SYMBOL,
         CKBTC_SYMBOL,
@@ -21,6 +21,7 @@
     import TruncatedAccount from "./TruncatedAccount.svelte";
     import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";
     import RobotConfusedOutline from "svelte-material-icons/RobotConfusedOutline.svelte";
+    import { Subtitle } from "component-lib";
 
     interface Props {
         ledger: string;
@@ -139,22 +140,23 @@
 
 {#snippet fetchingDepositFee()}
     <!-- TODO add loading spinner ? -->
-    <Body colour={"textSecondary"}>
+    <Subtitle colour={"textSecondary"}>
         {$_("cryptoAccount.fetchingDepositFee")}
-    </Body>
+    </Subtitle>
 {/snippet}
 
 {#snippet fetchingFeeError()}
-    <Body colour={"error"}>
+    <Subtitle colour={"error"}>
         {$_("cryptoAccount.failedToFetchDepositFee")}
-    </Body>
+    </Subtitle>
     <RobotConfusedOutline color={ColourVars.error} size="1.25rem" />
 {/snippet}
 
+<!-- TODO open fee breakdown modal -->
 {#snippet displayFee(values: { amount: string; token: string })}
-    <Body colour={"warning"}>
+    <Subtitle colour={"warning"}>
         {$_("cryptoAccount.networkFee", { values })}
-    </Body>
+    </Subtitle>
     <AlertCircleOutline color={ColourVars.warning} size="1.25rem" />
 {/snippet}
 
@@ -181,6 +183,10 @@
                 border={false} />
         {/if}
     </Container>
+
+    {#if networks.length > 0 && selectedNetwork !== undefined}
+        <NetworkSelector {background} {networks} flatSelect={true} bind:selectedNetwork />
+    {/if}
 
     {#if isBtcNetwork}
         <Row {background} padding={["lg", "xl"]} crossAxisAlignment="center">
@@ -216,15 +222,15 @@
         borderRadius={["zero", "zero", "lg", "lg"]}>
         {#if account === undefined}
             {#if error !== undefined}
-                <Body colour={"error"}>
+                <Subtitle colour={"error"}>
                     {$_("cryptoAccount.failedToGenera4teAddress")}
-                </Body>
+                </Subtitle>
                 <RobotConfusedOutline color={ColourVars.error} size="1.25rem" />
             {:else}
                 <!-- TODO add spinner? -->
-                <Body colour={"textSecondary"}>
+                <Subtitle colour={"textSecondary"}>
                     {$_("generating")}
-                </Body>
+                </Subtitle>
             {/if}
         {:else}
             <TruncatedAccount {account}>
@@ -235,12 +241,6 @@
             </TruncatedAccount>
         {/if}
     </Container>
-
-    {#if networks.length > 0 && selectedNetwork !== undefined}
-        <Row padding={["lg", "zero"]}>
-            <NetworkSelector {networks} bind:selectedNetwork />
-        </Row>
-    {/if}
 </Container>
 
 <style lang="scss">
