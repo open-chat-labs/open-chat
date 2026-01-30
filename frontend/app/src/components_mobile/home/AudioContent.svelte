@@ -1,5 +1,17 @@
 <script module lang="ts">
     let current: WaveSurfer | undefined = undefined;
+    let registry: WaveSurfer[] = [];
+    function register(w: WaveSurfer) {
+        registry.push(w);
+    }
+
+    function playNext(w: WaveSurfer) {
+        for (let i = registry.length - 1; i > 0; i--) {
+            if (registry[i] === w) {
+                registry[i - 1]?.play();
+            }
+        }
+    }
 </script>
 
 <script lang="ts">
@@ -101,6 +113,9 @@
 
             wavesurfer.on("finish", () => {
                 wavesurfer?.setTime(0);
+                if (wavesurfer) {
+                    playNext(wavesurfer);
+                }
             });
 
             wavesurfer.on("timeupdate", (t) => (currentTime = formatTime(t)));
@@ -114,6 +129,8 @@
             });
 
             wavesurfer.on("pause", () => (playing = false));
+
+            register(wavesurfer);
         }
     });
 </script>
