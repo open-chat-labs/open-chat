@@ -27,6 +27,18 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Set NDK_HOME
+        run: |
+          # Find the NDK directory (usually the latest version installed by setup-android or pre-installed on the runner)
+          NDK_PATH=$(find $ANDROID_HOME/ndk -maxdepth 1 -mindepth 1 -type d | sort -V | tail -n 1)
+          if [ -z "$NDK_PATH" ]; then
+            echo "NDK not found! Installing a specific version..."
+            sdkmanager "ndk;26.1.10909125"
+            NDK_PATH=$ANDROID_HOME/ndk/26.1.10909125
+          fi
+          echo "NDK_HOME=$NDK_PATH" >> $GITHUB_ENV
+          echo "Using NDK at $NDK_PATH"
+
       - name: Setup Rust
         uses: ./.github/workflows/setup-rust
         with:
