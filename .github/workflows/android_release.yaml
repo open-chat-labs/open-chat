@@ -68,47 +68,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Debug svelte-material-icons casing & Environment
-        run: |
-          echo "=== DEBUG START ==="
-          
-          echo "--- Checking svelte-material-icons casing ---"
-          ls -F node_modules/svelte-material-icons/ | grep -i "qrcode" || echo "No qrcode found!"
-          
-          echo "--- Checking file existence via Node fs ---"
-          node -e 'const fs = require("fs"); const p = "node_modules/svelte-material-icons/QrCode.svelte"; console.log(p + ": " + (fs.existsSync(p) ? "EXISTS" : "MISSING"));'
-          
-          echo "--- Checking .env file content (Keys only) ---"
-          if [ -f .env ]; then
-            cat .env | sed 's/=.*/=******/'
-          else
-            echo ".env file MISSING!"
-          fi
-          
-          echo "--- Checking environment variables seen by shell ---"
-          env | grep "OC_" || echo "No OC_ variables found in shell env"
-          
-          echo "=== DEBUG END ==="
-
-      - name: Install Tauri CLI
-        uses: baptiste0928/cargo-install@v3
-        with:
-          crate: tauri-cli
-          version: "2.0.3" # Pinning a version is good practice for caching consistency
-
-      - name: Setup Keystore
-        run: |
-          mkdir -p ~/.android
-          
-          if [ ! -z "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
-            echo "Using provided keystore from secrets..."
-            echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > ~/.android/debug.keystore
-          else
-            echo "No keystore secret found. Generating a temporary debug keystore..."
-            echo "WARNING: App Links validation (assetlinks.json) will fail because the signature won't match."
-            keytool -genkey -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-          fi
-
       - name: Create Env File
         run: |
           # Create a .env file for the build script to source
@@ -150,6 +109,28 @@ jobs:
             echo "ERROR: canister_ids.json not found at $CANISTERS_JSON"
             exit 1
           fi
+
+      - name: Debug svelte-material-icons casing & Environment
+        run: |
+          echo "=== DEBUG START ==="
+          
+          echo "--- Checking svelte-material-icons casing ---"
+          ls -F node_modules/svelte-material-icons/ | grep -i "qrcode" || echo "No qrcode found!"
+          
+          echo "--- Checking file existence via Node fs ---"
+          node -e 'const fs = require("fs"); const p = "node_modules/svelte-material-icons/QrCode.svelte"; console.log(p + ": " + (fs.existsSync(p) ? "EXISTS" : "MISSING"));'
+          
+          echo "--- Checking .env file content (Keys only) ---"
+          if [ -f .env ]; then
+            cat .env | sed 's/=.*/=******/'
+          else
+            echo ".env file MISSING!"
+          fi
+          
+          echo "--- Checking environment variables seen by shell ---"
+          env | grep "OC_" || echo "No OC_ variables found in shell env"
+          
+          echo "=== DEBUG END ==="
 
       - name: Build Android APK
         run: cargo tauri android build --verbose
