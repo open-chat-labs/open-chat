@@ -129,6 +129,7 @@
 
     type ConfirmActionEvent =
         | ConfirmLeaveEvent
+        | ConfirmDeleteDirectChatEvent
         | ConfirmDeleteEvent
         | ConfirmLeaveCommunityEvent
         | ConfirmDeleteCommunityEvent;
@@ -142,6 +143,13 @@
         kind: "leave";
         chatId: MultiUserChatIdentifier;
         level: Level;
+    };
+
+    type ConfirmDeleteDirectChatEvent = {
+        kind: "delete_direct_chat";
+        chatId: DirectChatIdentifier;
+        blockUser: boolean;
+        doubleCheck: { challenge: ResourceKey; response: ResourceKey };
     };
 
     type ConfirmDeleteEvent = {
@@ -204,6 +212,7 @@
             subscribe("showGroupMembers", showGroupMembers),
             subscribe("upgrade", upgrade),
             subscribe("verifyHumanity", verifyHumanity),
+            subscribe("deleteDirectChat", onTriggerConfirm),
             subscribe("deleteGroup", onTriggerConfirm),
             subscribe("deleteCommunity", onTriggerConfirm),
             subscribe("communityDetails", communityDetails),
@@ -410,6 +419,8 @@
                 return i18nKey("confirmLeaveGroup", undefined, confirmActionEvent.level, true);
             case "leave_community":
                 return i18nKey("communities.leaveMessage");
+            case "delete_direct_chat":
+                return i18nKey("confirmDeleteDirectChat", undefined, undefined, true);
             case "delete_community":
                 return i18nKey("communities.deleteMessage");
             case "delete":
@@ -435,6 +446,12 @@
                 return leaveGroup(confirmActionEvent.chatId, confirmActionEvent.level);
             case "leave_community":
                 return leaveCommunity(confirmActionEvent.communityId);
+            case "delete_direct_chat":
+                return deleteDirectChat(confirmActionEvent.chatId, confirmActionEvent.blockUser).then(
+                    (_) => {
+                        setRightPanelHistory([]);
+                    },
+                );
             case "delete_community":
                 return deleteCommunity(confirmActionEvent.communityId).then((_) => {
                     setRightPanelHistory([]);
@@ -449,6 +466,16 @@
             default:
                 return Promise.reject();
         }
+    }
+
+    function deleteDirectChat(chatId: DirectChatIdentifier, blockUser: boolean): Promise<void> {
+        page(routeForScope($chatListScopeStore));
+        return client.deleteDirectChat(chatId, blockUser).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast(i18nKey("deleteGroupFailure", undefined, "group", true));
+                page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
+            }
+        });
     }
 
     function deleteGroup(chatId: MultiUserChatIdentifier, level: Level): Promise<void> {
@@ -1017,6 +1044,7 @@
 {#if confirmActionEvent !== undefined}
     <AreYouSure
         doubleCheck={confirmActionEvent.kind === "delete" ||
+        confirmActionEvent.kind === "delete_direct_chat" ||
         confirmActionEvent.kind === "delete_community"
             ? confirmActionEvent.doubleCheck
             : undefined}
