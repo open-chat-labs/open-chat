@@ -170,6 +170,7 @@ impl User {
             suspended: self.suspension_details.is_some(),
             diamond_membership_status: self.diamond_membership_details.status(now),
             is_unique_person: self.unique_person_proof.is_some(),
+            hide_online_status: self.hide_online_status,
         }
     }
 

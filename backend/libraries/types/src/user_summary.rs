@@ -63,6 +63,9 @@ pub struct UserSummaryStable {
     #[serde(default, skip_serializing_if = "is_default")]
     #[ts(as = "Option<bool>", optional)]
     pub is_unique_person: bool,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
+    pub hide_online_status: bool,
 }
 
 #[ts_export]

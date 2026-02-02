@@ -14,6 +14,11 @@ fn set_hide_online_status(args: Args) -> Response {
 fn set_hide_online_status_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     let user_id = state.data.users.get(&caller).unwrap().user_id;
-    state.data.users.set_hide_online_status(&user_id, args.hide_online_status);
+    let now = state.env.now();
+    state
+        .data
+        .users
+        .set_hide_online_status(&user_id, args.hide_online_status, now);
+
     Success
 }

@@ -793,6 +793,7 @@ type UserSummary = record {
     streak : nat16;
     max_streak : nat16;
     is_unique_person : bool;
+    hide_online_status : bool;
 };
 
 type BuildVersion = record {
@@ -1686,6 +1687,7 @@ type UserSummaryStable = record {
     suspended : bool;
     diamond_membership_status : DiamondMembershipStatus;
     is_unique_person : bool;
+    hide_online_status : bool;
 };
 
 type UserSummaryVolatile = record {
@@ -1714,6 +1716,7 @@ type CurrentUserSummary = record {
     chit_balance : int32;
     streak : nat16;
     max_streak : nat16;
+    hide_online_status : bool;
 };
 
 type BotConfig = record {
