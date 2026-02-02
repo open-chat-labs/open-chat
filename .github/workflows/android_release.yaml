@@ -72,17 +72,11 @@ jobs:
             keytool -genkey -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           fi
 
-      - name: Build Android APK (Debug)
-        run: |
-          cd src-tauri/gen/android
-          chmod +x gradlew
-          ./gradlew assembleRelease --stacktrace --info
+      - name: Build Android APK
+        run: npx tauri android build --verbose
         env:
           # Ensure these are passed if needed, though the gradle file uses the debug fallback we set up
           ANDROID_KEY_STORE_FILE: ${{ env.ANDROID_KEY_STORE_FILE }}
-          
-      - name: Build Android APK (Tauri)
-        run: npx tauri android build --verbose
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
