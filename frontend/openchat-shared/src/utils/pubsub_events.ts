@@ -32,6 +32,12 @@ export type PubSubEvents = {
     showGroupMembers: undefined;
     upgrade: undefined;
     verifyHumanity: undefined;
+    deleteDirectChat: {
+        kind: "delete_direct_chat";
+        chatId: DirectChatIdentifier;
+        blockUser: boolean;
+        doubleCheck: { challenge: ResourceKey; response: ResourceKey };
+    };
     deleteGroup: {
         kind: "delete";
         chatId: MultiUserChatIdentifier;

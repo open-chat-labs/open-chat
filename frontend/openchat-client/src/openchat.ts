@@ -1482,11 +1482,10 @@ export class OpenChat {
             .catch(() => false);
     }
 
-    deleteDirectChat(userId: string, blockUser: boolean): Promise<boolean> {
-        const chatId: ChatIdentifier = { kind: "direct_chat", userId };
+    deleteDirectChat(chatId: DirectChatIdentifier, blockUser: boolean): Promise<boolean> {
         const undo = localUpdates.removeChat(chatId);
         return this.#worker
-            .send({ kind: "deleteDirectChat", userId, blockUser })
+            .send({ kind: "deleteDirectChat", userId: chatId.userId, blockUser })
             .then((success) => {
                 if (!success) {
                     undo();
