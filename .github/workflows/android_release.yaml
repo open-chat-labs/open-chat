@@ -1,9 +1,9 @@
 name: Android Release
 
 on:
-  push:
-    branches:
-      - the_big_fork
+  workflow_dispatch: # Allows manual triggering from the Actions tab
+  release:
+    types: [published] # Triggers when you publish a release
 
 jobs:
   build-android:
@@ -78,3 +78,11 @@ jobs:
           name: android-release-apk
           path: frontend/src-tauri/gen/android/app/build/outputs/apk/**/*.apk
           if-no-files-found: error
+
+      - name: Upload APK to Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: frontend/src-tauri/gen/android/app/build/outputs/apk/release/openchat-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
