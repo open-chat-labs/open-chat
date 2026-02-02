@@ -1,9 +1,12 @@
 name: Android Release
 
 on:
-  workflow_dispatch: # Allows manual triggering from the Actions tab
+  workflow_dispatch:
+  push:
+    branches:
+      - the_big_fork
   release:
-    types: [published] # Triggers when you publish a release
+    types: [published]
 
 jobs:
   build-android:
