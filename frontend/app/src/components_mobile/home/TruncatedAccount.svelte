@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Body, ColourVars, Container, IconButton } from "component-lib";
+    import { Subtitle, ColourVars, Container, IconButton } from "component-lib";
     import type { Snippet } from "svelte";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -39,9 +39,9 @@
 <Container crossAxisAlignment={"center"} gap={"md"}>
     <Container direction="vertical" gap="xs">
         {@render children?.()}
-        <Body colour={"textPrimary"} fontWeight={"bold"}>
+        <Subtitle colour={"textPrimary"} fontWeight={"bold"}>
             {collapseAccount(account)}
-        </Body>
+        </Subtitle>
     </Container>
     {#if !disableCopy}
         <IconButton padding={"zero"} onclick={copy}>

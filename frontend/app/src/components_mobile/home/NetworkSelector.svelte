@@ -1,12 +1,15 @@
 <script lang="ts">
     import { i18nKey } from "@i18n/i18n";
-    import { Body, BodySmall, ColourVars, Container, Select, Subtitle } from "component-lib";
+    import { Body, BodySmall, ColourVars, Container, Sheet, Subtitle, Select } from "component-lib";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
+    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Translatable from "../Translatable.svelte";
 
     type Props = {
         networks: string[];
         selectedNetwork?: string;
+        background?: string;
+        flatSelect?: boolean;
     };
 
     type NetworkInfo = {
@@ -41,49 +44,95 @@
         },
     };
 
-    let { networks, selectedNetwork = $bindable() }: Props = $props();
+    let {
+        networks,
+        selectedNetwork = $bindable(),
+        background,
+        flatSelect = false,
+    }: Props = $props();
+
+    let showSheet = $state(false);
 </script>
 
-<Select
-    onSelect={(val) => (selectedNetwork = val)}
-    placeholder={"Token networks"}
-    value={selectedNetwork}>
-    {#snippet subtext()}
-        <Translatable resourceKey={i18nKey("Select your token transfer network")}></Translatable>
-    {/snippet}
-    {#snippet selectedValue(val)}
-        {val}
-    {/snippet}
-    {#snippet selectOptions(onSelect)}
-        <Container
-            onClick={(e) => e?.stopPropagation()}
-            height={{ size: "100%" }}
-            supplementalClass={"language_options"}
-            padding={"xl"}
-            gap={"lg"}
-            direction={"vertical"}>
-            <Subtitle fontWeight={"bold"}>
-                <Translatable resourceKey={i18nKey("Select token network")}></Translatable>
-            </Subtitle>
+{#snippet selectOptions(onSelect: (val: string) => void)}
+    <Container
+        onClick={(e) => e?.stopPropagation()}
+        height={{ size: "100%" }}
+        supplementalClass={"language_options"}
+        padding={["lg", "xl", "huge"]}
+        gap={"xxl"}
+        direction={"vertical"}>
+        <Subtitle fontWeight={"bold"}>
+            <Translatable resourceKey={i18nKey("Select token network")}></Translatable>
+        </Subtitle>
 
-            <Container gap={"lg"} supplementalClass={"binding_options"} direction={"vertical"}>
-                {#each networks as network}
-                    {@const { info, name } = networkInfo[network.toLowerCase()]}
-                    <Container
-                        onClick={() => onSelect(network)}
-                        gap={"sm"}
-                        crossAxisAlignment={"center"}
-                        direction={"vertical"}>
-                        <Container>
-                            <Body fontWeight={"bold"} colour={"primary"}>{name}</Body>
-                            <ChevronRight color={ColourVars.primary} />
-                        </Container>
-                        <BodySmall colour={"textSecondary"}>
-                            {info}
-                        </BodySmall>
+        <Container gap={"xxl"} supplementalClass={"binding_options"} direction={"vertical"}>
+            {#each networks as network}
+                {@const { info, name } = networkInfo[network.toLowerCase()]}
+                <Container
+                    onClick={() => onSelect(network)}
+                    gap={"sm"}
+                    crossAxisAlignment={"center"}
+                    direction={"vertical"}>
+                    <Container>
+                        <Body fontWeight={"bold"} colour={"primary"}>{name}</Body>
+                        <ChevronRight color={ColourVars.primary} />
                     </Container>
-                {/each}
+                    <Body colour={"textSecondary"}>
+                        {info}
+                    </Body>
+                </Container>
+            {/each}
+        </Container>
+    </Container>
+{/snippet}
+
+{#if flatSelect}
+    <Container
+        {background}
+        padding={["lg", "xl"]}
+        direction="horizontal"
+        crossAxisAlignment="center">
+        <Container
+            direction="vertical"
+            width="fill"
+            gap="xs"
+            onClick={() => {
+                showSheet = true;
+            }}>
+            <BodySmall colour={"textSecondary"} fontWeight={"bold"}>
+                <Translatable resourceKey={i18nKey("tokenTransfer.selectTransferNetwork")} />
+            </BodySmall>
+            <Container crossAxisAlignment="end" gap="sm">
+                <Subtitle width="hug" fontWeight="bold">{selectedNetwork}</Subtitle>
             </Container>
         </Container>
-    {/snippet}
-</Select>
+        <ChevronDown size="1.25rem" color={ColourVars.primary} />
+    </Container>
+
+    {#if showSheet}
+        <Sheet
+            onDismiss={() => {
+                showSheet = false;
+            }}>
+            {@render selectOptions((val) => {
+                selectedNetwork = val;
+                showSheet = false;
+            })}
+        </Sheet>
+    {/if}
+{:else}
+    <Select
+        onSelect={(val) => (selectedNetwork = val)}
+        placeholder={"Token networks"}
+        value={selectedNetwork}
+        {selectOptions}>
+        {#snippet subtext()}
+            <Translatable resourceKey={i18nKey("Select your token transfer network")}
+            ></Translatable>
+        {/snippet}
+        {#snippet selectedValue(val)}
+            {val}
+        {/snippet}
+    </Select>
+{/if}
