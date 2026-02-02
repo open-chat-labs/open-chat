@@ -27,7 +27,17 @@ jobs:
       - name: Setup Rust
         uses: ./.github/workflows/setup-rust
         with:
-          cache: 'read'
+          cache: 'write'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
       - name: Add Android targets
         run: |
@@ -44,7 +54,7 @@ jobs:
         run: npm ci
 
       - name: Install Tauri CLI
-        run: cargo install tauri-cli
+        run: npm install -g @tauri-apps/cli
 
       - name: Setup Keystore
         run: |
@@ -60,7 +70,7 @@ jobs:
           fi
 
       - name: Build Android APK
-        run: cargo tauri android build
+        run: npx tauri android build
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
