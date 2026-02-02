@@ -119,6 +119,11 @@ jobs:
             echo "OC_SIGN_IN_WITH_EMAIL_CANISTER=$(jq -r '.sign_in_with_email.ic' $CANISTERS_JSON)" >> .env
             echo "OC_SIGN_IN_WITH_ETHEREUM_CANISTER=$(jq -r '.sign_in_with_ethereum.ic' $CANISTERS_JSON)" >> .env
             echo "OC_SIGN_IN_WITH_SOLANA_CANISTER=$(jq -r '.sign_in_with_solana.ic' $CANISTERS_JSON)" >> .env
+            echo "OC_AIRDROP_BOT_CANISTER=$(jq -r '.airdrop_bot.ic' $CANISTERS_JSON)" >> .env
+            
+            # These are hardcoded in rollup.extras.mjs, so we must manually inject them if that script fails to load
+            echo "OC_ONESEC_FORWARDER_CANISTER=lsoct-pyaaa-aaaar-boahq-cai" >> .env
+            echo "OC_ONESEC_MINTER_CANISTER=5okwm-giaaa-aaaar-qbn6a-cai" >> .env
           else
             echo "ERROR: canister_ids.json not found at $CANISTERS_JSON"
             exit 1
