@@ -74,7 +74,7 @@ jobs:
 
       - name: Build Android APK (Debug)
         run: |
-          cd frontend/src-tauri/gen/android
+          cd src-tauri/gen/android
           chmod +x gradlew
           ./gradlew assembleRelease --stacktrace --info
         env:
