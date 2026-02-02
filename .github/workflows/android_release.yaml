@@ -68,6 +68,25 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Tauri CLI
+        uses: baptiste0928/cargo-install@v3
+        with:
+          crate: tauri-cli
+          version: "2.0.3"
+
+      - name: Setup Keystore
+        run: |
+          mkdir -p ~/.android
+          
+          if [ ! -z "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "Using provided keystore from secrets..."
+            echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > ~/.android/debug.keystore
+          else
+            echo "No keystore secret found. Generating a temporary debug keystore..."
+            echo "WARNING: App Links validation (assetlinks.json) will fail because the signature won't match."
+            keytool -genkey -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
       - name: Create Env File
         run: |
           # Create a .env file for the build script to source
