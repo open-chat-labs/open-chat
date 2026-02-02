@@ -31,6 +31,9 @@ pub struct UserSummary {
     #[serde(default, skip_serializing_if = "is_default")]
     #[ts(as = "Option<bool>", optional)]
     pub is_unique_person: bool,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
+    pub hide_online_status: bool,
 }
 
 #[ts_export]
@@ -106,4 +109,7 @@ pub struct CurrentUserSummary {
     pub chit_balance: i32,
     pub streak: u16,
     pub max_streak: u16,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
+    pub hide_online_status: bool,
 }

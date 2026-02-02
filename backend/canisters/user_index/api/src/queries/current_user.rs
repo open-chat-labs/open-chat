@@ -3,7 +3,9 @@ use ic_ledger_types::AccountIdentifier;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{DiamondMembershipDetails, DiamondMembershipStatusFull, Empty, SuspensionDetails, TimestampMillis, UserId};
+use types::{
+    DiamondMembershipDetails, DiamondMembershipStatusFull, Empty, SuspensionDetails, TimestampMillis, UserId, is_default,
+};
 
 pub type Args = Empty;
 
@@ -39,4 +41,7 @@ pub struct SuccessResult {
     pub chit_balance: i32,
     pub streak: u16,
     pub max_streak: u16,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
+    pub hide_online_status: bool,
 }

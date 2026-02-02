@@ -2137,6 +2137,11 @@ export const UserIndexRemoveBotResponse = Type.Union([
     }),
 ]);
 
+export type UserIndexSetHideOnlineStatusArgs = Static<typeof UserIndexSetHideOnlineStatusArgs>;
+export const UserIndexSetHideOnlineStatusArgs = Type.Object({
+    hide_online_status: Type.Boolean(),
+});
+
 export type UserIndexUnsuspendUserArgs = Static<typeof UserIndexUnsuspendUserArgs>;
 export const UserIndexUnsuspendUserArgs = Type.Object({
     user_id: UserId,
@@ -4700,6 +4705,7 @@ export const UserSummary = Type.Object({
     streak: Type.Number(),
     max_streak: Type.Number(),
     is_unique_person: Type.Optional(Type.Boolean()),
+    hide_online_status: Type.Optional(Type.Boolean()),
 });
 
 export type DirectMessageTipped = Static<typeof DirectMessageTipped>;
@@ -7419,6 +7425,7 @@ export const UserIndexCurrentUserSuccessResult = Type.Object({
     chit_balance: Type.Number(),
     streak: Type.Number(),
     max_streak: Type.Number(),
+    hide_online_status: Type.Optional(Type.Boolean()),
 });
 
 export type UserIndexCurrentUserResponse = Static<typeof UserIndexCurrentUserResponse>;
@@ -7818,6 +7825,7 @@ export const CurrentUserSummary = Type.Object({
     chit_balance: Type.Number(),
     streak: Type.Number(),
     max_streak: Type.Number(),
+    hide_online_status: Type.Optional(Type.Boolean()),
 });
 
 export type SenderContext = Static<typeof SenderContext>;
