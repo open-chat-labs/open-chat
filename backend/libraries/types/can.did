@@ -71,11 +71,6 @@ type BlobReference = record {
     blob_id : nat;
 };
 
-type CanisterUpgradeStatus = variant {
-    InProgress;
-    NotRequired;
-};
-
 type CanisterWasm = record {
     module : vec nat8;
     version : BuildVersion;
