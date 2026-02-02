@@ -73,7 +73,7 @@ jobs:
           fi
 
       - name: Build Android APK
-        run: npx tauri android build --verbose
+        run: cargo tauri android build --verbose
         env:
           # Ensure these are passed if needed, though the gradle file uses the debug fallback we set up
           ANDROID_KEY_STORE_FILE: ${{ env.ANDROID_KEY_STORE_FILE }}
