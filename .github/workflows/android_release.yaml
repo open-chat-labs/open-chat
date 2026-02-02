@@ -75,12 +75,12 @@ jobs:
       - name: Create Env File
         run: |
           # Create a .env file for the build script to source
-          echo "OC_APP_TENOR_APIKEY=${{ secrets.GH_TENOR_API_KEY || 'dummy_tenor_key' }}" >> frontend/.env
-          echo "OC_APP_TRANSLATE_API_KEY=${{ secrets.GH_TRANSLATE_API_KEY || 'dummy_translate_key' }}" >> frontend/.env
-          echo "OC_ROLLBAR_ACCESS_TOKEN=${{ secrets.GH_ROLLBAR_ACCESS_TOKEN || 'dummy_rollbar_token' }}" >> frontend/.env
-          echo "OC_USERGEEK_APIKEY=${{ secrets.GH_USERGEEK_APIKEY || 'dummy_usergeek_key' }}" >> frontend/.env
-          echo "OC_METERED_APIKEY=${{ secrets.GH_METERED_APIKEY || 'dummy_metered_key' }}" >> frontend/.env
-          echo "OC_VAPID_PUBLIC_KEY=${{ secrets.GH_VAPID_PUBLIC_KEY || 'dummy_vapid_key' }}" >> frontend/.env
+          echo "OC_APP_TENOR_APIKEY=${{ secrets.GH_TENOR_API_KEY || 'dummy_tenor_key' }}" >> .env
+          echo "OC_APP_TRANSLATE_API_KEY=${{ secrets.GH_TRANSLATE_API_KEY || 'dummy_translate_key' }}" >> .env
+          echo "OC_ROLLBAR_ACCESS_TOKEN=${{ secrets.GH_ROLLBAR_ACCESS_TOKEN || 'dummy_rollbar_token' }}" >> .env
+          echo "OC_USERGEEK_APIKEY=${{ secrets.GH_USERGEEK_APIKEY || 'dummy_usergeek_key' }}" >> .env
+          echo "OC_METERED_APIKEY=${{ secrets.GH_METERED_APIKEY || 'dummy_metered_key' }}" >> .env
+          echo "OC_VAPID_PUBLIC_KEY=${{ secrets.GH_VAPID_PUBLIC_KEY || 'dummy_vapid_key' }}" >> .env
 
       - name: Build Android APK
         run: cargo tauri android build --verbose
