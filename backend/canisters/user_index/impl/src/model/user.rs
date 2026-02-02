@@ -73,6 +73,8 @@ pub struct User {
     pub total_chit_earned: i32,
     #[serde(rename = "cb", default, skip_serializing_if = "is_default")]
     pub chit_balance: i32,
+    #[serde(rename = "ho", default, skip_serializing_if = "is_default")]
+    pub hide_online_status: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]
@@ -127,6 +129,7 @@ impl User {
             unique_person_proof: None,
             total_chit_earned: 0,
             chit_balance: 0,
+            hide_online_status: false,
         }
     }
 
@@ -145,6 +148,7 @@ impl User {
             streak: self.streak(now),
             max_streak: self.max_streak,
             is_unique_person: self.unique_person_proof.is_some(),
+            hide_online_status: self.hide_online_status,
         }
     }
 
@@ -166,6 +170,7 @@ impl User {
             suspended: self.suspension_details.is_some(),
             diamond_membership_status: self.diamond_membership_details.status(now),
             is_unique_person: self.unique_person_proof.is_some(),
+            hide_online_status: self.hide_online_status,
         }
     }
 
@@ -261,6 +266,7 @@ impl Default for User {
             unique_person_proof: None,
             total_chit_earned: 0,
             chit_balance: 0,
+            hide_online_status: false,
         }
     }
 }
