@@ -63,7 +63,6 @@ type CurrentUserResponse = variant {
         date_created : TimestampMillis;
         display_name : opt text;
         avatar_id : opt nat;
-        wasm_version : BuildVersion;
         icp_account : AccountIdentifier;
         referrals : vec UserId;
         is_platform_moderator : bool;
