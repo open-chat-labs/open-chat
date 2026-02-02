@@ -229,8 +229,6 @@ export type CanForwardResponse = { 'Success' : ProjectedAllowance } |
   { 'AllowanceExceeded' : ProjectedAllowance } |
   { 'UserNotFound' : null };
 export type CanisterId = Principal;
-export type CanisterUpgradeStatus = { 'NotRequired' : null } |
-  { 'InProgress' : null };
 export interface CanisterWasm {
   'compressed' : boolean,
   'version' : BuildVersion,

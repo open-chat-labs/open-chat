@@ -13,17 +13,25 @@ pub struct DiamondMembershipDetails {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub enum DiamondMembershipStatusFull {
+    #[default]
     Inactive,
     Active(DiamondMembershipDetails),
     Lifetime,
 }
 
+impl DiamondMembershipStatusFull {
+    pub fn is_inactive(&self) -> bool {
+        matches!(self, Self::Inactive)
+    }
+}
+
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq)]
 #[repr(u8)]
 pub enum DiamondMembershipStatus {
+    #[default]
     Inactive = 0,
     Active = 1,
     Lifetime = 2,

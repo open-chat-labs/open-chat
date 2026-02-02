@@ -3,10 +3,7 @@ use ic_ledger_types::AccountIdentifier;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{
-    BuildVersion, CanisterUpgradeStatus, DiamondMembershipDetails, DiamondMembershipStatusFull, Empty, SuspensionDetails,
-    TimestampMillis, UserId,
-};
+use types::{DiamondMembershipDetails, DiamondMembershipStatusFull, Empty, SuspensionDetails, TimestampMillis, UserId};
 
 pub type Args = Empty;
 
@@ -27,8 +24,6 @@ pub struct SuccessResult {
     pub date_created: TimestampMillis,
     pub display_name: Option<String>,
     pub avatar_id: Option<u128>,
-    pub canister_upgrade_status: CanisterUpgradeStatus,
-    pub wasm_version: BuildVersion,
     #[ts(as = "[u8; 32]")]
     pub icp_account: AccountIdentifier,
     pub referrals: Vec<UserId>,

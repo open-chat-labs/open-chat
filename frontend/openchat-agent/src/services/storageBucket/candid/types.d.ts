@@ -205,8 +205,6 @@ export interface CallParticipant {
   'joined' : TimestampMillis,
 }
 export type CanisterId = Principal;
-export type CanisterUpgradeStatus = { 'NotRequired' : null } |
-  { 'InProgress' : null };
 export interface CanisterWasm {
   'compressed' : boolean,
   'version' : BuildVersion,

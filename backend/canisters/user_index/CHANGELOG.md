@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Skip serializing fields with default values when fetching user data ([#8847](https://github.com/open-chat-labs/open-chat/pull/8847))
+
 ## [[2.0.1947](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1947-user_index)] - 2026-01-14
 
 ### Changed
