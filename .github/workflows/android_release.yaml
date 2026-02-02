@@ -129,28 +129,6 @@ jobs:
             exit 1
           fi
 
-      - name: Debug svelte-material-icons casing & Environment
-        run: |
-          echo "=== DEBUG START ==="
-          
-          echo "--- Checking svelte-material-icons casing ---"
-          ls -F node_modules/svelte-material-icons/ | grep -i "qrcode" || echo "No qrcode found!"
-          
-          echo "--- Checking file existence via Node fs ---"
-          node -e 'const fs = require("fs"); const p = "node_modules/svelte-material-icons/QrCode.svelte"; console.log(p + ": " + (fs.existsSync(p) ? "EXISTS" : "MISSING"));'
-          
-          echo "--- Checking .env file content (Keys only) ---"
-          if [ -f .env ]; then
-            cat .env | sed 's/=.*/=******/'
-          else
-            echo ".env file MISSING!"
-          fi
-          
-          echo "--- Checking environment variables seen by shell ---"
-          env | grep "OC_" || echo "No OC_ variables found in shell env"
-          
-          echo "=== DEBUG END ==="
-
       - name: Build Android APK
         run: cargo tauri android build --verbose
         env:
