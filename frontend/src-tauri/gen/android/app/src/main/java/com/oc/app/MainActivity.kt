@@ -28,6 +28,7 @@ class MainActivity : TauriActivity() {
         enableEdgeToEdgeForAndroid14AndLess()
         
         super.onCreate(savedInstanceState)
+        WebView.setWebContentsDebuggingEnabled(true)
         
         try {
             handleWindowInsets()
