@@ -16,7 +16,7 @@
     import { enhancedCryptoLookup, publish, type TokenBalanceGate } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Chart from "svelte-material-icons/ChartBoxOutline.svelte";
-    import QrCode from "svelte-material-icons/QrCode.svelte";
+    import QrCode from "svelte-material-icons/Qrcode.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import { TokenState } from "../wallet/walletState.svelte";

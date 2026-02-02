@@ -23,7 +23,7 @@
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import QrCode from "svelte-material-icons/QrCode.svelte";
+    import QrCode from "svelte-material-icons/Qrcode.svelte";
     import Refresh from "svelte-material-icons/Refresh.svelte";
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";

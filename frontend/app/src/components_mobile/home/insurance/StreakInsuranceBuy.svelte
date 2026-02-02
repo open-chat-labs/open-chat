@@ -24,7 +24,7 @@
     } from "openchat-client";
     import { getContext } from "svelte";
     import Plus from "svelte-material-icons/Plus.svelte";
-    import QrCode from "svelte-material-icons/QrCode.svelte";
+    import QrCode from "svelte-material-icons/Qrcode.svelte";
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";

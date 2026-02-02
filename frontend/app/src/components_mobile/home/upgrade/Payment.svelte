@@ -36,7 +36,7 @@
     import Right from "svelte-material-icons/ChevronRight.svelte";
     import Diamond from "svelte-material-icons/DiamondOutline.svelte";
     import Lifetime from "svelte-material-icons/DiamondStone.svelte";
-    import QrCode from "svelte-material-icons/QrCode.svelte";
+    import QrCode from "svelte-material-icons/Qrcode.svelte";
     import Refresh from "svelte-material-icons/Refresh.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
