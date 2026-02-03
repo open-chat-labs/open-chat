@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { BodySmall, Column, CommonButton, Row } from "component-lib";
+    import { Body, Subtitle, Column, CommonButton2, Row, ColourVars } from "component-lib";
     import type { MessageContext, OpenChat, P2PSwapContentInitial } from "openchat-client";
     import {
         enhancedCryptoLookup as cryptoLookup,
@@ -130,88 +130,98 @@
         action={send} />
 {/if}
 
-<SlidingPageContent title={i18nKey("Create a swap offer")} subtitle={i18nKey("P2P Swap")}>
-    <Column gap={"xl"} padding={["lg", "xl"]}>
-        <Column>
-            <BodySmall fontWeight={"bold"}>
-                <Translatable resourceKey={i18nKey("Token to offer")} />
-            </BodySmall>
-            <BodySmall colour={"textSecondary"}>
-                <Translatable
-                    resourceKey={i18nKey(
-                        "This is the token that you are offering for exchange. You can only swap tokens for which you hold a non-zero balance. Top up via your wallet if necessary.",
-                    )} />
-            </BodySmall>
+<SlidingPageContent title={i18nKey("Create swap offer")}>
+    <Column gap={"xl"} padding={["lg", "lg", "huge"]} overflow="auto" height="fill">
+        <!-- Container for swap info -->
+        <Column
+            backgroundColor={ColourVars.background1}
+            padding={["xl", "lg"]}
+            borderRadius="lg"
+            gap="xxl">
+            <!-- Send token -->
+            <Column gap={"xl"}>
+                <Column gap="md">
+                    <Subtitle fontWeight={"bold"}>
+                        <Translatable resourceKey={i18nKey("Token to swap")} />
+                    </Subtitle>
+                    <Body colour={"textSecondary"}>
+                        <Translatable
+                            resourceKey={i18nKey(
+                                "This is the token that you are offering for exchange. You can only swap tokens for which you hold a non-zero balance. Top up via your wallet if necessary.",
+                            )} />
+                    </Body>
+                </Column>
+                <CryptoSelector
+                    filter={(t) => t.balance > 0}
+                    bind:ledger={fromLedger}
+                    draftAmount={fromAmount}
+                    showRefresh
+                    onSelect={onSelectFromToken} />
+                <TokenInput
+                    placeholder="Swap amount"
+                    balance={fromState.cryptoBalance}
+                    ledger={fromLedger}
+                    {minAmount}
+                    converted={fromState.formatConvertedTokens(fromAmount)}
+                    bind:status={tokenInputState}
+                    bind:valid={fromAmountValid}
+                    bind:amount={fromAmount}>
+                    {#snippet subtext()}
+                        {`Minimum amount ${fromState.formatTokens(minAmount)} ${fromState.symbol}`}
+                    {/snippet}
+                </TokenInput>
+            </Column>
+
+            <!-- Receive token -->
+            <Column gap={"xl"}>
+                <Column gap="md">
+                    <Subtitle fontWeight={"bold"}>
+                        <Translatable resourceKey={i18nKey("Token to receive")} />
+                    </Subtitle>
+                    <Body colour={"textSecondary"}>
+                        <Translatable
+                            resourceKey={i18nKey(
+                                "This is the token that you would like to receive in return. You decide how many tokens you would like to receive in the exchange.",
+                            )} />
+                    </Body>
+                </Column>
+                <CryptoSelector filter={(t) => t.ledger !== fromLedger} bind:ledger={toLedger} />
+                <TokenInput
+                    placeholder="Receive amount"
+                    ledger={toLedger}
+                    converted={toState.formatConvertedTokens(toAmount)}
+                    bind:valid={toAmountValid}
+                    bind:amount={toAmount} />
+            </Column>
         </Column>
 
-        <Column gap={"md"}>
-            <CryptoSelector
-                filter={(t) => t.balance > 0}
-                bind:ledger={fromLedger}
-                draftAmount={fromAmount}
-                showRefresh
-                onSelect={onSelectFromToken} />
-            <TokenInput
-                balance={fromState.cryptoBalance}
-                ledger={fromLedger}
-                {minAmount}
-                bind:status={tokenInputState}
-                bind:valid={fromAmountValid}
-                bind:amount={fromAmount}>
-                {#snippet subtext()}
-                    {`Minimum amount ${fromState.formatTokens(minAmount)} ${fromState.symbol}`}
+        <!-- Duration selection -->
+        <Column gap={"lg"} padding={["zero", "lg"]}>
+            <DurationSelector bind:duration={expiresIn}>
+                {#snippet title()}
+                    <Body fontWeight={"bold"}>
+                        <Translatable resourceKey={i18nKey("Swap expiry time")} />
+                    </Body>
                 {/snippet}
-                {#snippet converted()}
-                    <BodySmall colour={"textSecondary"}>
-                        {`${fromState.formatConvertedTokens(fromAmount)}`}
-                    </BodySmall>
-                {/snippet}
-            </TokenInput>
+            </DurationSelector>
         </Column>
 
-        <Column>
-            <BodySmall fontWeight={"bold"}>
-                <Translatable resourceKey={i18nKey("Token to receive")} />
-            </BodySmall>
-            <BodySmall colour={"textSecondary"}>
-                <Translatable
-                    resourceKey={i18nKey(
-                        "This is the token that you would like to receive in return. You decide how many tokens you would like to receive in the exchange.",
-                    )} />
-            </BodySmall>
-        </Column>
-        <Column gap={"md"}>
-            <CryptoSelector filter={(t) => t.ledger !== fromLedger} bind:ledger={toLedger} />
-            <TokenInput ledger={toLedger} bind:valid={toAmountValid} bind:amount={toAmount}>
-                {#snippet subtext()}
-                    {`The amount of ${toDetails.symbol} tokens you would like in return`}
-                {/snippet}
-                {#snippet converted()}
-                    <BodySmall colour={"textSecondary"}>
-                        {`${toState.formatConvertedTokens(toAmount)}`}
-                    </BodySmall>
-                {/snippet}
-            </TokenInput>
-        </Column>
-        <DurationSelector bind:duration={expiresIn}>
-            {#snippet title()}
-                <BodySmall fontWeight={"bold"}>
-                    <Translatable resourceKey={i18nKey("Swap expiry time")} />
-                </BodySmall>
-            {/snippet}
-        </DurationSelector>
-
-        <Row mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"end"}>
+        <!-- Fees and button -->
+        <Row
+            mainAxisAlignment="spaceBetween"
+            crossAxisAlignment="center"
+            padding={["lg", "md"]}
+            gap="xl">
             <TransferFeesMessage
                 symbol={fromDetails.symbol}
                 tokenDecimals={fromDetails.decimals}
                 transferFees={totalFees} />
-            <CommonButton disabled={!valid} onClick={onSend} mode={"active"} size={"medium"}>
+            <CommonButton2 onClick={onSend} variant="primary" mode={"regular"} disabled={!valid}>
                 {#snippet icon(color, size)}
                     <Paperclip {color} {size} />
                 {/snippet}
                 <Translatable resourceKey={i18nKey("Confirm")} />
-            </CommonButton>
+            </CommonButton2>
         </Row>
     </Column>
 </SlidingPageContent>
