@@ -23,6 +23,7 @@ pub mod remove_platform_operator;
 pub mod remove_sms_messages;
 pub mod set_diamond_membership_fees;
 pub mod set_display_name;
+pub mod set_hide_online_status;
 pub mod set_max_concurrent_user_canister_upgrades;
 pub mod set_moderation_flags;
 pub mod set_premium_item_cost;

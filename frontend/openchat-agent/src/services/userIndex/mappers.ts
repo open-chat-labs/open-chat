@@ -184,8 +184,8 @@ export function usersApiResponse(value: UserIndexUsersResponse): UsersApiRespons
         const timestamp = value.Success.timestamp;
         return {
             serverTimestamp: timestamp,
-            users: value.Success.users.map(userSummaryUpdate),
-            deletedUserIds: new Set(value.Success.deleted.map(principalBytesToString)),
+            users: value.Success.users?.map(userSummaryUpdate) ?? [],
+            deletedUserIds: new Set(value.Success.deleted?.map(principalBytesToString) ?? []),
             currentUser: mapOptional(value.Success.current_user, (u) =>
                 currentUserSummary(u, timestamp),
             ),
@@ -201,22 +201,22 @@ export function currentUserSummary(
     return {
         kind: "current_user_summary",
         username: value.username,
-        isPlatformOperator: value.is_platform_operator,
+        isPlatformOperator: value.is_platform_operator ?? false,
         diamondStatus: diamondMembershipStatus(value.diamond_membership_status),
         userId: principalBytesToString(value.user_id),
-        isBot: value.is_bot,
+        isBot: value.is_bot ?? false,
         displayName: mapOptional(value.display_name, identity),
-        moderationFlagsEnabled: value.moderation_flags_enabled,
-        isSuspectedBot: value.is_suspected_bot,
+        moderationFlagsEnabled: value.moderation_flags_enabled ?? 0,
+        isSuspectedBot: value.is_suspected_bot ?? false,
         suspensionDetails: mapOptional(value.suspension_details, suspensionDetails),
-        isPlatformModerator: value.is_platform_moderator,
+        isPlatformModerator: value.is_platform_moderator ?? false,
         diamondDetails: mapOptional(value.diamond_membership_details, diamondMembership),
         updated: timestamp,
         blobReference: mapOptional(value.avatar_id, (id) => ({
             blobId: id,
             canisterId: principalBytesToString(value.user_id),
         })),
-        isUniquePerson: value.is_unique_person,
+        isUniquePerson: value.is_unique_person ?? false,
         totalChitEarned: value.total_chit_earned,
         chitBalance: value.chit_balance,
         streak: value.streak,
@@ -231,14 +231,14 @@ export function userSummaryUpdate(value: TUserSummaryV2): UserSummaryUpdate {
         stable: mapOptional(value.stable, (s) => ({
             username: s.username,
             diamondStatus: diamondStatus(s.diamond_membership_status),
-            isBot: s.is_bot,
+            isBot: s.is_bot ?? false,
             displayName: mapOptional(s.display_name, identity),
             blobReference: mapOptional(s.avatar_id, (id) => ({
                 blobId: id,
                 canisterId: principalBytesToString(value.user_id),
             })),
-            suspended: s.suspended,
-            isUniquePerson: s.is_unique_person,
+            suspended: s.suspended ?? false,
+            isUniquePerson: s.is_unique_person ?? false,
             backgroundId: s.profile_background_id,
         })),
         volatile: mapOptional(value.volatile, (v) => ({
@@ -261,18 +261,20 @@ export function userSummary(value: TUserSummary, timestamp: bigint): UserSummary
             canisterId: principalBytesToString(value.user_id),
         })),
         updated: timestamp,
-        suspended: value.suspended,
+        suspended: value.suspended ?? false,
         diamondStatus: diamondStatus(value.diamond_membership_status),
         chitBalance: value.chit_balance,
         totalChitEarned: value.total_chit_earned,
         streak: value.streak,
         maxStreak: value.max_streak,
-        isUniquePerson: value.is_unique_person,
+        isUniquePerson: value.is_unique_person ?? false,
     };
 }
 
-export function diamondStatus(value: TDiamondMembershipStatus): DiamondMembershipStatus["kind"] {
-    if (value === "Inactive") {
+export function diamondStatus(
+    value: TDiamondMembershipStatus | undefined,
+): DiamondMembershipStatus["kind"] {
+    if (value === undefined || value === "Inactive") {
         return "inactive";
     }
     if (value === "Active") {
@@ -328,8 +330,10 @@ export function currentUserResponse(value: UserIndexCurrentUserResponse): Curren
     throw new Error(`Unexpected CurrentUserResponse type received: ${value}`);
 }
 
-function diamondMembershipStatus(value: TDiamondMembershipStatusFull): DiamondMembershipStatus {
-    if (value === "Inactive") {
+function diamondMembershipStatus(
+    value: TDiamondMembershipStatusFull | undefined,
+): DiamondMembershipStatus {
+    if (value === undefined || value === "Inactive") {
         return { kind: "inactive" };
     }
     if (value === "Lifetime") {

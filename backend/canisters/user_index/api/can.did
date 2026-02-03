@@ -62,9 +62,7 @@ type CurrentUserResponse = variant {
         username : text;
         date_created : TimestampMillis;
         display_name : opt text;
-        canister_upgrade_status : CanisterUpgradeStatus;
         avatar_id : opt nat;
-        wasm_version : BuildVersion;
         icp_account : AccountIdentifier;
         referrals : vec UserId;
         is_platform_moderator : bool;
@@ -79,6 +77,7 @@ type CurrentUserResponse = variant {
         chit_balance : int32;
         streak : nat16;
         max_streak : nat16;
+        hide_online_status : bool;
     };
     UserNotFound;
     Error : OCError;

@@ -1,7 +1,6 @@
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use ledger_utils::default_ledger_account;
-use types::{BuildVersion, CanisterUpgradeStatus};
 use user_index_canister::current_user::{Response::*, *};
 
 #[query(candid = true, msgpack = true)]
@@ -22,9 +21,7 @@ fn current_user_impl(state: &RuntimeState) -> Response {
             username: u.username.clone(),
             date_created: u.date_created,
             display_name: u.display_name.clone(),
-            canister_upgrade_status: CanisterUpgradeStatus::NotRequired,
             avatar_id: u.avatar_id,
-            wasm_version: BuildVersion::default(),
             icp_account: default_ledger_account(u.user_id.into()),
             referrals: state.data.users.referrals(&u.user_id),
             is_platform_moderator: state.data.platform_moderators.contains(&u.user_id),
@@ -39,6 +36,7 @@ fn current_user_impl(state: &RuntimeState) -> Response {
             chit_balance: u.chit_balance,
             streak: u.streak,
             max_streak: u.max_streak,
+            hide_online_status: u.hide_online_status,
         })
     } else {
         UserNotFound

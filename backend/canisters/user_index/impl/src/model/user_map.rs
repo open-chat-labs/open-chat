@@ -625,6 +625,15 @@ impl UserMap {
         true
     }
 
+    pub fn set_hide_online_status(&mut self, user_id: &UserId, set_hide_online_status: bool, now: TimestampMillis) {
+        if let Some(user) = self.users.get_mut(user_id)
+            && user.hide_online_status != set_hide_online_status
+        {
+            user.hide_online_status = set_hide_online_status;
+            user.date_updated = now;
+        }
+    }
+
     pub fn suspend_user(
         &mut self,
         user_id: UserId,

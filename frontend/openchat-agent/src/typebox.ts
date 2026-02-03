@@ -526,12 +526,6 @@ export const ProposalDecisionStatus = Type.Union([
     Type.Literal("Failed"),
 ]);
 
-export type CanisterUpgradeStatus = Static<typeof CanisterUpgradeStatus>;
-export const CanisterUpgradeStatus = Type.Union([
-    Type.Literal("InProgress"),
-    Type.Literal("NotRequired"),
-]);
-
 export type OptionUpdateU128 = Static<typeof OptionUpdateU128>;
 export const OptionUpdateU128 = Type.Union(
     [
@@ -2143,6 +2137,11 @@ export const UserIndexRemoveBotResponse = Type.Union([
     }),
 ]);
 
+export type UserIndexSetHideOnlineStatusArgs = Static<typeof UserIndexSetHideOnlineStatusArgs>;
+export const UserIndexSetHideOnlineStatusArgs = Type.Object({
+    hide_online_status: Type.Boolean(),
+});
+
 export type UserIndexUnsuspendUserArgs = Static<typeof UserIndexUnsuspendUserArgs>;
 export const UserIndexUnsuspendUserArgs = Type.Object({
     user_id: UserId,
@@ -2171,6 +2170,12 @@ export type UserIndexUsersArgs = Static<typeof UserIndexUsersArgs>;
 export const UserIndexUsersArgs = Type.Object({
     user_groups: Type.Array(UserIndexUsersUserGroup),
     users_suspended_since: Type.Optional(Type.BigInt()),
+});
+
+export type UserIndexBotInstallationEventsArgs = Static<typeof UserIndexBotInstallationEventsArgs>;
+export const UserIndexBotInstallationEventsArgs = Type.Object({
+    from: Type.Number(),
+    size: Type.Number(),
 });
 
 export type UserIndexSubmitProofOfUniquePersonhoodResponse = Static<
@@ -4691,15 +4696,16 @@ export const UserSummary = Type.Object({
     username: Type.String(),
     display_name: Type.Optional(Type.String()),
     avatar_id: Type.Optional(Type.BigInt()),
-    is_bot: Type.Boolean(),
-    suspended: Type.Boolean(),
-    diamond_member: Type.Boolean(),
-    diamond_membership_status: DiamondMembershipStatus,
+    is_bot: Type.Optional(Type.Boolean()),
+    suspended: Type.Optional(Type.Boolean()),
+    diamond_member: Type.Optional(Type.Boolean()),
+    diamond_membership_status: Type.Optional(DiamondMembershipStatus),
     total_chit_earned: Type.Number(),
     chit_balance: Type.Number(),
     streak: Type.Number(),
     max_streak: Type.Number(),
-    is_unique_person: Type.Boolean(),
+    is_unique_person: Type.Optional(Type.Boolean()),
+    hide_online_status: Type.Optional(Type.Boolean()),
 });
 
 export type DirectMessageTipped = Static<typeof DirectMessageTipped>;
@@ -5002,10 +5008,10 @@ export const UserSummaryStable = Type.Object({
     display_name: Type.Optional(Type.String()),
     avatar_id: Type.Optional(Type.BigInt()),
     profile_background_id: Type.Optional(Type.BigInt()),
-    is_bot: Type.Boolean(),
-    suspended: Type.Boolean(),
-    diamond_membership_status: DiamondMembershipStatus,
-    is_unique_person: Type.Boolean(),
+    is_bot: Type.Optional(Type.Boolean()),
+    suspended: Type.Optional(Type.Boolean()),
+    diamond_membership_status: Type.Optional(DiamondMembershipStatus),
+    is_unique_person: Type.Optional(Type.Boolean()),
 });
 
 export type StringParam = Static<typeof StringParam>;
@@ -5977,23 +5983,6 @@ export const UserIndexUsersChitResponse = Type.Object({
     Success: UserIndexUsersChitSuccessResult,
 });
 
-export type UserIndexBotInstallationsArgs = Static<typeof UserIndexBotInstallationsArgs>;
-export const UserIndexBotInstallationsArgs = Type.Object({
-    installed_since: Type.Optional(BotInstallationLocation),
-    max_results: Type.Number(),
-});
-
-export type UserIndexBotInstallationsInstallationDetails = Static<
-    typeof UserIndexBotInstallationsInstallationDetails
->;
-export const UserIndexBotInstallationsInstallationDetails = Type.Object({
-    location: BotInstallationLocation,
-    installed_at: Type.BigInt(),
-    local_user_index: TSPrincipal,
-    granted_permissions: BotPermissions,
-    granted_autonomous_permissions: BotPermissions,
-});
-
 export type UserIndexPlatformModeratorsResponse = Static<
     typeof UserIndexPlatformModeratorsResponse
 >;
@@ -6049,6 +6038,27 @@ export const UserIndexSearchResult = Type.Object({
 export type UserIndexSearchResponse = Static<typeof UserIndexSearchResponse>;
 export const UserIndexSearchResponse = Type.Object({
     Success: UserIndexSearchResult,
+});
+
+export type UserIndexBotInstallationEventsBotUninstalled = Static<
+    typeof UserIndexBotInstallationEventsBotUninstalled
+>;
+export const UserIndexBotInstallationEventsBotUninstalled = Type.Object({
+    location: BotInstallationLocation,
+    uninstalled_by: UserId,
+    timestamp: Type.BigInt(),
+});
+
+export type UserIndexBotInstallationEventsBotInstalled = Static<
+    typeof UserIndexBotInstallationEventsBotInstalled
+>;
+export const UserIndexBotInstallationEventsBotInstalled = Type.Object({
+    location: BotInstallationLocation,
+    api_gateway: TSPrincipal,
+    granted_permissions: BotPermissions,
+    granted_autonomous_permissions: BotPermissions,
+    installed_by: UserId,
+    timestamp: Type.BigInt(),
 });
 
 export type UserIndexExploreBotsArgs = Static<typeof UserIndexExploreBotsArgs>;
@@ -7341,22 +7351,25 @@ export const RegistryUpdatesResponse = Type.Union([
     Type.Literal("SuccessNoUpdates"),
 ]);
 
-export type UserIndexBotInstallationsSuccessResult = Static<
-    typeof UserIndexBotInstallationsSuccessResult
+export type UserIndexBotInstallationEventsBotInstallationEvent = Static<
+    typeof UserIndexBotInstallationEventsBotInstallationEvent
 >;
-export const UserIndexBotInstallationsSuccessResult = Type.Object({
-    installations: Type.Array(UserIndexBotInstallationsInstallationDetails),
-});
-
-export type UserIndexBotInstallationsResponse = Static<typeof UserIndexBotInstallationsResponse>;
-export const UserIndexBotInstallationsResponse = Type.Union([
+export const UserIndexBotInstallationEventsBotInstallationEvent = Type.Union([
     Type.Object({
-        Success: UserIndexBotInstallationsSuccessResult,
+        Installed: UserIndexBotInstallationEventsBotInstalled,
     }),
     Type.Object({
-        Error: OCError,
+        Uninstalled: UserIndexBotInstallationEventsBotUninstalled,
     }),
 ]);
+
+export type UserIndexBotInstallationEventsSuccessResult = Static<
+    typeof UserIndexBotInstallationEventsSuccessResult
+>;
+export const UserIndexBotInstallationEventsSuccessResult = Type.Object({
+    bot_id: UserId,
+    events: Type.Array(UserIndexBotInstallationEventsBotInstallationEvent),
+});
 
 export type UserIndexCurrentUserSuccessResult = Static<typeof UserIndexCurrentUserSuccessResult>;
 export const UserIndexCurrentUserSuccessResult = Type.Object({
@@ -7365,8 +7378,6 @@ export const UserIndexCurrentUserSuccessResult = Type.Object({
     date_created: Type.BigInt(),
     display_name: Type.Optional(Type.String()),
     avatar_id: Type.Optional(Type.BigInt()),
-    canister_upgrade_status: CanisterUpgradeStatus,
-    wasm_version: BuildVersion,
     icp_account: Type.Tuple([
         Type.Number(),
         Type.Number(),
@@ -7414,6 +7425,7 @@ export const UserIndexCurrentUserSuccessResult = Type.Object({
     chit_balance: Type.Number(),
     streak: Type.Number(),
     max_streak: Type.Number(),
+    hide_online_status: Type.Optional(Type.Boolean()),
 });
 
 export type UserIndexCurrentUserResponse = Static<typeof UserIndexCurrentUserResponse>;
@@ -7800,19 +7812,20 @@ export const CurrentUserSummary = Type.Object({
     display_name: Type.Optional(Type.String()),
     avatar_id: Type.Optional(Type.BigInt()),
     profile_background_id: Type.Optional(Type.BigInt()),
-    is_bot: Type.Boolean(),
-    is_platform_moderator: Type.Boolean(),
-    is_platform_operator: Type.Boolean(),
+    is_bot: Type.Optional(Type.Boolean()),
+    is_platform_moderator: Type.Optional(Type.Boolean()),
+    is_platform_operator: Type.Optional(Type.Boolean()),
     suspension_details: Type.Optional(SuspensionDetails),
-    is_suspected_bot: Type.Boolean(),
+    is_suspected_bot: Type.Optional(Type.Boolean()),
     diamond_membership_details: Type.Optional(DiamondMembershipDetails),
-    diamond_membership_status: DiamondMembershipStatusFull,
-    moderation_flags_enabled: Type.Number(),
-    is_unique_person: Type.Boolean(),
+    diamond_membership_status: Type.Optional(DiamondMembershipStatusFull),
+    moderation_flags_enabled: Type.Optional(Type.Number()),
+    is_unique_person: Type.Optional(Type.Boolean()),
     total_chit_earned: Type.Number(),
     chit_balance: Type.Number(),
     streak: Type.Number(),
     max_streak: Type.Number(),
+    hide_online_status: Type.Optional(Type.Boolean()),
 });
 
 export type SenderContext = Static<typeof SenderContext>;
@@ -7897,9 +7910,9 @@ export const UserIndexBotUpdatesBotDetails = Type.Object({
 
 export type UserIndexUsersResult = Static<typeof UserIndexUsersResult>;
 export const UserIndexUsersResult = Type.Object({
-    users: Type.Array(UserSummaryV2),
+    users: Type.Optional(Type.Array(UserSummaryV2)),
     current_user: Type.Optional(CurrentUserSummary),
-    deleted: Type.Array(UserId),
+    deleted: Type.Optional(Type.Array(UserId)),
     timestamp: Type.BigInt(),
 });
 
@@ -7907,6 +7920,18 @@ export type UserIndexUsersResponse = Static<typeof UserIndexUsersResponse>;
 export const UserIndexUsersResponse = Type.Object({
     Success: UserIndexUsersResult,
 });
+
+export type UserIndexBotInstallationEventsResponse = Static<
+    typeof UserIndexBotInstallationEventsResponse
+>;
+export const UserIndexBotInstallationEventsResponse = Type.Union([
+    Type.Object({
+        Success: UserIndexBotInstallationEventsSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
 
 export type UserIndexExploreBotsSuccessResult = Static<typeof UserIndexExploreBotsSuccessResult>;
 export const UserIndexExploreBotsSuccessResult = Type.Object({

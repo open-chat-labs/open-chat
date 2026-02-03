@@ -15,6 +15,7 @@
         mobileWidth,
         notificationsSupported,
         type OpenChat,
+        OPENCHAT_BOT_USER_ID,
         platformModeratorStore,
         publish,
         setRightPanelHistory,
@@ -90,8 +91,9 @@
     let userId = $derived(
         selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "",
     );
-    let isBot = $derived($allUsersStore.get(userId)?.kind === "bot");
-    let isSuspended = $derived($allUsersStore.get(userId)?.suspended ?? false);
+    let themIfDirectChat = $derived(userId ? $allUsersStore.get(userId) : undefined);
+    let isBot = $derived(themIfDirectChat?.kind === "bot");
+    let isSuspended = $derived(themIfDirectChat?.suspended ?? false);
     let groupDetailsSelected = $derived($lastRightPanelState.kind === "group_details");
     let pinnedSelected = $derived($lastRightPanelState.kind === "show_pinned");
     let membersSelected = $derived($lastRightPanelState.kind === "show_group_members");
@@ -126,6 +128,8 @@
     let canRegisterWebhook = $derived(client.canRegisterWebhook(selectedChatSummary.id));
 
     let canStartOrJoinVideoCall = $derived(!inCall && (videoCallInProgress || canStartVideoCalls));
+
+    let canDeleteDirectChat = $derived(selectedChatSummary.kind === "direct_chat" && selectedChatSummary.id.userId !== OPENCHAT_BOT_USER_ID);
 
     let hasUnreadPinned = $state(false);
 
@@ -304,6 +308,20 @@
                     toastStore.showFailureToast(i18nKey("bots.manage.removeFailed"));
                 }
             });
+    }
+
+    function deleteDirectChat() {
+        if (selectedChatSummary.kind === "direct_chat" && themIfDirectChat !== undefined) {
+            publish("deleteDirectChat", {
+                kind: "delete_direct_chat",
+                chatId: selectedChatSummary.id,
+                blockUser: false,
+                doubleCheck: {
+                    challenge: i18nKey("typeGroupName", { name: themIfDirectChat.username }),
+                    response: i18nKey(themIfDirectChat.username),
+                },
+            });
+        }
     }
 </script>
 
@@ -707,6 +725,16 @@
                         {/snippet}
                         {#snippet text()}
                             <Translatable resourceKey={i18nKey("bots.manage.remove")} />
+                        {/snippet}
+                    </MenuItem>
+                {/if}
+                {#if canDeleteDirectChat}
+                    <MenuItem warning onclick={() => deleteDirectChat()}>
+                        {#snippet icon()}
+                            <DeleteOutline size={$iconSize} color={"var(--menu-warn)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <Translatable resourceKey={i18nKey("deleteChat")} />
                         {/snippet}
                     </MenuItem>
                 {/if}
