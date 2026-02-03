@@ -2,6 +2,9 @@ name: Android Release
 
 on:
     workflow_dispatch:
+    push:
+        branches:
+            - the_big_fork
     release:
         types: [published]
 
