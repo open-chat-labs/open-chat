@@ -1,151 +1,161 @@
 name: Android Release
 
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - the_big_fork
-  release:
-    types: [published]
+    workflow_dispatch:
+    release:
+        types: [published]
 
 jobs:
-  build-android:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
+    build-android:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: frontend
 
-    steps:
-      - uses: actions/checkout@v4
+        steps:
+            - uses: actions/checkout@v4
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+            - name: Extract Version
+              id: extract_version
+              run: |
+                  # Remove 'v' prefix if present
+                  VERSION=${GITHUB_REF_NAME#v}
+                  echo "VERSION=$VERSION" >> $GITHUB_ENV
+                  echo "Detected version: $VERSION"
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+            - name: Setup Java
+              uses: actions/setup-java@v4
+              with:
+                  distribution: "temurin"
+                  java-version: "17"
 
-      - name: Set NDK_HOME
-        run: |
-          # Find the NDK directory (usually the latest version installed by setup-android or pre-installed on the runner)
-          NDK_PATH=$(find $ANDROID_HOME/ndk -maxdepth 1 -mindepth 1 -type d | sort -V | tail -n 1)
-          if [ -z "$NDK_PATH" ]; then
-            echo "NDK not found! Installing a specific version..."
-            sdkmanager "ndk;26.1.10909125"
-            NDK_PATH=$ANDROID_HOME/ndk/26.1.10909125
-          fi
-          echo "NDK_HOME=$NDK_PATH" >> $GITHUB_ENV
-          echo "Using NDK at $NDK_PATH"
+            - name: Setup Android SDK
+              uses: android-actions/setup-android@v3
 
-      - name: Setup Rust
-        uses: ./.github/workflows/setup-rust
-        with:
-          cache: 'write'
+            - name: Set NDK_HOME
+              run: |
+                  # Find the NDK directory (usually the latest version installed by setup-android or pre-installed on the runner)
+                  NDK_PATH=$(find $ANDROID_HOME/ndk -maxdepth 1 -mindepth 1 -type d | sort -V | tail -n 1)
+                  if [ -z "$NDK_PATH" ]; then
+                    echo "NDK not found! Installing a specific version..."
+                    sdkmanager "ndk;26.1.10909125"
+                    NDK_PATH=$ANDROID_HOME/ndk/26.1.10909125
+                  fi
+                  echo "NDK_HOME=$NDK_PATH" >> $GITHUB_ENV
+                  echo "Using NDK at $NDK_PATH"
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+            - name: Setup Rust
+              uses: ./.github/workflows/setup-rust
+              with:
+                  cache: "write"
 
-      - name: Add Android targets
-        run: |
-          rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+            - name: Cache Gradle packages
+              uses: actions/cache@v3
+              with:
+                  path: |
+                      ~/.gradle/caches
+                      ~/.gradle/wrapper
+                  key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+                  restore-keys: |
+                      ${{ runner.os }}-gradle-
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "20.17.0"
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+            - name: Add Android targets
+              run: |
+                  rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
 
-      - name: Install dependencies
-        run: npm ci
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: "20.17.0"
+                  cache: "npm"
+                  cache-dependency-path: frontend/package-lock.json
 
-      - name: Install Tauri CLI
-        uses: baptiste0928/cargo-install@v3
-        with:
-          crate: tauri-cli
-          version: "2.0.3"
+            - name: Install dependencies
+              run: npm ci
 
-      - name: Setup Keystore
-        run: |
-          mkdir -p ~/.android
-          
-          if [ ! -z "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
-            echo "Using provided keystore from secrets..."
-            echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > ~/.android/debug.keystore
-          else
-            echo "No keystore secret found. Generating a temporary debug keystore..."
-            echo "WARNING: App Links validation (assetlinks.json) will fail because the signature won't match."
-            keytool -genkey -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-          fi
+            - name: Install Tauri CLI
+              uses: baptiste0928/cargo-install@v3
+              with:
+                  crate: tauri-cli
+                  version: "2.0.3"
 
-      - name: Create Env File
-        run: |
-          # Create a .env file for the build script to source
-          echo "OC_DFX_NETWORK=ic" >> .env
-          echo "OC_APP_TYPE=android" >> .env
-          echo "OC_APP_TENOR_APIKEY=${{ secrets.GH_TENOR_API_KEY || 'dummy_tenor_key' }}" >> .env
-          echo "OC_APP_TRANSLATE_API_KEY=${{ secrets.GH_TRANSLATE_API_KEY || 'dummy_translate_key' }}" >> .env
-          echo "OC_ROLLBAR_ACCESS_TOKEN=${{ secrets.GH_ROLLBAR_ACCESS_TOKEN || 'dummy_rollbar_token' }}" >> .env
-          echo "OC_USERGEEK_APIKEY=${{ secrets.GH_USERGEEK_APIKEY || 'dummy_usergeek_key' }}" >> .env
-          echo "OC_METERED_APIKEY=${{ secrets.GH_METERED_APIKEY || 'dummy_metered_key' }}" >> .env
-          echo "OC_VAPID_PUBLIC_KEY=${{ secrets.GH_VAPID_PUBLIC_KEY || 'dummy_vapid_key' }}" >> .env
+            - name: Setup Keystore
+              run: |
+                  mkdir -p ~/.android
 
-          # Extract Canister IDs from canister_ids.json and inject them into .env
-          # This ensures they are present even if rollup.extras.mjs fails to load the JSON
-          sudo apt-get install -y jq
-          CANISTERS_JSON="../canister_ids.json"
-          
-          if [ -f "$CANISTERS_JSON" ]; then
-            echo "Extracting canister IDs from $CANISTERS_JSON..."
-            echo "OC_IDENTITY_CANISTER=$(jq -r '.identity.ic' $CANISTERS_JSON)" >> .env
-            echo "OC_USER_INDEX_CANISTER=$(jq -r '.user_index.ic' $CANISTERS_JSON)" >> .env
-            echo "OC_GROUP_INDEX_CANISTER=$(jq -r '.group_index.ic' $CANISTERS_JSON)" >> .env
-            echo "OC_NOTIFICATIONS_CANISTER=$(jq -r '.notifications_index.ic' $CANISTERS_JSON)" >> .env
-            echo "OC_ONLINE_CANISTER=$(jq -r '.online_users.ic' $CANISTERS_JSON)" >> .env
-            echo "OC_TRANSLATIONS_CANISTER=$(jq -r '.translations.ic' $CANISTERS_JSON)" >> .env
-            echo "OC_REGISTRY_CANISTER=$(jq -r '.registry.ic' $CANISTERS_JSON)" >> .env
-            echo "OC_STORAGE_INDEX_CANISTER=$(jq -r '.storage_index.ic' $CANISTERS_JSON)" >> .env
-            echo "OC_PROPOSALS_BOT_CANISTER=$(jq -r '.proposals_bot.ic' $CANISTERS_JSON)" >> .env
-            echo "OC_MARKET_MAKER_CANISTER=$(jq -r '.market_maker.ic' $CANISTERS_JSON)" >> .env
-            echo "OC_SIGN_IN_WITH_EMAIL_CANISTER=$(jq -r '.sign_in_with_email.ic' $CANISTERS_JSON)" >> .env
-            echo "OC_SIGN_IN_WITH_ETHEREUM_CANISTER=$(jq -r '.sign_in_with_ethereum.ic' $CANISTERS_JSON)" >> .env
-            echo "OC_SIGN_IN_WITH_SOLANA_CANISTER=$(jq -r '.sign_in_with_solana.ic' $CANISTERS_JSON)" >> .env
-            echo "OC_AIRDROP_BOT_CANISTER=$(jq -r '.airdrop_bot.ic' $CANISTERS_JSON)" >> .env
-            
-            # These are hardcoded in rollup.extras.mjs, so we must manually inject them if that script fails to load
-            echo "OC_ONESEC_FORWARDER_CANISTER=lsoct-pyaaa-aaaar-boahq-cai" >> .env
-            echo "OC_ONESEC_MINTER_CANISTER=5okwm-giaaa-aaaar-qbn6a-cai" >> .env
-          else
-            echo "ERROR: canister_ids.json not found at $CANISTERS_JSON"
-            exit 1
-          fi
+                  if [ ! -z "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+                    echo "Using provided keystore from secrets..."
+                    echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > ~/.android/debug.keystore
+                  else
+                    echo "No keystore secret found. Generating a temporary debug keystore..."
+                    echo "WARNING: App Links validation (assetlinks.json) will fail because the signature won't match."
+                    keytool -genkey -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+                  fi
 
-      - name: Build Android APK
-        run: cargo tauri android build --verbose
-        env:
-          # Ensure these are passed if needed, though the gradle file uses the debug fallback we set up
-          ANDROID_KEY_STORE_FILE: ${{ env.ANDROID_KEY_STORE_FILE }}
+            - name: Create Env File
+              run: |
+                  # Create a .env file for the build script to source
+                  echo "OC_DFX_NETWORK=ic" >> .env
+                  echo "OC_APP_TYPE=android" >> .env
+                  echo "OC_WEBSITE_VERSION=${{ env.VERSION }}" >> .env
+                  echo "OC_APP_TENOR_APIKEY=${{ secrets.GH_TENOR_API_KEY || 'dummy_tenor_key' }}" >> .env
+                  echo "OC_APP_TRANSLATE_API_KEY=${{ secrets.GH_TRANSLATE_API_KEY || 'dummy_translate_key' }}" >> .env
+                  echo "OC_ROLLBAR_ACCESS_TOKEN=${{ secrets.GH_ROLLBAR_ACCESS_TOKEN || 'dummy_rollbar_token' }}" >> .env
+                  echo "OC_USERGEEK_APIKEY=${{ secrets.GH_USERGEEK_APIKEY || 'dummy_usergeek_key' }}" >> .env
+                  echo "OC_METERED_APIKEY=${{ secrets.GH_METERED_APIKEY || 'dummy_metered_key' }}" >> .env
+                  echo "OC_VAPID_PUBLIC_KEY=${{ secrets.GH_VAPID_PUBLIC_KEY || 'dummy_vapid_key' }}" >> .env
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-release-apk
-          path: frontend/src-tauri/gen/android/app/build/outputs/apk/**/*.apk
-          if-no-files-found: error
+                  # Extract Canister IDs from canister_ids.json and inject them into .env
+                  # This ensures they are present even if rollup.extras.mjs fails to load the JSON
+                  sudo apt-get install -y jq
+                  CANISTERS_JSON="../canister_ids.json"
 
-      - name: Upload APK to Release
-        if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v2
-        with:
-          files: frontend/src-tauri/gen/android/app/build/outputs/apk/release/openchat-release.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  if [ -f "$CANISTERS_JSON" ]; then
+                    echo "Extracting canister IDs from $CANISTERS_JSON..."
+                    echo "OC_IDENTITY_CANISTER=$(jq -r '.identity.ic' $CANISTERS_JSON)" >> .env
+                    echo "OC_USER_INDEX_CANISTER=$(jq -r '.user_index.ic' $CANISTERS_JSON)" >> .env
+                    echo "OC_GROUP_INDEX_CANISTER=$(jq -r '.group_index.ic' $CANISTERS_JSON)" >> .env
+                    echo "OC_NOTIFICATIONS_CANISTER=$(jq -r '.notifications_index.ic' $CANISTERS_JSON)" >> .env
+                    echo "OC_ONLINE_CANISTER=$(jq -r '.online_users.ic' $CANISTERS_JSON)" >> .env
+                    echo "OC_TRANSLATIONS_CANISTER=$(jq -r '.translations.ic' $CANISTERS_JSON)" >> .env
+                    echo "OC_REGISTRY_CANISTER=$(jq -r '.registry.ic' $CANISTERS_JSON)" >> .env
+                    echo "OC_STORAGE_INDEX_CANISTER=$(jq -r '.storage_index.ic' $CANISTERS_JSON)" >> .env
+                    echo "OC_PROPOSALS_BOT_CANISTER=$(jq -r '.proposals_bot.ic' $CANISTERS_JSON)" >> .env
+                    echo "OC_MARKET_MAKER_CANISTER=$(jq -r '.market_maker.ic' $CANISTERS_JSON)" >> .env
+                    echo "OC_SIGN_IN_WITH_EMAIL_CANISTER=$(jq -r '.sign_in_with_email.ic' $CANISTERS_JSON)" >> .env
+                    echo "OC_SIGN_IN_WITH_ETHEREUM_CANISTER=$(jq -r '.sign_in_with_ethereum.ic' $CANISTERS_JSON)" >> .env
+                    echo "OC_SIGN_IN_WITH_SOLANA_CANISTER=$(jq -r '.sign_in_with_solana.ic' $CANISTERS_JSON)" >> .env
+                    echo "OC_AIRDROP_BOT_CANISTER=$(jq -r '.airdrop_bot.ic' $CANISTERS_JSON)" >> .env
+
+                    # These are hardcoded in rollup.extras.mjs, so we must manually inject them if that script fails to load
+                    echo "OC_ONESEC_FORWARDER_CANISTER=lsoct-pyaaa-aaaar-boahq-cai" >> .env
+                    echo "OC_ONESEC_MINTER_CANISTER=5okwm-giaaa-aaaar-qbn6a-cai" >> .env
+                  else
+                    echo "ERROR: canister_ids.json not found at $CANISTERS_JSON"
+                    exit 1
+                  fi
+
+            - name: Build Android APK
+              run: cargo tauri android build --verbose
+              env:
+                  # Ensure these are passed if needed, though the gradle file uses the debug fallback we set up
+                  ANDROID_KEY_STORE_FILE: ${{ env.ANDROID_KEY_STORE_FILE }}
+
+            - name: Rename APK
+              run: |
+                  mv frontend/src-tauri/gen/android/app/build/outputs/apk/release/openchat-release.apk frontend/src-tauri/gen/android/app/build/outputs/apk/release/openchat-v${{ env.VERSION }}.apk
+
+            - name: Upload APK
+              uses: actions/upload-artifact@v4
+              with:
+                  name: android-release-apk
+                  path: frontend/src-tauri/gen/android/app/build/outputs/apk/release/openchat-v${{ env.VERSION }}.apk
+                  if-no-files-found: error
+
+            - name: Upload APK to Release
+              if: github.event_name == 'release'
+              uses: softprops/action-gh-release@v2
+              with:
+                  files: frontend/src-tauri/gen/android/app/build/outputs/apk/release/openchat-v${{ env.VERSION }}.apk
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
