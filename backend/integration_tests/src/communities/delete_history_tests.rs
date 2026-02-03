@@ -32,7 +32,7 @@ fn delete_channel_history() {
 
     client::community::happy_path::send_text_message(env, &user, community_id, channel_id, None, "cde", None);
 
-    client::community::happy_path::delete_history(env, &user, community_id, channel_id, delete_before);
+    client::community::happy_path::delete_channel_history(env, &user, community_id, channel_id, delete_before);
 
     env.tick();
 
@@ -90,7 +90,7 @@ fn stable_memory_garbage_collected_after_messages_deleted() {
     env.advance_time(Duration::from_secs(1));
     env.tick();
 
-    client::community::happy_path::delete_history(env, &user, community_id, channel_id, now_millis(env));
+    client::community::happy_path::delete_channel_history(env, &user, community_id, channel_id, now_millis(env));
 
     // Tick once to delete the messages
     env.tick();

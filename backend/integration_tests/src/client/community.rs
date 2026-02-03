@@ -774,7 +774,7 @@ pub mod happy_path {
         }
     }
 
-    pub fn delete_history(
+    pub fn delete_channel_history(
         env: &mut PocketIc,
         sender: &User,
         community_id: CommunityId,
