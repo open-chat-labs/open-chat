@@ -174,11 +174,11 @@ jobs:
               uses: actions/upload-artifact@v4
               with:
                   name: android-release-apk
-                  path: src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}.apk
+                  path: frontend/src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}.apk
                   if-no-files-found: error
 
             - name: Upload APK to Release
               if: github.event_name == 'release'
               uses: softprops/action-gh-release@v2
               with:
-                  files: src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}.apk
+                  files: frontend/src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}.apk
