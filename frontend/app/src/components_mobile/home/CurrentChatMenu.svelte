@@ -10,6 +10,7 @@
         type MultiUserChat,
         notificationsSupported,
         type OpenChat,
+        OPENCHAT_BOT_USER_ID,
         platformModeratorStore,
         publish,
         selectedChatPinnedMessagesStore,
@@ -293,7 +294,7 @@
     </MenuItem>
 {/if}
 {#if canDeleteDirectChat}
-    <MenuItem warning onclick={deleteDirectChat}>
+    <MenuItem danger onclick={deleteDirectChat}>
         <Translatable resourceKey={i18nKey("deleteChat")} />
     </MenuItem>
 {/if}
