@@ -18,8 +18,12 @@ jobs:
             - name: Extract Version
               id: extract_version
               run: |
-                  # Remove 'v' prefix if present
-                  VERSION=${GITHUB_REF_NAME#v}
+                  if [ "${{ github.event_name }}" == "release" ]; then
+                    # Remove 'v' prefix if present
+                    VERSION=${GITHUB_REF_NAME#v}
+                  else
+                    VERSION="manual-build-${{ github.run_number }}"
+                  fi
                   echo "VERSION=$VERSION" >> $GITHUB_ENV
                   echo "Detected version: $VERSION"
 
