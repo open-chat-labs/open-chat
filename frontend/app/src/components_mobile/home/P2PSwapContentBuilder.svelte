@@ -196,12 +196,12 @@
         </Column>
 
         <!-- Duration selection -->
-        <Column gap={"lg"} padding={["zero", "lg"]}>
+        <Column padding={["zero", "lg"]}>
             <DurationSelector bind:duration={expiresIn}>
                 {#snippet title()}
-                    <Body fontWeight={"bold"}>
+                    <Subtitle fontWeight={"bold"}>
                         <Translatable resourceKey={i18nKey("Swap expiry time")} />
-                    </Body>
+                    </Subtitle>
                 {/snippet}
             </DurationSelector>
         </Column>
