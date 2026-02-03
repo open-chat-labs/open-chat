@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { Caption, ColourVars, Container, type Padding } from "component-lib";
+    import { BodySmall, Caption, ColourVars, Container, type Padding } from "component-lib";
     import { onMount, type Snippet } from "svelte";
 
     interface Props {
         id?: string;
-        value?: number;
+        value?: string | number | bigint;
         placeholder?: string;
         subtext?: Snippet;
         error?: boolean;
@@ -13,8 +13,11 @@
         icon?: Snippet<[string]>;
         iconButtons?: Snippet<[string]>;
         textButtons?: Snippet;
+        unitText?: string;
         disabled?: boolean;
         autofocus?: boolean;
+        step?: number;
+        maxDecimals?: number;
     }
 
     let {
@@ -23,13 +26,16 @@
         placeholder,
         subtext,
         error,
-        min = 0,
-        max = 10000,
+        min,
+        max,
         icon,
         iconButtons,
         textButtons,
+        unitText,
         disabled = false,
         autofocus = false,
+        step = 1,
+        maxDecimals,
     }: Props = $props();
 
     let hasInternalButtons = $derived(textButtons);
@@ -42,49 +48,68 @@
         }
     });
 
-    function clamp(val: number): number | undefined {
-        if (isNaN(val)) return undefined;
-        if (val > max) return max;
-        if (val < min) return min;
-        return val;
-    }
+    $effect(() => {
+        if (value) {
+            const cleaned = trimDecimals(
+                value
+                    .toString()
+                    .replace(/[^0-9.]/g, "") // Remove everything except digits and dots
+                    .replace(/(\..*)\./g, "$1"), // Allow only the first dot
+            );
 
-    function handleInput(e: { currentTarget: { value: string } }) {
-        if (inp) {
-            value = clamp(parseInt(e.currentTarget.value, 10));
-            if (value !== undefined) {
-                inp.value = value.toString();
+            if (value !== cleaned) {
+                value = cleaned;
             }
         }
+    });
+
+    function trimDecimals(value: string): string {
+        if (maxDecimals && maxDecimals > 0) {
+            const fractional = value.split(".")[1];
+
+            if (fractional !== undefined) {
+                const toTrim = fractional.length - maxDecimals;
+                if (toTrim > 0) {
+                    return value.substring(0, value.length - toTrim);
+                }
+            }
+        }
+
+        return value;
     }
 </script>
 
 <Container direction={"vertical"} gap={"xs"}>
-    <Container mainAxisAlignment={"spaceBetween"} gap={"xs"}>
+    <Container mainAxisAlignment={"spaceBetween"} gap={"sm"}>
         <Container
             background={ColourVars.textTertiary}
-            height={{ size: "3rem" }}
+            minHeight="3.5rem"
             {padding}
             borderRadius={"circle"}
             gap={"sm"}
             crossAxisAlignment={"center"}>
             <input
+                type="text"
+                inputmode="decimal"
                 bind:this={inp}
+                bind:value
                 class:disabled
-                oninput={handleInput}
-                {disabled}
                 pattern={"[0-9]*"}
                 data-gram="false"
                 data-gramm_editor="false"
                 data-enable-grammarly="false"
                 data-lpignore="true"
                 spellcheck="false"
-                {value}
+                {disabled}
                 {min}
                 {max}
                 {id}
+                {step}
                 {placeholder} />
 
+            {#if unitText}
+                <BodySmall fontWeight="bold" colour="textSecondary">{unitText}</BodySmall>
+            {/if}
             {#if icon}
                 <div class="input_icon">
                     {@render icon(ColourVars.textSecondary)}
@@ -93,6 +118,11 @@
             {#if textButtons}
                 <Container width={"hug"} gap={"xs"}>
                     {@render textButtons()}
+                </Container>
+            {/if}
+            {#if error}
+                <Container width="hug" padding="xs">
+                    <div class="error_indicator"></div>
                 </Container>
             {/if}
         </Container>
@@ -125,7 +155,7 @@
     input {
         all: unset;
         width: 100%;
-        color: var(--text-secondary);
+        color: var(--text-primary);
         font-size: var(--typo-body-sz);
         line-height: var(--typo-body-lh);
 
@@ -139,10 +169,24 @@
         padding-inline-end: var(--sp-xl);
     }
 
-    .countdown {
-        color: var(--text-secondary);
-        &.warn {
-            color: var(--warning);
-        }
+    .error_indicator {
+        display: block;
+        width: 0.75rem;
+        height: 0.75rem;
+        border-radius: var(--rad-sm);
+        background-color: var(--error);
+        transform: rotate(45deg);
+    }
+
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type="number"] {
+        -moz-appearance: textfield;
     }
 </style>

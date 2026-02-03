@@ -1,14 +1,5 @@
 <script lang="ts">
-    import {
-        Body,
-        Chip,
-        Column,
-        CommonButton,
-        Container,
-        IconButton,
-        Row,
-        Sheet,
-    } from "component-lib";
+    import { Body, Column, CommonButton, Container, IconButton, Row, Sheet } from "component-lib";
     import type { ChatSummary, UserSummary } from "openchat-client";
     import {
         allUsersStore,
@@ -78,23 +69,11 @@
 
         onClose();
     }
-
-    function setAmount(percentage: number) {
-        tokenState.draftAmount =
-            BigInt(Math.floor(Number(tokenState.cryptoBalance) * (percentage / 100))) -
-            tokenState.transferFees;
-    }
 </script>
 
-{#snippet percentage(perc: number)}
-    <Chip fill mode={"rounded"} onClick={() => setAmount(perc)}>
-        {`${perc}%`}
-    </Chip>
-{/snippet}
-
 <Sheet onDismiss={onClose}>
-    <Container gap={"lg"} padding={["lg", "xl"]} direction={"vertical"}>
-        <Row>
+    <Container gap={"xl"} padding={["sm", "xl", "huge"]} direction={"vertical"}>
+        <Row crossAxisAlignment="center" padding={["zero", "zero", "zero", "sm"]}>
             <Body fontWeight={"bold"}>
                 <Translatable resourceKey={i18nKey("Send crypto")} />
             </Body>
@@ -105,6 +84,8 @@
             </IconButton>
         </Row>
 
+        <!-- TODO "fix" the double sheet! -->
+        <!-- Perhaps we just get the content of the crypto selector and replace current sheet (?) -->
         <CryptoSelector
             showRefresh
             draftAmount={tokenState.draftAmount}
@@ -122,22 +103,16 @@
 
             <TokenInput
                 {ledger}
-                minAmount={tokenState.minAmount}
                 error={!validAmount}
-                bind:valid={validAmount}
+                balance={tokenState.cryptoBalance}
+                minAmount={tokenState.minAmount}
                 maxAmount={tokenState.maxAmount}
+                bind:valid={validAmount}
                 bind:amount={tokenState.draftAmount}>
                 {#snippet subtext()}
                     {`Minimum amount ${tokenState.minAmountLabel} ${tokenState.symbol}`}
                 {/snippet}
             </TokenInput>
-
-            <Row mainAxisAlignment={"spaceBetween"} gap={"sm"}>
-                {@render percentage(25)}
-                {@render percentage(50)}
-                {@render percentage(75)}
-                {@render percentage(100)}
-            </Row>
         </Column>
 
         {#if errorMessage !== undefined}
@@ -146,13 +121,19 @@
             </div>
         {/if}
 
-        <Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
+        <Container
+            mainAxisAlignment={"spaceBetween"}
+            crossAxisAlignment={"center"}
+            padding={["zero", "sm"]}>
             <TransferFeesMessage
                 symbol={tokenState.symbol}
                 tokenDecimals={tokenState.decimals}
                 transferFees={tokenState.transferFees} />
 
-            <CommonButton onClick={send} disabled={!valid} mode={"active"}>
+            <CommonButton
+                onClick={send}
+                disabled={!valid || !tokenState.draftAmount}
+                mode={"active"}>
                 {#snippet icon(color, size)}
                     <Chat {color} {size} />
                 {/snippet}

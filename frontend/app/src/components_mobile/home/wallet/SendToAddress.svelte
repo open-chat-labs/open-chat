@@ -270,6 +270,7 @@
 </Input>
 
 <TokenInput
+    balance={tokenState.cryptoBalance}
     ledger={tokenState.ledger}
     {minAmount}
     disabled={busy}

@@ -280,6 +280,7 @@
             {#if showCustomTip || exchangeRate <= 0}
                 <div in:fade|local={{ duration: 500 }} class="custom-tip-amount">
                     <TokenInput
+                        balance={tokenState.cryptoBalance}
                         {ledger}
                         bind:valid={validAmount}
                         maxAmount={tokenState.maxAmount}

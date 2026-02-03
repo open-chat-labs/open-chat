@@ -274,10 +274,6 @@
                 break;
         }
     }
-
-    function setAmount(percentage: number) {
-        draftAmount = BigInt(Math.floor(Number(maxAmount) * (percentage / 100)));
-    }
 </script>
 
 {#if selectMinChitEarned}
@@ -301,18 +297,13 @@
         }} />
 {/if}
 
-{#snippet percentage(perc: number)}
-    <Chip fill mode={"rounded"} onClick={() => setAmount(perc)}>
-        {`${perc}%`}
-    </Chip>
-{/snippet}
-
 <SlidingPageContent title={i18nKey("Create a prize")}>
     <Column height={"fill"} gap={"xxl"} padding={["lg", "xxl"]}>
         <CryptoSelector {draftAmount} showRefresh bind:ledger />
 
         <Column gap={"xs"}>
             <TokenInput
+                balance={tokenState.cryptoBalance}
                 {ledger}
                 bind:status={tokenInputState}
                 {minAmount}
@@ -327,13 +318,6 @@
                         )} />
                 {/snippet}
             </TokenInput>
-
-            <Row mainAxisAlignment={"spaceBetween"} padding={["sm", "zero"]} gap={"sm"}>
-                {@render percentage(25)}
-                {@render percentage(50)}
-                {@render percentage(75)}
-                {@render percentage(100)}
-            </Row>
 
             <TransferFeesMessage
                 symbol={tokenState.symbol}
