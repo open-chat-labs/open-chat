@@ -45,8 +45,6 @@
     let style = $derived(`--speed: ${SPEED}ms; ${widthCss};`);
 
     function getIconColour(): string {
-        if (disabled) return ColourVars.disabledButton;
-
         switch (variant) {
             case "primary":
                 switch (mode) {
@@ -156,13 +154,14 @@
 
         &:disabled {
             cursor: not-allowed;
+            background: var(--disabled-button);
         }
 
         &.regular {
             border-radius: var(--rad-lg);
         }
 
-        &.primary.regular {
+        &.primary.regular:not(.disabled) {
             background: var(--primary);
         }
 

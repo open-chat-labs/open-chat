@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Caption, Chip, Container, NumberInput, Row } from "component-lib";
+    import { BodySmall, Chip, Container, NumberInput, Row } from "component-lib";
     import { enhancedCryptoLookup as cryptoLookup, type OpenChat } from "openchat-client";
     import { getContext, untrack, type Snippet } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -19,7 +19,8 @@
         error?: boolean;
         disabled?: boolean;
         icon?: Snippet;
-        converted?: Snippet;
+        converted?: string;
+        placeholder?: string;
     }
 
     let {
@@ -32,9 +33,10 @@
         valid = $bindable(false),
         status = $bindable("zero"),
         error = false,
-        // converted,
+        converted,
         icon,
         disabled = false,
+        placeholder = "Withdrawal amount",
     }: Props = $props();
 
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
@@ -101,15 +103,15 @@
 {/snippet}
 
 <!-- TODO i18n -->
-<Container direction="vertical" width="fill" gap="sm">
+<Container direction="vertical" width="fill" gap="md">
     <NumberInput
         bind:value={displayValue}
         {disabled}
         {icon}
         {subtext}
+        {placeholder}
         error={error && amount > 0}
-        unitText={tokenDetails.symbol}
-        placeholder={"Withdrawal amount"}
+        unitText={tokenDetails.symbol + (converted ? ` // ${converted}` : ``)}
         maxDecimals={tokenDecimals}
         min={Number(minAmount) / Math.pow(10, tokenDecimals)}
         max={maxAmount !== undefined
@@ -117,20 +119,20 @@
             : undefined} />
 
     {#if balance}
-        <Container direction="vertical" padding={["zero", "sm"]}>
+        <Container direction="vertical" padding={["zero", "xs"]}>
             <Row mainAxisAlignment={"spaceBetween"} gap={"sm"}>
                 {@render percentage(25)}
                 {@render percentage(50)}
                 {@render percentage(75)}
                 {@render percentage(100)}
             </Row>
-            <Row padding={["zero", "sm"]} gap="md">
-                <Caption colour="textSecondary">
+            <Row padding={["zero", "xs"]} gap="md">
+                <BodySmall colour="textSecondary">
                     <Translatable
                         resourceKey={i18nKey(
                             "Use the options above to select a specific percentage of your total token amount you would like to swap.",
                         )} />
-                </Caption>
+                </BodySmall>
                 <!-- TODO converted should be a part of the input? -->
                 <!-- {@render converted?.()} -->
             </Row>

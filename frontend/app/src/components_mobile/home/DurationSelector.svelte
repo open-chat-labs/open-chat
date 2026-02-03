@@ -72,7 +72,7 @@
     });
 </script>
 
-<Column gap={"md"}>
+<Column gap="sm">
     {@render title?.()}
     <Container wrap mainAxisAlignment={"spaceAround"} gap={"xs"}>
         {#each values as value}

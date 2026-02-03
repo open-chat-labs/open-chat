@@ -48,7 +48,7 @@
     }
 </script>
 
-<Sheet>
+<Sheet onDismiss={() => onClick(false)}>
     <Container height={"hug"} padding={"xl"} gap={"xl"} direction={"vertical"}>
         {#if title !== undefined}
             <Title fontWeight={"bold"}>

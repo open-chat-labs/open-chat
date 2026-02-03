@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { BodySmall, Caption, ColourVars, Container, type Padding } from "component-lib";
+    import { BodySmall, ColourVars, Container, type Padding } from "component-lib";
     import { onMount, type Snippet } from "svelte";
+    import ChatCaption from "../typography/ChatCaption.svelte";
 
     interface Props {
         id?: string;
@@ -108,7 +109,9 @@
                 {placeholder} />
 
             {#if unitText}
-                <BodySmall fontWeight="bold" colour="textSecondary">{unitText}</BodySmall>
+                <Container width={"hug"}>
+                    <BodySmall fontWeight="bold" colour="textSecondary">{unitText}</BodySmall>
+                </Container>
             {/if}
             {#if icon}
                 <div class="input_icon">
@@ -134,9 +137,9 @@
     </Container>
     {#if subtext}
         <div class="subtext">
-            <Caption colour={error ? "error" : "textSecondary"}>
+            <BodySmall colour={error ? "error" : "textSecondary"}>
                 {@render subtext()}
-            </Caption>
+            </BodySmall>
         </div>
     {/if}
 </Container>
