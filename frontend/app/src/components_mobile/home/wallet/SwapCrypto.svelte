@@ -4,12 +4,9 @@
         Body,
         BodySmall,
         Caption,
-        Chip,
         ColourVars,
-        Column,
         CommonButton,
         Container,
-        Row,
         Switch,
     } from "component-lib";
     import {
@@ -239,12 +236,6 @@
 
     let pinNumberError = $derived($pinNumberErrorMessageStore);
 
-    function setAmount(percentage: number) {
-        inToken.draftAmount =
-            BigInt(Math.floor(Number(inToken.cryptoBalance) * (percentage / 100))) -
-            inToken.transferFees;
-    }
-
     function selectFrom() {
         tokenSelector = {
             title: i18nKey("Select token to swap from"),
@@ -356,6 +347,7 @@
                     </Container>
 
                     <TokenInput
+                        balance={inToken.cryptoBalance}
                         ledger={inToken.ledger}
                         minAmount={inToken.minAmount}
                         disabled={busy}
@@ -371,21 +363,6 @@
                             </Container>
                         {/snippet}
                     </TokenInput>
-
-                    <Column gap={"xs"}>
-                        <Row mainAxisAlignment={"spaceBetween"} padding={["sm", "zero"]} gap={"sm"}>
-                            {@render percentage(25)}
-                            {@render percentage(50)}
-                            {@render percentage(75)}
-                            {@render percentage(100)}
-                        </Row>
-                        <Caption colour={"disabledButton"}>
-                            <Translatable
-                                resourceKey={i18nKey(
-                                    "Use the options above to select a specific percentage of your total token amount you would like to swap.",
-                                )} />
-                        </Caption>
-                    </Column>
                 </Container>
             {/if}
 
@@ -561,12 +538,6 @@
         decimalsOut={detailsOut.decimals}
         dex={dexName(bestQuote[0])} />
 {/if}
-
-{#snippet percentage(perc: number)}
-    <Chip fill mode={"rounded"} onClick={() => setAmount(perc)}>
-        {`${perc}%`}
-    </Chip>
-{/snippet}
 
 <style lang="scss">
     :global(.container.swap_down_arrow) {

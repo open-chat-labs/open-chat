@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { BodySmall, Chip, Column, CommonButton, Row } from "component-lib";
+    import { BodySmall, Column, CommonButton, Row } from "component-lib";
     import type { MessageContext, OpenChat, P2PSwapContentInitial } from "openchat-client";
     import {
         enhancedCryptoLookup as cryptoLookup,
@@ -119,12 +119,6 @@
                 toLedger;
         }
     }
-
-    function setFromAmount(percentage: number) {
-        fromAmount =
-            BigInt(Math.floor(Number(fromDetails.balance) * (percentage / 100))) -
-            fromState.transferFees * 2n;
-    }
 </script>
 
 {#if confirming}
@@ -135,12 +129,6 @@
         })}
         action={send} />
 {/if}
-
-{#snippet percentage(perc: number)}
-    <Chip fill mode={"rounded"} onClick={() => setFromAmount(perc)}>
-        {`${perc}%`}
-    </Chip>
-{/snippet}
 
 <SlidingPageContent title={i18nKey("Create a swap offer")} subtitle={i18nKey("P2P Swap")}>
     <Column gap={"xl"} padding={["lg", "xl"]}>
@@ -164,6 +152,7 @@
                 showRefresh
                 onSelect={onSelectFromToken} />
             <TokenInput
+                balance={fromState.cryptoBalance}
                 ledger={fromLedger}
                 {minAmount}
                 bind:status={tokenInputState}
@@ -178,13 +167,6 @@
                     </BodySmall>
                 {/snippet}
             </TokenInput>
-
-            <Row mainAxisAlignment={"spaceBetween"} gap={"sm"}>
-                {@render percentage(25)}
-                {@render percentage(50)}
-                {@render percentage(75)}
-                {@render percentage(100)}
-            </Row>
         </Column>
 
         <Column>
@@ -200,7 +182,6 @@
         </Column>
         <Column gap={"md"}>
             <CryptoSelector filter={(t) => t.ledger !== fromLedger} bind:ledger={toLedger} />
-
             <TokenInput ledger={toLedger} bind:valid={toAmountValid} bind:amount={toAmount}>
                 {#snippet subtext()}
                     {`The amount of ${toDetails.symbol} tokens you would like in return`}
