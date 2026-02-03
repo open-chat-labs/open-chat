@@ -26,7 +26,6 @@ import type {
     EventsResponse,
     EventsSuccessResult,
     ExpiredEventsRange,
-    ExpiredMessagesRange,
     ExternalAchievement,
     GroupChatDetails,
     IndexRange,
@@ -97,11 +96,6 @@ export interface ChatSchema extends DBSchema {
         indexes: {
             messageIdx: string;
         };
-    };
-
-    expiredMessageRanges: {
-        key: string;
-        value: ExpiredMessagesRange;
     };
 
     group_details: {
@@ -304,9 +298,6 @@ function nuke(db: IDBPDatabase<ChatSchema>) {
     }
     if (db.objectStoreNames.contains("thread_events")) {
         db.deleteObjectStore("thread_events");
-    }
-    if (db.objectStoreNames.contains("expiredMessageRanges")) {
-        db.deleteObjectStore("expiredMessageRanges");
     }
     if (db.objectStoreNames.contains("chats")) {
         db.deleteObjectStore("chats");
@@ -536,7 +527,6 @@ export async function getCachedEvents(
         {
             events,
             expiredEventRanges,
-            expiredMessageRanges: [],
             latestEventIndex: undefined,
         },
         missing,
@@ -696,7 +686,6 @@ export async function getCachedEventsByIndex(
         {
             events,
             expiredEventRanges,
-            expiredMessageRanges: [],
             latestEventIndex: undefined,
         },
         missing,

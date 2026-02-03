@@ -34,7 +34,6 @@ import type {
     EventWrapper,
     EventsResponse,
     ExpiredEventsRange,
-    ExpiredMessagesRange,
     ExternalBotPermissions,
     FailedCryptocurrencyTransfer,
     FileContent,
@@ -111,7 +110,8 @@ import type {
     VideoCallPresence,
     VideoCallType,
     VideoContent,
-    WebhookDetails, VersionedRules,
+    WebhookDetails,
+    VersionedRules,
 } from "openchat-shared";
 import {
     CommonResponses,
@@ -292,7 +292,6 @@ export async function getEventsSuccess(
         error ?? {
             events: value.events.map(eventWrapper),
             expiredEventRanges: value.expired_event_ranges?.map(expiredEventsRange) ?? [],
-            expiredMessageRanges: value.expired_message_ranges?.map(expiredMessagesRange) ?? [],
             latestEventIndex: value.latest_event_index,
         }
     );
@@ -2340,7 +2339,6 @@ export async function getMessagesSuccess(
         error ?? {
             events: value.messages.map(messageEvent),
             expiredEventRanges: [],
-            expiredMessageRanges: [],
             latestEventIndex: value.latest_event_index,
         }
     );
@@ -2370,14 +2368,6 @@ export function mentions(value: TMention[] | undefined): Mention[] {
 export function expiredEventsRange([start, end]: [number, number]): ExpiredEventsRange {
     return {
         kind: "expired_events_range",
-        start,
-        end,
-    };
-}
-
-export function expiredMessagesRange([start, end]: [number, number]): ExpiredMessagesRange {
-    return {
-        kind: "expired_messages_range",
         start,
         end,
     };
@@ -2454,8 +2444,9 @@ export function groupDetailsSuccess(
         rules: value.chat_rules ?? emptyRules(),
         timestamp: value.timestamp,
         bots: bots?.map(installedBotDetails) ?? [],
-        webhooks: value.webhooks?.map((v) =>
-            webhookDetails(v, blobUrlPattern, canisterId, channelId)) ?? [],
+        webhooks:
+            value.webhooks?.map((v) => webhookDetails(v, blobUrlPattern, canisterId, channelId)) ??
+            [],
     };
 }
 
@@ -2470,7 +2461,9 @@ export function groupDetailsUpdatesResponse(
             return {
                 kind: "success",
                 membersAddedOrUpdated: value.Success.members_added_or_updated?.map(member) ?? [],
-                membersRemoved: new Set(value.Success.members_removed?.map(principalBytesToString) ?? []),
+                membersRemoved: new Set(
+                    value.Success.members_removed?.map(principalBytesToString) ?? [],
+                ),
                 blockedUsersAdded: new Set(
                     value.Success.blocked_users_added?.map(principalBytesToString) ?? [],
                 ),
@@ -2485,7 +2478,8 @@ export function groupDetailsUpdatesResponse(
                     (invited_users) => new Set(invited_users.map(principalBytesToString)),
                 ),
                 timestamp: value.Success.timestamp,
-                botsAddedOrUpdated: value.Success.bots_added_or_updated?.map(installedBotDetails) ?? [],
+                botsAddedOrUpdated:
+                    value.Success.bots_added_or_updated?.map(installedBotDetails) ?? [],
                 botsRemoved: new Set(value.Success.bots_removed?.map(principalBytesToString) ?? []),
                 webhooks: mapOptional(value.Success.webhooks, (whs) =>
                     whs.map((v) => webhookDetails(v, blobUrlPattern, canisterId, channelId)),
@@ -2945,10 +2939,10 @@ export function changeRoleResult(
 
     return mapResult(value, CommonResponses.success);
 }
- function emptyRules(): VersionedRules {
+function emptyRules(): VersionedRules {
     return {
         text: "",
         enabled: false,
         version: 0,
     };
- }
+}

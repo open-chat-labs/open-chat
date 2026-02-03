@@ -1143,7 +1143,6 @@ export type EventWrapper<T extends ChatEvent> = {
 export type EventsSuccessResult<T extends ChatEvent> = {
     events: EventWrapper<T>[];
     expiredEventRanges: ExpiredEventsRange[];
-    expiredMessageRanges: ExpiredMessagesRange[];
     latestEventIndex: number | undefined;
 };
 
@@ -1231,7 +1230,6 @@ export type DirectChatsInitial = {
 };
 
 export type ExpiredEventsRange = { kind: "expired_events_range"; start: number; end: number };
-export type ExpiredMessagesRange = { kind: "expired_messages_range"; start: number; end: number };
 
 export function messageContextsEqual(
     a: MessageContext | undefined,
@@ -2523,7 +2521,6 @@ export function emptyEventsResponse<T extends ChatEvent>(): EventsSuccessResult<
     return {
         events: [],
         expiredEventRanges: [],
-        expiredMessageRanges: [],
         latestEventIndex: undefined,
     };
 }

@@ -4711,7 +4711,6 @@ export class OpenChat {
                 this.#handleEventsResponse(serverChat, undefined, {
                     events: [m],
                     expiredEventRanges: [],
-                    expiredMessageRanges: [],
                     latestEventIndex: undefined,
                 });
             });
