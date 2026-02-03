@@ -49,7 +49,6 @@
     supplementalClass={`transient_sheet`}
     direction={"vertical"}
     parentDirection={"vertical"}
-    overflow={"hidden"}
     borderRadius={["md", "md", "zero", "zero"]}
     width={"fill"}
     background={ColourVars.background1}>

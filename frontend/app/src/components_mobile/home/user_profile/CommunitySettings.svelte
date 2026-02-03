@@ -1,6 +1,16 @@
 <script lang="ts">
     import { toastStore } from "@src/stores/toast";
-    import { Body, BodySmall, Chip, CommonButton, Container, Option, Select } from "component-lib";
+    import {
+        Body,
+        BodySmall,
+        Chip,
+        CommonButton,
+        Container,
+        Option,
+        Select,
+        Column,
+        Row,
+    } from "component-lib";
     import {
         type CommunitySummary,
         ErrorCode,
@@ -74,15 +84,10 @@
 </script>
 
 <SlidingPageContent title={i18nKey("Communities")} subtitle={i18nKey("General options")}>
-    <Container
-        padding={["xxl", "lg"]}
-        gap={"lg"}
-        height={"fill"}
-        crossAxisAlignment={"center"}
-        direction={"vertical"}>
-        <Container gap={"xl"} direction={"vertical"}>
+    <Column padding={["xxl", "lg"]} gap={"lg"} height={"fill"} crossAxisAlignment={"center"}>
+        <Column gap={"xl"}>
             {#if displayNames.length > 0}
-                <Container padding={["zero", "lg"]} direction={"vertical"}>
+                <Column padding={["zero", "lg"]}>
                     <Body fontWeight={"bold"}>
                         <Translatable resourceKey={i18nKey("Existing associations")}></Translatable>
                     </Body>
@@ -93,17 +98,17 @@
                                 "Below is an existing list of associated custom display names with your communities. Tap to remove any existing associations.",
                             )}></Translatable>
                     </BodySmall>
-                </Container>
-                <Container padding={["zero", "lg"]} gap={"sm"} direction={"vertical"}>
+                </Column>
+                <Column padding={["zero", "lg"]} gap={"sm"}>
                     {#each displayNames as [community, displayName]}
                         <Chip onRemove={() => deleteDisplayName(community)}>
                             {community.name} / {displayName}
                         </Chip>
                     {/each}
-                </Container>
+                </Column>
             {/if}
 
-            <Container padding={["zero", "lg"]} direction={"vertical"}>
+            <Column padding={["zero", "lg"]}>
                 <Body fontWeight={"bold"}>
                     <Translatable resourceKey={i18nKey("Select a community")}></Translatable>
                 </Body>
@@ -114,7 +119,7 @@
                             "Display names can be set per community. Select a community for which you would like to set a custom display name.",
                         )}></Translatable>
                 </BodySmall>
-            </Container>
+            </Column>
             <Select
                 onSelect={(val) => {
                     selectedCommunity = val;
@@ -127,7 +132,7 @@
                     {community.name}
                 {/snippet}
                 {#snippet selectOptions(onSelect)}
-                    <Container padding={"lg"} direction={"vertical"}>
+                    <Column padding={"lg"} direction={"vertical"}>
                         {#each $sortedCommunitiesStore.filter((s) => s.membership?.role !== ROLE_NONE) as community (community.id.communityId)}
                             <Option
                                 value={community}
@@ -137,7 +142,7 @@
                                 {community.name}
                             </Option>
                         {/each}
-                    </Container>
+                    </Column>
                 {/snippet}
                 {#snippet subtext()}
                     <Translatable
@@ -147,7 +152,7 @@
             </Select>
 
             {#if selectedCommunity !== undefined}
-                <Container padding={["zero", "lg"]} direction={"vertical"}>
+                <Column padding={["zero", "lg"]}>
                     <Body fontWeight={"bold"}>
                         <Translatable resourceKey={i18nKey("Display name")}></Translatable>
                     </Body>
@@ -158,7 +163,7 @@
                                 `Provide your custom display name for the "${selectedCommunity.name}" community.`,
                             )}></Translatable>
                     </BodySmall>
-                </Container>
+                </Column>
 
                 <DisplayNameInput
                     disabled={saving}
@@ -169,7 +174,7 @@
                     bind:displayNameValid>
                 </DisplayNameInput>
 
-                <Container mainAxisAlignment={"end"}>
+                <Row mainAxisAlignment={"end"}>
                     <CommonButton
                         disabled={!displayNameValid}
                         loading={saving}
@@ -181,8 +186,8 @@
                         {/snippet}
                         <Translatable resourceKey={i18nKey("Add association")}></Translatable>
                     </CommonButton>
-                </Container>
+                </Row>
             {/if}
-        </Container>
-    </Container>
+        </Column>
+    </Column>
 </SlidingPageContent>
