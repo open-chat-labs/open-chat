@@ -246,17 +246,25 @@ export class CachedChatEventsReader {
                 chatId,
                 threadRootMessageIndex,
             })
-                .then((resp) =>
-                    this.handleMissingEvents(
+                .then(([cachedEvents, missing, dirty]) => {
+                    if (cachedEvents.events.length > 0) {
+                        const complete = missing.size + dirty.size === 0;
+                        resolve(cachedEvents, complete);
+                        if (complete) {
+                            return;
+                        }
+                    }
+
+                    return this.handleMissingEvents(
                         reader,
                         chatId,
-                        resp,
+                        [cachedEvents, missing, dirty],
                         threadRootMessageIndex,
                         latestKnownUpdate,
                         resolve,
                         reject,
-                    ),
-                )
+                    );
+                })
                 .catch(reject);
         });
     }
