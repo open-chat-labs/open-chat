@@ -7,3 +7,6 @@ export const disableTipsFeature =
 
 export const disableCreatePrizeFeature =
     disableWalletFeature || import.meta.env.OC_DISABLE_CREATE_PRIZE === "true";
+
+export const disableSendCryptoFeature =
+    disableWalletFeature || import.meta.env.OC_DISABLE_SEND_CRYPTO === "true";

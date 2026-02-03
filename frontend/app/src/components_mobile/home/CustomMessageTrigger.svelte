@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { disableCreatePrizeFeature } from "@src/utils/features";
+    import { disableCreatePrizeFeature, disableSendCryptoFeature } from "@src/utils/features";
     import { BigButton, Container, type SizeMode } from "component-lib";
     import {
         publish,
@@ -56,7 +56,7 @@
         gap={"sm"}
         supplementalClass={`custom_message_selector ${open ? "open" : ""}`}
         onClick={() => (open = false)}>
-        {#if permittedMessages.get("crypto")}
+        {#if permittedMessages.get("crypto") && !disableSendCryptoFeature}
             <BigButton {height} {width} onClick={() => onTokenTransfer({})}>
                 {#snippet icon(color)}
                     <Bitcoin {color} />

@@ -62,7 +62,13 @@
     });
 </script>
 
-<button {disabled} type="button" {style} onclick={onClick} class={`big_button ${internalMode}`}>
+<button
+    class:disabled
+    {disabled}
+    type="button"
+    {style}
+    onclick={onClick}
+    class={`big_button ${internalMode}`}>
     {#if icon}
         <span class="icon">{@render icon(iconColour, iconSize)}</span>
     {/if}
@@ -128,6 +134,10 @@
         &.pressed,
         &:active {
             background: var(--background-2);
+        }
+
+        &.disabled {
+            color: var(--button-disabled);
         }
     }
 </style>

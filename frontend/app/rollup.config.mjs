@@ -130,6 +130,7 @@ export default {
             "import.meta.env.OC_DISABLE_WALLET": process.env.OC_DISABLE_WALLET,
             "import.meta.env.OC_DISABLE_TIPS": process.env.OC_DISABLE_TIPS,
             "import.meta.env.OC_DISABLE_CREATE_PRIZE": process.env.OC_DISABLE_CREATE_PRIZE,
+            "import.meta.env.OC_DISABLE_SEND_CRYPTO": process.env.OC_DISABLE_SEND_CRYPTO,
             "import.meta.env.OC_MOBILE_LAYOUT": JSON.stringify(process.env.OC_MOBILE_LAYOUT),
             "import.meta.env.OC_APP_TYPE": JSON.stringify(process.env.OC_APP_TYPE),
             "import.meta.env.OC_BUILD_ENV": JSON.stringify(process.env.OC_BUILD_ENV),

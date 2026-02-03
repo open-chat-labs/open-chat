@@ -1,5 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
+    import { disableSendCryptoFeature } from "@src/utils/features";
     import { BigButton, Container, type SizeMode } from "component-lib";
     import {
         publish,
@@ -102,7 +103,12 @@
     <BigButton icon={receiveIcon} {width} mode={"default"} onClick={onReceive}>
         <Translatable resourceKey={i18nKey("Receive")} />
     </BigButton>
-    <BigButton icon={sendIcon} {width} mode={"default"} onClick={onSend}>
+    <BigButton
+        disabled={disableSendCryptoFeature}
+        icon={sendIcon}
+        {width}
+        mode={"default"}
+        onClick={onSend}>
         <Translatable resourceKey={i18nKey("Send")} />
     </BigButton>
     <BigButton icon={swapIcon} {width} mode={"default"} onClick={onSwap}>

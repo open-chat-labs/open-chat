@@ -1,5 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
+    import { disableSendCryptoFeature } from "@src/utils/features";
     import { ColourVars, CommonButton, Container, MenuItem } from "component-lib";
     import { publish, swappableTokensStore } from "openchat-client";
     import ArrowLeftBoldCircle from "svelte-material-icons/ArrowLeftBoldCircle.svelte";
@@ -71,6 +72,7 @@
             /
             <CommonButton
                 onClick={() => publish("sendToken", tokenState)}
+                disabled={disableSendCryptoFeature}
                 mode={"active"}
                 size={"small_text"}>
                 {#snippet icon(color, size)}
