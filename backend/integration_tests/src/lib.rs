@@ -18,6 +18,7 @@ mod communities;
 mod cycles_dispenser_tests;
 mod delete_direct_chat_tests;
 mod delete_group_tests;
+mod delete_history_tests;
 mod delete_message_tests;
 mod delete_user_tests;
 mod diamond_membership_tests;

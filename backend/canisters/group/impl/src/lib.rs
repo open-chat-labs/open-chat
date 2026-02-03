@@ -1,11 +1,11 @@
 use crate::memory::{get_instruction_counts_data_memory, get_instruction_counts_index_memory};
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
-use crate::timer_job_types::{DeleteFileReferencesJob, MakeTransferJob, RemoveExpiredEventsJob, TimerJob};
+use crate::timer_job_types::{DeleteFileReferencesJob, MakeTransferJob, RemoveExpiredEventsJob, RemoveOldEventsJob, TimerJob};
 use crate::updates::c2c_freeze_group::freeze_group_impl;
 use activity_notification_state::ActivityNotificationState;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::{ChatEventInternal, EventPusher, Reader};
+use chat_events::{ChatEventInternal, EventPusher, Reader, RemoveEventsResult};
 use constants::{DAY_IN_MS, HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, OPENCHAT_BOT_USER_ID};
 use event_store_types::Event;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -342,10 +342,57 @@ impl RuntimeState {
                 .timer_jobs
                 .enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
         }
+
+        self.post_process_removed_events(result, now);
+    }
+
+    pub fn run_remove_events_job(&mut self, before: TimestampMillis) {
+        const BATCH_SIZE: usize = 100;
+
+        let now = self.env.now();
+        let mut results = RemoveEventsResult::default();
+        let mut finished = false;
+
+        loop {
+            let batch_result = self.data.chat.remove_old_events_batch(before, now, BATCH_SIZE as u16);
+
+            if batch_result.events.len() < BATCH_SIZE {
+                finished = true;
+            }
+
+            results.merge(batch_result);
+
+            // Break out of the loop if we are too close to the instruction limit
+            if finished || ic_cdk::api::instruction_counter() >= 2_000_000_000 {
+                break;
+            }
+        }
+
+        self.post_process_removed_events(results, now);
+
+        if !finished {
+            self.data
+                .timer_jobs
+                .enqueue_job(TimerJob::RemoveOldEvents(RemoveOldEventsJob { before }), now, now);
+        }
+    }
+
+    fn post_process_removed_events(&mut self, result: RemoveEventsResult, now: TimestampMillis) {
+        for thread in result.threads {
+            self.data
+                .stable_memory_keys_to_garbage_collect
+                .push(BaseKeyPrefix::from(ChatEventKeyPrefix::new_from_group_chat(Some(
+                    thread.root_message_index,
+                ))));
+        }
+
+        jobs::garbage_collect_stable_memory::start_job_if_required(self);
+
         if !result.files.is_empty() {
             let delete_files_job = DeleteFileReferencesJob { files: result.files };
             delete_files_job.execute();
         }
+
         for pending_transaction in result.final_prize_payments {
             self.data.timer_jobs.enqueue_job(
                 TimerJob::MakeTransfer(Box::new(MakeTransferJob {
@@ -356,14 +403,6 @@ impl RuntimeState {
                 now,
             );
         }
-        for thread in result.threads {
-            self.data
-                .stable_memory_keys_to_garbage_collect
-                .push(BaseKeyPrefix::from(ChatEventKeyPrefix::new_from_group_chat(Some(
-                    thread.root_message_index,
-                ))));
-        }
-        jobs::garbage_collect_stable_memory::start_job_if_required(self);
     }
 
     pub fn push_event_to_user(&mut self, user_id: UserId, event: GroupCanisterEvent, now: TimestampMillis) {

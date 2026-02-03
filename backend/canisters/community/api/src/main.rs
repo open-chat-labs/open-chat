@@ -42,6 +42,7 @@ fn main() {
     generate_ts_method!(community, create_user_group);
     generate_ts_method!(community, decline_invitation);
     generate_ts_method!(community, delete_channel);
+    generate_ts_method!(community, delete_channel_history);
     generate_ts_method!(community, delete_messages);
     generate_ts_method!(community, delete_user_groups);
     generate_ts_method!(community, delete_webhook);

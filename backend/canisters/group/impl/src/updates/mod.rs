@@ -24,6 +24,7 @@ pub mod cancel_p2p_swap;
 pub mod change_role;
 pub mod convert_into_community;
 pub mod decline_invitation;
+pub mod delete_history;
 pub mod delete_messages;
 pub mod delete_webhook;
 pub mod disable_invite_code;

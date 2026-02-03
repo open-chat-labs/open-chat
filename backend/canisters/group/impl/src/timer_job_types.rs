@@ -9,7 +9,9 @@ use constants::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
 use tracing::error;
-use types::{BlobReference, CanisterId, MessageId, MessageIndex, P2PSwapStatus, PendingCryptoTransaction, UserId};
+use types::{
+    BlobReference, CanisterId, MessageId, MessageIndex, P2PSwapStatus, PendingCryptoTransaction, TimestampMillis, UserId,
+};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -19,6 +21,7 @@ pub enum TimerJob {
     FinalPrizePayments(FinalPrizePaymentsJob),
     MakeTransfer(Box<MakeTransferJob>),
     RemoveExpiredEvents(RemoveExpiredEventsJob),
+    RemoveOldEvents(RemoveOldEventsJob),
     NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob),
     CancelP2PSwapInEscrowCanister(CancelP2PSwapInEscrowCanisterJob),
     MarkP2PSwapExpired(MarkP2PSwapExpiredJob),
@@ -55,6 +58,11 @@ pub struct MakeTransferJob {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct RemoveExpiredEventsJob;
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct RemoveOldEventsJob {
+    pub before: TimestampMillis,
+}
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct NotifyEscrowCanisterOfDepositJob {
@@ -122,6 +130,7 @@ impl Job for TimerJob {
             TimerJob::FinalPrizePayments(job) => job.execute(),
             TimerJob::MakeTransfer(job) => job.execute(),
             TimerJob::RemoveExpiredEvents(job) => job.execute(),
+            TimerJob::RemoveOldEvents(job) => job.execute(),
             TimerJob::NotifyEscrowCanisterOfDeposit(job) => job.execute(),
             TimerJob::CancelP2PSwapInEscrowCanister(job) => job.execute(),
             TimerJob::MarkP2PSwapExpired(job) => job.execute(),
@@ -288,6 +297,12 @@ impl Job for MakeTransferJob {
 impl Job for RemoveExpiredEventsJob {
     fn execute(self) {
         mutate_state(|state| state.run_event_expiry_job());
+    }
+}
+
+impl Job for RemoveOldEventsJob {
+    fn execute(self) {
+        mutate_state(|state| state.run_remove_events_job(self.before));
     }
 }
 

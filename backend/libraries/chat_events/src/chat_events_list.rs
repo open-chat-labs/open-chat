@@ -9,6 +9,7 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
+use std::iter::Peekable;
 use std::ops::Deref;
 use types::{
     Chat, ChatEvent, ChatEventCategory, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention,
@@ -154,7 +155,7 @@ impl ChatEventsList {
 
         if ascending {
             Box::new(ChatEventsListIterator {
-                inner: iter,
+                inner: iter.peekable(),
                 ascending: true,
                 expected_next: min,
                 end: max,
@@ -163,7 +164,7 @@ impl ChatEventsList {
             })
         } else {
             Box::new(ChatEventsListIterator {
-                inner: iter.rev(),
+                inner: iter.rev().peekable(),
                 ascending: false,
                 expected_next: max,
                 end: min,
@@ -528,8 +529,8 @@ fn try_into_message_event(
     })
 }
 
-struct ChatEventsListIterator<I> {
-    inner: I,
+struct ChatEventsListIterator<I: Iterator> {
+    inner: Peekable<I>,
     ascending: bool,
     expected_next: EventIndex,
     end: EventIndex,
@@ -545,40 +546,48 @@ impl<I: Iterator<Item = EventWrapperInternal<ChatEventInternal>>> Iterator for C
             return None;
         }
 
-        let result = if let Some(next) = self.inner.next() {
+        let result = if let Some(next) = self.inner.peek() {
             let index = next.index;
             let result = if next.index == self.expected_next {
+                let event = self.inner.next().unwrap();
+                if self.ascending {
+                    self.expected_next = index.incr();
+                } else {
+                    self.expected_next = index.decr();
+                }
+
                 if self
                     .bot_permitted_event_types
                     .as_ref()
-                    .is_none_or(|pt| next.event.event_category().is_some_and(|t| pt.contains(&t)))
+                    .is_none_or(|pt| event.event.event_category().is_some_and(|t| pt.contains(&t)))
                 {
-                    EventOrExpiredRangeInternal::Event(next)
+                    EventOrExpiredRangeInternal::Event(event)
                 } else {
                     EventOrExpiredRangeInternal::Unauthorized(index)
                 }
-            } else if self.ascending {
-                EventOrExpiredRangeInternal::ExpiredEventRange(self.expected_next, index.decr())
             } else {
-                EventOrExpiredRangeInternal::ExpiredEventRange(index.incr(), self.expected_next)
+                let expired_range =
+                    if self.ascending { (self.expected_next, index.decr()) } else { (index.incr(), self.expected_next) };
+
+                self.expected_next = index;
+                EventOrExpiredRangeInternal::ExpiredEventRange(expired_range.0, expired_range.1)
             };
 
-            if self.expected_next == self.end {
+            if (self.ascending && self.expected_next > self.end) || (!self.ascending && self.expected_next < self.end) {
                 self.complete = true;
-            } else if self.ascending {
-                self.expected_next = index.incr();
-            } else {
-                self.expected_next = index.decr();
             }
 
             result
         } else {
             self.complete = true;
-            if self.ascending {
-                EventOrExpiredRangeInternal::ExpiredEventRange(self.expected_next, self.end)
-            } else {
-                EventOrExpiredRangeInternal::ExpiredEventRange(self.end, self.expected_next)
+
+            let expired_range = if self.ascending { (self.expected_next, self.end) } else { (self.end, self.expected_next) };
+
+            if expired_range.1 <= expired_range.0 {
+                return None;
             }
+
+            EventOrExpiredRangeInternal::ExpiredEventRange(expired_range.0, expired_range.1)
         };
 
         Some(result)
@@ -594,12 +603,49 @@ mod tests {
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use rand::random;
     use std::mem::size_of;
-    use types::{EventsTimeToLiveUpdated, Milliseconds};
+    use types::Milliseconds;
 
     #[test]
     fn enum_size() {
         let size = size_of::<ChatEventInternal>();
         assert_eq!(size, 16);
+    }
+
+    #[test]
+    fn delete_partial_history() {
+        let mut events = setup_events(None);
+
+        let result = events.remove_old_events_batch(6, 102, 200);
+
+        assert_eq!(result.events.len(), 4);
+
+        let results: Vec<_> = events
+            .main_events_list()
+            .iter(None, true, EventIndex::default(), None)
+            .collect();
+
+        // created, 1 deleted range, 96 messages
+        assert_eq!(results.len(), 98);
+    }
+
+    #[test]
+    fn delete_all_history_but_one() {
+        let mut events = setup_events(None);
+
+        let result = events.remove_old_events_batch(101, 102, 200);
+
+        assert_eq!(result.events.len(), 99);
+
+        let results: Vec<_> = events
+            .main_events_list()
+            .iter(None, true, EventIndex::default(), None)
+            .collect();
+
+        // created, 1 deleted range, 1 message
+        assert_eq!(results.len(), 3);
+
+        // Last element should be an event not an expired range
+        assert!(matches!(results.last().unwrap(), EventOrExpiredRangeInternal::Event(_)));
     }
 
     #[test]
@@ -755,7 +801,7 @@ mod tests {
 
         let mut events = ChatEvents::new_direct_chat(Principal::from_slice(&[1]).into(), events_ttl, random(), 1);
 
-        push_events(&mut events, 0);
+        push_events(&mut events, 2);
 
         events
     }
@@ -763,7 +809,7 @@ mod tests {
     fn push_events(events: &mut ChatEvents, now: TimestampMillis) {
         let user_id = Principal::from_slice(&[2]).into();
 
-        for i in 0..50 {
+        for i in 0..100 {
             let message_id = MessageId::from((now + i) as u128);
             events.push_message::<NullEventPusher>(
                 PushMessageArgs {
@@ -776,19 +822,12 @@ mod tests {
                     sender_context: None,
                     mentioned: Vec::new(),
                     replies_to: None,
-                    now,
+                    now: now + i,
                     forwarded: false,
                     sender_is_bot: false,
                     block_level_markdown: false,
                 },
                 None,
-            );
-            events.push_main_event(
-                ChatEventInternal::EventsTimeToLiveUpdated(Box::new(EventsTimeToLiveUpdated {
-                    updated_by: user_id,
-                    new_ttl: Some(i),
-                })),
-                now,
             );
         }
     }
