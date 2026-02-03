@@ -82,17 +82,21 @@
     }
 </script>
 
+<!-- TODO network selection when applicable ?? -->
+
 <SelectUser
     disabled={busy}
     onSelect={(user) => (selectedUser = user)}
     selected={selectedUser}
-    placeholder={`Select a user to send ${tokenState.symbol} to`}>
+    placeholder={`Select user`}>
     {#snippet subtext()}
-        {`Select a user to send ${tokenState.symbol} to`}
+        <!-- TODO i18n -->
+        {`You may only select users you have DM'd with`}
     {/snippet}
 </SelectUser>
 
 <TokenInput
+    balance={tokenState.cryptoBalance}
     ledger={tokenState.ledger}
     minAmount={tokenState.minAmount}
     disabled={busy}

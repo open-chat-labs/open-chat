@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Caption, ColourVars, Container } from "component-lib";
+    import { BodySmall, ColourVars, Container } from "component-lib";
     import { i18nKey, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import Info from "svelte-material-icons/InformationOutline.svelte";
@@ -20,21 +20,21 @@
 <Container crossAxisAlignment={"center"} gap={"sm"}>
     <Info viewBox={"0 2 24 24"} size={"1rem"} color={ColourVars.warning} />
     <Container direction={"vertical"}>
-        <Caption colour={"warning"}>
+        <BodySmall colour={"warning"}>
             <Translatable
                 resourceKey={i18nKey("tokenTransfer.fee", {
                     fee: client.formatTokens(transferFees, tokenDecimals),
                     token: symbol,
                 })} />
-        </Caption>
+        </BodySmall>
         {#if networkFee !== undefined}
-            <Caption colour={"warning"}>
+            <BodySmall colour={"warning"}>
                 <Translatable
                     resourceKey={i18nKey("cryptoAccount.networkFee", {
                         amount: `~${client.formatTokens(networkFee, tokenDecimals)}`,
                         token: symbol,
                     })} />
-            </Caption>
+            </BodySmall>
         {/if}
     </Container>
 </Container>
