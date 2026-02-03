@@ -168,7 +168,7 @@ jobs:
 
             - name: Rename APK
               run: |
-                  mv src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}.apk
+                  mv src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat-release.apk src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}.apk
 
             - name: Upload APK
               uses: actions/upload-artifact@v4
@@ -182,5 +182,3 @@ jobs:
               uses: softprops/action-gh-release@v2
               with:
                   files: src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}.apk
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
