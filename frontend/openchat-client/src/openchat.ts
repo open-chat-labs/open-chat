@@ -1027,6 +1027,7 @@ export class OpenChat {
                 user.blobReference?.blobId ?? undefined,
             ),
             isUniquePerson: user.isUniquePerson,
+            hideOnlineStatus: user.hideOnlineStatus,
         });
     }
 
@@ -5785,6 +5786,13 @@ export class OpenChat {
                 userStore.updateUser(userId, (user) => ({ ...user, displayName }));
             }
             return resp;
+        });
+    }
+
+    setHideOnlineStatus(hideOnlineStatus: boolean): Promise<void> {
+        return this.#worker.send({
+            kind: "setHideOnlineStatus",
+            hideOnlineStatus,
         });
     }
 

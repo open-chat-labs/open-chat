@@ -28,6 +28,7 @@ export type UserSummary = DataContent & {
     streak: number;
     maxStreak: number;
     isUniquePerson: boolean;
+    hideOnlineStatus: boolean;
 };
 
 export type PartitionedUserIds = {
@@ -50,6 +51,7 @@ export function deletedUser(userId: string): UserSummary {
         maxStreak: 0,
         isUniquePerson: false,
         totalChitEarned: 0,
+        hideOnlineStatus: false,
     };
 }
 
@@ -100,6 +102,7 @@ export function userSummaryFromCurrentUserSummary(currentSummary: CurrentUserSum
         blobData: currentSummary.blobData,
         blobUrl: currentSummary.blobUrl,
         isUniquePerson: currentSummary.isUniquePerson,
+        hideOnlineStatus: currentSummary.hideOnlineStatus,
     };
 }
 
@@ -196,6 +199,7 @@ export type UserSummaryStable = DataContent & {
     displayName: string | undefined;
     suspended: boolean;
     isUniquePerson: boolean;
+    hideOnlineStatus: boolean;
 };
 
 export type UserSummaryVolatile = {
@@ -263,6 +267,7 @@ type CurrentUserCommon = DataContent & {
     streak: number;
     maxStreak: number;
     backgroundId?: bigint;
+    hideOnlineStatus: boolean;
 };
 
 export type CurrentUserSummary = CurrentUserCommon & {
@@ -296,6 +301,7 @@ export function anonymousUser(): CreatedUser {
         chitBalance: 0,
         streak: 0,
         maxStreak: 0,
+        hideOnlineStatus: false,
     };
 }
 

@@ -34,6 +34,7 @@ const lookup: UserLookup = new Map([
             maxStreak: 0,
             isUniquePerson: false,
             totalChitEarned: 0,
+            hideOnlineStatus: false,
         },
     ],
     [
@@ -51,6 +52,7 @@ const lookup: UserLookup = new Map([
             maxStreak: 0,
             isUniquePerson: false,
             totalChitEarned: 0,
+            hideOnlineStatus: false,
         },
     ],
     [
@@ -68,6 +70,7 @@ const lookup: UserLookup = new Map([
             maxStreak: 0,
             isUniquePerson: false,
             totalChitEarned: 0,
+            hideOnlineStatus: false,
         },
     ],
     [
@@ -85,6 +88,7 @@ const lookup: UserLookup = new Map([
             maxStreak: 0,
             isUniquePerson: false,
             totalChitEarned: 0,
+            hideOnlineStatus: false,
         },
     ],
 ]);
@@ -140,6 +144,7 @@ describe("compare username", () => {
             maxStreak: 0,
             isUniquePerson: false,
             totalChitEarned: 0,
+            hideOnlineStatus: false,
         };
     }
     test("works with non-null usernames", () => {

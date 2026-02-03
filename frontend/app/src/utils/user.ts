@@ -60,5 +60,6 @@ export function findUser(
         maxStreak: 0,
         isUniquePerson: false,
         totalChitEarned: 0,
+        hideOnlineStatus: false,
     };
 }

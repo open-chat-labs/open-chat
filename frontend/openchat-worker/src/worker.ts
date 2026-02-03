@@ -696,6 +696,9 @@ function getAction(
         case "setDisplayName":
             return agent.setDisplayName(payload.userId, payload.displayName);
 
+        case "setHideOnlineStatus":
+            return agent.setHideOnlineStatus(payload.hideOnlineStatus);
+
         case "setBio":
             return agent.setBio(payload.bio);
 

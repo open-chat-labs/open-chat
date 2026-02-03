@@ -121,6 +121,7 @@
         maxStreak: 0,
         isUniquePerson: $currentUserStore.isUniquePerson,
         totalChitEarned: 0,
+        hideOnlineStatus: false,
     });
 
     let levelType = $derived((chatType === "channel" ? "channel" : "group") as Level);

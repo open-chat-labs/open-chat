@@ -2101,6 +2101,10 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.setDisplayName(userId, displayName);
     }
 
+    setHideOnlineStatus(hideOnlineStatus: boolean): Promise<void> {
+        return this._userIndexClient.setHideOnlineStatus(hideOnlineStatus);
+    }
+
     changeRole(
         chatId: MultiUserChatIdentifier,
         userId: string,
