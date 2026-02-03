@@ -69,11 +69,11 @@ jobs:
 
             - name: Configure Gradle
               run: |
-                mkdir -p ~/.gradle
-                echo "org.gradle.caching=true" >> ~/.gradle/gradle.properties
-                echo "org.gradle.parallel=true" >> ~/.gradle/gradle.properties
-                echo "org.gradle.vfs.watch=false" >> ~/.gradle/gradle.properties
-                echo "org.gradle.jvmargs=-Dfile.encoding=UTF-8" >> ~/.gradle/gradle.properties
+                  mkdir -p ~/.gradle
+                  echo "org.gradle.caching=true" >> ~/.gradle/gradle.properties
+                  echo "org.gradle.parallel=true" >> ~/.gradle/gradle.properties
+                  echo "org.gradle.vfs.watch=false" >> ~/.gradle/gradle.properties
+                  echo "org.gradle.jvmargs=-Dfile.encoding=UTF-8" >> ~/.gradle/gradle.properties
 
             - name: Add Android targets
               run: |
@@ -158,19 +158,19 @@ jobs:
 
             - name: Rename APK
               run: |
-                  mv frontend/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk frontend/src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}.apk
+                  mv src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}.apk
 
             - name: Upload APK
               uses: actions/upload-artifact@v4
               with:
                   name: android-release-apk
-                  path: frontend/src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}.apk
+                  path: src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}.apk
                   if-no-files-found: error
 
             - name: Upload APK to Release
               if: github.event_name == 'release'
               uses: softprops/action-gh-release@v2
               with:
-                  files: frontend/src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}.apk
+                  files: src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}.apk
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
