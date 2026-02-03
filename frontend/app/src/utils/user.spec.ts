@@ -16,6 +16,7 @@ userLookup.set("xyz", {
     streak: 0,
     maxStreak: 0,
     isUniquePerson: true,
+    hideOnlineStatus: false,
 });
 
 describe("buildUsername", () => {
