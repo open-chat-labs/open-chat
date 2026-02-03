@@ -400,7 +400,6 @@ export class CachedChatEventsReader {
                             ? {
                                   events: [...fromCache.messageEvents, ...resp.events],
                                   expiredEventRanges: [],
-                                  expiredMessageRanges: [],
                                   latestEventIndex: resp.latestEventIndex,
                               }
                             : resp,
@@ -411,7 +410,6 @@ export class CachedChatEventsReader {
                     {
                         events: fromCache.messageEvents,
                         expiredEventRanges: [],
-                        expiredMessageRanges: [],
                         latestEventIndex: undefined,
                     },
                     true,
@@ -466,7 +464,6 @@ function mergeEventsResponse<T extends ChatEvent>(
     return {
         events: [...a.events, ...b.events],
         expiredEventRanges: [...a.expiredEventRanges, ...b.expiredEventRanges],
-        expiredMessageRanges: [...a.expiredMessageRanges, ...b.expiredMessageRanges],
         latestEventIndex: Math.max(a.latestEventIndex ?? 0, b.latestEventIndex ?? 0),
     };
 }
