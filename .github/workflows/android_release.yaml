@@ -59,9 +59,19 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-gradle-
 
+            - name: Cache TurboRepo
+              uses: actions/cache@v3
+              with:
+                  path: frontend/.turbo
+                  key: ${{ runner.os }}-turbo-${{ github.sha }}
+                  restore-keys: |
+                      ${{ runner.os }}-turbo-
+
             - name: Add Android targets
               run: |
-                  rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+                  # Real devices only (aarch64 is modern, armv7 is legacy). 
+                  # Skipping x86/x86_64 saves ~50% compilation time.
+                  rustup target add aarch64-linux-android armv7-linux-androideabi
 
             - name: Setup Node.js
               uses: actions/setup-node@v3
@@ -136,7 +146,7 @@ jobs:
                   fi
 
             - name: Build Android APK
-              run: cargo tauri android build --verbose
+              run: cargo tauri android build --verbose --target aarch64-linux-android,armv7-linux-androideabi
               env:
                   # Ensure these are passed if needed, though the gradle file uses the debug fallback we set up
                   ANDROID_KEY_STORE_FILE: ${{ env.ANDROID_KEY_STORE_FILE }}
