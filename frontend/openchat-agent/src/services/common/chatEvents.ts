@@ -166,6 +166,14 @@ export class CachedChatEventsReader {
                     ascending,
                 );
 
+                if (cachedEvents.events.length > 0) {
+                    const complete = missing.size + dirty.size === 0;
+                    resolve(cachedEvents, complete);
+                    if (complete) {
+                        return;
+                    }
+                }
+
                 // we may or may not have all the requested events
                 if (missing.size + dirty.size > MAX_MISSING) {
                     // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
@@ -238,17 +246,25 @@ export class CachedChatEventsReader {
                 chatId,
                 threadRootMessageIndex,
             })
-                .then((resp) =>
-                    this.handleMissingEvents(
+                .then(([cachedEvents, missing, dirty]) => {
+                    if (cachedEvents.events.length > 0) {
+                        const complete = missing.size + dirty.size === 0;
+                        resolve(cachedEvents, complete);
+                        if (complete) {
+                            return;
+                        }
+                    }
+
+                    return this.handleMissingEvents(
                         reader,
                         chatId,
-                        resp,
+                        [cachedEvents, missing, dirty],
                         threadRootMessageIndex,
                         latestKnownUpdate,
                         resolve,
                         reject,
-                    ),
-                )
+                    );
+                })
                 .catch(reject);
         });
     }
@@ -271,6 +287,15 @@ export class CachedChatEventsReader {
                         { chatId, threadRootMessageIndex },
                         messageIndex,
                     );
+
+                if (cachedEvents.events.length > 0) {
+                    const complete = !totalMiss && missing.size + dirty.size === 0;
+                    resolve(cachedEvents, complete);
+                    if (complete) {
+                        return;
+                    }
+                }
+
                 if (totalMiss || missing.size + dirty.size > MAX_MISSING) {
                     // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
                     console.debug(
@@ -409,10 +434,6 @@ export class CachedChatEventsReader {
         if (toFetch.length === 0) {
             resolve(cachedEvents, true);
             return;
-        }
-
-        if (missing.size === 0) {
-            resolve(cachedEvents, false);
         }
 
         return reader
