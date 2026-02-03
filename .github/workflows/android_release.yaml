@@ -163,6 +163,9 @@ jobs:
                   # Ensure these are passed if needed, though the gradle file uses the debug fallback we set up
                   ANDROID_KEY_STORE_FILE: ${{ env.ANDROID_KEY_STORE_FILE }}
 
+            - name: Find APK
+              run: find . -name "*.apk"
+
             - name: Rename APK
               run: |
                   mv src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}.apk
