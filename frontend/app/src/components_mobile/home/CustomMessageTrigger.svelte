@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { disableCreatePrizeFeature } from "@src/utils/features";
     import { BigButton, Container, type SizeMode } from "component-lib";
     import {
         publish,
@@ -87,7 +88,7 @@
                 {/snippet}
             </FileAttacher>
         {/if}
-        {#if permittedMessages.get("prize")}
+        {#if permittedMessages.get("prize") && !disableCreatePrizeFeature}
             <BigButton {height} {width} onClick={onCreatePrizeMessage}>
                 {#snippet icon(color)}
                     <Gift {color} />

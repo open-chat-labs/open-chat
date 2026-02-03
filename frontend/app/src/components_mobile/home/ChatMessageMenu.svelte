@@ -1,6 +1,7 @@
 <script lang="ts">
     import { quickReactions } from "@src/stores/quickReactions";
     import { confirmMessageDeletion } from "@src/stores/settings";
+    import { disableTipsFeature } from "@src/utils/features";
     import { urlForMediaContent } from "@src/utils/media";
     import { Container, IconButton, MenuItem } from "component-lib";
     import {
@@ -496,7 +497,7 @@
         <Translatable resourceKey={i18nKey("editMessage")} />
     </MenuItem>
 {/if}
-{#if canTip}
+{#if canTip && !disableTipsFeature}
     <MenuItem onclick={() => onTipMessage($lastCryptoSent ?? LEDGER_CANISTER_ICP)}>
         {#snippet icon(color, size)}
             <Bitcoin {color} {size} />
