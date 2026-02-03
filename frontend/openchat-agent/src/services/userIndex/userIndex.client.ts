@@ -61,6 +61,7 @@ import {
     UserIndexSetDiamondMembershipFeesResponse,
     UserIndexSetDisplayNameArgs,
     UserIndexSetDisplayNameResponse,
+    UserIndexSetHideOnlineStatusArgs,
     UserIndexSetModerationFlagsArgs,
     UserIndexSetPremiumItemCostArgs,
     UserIndexSetUsernameArgs,
@@ -463,6 +464,18 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             }
             return res;
         });
+    }
+
+    setHideOnlineStatus(hideOnlineStatus: boolean): Promise<void> {
+        return this.update(
+            "set_hide_online_status",
+            {
+                hide_online_status: hideOnlineStatus,
+            },
+            toVoid,
+            UserIndexSetHideOnlineStatusArgs,
+            SuccessOnly,
+        );
     }
 
     suspendUser(userId: string, reason: string): Promise<SuspendUserResponse> {

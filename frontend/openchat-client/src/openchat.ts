@@ -5789,6 +5789,13 @@ export class OpenChat {
         });
     }
 
+    setHideOnlineStatus(hideOnlineStatus: boolean): Promise<void> {
+        return this.#worker.send({
+            kind: "setHideOnlineStatus",
+            hideOnlineStatus,
+        });
+    }
+
     setBio(bio: string): Promise<SetBioResponse> {
         return this.#worker.send({ kind: "setBio", bio });
     }
