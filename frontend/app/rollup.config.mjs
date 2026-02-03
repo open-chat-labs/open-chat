@@ -305,8 +305,7 @@ export default {
         // We're building for production (npm run build
         // instead of npm run dev), minify
         terser(),
-        analyze({ summaryOnly: true }),
-        filesize(),
+        ...(process.env.ANALYZE ? [analyze({ summaryOnly: true }), filesize()] : []),
 
         // Pull in the worker and service worker
         copy({
