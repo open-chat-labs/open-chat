@@ -67,6 +67,14 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-turbo-
 
+            - name: Configure Gradle
+              run: |
+                mkdir -p ~/.gradle
+                echo "org.gradle.caching=true" >> ~/.gradle/gradle.properties
+                echo "org.gradle.parallel=true" >> ~/.gradle/gradle.properties
+                echo "org.gradle.vfs.watch=false" >> ~/.gradle/gradle.properties
+                echo "org.gradle.jvmargs=-Dfile.encoding=UTF-8" >> ~/.gradle/gradle.properties
+
             - name: Add Android targets
               run: |
                   # Real devices only (aarch64 is modern, armv7 is legacy).
