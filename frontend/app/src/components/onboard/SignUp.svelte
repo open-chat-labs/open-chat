@@ -132,6 +132,7 @@
                     chitBalance: 0,
                     streak: 0,
                     maxStreak: 0,
+                    hideOnlineStatus: false,
                 };
                 onCreatedUser(createdUser);
                 busy = false;

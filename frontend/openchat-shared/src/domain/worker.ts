@@ -308,6 +308,7 @@ export type WorkerRequest =
     | GetPublicProfile
     | SetUsername
     | SetDisplayName
+    | SetHideOnlineStatus
     | SetBio
     | GetBio
     | WithdrawCrypto
@@ -927,6 +928,11 @@ type SetDisplayName = {
     userId: string;
     displayName: string | undefined;
     kind: "setDisplayName";
+};
+
+type SetHideOnlineStatus = {
+    hideOnlineStatus: boolean;
+    kind: "setHideOnlineStatus";
 };
 
 type GetPublicProfile = {
@@ -2310,6 +2316,8 @@ export type WorkerResult<T> = T extends Init
     ? SetUsernameResponse
     : T extends SetDisplayName
     ? SetDisplayNameResponse
+    : T extends SetHideOnlineStatus
+    ? void
     : T extends SetBio
     ? SetBioResponse
     : T extends GetBio

@@ -222,6 +222,7 @@ export function currentUserSummary(
         streak: value.streak,
         maxStreak: value.max_streak,
         backgroundId: value.profile_background_id,
+        hideOnlineStatus: value.hide_online_status ?? false,
     };
 }
 
@@ -240,6 +241,7 @@ export function userSummaryUpdate(value: TUserSummaryV2): UserSummaryUpdate {
             suspended: s.suspended ?? false,
             isUniquePerson: s.is_unique_person ?? false,
             backgroundId: s.profile_background_id,
+            hideOnlineStatus: s.hide_online_status ?? false,
         })),
         volatile: mapOptional(value.volatile, (v) => ({
             chitBalance: v.chit_balance,
@@ -268,6 +270,7 @@ export function userSummary(value: TUserSummary, timestamp: bigint): UserSummary
         streak: value.streak,
         maxStreak: value.max_streak,
         isUniquePerson: value.is_unique_person ?? false,
+        hideOnlineStatus: value.hide_online_status ?? false,
     };
 }
 
@@ -319,11 +322,12 @@ export function currentUserResponse(value: UserIndexCurrentUserResponse): Curren
             moderationFlagsEnabled: r.moderation_flags_enabled,
             isBot: false,
             updated: BigInt(Date.now()),
-            isUniquePerson: value.Success.is_unique_person,
-            totalChitEarned: value.Success.total_chit_earned,
-            chitBalance: value.Success.chit_balance,
-            streak: value.Success.streak,
-            maxStreak: value.Success.max_streak,
+            isUniquePerson: r.is_unique_person,
+            totalChitEarned: r.total_chit_earned,
+            chitBalance: r.chit_balance,
+            streak: r.streak,
+            maxStreak: r.max_streak,
+            hideOnlineStatus: r.hide_online_status ?? false,
         };
     }
 

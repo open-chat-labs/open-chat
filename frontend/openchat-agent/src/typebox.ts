@@ -5012,6 +5012,7 @@ export const UserSummaryStable = Type.Object({
     suspended: Type.Optional(Type.Boolean()),
     diamond_membership_status: Type.Optional(DiamondMembershipStatus),
     is_unique_person: Type.Optional(Type.Boolean()),
+    hide_online_status: Type.Optional(Type.Boolean()),
 });
 
 export type StringParam = Static<typeof StringParam>;

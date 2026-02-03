@@ -1051,6 +1051,7 @@ export class OpenChat {
             blobData: user.blobData,
             blobUrl: user.blobUrl,
             isUniquePerson: user.isUniquePerson,
+            hideOnlineStatus: user.hideOnlineStatus,
         });
         this.getPublicProfile(user.userId).subscribe({
             onResult: (profile) => {
@@ -5863,6 +5864,13 @@ export class OpenChat {
                 userStore.updateUser(userId, (user) => ({ ...user, displayName }));
             }
             return resp;
+        });
+    }
+
+    setHideOnlineStatus(hideOnlineStatus: boolean): Promise<void> {
+        return this.#worker.send({
+            kind: "setHideOnlineStatus",
+            hideOnlineStatus,
         });
     }
 
