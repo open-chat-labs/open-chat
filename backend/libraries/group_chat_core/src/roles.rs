@@ -157,6 +157,10 @@ impl GroupRoleInternal {
         self.is_permitted(permissions.mention_all_members)
     }
 
+    pub fn can_delete_history(&self) -> bool {
+        self.is_owner()
+    }
+
     pub fn is_permitted(&self, permission_role: GroupPermissionRole) -> bool {
         match permission_role {
             GroupPermissionRole::None => false,

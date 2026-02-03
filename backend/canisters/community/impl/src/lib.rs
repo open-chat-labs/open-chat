@@ -3,11 +3,11 @@ use crate::model::channels::Channels;
 use crate::model::groups_being_imported::{GroupBeingImportedSummary, GroupsBeingImported};
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::members::CommunityMembers;
-use crate::timer_job_types::{DeleteFileReferencesJob, MakeTransferJob, RemoveExpiredEventsJob, TimerJob};
+use crate::timer_job_types::{DeleteFileReferencesJob, MakeTransferJob, RemoveExpiredEventsJob, RemoveOldEventsJob, TimerJob};
 use activity_notification_state::ActivityNotificationState;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::{ChatEventInternal, ChatMetricsInternal, EventPusher};
+use chat_events::{ChatEventInternal, ChatMetricsInternal, EventPusher, ExpiredThread};
 use community_canister::add_members_to_channel::UserFailedError;
 use constants::{ICP_LEDGER_CANISTER_ID, OPENCHAT_BOT_USER_ID};
 use event_store_types::Event;
@@ -30,16 +30,16 @@ use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    AccessGate, AccessGateConfigInternal, Achievement, BotCommunityEvent, BotDefinitionUpdate, BotEventsCaller, BotInitiator,
-    BotNotification, BotPermissions, BotUpdated, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId,
+    AccessGate, AccessGateConfigInternal, Achievement, BlobReference, BotCommunityEvent, BotDefinitionUpdate, BotEventsCaller,
+    BotInitiator, BotNotification, BotPermissions, BotUpdated, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId,
     ChannelUserNotificationPayload, ChatMetrics, ChatPermission, CommunityCanisterCommunitySummary, CommunityEvent,
     CommunityMembership, CommunityPermissions, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupRole,
-    IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId,
-    UserNotification, UserType,
+    IdempotentEnvelope, MembersAdded, Milliseconds, Notification, PendingCryptoTransaction, Rules, TimestampMillis,
+    Timestamped, UserId, UserNotification, UserType,
 };
 use types::{BotSubscriptions, CommunityId};
 use user_canister::CommunityCanisterEvent;
@@ -281,6 +281,7 @@ impl RuntimeState {
     pub fn run_event_expiry_job(&mut self) {
         let now = self.env.now();
         let mut next_event_expiry = None;
+        let mut threads_to_delete = HashMap::new();
         let mut files_to_delete = Vec::new();
         let mut final_prize_payments = Vec::new();
         for channel in self.data.channels.iter_mut() {
@@ -292,24 +293,81 @@ impl RuntimeState {
             }
             files_to_delete.extend(result.files);
             final_prize_payments.extend(result.final_prize_payments);
-            for thread in result.threads {
-                self.data.stable_memory_keys_to_garbage_collect.push(BaseKeyPrefix::from(
-                    ChatEventKeyPrefix::new_from_channel(channel.id, Some(thread.root_message_index)),
-                ));
-            }
+            threads_to_delete.insert(channel.id, result.threads);
         }
-        jobs::garbage_collect_stable_memory::start_job_if_required(self);
 
         self.data.next_event_expiry = next_event_expiry;
+
         if let Some(expiry) = self.data.next_event_expiry {
             self.data
                 .timer_jobs
                 .enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
         }
+
+        self.post_process_removed_events(threads_to_delete, files_to_delete, final_prize_payments, now);
+    }
+
+    pub fn run_remove_events_job(&mut self, channel_id: ChannelId, before: TimestampMillis) {
+        let Some(channel) = self.data.channels.get_mut(&channel_id) else {
+            return;
+        };
+
+        const BATCH_SIZE: usize = 100;
+
+        let now = self.env.now();
+        let mut threads_to_delete = HashMap::new();
+        let mut files_to_delete = Vec::new();
+        let mut final_prize_payments = Vec::new();
+        let mut finished = false;
+
+        loop {
+            let result = channel.chat.remove_old_events_batch(before, now, BATCH_SIZE as u16);
+
+            files_to_delete.extend(result.files);
+            final_prize_payments.extend(result.final_prize_payments);
+            threads_to_delete.insert(channel.id, result.threads);
+
+            if result.events.len() < BATCH_SIZE {
+                finished = true;
+            }
+
+            // Break out of the loop if we are too close to the instruction limit
+            if finished || ic_cdk::api::instruction_counter() >= 2_000_000_000 {
+                break;
+            }
+        }
+
+        self.post_process_removed_events(threads_to_delete, files_to_delete, final_prize_payments, now);
+
+        if !finished {
+            self.data
+                .timer_jobs
+                .enqueue_job(TimerJob::RemoveOldEvents(RemoveOldEventsJob { channel_id, before }), now, now);
+        }
+    }
+
+    fn post_process_removed_events(
+        &mut self,
+        threads_to_delete: HashMap<ChannelId, Vec<ExpiredThread>>,
+        files_to_delete: Vec<BlobReference>,
+        final_prize_payments: Vec<PendingCryptoTransaction>,
+        now: TimestampMillis,
+    ) {
+        for (channel_id, threads) in threads_to_delete {
+            for thread in threads {
+                self.data.stable_memory_keys_to_garbage_collect.push(BaseKeyPrefix::from(
+                    ChatEventKeyPrefix::new_from_channel(channel_id, Some(thread.root_message_index)),
+                ));
+            }
+        }
+
+        jobs::garbage_collect_stable_memory::start_job_if_required(self);
+
         if !files_to_delete.is_empty() {
             let delete_files_job = DeleteFileReferencesJob { files: files_to_delete };
             delete_files_job.execute();
         }
+
         for pending_transaction in final_prize_payments {
             self.data.timer_jobs.enqueue_job(
                 TimerJob::MakeTransfer(Box::new(MakeTransferJob {

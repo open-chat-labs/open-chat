@@ -1937,31 +1937,74 @@ impl ChatEvents {
         self.expiring_events.next_event_expiry()
     }
 
-    pub fn remove_expired_events(&mut self, now: TimestampMillis) -> RemoveExpiredEventsResult {
-        let mut result = RemoveExpiredEventsResult::default();
+    pub fn remove_expired_events(&mut self, now: TimestampMillis) -> RemoveEventsResult {
+        let mut results = RemoveEventsResult::default();
 
         while let Some(event_index) = self.expiring_events.take_next_expired_event(now) {
-            if let Some(event) = self.main.remove(event_index) {
-                result.events.push(event_index);
-                if let ChatEventInternal::Message(m) = event.event {
-                    if let Some(thread) = m.thread_summary {
-                        self.threads.remove(&m.message_index);
-                        result.threads.push(ExpiredThread {
-                            root_message_index: m.message_index,
-                            followers: thread.followers,
-                        });
-                    }
-                    result.files.extend(m.content.blob_references());
-                    if let MessageContentInternal::Prize(mut p) = m.content {
-                        result
-                            .final_prize_payments
-                            .append(&mut p.final_payments(m.sender, now * 1_000_000));
-                    }
-                }
+            if let Some(result) = self.remove_event(event_index, now) {
+                results.merge_result(event_index, result);
             }
         }
 
-        result
+        results
+    }
+
+    pub fn any_events_to_delete(&self, before: TimestampMillis) -> bool {
+        self.main.iter(None, true, EventIndex::default(), None).any(|e| match e {
+            EventOrExpiredRangeInternal::Event(event) => self.can_delete_event(&event.event) && event.timestamp < before,
+            _ => false,
+        })
+    }
+
+    pub fn remove_old_events_batch(
+        &mut self,
+        before: TimestampMillis,
+        now: TimestampMillis,
+        batch_size: u16,
+    ) -> RemoveEventsResult {
+        let mut batch_result = RemoveEventsResult::default();
+
+        let batch_to_remove: Vec<_> = self
+            .main
+            .iter(None, true, EventIndex::default(), None)
+            .filter_map(|e| match e {
+                EventOrExpiredRangeInternal::Event(event) => Some(event),
+                _ => None,
+            })
+            .filter(|e| self.can_delete_event(&e.event))
+            .take(batch_size as usize)
+            .take_while(|event| event.timestamp < before)
+            .collect();
+
+        for event in batch_to_remove {
+            if let Some(result) = self.remove_event(event.index, now) {
+                batch_result.merge_result(event.index, result);
+            }
+        }
+
+        batch_result
+    }
+
+    pub fn remove_event(&mut self, event_index: EventIndex, now: TimestampMillis) -> Option<RemoveEventResult> {
+        let event = self.main.remove(event_index)?;
+
+        let mut result = RemoveEventResult::default();
+
+        if let ChatEventInternal::Message(m) = event.event {
+            if let Some(thread) = m.thread_summary {
+                self.threads.remove(&m.message_index);
+                result.thread = Some(ExpiredThread {
+                    root_message_index: m.message_index,
+                    followers: thread.followers,
+                });
+            }
+            result.files = m.content.blob_references();
+            if let MessageContentInternal::Prize(mut p) = m.content {
+                result.final_prize_payments = p.final_payments(m.sender, now * 1_000_000);
+            }
+        }
+
+        Some(result)
     }
 
     pub fn main_events_reader(&self) -> ChatEventsListReader<'_> {
@@ -2310,30 +2353,29 @@ impl ChatEvents {
     }
 
     fn expiry_date(&self, event: &ChatEventInternal, is_thread_event: bool, now: TimestampMillis) -> Option<TimestampMillis> {
-        if let Some(ttl) = self.events_ttl.value {
-            if is_thread_event
-                || matches!(
-                    event,
-                    ChatEventInternal::DirectChatCreated(_)
-                        | ChatEventInternal::GroupChatCreated(_)
-                        | ChatEventInternal::GroupNameChanged(_)
-                        | ChatEventInternal::GroupDescriptionChanged(_)
-                        | ChatEventInternal::GroupRulesChanged(_)
-                        | ChatEventInternal::AvatarChanged(_)
-                        | ChatEventInternal::GroupVisibilityChanged(_)
-                        | ChatEventInternal::GroupGateUpdated(_)
-                        | ChatEventInternal::ChatFrozen(_)
-                        | ChatEventInternal::ChatUnfrozen(_)
-                        | ChatEventInternal::EventsTimeToLiveUpdated(_)
-                )
-            {
-                None
-            } else {
-                Some(now + ttl)
-            }
+        if !is_thread_event && let Some(ttl) = self.events_ttl.value {
+            if self.can_delete_event(event) { Some(now + ttl) } else { None }
         } else {
             None
         }
+    }
+
+    fn can_delete_event(&self, event: &ChatEventInternal) -> bool {
+        !matches!(
+            event,
+            ChatEventInternal::DirectChatCreated(_)
+                | ChatEventInternal::GroupChatCreated(_)
+                | ChatEventInternal::GroupNameChanged(_)
+                | ChatEventInternal::GroupDescriptionChanged(_)
+                | ChatEventInternal::GroupRulesChanged(_)
+                | ChatEventInternal::AvatarChanged(_)
+                | ChatEventInternal::GroupVisibilityChanged(_)
+                | ChatEventInternal::GroupGateUpdated(_)
+                | ChatEventInternal::ChatFrozen(_)
+                | ChatEventInternal::ChatUnfrozen(_)
+                | ChatEventInternal::EventsTimeToLiveUpdated(_)
+                | ChatEventInternal::HistoryDeleted(_)
+        )
     }
 
     fn update_event<F: FnOnce(&mut EventWrapperInternal<ChatEventInternal>) -> Result<T, UpdateEventError<E>>, T, E>(
@@ -2571,13 +2613,39 @@ pub struct ReservePrizeSuccess {
 }
 
 #[derive(Default)]
-pub struct RemoveExpiredEventsResult {
+pub struct RemoveEventsResult {
     pub events: Vec<EventIndex>,
     pub threads: Vec<ExpiredThread>,
     pub files: Vec<BlobReference>,
     pub final_prize_payments: Vec<PendingCryptoTransaction>,
 }
 
+impl RemoveEventsResult {
+    pub fn merge_result(&mut self, event_index: EventIndex, result: RemoveEventResult) {
+        self.events.push(event_index);
+        if let Some(thread) = result.thread {
+            self.threads.push(thread);
+        }
+        self.files.extend(result.files);
+        self.final_prize_payments.extend(result.final_prize_payments);
+    }
+
+    pub fn merge(&mut self, results: RemoveEventsResult) {
+        self.events.extend(results.events);
+        self.threads.extend(results.threads);
+        self.files.extend(results.files);
+        self.final_prize_payments.extend(results.final_prize_payments);
+    }
+}
+
+#[derive(Default)]
+pub struct RemoveEventResult {
+    pub thread: Option<ExpiredThread>,
+    pub files: Vec<BlobReference>,
+    pub final_prize_payments: Vec<PendingCryptoTransaction>,
+}
+
+#[derive(Clone, Debug)]
 pub struct ExpiredThread {
     pub root_message_index: MessageIndex,
     pub followers: BTreeSet<UserId>,

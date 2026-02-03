@@ -35,6 +35,7 @@ fn main() {
     generate_ts_method!(group, convert_into_community);
     generate_ts_method!(group, decline_invitation);
     generate_ts_method!(group, delete_messages);
+    generate_ts_method!(group, delete_history);
     generate_ts_method!(group, delete_webhook);
     generate_ts_method!(group, disable_invite_code);
     generate_ts_method!(group, edit_message_v2);
