@@ -91,6 +91,7 @@ export function nullUser(username: string): UserSummary {
         maxStreak: 0,
         isUniquePerson: false,
         totalChitEarned: 0,
+        hideOnlineStatus: false,
     };
 }
 
@@ -115,7 +116,11 @@ export function userAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T): 
     return dataContent?.blobUrl ?? "/assets/unknownUserAvatar.svg";
 }
 
-export function missingUserIds(userLookup: UserLookup, webhookUserIds: Set<string>, userIds: Iterable<string>): string[] {
+export function missingUserIds(
+    userLookup: UserLookup,
+    webhookUserIds: Set<string>,
+    userIds: Iterable<string>,
+): string[] {
     const missing: string[] = [];
     for (const userId of userIds) {
         if (!userLookup.has(userId) && !webhookUserIds.has(userId)) {

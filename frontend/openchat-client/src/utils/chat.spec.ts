@@ -104,6 +104,7 @@ function createUser(userId: string, username: string): UserSummary {
         maxStreak: 0,
         isUniquePerson: false,
         totalChitEarned: 0,
+        hideOnlineStatus: false,
     };
 }
 

@@ -1027,6 +1027,7 @@ export class OpenChat {
                 user.blobReference?.blobId ?? undefined,
             ),
             isUniquePerson: user.isUniquePerson,
+            hideOnlineStatus: user.hideOnlineStatus,
         });
     }
 

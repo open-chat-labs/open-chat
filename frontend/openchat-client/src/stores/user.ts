@@ -29,6 +29,7 @@ export const airdropBotUser: UserSummary = {
     maxStreak: 0,
     isUniquePerson: false,
     totalChitEarned: 0,
+    hideOnlineStatus: false,
 };
 
 export const videoCallBotUser: UserSummary = {
@@ -45,6 +46,7 @@ export const videoCallBotUser: UserSummary = {
     maxStreak: 0,
     isUniquePerson: false,
     totalChitEarned: 0,
+    hideOnlineStatus: false,
 };
 
 export const openChatBotUser: UserSummary = {
@@ -61,6 +63,7 @@ export const openChatBotUser: UserSummary = {
     maxStreak: 0,
     isUniquePerson: false,
     totalChitEarned: 0,
+    hideOnlineStatus: false,
 };
 
 export const anonymousUserSummary: UserSummary = {
@@ -77,9 +80,9 @@ export const anonymousUserSummary: UserSummary = {
     maxStreak: 0,
     isUniquePerson: false,
     totalChitEarned: 0,
+    hideOnlineStatus: false,
 };
 
- 
 export const PROPOSALS_BOT_USERNAME = "ProposalsBot";
 export const PROPOSALS_BOT_AVATAR_URL = "/assets/proposal-robot.svg";
 
@@ -98,6 +101,7 @@ export function proposalsBotUser(userId: string): UserSummary {
         maxStreak: 0,
         isUniquePerson: false,
         totalChitEarned: 0,
+        hideOnlineStatus: false,
     };
 }
 
