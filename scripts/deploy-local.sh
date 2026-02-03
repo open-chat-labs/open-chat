@@ -10,11 +10,11 @@ SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
 # Create and install the NNS canisters
-if ! dfx extension install nns --version 0.7.0 >& /dev/null
+if ! dfx extension install nns --version 0.8.0 >& /dev/null
 then
-  echo "Updating the DFX NNS extension to version 0.7.0"
+  echo "Updating the DFX NNS extension to version 0.8.0"
   dfx extension uninstall nns
-  dfx extension install nns --version 0.7.0 >& /dev/null
+  dfx extension install nns --version 0.8.0 >& /dev/null
 fi
 
 TEST_ICP_ACCOUNT=$(dfx --identity $IDENTITY ledger account-id)
@@ -85,5 +85,5 @@ STORAGE_INDEX_CANISTER_ID=$(dfx canister id storage_index)
 dfx --identity $IDENTITY canister call storage_index add_bucket_canister '(record { })'
 
 ./scripts/deploy-test-chat-ledger.sh $IDENTITY
-./scripts/get-test-icp.sh "xsfk2-nx777-77774-qaala-cai" $IDENTITY
-./scripts/get-test-chat-tokens.sh "xsfk2-nx777-77774-qaala-cai" $IDENTITY
+./scripts/get-test-icp.sh "xvemo-ap777-77774-qaalq-cai" $IDENTITY
+./scripts/get-test-chat-tokens.sh "xvemo-ap777-77774-qaalq-cai" $IDENTITY
