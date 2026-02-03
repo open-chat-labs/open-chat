@@ -81,11 +81,19 @@
     type ConfirmActionEvent =
         | ConfirmLeaveEvent
         | ConfirmLeaveCommunityEvent
+        | ConfirmDeleteDirectChatEvent
         | ConfirmDeleteCommunityEvent;
 
     type ConfirmLeaveCommunityEvent = {
         kind: "leave_community";
         communityId: CommunityIdentifier;
+    };
+
+    type ConfirmDeleteDirectChatEvent = {
+        kind: "delete_direct_chat";
+        chatId: DirectChatIdentifier;
+        blockUser: boolean;
+        doubleCheck: { challenge: ResourceKey; response: ResourceKey };
     };
 
     type ConfirmLeaveEvent = {
@@ -118,6 +126,7 @@
             subscribe("chatWith", chatWith),
             subscribe("replyPrivatelyTo", replyPrivatelyTo),
             subscribe("verifyHumanity", verifyHumanity),
+            subscribe("deleteDirectChat", onTriggerConfirm),
             subscribe("deleteCommunity", onTriggerConfirm),
             subscribe("leaveCommunity", onTriggerConfirm),
             subscribe("makeProposal", showMakeProposalModal),
@@ -249,6 +258,8 @@
         switch (confirmActionEvent.kind) {
             case "leave":
                 return i18nKey("confirmLeaveGroup", undefined, confirmActionEvent.level, true);
+            case "delete_direct_chat":
+                return i18nKey("confirmDeleteDirectChat", undefined, undefined, true);
             case "leave_community":
                 return i18nKey("communities.leaveMessage");
             case "delete_community":
@@ -272,6 +283,13 @@
         switch (confirmActionEvent.kind) {
             case "leave":
                 return leaveGroup(confirmActionEvent.chatId, confirmActionEvent.level);
+            case "delete_direct_chat":
+                return deleteDirectChat(
+                    confirmActionEvent.chatId,
+                    confirmActionEvent.blockUser,
+                ).then((_) => {
+                    setRightPanelHistory([]);
+                });
             case "leave_community":
                 return leaveCommunity(confirmActionEvent.communityId);
             case "delete_community":
@@ -279,6 +297,18 @@
             default:
                 return Promise.reject();
         }
+    }
+
+    function deleteDirectChat(chatId: DirectChatIdentifier, blockUser: boolean): Promise<void> {
+        page(routeForScope($chatListScopeStore));
+        return client.deleteDirectChat(chatId, blockUser).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast(
+                    i18nKey("deleteGroupFailure", undefined, "group", true),
+                );
+                page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
+            }
+        });
     }
 
     function deleteCommunity(id: CommunityIdentifier): Promise<void> {

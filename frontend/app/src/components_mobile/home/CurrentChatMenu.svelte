@@ -51,8 +51,13 @@
     let userId = $derived(
         selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "",
     );
+    let themIfDirectChat = $derived(userId ? $allUsersStore.get(userId) : undefined);
     let isBot = $derived($allUsersStore.get(userId)?.kind === "bot");
     let isSuspended = $derived($allUsersStore.get(userId)?.suspended ?? false);
+    let canDeleteDirectChat = $derived(
+        selectedChatSummary.kind === "direct_chat" &&
+            selectedChatSummary.id.userId !== OPENCHAT_BOT_USER_ID,
+    );
 
     function toggleMuteNotifications(
         mute: boolean | undefined,
@@ -173,6 +178,20 @@
                 }
             });
     }
+
+    function deleteDirectChat() {
+        if (selectedChatSummary.kind === "direct_chat" && themIfDirectChat !== undefined) {
+            publish("deleteDirectChat", {
+                kind: "delete_direct_chat",
+                chatId: selectedChatSummary.id,
+                blockUser: false,
+                doubleCheck: {
+                    challenge: i18nKey("typeGroupName", { name: themIfDirectChat.username }),
+                    response: i18nKey(themIfDirectChat.username),
+                },
+            });
+        }
+    }
 </script>
 
 <MenuItem onclick={searchChat}>
@@ -271,5 +290,10 @@
 {#if botIdToUninstall !== undefined}
     <MenuItem onclick={() => removeBot(botIdToUninstall)}>
         <Translatable resourceKey={i18nKey("bots.manage.remove")} />
+    </MenuItem>
+{/if}
+{#if canDeleteDirectChat}
+    <MenuItem warning onclick={deleteDirectChat}>
+        <Translatable resourceKey={i18nKey("deleteChat")} />
     </MenuItem>
 {/if}
