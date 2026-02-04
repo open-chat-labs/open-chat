@@ -152,7 +152,7 @@ jobs:
             - name: Build Android APK (Full)
               run: |
                   cargo tauri android build --verbose --target aarch64 armv7
-                  mv src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat-release.apk src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}_full.apk
+                  mv src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat-release.apk ./openchat_${{ env.VERSION }}_full.apk
               env:
                   # Ensure these are passed if needed, though the gradle file uses the debug fallback we set up
                   ANDROID_KEY_STORE_FILE: ${{ env.ANDROID_KEY_STORE_FILE }}
@@ -161,7 +161,7 @@ jobs:
             - name: Build Android APK (Store)
               run: |
                   cargo tauri android build --verbose --target aarch64 armv7
-                  mv src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat-release.apk src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}_store.apk
+                  mv src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat-release.apk ./openchat_${{ env.VERSION }}_store.apk
               env:
                   # Ensure these are passed if needed, though the gradle file uses the debug fallback we set up
                   ANDROID_KEY_STORE_FILE: ${{ env.ANDROID_KEY_STORE_FILE }}
@@ -172,8 +172,8 @@ jobs:
               with:
                   name: android-release-apks
                   path: |
-                      frontend/src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}_full.apk
-                      frontend/src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}_store.apk
+                      frontend/openchat_${{ env.VERSION }}_full.apk
+                      frontend/openchat_${{ env.VERSION }}_store.apk
                   if-no-files-found: error
 
             - name: Upload APKs to Release
@@ -181,5 +181,5 @@ jobs:
               uses: softprops/action-gh-release@v2
               with:
                   files: |
-                      frontend/src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}_full.apk
-                      frontend/src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}_store.apk
+                      frontend/openchat_${{ env.VERSION }}_full.apk
+                      frontend/openchat_${{ env.VERSION }}_store.apk
