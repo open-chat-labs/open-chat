@@ -1,5 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
+    import { disableCryptoPaymentsFeature } from "@src/utils/features";
     import { accessApprovalState } from "@src/utils/preview.svelte";
     import {
         Avatar,
@@ -37,6 +38,9 @@
         onClick: (g: LeafGate) => void;
     }
 
+    const restrictedMsg = i18nKey(
+        "Unfortunately access gates of this type cannot be met from the native app",
+    );
     let { gate, onClick, satisfied }: Props = $props();
     let token = $derived(client.getTokenDetailsForAccessGate(gate));
     let tokenState = $derived.by(() => {
@@ -63,8 +67,8 @@
     }
 </script>
 
-{#snippet booleanGate(Icon: any, title: string, subtitle?: string)}
-    <AccessGateBox {satisfied} satisfiable onClick={() => onClick(gate)}>
+{#snippet booleanGate(restricted: boolean, Icon: any, title: string, subtitle?: string)}
+    <AccessGateBox {satisfied} satisfiable onClick={restricted ? undefined : () => onClick(gate)}>
         <Row mainAxisAlignment={"center"} width={{ size: "2.5rem" }}>
             <Icon color={ColourVars.warning} size={"1.5rem"} />
         </Row>
@@ -73,8 +77,12 @@
                 <Translatable resourceKey={i18nKey(title)} />
             </Body>
             {#if subtitle !== undefined}
-                <Caption colour={"textSecondary"}>
-                    <Translatable resourceKey={i18nKey(subtitle)} />
+                <Caption colour={restricted ? "error" : "textSecondary"}>
+                    {#if restricted}
+                        <Translatable resourceKey={restrictedMsg} />
+                    {:else}
+                        <Translatable resourceKey={i18nKey(subtitle)} />
+                    {/if}
                 </Caption>
             {/if}
         </Column>
@@ -107,13 +115,8 @@
     onClick?: () => void,
     refresh?: () => void,
 )}
-    <MenuTrigger maskUI align={"end"} position={"bottom"} fill mobileMode={"longpress"}>
-        {#snippet menuItems()}
-            <MenuItem onclick={refresh}>
-                <Translatable resourceKey={i18nKey("Refresh balance")} />
-            </MenuItem>
-        {/snippet}
-        <AccessGateBox {satisfied} satisfiable={!insufficient} {onClick}>
+    {#if disableCryptoPaymentsFeature}
+        <AccessGateBox {satisfied} satisfiable={false}>
             <Avatar url={logo} />
 
             <Column width={"fill"}>
@@ -128,20 +131,47 @@
                         width={"hug"}>{label}</Body>
                 </Row>
                 <Caption colour={insufficient ? "error" : "textSecondary"}>
-                    {balance}
-                    {#if insufficient}
-                        {`/ Insufficient ${symbol}`}
-                    {/if}
+                    <Translatable resourceKey={restrictedMsg} />
                 </Caption>
             </Column>
-
-            <Row width={"hug"}>
-                <BodySmall colour={"textSecondary"}>
-                    {required}
-                </BodySmall>
-            </Row>
         </AccessGateBox>
-    </MenuTrigger>
+    {:else}
+        <MenuTrigger maskUI align={"end"} position={"bottom"} fill mobileMode={"longpress"}>
+            {#snippet menuItems()}
+                <MenuItem onclick={refresh}>
+                    <Translatable resourceKey={i18nKey("Refresh balance")} />
+                </MenuItem>
+            {/snippet}
+            <AccessGateBox {satisfied} satisfiable={!insufficient} {onClick}>
+                <Avatar url={logo} />
+
+                <Column width={"fill"}>
+                    <Row crossAxisAlignment={"center"} gap={"xs"}>
+                        <Body
+                            fontWeight={"bold"}
+                            colour={insufficient ? "textSecondary" : "primary"}
+                            width={"hug"}>{symbol}</Body>
+                        <Body
+                            fontWeight={"bold"}
+                            colour={insufficient ? "textSecondary" : "textPrimary"}
+                            width={"hug"}>{label}</Body>
+                    </Row>
+                    <Caption colour={insufficient ? "error" : "textSecondary"}>
+                        {balance}
+                        {#if insufficient}
+                            {`/ Insufficient ${symbol}`}
+                        {/if}
+                    </Caption>
+                </Column>
+
+                <Row width={"hug"}>
+                    <BodySmall colour={"textSecondary"}>
+                        {required}
+                    </BodySmall>
+                </Row>
+            </AccessGateBox>
+        </MenuTrigger>
+    {/if}
 {/snippet}
 
 {#if gate.kind !== "no_gate"}
@@ -191,18 +221,25 @@
         )}
     {:else if gate.kind === "lifetime_diamond_gate"}
         {@render booleanGate(
+            disableCryptoPaymentsFeature,
             Lifetime,
-            satisfied ? "Lifetime diamond membership" : "Get lifetime membership",
+            satisfied || disableCryptoPaymentsFeature
+                ? "Lifetime diamond membership"
+                : "Get lifetime membership",
             satisfied ? undefined : "You are currently not a member",
         )}
     {:else if gate.kind === "diamond_gate"}
         {@render booleanGate(
+            disableCryptoPaymentsFeature,
             Diamond,
-            satisfied ? "Diamond membership" : "Get diamond membership",
+            satisfied || disableCryptoPaymentsFeature
+                ? "Diamond membership"
+                : "Get diamond membership",
             satisfied ? undefined : "You are currently not a member",
         )}
     {:else if gate.kind === "unique_person_gate"}
         {@render booleanGate(
+            false,
             AccountCheck,
             satisfied ? "Unique personhood verified" : "Verify unique personhood",
             satisfied ? undefined : "You have not yet been verified",

@@ -1,5 +1,9 @@
 <script lang="ts">
-    import { disableCreatePrizeFeature, disableSendCryptoFeature } from "@src/utils/features";
+    import {
+        disableCreatePrizeFeature,
+        disableP2PSwapFeature,
+        disableSendCryptoFeature,
+    } from "@src/utils/features";
     import { BigButton, Container, type SizeMode } from "component-lib";
     import {
         publish,
@@ -104,7 +108,7 @@
                 Poll
             </BigButton>
         {/if}
-        {#if permittedMessages.get("p2pSwap")}
+        {#if permittedMessages.get("p2pSwap") && !disableP2PSwapFeature}
             <BigButton {height} {width} onClick={onCreateP2PSwapMessage}>
                 {#snippet icon(color)}
                     <Swap {color} />

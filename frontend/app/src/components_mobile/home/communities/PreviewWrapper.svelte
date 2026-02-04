@@ -5,8 +5,11 @@
     import { identityStateStore } from "openchat-client";
     import { getContext, tick, type Snippet } from "svelte";
     import GateCheckFailed from "../access/AccessGateCheckFailed.svelte";
+
+    type ChildProps = [boolean, () => void, () => void, boolean];
+
     interface Props {
-        children?: Snippet<[boolean, () => void, () => void, boolean]>;
+        children?: Snippet<ChildProps>;
     }
 
     let { children }: Props = $props();

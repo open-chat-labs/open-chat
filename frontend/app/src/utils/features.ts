@@ -1,12 +1,26 @@
-/** A bunch of feature flags that we _might_ need for app store review */
+/** A bunch of feature flags that we _might_ need for app store review
+ * This really boils down to two things: disabling _payments_ or disabling the whole wallet
+ */
 
 export const disableWalletFeature = import.meta.env.OC_DISABLE_WALLET === "true";
 
-export const disableTipsFeature =
-    disableWalletFeature || import.meta.env.OC_DISABLE_TIPS === "true";
+export const disableCryptoPaymentsFeature =
+    disableWalletFeature || import.meta.env.OC_DISABLE_CRYPTO_PAYMENTS === "true";
 
-export const disableCreatePrizeFeature =
-    disableWalletFeature || import.meta.env.OC_DISABLE_CREATE_PRIZE === "true";
+export const disableTipsFeature = disableCryptoPaymentsFeature;
 
-export const disableSendCryptoFeature =
-    disableWalletFeature || import.meta.env.OC_DISABLE_SEND_CRYPTO === "true";
+export const disableCreatePrizeFeature = disableCryptoPaymentsFeature;
+
+export const disableClaimPrizeFeature = disableWalletFeature;
+
+export const disableSendCryptoFeature = disableCryptoPaymentsFeature;
+
+export const disableReceiveCryptoFeature = disableWalletFeature;
+
+export const disableP2PSwapFeature = disableCryptoPaymentsFeature;
+
+export const disableSwapFeature = disableCryptoPaymentsFeature;
+
+export const disableDiamondPaymentFeature = disableCryptoPaymentsFeature;
+
+export const disableMakeProposalFeature = disableCryptoPaymentsFeature;

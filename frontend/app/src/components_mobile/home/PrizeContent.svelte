@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
+    import { disableClaimPrizeFeature } from "@src/utils/features";
     import { Column, defaultBackgroundGradient, Row } from "component-lib";
     import {
         AuthProvider,
@@ -279,7 +280,7 @@
                 </div>
             {/if}
 
-            {#if !me}
+            {#if !me && !disableClaimPrizeFeature}
                 <Row>
                     <SecureButton
                         label={"Prize message clicked"}

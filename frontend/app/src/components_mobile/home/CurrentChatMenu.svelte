@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { disableMakeProposalFeature } from "@src/utils/features";
     import { MenuItem } from "component-lib";
     import {
         allUsersStore,
@@ -46,7 +47,8 @@
             : undefined,
     );
     let canMakeProposals = $derived(
-        client.tryGetNervousSystem(governanceCanisterId)?.submittingProposalsEnabled ?? false,
+        !disableMakeProposalFeature &&
+            (client.tryGetNervousSystem(governanceCanisterId)?.submittingProposalsEnabled ?? false),
     );
     // let canMakeProposals = $derived(true);
     let userId = $derived(

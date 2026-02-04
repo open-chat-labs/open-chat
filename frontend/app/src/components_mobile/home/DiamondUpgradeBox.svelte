@@ -1,5 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
+    import { disableDiamondPaymentFeature } from "@src/utils/features";
     import { publish, type ResourceKey } from "openchat-client";
     import DiamondOutline from "svelte-material-icons/DiamondOutline.svelte";
     import MulticolourText from "../MulticolourText.svelte";
@@ -16,12 +17,14 @@
     }: Props = $props();
 </script>
 
-<SparkleBox buttonText={i18nKey("Get Diamond")} onClick={() => publish("upgrade")}>
+<SparkleBox
+    buttonText={i18nKey(disableDiamondPaymentFeature ? "Explore Diamond" : "Get Diamond")}
+    onClick={() => publish("upgrade")}>
     {#snippet title()}
         <MulticolourText
             parts={[
                 {
-                    text: i18nKey("Upgrade to "),
+                    text: i18nKey(disableDiamondPaymentFeature ? "Explore " : "Upgrade to "),
                     colour: "primaryLight",
                 },
                 {
@@ -38,7 +41,7 @@
                     colour: "primaryLight",
                 },
                 {
-                    text: i18nKey("Join now!"),
+                    text: i18nKey(disableDiamondPaymentFeature ? "Explore!" : "Join now!"),
                     colour: "textPrimary",
                 },
             ]} />

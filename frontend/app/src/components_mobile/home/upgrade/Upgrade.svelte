@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { disableDiamondPaymentFeature } from "@src/utils/features";
     import {
         Body,
         Button,
@@ -23,14 +24,10 @@
     let showPayment = $state(false);
 
     onMount(() => {
-        if ($canExtendDiamondStore) {
+        if ($canExtendDiamondStore && !disableDiamondPaymentFeature) {
             showPayment = true;
         }
     });
-
-    function insideEnd(n: number) {
-        console.log("from end", n);
-    }
 
     function onCancel() {
         publish("closeModalPage");
@@ -44,7 +41,7 @@
 </script>
 
 <Container {onSwipe} background={ColourVars.background0} height={"fill"} direction={"vertical"}>
-    <Container onInsideEnd={insideEnd} direction={"vertical"} closeMenuOnScroll height={"fill"}>
+    <Container direction={"vertical"} closeMenuOnScroll height={"fill"}>
         <Column gap={"xl"} padding={["xxl", "xxl", "xxxl", "xxl"]} supplementalClass={"starfield"}>
             <Column width={{ size: "80%" }} gap={"sm"}>
                 <Diamond color={ColourVars.primary} size={"4.5rem"} />
@@ -103,14 +100,14 @@
         <div class="fade"></div>
     </Container>
     <Column gap={"lg"} crossAxisAlignment={"center"} padding={["lg", "xl"]}>
-        {#if !$isDiamondStore}
+        {#if !$isDiamondStore && !disableDiamondPaymentFeature}
             <Button onClick={() => (showPayment = true)}>
                 {#snippet icon(color)}
                     <Diamond {color} />
                 {/snippet}
 
                 <Translatable resourceKey={i18nKey("upgrade.button")} /></Button>
-        {:else if $canExtendDiamondStore}
+        {:else if $canExtendDiamondStore && !disableDiamondPaymentFeature}
             <Button onClick={() => (showPayment = true)}>
                 {#snippet icon(color)}
                     <Diamond {color} />

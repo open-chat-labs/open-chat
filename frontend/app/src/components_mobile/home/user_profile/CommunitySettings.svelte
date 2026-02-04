@@ -4,12 +4,11 @@
         Body,
         BodySmall,
         Chip,
-        CommonButton,
-        Container,
-        Option,
-        Select,
         Column,
+        CommonButton,
+        Option,
         Row,
+        Select,
     } from "component-lib";
     import {
         type CommunitySummary,
@@ -132,7 +131,7 @@
                     {community.name}
                 {/snippet}
                 {#snippet selectOptions(onSelect)}
-                    <Column padding={"lg"} direction={"vertical"}>
+                    <Column padding={"lg"}>
                         {#each $sortedCommunitiesStore.filter((s) => s.membership?.role !== ROLE_NONE) as community (community.id.communityId)}
                             <Option
                                 value={community}

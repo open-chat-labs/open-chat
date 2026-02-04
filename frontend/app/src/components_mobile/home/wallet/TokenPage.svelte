@@ -1,6 +1,10 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { disableSendCryptoFeature } from "@src/utils/features";
+    import {
+        disableReceiveCryptoFeature,
+        disableSendCryptoFeature,
+        disableSwapFeature,
+    } from "@src/utils/features";
     import { ColourVars, CommonButton, Container, MenuItem } from "component-lib";
     import { publish, swappableTokensStore } from "openchat-client";
     import ArrowLeftBoldCircle from "svelte-material-icons/ArrowLeftBoldCircle.svelte";
@@ -59,10 +63,12 @@
             mainAxisAlignment={"spaceAround"}
             borderWidth={"thick"}
             borderColour={ColourVars.primary}>
-            {@const swapDisabled = !$swappableTokensStore.has(tokenState.ledger)}
+            {@const swapDisabled =
+                !$swappableTokensStore.has(tokenState.ledger) || disableSwapFeature}
             <CommonButton
                 onClick={() => publish("receiveToken", tokenState)}
                 mode={"active"}
+                disabled={disableReceiveCryptoFeature}
                 size={"small_text"}>
                 {#snippet icon(color, size)}
                     <TrayArrowDown {color} {size} />
@@ -84,7 +90,7 @@
             <CommonButton
                 disabled={swapDisabled}
                 onClick={() => publish("swapToken", tokenState)}
-                mode={swapDisabled ? "default" : "active"}
+                mode={"active"}
                 size={"small_text"}>
                 {#snippet icon(color, size)}
                     <SwapVertical {color} {size} />
