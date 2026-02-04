@@ -46,6 +46,8 @@ export OC_ONESEC_FORWARDER_CANISTER="${OC_ONESEC_FORWARDER_CANISTER:-this-is-a-f
 export OC_ONESEC_MINTER_CANISTER="${OC_ONESEC_MINTER_CANISTER:-this-is-a-fake-canister-id}"
 export OC_BASE_ORIGIN=https://oc.app
 
+echo "DEBUG: OC_DISABLE_WALLET is set to: '$OC_DISABLE_WALLET'"
+
 npx rollup -c
 
 cp -r ./public/* ./build
