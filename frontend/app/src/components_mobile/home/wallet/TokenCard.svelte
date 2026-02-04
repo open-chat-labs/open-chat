@@ -40,6 +40,7 @@
             align={"end"}
             width={"hug"}
             colour={"primary"}
-            fontWeight={"bold"}>{tokenState.formattedConvertedValue}</BodySmall>
+            fontWeight={"bold"}>
+            ≈ {tokenState.formattedConvertedValue}</BodySmall>
     </Container>
 </Container>

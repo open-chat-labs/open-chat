@@ -6,7 +6,9 @@
         Caption,
         ColourVars,
         CommonButton,
+        CommonButton2,
         Container,
+        Column,
         Switch,
     } from "component-lib";
     import {
@@ -282,7 +284,7 @@
     <Container
         {onClick}
         background={ColourVars.textTertiary}
-        height={{ size: "3rem" }}
+        height={{ size: "3.5rem" }}
         padding={["xs", "md"]}
         borderRadius={"circle"}
         gap={"sm"}
@@ -296,203 +298,207 @@
                 </Body>
             </Container>
         {:else}
-            <Body colour={"textPlaceholder"}>
-                <Translatable resourceKey={i18nKey("Choose token...")} />
-            </Body>
+            <Container padding={["zero", "zero", "zero", "sm"]}>
+                <Body colour="textPlaceholder">
+                    <Translatable resourceKey={i18nKey("Choose token...")} />
+                </Body>
+            </Container>
         {/if}
-        <div class="icon">
-            <ChevronDown color={"var(--text-placeholder)"} size="1.5rem" />
-        </div>
+        <ChevronDown color={"var(--text-placeholder)"} size="1.5rem" />
     </Container>
 {/snippet}
 
+{#snippet quoteView()}
+    <Container
+        background={ColourVars.background1}
+        gap={"xl"}
+        direction={"vertical"}
+        borderRadius={"lg"}
+        padding={["xl", "lg"]}>
+        <Container direction={"vertical"} gap={"md"} crossAxisAlignment={"center"}>
+            {@render selectedToken(selectFrom, inToken.token)}
+            <Container
+                supplementalClass={"swap_down_arrow"}
+                width={{ size: "2.5rem" }}
+                borderRadius={"circle"}
+                background={ColourVars.background1}
+                mainAxisAlignment={"center"}
+                crossAxisAlignment={"center"}>
+                <ArrowDown size={"1.5rem"} />
+            </Container>
+            {@render selectedToken(selectTo, outToken?.token)}
+        </Container>
+
+        <TokenInput
+            balance={inToken.cryptoBalance}
+            ledger={inToken.ledger}
+            minAmount={inToken.minAmount}
+            disabled={busy}
+            error={!validAmount}
+            bind:valid={validAmount}
+            bind:amount={inToken.draftAmount}>
+            {#snippet subtext()}
+                {`Minimum amount ${inToken.minAmountLabel} ${inToken.symbol}`}
+            {/snippet}
+        </TokenInput>
+    </Container>
+{/snippet}
+
+{#snippet swapView()}
+    {#if outToken !== undefined && swapMessageValues !== undefined}
+        <TokenCard tokenState={outToken} />
+        <Container
+            gap={"lg"}
+            background={ColourVars.background1}
+            padding={"lg"}
+            borderRadius={"lg"}
+            direction={"vertical"}>
+            <Container mainAxisAlignment={"spaceBetween"}>
+                <BodySmall colour={"textSecondary"}>
+                    <Translatable resourceKey={i18nKey("You swap")} />
+                </BodySmall>
+                <Container crossAxisAlignment={"end"} width={"hug"} direction={"vertical"}>
+                    <Body align={"end"} width={"hug"} fontWeight={"bold"}>
+                        {`${swapMessageValues.amountIn} ${swapMessageValues.tokenIn}`}
+                    </Body>
+                    <BodySmall
+                        align={"end"}
+                        width={"hug"}
+                        fontWeight={"bold"}
+                        colour={"textSecondary"}>
+                        ≈ ${swapMessageValues.usdIn}
+                    </BodySmall>
+                </Container>
+            </Container>
+            <Container mainAxisAlignment={"spaceBetween"}>
+                <BodySmall colour={"textSecondary"}>
+                    <Translatable resourceKey={i18nKey("You receive (approx.)")} />
+                </BodySmall>
+                <Container crossAxisAlignment={"end"} width={"hug"} direction={"vertical"}>
+                    <Body align={"end"} width={"hug"} colour={"primary"} fontWeight={"bold"}>
+                        {`${swapMessageValues.amountOut} ${swapMessageValues.tokenOut}`}
+                    </Body>
+                    <BodySmall
+                        align={"end"}
+                        width={"hug"}
+                        fontWeight={"bold"}
+                        colour={"textSecondary"}>
+                        ≈ ${swapMessageValues.usdOut}
+                    </BodySmall>
+                </Container>
+            </Container>
+            <Container mainAxisAlignment={"spaceBetween"}>
+                <BodySmall colour={"textSecondary"}>
+                    <Translatable resourceKey={i18nKey("Exchange rate")} />
+                </BodySmall>
+                <Body width={"hug"} fontWeight={"bold"}>
+                    {`${swapMessageValues.rate} ${swapMessageValues.tokenOut} ~ 1 ${swapMessageValues.tokenIn}`}
+                </Body>
+            </Container>
+            <Container mainAxisAlignment={"spaceBetween"}>
+                <BodySmall colour={"textSecondary"}>
+                    <Translatable resourceKey={i18nKey("Quote provider")} />
+                </BodySmall>
+                <Body width={"hug"} fontWeight={"bold"}>
+                    {`${swapMessageValues.dex}`}
+                </Body>
+            </Container>
+        </Container>
+
+        {#if warnValueDropped || warnValueUnknown}
+            <Container
+                gap={"md"}
+                background={ColourVars.background1}
+                padding={"lg"}
+                borderRadius={"lg"}
+                direction={"vertical"}>
+                <Container crossAxisAlignment={"center"} gap={"sm"}>
+                    <Alert color={ColourVars.warning} />
+                    <Body fontWeight={"bold"} colour={"warning"}>
+                        <Translatable resourceKey={i18nKey("Low value warning")} />
+                    </Body>
+                </Container>
+                <Body colour={"textSecondary"}>
+                    {#if warnValueDropped}
+                        <Translatable
+                            resourceKey={i18nKey(
+                                "tokenSwap.warningValueDropped",
+                                swapMessageValues,
+                            )} />
+                    {:else}
+                        <Translatable
+                            resourceKey={i18nKey(
+                                "tokenSwap.warningValueUnknown",
+                                swapMessageValues,
+                            )} />
+                    {/if}
+                </Body>
+                <Switch reverse bind:checked={userAcceptedWarning}>
+                    <Translatable resourceKey={i18nKey("tokenSwap.confirmUnderstanding")} />
+                </Switch>
+            </Container>
+        {/if}
+
+        <Container
+            gap={"md"}
+            background={ColourVars.background1}
+            padding={"lg"}
+            borderRadius={"lg"}
+            direction={"vertical"}>
+            <Container crossAxisAlignment={"center"} gap={"sm"}>
+                <Info color={ColourVars.secondary} />
+                <Body fontWeight={"bold"} colour={"secondary"}>
+                    <Translatable resourceKey={i18nKey("Swap success limit")} />
+                </Body>
+            </Container>
+            <Body colour={"textSecondary"}>
+                <Translatable
+                    resourceKey={i18nKey("tokenSwap.proceedWithSwap", swapMessageValues)} />
+            </Body>
+        </Container>
+    {/if}
+{/snippet}
+
 <SlidingPageContent title={i18nKey("Swap tokens")}>
-    <Container height={"fill"} gap={"lg"} padding={"xl"} direction={"vertical"}>
-        <Container gap={"md"} direction={"vertical"} padding={"md"}>
+    <Container height={"fill"} gap={"xl"} padding={["xl", "lg", "huge"]} direction={"vertical"}>
+        <!-- Title and description -->
+        <Container gap={"md"} direction={"vertical"} padding={["zero", "sm"]}>
             <Body fontWeight={"bold"}>
                 <Translatable resourceKey={i18nKey(`Swap ${inToken.symbol}`)} />
             </Body>
-
-            <BodySmall colour={"textSecondary"}>
+            <Body colour={"textSecondary"}>
                 <Translatable
                     resourceKey={i18nKey(
                         "Provide values first to obtain our best quote from DEX partners. If you accept the quote your tokens are securely sent, exchanged for the selected token, and the swapped tokens are automatically returned to your wallet.",
                     )} />
-            </BodySmall>
+            </Body>
         </Container>
 
-        <TokenCard tokenState={inToken} />
+        <!-- Content -->
+        <Column gap="sm">
+            <TokenCard tokenState={inToken} />
 
-        {#if initialized}
-            {#if swapState === "quote"}
-                <Container
-                    background={ColourVars.background1}
-                    gap={"xl"}
-                    direction={"vertical"}
-                    borderRadius={"lg"}
-                    padding={["xl", "lg"]}>
-                    <Container direction={"vertical"} gap={"md"} crossAxisAlignment={"center"}>
-                        {@render selectedToken(selectFrom, inToken.token)}
-                        <Container
-                            supplementalClass={"swap_down_arrow"}
-                            width={{ size: "3rem" }}
-                            height={{ size: "3rem" }}
-                            borderRadius={"circle"}
-                            background={ColourVars.background1}
-                            mainAxisAlignment={"center"}
-                            crossAxisAlignment={"center"}>
-                            <ArrowDown size={"1.5rem"} />
-                        </Container>
-                        {@render selectedToken(selectTo, outToken?.token)}
-                    </Container>
-
-                    <TokenInput
-                        balance={inToken.cryptoBalance}
-                        ledger={inToken.ledger}
-                        minAmount={inToken.minAmount}
-                        disabled={busy}
-                        error={!validAmount}
-                        bind:valid={validAmount}
-                        bind:amount={inToken.draftAmount}>
-                        {#snippet subtext()}
-                            {`Minimum amount ${inToken.minAmountLabel} ${inToken.symbol}`}
-                        {/snippet}
-                        {#snippet icon()}
-                            <Container padding={["zero", "xs"]} width={"hug"}>
-                                <Avatar url={inToken.logo} size={"sm"} />
-                            </Container>
-                        {/snippet}
-                    </TokenInput>
-                </Container>
-            {/if}
-
-            {#if swapState === "swap" && outToken !== undefined && swapMessageValues !== undefined}
-                <TokenCard tokenState={outToken} />
-
-                <Container
-                    gap={"lg"}
-                    background={ColourVars.background1}
-                    padding={"lg"}
-                    borderRadius={"lg"}
-                    direction={"vertical"}>
-                    <Container mainAxisAlignment={"spaceBetween"}>
-                        <BodySmall colour={"textSecondary"}>
-                            <Translatable resourceKey={i18nKey("You swap")} />
-                        </BodySmall>
-                        <Container crossAxisAlignment={"end"} width={"hug"} direction={"vertical"}>
-                            <Body align={"end"} width={"hug"} fontWeight={"bold"}>
-                                {`${swapMessageValues.amountIn} ${swapMessageValues.tokenIn}`}
-                            </Body>
-                            <Caption
-                                align={"end"}
-                                width={"hug"}
-                                fontWeight={"bold"}
-                                colour={"textSecondary"}>
-                                ${swapMessageValues.usdIn}
-                            </Caption>
-                        </Container>
-                    </Container>
-                    <Container mainAxisAlignment={"spaceBetween"}>
-                        <BodySmall colour={"textSecondary"}>
-                            <Translatable resourceKey={i18nKey("You receive (approx.)")} />
-                        </BodySmall>
-                        <Container crossAxisAlignment={"end"} width={"hug"} direction={"vertical"}>
-                            <Body
-                                align={"end"}
-                                width={"hug"}
-                                colour={"primary"}
-                                fontWeight={"bold"}>
-                                {`${swapMessageValues.amountOut} ${swapMessageValues.tokenOut}`}
-                            </Body>
-                            <Caption
-                                align={"end"}
-                                width={"hug"}
-                                fontWeight={"bold"}
-                                colour={"textSecondary"}>
-                                ${swapMessageValues.usdOut}
-                            </Caption>
-                        </Container>
-                    </Container>
-                    <Container mainAxisAlignment={"spaceBetween"}>
-                        <BodySmall colour={"textSecondary"}>
-                            <Translatable resourceKey={i18nKey("Exchange rate")} />
-                        </BodySmall>
-                        <Body width={"hug"} fontWeight={"bold"}>
-                            {`${swapMessageValues.rate} ${swapMessageValues.tokenOut} ~ 1 ${swapMessageValues.tokenIn}`}
-                        </Body>
-                    </Container>
-                    <Container mainAxisAlignment={"spaceBetween"}>
-                        <BodySmall colour={"textSecondary"}>
-                            <Translatable resourceKey={i18nKey("Quote provider")} />
-                        </BodySmall>
-                        <Body width={"hug"} fontWeight={"bold"}>
-                            {`${swapMessageValues.dex}`}
-                        </Body>
-                    </Container>
-                </Container>
-
-                {#if warnValueDropped || warnValueUnknown}
-                    <Container
-                        gap={"md"}
-                        background={ColourVars.background1}
-                        padding={"lg"}
-                        borderRadius={"lg"}
-                        direction={"vertical"}>
-                        <Container crossAxisAlignment={"center"} gap={"sm"}>
-                            <Alert color={ColourVars.warning} />
-                            <Body fontWeight={"bold"} colour={"warning"}>
-                                <Translatable resourceKey={i18nKey("Low value warning")} />
-                            </Body>
-                        </Container>
-                        <Body colour={"textSecondary"}>
-                            {#if warnValueDropped}
-                                <Translatable
-                                    resourceKey={i18nKey(
-                                        "tokenSwap.warningValueDropped",
-                                        swapMessageValues,
-                                    )} />
-                            {:else}
-                                <Translatable
-                                    resourceKey={i18nKey(
-                                        "tokenSwap.warningValueUnknown",
-                                        swapMessageValues,
-                                    )} />
-                            {/if}
-                        </Body>
-                        <Switch reverse bind:checked={userAcceptedWarning}>
-                            <Translatable resourceKey={i18nKey("tokenSwap.confirmUnderstanding")} />
-                        </Switch>
-                    </Container>
+            {#if initialized}
+                {#if swapState === "quote"}
+                    {@render quoteView()}
                 {/if}
 
-                <Container
-                    gap={"md"}
-                    background={ColourVars.background1}
-                    padding={"lg"}
-                    borderRadius={"lg"}
-                    direction={"vertical"}>
-                    <Container crossAxisAlignment={"center"} gap={"sm"}>
-                        <Info color={ColourVars.secondary} />
-                        <Body fontWeight={"bold"} colour={"secondary"}>
-                            <Translatable resourceKey={i18nKey("Swap success limit")} />
-                        </Body>
-                    </Container>
-                    <Body colour={"textSecondary"}>
-                        <Translatable
-                            resourceKey={i18nKey("tokenSwap.proceedWithSwap", swapMessageValues)} />
-                    </Body>
-                </Container>
-            {/if}
-        {/if}
-        {#if error !== undefined || pinNumberError !== undefined}
-            <ErrorMessage>
-                {#if pinNumberError !== undefined}
-                    <Translatable resourceKey={pinNumberError} />
-                {:else}
-                    {error}
+                {#if swapState === "swap"}
+                    {@render swapView()}
                 {/if}
-            </ErrorMessage>
-        {/if}
+            {/if}
+            {#if error !== undefined || pinNumberError !== undefined}
+                <ErrorMessage>
+                    {#if pinNumberError !== undefined}
+                        <Translatable resourceKey={pinNumberError} />
+                    {:else}
+                        {error}
+                    {/if}
+                </ErrorMessage>
+            {/if}
+        </Column>
+
+        <!-- Buttons -->
         <Container
             crossAxisAlignment={"end"}
             mainAxisAlignment={swapState === "quote" ? "end" : "spaceBetween"}>
@@ -504,12 +510,12 @@
                     <Translatable resourceKey={i18nKey("cancel")} />
                 </CommonButton>
             {/if}
-            <CommonButton
+            <CommonButton2
                 loading={busy}
                 onClick={onPrimaryClick}
                 disabled={busy || !valid}
-                mode={"active"}
-                size={"medium"}>
+                variant="primary"
+                mode="small">
                 {#snippet icon(color, size)}
                     {#if swapState === "swap"}
                         <Check {color} {size} />
@@ -522,7 +528,7 @@
                 {:else}
                     <Translatable resourceKey={i18nKey("Get swap quote")} />
                 {/if}
-            </CommonButton>
+            </CommonButton2>
         </Container>
     </Container>
 </SlidingPageContent>
@@ -542,9 +548,9 @@
 <style lang="scss">
     :global(.container.swap_down_arrow) {
         position: absolute;
-        width: 3rem;
-        height: 3rem;
-        transform: translateY(calc(50% + 0.3rem));
+        width: 2.5rem;
+        height: 2.5rem;
+        transform: translateY(calc(50% + 1.25rem));
         z-index: 1;
     }
 </style>

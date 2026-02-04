@@ -7,6 +7,7 @@
         type ColourVarKeys,
         type Padding,
         type SizeMode,
+        type BorderWidthSize,
     } from "component-lib";
     import { type Snippet } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
@@ -54,7 +55,7 @@
         filter: ColourVars.secondaryMuted,
         rounded: ColourVars.primary,
         default: ColourVars.textTertiary,
-        unselected: ColourVars.textTertiary,
+        unselected: ColourVars.background2,
     };
 
     const backgroundColours: Record<Mode, string> = {
@@ -63,6 +64,14 @@
         rounded: "transparent",
         default: "transparent",
         unselected: "transparent",
+    };
+
+    const borderWidth: Record<Mode, BorderWidthSize> = {
+        filled: "zero",
+        filter: "zero",
+        rounded: "thick",
+        default: "thick",
+        unselected: "thin",
     };
 
     const isRounded = ["rounded", "unselected"].indexOf(mode) > -1;
@@ -82,7 +91,7 @@
         crossAxisAlignment={"center"}
         borderColour={borderColours[mode]}
         borderRadius={isRounded ? "circle" : "md"}
-        borderWidth={"thick"}
+        borderWidth={borderWidth[mode]}
         padding={["xs", onRemove ? "md" : "lg", "xs", icon ? "md" : "lg"]}>
         {#if icon}
             <span class="icon">{@render icon(iconColours[mode])}</span>
