@@ -2,6 +2,9 @@ name: Android Release
 
 on:
     workflow_dispatch:
+    push:
+        branches:
+            - the_big_fork
     release:
         types: [published]
 
@@ -146,28 +149,37 @@ jobs:
                     exit 1
                   fi
 
-            - name: Build Android APK
-              run: cargo tauri android build --verbose --target aarch64 armv7
+            - name: Build Android APK (Full)
+              run: |
+                  cargo tauri android build --verbose --target aarch64 armv7
+                  mv src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat-release.apk src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}_full.apk
               env:
                   # Ensure these are passed if needed, though the gradle file uses the debug fallback we set up
                   ANDROID_KEY_STORE_FILE: ${{ env.ANDROID_KEY_STORE_FILE }}
+                  OC_DISABLE_WALLET: "false"
 
-            - name: Find APK
-              run: find . -name "*.apk"
-
-            - name: Rename APK
+            - name: Build Android APK (Store)
               run: |
-                  mv src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat-release.apk src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}.apk
+                  cargo tauri android build --verbose --target aarch64 armv7
+                  mv src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat-release.apk src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}_store.apk
+              env:
+                  # Ensure these are passed if needed, though the gradle file uses the debug fallback we set up
+                  ANDROID_KEY_STORE_FILE: ${{ env.ANDROID_KEY_STORE_FILE }}
+                  OC_DISABLE_WALLET: "true"
 
-            - name: Upload APK
+            - name: Upload APKs
               uses: actions/upload-artifact@v4
               with:
-                  name: android-release-apk
-                  path: frontend/src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}.apk
+                  name: android-release-apks
+                  path: |
+                      frontend/src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}_full.apk
+                      frontend/src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}_store.apk
                   if-no-files-found: error
 
-            - name: Upload APK to Release
+            - name: Upload APKs to Release
               if: github.event_name == 'release'
               uses: softprops/action-gh-release@v2
               with:
-                  files: frontend/src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}.apk
+                  files: |
+                      frontend/src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}_full.apk
+                      frontend/src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat_${{ env.VERSION }}_store.apk

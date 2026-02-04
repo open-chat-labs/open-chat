@@ -11,7 +11,8 @@
         "OC_PUBLIC_TRANSLATE_API_KEY",
         "OC_TENOR_APIKEY",
         "OC_CORS_APIKEY",
-        "OC_WEBSITE_VERSION"
+        "OC_WEBSITE_VERSION",
+        "OC_DISABLE_WALLET"
     ],
     "tasks": {
         "deploy:prod": {
