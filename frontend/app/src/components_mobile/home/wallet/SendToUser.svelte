@@ -7,7 +7,7 @@
         BodySmall,
         Button,
         ColourVars,
-        CommonButton,
+        CommonButton2,
         Container,
         Sheet,
         TextArea,
@@ -22,7 +22,7 @@
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import Chat from "svelte-material-icons/ChatPlusOutline.svelte";
+    import SendOutline from "svelte-material-icons/SendOutline.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import SelectUser from "../../SelectDirectUser.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -120,18 +120,26 @@
     {/snippet}
 </TextArea>
 
-<Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
-    <TransferFeesMessage
-        symbol={tokenState.symbol}
-        tokenDecimals={tokenState.decimals}
-        transferFees={tokenState.transferFees} />
+<!-- TODO deduplicate, same in SendToAddress.svelte -->
+<Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"} gap="lg">
+    <Container direction={"vertical"} padding={["zero", "xs"]}>
+        <TransferFeesMessage
+            symbol={tokenState.symbol}
+            tokenDecimals={tokenState.decimals}
+            transferFees={tokenState.transferFees} />
+    </Container>
 
-    <CommonButton onClick={send} loading={status === "sending"} disabled={!valid} mode={"active"}>
+    <CommonButton2
+        onClick={send}
+        loading={status === "sending"}
+        disabled={!valid}
+        variant="primary"
+        mode={"regular"}>
         {#snippet icon(color, size)}
-            <Chat {color} {size} />
+            <SendOutline {color} {size} />
         {/snippet}
-        <Translatable resourceKey={i18nKey("Send to user")} />
-    </CommonButton>
+        <Translatable resourceKey={i18nKey("Send")} />
+    </CommonButton2>
 </Container>
 
 {#if status === "sent" && selectedUser !== undefined}

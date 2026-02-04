@@ -1,5 +1,5 @@
 <script lang="ts" generics="T">
-    import { Body, Caption, ColourVars, Container, Sheet } from "component-lib";
+    import { Body, BodySmall, ColourVars, Container, Sheet } from "component-lib";
     import { type Snippet } from "svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
 
@@ -39,13 +39,13 @@
 <Container onClick={() => (popupVisible = true)} direction={"vertical"}>
     <Container
         background={ColourVars.textTertiary}
-        height={{ size: "3rem" }}
+        height={{ size: "3.5rem" }}
         padding={["xs", "xl"]}
         borderRadius={"circle"}
         gap={"sm"}
         crossAxisAlignment={"center"}>
         {#if selectedValue !== undefined && value !== undefined}
-            <Body colour={"textSecondary"}>
+            <Body colour={"textPrimary"}>
                 {@render selectedValue(value)}
             </Body>
         {:else}
@@ -61,9 +61,9 @@
     </Container>
     {#if subtext}
         <div class="subtext">
-            <Caption colour={error ? "error" : "textSecondary"}>
+            <BodySmall colour={error ? "error" : "textSecondary"}>
                 {@render subtext()}
-            </Caption>
+            </BodySmall>
         </div>
     {/if}
 </Container>

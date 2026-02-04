@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Caption, ColourVars, Container } from "component-lib";
+    import { BodySmall, ColourVars, Container } from "component-lib";
     import type { Snippet } from "svelte";
 
     interface Props {
@@ -61,9 +61,9 @@
     </Container>
     {#if subtext}
         <div class="subtext">
-            <Caption colour={error ? "error" : "textSecondary"}>
+            <BodySmall colour={error ? "error" : "textSecondary"}>
                 {@render subtext()}
-            </Caption>
+            </BodySmall>
         </div>
     {/if}
 </Container>
@@ -72,7 +72,7 @@
     textarea {
         all: unset;
         width: 100%;
-        color: var(--text-secondary);
+        color: var(--text-primary);
         font-size: var(--typo-body-sz);
         line-height: var(--typo-body-lh);
 

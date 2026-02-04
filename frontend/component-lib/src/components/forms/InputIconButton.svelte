@@ -30,8 +30,8 @@
     .input_icon_button {
         all: unset;
         display: flex;
-        width: 3rem;
-        height: 3rem;
+        width: 3.25rem;
+        height: 3.25rem;
         background-color: var(--background-1);
         border-radius: var(--rad-circle);
         justify-content: center;

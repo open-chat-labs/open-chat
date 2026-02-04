@@ -1,6 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { Container, Option, Search, Select, Subtitle } from "component-lib";
+    import { Container, Column, Option, Search, Select, Subtitle } from "component-lib";
     import {
         allUsersStore,
         compareChats,
@@ -54,36 +54,43 @@
         @{val.username}
     {/snippet}
     {#snippet selectOptions(onSelect)}
-        <Container
-            onClick={(e) => e?.stopPropagation()}
-            height={{ size: "100%" }}
-            supplementalClass={"language_options"}
-            padding={"lg"}
-            gap={"lg"}
-            direction={"vertical"}>
-            <Subtitle fontWeight={"bold"}>
-                <Translatable resourceKey={i18nKey("Select user")}></Translatable>
-            </Subtitle>
+        <Container onClick={(e) => e?.stopPropagation()} gap={"xxl"} direction={"vertical"}>
+            <!-- Title -->
+            <Column padding={["zero", "xxl"]}>
+                <Subtitle fontWeight={"bold"}>
+                    <Translatable resourceKey={i18nKey("Select user")}></Translatable>
+                </Subtitle>
+            </Column>
 
-            <Search
-                {searching}
-                id={"search_component"}
-                placeholder={$_("search")}
-                bind:value={searchTerm} />
+            <!-- Search and users -->
+            <Column gap="xs">
+                <Container padding={["zero", "lg"]}>
+                    <Search
+                        {searching}
+                        id={"search_component"}
+                        placeholder={$_("search")}
+                        bind:value={searchTerm} />
+                </Container>
 
-            <Container direction={"vertical"}>
-                {#each dms as user (user?.userId)}
-                    {#if user}
-                        <Option
-                            padding={["sm", "md", "sm", "sm"]}
-                            value={user}
-                            onClick={onSelect}
-                            selected={selected?.userId === user.userId}>
-                            {@render match(user)}
-                        </Option>
-                    {/if}
-                {/each}
-            </Container>
+                <Container
+                    direction={"vertical"}
+                    padding={["lg", "lg", "huge"]}
+                    gap="lg"
+                    overflow="auto"
+                    maxHeight="60vh">
+                    {#each dms as user (user?.userId)}
+                        {#if user}
+                            <Option
+                                padding={["sm", "md", "sm", "sm"]}
+                                value={user}
+                                onClick={onSelect}
+                                selected={selected?.userId === user.userId}>
+                                {@render match(user)}
+                            </Option>
+                        {/if}
+                    {/each}
+                </Container>
+            </Column>
         </Container>
     {/snippet}
 </Select>
