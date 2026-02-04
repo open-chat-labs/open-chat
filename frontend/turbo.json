@@ -10,7 +10,8 @@
         "OC_TRANSLATE_API_KEY",
         "OC_PUBLIC_TRANSLATE_API_KEY",
         "OC_TENOR_APIKEY",
-        "OC_CORS_APIKEY"
+        "OC_CORS_APIKEY",
+        "OC_WEBSITE_VERSION"
     ],
     "tasks": {
         "deploy:prod": {
