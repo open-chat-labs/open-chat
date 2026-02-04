@@ -4,7 +4,7 @@
         BodySmall,
         Button,
         ColourVars,
-        CommonButton,
+        CommonButton2,
         Container,
         Input,
         InputIconButton,
@@ -31,7 +31,7 @@
     import Account from "svelte-material-icons/AccountBoxOutline.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import QrcodeScan from "svelte-material-icons/QrcodeScan.svelte";
-    import Wallet from "svelte-material-icons/WalletOutline.svelte";
+    import SendOutline from "svelte-material-icons/SendOutline.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
     import { Debouncer } from "../../../utils/debouncer";
@@ -291,8 +291,9 @@
     <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
 {/if}
 
-<Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
-    <Container direction={"vertical"}>
+<!-- TODO deduplicate, same in SendToUser.svelte -->
+<Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"} gap="lg">
+    <Container direction={"vertical"} padding={["zero", "xs"]}>
         <TransferFeesMessage
             symbol={tokenState.symbol}
             tokenDecimals={tokenState.decimals}
@@ -300,12 +301,17 @@
             transferFees={tokenState.transferFees} />
     </Container>
 
-    <CommonButton onClick={send} loading={status === "sending"} disabled={!valid} mode={"active"}>
+    <CommonButton2
+        onClick={send}
+        loading={status === "sending"}
+        disabled={!valid}
+        variant="primary"
+        mode="regular">
         {#snippet icon(color, size)}
-            <Wallet {color} {size} />
+            <SendOutline {color} {size} />
         {/snippet}
-        <Translatable resourceKey={i18nKey("Send to address")} />
-    </CommonButton>
+        <Translatable resourceKey={i18nKey("Send")} />
+    </CommonButton2>
 </Container>
 
 {#if status === "sent"}

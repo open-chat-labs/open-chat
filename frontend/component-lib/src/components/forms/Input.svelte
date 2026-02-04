@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { BodySmall, Caption, ColourVars, Container, Row, type Padding } from "component-lib";
+    import { BodySmall, ColourVars, Container, Row, type Padding } from "component-lib";
     import { onMount, type Snippet } from "svelte";
 
     interface Props {
@@ -50,10 +50,10 @@
 </script>
 
 <Container direction={"vertical"} gap={"xs"}>
-    <Container mainAxisAlignment={"spaceBetween"} gap={"xs"}>
+    <Container mainAxisAlignment={"spaceBetween"} gap={"xs"} crossAxisAlignment="center">
         <Container
             background={ColourVars.textTertiary}
-            height={{ size: "3rem" }}
+            height={{ size: "3.5rem" }}
             {padding}
             borderRadius={"circle"}
             gap={"sm"}
@@ -96,9 +96,9 @@
     </Container>
     {#if subtext}
         <Row width={"hug"} gap={"xs"} padding={["zero", "xl"]}>
-            <Caption width={required ? "hug" : "fill"} colour={error ? "error" : "textSecondary"}>
+            <BodySmall width={required ? "hug" : "fill"} colour={error ? "error" : "textSecondary"}>
                 {@render subtext()}
-            </Caption>
+            </BodySmall>
             {#if required}
                 <BodySmall width={"hug"} colour={"error"}>*</BodySmall>
             {/if}
