@@ -2,7 +2,7 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { hideTokenBalances } from "@src/stores/settings";
     import { sum } from "@src/utils/math";
-    import { BodySmall, ColourVars, CommonButton2, Container, H1, Subtitle } from "component-lib";
+    import { ColourVars, Container, H1, IconButton, Subtitle, Row, Spinner } from "component-lib";
     import {
         type EnhancedTokenDetails,
         walletTokensSorted as accountsSorted,
@@ -12,6 +12,7 @@
     import Reload from "svelte-material-icons/Reload.svelte";
     import Translatable from "../../Translatable.svelte";
     import type { ConversionToken } from "./walletState.svelte";
+    import BalanceActions from "./BalanceActions.svelte";
 
     interface Props {
         selectedConversion: ConversionToken;
@@ -40,42 +41,48 @@
     let total = $derived(calculateTotal($accountsSorted, selectedConversion));
 </script>
 
-<Container padding={["md", "lg"]} crossAxisAlignment={"center"} direction={"vertical"} gap={"lg"}>
-    <!-- Balance -->
-    <Container crossAxisAlignment={"center"} direction={"vertical"} overflow="visible">
-        <BodySmall width={"hug"} fontWeight={"bold"} colour={"textSecondary"}>
+<Container padding={["md", "lg"]} crossAxisAlignment={"center"} direction={"vertical"} gap={"xl"}>
+    <Container crossAxisAlignment={"center"} direction={"vertical"} overflow="visible" gap="sm">
+        <Subtitle width={"hug"} fontWeight={"bold"} colour={"textSecondary"}>
             <Translatable resourceKey={i18nKey("Total balance")} />
-        </BodySmall>
-        <H1 blur={$hideTokenBalances} width={"hug"} fontWeight={"bold"}>
-            {selectedConversion === "usd" ? "$" : ""}
-            {total}
-        </H1>
-    </Container>
-    <!-- Buttons -->
-    <Container
-        mainAxisAlignment={"center"}
-        crossAxisAlignment={"center"}
-        padding={["sm", "zero"]}
-        borderColour={ColourVars.background2}
-        borderWidth="thick"
-        borderRadius="md">
-        <CommonButton2 onClick={onRefreshWallet} loading={refreshingWallet} width="fill">
-            {#snippet icon(color, size)}
-                <Reload {color} {size} />
-            {/snippet}
-            <Translatable resourceKey={i18nKey("Refresh wallet")} />
-        </CommonButton2>
-        <Subtitle width={"hug"} colour="textTertiary" fontWeight="bold">/</Subtitle>
-        <CommonButton2 onClick={hideTokenBalances.toggle} width="fill">
-            {#snippet icon(color, size)}
-                {#if $hideTokenBalances}
-                    <EyeOff {color} {size} />
+        </Subtitle>
+        <Row gap="md" overflow="visible">
+            <Row width="fill">
+                <div></div>
+            </Row>
+            <Row width="hug" overflow="visible">
+                <H1 blur={$hideTokenBalances} width={"hug"} fontWeight={"bold"}>
+                    {selectedConversion === "usd" ? "$" : ""}
+                    {total}
+                </H1>
+            </Row>
+            <Row width="fill" height="fill" crossAxisAlignment="center" gap="xs">
+                <IconButton size="md" onclick={hideTokenBalances.toggle}>
+                    {#snippet icon()}
+                        {#if $hideTokenBalances}
+                            <EyeOff color={ColourVars.textSecondary} />
+                        {:else}
+                            <Eye color={ColourVars.textSecondary} />
+                        {/if}
+                    {/snippet}
+                </IconButton>
+
+                {#if refreshingWallet}
+                    <Container width={{ size: "2.5rem" }} mainAxisAlignment="center">
+                        <Spinner
+                            size="1.25rem"
+                            backgroundColour={ColourVars.textTertiary}
+                            foregroundColour={ColourVars.textSecondary} />
+                    </Container>
                 {:else}
-                    <Eye {color} {size} />
+                    <IconButton size="md" onclick={onRefreshWallet}>
+                        {#snippet icon()}
+                            <Reload color={ColourVars.textSecondary} />
+                        {/snippet}
+                    </IconButton>
                 {/if}
-            {/snippet}
-            <Translatable
-                resourceKey={i18nKey($hideTokenBalances ? "Show balances" : "Hide balances")} />
-        </CommonButton2>
+            </Row>
+        </Row>
     </Container>
+    <BalanceActions {selectedConversion} />
 </Container>

@@ -5,7 +5,6 @@
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import Accounts from "./Accounts.svelte";
-    import BottomBar from "./BottomBar.svelte";
     import OverallBalance from "./OverallBalance.svelte";
     import TokenToggle from "./TokenToggle.svelte";
     import type { ConversionToken } from "./walletState.svelte";
@@ -63,5 +62,4 @@
         <OverallBalance {onRefreshWallet} refreshingWallet={refreshing} {selectedConversion} />
         <Accounts bind:selectedConversion />
     </Container>
-    <BottomBar {selectedConversion} />
 </Container>

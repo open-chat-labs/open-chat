@@ -5,7 +5,7 @@
         disableSendCryptoFeature,
         disableSwapFeature,
     } from "@src/utils/features";
-    import { BigButton, Container, type SizeMode } from "component-lib";
+    import { Container, ColourVars, CommonButton2, Subtitle } from "component-lib";
     import {
         publish,
         swappableTokensStore,
@@ -14,7 +14,6 @@
         type ResourceKey,
     } from "openchat-client";
     import type { Snippet } from "svelte";
-    import List from "svelte-material-icons/FormatListBulletedType.svelte";
     import SwapVertical from "svelte-material-icons/SwapVertical.svelte";
     import TrayArrowDown from "svelte-material-icons/TrayArrowDown.svelte";
     import TrayArrowUp from "svelte-material-icons/TrayArrowUp.svelte";
@@ -35,8 +34,6 @@
     }
 
     let { selectedConversion }: Props = $props();
-
-    const width: SizeMode = { size: "6rem" };
     let tokenSelector = $state<TokenSelectorParams>();
 
     function onSelect(ev: "receiveToken" | "sendToken" | "swapToken", token: EnhancedTokenDetails) {
@@ -97,35 +94,37 @@
         title={tokenSelector.title} />
 {/if}
 
-<Container gap={"sm"} padding={["xs", "sm", "sm", "sm"]}>
-    <BigButton {width} mode={"active"}>
-        {#snippet icon(color)}
-            <List {color} />
-        {/snippet}
-        <Translatable resourceKey={i18nKey("Overview")} />
-    </BigButton>
-    <BigButton
-        disabled={disableReceiveCryptoFeature}
-        icon={receiveIcon}
-        {width}
-        mode={"default"}
-        onClick={onReceive}>
-        <Translatable resourceKey={i18nKey("Receive")} />
-    </BigButton>
-    <BigButton
-        disabled={disableSendCryptoFeature}
-        icon={sendIcon}
-        {width}
-        mode={"default"}
-        onClick={onSend}>
-        <Translatable resourceKey={i18nKey("Send")} />
-    </BigButton>
-    <BigButton
-        disabled={disableSwapFeature}
-        icon={swapIcon}
-        {width}
-        mode={"default"}
-        onClick={onSwap}>
-        <Translatable resourceKey={i18nKey("Swap")} />
-    </BigButton>
-</Container>
+{#snippet slashSeparator()}
+    <Subtitle width={"hug"} colour="textTertiary" fontWeight="bold">/</Subtitle>
+{/snippet}
+
+{#if !disableReceiveCryptoFeature || !disableSendCryptoFeature || !disableSwapFeature}
+    <Container
+        mainAxisAlignment={"center"}
+        crossAxisAlignment={"center"}
+        padding={["sm", "zero"]}
+        borderColour={ColourVars.background2}
+        borderWidth="thick"
+        borderRadius="md">
+        {#if !disableReceiveCryptoFeature}
+            <!-- RECEIVE button -->
+            <CommonButton2 onClick={onReceive} width="fill" icon={receiveIcon}>
+                <Translatable resourceKey={i18nKey("Receive")} />
+            </CommonButton2>
+        {/if}
+        {#if !disableSendCryptoFeature}
+            {@render slashSeparator()}
+            <!-- SEND button -->
+            <CommonButton2 onClick={onSend} width="fill" icon={sendIcon}>
+                <Translatable resourceKey={i18nKey("Send")} />
+            </CommonButton2>
+        {/if}
+        {#if !disableSwapFeature}
+            {@render slashSeparator()}
+            <!-- SWAP button -->
+            <CommonButton2 onClick={onSwap} width="fill" icon={swapIcon}>
+                <Translatable resourceKey={i18nKey("Swap")} />
+            </CommonButton2>
+        {/if}
+    </Container>
+{/if}

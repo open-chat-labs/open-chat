@@ -47,7 +47,7 @@
 {/if}
 
 {#snippet header_item(key: string)}
-    <BodySmall colour="textSecondary" fontWeight="bold" width="hug">
+    <BodySmall colour="textTertiary" fontWeight="bold" width="hug">
         <Translatable resourceKey={i18nKey(`appWallet.header.${key}`)} />
     </BodySmall>
 {/snippet}
