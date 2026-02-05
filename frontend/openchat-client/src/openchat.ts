@@ -66,6 +66,7 @@ import {
     isSuccessfulEventsResponse,
     isTransfer,
     mergeCombinedUnreadCounts,
+    mergeEventStreamResponses,
     messageContextsEqual,
     parseBigInt,
     pinNumberFailureFromError,
@@ -500,7 +501,6 @@ import {
     isLapsed,
     isPreviewing,
     makeRtcConnections,
-    mergeEventStreamResponses,
     mergeSendMessageResponse,
     mergeServerEvents,
     messageIsReadByThem,
@@ -3541,6 +3541,7 @@ export class OpenChat {
     ): Promise<void> {
         const confirmedLoaded = eventIndexesLoaded(serverChat.id);
         const confirmedThreadLoaded = threadEventIndexesLoadedStore.value;
+        const chatId = serverChat.id;
         const selectedThreadRootMessageIndex = selectedThreadIdStore.value?.threadRootMessageIndex;
 
         // Partition the updated events into those that belong to the currently selected thread and those that don't
@@ -3549,7 +3550,7 @@ export class OpenChat {
                 if (e.threadRootMessageIndex !== undefined) {
                     if (
                         e.threadRootMessageIndex === selectedThreadRootMessageIndex &&
-                        chatIdentifiersEqual(serverChat.id, selectedChatIdStore.value) &&
+                        chatIdentifiersEqual(chatId, selectedChatIdStore.value) &&
                         indexIsInRanges(e.eventIndex, confirmedThreadLoaded)
                     ) {
                         thread.push(e.eventIndex);
@@ -3564,69 +3565,67 @@ export class OpenChat {
             [[], []] as [number[], number[]],
         );
 
-        const chatEventsPromise =
-            currentChatEvents.length === 0
-                ? Promise.resolve()
-                : (serverChat.kind === "direct_chat"
-                      ? this.#worker
-                            .stream({
-                                kind: "chatEventsByEventIndex",
-                                chatId: serverChat.them,
-                                eventIndexes: currentChatEvents,
-                                threadRootMessageIndex: undefined,
-                                latestKnownUpdate: serverChat.lastUpdated,
-                            })
-                            .toPromise()
-                            .catch(CommonResponses.failure)
-                      : this.#worker
-                            .stream({
-                                kind: "chatEventsByEventIndex",
-                                chatId: serverChat.id,
-                                eventIndexes: currentChatEvents,
-                                threadRootMessageIndex: undefined,
-                                latestKnownUpdate: serverChat.lastUpdated,
-                            })
-                            .toPromise()
-                            .catch(CommonResponses.failure)
-                  ).then((resp) => {
-                      if (isSuccessfulEventsResponse(resp)) {
-                          resp.events.forEach((e) => {
-                              if (
-                                  e.event.kind === "message" &&
-                                  e.event.content.kind === "video_call_content"
-                              ) {
-                                  publish("videoCallMessageUpdated", {
-                                      chatId: serverChat.id,
-                                      messageId: e.event.messageId,
-                                  });
-                              }
-                          });
-                      }
-                      return this.#handleEventsResponse(serverChat, undefined, resp);
-                  });
+        const eventStreams: [boolean, Stream<EventsResponse<ChatEvent>>][] = [];
 
-        const threadEventPromise =
-            currentThreadEvents.length === 0
-                ? Promise.resolve()
-                : this.#worker
-                      .stream({
+        if (currentChatEvents.length > 0) {
+            const stream =
+                serverChat.kind === "direct_chat"
+                    ? this.#worker.stream({
                           kind: "chatEventsByEventIndex",
-                          chatId: serverChat.id,
-                          eventIndexes: currentThreadEvents,
-                          threadRootMessageIndex: selectedThreadRootMessageIndex,
+                          chatId: serverChat.them,
+                          eventIndexes: currentChatEvents,
+                          threadRootMessageIndex: undefined,
                           latestKnownUpdate: serverChat.lastUpdated,
                       })
-                      .toPromise()
-                      .then((resp) =>
-                          this.#handleEventsResponse(
-                              serverChat,
-                              selectedThreadRootMessageIndex!,
-                              resp,
-                          ),
-                      )
-                      .catch(CommonResponses.failure);
+                    : this.#worker.stream({
+                          kind: "chatEventsByEventIndex",
+                          chatId: serverChat.id,
+                          eventIndexes: currentChatEvents,
+                          threadRootMessageIndex: undefined,
+                          latestKnownUpdate: serverChat.lastUpdated,
+                      });
+            eventStreams.push([false, stream]);
+        }
 
-        await Promise.all([chatEventsPromise, threadEventPromise]);
+        if (currentThreadEvents.length > 0) {
+            const stream = this.#worker.stream({
+                kind: "chatEventsByEventIndex",
+                chatId: serverChat.id,
+                eventIndexes: currentThreadEvents,
+                threadRootMessageIndex: selectedThreadRootMessageIndex,
+                latestKnownUpdate: serverChat.lastUpdated,
+            });
+            eventStreams.push([true, stream]);
+        }
+
+        const promises = eventStreams.map(([isThread, stream]) => {
+            stream
+                .aggregate(mergeEventStreamResponses, emptyEventsResponse())
+                .toPromise()
+                .then((resp) => {
+                    if (!isThread && isSuccessfulEventsResponse(resp)) {
+                        resp.events.forEach((e) => {
+                            if (
+                                e.event.kind === "message" &&
+                                e.event.content.kind === "video_call_content"
+                            ) {
+                                publish("videoCallMessageUpdated", {
+                                    chatId: serverChat.id,
+                                    messageId: e.event.messageId,
+                                });
+                            }
+                        });
+                    }
+                    return this.#handleEventsResponse(
+                        serverChat,
+                        isThread ? selectedThreadRootMessageIndex : undefined,
+                        resp,
+                    );
+                })
+                .catch(CommonResponses.failure);
+        });
+
+        await Promise.all(promises);
         return;
     }
 
