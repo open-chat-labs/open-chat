@@ -410,7 +410,6 @@ export function mergeEventStreamResponses<T extends ChatEvent>(
     return {
         events,
         expiredEventRanges: current.expiredEventRanges.concat(next.expiredEventRanges),
-        expiredMessageRanges: current.expiredMessageRanges.concat(next.expiredMessageRanges),
         latestEventIndex: next.latestEventIndex ?? current.latestEventIndex,
     };
 }
