@@ -26,3 +26,5 @@ tsBindings
 website_release.md
 frontend/app/src/stores/timeline.ts
 /Makefile
+claude.md
+GEMINI.md
