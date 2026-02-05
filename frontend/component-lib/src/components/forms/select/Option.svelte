@@ -1,7 +1,7 @@
 <script lang="ts" generics="T">
     import { Body, type ColourVarKeys, ColourVars, Container, type Padding } from "component-lib";
     import type { Snippet } from "svelte";
-    import Check from "svelte-material-icons/CheckboxMarkedOutline.svelte";
+    import Check from "svelte-material-icons/Check.svelte";
 
     let {
         children,

@@ -120,7 +120,7 @@
     input {
         all: unset;
         width: 100%;
-        color: var(--text-secondary);
+        color: var(--text-primary);
         font-size: var(--typo-body-sz);
         line-height: var(--typo-body-lh);
 

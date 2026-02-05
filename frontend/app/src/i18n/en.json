@@ -617,7 +617,7 @@
         "send": "Send",
         "sendFailed": "Failed to send {symbol}",
         "sendSucceeded": "Your {symbol} was successfully sent!",
-        "sendTarget": "enter an address to send to",
+        "sendTarget": "Enter an address to send to",
         "sendToken": "Send {symbol}",
         "shortBalanceLabel": "Balance",
         "shortRemainingBalanceLabel": "remaining balance",

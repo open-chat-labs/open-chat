@@ -57,7 +57,7 @@
     gap={"sm"}
     height={"fill"}
     direction={"vertical"}
-    padding={["zero", "sm"]}
+    padding={["zero", "sm", "huge"]}
     overflow="initial">
     <!-- Tokens header -->
     <!-- TODO stick headers to top when scrolling -->

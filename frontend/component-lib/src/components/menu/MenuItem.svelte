@@ -26,7 +26,7 @@
     }: MenuItemProps & { icon?: Snippet<[string, string]>; children?: Snippet } = $props();
 
     let iconColour = $derived(danger ? ColourVars.error : ColourVars.textPrimary);
-    let iconSize = "20px";
+    let iconSize = "24px";
 </script>
 
 {#if disabled}
@@ -71,7 +71,7 @@
         width: 100%;
         height: 3rem;
         align-items: center;
-        gap: var(--sp-sm);
+        gap: var(--sp-md);
         color: var(--text-primary);
         padding: var(--sp-md) var(--sp-lg);
 

@@ -3,7 +3,6 @@
         Avatar,
         Body,
         BodySmall,
-        Caption,
         ColourVars,
         CommonButton,
         CommonButton2,
@@ -510,12 +509,7 @@
                     <Translatable resourceKey={i18nKey("cancel")} />
                 </CommonButton>
             {/if}
-            <CommonButton2
-                loading={busy}
-                onClick={onPrimaryClick}
-                disabled={busy || !valid}
-                variant="primary"
-                mode="small">
+            <CommonButton2 loading={busy} onClick={onPrimaryClick} variant="primary" mode="small">
                 {#snippet icon(color, size)}
                     {#if swapState === "swap"}
                         <Check {color} {size} />
