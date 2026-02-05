@@ -50,8 +50,8 @@
     let confirming = $state(false);
     let showDetails = $state(false);
 
-    let fromDetails = $derived($cryptoLookup.get(content.token0.ledger)!);
-    let toDetails = $derived($cryptoLookup.get(content.token1.ledger)!);
+    let fromDetails = $derived($cryptoLookup.get(content.token0.ledger));
+    let toDetails = $derived($cryptoLookup.get(content.token1.ledger));
     let finished = $derived($now500 >= Number(content.expiresAt));
     let timeRemaining = $derived(
         finished
@@ -70,18 +70,22 @@
     let toAmount = $derived(client.formatTokens(content.token1Amount, content.token1.decimals));
     let buttonDisabled = $derived(content.status.kind !== "p2p_swap_open" || reply || pinned);
     let fromAmountInUsd = $derived(
-        calculateDollarAmount(
-            content.token0Amount,
-            $exchangeRatesLookup.get(fromDetails.symbol.toLowerCase())?.toUSD,
-            fromDetails.decimals,
-        ),
+        fromDetails
+            ? calculateDollarAmount(
+                  content.token0Amount,
+                  $exchangeRatesLookup.get(fromDetails.symbol.toLowerCase())?.toUSD,
+                  fromDetails.decimals,
+              )
+            : "0",
     );
     let toAmountInUsd = $derived(
-        calculateDollarAmount(
-            content.token1Amount,
-            $exchangeRatesLookup.get(toDetails.symbol.toLowerCase())?.toUSD,
-            toDetails.decimals,
-        ),
+        toDetails
+            ? calculateDollarAmount(
+                  content.token1Amount,
+                  $exchangeRatesLookup.get(toDetails.symbol.toLowerCase())?.toUSD,
+                  toDetails.decimals,
+              )
+            : "0",
     );
 
     type Labels = {
@@ -267,7 +271,10 @@
         {/if}
         <div class="coins" onclick={onSwapClick}>
             <div class="coin">
-                <SpinningToken logo={fromDetails.logo} spin={false} size="medium" />
+                <SpinningToken
+                    logo={fromDetails?.logo ?? "/assets/not_found.svg"}
+                    spin={false}
+                    size="medium" />
                 <div class="amount">
                     <div>{fromAmount} {content.token0.symbol}</div>
                     <div class="dollar">({fromAmountInUsd} USD)</div>
@@ -279,7 +286,10 @@
             </div>
 
             <div class="coin">
-                <SpinningToken logo={toDetails.logo} spin={false} size="medium" />
+                <SpinningToken
+                    logo={toDetails?.logo ?? "/assets/not_found.svg"}
+                    spin={false}
+                    size="medium" />
                 <div class="amount">
                     <div>{toAmount} {content.token1.symbol}</div>
                     <div class="dollar">({toAmountInUsd} USD)</div>
