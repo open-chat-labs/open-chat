@@ -15,8 +15,6 @@ import type {
     CryptocurrencyContent,
     CryptocurrencyDetails,
     CryptocurrencyTransfer,
-    EventsResponse,
-    EventsSuccessResult,
     EventWrapper,
     ExpiredEventsRange,
     GroupChatSummary,
@@ -58,7 +56,6 @@ import type {
 } from "openchat-shared";
 import {
     applyOptionUpdate,
-    assertSuccessfulEventsResponse,
     bigIntMax,
     chatIdentifiersEqual,
     defaultChatPermissions,
@@ -2190,27 +2187,4 @@ function latestEventAndMessageIndexesFromEvents(
     }
 
     return [eventIndex, messageIndex];
-}
-
-export function mergeEventStreamResponses<T extends ChatEvent>(
-    current: EventsSuccessResult<T>,
-    next: EventsResponse<T>,
-): EventsSuccessResult<T> {
-    assertSuccessfulEventsResponse(next);
-
-    const events = next.events;
-    const indexes = new Set(events.map((e) => e.index));
-    for (const event of current.events) {
-        if (!indexes.has(event.index)) {
-            indexes.add(event.index);
-            events.push(event);
-        }
-    }
-    events.sort((a, b) => b.index - a.index);
-
-    return {
-        events,
-        expiredEventRanges: current.expiredEventRanges.concat(next.expiredEventRanges),
-        latestEventIndex: next.latestEventIndex ?? current.latestEventIndex,
-    };
 }

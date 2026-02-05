@@ -30,6 +30,7 @@ generate_msgpack_update_call!(create_channel);
 generate_msgpack_update_call!(create_user_group);
 generate_msgpack_update_call!(delete_channel);
 generate_msgpack_update_call!(delete_messages);
+generate_msgpack_update_call!(delete_channel_history);
 generate_msgpack_update_call!(delete_user_groups);
 generate_msgpack_update_call!(edit_message);
 generate_msgpack_update_call!(enable_invite_code);
@@ -404,8 +405,8 @@ pub mod happy_path {
         );
 
         match response {
-            community_canister::events_by_index::Response::Success(result) => result,
-            response => panic!("'events_by_index' error: {response:?}"),
+            community_canister::events::Response::Success(result) => result,
+            response => panic!("'events' error: {response:?}"),
         }
     }
 
@@ -770,6 +771,26 @@ pub mod happy_path {
         match response {
             community_canister::webhook::Response::Success(result) => result.secret,
             response => panic!("'webhook' error: {response:?}"),
+        }
+    }
+
+    pub fn delete_channel_history(
+        env: &mut PocketIc,
+        sender: &User,
+        community_id: CommunityId,
+        channel_id: ChannelId,
+        before: TimestampMillis,
+    ) {
+        let response = super::delete_channel_history(
+            env,
+            sender.principal,
+            community_id.into(),
+            &community_canister::delete_channel_history::Args { channel_id, before },
+        );
+
+        match response {
+            community_canister::delete_channel_history::Response::Success => (),
+            response => panic!("'delete_history' error: {response:?}"),
         }
     }
 }

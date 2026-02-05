@@ -6,6 +6,7 @@ use crate::{RuntimeState, can_borrow_state, flush_pending_events, mutate_state, 
 use canister_timer_jobs::Job;
 use chat_events::{EndPollResult, MessageContentInternal};
 use constants::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
+use event_store_types::TimestampMillis;
 use group_chat_core::AddResult;
 use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
@@ -20,6 +21,7 @@ pub enum TimerJob {
     DeleteFileReferences(DeleteFileReferencesJob),
     EndPoll(EndPollJob),
     RemoveExpiredEvents(RemoveExpiredEventsJob),
+    RemoveOldEvents(RemoveOldEventsJob),
     FinalizeGroupImport(FinalizeGroupImportJob),
     ProcessGroupImportChannelMembers(ProcessGroupImportChannelMembersJob),
     MarkGroupImportComplete(MarkGroupImportCompleteJob),
@@ -53,6 +55,12 @@ pub struct EndPollJob {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct RemoveExpiredEventsJob;
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct RemoveOldEventsJob {
+    pub channel_id: ChannelId,
+    pub before: TimestampMillis,
+}
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct FinalizeGroupImportJob {
@@ -158,6 +166,7 @@ impl Job for TimerJob {
             TimerJob::DeleteFileReferences(job) => job.execute(),
             TimerJob::EndPoll(job) => job.execute(),
             TimerJob::RemoveExpiredEvents(job) => job.execute(),
+            TimerJob::RemoveOldEvents(job) => job.execute(),
             TimerJob::FinalizeGroupImport(job) => job.execute(),
             TimerJob::ProcessGroupImportChannelMembers(job) => job.execute(),
             TimerJob::MarkGroupImportComplete(job) => job.execute(),
@@ -281,6 +290,12 @@ impl Job for EndPollJob {
 impl Job for RemoveExpiredEventsJob {
     fn execute(self) {
         mutate_state(|state| state.run_event_expiry_job());
+    }
+}
+
+impl Job for RemoveOldEventsJob {
+    fn execute(self) {
+        mutate_state(|state| state.run_remove_events_job(self.channel_id, self.before));
     }
 }
 

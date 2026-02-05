@@ -190,6 +190,7 @@ pub enum OCErrorCode {
     ProfileBackgroundTooBig = 346,
     LedgerNotFound = 347,
     PrizeUserNotElligible = 348,
+    NoEventsToDelete = 349,
 
     // InternalError
     C2CError = 500,

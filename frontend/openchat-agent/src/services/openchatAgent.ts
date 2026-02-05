@@ -210,9 +210,11 @@ import {
     UnsupportedValueError,
     applyOptionUpdate,
     chatIdentifiersEqual,
+    emptyEventsResponse,
     getOrAdd,
     isError,
     isSuccessfulEventsResponse,
+    mergeEventStreamResponses,
     messageContextsEqual,
     messageContextToString,
     offline,
@@ -1066,6 +1068,7 @@ export class OpenChatAgent extends EventTarget {
 
             return this._chatEventsReader
                 .chatEventsByIndex(chatId, idxs, ctx.threadRootMessageIndex, latestUpdate)
+                .aggregate(mergeEventStreamResponses, emptyEventsResponse())
                 .toPromise()
                 .then((resp) => this.messagesFromEventsResponse(ctx, resp));
         });
@@ -4049,25 +4052,24 @@ export class OpenChatAgent extends EventTarget {
                 cxt.threadRootMessageIndex,
                 indexes,
                 undefined,
-            ).toPromise();
+            )
+                .aggregate(mergeEventStreamResponses, emptyEventsResponse<Message>())
+                .toPromise();
 
-            if (isSuccessfulEventsResponse(response)) {
-                const lookup = toRecord2(
-                    response.events,
-                    (m) => m.event.messageIndex,
-                    (m) => m.event,
-                );
+            const lookup = toRecord2(
+                response.events,
+                (m) => m.event.messageIndex,
+                (m) => m.event,
+            );
 
-                activityEvents.forEach((ev) => {
-                    if (messageContextsEqual(cxt, ev.messageContext)) {
-                        ev.message = lookup[ev.messageIndex] ?? ev.message;
-                    }
-                });
-                callback(activityEvents, false);
-            }
+            activityEvents.forEach((ev) => {
+                if (messageContextsEqual(cxt, ev.messageContext)) {
+                    ev.message = lookup[ev.messageIndex] ?? ev.message;
+                }
+            });
+            callback(activityEvents, false);
             return [cxt, []];
         });
-        callback(activityEvents, true);
     }
 
     getChannelSummary(channelId: ChannelIdentifier): Promise<ChannelSummaryResponse> {

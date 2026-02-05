@@ -39,6 +39,7 @@ pub enum ChatEvent {
     BotAdded(Box<BotAdded>),
     BotRemoved(Box<BotRemoved>),
     BotUpdated(Box<BotUpdated>),
+    HistoryDeleted(Box<HistoryDeleted>),
     FailedToDeserialize,
 }
 
@@ -83,6 +84,7 @@ pub enum ChatEventType {
     Frozen,            // Applies to group chats only
     Unfrozen,          // Applies to group chats only
     DisappearingMessagesUpdated,
+    HistoryDeleted,
     MessagePinned,
     MessageUnpinned,
 
@@ -127,6 +129,7 @@ impl From<ChatEventType> for ChatEventCategory {
             | ChatEventType::Unfrozen
             | ChatEventType::DisappearingMessagesUpdated
             | ChatEventType::GateUpdated
+            | ChatEventType::HistoryDeleted
             | ChatEventType::MessagePinned
             | ChatEventType::MessageUnpinned => ChatEventCategory::Details,
             ChatEventType::MembersJoined
@@ -529,6 +532,13 @@ pub struct BotUpdated {
     pub updated_by: UserId,
 }
 
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct HistoryDeleted {
+    pub before: TimestampMillis,
+    pub deleted_by: UserId,
+}
+
 impl ChatEvent {
     pub fn event_type(&self) -> Option<ChatEventType> {
         match self {
@@ -561,6 +571,7 @@ impl ChatEvent {
             ChatEvent::BotAdded(_) => Some(ChatEventType::BotAdded),
             ChatEvent::BotRemoved(_) => Some(ChatEventType::BotRemoved),
             ChatEvent::BotUpdated(_) => Some(ChatEventType::BotUpdated),
+            ChatEvent::HistoryDeleted(_) => Some(ChatEventType::HistoryDeleted),
             ChatEvent::FailedToDeserialize => None,
             ChatEvent::Empty => None,
         }

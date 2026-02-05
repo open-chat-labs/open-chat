@@ -26,6 +26,7 @@ pub mod create_channel;
 pub mod create_user_group;
 pub mod decline_invitation;
 pub mod delete_channel;
+pub mod delete_channel_history;
 pub mod delete_messages;
 pub mod delete_user_groups;
 pub mod disable_invite_code;

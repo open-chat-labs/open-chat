@@ -1,8 +1,8 @@
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageSuccess,
-    DeleteUndeleteMessagesArgs, EditMessageArgs, EventPusher, GroupGateUpdatedInternal, MessageContentInternal,
+    DeleteUndeleteMessagesArgs, EditMessageArgs, EventPusher, ExpiredThread, GroupGateUpdatedInternal, MessageContentInternal,
     NullEventPusher, PushEventResultInternal, PushMessageArgs, Reader, RegisterPollVoteArgs, RegisterPollVoteSuccess,
-    RemoveExpiredEventsResult, ReservePrizeSuccess, TipMessageArgs, UndeleteMessageSuccess, UpdateMessageSuccess,
+    RemoveEventsResult, ReservePrizeSuccess, TipMessageArgs, UndeleteMessageSuccess, UpdateMessageSuccess,
 };
 use group_community_common::MemberUpdate;
 use itertools::Itertools;
@@ -1827,17 +1827,34 @@ impl GroupChatCore {
             .set_video_call_presence(user_id, message_id, presence, min_visible_event_index, now)
     }
 
-    pub fn remove_expired_events(&mut self, now: TimestampMillis) -> RemoveExpiredEventsResult {
+    pub fn remove_expired_events(&mut self, now: TimestampMillis) -> RemoveEventsResult {
         let result = self.events.remove_expired_events(now);
 
-        for thread in result.threads.iter() {
+        self.unfollow_removed_threads(&result.threads);
+
+        result
+    }
+
+    pub fn remove_old_events_batch(
+        &mut self,
+        before: TimestampMillis,
+        now: TimestampMillis,
+        batch_size: u16,
+    ) -> RemoveEventsResult {
+        let result = self.events.remove_old_events_batch(before, now, batch_size);
+
+        self.unfollow_removed_threads(&result.threads);
+
+        result
+    }
+
+    fn unfollow_removed_threads(&mut self, threads: &[ExpiredThread]) {
+        for thread in threads.iter() {
             for user_id in thread.followers.iter() {
                 self.members
                     .update_member(user_id, |m| m.followed_threads.remove(thread.root_message_index).is_some());
             }
         }
-
-        result
     }
 
     pub fn most_recent_mentions(&self, member: &GroupMemberInternal, since: Option<TimestampMillis>) -> Vec<HydratedMention> {

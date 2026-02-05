@@ -6,6 +6,8 @@ import type {
     ChatListScope,
     ChatSummary,
     CryptocurrencyDetails,
+    EventsResponse,
+    EventsSuccessResult,
     EventWrapper,
     GovernanceProposalsSubtype,
     IndexRange,
@@ -18,7 +20,11 @@ import type {
     PartitionedUserIds,
     VersionedRules,
 } from "../domain";
-import { extractUserIdsFromMentions, UnsupportedValueError } from "../domain";
+import {
+    assertSuccessfulEventsResponse,
+    extractUserIdsFromMentions,
+    UnsupportedValueError,
+} from "../domain";
 import type { MessageFormatter } from "./i18n";
 import type { ReadonlyMap } from "./map";
 
@@ -393,4 +399,27 @@ export function isProposalsChat(chat: ChatSummary): chat is MultiUserChat & {
     subtype: GovernanceProposalsSubtype;
 } {
     return chat.kind !== "direct_chat" && chat.subtype?.kind === "governance_proposals";
+}
+
+export function mergeEventStreamResponses<T extends ChatEvent>(
+    current: EventsSuccessResult<T>,
+    next: EventsResponse<T>,
+): EventsSuccessResult<T> {
+    assertSuccessfulEventsResponse(next);
+
+    const events = next.events;
+    const indexes = new Set(events.map((e) => e.index));
+    for (const event of current.events) {
+        if (!indexes.has(event.index)) {
+            indexes.add(event.index);
+            events.push(event);
+        }
+    }
+    events.sort((a, b) => b.index - a.index);
+
+    return {
+        events,
+        expiredEventRanges: current.expiredEventRanges.concat(next.expiredEventRanges),
+        latestEventIndex: next.latestEventIndex ?? current.latestEventIndex,
+    };
 }

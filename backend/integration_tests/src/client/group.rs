@@ -23,6 +23,7 @@ generate_msgpack_update_call!(block_user);
 generate_msgpack_update_call!(cancel_p2p_swap);
 generate_msgpack_update_call!(change_role);
 generate_msgpack_update_call!(convert_into_community);
+generate_msgpack_update_call!(delete_history);
 generate_msgpack_update_call!(delete_messages);
 generate_msgpack_update_call!(edit_message_v2);
 generate_msgpack_update_call!(enable_invite_code);
@@ -588,6 +589,20 @@ pub mod happy_path {
         match response {
             group_canister::webhook::Response::Success(result) => result.secret,
             response => panic!("'webhook' error: {response:?}"),
+        }
+    }
+
+    pub fn delete_history(env: &mut PocketIc, sender: &User, group_id: ChatId, before: TimestampMillis) {
+        let response = super::delete_history(
+            env,
+            sender.principal,
+            group_id.into(),
+            &group_canister::delete_history::Args { before },
+        );
+
+        match response {
+            group_canister::delete_history::Response::Success => (),
+            response => panic!("'delete_history' error: {response:?}"),
         }
     }
 }

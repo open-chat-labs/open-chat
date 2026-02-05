@@ -8,10 +8,10 @@ use types::{
     ChatEventCategory, ChatEventType, ChatId, CommunityId, DeletedBy, DirectChatCreated, EventIndex, EventWrapperInternal,
     EventsTimeToLiveUpdated, ExternalUrlUpdated, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
     GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged,
-    MemberJoinedInternal, MemberLeft, MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, Message, MessageContent,
-    MessageContentType, MessageId, MessageIndex, MessagePinned, MessageUnpinned, MultiUserChat, PermissionsChanged,
-    PushIfNotContains, Reaction, ReplyContext, RoleChanged, SenderContext, ThreadSummary, TimestampMillis, Tips, UserId,
-    UsersBlocked, UsersInvited, UsersUnblocked, is_default,
+    HistoryDeleted, MemberJoinedInternal, MemberLeft, MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, Message,
+    MessageContent, MessageContentType, MessageId, MessageIndex, MessagePinned, MessageUnpinned, MultiUserChat,
+    PermissionsChanged, PushIfNotContains, Reaction, ReplyContext, RoleChanged, SenderContext, ThreadSummary, TimestampMillis,
+    Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked, is_default,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -74,6 +74,8 @@ pub enum ChatEventInternal {
     BotRemoved(Box<BotRemoved>),
     #[serde(rename = "bu")]
     BotUpdated(Box<BotUpdated>),
+    #[serde(rename = "hd")]
+    HistoryDeleted(Box<HistoryDeleted>),
     #[serde(rename = "e")]
     Empty,
     // This should never happen!
@@ -122,6 +124,7 @@ impl ChatEventInternal {
                 | ChatEventInternal::UsersInvited(_)
                 | ChatEventInternal::MembersAddedToPublicChannel(_)
                 | ChatEventInternal::ExternalUrlUpdated(_)
+                | ChatEventInternal::HistoryDeleted(_)
                 | ChatEventInternal::BotAdded(_)
                 | ChatEventInternal::BotRemoved(_)
                 | ChatEventInternal::BotUpdated(_)
@@ -177,6 +180,7 @@ impl ChatEventInternal {
             ChatEventInternal::BotAdded(e) => ChatEvent::BotAdded(e),
             ChatEventInternal::BotRemoved(e) => ChatEvent::BotRemoved(e),
             ChatEventInternal::BotUpdated(e) => ChatEvent::BotUpdated(e),
+            ChatEventInternal::HistoryDeleted(e) => ChatEvent::HistoryDeleted(e),
         }
     }
 
@@ -198,6 +202,7 @@ impl ChatEventInternal {
             | ChatEventInternal::ChatUnfrozen(_)
             | ChatEventInternal::EventsTimeToLiveUpdated(_)
             | ChatEventInternal::GroupGateUpdated(_)
+            | ChatEventInternal::HistoryDeleted(_)
             | ChatEventInternal::ExternalUrlUpdated(_) => Some(ChatEventCategory::Details),
             ChatEventInternal::ParticipantsAdded(_)
             | ChatEventInternal::ParticipantsRemoved(_)
@@ -246,12 +251,14 @@ impl ChatEventInternal {
             ChatEventInternal::BotAdded(_) => Some(ChatEventType::BotAdded),
             ChatEventInternal::BotRemoved(_) => Some(ChatEventType::BotRemoved),
             ChatEventInternal::BotUpdated(_) => Some(ChatEventType::BotUpdated),
+            ChatEventInternal::HistoryDeleted(_) => Some(ChatEventType::HistoryDeleted),
             ChatEventInternal::FailedToDeserialize => None,
             ChatEventInternal::Empty => None,
         }
     }
 }
 
+#[derive(Debug)]
 pub enum EventOrExpiredRangeInternal {
     Event(EventWrapperInternal<ChatEventInternal>),
     ExpiredEventRange(EventIndex, EventIndex),
