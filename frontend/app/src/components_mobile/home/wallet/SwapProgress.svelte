@@ -5,7 +5,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import {
-        BodySmall,
+        Body,
         Button,
         ColourVars,
         Container,
@@ -38,7 +38,7 @@
 
     ledgerOut;
 
-    const height: SizeMode = { size: "200px" };
+    const height: SizeMode = { size: "16rem" };
     const client = getContext<OpenChat>("client");
     const POLL_INTERVAL = 1000;
     const labelPrefix = "tokenSwap.progress.";
@@ -128,12 +128,16 @@
     function onFinished() {
         client.refreshAccountBalance(ledgerIn);
         client.refreshAccountBalance(ledgerOut);
+        closeModalStack();
+    }
+
+    function closeModalStack() {
         publish("closeModalStack");
     }
 </script>
 
-<Sheet>
-    <Container direction={"vertical"} gap={"xl"} padding={"xl"}>
+<Sheet onDismiss={closeModalStack}>
+    <Container direction={"vertical"} gap={"xxl"} padding={["lg", "xxl", "huge"]}>
         <Subtitle fontWeight={"bold"}>
             <Translatable resourceKey={i18nKey("Swap in progress")} />
         </Subtitle>
@@ -179,18 +183,17 @@
                     {@const inerror = current && error}
                     <div class="role_label" style={`top: ${percentFromIndex(i)}%;`}>
                         <Container crossAxisAlignment={"center"} gap={"md"}>
-                            <BodySmall
+                            <Body
                                 align={"center"}
                                 colour={inerror
                                     ? "error"
                                     : active
                                       ? "textPrimary"
                                       : "textSecondary"}
-                                fontWeight={"bold"}
                                 width={"hug"}>
                                 <Translatable
                                     resourceKey={i18nKey(`${labelPrefix}${stage}`, labelValues)} />
-                            </BodySmall>
+                            </Body>
                             {#if inerror}
                                 <Close color={ColourVars.error} />
                             {:else if active}
@@ -202,7 +205,7 @@
             </Container>
         </Container>
 
-        {#if outcome !== "success"}
+        {#if outcome && outcome !== "success"}
             <ErrorMessage>
                 {#if outcome === "error"}
                     <Translatable resourceKey={i18nKey("Failed to get deposit account")} />
@@ -290,11 +293,6 @@
                     border-color: var(--error);
                 }
             }
-
-            /* &.end {
-                width: 1rem;
-                height: 1rem;
-            } */
         }
     }
 </style>

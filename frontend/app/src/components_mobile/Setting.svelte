@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { BodySmall, Container } from "component-lib";
+    import { Body, Container } from "component-lib";
     import { i18nKey } from "openchat-client";
     import type { Snippet } from "svelte";
     import Translatable from "./Translatable.svelte";
@@ -18,8 +18,8 @@
 <Container onClick={disabled ? undefined : toggle} gap={"sm"} direction={"vertical"}>
     {@render children()}
     {#each paras as para}
-        <BodySmall width={"fill"} colour={disabled ? "textTertiary" : "textSecondary"}>
+        <Body width={"fill"} colour={disabled ? "textTertiary" : "textSecondary"}>
             <Translatable resourceKey={i18nKey(para)}></Translatable>
-        </BodySmall>
+        </Body>
     {/each}
 </Container>

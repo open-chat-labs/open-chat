@@ -4,7 +4,6 @@
         Body,
         BodySmall,
         ColourVars,
-        CommonButton,
         CommonButton2,
         Container,
         Column,
@@ -499,15 +498,16 @@
 
         <!-- Buttons -->
         <Container
-            crossAxisAlignment={"end"}
+            crossAxisAlignment="center"
             mainAxisAlignment={swapState === "quote" ? "end" : "spaceBetween"}>
-            {#if swapState === "swap" && !swapping}
-                <CommonButton
+            {#if swapState === "swap"}
+                <CommonButton2
                     onClick={() => (swapState = "quote")}
-                    mode={"default"}
-                    size={"small_text"}>
+                    variant="primary"
+                    mode="text"
+                    disabled={swapping}>
                     <Translatable resourceKey={i18nKey("cancel")} />
-                </CommonButton>
+                </CommonButton2>
             {/if}
             <CommonButton2 loading={busy} onClick={onPrimaryClick} variant="primary" mode="small">
                 {#snippet icon(color, size)}
