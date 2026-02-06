@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { BodySmall, Button, Subtitle } from "component-lib";
+    import { BodySmall, Button, Column, Subtitle } from "component-lib";
     import type { ResourceKey } from "openchat-client";
     import type { Snippet } from "svelte";
     import SparkleBoxOutline from "./SparkleBoxOutline.svelte";
@@ -17,15 +17,17 @@
 </script>
 
 <SparkleBoxOutline>
-    <Subtitle fontWeight={"bold"} colour={"primaryLight"}>
-        {@render title()}
-    </Subtitle>
+    <Column gap="xs">
+        <Subtitle fontWeight={"bold"} colour={"primaryLight"}>
+            {@render title()}
+        </Subtitle>
 
-    {#if body}
-        <BodySmall colour={"primaryLight"}>
-            {@render body()}
-        </BodySmall>
-    {/if}
+        {#if body}
+            <BodySmall colour={"primaryLight"}>
+                {@render body()}
+            </BodySmall>
+        {/if}
+    </Column>
 
     <Button {onClick} icon={buttonIcon}>
         <Translatable resourceKey={buttonText}></Translatable>
