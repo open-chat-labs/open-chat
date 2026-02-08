@@ -140,18 +140,6 @@ pub fn run() {
                 .body(Vec::new())
                 .unwrap()
         })
-        .setup(|app| {
-            let handle = app.handle().clone();
-            tauri::async_runtime::spawn(async move {
-                let update_manager = update_manager::UpdateManager::new(handle);
-                match update_manager.check_for_updates().await {
-                    Ok(true) => println!("Update downloaded and installed"),
-                    Ok(false) => println!("No updates available"),
-                    Err(e) => eprintln!("Error checking for updates: {}", e),
-                }
-            });
-            Ok(())
-        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
