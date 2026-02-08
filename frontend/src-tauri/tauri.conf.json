@@ -15,7 +15,7 @@
                 "title": "OpenChat",
                 "width": 800,
                 "height": 600,
-                "url": "oc://localhost/index.html"
+                "url": "oc://localhost/"
             }
         ],
         "security": {
