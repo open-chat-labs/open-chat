@@ -30,6 +30,8 @@
             console.log("Got server version of: ", sv);
             serverVersion = sv;
             if (serverVersion.isGreaterThan(clientVersion)) {
+                poller.stop();
+
                 if (client.isNativeApp()) {
                     console.log("About to tell the android shell to update itself");
                     try {
@@ -44,18 +46,13 @@
                     }
                 }
 
-                poller.stop();
                 countdown = 30;
                 showBanner = true;
                 const interval = window.setInterval(() => {
                     countdown = countdown - 1;
                     if (countdown === 0) {
                         window.clearInterval(interval);
-                        if (client.isNativeApp()) {
-                            invoke("restart_app");
-                        } else {
-                            window.location.reload();
-                        }
+                        reload();
                     }
                 }, 1000);
             } else {
@@ -88,13 +85,13 @@
             });
     }
 
-    function reload(ev: Event) {
+    function reload(ev?: Event) {
         if (client.isNativeApp()) {
             invoke("restart_app");
         } else {
             window.location.reload();
         }
-        ev.preventDefault();
+        ev?.preventDefault();
     }
 </script>
 
