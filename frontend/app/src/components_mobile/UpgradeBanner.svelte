@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { invoke } from "@tauri-apps/api/core";
     import { Body, BodySmall, ColourVars, Column, Row } from "component-lib";
     import { OpenChat, Poller, Version } from "openchat-client";
     import { getContext, onDestroy } from "svelte";
@@ -20,11 +21,29 @@
     onDestroy(() => poller.stop());
 
     function checkVersion(): Promise<void> {
-        if (import.meta.env.OC_NODE_ENV !== "production" || $activeVideoCall !== undefined)
+        console.log("Checking version");
+        if (import.meta.env.OC_NODE_ENV !== "production" || $activeVideoCall !== undefined) {
+            console.log("Bailing out of version check");
             return Promise.resolve();
-        return getServerVersion().then((sv) => {
+        }
+        return getServerVersion().then(async (sv) => {
+            console.log("Got server version of: ", sv);
             serverVersion = sv;
             if (serverVersion.isGreaterThan(clientVersion)) {
+                if (client.isNativeApp()) {
+                    console.log("About to tell the android shell to update itself");
+                    try {
+                        const updated = await invoke("download_update");
+                        if (!updated) {
+                            console.log("Native update failed or was not needed");
+                            return;
+                        }
+                    } catch (e) {
+                        console.error("Failed to download native update", e);
+                        return;
+                    }
+                }
+
                 poller.stop();
                 countdown = 30;
                 showBanner = true;
@@ -32,14 +51,24 @@
                     countdown = countdown - 1;
                     if (countdown === 0) {
                         window.clearInterval(interval);
-                        window.location.reload();
+                        if (client.isNativeApp()) {
+                            invoke("restart_app");
+                        } else {
+                            window.location.reload();
+                        }
                     }
                 }, 1000);
+            } else {
+                console.log("Server version is not greater than client version", clientVersion);
             }
         });
     }
 
     function getServerVersion(): Promise<Version> {
+        if (client.isNativeApp()) {
+            return invoke<string>("get_server_version").then((v) => Version.parse(v));
+        }
+
         return fetch("/version", {
             method: "get",
             headers: {
@@ -60,7 +89,11 @@
     }
 
     function reload(ev: Event) {
-        window.location.reload();
+        if (client.isNativeApp()) {
+            invoke("restart_app");
+        } else {
+            window.location.reload();
+        }
         ev.preventDefault();
     }
 </script>

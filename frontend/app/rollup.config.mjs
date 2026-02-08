@@ -332,6 +332,12 @@ export default {
             ],
             hook: "buildStart",
         }),
+        execute({
+            commands: [
+                `rm -rf dist_bundle && mkdir -p dist_bundle && cp -r public/. dist_bundle/ && cp -r build/. dist_bundle/ && mkdir -p build/downloads && (cd dist_bundle && zip -r ../build/downloads/bundle-${version}.zip .) && rm -rf dist_bundle`,
+            ],
+            hook: "writeBundle",
+        }),
     ],
     watch: {
         clearScreen: false,

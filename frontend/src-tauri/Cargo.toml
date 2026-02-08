@@ -21,3 +21,8 @@ tauri-plugin-deep-link = { workspace = true }
 tauri-plugin-devtools = { workspace = true }
 tauri-plugin-notification = { workspace = true }
 tauri-plugin-oc = { path = "../tauri-plugin-oc" }
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls"] }
+zip = "2.2.2"
+semver = "1.0"
+tokio = { workspace = true, features = ["fs", "io-util"] }
+mime_guess = "2.0"

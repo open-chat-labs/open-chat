@@ -14,7 +14,8 @@
             {
                 "title": "OpenChat",
                 "width": 800,
-                "height": 600
+                "height": 600,
+                "url": "oc://localhost/index.html"
             }
         ],
         "security": {
@@ -34,7 +35,7 @@
     },
     "plugins": {
         "deep-link": {
-            "mobile": [{ "schema": "openchat", "host": "oc.app" }]
+            "mobile": [{ "schema": "openchat", "host": "webtest.oc.app" }]
         }
     }
 }

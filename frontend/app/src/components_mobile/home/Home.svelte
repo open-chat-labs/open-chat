@@ -284,12 +284,7 @@
             case "leave":
                 return leaveGroup(confirmActionEvent.chatId, confirmActionEvent.level);
             case "delete_direct_chat":
-                return deleteDirectChat(
-                    confirmActionEvent.chatId,
-                    confirmActionEvent.blockUser,
-                ).then((_) => {
-                    setRightPanelHistory([]);
-                });
+                return deleteDirectChat(confirmActionEvent.chatId, confirmActionEvent.blockUser);
             case "leave_community":
                 return leaveCommunity(confirmActionEvent.communityId);
             case "delete_community":
