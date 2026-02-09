@@ -1,7 +1,7 @@
 <script lang="ts">
     import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
     import { i18nKey } from "@src/i18n/i18n";
-    import { BodySmall, Container, IconButton, MenuItem, MenuTrigger } from "component-lib";
+    import { Body, Container, IconButton, MenuItem, MenuTrigger } from "component-lib";
     import {
         allUsersStore,
         currentUserIdStore,
@@ -128,9 +128,9 @@
         {/if}
 
         <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
-            <BodySmall colour={"textSecondary"} fontWeight={"bold"}>
+            <Body colour={"textSecondary"} fontWeight={"bold"}>
                 <Translatable resourceKey={i18nKey("User stats")}></Translatable>
-            </BodySmall>
+            </Body>
             <Stats showReported stats={$userMetricsStore} />
         </Container>
     </Container>

@@ -117,7 +117,7 @@
             </BodySmall>
         </Container>
         <Container gap={"xxs"} overflow={"visible"} direction={"vertical"}>
-            <div class="badges">
+            <div class="streak_badges">
                 {#each badgesVisible as badge}
                     <div class="badge" style="left: {(badge * 100) / maxBadgeVisible}%">
                         <Streak disabled={streak < badge} days={badge} />
@@ -213,7 +213,7 @@
         margin-top: 1.7rem;
     }
 
-    .badges {
+    .streak_badges {
         position: relative;
         // margin-bottom: 2px;
         width: 100%;
@@ -222,7 +222,7 @@
         margin-bottom: 3px;
 
         .badge {
-            top: 12px;
+            top: 6px;
             position: absolute;
             transform-origin: 50% 50%;
             transform: translateX(var(--offset)) scale(var(--scale));

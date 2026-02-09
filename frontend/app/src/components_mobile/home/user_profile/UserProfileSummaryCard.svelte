@@ -99,10 +99,10 @@
         background={colour}
         gap={"xs"}
         crossAxisAlignment={"center"}
-        padding={["xs", "md"]}
+        padding={["xs", "md", "xs", "sm"]}
         borderRadius={"circle"}>
-        <Icon color={ColourVars.textPrimary} />
-        <BodySmall>{text}</BodySmall>
+        <Icon size="1.25rem" color={ColourVars.textPrimary} />
+        <Subtitle>{text}</Subtitle>
     </Container>
 {/snippet}
 
@@ -177,16 +177,21 @@
 
         <!-- Profile / user name and badges -->
         <Container direction={"vertical"} gap="md">
-            <Column gap="xs" padding={["zero", "sm"]}>
-                <H2 width={"hug"}>{profile.displayName ?? `@${profile.username}`}</H2>
-                <Container gap={"sm"} crossAxisAlignment={"center"}>
-                    <Body width={"hug"} colour={"textSecondary"}>@{user.username}</Body>
+            <Column padding={["zero", "sm"]}>
+                <Row gap={"sm"} crossAxisAlignment={"center"}>
+                    <H2 fontWeight="bold" width="hug">
+                        {profile.displayName ?? `@${profile.username}`}
+                    </H2>
                     <Badges
+                        size="large"
                         diamondStatus={user.diamondStatus}
                         uniquePerson={user.isUniquePerson}
                         streak={user.streak}
                         chitEarned={user.totalChitEarned} />
-                </Container>
+                </Row>
+                <Row gap={"sm"} crossAxisAlignment={"center"}>
+                    <Subtitle width={"hug"} colour={"textSecondary"}>@{user.username}</Subtitle>
+                </Row>
             </Column>
             {#if user.isUniquePerson || user.diamondStatus !== "inactive"}
                 <Container padding={["zero", "zero"]} gap={"sm"}>
@@ -221,10 +226,14 @@
         {/if}
 
         <!-- Member since-->
-        <Column backgroundColor={ColourVars.background1} borderRadius="md" padding={["lg", "xl"]}>
-            <BodySmall colour="textSecondary" fontWeight="bold">
+        <Column
+            backgroundColor={ColourVars.background1}
+            borderRadius="md"
+            padding={["lg", "xl"]}
+            gap="xs">
+            <Body colour="textSecondary" fontWeight="bold">
                 <Translatable resourceKey={i18nKey("Member since")} />
-            </BodySmall>
+            </Body>
             <Body>{formatDate(profile.created)}</Body>
         </Column>
 
@@ -238,9 +247,9 @@
                 supplementalClass="user_bio"
                 onClick={() => (showAboutSheet = true)}>
                 <Row mainAxisAlignment="spaceBetween">
-                    <BodySmall colour="textSecondary" width="hug" fontWeight="bold">
+                    <Body colour="textSecondary" width="hug" fontWeight="bold">
                         <Translatable resourceKey={i18nKey("About user")} />
-                    </BodySmall>
+                    </Body>
                     <BodySmall colour="primary" fontWeight="bold" width="hug">
                         <Translatable resourceKey={i18nKey("View more")} />
                     </BodySmall>
@@ -259,10 +268,10 @@
                 borderRadius="md"
                 padding={["lg", "md", "lg", "xl"]}
                 crossAxisAlignment="center">
-                <Column>
-                    <BodySmall colour="textSecondary" fontWeight="bold">
+                <Column gap="xs">
+                    <Body colour="textSecondary" fontWeight="bold">
                         <Translatable resourceKey={i18nKey("User & canister id")} />
-                    </BodySmall>
+                    </Body>
                     <Body>{user.userId}</Body>
                 </Column>
                 <IconButton size={"md"}>
@@ -278,9 +287,9 @@
                 borderRadius="md"
                 padding={["lg", "xl"]}
                 backgroundColor={ColourVars.background1}>
-                <BodySmall colour="textSecondary" fontWeight="bold">
+                <Body colour="textSecondary" fontWeight="bold">
                     <Translatable resourceKey={i18nKey("Online account storage usage")} />
-                </BodySmall>
+                </Body>
                 <Progress
                     colour={ColourVars.secondary}
                     size={"6px"}

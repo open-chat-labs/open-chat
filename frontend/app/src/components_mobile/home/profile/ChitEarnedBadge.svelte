@@ -1,16 +1,17 @@
 <script lang="ts">
-    import { Tooltip, Caption, ColourVars } from "component-lib";
+    import { Body, Caption, ColourVars, Tooltip } from "component-lib";
     import Translatable from "@src/components/Translatable.svelte";
     import { i18nKey } from "@src/i18n/i18n";
     import { chitBands, findClosestChitBand } from "openchat-client";
-    import BadgeContainer from "./BadgeContainer.svelte";
+    import BadgeContainer, { type BadgeSize } from "./BadgeContainer.svelte";
 
     interface Props {
         earned: number;
         showTooltip?: boolean;
+        size?: BadgeSize;
     }
 
-    let { earned, showTooltip = true }: Props = $props();
+    let { earned, showTooltip = true, size = "default" }: Props = $props();
 
     let closest = $derived(findClosestChitBand(earned));
 
@@ -22,10 +23,15 @@
 
 {#snippet renderChit()}
     <BadgeContainer
+        {size}
         supplementalClass="chit-badge"
         backgroundColor={ColourVars.tertiaryMuted}
         backgroundImage={"/assets/oc_logo_no_bg.svg"}>
-        <Caption align="center" fontWeight="bold">{chitIconText}</Caption>
+        {#if size === "default"}
+            <Caption align="center" fontWeight="bold">{chitIconText}</Caption>
+        {:else}
+            <Body align="center" fontWeight="bold">{chitIconText}</Body>
+        {/if}
     </BadgeContainer>
 {/snippet}
 
@@ -56,10 +62,6 @@
 <style lang="scss">
     :global {
         .chit-badge {
-            .oc-logo {
-                // position: absolute;
-            }
-
             .caption {
                 z-index: 1;
                 scale: 0.8;

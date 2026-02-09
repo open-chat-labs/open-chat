@@ -2,8 +2,11 @@
     import { Container, ColourVars } from "component-lib";
     import { type Snippet } from "svelte";
 
+    export type BadgeSize = "default" | "large";
+
     interface Props {
         children: Snippet;
+        size?: BadgeSize;
         supplementalClass?: string;
         backgroundColor?: string;
         backgroundImage?: string;
@@ -11,20 +14,23 @@
 
     let {
         children,
+        size = "default",
         supplementalClass,
         backgroundColor = ColourVars.primary,
         backgroundImage,
     }: Props = $props();
+
+    let remSize = size === "large" ? "2rem" : "1.375rem";
 </script>
 
-<div class="badge">
+<div class="badge" class:large={size === "large"}>
     <Container
         {backgroundColor}
         {backgroundImage}
         {supplementalClass}
         borderRadius={"circle"}
-        width={{ size: "1.375rem" }}
-        height={{ size: "1.375rem" }}
+        width={{ size: remSize }}
+        height={{ size: remSize }}
         mainAxisAlignment="center"
         crossAxisAlignment="center"
         parentDirection={"vertical"}
@@ -42,5 +48,10 @@
         height: 1.375rem;
         display: flex;
         flex-direction: column;
+
+        &.large {
+            width: 2rem;
+            height: 2rem;
+        }
     }
 </style>
