@@ -53,3 +53,8 @@ pub(crate) async fn release_notifications<R: Runtime>(
 pub(crate) async fn minimize_app<R: Runtime>(app: AppHandle<R>) {
     app.oc().minimize_app()
 }
+
+#[command]
+pub(crate) async fn restart_app<R: Runtime>(app: AppHandle<R>) {
+    app.restart();
+}

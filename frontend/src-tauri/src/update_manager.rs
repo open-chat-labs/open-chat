@@ -1,10 +1,10 @@
+use reqwest::Client;
+use semver::Version;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io::Cursor;
 use std::path::PathBuf;
-use semver::Version;
-use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
-use reqwest::Client;
 
 const VERSION_ENDPOINT: &str = "https://webtest.oc.app/version";
 // TODO: This needs to be the actual URL where the bundle can be downloaded
@@ -30,13 +30,17 @@ impl UpdateManager {
     }
 
     pub fn get_cache_dir(&self) -> Option<PathBuf> {
-        self.app_handle.path().app_data_dir().ok().map(|p| p.join("updates"))
+        self.app_handle
+            .path()
+            .app_data_dir()
+            .ok()
+            .map(|p| p.join("updates"))
     }
 
     pub fn get_cached_version(&self) -> Option<Version> {
         let cache_dir = self.get_cache_dir()?;
         let version_file = cache_dir.join("version.json");
-        
+
         if version_file.exists() {
             if let Ok(file) = fs::File::open(version_file) {
                 if let Ok(info) = serde_json::from_reader::<_, CachedVersion>(file) {
@@ -49,7 +53,12 @@ impl UpdateManager {
 
     pub fn get_bundled_version(&self) -> Option<Version> {
         // This relies on the package version in tauri.conf.json being in sync with the PWA version
-        self.app_handle.package_info().version.to_string().parse().ok()
+        self.app_handle
+            .package_info()
+            .version
+            .to_string()
+            .parse()
+            .ok()
     }
 
     pub async fn get_server_version(&self) -> Result<Version, Box<dyn std::error::Error>> {
@@ -63,8 +72,12 @@ impl UpdateManager {
     pub async fn check_for_updates(&self) -> Result<bool, Box<dyn std::error::Error>> {
         let server_version = self.get_server_version().await?;
 
-        let bundled_version = self.get_bundled_version().unwrap_or_else(|| Version::parse("0.0.0").unwrap());
-        let cached_version = self.get_cached_version().unwrap_or_else(|| Version::parse("0.0.0").unwrap());
+        let bundled_version = self
+            .get_bundled_version()
+            .unwrap_or_else(|| Version::parse("0.0.0").unwrap());
+        let cached_version = self
+            .get_cached_version()
+            .unwrap_or_else(|| Version::parse("0.0.0").unwrap());
 
         let current_version = if cached_version > bundled_version {
             cached_version
@@ -81,14 +94,18 @@ impl UpdateManager {
         Ok(false)
     }
 
-    async fn download_and_install(&self, version: &Version) -> Result<(), Box<dyn std::error::Error>> {
+    async fn download_and_install(
+        &self,
+        version: &Version,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let url = BUNDLE_URL_TEMPLATE.replace("{}", &version.to_string());
         println!("Downloading update from {}", url);
-        
+
         let client = Client::new();
         let resp = client.get(&url).send().await?;
-        
+
         if !resp.status().is_success() {
+            // TODO what do we do here? Retry?
             return Err(format!("Failed to download bundle: {}", resp.status()).into());
         }
 
@@ -104,7 +121,7 @@ impl UpdateManager {
         // Extract to a temp dir first then move? Or just extract.
         // We'll extract to the cache directory.
         // Important: We need to handle clearing old versions or overwriting.
-        
+
         // For simplicity, we extract all.
         archive.extract(&cache_dir)?;
 

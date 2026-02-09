@@ -3,13 +3,20 @@ mod update_manager;
 #[tauri::command]
 async fn get_server_version(app: tauri::AppHandle) -> Result<String, String> {
     let manager = update_manager::UpdateManager::new(app);
-    manager.get_server_version().await.map(|v| v.to_string()).map_err(|e| e.to_string())
+    manager
+        .get_server_version()
+        .await
+        .map(|v| v.to_string())
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 async fn download_update(app: tauri::AppHandle) -> Result<bool, String> {
     let manager = update_manager::UpdateManager::new(app.clone());
-    let did_download = manager.check_for_updates().await.map_err(|e| e.to_string())?;
+    let did_download = manager
+        .check_for_updates()
+        .await
+        .map_err(|e| e.to_string())?;
 
     if did_download {
         return Ok(true);
@@ -29,11 +36,6 @@ async fn download_update(app: tauri::AppHandle) -> Result<bool, String> {
     Ok(false)
 }
 
-#[tauri::command]
-fn restart_app(app: tauri::AppHandle) {
-    app.restart();
-}
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // ENABLE DEVTOOLS FOR DEBUGGING RELEASE BUILD
@@ -48,10 +50,13 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_oc::init())
-        .invoke_handler(tauri::generate_handler![get_server_version, download_update, restart_app])
+        .invoke_handler(tauri::generate_handler![
+            get_server_version,
+            download_update
+        ])
         .register_uri_scheme_protocol("oc", |ctx, request| {
             let handle = ctx.app_handle().clone();
-            
+
             let path = request.uri().path();
             let path = if path == "/" {
                 "index.html"
@@ -65,7 +70,10 @@ pub fn run() {
                 let cached_file = cache_dir.join(path);
                 if cached_file.exists() && cached_file.is_file() {
                     if let Ok(data) = std::fs::read(&cached_file) {
-                        let mime_type = mime_guess::from_path(path).first_or_octet_stream().as_ref().to_string();
+                        let mime_type = mime_guess::from_path(path)
+                            .first_or_octet_stream()
+                            .as_ref()
+                            .to_string();
                         return tauri::http::Response::builder()
                             .header("Content-Type", mime_type)
                             .header("Access-Control-Allow-Origin", "*")
@@ -85,7 +93,7 @@ pub fn run() {
                     let index_path = "index.html";
                     let cached_index = cache_dir.join(index_path);
                     if cached_index.exists() && cached_index.is_file() {
-                         if let Ok(data) = std::fs::read(&cached_index) {
+                        if let Ok(data) = std::fs::read(&cached_index) {
                             return tauri::http::Response::builder()
                                 .header("Content-Type", "text/html")
                                 .header("Access-Control-Allow-Origin", "*")
@@ -121,7 +129,7 @@ pub fn run() {
             if std::path::Path::new(path).extension().is_none() {
                 let index_path = "index.html";
                 if let Some(asset) = handle.asset_resolver().get(index_path.to_string()) {
-                     return tauri::http::Response::builder()
+                    return tauri::http::Response::builder()
                         .header("Content-Type", "text/html")
                         .header("Access-Control-Allow-Origin", "*")
                         .header("Cache-Control", "no-cache")
