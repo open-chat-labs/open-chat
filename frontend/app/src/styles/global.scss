@@ -461,6 +461,10 @@ body.native-android {
         padding-top: var(--device-status-bar-height) !important;
     }
 
+    .container.upgrade_banner {
+        margin-top: var(--device-status-bar-height) !important;
+    }
+
     // Set paddings when device uses gesture navigation
     &.has-gesture-nav {
         .bottom_nav_bar {
