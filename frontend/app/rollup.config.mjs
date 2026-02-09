@@ -20,6 +20,7 @@ import svelte from "rollup-plugin-svelte";
 import styles from "rollup-styles";
 import { sveltePreprocess } from "svelte-preprocess";
 import { sourcemapNewline } from "../sourcemapNewline.mjs";
+import { androidBundlePlugin } from "./rollup-plugin-android-bundle.mjs";
 import {
     __dirname,
     copyFile,
@@ -340,12 +341,7 @@ export default {
             ],
             hook: "buildStart",
         }),
-        execute({
-            commands: [
-                `rm -rf dist_bundle && mkdir -p dist_bundle && cp -r public/. dist_bundle/ && cp -r build/. dist_bundle/ && rm -rf dist_bundle/downloads && mkdir -p build/downloads && node -e "const fs = require('fs'); let c = fs.readFileSync('dist_bundle/index.html', 'utf8'); c = c.replace('<head>', '<head><script>window.OC_CONFIG={OC_APP_TYPE:\\"android\\",OC_MOBILE_LAYOUT:\\"v2\\"}</script>'); fs.writeFileSync('dist_bundle/index.html', c);" && (cd dist_bundle && zip -r ../build/downloads/bundle-${version}.zip .) && rm -rf dist_bundle`,
-            ],
-            hook: "writeBundle",
-        }),
+        androidBundlePlugin({ version }),
     ],
     watch: {
         clearScreen: false,
