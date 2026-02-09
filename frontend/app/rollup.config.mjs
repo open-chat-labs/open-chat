@@ -20,6 +20,7 @@ import svelte from "rollup-plugin-svelte";
 import styles from "rollup-styles";
 import { sveltePreprocess } from "svelte-preprocess";
 import { sourcemapNewline } from "../sourcemapNewline.mjs";
+import { androidBundlePlugin } from "./rollup-plugin-android-bundle.mjs";
 import {
     __dirname,
     copyFile,
@@ -63,6 +64,8 @@ function clean() {
 }
 
 const { version } = initEnv();
+
+const override = (key, val) => `(window.OC_CONFIG?.${key} ?? ${val})`;
 
 export default {
     input: `./src/main.ts`,
@@ -127,12 +130,18 @@ export default {
 
         replace({
             preventAssignment: true,
-            "import.meta.env.OC_DISABLE_WALLET": JSON.stringify(process.env.OC_DISABLE_WALLET),
-            "import.meta.env.OC_DISABLE_CRYPTO_PAYMENTS": JSON.stringify(
-                process.env.OC_DISABLE_CRYPTO_PAYMENTS,
+            "import.meta.env.OC_APP_STORE": override(
+                "OC_APP_STORE",
+                JSON.stringify(process.env.OC_APP_STORE),
             ),
-            "import.meta.env.OC_MOBILE_LAYOUT": JSON.stringify(process.env.OC_MOBILE_LAYOUT),
-            "import.meta.env.OC_APP_TYPE": JSON.stringify(process.env.OC_APP_TYPE),
+            "import.meta.env.OC_MOBILE_LAYOUT": override(
+                "OC_MOBILE_LAYOUT",
+                JSON.stringify(process.env.OC_MOBILE_LAYOUT),
+            ),
+            "import.meta.env.OC_APP_TYPE": override(
+                "OC_APP_TYPE",
+                JSON.stringify(process.env.OC_APP_TYPE),
+            ),
             "import.meta.env.OC_BUILD_ENV": JSON.stringify(process.env.OC_BUILD_ENV),
             "import.meta.env.OC_WEBAUTHN_ORIGIN": JSON.stringify(process.env.OC_WEBAUTHN_ORIGIN),
             "import.meta.env.OC_INTERNET_IDENTITY_URL": JSON.stringify(
@@ -332,6 +341,7 @@ export default {
             ],
             hook: "buildStart",
         }),
+        androidBundlePlugin({ version }),
     ],
     watch: {
         clearScreen: false,

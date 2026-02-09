@@ -44,9 +44,9 @@ export OC_USERGEEK_APIKEY="${OC_USERGEEK_APIKEY:-this-is-a-fake-apikey}"
 export OC_METERED_APIKEY="${OC_METERED_APIKEY:-this-is-a-fake-apikey}"
 export OC_ONESEC_FORWARDER_CANISTER="${OC_ONESEC_FORWARDER_CANISTER:-this-is-a-fake-canister-id}"
 export OC_ONESEC_MINTER_CANISTER="${OC_ONESEC_MINTER_CANISTER:-this-is-a-fake-canister-id}"
-export OC_BASE_ORIGIN=https://oc.app
+export OC_BASE_ORIGIN=https://webtest.oc.app
 
-echo "DEBUG: OC_DISABLE_WALLET is set to: '$OC_DISABLE_WALLET'"
+echo "DEBUG: OC_APP_STORE is set to: '$OC_APP_STORE'"
 
 npx rollup -c
 

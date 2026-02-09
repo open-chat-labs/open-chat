@@ -14,6 +14,9 @@ Default permissions for the plugin
 - `allow-svelte-ready`
 - `allow-release-notifications`
 - `allow-minimize-app`
+- `allow-get-server-version`
+- `allow-download-update`
+- `allow-restart-app`
 
 ## Permission Table
 
@@ -23,6 +26,32 @@ Default permissions for the plugin
 <th>Description</th>
 </tr>
 
+
+<tr>
+<td>
+
+`oc:allow-download-update`
+
+</td>
+<td>
+
+Enables the download_update command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-download-update`
+
+</td>
+<td>
+
+Denies the download_update command without any pre-configured scope.
+
+</td>
+</tr>
 
 <tr>
 <td>
@@ -46,6 +75,32 @@ Enables the get_fcm_token command without any pre-configured scope.
 <td>
 
 Denies the get_fcm_token command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-get-server-version`
+
+</td>
+<td>
+
+Enables the get_server_version command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-get-server-version`
+
+</td>
+<td>
+
+Denies the get_server_version command without any pre-configured scope.
 
 </td>
 </tr>
@@ -176,6 +231,32 @@ Enables the removeListener command without any pre-configured scope.
 <td>
 
 Denies the removeListener command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-restart-app`
+
+</td>
+<td>
+
+Enables the restart_app command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-restart-app`
+
+</td>
+<td>
+
+Denies the restart_app command without any pre-configured scope.
 
 </td>
 </tr>

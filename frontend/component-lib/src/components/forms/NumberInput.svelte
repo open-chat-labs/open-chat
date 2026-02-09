@@ -1,7 +1,6 @@
 <script lang="ts">
     import { BodySmall, ColourVars, Container, type Padding } from "component-lib";
     import { onMount, type Snippet } from "svelte";
-    import ChatCaption from "../typography/ChatCaption.svelte";
 
     interface Props {
         id?: string;

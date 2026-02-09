@@ -1,20 +1,6 @@
-<script module lang="ts">
-    export interface ButtonProps {
-        children?: Snippet;
-        disabled?: boolean;
-        loading?: boolean;
-        secondary?: boolean;
-        onClick?: (e: MouseEvent) => void;
-        icon?: Snippet<[string]>;
-        width?: SizeMode;
-        height?: SizeMode;
-        danger?: boolean;
-    }
-</script>
-
 <script lang="ts">
-    import { getFlexStyle, type Direction, type SizeMode } from "component-lib";
-    import { getContext, type Snippet } from "svelte";
+    import { getFlexStyle, type ButtonProps, type Direction } from "component-lib";
+    import { getContext } from "svelte";
     import Spinner from "../Spinner.svelte";
 
     let {

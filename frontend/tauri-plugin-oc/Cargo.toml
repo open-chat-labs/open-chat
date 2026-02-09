@@ -7,8 +7,17 @@ links = "tauri-plugin-oc"
 
 [dependencies]
 serde = { workspace = true }
+serde_json = { workspace = true }
 tauri = { workspace = true }
 thiserror = { workspace = true }
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls"] }
+zip = "2.2.2"
+semver = "1.0"
+tokio = { workspace = true, features = ["fs", "io-util"] }
+mime_guess = "2.0"
 
 [build-dependencies]
 tauri-plugin = { version = "2.4.0", features = ["build"] }
+
+[features]
+store = []

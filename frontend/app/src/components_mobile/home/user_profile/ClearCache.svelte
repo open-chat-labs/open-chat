@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { invoke } from "@tauri-apps/api/core";
     import { i18nKey } from "@src/i18n/i18n";
     import { BodySmall, Button, Container, H2 } from "component-lib";
     import { OpenChat } from "openchat-client";
@@ -15,8 +16,16 @@
         busy = true;
         client
             .clearCachedData()
-            .then(() => window.location.reload())
+            .then(reload)
             .finally(() => (busy = false));
+    }
+
+    function reload() {
+        if (client.isNativeApp()) {
+            invoke("plugin:oc|restart_app");
+        } else {
+            window.location.reload();
+        }
     }
 </script>
 

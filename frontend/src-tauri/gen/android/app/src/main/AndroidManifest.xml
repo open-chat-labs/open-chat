@@ -56,7 +56,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" />
                 <data android:scheme="http" />
-                <data android:host="oc.app" />
+                <data android:host="webtest.oc.app" />
                 
                 
                 
