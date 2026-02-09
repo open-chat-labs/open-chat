@@ -3630,29 +3630,20 @@ export class OpenChat {
         const eventStreams: [boolean, Stream<EventsResponse<ChatEvent>>][] = [];
 
         if (currentChatEvents.length > 0) {
-            const stream =
-                serverChat.kind === "direct_chat"
-                    ? this.#worker.stream({
-                          kind: "chatEventsByEventIndex",
-                          chatId: serverChat.them,
-                          eventIndexes: currentChatEvents,
-                          threadRootMessageIndex: undefined,
-                          latestKnownUpdate: serverChat.lastUpdated,
-                      })
-                    : this.#worker.stream({
-                          kind: "chatEventsByEventIndex",
-                          chatId: serverChat.id,
-                          eventIndexes: currentChatEvents,
-                          threadRootMessageIndex: undefined,
-                          latestKnownUpdate: serverChat.lastUpdated,
-                      });
+            const stream = this.#worker.stream({
+                kind: "chatEventsByEventIndex",
+                chatId,
+                eventIndexes: currentChatEvents,
+                threadRootMessageIndex: undefined,
+                latestKnownUpdate: serverChat.lastUpdated,
+            });
             eventStreams.push([false, stream]);
         }
 
         if (currentThreadEvents.length > 0) {
             const stream = this.#worker.stream({
                 kind: "chatEventsByEventIndex",
-                chatId: serverChat.id,
+                chatId,
                 eventIndexes: currentThreadEvents,
                 threadRootMessageIndex: selectedThreadRootMessageIndex,
                 latestKnownUpdate: serverChat.lastUpdated,
@@ -3672,7 +3663,7 @@ export class OpenChat {
                                 e.event.content.kind === "video_call_content"
                             ) {
                                 publish("videoCallMessageUpdated", {
-                                    chatId: serverChat.id,
+                                    chatId,
                                     messageId: e.event.messageId,
                                 });
                             }
