@@ -133,7 +133,7 @@
 
 <SlidingPageContent title={i18nKey("Wallet settings")}>
     <Container height={"fill"} gap={"lg"} padding={"lg"} direction={"vertical"}>
-        <Container padding={"sm"} gap={"xl"} direction={"vertical"}>
+        <Container padding={"sm"} gap={"xxl"} direction={"vertical"}>
             <Container gap={"md"} direction={"vertical"}>
                 <Setting
                     toggle={togglePin}

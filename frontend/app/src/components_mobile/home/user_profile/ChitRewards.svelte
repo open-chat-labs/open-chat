@@ -89,6 +89,7 @@
         <Container padding={["lg", "zero"]} direction={"vertical"} overflow={"visible"}>
             <ChitSummary
                 insuranceLink={false}
+                useSparkleBox={true}
                 earnMoreLink
                 streak={$chitStateStore.streak}
                 earned={$chitStateStore.totalChitEarned}

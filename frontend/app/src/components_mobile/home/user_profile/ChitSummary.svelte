@@ -6,10 +6,11 @@
         BodySmall,
         Button,
         ColourVars,
-        CommonButton,
+        CommonButton2,
         Container,
         H2,
         Subtitle,
+        Column,
     } from "component-lib";
     import { chitStateStore, i18nKey, OpenChat, publish } from "openchat-client";
     import { getContext } from "svelte";
@@ -32,6 +33,7 @@
         balance?: number;
         insuranceLink?: boolean;
         earnMoreLink?: boolean;
+        useSparkleBox?: boolean;
     }
 
     let {
@@ -41,6 +43,7 @@
         balance = 0,
         insuranceLink = true,
         earnMoreLink = false,
+        useSparkleBox = false,
     }: Props = $props();
 
     let showLearnToEarn = $state(false);
@@ -95,8 +98,9 @@
     <LearnToEarn onClose={() => (showLearnToEarn = false)} />
 {/if}
 
-<SparkleBoxOutline>
-    <Container padding={["zero", "zero", "lg", "zero"]} gap={"sm"} crossAxisAlignment={"center"}>
+{#snippet summary()}
+    <!-- Streak bar-->
+    <Container gap={"sm"} crossAxisAlignment={"center"}>
         <Container
             supplementalClass={"streak_bubble"}
             borderRadius={"circle"}
@@ -153,30 +157,44 @@
                 {/if}
             </Button>
             {#if insuranceLink}
-                <CommonButton
-                    mode={"default"}
+                <CommonButton2
                     onClick={() => publish("streakInsurance")}
-                    size={"small_text"}>
+                    variant={"primary"}
+                    mode={"text"}>
                     {#snippet icon(color, size)}
                         <ShieldStarOutline {color} {size}></ShieldStarOutline>
                     {/snippet}
                     <Translatable resourceKey={i18nKey("Streak insurance")}></Translatable>
-                </CommonButton>
+                </CommonButton2>
             {/if}
             {#if earnMoreLink}
-                <CommonButton
-                    mode={"default"}
+                <CommonButton2
                     onClick={() => (showLearnToEarn = true)}
-                    size={"small_text"}>
+                    variant={"primary"}
+                    mode={"text"}>
                     {#snippet icon(color, size)}
                         <Rocket {color} {size}></Rocket>
                     {/snippet}
                     <Translatable resourceKey={i18nKey("Earn more")}></Translatable>
-                </CommonButton>
+                </CommonButton2>
             {/if}
         </Container>
     {/if}
-</SparkleBoxOutline>
+{/snippet}
+
+{#if useSparkleBox}
+    <SparkleBoxOutline>
+        {@render summary()}
+    </SparkleBoxOutline>
+{:else}
+    <Column
+        gap="xl"
+        background={ColourVars.background1}
+        borderRadius="lg"
+        padding={["xl", "xl", "lg"]}>
+        {@render summary()}
+    </Column>
+{/if}
 
 <style lang="scss">
     :global(.container.streak_bubble h2) {

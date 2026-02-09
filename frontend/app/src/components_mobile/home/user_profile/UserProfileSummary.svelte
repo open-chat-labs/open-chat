@@ -1,33 +1,20 @@
 <script lang="ts">
     import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
     import { i18nKey } from "@src/i18n/i18n";
-    import { toastStore } from "@src/stores/toast";
-    import {
-        Body,
-        BodySmall,
-        ColourVars,
-        Container,
-        IconButton,
-        MenuItem,
-        MenuTrigger,
-    } from "component-lib";
+    import { BodySmall, Container, IconButton, MenuItem, MenuTrigger } from "component-lib";
     import {
         allUsersStore,
         currentUserIdStore,
         currentUserProfileStore,
         OpenChat,
-        percentageStorageUsedStore,
         publish,
-        storageInGBStore,
         userMetricsStore,
         type PublicProfile,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import AccountStar from "svelte-material-icons/AccountStarOutline.svelte";
-    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import Share from "svelte-material-icons/ShareVariantOutline.svelte";
-    import Progress from "../../Progress.svelte";
     import SparkleBox from "../../SparkleBox.svelte";
     import Translatable from "../../Translatable.svelte";
     import Stats from "../Stats.svelte";
@@ -50,12 +37,6 @@
         });
     });
 
-    function onCopy() {
-        navigator.clipboard.writeText(user.userId).then(() => {
-            toastStore.showSuccessToast(i18nKey("userIdCopiedToClipboard"));
-        });
-    }
-
     function appSettings() {
         publish("appSettings");
     }
@@ -77,7 +58,7 @@
     height={"fill"}
     crossAxisAlignment={"center"}
     direction={"vertical"}>
-    <Container padding={["zero", "zero", "lg", "zero"]} gap={"xl"} direction={"vertical"}>
+    <Container padding={["zero", "zero", "huge", "zero"]} gap={"xxl"} direction={"vertical"}>
         {#if user !== undefined && profile !== undefined}
             <UserProfileSummaryCard {user} {profile}>
                 {#snippet buttons()}
@@ -107,52 +88,6 @@
                 {/snippet}
             </UserProfileSummaryCard>
         {/if}
-        <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
-            <BodySmall colour={"textSecondary"} fontWeight={"bold"}>
-                <Translatable resourceKey={i18nKey("Account details")}></Translatable>
-            </BodySmall>
-            <Container gap={"sm"} direction={"vertical"}>
-                <Container crossAxisAlignment={"center"}>
-                    <Container direction={"vertical"}>
-                        <Body colour={"textSecondary"}>
-                            <Translatable resourceKey={i18nKey("user & canister id")}
-                            ></Translatable>
-                        </Body>
-
-                        <Body fontWeight={"bold"}>
-                            {user.userId}
-                        </Body>
-                    </Container>
-                    <IconButton onclick={onCopy} size={"sm"}>
-                        {#snippet icon()}
-                            <CopyIcon color={ColourVars.textSecondary} />
-                        {/snippet}
-                    </IconButton>
-                </Container>
-            </Container>
-            <Container gap={"sm"} direction={"vertical"}>
-                <Body colour={"textSecondary"}>
-                    <Translatable resourceKey={i18nKey("account storage usage")}></Translatable>
-                </Body>
-
-                <Progress
-                    colour={ColourVars.secondary}
-                    size={"6px"}
-                    percent={$percentageStorageUsedStore} />
-
-                <Body fontWeight={"bold"}>
-                    <Translatable
-                        resourceKey={i18nKey("storageUsed", {
-                            used: $storageInGBStore.gbUsed.toFixed(2),
-                            limit: $storageInGBStore.gbLimit.toFixed(1),
-                        })} />
-                    <Translatable
-                        resourceKey={i18nKey("storagePercentRemaining", {
-                            percent: $percentageStorageUsedStore,
-                        })} />
-                </Body>
-            </Container>
-        </Container>
 
         {#if !verified}
             <SparkleBox

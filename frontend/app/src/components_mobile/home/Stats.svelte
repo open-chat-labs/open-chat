@@ -141,7 +141,7 @@
     </Container>
 {/snippet}
 
-<Container direction={"vertical"} gap={"xl"} crossAxisAlignment={"center"}>
+<Container direction={"vertical"} gap={"xxl"} crossAxisAlignment={"center"}>
     <svg class:rendered class="pie" viewBox="0 0 320 320">
         <clipPath id="hollow">
             <path
@@ -153,6 +153,7 @@
 
         {#each data as slice, i}
             <circle
+                role="presentation"
                 onmouseenter={(_) => (hoveredIndex = i)}
                 onmouseleave={(_) => (hoveredIndex = undefined)}
                 class={`slice ${slice.cls}`}

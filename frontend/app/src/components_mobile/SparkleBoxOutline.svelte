@@ -11,10 +11,10 @@
 
 <div class="gradient_border">
     <Container
-        gap={"lg"}
+        gap={"xl"}
         supplementalClass={"starfield"}
         borderRadius={"lg"}
-        padding={"lg"}
+        padding={"xl"}
         direction={"vertical"}
         background={"#000"}>
         {@render children()}
@@ -54,7 +54,7 @@
 
     .gradient_border {
         width: 100%;
-        padding: var(--bw-thick);
+        padding: var(--bw-extra-thick);
         background: linear-gradient(90deg, var(--primary), var(--secondary));
         border-radius: var(--rad-lg);
     }
