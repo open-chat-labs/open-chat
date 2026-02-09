@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io::Cursor;
 use std::path::PathBuf;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Manager, Runtime};
 
 const VERSION_ENDPOINT: &str = "https://webtest.oc.app/version";
 // TODO: This needs to be the actual URL where the bundle can be downloaded
@@ -20,12 +20,12 @@ struct CachedVersion {
     version: String,
 }
 
-pub struct UpdateManager {
-    app_handle: AppHandle,
+pub struct UpdateManager<R: Runtime> {
+    app_handle: AppHandle<R>,
 }
 
-impl UpdateManager {
-    pub fn new(app_handle: AppHandle) -> Self {
+impl<R: Runtime> UpdateManager<R> {
+    pub fn new(app_handle: AppHandle<R>) -> Self {
         Self { app_handle }
     }
 

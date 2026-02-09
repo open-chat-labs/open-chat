@@ -10,7 +10,7 @@
     const VERSION_INTERVAL = 60 * 1000;
     const client = getContext<OpenChat>("client");
 
-    let poller = new Poller(checkVersion, VERSION_INTERVAL);
+    let poller = new Poller(checkVersion, VERSION_INTERVAL, undefined, true);
     // @ts-ignore
     let clientVersion = Version.parse(window.OC_WEBSITE_VERSION);
     let serverVersion = $state(clientVersion);
@@ -35,7 +35,7 @@
                 if (client.isNativeApp()) {
                     console.log("About to tell the android shell to update itself");
                     try {
-                        const updated = await invoke("download_update");
+                        const updated = await invoke("plugin:oc|download_update");
                         if (!updated) {
                             console.log("Native update failed or was not needed");
                             return;
@@ -63,7 +63,7 @@
 
     function getServerVersion(): Promise<Version> {
         if (client.isNativeApp()) {
-            return invoke<string>("get_server_version").then((v) => Version.parse(v));
+            return invoke<string>("plugin:oc|get_server_version").then((v) => Version.parse(v));
         }
 
         return fetch("/version", {
@@ -87,7 +87,7 @@
 
     function reload(ev?: Event) {
         if (client.isNativeApp()) {
-            invoke("restart_app");
+            invoke("plugin:oc|restart_app");
         } else {
             window.location.reload();
         }

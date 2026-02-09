@@ -295,6 +295,18 @@
       "type": "string",
       "oneOf": [
         {
+          "description": "Enables the download_update command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-download-update",
+          "markdownDescription": "Enables the download_update command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the download_update command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-download-update",
+          "markdownDescription": "Denies the download_update command without any pre-configured scope."
+        },
+        {
           "description": "Enables the get_fcm_token command without any pre-configured scope.",
           "type": "string",
           "const": "allow-get-fcm-token",
@@ -305,6 +317,18 @@
           "type": "string",
           "const": "deny-get-fcm-token",
           "markdownDescription": "Denies the get_fcm_token command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the get_server_version command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-get-server-version",
+          "markdownDescription": "Enables the get_server_version command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_server_version command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-get-server-version",
+          "markdownDescription": "Denies the get_server_version command without any pre-configured scope."
         },
         {
           "description": "Enables the minimize_app command without any pre-configured scope.",
@@ -367,6 +391,18 @@
           "markdownDescription": "Denies the removeListener command without any pre-configured scope."
         },
         {
+          "description": "Enables the restart_app command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-restart-app",
+          "markdownDescription": "Enables the restart_app command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the restart_app command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-restart-app",
+          "markdownDescription": "Denies the restart_app command without any pre-configured scope."
+        },
+        {
           "description": "Enables the show_notification command without any pre-configured scope.",
           "type": "string",
           "const": "allow-show-notification",
@@ -415,10 +451,10 @@
           "markdownDescription": "Denies the svelte_ready command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`\n- `allow-release-notifications`\n- `allow-minimize-app`",
+          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`\n- `allow-release-notifications`\n- `allow-minimize-app`\n- `allow-get-server-version`\n- `allow-download-update`\n- `allow-restart-app`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`\n- `allow-release-notifications`\n- `allow-minimize-app`"
+          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`\n- `allow-release-notifications`\n- `allow-minimize-app`\n- `allow-get-server-version`\n- `allow-download-update`\n- `allow-restart-app`"
         }
       ]
     }
