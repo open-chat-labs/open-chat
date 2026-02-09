@@ -22,7 +22,7 @@
 
     function reload() {
         if (client.isNativeApp()) {
-            invoke("restart_app");
+            invoke("plugin:oc|restart_app");
         } else {
             window.location.reload();
         }
