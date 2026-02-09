@@ -8,7 +8,10 @@ use tauri::{AppHandle, Manager, Runtime};
 
 const VERSION_ENDPOINT: &str = "https://webtest.oc.app/version";
 // TODO: This needs to be the actual URL where the bundle can be downloaded
-const BUNDLE_URL_TEMPLATE: &str = "https://webtest.oc.app/downloads/bundle-{}.zip";
+#[cfg(feature = "store")]
+const BUNDLE_URL_TEMPLATE: &str = "https://webtest.oc.app/downloads/store-{}.zip";
+#[cfg(not(feature = "store"))]
+const BUNDLE_URL_TEMPLATE: &str = "https://webtest.oc.app/downloads/full-{}.zip";
 
 #[derive(Serialize, Deserialize, Debug)]
 struct ServerVersion {

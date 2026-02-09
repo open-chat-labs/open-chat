@@ -130,9 +130,9 @@ export default {
 
         replace({
             preventAssignment: true,
-            "import.meta.env.OC_DISABLE_WALLET": JSON.stringify(process.env.OC_DISABLE_WALLET),
-            "import.meta.env.OC_DISABLE_CRYPTO_PAYMENTS": JSON.stringify(
-                process.env.OC_DISABLE_CRYPTO_PAYMENTS,
+            "import.meta.env.OC_APP_STORE": override(
+                "OC_APP_STORE",
+                JSON.stringify(process.env.OC_APP_STORE),
             ),
             "import.meta.env.OC_MOBILE_LAYOUT": override(
                 "OC_MOBILE_LAYOUT",
