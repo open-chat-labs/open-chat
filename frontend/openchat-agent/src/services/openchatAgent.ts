@@ -4070,6 +4070,7 @@ export class OpenChatAgent extends EventTarget {
             callback(activityEvents, false);
             return [cxt, []];
         });
+        callback(activityEvents, true);
     }
 
     getChannelSummary(channelId: ChannelIdentifier): Promise<ChannelSummaryResponse> {
