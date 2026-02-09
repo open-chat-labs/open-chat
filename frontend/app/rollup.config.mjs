@@ -64,6 +64,8 @@ function clean() {
 
 const { version } = initEnv();
 
+const override = (key, val) => `(window.OC_CONFIG?.${key} ?? ${val})`;
+
 export default {
     input: `./src/main.ts`,
     output: {
@@ -131,8 +133,14 @@ export default {
             "import.meta.env.OC_DISABLE_CRYPTO_PAYMENTS": JSON.stringify(
                 process.env.OC_DISABLE_CRYPTO_PAYMENTS,
             ),
-            "import.meta.env.OC_MOBILE_LAYOUT": JSON.stringify(process.env.OC_MOBILE_LAYOUT),
-            "import.meta.env.OC_APP_TYPE": JSON.stringify(process.env.OC_APP_TYPE),
+            "import.meta.env.OC_MOBILE_LAYOUT": override(
+                "OC_MOBILE_LAYOUT",
+                JSON.stringify(process.env.OC_MOBILE_LAYOUT),
+            ),
+            "import.meta.env.OC_APP_TYPE": override(
+                "OC_APP_TYPE",
+                JSON.stringify(process.env.OC_APP_TYPE),
+            ),
             "import.meta.env.OC_BUILD_ENV": JSON.stringify(process.env.OC_BUILD_ENV),
             "import.meta.env.OC_WEBAUTHN_ORIGIN": JSON.stringify(process.env.OC_WEBAUTHN_ORIGIN),
             "import.meta.env.OC_INTERNET_IDENTITY_URL": JSON.stringify(
@@ -334,7 +342,7 @@ export default {
         }),
         execute({
             commands: [
-                `rm -rf dist_bundle && mkdir -p dist_bundle && cp -r public/. dist_bundle/ && cp -r build/. dist_bundle/ && mkdir -p build/downloads && (cd dist_bundle && zip -r ../build/downloads/bundle-${version}.zip .) && rm -rf dist_bundle`,
+                `rm -rf dist_bundle && mkdir -p dist_bundle && cp -r public/. dist_bundle/ && cp -r build/. dist_bundle/ && rm -rf dist_bundle/downloads && mkdir -p build/downloads && node -e "const fs = require('fs'); let c = fs.readFileSync('dist_bundle/index.html', 'utf8'); c = c.replace('<head>', '<head><script>window.OC_CONFIG={OC_APP_TYPE:\\"android\\",OC_MOBILE_LAYOUT:\\"v2\\"}</script>'); fs.writeFileSync('dist_bundle/index.html', c);" && (cd dist_bundle && zip -r ../build/downloads/bundle-${version}.zip .) && rm -rf dist_bundle`,
             ],
             hook: "writeBundle",
         }),
