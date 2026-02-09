@@ -156,16 +156,16 @@ jobs:
               env:
                   # Ensure these are passed if needed, though the gradle file uses the debug fallback we set up
                   ANDROID_KEY_STORE_FILE: ${{ env.ANDROID_KEY_STORE_FILE }}
-                  OC_DISABLE_WALLET: "false"
+                  OC_APP_STORE: "false"
 
             - name: Build Android APK (Store)
               run: |
-                  cargo tauri android build --verbose --target aarch64 armv7
+                  cargo tauri android build --verbose --target aarch64 armv7 --features store
                   mv src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat-release.apk ./openchat_${{ env.VERSION }}_store.apk
               env:
                   # Ensure these are passed if needed, though the gradle file uses the debug fallback we set up
                   ANDROID_KEY_STORE_FILE: ${{ env.ANDROID_KEY_STORE_FILE }}
-                  OC_DISABLE_WALLET: "true"
+                  OC_APP_STORE: "true"
 
             - name: Upload APKs
               uses: actions/upload-artifact@v4

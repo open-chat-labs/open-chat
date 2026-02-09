@@ -135,9 +135,9 @@
     <Container crossAxisAlignment={"center"} gap={"sm"}>
         <div class={`legend ${cls} key`}></div>
         <div class={`legend ${cls}`}>{n.toLocaleString()}</div>
-        <BodySmall width={"hug"}>
+        <Body width={"hug"}>
             <Translatable resourceKey={i18nKey(resourceKey)} />
-        </BodySmall>
+        </Body>
     </Container>
 {/snippet}
 
@@ -210,7 +210,7 @@
     </Container>
 
     {#if showReported}
-        <Container gap={"xs"} direction={"vertical"}>
+        <Container gap={"md"} direction={"vertical"}>
             <Container crossAxisAlignment={"center"} gap={"xs"}>
                 <Flag color={ColourVars.error} />
                 <Subtitle width={"hug"} colour={"error"} fontWeight={"bold"}>
@@ -220,9 +220,9 @@
                     / {stats.reportedMessages.toLocaleString()}
                 </Subtitle>
             </Container>
-            <BodySmall colour={"textSecondary"} align={"start"}>
+            <Body colour={"textSecondary"} align={"start"}>
                 <Translatable resourceKey={i18nKey("stats.reportedMessagesInfo")} />
-            </BodySmall>
+            </Body>
         </Container>
     {/if}
 </Container>
@@ -248,8 +248,8 @@
     $giphy-colour: #ed5e5e;
 
     .legend {
-        font-size: var(--typo-bodySmall-sz);
-        line-height: var(--typo-bodySmall-lh);
+        font-size: var(--typo-body-sz);
+        line-height: var(--typo-body-lh);
     }
 
     .slice {

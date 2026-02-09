@@ -100,18 +100,19 @@
         position: relative;
     }
     .streak_icon {
-        width: 20px;
-        ///height: 18px;
+        width: 26px;
         aspect-ratio: 1 / 1;
     }
 
     .num {
         position: absolute;
-        top: 7px;
-        left: 3.5px;
+        top: 10px;
+        left: 0;
         @include font(bold, normal, fs-50);
         font-size: 0.4rem;
         color: var(--text-on-primary);
+        width: 65%;
+        text-align: center;
 
         &.disabled {
             color: var(--text-primary);

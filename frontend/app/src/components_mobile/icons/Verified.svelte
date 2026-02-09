@@ -3,19 +3,20 @@
     import type { ResourceKey } from "openchat-client";
     import Translatable from "../Translatable.svelte";
     import Check from "svelte-material-icons/Check.svelte";
-    import BadgeContainer from "../home/profile/BadgeContainer.svelte";
+    import BadgeContainer, { type BadgeSize } from "../home/profile/BadgeContainer.svelte";
 
     interface Props {
         verified: boolean;
+        size?: BadgeSize;
         tooltip?: ResourceKey;
     }
 
-    let { verified, tooltip }: Props = $props();
+    let { verified, size = "default", tooltip }: Props = $props();
 </script>
 
 {#snippet renderCheck()}
-    <BadgeContainer backgroundColor={ColourVars.secondary}>
-        <Check size="0.625rem" />
+    <BadgeContainer {size} backgroundColor={ColourVars.secondary}>
+        <Check size={size === "large" ? "1rem" : "0.625rem"} />
     </BadgeContainer>
 {/snippet}
 

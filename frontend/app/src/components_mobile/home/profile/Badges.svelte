@@ -6,12 +6,14 @@
     import Verified from "../../icons/Verified.svelte";
     import ChitEarnedBadge from "./ChitEarnedBadge.svelte";
     import Streak from "./Streak.svelte";
+    import { type BadgeSize } from "./BadgeContainer.svelte";
 
     interface Props {
         diamondStatus?: DiamondMembershipStatus["kind"] | undefined;
         streak?: number;
         uniquePerson?: boolean;
         chitEarned?: number;
+        size?: BadgeSize;
     }
 
     let {
@@ -19,19 +21,20 @@
         streak = 0,
         uniquePerson = false,
         chitEarned = 0,
+        size = "default",
     }: Props = $props();
 </script>
 
 <Container
-    supplementalClass={"badges"}
+    supplementalClass={`badges ${size === "large" ? "large" : ""}`}
     crossAxisAlignment={"center"}
     gap={"xs"}
     padding={["xxs", "zero"]}>
-    <Diamond status={diamondStatus} />
-    <Verified verified={uniquePerson} />
+    <Diamond {size} status={diamondStatus} />
+    <Verified {size} verified={uniquePerson} />
     {#if !$disableChit}
-        <Streak days={streak} />
-        <ChitEarnedBadge earned={chitEarned} />
+        <Streak {size} days={streak} />
+        <ChitEarnedBadge {size} earned={chitEarned} />
     {/if}
 </Container>
 
@@ -43,6 +46,10 @@
             > *:not(:first-child) {
                 z-index: 1;
                 margin-left: -0.5rem;
+            }
+
+            &.large > *:not(:first-child) {
+                margin-left: -0.65rem;
             }
         }
     }

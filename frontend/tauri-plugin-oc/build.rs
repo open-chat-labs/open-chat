@@ -8,6 +8,10 @@ const COMMANDS: &[&str] = &[
     "show_notification",
     "svelte_ready",
     "release_notifications",
+    "minimize_app",
+    "get_server_version",
+    "download_update",
+    "restart_app",
 ];
 
 fn main() {

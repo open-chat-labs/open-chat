@@ -5,15 +5,15 @@
     import Translatable from "../Translatable.svelte";
     import Diamond from "svelte-material-icons/Diamond.svelte";
     import DiamondOutline from "svelte-material-icons/DiamondOutline.svelte";
-    import BadgeContainer from "../home/profile/BadgeContainer.svelte";
+    import BadgeContainer, { type BadgeSize } from "../home/profile/BadgeContainer.svelte";
 
     interface Props {
-        size?: string;
+        size?: BadgeSize;
         show?: "blue" | "gold" | undefined;
         status?: DiamondMembershipStatus["kind"] | undefined;
     }
 
-    let { show = undefined, status = undefined }: Props = $props();
+    let { size = "default", show = undefined, status = undefined }: Props = $props();
 
     function getStatusName(
         status: DiamondMembershipStatus["kind"] | undefined,
@@ -30,12 +30,12 @@
         }
     }
     let statusName = $derived(getStatusName(status));
-    let iconSize = "0.625rem";
+    let iconSize = size == "large" ? "1rem" : "0.625rem";
 </script>
 
 {#if status !== "inactive" || show}
     <Tooltip uppercase position="top" align="middle">
-        <BadgeContainer>
+        <BadgeContainer {size}>
             {#if status == "lifetime"}
                 <Diamond size={iconSize} />
             {:else}

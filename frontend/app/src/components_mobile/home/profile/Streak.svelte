@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { Tooltip, Caption, ColourVars } from "component-lib";
-    import BadgeContainer from "./BadgeContainer.svelte";
+    import { Subtitle, Tooltip, Caption, ColourVars } from "component-lib";
+    import BadgeContainer, { type BadgeSize } from "./BadgeContainer.svelte";
 
     type Streak =
         | "none"
@@ -15,9 +15,10 @@
         days?: number;
         showTooltip?: boolean;
         disabled?: boolean;
+        size?: BadgeSize;
     }
 
-    let { days = 0, showTooltip = true }: Props = $props();
+    let { days = 0, showTooltip = true, size = "default" }: Props = $props();
 
     function streakFromDays(days: number): Streak {
         return days < 3
@@ -56,16 +57,23 @@
     let streak = $derived(streakFromDays(days));
     let show = $derived(streak !== "none");
     let num = $derived(streakNumber(streak));
+
+    let [svgw, svgh] = size === "large" ? [22, 23] : [17, 18];
 </script>
 
 {#snippet renderStreak()}
-    <BadgeContainer supplementalClass="streak-badge" backgroundColor={ColourVars.error}>
-        <Caption align="center" fontWeight="bold">{num}</Caption>
+    <BadgeContainer {size} supplementalClass="streak-badge" backgroundColor={ColourVars.error}>
+        {#if size === "default"}
+            <Caption align="center" fontWeight="bold">{num}</Caption>
+        {:else}
+            <Subtitle align="center" fontWeight="bold">{num}</Subtitle>
+        {/if}
         <svg
             class="commet-tail"
-            width="17"
-            height="18"
-            viewBox="0 0 17 18"
+            class:large={size === "large"}
+            width={svgw}
+            height={svgh}
+            viewBox={`0 0 ${svgw} ${svgh}`}
             fill="none"
             xmlns="http://www.w3.org/2000/svg">
             <path
@@ -95,9 +103,20 @@
                 position: absolute;
                 right: -0.125rem;
                 top: -0.25rem;
+
+                &.large {
+                    right: 0;
+                    top: -0.28rem;
+
+                    path {
+                        scale: 1.35;
+                    }
+                }
             }
 
-            .caption {
+            .caption,
+            .body,
+            .subtitle {
                 z-index: 1;
                 scale: 0.8;
                 width: 100%;

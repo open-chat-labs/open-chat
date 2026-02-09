@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { invoke } from "@tauri-apps/api/core";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import { Container, Sheet } from "component-lib";
@@ -135,7 +136,7 @@
             subscribe("toggleMuteNotifications", toggleMuteNotifications),
             subscribe("successfulImport", successfulImport),
             subscribe("clearSelection", () => pageReplace(routeForScope($chatListScopeStore))),
-            subscribe("userSuspensionChanged", () => window.location.reload()),
+            subscribe("userSuspensionChanged", reload),
             subscribe("selectedChatInvalid", selectedChatInvalid),
             subscribe("sendMessageFailed", sendMessageFailed),
             subscribe("remoteVideoCallStarted", remoteVideoCallStarted),
@@ -158,6 +159,14 @@
             document.body.removeEventListener("profile-clicked", profileClicked);
         };
     });
+
+    function reload() {
+        if (client.isNativeApp()) {
+            invoke("plugin:oc|restart_app");
+        } else {
+            window.location.reload();
+        }
+    }
 
     function suspendUser(userId: string) {
         modal = { kind: "suspending", userId };
@@ -284,12 +293,7 @@
             case "leave":
                 return leaveGroup(confirmActionEvent.chatId, confirmActionEvent.level);
             case "delete_direct_chat":
-                return deleteDirectChat(
-                    confirmActionEvent.chatId,
-                    confirmActionEvent.blockUser,
-                ).then((_) => {
-                    setRightPanelHistory([]);
-                });
+                return deleteDirectChat(confirmActionEvent.chatId, confirmActionEvent.blockUser);
             case "leave_community":
                 return leaveCommunity(confirmActionEvent.communityId);
             case "delete_community":
