@@ -157,6 +157,7 @@ jobs:
                   # Ensure these are passed if needed, though the gradle file uses the debug fallback we set up
                   ANDROID_KEY_STORE_FILE: ${{ env.ANDROID_KEY_STORE_FILE }}
                   OC_APP_STORE: "false"
+                  OC_OTA_UPDATES: "patch"
 
             - name: Build Android APK (Store)
               run: |
@@ -166,6 +167,7 @@ jobs:
                   # Ensure these are passed if needed, though the gradle file uses the debug fallback we set up
                   ANDROID_KEY_STORE_FILE: ${{ env.ANDROID_KEY_STORE_FILE }}
                   OC_APP_STORE: "true"
+                  OC_OTA_UPDATES: "minor"
 
             - name: Upload APKs
               uses: actions/upload-artifact@v4

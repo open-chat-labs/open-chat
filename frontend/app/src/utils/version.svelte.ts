@@ -27,14 +27,8 @@ export class VersionChecker {
     }
 
     #startPoller(immediate: boolean) {
-        if (import.meta.env.OC_APP_TYPE !== "android") {
+        if (import.meta.env.OC_APP_TYPE !== "android" || import.meta.env.OC_OTA_UPDATES === "none") {
             this.#versionState = { kind: "up_to_date" };
-            // this.#versionState = {
-            //     kind: "out_of_date",
-            //     compatible: true,
-            //     available: Version.parse("2.0.220"),
-            //     downloadProgress: 75,
-            // };
             return;
         }
         return new Poller(() => this.#checkVersion(), VERSION_INTERVAL, undefined, immediate);

@@ -142,6 +142,10 @@ export default {
                 "OC_APP_TYPE",
                 JSON.stringify(process.env.OC_APP_TYPE),
             ),
+            "import.meta.env.OC_OTA_UPDATES": override(
+                "OC_OTA_UPDATES",
+                JSON.stringify(process.env.OC_OTA_UPDATES),
+            ),
             "import.meta.env.OC_BUILD_ENV": JSON.stringify(process.env.OC_BUILD_ENV),
             "import.meta.env.OC_WEBAUTHN_ORIGIN": JSON.stringify(process.env.OC_WEBAUTHN_ORIGIN),
             "import.meta.env.OC_INTERNET_IDENTITY_URL": JSON.stringify(
