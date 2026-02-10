@@ -14,6 +14,7 @@
         uppercase?: boolean;
         onClick?: () => void;
         blur?: boolean;
+        maxLines?: number;
     }
 </script>
 
@@ -42,13 +43,17 @@
         uppercase = false,
         onClick,
         blur = false,
+        maxLines,
     }: Props = $props();
 
     let parentDirection = getContext<Direction>("direction");
     let widthCss = $derived(getFlexStyle("width", width, parentDirection));
     let heightCss = $derived(getFlexStyle("height", height, parentDirection));
     let textColorCss = $derived(colour ? `color: ${ColourVars[colour]};` : "");
-    let style = $derived(`${heightCss}; ${widthCss}; ${textColorCss} text-align:${align};`);
+    let maxLinesCss = $derived(maxLines ? `--max-lines: ${maxLines};` : ``);
+    let style = $derived(
+        `${heightCss}; ${widthCss}; ${textColorCss} text-align:${align}; ${maxLinesCss}`,
+    );
     let tag = $derived(getTag());
 
     function getTag() {
@@ -78,6 +83,7 @@
         onclick={onClick}
         class:uppercase
         class:blur
+        class:has_max_lines={maxLines && maxLines > 0}
         for={labelFor}
         class:ellipsis={ellipsisTruncate}
         {style}
@@ -91,6 +97,7 @@
         onclick={onClick}
         class:uppercase
         class:blur
+        class:has_max_lines={maxLines && maxLines > 0}
         class:ellipsis={ellipsisTruncate}
         {style}
         class={`typo ${type} ${fontWeight}`}>
@@ -206,5 +213,15 @@
 
     .blur {
         filter: blur(8px);
+    }
+
+    .has_max_lines {
+        width: 100%;
+        overflow: hidden;
+        display: -webkit-box;
+        white-space: unset;
+        line-clamp: var(--max-lines);
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: var(--max-lines);
     }
 </style>

@@ -84,6 +84,7 @@
         {truncate}
         {pinned}
         {content}
+        {reply}
         {blockLevelMarkdown}
         {showPreviews}
         {onRemovePreview} />

@@ -29,6 +29,7 @@
         selectedCommunitySummaryStore,
         selectedCommunityUserGroupsStore,
         throttleDeadline,
+        type CreatedUser,
     } from "openchat-client";
     import { getContext, tick } from "svelte";
     import { _ } from "svelte-i18n";
@@ -58,6 +59,7 @@
     import MentionPicker from "./MentionPicker.svelte";
     import PreviewFooter from "./PreviewFooter.svelte";
     import ThrottleCountdown from "./ThrottleCountdown.svelte";
+    import ReplyingTo from "./ReplyingTo.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -73,6 +75,7 @@
         mode?: "thread" | "message";
         externalContent: boolean;
         messageContext: MessageContext;
+        user: CreatedUser;
         onFileSelected: (content: AttachmentContent) => void;
         onPaste: (e: ClipboardEvent) => void;
         onSetTextContent: (txt?: string) => void;
@@ -85,6 +88,7 @@
         onCreatePrizeMessage?: () => void;
         onCreateP2PSwapMessage: () => void;
         onMakeMeme: () => void;
+        onCancelReply: () => void;
     }
 
     let {
@@ -99,6 +103,7 @@
         mode = "message",
         externalContent,
         messageContext,
+        user,
         onFileSelected,
         onPaste,
         onSetTextContent,
@@ -111,6 +116,7 @@
         onCreatePrizeMessage,
         onCreateP2PSwapMessage,
         onMakeMeme,
+        onCancelReply,
     }: Props = $props();
 
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
@@ -638,91 +644,94 @@
                 <Progress size={"3rem"} percent={percentRecorded} />
             {:else if canEnterText}
                 {#key textboxId}
-                    <Container
-                        gap={"sm"}
-                        background={ColourVars.textTertiary}
-                        borderRadius={"xxl"}
-                        minHeight={"3.5rem"}
-                        maxHeight={"calc(var(--vh, 1vh) * 50)"}
-                        padding={["zero", "xs", "xs", "xs"]}
-                        crossAxisAlignment={"end"}
-                        mainAxisAlignment={"spaceBetween"}
-                        supplementalClass={"message_entry_text_box"}>
-                        <IconButton
-                            onclick={toggleEmojiPicker}
-                            padding={["sm", "zero", "md", "sm"]}
-                            size={"md"}>
-                            {#snippet icon()}
-                                {#if showEmojiPicker}
-                                    <Keyboard color={ColourVars.textPlaceholder} />
-                                {:else}
-                                    <StickerEmoji color={ColourVars.textPlaceholder} />
-                                {/if}
-                            {/snippet}
-                        </IconButton>
-                        <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_static_element_interactions -->
-                        <div
-                            data-gram="false"
-                            data-gramm_editor="false"
-                            data-enable-grammarly="false"
-                            tabindex={0}
-                            bind:this={inp}
-                            onblur={saveSelection}
-                            class="textbox"
-                            class:recording
-                            class:empty={textboxEmpty}
-                            contenteditable
-                            onpaste={onPaste}
-                            placeholder={interpolate($_, placeholder)}
-                            use:translatable={{
-                                key: placeholder,
-                                position: "absolute",
-                                right: 12,
-                                top: 12,
-                            }}
-                            spellcheck
-                            oninput={onInput}
-                            onkeypress={keyPress}>
-                        </div>
-
-                        <Container
-                            padding={["zero", "sm", "zero", "zero"]}
-                            width={"hug"}
-                            gap={"md"}>
+                    <div class="message_entry_wrapper" class:has_reply={!!replyingTo}>
+                        {#if replyingTo}
+                            <ReplyingTo readonly {replyingTo} {user} {onCancelReply} />
+                        {/if}
+                        <Row
+                            gap={"sm"}
+                            minHeight={"3.5rem"}
+                            maxHeight={"calc(var(--vh, 1vh) * 50)"}
+                            padding={["xs", "xs"]}
+                            crossAxisAlignment={"end"}
+                            mainAxisAlignment={"spaceBetween"}
+                            supplementalClass={"message_entry_text_box"}>
                             <IconButton
-                                onclick={() =>
-                                    (showCustomMessageTrigger = !showCustomMessageTrigger)}
-                                padding={["sm", "zero", "md", "zero"]}
+                                onclick={toggleEmojiPicker}
+                                padding={["sm", "zero", "md", "sm"]}
                                 size={"md"}>
                                 {#snippet icon()}
-                                    <div
-                                        class:open={showCustomMessageTrigger}
-                                        class="drawer_trigger">
-                                        <PlusCircle color={ColourVars.textPlaceholder} />
-                                    </div>
+                                    {#if showEmojiPicker}
+                                        <Keyboard color={ColourVars.textPlaceholder} />
+                                    {:else}
+                                        <StickerEmoji color={ColourVars.textPlaceholder} />
+                                    {/if}
                                 {/snippet}
                             </IconButton>
+                            <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_static_element_interactions -->
+                            <div
+                                data-gram="false"
+                                data-gramm_editor="false"
+                                data-enable-grammarly="false"
+                                tabindex={0}
+                                bind:this={inp}
+                                onblur={saveSelection}
+                                class="textbox"
+                                class:recording
+                                class:empty={textboxEmpty}
+                                contenteditable
+                                onpaste={onPaste}
+                                placeholder={interpolate($_, placeholder)}
+                                use:translatable={{
+                                    key: placeholder,
+                                    position: "absolute",
+                                    right: 12,
+                                    top: 12,
+                                }}
+                                spellcheck
+                                oninput={onInput}
+                                onkeypress={keyPress}>
+                            </div>
 
-                            {#if messageIsEmpty && canAddImageOrVideo}
-                                <FileAttacher {onFileSelected}>
-                                    {#snippet children(onClick)}
-                                        <IconButton
-                                            onclick={onClick}
-                                            padding={["sm", "zero", "md", "zero"]}
-                                            size={"md"}>
-                                            {#snippet icon()}
-                                                <Camera color={ColourVars.textPlaceholder} />
-                                            {/snippet}
-                                        </IconButton>
+                            <Container
+                                padding={["zero", "sm", "zero", "zero"]}
+                                width={"hug"}
+                                gap={"md"}>
+                                <IconButton
+                                    onclick={() =>
+                                        (showCustomMessageTrigger = !showCustomMessageTrigger)}
+                                    padding={["sm", "zero", "md", "zero"]}
+                                    size={"md"}>
+                                    {#snippet icon()}
+                                        <div
+                                            class:open={showCustomMessageTrigger}
+                                            class="drawer_trigger">
+                                            <PlusCircle color={ColourVars.textPlaceholder} />
+                                        </div>
                                     {/snippet}
-                                </FileAttacher>
-                            {/if}
-                        </Container>
+                                </IconButton>
 
-                        {#if containsMarkdown}
-                            <MarkdownToggle {editingEvent} />
-                        {/if}
-                    </Container>
+                                {#if messageIsEmpty && canAddImageOrVideo}
+                                    <FileAttacher {onFileSelected}>
+                                        {#snippet children(onClick)}
+                                            <IconButton
+                                                onclick={onClick}
+                                                padding={["sm", "zero", "md", "zero"]}
+                                                size={"md"}>
+                                                {#snippet icon()}
+                                                    <Camera color={ColourVars.textPlaceholder} />
+                                                {/snippet}
+                                            </IconButton>
+                                        {/snippet}
+                                    </FileAttacher>
+                                {/if}
+                            </Container>
+
+                            {#if containsMarkdown}
+                                <MarkdownToggle {editingEvent} />
+                            {/if}
+                        </Row>
+                    </div>
                 {/key}
             {:else}
                 <div class="textbox">
@@ -789,8 +798,16 @@
     bind:open={showCustomMessageTrigger} />
 
 <style lang="scss">
-    :global(.container.message_entry_text_box) {
-        border-radius: toRem(32) !important;
+    .message_entry_wrapper {
+        width: 100%;
+        overflow: auto;
+        border-radius: var(--rad-huge);
+        background-color: var(--text-tertiary);
+        transition: border-radius 200ms ease-out;
+
+        &.has_reply {
+            border-radius: var(--rad-xl) var(--rad-xl) var(--rad-xxl) var(--rad-xxl);
+        }
     }
 
     .drawer_trigger {
@@ -813,8 +830,8 @@
         white-space: pre-wrap;
         overflow-wrap: anywhere;
         flex: auto;
-        font-size: var(--typo-body-sz);
-        line-height: var(--typo-body-lh);
+        font-size: var(--typo-chatText-sz);
+        line-height: var(--typo-chatText-lh);
         color: var(--text-primary);
 
         &.empty:before {

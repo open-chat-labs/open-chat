@@ -109,7 +109,9 @@
     let isPrize = $derived(msg.content.kind === "prize_content");
     let hasReactions = $derived(msg.reactions.length > 0);
     let me = $derived(msg.sender === $currentUserIdStore);
-    let showHeader = $derived(first && !isProposal && !isPrize && !me);
+    let showHeader = $derived(
+        first && !isProposal && !isPrize && !me && chatType !== "direct_chat",
+    );
     let hasReply = $derived(msg.repliesTo !== undefined);
     let backgroundColour = $derived.by(() => {
         if (failed) {
@@ -126,7 +128,7 @@
         if (hasReply) {
             return ["xs", "xs", uniform ? "xs" : "xxs", "xs"];
         }
-        return ["xs", "sm", uniform ? "sm" : "xxs", "sm"];
+        return [showHeader ? "xs" : "sm", "sm", uniform ? "sm" : "xxs", "sm"];
     });
     let contentPadding = $derived<Padding>(hasReply ? "xs" : "zero");
     let borderRadius = $derived.by<Radius>(() => {

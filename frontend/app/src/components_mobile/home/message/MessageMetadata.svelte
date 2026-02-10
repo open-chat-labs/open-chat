@@ -1,11 +1,10 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { ChatFootnote, Container } from "component-lib";
+    import { ChatFootnote, ColourVars, Container } from "component-lib";
     import type { ChatType, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
+    import Check from "svelte-material-icons/Check.svelte";
     import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";
-    import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
-    import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
     import DeletedIcon from "svelte-material-icons/DeleteOutline.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -48,6 +47,20 @@
     }: Props = $props();
 </script>
 
+{#snippet check(fill: boolean = false)}
+    <div class="bubble_check" class:fill>
+        <Container
+            borderRadius="circle"
+            borderColour={ColourVars.primaryLight}
+            borderWidth="thin"
+            backgroundColor={fill ? ColourVars.primaryLight : ColourVars.myChatBubble}>
+            <Check
+                size="0.75rem"
+                color={fill ? ColourVars.myChatBubble : ColourVars.primaryLight} />
+        </Container>
+    </div>
+{/snippet}
+
 <Container
     supplementalClass={`message-metadata ${fill ? "fill" : ""}`}
     gap={"xs"}
@@ -74,15 +87,15 @@
         {#if !bot}
             {#if me}
                 {#if accepted}
-                    <CheckCircle />
+                    {@render check(true)}
                 {:else}
                     <div class="confirming"></div>
                 {/if}
                 {#if chatType === "direct_chat"}
                     {#if readByThem}
-                        <CheckCircle />
+                        {@render check(true)}
                     {:else}
-                        <CheckCircleOutline />
+                        {@render check(false)}
                     {/if}
                 {/if}
             {:else if !accepted}
@@ -99,10 +112,6 @@
 </Container>
 
 <style lang="scss">
-    :global(.message-metadata) {
-        opacity: 0.6;
-    }
-
     :global(.message-metadata.fill) {
         position: absolute;
         padding: var(--sp-sm) !important;
@@ -113,9 +122,19 @@
         border-radius: var(--rad-xl) 0 0 0 !important;
     }
 
+    :global(.message-metadata-icons > :not(:first-child)) {
+        margin-left: -6px;
+        z-index: 1;
+    }
+
     .confirming {
         width: 1.1rem;
         height: 0.8rem;
         @include loading-spinner(0.8rem, 0.3rem, "#ffffff", "/assets/plain-spinner.svg", 1.5s);
+    }
+
+    .bubble_check {
+        border-radius: var(--rad-circle);
+        border: var(--bw-thin) solid var(--my-chat-bubble);
     }
 </style>
