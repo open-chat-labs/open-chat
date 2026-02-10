@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Body, ColourVars, Column, IconButton, Row } from "component-lib";
+    import { ColourVars, Column, IconButton, Row, ChatCaption } from "component-lib";
     import type { CreatedUser, EnhancedReplyContext, OpenChat } from "openchat-client";
     import { selectedChatWebhooksStore, selectedCommunityMembersStore } from "openchat-client";
     import { getContext } from "svelte";
@@ -35,38 +35,41 @@
 <Column
     backgroundColor={me ? ColourVars.myChatBubble : ColourVars.background2}
     borderRadius={"md"}
-    padding={["zero", "zero", "md", "md"]}
+    padding={["zero", "zero", "md", "xl"]}
     minWidth={"120px"}
     maxHeight={"10rem"}
-    gap={"sm"}>
-    <Row crossAxisAlignment={"center"}>
-        <Body fontWeight={"bold"}>
-            {displayName}
-        </Body>
-        <IconButton onclick={onCancelReply}>
-            {#snippet icon(_color)}
-                <Close color={me ? "#fff" : "#aaa"} />
-            {/snippet}
-        </IconButton>
-    </Row>
-    <div class="reply-content">
-        <ChatMessageContent
-            showPreviews={false}
-            {readonly}
-            {timestamp}
-            messageContext={replyingTo.sourceContext}
-            fill={false}
-            failed={false}
-            blockLevelMarkdown={false}
-            {me}
-            intersecting={true}
-            messageId={replyingTo.messageId}
-            messageIndex={replyingTo.messageIndex}
-            senderId={replyingTo.senderId}
-            truncate
-            edited={replyingTo.edited}
-            content={replyingTo.content}
-            reply />
+    width="fill"
+    gap={"zero"}>
+    <div class="reply">
+        <Row crossAxisAlignment={"center"}>
+            <ChatCaption fontWeight={"bold"}>
+                {displayName}
+            </ChatCaption>
+            <IconButton onclick={onCancelReply} size="sm">
+                {#snippet icon(_color)}
+                    <Close color={me ? ColourVars.textPrimary : ColourVars.textSecondary} />
+                {/snippet}
+            </IconButton>
+        </Row>
+        <div class="reply-content">
+            <ChatMessageContent
+                showPreviews={false}
+                {readonly}
+                {timestamp}
+                messageContext={replyingTo.sourceContext}
+                fill={false}
+                failed={false}
+                blockLevelMarkdown={false}
+                {me}
+                intersecting={true}
+                messageId={replyingTo.messageId}
+                messageIndex={replyingTo.messageIndex}
+                senderId={replyingTo.senderId}
+                truncate
+                edited={replyingTo.edited}
+                content={replyingTo.content}
+                reply />
+        </div>
     </div>
 </Column>
 
@@ -76,8 +79,25 @@
     }
 
     :global {
+        .reply {
+            width: 100%;
+
+            &:before {
+                content: "";
+                display: block;
+                position: absolute;
+                width: 0.25rem;
+                left: 0.5rem;
+                top: 0.5rem;
+                bottom: 0.5rem;
+                background-color: var(--primary-light);
+                border-radius: var(--rad-circle);
+            }
+        }
+
         .reply-content {
             pointer-events: none;
+            padding-right: var(--sp-md);
 
             a {
                 color: inherit;

@@ -83,6 +83,7 @@ export class BorderRadius {
         public lg: Rem,
         public xl: Rem,
         public xxl: Rem,
+        public huge: Rem,
         public circle: Rem,
     ) {}
 
@@ -95,6 +96,7 @@ export class BorderRadius {
             this.lg.cssVariable("rad", "lg"),
             this.xl.cssVariable("rad", "xl"),
             this.xxl.cssVariable("rad", "xxl"),
+            this.huge.cssVariable("rad", "huge"),
             this.circle.cssVariable("rad", "circle"),
         ];
     }

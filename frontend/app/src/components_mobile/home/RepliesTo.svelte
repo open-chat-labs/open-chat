@@ -72,8 +72,19 @@
 
 <style lang="scss">
     :global(.container.replies_to) {
-        border-left: 4px solid var(--primary-light) !important;
-        padding-left: var(--sp-md) !important;
+        position: relative;
         pointer-events: none;
+        padding-left: var(--sp-md) !important;
+    }
+
+    :global(.container.replies_to:before) {
+        content: "";
+        display: block;
+        position: absolute;
+        left: 0;
+        height: 100%;
+        width: 0.25rem;
+        background-color: var(--primary-light);
+        border-radius: var(--rad-circle);
     }
 </style>

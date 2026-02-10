@@ -13,6 +13,7 @@
         inline?: boolean;
         oneLine?: boolean;
         twoLine?: boolean;
+        threeLine?: boolean;
         suppressLinks?: boolean;
     }
 
@@ -134,12 +135,21 @@
             word-wrap: break-word;
         }
 
-        &.twoLine {
+        &.twoLine,
+        &.threeLine {
             display: -webkit-box;
-            -webkit-line-clamp: 2;
-            line-clamp: 2;
             -webkit-box-orient: vertical;
             white-space: unset;
+        }
+
+        &.twoLine {
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+        }
+
+        &.threeLine {
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
         }
     }
 

@@ -22,7 +22,6 @@
     import EphemeralMessage from "../bots/EphemeralMessage.svelte";
     import DraftMediaMessage from "./DraftMediaMessage.svelte";
     import MessageEntry from "./MessageEntry.svelte";
-    import ReplyingTo from "./ReplyingTo.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -156,10 +155,7 @@
                 event={ephemeralMessageEvent} />
         {/if}
         {#if editingEvent === undefined && (replyingTo || attachment !== undefined)}
-            <Column padding={"lg"}>
-                {#if replyingTo}
-                    <ReplyingTo readonly {onCancelReply} {user} {replyingTo} />
-                {/if}
+            <Column padding={["xxs", "zero", "sm"]}>
                 {#if attachment !== undefined}
                     <DraftMediaMessage ctx={messageContext} content={attachment} />
                 {/if}
@@ -176,11 +172,13 @@
         {blocked}
         {attachment}
         {editingEvent}
-        {replyingTo}
+        replyingTo={editingEvent === undefined && replyingTo !== undefined ? replyingTo : undefined}
         {textContent}
         {chat}
         {messageContext}
+        {user}
         {onSendMessage}
+        {onCancelReply}
         {onCancelEdit}
         {onSetTextContent}
         {onStartTyping}
