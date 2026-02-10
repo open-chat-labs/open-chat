@@ -57,6 +57,9 @@ pub(crate) async fn minimize_app<R: Runtime>(app: AppHandle<R>) {
 
 #[command]
 pub(crate) async fn restart_app<R: Runtime>(app: AppHandle<R>) {
+    #[cfg(mobile)]
+    app.oc().restart_app();
+    #[cfg(not(mobile))]
     app.restart();
 }
 

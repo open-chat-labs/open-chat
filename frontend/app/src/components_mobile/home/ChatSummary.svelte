@@ -488,7 +488,7 @@
                         mainAxisAlignment={"spaceBetween"}
                         crossAxisAlignment={"center"}>
                         <Container crossAxisAlignment={"center"} gap={"sm"} width={"fill"}>
-                            <WithVerifiedBadge {verified} size={"small"}>
+                            <WithVerifiedBadge {verified}>
                                 <Subtitle ellipsisTruncate fontWeight={"semi-bold"}>
                                     {#if community !== undefined && $chatListScopeStore.kind === "favourite"}
                                         <span>{community.name}</span>

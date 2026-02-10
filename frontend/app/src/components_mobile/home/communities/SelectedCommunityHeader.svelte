@@ -52,7 +52,7 @@
             size={"lg"} />
     {/snippet}
     {#snippet title()}
-        <WithVerifiedBadge verified={community.verified} size={"small"}>
+        <WithVerifiedBadge verified={community.verified}>
             <h4 class="name">
                 {community.name}
             </h4>

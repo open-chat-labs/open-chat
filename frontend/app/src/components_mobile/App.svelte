@@ -37,16 +37,17 @@
     import page from "page";
     import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
-    import { _, isLoading } from "svelte-i18n";
+    import { _, isLoading, waitLocale } from "svelte-i18n";
     import { getFcmToken, openUrl, svelteReady } from "tauri-plugin-oc-api";
     import Head from "./Head.svelte";
-    import Router from "./Router.svelte";
-    import Snow from "./Snow.svelte";
-    import UpgradeBanner from "./UpgradeBanner.svelte";
     import NotificationsBar from "./home/NotificationsBar.svelte";
     import ActiveCall from "./home/video/ActiveCall.svelte";
     import IncomingCall from "./home/video/IncomingCall.svelte";
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
+    import NativeUpgradeBanner from "./NativeUpgradeBanner.svelte";
+    import Router from "./Router.svelte";
+    import Snow from "./Snow.svelte";
+    import UpgradeBanner from "./UpgradeBanner.svelte";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -301,27 +302,33 @@
 
 <Head />
 
-<ActiveCall
-    onClearSelection={() => page(routeForScope($chatListScopeStore))}
-    bind:this={videoCallElement} />
+{#await waitLocale()}
+    <ActiveCall
+        onClearSelection={() => page(routeForScope($chatListScopeStore))}
+        bind:this={videoCallElement} />
 
-<VideoCallAccessRequests />
+    <VideoCallAccessRequests />
 
-<IncomingCall onJoinVideoCall={joinVideoCall} />
+    <IncomingCall onJoinVideoCall={joinVideoCall} />
 
-<NotificationsBar />
+    <NotificationsBar />
 
-<!-- should we perhaps just _always_ render the router -->
-{#if $identityStateStore.kind === "anon" || $identityStateStore.kind === "logging_in" || $identityStateStore.kind === "registering" || $identityStateStore.kind === "logged_in" || $identityStateStore.kind === "loading_user"}
-    {#if !$isLoading}
-        <Router />
+    <!-- should we perhaps just _always_ render the router -->
+    {#if $identityStateStore.kind === "anon" || $identityStateStore.kind === "logging_in" || $identityStateStore.kind === "registering" || $identityStateStore.kind === "logged_in" || $identityStateStore.kind === "loading_user"}
+        {#if !$isLoading}
+            <Router />
+        {/if}
     {/if}
-{/if}
 
-<UpgradeBanner />
+    {#if client.isNativeApp()}
+        <NativeUpgradeBanner />
+    {:else}
+        <UpgradeBanner />
+    {/if}
 
-{#if $snowing}
-    <Snow />
-{/if}
+    {#if $snowing}
+        <Snow />
+    {/if}
+{/await}
 
 <svelte:window onresize={resize} onerror={unhandledError} onorientationchange={resize} />

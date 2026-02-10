@@ -219,7 +219,7 @@
                         <div onclick={onDiamondClick}>
                             <div>
                                 <Diamond
-                                    size={"1.1em"}
+                                    size={"default"}
                                     status={content.lifetimeDiamondOnly ? "lifetime" : "active"} />
                             </div>
                             <Translatable

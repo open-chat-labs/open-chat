@@ -64,4 +64,10 @@ impl<R: Runtime> Oc<R> {
             .0
             .run_mobile_plugin("minimizeApp", MinimizeAppRequest::default());
     }
+
+    pub fn restart_app(&self) {
+        let _: Result<(), _> = self
+            .0
+            .run_mobile_plugin("restartApp", MinimizeAppRequest::default());
+    }
 }

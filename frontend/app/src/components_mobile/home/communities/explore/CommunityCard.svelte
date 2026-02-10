@@ -110,7 +110,6 @@
                 <Container gap={"sm"} crossAxisAlignment={"center"}>
                     <WithVerifiedBadge
                         {verified}
-                        size={"small"}
                         tooltip={i18nKey("verified.verified", undefined, "community")}>
                         <Title fontWeight={"bold"}>
                             {name}

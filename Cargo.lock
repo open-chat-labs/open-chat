@@ -10959,6 +10959,7 @@ dependencies = [
 name = "tauri-plugin-oc"
 version = "0.1.0"
 dependencies = [
+ "futures-util",
  "mime_guess",
  "reqwest 0.12.28",
  "semver",

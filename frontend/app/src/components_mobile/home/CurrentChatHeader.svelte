@@ -192,7 +192,7 @@
     {#snippet title()}
         <Container onClick={showGroupDetails}>
             {#if isMultiUser && !readonly}
-                <WithVerifiedBadge {verified} size={"small"}>
+                <WithVerifiedBadge {verified}>
                     <Container gap={"xs"}>
                         {#if $selectedCommunitySummaryStore !== undefined && $chatListScopeStore.kind === "favourite"}
                             <span onclick={navigateToCommunity} class="pointer">
