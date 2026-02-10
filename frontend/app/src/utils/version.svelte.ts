@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /**
  * This a class that will perform version checks and handle the state of and native downloads
+ * Note that this will only do anything for native. The update mechanism is different for web.
  */
 
 import { invoke } from "@tauri-apps/api/core";
@@ -26,13 +27,25 @@ export class VersionChecker {
     }
 
     #startPoller(immediate: boolean) {
+        if (import.meta.env.OC_APP_TYPE !== "android") {
+            this.#versionState = { kind: "up_to_date" };
+            // this.#versionState = {
+            //     kind: "out_of_date",
+            //     compatible: true,
+            //     available: Version.parse("2.0.220"),
+            //     downloadProgress: 75,
+            // };
+            return;
+        }
         return new Poller(() => this.#checkVersion(), VERSION_INTERVAL, undefined, immediate);
     }
 
     #checkVersion() {
         return this.#getServerVersion().then(async (sv) => {
+            if (sv === undefined) return;
+
             if (sv.isGreaterThan(this.#clientVersion)) {
-                this.#poller.stop();
+                this.#poller?.stop();
 
                 this.#versionState = {
                     kind: "out_of_date",
@@ -52,7 +65,7 @@ export class VersionChecker {
                     });
 
                     console.log("About to tell the android shell to update itself");
-                    const updated = await invoke("plugin:oc|download_update");
+                    const updated = await invoke?.("plugin:oc|download_update");
                     if (!updated) {
                         this.#versionState = {
                             kind: "failed_update",
@@ -83,14 +96,14 @@ export class VersionChecker {
     }
 
     #getServerVersion(): Promise<Version> {
-        return invoke<string>("plugin:oc|get_server_version").then((v) => Version.parse(v));
+        return invoke<string>?.("plugin:oc|get_server_version").then((v) => Version.parse(v));
     }
 
     reload() {
-        invoke("plugin:oc|restart_app");
+        invoke?.("plugin:oc|restart_app");
     }
 
     stop() {
-        this.#poller.stop();
+        this.#poller?.stop();
     }
 }

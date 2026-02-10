@@ -1,7 +1,6 @@
 <script lang="ts">
-    import { ColourVars, Container } from "component-lib";
+    import { ColourVars, Container, SheetBehavior } from "component-lib";
     import { type Snippet } from "svelte";
-    import { SheetBehavior } from "component-lib";
 
     interface Props {
         onDismiss?: () => void;
@@ -33,14 +32,18 @@
 <svelte:window onpopstate={dismissInternal} onkeydown={onKeyDown} />
 
 <!-- TODO | There is still duplication in this file and AnchoredSheet as they
-     TODO | have very similar CSS and HTML attached to them.
+     TODO | have very similar CSS and HTML attaonched to them.
 -->
 
 <button
     bind:this={sheetBehavior.backdrop}
     class="backdrop"
     class:active={sheetBehavior.openFactor > 0.2}
-    onclick={() => sheetBehavior.collapse()}
+    onclick={() => {
+        if (onDismiss) {
+            sheetBehavior.collapse();
+        }
+    }}
     aria-label="close sheet">
 </button>
 
@@ -52,18 +55,20 @@
     borderRadius={["md", "md", "zero", "zero"]}
     width={"fill"}
     background={ColourVars.background1}>
-    <button
-        bind:this={sheetBehavior.handle}
-        onpointerdown={(e) => sheetBehavior.onDragStart(e)}
-        onpointermove={(e) => sheetBehavior.onDrag(e)}
-        onpointerup={(e) => sheetBehavior.onDragStop(e)}
-        onpointercancel={(e) => sheetBehavior.onDragStop(e)}
-        oncontextmenu={(e) => e.preventDefault()}
-        aria-label="handle"
-        class="handle"
-        class:dragged={sheetBehavior.dragged}>
-        <div class="inner"></div>
-    </button>
+    {#if onDismiss}
+        <button
+            bind:this={sheetBehavior.handle}
+            onpointerdown={(e) => sheetBehavior.onDragStart(e)}
+            onpointermove={(e) => sheetBehavior.onDrag(e)}
+            onpointerup={(e) => sheetBehavior.onDragStop(e)}
+            onpointercancel={(e) => sheetBehavior.onDragStop(e)}
+            oncontextmenu={(e) => e.preventDefault()}
+            aria-label="handle"
+            class="handle"
+            class:dragged={sheetBehavior.dragged}>
+            <div class="inner"></div>
+        </button>
+    {/if}
 
     {@render children?.()}
 </Container>

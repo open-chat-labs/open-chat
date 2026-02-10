@@ -37,7 +37,7 @@
     import page from "page";
     import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
-    import { _, isLoading, waitLocale } from "svelte-i18n";
+    import { _, isLoading } from "svelte-i18n";
     import { getFcmToken, openUrl, svelteReady } from "tauri-plugin-oc-api";
     import Head from "./Head.svelte";
     import NotificationsBar from "./home/NotificationsBar.svelte";
@@ -302,33 +302,29 @@
 
 <Head />
 
-{#await waitLocale()}
-    <ActiveCall
-        onClearSelection={() => page(routeForScope($chatListScopeStore))}
-        bind:this={videoCallElement} />
+<ActiveCall
+    onClearSelection={() => page(routeForScope($chatListScopeStore))}
+    bind:this={videoCallElement} />
 
-    <VideoCallAccessRequests />
+<VideoCallAccessRequests />
 
-    <IncomingCall onJoinVideoCall={joinVideoCall} />
+<IncomingCall onJoinVideoCall={joinVideoCall} />
 
-    <NotificationsBar />
+<NotificationsBar />
 
-    <!-- should we perhaps just _always_ render the router -->
-    {#if $identityStateStore.kind === "anon" || $identityStateStore.kind === "logging_in" || $identityStateStore.kind === "registering" || $identityStateStore.kind === "logged_in" || $identityStateStore.kind === "loading_user"}
-        {#if !$isLoading}
-            <Router />
-        {/if}
+<!-- should we perhaps just _always_ render the router -->
+{#if $identityStateStore.kind === "anon" || $identityStateStore.kind === "logging_in" || $identityStateStore.kind === "registering" || $identityStateStore.kind === "logged_in" || $identityStateStore.kind === "loading_user"}
+    {#if !$isLoading}
+        <Router />
     {/if}
+{/if}
 
-    {#if client.isNativeApp()}
-        <NativeUpgradeBanner />
-    {:else}
-        <UpgradeBanner />
-    {/if}
+{#if !client.isNativeApp()}
+    <UpgradeBanner />
+{/if}
 
-    {#if $snowing}
-        <Snow />
-    {/if}
-{/await}
+{#if $snowing}
+    <Snow />
+{/if}
 
 <svelte:window onresize={resize} onerror={unhandledError} onorientationchange={resize} />

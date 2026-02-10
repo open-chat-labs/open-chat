@@ -1,16 +1,17 @@
 <script lang="ts">
     import { VersionChecker } from "@src/utils/version.svelte";
     import { Body, BodySmall, ColourVars, Column, Row } from "component-lib";
+    import { onDestroy } from "svelte";
     import { i18nKey } from "../i18n/i18n";
     import Progress from "./Progress.svelte";
     import Translatable from "./Translatable.svelte";
 
     let checker = new VersionChecker();
+
+    onDestroy(() => checker.stop());
 </script>
 
-<pre>{checker.versionState}</pre>
-
-{#if checker.versionState.kind !== "up_to_date"}
+{#if checker.versionState.kind !== "unknown" && checker.versionState.kind !== "up_to_date"}
     <Column
         mainAxisAlignment={"center"}
         crossAxisAlignment={"center"}
@@ -20,9 +21,7 @@
         supplementalClass={"upgrade_banner"}>
         <Row>
             <Body width={"hug"} fontWeight={"bold"}>
-                {#if checker.versionState.kind === "unknown"}
-                    <Translatable resourceKey={i18nKey(`Checking for updates ...`)} />
-                {:else if checker.versionState.kind === "failed_update"}
+                {#if checker.versionState.kind === "failed_update"}
                     <Translatable
                         resourceKey={i18nKey(
                             `An update is available but we were unable to load it ...`,
