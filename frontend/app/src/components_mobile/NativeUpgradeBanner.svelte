@@ -1,6 +1,6 @@
 <script lang="ts">
     import { VersionChecker } from "@src/utils/version.svelte";
-    import { Body, BodySmall, ColourVars, Column, Row } from "component-lib";
+    import { BodySmall, Button, ColourVars, Column, Overview, Sheet } from "component-lib";
     import { onDestroy } from "svelte";
     import { i18nKey } from "../i18n/i18n";
     import Progress from "./Progress.svelte";
@@ -11,58 +11,28 @@
     onDestroy(() => checker.stop());
 </script>
 
-{#if checker.versionState.kind !== "unknown" && checker.versionState.kind !== "up_to_date"}
-    <Column
-        mainAxisAlignment={"center"}
-        crossAxisAlignment={"center"}
-        backgroundColor={ColourVars.warning}
-        padding={"lg"}
-        gap={"lg"}
-        supplementalClass={"upgrade_banner"}>
-        <Row>
-            <Body width={"hug"} fontWeight={"bold"}>
-                {#if checker.versionState.kind === "failed_update"}
-                    <Translatable
-                        resourceKey={i18nKey(
-                            `An update is available but we were unable to load it ...`,
-                        )} />
-                {:else if checker.versionState.kind === "out_of_date"}
-                    <Translatable
-                        resourceKey={i18nKey(
-                            `The app is currently updating to version ${checker.versionState.available.toText()} ...`,
-                        )} />
-                {/if}
-            </Body>
-        </Row>
-        {#if checker.versionState.kind === "out_of_date"}
-            <Row crossAxisAlignment="center" gap={"md"}>
-                <Progress
-                    colour={ColourVars.textPrimary}
-                    size={"1rem"}
-                    percent={checker.versionState.downloadProgress} />
+{#if checker.versionState.kind === "out_of_date"}
+    <Sheet>
+        <Column gap={"xl"} padding={"xxl"}>
+            <Overview colour={"primary"}>One second! Updating ...</Overview>
+            <BodySmall width={"hug"} fontWeight={"bold"}>
+                <Translatable
+                    resourceKey={i18nKey(
+                        `We are just downloading a quick update and then we will have you on your way ...`,
+                    )} />
+            </BodySmall>
 
-                <BodySmall width={"hug"} fontWeight={"light"}>
-                    <a href="/" onclick={() => checker.reload()}
-                        ><Translatable resourceKey={i18nKey("updateNow")} /></a>
-                </BodySmall>
-            </Row>
-        {/if}
-    </Column>
+            <Progress
+                colour={ColourVars.primary}
+                size={"1rem"}
+                percent={checker.versionState.downloadProgress} />
+
+            <Button
+                disabled={checker.versionState.downloadProgress < 100}
+                onClick={() => checker.reload()}
+                secondary>
+                <Translatable resourceKey={i18nKey("Reload and continue")} />
+            </Button>
+        </Column>
+    </Sheet>
 {/if}
-
-<style lang="scss">
-    :global(.container.upgrade_banner) {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        @include z-index("upgrade-banner");
-    }
-
-    a {
-        text-decoration: underline;
-        text-underline-offset: $sp1;
-        cursor: pointer;
-        color: inherit;
-    }
-</style>

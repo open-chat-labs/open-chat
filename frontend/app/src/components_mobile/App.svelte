@@ -44,7 +44,6 @@
     import ActiveCall from "./home/video/ActiveCall.svelte";
     import IncomingCall from "./home/video/IncomingCall.svelte";
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
-    import NativeUpgradeBanner from "./NativeUpgradeBanner.svelte";
     import Router from "./Router.svelte";
     import Snow from "./Snow.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
