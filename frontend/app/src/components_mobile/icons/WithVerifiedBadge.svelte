@@ -5,7 +5,7 @@
 
     interface Props {
         verified: boolean;
-        size: "small" | "default" | "large";
+        size?: "default" | "large";
         tooltip?: ResourceKey;
         children: Snippet;
     }

@@ -1,12 +1,17 @@
 <script lang="ts">
     import { i18nKey, interpolate } from "@src/i18n/i18n";
+    import { VersionChecker } from "@src/utils/version.svelte";
     import {
         Body,
         BodySmall,
         Button,
+        ColourVars,
+        Column,
         CommonButton,
         Container,
         H1,
+        Overview,
+        Sheet,
         Subtitle,
         Title,
     } from "component-lib";
@@ -18,6 +23,7 @@
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import Markdown from "../home/Markdown.svelte";
+    import Progress from "../Progress.svelte";
     import Translatable from "../Translatable.svelte";
     import SignUp from "./SignUp.svelte";
 
@@ -33,11 +39,15 @@
     let linkingInProgress = $state(false);
     let error: string | undefined = $state(undefined);
     let signUpError: string | undefined = $state(undefined);
+    let checker = new VersionChecker();
+
+    let outdated = $derived(checker.versionState.kind !== "up_to_date");
 
     onMount(() => {
         document.body.classList.add("onboarding");
         return () => {
             document.body.classList.remove("onboarding");
+            checker.stop();
         };
     });
 
@@ -113,13 +123,39 @@
     </Container>
 {/snippet}
 
+{#if checker.versionState.kind === "out_of_date"}
+    <Sheet>
+        <Column gap={"xl"} padding={"xxl"}>
+            <Overview colour={"primary"}>One second! Updating ...</Overview>
+            <BodySmall width={"hug"} fontWeight={"bold"}>
+                <Translatable
+                    resourceKey={i18nKey(
+                        `We are just downloading a quick update and then we will have you on your way ...`,
+                    )} />
+            </BodySmall>
+
+            <Progress
+                colour={ColourVars.primary}
+                size={"1rem"}
+                percent={checker.versionState.downloadProgress} />
+
+            <Button
+                disabled={checker.versionState.downloadProgress < 100}
+                onClick={() => checker.reload()}
+                secondary>
+                <Translatable resourceKey={i18nKey("Reload and continue")} />
+            </Button>
+        </Column>
+    </Sheet>
+{/if}
+
 {#snippet choosePath()}
     <Container padding={["zero", "xxl"]} direction={"vertical"}>
         <H1><Translatable resourceKey={i18nKey("Fully featured.")} /></H1>
         <H1><Translatable resourceKey={i18nKey("Fully yours.")} /></H1>
     </Container>
     <Container gap={"md"} padding={["zero", "xxl"]} direction={"vertical"}>
-        <Button onClick={explore} secondary>
+        <Button disabled={outdated} onClick={explore} secondary>
             <Translatable resourceKey={i18nKey("Explore communities")} />
         </Button>
         <BodySmall colour={"textSecondary"} align={"center"} width={"hug"} fontWeight={"bold"}>
@@ -129,6 +165,7 @@
                 )} />
         </BodySmall>
     </Container>
+
     <Container
         crossAxisAlignment={"center"}
         mainAxisAlignment={"center"}
@@ -145,10 +182,10 @@
         gap={"md"}
         padding={["zero", "xxl"]}
         direction={"vertical"}>
-        <Button onClick={signIn}>
+        <Button disabled={outdated} onClick={signIn}>
             <Translatable resourceKey={i18nKey("I'm an existing user")} />
         </Button>
-        <Button onClick={signUp} secondary>
+        <Button disabled={outdated} onClick={signUp} secondary>
             <Translatable resourceKey={i18nKey("Create new account")} />
         </Button>
         <BodySmall colour={"textSecondary"} align={"center"} width={"hug"} fontWeight={"bold"}>

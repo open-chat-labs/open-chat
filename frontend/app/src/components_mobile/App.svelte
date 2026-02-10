@@ -40,13 +40,13 @@
     import { _, isLoading } from "svelte-i18n";
     import { getFcmToken, openUrl, svelteReady } from "tauri-plugin-oc-api";
     import Head from "./Head.svelte";
-    import Router from "./Router.svelte";
-    import Snow from "./Snow.svelte";
-    import UpgradeBanner from "./UpgradeBanner.svelte";
     import NotificationsBar from "./home/NotificationsBar.svelte";
     import ActiveCall from "./home/video/ActiveCall.svelte";
     import IncomingCall from "./home/video/IncomingCall.svelte";
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
+    import Router from "./Router.svelte";
+    import Snow from "./Snow.svelte";
+    import UpgradeBanner from "./UpgradeBanner.svelte";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -318,7 +318,9 @@
     {/if}
 {/if}
 
-<UpgradeBanner />
+{#if !client.isNativeApp()}
+    <UpgradeBanner />
+{/if}
 
 {#if $snowing}
     <Snow />

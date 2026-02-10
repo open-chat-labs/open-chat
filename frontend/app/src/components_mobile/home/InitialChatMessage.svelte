@@ -90,7 +90,7 @@
     {:else if chat.kind === "direct_chat" && client.isOpenChatBot(chat.them.userId)}
         <Robot />
     {:else}
-        <WithVerifiedBadge verified={state.verified} size={"small"}>
+        <WithVerifiedBadge verified={state.verified}>
             <h4 class="welcome">
                 <Translatable resourceKey={state.title} />
             </h4>

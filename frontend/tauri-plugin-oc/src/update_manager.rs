@@ -1,10 +1,11 @@
+use futures_util::StreamExt;
 use reqwest::Client;
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io::Cursor;
 use std::path::PathBuf;
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{AppHandle, Emitter, Manager, Runtime};
 
 const VERSION_ENDPOINT: &str = "https://webtest.oc.app/version";
 // TODO: This needs to be the actual URL where the bundle can be downloaded
@@ -21,6 +22,13 @@ struct ServerVersion {
 #[derive(Serialize, Deserialize, Debug)]
 struct CachedVersion {
     version: String,
+}
+
+#[derive(Serialize, Clone)]
+struct ProgressPayload {
+    progress: f64,
+    downloaded: u64,
+    total: u64,
 }
 
 pub struct UpdateManager<R: Runtime> {
@@ -105,14 +113,46 @@ impl<R: Runtime> UpdateManager<R> {
         println!("Downloading update from {}", url);
 
         let client = Client::new();
-        let resp = client.get(&url).send().await?;
+        let resp = client
+            .get(&url)
+            .header("Accept-Encoding", "identity")
+            .send()
+            .await?;
 
         if !resp.status().is_success() {
             // TODO what do we do here? Retry?
             return Err(format!("Failed to download bundle: {}", resp.status()).into());
         }
 
-        let bytes = resp.bytes().await?;
+                let content_length = resp.content_length();
+                let total_size = content_length.unwrap_or(50 * 1024 * 1024);
+                let is_estimated = content_length.is_none();
+                
+                println!("Starting download. Total size: {} (estimated: {})", total_size, is_estimated);
+                
+                let mut downloaded: u64 = 0;
+                let mut stream = resp.bytes_stream();
+                let mut bytes = Vec::with_capacity(total_size as usize);
+        
+                while let Some(item) = stream.next().await {
+                    let chunk = item?;
+                    bytes.extend_from_slice(&chunk);
+                    downloaded += chunk.len() as u64;
+        
+                    let mut progress = (downloaded as f64 / total_size as f64) * 100.0;
+                    if is_estimated && progress > 99.0 {
+                        progress = 99.0;
+                    }
+        
+                    self.app_handle.emit(
+                        "update-progress",
+                        ProgressPayload {
+                            progress,
+                            downloaded,
+                            total: if is_estimated { 0 } else { total_size },
+                        },
+                    )?;
+                }
         let reader = Cursor::new(bytes);
         let mut archive = zip::ZipArchive::new(reader)?;
 

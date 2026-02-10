@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { invoke } from "@tauri-apps/api/core";
     import { trackedEffect } from "@src/utils/effects.svelte";
+    import { invoke } from "@tauri-apps/api/core";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import { Container, Sheet } from "component-lib";
     import type {
@@ -50,6 +50,7 @@
     import { activeVideoCall, incomingVideoCall } from "../../stores/video";
     import { removeQueryStringParam } from "../../utils/urls";
     import AreYouSure from "../AreYouSure.svelte";
+    import NativeUpgradeBanner from "../NativeUpgradeBanner.svelte";
     import NotFound from "../NotFound.svelte";
     import OfflineFooter from "../OfflineFooter.svelte";
     import OnboardModal from "../onboard/OnboardModal.svelte";
@@ -553,6 +554,9 @@
     {#if showOnboarding}
         <OnboardModal />
     {:else}
+        {#if client.isNativeApp()}
+            <NativeUpgradeBanner />
+        {/if}
         <LeftPanel />
         <MiddlePanel />
     {/if}
