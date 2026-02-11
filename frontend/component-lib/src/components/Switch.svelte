@@ -1,18 +1,63 @@
 <script lang="ts">
+    import { Body, Container, type SizeMode } from "component-lib";
+    import type { Snippet } from "svelte";
     interface Props {
         checked: boolean;
         disabled?: boolean;
+        loading?: boolean;
+        onChange?: () => void;
+        children?: Snippet;
+        reverse?: boolean;
+        width?: SizeMode;
+        bound?: boolean;
     }
 
-    let { checked = $bindable(), disabled = false }: Props = $props();
+    let {
+        checked = $bindable(),
+        disabled = false,
+        loading = false,
+        onChange,
+        children,
+        reverse = false,
+        width = "hug",
+        bound = true,
+    }: Props = $props();
+
+    function internalOnChange(e?: Event) {
+        if (disabled || loading) return;
+        if (bound) {
+            checked = !checked;
+        }
+        e?.stopPropagation();
+        e?.preventDefault();
+        onChange?.();
+    }
 </script>
 
-<label class="toggle" class:disabled>
-    <input {disabled} bind:checked type="checkbox" class="toggle-input" />
-    <span class="toggle-track">
-        <span class="toggle-knob"></span>
-    </span>
-</label>
+<Container
+    mainAxisAlignment={"spaceBetween"}
+    {reverse}
+    {width}
+    crossAxisAlignment={"center"}
+    onClick={internalOnChange}
+    gap={"md"}>
+    <label class="toggle" class:disabled={disabled || loading}>
+        <input
+            onchange={internalOnChange}
+            disabled={disabled || loading}
+            {checked}
+            type="checkbox"
+            class="toggle-input" />
+        <span class="toggle-track">
+            <span class="toggle-knob"></span>
+        </span>
+    </label>
+    {#if children}
+        <Body fontWeight={"bold"} colour={disabled ? "textTertiary" : "textPrimary"}>
+            {@render children()}
+        </Body>
+    {/if}
+</Container>
 
 <style lang="scss">
     $speed: 0.2s;
@@ -104,11 +149,11 @@
     }
 
     .toggle-input:disabled + .toggle-track .toggle-knob {
-        background: var(--disabled-button);
-        color: var(--disabled-button);
+        background: var(--text-tertiary);
+        color: var(--text-tertiary);
     }
 
     .toggle-input:disabled + .toggle-track {
-        border-color: var(--disabled-button);
+        border-color: var(--text-tertiary);
     }
 </style>

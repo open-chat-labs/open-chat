@@ -1,6 +1,6 @@
 // https://stackoverflow.com/questions/10687099/how-to-test-if-a-url-string-is-absolute-or-relative
 
-import type { RouteParams, RouteType } from "openchat-client";
+import { routeStore, type RouteParams, type RouteType } from "openchat-client";
 
 const regex = new RegExp("^(?:[a-z]+:)?//", "i");
 
@@ -10,13 +10,26 @@ export function isAbsoluteUrl(url: string): boolean {
 
 export const openChatFriendlyUrl =
     import.meta.env.OC_DFX_NETWORK === "ic_test" ? "https://test.oc.app" : "https://oc.app";
-export const synonymousUrlRegex = new RegExp(`^(${window.location.origin}|${openChatFriendlyUrl})`);
+export const synonymousUrlRegex = new RegExp(
+    `^(${import.meta.env.OC_BASE_ORIGIN!}|${openChatFriendlyUrl})`,
+);
 
 export function addQueryStringParam(name: string, val: string): string {
     const path = window.location.pathname;
     const qs = new URLSearchParams(window.location.search);
     qs.set(name, val);
     return [...qs.keys()].length > 0 ? `${path}?${qs}` : path;
+}
+
+export function stripThreadFromUrl(path: string) {
+    if (
+        (routeStore.value.kind === "global_chat_selected_route" ||
+            routeStore.value.kind === "selected_channel_route") &&
+        routeStore.value.threadMessageIndex !== undefined
+    ) {
+        return removeThreadMessageIndex(routeStore.value.threadMessageIndex, path);
+    }
+    return path;
 }
 
 export function removeThreadMessageIndex(threadMessageIndex: number, path: string): string {

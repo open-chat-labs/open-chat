@@ -15,12 +15,14 @@ const tertiaryLight = Colour.fromHex("#f4a5c9");
 
 const success = Colour.fromHex("#4dc164");
 const warn = Colour.fromHex("#f36d28");
-const error = Colour.fromHex("#ea2929");
+const error = Colour.fromHex("#ff2448");
 
-const background0 = Colour.fromHex("#242834");
-const background1 = Colour.fromHex("#2f333e");
-const background2 = Colour.fromHex("#3a3e48");
+const background0 = Colour.fromHex("#13151B");
+// const background1 = Colour.fromHex("#272934");
+const background1 = Colour.fromHex("#1C1D26");
+const background2 = Colour.fromHex("#282B34");
 const disabledButton = Colour.fromHex("#7c7e85");
+const myChatBubble = Colour.fromHex("#dc3954");
 
 const textPrimary = Colour.fromHex("#ffffff");
 const textSecondary = Colour.fromHex("#9c9ea4");
@@ -31,6 +33,7 @@ const textAccent = primary;
 
 const gradientPrimary = tertiary;
 const gradientSecondary = primary;
+const backdrop = Colour.fromRGBA(19, 21, 27, 0.75);
 
 export const theme = new Theme(
     new Colours(
@@ -50,6 +53,7 @@ export const theme = new Theme(
         background1,
         background2,
         disabledButton,
+        myChatBubble,
         textPrimary,
         textSecondary,
         textTertiary,
@@ -58,5 +62,6 @@ export const theme = new Theme(
         textAccent,
         gradientPrimary,
         gradientSecondary,
+        backdrop,
     ),
 );

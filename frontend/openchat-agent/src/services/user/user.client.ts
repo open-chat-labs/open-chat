@@ -1,4 +1,5 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
+import { Type } from "@sinclair/typebox";
 import {
     MAX_EVENTS,
     MAX_MESSAGES,
@@ -27,6 +28,7 @@ import {
     type CreateGroupResponse,
     type CryptocurrencyDetails,
     type DeleteCommunityResponse,
+    type DeleteCryptoAccountResponse,
     type DeletedDirectMessageResponse,
     type DeleteGroupResponse,
     type DeleteMessageResponse,
@@ -701,6 +703,10 @@ export class UserClient extends SingleCanisterMsgpackAgent implements IChatEvent
         );
     }
 
+    deleteCryptoAccount(account: string): Promise<DeleteCryptoAccountResponse> {
+        return this.update("delete_crypto_account", account, unitResult, Type.String(), UnitResult);
+    }
+
     sendMessageWithTransferToChannel(
         chatId: ChannelIdentifier,
         recipientId: string | undefined,
@@ -1046,13 +1052,7 @@ export class UserClient extends SingleCanisterMsgpackAgent implements IChatEvent
     }
 
     getBio(): Promise<string> {
-        return this.query(
-            "bio",
-            {},
-            (value) => value.Success,
-            TEmpty,
-            UserBioResponse,
-        );
+        return this.query("bio", {}, (value) => value.Success, TEmpty, UserBioResponse);
     }
 
     getPublicProfile(): Stream<PublicProfile> {
@@ -1084,13 +1084,7 @@ export class UserClient extends SingleCanisterMsgpackAgent implements IChatEvent
     }
 
     setBio(bio: string): Promise<SetBioResponse> {
-        return this.update(
-            "set_bio",
-            { text: bio },
-            unitResult,
-            UserSetBioArgs,
-            UnitResult,
-        );
+        return this.update("set_bio", { text: bio }, unitResult, UserSetBioArgs, UnitResult);
     }
 
     withdrawCryptocurrency(

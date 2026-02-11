@@ -101,6 +101,10 @@ q {
     quotes: none;
 }
 
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
 blockquote::before,
 blockquote::after,
 q::before,
@@ -160,6 +164,10 @@ select {
     vertical-align: middle;
 }
 
+div[data-lastpass-icon-root] {
+    display: none;
+}
+
 html,
 body {
     position: relative;
@@ -175,6 +183,7 @@ html {
     box-sizing: border-box;
     font-size: var(--font-size);
 }
+
 *,
 *:before,
 *:after {
@@ -189,6 +198,8 @@ html {
     --font: "Roboto", sans-serif;
     --font-bold: "Manrope", sans-serif;
     --safe-inset: 0;
+    --android-inset-with-buttons: 3.5rem;
+    --android-inset-without-buttons: 1.5rem;
 }
 
 body {
@@ -236,17 +247,19 @@ body {
 // this is designed to target only iOS devices where the app is saved to home screen
 // and the device does not have a home button (hence the min-height check)
 // and the virtual keyboard is not visible
-@supports (-webkit-touch-callout: none) {
-    @media (display-mode: standalone) and (min-height: 668px) {
-        body:not(.keyboard) {
-            $inset: 32px;
-            --safe-inset: 32px;
-            padding-bottom: $inset;
+body.needs-safe-inset:not(.keyboard):not(.native-android) {
+    --safe-inset: 32px;
+    padding-bottom: var(--safe-inset);
 
-            .modal-content {
-                padding-bottom: $inset;
-            }
+    .align-bottom {
+        .modal-content {
+            padding-bottom: var(--safe-inset);
         }
+    }
+
+    .transient_sheet,
+    .anon-footer {
+        padding-bottom: var(--safe-inset) !important;
     }
 }
 
@@ -319,6 +332,7 @@ a {
     h4 {
         margin-top: toRem(24);
         margin-bottom: toRem(16);
+
         &:first-child {
             margin-top: 0;
         }
@@ -331,6 +345,7 @@ a {
     pre,
     blockquote {
         margin-bottom: toRem(16);
+
         &:last-child {
             margin-bottom: 0;
         }
@@ -429,49 +444,189 @@ a {
     }
 }
 
-// TODO get the status bar height programatically from the device
-body.native-android {
-    --status-bar-height: 36px; // This is the height we'll take as relevant!
-
+html,
+body {
     // Prevent pinch-zooming on Android devices
     // Note: tested meta viewport `user-scalable=no`, but seems like Tauri
     // webview does not respect it
-    touch-action: pan-x pan-y;
     height: 100%;
+    touch-action: pan-x pan-y;
+}
 
-    // Status bar on Android devices
-    &:before {
-        content: "";
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: var(--status-bar-height);
-        background-color: #14151b;
-        z-index: 1;
+body.native-android {
+    // Set the status bar height via CSS to avoid issues with bg colour not
+    // matching the headers bg.
+    &:not(.onboarding) > main,
+    .sliding_page {
+        padding-top: var(--device-status-bar-height) !important;
     }
 
-    // We need to adjust the main content to account for the status bar height!
-    // This is a workaround for the Android status bar issue
-    // where the content is pushed down by the status bar height.
-    &:not(.landing-page) > main {
-        margin-top: var(--status-bar-height);
-        height: calc(100vh - var(--status-bar-height));
+    .container.upgrade_banner {
+        margin-top: var(--device-status-bar-height) !important;
     }
 
-    &.landing-page {
-        &:before {
-            background-color: #1b1c20;
+    // Set paddings when device uses gesture navigation
+    &.has-gesture-nav {
+        .bottom_nav_bar {
+            padding-bottom: calc(var(--sp-lg) + var(--device-nav-height)) !important;
         }
 
-        > .wrapper {
-            top: var(--status-bar-height);
+        .footer {
+            padding-bottom: var(--device-nav-height) !important;
         }
 
-        > .main {
-            margin-top: var(--status-bar-height);
-            padding-top: var(--status-bar-height);
-            height: calc(100vh - var(--status-bar-height));
+        .transient_sheet,
+        .anon-footer {
+            padding-bottom: var(--device-nav-height) !important;
         }
+    }
+
+    // Set paddings when device uses 2 or 3 button navigation
+    &:not(.has-gesture-nav) {
+        .footer {
+            padding-bottom: var(--sp-md) !important;
+        }
+    }
+
+    // Case when keyboard is visible, we want to have a bit of padding between
+    // the top of the keyboard and any UI elements.
+    &.keyboard-visible {
+        .footer {
+            padding-bottom: var(--sp-sm) !important;
+        }
+    }
+}
+
+svelte-virtual-list-viewport {
+    width: 100%;
+}
+
+#masked_overlay {
+    transition: opacity 250ms ease-in-out;
+    position: fixed;
+    inset: 0;
+    background: var(--background-0);
+    z-index: 90;
+    pointer-events: none;
+    opacity: 0;
+
+    &.visible {
+        opacity: 0.8;
+    }
+
+    &.active {
+        pointer-events: auto;
+    }
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+}
+
+@keyframes fade-out {
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes slide_down {
+    to {
+        transform: translateY(100%);
+    }
+}
+
+@keyframes slide_up {
+    from {
+        transform: translateY(100%);
+    }
+}
+
+@keyframes slide-to-right {
+    to {
+        transform: translateX(100vw);
+    }
+}
+
+@keyframes slide-from-right {
+    from {
+        transform: translateX(100vw);
+    }
+}
+
+@keyframes slide-to-left {
+    to {
+        transform: translateX(-100vw);
+    }
+}
+
+@keyframes slide-from-left {
+    from {
+        transform: translateX(-100vw);
+    }
+}
+
+/* VIEW TRANSITIONS */
+
+$speed: 200ms;
+
+@mixin defineTransitionNameFor($selector, $name) {
+    #{$selector} {
+        view-transition-name: #{$name};
+        contain: layout;
+    }
+}
+
+// Ensure, elements are positioned as they should be!
+html::view-transition-group(bottom_nav_bar),
+html::view-transition-group(floating_button) {
+    z-index: 100;
+}
+
+html::view-transition-group(anchored_sheet),
+html::view-transition-group(anon_footer) {
+    z-index: 99;
+}
+
+html::view-transition-group(transient_sheet),
+html::view-transition-group(root) {
+    z-index: 1;
+}
+
+html:active-view-transition-type(slide_left, slide_right) {
+    @include defineTransitionNameFor(".bottom_nav_bar", "bottom_nav_bar");
+    @include defineTransitionNameFor(".anchored_sheet", "anchored_sheet");
+    @include defineTransitionNameFor(".anon-footer", "anon_footer");
+    @include defineTransitionNameFor(".sliding_page.top", "sliding_modal");
+    @include defineTransitionNameFor(".transient_sheet", "transient_sheet");
+}
+
+// Root animations!
+html:active-view-transition-type(slide_left) {
+    &::view-transition-old(root) {
+        animation:
+            $speed ease-in-out both slide-to-left,
+            $speed ease-in-out both fade-out;
+    }
+
+    &::view-transition-new(root) {
+        animation:
+            $speed ease-in-out both slide-from-right,
+            $speed ease-in-out both fade-in;
+    }
+}
+
+html:active-view-transition-type(slide_right) {
+    &::view-transition-old(root) {
+        animation:
+            $speed ease-in-out both slide-to-right,
+            $speed ease-in-out both fade-out;
+    }
+
+    &::view-transition-new(root) {
+        animation:
+            $speed ease-in-out both slide-from-left,
+            $speed ease-in-out both fade-in;
     }
 }

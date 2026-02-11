@@ -1,4 +1,4 @@
-import type { MessageFormatter, UserLookup, UserSummary } from "openchat-shared";
+import type { MessageFormatter, PublicProfile, UserLookup, UserSummary } from "openchat-shared";
 
 export function formatLastOnlineDate(
     formatter: MessageFormatter,
@@ -92,6 +92,17 @@ export function nullUser(username: string): UserSummary {
         isUniquePerson: false,
         totalChitEarned: 0,
         hideOnlineStatus: false,
+    };
+}
+
+export function nullProfile(): PublicProfile {
+    return {
+        username: "",
+        displayName: undefined,
+        bio: "",
+        isPremium: false,
+        phoneIsVerified: false,
+        created: 0n,
     };
 }
 

@@ -18,5 +18,9 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 tauri = { workspace = true }
 tauri-plugin-deep-link = { workspace = true }
+tauri-plugin-devtools = { workspace = true }
 tauri-plugin-notification = { workspace = true }
 tauri-plugin-oc = { path = "../tauri-plugin-oc" }
+
+[features]
+store = ["tauri-plugin-oc/store"]

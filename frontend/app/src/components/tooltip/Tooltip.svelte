@@ -1,10 +1,10 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
     import type { Alignment, Position } from "component-lib";
+    import { portalState } from "component-lib";
     import { getAllContexts, mount, onDestroy, type Snippet } from "svelte";
     import Hoverable from "../Hoverable.svelte";
     import TooltipPopup from "../portal/TooltipPopup.svelte";
-    import { portalState } from "../portalState.svelte";
 
     interface Props {
         enable?: boolean;

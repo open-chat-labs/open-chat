@@ -7,10 +7,10 @@ export type FontWeight = "light" | "normal" | "semi-bold" | "bold";
 export class FontWeights {
     cssVariables(): CssVariable[] {
         return [
-            new CssVariable("font-light", "300"),
-            new CssVariable("font-normal", "400"),
-            new CssVariable("font-semi-bold", "700"),
-            new CssVariable("font-bold", "900"),
+            new CssVariable("font-weight-light", "300"),
+            new CssVariable("font-weight-normal", "400"),
+            new CssVariable("font-weight-semi-bold", "700"),
+            new CssVariable("font-weight-bold", "900"),
         ];
     }
 }
@@ -34,12 +34,19 @@ export class TypographicStyles {
         public overview: TypographicStyle,
         public h1: TypographicStyle,
         public h2: TypographicStyle,
+        public h3: TypographicStyle,
         public title: TypographicStyle,
         public subtitle: TypographicStyle,
         public body: TypographicStyle,
         public bodySmall: TypographicStyle,
         public caption: TypographicStyle,
         public label: TypographicStyle,
+        public chatLabel: TypographicStyle,
+        public chatText: TypographicStyle,
+        public chatFootnote: TypographicStyle,
+        public chatCaption: TypographicStyle,
+        public buttonSmall: TypographicStyle,
+        public buttonRegular: TypographicStyle,
     ) {}
 
     cssVariables(): CssVariable[] {
@@ -47,12 +54,19 @@ export class TypographicStyles {
             ...this.overview.cssVariables("overview"),
             ...this.h1.cssVariables("h1"),
             ...this.h2.cssVariables("h2"),
+            ...this.h3.cssVariables("h3"),
             ...this.title.cssVariables("title"),
             ...this.subtitle.cssVariables("subtitle"),
             ...this.body.cssVariables("body"),
             ...this.bodySmall.cssVariables("bodySmall"),
             ...this.caption.cssVariables("caption"),
             ...this.label.cssVariables("label"),
+            ...this.chatLabel.cssVariables("chatLabel"),
+            ...this.chatText.cssVariables("chatText"),
+            ...this.chatFootnote.cssVariables("chatFootnote"),
+            ...this.chatCaption.cssVariables("chatCaption"),
+            ...this.buttonSmall.cssVariables("buttonSmall"),
+            ...this.buttonRegular.cssVariables("buttonRegular"),
         ];
     }
 }

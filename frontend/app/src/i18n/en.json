@@ -44,7 +44,7 @@
         "diamondGateInfo": "Only users with Diamond membership will be allowed to join",
         "diamondGateInfo2": "In order to join this {level} you are required to have Diamond membership.",
         "diamondMember": "Diamond membership",
-        "doYouHaveUniquePersonCredential": "IMPORTANT! Please confirm that you have verified your unique personhood via <a target='_blank' href='https://id.decideai.xyz'>the DecideAI website</a> _before_ you proceed.",
+        "doYouHaveUniquePersonCredential": "Please confirm that you have verified your unique personhood via the [DecideAI website](https://id.decideai.xyz) _before_ you proceed.",
         "evaluationInterval": "Access gate evaluation interval",
         "evaluationIntervalInfo": "You may choose to enforce the periodic re-evaluation of your access gate. When a member's access lapses, they will not be able to interact with the {level} until they have re-evaluated that the access conditions are still met.",
         "evaluationIntervalSummary": "This access gate will be re-evaluated every {interval}",
@@ -102,7 +102,7 @@
         "uniquePerson": "Unique person",
         "uniquePersonInfo": "Only users who have provided a unique personhood proof will be allowed to join",
         "uniquePersonInfo1": "What if I do not have the verifiable credential?",
-        "uniquePersonInfo2": "If you have not done so, simply head over to <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a>, sign in using the same Internet Identity that you used to access OpenChat and follow the instructions to prove your unique personhood.",
+        "uniquePersonInfo2": "If you have not done so, simply head over to [DecideAI](https://id.decideai.xyz), sign in using the same Internet Identity that you used to access OpenChat and follow the instructions to prove your unique personhood.",
         "uniquePersonInfo3": "It's simple to do, takes only a few minutes and only needs to be done once. When you have completed the process, come back here and hit 'Verify'.",
         "verify": "Verify",
         "visibility": "Access"
@@ -494,6 +494,7 @@
             "createGroupFailed": "Sorry we were unable to create the user group",
             "deleteFailed": "Sorry we were unable to delete this community",
             "deleteUserGroupFailed": "Sorry we were unable to delete the user group",
+            "error": "Sorry an unexpected error occurred",
             "failure": "Sorry we were unable to create your community",
             "importFailed": "Sorry we were unable to import your group",
             "inviteUsers": "Sorry we were unable to invite these users",
@@ -616,7 +617,7 @@
         "send": "Send",
         "sendFailed": "Failed to send {symbol}",
         "sendSucceeded": "Your {symbol} was successfully sent!",
-        "sendTarget": "enter an address to send to",
+        "sendTarget": "Enter an address to send to",
         "sendToken": "Send {symbol}",
         "shortBalanceLabel": "Balance",
         "shortRemainingBalanceLabel": "remaining balance",
@@ -796,6 +797,7 @@
     "goToFirstMention": "Go to the first unread mention",
     "goToLatestMessage": "Go to latest message",
     "group": {
+        "addGroupInfo": "Add {level} info",
         "addGroupPhoto": "Add {level} photo",
         "addMembers": "Add channel members",
         "addMembersFailed": "There was an error adding members",
@@ -831,6 +833,7 @@
         "shareTab": "Share",
         "tooManyInvites": "You can only have 100 outstanding invitations",
         "update": "Update {level}",
+        "updateInfo": "Update {level} info",
         "usersInvited": "Invite message sent!",
         "welcome": "Welcome to {groupName}"
     },
@@ -1743,6 +1746,7 @@
     "stopRecording": "Stop recording",
     "storage": "Storage",
     "storageUsed": "{used}GB used of {limit}GB",
+    "storagePercentRemaining": " / {percent}% remaining",
     "streakInsurance": {
         "addDay": "Add a day",
         "atRisk": "Your streak is at risk",
@@ -1780,7 +1784,7 @@
     "thisIsPrivateGroupWithN": "This is a private {level} with {number} members",
     "thisIsPublicGroupWithN": "This is a public {level} with {number} members",
     "thread": {
-        "lastMessage": "(last message {date}) ",
+        "lastMessage": "/ {date} ",
         "menu": "Reply in thread",
         "moreMessages": "- {number} more message(s) -",
         "nreplies": "{number} {replies} {message}",
@@ -1861,6 +1865,7 @@
         "receiver": "Recipient",
         "saveAccount": "Save",
         "saveAccountMessage": "Would you like to save this account for easier access next time?",
+        "selectTransferNetwork": "Token transfer network",
         "send": "Send",
         "title": "Send {token}",
         "transfer": "{token} transfer",
@@ -2051,6 +2056,13 @@
     },
     "viewer": "viewer",
     "wallet": "Wallet",
+    "appWallet": {
+        "header": {
+            "asset": "Asset",
+            "holdings": "Holdings",
+            "total": "Total"
+        }
+    },
     "walletSettings": "Wallet settings",
     "webhook": {
         "avatarLabel": "Avatar",

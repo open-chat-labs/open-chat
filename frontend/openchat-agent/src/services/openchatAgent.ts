@@ -263,7 +263,7 @@ import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
 import { bytesToHexString, mapOptional } from "../utils/mapping";
 import { mean } from "../utils/maths";
 import { AsyncMessageContextMap } from "../utils/messageContext";
-import { isMainnet } from "../utils/network";
+// import { isMainnet } from "../utils/network";
 import {
     clearCache as clearReferralCache,
     deleteCommunityReferral,
@@ -354,6 +354,7 @@ export class OpenChatAgent extends EventTarget {
     ) {
         super();
         this._logger = config.logger;
+        console.log("url", config.icUrl);
         this._agent = createHttpAgentSync(identity, config.icUrl);
         this.db = initDb(this.principal);
         this._onlineClient = new OnlineClient(identity, this._agent, config.onlineCanister);
@@ -3574,7 +3575,11 @@ export class OpenChatAgent extends EventTarget {
     async exchangeRates(): Promise<Record<string, TokenExchangeRates>> {
         const supportedTokens = this._registryValue?.tokenDetails;
 
-        if (supportedTokens === undefined || !isMainnet(this.config.icUrl)) {
+        // if (supportedTokens === undefined || !isMainnet(this.config.icUrl)) {
+        //     return Promise.resolve({});
+        // }
+
+        if (supportedTokens === undefined) {
             return Promise.resolve({});
         }
 

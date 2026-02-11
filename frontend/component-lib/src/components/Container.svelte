@@ -1,3 +1,54 @@
+<script module lang="ts">
+    export type ContainerProps = Props;
+
+    type Overflow = "auto" | "visible" | "hidden" | "initial";
+
+    interface Props {
+        children: Snippet;
+        direction?: Direction;
+        parentDirection?: Direction;
+        gap?: SpacingSize;
+        padding?: Padding;
+        borderWidth?: BorderWidthSize;
+        borderRadius?: Radius;
+        borderStyle?: string;
+        borderColour?: string;
+        width?: SizeMode;
+        height?: SizeMode;
+        colour?: string;
+        mainAxisAlignment?: MainAxisAlignment;
+        crossAxisAlignment?: CrossAxisAlignment;
+        mainAxisSelfAlignment?: MainAxisAlignment;
+        crossAxisSelfAlignment?: CrossAxisAlignment;
+        minWidth?: string;
+        minHeight?: string;
+        maxWidth?: string;
+        maxHeight?: string;
+        shadow?: string;
+        background?: string;
+        backgroundColor?: string;
+        backgroundImage?: string;
+        onClick?: (e?: MouseEvent) => void;
+        onDoubleClick?: (e?: MouseEvent) => void;
+        supplementalClass?: string;
+        overflow?: Overflow;
+        tag?: "div" | "button" | "main" | "section"; // this could be just about anything but let's try to limit it
+        id?: string;
+        onInsideStart?: (fromStart: number) => void;
+        onInsideEnd?: (fromEnd: number) => void;
+        onSwipe?: (direction: SwipeDirection) => void;
+        closeMenuOnScroll?: boolean;
+        wrap?: boolean;
+        ref?: HTMLElement;
+        clientHeight?: number;
+        clientWidth?: number;
+        reverse?: boolean;
+        data_id?: string; //todo find a better way to do this
+        data_index?: string; // tod fine a better way to do this
+        pos?: Pos;
+    }
+</script>
+
 <script lang="ts">
     import {
         ColourVars,
@@ -8,15 +59,20 @@
         getFlexStyle,
         getGapCss,
         getPaddingCss,
-        Pixel,
+        menuCloser,
+        posToStyle,
+        scrollLimits,
+        swipe,
         type BorderWidthSize,
         type CrossAxisAlignment,
         type Direction,
         type MainAxisAlignment,
         type Padding,
+        type Pos,
         type Radius,
         type SizeMode,
         type SpacingSize,
+        type SwipeDirection,
     } from "component-lib";
     import { getContext, setContext, type Snippet } from "svelte";
 
@@ -36,41 +92,16 @@
      * unexpected results. This can always be resolved but only if you understand what is going on.
      */
 
-    interface Props {
-        children: Snippet;
-        direction?: Direction;
-        gap?: SpacingSize;
-        padding?: Padding;
-        borderWidth?: BorderWidthSize;
-        borderRadius?: Radius;
-        borderStyle?: string;
-        borderColour?: string;
-        width?: SizeMode;
-        height?: SizeMode;
-        colour?: string;
-        mainAxisAlignment?: MainAxisAlignment;
-        crossAxisAlignment?: CrossAxisAlignment;
-        mainAxisSelfAlignment?: MainAxisAlignment;
-        crossAxisSelfAlignment?: CrossAxisAlignment;
-        minWidth?: Pixel;
-        minHeight?: Pixel;
-        shadow?: string;
-        backgroundColour?: string;
-        onClick?: () => void;
-        supplementalClass?: string;
-        allowOverflow?: boolean;
-        tag?: "div" | "main" | "section"; // this could be just about anything but let's try to limit it
-    }
-
     let {
         children,
         direction = "horizontal",
+        parentDirection,
         gap = "zero",
         padding = "zero",
         borderWidth = "zero",
         borderRadius = "zero",
-        width = { kind: "fill" },
-        height = { kind: "hug" },
+        width = "fill",
+        height = "hug",
         colour,
         borderStyle = "solid",
         borderColour = ColourVars.background2,
@@ -78,19 +109,41 @@
         crossAxisAlignment = "start",
         mainAxisSelfAlignment,
         crossAxisSelfAlignment,
-        minWidth = new Pixel(0),
-        minHeight = new Pixel(0),
+        minWidth = "auto",
+        minHeight = "auto",
+        maxWidth = "auto",
+        maxHeight = "auto",
         shadow,
-        backgroundColour = "unset",
+        background = "unset",
+        backgroundColor,
+        backgroundImage,
         onClick,
+        onDoubleClick,
         supplementalClass,
-        allowOverflow = false,
+        overflow = "auto",
         tag = "div",
+        id,
+        onInsideEnd,
+        onInsideStart,
+        onSwipe,
+        closeMenuOnScroll = false,
+        wrap = false,
+        ref = $bindable(),
+        clientHeight = $bindable(),
+        clientWidth = $bindable(),
+        reverse = false,
+        data_id,
+        data_index,
+        pos,
     }: Props = $props();
+
+    void clientHeight;
+    void clientWidth;
+    void ref;
 
     // you might expect this to be done inside onMount but
     // that runs from the bottom of the tree up which is not what we need
-    let parentDirection = getContext<Direction>("direction");
+    parentDirection = parentDirection ?? getContext<Direction>("direction");
     setContext("direction", direction);
 
     let paddingCss = $derived(getPaddingCss(padding));
@@ -101,6 +154,7 @@
     let widthCss = $derived(getFlexStyle("width", width, parentDirection));
     let heightCss = $derived(getFlexStyle("height", height, parentDirection));
     let colourCss = $derived(colour ? `background-color: ${colour}` : "");
+    let wrapCss = $derived(wrap ? "flex-wrap: wrap;" : "");
     let alignmentCss = $derived(
         getAlignmentCss(
             mainAxisAlignment,
@@ -109,8 +163,20 @@
             crossAxisSelfAlignment,
         ),
     );
+    let backgroundCss = $derived(
+        backgroundImage
+            ? `background-image: url(${backgroundImage});`
+            : background && background !== "unset"
+              ? `background: ${background};`
+              : "",
+    );
+    let backgroundColorCss = $derived(
+        background === "unset" && backgroundColor ? `background-color: ${backgroundColor};` : "",
+    );
     let style = $derived(
-        `background-color: ${backgroundColour}; box-shadow: ${shadow}; min-width: ${minWidth}; min-height: ${minHeight}; ${alignmentCss}; ${colourCss}; ${heightCss}; ${widthCss}; ${borderStyleCss}; ${borderRadiusCss}; ${borderWidthCss}; ${paddingCss}; ${gapCss};`,
+        `${posToStyle(
+            pos,
+        )} overflow: ${overflow}; ${wrapCss} ${backgroundCss} ${backgroundColorCss} box-shadow: ${shadow}; max-width: ${maxWidth}; max-height: ${maxHeight}; min-width: ${minWidth}; min-height: ${minHeight}; ${alignmentCss}; ${colourCss}; ${heightCss}; ${widthCss}; ${borderStyleCss}; ${borderRadiusCss}; ${borderWidthCss}; ${paddingCss}; ${gapCss};`,
     );
     // TODO I think it might be nice to do a lot of this flex sizing with classes rather than inline styles
     // although I'm not sure I can say *why*
@@ -120,8 +186,19 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <svelte:element
     this={tag}
+    data-id={data_id}
+    data-index={data_index}
+    bind:clientHeight
+    bind:clientWidth
+    role={onClick ? "button" : "none"}
+    bind:this={ref}
+    use:menuCloser={closeMenuOnScroll}
+    use:swipe={{ onSwipe }}
+    use:scrollLimits={{ onEnd: onInsideEnd, onStart: onInsideStart }}
+    {id}
     class:clickable={onClick !== undefined}
-    class:overflow={allowOverflow}
+    class:reverse
+    ondblclick={onDoubleClick}
     onclick={onClick}
     {style}
     class={`container ${direction} ${supplementalClass ?? ""}`}>
@@ -130,25 +207,33 @@
 
 <style lang="scss">
     .container {
-        overflow: auto;
         scrollbar-width: none;
         position: relative;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
         transition:
-            padding ease-in-out 200ms,
-            gap ease-in-out 200ms;
-
-        &.overflow {
-            overflow: visible;
-        }
+            border-radius 200ms ease-in-out,
+            margin 200ms ease-in-out,
+            min-width 200ms ease-in-out,
+            flex-basis 200ms ease-in-out,
+            padding 200ms ease-in-out,
+            gap 200ms ease-in-out;
 
         &.horizontal {
             display: flex;
             flex-direction: row;
+            &.reverse {
+                flex-direction: row-reverse;
+            }
         }
 
         &.vertical {
             display: flex;
             flex-direction: column;
+            &.reverse {
+                flex-direction: column-reverse;
+            }
         }
 
         &.clickable {

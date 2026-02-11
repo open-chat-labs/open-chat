@@ -1,0 +1,102 @@
+<script lang="ts">
+    import { i18nKey } from "@src/i18n/i18n";
+    import { Body, ColourVars, Container, transition } from "component-lib";
+    import { pageReplace, publish, routeStore } from "openchat-client";
+    import page from "page";
+    import { type Snippet } from "svelte";
+    import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
+    import MulticolourText, { type TextPart } from "../MulticolourText.svelte";
+
+    interface Props {
+        children?: Snippet;
+    }
+
+    let { children }: Props = $props();
+
+    const signInMsg = [
+        {
+            text: i18nKey("Back to "),
+            colour: "textSecondary",
+        },
+        {
+            text: i18nKey("create account "),
+            colour: "primary",
+        },
+        {
+            text: i18nKey("& "),
+            colour: "textSecondary",
+        },
+        {
+            text: i18nKey("sign in"),
+            colour: "primary",
+        },
+    ];
+    const backToExploreMsg = [
+        {
+            text: i18nKey("Back to "),
+            colour: "textSecondary",
+        },
+        {
+            text: i18nKey("Communities explorer"),
+            colour: "primary",
+        },
+    ];
+
+    let msg = $derived.by<TextPart[]>(() => {
+        switch ($routeStore.kind) {
+            case "communities_route":
+                return signInMsg as TextPart[];
+            default:
+                return backToExploreMsg as TextPart[];
+        }
+    });
+
+    function back() {
+        transition(["fade"], () => {
+            publish("closeModalStack");
+            if ($routeStore.kind === "communities_route") {
+                page("/");
+            } else {
+                pageReplace("/communities");
+            }
+        });
+    }
+</script>
+
+<Container
+    gap={"sm"}
+    overflow={"visible"}
+    mainAxisAlignment={children ? "spaceBetween" : "center"}
+    supplementalClass={"anon-footer"}
+    padding={["lg", "lg", "zero", "lg"]}>
+    <Container
+        width={children ? "fill" : "hug"}
+        height={{ size: "3.5rem" }}
+        padding={["md", "xl", "md", "sm"]}
+        gap={"sm"}
+        shadow={"var(--shadow-menu)"}
+        borderRadius={"circle"}
+        mainAxisAlignment={"center"}
+        crossAxisAlignment={"center"}
+        background={ColourVars.background2}
+        onClick={back}>
+        <ChevronLeft size={"1.6rem"} color={ColourVars.textSecondary} />
+        <Body width={"hug"}>
+            <MulticolourText parts={msg}></MulticolourText>
+        </Body>
+    </Container>
+    {@render children?.()}
+</Container>
+
+<style lang="scss">
+    :global {
+        .anon-footer {
+            @include z-index("anon-banner");
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            position: fixed !important;
+            cursor: pointer;
+        }
+    }
+</style>

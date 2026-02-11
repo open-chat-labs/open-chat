@@ -1,6 +1,15 @@
 import type { Level } from "./structure";
 
-export type EnhancedAccessGate = { level: Level; expiry: bigint | undefined } & AccessGate;
+export type EnhancedAccessGate = {
+    collectionName: string;
+    level: Level;
+    expiry: bigint | undefined;
+} & AccessGate;
+export type EnhancedLeafGate = {
+    collectionName: string;
+    level: Level;
+    expiry: bigint | undefined;
+} & LeafGate;
 
 export type AccessGate = LeafGate | CompositeGate;
 

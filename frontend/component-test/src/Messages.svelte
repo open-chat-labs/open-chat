@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Body, Container, Message, Reactions, ThreadSummary } from "component-lib";
+    import { Body, Container } from "component-lib";
     import DebugEvent from "./DebugEvent.svelte";
 
     let time = new Date().getTime();
@@ -8,7 +8,7 @@
 <DebugEvent>
     {#snippet children(onAction)}
         <Container
-            width={{ kind: "fixed", size: "800px" }}
+            width={{ size: "800px" }}
             borderColour={"cyan"}
             borderStyle={"dashed"}
             borderWidth={"thick"}

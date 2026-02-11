@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { menuCloser } from "component-lib";
     import {
         type BotClientConfigData,
         type ModerationFlag,
@@ -30,7 +31,6 @@
     import { _, locale } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
-    import { menuCloser } from "../../../actions/closeMenu";
     import {
         editmode,
         i18nKey,

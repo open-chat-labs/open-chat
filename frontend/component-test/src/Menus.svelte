@@ -56,14 +56,11 @@
 <Container gap={"xl"} direction={"vertical"}>
     <H2>Context menus</H2>
 
-    <Container
-        height={{ kind: "fixed", size: "300px" }}
-        mainAxisAlignment={"spaceBetween"}
-        gap="lg">
+    <Container height={{ size: "300px" }} mainAxisAlignment={"spaceBetween"} gap="lg">
         <MenuTrigger position={"bottom"} align={"middle"}>
             <CommonButton size={"large"} mode={"active"}>
-                {#snippet icon(color)}
-                    <Burger {color} />
+                {#snippet icon(color, size)}
+                    <Burger {color} {size} />
                 {/snippet}
                 Bottom middle
             </CommonButton>
@@ -74,8 +71,8 @@
 
         <MenuTrigger position={"bottom"} align={"middle"}>
             <CommonButton size={"large"} mode={"active"}>
-                {#snippet icon(color)}
-                    <Burger {color} />
+                {#snippet icon(color, size)}
+                    <Burger {color} {size} />
                 {/snippet}
                 Bottom middle
             </CommonButton>
@@ -85,14 +82,11 @@
         </MenuTrigger>
     </Container>
 
-    <Container
-        height={{ kind: "fixed", size: "300px" }}
-        mainAxisAlignment={"spaceBetween"}
-        gap="lg">
+    <Container height={{ size: "300px" }} mainAxisAlignment={"spaceBetween"} gap="lg">
         <MenuTrigger position={"right"} align={"start"}>
             <CommonButton size={"large"} mode={"active"}>
-                {#snippet icon(color)}
-                    <Burger {color} />
+                {#snippet icon(color, size)}
+                    <Burger {color} {size} />
                 {/snippet}
                 Right start
             </CommonButton>
@@ -103,8 +97,8 @@
 
         <MenuTrigger position={"left"} align={"end"}>
             <CommonButton size={"large"} mode={"active"}>
-                {#snippet icon(color)}
-                    <Burger {color} />
+                {#snippet icon(color, size)}
+                    <Burger {color} {size} />
                 {/snippet}
                 Left end
             </CommonButton>
@@ -114,14 +108,11 @@
         </MenuTrigger>
     </Container>
 
-    <Container
-        height={{ kind: "fixed", size: "300px" }}
-        mainAxisAlignment={"spaceBetween"}
-        gap="lg">
+    <Container height={{ size: "300px" }} mainAxisAlignment={"spaceBetween"} gap="lg">
         <MenuTrigger position={"top"} align={"start"}>
             <CommonButton size={"large"} mode={"active"}>
-                {#snippet icon(color)}
-                    <Burger {color} />
+                {#snippet icon(color, size)}
+                    <Burger {color} {size} />
                 {/snippet}
                 Top start
             </CommonButton>
@@ -132,8 +123,8 @@
 
         <MenuTrigger position={"top"} align={"start"}>
             <CommonButton size={"large"} mode={"active"}>
-                {#snippet icon(color)}
-                    <Burger {color} />
+                {#snippet icon(color, size)}
+                    <Burger {color} {size} />
                 {/snippet}
                 Top start
             </CommonButton>

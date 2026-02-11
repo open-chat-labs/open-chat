@@ -1,19 +1,22 @@
 <script lang="ts">
-    import { Caption, ColourVars, Container, type Padding } from "component-lib";
-    import type { Snippet } from "svelte";
+    import { BodySmall, ColourVars, Container, Row, type Padding } from "component-lib";
+    import { onMount, type Snippet } from "svelte";
 
     interface Props {
         id?: string;
-        value?: string;
+        value?: string | number;
         placeholder?: string;
         subtext?: Snippet;
-        error?: Snippet;
+        error?: boolean;
         minlength?: number;
         maxlength?: number;
         countdown?: boolean;
         icon?: Snippet<[string]>;
         iconButtons?: Snippet<[string]>;
         textButtons?: Snippet;
+        disabled?: boolean;
+        autofocus?: boolean;
+        required?: boolean;
     }
 
     let {
@@ -28,70 +31,78 @@
         icon,
         iconButtons,
         textButtons,
+        disabled = false,
+        autofocus = false,
+        required = false,
     }: Props = $props();
 
-    let remaining = $derived(maxlength - (value?.length ?? 0));
+    let remaining = $derived(maxlength - (value?.toString()?.length ?? 0));
     let warn = $derived(remaining <= 5);
-    let hasButtons = $derived(iconButtons || textButtons);
-    let padding = $derived<Padding>(hasButtons ? ["xs", "xs", "xs", "md"] : ["xs", "md"]);
+    let hasInternalButtons = $derived(textButtons);
+    let padding = $derived<Padding>(hasInternalButtons ? ["xs", "xs", "xs", "md"] : ["xs", "xl"]);
+    let inp: HTMLInputElement;
+
+    onMount(() => {
+        if (autofocus) {
+            inp?.focus();
+        }
+    });
 </script>
 
 <Container direction={"vertical"} gap={"xs"}>
-    <Container
-        backgroundColour={ColourVars.textTertiary}
-        height={{ kind: "fixed", size: "3rem" }}
-        {padding}
-        borderRadius={"sm"}
-        gap={"sm"}
-        crossAxisAlignment={"center"}>
-        <input
-            data-gram="false"
-            data-gramm_editor="false"
-            data-enable-grammarly="false"
-            data-lpignore="true"
-            spellcheck="false"
-            {minlength}
-            {maxlength}
-            required={minlength > 0}
-            {id}
-            bind:value
-            {placeholder} />
+    <Container mainAxisAlignment={"spaceBetween"} gap={"xs"} crossAxisAlignment="center">
+        <Container
+            background={ColourVars.textTertiary}
+            height={{ size: "3.5rem" }}
+            {padding}
+            borderRadius={"circle"}
+            gap={"sm"}
+            crossAxisAlignment={"center"}>
+            <input
+                bind:this={inp}
+                class:disabled
+                {disabled}
+                data-gram="false"
+                data-gramm_editor="false"
+                data-enable-grammarly="false"
+                data-lpignore="true"
+                spellcheck="false"
+                {minlength}
+                {maxlength}
+                required={minlength > 0}
+                {id}
+                bind:value
+                {placeholder} />
 
-        {#if countdown}
-            <div class:warn class="countdown">{remaining}</div>
-        {/if}
-        {#if icon}
-            <div class="input_icon">
-                {@render icon(ColourVars.textSecondary)}
-            </div>
-        {/if}
-        <div class="testing">
-            <something></something>
-        </div>
+            {#if countdown}
+                <div class:warn class="countdown">{remaining}</div>
+            {/if}
+            {#if icon}
+                <div class="input_icon">
+                    {@render icon(ColourVars.textSecondary)}
+                </div>
+            {/if}
+            {#if textButtons}
+                <Container width={"hug"} gap={"xs"}>
+                    {@render textButtons()}
+                </Container>
+            {/if}
+        </Container>
         {#if iconButtons}
-            <Container width={{ kind: "hug" }} gap={"xs"}>
+            <Container width={"hug"} gap={"xs"}>
                 {@render iconButtons(ColourVars.textPrimary)}
-            </Container>
-        {/if}
-        {#if textButtons}
-            <Container width={{ kind: "hug" }} gap={"xs"}>
-                {@render textButtons()}
             </Container>
         {/if}
     </Container>
     {#if subtext}
-        <div class="subtext">
-            <Caption colour={"secondary"}>
+        <Row width={"hug"} gap={"xs"} padding={["zero", "xl"]}>
+            <BodySmall width={required ? "hug" : "fill"} colour={error ? "error" : "textSecondary"}>
                 {@render subtext()}
-            </Caption>
-        </div>
-    {/if}
-    {#if error}
-        <div class="subtext">
-            <Caption colour={"error"}>
-                {@render error()}
-            </Caption>
-        </div>
+            </BodySmall>
+            {#if required}
+                <BodySmall width={"hug"} colour={"error"}>*</BodySmall>
+            {/if}
+        </Row>
     {/if}
 </Container>
 
@@ -109,15 +120,13 @@
     input {
         all: unset;
         width: 100%;
-        color: var(--text-secondary);
+        color: var(--text-primary);
+        font-size: var(--typo-body-sz);
+        line-height: var(--typo-body-lh);
 
         &::placeholder {
             color: var(--text-placeholder);
         }
-    }
-
-    .subtext {
-        padding-inline-start: var(--sp-md);
     }
 
     .countdown {

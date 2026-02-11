@@ -772,7 +772,7 @@ function makeSerialisable<T extends ChatEvent>(
 
 function dataToBlobUrl(data: Uint8Array, type?: string): string {
     const options = type ? { type } : undefined;
-    const blob = new Blob([data], options);
+    const blob = new Blob([data.slice().buffer], options);
     return URL.createObjectURL(blob);
 }
 

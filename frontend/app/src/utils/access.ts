@@ -1,12 +1,19 @@
 import {
+    isCompositeGate,
+    isLeafGate,
     type AccessGate,
+    type AccessGateConfig,
     type Credential,
     type CredentialGate,
     type CryptocurrencyDetails,
     type EnhancedAccessGate,
+    type LeafGate,
     type Level,
     type NervousSystemDetails,
+    type NeuronGate,
+    type PaymentGate,
     type ReadonlyMap,
+    type TokenBalanceGate,
 } from "openchat-client";
 import { _ } from "svelte-i18n";
 import { get } from "svelte/store";
@@ -15,7 +22,7 @@ export type GateBinding = {
     key: string;
     label: string;
     enabled: boolean;
-    gate: AccessGate;
+    gate: LeafGate;
 };
 
 export const gateLabel: Record<AccessGate["kind"], string> = {
@@ -61,9 +68,13 @@ const chitEarnedGate: GateBinding = {
     enabled: true,
 };
 
+export type NeuronGateBinding = GateBinding & { gate: NeuronGate };
+export type PaymentGateBinding = GateBinding & { gate: PaymentGate };
+export type BalanceGateBinding = GateBinding & { gate: TokenBalanceGate };
+
 export function getNeuronGateBindings(
     nervousSystemLookup: ReadonlyMap<string, NervousSystemDetails>,
-): GateBinding[] {
+): NeuronGateBinding[] {
     return [...nervousSystemLookup.values()].map((ns) => {
         return {
             label: formatLabel(ns.token.name, ns.isNns),
@@ -80,7 +91,7 @@ export function getNeuronGateBindings(
 export function getPaymentGateBindings(
     cryptoLookup: ReadonlyMap<string, CryptocurrencyDetails>,
     nsLedgers: Set<string>,
-): GateBinding[] {
+): PaymentGateBinding[] {
     return [...cryptoLookup.values()]
         .filter((c) => c.supportedStandards.includes("ICRC-2") || nsLedgers.has(c.ledger))
         .map((c) => {
@@ -101,7 +112,7 @@ export function getPaymentGateBindings(
 
 export function getBalanceGateBindings(
     cryptoLookup: ReadonlyMap<string, CryptocurrencyDetails>,
-): GateBinding[] {
+): BalanceGateBinding[] {
     return [...cryptoLookup.values()].map((c) => {
         return {
             label: formatLabel(c.symbol, false),
@@ -281,4 +292,15 @@ export function mergeAccessGates(
         ];
     }
     return [g1, g2];
+}
+
+export function flattenGateConfig({ gate }: AccessGateConfig): LeafGate[] {
+    if (isLeafGate(gate)) {
+        if (gate.kind === "no_gate") return [];
+        return [gate];
+    }
+    if (isCompositeGate(gate)) {
+        return gate.gates;
+    }
+    return [];
 }

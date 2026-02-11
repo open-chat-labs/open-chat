@@ -15,7 +15,7 @@
 
             <Container gap={"lg"}>
                 <Container
-                    width={{ kind: "fixed", size: "300px" }}
+                    width={{ size: "300px" }}
                     gap={"md"}
                     borderRadius={"lg"}
                     padding={"lg"}
@@ -33,7 +33,7 @@
                     <Button disabled>Disabled button</Button>
                 </Container>
                 <Container
-                    width={{ kind: "fixed", size: "300px" }}
+                    width={{ size: "300px" }}
                     gap={"md"}
                     borderRadius={"lg"}
                     padding={"lg"}
@@ -60,27 +60,23 @@
                     padding={"lg"}
                     borderWidth={"thin"}
                     borderRadius={"lg"}
-                    width={{ kind: "fixed", size: "450px" }}>
+                    width={{ size: "450px" }}>
                     <Container gap={"md"}>
                         {#each ["a", "b", "c", "d", "e", "f"] as c}
                             <Button
                                 secondary={["b", "d", "f"].includes(c)}
-                                width={{ kind: "fixed", size: "150px" }}>Button {c}</Button>
+                                width={{ size: "150px" }}>Button {c}</Button>
                         {/each}
                     </Container>
                 </Container>
 
                 <Subtitle>Filling</Subtitle>
-                <Container
-                    padding={"lg"}
-                    borderWidth={"thin"}
-                    borderRadius={"lg"}
-                    width={{ kind: "hug" }}>
+                <Container padding={"lg"} borderWidth={"thin"} borderRadius={"lg"} width={"hug"}>
                     <Container gap={"md"}>
                         {#each ["a", "b", "c", "d", "e", "f"] as c}
                             <Button
                                 secondary={["b", "d", "f"].includes(c)}
-                                width={{ kind: "fixed", size: "150px" }}>Button {c}</Button>
+                                width={{ size: "150px" }}>Button {c}</Button>
                         {/each}
                     </Container>
                 </Container>
@@ -95,8 +91,8 @@
                     borderRadius={"lg"}
                     mainAxisAlignment={"end"}
                     crossAxisAlignment={"end"}
-                    width={{ kind: "fixed", size: "450px" }}
-                    height={{ kind: "fixed", size: "450px" }}>
+                    width={{ size: "450px" }}
+                    height={{ size: "450px" }}>
                     <FloatingButton>
                         {#snippet icon(color)}
                             <AccountMultiplePlus {color} />

@@ -2,8 +2,8 @@
     import { communityThemes, currentTheme, themes } from "../../theme/themes";
     import Feature from "./Feature.svelte";
 
+    import { portalState } from "component-lib";
     import { availableHeight, mobileWidth, toPixel } from "openchat-client";
-    import { portalState } from "../portalState.svelte";
 
     let scrollTop = $state(0);
     let phoneBorder = 5;

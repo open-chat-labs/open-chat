@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-minimize-app"
+description = "Enables the minimize_app command without any pre-configured scope."
+commands.allow = ["minimize_app"]
+
+[[permission]]
+identifier = "deny-minimize-app"
+description = "Denies the minimize_app command without any pre-configured scope."
+commands.deny = ["minimize_app"]

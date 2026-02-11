@@ -34,6 +34,10 @@ impl<R: Runtime> Oc<R> {
         unimplemented!("not implemented for desktop environment")
     }
 
+    pub fn minimize_app(&self) {
+        unimplemented!("not implemented for desktop environment")
+    }
+
     pub fn release_notifications(&self, _payload: ReleaseNotificationsRequest) {
         unimplemented!("not implemented for desktop environment")
     }

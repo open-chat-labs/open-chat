@@ -1,5 +1,13 @@
 <script lang="ts">
-    import { getFlexStyle, type Direction, type SizeMode } from "component-lib";
+    import {
+        Body,
+        ButtonSmall,
+        ColourVars,
+        getFlexStyle,
+        type ColourVarKeys,
+        type Direction,
+        type SizeMode,
+    } from "component-lib";
     import { getContext, onMount, type Snippet } from "svelte";
     import Spinner from "../Spinner.svelte";
 
@@ -14,9 +22,10 @@
         mode?: Mode;
         size?: Size;
         onClick?: (e: MouseEvent) => void;
-        icon?: Snippet<[string]>;
+        icon?: Snippet<[string, string]>;
         width?: SizeMode;
         height?: SizeMode;
+        reverse?: boolean;
     }
     let {
         children,
@@ -26,15 +35,18 @@
         loading = false,
         mode = "default",
         size = "medium",
-        width = { kind: "hug" },
-        height = { kind: "hug" },
+        width = "hug",
+        height = "hug",
+        reverse = false,
     }: Props = $props();
 
-    const SPEED = 300;
+    const SPEED = 250;
     let internalMode = $state<InternalMode>("default");
     let parentDirection = getContext<Direction>("direction");
     let spinnerColour = mode === "default" ? "var(--primary)" : "var(--text-on-primary)";
     let iconColour = $derived(getIconColour());
+    let iconSize = $derived(getIconSize());
+    let textColour = $derived(getTextColour());
     let widthCss = $derived(getFlexStyle("width", width, parentDirection));
     let heightCss = $derived(getFlexStyle("height", height, parentDirection));
     let style = $derived(`--speed: ${SPEED}ms; ${heightCss}; ${widthCss};`);
@@ -59,30 +71,76 @@
         }
     });
 
+    function getTextColour(): ColourVarKeys {
+        switch (internalMode) {
+            case "default":
+                if (disabled) return "disabledButton";
+                switch (size) {
+                    case "small_text":
+                        return "textPrimary";
+                    default:
+                        return "textSecondary";
+                }
+            case "pressed":
+                if (disabled) return "disabledButton";
+                switch (size) {
+                    case "small_text":
+                        return "primary";
+                    default:
+                        return "textPrimary";
+                }
+            case "active": {
+                if (disabled) return "textTertiary";
+                switch (size) {
+                    case "small":
+                    case "small_text":
+                        return "primary";
+                    default:
+                        return "textOnPrimary";
+                }
+            }
+        }
+    }
+
     function getIconColour(): string {
         switch (internalMode) {
             case "default":
+                if (disabled) return ColourVars.disabledButton;
                 switch (size) {
                     case "small_text":
-                        return "var(--text-primary)";
+                        return ColourVars.textPrimary;
                     default:
-                        return "var(--text-secondary)";
+                        return ColourVars.textSecondary;
                 }
             case "pressed":
+                if (disabled) return ColourVars.disabledButton;
                 switch (size) {
                     case "small_text":
-                        return "var(--primary)";
+                        return ColourVars.primary;
                     default:
-                        return "var(--text-primary)";
+                        return ColourVars.textPrimary;
                 }
             case "active": {
+                if (disabled) return ColourVars.textTertiary;
                 switch (size) {
+                    case "small":
                     case "small_text":
-                        return "var(--primary)";
+                        return ColourVars.primary;
                     default:
-                        return "var(--primary-light)";
+                        return ColourVars.textOnPrimary;
                 }
             }
+        }
+    }
+
+    function getIconSize() {
+        switch (size) {
+            case "large":
+                return "1.4rem";
+            case "medium":
+                return "1.2rem";
+            default:
+                return "1.2rem";
         }
     }
 
@@ -95,49 +153,47 @@
     }
 </script>
 
+{#snippet icon_view()}
+    {#if loading}
+        <span class="icon">
+            <Spinner
+                size={iconSize}
+                backgroundColour={"var(--text-tertiary)"}
+                foregroundColour={spinnerColour} />
+        </span>
+    {:else if icon}
+        <span class="icon">{@render icon(iconColour, iconSize)}</span>
+    {/if}
+{/snippet}
+
 <button
     type="button"
     aria-busy={loading}
     {style}
     class={`common_button ${internalMode} ${size}`}
-    class:disabled
+    class:disabled={disabled || loading}
     onclick={clickInternal}
     disabled={disabled || loading}>
-    {#if loading}
-        <Spinner
-            size={"1.4rem"}
-            backgroundColour={"var(--text-tertiary)"}
-            foregroundColour={spinnerColour} />
-    {:else}
-        {#if icon}
-            <span class="icon">{@render icon(iconColour)}</span>
+    {#if !reverse}
+        {@render icon_view()}
+    {/if}
+    {#if children}
+        {#if size !== "large"}
+            <ButtonSmall align={"center"} width={"hug"} colour={textColour} fontWeight={"bold"}
+                >{@render children?.()}</ButtonSmall>
+        {:else}
+            <Body align={"center"} width={"hug"} colour={textColour} fontWeight={"bold"}
+                >{@render children?.()}</Body>
         {/if}
-        <span class="content"> {@render children?.()}</span>
+    {/if}
+    {#if reverse}
+        {@render icon_view()}
     {/if}
 </button>
 
 <style lang="scss">
-    $small_icon: 12px;
-    $medium_icon: 16px;
-    $large_icon: 18px;
-
     :global(.common_button .icon svg path) {
         transition: fill var(--speed) ease-in-out;
-    }
-
-    :global(.common_button.small .icon svg) {
-        width: $small_icon;
-        height: $small_icon;
-    }
-
-    :global(.common_button.medium .icon svg) {
-        width: $medium_icon;
-        height: $medium_icon;
-    }
-
-    :global(.common_button.large .icon svg) {
-        width: $large_icon;
-        height: $large_icon;
     }
 
     button {
@@ -150,29 +206,23 @@
         border: none;
         cursor: pointer;
         transition:
+            flex ease-in-out $speed,
             border-radius ease-in-out $speed,
             border ease-in-out $speed,
             background ease-in-out $speed,
             color ease-in-out $speed;
 
-        font-weight: var(--font-semi-bold);
-        font-size: 14px; // TODO - typography vars
-
         .content {
             pointer-events: none;
         }
 
-        &.disabled {
-            background: var(--disabled-button);
-        }
-
-        &:disabled {
-            cursor: not-allowed;
+        .icon {
+            display: flex;
         }
 
         &.default {
             border-radius: var(--rad-circle);
-            border: var(--bw-thin) solid var(--background-2);
+            border: var(--bw-thick) solid var(--background-2);
             background: var(--background-1);
             color: var(--text-secondary);
 
@@ -182,14 +232,14 @@
             }
 
             &.small_text {
-                border: var(--bw-thin) solid transparent;
+                border: var(--bw-thick) solid transparent;
                 color: var(--text-primary);
             }
         }
 
         &.pressed {
             border-radius: var(--rad-lg);
-            border: var(--bw-thin) solid transparent;
+            border: var(--bw-thick) solid transparent;
             background: var(--background-2);
             color: var(--text-primary);
 
@@ -201,26 +251,30 @@
 
         &.active {
             border-radius: var(--rad-md);
-            border: var(--bw-thin) solid transparent;
-            background: var(--primary-muted);
-            color: var(--primary-light);
+            border: var(--bw-thick) solid transparent;
+            background: var(--primary);
+            color: var(--text-on-primary);
 
             &.small_text {
                 background: transparent;
                 color: var(--primary);
-                border: var(--bw-thin) solid transparent;
+                border: var(--bw-thick) solid transparent;
+            }
+
+            &.small {
+                color: var(--primary);
+                background: transparent;
+                border: var(--bw-thick) solid var(--primary);
             }
         }
 
         &.small,
         &.small_text {
-            padding: var(--sp-sm) var(--sp-md);
+            border-radius: var(--rad-circle);
+            padding: var(--sp-xs) var(--sp-md);
             font-size: var(--typo-bodySmall-sz);
             line-height: 12px;
             gap: var(--sp-xs);
-            .icon {
-                height: $small_icon;
-            }
         }
 
         &.medium {
@@ -236,9 +290,6 @@
             }
             &.active {
                 border-radius: var(--rad-md);
-            }
-            .icon {
-                height: $medium_icon;
             }
         }
 
@@ -256,9 +307,14 @@
             &.active {
                 border-radius: var(--rad-md);
             }
-            .icon {
-                height: $large_icon;
-            }
+        }
+
+        &.disabled {
+            background: var(--disabled-button);
+        }
+
+        &:disabled {
+            cursor: not-allowed;
         }
     }
 </style>

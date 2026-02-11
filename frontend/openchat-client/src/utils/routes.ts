@@ -50,6 +50,33 @@ export function adminRoute(_ctx: PageJS.Context): RouteParams {
         scope: noScope,
     };
 }
+export function profileSummaryRoute(_ctx: PageJS.Context): RouteParams {
+    return {
+        kind: "profile_summary_route",
+        scope: noScope,
+    };
+}
+
+export function welcomeRoute(_ctx: PageJS.Context): RouteParams {
+    return {
+        kind: "welcome_route",
+        scope: noScope,
+    };
+}
+
+export function walletRoute(_ctx: PageJS.Context): RouteParams {
+    return {
+        kind: "wallet_route",
+        scope: noScope,
+    };
+}
+
+export function notificationsRoute(_ctx: PageJS.Context): RouteParams {
+    return {
+        kind: "notifications_route",
+        scope: noScope,
+    };
+}
 
 export function communitesRoute(_ctx: PageJS.Context): RouteParams {
     return {

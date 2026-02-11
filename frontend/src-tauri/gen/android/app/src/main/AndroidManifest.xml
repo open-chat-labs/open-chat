@@ -8,6 +8,10 @@
     <uses-feature
         android:name="android.hardware.touchscreen"
         android:required="false" />
+        
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
     <queries>
         <intent>
@@ -30,6 +34,7 @@
             android:label="@string/main_activity_title"
             android:name=".MainActivity"
             android:windowSoftInputMode="adjustResize"
+            android:screenOrientation="portrait"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -45,13 +50,13 @@
                 <data android:host="oc.app" />
             </intent-filter>
             <!-- DEEP LINK PLUGIN. AUTO-GENERATED. DO NOT REMOVE. -->
-            <intent-filter android:autoVerify="true">
+            <intent-filter android:autoVerify="true" >
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" />
                 <data android:scheme="http" />
-                <data android:host="oc.app" />
+                <data android:host="webtest.oc.app" />
                 
                 
                 

@@ -1,8 +1,8 @@
 <script lang="ts">
     import CollapsibleCard from "@src/components/CollapsibleCard.svelte";
+    import { menuCloser } from "component-lib";
     import { chitStateStore, OpenChat, type ChitEvent } from "openchat-client";
     import { getContext } from "svelte";
-    import { menuCloser } from "../../../actions/closeMenu";
     import { i18nKey } from "../../../i18n/i18n";
     import { chitPopup, disableChit, hideChitIcon, utcMode } from "../../../stores/settings";
     import { now500 } from "../../../stores/time";

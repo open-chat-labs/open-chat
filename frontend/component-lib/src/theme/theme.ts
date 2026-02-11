@@ -38,10 +38,11 @@ export class Theme {
             Rem.fromPixels(12),
             Rem.fromPixels(16),
             Rem.fromPixels(24),
+            Rem.fromPixels(32),
             Rem.fromPixels(160),
         );
 
-        this.borderWidth = new BorderWidth(new Pixel(0), new Pixel(1), new Pixel(2));
+        this.borderWidth = new BorderWidth(new Pixel(0), new Pixel(1), new Pixel(2), new Pixel(4));
 
         this.iconSize = new IconSize(
             Rem.fromPixels(12),
@@ -51,15 +52,22 @@ export class Theme {
         );
 
         this.typography = new TypographicStyles(
-            new TypographicStyle(Rem.fromPixels(40), Rem.fromPixels(48)),
-            new TypographicStyle(Rem.fromPixels(32), Rem.fromPixels(40)),
-            new TypographicStyle(Rem.fromPixels(24), Rem.fromPixels(32)),
-            new TypographicStyle(Rem.fromPixels(18), Rem.fromPixels(24)),
-            new TypographicStyle(Rem.fromPixels(16), Rem.fromPixels(26)),
-            new TypographicStyle(Rem.fromPixels(14), Rem.fromPixels(22)),
-            new TypographicStyle(Rem.fromPixels(12), Rem.fromPixels(20)),
-            new TypographicStyle(Rem.fromPixels(10), Rem.fromPixels(16)),
-            new TypographicStyle(Rem.fromPixels(14), Rem.fromPixels(20)),
+            new TypographicStyle(Rem.fromPixels(40), Rem.fromPixels(48)), // overview
+            new TypographicStyle(Rem.fromPixels(32), Rem.fromPixels(40)), // h1
+            new TypographicStyle(Rem.fromPixels(24), Rem.fromPixels(32)), // h2
+            new TypographicStyle(Rem.fromPixels(20), Rem.fromPixels(28)), // h3
+            new TypographicStyle(Rem.fromPixels(18), Rem.fromPixels(24)), // title
+            new TypographicStyle(Rem.fromPixels(16), Rem.fromPixels(26)), // subtitle
+            new TypographicStyle(Rem.fromPixels(14), Rem.fromPixels(22)), // body
+            new TypographicStyle(Rem.fromPixels(12), Rem.fromPixels(20)), // bodySmall
+            new TypographicStyle(Rem.fromPixels(10), Rem.fromPixels(16)), // caption
+            new TypographicStyle(Rem.fromPixels(14), Rem.fromPixels(20)), // label
+            new TypographicStyle(Rem.fromPixels(12), Rem.fromPixels(12)), // chatLabel
+            new TypographicStyle(Rem.fromPixels(15), Rem.fromPixels(20)), // chatText
+            new TypographicStyle(Rem.fromPixels(12), Rem.fromPixels(12)), // chatFootnote
+            new TypographicStyle(Rem.fromPixels(13), Rem.fromPixels(17)), // chatCaption
+            new TypographicStyle(Rem.fromPixels(14), Rem.fromPixels(14)), // buttonSmall
+            new TypographicStyle(Rem.fromPixels(16), Rem.fromPixels(16)), // buttonRegular
         );
 
         this.fontWeights = new FontWeights();
@@ -71,7 +79,9 @@ export class Theme {
             Rem.fromPixels(32),
             Rem.fromPixels(40),
             Rem.fromPixels(48),
-            Rem.fromPixels(60),
+            Rem.fromPixels(56),
+            Rem.fromPixels(80),
+            Rem.fromPixels(128),
         );
     }
 

@@ -39,6 +39,14 @@ declare global {
         platformModerator: any;
         platformOperator: any;
     }
+
+    interface Document {
+        startViewTransition?: (callback: () => void | Promise<void>) => {
+            finished: Promise<void>;
+            updateCallbackDone: Promise<void>;
+            ready: Promise<void>;
+        };
+    }
 }
 
 declare namespace svelteHTML {
@@ -53,3 +61,7 @@ declare namespace svelteHTML {
 }
 
 declare function gtag(command: "event", name: string, options?: any): void;
+
+declare interface Set<T> {
+    difference(other: Set<T>): Set<T>;
+}

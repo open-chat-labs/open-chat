@@ -115,8 +115,8 @@
     );
 
     function userAvatarSelected(detail: { url: string; data: Uint8Array }): void {
-        client.setUserAvatar(detail.data, detail.url).then((success) => {
-            if (!success) {
+        client.setUserAvatar(detail.data, detail.url).then((blobId) => {
+            if (blobId === undefined) {
                 toastStore.showFailureToast(i18nKey("avatarUpdateFailed"));
             }
         });

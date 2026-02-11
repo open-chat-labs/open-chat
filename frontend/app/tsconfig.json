@@ -7,12 +7,12 @@
         "paths": {
             "@src/*": ["./src/*"],
             "@actions/*": ["./src/actions/*"],
-            "@components/*": ["./src/components/*"],
             "@i18n/*": ["./src/i18n/*"],
             "@stores/*": ["./src/stores/*"],
             "@theme/*": ["./src/theme/*"],
             "@utils/*": ["./src/utils/*"],
             "@styles/*": ["./src/styles/*"],
+            "@webcomponents/*": ["./src/web-components/*"],
             "@component-lib/*": ["../component-lib/src/*"]
         }
     },

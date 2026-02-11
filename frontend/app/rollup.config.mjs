@@ -20,6 +20,7 @@ import svelte from "rollup-plugin-svelte";
 import styles from "rollup-styles";
 import { sveltePreprocess } from "svelte-preprocess";
 import { sourcemapNewline } from "../sourcemapNewline.mjs";
+import { androidBundlePlugin } from "./rollup-plugin-android-bundle.mjs";
 import {
     __dirname,
     copyFile,
@@ -43,7 +44,7 @@ function clean() {
             }
             const customDomains = process.env.OC_CUSTOM_DOMAINS;
             if (customDomains !== undefined) {
-                const origins = customDomains.split(",").map((d) => `https://${d}`)
+                const origins = customDomains.split(",").map((d) => `https://${d}`);
                 fs.writeFileSync(
                     "build/.well-known/ii-alternative-origins",
                     JSON.stringify({
@@ -54,10 +55,7 @@ function clean() {
                     "build/.well-known/ic-domains",
                     customDomains.split(",").join("\n"),
                 );
-                fs.writeFileSync(
-                    "build/.well-known/webauthn",
-                    JSON.stringify({ origins })
-                );
+                fs.writeFileSync("build/.well-known/webauthn", JSON.stringify({ origins }));
             }
             copyFile(".", "build", ".ic-assets.json5");
             copyFile(".", "build/.well-known", "assetlinks.json");
@@ -66,6 +64,8 @@ function clean() {
 }
 
 const { version } = initEnv();
+
+const override = (key, val) => `(window.OC_CONFIG?.${key} ?? ${val})`;
 
 export default {
     input: `./src/main.ts`,
@@ -99,7 +99,6 @@ export default {
             entries: [
                 { find: "@src", replacement: path.resolve(__dirname, "src") },
                 { find: "@actions", replacement: path.resolve(__dirname, "src/actions") },
-                { find: "@components", replacement: path.resolve(__dirname, "src/components") },
                 { find: "@i18n", replacement: path.resolve(__dirname, "src/i18n") },
                 { find: "@stores", replacement: path.resolve(__dirname, "src/stores") },
                 { find: "@theme", replacement: path.resolve(__dirname, "src/theme") },
@@ -131,7 +130,22 @@ export default {
 
         replace({
             preventAssignment: true,
-            "import.meta.env.OC_APP_TYPE": JSON.stringify(process.env.OC_APP_TYPE),
+            "import.meta.env.OC_APP_STORE": override(
+                "OC_APP_STORE",
+                JSON.stringify(process.env.OC_APP_STORE),
+            ),
+            "import.meta.env.OC_MOBILE_LAYOUT": override(
+                "OC_MOBILE_LAYOUT",
+                JSON.stringify(process.env.OC_MOBILE_LAYOUT),
+            ),
+            "import.meta.env.OC_APP_TYPE": override(
+                "OC_APP_TYPE",
+                JSON.stringify(process.env.OC_APP_TYPE),
+            ),
+            "import.meta.env.OC_OTA_UPDATES": override(
+                "OC_OTA_UPDATES",
+                JSON.stringify(process.env.OC_OTA_UPDATES),
+            ),
             "import.meta.env.OC_BUILD_ENV": JSON.stringify(process.env.OC_BUILD_ENV),
             "import.meta.env.OC_WEBAUTHN_ORIGIN": JSON.stringify(process.env.OC_WEBAUTHN_ORIGIN),
             "import.meta.env.OC_INTERNET_IDENTITY_URL": JSON.stringify(
@@ -226,6 +240,7 @@ export default {
                 process.env.OC_ACCOUNT_LINKING_CODES_ENABLED,
             ),
             "import.meta.env.OC_ALCHEMY_API_KEY": JSON.stringify(process.env.OC_ALCHEMY_API_KEY),
+            "import.meta.env.OC_BASE_ORIGIN": JSON.stringify(process.env.OC_BASE_ORIGIN),
         }),
 
         html({
@@ -307,8 +322,7 @@ export default {
         // We're building for production (npm run build
         // instead of npm run dev), minify
         terser(),
-        analyze({ summaryOnly: true }),
-        filesize(),
+        ...(process.env.ANALYZE ? [analyze({ summaryOnly: true }), filesize()] : []),
 
         // Pull in the worker and service worker
         copy({
@@ -331,6 +345,7 @@ export default {
             ],
             hook: "buildStart",
         }),
+        androidBundlePlugin({ version }),
     ],
     watch: {
         clearScreen: false,

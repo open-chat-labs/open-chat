@@ -1,4 +1,7 @@
-import { LocalStorageBoolStore } from "openchat-client/lib/state/localStorageStore";
+import {
+    LocalStorageBoolStore,
+    LocalStorageStore,
+} from "openchat-client/lib/state/localStorageStore";
 import { configKeys } from "../utils/config";
 import { isTouchDevice, mobileOperatingSystem } from "../utils/devices";
 
@@ -92,3 +95,5 @@ export const communityInviteUsersOpen = new LocalStorageBoolStore(
 );
 export const referredUsersOpen = new LocalStorageBoolStore(configKeys.referredUsersOpen, false);
 export const linkDeviceSectionOpen = new LocalStorageBoolStore(configKeys.linkDeviceSection, false);
+
+export const chatListFilterStore = new LocalStorageStore(configKeys.chatListFilter, "all");

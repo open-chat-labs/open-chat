@@ -1,11 +1,15 @@
 // this is an action that can be added to any element to raise a custom event when the element crosses scroll thresholds in either direction
 // One application of this action is to easily add infinite scroll behaviour to a Container component
 
-const THRESHOLD = 400;
+const THRESHOLD = 300;
 
 export function scrollLimits(
     node: HTMLElement,
-    config: { threshold?: number, onStart?: (fromStart: number) => void; onEnd?: (fromEnd: number) => void },
+    config: {
+        threshold?: number;
+        onStart?: (fromStart: number) => void;
+        onEnd?: (fromEnd: number) => void;
+    },
 ) {
     function fromEnd(): number {
         return node.scrollHeight - node.clientHeight - fromStart();
@@ -31,10 +35,12 @@ export function scrollLimits(
             config.onEnd?.(fromEnd());
         }
     }
-    node.addEventListener("scroll", onScroll);
-    return {
-        destroy() {
-            node.removeEventListener("scroll", onScroll);
-        },
-    };
+    if (config.onEnd || config.onStart) {
+        node.addEventListener("scroll", onScroll);
+        return {
+            destroy() {
+                node.removeEventListener("scroll", onScroll);
+            },
+        };
+    }
 }

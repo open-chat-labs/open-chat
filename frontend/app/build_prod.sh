@@ -17,5 +17,6 @@ export OC_BITCOIN_MAINNET_ENABLED=true
 export OC_ACCOUNT_LINKING_CODES_ENABLED=true
 export OC_VAPID_PUBLIC_KEY=BD8RU5tDBbFTDFybDoWhFzlL5+mYptojI6qqqqiit68KSt17+vt33jcqLTHKhAXdSzu6pXntfT9e4LccBv+iV3A=
 export OC_ALCHEMY_API_KEY=6pSBD1eOqwyGDI1xFfV-p
+export OC_BASE_ORIGIN=https://oc.app
 
 npx rollup -c

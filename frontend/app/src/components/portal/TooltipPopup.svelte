@@ -1,10 +1,15 @@
 <script lang="ts">
-    import { reposition, type Alignment, type NanoPopPosition, type Position } from "component-lib";
+    import {
+        portalState,
+        reposition,
+        type Alignment,
+        type NanoPopPosition,
+        type Position,
+    } from "component-lib";
     import { mobileWidth } from "openchat-client";
     import { onMount, type Snippet } from "svelte";
     import { fade } from "svelte/transition";
     import { rtlStore } from "../../stores/rtl";
-    import { portalState } from "../portalState.svelte";
 
     interface Props {
         children?: Snippet;

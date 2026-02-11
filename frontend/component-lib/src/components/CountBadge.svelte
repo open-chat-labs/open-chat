@@ -7,12 +7,13 @@
         mode?: Mode;
         size?: Size;
         children: Snippet;
+        muted?: boolean;
     }
 
-    let { children, mode = "default", size = "default" }: Props = $props();
+    let { children, mode = "default", size = "default", muted = false }: Props = $props();
 </script>
 
-<div class={`badge ${mode}_mode ${size}-size`}>
+<div class={`badge ${mode}_mode ${size}-size`} class:muted>
     {@render children()}
 </div>
 
@@ -36,6 +37,12 @@
             background ease-in-out $speed,
             color ease-in-out $speed;
 
+        &.muted {
+            border: var(--bw-thin) solid transparent;
+            background: var(--text-tertiary);
+            color: var(--text-primary);
+        }
+
         &.on_primary_mode {
             background: transparent;
             color: var(--text-on-primary);
@@ -50,8 +57,8 @@
         }
 
         &.additive_mode {
-            background: var(--background-2);
-            color: var(--text-placeholder);
+            background: var(--text-tertiary);
+            color: var(--text-primary);
         }
     }
 </style>

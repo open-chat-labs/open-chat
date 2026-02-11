@@ -33,7 +33,11 @@ export type RouteParams =
     | ShareRoute
     | NotFound
     | HotGroupsRoute
-    | AdminRoute;
+    | AdminRoute
+    | ProfileSummaryRoute
+    | WelcomeRoute
+    | WalletRoute
+    | NotificationsRoute;
 
 export type MessageIndexRoute = GlobalSelectedChatRoute | FavouritesRoute | SelectedChannelRoute;
 
@@ -54,6 +58,14 @@ export type TermsRoute = NoScope & { kind: "terms_route" };
 export type HomeRoute = Scoped & {
     kind: "home_route";
 };
+
+export function isMessageIndexRoute(route: RouteParams): route is MessageIndexRoute {
+    return (
+        route.kind === "global_chat_selected_route" ||
+        route.kind === "favourites_route" ||
+        route.kind === "selected_channel_route"
+    );
+}
 
 export type GlobalSelectedChatRoute = Scoped & {
     kind: "global_chat_selected_route";
@@ -92,6 +104,22 @@ export type CommunitiesRoute = NoScope & {
 
 export type AdminRoute = NoScope & {
     kind: "admin_route";
+};
+
+export type ProfileSummaryRoute = NoScope & {
+    kind: "profile_summary_route";
+};
+
+export type WelcomeRoute = NoScope & {
+    kind: "welcome_route";
+};
+
+export type WalletRoute = NoScope & {
+    kind: "wallet_route";
+};
+
+export type NotificationsRoute = NoScope & {
+    kind: "notifications_route";
 };
 
 export type ShareRoute = NoScope & {

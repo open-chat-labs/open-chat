@@ -11,7 +11,7 @@
     import Avatar from "../../Avatar.svelte";
     import FilteredUsername from "../../FilteredUsername.svelte";
     import Translatable from "../../Translatable.svelte";
-    import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
+    import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import Badges from "../profile/Badges.svelte";
 
     const client = getContext<OpenChat>("client");

@@ -6,13 +6,21 @@
 
     interface Props {
         colour?: "primary" | "secondary" | "tertiary";
-        children: Snippet;
+        children?: Snippet;
         icon: Snippet<[string]>;
         onClick?: () => void;
         smallIcon?: Snippet<[string]>;
+        size?: "default" | "large";
     }
 
-    let { colour = "primary", children, onClick, icon, smallIcon }: Props = $props();
+    let {
+        colour = "primary",
+        children,
+        onClick,
+        icon,
+        smallIcon,
+        size = "default",
+    }: Props = $props();
     let iconColour = $derived(getIconColour());
 
     function getIconColour() {
@@ -27,8 +35,13 @@
     }
 </script>
 
-<Container crossAxisAlignment={"center"} gap={"lg"} {onClick}>
-    <button class={`list_action_button ${colour}`} type="button">
+<Container
+    width={"hug"}
+    crossAxisAlignment={"center"}
+    gap={"lg"}
+    padding={[children ? "xs" : "zero", "zero"]}
+    {onClick}>
+    <button class:large={size === "large"} class={`list_action_button ${colour}`} type="button">
         {@render icon(iconColour)}
         {#if smallIcon !== undefined}
             <div class="plus">
@@ -36,7 +49,9 @@
             </div>
         {/if}
     </button>
-    <Subtitle ellipsisTruncate fontWeight={"bold"}>{@render children()}</Subtitle>
+    {#if children}
+        <Subtitle ellipsisTruncate fontWeight={"bold"}>{@render children()}</Subtitle>
+    {/if}
 </Container>
 
 <style lang="scss">
@@ -65,12 +80,18 @@
         position: relative;
         width: 2.5rem;
         height: 2.5rem;
+        border-radius: var(--rad-md);
         color: var(--text-primary);
-        border-radius: var(--rad-lg);
         border: none;
         display: flex;
         align-items: center;
         justify-content: center;
+
+        &.large {
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: var(--rad-lg);
+        }
 
         &.primary {
             background: var(--primary-muted);

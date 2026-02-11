@@ -1,12 +1,14 @@
-import { isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notification";
 import { addPluginListener, PluginListener } from "@tauri-apps/api/core";
-import { showNotification } from "tauri-plugin-oc-api";
+import { isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notification";
 import page from "page";
+import { showNotification } from "tauri-plugin-oc-api";
 
 const TAURI_PLUGIN_NAME = "oc";
 const PUSH_NOTIFICATION_EVENT = "push-notification";
 const NEW_FCM_TOKEN_EVENT = "fcm-token";
 const NOTIFICATION_TAP_EVENT = "notification-tap";
+const BACK_PRESS_EVENT = "back-pressed";
+const WINDOW_INSET_CHANGE_EVENT = "window-inset-change";
 
 type PushNotification = {
     id: number;
@@ -21,11 +23,11 @@ type PushNotification = {
 /**
  * Sets up a listener for push notifications. This function will ask for
  * permission to show notifications!
- * 
+ *
  * Can be tested within App.svelte onMount:
  * ```ts
  * import { expectPushNotifications } from "@utils/native/notification_channels";
- * 
+ *
  * if (client.isNativeApp()) {
  *   // Listen for incoming push notifications
  *   expectPushNotifications().catch((error) => {
@@ -37,7 +39,7 @@ type PushNotification = {
  * @param handler - The function to call when a push notification is received.
  * @returns A promise that resolves to a PluginListener for the push, and
  * provides the unlisten method.
- * 
+ *
  * TODO handle favourite paths
  */
 export async function expectPushNotifications(): Promise<PluginListener> {
@@ -177,4 +179,45 @@ async function askForPermission(): Promise<boolean> {
 export async function expectNewFcmToken<T>(handler: (data: T) => void): Promise<PluginListener> {
     // Set up the listener for new FCM tokens!
     return addPluginListener(TAURI_PLUGIN_NAME, NEW_FCM_TOKEN_EVENT, handler);
+}
+
+/**
+ * Add a listener awaiting for the user to press the back button.
+ *
+ * TODO either rename this file, or move to a new one!
+ *
+ * @param handler runs on back press
+ * @returns
+ */
+export async function expectBackPress(handler: () => void): Promise<PluginListener> {
+    // Set up the listener for nav back presses
+    return addPluginListener(TAURI_PLUGIN_NAME, BACK_PRESS_EVENT, handler);
+}
+
+/**
+ * Data shape epxected to be received from the native code, informing us of the
+ * navigation type that the Android app is using, and if the software keyboard
+ * is open/visible.
+ */
+export interface WindowInsetChange {
+    isKeyboardOpen: boolean;
+    isGestureNavigation: boolean;
+    navHeightDp: number;
+    statusBarHeightDp: number;
+    keyboardHeightDp: number;
+    apiLevel: number;
+    osVersion: string;
+}
+
+/**
+ * Use this function to detect keyboard open/close, or device nav type (buttons
+ * or gestures)
+ *
+ * @param handler runs when insets change, nav type or keyboard open
+ * @returns
+ */
+export async function expectWindowInsetChange(
+    handler: (data: WindowInsetChange) => void,
+): Promise<PluginListener> {
+    return addPluginListener(TAURI_PLUGIN_NAME, WINDOW_INSET_CHANGE_EVENT, handler);
 }

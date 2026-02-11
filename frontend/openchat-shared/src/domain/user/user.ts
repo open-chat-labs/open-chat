@@ -132,10 +132,19 @@ export type UserGroupDetails = {
     name: string;
 };
 
-export type PostLoginOperation = CreateCommunity | CreateGroup | JoinCommunity | JoinGroup;
+export type PostLoginOperation =
+    | CreateCommunity
+    | RegisterBot
+    | CreateGroup
+    | JoinCommunity
+    | JoinGroup;
 
 export type CreateCommunity = {
     kind: "create_community";
+};
+
+export type RegisterBot = {
+    kind: "register_bot";
 };
 
 export type CreateGroup = {
@@ -449,6 +458,8 @@ export type NamedAccount = {
 };
 
 export type SaveCryptoAccountResponse = Success | OCError | Failure;
+
+export type DeleteCryptoAccountResponse = Success | OCError | Failure;
 
 export type SubmitProposalResponse =
     | Success

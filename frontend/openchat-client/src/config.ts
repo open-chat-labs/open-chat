@@ -2,6 +2,7 @@ import type { CommunityInvite, GroupInvite, Logger, MessageFormatter } from "ope
 
 export type OpenChatConfig = {
     appType?: "android" | "ios" | "web";
+    mobileLayout: "v1" | "v2";
     icUrl?: string;
     webAuthnOrigin: string | undefined;
     iiDerivationOrigin?: string;
@@ -38,4 +39,5 @@ export type OpenChatConfig = {
     communityInvite?: CommunityInvite;
     vapidPublicKey: string;
     accountLinkingCodesEnabled: boolean;
+    baseOrigin: string;
 };

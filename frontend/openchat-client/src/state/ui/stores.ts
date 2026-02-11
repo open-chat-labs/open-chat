@@ -79,8 +79,14 @@ export const availableHeight = derived(
 export function toPixel(rem: number): number {
     return pixelsFromRems(rem, dimensionsWidth.value);
 }
+const v2Mobile = import.meta.env.OC_MOBILE_LAYOUT === "v2";
 export const iconSize = derived(mobileWidth, (mobileWidth) => (mobileWidth ? "1.6em" : "1.4em"));
-export const baseFontSize = derived(mobileWidth, (mobileWidth) => (mobileWidth ? 14 : 16));
+export const baseFontSize = derived(mobileWidth, (mobileWidth) => {
+    if (v2Mobile) {
+        return 16;
+    }
+    return mobileWidth ? 14 : 16;
+});
 
 export const fontScaleStore = new LocalStorageStore<FontScale>(
     "openchat_font_size",
@@ -96,6 +102,10 @@ function someHomeRoute(route: RouteParams["kind"]): boolean {
     return (
         route === "home_route" ||
         route === "chat_list_route" ||
+        route === "profile_summary_route" ||
+        route === "welcome_route" ||
+        route === "wallet_route" ||
+        route === "notifications_route" ||
         route === "selected_community_route"
     );
 }
@@ -110,6 +120,14 @@ export function setRightPanelHistory(history: RightPanelContent[]) {
     }
     rightPanelHistory.set(history);
 }
+
+export const showProfileStore = derived(
+    lastRightPanelState,
+    (lastRightPanelState) => {
+        return lastRightPanelState.kind === "user_profile";
+    },
+    notEq,
+);
 
 export const xframeOverrides = writable<XFrameOverrides>({
     disableLeftNav: false,
@@ -131,7 +149,7 @@ export const layout = derived(
             xframeOverrides.restrictTo !== undefined || xframeOverrides.disableLeftNav;
         const disableLeft = xframeOverrides.restrictTo === "selected_chat";
         if (mobileWidth) {
-            const showRight = rightPanelHistory.length > 0;
+            const showRight = v2Mobile ? false : rightPanelHistory.length > 0;
             const showMiddle = !someHomeRoute(route.kind) && !showRight;
             const showLeft = !showMiddle && !showRight && !disableLeft;
             const showNav =

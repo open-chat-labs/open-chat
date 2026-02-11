@@ -8,19 +8,25 @@
         width?: SizeMode;
         height?: SizeMode;
         ellipsisTruncate?: boolean;
-        colour?: TypographyColour;
+        colour?: ColourVarKeys;
         labelFor?: string;
+        align?: "start" | "end" | "center" | "unset";
+        uppercase?: boolean;
+        onClick?: () => void;
+        blur?: boolean;
+        maxLines?: number;
     }
 </script>
 
 <script lang="ts">
     import {
+        ColourVars,
         getFlexStyle,
+        type ColourVarKeys,
         type Direction,
         type FontWeight,
         type SizeMode,
         type TypographicStyleName,
-        type TypographyColour,
     } from "component-lib";
     import { getContext, type Snippet } from "svelte";
 
@@ -28,17 +34,26 @@
         fontWeight = "normal",
         type,
         children,
-        width = { kind: "fill" },
-        height = { kind: "hug" },
+        width = "fill",
+        height = "hug",
         ellipsisTruncate = false,
-        colour = "primary",
+        colour,
         labelFor,
+        align = "unset",
+        uppercase = false,
+        onClick,
+        blur = false,
+        maxLines,
     }: Props = $props();
 
     let parentDirection = getContext<Direction>("direction");
     let widthCss = $derived(getFlexStyle("width", width, parentDirection));
     let heightCss = $derived(getFlexStyle("height", height, parentDirection));
-    let style = $derived(`${heightCss}; ${widthCss}; color: ${getColourVar()};`);
+    let textColorCss = $derived(colour ? `color: ${ColourVars[colour]};` : "");
+    let maxLinesCss = $derived(maxLines ? `--max-lines: ${maxLines};` : ``);
+    let style = $derived(
+        `${heightCss}; ${widthCss}; ${textColorCss} text-align:${align}; ${maxLinesCss}`,
+    );
     let tag = $derived(getTag());
 
     function getTag() {
@@ -48,6 +63,7 @@
                 return "h1";
             case "h2":
                 return "h2";
+            case "h3":
             case "title":
                 return "h3";
             case "subtitle":
@@ -55,29 +71,36 @@
             case "label":
                 return "label";
             default:
-                return "p";
-        }
-    }
-    function getColourVar() {
-        switch (colour) {
-            case "error":
-                return "var(--error)";
-            default:
-                return `var(--text-${colour})`;
+                return "span";
         }
     }
 </script>
 
 {#if type === "label"}
-    <label for={labelFor} class:ellipsis={ellipsisTruncate} {style} class={`${type} ${fontWeight}`}>
+    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <label
+        onclick={onClick}
+        class:uppercase
+        class:blur
+        class:has_max_lines={maxLines && maxLines > 0}
+        for={labelFor}
+        class:ellipsis={ellipsisTruncate}
+        {style}
+        class={`typo ${type} ${fontWeight}`}>
         {@render children?.()}
     </label>
 {:else}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <svelte:element
         this={tag}
+        onclick={onClick}
+        class:uppercase
+        class:blur
+        class:has_max_lines={maxLines && maxLines > 0}
         class:ellipsis={ellipsisTruncate}
         {style}
-        class={`${type} ${fontWeight}`}>
+        class={`typo ${type} ${fontWeight}`}>
         {@render children?.()}
     </svelte:element>
 {/if}
@@ -92,6 +115,10 @@
         padding: 0;
     }
 
+    .typo {
+        transition: filter ease-in-out 250ms;
+    }
+
     .overview {
         font-size: var(--typo-overview-sz);
         line-height: var(--typo-overview-lh);
@@ -103,6 +130,10 @@
     .h2 {
         font-size: var(--typo-h2-sz);
         line-height: var(--typo-h2-lh);
+    }
+    .h3 {
+        font-size: var(--typo-h3-sz);
+        line-height: var(--typo-h3-lh);
     }
     .title {
         font-size: var(--typo-title-sz);
@@ -128,21 +159,45 @@
         font-size: var(--typo-label-sz);
         line-height: var(--typo-label-lh);
     }
+    .chatLabel {
+        font-size: var(--typo-chatLabel-sz);
+        line-height: var(--typo-chatLabel-lh);
+    }
+    .chatText {
+        font-size: var(--typo-chatText-sz);
+        line-height: var(--typo-chatText-lh);
+    }
+    .chatFootnote {
+        font-size: var(--typo-chatFootnote-sz);
+        line-height: var(--typo-chatFootnote-lh);
+    }
+    .chatCaption {
+        font-size: var(--typo-chatCaption-sz);
+        line-height: var(--typo-chatCaption-lh);
+    }
+    .buttonSmall {
+        font-size: var(--typo-buttonSmall-sz);
+        line-height: var(--typo-buttonSmall-lh);
+    }
+    .buttonRegular {
+        font-size: var(--typo-buttonRegular-sz);
+        line-height: var(--typo-buttonRegular-lh);
+    }
 
     .light {
-        font-weight: var(--font-light);
+        font-weight: var(--font-weight-light);
     }
 
     .normal {
-        font-weight: var(--font-normal);
+        font-weight: var(--font-weight-normal);
     }
 
     .semi-bold {
-        font-weight: var(--font-semi-bold);
+        font-weight: var(--font-weight-semi-bold);
     }
 
     .bold {
-        font-weight: var(--font-bold);
+        font-weight: var(--font-weight-bold);
     }
 
     .ellipsis {
@@ -150,5 +205,23 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+
+    .uppercase {
+        text-transform: uppercase;
+    }
+
+    .blur {
+        filter: blur(8px);
+    }
+
+    .has_max_lines {
+        width: 100%;
+        overflow: hidden;
+        display: -webkit-box;
+        white-space: unset;
+        line-clamp: var(--max-lines);
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: var(--max-lines);
     }
 </style>

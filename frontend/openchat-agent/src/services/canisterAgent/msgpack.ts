@@ -11,12 +11,12 @@ import {
     UncertifiedRejectErrorCode,
 } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
+import { utf8ToBytes } from "@noble/hashes/utils";
 import type { Static, TSchema } from "@sinclair/typebox";
 import { deserializeFromMsgPack, serializeToMsgPack } from "../../utils/msgpack";
 import { typeboxValidate } from "../../utils/typebox";
 import { toCanisterResponseError } from "../error";
 import { CanisterAgent } from "./base";
-import { utf8ToBytes } from "@noble/hashes/utils";
 
 abstract class MsgpackCanisterAgent extends CanisterAgent {
     constructor(identity: Identity, agent: HttpAgent, canisterName: string) {
@@ -53,7 +53,7 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
                         return Promise.resolve(
                             mapper(
                                 MsgpackCanisterAgent.deserializeResponse(
-                                    resp.reply.arg,
+                                    resp.reply.arg.slice().buffer,
                                     responseValidator,
                                 ),
                                 timestampMs,
@@ -128,7 +128,7 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
                             return Promise.resolve(
                                 mapper(
                                     MsgpackCanisterAgent.deserializeResponse(
-                                        reply,
+                                        reply.slice().buffer,
                                         responseValidator,
                                     ),
                                 ),
@@ -195,7 +195,12 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
 
                 const { reply } = await polling.pollForResponse(this.agent, canisterIdPrincipal, requestId);
                 return Promise.resolve(
-                    mapper(MsgpackCanisterAgent.deserializeResponse(reply, responseValidator)),
+                    mapper(
+                        MsgpackCanisterAgent.deserializeResponse(
+                            reply.slice().buffer,
+                            responseValidator,
+                        ),
+                    ),
                 );
             } else {
                 throw new Error(

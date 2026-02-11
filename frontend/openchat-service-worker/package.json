@@ -20,7 +20,7 @@
         "openchat-shared": "*"
     },
     "devDependencies": {
-        "typescript": "=5.4.2",
+        "typescript": "^5.9.3",
         "wait-on": "^7.0.1"
     }
 }

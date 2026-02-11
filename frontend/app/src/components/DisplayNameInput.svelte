@@ -1,9 +1,8 @@
 <script lang="ts">
-    import Input from "./Input.svelte";
-    import { onMount } from "svelte";
-    import { _ } from "svelte-i18n";
     import type { OpenChat } from "openchat-client";
+    import { onMount } from "svelte";
     import { i18nKey } from "../i18n/i18n";
+    import Input from "./Input.svelte";
 
     const MIN_DISPLAY_NAME_LENGTH = 3;
     const MAX_DISPLAY_NAME_LENGTH = 25;

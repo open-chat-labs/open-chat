@@ -16,7 +16,7 @@
 </script>
 
 <script lang="ts">
-    import { ColourVars, type TypographyColour } from "component-lib";
+    import { ColourVars, type ColourVarKeys } from "component-lib";
     import Container from "./Container.svelte";
     import BodySmall from "./typography/BodySmall.svelte";
 
@@ -30,8 +30,8 @@
             ? ColourVars.primary
             : ColourVars.textSecondary,
     );
-    let textColour = $derived<TypographyColour>(
-        latestMessage.kind === "video_call" && latestMessage.inProgress ? "accent" : "secondary",
+    let textColour = $derived<ColourVarKeys>(
+        latestMessage.kind === "video_call" && latestMessage.inProgress ? "primary" : "secondary",
     );
 </script>
 

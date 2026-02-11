@@ -1,5 +1,6 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
+    import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import type {
         CandidateGroupChat,
         ChannelIdentifier,
@@ -34,20 +35,17 @@
         chatSummariesStore,
         communitiesStore,
         currentUserStore,
-        defaultChatPermissions,
         defaultChatRules,
         dimensionsHeight,
         fullWidth,
         identityStateStore,
         localUpdates,
-        nullMembership,
         offlineStore,
         pageRedirect,
         pageReplace,
         pinNumberResolverStore,
         querystringStore,
         ROLE_NONE,
-        ROLE_OWNER,
         routeForChatIdentifier,
         routeForScope,
         routeStore,
@@ -82,7 +80,6 @@
     import BotBuilderModal from "../bots/BotBuilderModal.svelte";
     import WebhookModal from "../bots/WebhookModal.svelte";
     import EditLabel from "../EditLabel.svelte";
-    import NativeOnboardModal from "../mobile/NativeOnboardModal.svelte";
     import NotFound from "../NotFound.svelte";
     import OfflineFooter from "../OfflineFooter.svelte";
     import OnboardModal from "../onboard/OnboardModal.svelte";
@@ -90,7 +87,6 @@
     import SelectChatModal from "../SelectChatModal.svelte";
     import SuspendedModal from "../SuspendedModal.svelte";
     import Toast from "../Toast.svelte";
-    import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
     import GateCheckFailed from "./access/AccessGateCheckFailed.svelte";
     import AccessGateEvaluator from "./access/AccessGateEvaluator.svelte";
@@ -233,7 +229,7 @@
             subscribe("successfulImport", successfulImport),
             subscribe("showProposalFilters", showProposalFilters),
             subscribe("convertGroupToCommunity", convertGroupToCommunity),
-            subscribe("clearSelection", () => page(routeForScope($chatListScopeStore))),
+            subscribe("clearSelection", () => pageReplace(routeForScope($chatListScopeStore))),
             subscribe("editGroup", editGroup),
             subscribe("userSuspensionChanged", () => window.location.reload()),
             subscribe("selectedChatInvalid", selectedChatInvalid),
@@ -291,8 +287,8 @@
         modal = { kind: "register_webhook" };
     }
 
-    function updateWebhook(webhook: FullWebhookDetails) {
-        modal = { kind: "update_webhook", webhook };
+    function updateWebhook({ hook }: { hook: FullWebhookDetails; chat: MultiUserChat }) {
+        modal = { kind: "update_webhook", webhook: hook };
     }
 
     function updateBot() {
@@ -761,38 +757,13 @@
     }
 
     function newGroup(level: Level = "group", embeddedContent: boolean = false) {
-        if (level === "channel" && $chatListScopeStore.kind !== "community") {
-            return;
-        }
-        const id: MultiUserChatIdentifier =
-            level === "channel" && $chatListScopeStore.kind === "community"
-                ? { kind: "channel", communityId: $chatListScopeStore.id.communityId, channelId: 0 }
-                : { kind: "group_chat", groupId: "" };
+        const candidate = client.createCandidateGroup(level, embeddedContent);
+        if (candidate === undefined) return;
 
         modal = {
             kind: "new_group",
             embeddedContent,
-            candidate: {
-                id,
-                kind: "candidate_group_chat",
-                name: "",
-                description: "",
-                historyVisible: true,
-                public: false,
-                frozen: false,
-                members: [],
-                permissions: defaultChatPermissions(),
-                rules: { ...defaultChatRules(level), newVersion: false },
-                gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
-                level,
-                membership: {
-                    ...nullMembership(),
-                    role: ROLE_OWNER,
-                },
-                messagesVisibleToNonMembers: false,
-                externalUrl: embeddedContent ? "" : undefined,
-                verified: false,
-            },
+            candidate,
         };
     }
 
@@ -1119,13 +1090,9 @@
                 nervousSystem={modal.nervousSystem}
                 onClose={closeModal} />
         {:else if modal.kind === "logging_in" || modal.kind === "registering"}
-            {#if client.isNativeAndroid()}
-                <NativeOnboardModal onClose={closeModal} />
-            {:else}
-                <OnboardModal
-                    step={modal.kind === "registering" ? "sign_up" : "select_mode"}
-                    onClose={closeModal} />
-            {/if}
+            <OnboardModal
+                step={modal.kind === "registering" ? "sign_up" : "select_mode"}
+                onClose={closeModal} />
         {:else if modal.kind === "claim_daily_chit"}
             <DailyChitModal onLeaderboard={leaderboard} onClose={closeModal} />
         {:else if modal.kind === "verify_humanity"}

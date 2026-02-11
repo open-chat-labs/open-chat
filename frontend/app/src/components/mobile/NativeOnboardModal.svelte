@@ -1,19 +1,19 @@
 <script lang="ts">
     import { i18nKey, setLocale, supportedLanguages } from "@src/i18n/i18n";
     import { anonUserStore, identityStateStore, OpenChat, type CreatedUser } from "openchat-client";
+    import { ErrorCode } from "openchat-shared";
     import { getContext } from "svelte";
     import { locale } from "svelte-i18n";
+    import AccountPlus from "svelte-material-icons/AccountPlus.svelte";
+    import LinkVariant from "svelte-material-icons/LinkVariant.svelte";
+    import Login from "svelte-material-icons/Login.svelte";
+    import Button from "../Button.svelte";
+    import OnBoardOptionLogo from "../home/profile/OnBoardOptionLogo.svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
     import ModalContent from "../ModalContent.svelte";
+    import SignUp from "../onboard/SignUp.svelte";
     import Select from "../Select.svelte";
     import Translatable from "../Translatable.svelte";
-    import OnBoardOptionLogo from "@components/home/profile/OnBoardOptionLogo.svelte";
-    import AccountPlus from "svelte-material-icons/AccountPlus.svelte";
-    import Login from "svelte-material-icons/Login.svelte";
-    import LinkVariant from "svelte-material-icons/LinkVariant.svelte";
-    import Button from "../Button.svelte";
-    import SignUp from "../onboard/SignUp.svelte";
-    import { ErrorCode } from "openchat-shared";
 
     const ALC_LENGTH = 6;
 

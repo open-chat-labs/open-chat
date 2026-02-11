@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { scrollLimits } from "component-lib";
+    import { scrollLimits, menuCloser } from "component-lib";
     import {
         allUsersStore,
         type BotMatch,
@@ -31,7 +31,6 @@
     } from "openchat-client";
     import page from "page";
     import { getContext, tick } from "svelte";
-    import { menuCloser } from "../../actions/closeMenu";
     import { i18nKey } from "../../i18n/i18n";
     import { chatListView } from "../../stores/chatListView";
     import Button from "../Button.svelte";

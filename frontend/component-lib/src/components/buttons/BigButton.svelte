@@ -9,7 +9,7 @@
         children?: Snippet;
         mode?: Mode;
         onClick?: (e: MouseEvent) => void;
-        icon: Snippet<[string]>;
+        icon: Snippet<[string, string]>;
         countBadge?: number;
         width?: SizeMode;
         height?: SizeMode;
@@ -21,18 +21,19 @@
         onClick,
         mode = "default",
         countBadge,
-        width = { kind: "fill" },
-        height = { kind: "fill" },
+        width = "fill",
+        height = "fill",
         disabled = false,
     }: Props = $props();
 
     const iconColours: Record<InternalMode, string> = {
         default: "var(--text-tertiary)",
-        active: "var(--text-on-primary)",
+        active: "var(--primary)",
         pressed: "var(--text-primary)",
     };
+    const iconSize = "var(--icon-md)";
 
-    const SPEED = 300;
+    const SPEED = 150;
     let internalMode = $state<InternalMode>("default");
     let parentDirection = getContext<Direction>("direction");
     let widthCss = $derived(getFlexStyle("width", width, parentDirection));
@@ -61,9 +62,15 @@
     });
 </script>
 
-<button {disabled} type="button" {style} onclick={onClick} class={`big_button ${internalMode}`}>
+<button
+    class:disabled
+    {disabled}
+    type="button"
+    {style}
+    onclick={onClick}
+    class={`big_button ${internalMode}`}>
     {#if icon}
-        <span class="icon">{@render icon(iconColour)}</span>
+        <span class="icon">{@render icon(iconColour, iconSize)}</span>
     {/if}
     <div class="row2">
         {#if children}
@@ -116,15 +123,21 @@
             justify-content: space-between;
             align-items: center;
             width: 100%;
+            white-space: nowrap;
         }
 
         &.active {
-            background: var(--primary);
-            color: var(--text-on-primary);
+            background: var(--background-2);
+            color: var(--primary);
         }
 
-        &.pressed {
+        &.pressed,
+        &:active {
             background: var(--background-2);
+        }
+
+        &.disabled {
+            color: var(--button-disabled);
         }
     }
 </style>

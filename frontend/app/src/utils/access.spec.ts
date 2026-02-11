@@ -10,11 +10,13 @@ function testGates(
         kind,
         level: "community",
         expiry: e1,
+        collectionName: "community_one",
     };
     const g2: EnhancedAccessGate = {
         kind,
         level: "channel",
         expiry: e2,
+        collectionName: "channel_one",
     };
     return [g1, g2];
 }
@@ -49,6 +51,7 @@ describe("merging access gates", () => {
                 kind: "diamond_gate",
                 level: "community",
                 expiry: undefined,
+                collectionName: "community_one",
             };
             expect(mergeAccessGates(g1)).toEqual([g1]);
         });

@@ -20,6 +20,7 @@ import type {
     CreateGroupResponse,
     CryptocurrencyDetails,
     DeleteCommunityResponse,
+    DeleteCryptoAccountResponse,
     DeletedDirectMessageResponse,
     DeleteGroupResponse,
     DeleteMessageResponse,
@@ -254,6 +255,10 @@ export class AnonUserClient implements IChatEventsReader<DirectChatIdentifier> {
     }
 
     saveCryptoAccount(_: NamedAccount): Promise<SaveCryptoAccountResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    deleteCryptoAccount(_: string): Promise<DeleteCryptoAccountResponse> {
         throw new AnonymousOperationError();
     }
 

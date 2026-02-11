@@ -100,7 +100,12 @@
             }
             if (isCompositeGate(gate)) {
                 yield* preprocessGates(
-                    gate.gates.map((g) => ({ ...g, level: gate.level, expiry: gate.expiry })),
+                    gate.gates.map((g) => ({
+                        ...g,
+                        level: gate.level,
+                        expiry: gate.expiry,
+                        collectionName: gate.collectionName,
+                    })),
                     predicate,
                 );
             }

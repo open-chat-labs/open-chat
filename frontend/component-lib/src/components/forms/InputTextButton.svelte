@@ -16,7 +16,7 @@
         onClick();
     }}
     class="input_text_button">
-    <BodySmall colour={"primary"}>{@render children()}</BodySmall>
+    <BodySmall colour={"textPrimary"}>{@render children()}</BodySmall>
 </button>
 
 <style lang="scss">
@@ -25,7 +25,7 @@
         height: 2.5rem;
         padding: 0 var(--sp-xl);
         background-color: var(--background-1);
-        border-radius: var(--rad-sm);
+        border-radius: var(--rad-circle);
         justify-content: center;
         align-items: center;
         cursor: pointer;

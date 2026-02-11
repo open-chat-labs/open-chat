@@ -1,18 +1,15 @@
 <script lang="ts">
     import "@styles/global.scss";
 
-    import Router from "@components/Router.svelte";
-    import "@components/web-components/customEmoji";
-    import "@components/web-components/profileLink";
-    import "@components/web-components/spoiler";
     import "@i18n/i18n";
     import { reviewingTranslations } from "@i18n/i18n";
     import { trackedEffect } from "@src/utils/effects.svelte";
+    import { detectNeedsSafeInset, setupKeyboardTracking } from "@src/utils/safe_area";
     import { rtlStore } from "@stores/rtl";
     import { snowing } from "@stores/snow";
     import { incomingVideoCall } from "@stores/video";
     import { broadcastLoggedInUser } from "@stores/xframe";
-    import { currentTheme, setNativeTheme, writeNativeCssVariables } from "@theme/themes";
+    import { currentTheme } from "@theme/themes";
     import "@utils/markdown";
     import {
         expectNewFcmToken,
@@ -25,6 +22,7 @@
         isScrollingRoute,
         redirectLandingPageLinksIfNecessary,
     } from "@utils/urls";
+    import { portalState } from "component-lib";
     import {
         type ChatIdentifier,
         type DexId,
@@ -52,6 +50,7 @@
     import { getFcmToken, svelteReady } from "tauri-plugin-oc-api";
     import Head from "./Head.svelte";
     import Profiler from "./Profiler.svelte";
+    import Router from "./Router.svelte";
     import Snow from "./Snow.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import Witch from "./Witch.svelte";
@@ -60,7 +59,6 @@
     import ActiveCall from "./home/video/ActiveCall.svelte";
     import IncomingCall from "./home/video/IncomingCall.svelte";
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
-    import { portalState } from "./portalState.svelte";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -73,6 +71,7 @@
     function createOpenChatClient(): OpenChat {
         const client = new OpenChat({
             appType: import.meta.env.OC_APP_TYPE,
+            mobileLayout: import.meta.env.OC_MOBILE_LAYOUT,
             icUrl: import.meta.env.OC_IC_URL,
             webAuthnOrigin: import.meta.env.OC_WEBAUTHN_ORIGIN,
             iiDerivationOrigin: import.meta.env.OC_II_DERIVATION_ORIGIN,
@@ -107,15 +106,8 @@
             vapidPublicKey: import.meta.env.OC_VAPID_PUBLIC_KEY!,
             accountLinkingCodesEnabled:
                 import.meta.env.OC_ACCOUNT_LINKING_CODES_ENABLED! === "true",
+            baseOrigin: import.meta.env.OC_BASE_ORIGIN!,
         });
-
-        if (client.isNativeLayout()) {
-            setNativeTheme();
-        } else {
-            // even if we are not using the native layout
-            // we do need the variables if we are going to use the new components
-            writeNativeCssVariables();
-        }
 
         return client;
     }
@@ -137,8 +129,6 @@
     );
     let burstUrl = $derived(isFirefox ? `${burstPath}.png` : `${burstPath}.svg`);
     let burstFixed = $derived(isScrollingRoute($routeStore));
-
-    let lastScrollY = $state(window.scrollY);
 
     trackedEffect("rtl", () => {
         // subscribe to the rtl store so that we can set the overall page direction at the right time
@@ -167,8 +157,6 @@
             subscribe("askToSpeak", askToSpeak),
             subscribe("userLoggedIn", onUserLoggedIn),
         ];
-        window.addEventListener("scroll", trackVirtualKeyboard);
-        window.addEventListener("resize", trackVirtualKeyboard);
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
 
@@ -223,28 +211,16 @@
             setTimeout(svelteReady);
         }
 
+        const unsubKeyboard = setupKeyboardTracking();
+
         return () => {
-            window.removeEventListener("scroll", trackVirtualKeyboard);
-            window.removeEventListener("resize", trackVirtualKeyboard);
             window.removeEventListener("orientationchange", calculateHeight);
             window.removeEventListener("unhandledrejection", unhandledError);
             unsubs.forEach((u) => u());
             unsub();
+            unsubKeyboard();
         };
     });
-
-    // We will interpret a significant leap in window.scrollY to indicate the opening of the virtual keyboard
-    function trackVirtualKeyboard() {
-        const threshold = 100; // prevent accidental triggering
-        const delta = window.scrollY - lastScrollY;
-        const keyboardVisible = delta > threshold;
-        lastScrollY = window.scrollY;
-        if (keyboardVisible) {
-            document.body.classList.add("keyboard");
-        } else {
-            document.body.classList.remove("keyboard");
-        }
-    }
 
     // Sets up push notifications and FCM token management for native apps
     function setupNativeApp() {
@@ -630,6 +606,7 @@
     if (client.isNativeAndroid()) {
         document.body.classList.add("native-android");
     }
+    detectNeedsSafeInset();
 </script>
 
 {#if $currentTheme.burst}

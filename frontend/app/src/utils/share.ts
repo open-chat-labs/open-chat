@@ -274,7 +274,7 @@ export function buildMessageUrl(
     messageIndex: number,
     threadRootMessageIndex?: number,
 ): string {
-    return `${window.location.origin}${routeForMessage(
+    return `${import.meta.env.OC_BASE_ORIGIN!}${routeForMessage(
         "none",
         { chatId, threadRootMessageIndex },
         messageIndex,

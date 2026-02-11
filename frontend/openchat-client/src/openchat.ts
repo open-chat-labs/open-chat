@@ -33,6 +33,7 @@ import {
     PremiumItem,
     ROLE_MEMBER,
     ROLE_NONE,
+    ROLE_OWNER,
     Stream,
     WEBAUTHN_ORIGINATING_CANISTER,
     anonymousUser,
@@ -44,6 +45,7 @@ import {
     communityRoles,
     compareRoles,
     contentTypeToPermission,
+    defaultChatPermissions,
     defaultChatRules,
     deletedUser,
     emptyEventsResponse,
@@ -52,6 +54,7 @@ import {
     getContentAsFormattedText,
     getDisplayDate,
     getEmailSignInSession,
+    i18nKey,
     indexRangeForChat,
     isBalanceGate,
     isCaptionedContent,
@@ -68,6 +71,7 @@ import {
     mergeCombinedUnreadCounts,
     mergeEventStreamResponses,
     messageContextsEqual,
+    nullMembership,
     parseBigInt,
     pinNumberFailureFromError,
     publish,
@@ -151,11 +155,13 @@ import {
     type CryptocurrencyTransfer,
     type CurrentUserResponse,
     type DataContent,
+    type DeleteCryptoAccountResponse,
     type DexId,
     type DiamondMembershipDuration,
     type DiamondMembershipFees,
     type DiamondMembershipStatus,
     type DiamondRoute,
+    type Dimensions,
     type DirectChatIdentifier,
     type DirectChatSummary,
     type DisableInviteCodeResponse,
@@ -175,6 +181,7 @@ import {
     type FaqRoute,
     type FullWebhookDetails,
     type GenerateMagicLinkResponse,
+    type GetOpenChatIdentitySuccess,
     type GlobalSelectedChatRoute,
     type GrantedBotPermissions,
     type GroupChatDetailsResponse,
@@ -243,6 +250,7 @@ import {
     type RemoveIdentityLinkResponse,
     type RemoveMemberResponse,
     type ResetInviteCodeResponse,
+    type ResourceKey,
     type RightPanelContent,
     type RoadmapRoute,
     type RouteParams,
@@ -304,7 +312,6 @@ import {
     type WhitepaperRoute,
     type WithdrawBtcResponse,
     type WithdrawCryptocurrencyResponse,
-    type GetOpenChatIdentitySuccess,
 } from "openchat-shared";
 import page from "page";
 import { tick } from "svelte";
@@ -332,6 +339,7 @@ import {
     cryptoBalanceStore,
     cryptoLookup,
     currentUserIdStore,
+    currentUserProfileStore,
     currentUserStore,
     diamondStatusStore,
     directChatBotsStore,
@@ -348,6 +356,7 @@ import {
     isLifetimeDiamondStore,
     lastCryptoSent,
     lastSelectedChatByScopeStore,
+    lastSelectedCommunityIdStore,
     latestSuccessfulUpdatesLoop,
     localUpdates,
     messageActivitySummaryStore,
@@ -409,6 +418,7 @@ import {
     serverWalletConfigStore,
     setSoftDisabled,
     snsFunctionsStore,
+    sortedCommunitiesStore,
     storageStore,
     suspendedUserStore,
     swappableTokensStore,
@@ -532,11 +542,14 @@ import { configKeys } from "./utils/config";
 import { verifyCredential } from "./utils/credentials";
 import { formatTokens, validateTokenInput } from "./utils/cryptoFormatter";
 import {
+    formatDateLong,
     formatMessageDate,
+    getSmartDateHeader,
     toDateString,
     toDatetimeString,
     toLongDateString,
     toMonthString,
+    toRelativeTime,
     toShortTimeString,
 } from "./utils/date";
 import { getErc20TokenBalances } from "./utils/evm";
@@ -620,6 +633,7 @@ const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
 
 export class OpenChat {
+    #mobileLayout: "v1" | "v2";
     #worker: WorkerAgent;
     #authIdentityStorage: IdentityStorage;
     #authPrincipal: string | undefined;
@@ -662,6 +676,7 @@ export class OpenChat {
         this.#logger = config.logger;
 
         this.#appType = config.appType;
+        this.#mobileLayout = config.mobileLayout;
         this.#vapidPublicKey = config.vapidPublicKey;
         locale.subscribe((v) => (this.#locale = v ?? "en"));
 
@@ -698,17 +713,25 @@ export class OpenChat {
         return this.#authPrincipal;
     }
 
-    isNativeLayout() {
-        return this.isNativeApp() || localStorage.getItem("openchat_native_layout") === "true";
-    }
-
     isNativeAndroid() {
         return this.#appType === "android";
+    }
+
+    canonicalOrigin() {
+        if (this.isNativeApp()) {
+            return this.config.baseOrigin;
+        } else {
+            return window.location.origin;
+        }
     }
 
     isNativeApp() {
         // TODO this will be updated to include iOS
         return this.isNativeAndroid();
+    }
+
+    get mobileLayout() {
+        return this.#mobileLayout;
     }
 
     clearCachedData() {
@@ -1006,6 +1029,11 @@ export class OpenChat {
     }
 
     onRegisteredUser(user: CreatedUser) {
+        user.blobUrl = buildUserAvatarUrl(
+            this.config.blobUrlPattern,
+            user.userId,
+            user.blobReference?.blobId,
+        );
         this.onCreatedUser(user);
         userStore.addUser({
             kind: user.isBot ? "bot" : "user",
@@ -1021,13 +1049,16 @@ export class OpenChat {
             maxStreak: 0,
             blobReference: user.blobReference,
             blobData: user.blobData,
-            blobUrl: buildUserAvatarUrl(
-                this.config.blobUrlPattern,
-                user.userId,
-                user.blobReference?.blobId ?? undefined,
-            ),
+            blobUrl: user.blobUrl,
             isUniquePerson: user.isUniquePerson,
             hideOnlineStatus: user.hideOnlineStatus,
+        });
+        this.getPublicProfile(user.userId).subscribe({
+            onResult: (profile) => {
+                if (profile !== undefined) {
+                    currentUserProfileStore.set(profile);
+                }
+            },
         });
     }
 
@@ -1442,7 +1473,7 @@ export class OpenChat {
             });
     }
 
-    setUserAvatar(data: Uint8Array, url: string): Promise<boolean> {
+    setUserAvatar(data: Uint8Array, url: string): Promise<bigint | undefined> {
         const partialUser = userStore.get(currentUserIdStore.value);
         if (partialUser) {
             userStore.addUser({
@@ -1454,14 +1485,26 @@ export class OpenChat {
 
         return this.#worker
             .send({ kind: "setUserAvatar", data })
-            .then((_resp) => true)
-            .catch(() => false);
+            .then((resp) => {
+                currentUserProfileStore.update((profile) => ({
+                    ...profile,
+                    avatarId: resp.blobId,
+                }));
+                return resp.blobId;
+            })
+            .catch(() => undefined);
     }
 
     setUserProfileBackground(data: Uint8Array): Promise<bigint | undefined> {
         return this.#worker
             .send({ kind: "setProfileBackground", data })
-            .then((resp) => resp.blobId)
+            .then((resp) => {
+                currentUserProfileStore.update((profile) => ({
+                    ...profile,
+                    backgroundId: resp.blobId,
+                }));
+                return resp.blobId;
+            })
             .catch(() => undefined);
     }
 
@@ -1859,7 +1902,7 @@ export class OpenChat {
                 return this.communityAvatarUrl(community.id.communityId, community.avatar);
             }
         }
-        return "/assets/group.svg";
+        return this.mobileLayout === "v2" ? "unknown" : "/assets/group.svg";
     }
 
     toShortTimeString(date: Date): string {
@@ -1890,6 +1933,19 @@ export class OpenChat {
 
     toLongDateString(date: Date): string {
         return toLongDateString(date, this.#locale);
+    }
+
+    toRelativeTime(timestamp: bigint): string {
+        // TODO i18n
+        return toRelativeTime(timestamp);
+    }
+
+    formatDateLong(timestamp: bigint): string {
+        return formatDateLong(timestamp, this.#locale);
+    }
+
+    getSmartDateHeader(timestamp: bigint, today: string, yesterday: string): string {
+        return getSmartDateHeader(timestamp, this.#locale, { today, yesterday });
     }
 
     /**
@@ -3040,6 +3096,7 @@ export class OpenChat {
                 this.loadPreviousMessages(chatId, threadRootEvent, true);
             }
         }
+
         rightPanelHistory.set([
             {
                 kind: "message_thread_panel",
@@ -3047,6 +3104,11 @@ export class OpenChat {
                 threadRootMessageId: threadRootEvent.event.messageId,
             },
         ]);
+
+        const chat = allChatsStore.value.get(chatId);
+        if (chat) {
+            publish("openThread", { msg: threadRootEvent, chat });
+        }
     }
 
     async loadThreadMessages(
@@ -4256,7 +4318,7 @@ export class OpenChat {
         messageIdIfRetrying?: bigint,
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
-        const chat = chatSummariesStore.value.get(chatId);
+        const chat = allChatsStore.value.get(chatId);
         if (chat === undefined) {
             return Promise.resolve(CommonResponses.failure());
         }
@@ -4350,9 +4412,11 @@ export class OpenChat {
         // *before* the new message is added to the unconfirmed store. Is this nice? No it is not.
         window.setTimeout(() => {
             withPausedStores(() => {
-                if (!isTransfer(messageEvent.event.content)) {
-                    localUpdates.addUnconfirmed(context, messageEvent);
-                }
+                // TODO - I'm not sure *why* we are doing this - it does not appear to be necessary
+                // if (!isTransfer(messageEvent.event.content)) {
+                //     localUpdates.addUnconfirmed(context, messageEvent);
+                // }
+                localUpdates.addUnconfirmed(context, messageEvent);
 
                 localUpdates.deleteFailedMessage(context, messageEvent.event.messageId);
 
@@ -4689,6 +4753,11 @@ export class OpenChat {
                 return currentUserStore.value.isUniquePerson;
             } else if (gate.kind === "chit_earned_gate") {
                 return currentUserStore.value.totalChitEarned >= gate.minEarned;
+            } else if (gate.kind === "token_balance_gate") {
+                // Note that this takes no account of accumulated commitments incurred during gate evaluation
+                // So it is only good for telling us if a balance gate is *initially* satisfied.
+                // How to make that *reactive* is another issue
+                return (cryptoBalanceStore.value.get(gate.ledgerCanister) ?? 0n) >= gate.minBalance;
             } else {
                 return false;
             }
@@ -4731,6 +4800,7 @@ export class OpenChat {
             gates.push({
                 level: "community",
                 expiry: community.gateConfig.expiry,
+                collectionName: community.name,
                 ...community.gateConfig.gate,
             });
         }
@@ -4742,6 +4812,7 @@ export class OpenChat {
             gates.push({
                 level: chat.level,
                 expiry: chat.gateConfig.expiry,
+                collectionName: chat.name,
                 ...chat.gateConfig.gate,
             });
         }
@@ -5130,6 +5201,13 @@ export class OpenChat {
                         userCreatedStore.set(true);
                         currentUserStore.set(user);
                         this.#setDiamondStatus(user.diamondStatus);
+                        this.getPublicProfile(user.userId).subscribe({
+                            onResult: (profile) => {
+                                if (profile !== undefined) {
+                                    currentUserProfileStore.set(profile);
+                                }
+                            },
+                        });
                     }
                     if (!resolved) {
                         // we want to resolve the promise with the first response from the stream so that
@@ -6331,7 +6409,11 @@ export class OpenChat {
                         ...currentUser,
                         blobReference,
                         blobData: undefined,
-                        blobUrl: undefined,
+                        blobUrl: buildUserAvatarUrl(
+                            this.config.blobUrlPattern,
+                            currentUser.userId,
+                            currentUser.blobReference?.blobId,
+                        ),
                     };
 
                     userStore.addUser(this.#rehydrateDataContent(user, "avatar"));
@@ -6411,7 +6493,7 @@ export class OpenChat {
                 this.#initWebRtc();
                 startMessagesReadTracker(this);
                 this.refreshSwappableTokens();
-                window.setTimeout(() => this.#refreshBalancesInSeries(), 1000);
+                window.setTimeout(() => this.refreshBalancesInSeries(), 1000);
             }
 
             // horribly enough - we need to slightly defer this so that all the cascade of derived stuff is complete
@@ -7133,6 +7215,15 @@ export class OpenChat {
             .catch(() => ({ kind: "failure" }));
     }
 
+    deleteCryptoAccount(account: string): Promise<DeleteCryptoAccountResponse> {
+        return this.#worker
+            .send({
+                kind: "deleteCryptoAccount",
+                account,
+            })
+            .catch(() => ({ kind: "failure" }));
+    }
+
     async #updateRegistry(): Promise<void> {
         let resolved = false;
         return new Promise((resolve) => {
@@ -7209,7 +7300,7 @@ export class OpenChat {
             .catch(() => undefined);
     }
 
-    async #refreshBalancesInSeries() {
+    async refreshBalancesInSeries() {
         const config = walletConfigStore.value;
         for (const t of [...cryptoLookup.value.values()]) {
             if (config.kind === "auto_wallet" || config.tokens.has(t.ledger)) {
@@ -7938,7 +8029,8 @@ export class OpenChat {
 
             if (!cachedWebAuthnKey) {
                 return Promise.reject({
-                    code: AndroidWebAuthnErrorCode.NoWebAuthnKey,
+                    code: AndroidWebAuthnErrorCode.FailedToCacheWebAuthnKey,
+                    msg: "failed to cache webauthn key",
                 });
             }
 
@@ -8005,10 +8097,29 @@ export class OpenChat {
             }));
         if (webAuthnKey === undefined) throw new Error("WebAuthnKey not set");
 
-        const cose = unwrapDER(webAuthnKey.publicKey, DER_COSE_OID);
-        const webAuthnIdentity = new WebAuthnIdentity(webAuthnKey.credentialId, cose, undefined);
-
-        return await this.#finaliseWebAuthnSignin(webAuthnIdentity, () => webAuthnIdentity, false);
+        if (this.isNativeAndroid()) {
+            // Not 100% sure that this is right
+            const webAuthnIdentity = new AndroidWebAuthnPasskeyIdentity((credentialId) =>
+                this.lookupWebAuthnPubKey(credentialId),
+            );
+            return await this.#finaliseWebAuthnSignin(
+                webAuthnIdentity,
+                () => webAuthnIdentity.identity(),
+                false,
+            );
+        } else {
+            const cose = unwrapDER(webAuthnKey.publicKey, DER_COSE_OID);
+            const webAuthnIdentity = new WebAuthnIdentity(
+                webAuthnKey.credentialId,
+                cose,
+                undefined,
+            );
+            return await this.#finaliseWebAuthnSignin(
+                webAuthnIdentity,
+                () => webAuthnIdentity,
+                false,
+            );
+        }
     }
 
     async #finaliseWebAuthnSignin(
@@ -8280,6 +8391,31 @@ export class OpenChat {
         }
     }
 
+    getOpenChatCommunity() {
+        if (import.meta.env.OC_NODE_ENV === "production") {
+            return this.getCommunitySummary({
+                kind: "community",
+                communityId: "dgegb-daaaa-aaaar-arlhq-cai",
+            });
+        }
+        return Promise.resolve(undefined);
+    }
+
+    async getCommunitySummary(id: CommunityIdentifier): Promise<CommunitySummary | undefined> {
+        const community = communitiesStore.value.get(id);
+        if (community) return community;
+
+        const resp = await this.#worker.send({
+            kind: "getCommunitySummary",
+            communityId: id.communityId,
+        });
+        if ("id" in resp) {
+            return resp;
+        } else {
+            return undefined;
+        }
+    }
+
     async setSelectedCommunity(id: CommunityIdentifier): Promise<boolean> {
         let community = communitiesStore.value.get(id);
         let preview = false;
@@ -8313,6 +8449,7 @@ export class OpenChat {
         }
 
         if (community !== undefined) {
+            lastSelectedCommunityIdStore.set(community.id);
             this.#loadCommunityDetails(community);
         }
 
@@ -8341,6 +8478,34 @@ export class OpenChat {
             return true;
         }
         return false;
+    }
+
+    #selectLastSelectedCommunity(): boolean {
+        const mostRecentId = lastSelectedCommunityIdStore.value;
+        const mostRecentCommunity = mostRecentId
+            ? communitiesStore.value.get(mostRecentId)
+            : undefined;
+        if (mostRecentCommunity !== undefined) {
+            page(`/community/${mostRecentCommunity.id.communityId}`);
+            return true;
+        }
+        return false;
+    }
+
+    #selectFirstCommunity(): boolean {
+        const first = sortedCommunitiesStore.value?.find((c) => !c.membership.archived);
+        if (first !== undefined) {
+            page(`/community/${first.id.communityId}`);
+            return true;
+        }
+        return false;
+    }
+
+    selectDefaultCommunity(): boolean {
+        if (!this.#selectLastSelectedCommunity()) {
+            return this.#selectFirstCommunity();
+        }
+        return true;
     }
 
     selectDefaultChat(desktopOnly: boolean = true): boolean {
@@ -8428,6 +8593,7 @@ export class OpenChat {
                 if (resp.kind === "success") {
                     // Make the community appear at the top of the list
                     resp.community.membership.index = nextCommunityIndexStore.value;
+                    resp.community.avatar = community.avatar;
                     localUpdates.addCommunity(resp.community);
                     this.#loadCommunityDetails(resp.community);
                     withPausedStores(() => {
@@ -8691,14 +8857,14 @@ export class OpenChat {
 
     setChatListScopeAndRedirect(route: RouteParams): boolean {
         if (route.kind === "home_route") {
-            page(routeForScope(this.getDefaultScope()));
+            pageReplace(routeForScope(this.getDefaultScope()));
             return true;
         }
         return false;
     }
 
     getDefaultScope(): ChatListScope {
-        if (anonUserStore.value) return { kind: "chats" };
+        if (anonUserStore.value) return { kind: "none" };
 
         // sometimes we have to re-direct the user to home route "/"
         // However, with communities enabled it is not clear what this means
@@ -8964,7 +9130,12 @@ export class OpenChat {
         } else if (bot.command.name === "register_bot") {
             publish("registerBot");
         } else if (bot.command.name === "register_webhook") {
-            publish("registerWebhook");
+            if (
+                selectedChatSummaryStore.value !== undefined &&
+                selectedChatSummaryStore.value.kind !== "direct_chat"
+            ) {
+                publish("registerWebhook", selectedChatSummaryStore.value);
+            }
         } else if (bot.command.name === "update_bot") {
             publish("updateBot");
         } else if (bot.command.name === "remove_bot") {
@@ -10113,6 +10284,96 @@ export class OpenChat {
             }
         }
         return false;
+    }
+
+    createCandidateGroup(level: Level, embeddedContent: boolean): CandidateGroupChat | undefined {
+        if (level === "channel" && chatListScopeStore.value.kind !== "community") {
+            return;
+        }
+        const id: MultiUserChatIdentifier =
+            level === "channel" && chatListScopeStore.value.kind === "community"
+                ? {
+                      kind: "channel",
+                      communityId: chatListScopeStore.value.id.communityId,
+                      channelId: 0,
+                  }
+                : { kind: "group_chat", groupId: "" };
+
+        return {
+            id,
+            kind: "candidate_group_chat",
+            name: "",
+            description: "",
+            historyVisible: true,
+            public: false,
+            frozen: false,
+            members: [],
+            permissions: defaultChatPermissions(),
+            rules: { ...defaultChatRules(level), newVersion: false },
+            gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
+            level,
+            membership: {
+                ...nullMembership(),
+                role: ROLE_OWNER,
+            },
+            messagesVisibleToNonMembers: false,
+            externalUrl: embeddedContent ? "" : undefined,
+            verified: false,
+        };
+    }
+
+    groupCreationErrorMessage(resp: CreateGroupResponse, level: Level): ResourceKey | undefined {
+        if (resp.kind === "success") return undefined;
+        if (resp.kind === "offline") return i18nKey("offlineError");
+        if (resp.kind === "error") {
+            if (resp.code === ErrorCode.NameTooShort) return i18nKey("groupNameTooShort");
+            if (resp.code === ErrorCode.NameTooLong) return i18nKey("groupNameTooLong");
+            if (resp.code === ErrorCode.NameReserved) return i18nKey("groupNameReserved");
+            if (resp.code === ErrorCode.DescriptionTooLong) return i18nKey("groupDescTooLong");
+            if (resp.code === ErrorCode.NameTaken && level === "group")
+                return i18nKey("groupAlreadyExists");
+            if (resp.code === ErrorCode.NameTaken) return i18nKey("channelAlreadyExists");
+            if (resp.code === ErrorCode.AvatarTooBig) return i18nKey("groupAvatarTooBig");
+            if (resp.code === ErrorCode.MaxGroupsCreated) return i18nKey("maxGroupsCreated");
+            if (resp.code === ErrorCode.Throttled) return i18nKey("groupCreationFailed");
+            if (resp.code === ErrorCode.RulesTooShort) return i18nKey("groupRulesTooShort");
+            if (resp.code === ErrorCode.RulesTooLong) return i18nKey("groupRulesTooLong");
+            if (resp.code === ErrorCode.InitiatorSuspended) return i18nKey("userSuspended");
+            if (resp.code === ErrorCode.NotDiamondMember)
+                return i18nKey("unauthorizedToCreatePublicGroup");
+            if (resp.code === ErrorCode.InvalidAccessGate) return i18nKey("access.gateInvalid");
+        }
+        return i18nKey("groupCreationFailed");
+    }
+
+    extractDimensionsFromMessageContent(content: MessageContent): Dimensions | undefined {
+        if (content.kind === "image_content") {
+            return {
+                width: content.width,
+                height: content.height,
+            };
+        } else if (content.kind === "video_content") {
+            return {
+                width: content.width,
+                height: content.height,
+            };
+        } else if (content.kind === "meme_fighter_content") {
+            return {
+                width: content.width,
+                height: content.height,
+            };
+        } else if (content.kind === "giphy_content") {
+            return mobileWidth.value
+                ? { width: content.mobile.width, height: content.mobile.height }
+                : { width: content.desktop.width, height: content.desktop.height };
+        } else if (
+            content.kind === "text_content" &&
+            (this.isSocialVideoLink(content.text) || this.containsSocialVideoLink(content.text))
+        ) {
+            return { width: 560, height: 315 };
+        }
+
+        return undefined;
     }
 
     updateBlockedUsernamePatterns(pattern: string, add: boolean): Promise<void> {

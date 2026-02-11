@@ -10,4 +10,8 @@ permissions = [
     "allow-show-notification",
     "allow-svelte-ready",
     "allow-release-notifications",
+    "allow-minimize-app",
+    "allow-get-server-version",
+    "allow-download-update",
+    "allow-restart-app",
 ]

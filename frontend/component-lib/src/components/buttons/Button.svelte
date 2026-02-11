@@ -1,18 +1,8 @@
 <script lang="ts">
-    import { getFlexStyle, type Direction, type SizeMode } from "component-lib";
-    import { getContext, type Snippet } from "svelte";
+    import { getFlexStyle, type ButtonProps, type Direction } from "component-lib";
+    import { getContext } from "svelte";
     import Spinner from "../Spinner.svelte";
 
-    interface Props {
-        children?: Snippet;
-        disabled?: boolean;
-        loading?: boolean;
-        secondary?: boolean;
-        onClick?: (e: MouseEvent) => void;
-        icon?: Snippet<[string]>;
-        width?: SizeMode;
-        height?: SizeMode;
-    }
     let {
         children,
         icon,
@@ -20,12 +10,14 @@
         onClick,
         loading = false,
         secondary = false,
-        width = { kind: "fill" },
-        height = { kind: "hug" },
-    }: Props = $props();
+        width = "fill",
+        height = "hug",
+        danger = false,
+    }: ButtonProps = $props();
 
     let parentDirection = getContext<Direction>("direction");
-    let spinnerColour = secondary ? "var(--gradient-secondary)" : "var(--text-on-primary)";
+    let spinnerColour =
+        secondary && !disabled ? "var(--gradient-secondary)" : "var(--text-on-primary)";
     let iconColour = secondary ? "var(--gradient-secondary)" : "var(--text-on-primary)";
     let widthCss = $derived(getFlexStyle("width", width, parentDirection));
     let heightCss = $derived(getFlexStyle("height", height, parentDirection));
@@ -36,28 +28,33 @@
     type="button"
     aria-busy={loading}
     {style}
+    class:danger
     class:secondary
-    class:disabled
+    class:disabled={disabled || loading}
     onclick={onClick}
     disabled={disabled || loading}>
+    <span class="content">
+        {@render children?.()}
+    </span>
     {#if loading}
-        <Spinner
-            size={"1.4rem"}
-            backgroundColour={"var(--text-tertiary)"}
-            foregroundColour={spinnerColour} />
-    {:else}
-        <span class="content">{@render children?.()}</span>
-        {#if icon}
-            <span class="icon">{@render icon(iconColour)}</span>
-        {/if}
+        <span class="button_icon">
+            <Spinner backgroundColour={"var(--text-tertiary)"} foregroundColour={spinnerColour} />
+        </span>
+    {:else if icon}
+        <span class="button_icon">{@render icon(iconColour)}</span>
     {/if}
 </button>
 
 <style lang="scss">
+    :global(.button_icon svg) {
+        width: var(--icon-md);
+        height: var(--icon-md);
+    }
+
     button {
         all: unset;
         position: relative;
-        min-height: var(--sp-xxxl);
+        min-height: 2.75rem;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -70,18 +67,27 @@
             background ease-in-out 200ms,
             color ease-in-out 200ms;
 
-        font-weight: var(--font-semi-bold);
+        font-weight: var(--font-weight-bold);
         font-size: 14px; // TODO - typography vars
         z-index: 0;
 
         // This is a bit of a faff but we have to do the background fill this way to
         // end up with a filled button that is exactly the same size as a hollow button
-        &:not(.secondary)::before {
+        &:not(.secondary):not(.disabled)::before {
             content: "";
             position: absolute;
             inset: calc(-1 * var(--bw-thick));
             border-radius: var(--rad-sm);
-            background: var(--gradient-inverted);
+            background: var(--gradient);
+            z-index: -1;
+        }
+
+        &:not(.secondary):not(.disabled).danger::before {
+            content: "";
+            position: absolute;
+            inset: calc(-1 * var(--bw-thick));
+            border-radius: var(--rad-sm);
+            background: var(--error);
             z-index: -1;
         }
 
@@ -97,7 +103,7 @@
             cursor: not-allowed;
         }
 
-        .icon {
+        .button_icon {
             position: absolute;
             right: 0;
             top: 50%;

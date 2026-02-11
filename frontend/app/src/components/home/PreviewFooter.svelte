@@ -5,13 +5,13 @@
         mobileWidth,
         type MultiUserChat,
         type OpenChat,
+        pageReplace,
         platformModeratorStore,
         publish,
         ROLE_NONE,
         routeForScope,
         selectedCommunitySummaryStore,
     } from "openchat-client";
-    import page from "page";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
@@ -49,14 +49,14 @@
     function cancelPreview() {
         if (previewingCommunity && $selectedCommunitySummaryStore) {
             client.removeCommunity($selectedCommunitySummaryStore.id);
-            page(routeForScope(client.getDefaultScope()));
+            pageReplace(routeForScope(client.getDefaultScope()));
         } else {
             if (!chat.public) {
                 client.declineInvitation(chat.id);
             }
             client.removePreviewedChat(chat.id);
             if ($mobileWidth || !client.selectDefaultChat(false)) {
-                page(routeForScope($chatListScopeStore));
+                pageReplace(routeForScope($chatListScopeStore));
             }
         }
     }

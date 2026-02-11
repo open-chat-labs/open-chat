@@ -2,23 +2,36 @@ import type { Readable } from "svelte/store";
 import type {
     ChannelIdentifier,
     ChatIdentifier,
+    ChatSummary,
+    ChitEarnedGate,
     ChitEvent,
+    CommandDefinition,
     CommunityIdentifier,
     CommunitySummary,
     DirectChatIdentifier,
+    DirectChatSummary,
     EnhancedReplyContext,
     EphemeralMessageEvent,
     EventWrapper,
+    ExternalBot,
     FullWebhookDetails,
+    GrantedBotPermissions,
     GroupChatSummary,
     Level,
     Message,
     MessageContext,
     MultiUserChat,
     MultiUserChatIdentifier,
+    NamedAccount,
+    NeuronGate,
     Notification,
+    PaymentGate,
+    PublicProfile,
+    ReadonlySet,
     ResourceKey,
+    TokenBalanceGate,
     UpdatedRules,
+    UserGroupDetails,
     VideoCallType,
 } from "..";
 
@@ -30,8 +43,12 @@ export type PubSubEvents = {
     showInviteGroupUsers: boolean;
     replyPrivatelyTo: EnhancedReplyContext;
     showGroupMembers: undefined;
+    addGroupMembers: undefined;
+    addCommunityMembers: undefined;
     upgrade: undefined;
     verifyHumanity: undefined;
+    deleteChat: MultiUserChat;
+    deleteCommunityMobile: CommunitySummary;
     deleteDirectChat: {
         kind: "delete_direct_chat";
         chatId: DirectChatIdentifier;
@@ -73,6 +90,7 @@ export type PubSubEvents = {
     createCommunity: undefined;
     unarchiveChat: ChatIdentifier;
     forward: Message;
+    shareMessage: unknown;
     toggleMuteNotifications: {
         chatId: ChatIdentifier;
         mute: boolean | undefined;
@@ -82,8 +100,10 @@ export type PubSubEvents = {
     successfulImport: ChannelIdentifier;
     showProposalFilters: undefined;
     convertGroupToCommunity: GroupChatSummary;
+    convertedGroupToCommunity: { name: string; channelId: ChannelIdentifier };
     clearSelection: undefined;
     editGroup: { chat: MultiUserChat; rules: UpdatedRules | undefined };
+    updateGroup: undefined;
     videoCallMessageUpdated: { chatId: ChatIdentifier; messageId: bigint };
     chatUpdated: MessageContext;
     sendingMessage: MessageContext;
@@ -101,8 +121,9 @@ export type PubSubEvents = {
     registerBot: undefined;
     updateBot: undefined;
     removeBot: undefined;
-    registerWebhook: undefined;
-    updateWebhook: FullWebhookDetails;
+    registerWebhook: MultiUserChat;
+    updateWebhook: { chat: MultiUserChat; hook: FullWebhookDetails };
+    regenerateWebhook: { chat: MultiUserChat; hook: FullWebhookDetails };
     deleteWebhook: undefined;
     loadedMessageWindow: {
         context: MessageContext;
@@ -115,6 +136,7 @@ export type PubSubEvents = {
         initialLoad: boolean;
     };
     createPoll: MessageContext;
+    createPrize: MessageContext;
     attachGif: [MessageContext, string];
     tokenTransfer: {
         context: MessageContext;
@@ -143,4 +165,81 @@ export type PubSubEvents = {
     ephemeralMessage: EphemeralMessageEvent;
     copyUrl: undefined;
     suspendUser: string;
+    userProfileChatsAndVideo: undefined;
+    appSettings: undefined;
+    userInformation: PublicProfile;
+    userProfileShare: undefined;
+    userProfileAbout: undefined;
+    userProfileCacheManagement: undefined;
+    userProfileBotConfig: undefined;
+    userProfileDeleteAccount: undefined;
+    userProfileAppearance: undefined;
+    userProfileChitRewards: undefined;
+    userProfileCommunitySettings: undefined;
+    userProfileVerify: undefined;
+    closeModalPage: undefined;
+    closeThread: undefined;
+    closeModalStack: undefined;
+    updateGroupDetails: undefined;
+    updateRules: unknown;
+    updateAccessGates: unknown;
+    updateGroupPermissions: undefined;
+    updateCommunityPermissions: undefined;
+    updateNeuronGates: unknown;
+    updatePaymentGates: unknown;
+    updateTokenBalanceGates: unknown;
+    accessGatesLearnMore: undefined;
+    updateNeuronGate: {
+        data: unknown;
+        gate: NeuronGate;
+    };
+    updatePaymentGate: { data: unknown; gate: PaymentGate };
+    updateChitGate: { data: unknown; gate: ChitEarnedGate };
+    updateTokenBalanceGate: { data: unknown; gate: TokenBalanceGate };
+    updateCommunity: undefined;
+    updateCommunityRules: undefined;
+    updateCommunityChannels: undefined;
+    newMessage: undefined;
+    directChatDetails: DirectChatSummary;
+    groupChatDetails: MultiUserChat;
+    tokenPage: unknown;
+    receiveToken: unknown;
+    sendToken: unknown;
+    swapToken: unknown;
+    manageRecipients: undefined;
+    addRecipient: { account?: NamedAccount; onComplete: () => void };
+    editRecipient: { account: NamedAccount; onComplete: () => void };
+    walletSettings: undefined;
+    showThreads: undefined;
+    openThread: { chat: ChatSummary; msg: EventWrapper<Message> };
+    showMembers: {
+        collection: MultiUserChat | CommunitySummary;
+        view: "members" | "add" | "lapsed" | "blocked";
+    };
+    showUserGroups: undefined;
+    showUserGroup: UserGroupDetails;
+    editUserGroup: UserGroupDetails;
+    inviteAndShare: { collection: MultiUserChat | CommunitySummary; view: "invite" | "share" };
+    showBots: MultiUserChat | CommunitySummary;
+    showBot: {
+        bot: ExternalBot;
+        collection?: ChatSummary | CommunitySummary;
+        grantedPermissions?: GrantedBotPermissions;
+    };
+    installBot: {
+        bot: ExternalBot;
+        collection: ChatSummary | CommunitySummary;
+        installedWithPermissions?: GrantedBotPermissions;
+    };
+    showPinned: { chat: MultiUserChat; pinned: ReadonlySet<number> };
+    showVideoCallParticipants: {
+        chatId: MultiUserChatIdentifier;
+        messageId: bigint;
+        isOwner: boolean;
+    };
+    evaluateCommunityAccessGate: undefined;
+    evaluateGroupAccessGate: undefined;
+    streakInsurance: undefined;
+    createSwap: { fromLedger: string; ctx: MessageContext };
+    viewBotCommand: CommandDefinition;
 };

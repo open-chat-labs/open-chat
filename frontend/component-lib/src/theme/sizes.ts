@@ -1,5 +1,12 @@
 import { CssVariable } from "./variable";
 
+export type Pos = {
+    top?: SpacingSize;
+    bottom?: SpacingSize;
+    left?: SpacingSize;
+    right?: SpacingSize;
+};
+
 export class IconSize {
     constructor(
         public xs: Rem,
@@ -23,6 +30,7 @@ export class BorderWidth {
         public zero: Pixel,
         public thin: Pixel,
         public thick: Pixel,
+        public extraThick: Pixel,
     ) {}
 
     cssVariables(): CssVariable[] {
@@ -30,6 +38,7 @@ export class BorderWidth {
             this.zero.cssVariable("bw", "zero"),
             this.thin.cssVariable("bw", "thin"),
             this.thick.cssVariable("bw", "thick"),
+            this.extraThick.cssVariable("bw", "extra-thick"),
         ];
     }
 }
@@ -37,7 +46,9 @@ export class BorderWidth {
 export type BorderWidthSize = Exclude<keyof BorderWidth, keyof object | "cssVariables">;
 
 export function getBorderWidthCss(bw: BorderWidthSize): string {
-    return bw === "zero" ? "" : `border-width: var(--bw-${bw})`;
+    return bw === "zero"
+        ? ""
+        : `border-width: var(--bw-${bw === "extraThick" ? "extra-thick" : bw})`;
 }
 
 export function getBorderStyleCss(
@@ -72,6 +83,7 @@ export class BorderRadius {
         public lg: Rem,
         public xl: Rem,
         public xxl: Rem,
+        public huge: Rem,
         public circle: Rem,
     ) {}
 
@@ -84,6 +96,7 @@ export class BorderRadius {
             this.lg.cssVariable("rad", "lg"),
             this.xl.cssVariable("rad", "xl"),
             this.xxl.cssVariable("rad", "xxl"),
+            this.huge.cssVariable("rad", "huge"),
             this.circle.cssVariable("rad", "circle"),
         ];
     }
@@ -128,7 +141,7 @@ export class Spacings {
     }
 }
 
-export type SizeMode = { kind: "hug" } | { kind: "fill" } | { kind: "fixed"; size: string };
+export type SizeMode = "hug" | "fill" | { size: string } | { share: number };
 
 export type MainAxisAlignment = "start" | "center" | "end" | "spaceBetween" | "spaceAround";
 
@@ -174,9 +187,9 @@ export function getFlexStyle(
 ): string {
     // Fallback for unknown or non-flex parent
     if (parentDirection === "unknown" || parentDirection === undefined) {
-        if (mode.kind === "fixed") return `${axis}: ${mode.size ?? "auto"}`;
-        if (mode.kind === "hug") return `${axis}: fit-content`;
-        if (mode.kind === "fill") return `${axis}: 100%`;
+        if (mode === "hug") return `${axis}: fit-content`;
+        if (mode === "fill") return `${axis}: 100%`;
+        if ("size" in mode) return `${axis}: ${mode.size ?? "auto"}`;
     }
 
     const isMainAxis =
@@ -184,16 +197,22 @@ export function getFlexStyle(
         (axis === "height" && parentDirection === "vertical");
 
     if (isMainAxis) {
-        if (mode.kind === "fixed") return `flex: 0 0 ${mode.size ?? "auto"}`;
-        if (mode.kind === "hug") return `flex: 0 0 auto`;
+        if (mode === "hug") return `flex: 0 0 auto`;
+        if (mode === "fill") return `flex: 1 1 0`;
+        if ("size" in mode) return `flex: 0 0 ${mode.size ?? "auto"}`;
         // if (mode.kind === "fill") return `flex: 1 1 auto`;
-        if (mode.kind === "fill") return `flex: 1 1 0`;
+        if ("share" in mode) return `flex: ${mode.share}`;
     }
 
     if (!isMainAxis) {
-        if (mode.kind === "fixed") return `${axis}: ${mode.size ?? "auto"}`;
-        if (mode.kind === "hug") return `${axis}: fit-content`;
-        if (mode.kind === "fill") return `align-self: stretch`;
+        if (mode === "hug") return `${axis}: fit-content`;
+        if (mode === "fill") return `align-self: stretch`;
+        if ("size" in mode) return `${axis}: ${mode.size ?? "auto"}`;
+        if ("share" in mode) {
+            console.warn(
+                "share SizeMode does not make sense for the cross-axis - you are probably making a mistake",
+            );
+        }
     }
 
     return "";
@@ -202,6 +221,10 @@ export function getFlexStyle(
 export type SpacingSize = "zero" | Exclude<keyof Spacings, keyof object | "cssVariables">;
 
 type StyleSize<T> = T | [T, T] | [T, T, T] | [T, T, T, T];
+
+export function sizeToCssVar(sz: SpacingSize): string {
+    return `var(--sp-${sz})`;
+}
 
 export type Padding = StyleSize<SpacingSize>;
 
@@ -239,4 +262,23 @@ export class Rem extends Unit {
     toString(): string {
         return `${this.val}rem`;
     }
+}
+
+export function posToStyle(pos?: Pos) {
+    if (pos === undefined) return "";
+    const keys: (keyof Pos)[] = ["top", "right", "bottom", "left"];
+    return (
+        keys
+            .reduce(
+                (res, key) => {
+                    const val = pos[key];
+                    if (val !== undefined) {
+                        res.push(`${key}: ${sizeToCssVar(val)}`);
+                    }
+                    return res;
+                },
+                ["position: absolute"] as string[],
+            )
+            .join("; ") + ";"
+    );
 }

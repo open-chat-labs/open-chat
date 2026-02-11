@@ -11,7 +11,7 @@
         "build:docker": "sh ./build_docker.sh",
         "dev": "sh ./build_dev.sh",
         "dev:mobile": "sh ./build_mobile.sh",
-        "android:release": "sh ./build_android.sh",
+        "android:release": "bash ./build_android.sh",
         "start": "sirv public --no-clear",
         "validate": "svelte-check --threshold error",
         "lint": "eslint ./src --fix",
@@ -33,6 +33,8 @@
         "@types/marked": "^6.0.0",
         "@types/md5": "^2.3.2",
         "@types/node": "^20.5.0",
+        "@types/page": "^1.11.6",
+        "@types/wavesurfer.js": "^6.0.12",
         "assert": "2.0.0",
         "autoprefixer": "^10.4.15",
         "buffer": "6.0.3",
@@ -54,7 +56,7 @@
         "svelte-preprocess": "^6.0.3",
         "svelty-picker": "^6.1.5",
         "tslib": "^2.6.1",
-        "typescript": "=5.4.2",
+        "typescript": "^5.9.3",
         "url": "^0.11.1",
         "util": "0.12.5",
         "vite": "^6.4.1",
@@ -97,6 +99,6 @@
         "svelte-qrcode-image": "^1.0.0-rc.2",
         "tauri-plugin-oc-api": "file:../tauri-plugin-oc",
         "usergeek-ic-js": "^1.0.6",
-        "wavesurfer.js": "^7.7.5"
+        "wavesurfer.js": "^7.11.1"
     }
 }

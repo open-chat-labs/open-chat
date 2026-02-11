@@ -15,7 +15,7 @@ import type {
     CommunitySummary,
 } from "../community";
 import type { WalletConfig } from "../crypto";
-import { type DataContent, DataContentSchema } from "../data/data";
+import { DataContentSchema, type DataContent } from "../data/data";
 import type { OCError } from "../error";
 import type { OptionUpdate } from "../optionUpdate";
 import type {
@@ -142,6 +142,8 @@ export interface PrizeContentInitial {
     transfer: PendingCryptocurrencyTransfer;
     prizes: bigint[];
     requiresCaptcha: boolean;
+    fees: bigint;
+    amount: bigint;
 }
 
 export interface P2PSwapContentInitial {
@@ -167,7 +169,15 @@ export type CaptionedContent =
     | GiphyContent
     | PrizeContent;
 
-export type AttachmentContent = ImageContent | VideoContent | AudioContent | FileContent;
+export type AttachmentContent =
+    | ImageContent
+    | VideoContent
+    | AudioContent
+    | FileContent
+    | GiphyContent
+    | CryptocurrencyContent
+    | PrizeContentInitial
+    | P2PSwapContentInitial;
 
 export function isAttachmentContent(content: MessageContent): content is AttachmentContent {
     switch (content.kind) {
@@ -175,6 +185,10 @@ export function isAttachmentContent(content: MessageContent): content is Attachm
         case "video_content":
         case "audio_content":
         case "file_content":
+        case "giphy_content":
+        case "crypto_content":
+        case "p2p_swap_content_initial":
+        case "prize_content_initial":
             return true;
         default:
             return false;
@@ -611,6 +625,8 @@ export const AudioContentSchema = Type.Intersect([
         kind: Type.Literal("audio_content"),
         caption: Type.Optional(Type.String()),
         mimeType: Type.String(),
+        samples: Type.Uint8Array(),
+        durationMs: Type.BigInt(),
     }),
 ]);
 export type AudioContent = Static<typeof AudioContentSchema>;

@@ -29,9 +29,6 @@
 
     let container: HTMLElement | undefined;
 
-    // TODO
-    let mobileWidth = $state(false);
-
     onMount(() => {
         if (container) {
             move(container);
@@ -40,10 +37,14 @@
         setTimeout(() => {
             document.addEventListener("click", onClose, { once: true });
         }, 100);
+
+        return () => {
+            document.removeEventListener("click", onClose);
+        };
     });
 
     function move(container: HTMLElement) {
-        if (centered && mobileWidth) {
+        if (centered) {
             positionInCenter(container);
         } else {
             reposition(trigger, container, {
@@ -71,6 +72,8 @@
 
 <style lang="scss">
     .menu {
+        border-radius: var(--rad-xl);
         position: fixed;
+        z-index: 100;
     }
 </style>

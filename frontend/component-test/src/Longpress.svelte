@@ -28,7 +28,7 @@
         <Switch bind:checked={longpress}></Switch>
         <Label>Use long press</Label>
     </Container>
-    <Caption width={{ kind: "fixed", size: "300px" }}
+    <Caption width={{ size: "300px" }}
         >Note this setting makes no difference on desktop and might not work 100% if you're not
         using a real device</Caption>
     <DebugEvent>
@@ -38,14 +38,14 @@
                 position={"bottom"}
                 align={"middle"}>
                 <Container
-                    width={{ kind: "fixed", size: "200px" }}
+                    width={{ size: "200px" }}
                     padding={"xxl"}
                     mainAxisAlignment={"center"}
                     crossAxisAlignment={"center"}
                     borderStyle={"dashed"}
                     borderColour={"cyan"}
                     borderWidth={"thick"}>
-                    <Subtitle width={{ kind: "hug" }}>Click or long press</Subtitle>
+                    <Subtitle width={"hug"}>Click or long press</Subtitle>
                 </Container>
                 {#snippet menuItems()}
                     <MenuItem onclick={() => onAction("Make a call clicked")}>

@@ -1,5 +1,8 @@
 import { CssVariable } from "./variable";
 
+export const defaultBackgroundGradient =
+    "linear-gradient(90deg, var(--warning) 0%, var(--primary) 30%, var(--primary) 70%, var(--tertiary) 100%)";
+
 export class Colour {
     #r: number;
     #g: number;
@@ -128,7 +131,7 @@ export class Colour {
         else if (h < 180) [r, g, b] = [0, c, x];
         else if (h < 240) [r, g, b] = [0, x, c];
         else if (h < 300) [r, g, b] = [x, 0, c];
-        else [r, g, b] = [c, 0, x];
+        else[r, g, b] = [c, 0, x];
 
         return new Colour(
             Math.round((r + m) * 255),
@@ -190,6 +193,7 @@ export class Colours {
         public background1: Colour,
         public background2: Colour,
         public disabledButton: Colour,
+        public myChatBubble: Colour,
         public textPrimary: Colour,
         public textSecondary: Colour,
         public textTertiary: Colour,
@@ -198,6 +202,7 @@ export class Colours {
         public textAccent: Colour,
         public gradientPrimary: Colour,
         public gradientSecondary: Colour,
+        public backdrop: Colour,
     ) {
         this.gradient = new Gradient(gradientPrimary, gradientSecondary);
         this.gradientInverted = new Gradient(gradientSecondary, gradientPrimary);
@@ -221,6 +226,7 @@ export class Colours {
             this.background1.cssVariable("background-1"),
             this.background2.cssVariable("background-2"),
             this.disabledButton.cssVariable("disabled-button"),
+            this.myChatBubble.cssVariable("my-chat-bubble"),
             this.textPrimary.cssVariable("text-primary"),
             this.textSecondary.cssVariable("text-secondary"),
             this.textTertiary.cssVariable("text-tertiary"),
@@ -231,6 +237,8 @@ export class Colours {
             this.gradientInverted.cssVariable("gradient-inverted"),
             this.gradientPrimary.cssVariable("gradient-primary"),
             this.gradientSecondary.cssVariable("gradient-secondary"),
+            this.myChatBubble.cssVariable("my-chat-bubble"),
+            this.backdrop.cssVariable("backdrop"),
         ];
     }
 }
@@ -251,6 +259,8 @@ const dummyColour = Colour.fromHex("#000000");
 export const ColourVars: ColourVarsType = Object.fromEntries(
     Object.keys(
         new Colours(
+            dummyColour,
+            dummyColour,
             dummyColour,
             dummyColour,
             dummyColour,

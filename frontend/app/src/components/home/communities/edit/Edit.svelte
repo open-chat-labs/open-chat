@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { menuCloser } from "component-lib";
     import {
         mobileWidth,
         type CandidateMember,
@@ -11,7 +12,6 @@
     import page from "page";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
-    import { menuCloser } from "../../../../actions/closeMenu";
     import { i18nKey } from "../../../../i18n/i18n";
     import { createCandidateCommunity } from "../../../../stores/community";
     import { toastStore } from "../../../../stores/toast";

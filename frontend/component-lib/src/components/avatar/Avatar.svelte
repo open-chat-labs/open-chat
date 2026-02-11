@@ -1,53 +1,89 @@
 <script lang="ts">
+    import { DefaultAvatar, isValueUrlOrPath } from "component-lib";
     import type { BorderRadiusSize } from "component-lib";
+    import type { Snippet } from "svelte";
 
-    type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl";
+    export type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl" | "xxl" | "huge";
 
     interface Props {
         url: string;
         size?: AvatarSize;
         name?: string;
         radius?: BorderRadiusSize;
+        borderWidth?: "zero" | "thin" | "thick" | "extra-thick";
+        customSize?: string;
+        highlightBorder?: boolean;
+        onClick?: (ev: Event) => void;
+        children?: Snippet;
     }
 
     // TODO - add intersection observer
-    let { url, size = "md", name, radius = "circle" }: Props = $props();
+    let {
+        url,
+        size = "md",
+        name,
+        radius = "circle",
+        highlightBorder = false,
+        borderWidth = highlightBorder ? "thick" : "zero",
+        customSize,
+        onClick,
+        children,
+    }: Props = $props();
+    let borderCss = $derived.by(() => {
+        switch (borderWidth) {
+            case "zero":
+                return "";
+            default:
+                return `padding: var(--bw-${borderWidth});`;
+        }
+    });
+
+    let sizeCss = $derived(`--size: ${customSize ? customSize : `var(--avatar-${size})`};`);
+    let radiusCss = $derived(`border-radius: var(--rad-${radius});`);
 </script>
 
-<img
-    loading="lazy"
-    src={url}
-    alt={name}
-    class={`avatar ${size}`}
-    style={`border-radius: var(--rad-${radius});`} />
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<div
+    class:clickable={onClick !== undefined}
+    class:highlight={highlightBorder}
+    class="border"
+    onclick={onClick}
+    style={`${sizeCss} ${radiusCss} ${borderCss}`}>
+    {#if isValueUrlOrPath(url)}
+        <img
+            loading="lazy"
+            src={url}
+            alt={name}
+            class={`avatar ${size}`}
+            style={`${sizeCss} ${radiusCss}`} />
+    {:else}
+        <DefaultAvatar {name} />
+    {/if}
+    {@render children?.()}
+</div>
 
 <style lang="scss">
+    .border {
+        position: relative;
+        background: var(--background-0);
+        width: var(--size);
+        height: var(--size);
+
+        &.highlight {
+            background: var(--gradient);
+        }
+
+        &.clickable {
+            cursor: pointer;
+        }
+    }
+
     .avatar {
         object-fit: cover;
-
-        &.xs {
-            width: var(--avatar-xs);
-            height: var(--avatar-xs);
-        }
-
-        &.sm {
-            width: var(--avatar-sm);
-            height: var(--avatar-sm);
-        }
-
-        &.md {
-            width: var(--avatar-md);
-            height: var(--avatar-md);
-        }
-
-        &.lg {
-            width: var(--avatar-lg);
-            height: var(--avatar-lg);
-        }
-
-        &.xl {
-            width: var(--avatar-xl);
-            height: var(--avatar-xl);
-        }
+        width: 100%;
+        height: 100%;
+        aspect-ratio: 1 / 1;
+        display: block;
     }
 </style>

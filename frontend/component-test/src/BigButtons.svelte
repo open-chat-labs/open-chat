@@ -23,10 +23,7 @@
         <Container gap={"xl"} direction={"vertical"}>
             <H2>Big button groups</H2>
 
-            <Container
-                width={{ kind: "fixed", size: "450px" }}
-                height={{ kind: "fixed", size: "85px" }}
-                gap={"md"}>
+            <Container width={{ size: "450px" }} height={{ size: "85px" }} gap={"md"}>
                 <BigButton countBadge={23} mode={"active"} onClick={onClicked(onAction)}>
                     {#snippet icon(color)}
                         <AccountMultiplePlus {color} />
@@ -41,10 +38,7 @@
                 </BigButton>
             </Container>
 
-            <Container
-                width={{ kind: "fixed", size: "450px" }}
-                height={{ kind: "fixed", size: "85px" }}
-                gap={"md"}>
+            <Container width={{ size: "450px" }} height={{ size: "85px" }} gap={"md"}>
                 <BigButton
                     mode={selected1 === 0 ? "active" : "default"}
                     onClick={() => (selected1 = 0)}>
@@ -79,12 +73,12 @@
                 borderWidth={"thick"}
                 borderRadius={"xl"}
                 padding={"xl"}
-                width={{ kind: "fixed", size: "500px" }}
-                height={{ kind: "fixed", size: "150px" }}
+                width={{ size: "500px" }}
+                height={{ size: "150px" }}
                 gap={"md"}>
                 <BigButton
                     mode={selected2 === 0 ? "active" : "default"}
-                    width={{ kind: "fixed", size: "150px" }}
+                    width={{ size: "150px" }}
                     onClick={() => (selected2 = 0)}>
                     {#snippet icon(color)}
                         <AccountGroup {color} />
@@ -93,7 +87,7 @@
                 </BigButton>
                 <BigButton
                     mode={selected2 === 1 ? "active" : "default"}
-                    width={{ kind: "fixed", size: "150px" }}
+                    width={{ size: "150px" }}
                     onClick={() => (selected2 = 1)}>
                     {#snippet icon(color)}
                         <AccountGroupOutline {color} />
@@ -102,7 +96,7 @@
                 </BigButton>
                 <BigButton
                     mode={selected2 === 2 ? "active" : "default"}
-                    width={{ kind: "fixed", size: "150px" }}
+                    width={{ size: "150px" }}
                     onClick={() => (selected2 = 2)}>
                     {#snippet icon(color)}
                         <AccountMultiple {color} />
@@ -111,7 +105,7 @@
                 </BigButton>
                 <BigButton
                     mode={selected2 === 3 ? "active" : "default"}
-                    width={{ kind: "fixed", size: "150px" }}
+                    width={{ size: "150px" }}
                     onClick={() => (selected2 = 3)}>
                     {#snippet icon(color)}
                         <FlagOutline {color} />

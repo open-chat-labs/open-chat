@@ -1,15 +1,26 @@
 import {
     argIsValid,
+    chatIdentifiersEqual,
     createArgsFromSchema,
+    installationLocationsEqual,
     type BotCommandInstance,
+    type BotInstallationLocation,
+    type ChatSummary,
     type CommandArg,
     type CommandParam,
+    type CommunitySummary,
+    type DirectChatSummary,
+    type EnhancedExternalBot,
     type ExternalBot,
     type FlattenedCommand,
+    type GrantedBotPermissions,
+    type GroupChatSummary,
     type MessageContext,
     type MessageFormatter,
+    type ReadonlyMap,
 } from "openchat-shared";
 import { builtinBot } from "../utils/builtinBotCommands";
+import { communitiesStore, currentUserIdStore } from "./app/stores";
 
 function filterCommand(
     formatter: MessageFormatter,
@@ -281,3 +292,67 @@ export class BotState {
 }
 
 export const botState = new BotState();
+
+export function hydrateBots(
+    installed: ReadonlyMap<string, GrantedBotPermissions>,
+    allBots: Map<string, ExternalBot>,
+): EnhancedExternalBot[] {
+    return [...installed.entries()].reduce((bots, [id, perm]) => {
+        const bot = allBots.get(id);
+        if (bot !== undefined) {
+            bots.push({
+                ...bot,
+                grantedPermissions: perm,
+            });
+        }
+        return bots;
+    }, [] as EnhancedExternalBot[]);
+}
+
+export function botIsInstallable(bot: ExternalBot, location: BotInstallationLocation) {
+    if (bot.definition.restrictedLocations?.includes(location.kind) === false) {
+        return false;
+    }
+
+    switch (bot.registrationStatus.kind) {
+        case "public":
+            return true;
+        case "private": {
+            return (
+                bot.ownerId === currentUserIdStore.value ||
+                (bot.registrationStatus.location !== undefined &&
+                    installationLocationsEqual(bot.registrationStatus.location, location))
+            );
+        }
+    }
+}
+
+export function botContainerFrom(
+    collection: ChatSummary | CommunitySummary,
+): GroupChatSummary | DirectChatSummary | CommunitySummary | undefined {
+    switch (collection.kind) {
+        case "channel":
+            return [...communitiesStore.value.values()].find((c) => {
+                return (
+                    c.channels.findIndex((ch) => chatIdentifiersEqual(ch.id, collection.id)) >= 0
+                );
+            });
+        case "direct_chat":
+            return { ...collection, id: { kind: "direct_chat", userId: currentUserIdStore.value } };
+        default:
+            return collection;
+    }
+}
+
+export function installationLocationFrom(
+    collection: ChatSummary | CommunitySummary,
+): BotInstallationLocation {
+    switch (collection.kind) {
+        case "channel":
+            return { kind: "community", communityId: collection.id.communityId };
+        case "direct_chat":
+            return { kind: "direct_chat", userId: currentUserIdStore.value };
+        default:
+            return collection.id;
+    }
+}

@@ -1,16 +1,16 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import {
+        botIsInstallable,
         botState,
-        currentUserIdStore,
-        installationLocationsEqual,
+        hydrateBots,
+        installationLocationFrom,
         OpenChat,
         ROLE_OWNER,
         type BotInstallationLocation,
         type BotMatch as BotMatchType,
         type CommunityIdentifier,
         type CommunitySummary,
-        type EnhancedExternalBot,
         type ExternalBot,
         type FullMember,
         type GrantedBotPermissions,
@@ -58,16 +58,7 @@
             ? ({ kind: "community", communityId: collection.id.communityId } as CommunityIdentifier)
             : collection.id,
     );
-    let location = $derived.by<BotInstallationLocation>(() => {
-        switch (collection.kind) {
-            case "community":
-                return collection.id;
-            case "group_chat":
-                return collection.id;
-            case "channel":
-                return { kind: "community", communityId: collection.id.communityId };
-        }
-    });
+    let location = $derived<BotInstallationLocation>(installationLocationFrom(collection));
     let canManageBots = $derived(client.canManageBots(collection.id));
     let canAddBots = $derived(canManageBots && collection.kind !== "channel");
     let searchTerm = $derived(searchTermEntered ?? "");
@@ -91,7 +82,7 @@
         [...botState.externalBots.values()].filter(
             (b) =>
                 !installedBots.has(b.id) &&
-                botIsInstallable(b) &&
+                botIsInstallable(b, location) &&
                 matchesSearch(searchTermLower ?? "", [
                     b.name.toLocaleLowerCase(),
                     b.definition.description?.toLocaleLowerCase(),
@@ -101,45 +92,12 @@
 
     let numberOfInstalledBots = $derived(matchingInstalledBots.length + matchingWebhooks.length);
 
-    function botIsInstallable(bot: ExternalBot) {
-        if (bot.definition.restrictedLocations?.includes(location.kind) === false) {
-            return false;
-        }
-
-        switch (bot.registrationStatus.kind) {
-            case "public":
-                return true;
-            case "private": {
-                return (
-                    bot.ownerId === $currentUserIdStore ||
-                    (bot.registrationStatus.location !== undefined &&
-                        installationLocationsEqual(bot.registrationStatus.location, location))
-                );
-            }
-        }
-    }
     function webhookMatches(searchTermLower: string, webhook: WebhookDetails): boolean {
         return matchesSearch(searchTermLower, [webhook.name.toLocaleLowerCase()]);
     }
     function matchesSearch(searchTermLower: string, things: string[]): boolean {
         if (searchTermLower === "") return true;
         return things.some((t) => t !== undefined && t.toLocaleLowerCase().includes(searchTerm));
-    }
-
-    function hydrateBots(
-        bots: ReadonlyMap<string, GrantedBotPermissions>,
-        allBots: Map<string, ExternalBot>,
-    ): EnhancedExternalBot[] {
-        return [...bots.entries()].reduce((bots, [id, perm]) => {
-            const bot = allBots.get(id);
-            if (bot !== undefined) {
-                bots.push({
-                    ...bot,
-                    grantedPermissions: perm,
-                });
-            }
-            return bots;
-        }, [] as EnhancedExternalBot[]);
     }
 
     function onBotSelected(bot: BotMatchType | ExternalBot | undefined) {

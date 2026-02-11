@@ -12,7 +12,7 @@
         {#snippet children(onAction)}
             <Container gap={"xxl"}>
                 <Container
-                    width={{ kind: "fixed", size: "400px" }}
+                    width={{ size: "400px" }}
                     borderWidth={"thick"}
                     borderRadius={"lg"}
                     borderStyle={"dashed"}
@@ -26,7 +26,9 @@
                         {/snippet}
                         Primary list label
                     </ListAction>
-                    <ListAction onClick={() => onAction("Secondary clicked")} colour={"secondary"}>
+                    <ListAction
+                        onClick={() => onAction("Secondary clicked")}
+                        colour={"textSecondary"}>
                         {#snippet icon(color)}
                             <Compass {color} />
                         {/snippet}
@@ -46,7 +48,7 @@
                     </ListAction>
                 </Container>
                 <Container
-                    width={{ kind: "fixed", size: "400px" }}
+                    width={{ size: "400px" }}
                     borderWidth={"thick"}
                     borderRadius={"lg"}
                     borderStyle={"dashed"}
@@ -63,7 +65,9 @@
                         {/snippet}
                         Primary list label
                     </ListAction>
-                    <ListAction onClick={() => onAction("Secondary clicked")} colour={"secondary"}>
+                    <ListAction
+                        onClick={() => onAction("Secondary clicked")}
+                        colour={"textSecondary"}>
                         {#snippet icon(color)}
                             <Compass {color} />
                         {/snippet}

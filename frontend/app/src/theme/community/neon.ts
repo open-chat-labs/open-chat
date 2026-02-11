@@ -15,11 +15,13 @@ const txtPrimary = neon.colours.textPrimary.toString();
 const txtSecondary = neon.colours.textSecondary.toString();
 const txtTertiary = neon.colours.textTertiary.toString();
 const txtPlaceholder = neon.colours.textPlaceholder.toString();
-const buttonGradient = neon.colours.gradientInverted.toString();
+// const buttonGradient = neon.colours.gradientInverted.toString();
 
 export function getTheme(base: Theme): Theme {
     // it's ok to mutate the theme passed in because it's a clone
     base.author = "2yfsq-kaaaa-aaaaf-aaa4q-cai";
+    base.font = '"Manrope", sans-serif';
+    base["font-bold"] = '"Manrope", sans-serif';
     base.mode = "dark";
     base.name = "neon_dark";
     base.label = "Neon";
@@ -39,8 +41,8 @@ export function getTheme(base: Theme): Theme {
     base.panel.right.modal = level0;
     base.panel.nav.bg = level1;
     base.placeholder = txtPlaceholder;
-    base.button.bg = buttonGradient;
-    base.button.hv = buttonGradient;
+    base.button.bg = primary;
+    base.button.hv = primary;
     base.button.txt = txtOnPrimary;
     base.button["hv-txt"] = txtOnPrimary;
     base.button.disabled = buttonDisabled;
@@ -76,7 +78,7 @@ export function getTheme(base: Theme): Theme {
     base.icon.selected = primary;
     base.currentChat.msg.bg = level1;
     base.currentChat.msg.me.bg = primary;
-    base.currentChat.msg.focus = secondary;
+    base.currentChat.msg.focus = primary;
     base.entry.bg = "none";
     base.entry.input.bg = base.input.bg;
     base.entry.input.sh = "none";

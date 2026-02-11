@@ -5,18 +5,20 @@
     interface Props {
         onClick: () => void;
         children: Snippet<[string]>;
+        disabled?: boolean;
     }
 
-    let { children, onClick }: Props = $props();
+    let { children, onClick, disabled = false }: Props = $props();
 </script>
 
 <button
+    {disabled}
     onclick={(e) => {
         e.preventDefault();
         onClick();
     }}
     class="input_icon_button">
-    {@render children(ColourVars.textPrimary)}
+    {@render children(disabled ? ColourVars.textSecondary : ColourVars.textPrimary)}
 </button>
 
 <style lang="scss">
@@ -28,10 +30,10 @@
     .input_icon_button {
         all: unset;
         display: flex;
-        width: 2.5rem;
-        height: 2.5rem;
+        width: 3.25rem;
+        height: 3.25rem;
         background-color: var(--background-1);
-        border-radius: var(--rad-sm);
+        border-radius: var(--rad-circle);
         justify-content: center;
         align-items: center;
         cursor: pointer;

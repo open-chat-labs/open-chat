@@ -1,5 +1,14 @@
+export type VersionPart = "patch" | "minor" | "major";
+
+export type OTAUpdateStrategy = "none" | VersionPart;
+
+// see ./version.spec.ts to get an idea for how this works
 export class Version {
-    constructor(private major: number, private minor: number, private patch: number) {}
+    constructor(
+        private major: number,
+        private minor: number,
+        private patch: number,
+    ) {}
 
     public toText(): string {
         return `${this.major}.${this.minor}.${this.patch}`;
@@ -8,7 +17,11 @@ export class Version {
     public static parse(str: string): Version {
         const parts = str.split(".");
 
-        return new Version(Number.parseInt(parts[0]), Number.parseInt(parts[1]), Number.parseInt(parts[2]));
+        return new Version(
+            Number.parseInt(parts[0]),
+            Number.parseInt(parts[1]),
+            Number.parseInt(parts[2]),
+        );
     }
 
     public isGreaterThan(other: Version): boolean {
@@ -17,5 +30,22 @@ export class Version {
         if (this.minor > other.minor) return true;
         if (this.minor < other.minor) return false;
         return this.patch > other.patch;
+    }
+
+    public canUpdateTo(other: Version, maxOtaUpdate: OTAUpdateStrategy = "major"): boolean {
+        if (!other.isGreaterThan(this)) {
+            return false;
+        }
+
+        switch (maxOtaUpdate) {
+            case "none":
+                return false;
+            case "patch":
+                return this.major === other.major && this.minor === other.minor;
+            case "minor":
+                return this.major === other.major;
+            case "major":
+                return true;
+        }
     }
 }

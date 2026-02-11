@@ -6,6 +6,7 @@
     import BigButtons from "./BigButtons.svelte";
     import Buttons from "./Buttons.svelte";
     import ChatSummaries from "./ChatSummaries.svelte";
+    import Chips from "./Chips.svelte";
     import Colours from "./Colours.svelte";
     import CommonButtons from "./CommonButtons.svelte";
     import ControlsAndIndicators from "./ControlsAndIndicators.svelte";
@@ -22,6 +23,7 @@
     neon.writeCssVariables();
 
     type Section =
+        | "chips"
         | "colours"
         | "buttons"
         | "big_buttons"
@@ -46,6 +48,7 @@
         big_buttons: "Big buttons",
         buttons: "Buttons",
         chat_summary: "Chat summary",
+        chips: "Chips",
         colours: "Colours",
         common_buttons: "Common buttons",
         controls: "Controls & indicators",
@@ -65,12 +68,12 @@
     <MenuItem onclick={() => (selected = section)}>{labels[section]}</MenuItem>
 {/snippet}
 
-<Container gap={"xl"} height={{ kind: "fill" }} direction={"vertical"}>
+<Container gap={"xl"} height={"fill"} direction={"vertical"}>
     <Container crossAxisAlignment={"center"} padding={["zero", "lg"]} gap={"xl"}>
         <MenuTrigger>
             <CommonButton mode="active" size="large">
-                {#snippet icon(color)}
-                    <Burger {color} />
+                {#snippet icon(color, size)}
+                    <Burger {color} {size} />
                 {/snippet}
                 Menu
             </CommonButton>
@@ -83,9 +86,11 @@
         <Overview>{labels[selected]}</Overview>
     </Container>
 
-    <Container height={{ kind: "fill" }} direction={"vertical"} padding={"lg"}>
+    <Container height={"fill"} direction={"vertical"} padding={"lg"}>
         {#if selected === "colours"}
             <Colours></Colours>
+        {:else if selected === "chips"}
+            <Chips></Chips>
         {:else if selected === "buttons"}
             <Buttons></Buttons>
         {:else if selected === "big_buttons"}
