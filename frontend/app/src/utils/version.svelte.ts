@@ -28,6 +28,7 @@ export class VersionChecker {
     }
 
     #startPoller(immediate: boolean) {
+        // this should only operate if we are in the android app and the ota strategy is not set to none
         if (this.#appType !== "android" || this.#strategy === "none") {
             this.#versionState = { kind: "up_to_date" };
             return;
