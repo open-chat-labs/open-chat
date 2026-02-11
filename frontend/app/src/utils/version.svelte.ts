@@ -40,7 +40,7 @@ export class VersionChecker {
         return this.#getServerVersion().then(async (sv) => {
             if (sv === undefined) return;
 
-            if (sv.isGreaterThan(this.#clientVersion, this.#strategy)) {
+            if (this.#clientVersion.canUpdateTo(sv, this.#strategy)) {
                 this.#poller?.stop();
 
                 this.#versionState = {

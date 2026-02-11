@@ -24,24 +24,28 @@ export class Version {
         );
     }
 
-    public isGreaterThan(other: Version, strategy: OTAUpdateStrategy = "patch"): boolean {
-        switch (strategy) {
+    public isGreaterThan(other: Version): boolean {
+        if (this.major > other.major) return true;
+        if (this.major < other.major) return false;
+        if (this.minor > other.minor) return true;
+        if (this.minor < other.minor) return false;
+        return this.patch > other.patch;
+    }
+
+    public canUpdateTo(other: Version, maxOtaUpdate: OTAUpdateStrategy = "major"): boolean {
+        if (!other.isGreaterThan(this)) {
+            return false;
+        }
+
+        switch (maxOtaUpdate) {
             case "none":
                 return false;
+            case "patch":
+                return this.major === other.major && this.minor === other.minor;
+            case "minor":
+                return this.major === other.major;
             case "major":
-                return this.major > other.major;
-            case "minor": {
-                if (this.major > other.major) return true;
-                if (this.major < other.major) return false;
-                return this.minor > other.minor;
-            }
-            case "patch": {
-                if (this.major > other.major) return true;
-                if (this.major < other.major) return false;
-                if (this.minor > other.minor) return true;
-                if (this.minor < other.minor) return false;
-                return this.patch > other.patch;
-            }
+                return true;
         }
     }
 }

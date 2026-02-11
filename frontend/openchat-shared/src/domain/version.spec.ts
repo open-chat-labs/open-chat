@@ -26,173 +26,243 @@ describe("Version", () => {
         });
     });
 
-    describe("isGreaterThan with 'none' strategy", () => {
-        test("always returns false regardless of version", () => {
-            const v1 = new Version(2, 0, 0);
-            const v2 = new Version(1, 0, 0);
-            expect(v1.isGreaterThan(v2, "none")).toBe(false);
-        });
-
-        test("returns false even when versions are equal", () => {
-            const v1 = new Version(1, 0, 0);
-            const v2 = new Version(1, 0, 0);
-            expect(v1.isGreaterThan(v2, "none")).toBe(false);
-        });
-    });
-
-    describe("isGreaterThan with 'major' strategy", () => {
-        test("returns true when major version is greater", () => {
-            const v1 = new Version(2, 0, 0);
-            const v2 = new Version(1, 0, 0);
-            expect(v1.isGreaterThan(v2, "major")).toBe(true);
-        });
-
-        test("returns false when major version is equal", () => {
-            const v1 = new Version(1, 5, 0);
-            const v2 = new Version(1, 0, 0);
-            expect(v1.isGreaterThan(v2, "major")).toBe(false);
-        });
-
-        test("returns false when major version is less", () => {
-            const v1 = new Version(1, 0, 0);
-            const v2 = new Version(2, 0, 0);
-            expect(v1.isGreaterThan(v2, "major")).toBe(false);
-        });
-
-        test("ignores minor and patch differences", () => {
-            const v1 = new Version(1, 99, 99);
-            const v2 = new Version(1, 0, 0);
-            expect(v1.isGreaterThan(v2, "major")).toBe(false);
-        });
-    });
-
-    describe("isGreaterThan with 'minor' strategy", () => {
-        test("returns true when major version is greater", () => {
-            const v1 = new Version(2, 0, 0);
-            const v2 = new Version(1, 5, 0);
-            expect(v1.isGreaterThan(v2, "minor")).toBe(true);
-        });
-
-        test("returns false when major version is less", () => {
-            const v1 = new Version(1, 5, 0);
-            const v2 = new Version(2, 0, 0);
-            expect(v1.isGreaterThan(v2, "minor")).toBe(false);
-        });
-
-        test("returns true when major is equal and minor is greater", () => {
-            const v1 = new Version(1, 5, 0);
-            const v2 = new Version(1, 4, 0);
-            expect(v1.isGreaterThan(v2, "minor")).toBe(true);
-        });
-
-        test("returns false when major and minor are equal", () => {
-            const v1 = new Version(1, 5, 10);
-            const v2 = new Version(1, 5, 0);
-            expect(v1.isGreaterThan(v2, "minor")).toBe(false);
-        });
-
-        test("returns false when major is equal and minor is less", () => {
-            const v1 = new Version(1, 4, 0);
-            const v2 = new Version(1, 5, 0);
-            expect(v1.isGreaterThan(v2, "minor")).toBe(false);
-        });
-
-        test("ignores patch differences", () => {
-            const v1 = new Version(1, 5, 99);
-            const v2 = new Version(1, 5, 0);
-            expect(v1.isGreaterThan(v2, "minor")).toBe(false);
-        });
-    });
-
-    describe("isGreaterThan with 'patch' strategy", () => {
+    describe("isGreaterThan", () => {
         test("returns true when major version is greater", () => {
             const v1 = new Version(2, 0, 0);
             const v2 = new Version(1, 5, 10);
-            expect(v1.isGreaterThan(v2, "patch")).toBe(true);
+            expect(v1.isGreaterThan(v2)).toBe(true);
         });
 
         test("returns false when major version is less", () => {
             const v1 = new Version(1, 5, 10);
             const v2 = new Version(2, 0, 0);
-            expect(v1.isGreaterThan(v2, "patch")).toBe(false);
+            expect(v1.isGreaterThan(v2)).toBe(false);
         });
 
         test("returns true when major is equal and minor is greater", () => {
             const v1 = new Version(1, 5, 0);
             const v2 = new Version(1, 4, 10);
-            expect(v1.isGreaterThan(v2, "patch")).toBe(true);
+            expect(v1.isGreaterThan(v2)).toBe(true);
         });
 
         test("returns false when major is equal and minor is less", () => {
             const v1 = new Version(1, 4, 10);
             const v2 = new Version(1, 5, 0);
-            expect(v1.isGreaterThan(v2, "patch")).toBe(false);
+            expect(v1.isGreaterThan(v2)).toBe(false);
         });
 
         test("returns true when major and minor are equal and patch is greater", () => {
             const v1 = new Version(1, 5, 10);
             const v2 = new Version(1, 5, 9);
-            expect(v1.isGreaterThan(v2, "patch")).toBe(true);
+            expect(v1.isGreaterThan(v2)).toBe(true);
         });
 
         test("returns false when major, minor and patch are equal", () => {
             const v1 = new Version(1, 5, 10);
             const v2 = new Version(1, 5, 10);
-            expect(v1.isGreaterThan(v2, "patch")).toBe(false);
+            expect(v1.isGreaterThan(v2)).toBe(false);
         });
 
         test("returns false when major and minor are equal and patch is less", () => {
             const v1 = new Version(1, 5, 9);
             const v2 = new Version(1, 5, 10);
-            expect(v1.isGreaterThan(v2, "patch")).toBe(false);
+            expect(v1.isGreaterThan(v2)).toBe(false);
         });
     });
 
-    describe("isGreaterThan with default strategy", () => {
-        test("defaults to 'patch' strategy", () => {
-            const v1 = new Version(1, 5, 10);
-            const v2 = new Version(1, 5, 9);
-            expect(v1.isGreaterThan(v2)).toBe(true);
+    describe("canUpdateTo with 'none' strategy", () => {
+        test("always returns false regardless of version", () => {
+            const current = new Version(1, 0, 0);
+            const newer = new Version(2, 0, 0);
+            expect(current.canUpdateTo(newer, "none")).toBe(false);
+        });
+
+        test("returns false even for patch updates", () => {
+            const current = new Version(1, 0, 0);
+            const newer = new Version(1, 0, 1);
+            expect(current.canUpdateTo(newer, "none")).toBe(false);
         });
     });
 
-    describe("real-world scenarios", () => {
-        test("typical semver progression", () => {
-            const versions = [
-                Version.parse("1.0.0"),
-                Version.parse("1.0.1"),
-                Version.parse("1.1.0"),
-                Version.parse("2.0.0"),
-            ];
-
-            expect(versions[1].isGreaterThan(versions[0], "patch")).toBe(true);
-            expect(versions[2].isGreaterThan(versions[1], "minor")).toBe(true);
-            expect(versions[3].isGreaterThan(versions[2], "major")).toBe(true);
+    describe("canUpdateTo with 'major' strategy", () => {
+        test("allows major version updates", () => {
+            const current = new Version(1, 5, 3);
+            const newer = new Version(2, 0, 0);
+            expect(current.canUpdateTo(newer, "major")).toBe(true);
         });
 
-        test("OTA update scenarios", () => {
-            const current = Version.parse("1.5.3");
-            const patchUpdate = Version.parse("1.5.4");
-            const minorUpdate = Version.parse("1.6.0");
-            const majorUpdate = Version.parse("2.0.0");
+        test("allows minor version updates", () => {
+            const current = new Version(1, 5, 3);
+            const newer = new Version(1, 6, 0);
+            expect(current.canUpdateTo(newer, "major")).toBe(true);
+        });
 
-            // With 'none' strategy, no updates trigger
-            expect(majorUpdate.isGreaterThan(current, "none")).toBe(false);
+        test("allows patch version updates", () => {
+            const current = new Version(1, 5, 3);
+            const newer = new Version(1, 5, 4);
+            expect(current.canUpdateTo(newer, "major")).toBe(true);
+        });
 
-            // With 'major' strategy, only major updates trigger
-            expect(patchUpdate.isGreaterThan(current, "major")).toBe(false);
-            expect(minorUpdate.isGreaterThan(current, "major")).toBe(false);
-            expect(majorUpdate.isGreaterThan(current, "major")).toBe(true);
+        test("returns false when new version is not greater", () => {
+            const current = new Version(2, 0, 0);
+            const older = new Version(1, 5, 3);
+            expect(current.canUpdateTo(older, "major")).toBe(false);
+        });
 
-            // With 'minor' strategy, minor and major updates trigger
-            expect(patchUpdate.isGreaterThan(current, "minor")).toBe(false);
-            expect(minorUpdate.isGreaterThan(current, "minor")).toBe(true);
-            expect(majorUpdate.isGreaterThan(current, "minor")).toBe(true);
+        test("returns false when versions are equal", () => {
+            const current = new Version(1, 5, 3);
+            const same = new Version(1, 5, 3);
+            expect(current.canUpdateTo(same, "major")).toBe(false);
+        });
+    });
 
-            // With 'patch' strategy, all updates trigger
-            expect(patchUpdate.isGreaterThan(current, "patch")).toBe(true);
-            expect(minorUpdate.isGreaterThan(current, "patch")).toBe(true);
-            expect(majorUpdate.isGreaterThan(current, "patch")).toBe(true);
+    describe("canUpdateTo with 'minor' strategy", () => {
+        test("disallows major version updates", () => {
+            const current = new Version(1, 5, 3);
+            const newer = new Version(2, 0, 0);
+            expect(current.canUpdateTo(newer, "minor")).toBe(false);
+        });
+
+        test("allows minor version updates within same major", () => {
+            const current = new Version(1, 5, 3);
+            const newer = new Version(1, 6, 0);
+            expect(current.canUpdateTo(newer, "minor")).toBe(true);
+        });
+
+        test("allows patch version updates within same major", () => {
+            const current = new Version(1, 5, 3);
+            const newer = new Version(1, 5, 4);
+            expect(current.canUpdateTo(newer, "minor")).toBe(true);
+        });
+
+        test("allows multiple minor increments", () => {
+            const current = new Version(1, 5, 3);
+            const newer = new Version(1, 8, 0);
+            expect(current.canUpdateTo(newer, "minor")).toBe(true);
+        });
+
+        test("returns false when new version is not greater", () => {
+            const current = new Version(1, 6, 0);
+            const older = new Version(1, 5, 3);
+            expect(current.canUpdateTo(older, "minor")).toBe(false);
+        });
+
+        test("returns false when versions are equal", () => {
+            const current = new Version(1, 5, 3);
+            const same = new Version(1, 5, 3);
+            expect(current.canUpdateTo(same, "minor")).toBe(false);
+        });
+    });
+
+    describe("canUpdateTo with 'patch' strategy", () => {
+        test("disallows major version updates", () => {
+            const current = new Version(1, 5, 3);
+            const newer = new Version(2, 0, 0);
+            expect(current.canUpdateTo(newer, "patch")).toBe(false);
+        });
+
+        test("disallows minor version updates", () => {
+            const current = new Version(1, 5, 3);
+            const newer = new Version(1, 6, 0);
+            expect(current.canUpdateTo(newer, "patch")).toBe(false);
+        });
+
+        test("allows patch version updates within same major and minor", () => {
+            const current = new Version(1, 5, 3);
+            const newer = new Version(1, 5, 4);
+            expect(current.canUpdateTo(newer, "patch")).toBe(true);
+        });
+
+        test("allows multiple patch increments", () => {
+            const current = new Version(1, 5, 3);
+            const newer = new Version(1, 5, 10);
+            expect(current.canUpdateTo(newer, "patch")).toBe(true);
+        });
+
+        test("returns false when new version is not greater", () => {
+            const current = new Version(1, 5, 4);
+            const older = new Version(1, 5, 3);
+            expect(current.canUpdateTo(older, "patch")).toBe(false);
+        });
+
+        test("returns false when versions are equal", () => {
+            const current = new Version(1, 5, 3);
+            const same = new Version(1, 5, 3);
+            expect(current.canUpdateTo(same, "patch")).toBe(false);
+        });
+    });
+
+    describe("canUpdateTo with default strategy", () => {
+        test("defaults to 'major' strategy", () => {
+            const current = new Version(1, 5, 3);
+            const newer = new Version(2, 0, 0);
+            expect(current.canUpdateTo(newer)).toBe(true);
+        });
+    });
+
+    describe("real-world OTA update scenarios", () => {
+        const current = Version.parse("1.5.3");
+
+        test("patch update: 1.5.3 -> 1.5.4", () => {
+            const update = Version.parse("1.5.4");
+
+            expect(current.canUpdateTo(update, "none")).toBe(false);
+            expect(current.canUpdateTo(update, "patch")).toBe(true);
+            expect(current.canUpdateTo(update, "minor")).toBe(true);
+            expect(current.canUpdateTo(update, "major")).toBe(true);
+        });
+
+        test("minor update: 1.5.3 -> 1.6.0", () => {
+            const update = Version.parse("1.6.0");
+
+            expect(current.canUpdateTo(update, "none")).toBe(false);
+            expect(current.canUpdateTo(update, "patch")).toBe(false);
+            expect(current.canUpdateTo(update, "minor")).toBe(true);
+            expect(current.canUpdateTo(update, "major")).toBe(true);
+        });
+
+        test("major update: 1.5.3 -> 2.0.0", () => {
+            const update = Version.parse("2.0.0");
+
+            expect(current.canUpdateTo(update, "none")).toBe(false);
+            expect(current.canUpdateTo(update, "patch")).toBe(false);
+            expect(current.canUpdateTo(update, "minor")).toBe(false);
+            expect(current.canUpdateTo(update, "major")).toBe(true);
+        });
+
+        test("mixed update: 1.5.3 -> 1.6.2 (minor + patch)", () => {
+            const update = Version.parse("1.6.2");
+
+            expect(current.canUpdateTo(update, "none")).toBe(false);
+            expect(current.canUpdateTo(update, "patch")).toBe(false);
+            expect(current.canUpdateTo(update, "minor")).toBe(true);
+            expect(current.canUpdateTo(update, "major")).toBe(true);
+        });
+
+        test("mixed update: 1.5.3 -> 2.1.5 (major + minor + patch)", () => {
+            const update = Version.parse("2.1.5");
+
+            expect(current.canUpdateTo(update, "none")).toBe(false);
+            expect(current.canUpdateTo(update, "patch")).toBe(false);
+            expect(current.canUpdateTo(update, "minor")).toBe(false);
+            expect(current.canUpdateTo(update, "major")).toBe(true);
+        });
+
+        test("conservative patch-only updates", () => {
+            const current = Version.parse("2.0.0");
+
+            expect(current.canUpdateTo(Version.parse("2.0.1"), "patch")).toBe(true);
+            expect(current.canUpdateTo(Version.parse("2.1.0"), "patch")).toBe(false);
+            expect(current.canUpdateTo(Version.parse("3.0.0"), "patch")).toBe(false);
+        });
+
+        test("balanced minor updates", () => {
+            const current = Version.parse("2.0.0");
+
+            expect(current.canUpdateTo(Version.parse("2.0.1"), "minor")).toBe(true);
+            expect(current.canUpdateTo(Version.parse("2.1.0"), "minor")).toBe(true);
+            expect(current.canUpdateTo(Version.parse("2.5.3"), "minor")).toBe(true);
+            expect(current.canUpdateTo(Version.parse("3.0.0"), "minor")).toBe(false);
         });
     });
 });
