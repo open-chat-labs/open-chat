@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
+
 /**
  * This a class that will perform version checks and handle the state of and native downloads
  * Note that this will only do anything for native. The update mechanism is different for web.
@@ -20,8 +20,8 @@ export class VersionChecker {
     #clientVersion = Version.parse(import.meta.env.OC_WEBSITE_VERSION);
     #appType = import.meta.env.OC_APP_TYPE;
     #versionState = $state<VersionState>({ kind: "unknown" });
-    #poller = this.#startPoller(true);
     #strategy: OTAUpdateStrategy = import.meta.env.OC_OTA_UPDATES;
+    #poller = this.#startPoller(true);
 
     get versionState() {
         return this.#versionState;
