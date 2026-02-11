@@ -75,7 +75,7 @@ async function writeBundleZip(
     version,
     store,
 ) {
-    const ota = store ? "minor" : "patch";
+    const ota = store ? "patch" : "major";
     const zipFile = store
         ? path.join(downloadDir, `store-${version}.zip`)
         : path.join(downloadDir, `full-${version}.zip`);
