@@ -54,9 +54,10 @@ impl<R: Runtime> UpdateManager<R> {
 
         if version_file.exists()
             && let Ok(file) = fs::File::open(version_file)
-                && let Ok(info) = serde_json::from_reader::<_, CachedVersion>(file) {
-                    return Version::parse(&info.version).ok();
-                }
+            && let Ok(info) = serde_json::from_reader::<_, CachedVersion>(file)
+        {
+            return Version::parse(&info.version).ok();
+        }
         None
     }
 
