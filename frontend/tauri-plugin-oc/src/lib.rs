@@ -76,25 +76,23 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             let update_manager = update_manager::UpdateManager::new(handle.clone());
             if let Some(cache_dir) = update_manager.get_cache_dir() {
                 let cached_file = cache_dir.join(path);
-                if cached_file.exists() && cached_file.is_file() {
-                    if let Ok(data) = std::fs::read(&cached_file) {
+                if cached_file.exists() && cached_file.is_file()
+                    && let Ok(data) = std::fs::read(&cached_file) {
                         let mime_type = mime_guess::from_path(path)
                             .first_or_octet_stream()
                             .as_ref()
                             .to_string();
                         return build_response(data, &mime_type);
                     }
-                }
 
                 // SPA Fallback (Cache): If not found and no extension, serve cached index.html
                 if std::path::Path::new(path).extension().is_none() {
                     let index_path = "index.html";
                     let cached_index = cache_dir.join(index_path);
-                    if cached_index.exists() && cached_index.is_file() {
-                        if let Ok(data) = std::fs::read(&cached_index) {
+                    if cached_index.exists() && cached_index.is_file()
+                        && let Ok(data) = std::fs::read(&cached_index) {
                             return build_response(data, "text/html");
                         }
-                    }
                 }
             }
 

@@ -52,13 +52,11 @@ impl<R: Runtime> UpdateManager<R> {
         let cache_dir = self.get_cache_dir()?;
         let version_file = cache_dir.join("version.json");
 
-        if version_file.exists() {
-            if let Ok(file) = fs::File::open(version_file) {
-                if let Ok(info) = serde_json::from_reader::<_, CachedVersion>(file) {
+        if version_file.exists()
+            && let Ok(file) = fs::File::open(version_file)
+                && let Ok(info) = serde_json::from_reader::<_, CachedVersion>(file) {
                     return Version::parse(&info.version).ok();
                 }
-            }
-        }
         None
     }
 
