@@ -4,6 +4,7 @@ interface ImportMetaEnv {
     readonly OC_ACCOUNT_LINKING_CODES_ENABLED: string;
     readonly OC_AIRDROP_BOT_CANISTER: string;
     readonly OC_ALCHEMY_API_KEY: string;
+    readonly OC_APP_STORE: string;
     readonly OC_APP_TYPE: "android" | "ios" | "web" | undefined;
     readonly OC_MOBILE_LAYOUT: "v1" | "v2";
     readonly OC_BITCOIN_MAINNET_ENABLED: string;
@@ -24,6 +25,7 @@ interface ImportMetaEnv {
     readonly OC_NOTIFICATIONS_CANISTER: string;
     readonly OC_ONE_SEC_MINTER_CANISTER: string;
     readonly OC_ONLINE_CANISTER: string;
+    readonly OC_OTA_UPDATES: "none" | "major" | "minor" | "patch";
     readonly OC_PREVIEW_PROXY_URL: string;
     readonly OC_PROPOSALS_BOT_CANISTER: string;
     readonly OC_PUBLIC_TRANSLATE_API_KEY: string;

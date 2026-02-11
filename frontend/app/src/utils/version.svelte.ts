@@ -6,7 +6,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import { Poller, Version } from "openchat-client";
+import { Poller, Version, type OTAUpdateStrategy } from "openchat-client";
 
 const VERSION_INTERVAL = 60 * 1000;
 
@@ -17,17 +17,18 @@ type VersionState =
     | { kind: "out_of_date"; compatible: boolean; available: Version; downloadProgress: number };
 
 export class VersionChecker {
-    // @ts-ignore
-    #clientVersion = Version.parse(window.OC_WEBSITE_VERSION);
+    #clientVersion = Version.parse(import.meta.env.OC_WEBSITE_VERSION);
+    #appType = import.meta.env.OC_APP_TYPE;
     #versionState = $state<VersionState>({ kind: "unknown" });
     #poller = this.#startPoller(true);
+    #strategy: OTAUpdateStrategy = import.meta.env.OC_OTA_UPDATES;
 
     get versionState() {
         return this.#versionState;
     }
 
     #startPoller(immediate: boolean) {
-        if (import.meta.env.OC_APP_TYPE !== "android" || import.meta.env.OC_OTA_UPDATES === "none") {
+        if (this.#appType !== "android" || this.#strategy === "none") {
             this.#versionState = { kind: "up_to_date" };
             return;
         }
@@ -38,7 +39,7 @@ export class VersionChecker {
         return this.#getServerVersion().then(async (sv) => {
             if (sv === undefined) return;
 
-            if (sv.isGreaterThan(this.#clientVersion)) {
+            if (sv.isGreaterThan(this.#clientVersion, this.#strategy)) {
                 this.#poller?.stop();
 
                 this.#versionState = {
