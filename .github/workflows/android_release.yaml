@@ -32,6 +32,20 @@ jobs:
                   echo "VERSION=$VERSION" >> $GITHUB_ENV
                   echo "Detected version: $VERSION"
 
+            - name: Free Disk Space
+              run: |
+                  sudo rm -rf /usr/share/dotnet
+                  sudo rm -rf /usr/local/lib/android
+                  sudo rm -rf /opt/ghc
+                  sudo rm -rf /usr/local/share/powershell
+                  sudo rm -rf /usr/share/swift
+                  sudo rm -rf /usr/local/lib/node_modules
+                  sudo rm -rf /usr/lib/google-cloud-sdk
+                  sudo rm -rf /opt/google/chrome
+                  sudo rm -rf /opt/microsoft/powershell
+                  sudo rm -rf /usr/lib/jvm/adoptopenjdk-8-hotspot-amd64
+                  df -h
+
             - name: Setup Java
               uses: actions/setup-java@v4
               with:
@@ -160,6 +174,9 @@ jobs:
                   ANDROID_KEY_STORE_FILE: ${{ env.ANDROID_KEY_STORE_FILE }}
                   OC_APP_STORE: "false"
                   OC_OTA_UPDATES: "major"
+
+            - name: Clean Target Directory
+              run: rm -rf src-tauri/target
 
             - name: Build Android APK (Store)
               run: |
