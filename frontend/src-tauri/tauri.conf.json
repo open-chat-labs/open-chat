@@ -33,7 +33,7 @@
     },
     "plugins": {
         "deep-link": {
-            "mobile": [{ "schema": "openchat", "host": "webtest.oc.app" }]
+            "mobile": [{ "schema": "openchat", "host": "oc.app" }]
         }
     }
 }

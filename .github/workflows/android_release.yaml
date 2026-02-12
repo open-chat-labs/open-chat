@@ -22,13 +22,28 @@ jobs:
               id: extract_version
               run: |
                   if [ "${{ github.event_name }}" == "release" ]; then
-                    # Remove 'v' prefix if present
+                    # Extract version from vX.Y.Z-android format
+                    # Remove 'v' prefix and strip everything after the hyphen
                     VERSION=${GITHUB_REF_NAME#v}
+                    VERSION=${VERSION%%-*}
                   else
                     VERSION="manual-build-${{ github.run_number }}"
                   fi
                   echo "VERSION=$VERSION" >> $GITHUB_ENV
                   echo "Detected version: $VERSION"
+
+            - name: Free Disk Space
+              run: |
+                  sudo rm -rf /usr/share/dotnet
+                  sudo rm -rf /opt/ghc
+                  sudo rm -rf /usr/local/share/powershell
+                  sudo rm -rf /usr/share/swift
+                  sudo rm -rf /usr/local/lib/node_modules
+                  sudo rm -rf /usr/lib/google-cloud-sdk
+                  sudo rm -rf /opt/google/chrome
+                  sudo rm -rf /opt/microsoft/powershell
+                  sudo rm -rf /usr/lib/jvm/adoptopenjdk-8-hotspot-amd64
+                  df -h
 
             - name: Setup Java
               uses: actions/setup-java@v4
@@ -158,6 +173,9 @@ jobs:
                   ANDROID_KEY_STORE_FILE: ${{ env.ANDROID_KEY_STORE_FILE }}
                   OC_APP_STORE: "false"
                   OC_OTA_UPDATES: "major"
+
+            - name: Clean Target Directory
+              run: rm -rf src-tauri/target
 
             - name: Build Android APK (Store)
               run: |
