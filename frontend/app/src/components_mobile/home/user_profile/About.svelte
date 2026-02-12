@@ -1,12 +1,14 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { Body, BodySmall, ColourVars, Container, Logo, Overview } from "component-lib";
-    import type { OpenChat } from "openchat-client";
+    import { publish, type OpenChat } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import { openUrl } from "tauri-plugin-oc-api";
     import SlidingPageContent from "../SlidingPageContent.svelte";
+
+    type OnClick = { kind: "route"; url: string } | { kind: "action"; action: () => void };
 
     const client = getContext<OpenChat>("client");
 
@@ -22,8 +24,10 @@
     }
 </script>
 
-{#snippet menuitem(label: string, route: string)}
-    <Container onClick={() => goTo(route)} crossAxisAlignment={"center"}>
+{#snippet menuitem(label: string, onclick: OnClick)}
+    <Container
+        onClick={onclick.kind === "action" ? onclick.action : () => goTo(onclick.url)}
+        crossAxisAlignment={"center"}>
         <Body fontWeight={"bold"}>{label}</Body>
         <ChevronRight color={ColourVars.primary} />
     </Container>
@@ -42,14 +46,20 @@
             >Android / {version}</BodySmall>
         <div class="line"></div>
         <Container direction={"vertical"} gap={"xl"}>
-            {@render menuitem("Architecture", "/architecture")}
-            {@render menuitem("Blog", "/blog")}
-            {@render menuitem("FAQ", "/faq")}
-            {@render menuitem("Features", "/features")}
-            {@render menuitem("Guidelines", "/guidelines")}
-            {@render menuitem("Metrics", "https://tokenterminal.com/explorer/projects/openchat")}
-            {@render menuitem("Roadmap", "/roadmap")}
-            {@render menuitem("Whitepaper", "/whitepaper")}
+            {@render menuitem("Architecture", {
+                kind: "action",
+                action: () => publish("architecture"),
+            })}
+            {@render menuitem("Blog", { kind: "route", url: "/blog" })}
+            {@render menuitem("FAQ", { kind: "route", url: "/faq" })}
+            {@render menuitem("Features", { kind: "route", url: "/features" })}
+            {@render menuitem("Guidelines", { kind: "route", url: "/guidelines" })}
+            {@render menuitem("Metrics", {
+                kind: "route",
+                url: "https://tokenterminal.com/explorer/projects/openchat",
+            })}
+            {@render menuitem("Roadmap", { kind: "route", url: "/roadmap" })}
+            {@render menuitem("Whitepaper", { kind: "route", url: "/whitepaper" })}
         </Container>
     </Container>
 </SlidingPageContent>

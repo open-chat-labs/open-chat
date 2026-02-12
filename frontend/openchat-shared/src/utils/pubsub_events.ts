@@ -242,4 +242,5 @@ export type PubSubEvents = {
     streakInsurance: undefined;
     createSwap: { fromLedger: string; ctx: MessageContext };
     viewBotCommand: CommandDefinition;
+    architecture: undefined;
 };
