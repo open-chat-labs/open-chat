@@ -7,12 +7,12 @@ use std::io::Cursor;
 use std::path::PathBuf;
 use tauri::{AppHandle, Emitter, Manager, Runtime};
 
-const VERSION_ENDPOINT: &str = "https://webtest.oc.app/version";
+const VERSION_ENDPOINT: &str = "https://oc.app/version";
 // TODO: This needs to be the actual URL where the bundle can be downloaded
 #[cfg(feature = "store")]
-const BUNDLE_URL_TEMPLATE: &str = "https://webtest.oc.app/downloads/store-{}.zip";
+const BUNDLE_URL_TEMPLATE: &str = "https://oc.app/downloads/store-{}.zip";
 #[cfg(not(feature = "store"))]
-const BUNDLE_URL_TEMPLATE: &str = "https://webtest.oc.app/downloads/full-{}.zip";
+const BUNDLE_URL_TEMPLATE: &str = "https://oc.app/downloads/full-{}.zip";
 
 #[derive(Serialize, Deserialize, Debug)]
 struct ServerVersion {
