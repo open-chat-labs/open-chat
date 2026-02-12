@@ -287,7 +287,7 @@
         {percentageExpired}
         {pinned}
         edited={msg.edited}
-        {time}></MessageMetadata>
+        {time} />
 </Container>
 
 <style lang="scss">

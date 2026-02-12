@@ -61,6 +61,7 @@
     import Tips from "./message/Tips.svelte";
     import RepliesTo from "./RepliesTo.svelte";
     import TipBuilder from "./TipBuilder.svelte";
+    import { scrollStatus } from "../../stores/scroll.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -449,6 +450,8 @@
     );
     let showConfirmDelete = $state(false);
 
+    let longpressCooldown = $derived(scrollStatus.isCooldown);
+
     async function deleteMessage(deletionConfirmed: boolean) {
         if (failed) {
             onDeleteFailedMessage?.();
@@ -586,7 +589,9 @@
                         maskUI
                         disabled={!showChatMenu || !intersecting}
                         centered
-                        mobileMode={"longpress"}>
+                        mobileMode="longpress"
+                        longpressAnimation="scale"
+                        {longpressCooldown}>
                         {#snippet menuItems()}
                             {#if showChatMenu && intersecting}
                                 <ChatMessageMenu

@@ -505,13 +505,13 @@ svelte-virtual-list-viewport {
     transition: opacity 250ms ease-in-out;
     position: fixed;
     inset: 0;
-    background: var(--background-0);
+    background: var(--backdrop);
     z-index: 90;
     pointer-events: none;
     opacity: 0;
 
     &.visible {
-        opacity: 0.8;
+        opacity: 1;
     }
 
     &.active {
@@ -566,6 +566,28 @@ svelte-virtual-list-viewport {
         transform: translateX(-100vw);
     }
 }
+
+@keyframes expand-outward {
+    to {
+        width: 100%;
+        height: 100%;
+        box-shadow: var(--menu-sh);
+    }
+}
+
+@keyframes expand-inward {
+    from {
+        width: 100%;
+        height: 100%;
+        box-shadow: var(--menu-sh);
+    }
+    to {
+        width: 0;
+        height: 0;
+        box-shadow: none;
+    }
+}
+
 
 /* VIEW TRANSITIONS */
 

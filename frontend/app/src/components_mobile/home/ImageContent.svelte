@@ -106,6 +106,8 @@
                 {/if}
             </Column>
         {/if}
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
         <img
             bind:this={imgElement}
             onclick={onClick}
@@ -123,6 +125,8 @@
             alt={normalised.caption} />
 
         {#if zoomable && !hidden}
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div class="expand" class:rtl={$rtlStore} class:zoomed={zoom} onclick={toggleZoom}>
                 <ArrowExpand size={"1em"} color={"#fff"} />
             </div>

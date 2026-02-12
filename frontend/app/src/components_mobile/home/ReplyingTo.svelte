@@ -6,6 +6,7 @@
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
+    import ChatMessageReplyContent from "./ChatMessageReplyContent.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -30,46 +31,79 @@
                   $selectedChatWebhooksStore,
               ),
     );
+
+    let fillReplyCancel = $derived(
+        ["image_content", "video_content"].indexOf(replyingTo.content.kind) > -1,
+    );
+
+    // This is transitional, until we adjust replies for different content types.
+    let hasDedicatedReplyContent = $derived(
+        ["image_content"].indexOf(replyingTo.content.kind) > -1,
+    );
 </script>
 
 <Column
-    backgroundColor={me ? ColourVars.myChatBubble : ColourVars.background2}
     borderRadius={"md"}
-    padding={["zero", "zero", "md", "xl"]}
+    padding={["xs", "xs", "zero"]}
     minWidth={"120px"}
     maxHeight={"10rem"}
     width="fill"
     gap={"zero"}>
-    <div class="reply">
-        <Row crossAxisAlignment={"center"}>
-            <ChatCaption fontWeight={"bold"}>
-                {displayName}
-            </ChatCaption>
+    <div class="reply_wrapper" class:me class:with_padding={!hasDedicatedReplyContent}>
+        <div class="cancel_reply" class:filled={fillReplyCancel}>
             <IconButton onclick={onCancelReply} size="sm">
                 {#snippet icon(_color)}
-                    <Close color={me ? ColourVars.textPrimary : ColourVars.textSecondary} />
+                    <Close color={ColourVars.textSecondary} />
                 {/snippet}
             </IconButton>
-        </Row>
-        <div class="reply-content">
-            <ChatMessageContent
-                showPreviews={false}
-                {readonly}
-                {timestamp}
-                messageContext={replyingTo.sourceContext}
-                fill={false}
-                failed={false}
-                blockLevelMarkdown={false}
-                {me}
-                intersecting={true}
-                messageId={replyingTo.messageId}
-                messageIndex={replyingTo.messageIndex}
-                senderId={replyingTo.senderId}
-                truncate
-                edited={replyingTo.edited}
-                content={replyingTo.content}
-                reply />
         </div>
+        {#if hasDedicatedReplyContent}
+            <div class="reply_content" class:me>
+                <ChatMessageReplyContent
+                    showPreviews={false}
+                    {displayName}
+                    {readonly}
+                    {timestamp}
+                    messageContext={replyingTo.sourceContext}
+                    fill={false}
+                    failed={false}
+                    blockLevelMarkdown={false}
+                    {me}
+                    intersecting={true}
+                    messageId={replyingTo.messageId}
+                    messageIndex={replyingTo.messageIndex}
+                    senderId={replyingTo.senderId}
+                    truncate
+                    edited={replyingTo.edited}
+                    content={replyingTo.content}
+                    reply />
+            </div>
+        {:else}
+            <Row crossAxisAlignment={"center"}>
+                <ChatCaption fontWeight={"bold"}>
+                    {displayName}
+                </ChatCaption>
+            </Row>
+            <div class="reply_content no_padding" class:me>
+                <ChatMessageContent
+                    showPreviews={false}
+                    {readonly}
+                    {timestamp}
+                    messageContext={replyingTo.sourceContext}
+                    fill={false}
+                    failed={false}
+                    blockLevelMarkdown={false}
+                    {me}
+                    intersecting={true}
+                    messageId={replyingTo.messageId}
+                    messageIndex={replyingTo.messageIndex}
+                    senderId={replyingTo.senderId}
+                    truncate
+                    edited={replyingTo.edited}
+                    content={replyingTo.content}
+                    reply />
+            </div>
+        {/if}
     </div>
 </Column>
 
@@ -79,8 +113,12 @@
     }
 
     :global {
-        .reply {
+        .reply_wrapper {
             width: 100%;
+            position: relative;
+            padding-left: var(--sp-xl);
+            background-color: var(--background-2);
+            border-radius: var(--rad-lg) var(--rad-lg) var(--rad-sm) var(--rad-sm);
 
             &:before {
                 content: "";
@@ -93,11 +131,41 @@
                 background-color: var(--primary-light);
                 border-radius: var(--rad-circle);
             }
+
+            &.me:before {
+                background-color: var(--secondary-light);
+            }
+
+            &.with_padding {
+                padding-top: var(--sp-sm);
+                padding-bottom: var(--sp-sm);
+            }
         }
 
-        .reply-content {
+        .cancel_reply {
+            position: absolute;
+            right: -0.05rem;
+            top: -0.05rem;
+            z-index: 1;
+
+            &.filled {
+                background-color: var(--background-2);
+                border-radius: var(--rad-circle);
+            }
+
+            &.filled > .icon_button {
+                padding: var(--sp-xxs) !important;
+            }
+        }
+
+        .reply_content {
             pointer-events: none;
-            padding-right: var(--sp-md);
+            padding: var(--sp-xs);
+            padding-left: 0;
+
+            &.no_padding {
+                padding: 0;
+            }
 
             a {
                 color: inherit;

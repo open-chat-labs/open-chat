@@ -13,9 +13,7 @@
         "windows": [
             {
                 "title": "OpenChat",
-                "width": 800,
-                "height": 600,
-                "url": "oc://localhost/"
+                "url": "/"
             }
         ],
         "security": {

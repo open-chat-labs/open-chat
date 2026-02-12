@@ -1,6 +1,6 @@
 <script lang="ts">
     import { fileFromDataTransferItems } from "@src/utils/datatransfer";
-    import { Column } from "component-lib";
+    // import { Column } from "component-lib";
     import {
         messageContextsEqual,
         subscribe,
@@ -155,11 +155,9 @@
                 event={ephemeralMessageEvent} />
         {/if}
         {#if editingEvent === undefined && (replyingTo || attachment !== undefined)}
-            <Column padding={["xxs", "zero", "sm"]}>
-                {#if attachment !== undefined}
-                    <DraftMediaMessage ctx={messageContext} content={attachment} />
-                {/if}
-            </Column>
+            {#if attachment !== undefined}
+                <DraftMediaMessage ctx={messageContext} content={attachment} />
+            {/if}
         {/if}
     </div>
     <MessageEntry

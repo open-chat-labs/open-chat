@@ -88,11 +88,39 @@
 </Container>
 
 <style lang="scss">
+    :global {
+        .menu_trigger_clone {
+            position: relative;
+
+            &:before {
+                content: "";
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+
+                width: 0%;
+                height: 0%;
+                z-index: -1;
+                border-radius: var(--rad-md);
+                background-color: var(--background-1);
+
+                animation: expand-outward 200ms ease-out forwards;
+            }
+        }
+
+        .menu_trigger_clone.collapse {
+            &:before {
+                animation: expand-inward 200ms ease-out forwards;
+            }
+        }
+    }
+
     :global(.menu_trigger_clone > .wallet_token) {
-        border-radius: var(--rad-md) !important;
-        background-color: var(--background-1) !important;
-        box-shadow: var(--menu-sh);
-        opacity: 1 !important;
+        // border-radius: var(--rad-md) !important;
+        // background-color: var(--background-1) !important;
+        // box-shadow: var(--menu-sh);
+        // opacity: 1 !important;
     }
 
     :global(.manage .link-button) {
