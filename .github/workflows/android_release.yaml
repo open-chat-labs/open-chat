@@ -22,8 +22,10 @@ jobs:
               id: extract_version
               run: |
                   if [ "${{ github.event_name }}" == "release" ]; then
-                    # Remove 'v' prefix if present
+                    # Extract version from vX.Y.Z-android format
+                    # Remove 'v' prefix and strip everything after the hyphen
                     VERSION=${GITHUB_REF_NAME#v}
+                    VERSION=${VERSION%%-*}
                   else
                     VERSION="manual-build-${{ github.run_number }}"
                   fi
