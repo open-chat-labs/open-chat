@@ -1,8 +1,13 @@
+<script module lang="ts">
+</script>
+
 <script lang="ts">
     import { Rem } from "component-lib";
     import type { Snippet } from "svelte";
     import { fade } from "svelte/transition";
     import Container from "../Container.svelte";
+
+    type MenuAnimation = "none" | "slideup";
 
     interface Props {
         centered?: boolean;
@@ -10,30 +15,43 @@
         children?: Snippet;
         shadow?: boolean;
         cls?: string;
+        animation?: MenuAnimation;
+        customContent?: boolean;
     }
-
-    let { centered = false, fit = false, children, shadow = true, cls = "" }: Props = $props();
+    let {
+        centered = false,
+        fit = false,
+        children,
+        shadow = true,
+        cls = "",
+        animation = "slideup",
+        customContent = false,
+    }: Props = $props();
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
     oncontextmenu={(e) => e.preventDefault()}
     in:fade={{ duration: 100 }}
-    class={`menu-content ${cls}`}
+    class={`menu-content ${cls} animation-${animation}`}
     class:fit
-    class:shadow
+    class:shadow={shadow && !customContent}
     class:centered>
-    <Container
-        padding={["lg", "zero"]}
-        background={"var(--background-1)"}
-        minWidth={Rem.fromPixels(200).toString()}
-        borderRadius={"xl"}
-        shadow={"var(--shadow-menu)"}
-        width={"fill"}
-        height={"fill"}
-        direction={"vertical"}>
+    {#if customContent}
         {@render children?.()}
-    </Container>
+    {:else}
+        <Container
+            padding={["lg", "zero"]}
+            background={"var(--background-1)"}
+            minWidth={Rem.fromPixels(200).toString()}
+            borderRadius={"xl"}
+            shadow={"var(--shadow-menu)"}
+            width={"fill"}
+            height={"fill"}
+            direction={"vertical"}>
+            {@render children?.()}
+        </Container>
+    {/if}
 </div>
 
 <style lang="scss">
@@ -41,6 +59,10 @@
         max-height: 80vh;
         max-height: var(--override-height, 80vh);
         border-radius: var(--rad-xl);
+
+        &.animation-slideup {
+            animation: slide-up 200ms ease-out forwards;
+        }
 
         &.centered {
             width: 70vw;

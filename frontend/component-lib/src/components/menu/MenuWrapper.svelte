@@ -8,7 +8,7 @@
     } from "component-lib";
     import { onMount, type Snippet } from "svelte";
 
-    interface Props {
+    type Props = {
         children?: Snippet;
         onClose: () => void;
         trigger: HTMLElement;
@@ -16,7 +16,10 @@
         position?: Position;
         align?: Alignment;
         gutter?: number;
-    }
+        customContent?: boolean;
+        positionReferenceElement?: HTMLElement;
+    };
+
     const {
         children,
         onClose,
@@ -25,6 +28,7 @@
         position = "bottom",
         align = "middle",
         gutter = 8,
+        positionReferenceElement,
     }: Props = $props();
 
     let container: HTMLElement | undefined;
@@ -47,7 +51,7 @@
         if (centered) {
             positionInCenter(container);
         } else {
-            reposition(trigger, container, {
+            reposition(positionReferenceElement ?? trigger, container, {
                 position: `${position}-${align}` as NanoPopPosition,
                 margin: gutter,
             });
@@ -72,7 +76,7 @@
 
 <style lang="scss">
     .menu {
-        border-radius: var(--rad-xl);
+        // border-radius: var(--rad-xl);
         position: fixed;
         z-index: 100;
     }

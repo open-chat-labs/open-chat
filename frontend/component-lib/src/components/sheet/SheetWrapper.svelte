@@ -80,7 +80,7 @@
             view-transition-class: transient_sheet;
 
             position: fixed !important;
-            z-index: 30;
+            z-index: 100; // TODO use z-index mixin
             bottom: 0;
             left: 0;
             width: 100%;
@@ -91,7 +91,7 @@
         all: unset;
         inset: 0;
         position: fixed;
-        z-index: 30; // puts it above all content
+        z-index: 100; // TODO use z-index mixin
         background-color: var(--backdrop);
         pointer-events: none;
 

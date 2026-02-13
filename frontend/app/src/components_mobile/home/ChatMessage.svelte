@@ -4,6 +4,7 @@
     import {
         Avatar,
         Container,
+        Column,
         IconButton,
         MenuTrigger,
         Row,
@@ -46,6 +47,7 @@
     import Translatable from "../Translatable.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import ChatMessageMenu from "./ChatMessageMenu.svelte";
+    import ChatMessageSheetMenu from "./ChatMessageSheetMenu.svelte";
     import EmojiPicker from "./EmojiPickerWrapper.svelte";
     import IntersectionObserverComponent from "./IntersectionObserver.svelte";
     import MessageBubble from "./message/MessageBubble.svelte";
@@ -467,6 +469,12 @@
         showConfirmDelete = false;
         await client.deleteMessage(chatId, threadRootMessageIndex, msg.messageId);
     }
+
+    let isSheetMenuOpen = $state(false);
+
+    function openSheetMenu() {
+        isSheetMenuOpen = true;
+    }
 </script>
 
 <svelte:window onresize={recalculateMediaDimensions} />
@@ -510,6 +518,51 @@
             onSkintoneChanged={(tone) => quickReactions.reload(tone)}
             supportCustom={true}
             mode={"reaction"} />
+    </Sheet>
+{/if}
+
+{#if isSheetMenuOpen}
+    <Sheet onDismiss={() => (isSheetMenuOpen = false)}>
+        <Column gap="sm" padding={["lg", "lg", "xxl", "lg"]} maxHeight="70vh">
+            <ChatMessageSheetMenu
+                {chatId}
+                {isProposal}
+                {inert}
+                {publicGroup}
+                {confirmed}
+                {failed}
+                {canShare}
+                {me}
+                {canPin}
+                {canTip}
+                {pinned}
+                {supportsReply}
+                {canQuoteReply}
+                {canStartThread}
+                {multiUserChat}
+                {threadRootMessage}
+                {msg}
+                {canForward}
+                {canBlockUser}
+                {canEdit}
+                {canDelete}
+                {canUndelete}
+                {canRevealDeleted}
+                {canRevealBlocked}
+                translatable={canTranslate}
+                {translated}
+                {onCollapseMessage}
+                onReply={reply}
+                {onRetrySend}
+                onReplyPrivately={replyPrivately}
+                onEditMessage={editMessage}
+                onTipMessage={tipMessage}
+                onReportMessage={reportMessage}
+                onCancelReminder={cancelReminder}
+                onDeleteMessage={deleteMessage}
+                onRemindMe={remindMe}
+                {onDeleteFailedMessage} />
+        </Column>
     </Sheet>
 {/if}
 
@@ -588,55 +641,37 @@
                         constrainMask={scrollingId}
                         maskUI
                         disabled={!showChatMenu || !intersecting}
-                        centered
                         mobileMode="longpress"
                         longpressAnimation="scale"
+                        position="bottom"
+                        customContent={true}
                         {longpressCooldown}>
                         {#snippet menuItems()}
                             {#if showChatMenu && intersecting}
                                 <ChatMessageMenu
                                     {chatId}
-                                    {isProposal}
                                     {inert}
                                     {publicGroup}
                                     {confirmed}
                                     {failed}
                                     {canShare}
                                     {me}
-                                    {canPin}
                                     {canReact}
                                     {canTip}
-                                    {pinned}
                                     {supportsReply}
                                     {canQuoteReply}
                                     {threadRootMessage}
                                     {canStartThread}
-                                    {multiUserChat}
                                     {msg}
-                                    {canForward}
-                                    {canBlockUser}
                                     {canEdit}
-                                    {canDelete}
-                                    {canUndelete}
-                                    {canRevealDeleted}
-                                    {canRevealBlocked}
-                                    translatable={canTranslate}
-                                    {translated}
                                     {selectQuickReaction}
                                     showEmojiPicker={() => {
                                         showEmojiPicker = true;
                                     }}
-                                    {onCollapseMessage}
                                     onReply={reply}
-                                    {onRetrySend}
-                                    {onDeleteFailedMessage}
-                                    onReplyPrivately={replyPrivately}
                                     onEditMessage={editMessage}
                                     onTipMessage={tipMessage}
-                                    onReportMessage={reportMessage}
-                                    onCancelReminder={cancelReminder}
-                                    onDeleteMessage={deleteMessage}
-                                    onRemindMe={remindMe} />
+                                    onOpenSheetMenu={openSheetMenu} />
                             {/if}
                         {/snippet}
                         <MessageBubble
@@ -744,9 +779,12 @@
     :global(.container.message_bubble_wrapper .menu-trigger) {
         width: 100%;
     }
+
     .avatar:not(.first) {
         visibility: hidden;
     }
+
+    // TODO is this used at all?
     .emoji-header {
         display: flex;
         justify-content: space-between;
@@ -754,6 +792,7 @@
         padding: $sp3 $sp4;
         background-color: var(--section-bg);
     }
+
     .bot-context {
         display: flex;
         margin-inline-start: $avatar-width-mob;

@@ -34,6 +34,7 @@
         withBgEffect?: boolean;
         longpressAnimation?: LongpressAnimation;
         longpressCooldown?: boolean;
+        customContent?: boolean;
     }
 
     let props: Props = $props();
@@ -80,6 +81,7 @@
                     children: wrappedMenuItems,
                     onClose: closeMenu,
                     trigger: menu,
+                    positionReferenceElement: menuClone,
                 },
                 context,
             }),
@@ -175,7 +177,7 @@
         }
 
         setTimeout(() => {
-            if (!menuClone) return;
+            if (!menuClone || !menu) return;
 
             // Restore the menu item looks...
             menu.remove();
@@ -212,7 +214,7 @@
 </script>
 
 {#snippet wrappedMenuItems()}
-    <Menu centered={props.centered}>
+    <Menu centered={props.centered} customContent={props.customContent}>
         {@render menuItems()}
     </Menu>
 {/snippet}
