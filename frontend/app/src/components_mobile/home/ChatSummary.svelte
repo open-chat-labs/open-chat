@@ -73,6 +73,7 @@
     import ArchiveOffIcon from "./ArchiveOffIcon.svelte";
     import Markdown from "./Markdown.svelte";
     import BotBadge from "./profile/BotBadge.svelte";
+    import { scrollStatus } from "../../stores/scroll.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -108,6 +109,8 @@
     let muted = $derived(chatSummary.membership.notificationsMuted);
     let atEveryoneMuted = $derived(chatSummary.membership.atEveryoneMuted);
     let LastMessageIcon = $derived(getLastMessageIcon());
+
+    let longpressCooldown = $derived(scrollStatus.isCooldown);
 
     $effect(() => updateUnreadCounts(chatSummary));
 
@@ -358,7 +361,9 @@
             disabled={$suspendedUserStore || readonly}
             position={"top"}
             align={"end"}
-            mobileMode={"longpress"}>
+            mobileMode={"longpress"}
+            withBgEffect={true}
+            {longpressCooldown}>
             {#snippet menuItems()}
                 {#if !$favouritesStore.has(chatSummary.id)}
                     <MenuItem onclick={addToFavourites}>
@@ -461,7 +466,7 @@
             <Container
                 onClick={selectChat}
                 supplementalClass={"chat_summary"}
-                padding={["sm", "sm"]}
+                padding={["lg", "sm"]}
                 mainAxisAlignment={"spaceBetween"}
                 crossAxisAlignment={"center"}
                 gap={"lg"}
@@ -566,19 +571,6 @@
 <style lang="scss">
     :global(.chat-name .with_verified) {
         gap: $sp2;
-    }
-
-    :global(.menu_trigger_clone > .chat_summary) {
-        transition:
-            background-color 300ms ease-out,
-            box-shadow 200ms ease;
-        background-color: var(--background-1) !important;
-        box-shadow: var(--menu-sh);
-    }
-
-    :global(.menu_trigger_clone.fadeout > .chat_summary) {
-        background-color: transparent !important;
-        box-shadow: 0 0 0 rgba(0, 0, 0, 0);
     }
 
     :global(.chat_summary .chat-date) {

@@ -1,9 +1,7 @@
 <script lang="ts">
-    import { DefaultAvatar, isValueUrlOrPath } from "component-lib";
+    import { DefaultAvatar, isValueUrlOrPath, type AvatarSize } from "component-lib";
     import type { BorderRadiusSize } from "component-lib";
     import type { Snippet } from "svelte";
-
-    export type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl" | "xxl" | "huge";
 
     interface Props {
         url: string;
@@ -58,7 +56,7 @@
             class={`avatar ${size}`}
             style={`${sizeCss} ${radiusCss}`} />
     {:else}
-        <DefaultAvatar {name} />
+        <DefaultAvatar {name} {size} />
     {/if}
     {@render children?.()}
 </div>

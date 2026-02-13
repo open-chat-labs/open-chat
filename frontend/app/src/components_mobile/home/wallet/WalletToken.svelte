@@ -51,7 +51,7 @@
         onClick={onClick ? () => onClick(tokenState) : undefined}
         mainAxisAlignment={"spaceBetween"}
         crossAxisAlignment={"center"}
-        padding={["md", "sm", "md", "lg"]}>
+        padding={["lg", "sm", "lg", "lg"]}>
         <Avatar url={token.logo}></Avatar>
         <Container direction={"vertical"}>
             <Subtitle width={"hug"} fontWeight={"bold"}>{token.symbol}</Subtitle>
@@ -90,7 +90,8 @@
         maskUI
         classString={"token_menu_trigger"}
         position={"bottom"}
-        align={"end"}>
+        align={"end"}
+        withBgEffect={true}>
         {#snippet menuItems()}
             <MenuItem onclick={() => tokenState.refreshBalance(client)}>
                 {#snippet icon(color)}

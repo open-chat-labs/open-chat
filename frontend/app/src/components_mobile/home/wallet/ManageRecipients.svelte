@@ -61,7 +61,7 @@
         {#if $namedAccountsStore.length > 0}
             <Container closeMenuOnScroll height={"fill"} gap={"md"} direction={"vertical"}>
                 {#each $namedAccountsStore as account}
-                    <MenuTrigger maskUI fill position={"bottom"} align={"end"}>
+                    <MenuTrigger maskUI fill position={"bottom"} align={"end"} withBgEffect={true}>
                         <Container
                             supplementalClass={"account_list_item"}
                             crossAxisAlignment={"center"}
@@ -125,19 +125,6 @@
 </SlidingPageContent>
 
 <style lang="scss">
-    :global(.menu_trigger_clone > .account_list_item) {
-        background-color: var(--background-1) !important;
-        border-color: transparent !important;
-        box-shadow: var(--menu-sh);
-        opacity: 1 !important;
-        transition: opacity 250ms ease-out;
-    }
-
-    // TODO do we move this to MenuTrigger.svelte?
-    :global(.menu_trigger_clone.fadeout > .account_list_item) {
-        opacity: 0 !important;
-    }
-
     .busy_icon {
         display: flex;
     }

@@ -47,9 +47,8 @@
         viewBox="0 0 128 128"
         fill="none"
         xmlns="http://www.w3.org/2000/svg">
-        <g class={`group-avatar`} clip-path="url(#clip0_6286_21920)">
+        <g class={`group-avatar`}>
             <circle
-                id="ld"
                 class="circle"
                 fill={variant === "filled" ? circleColor : "transparent"}
                 cx="64"
@@ -75,11 +74,6 @@
                 45.0445 80.4246 43.0754C78.4555 41.1063 75.7848 40 73 40Z" />
             {/if}
         </g>
-        <defs>
-            <clipPath id="clip0_6286_21920">
-                <rect width="128" height="128" fill="white" />
-            </clipPath>
-        </defs>
     </svg>
 </div>
 

@@ -519,6 +519,47 @@ svelte-virtual-list-viewport {
     }
 }
 
+
+.menu-trigger {
+    // Background effect for UI elements that have a longpress handler attached
+    // to them. This will animate the bg for the element when it's pushed on
+    // top of the longpress menu overlay.
+    &.with_bg_effect {
+        position: relative;
+
+        &:before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 0%;
+            height: 0%;
+            z-index: -1;
+            border-radius: var(--rad-lg);
+            background-color: var(--background-1);
+        }
+
+        &:not(.collapse) {
+            &:before {
+                animation: expand-bg-outward 200ms ease-out forwards;
+            }
+
+            & > :first-child {
+                border-color: transparent !important;
+            }
+        }
+
+        &.collapse:before {
+            animation: expand-bg-inward 200ms ease-out forwards;
+        }
+    }
+}
+
+
+/* KEYFRAMES */
+
+
 @keyframes fade-in {
     from {
         opacity: 0;
@@ -567,21 +608,36 @@ svelte-virtual-list-viewport {
     }
 }
 
-@keyframes expand-outward {
-    to {
+@keyframes expand-bg-outward {
+    0% {
+        opacity: 0;
+    }
+    30% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
         width: 100%;
         height: 100%;
         box-shadow: var(--menu-sh);
     }
 }
 
-@keyframes expand-inward {
-    from {
+@keyframes expand-bg-inward {
+    0% {
+        opacity: 1;
         width: 100%;
         height: 100%;
         box-shadow: var(--menu-sh);
     }
-    to {
+    80% {
+        opacity: 0;
+        width: 20%;
+        height: 20%;
+        box-shadow: none;
+    }
+    100% {
+        opacity: 0;
         width: 0;
         height: 0;
         box-shadow: none;
@@ -590,6 +646,7 @@ svelte-virtual-list-viewport {
 
 
 /* VIEW TRANSITIONS */
+
 
 $speed: 200ms;
 

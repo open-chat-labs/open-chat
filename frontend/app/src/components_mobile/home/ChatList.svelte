@@ -150,7 +150,6 @@
             <Container
                 supplementalClass={"chat_summary_list"}
                 direction={"vertical"}
-                gap={"lg"}
                 width={"fill"}
                 height={"hug"}
                 padding={["sm", "zero", "zero"]}>
