@@ -80,7 +80,7 @@
             </Container>
             <Container gap={"md"} direction={"vertical"}>
                 {#each ucs.channelNames as channelName}
-                    <MenuTrigger maskUI fill position={"bottom"} align={"end"}>
+                    <MenuTrigger maskUI fill position={"bottom"} align={"end"} withBgEffect={true}>
                         <Container
                             supplementalClass={"channel_list_item"}
                             crossAxisAlignment={"center"}
@@ -145,12 +145,3 @@
         </Container>
     </Container>
 </SlidingPageContent>
-
-<style lang="scss">
-    :global(.menu_trigger_clone > .channel_list_item) {
-        background-color: var(--background-1) !important;
-        border-color: transparent !important;
-        box-shadow: var(--menu-sh);
-        opacity: 1 !important;
-    }
-</style>

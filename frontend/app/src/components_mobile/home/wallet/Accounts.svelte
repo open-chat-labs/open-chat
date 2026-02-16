@@ -54,7 +54,6 @@
 
 <Container
     closeMenuOnScroll
-    gap={"sm"}
     height={"fill"}
     direction={"vertical"}
     padding={["zero", "sm", "huge"]}
@@ -88,41 +87,6 @@
 </Container>
 
 <style lang="scss">
-    :global {
-        .menu_trigger_clone {
-            position: relative;
-
-            &:before {
-                content: "";
-                position: absolute;
-                left: 50%;
-                top: 50%;
-                transform: translate(-50%, -50%);
-
-                width: 0%;
-                height: 0%;
-                z-index: -1;
-                border-radius: var(--rad-md);
-                background-color: var(--background-1);
-
-                animation: expand-outward 200ms ease-out forwards;
-            }
-        }
-
-        .menu_trigger_clone.collapse {
-            &:before {
-                animation: expand-inward 200ms ease-out forwards;
-            }
-        }
-    }
-
-    :global(.menu_trigger_clone > .wallet_token) {
-        // border-radius: var(--rad-md) !important;
-        // background-color: var(--background-1) !important;
-        // box-shadow: var(--menu-sh);
-        // opacity: 1 !important;
-    }
-
     :global(.manage .link-button) {
         padding: 0 0 0 $sp3;
         &:first-child {
@@ -131,10 +95,9 @@
         }
     }
 
-    :global {
-        .wallet_tokens_header {
-            padding-left: 4.25rem !important;
-            padding-right: 2.5rem !important;
-        }
+    :global(.wallet_tokens_header) {
+        padding-left: 4.25rem !important;
+        padding-right: 2.5rem !important;
+        padding-bottom: var(--sp-sm) !important;
     }
 </style>

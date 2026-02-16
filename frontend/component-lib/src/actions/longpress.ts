@@ -166,7 +166,10 @@ export function longpress(node: HTMLElement, args?: LongpressArg) {
     }
 
     if (isTouchDevice) {
-        node.addEventListener("touchend", clearLongPressTimer);
+        node.addEventListener("touchend", () => {
+            clearLongPressTimer();
+            restoreTargetScale();
+        });
         node.addEventListener("touchcancel", clearLongPressTimer);
         node.addEventListener("touchleave", clearLongPressTimer);
         node.addEventListener("touchmove", onTouchMove, { passive: true });

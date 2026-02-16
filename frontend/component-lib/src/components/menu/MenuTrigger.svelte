@@ -31,8 +31,10 @@
         fill?: boolean;
         maskUI?: boolean;
         constrainMask?: string;
+        withBgEffect?: boolean;
         longpressAnimation?: LongpressAnimation;
         longpressCooldown?: boolean;
+        customContent?: boolean;
     }
 
     let props: Props = $props();
@@ -79,6 +81,7 @@
                     children: wrappedMenuItems,
                     onClose: closeMenu,
                     trigger: menu,
+                    positionReferenceElement: menuClone,
                 },
                 context,
             }),
@@ -121,7 +124,11 @@
                 const { parent, left, top, width, height } = calcRectValues(sourceRect);
 
                 overlay.classList.add("visible");
-                menu.classList.add("menu_trigger_clone");
+
+                if (props.withBgEffect) {
+                    // Only applied if bg effect is allowed
+                    menu.classList.add("with_bg_effect");
+                }
 
                 // Insert cloned node, and keep the original node in memory!
                 menu.parentElement?.insertBefore(menuClone, menu);
@@ -145,6 +152,10 @@
         }
     }
 
+    // Note: when cloning a node that holds an SVG, if that svg has a clip path
+    // that depends on unique ids, the svg may not render. If clip path can't
+    // be removed, we'll need to add logic here to modify the ids in the cloned
+    // node.
     function cloneNode() {
         menuClone = menu.cloneNode(true) as HTMLElement;
         menuClone.style.visibility = "hidden";
@@ -161,14 +172,17 @@
     }
 
     function resetNodes() {
-        menu.classList.add("collapse");
+        if (props.withBgEffect) {
+            menu.classList.add("collapse");
+        }
+
         setTimeout(() => {
-            if (!menuClone) return;
+            if (!menuClone || !menu) return;
 
             // Restore the menu item looks...
             menu.remove();
             menu.style.cssText = styleRegistry.get(menu) ?? "";
-            menu.classList.remove("collapse", "menu_trigger_clone");
+            menu.classList.remove("with_bg_effect", "collapse");
 
             // insert menu to its previous place...
             menuClone.parentElement?.insertBefore(menu, menuClone);
@@ -200,7 +214,7 @@
 </script>
 
 {#snippet wrappedMenuItems()}
-    <Menu centered={props.centered}>
+    <Menu centered={props.centered} customContent={props.customContent}>
         {@render menuItems()}
     </Menu>
 {/snippet}
@@ -233,10 +247,6 @@
 {/if}
 
 <style lang="scss">
-    :global(.menu-trigger.open path) {
-        fill: var(--primary);
-    }
-
     .menu-trigger {
         cursor: pointer;
         &.noselect {
