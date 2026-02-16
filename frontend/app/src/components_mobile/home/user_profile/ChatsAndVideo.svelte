@@ -7,6 +7,7 @@
         videoMicOn,
         videoSpeakerView,
     } from "@src/stores/settings";
+    import { disableRestrictedContent } from "@src/utils/features";
     import { Body, BodySmall, Column, Container, H2, Switch } from "component-lib";
     import {
         adultEnabledStore,
@@ -124,43 +125,46 @@
                 <VideoCallRingtone {onTogglePlay} {ringtone} />
             {/each}
         </Container>
-        <Container gap={"xl"} direction={"vertical"}>
-            <H2 colour={"primary"}>
-                <Translatable resourceKey={i18nKey("Restricted content")}></Translatable>
-            </H2>
-            <Setting
-                toggle={() => toggleModerationFlag(ModerationFlags.Offensive)}
-                info={"Choose if you would like to see communities and groups marked as offensive."}>
-                <Switch
-                    width={"fill"}
-                    reverse
-                    onChange={() => toggleModerationFlag(ModerationFlags.Offensive)}
-                    checked={$offensiveEnabledStore}>
-                    <Translatable resourceKey={i18nKey("communities.offensive")}></Translatable>
-                </Switch>
-            </Setting>
-            <Setting
-                toggle={() => toggleModerationFlag(ModerationFlags.Adult)}
-                info={"Choose if you would like to see communitie and groups marked as containing adult content."}>
-                <Switch
-                    width={"fill"}
-                    reverse
-                    onChange={() => toggleModerationFlag(ModerationFlags.Adult)}
-                    checked={$adultEnabledStore}>
-                    <Translatable resourceKey={i18nKey("communities.adult")}></Translatable>
-                </Switch>
-            </Setting>
-            <Setting
-                toggle={() => toggleModerationFlag(ModerationFlags.UnderReview)}
-                info={"Choose if you would like to see communities and groups that are currently under review."}>
-                <Switch
-                    width={"fill"}
-                    reverse
-                    onChange={() => toggleModerationFlag(ModerationFlags.UnderReview)}
-                    checked={$underReviewEnabledStore}>
-                    <Translatable resourceKey={i18nKey("communities.underReview")}></Translatable>
-                </Switch>
-            </Setting>
-        </Container>
+        {#if !disableRestrictedContent}
+            <Container gap={"xl"} direction={"vertical"}>
+                <H2 colour={"primary"}>
+                    <Translatable resourceKey={i18nKey("Restricted content")}></Translatable>
+                </H2>
+                <Setting
+                    toggle={() => toggleModerationFlag(ModerationFlags.Offensive)}
+                    info={"Choose if you would like to see communities and groups marked as offensive."}>
+                    <Switch
+                        width={"fill"}
+                        reverse
+                        onChange={() => toggleModerationFlag(ModerationFlags.Offensive)}
+                        checked={$offensiveEnabledStore}>
+                        <Translatable resourceKey={i18nKey("communities.offensive")}></Translatable>
+                    </Switch>
+                </Setting>
+                <Setting
+                    toggle={() => toggleModerationFlag(ModerationFlags.Adult)}
+                    info={"Choose if you would like to see communitie and groups marked as containing adult content."}>
+                    <Switch
+                        width={"fill"}
+                        reverse
+                        onChange={() => toggleModerationFlag(ModerationFlags.Adult)}
+                        checked={$adultEnabledStore}>
+                        <Translatable resourceKey={i18nKey("communities.adult")}></Translatable>
+                    </Switch>
+                </Setting>
+                <Setting
+                    toggle={() => toggleModerationFlag(ModerationFlags.UnderReview)}
+                    info={"Choose if you would like to see communities and groups that are currently under review."}>
+                    <Switch
+                        width={"fill"}
+                        reverse
+                        onChange={() => toggleModerationFlag(ModerationFlags.UnderReview)}
+                        checked={$underReviewEnabledStore}>
+                        <Translatable resourceKey={i18nKey("communities.underReview")}
+                        ></Translatable>
+                    </Switch>
+                </Setting>
+            </Container>
+        {/if}
     </Container>
 </SlidingPageContent>

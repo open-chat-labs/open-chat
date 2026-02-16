@@ -2,7 +2,9 @@
  * This really boils down to two things: disabling _payments_ or disabling the whole wallet
  */
 
-export const disableWalletFeature = import.meta.env.OC_APP_STORE === "true";
+export const appStoreBuild = import.meta.env.OC_APP_STORE === "true";
+
+export const disableWalletFeature = appStoreBuild;
 
 export const disableCryptoPaymentsFeature = disableWalletFeature;
 
@@ -23,3 +25,5 @@ export const disableSwapFeature = disableCryptoPaymentsFeature;
 export const disableDiamondPaymentFeature = disableCryptoPaymentsFeature;
 
 export const disableMakeProposalFeature = disableCryptoPaymentsFeature;
+
+export const disableRestrictedContent = appStoreBuild;
