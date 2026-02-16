@@ -3,7 +3,7 @@ import type { Emoji } from "emoji-picker-element/shared";
 import { writable } from "svelte/store";
 
 const emojiDb = new EmojiDatabase();
-const showQuickReactionCount = 6;
+const showQuickReactionCount = 15;
 const defaultReactions = ["yes", "tears_of_joy", "pray", "wtf", "heart", "face_vomiting"];
 
 function initQuickReactions() {

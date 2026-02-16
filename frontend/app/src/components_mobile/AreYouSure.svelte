@@ -12,6 +12,7 @@
     interface Props {
         message?: ResourceKey | undefined;
         action: (yes: boolean) => Promise<void>;
+        dismiss?: () => void;
         doubleCheck?: { challenge: ResourceKey; response: ResourceKey } | undefined;
         title?: ResourceKey | undefined;
         yesLabel?: ResourceKey | undefined;
@@ -22,6 +23,7 @@
     let {
         message,
         action,
+        dismiss,
         doubleCheck,
         title = i18nKey("areYouSure"),
         yesLabel = i18nKey("yesPlease"),
@@ -48,7 +50,9 @@
     }
 </script>
 
-<Sheet onDismiss={() => onClick(false)}>
+<!-- TODO look into logic for this component, how to distinguish most effectively
+ between dismissing, pressing no, and pressing yes? -->
+<Sheet onDismiss={dismiss}>
     <Container height={"hug"} padding={"xl"} gap={"xl"} direction={"vertical"}>
         {#if title !== undefined}
             <Title fontWeight={"bold"}>

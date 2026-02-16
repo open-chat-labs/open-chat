@@ -47,13 +47,12 @@
     import Translatable from "../Translatable.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import ChatMessageMenu from "./ChatMessageMenu.svelte";
-    import ChatMessageSheetMenu from "./ChatMessageSheetMenu.svelte";
+    import ChatMessageOptions from "./ChatMessageOptions.svelte";
     import EmojiPicker from "./EmojiPickerWrapper.svelte";
     import IntersectionObserverComponent from "./IntersectionObserver.svelte";
     import MessageBubble from "./message/MessageBubble.svelte";
     import ReminderBuilder from "./ReminderBuilder.svelte";
     import ReportMessage from "./ReportMessage.svelte";
-    // import ThreadSummary from "./ThreadSummary.svelte";
     import { confirmMessageDeletion, dclickReply } from "@src/stores/settings";
     import AreYouSure from "../AreYouSure.svelte";
     import BotMessageContext from "../bots/BotMessageContext.svelte";
@@ -488,7 +487,7 @@
 {/if}
 
 {#if showConfirmDelete}
-    <AreYouSure action={deleteMessage}>
+    <AreYouSure action={deleteMessage} dismiss={() => (showConfirmDelete = false)}>
         <Container gap={"lg"} direction={"vertical"}>
             <Translatable resourceKey={i18nKey("deleteMessageConfirm")}></Translatable>
             <Checkbox
@@ -524,7 +523,8 @@
 {#if isSheetMenuOpen}
     <Sheet onDismiss={() => (isSheetMenuOpen = false)}>
         <Column gap="sm" padding={["lg", "lg", "xxl", "lg"]} maxHeight="70vh">
-            <ChatMessageSheetMenu
+            <ChatMessageOptions
+                menuType="menu_items"
                 {chatId}
                 {isProposal}
                 {inert}
@@ -561,7 +561,8 @@
                 onCancelReminder={cancelReminder}
                 onDeleteMessage={deleteMessage}
                 onRemindMe={remindMe}
-                {onDeleteFailedMessage} />
+                {onDeleteFailedMessage}
+                onOptionSelected={() => (isSheetMenuOpen = false)} />
         </Column>
     </Sheet>
 {/if}
@@ -649,7 +650,9 @@
                         {#snippet menuItems()}
                             {#if showChatMenu && intersecting}
                                 <ChatMessageMenu
+                                    menuType="icon_buttons"
                                     {chatId}
+                                    {isProposal}
                                     {inert}
                                     {publicGroup}
                                     {confirmed}
@@ -657,21 +660,40 @@
                                     {canShare}
                                     {me}
                                     {canReact}
+                                    {canPin}
                                     {canTip}
+                                    {pinned}
                                     {supportsReply}
                                     {canQuoteReply}
-                                    {threadRootMessage}
                                     {canStartThread}
+                                    {multiUserChat}
+                                    {threadRootMessage}
                                     {msg}
+                                    {canForward}
+                                    {canBlockUser}
                                     {canEdit}
                                     {selectQuickReaction}
+                                    {canDelete}
+                                    {canUndelete}
+                                    {canRevealDeleted}
+                                    {canRevealBlocked}
+                                    translatable={canTranslate}
+                                    {translated}
+                                    {onCollapseMessage}
                                     showEmojiPicker={() => {
                                         showEmojiPicker = true;
                                     }}
                                     onReply={reply}
+                                    {onRetrySend}
+                                    onReplyPrivately={replyPrivately}
                                     onEditMessage={editMessage}
                                     onTipMessage={tipMessage}
-                                    onOpenSheetMenu={openSheetMenu} />
+                                    onReportMessage={reportMessage}
+                                    onCancelReminder={cancelReminder}
+                                    onDeleteMessage={deleteMessage}
+                                    onRemindMe={remindMe}
+                                    onOpenSheetMenu={openSheetMenu}
+                                    {onDeleteFailedMessage} />
                             {/if}
                         {/snippet}
                         <MessageBubble
