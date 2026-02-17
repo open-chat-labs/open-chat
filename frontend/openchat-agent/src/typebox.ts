@@ -8839,9 +8839,6 @@ export const ChatEvent = Type.Union([
     Type.Object({
         BotUpdated: BotUpdated,
     }),
-    Type.Object({
-        HistoryDeleted: HistoryDeleted,
-    }),
     Type.Literal("FailedToDeserialize"),
 ]);
 
