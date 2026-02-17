@@ -142,6 +142,7 @@ import type {
     SetBioResponse,
     SetCommunityModerationFlagsResponse,
     SetDisplayNameResponse,
+    SetGroupModerationFlagsResponse,
     SetGroupUpgradeConcurrencyResponse,
     SetMemberDisplayNameResponse,
     SetMessageReminderResponse,
@@ -215,8 +216,8 @@ import {
     isError,
     isSuccessfulEventsResponse,
     mergeEventStreamResponses,
-    messageContextsEqual,
     messageContextToString,
+    messageContextsEqual,
     offline,
     textToCode,
     waitAll,
@@ -290,6 +291,7 @@ import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import { IcpLedgerIndexClient } from "./icpLedgerIndex/icpLedgerIndex.client";
 import { IcpSwapClient } from "./icpSwap/icpSwapClient";
 import { IcpCoinsClient } from "./icpcoins/icpCoinsClient";
+import { IdentityClient } from "./identity/identity.client";
 import { LedgerClient } from "./ledger/ledger.client";
 import { LedgerIndexClient } from "./ledgerIndex/ledgerIndex.client";
 import { LocalUserIndexClient } from "./localUserIndex/localUserIndex.client";
@@ -301,7 +303,6 @@ import { OneSecMinterClient } from "./oneSecMinter/oneSecMinter.client";
 import { OnlineClient } from "./online/online.client";
 import { ProposalsBotClient } from "./proposalsBot/proposalsBot.client";
 import { RegistryClient } from "./registry/registry.client";
-import { IdentityClient } from "./identity/identity.client";
 import { SignInWithEmailClient } from "./signInWithEmail/signInWithEmail.client";
 import { SignInWithEthereumClient } from "./signInWithEthereum/signInWithEthereum.client";
 import { SignInWithSolanaClient } from "./signInWithSolana/signInWithSolana.client";
@@ -3125,6 +3126,15 @@ export class OpenChatAgent extends EventTarget {
         if (offline()) return Promise.resolve("offline");
 
         return this._groupIndexClient.setCommunityModerationFlags(communityId, flags);
+    }
+
+    setGroupModerationFlags(
+        groupId: string,
+        flags: number,
+    ): Promise<SetGroupModerationFlagsResponse> {
+        if (offline()) return Promise.resolve("offline");
+
+        return this._groupIndexClient.setGroupModerationFlags(groupId, flags);
     }
 
     setGroupUpgradeConcurrency(value: number): Promise<SetGroupUpgradeConcurrencyResponse> {

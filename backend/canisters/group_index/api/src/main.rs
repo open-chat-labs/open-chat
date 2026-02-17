@@ -37,6 +37,7 @@ fn main() {
     generate_ts_method!(group_index, remove_hot_group_exclusion);
     generate_ts_method!(group_index, set_community_moderation_flags);
     generate_ts_method!(group_index, set_community_upgrade_concurrency);
+    generate_ts_method!(group_index, set_group_moderation_flags);
     generate_ts_method!(group_index, set_group_upgrade_concurrency);
     generate_ts_method!(group_index, unfreeze_community);
     generate_ts_method!(group_index, unfreeze_group);

@@ -7,12 +7,12 @@ import {
 } from "@icp-sdk/core/identity";
 import { Principal } from "@icp-sdk/core/principal";
 import {
-    type AgentConfig,
     getBotDefinition,
     IdentityAgent,
     OpenChatAgent,
     setCachedWebAuthnKey,
     setCommunityReferral,
+    type AgentConfig,
 } from "openchat-agent";
 import {
     buildIdentityFromJson,
@@ -36,6 +36,7 @@ import {
     type Logout,
     type RemoveIdentityLinkResponse,
     type SetAuthIdentity,
+    type SetAuthIdentityResponse,
     type SetMinLogLevel,
     type VerifyAccountLinkingCodeResponse,
     type WebAuthnKey,
@@ -43,7 +44,6 @@ import {
     type WorkerEvent,
     type WorkerRequest,
     type WorkerResponseInner,
-    type SetAuthIdentityResponse,
 } from "openchat-shared";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -789,6 +789,9 @@ function getAction(
 
         case "setCommunityModerationFlags":
             return agent.setCommunityModerationFlags(payload.communityId, payload.flags);
+
+        case "setGroupModerationFlags":
+            return agent.setGroupModerationFlags(payload.groupId, payload.flags);
 
         case "setGroupUpgradeConcurrency":
             return agent.setGroupUpgradeConcurrency(payload.value);

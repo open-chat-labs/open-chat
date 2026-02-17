@@ -1,41 +1,43 @@
-import { mapOptional, principalBytesToString } from "../../utils/mapping";
 import type {
     AddHotGroupExclusionResponse,
+    ChannelIdentifier,
+    CommunityMatch,
     DeleteFrozenGroupResponse,
+    ExploreCommunitiesResponse,
+    FreezeCommunityResponse,
     FreezeGroupResponse,
     GroupChatSummary,
     GroupMatch,
+    GroupSearchResponse,
     RemoveHotGroupExclusionResponse,
     SetCommunityModerationFlagsResponse,
+    SetGroupModerationFlagsResponse,
     SetGroupUpgradeConcurrencyResponse,
-    UnfreezeGroupResponse,
-    CommunityMatch,
-    GroupSearchResponse,
-    ExploreCommunitiesResponse,
-    ChannelIdentifier,
-    FreezeCommunityResponse,
     UnfreezeCommunityResponse,
+    UnfreezeGroupResponse,
 } from "openchat-shared";
 import { toBigInt32, UnsupportedValueError } from "openchat-shared";
-import { publicGroupSummary } from "../common/publicSummaryMapperV2";
-import { accessGateConfig, groupSubtype, ocError } from "../common/chatMappersV2";
 import type {
-    CommunityMatch as TCommunityMatch,
     GroupIndexAddHotGroupExclusionResponse,
     GroupIndexDeleteFrozenGroupResponse,
     GroupIndexExploreCommunitiesResponse,
     GroupIndexExploreGroupsResponse,
+    GroupIndexFreezeCommunityResponse,
     GroupIndexFreezeGroupResponse,
     GroupIndexLookupChannelByGroupIdResponse,
     GroupIndexRecommendedGroupsResponse,
     GroupIndexRemoveHotGroupExclusionResponse,
     GroupIndexSetCommunityModerationFlagsResponse,
     GroupIndexSetCommunityUpgradeConcurrencyResponse,
-    GroupIndexUnfreezeGroupResponse,
-    GroupMatch as TGroupMatch,
-    GroupIndexFreezeCommunityResponse,
+    GroupIndexSetGroupModerationFlagsResponse,
     GroupIndexUnfreezeCommunityResponse,
+    GroupIndexUnfreezeGroupResponse,
+    CommunityMatch as TCommunityMatch,
+    GroupMatch as TGroupMatch,
 } from "../../typebox";
+import { mapOptional, principalBytesToString } from "../../utils/mapping";
+import { accessGateConfig, groupSubtype, ocError } from "../common/chatMappersV2";
+import { publicGroupSummary } from "../common/publicSummaryMapperV2";
 
 export function recommendedGroupsResponse(
     value: GroupIndexRecommendedGroupsResponse,
@@ -316,6 +318,17 @@ export function setCommunityModerationFlagsResponse(
         "Unexpected ApiSetCommunityModerationFlagsResponse type received",
         value,
     );
+}
+
+export function setGroupModerationFlagsResponse(
+    value: GroupIndexSetGroupModerationFlagsResponse,
+): SetGroupModerationFlagsResponse {
+    if (value === "Success" || value === "Unchanged") {
+        return "success";
+    } else {
+        console.log("Failed to set group moderation flags", value);
+        return "failure";
+    }
 }
 
 function groupMatch(value: TGroupMatch): GroupMatch {
