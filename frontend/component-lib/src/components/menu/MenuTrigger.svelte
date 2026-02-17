@@ -230,6 +230,7 @@
             onpressactive: cloneNode,
             animation: props.longpressAnimation,
             cooldown: props.longpressCooldown,
+            isOpen: open,
         }}>
         {@render children()}
     </div>

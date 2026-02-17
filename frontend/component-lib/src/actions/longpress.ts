@@ -3,6 +3,9 @@ import { isTouchDevice, mobileOperatingSystem } from "component-lib";
 // how close to the edge can we get for a longpress
 const EDGE_TRESHOLD = 24;
 const TRANSITION_DURATION = 250;
+const SCALE_EFFECT_TARGET = "0.95";
+// Menu activates after 80% of the original delay time has passed.
+const MENU_ACTIVATION_THRESHOLD = 0.8;
 
 // Experience tells us that we get a strange rogue click event that fires after a long-press
 // on Safari and we need to deliberately ignore this. No this is not nice.
@@ -67,6 +70,8 @@ type Props = {
     animation?: LongpressAnimation;
     cooldown?: boolean;
     delay?: number;
+    // Helps us prevent longpress-ing again when the menu is already shown!
+    isOpen?: boolean;
 };
 
 // TODO this should basically just be props, but for backwards compatibility we use a union.
@@ -81,6 +86,7 @@ export function longpress(node: HTMLElement, args?: LongpressArg) {
         animation = "none",
         cooldown = false,
         delay = 600,
+        isOpen,
     } = processArgs(args);
 
     let scaleAnimationEnabled = animation === "scale";
@@ -88,6 +94,7 @@ export function longpress(node: HTMLElement, args?: LongpressArg) {
     let scalePressTimer: number | undefined;
     let startX = 0;
     let startY = 0;
+    let menuShown = false;
 
     const originalScale = window.getComputedStyle(node).scale ?? "1.0";
 
@@ -106,13 +113,13 @@ export function longpress(node: HTMLElement, args?: LongpressArg) {
 
     function shrinkTarget() {
         if (scaleAnimationEnabled) {
-            node.style.scale = "0.9";
+            node.style.scale = SCALE_EFFECT_TARGET;
         }
     }
 
     function restoreTargetScale() {
         if (scaleAnimationEnabled) {
-            node.style.scale = "0.9";
+            node.style.scale = SCALE_EFFECT_TARGET;
             // Timeout kicks the CSS defined scale transition.
             requestAnimationFrame(() => {
                 node.style.scale = originalScale;
@@ -121,7 +128,7 @@ export function longpress(node: HTMLElement, args?: LongpressArg) {
     }
 
     function onTouchStart(e: TouchEvent) {
-        if (cooldown || isEdgeTouch(e)) {
+        if (cooldown || menuShown || isEdgeTouch(e)) {
             return;
         }
 
@@ -135,13 +142,18 @@ export function longpress(node: HTMLElement, args?: LongpressArg) {
             shrinkTarget();
         }, delay / 2);
 
+        // We activate the menu after threshold % of the time had passed. In
+        // theory, this should prevent perceived issues with the menu where
+        // users may release the longpress target before full timeout has
+        // passed and no menu showed.
         longPressTimer = window.setTimeout(() => {
             if (mobileOperatingSystem === "iOS") {
                 suppressNextClick();
             }
+            menuShown = true;
             restoreTargetScale();
             onlongpress(e);
-        }, delay);
+        }, delay * MENU_ACTIVATION_THRESHOLD);
 
         // This is so that the first (deepest) longpress wins and short-circuits the process
         // I'm not 100% sure that this isn't going to have some nasty side effect
@@ -180,9 +192,9 @@ export function longpress(node: HTMLElement, args?: LongpressArg) {
     return {
         // Args will be updated whenever they change!
         update(newArgs: LongpressArg) {
-            // We only want cooldown updated for now
             const a = processArgs(newArgs);
             cooldown = a.cooldown ?? false;
+            menuShown = a.isOpen ?? false;
         },
         destroy() {
             if (isTouchDevice) {
