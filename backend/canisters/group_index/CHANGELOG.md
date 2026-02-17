@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Public group moderation flags ([#xxxx](https://github.com/open-chat-labs/open-chat/pull/xxxx))
+- Public group moderation flags ([#8870](https://github.com/open-chat-labs/open-chat/pull/8870))
 
 ## [[2.0.1932](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1932-group_index)] - 2025-12-04
 
