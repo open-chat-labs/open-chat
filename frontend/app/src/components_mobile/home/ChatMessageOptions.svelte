@@ -647,7 +647,7 @@
 {/if}
 
 <!-- Reply privately to a message -->
-{#if confirmed && multiUserChat && !inThread && !me && !isProposal && !inert && !failed}>
+{#if confirmed && multiUserChat && !inThread && !me && !isProposal && !inert && !failed}
     {@render renderMenuItem("replyPrivately")}
 {/if}
 
