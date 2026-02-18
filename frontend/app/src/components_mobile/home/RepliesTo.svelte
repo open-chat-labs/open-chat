@@ -85,7 +85,7 @@
             }
 
             &.me:before {
-                background-color: var(--secondary);
+                background-color: var(--secondary-light);
             }
         }
     }

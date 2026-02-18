@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ChatCaption } from "component-lib";
+    import { ChatCaption, type ColourVarKeys } from "component-lib";
     import type { TextContent } from "openchat-client";
     import { type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
@@ -35,9 +35,11 @@
     }
 
     let text = $derived(truncateText(content.text));
+
+    let textColorTxt = $derived<ColourVarKeys>(me ? "secondaryLight" : "primaryLight");
 </script>
 
 {@render title()}
-<ChatCaption width={"hug"} colour={me ? "secondary" : "primaryLight"} maxLines={3}>
+<ChatCaption width={"hug"} colour={textColorTxt} maxLines={3}>
     <Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} {text} />
 </ChatCaption>
