@@ -723,12 +723,7 @@
                             {onGoToMessageIndex}
                             {chatType}>
                             {#snippet repliesTo(reply)}
-                                <RepliesTo
-                                    {readonly}
-                                    {chatId}
-                                    {intersecting}
-                                    {onRemovePreview}
-                                    repliesTo={reply} />
+                                <RepliesTo {readonly} {chatId} {intersecting} repliesTo={reply} />
                             {/snippet}
 
                             {#snippet messageContent(me)}

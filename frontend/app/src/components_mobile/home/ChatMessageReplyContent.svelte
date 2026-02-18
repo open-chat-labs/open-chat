@@ -20,10 +20,10 @@
     import PrizeWinnerContent from "./PrizeWinnerContent.svelte";
     import ProposalContent from "./proposals/ProposalContent.svelte";
     import ReportedMessageContent from "./ReportedMessageContent.svelte";
-    import TextContent from "./TextContent.svelte";
     import UserReferralCardContent from "./UserReferralCardContent.svelte";
     import VideoCallContent from "./VideoCallContent.svelte";
     import VideoContent from "./VideoContent.svelte";
+    import TextContentReply from "./TextContentReply.svelte";
 
     interface Props {
         content: MessageContent;
@@ -46,9 +46,7 @@
         failed: boolean;
         timestamp?: bigint | undefined;
         blockLevelMarkdown: boolean;
-        showPreviews: boolean;
         onExpandMessage?: (() => void) | undefined;
-        onRemovePreview?: (url: string) => void;
         onRegisterVote?: (vote: { type: "delete" | "register"; answerIndex: number }) => void;
     }
 
@@ -73,9 +71,7 @@
         failed,
         timestamp = undefined,
         blockLevelMarkdown,
-        showPreviews = true,
         onExpandMessage = undefined,
-        onRemovePreview,
         onRegisterVote,
     }: Props = $props();
 </script>
@@ -89,16 +85,7 @@
 {/snippet}
 
 {#if content.kind === "text_content"}
-    <TextContent
-        {me}
-        {fill}
-        {truncate}
-        {pinned}
-        {content}
-        {reply}
-        {blockLevelMarkdown}
-        {showPreviews}
-        {onRemovePreview} />
+    <TextContentReply {title} {me} {truncate} {pinned} {content} {blockLevelMarkdown} />
 {:else if content.kind === "image_content"}
     <ImageContentReply
         {me}

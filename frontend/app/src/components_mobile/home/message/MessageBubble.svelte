@@ -113,13 +113,22 @@
         first && !isProposal && !isPrize && !me && chatType !== "direct_chat",
     );
     let hasReply = $derived(msg.repliesTo !== undefined);
+    let replyToMyself = $derived(
+        msg.repliesTo?.kind === "rehydrated_reply_context"
+            ? msg.repliesTo.senderId === $currentUserIdStore
+            : false,
+    );
     let backgroundColour = $derived.by(() => {
         if (failed) {
             return ColourVars.error;
         }
+        if (msg.deleted) {
+            return "transparent";
+        }
         if (me) {
             return ColourVars.myChatBubble;
         }
+
         return ColourVars.background2;
     });
     let padding = $derived.by<Padding>(() => {
@@ -147,24 +156,19 @@
         }
     });
 
-    // this is terrible
-    function adjustInnerRadius(outer: BorderRadiusSize): BorderRadiusSize {
-        if (outer === "xl") return "lg";
-        return outer;
-    }
-
-    let replyRadius = $derived<Radius>([
-        first && !me ? "sm" : adjustInnerRadius(borderRadius[0] as BorderRadiusSize),
-        first && !me ? "sm" : adjustInnerRadius(borderRadius[1] as BorderRadiusSize),
-        "sm",
-        "sm",
-    ]);
+    // Show only for deleted messages!
+    let borderColour = $derived.by(() => {
+        if (!msg.deleted) return "transparent";
+        if (me) return ColourVars.myChatBubble;
+        return ColourVars.background2;
+    });
 
     let classList = $derived.by(() => {
         const classes = ["message_bubble"];
         if (focused) {
             classes.push("focused");
         }
+        // TODO What is this about? Seems to be attached to "me" and participant's message bubbles.
         if (readByMe) {
             classes.push("read_by_me");
         }
@@ -204,7 +208,9 @@
     {padding}
     gap={"xs"}
     width={"fill"}
-    background={backgroundColour}>
+    background={backgroundColour}
+    {borderColour}
+    borderWidth={msg.deleted ? "thick" : "zero"}>
     {#if showHeader}
         <Container
             width={"hug"}
@@ -253,11 +259,14 @@
             msg.repliesTo.kind === "rehydrated_reply_context" ? msg.repliesTo : undefined}
         <Container
             onClick={reply ? () => zoomToMessage(reply) : undefined}
-            borderRadius={replyRadius}
-            padding={"md"}
+            padding={"sm"}
             supplementalClass={`reply-wrapper ${me ? "me" : ""}`}
             direction={"vertical"}
-            background={me ? ColourVars.primaryMuted : ColourVars.background0}>
+            background={me
+                ? replyToMyself
+                    ? ColourVars.background2
+                    : ColourVars.primaryMuted
+                : ColourVars.background0}>
             {#if msg.repliesTo.kind === "rehydrated_reply_context"}
                 {@render repliesTo(msg.repliesTo)}
             {:else}
@@ -291,34 +300,48 @@
 </Container>
 
 <style lang="scss">
-    :global(.reply-wrapper.me a) {
-        color: inherit;
-    }
+    :global {
+        .reply-wrapper {
+            border-radius: var(--rad-sm) !important;
 
-    :global(.container.message_sender.fill) {
-        position: absolute;
-        color: #fff;
-        z-index: 1;
-        width: max-content !important;
-    }
+            &:not(.me) {
+                border-top-right-radius: var(--rad-md) !important;
+            }
 
-    :global(.container.message_bubble) {
-        transition: box-shadow ease-in 300ms;
-    }
+            &.me {
+                border-top-left-radius: var(--rad-md) !important;
+            }
+        }
 
-    :global(.container.message_bubble a) {
-        color: inherit;
-    }
+        .reply-wrapper.me a {
+            color: inherit;
+        }
 
-    :global(.container.message_bubble .markdown-wrapper) {
-        word-break: break-word;
-    }
+        .container.message_sender.fill {
+            position: absolute;
+            color: #fff;
+            z-index: 1;
+            width: max-content !important;
+        }
 
-    :global(.container.message_bubble.focused) {
-        box-shadow: 0 0 0 4px var(--primary-muted);
-    }
+        .container.message_bubble {
+            transition: box-shadow ease-in 300ms;
+        }
 
-    :global(.container.message_bubble:not(.read_by_me)) {
-        box-shadow: 0 0 0 4px var(--primary-muted);
+        .container.message_bubble a {
+            color: inherit;
+        }
+
+        .container.message_bubble .markdown-wrapper {
+            word-break: break-word;
+        }
+
+        .container.message_bubble.focused {
+            box-shadow: 0 0 0 4px var(--primary-muted);
+        }
+
+        .container.message_bubble:not(.read_by_me) {
+            box-shadow: 0 0 0 4px var(--primary-muted);
+        }
     }
 </style>

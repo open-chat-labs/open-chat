@@ -59,14 +59,11 @@
     });
 </script>
 
-<Row gap="sm">
+<Row gap="sm" minWidth="12rem">
     <Column width="fill" gap="xxs" padding={["xs", "zero"]}>
         {@render title()}
         {#if normalised.caption}
-            <ChatCaption
-                width={"fill"}
-                colour={me ? "secondaryLight" : "primaryLight"}
-                maxLines={3}>
+            <ChatCaption width={"fill"} colour={me ? "secondary" : "primaryLight"} maxLines={3}>
                 <Markdown
                     inline={!blockLevelMarkdown}
                     suppressLinks={pinned}
@@ -75,9 +72,9 @@
         {:else}
             <Row gap="xs" crossAxisAlignment="center">
                 <ImageOutline
-                    color={me ? ColourVars.secondaryLight : ColourVars.primaryLight}
+                    color={me ? ColourVars.secondary : ColourVars.primaryLight}
                     size="1.25rem" />
-                <ChatCaption colour={me ? "secondaryLight" : "primaryLight"}>
+                <ChatCaption colour={me ? "secondary" : "primaryLight"}>
                     <Translatable resourceKey={i18nKey("Photo")} />
                 </ChatCaption>
             </Row>
@@ -98,6 +95,5 @@
         background-size: cover;
         background-position: center;
         border-radius: var(--rad-sm);
-        border-top-right-radius: var(--rad-lg);
     }
 </style>

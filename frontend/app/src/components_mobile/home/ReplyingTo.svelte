@@ -60,7 +60,6 @@
         {#if hasDedicatedReplyContent}
             <div class="reply_content" class:me>
                 <ChatMessageReplyContent
-                    showPreviews={false}
                     {displayName}
                     {readonly}
                     {timestamp}

@@ -45,6 +45,8 @@
         pinned,
         fill,
     }: Props = $props();
+
+    let textColorVar = $derived(me ? ColourVars.primaryLight : ColourVars.textSecondary);
 </script>
 
 {#snippet check(fill: boolean = false)}
@@ -69,22 +71,23 @@
     crossAxisSelfAlignment={"end"}
     width={"hug"}>
     {#if edited}
-        <ChatFootnote>(<Translatable resourceKey={i18nKey("edited")} />)</ChatFootnote>
+        <ChatFootnote colour="primaryLight"
+            >(<Translatable resourceKey={i18nKey("edited")} />)</ChatFootnote>
     {/if}
-    <ChatFootnote>
+    <ChatFootnote colour={me ? "primaryLight" : "textSecondary"}>
         {client.toShortTimeString(new Date(time))}
     </ChatFootnote>
     <Container supplementalClass={"message-metadata-icons"}>
         {#if failed}
-            <AlertCircleOutline />
+            <AlertCircleOutline color={textColorVar} />
         {/if}
         {#if deleted}
-            <DeletedIcon />
+            <DeletedIcon color={textColorVar} />
             {#if undeleting}
                 <div class="confirming"></div>
             {/if}
         {/if}
-        {#if !bot}
+        {#if !bot && !deleted}
             {#if me}
                 {#if accepted}
                     {@render check(true)}
@@ -106,7 +109,7 @@
             {/if}
         {/if}
         {#if pinned}
-            <Pin />
+            <Pin color={textColorVar} />
         {/if}
     </Container>
 </Container>
