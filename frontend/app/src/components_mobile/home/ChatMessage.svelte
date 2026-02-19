@@ -617,7 +617,11 @@
                 padding={last ? ["zero", "zero", "sm", "zero"] : "zero"}
                 gap={"sm"}
                 overflow={"visible"}
-                mainAxisAlignment={me ? "end" : "start"}>
+                mainAxisAlignment={me ? "end" : "start"}
+                pan={{
+                    handler: (direction) => (me && direction === "left" ? editMessage() : reply()),
+                    isScrolling: scrollStatus.isScrolling || scrollStatus.isCooldown,
+                }}>
                 {#if showAvatar}
                     <div class:first class="avatar">
                         <Avatar

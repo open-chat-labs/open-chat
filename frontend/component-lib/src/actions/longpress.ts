@@ -166,7 +166,9 @@ export function longpress(node: HTMLElement, args?: LongpressArg) {
 
         // This is so that the first (deepest) longpress wins and short-circuits the process
         // I'm not 100% sure that this isn't going to have some nasty side effect
-        e.stopImmediatePropagation();
+        // (Note: with this enabled pan/swipe feature of the message bubble does not work since
+        // it depends on the same event type.)
+        // e.stopImmediatePropagation();
     }
 
     function onTouchMove(e: TouchEvent) {
