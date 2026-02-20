@@ -5,7 +5,8 @@ export type PanDirection = "left" | "right";
 
 // TODO perhaps we disallow right/left movement via props? Not a feature at the moment.
 export type PanProps = {
-    handler?: (dir: PanDirection) => void;
+    oncommit?: (dir: PanDirection) => void;
+    onmove?: (dir: PanDirection, factor: number) => void;
     threshold?: number; // Threshold in pixels to consider it a "swipe commit"
     stiffness?: number;
     damping?: number;
@@ -15,6 +16,7 @@ export type PanProps = {
 
 const PAN_VERT_DELTA_DIFF = 50;
 const PAN_ACTIVATION_THRESHOOLD = 30; // Pan does not start immediatelly, but after a certain threshold
+const PAN_HANDLER_THRESHOLD_FACTOR = 0.8; // Handler will be called if at least % of the threshold is reached
 
 export function panWithSpring(node: HTMLElement, props?: PanProps) {
     // Do not init if no props were given...
@@ -22,11 +24,12 @@ export function panWithSpring(node: HTMLElement, props?: PanProps) {
 
     // Props, including spring params – tune these for the feel you want
     let {
-        handler,
+        oncommit,
+        onmove,
         threshold = 100,
-        stiffness = 0.75,
+        stiffness = 0.3,
         damping = 0.95,
-        precision = 0.05,
+        precision = 0.95,
         isScrolling = false,
     } = props;
 
@@ -46,6 +49,10 @@ export function panWithSpring(node: HTMLElement, props?: PanProps) {
         $effect(() => {
             // TODO preserve original translateX
             node.style.transform = `translateX(${spring.current}px)`;
+
+            // To have access to current spring factor, we call the move handler
+            // at this point...
+            onmove?.(getDirection(), getThresholdFactor());
         });
     });
 
@@ -95,7 +102,7 @@ export function panWithSpring(node: HTMLElement, props?: PanProps) {
                 return;
             }
 
-            // Otherwise set new delta X
+            // Otherwise set new delta X, up to movement threshold
             if (Math.abs(currentDx) < threshold) {
                 spring.set(currentDx, { hard: true });
             }
@@ -105,9 +112,9 @@ export function panWithSpring(node: HTMLElement, props?: PanProps) {
     function actionEnd() {
         if (!started) return;
 
-        if (currentDx && Math.abs(currentDx) > threshold) {
+        if (isThresholdReached()) {
             // Depending on the direction, we may fire different actions...
-            handler?.(currentDx < 0 ? "left" : "right");
+            oncommit?.(getDirection());
         }
 
         // Reset vars
@@ -133,6 +140,19 @@ export function panWithSpring(node: HTMLElement, props?: PanProps) {
         // If vertical movement passes a certain threshold compared to
         // horizontal, cancel pan!
         return delta > PAN_VERT_DELTA_DIFF;
+    }
+
+    function isThresholdReached(): boolean {
+        const adjustedThreshold = threshold * PAN_HANDLER_THRESHOLD_FACTOR;
+        return Math.abs(spring.current) > adjustedThreshold;
+    }
+
+    function getThresholdFactor(): number {
+        return Math.min(Math.abs(spring.current / (threshold * PAN_HANDLER_THRESHOLD_FACTOR)), 1);
+    }
+
+    function getDirection(): PanDirection {
+        return (spring.current ?? 0) < 0 ? "left" : "right";
     }
 
     function onContextMenu(e: MouseEvent) {

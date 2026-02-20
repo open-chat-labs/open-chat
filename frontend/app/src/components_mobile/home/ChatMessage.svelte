@@ -10,6 +10,7 @@
         Row,
         Sheet,
         Subtitle,
+        type PanDirection,
     } from "component-lib";
     import {
         type ChatIdentifier,
@@ -63,6 +64,9 @@
     import RepliesTo from "./RepliesTo.svelte";
     import TipBuilder from "./TipBuilder.svelte";
     import { scrollStatus } from "../../stores/scroll.svelte";
+    import Reply from "svelte-material-icons/Reply.svelte";
+    import SquareEditOutline from "svelte-material-icons/SquareEditOutline.svelte";
+    import ShareOutline from "svelte-material-icons/ShareOutline.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -474,6 +478,24 @@
     function openSheetMenu() {
         isSheetMenuOpen = true;
     }
+
+    let panDirection = $state();
+    let panFactor = $state(0);
+
+    function forward() {
+        window.setTimeout(() => publish("forward", msg), 250);
+    }
+
+    function onPanCommit(direction: PanDirection) {
+        if (me && direction === "left") editMessage();
+        if (!me && direction === "left") forward();
+        else reply();
+    }
+
+    function onPanMove(direction: PanDirection, factor: number) {
+        panDirection = direction;
+        panFactor = factor;
+    }
 </script>
 
 <svelte:window onresize={recalculateMediaDimensions} />
@@ -619,7 +641,8 @@
                 overflow={"visible"}
                 mainAxisAlignment={me ? "end" : "start"}
                 pan={{
-                    handler: (direction) => (me && direction === "left" ? editMessage() : reply()),
+                    oncommit: onPanCommit,
+                    onmove: onPanMove,
                     isScrolling: scrollStatus.isScrolling || scrollStatus.isCooldown,
                 }}>
                 {#if showAvatar}
@@ -642,6 +665,20 @@
                     gap={"xxs"}
                     minWidth={"6rem"}
                     direction={"vertical"}>
+                    {#if panDirection}
+                        <div
+                            class={`pan-action ${panDirection}`}
+                            class:active={panFactor >= 1}
+                            style:opacity={panFactor}>
+                            {#if me && panDirection === "left"}
+                                <SquareEditOutline size="1.5rem" />
+                            {:else if !me && panDirection === "left"}
+                                <ShareOutline size="1.5rem" />
+                            {:else}
+                                <Reply size="1.5rem" />
+                            {/if}
+                        </div>
+                    {/if}
                     <MenuTrigger
                         constrainMask={scrollingId}
                         maskUI
@@ -771,7 +808,6 @@
                             reactions={msg.reactions}
                             offset={!hasThread}></Reactions>
                     {/if}
-
                     {#if hasTips && !inert}
                         <Tips
                             {me}
@@ -819,5 +855,41 @@
         margin-inline-start: $avatar-width-mob;
         margin-bottom: $sp2;
         margin-top: $sp2;
+    }
+
+    :global(.pan-action svg) {
+        transition: scale 200ms ease-out;
+    }
+
+    :global(.pan-action.active svg) {
+        scale: 1.25;
+    }
+
+    :global(.pan-action path) {
+        fill: var(--text-secondary);
+        transition: fill 200ms ease-out;
+    }
+
+    :global(.pan-action.active path) {
+        fill: var(--primary-light);
+    }
+
+    .pan-action {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3rem;
+        height: 3rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &.right {
+            left: -4rem;
+        }
+
+        &.left {
+            right: -4rem;
+        }
     }
 </style>
