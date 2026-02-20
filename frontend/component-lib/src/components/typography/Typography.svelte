@@ -223,5 +223,6 @@
         line-clamp: var(--max-lines);
         -webkit-box-orient: vertical;
         -webkit-line-clamp: var(--max-lines);
+        word-break: break-word;
     }
 </style>

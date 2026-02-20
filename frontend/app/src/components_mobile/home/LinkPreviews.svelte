@@ -16,6 +16,7 @@
     import SpotifyPreviewComponent from "./SpotifyPreview.svelte";
     import Tweet from "./Tweet.svelte";
     import YouTubePreview from "./YouTubePreview.svelte";
+    import { ColourVars } from "component-lib";
 
     type Preview =
         | SpotifyPreview
@@ -241,8 +242,13 @@
         class:me>
         {#if me}
             <div class="remove-wrapper" class:rtl>
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div class="remove" onclick={() => removePreview(preview)}>
-                    <CloseIcon viewBox="0 0 24 24" size={$iconSize} color={"var(--button-txt)"} />
+                    <CloseIcon
+                        viewBox="0 0 24 24"
+                        size={$iconSize}
+                        color={ColourVars.textSecondary} />
                 </div>
             </div>
         {/if}
@@ -273,6 +279,7 @@
                         onRendered={renderPreview} />
                 {:else}
                     <GenericPreviewComponent
+                        {me}
                         url={preview.url}
                         {intersecting}
                         onRendered={renderPreview} />
@@ -285,14 +292,8 @@
 <style lang="scss">
     .preview {
         display: none;
-        margin-top: $sp4;
-        border-color: var(--currentChat-msg-separator);
-        flex-direction: row-reverse;
         word-break: break-word;
-
-        &.me {
-            border-color: var(--currentChat-msg-me-separator);
-        }
+        flex-direction: row-reverse;
 
         &.visible {
             display: flex;
@@ -300,13 +301,15 @@
 
         .remove-wrapper {
             flex: 0;
-            position: relative;
-            left: 6px;
-            visibility: hidden;
+            right: 0.25rem;
+            position: absolute;
+            padding: var(--sp-xs);
+            border-radius: var(--rad-circle);
+            background-color: var(--backdrop);
 
             &.rtl {
-                right: 6px;
-                left: unset;
+                right: unset;
+                left: 0.25rem;
             }
         }
 
@@ -317,17 +320,7 @@
 
         .inner {
             flex: 1;
-            border-inline-start: $sp2 solid var(--currentChat-msg-separator);
-            padding-inline-start: 12px;
             max-width: 100%;
-
-            &.me {
-                border-color: var(--currentChat-msg-me-separator);
-            }
         }
-    }
-
-    .preview:hover .remove-wrapper {
-        visibility: visible;
     }
 </style>

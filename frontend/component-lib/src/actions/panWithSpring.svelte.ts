@@ -27,7 +27,7 @@ export function panWithSpring(node: HTMLElement, props?: PanProps) {
         oncommit,
         onmove,
         threshold = 100,
-        stiffness = 0.3,
+        stiffness = 0.5,
         damping = 0.95,
         precision = 0.95,
         isScrolling = false,

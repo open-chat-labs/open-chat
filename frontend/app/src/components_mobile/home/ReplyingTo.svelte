@@ -38,7 +38,7 @@
 
     // This is transitional, until we adjust replies for different content types.
     let hasDedicatedReplyContent = $derived(
-        ["image_content"].indexOf(replyingTo.content.kind) > -1,
+        ["text_content", "image_content"].indexOf(replyingTo.content.kind) > -1,
     );
 </script>
 

@@ -200,7 +200,7 @@
 <Container
     bind:ref
     supplementalClass={classList}
-    overflow={"visible"}
+    overflow={"auto"}
     {onDoubleClick}
     minWidth={senderWidth}
     direction={"vertical"}
@@ -276,6 +276,7 @@
     {/if}
     <!-- this is a bit of an annoying wrapper -->
     <Container
+        overflow="visible"
         borderRadius={fill ? borderRadius : undefined}
         direction={"vertical"}
         gap={"xs"}
