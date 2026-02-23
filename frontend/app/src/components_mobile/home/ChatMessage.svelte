@@ -661,7 +661,7 @@
                     overflow={"visible"}
                     crossAxisAlignment={me ? "end" : "start"}
                     width={"hug"}
-                    maxWidth={"85%"}
+                    maxWidth={"78vw"}
                     gap={"xxs"}
                     minWidth={"6rem"}
                     direction={"vertical"}>
