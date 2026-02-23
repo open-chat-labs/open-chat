@@ -19,5 +19,7 @@ export OC_VAPID_PUBLIC_KEY=BD8RU5tDBbFTDFybDoWhFzlL5+mYptojI6qqqqiit68KSt17+vt33
 export OC_ALCHEMY_API_KEY=6pSBD1eOqwyGDI1xFfV-p
 export OC_BASE_ORIGIN=https://oc.app
 export OC_MOBILE_LAYOUT=v1
+export OC_APP_STORE=false
+export OC_OTA_UPDATES=none
 
 npx rollup -c
