@@ -1,7 +1,8 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { eventListScrolling } from "openchat-client";
-    import { ChatCaption, Column, Label } from "component-lib";
+    import { ChatCaption, Column, Label, ColourVars } from "component-lib";
+    import TooltipImageOutline from "svelte-material-icons/TooltipImageOutline.svelte";
 
     type LinkInfo = {
         url: string;
@@ -48,14 +49,16 @@
     }
 
     trackedEffect("generic-preview", () => {
-        // make sure we only actually *load* the preview once
-        previewPromise = previewPromise ?? loadPreview(url);
-        previewPromise.then((preview) => {
-            if (preview && intersecting && !$eventListScrolling) {
-                rendered = true;
-                onRendered(url);
-            }
-        });
+        setTimeout(() => {
+            // make sure we only actually *load* the preview once
+            previewPromise = previewPromise ?? loadPreview(url);
+            previewPromise.then((preview) => {
+                if (preview && intersecting && !$eventListScrolling) {
+                    rendered = true;
+                    onRendered(url);
+                }
+            });
+        }, 2000);
     });
 
     const urlDomain = $derived.by(() => {
@@ -69,9 +72,14 @@
 </script>
 
 {#snippet previewPlaceholder()}
+    <!-- TODO indicate loading? -->
     <div class="generic-preview placeholder" class:me>
-        <div class="image-preview">
-            <!-- TODO add image icon -->
+        <div
+            class="image-preview"
+            style:background-color={me ? ColourVars.myChatBubble : ColourVars.background2}>
+            <TooltipImageOutline
+                size="3rem"
+                color={me ? ColourVars.primaryMuted : ColourVars.background1} />
         </div>
         <Column padding={["sm", "md"]} gap="sm" width="fill">
             <div class="title-preview">
@@ -97,10 +105,11 @@
             <a href={preview.url} target="_blank">
                 <div class="generic-preview" class:me>
                     {#if preview.image}
-                        <img
+                        <!-- <img
                             class="image"
                             src={preview.image}
-                            alt={preview.imageAlt ?? "link preview image"} />
+                            alt={preview.imageAlt ?? "link preview image"} /> -->
+                        <div class="image" style:background-image={`url(${preview.image})`}></div>
                     {/if}
                     {#if preview.title || preview.description || urlDomain}
                         <Column padding={["sm", "md"]} gap="sm">
@@ -131,11 +140,14 @@
 
 <style lang="scss">
     .generic-preview {
+        width: 78vw; // Same as max message bubble width
         margin: -0.5rem -0.5rem 0 -0.5rem;
 
         .image {
-            max-height: 18rem;
-            max-width: 100%;
+            height: 12rem;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
         &.me {
@@ -150,8 +162,8 @@
     .generic-preview.placeholder {
         .row {
             width: 50%;
-            height: 1rem;
-            margin: 0.25rem 0;
+            height: 0.75rem;
+            margin: 0.5rem 0;
             border-radius: var(--rad-lg);
 
             &.w100 {
@@ -172,7 +184,7 @@
         }
 
         &.me .row {
-            background-color: var(--primary-light);
+            background-color: var(--my-chat-bubble);
         }
 
         &:not(.me) .row {
@@ -180,7 +192,10 @@
         }
 
         .image-preview {
-            height: 6rem;
+            height: 10rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .image-preview,

@@ -2,7 +2,6 @@
     import { previewHeightObserver } from "@utils/previewHeightObserver";
     import {
         eventListScrolling,
-        iconSize,
         offlineStore,
         type MultiUserChatIdentifier,
         type OpenChat,
@@ -245,10 +244,7 @@
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div class="remove" onclick={() => removePreview(preview)}>
-                    <CloseIcon
-                        viewBox="0 0 24 24"
-                        size={$iconSize}
-                        color={ColourVars.textSecondary} />
+                    <CloseIcon viewBox="0 0 24 24" size="1.25rem" color={ColourVars.primaryLight} />
                 </div>
             </div>
         {/if}
@@ -303,9 +299,9 @@
             flex: 0;
             right: 0.25rem;
             position: absolute;
-            padding: var(--sp-xs);
+            padding: var(--sp-xxs);
             border-radius: var(--rad-circle);
-            background-color: var(--backdrop);
+            background-color: var(--primary-muted);
 
             &.rtl {
                 right: unset;
