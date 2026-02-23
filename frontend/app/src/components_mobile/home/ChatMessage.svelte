@@ -840,7 +840,8 @@
     :global(#scrollable-list-chat-messages),
     :global(#scrollable-list-thread-messages) {
         overflow-x: hidden !important;
-        overflow-y: scroll !important;
+        overflow-y: auto !important;
+        overflow-anchor: auto;
     }
 
     :global(.container.message_bubble_wrapper .menu-trigger) {

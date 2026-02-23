@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ChatText } from "component-lib";
+    import { ChatText, Column } from "component-lib";
     import type { OpenChat, TextContent } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -9,7 +9,6 @@
     import LinkPreviews from "./LinkPreviews.svelte";
     import Markdown from "./Markdown.svelte";
 
-    const SIZE_LIMIT = 1000;
     const client = getContext<OpenChat>("client");
 
     interface Props {
@@ -39,21 +38,12 @@
         return urls.length <= 5 ? urls : [];
     }
 
-    function truncateText(text: string): string {
-        // todo - we might be able to do something nicer than this with pure css, but we just need to do
-        // *something* to make sure there a limit to the size of this box
-        if (truncate && text.length > SIZE_LIMIT) {
-            text = text.slice(0, SIZE_LIMIT) + "...";
-        }
-        return text;
-    }
-
     function expand() {
         expanded = true;
     }
 
     let expanded = $derived(!$lowBandwidth && $renderPreviews);
-    let text = $derived(truncateText(content.text));
+    let text = $derived(content.text);
     let previewUrls = $derived(showPreviews ? extractPreviewUrls(content.text) : []);
     let iconColour = $derived(me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)");
 </script>
@@ -66,7 +56,14 @@
             <ArrowExpand viewBox="0 -3 24 24" size={"1em"} color={iconColour} />
         </span>
     {:else}
-        <IntersectionObserver unobserveOnIntersect={false}>
+        <!-- TODO refine the top observer margin of 1000px -->
+        <!-- on low bandwith, observer will trigger once the element is in veiw
+             otherwise it will detect intersection at set margin -->
+        <IntersectionObserver
+            unobserveOnIntersect={false}
+            rootMarginTop={$lowBandwidth ? 0 : 1000}
+            rootMarginBottom={$lowBandwidth ? 0 : 1000}
+            contextId="scrollable-messages-div">
             {#snippet children(intersecting)}
                 <LinkPreviews
                     {me}
@@ -80,9 +77,13 @@
     {/if}
 {/if}
 
-<ChatText width={"hug"}>
-    <Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} {text} />
-</ChatText>
+<Column
+    supplementalClass={`text_content ${truncate ? "truncated" : ""}`}
+    padding={["xs", "sm", "zero"]}>
+    <ChatText width={"hug"} maxLines={truncate ? 3 : undefined}>
+        <Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} {text} />
+    </ChatText>
+</Column>
 
 <style lang="scss">
     .expand {

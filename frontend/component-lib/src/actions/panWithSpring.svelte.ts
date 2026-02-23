@@ -171,9 +171,9 @@ export function panWithSpring(node: HTMLElement, props?: PanProps) {
 
     return {
         // Args will be updated whenever they change!
-        update(props: PanProps) {
-            isScrolling = props.isScrolling ?? false;
-            threshold = props.threshold ?? 100;
+        update(props?: PanProps) {
+            isScrolling = props?.isScrolling ?? false;
+            threshold = props?.threshold ?? 100;
         },
         destroy() {
             // Cleanup and resets...

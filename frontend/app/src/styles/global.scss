@@ -655,6 +655,15 @@ svelte-virtual-list-viewport {
     }
 }
 
+@keyframes move-to-right {
+    from {
+        left: -20rem;
+    }
+    to {
+        left: calc(100% + 20rem);
+    }
+}
+
 /* VIEW TRANSITIONS */
 
 

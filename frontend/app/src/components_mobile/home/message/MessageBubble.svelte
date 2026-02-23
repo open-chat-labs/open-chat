@@ -1,12 +1,5 @@
 <script lang="ts">
-    import {
-        Body,
-        ColourVars,
-        Container,
-        type BorderRadiusSize,
-        type Padding,
-        type Radius,
-    } from "component-lib";
+    import { Body, ColourVars, Container, type BorderRadiusSize, type Radius } from "component-lib";
     import {
         chatIdentifiersEqual,
         chatListScopeStore,
@@ -107,16 +100,10 @@
     );
     let isProposal = $derived(msg.content.kind === "proposal_content");
     let isPrize = $derived(msg.content.kind === "prize_content");
-    let hasReactions = $derived(msg.reactions.length > 0);
+    // let hasReactions = $derived(msg.reactions.length > 0);
     let me = $derived(msg.sender === $currentUserIdStore);
     let showHeader = $derived(
         first && !isProposal && !isPrize && !me && chatType !== "direct_chat",
-    );
-    let hasReply = $derived(msg.repliesTo !== undefined);
-    let replyToMyself = $derived(
-        msg.repliesTo?.kind === "rehydrated_reply_context"
-            ? msg.repliesTo.senderId === $currentUserIdStore
-            : false,
     );
     let backgroundColour = $derived.by(() => {
         if (failed) {
@@ -131,16 +118,6 @@
 
         return ColourVars.background2;
     });
-    let padding = $derived.by<Padding>(() => {
-        if (msg.deleted) return "sm";
-        if (fill) return "zero";
-        const uniform = hasReactions && !hasThread;
-        if (hasReply) {
-            return ["xs", "xs", uniform ? "xs" : "xxs", "xs"];
-        }
-        return [showHeader ? "xs" : "sm", "sm", uniform ? "sm" : "xxs", "sm"];
-    });
-    let contentPadding = $derived<Padding>(hasReply ? "xs" : "zero");
     let borderRadius = $derived.by<Radius>(() => {
         // top, right, bottom, left
         if (me) {
@@ -172,6 +149,9 @@
         if (readByMe) {
             classes.push("read_by_me");
         }
+        if (!showHeader) {
+            classes.push("no_header");
+        }
         return classes.join(" ");
     });
 
@@ -200,22 +180,22 @@
 <Container
     bind:ref
     supplementalClass={classList}
-    overflow={"auto"}
-    {onDoubleClick}
-    minWidth={senderWidth}
-    direction={"vertical"}
-    {borderRadius}
-    {padding}
     gap={"xs"}
     width={"fill"}
+    padding={"xs"}
+    overflow={"auto"}
+    minWidth={senderWidth}
+    direction={"vertical"}
     background={backgroundColour}
+    borderWidth={msg.deleted ? "thick" : "zero"}
+    {borderRadius}
     {borderColour}
-    borderWidth={msg.deleted ? "thick" : "zero"}>
+    {onDoubleClick}>
     {#if showHeader}
         <Container
-            width={"hug"}
+            width="fill"
             bind:ref={senderContainer}
-            padding={fill ? "xs" : "zero"}
+            padding={["zero", "sm"]}
             borderRadius={fill
                 ? [borderRadius[0] as BorderRadiusSize, "zero", "lg", "zero"]
                 : "zero"}
@@ -224,7 +204,9 @@
             crossAxisAlignment={"center"}
             gap={"xs"}
             onClick={onOpenUserProfile}>
-            <Body fontWeight={"bold"} width={"hug"}>{senderDisplayName}</Body>
+            <Body fontWeight={"bold"} width={"hug"} colour="textSecondary">
+                {senderDisplayName}
+            </Body>
             <Badges
                 uniquePerson={sender?.isUniquePerson}
                 diamondStatus={sender?.diamondStatus}
@@ -254,19 +236,13 @@
             {/if}
         </Container>
     {/if}
-    {#if msg.repliesTo !== undefined}
+    {#if !msg.deleted && msg.repliesTo !== undefined}
         {@const reply =
             msg.repliesTo.kind === "rehydrated_reply_context" ? msg.repliesTo : undefined}
         <Container
             onClick={reply ? () => zoomToMessage(reply) : undefined}
-            padding={"sm"}
             supplementalClass={`reply-wrapper ${me ? "me" : ""}`}
-            direction={"vertical"}
-            background={me
-                ? replyToMyself
-                    ? ColourVars.background2
-                    : ColourVars.primaryMuted
-                : ColourVars.background0}>
+            direction={"vertical"}>
             {#if msg.repliesTo.kind === "rehydrated_reply_context"}
                 {@render repliesTo(msg.repliesTo)}
             {:else}
@@ -274,15 +250,7 @@
             {/if}
         </Container>
     {/if}
-    <!-- this is a bit of an annoying wrapper -->
-    <Container
-        overflow="visible"
-        borderRadius={fill ? borderRadius : undefined}
-        direction={"vertical"}
-        gap={"xs"}
-        padding={contentPadding}>
-        {@render messageContent?.(me)}
-    </Container>
+    {@render messageContent?.(me)}
     {#if !msg.deleted}
         <MessageMetadata
             {failed}
@@ -304,22 +272,6 @@
 
 <style lang="scss">
     :global {
-        .reply-wrapper {
-            border-radius: var(--rad-sm) !important;
-
-            &:not(.me) {
-                border-top-right-radius: var(--rad-md) !important;
-            }
-
-            &.me {
-                border-top-left-radius: var(--rad-md) !important;
-            }
-        }
-
-        .reply-wrapper.me a {
-            color: inherit;
-        }
-
         .container.message_sender.fill {
             position: absolute;
             color: #fff;
@@ -340,11 +292,17 @@
         }
 
         .container.message_bubble.focused {
-            box-shadow: 0 0 0 4px var(--primary-muted);
+            box-shadow: 0 0 0 0.25rem var(--primary-muted);
         }
 
         .container.message_bubble:not(.read_by_me) {
-            box-shadow: 0 0 0 4px var(--primary-muted);
+            box-shadow: 0 0 0 0.25rem var(--primary-muted);
+        }
+
+        // Removes extra space between sender name and content of the message.
+        // Only applied in cases where title and text content are siblings.
+        .container.message_sender + .container.text_content {
+            padding-top: 0 !important;
         }
     }
 </style>

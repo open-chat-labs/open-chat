@@ -67,10 +67,10 @@
 <Row
     supplementalClass={`message-metadata ${fill ? "fill" : ""}`}
     gap={"xs"}
-    padding={["zero", "zero", "xs", "zero"]}
+    padding={["xs", "sm", "sm", "md"]}
     crossAxisAlignment={"center"}
-    crossAxisSelfAlignment={"end"}
-    width={"hug"}>
+    mainAxisAlignment={"end"}
+    width={"fill"}>
     <Row gap="xs" width="hug">
         {#if edited}
             <!-- TODO would a pencil icon here be enough to indicate edited content -->

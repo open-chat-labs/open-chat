@@ -1,6 +1,6 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
-    import { Avatar } from "component-lib";
+    import { Avatar, Body } from "component-lib";
     import {
         allUsersStore,
         eventListScrolling,
@@ -82,7 +82,7 @@
 {#if rendered}
     {#await previewPromise then preview}
         {#if preview}
-            <a href={url}>
+            <a class="preview_link" href={url}>
                 <div
                     class="wrapper"
                     class:me
@@ -91,11 +91,9 @@
                         <Avatar
                             url={client.userAvatarUrl($allUsersStore.get(preview.senderId))}
                             size={"xs"} />
-                        <h4
-                            class="username"
-                            class:text-content={preview.content.kind === "text_content"}>
+                        <Body fontWeight="bold" colour={me ? "textPrimary" : "textSecondary"}>
                             {preview.displayName}
-                        </h4>
+                        </Body>
                     </div>
                     <div class="inert">
                         <ChatMessageContent
@@ -114,7 +112,7 @@
                             fill={false}
                             failed={false}
                             blockLevelMarkdown
-                            truncate
+                            truncate={true}
                             reply
                             content={preview.content} />
                     </div>
@@ -125,19 +123,25 @@
 {/if}
 
 <style lang="scss">
+    .preview_link {
+        width: 100%;
+    }
     .wrapper {
         overflow: hidden;
-        @include nice-scrollbar();
         max-height: 300px;
+        width: 100%;
+        padding: var(--sp-md) var(--sp-xs);
+
+        &.me {
+            background-color: var(--primary-muted);
+        }
+
+        &:not(.me) {
+            background-color: var(--background-1);
+        }
 
         .inert {
             pointer-events: none;
-        }
-
-        &:after {
-            content: "";
-            display: table;
-            clear: both;
         }
 
         &.p2pSwap {
@@ -146,8 +150,10 @@
     }
 
     .title {
-        display: flex;
         gap: $sp3;
+        display: flex;
+        padding: 0 var(--sp-sm);
+
         > * {
             flex: 1;
         }

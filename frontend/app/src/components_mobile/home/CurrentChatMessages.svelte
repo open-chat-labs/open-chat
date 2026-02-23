@@ -34,7 +34,7 @@
         unconfirmedStore,
     } from "openchat-client";
     import page from "page";
-    import { getContext, untrack } from "svelte";
+    import { getContext, untrack, setContext } from "svelte";
     import Witch from "../Witch.svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import ChatEventList from "./ChatEventList.svelte";
@@ -88,6 +88,15 @@
     let messagesDivHeight: number = $state(0);
     let initialised = $state(false);
     let currentChatId: ChatIdentifier | undefined = $state();
+
+    // Allows child nodes, like IntersectionObserver to access the root scrollable node to allow rootMargin to be used.
+    let scrollState = $state<{ node: HTMLElement | undefined }>({ node: undefined });
+    setContext("scrollable-messages-div", scrollState);
+    $effect(() => {
+        if (messagesDiv) {
+            scrollState.node = messagesDiv;
+        }
+    });
 
     function onGoToMessageIndex(detail: { index: number }) {
         doGoToMessageIndex(detail.index);
