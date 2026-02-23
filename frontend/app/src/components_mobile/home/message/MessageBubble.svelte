@@ -132,6 +132,7 @@
         return ColourVars.background2;
     });
     let padding = $derived.by<Padding>(() => {
+        if (msg.deleted) return "sm";
         if (fill) return "zero";
         const uniform = hasReactions && !hasThread;
         if (hasReply) {
@@ -159,7 +160,6 @@
     // Show only for deleted messages!
     let borderColour = $derived.by(() => {
         if (!msg.deleted) return "transparent";
-        if (me) return ColourVars.myChatBubble;
         return ColourVars.background2;
     });
 
@@ -283,21 +283,23 @@
         padding={contentPadding}>
         {@render messageContent?.(me)}
     </Container>
-    <MessageMetadata
-        {failed}
-        deleted={msg.deleted}
-        {undeleting}
-        {bot}
-        {me}
-        {fill}
-        {accepted}
-        {chatType}
-        {readByThem}
-        {expiresAt}
-        {percentageExpired}
-        {pinned}
-        edited={msg.edited}
-        {time} />
+    {#if !msg.deleted}
+        <MessageMetadata
+            {failed}
+            deleted={msg.deleted}
+            {undeleting}
+            {bot}
+            {me}
+            {fill}
+            {accepted}
+            {chatType}
+            {readByThem}
+            {expiresAt}
+            {percentageExpired}
+            {pinned}
+            edited={msg.edited}
+            {time} />
+    {/if}
 </Container>
 
 <style lang="scss">

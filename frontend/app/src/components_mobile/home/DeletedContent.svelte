@@ -21,7 +21,7 @@
         me: boolean;
     }
 
-    let { content, undeleting, me }: Props = $props();
+    let { content, undeleting }: Props = $props();
 
     let date = $derived(new Date(Number(content.timestamp)));
     let timestampStr = $derived(
@@ -36,7 +36,7 @@
     );
 </script>
 
-<BodySmall fontWeight={"light"} colour={me ? "primaryLight" : "textSecondary"}>
+<BodySmall fontWeight={"light"} colour={"textTertiary"} italic={true}>
     {#if undeleting}
         <Translatable
             resourceKey={i18nKey("undeletingMessage", {

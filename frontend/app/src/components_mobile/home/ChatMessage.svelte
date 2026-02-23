@@ -628,6 +628,7 @@
     <pre>showChatMenu: {showChatMenu}</pre>
     <pre>ephemeral: {ephemeral}</pre>
 {/if}
+
 {#if expiresAt === undefined || percentageExpired < 100}
     <IntersectionObserverComponent>
         {#snippet children(intersecting)}
@@ -640,11 +641,13 @@
                 gap={"sm"}
                 overflow={"visible"}
                 mainAxisAlignment={me ? "end" : "start"}
-                pan={{
-                    oncommit: onPanCommit,
-                    onmove: onPanMove,
-                    isScrolling: scrollStatus.isScrolling || scrollStatus.isCooldown,
-                }}>
+                pan={msg.deleted
+                    ? undefined
+                    : {
+                          oncommit: onPanCommit,
+                          onmove: onPanMove,
+                          isScrolling: scrollStatus.isScrolling || scrollStatus.isCooldown,
+                      }}>
                 {#if showAvatar}
                     <div class:first class="avatar">
                         <Avatar
@@ -699,6 +702,7 @@
                                     {confirmed}
                                     {failed}
                                     {canShare}
+                                    deleted={msg.deleted}
                                     {me}
                                     {canReact}
                                     {canPin}
