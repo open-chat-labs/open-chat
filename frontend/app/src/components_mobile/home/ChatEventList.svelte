@@ -798,7 +798,7 @@
         class:show={showGoToTop}
         class="fab to-top"
         class:rtl={$rtlStore}>
-        <FloatingButton onClick={scrollToTop}>
+        <FloatingButton variant="secondary" onClick={scrollToTop}>
             {#snippet icon(color)}
                 <ArrowUp {color} />
             {/snippet}
@@ -812,7 +812,7 @@
         class:show={firstUnreadMention !== undefined}
         class="fab mentions"
         class:rtl={$rtlStore}>
-        <FloatingButton onClick={() => scrollToMention(firstUnreadMention)}>
+        <FloatingButton variant="secondary" onClick={() => scrollToMention(firstUnreadMention)}>
             {#snippet icon()}
                 <div in:pop={{ duration: 1500 }} class="unread">
                     <div class="mention-count">@</div>
@@ -827,7 +827,7 @@
     class="fab to-bottom"
     class:footer
     class:rtl={$rtlStore}>
-    <FloatingButton onClick={scrollToLast}>
+    <FloatingButton variant="secondary" onClick={scrollToLast}>
         {#snippet icon(color)}
             {#if loadingFromUserScroll}
                 <div class="spinner"></div>
@@ -867,8 +867,7 @@
         transition: opacity ease-in-out 300ms;
         position: absolute;
         @include z-index("fab");
-        right: 20px;
-        right: var(--sp-md);
+        right: var(--sp-xl);
         bottom: 0;
         opacity: 0;
         pointer-events: none;

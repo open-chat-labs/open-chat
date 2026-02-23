@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { BodySmall, Column } from "component-lib";
+    import { Column } from "component-lib";
     import {
         currentUserIdStore,
         OpenChat,
@@ -10,7 +10,7 @@
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import ChatMessageContent from "./ChatMessageContent.svelte";
+    import ChatMessageReplyContent from "./ChatMessageReplyContent.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -19,10 +19,9 @@
         repliesTo: RehydratedReplyContext;
         readonly: boolean;
         intersecting: boolean;
-        onRemovePreview?: (url: string) => void;
     }
 
-    let { repliesTo, readonly, intersecting, onRemovePreview }: Props = $props();
+    let { repliesTo, readonly, intersecting }: Props = $props();
 
     let debug = false;
 
@@ -38,14 +37,11 @@
     );
 </script>
 
-<Column supplementalClass={"replies_to"}>
-    <BodySmall fontWeight={"bold"}>
-        {displayName}
-    </BodySmall>
+<Column supplementalClass={`replies_to ${me ? "me" : ""}`}>
     {#if repliesTo.content !== undefined}
-        <ChatMessageContent
-            showPreviews
+        <ChatMessageReplyContent
             {me}
+            {displayName}
             {readonly}
             messageContext={repliesTo.sourceContext}
             {intersecting}
@@ -58,7 +54,6 @@
             blockLevelMarkdown={true}
             truncate
             reply
-            {onRemovePreview}
             content={repliesTo.content} />
         {#if debug}
             <pre>EventIdx: {repliesTo.eventIndex}</pre>
@@ -71,20 +66,27 @@
 </Column>
 
 <style lang="scss">
-    :global(.container.replies_to) {
-        position: relative;
-        pointer-events: none;
-        padding-left: var(--sp-md) !important;
-    }
+    :global {
+        .container.replies_to {
+            position: relative;
+            pointer-events: none;
+            padding-left: var(--sp-md) !important;
 
-    :global(.container.replies_to:before) {
-        content: "";
-        display: block;
-        position: absolute;
-        left: 0;
-        height: 100%;
-        width: 0.25rem;
-        background-color: var(--primary-light);
-        border-radius: var(--rad-circle);
+            // Same CSS is defined in ReplyingTo.svelte
+            &:before {
+                content: "";
+                display: block;
+                position: absolute;
+                left: 0;
+                height: 100%;
+                width: 0.25rem;
+                background-color: var(--primary-light);
+                border-radius: var(--rad-circle);
+            }
+
+            &.me:before {
+                background-color: var(--secondary-light);
+            }
+        }
     }
 </style>

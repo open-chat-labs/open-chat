@@ -85,7 +85,7 @@
 
     .icon {
         position: absolute;
-        right: 0.7rem;
+        inset-inline-end: 0.7rem;
         top: 50%;
         transform: translateY(-50%);
         pointer-events: none;

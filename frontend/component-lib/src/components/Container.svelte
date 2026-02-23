@@ -46,6 +46,7 @@
         data_id?: string; //todo find a better way to do this
         data_index?: string; // tod fine a better way to do this
         pos?: Pos;
+        pan?: PanProps;
     }
 </script>
 
@@ -63,6 +64,7 @@
         posToStyle,
         scrollLimits,
         swipe,
+        panWithSpring,
         type BorderWidthSize,
         type CrossAxisAlignment,
         type Direction,
@@ -73,6 +75,7 @@
         type SizeMode,
         type SpacingSize,
         type SwipeDirection,
+        type PanProps,
     } from "component-lib";
     import { getContext, setContext, type Snippet } from "svelte";
 
@@ -135,6 +138,7 @@
         data_id,
         data_index,
         pos,
+        pan,
     }: Props = $props();
 
     void clientHeight;
@@ -194,6 +198,7 @@
     bind:this={ref}
     use:menuCloser={closeMenuOnScroll}
     use:swipe={{ onSwipe }}
+    use:panWithSpring={pan}
     use:scrollLimits={{ onEnd: onInsideEnd, onStart: onInsideStart }}
     {id}
     class:clickable={onClick !== undefined}

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { ChatFootnote, ColourVars, Container } from "component-lib";
+    import { ChatFootnote, ColourVars, Container, type ColourVarKeys, Row } from "component-lib";
     import type { ChatType, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import Check from "svelte-material-icons/Check.svelte";
@@ -45,6 +45,9 @@
         pinned,
         fill,
     }: Props = $props();
+
+    let textColorVar = $derived(me ? ColourVars.primaryLight : ColourVars.textSecondary);
+    let textColorTxt = $derived<ColourVarKeys>(me ? "primaryLight" : "textSecondary");
 </script>
 
 {#snippet check(fill: boolean = false)}
@@ -61,30 +64,36 @@
     </div>
 {/snippet}
 
-<Container
+<Row
     supplementalClass={`message-metadata ${fill ? "fill" : ""}`}
     gap={"xs"}
     padding={["zero", "zero", "xs", "zero"]}
     crossAxisAlignment={"center"}
     crossAxisSelfAlignment={"end"}
     width={"hug"}>
-    {#if edited}
-        <ChatFootnote>(<Translatable resourceKey={i18nKey("edited")} />)</ChatFootnote>
-    {/if}
-    <ChatFootnote>
-        {client.toShortTimeString(new Date(time))}
-    </ChatFootnote>
-    <Container supplementalClass={"message-metadata-icons"}>
+    <Row gap="xs" width="hug">
+        {#if edited}
+            <!-- TODO would a pencil icon here be enough to indicate edited content -->
+            <ChatFootnote colour={textColorTxt}>
+                <Translatable resourceKey={i18nKey("edited")} />
+            </ChatFootnote>
+            <ChatFootnote colour={textColorTxt}>/</ChatFootnote>
+        {/if}
+        <ChatFootnote colour={textColorTxt}>
+            {client.toShortTimeString(new Date(time))}
+        </ChatFootnote>
+    </Row>
+    <Row supplementalClass="message-metadata-icons" width="hug">
         {#if failed}
-            <AlertCircleOutline />
+            <AlertCircleOutline color={textColorVar} />
         {/if}
         {#if deleted}
-            <DeletedIcon />
+            <DeletedIcon color={textColorVar} />
             {#if undeleting}
                 <div class="confirming"></div>
             {/if}
         {/if}
-        {#if !bot}
+        {#if !bot && !deleted}
             {#if me}
                 {#if accepted}
                     {@render check(true)}
@@ -106,10 +115,10 @@
             {/if}
         {/if}
         {#if pinned}
-            <Pin />
+            <Pin color={textColorVar} />
         {/if}
-    </Container>
-</Container>
+    </Row>
+</Row>
 
 <style lang="scss">
     :global(.message-metadata.fill) {

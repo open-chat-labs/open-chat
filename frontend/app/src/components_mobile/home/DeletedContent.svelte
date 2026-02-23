@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ChatText } from "component-lib";
+    import { BodySmall } from "component-lib";
     import {
         OPENCHAT_BOT_USER_ID,
         selectedChatWebhooksStore,
@@ -36,7 +36,7 @@
     );
 </script>
 
-<ChatText fontWeight={"light"} colour={me ? "textPrimary" : "textSecondary"}>
+<BodySmall fontWeight={"light"} colour={me ? "primaryLight" : "textSecondary"}>
     {#if undeleting}
         <Translatable
             resourceKey={i18nKey("undeletingMessage", {
@@ -60,4 +60,4 @@
                 timestamp: timestampStr,
             })} />
     {/if}
-</ChatText>
+</BodySmall>

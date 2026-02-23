@@ -36,7 +36,7 @@
     import Alert from "svelte-material-icons/Alert.svelte";
     import Camera from "svelte-material-icons/CameraOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import ContentSaveEditOutline from "svelte-material-icons/ContentSaveMoveOutline.svelte";
+    import Check from "svelte-material-icons/Check.svelte";
     import Keyboard from "svelte-material-icons/KeyboardOutline.svelte";
     import PlusCircle from "svelte-material-icons/PlusCircleOutline.svelte";
     import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
@@ -614,7 +614,7 @@
         gap={"sm"}
         mainAxisAlignment={"spaceBetween"}
         crossAxisAlignment={recording ? "center" : "end"}
-        background={editingEvent !== undefined ? ColourVars.gradient : ColourVars.background0}>
+        background={ColourVars.background0}>
         {#if frozen}
             <div class="frozen">
                 <Translatable resourceKey={i18nKey("chatFrozen")} />
@@ -644,15 +644,33 @@
                 <Progress size={"3rem"} percent={percentRecorded} />
             {:else if canEnterText}
                 {#key textboxId}
-                    <div class="message_entry_wrapper" class:has_reply={!!replyingTo}>
+                    <div
+                        class="message_entry_wrapper"
+                        class:has_reply={!!replyingTo}
+                        class:is_editing={editingEvent !== undefined}>
                         {#if replyingTo}
                             <ReplyingTo readonly {replyingTo} {user} {onCancelReply} />
+                        {/if}
+                        {#if editingEvent !== undefined}
+                            <Row
+                                height={{ size: "1rem" }}
+                                crossAxisAlignment="center"
+                                supplementalClass="editing-title">
+                                <BodySmall colour="textSecondary">
+                                    <Translatable resourceKey={i18nKey("Editing...")} />
+                                </BodySmall>
+                                <IconButton size={"sm"} padding={"md"} onclick={onCancelEdit}>
+                                    {#snippet icon()}
+                                        <Close color={ColourVars.textSecondary} />
+                                    {/snippet}
+                                </IconButton>
+                            </Row>
                         {/if}
                         <Row
                             gap={"sm"}
                             minHeight={"3.5rem"}
                             maxHeight={"calc(var(--vh, 1vh) * 50)"}
-                            padding={["xs", "xs"]}
+                            padding="xs"
                             crossAxisAlignment={"end"}
                             mainAxisAlignment={"spaceBetween"}
                             supplementalClass={"message_entry_text_box"}>
@@ -693,39 +711,42 @@
                                 onkeypress={keyPress}>
                             </div>
 
-                            <Container
-                                padding={["zero", "sm", "zero", "zero"]}
-                                width={"hug"}
-                                gap={"md"}>
-                                <IconButton
-                                    onclick={() =>
-                                        (showCustomMessageTrigger = !showCustomMessageTrigger)}
-                                    padding={["sm", "zero", "md", "zero"]}
-                                    size={"md"}>
-                                    {#snippet icon()}
-                                        <div
-                                            class:open={showCustomMessageTrigger}
-                                            class="drawer_trigger">
-                                            <PlusCircle color={ColourVars.textPlaceholder} />
-                                        </div>
-                                    {/snippet}
-                                </IconButton>
-
-                                {#if messageIsEmpty && canAddImageOrVideo}
-                                    <FileAttacher {onFileSelected}>
-                                        {#snippet children(onClick)}
-                                            <IconButton
-                                                onclick={onClick}
-                                                padding={["sm", "zero", "md", "zero"]}
-                                                size={"md"}>
-                                                {#snippet icon()}
-                                                    <Camera color={ColourVars.textPlaceholder} />
-                                                {/snippet}
-                                            </IconButton>
+                            {#if editingEvent === undefined}
+                                <Container
+                                    padding={["zero", "sm", "zero", "zero"]}
+                                    width={"hug"}
+                                    gap={"md"}>
+                                    <IconButton
+                                        onclick={() =>
+                                            (showCustomMessageTrigger = !showCustomMessageTrigger)}
+                                        padding={["sm", "zero", "md", "zero"]}
+                                        size={"md"}>
+                                        {#snippet icon()}
+                                            <div
+                                                class:open={showCustomMessageTrigger}
+                                                class="drawer_trigger">
+                                                <PlusCircle color={ColourVars.textPlaceholder} />
+                                            </div>
                                         {/snippet}
-                                    </FileAttacher>
-                                {/if}
-                            </Container>
+                                    </IconButton>
+
+                                    {#if messageIsEmpty && canAddImageOrVideo}
+                                        <FileAttacher {onFileSelected}>
+                                            {#snippet children(onClick)}
+                                                <IconButton
+                                                    onclick={onClick}
+                                                    padding={["sm", "zero", "md", "zero"]}
+                                                    size={"md"}>
+                                                    {#snippet icon()}
+                                                        <Camera
+                                                            color={ColourVars.textPlaceholder} />
+                                                    {/snippet}
+                                                </IconButton>
+                                            {/snippet}
+                                        </FileAttacher>
+                                    {/if}
+                                </Container>
+                            {/if}
 
                             {#if containsMarkdown}
                                 <MarkdownToggle {editingEvent} />
@@ -761,14 +782,13 @@
                             </IconButton>
                         {/if}
                     {:else}
-                        <IconButton mode={"dark"} size={"lg"} padding={"md"} onclick={sendMessage}>
+                        <IconButton
+                            padding={"md"}
+                            mode={"primary"}
+                            size={"lg"}
+                            onclick={sendMessage}>
                             {#snippet icon(color)}
-                                <ContentSaveEditOutline {color} />
-                            {/snippet}
-                        </IconButton>
-                        <IconButton mode={"dark"} size={"lg"} padding={"md"} onclick={onCancelEdit}>
-                            {#snippet icon(color)}
-                                <Close {color} />
+                                <Check {color} />
                             {/snippet}
                         </IconButton>
                     {/if}
@@ -807,6 +827,10 @@
 
         &.has_reply {
             border-radius: var(--rad-xl) var(--rad-xl) var(--rad-xxl) var(--rad-xxl);
+        }
+
+        &.is_editing {
+            border-radius: var(--rad-xl);
         }
     }
 
@@ -856,5 +880,14 @@
         justify-content: center;
         align-items: center;
         width: 100%;
+    }
+
+    :global {
+        .editing-title {
+            position: relative;
+            z-index: 1;
+            top: 0.65rem;
+            padding-left: 2.75rem !important;
+        }
     }
 </style>
