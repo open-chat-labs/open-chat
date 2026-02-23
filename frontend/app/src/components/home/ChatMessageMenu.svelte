@@ -175,6 +175,8 @@
     let canFollow = $derived(threadRootMessage !== undefined && !isFollowedByMe);
     let canUnfollow = $derived(isFollowedByMe);
 
+    let emojiToDisplay = $derived($quickReactions.slice(0, 4));
+
     export function showMenu() {
         menuIconEl?.showMenu();
     }
@@ -346,7 +348,7 @@
 
 <div class="menu" class:touch={isTouchOnlyDevice} class:inert class:rtl={$rtlStore}>
     {#if !inert && !isTouchOnlyDevice}
-        {#each $quickReactions as reaction}
+        {#each emojiToDisplay as reaction}
             <HoverIcon compact onclick={() => selectQuickReaction(reaction)}>
                 <div class="quick-reaction">
                     {reaction}
