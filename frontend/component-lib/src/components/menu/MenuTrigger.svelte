@@ -3,11 +3,11 @@
         isTouchDevice,
         longpress,
         portalState,
-        type LongpressAnimation,
         type Alignment,
+        type LongpressAnimation,
         type Position,
     } from "component-lib";
-    import { getAllContexts, mount, onDestroy, type Snippet, tick } from "svelte";
+    import { getAllContexts, mount, onDestroy, type Snippet } from "svelte";
     import Menu from "./Menu.svelte";
     import MenuWrapper from "./MenuWrapper.svelte";
 
