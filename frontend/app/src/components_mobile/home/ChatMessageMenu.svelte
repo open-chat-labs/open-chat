@@ -7,6 +7,7 @@
     import ChatMessageOptions, { type Props as OptionProps } from "./ChatMessageOptions.svelte";
 
     interface Props extends OptionProps {
+        deleted: boolean;
         canReact: boolean;
         selectQuickReaction: (unicode: string) => void;
         showEmojiPicker: () => void;
@@ -14,13 +15,14 @@
     }
 
     let props: Props = $props();
-    let { failed, me, canReact, selectQuickReaction, showEmojiPicker, onOpenSheetMenu } = props;
+    let { deleted, failed, me, canReact, selectQuickReaction, showEmojiPicker, onOpenSheetMenu } =
+        props;
 
     const padding: Padding = ["sm", "sm"];
 </script>
 
 <Column gap="sm" overflow="visible" crossAxisAlignment={me ? "end" : "start"}>
-    {#if canReact && !failed}
+    {#if canReact && !deleted && !failed}
         <Row
             width="hug"
             maxWidth="80vw"

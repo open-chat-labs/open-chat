@@ -15,6 +15,7 @@
         onClick?: () => void;
         blur?: boolean;
         maxLines?: number;
+        italic?: boolean;
     }
 </script>
 
@@ -44,6 +45,7 @@
         onClick,
         blur = false,
         maxLines,
+        italic,
     }: Props = $props();
 
     let parentDirection = getContext<Direction>("direction");
@@ -99,6 +101,7 @@
         class:blur
         class:has_max_lines={maxLines && maxLines > 0}
         class:ellipsis={ellipsisTruncate}
+        class:italic
         {style}
         class={`typo ${type} ${fontWeight}`}>
         {@render children?.()}
@@ -213,6 +216,10 @@
 
     .blur {
         filter: blur(8px);
+    }
+
+    .italic {
+        font-style: italic;
     }
 
     .has_max_lines {
