@@ -297,7 +297,7 @@
 
         .remove-wrapper {
             flex: 0;
-            right: 0.25rem;
+            right: 0;
             position: absolute;
             padding: var(--sp-xxs);
             border-radius: var(--rad-circle);
@@ -305,7 +305,7 @@
 
             &.rtl {
                 right: unset;
-                left: 0.25rem;
+                left: 0;
             }
         }
 
