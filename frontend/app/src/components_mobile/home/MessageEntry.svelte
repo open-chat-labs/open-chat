@@ -31,7 +31,7 @@
         throttleDeadline,
         type CreatedUser,
     } from "openchat-client";
-    import { getContext, tick } from "svelte";
+    import { getContext, tick, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Alert from "svelte-material-icons/Alert.svelte";
     import Camera from "svelte-material-icons/CameraOutline.svelte";
@@ -151,7 +151,10 @@
 
     function toggleEmojiPicker() {
         transition(["fade"], () => {
-            showEmojiPicker = !showEmojiPicker;
+            toggleInteractiveSection("emoji_picker");
+            if (!showEmojiPicker) {
+                inp?.focus();
+            }
         });
     }
 
@@ -308,6 +311,25 @@
         } else {
             showDirectBotChatWarning = true;
         }
+    }
+
+    type InteractiveSections =
+        | "emoji_picker"
+        | "emoji_search"
+        | "command_selector"
+        | "mention_picker"
+        | "custom_message_trigger";
+
+    // Hides all other interactive sections besides the one selected by the user
+    function toggleInteractiveSection(showSection?: InteractiveSections) {
+        const toggle = (section: InteractiveSections, currentValue: boolean) =>
+            (showSection === section && !currentValue) || false;
+
+        showEmojiPicker = toggle("emoji_picker", showEmojiPicker);
+        showEmojiSearch = toggle("emoji_search", showEmojiSearch);
+        showCommandSelector = toggle("command_selector", showCommandSelector);
+        showMentionPicker = toggle("mention_picker", showMentionPicker);
+        showCustomMessageTrigger = toggle("custom_message_trigger", showCustomMessageTrigger);
     }
 
     function keyPress(e: KeyboardEvent) {
@@ -498,6 +520,7 @@
         const result = regexList.some((regex) => regex.test(text));
         return result;
     }
+
     let directChatBotId = $derived(client.directChatWithBot(chat));
     let directBot = $derived(
         directChatBotId ? botState.externalBots.get(directChatBotId) : undefined,
@@ -515,6 +538,15 @@
         permittedMessages.get("image") || permittedMessages.get("video"),
     );
     let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
+
+    onMount(() => {
+        const focusHandler = () => toggleInteractiveSection();
+        inp?.addEventListener("focus", focusHandler);
+        return () => {
+            inp?.removeEventListener("focus", focusHandler);
+        };
+    });
+
     $effect(() => {
         if (inp) {
             if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
@@ -550,16 +582,19 @@
             previousEditingEvent = undefined;
         }
     });
+
     trackedEffect("attachment-focus", () => {
         if (attachment !== undefined || replyingTo !== undefined) {
             inp?.focus();
         }
     });
+
     trackedEffect("screen-width-focus", () => {
         if ($screenWidth === ScreenWidth.Large) {
             inp?.focus();
         }
     });
+
     let placeholder = $derived(
         !canEnterText
             ? i18nKey("sendTextDisabled")
@@ -667,13 +702,14 @@
                             </Row>
                         {/if}
                         <Row
-                            gap={"sm"}
-                            minHeight={"3.5rem"}
-                            maxHeight={"calc(var(--vh, 1vh) * 50)"}
+                            gap="sm"
+                            minHeight="3.5rem"
+                            maxHeight="calc(var(--vh, 1vh) * 50)"
                             padding="xs"
-                            crossAxisAlignment={"end"}
-                            mainAxisAlignment={"spaceBetween"}
-                            supplementalClass={"message_entry_text_box"}>
+                            overflow="auto"
+                            crossAxisAlignment="center"
+                            mainAxisAlignment="spaceBetween"
+                            supplementalClass="message_entry_text_box">
                             <IconButton
                                 onclick={toggleEmojiPicker}
                                 padding={["sm", "zero", "md", "sm"]}
@@ -693,12 +729,10 @@
                                 data-enable-grammarly="false"
                                 tabindex={0}
                                 bind:this={inp}
-                                onblur={saveSelection}
                                 class="textbox"
                                 class:recording
                                 class:empty={textboxEmpty}
                                 contenteditable
-                                onpaste={onPaste}
                                 placeholder={interpolate($_, placeholder)}
                                 use:translatable={{
                                     key: placeholder,
@@ -707,6 +741,8 @@
                                     top: 12,
                                 }}
                                 spellcheck
+                                onblur={saveSelection}
+                                onpaste={onPaste}
                                 oninput={onInput}
                                 onkeypress={keyPress}>
                             </div>
@@ -718,7 +754,7 @@
                                     gap={"md"}>
                                     <IconButton
                                         onclick={() =>
-                                            (showCustomMessageTrigger = !showCustomMessageTrigger)}
+                                            toggleInteractiveSection("custom_message_trigger")}
                                         padding={["sm", "zero", "md", "zero"]}
                                         size={"md"}>
                                         {#snippet icon()}

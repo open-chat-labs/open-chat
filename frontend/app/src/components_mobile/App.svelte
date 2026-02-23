@@ -47,6 +47,7 @@
     import Router from "./Router.svelte";
     import Snow from "./Snow.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
+    import { keyboard } from "@src/stores/keyboard.svelte";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -179,6 +180,8 @@
                 navBarHeight: data.navHeightDp,
             });
 
+            keyboard.visible = data.isKeyboardOpen;
+            keyboard.height = data.keyboardHeightDp;
             data.isKeyboardOpen
                 ? document.body.classList.add("keyboard-visible")
                 : document.body.classList.remove("keyboard-visible");

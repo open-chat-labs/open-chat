@@ -37,7 +37,7 @@
     );
 </script>
 
-<Column supplementalClass={`replies_to ${me ? "me" : ""}`}>
+<Column supplementalClass={`replies_to ${me ? "me" : ""}`} padding="sm">
     {#if repliesTo.content !== undefined}
         <ChatMessageReplyContent
             {me}
@@ -70,15 +70,16 @@
         .container.replies_to {
             position: relative;
             pointer-events: none;
-            padding-left: var(--sp-md) !important;
+            padding-left: 1.25rem !important;
 
             // Same CSS is defined in ReplyingTo.svelte
             &:before {
                 content: "";
                 display: block;
                 position: absolute;
-                left: 0;
-                height: 100%;
+                left: var(--sp-sm);
+                top: var(--sp-sm);
+                bottom: var(--sp-sm);
                 width: 0.25rem;
                 background-color: var(--primary-light);
                 border-radius: var(--rad-circle);
@@ -87,6 +88,18 @@
             &.me:before {
                 background-color: var(--secondary-light);
             }
+        }
+
+        .reply-wrapper.me .replies_to.me {
+            background-color: var(--background-2);
+        }
+
+        .reply-wrapper.me .replies_to:not(.me) {
+            background-color: var(--primary-muted);
+        }
+
+        .reply-wrapper:not(.me) .replies_to {
+            background-color: var(--background-0);
         }
     }
 </style>

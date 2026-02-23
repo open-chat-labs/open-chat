@@ -1,12 +1,13 @@
 <script lang="ts">
-    import { previewHeightObserver } from "@utils/previewHeightObserver";
+    // import { previewHeightObserver } from "@utils/previewHeightObserver";
     import {
         eventListScrolling,
         offlineStore,
         type MultiUserChatIdentifier,
         type OpenChat,
     } from "openchat-client";
-    import { getContext, onMount } from "svelte";
+    // import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import { rtlStore } from "../../stores/rtl";
     import GenericPreviewComponent from "./GenericPreview.svelte";
@@ -197,27 +198,27 @@
         }
     }
 
-    onMount(() => {
-        const toUnobserve: Element[] = [];
-        for (const preview of previews) {
-            if (preview.container) {
-                previewHeightObserver.observe(preview.container, preview.url);
-                toUnobserve.push(preview.container);
+    // onMount(() => {
+    //     const toUnobserve: Element[] = [];
+    //     for (const preview of previews) {
+    //         if (preview.container) {
+    //             previewHeightObserver.observe(preview.container, preview.url);
+    //             toUnobserve.push(preview.container);
 
-                const height = previewHeightObserver.getHeight(preview.url);
-                if (height) {
-                    preview.container.style.setProperty("min-height", `${height}px`);
-                }
-                if (preview.kind === "generic") {
-                    // If we have a recorded height for this preview then display the container immediately, else hide it
-                    // until we have fetched the preview (if any)
-                    const display = height ? "flex" : "none";
-                    preview.container.style.setProperty("display", display);
-                }
-            }
-        }
-        return () => toUnobserve.forEach((e) => previewHeightObserver.unobserve(e));
-    });
+    //             const height = previewHeightObserver.getHeight(preview.url);
+    //             if (height) {
+    //                 preview.container.style.setProperty("min-height", `${height}px`);
+    //             }
+    //             if (preview.kind === "generic") {
+    //                 // If we have a recorded height for this preview then display the container immediately, else hide it
+    //                 // until we have fetched the preview (if any)
+    //                 const display = height ? "flex" : "none";
+    //                 preview.container.style.setProperty("display", display);
+    //             }
+    //         }
+    //     }
+    //     return () => toUnobserve.forEach((e) => previewHeightObserver.unobserve(e));
+    // });
 
     $effect(() => {
         if (intersecting && !$eventListScrolling && !shouldRenderPreviews && !$offlineStore) {
@@ -234,11 +235,7 @@
 </script>
 
 {#each previews as preview (preview.url)}
-    <div
-        class="preview"
-        bind:this={preview.container}
-        class:visible={preview.kind !== "generic" && preview.kind !== "message"}
-        class:me>
+    <div bind:this={preview.container} class="preview" class:me>
         {#if me}
             <div class="remove-wrapper" class:rtl>
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -287,17 +284,16 @@
 
 <style lang="scss">
     .preview {
-        display: none;
+        position: relative;
         word-break: break-word;
         flex-direction: row-reverse;
-
-        &.visible {
-            display: flex;
-        }
+        overflow: hidden;
+        border-radius: var(--rad-sm);
 
         .remove-wrapper {
             flex: 0;
-            right: 0;
+            top: 0.35rem;
+            right: 0.35rem;
             position: absolute;
             padding: var(--sp-xxs);
             border-radius: var(--rad-circle);
@@ -305,7 +301,7 @@
 
             &.rtl {
                 right: unset;
-                left: 0;
+                left: 0.35rem;
             }
         }
 
@@ -317,6 +313,19 @@
         .inner {
             flex: 1;
             max-width: 100%;
+            display: flex;
+        }
+    }
+
+    :global {
+        .container.message_bubble.no_header > .intersection_observer:first-child > .preview {
+            &.me {
+                border-top-left-radius: var(--rad-lg);
+            }
+
+            &:not(.me) {
+                border-top-right-radius: var(--rad-lg);
+            }
         }
     }
 </style>

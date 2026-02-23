@@ -110,50 +110,24 @@
 </Link>
 
 <style lang="scss">
-    :global(.reply-wrapper.me a) {
-        color: inherit;
-    }
+    :global {
+        .reply-wrapper {
+            border-radius: var(--rad-sm) !important;
 
-    .reply-wrapper {
-        border-radius: $sp3;
-        padding: $sp3;
-        background-color: var(--currentChat-msg-bg);
-        color: var(--currentChat-msg-txt);
-        border: var(--bw) solid var(--replies-bd);
-        cursor: pointer;
-        margin-bottom: $sp3;
-        overflow: hidden;
-        @include nice-scrollbar();
-        max-height: 300px;
-
-        .inert {
-            pointer-events: none;
+            &.me a {
+                color: inherit;
+            }
         }
 
-        &.me {
-            background-color: var(--currentChat-msg-me-bg);
-            border: var(--bw) solid var(--currentChat-msg-me-bd);
-            color: var(--currentChat-msg-me-txt);
-        }
+        // TODO fix this to work only if reply comes as first child
+        .container.message_bubble.no_header .reply-wrapper {
+            &:not(.me) {
+                border-top-right-radius: var(--rad-lg) !important;
+            }
 
-        &:after {
-            content: "";
-            display: table;
-            clear: both;
-        }
-
-        &.p2pSwap {
-            max-width: 350px;
-        }
-    }
-
-    .username {
-        margin: 0;
-        margin-bottom: $sp1;
-        display: inline;
-
-        &.text-content {
-            display: block;
+            &.me {
+                border-top-left-radius: var(--rad-lg) !important;
+            }
         }
     }
 </style>

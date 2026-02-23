@@ -15,7 +15,7 @@
     let url = $derived(buildUrl(type, id));
 </script>
 
-<div>
+<div class="spotify_wrapper">
     <iframe
         class:pinned
         class:fill
@@ -31,12 +31,9 @@
 </div>
 
 <style lang="scss">
-    iframe {
-        margin-top: $sp3;
-    }
-
-    iframe:not(.fill) {
-        border-radius: $sp3;
+    .spotify_wrapper {
+        display: flex;
+        width: 100%;
     }
 
     iframe.pinned {
