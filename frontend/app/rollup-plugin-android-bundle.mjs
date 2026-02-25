@@ -16,6 +16,14 @@ export function androidBundlePlugin({ version }) {
     return {
         name: "android-bundle",
         async writeBundle() {
+            // Only create OTA zip bundles for web builds. When building the APK
+            // directly (OC_APP_TYPE=android) the zips are not needed and would
+            // just bloat the APK.
+            if (process.env.OC_APP_TYPE === "android") {
+                await fs.remove(path.join("build", "downloads"));
+                return;
+            }
+
             const buildDir = "build";
             const distBundleDir = "dist_bundle";
             const downloadDir = path.join(buildDir, "downloads");
