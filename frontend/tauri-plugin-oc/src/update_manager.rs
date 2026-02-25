@@ -124,7 +124,7 @@ impl<R: Runtime> UpdateManager<R> {
         }
 
         let content_length = resp.content_length();
-        let total_size = content_length.unwrap_or(50 * 1024 * 1024);
+        let total_size = content_length.unwrap_or(15 * 1024 * 1024);
         let is_estimated = content_length.is_none();
 
         println!(
