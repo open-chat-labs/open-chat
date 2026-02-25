@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { disableRestrictedContent } from "@src/utils/features";
     import {
         Body,
         Button,
@@ -110,7 +111,7 @@
                 communitySearchState.term === "" ? undefined : communitySearchState.term,
                 communitySearchState.index,
                 32,
-                filters.flags ?? 0,
+                disableRestrictedContent ? 0 : filters.flags ?? 0,
                 filters.languages,
             )
             .then((results) => {

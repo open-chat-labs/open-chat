@@ -4,11 +4,13 @@
     import {
         Avatar,
         Container,
+        Column,
         IconButton,
         MenuTrigger,
         Row,
         Sheet,
         Subtitle,
+        type PanDirection,
     } from "component-lib";
     import {
         type ChatIdentifier,
@@ -46,12 +48,12 @@
     import Translatable from "../Translatable.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import ChatMessageMenu from "./ChatMessageMenu.svelte";
+    import ChatMessageOptions from "./ChatMessageOptions.svelte";
     import EmojiPicker from "./EmojiPickerWrapper.svelte";
     import IntersectionObserverComponent from "./IntersectionObserver.svelte";
     import MessageBubble from "./message/MessageBubble.svelte";
     import ReminderBuilder from "./ReminderBuilder.svelte";
     import ReportMessage from "./ReportMessage.svelte";
-    // import ThreadSummary from "./ThreadSummary.svelte";
     import { confirmMessageDeletion, dclickReply } from "@src/stores/settings";
     import AreYouSure from "../AreYouSure.svelte";
     import BotMessageContext from "../bots/BotMessageContext.svelte";
@@ -61,6 +63,10 @@
     import Tips from "./message/Tips.svelte";
     import RepliesTo from "./RepliesTo.svelte";
     import TipBuilder from "./TipBuilder.svelte";
+    import { scrollStatus } from "../../stores/scroll.svelte";
+    import Reply from "svelte-material-icons/Reply.svelte";
+    import SquareEditOutline from "svelte-material-icons/SquareEditOutline.svelte";
+    import ShareOutline from "svelte-material-icons/ShareOutline.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -449,6 +455,8 @@
     );
     let showConfirmDelete = $state(false);
 
+    let longpressCooldown = $derived(scrollStatus.isCooldown);
+
     async function deleteMessage(deletionConfirmed: boolean) {
         if (failed) {
             onDeleteFailedMessage?.();
@@ -464,6 +472,30 @@
         showConfirmDelete = false;
         await client.deleteMessage(chatId, threadRootMessageIndex, msg.messageId);
     }
+
+    let isSheetMenuOpen = $state(false);
+
+    function openSheetMenu() {
+        isSheetMenuOpen = true;
+    }
+
+    let panDirection = $state();
+    let panFactor = $state(0);
+
+    function forward() {
+        window.setTimeout(() => publish("forward", msg), 250);
+    }
+
+    function onPanCommit(direction: PanDirection) {
+        if (me && direction === "left") editMessage();
+        if (!me && direction === "left") forward();
+        else reply();
+    }
+
+    function onPanMove(direction: PanDirection, factor: number) {
+        panDirection = direction;
+        panFactor = factor;
+    }
 </script>
 
 <svelte:window onresize={recalculateMediaDimensions} />
@@ -477,7 +509,7 @@
 {/if}
 
 {#if showConfirmDelete}
-    <AreYouSure action={deleteMessage}>
+    <AreYouSure action={deleteMessage} dismiss={() => (showConfirmDelete = false)}>
         <Container gap={"lg"} direction={"vertical"}>
             <Translatable resourceKey={i18nKey("deleteMessageConfirm")}></Translatable>
             <Checkbox
@@ -507,6 +539,53 @@
             onSkintoneChanged={(tone) => quickReactions.reload(tone)}
             supportCustom={true}
             mode={"reaction"} />
+    </Sheet>
+{/if}
+
+{#if isSheetMenuOpen}
+    <Sheet onDismiss={() => (isSheetMenuOpen = false)}>
+        <Column gap="sm" padding={["lg", "lg", "xxl", "lg"]} maxHeight="70vh">
+            <ChatMessageOptions
+                menuType="menu_items"
+                {chatId}
+                {isProposal}
+                {inert}
+                {publicGroup}
+                {confirmed}
+                {failed}
+                {canShare}
+                {me}
+                {canPin}
+                {canTip}
+                {pinned}
+                {supportsReply}
+                {canQuoteReply}
+                {canStartThread}
+                {multiUserChat}
+                {threadRootMessage}
+                {msg}
+                {canForward}
+                {canBlockUser}
+                {canEdit}
+                {canDelete}
+                {canUndelete}
+                {canRevealDeleted}
+                {canRevealBlocked}
+                translatable={canTranslate}
+                {translated}
+                {onCollapseMessage}
+                onReply={reply}
+                {onRetrySend}
+                onReplyPrivately={replyPrivately}
+                onEditMessage={editMessage}
+                onTipMessage={tipMessage}
+                onReportMessage={reportMessage}
+                onCancelReminder={cancelReminder}
+                onDeleteMessage={deleteMessage}
+                onRemindMe={remindMe}
+                {onDeleteFailedMessage}
+                onOptionSelected={() => (isSheetMenuOpen = false)} />
+        </Column>
     </Sheet>
 {/if}
 
@@ -560,7 +639,12 @@
                 padding={last ? ["zero", "zero", "sm", "zero"] : "zero"}
                 gap={"sm"}
                 overflow={"visible"}
-                mainAxisAlignment={me ? "end" : "start"}>
+                mainAxisAlignment={me ? "end" : "start"}
+                pan={{
+                    oncommit: onPanCommit,
+                    onmove: onPanMove,
+                    isScrolling: scrollStatus.isScrolling || scrollStatus.isCooldown,
+                }}>
                 {#if showAvatar}
                     <div class:first class="avatar">
                         <Avatar
@@ -581,15 +665,33 @@
                     gap={"xxs"}
                     minWidth={"6rem"}
                     direction={"vertical"}>
+                    {#if panDirection}
+                        <div
+                            class={`pan-action ${panDirection}`}
+                            class:active={panFactor >= 1}
+                            style:opacity={panFactor}>
+                            {#if me && panDirection === "left"}
+                                <SquareEditOutline size="1.5rem" />
+                            {:else if !me && panDirection === "left"}
+                                <ShareOutline size="1.5rem" />
+                            {:else}
+                                <Reply size="1.5rem" />
+                            {/if}
+                        </div>
+                    {/if}
                     <MenuTrigger
                         constrainMask={scrollingId}
                         maskUI
                         disabled={!showChatMenu || !intersecting}
-                        centered
-                        mobileMode={"longpress"}>
+                        mobileMode="longpress"
+                        longpressAnimation="scale"
+                        position="bottom"
+                        customContent={true}
+                        {longpressCooldown}>
                         {#snippet menuItems()}
                             {#if showChatMenu && intersecting}
                                 <ChatMessageMenu
+                                    menuType="icon_buttons"
                                     {chatId}
                                     {isProposal}
                                     {inert}
@@ -598,40 +700,41 @@
                                     {failed}
                                     {canShare}
                                     {me}
-                                    {canPin}
                                     {canReact}
+                                    {canPin}
                                     {canTip}
                                     {pinned}
                                     {supportsReply}
                                     {canQuoteReply}
-                                    {threadRootMessage}
                                     {canStartThread}
                                     {multiUserChat}
+                                    {threadRootMessage}
                                     {msg}
                                     {canForward}
                                     {canBlockUser}
                                     {canEdit}
+                                    {selectQuickReaction}
                                     {canDelete}
                                     {canUndelete}
                                     {canRevealDeleted}
                                     {canRevealBlocked}
                                     translatable={canTranslate}
                                     {translated}
-                                    {selectQuickReaction}
+                                    {onCollapseMessage}
                                     showEmojiPicker={() => {
                                         showEmojiPicker = true;
                                     }}
-                                    {onCollapseMessage}
                                     onReply={reply}
                                     {onRetrySend}
-                                    {onDeleteFailedMessage}
                                     onReplyPrivately={replyPrivately}
                                     onEditMessage={editMessage}
                                     onTipMessage={tipMessage}
                                     onReportMessage={reportMessage}
                                     onCancelReminder={cancelReminder}
                                     onDeleteMessage={deleteMessage}
-                                    onRemindMe={remindMe} />
+                                    onRemindMe={remindMe}
+                                    onOpenSheetMenu={openSheetMenu}
+                                    {onDeleteFailedMessage} />
                             {/if}
                         {/snippet}
                         <MessageBubble
@@ -661,12 +764,7 @@
                             {onGoToMessageIndex}
                             {chatType}>
                             {#snippet repliesTo(reply)}
-                                <RepliesTo
-                                    {readonly}
-                                    {chatId}
-                                    {intersecting}
-                                    {onRemovePreview}
-                                    repliesTo={reply} />
+                                <RepliesTo {readonly} {chatId} {intersecting} repliesTo={reply} />
                             {/snippet}
 
                             {#snippet messageContent(me)}
@@ -710,7 +808,6 @@
                             reactions={msg.reactions}
                             offset={!hasThread}></Reactions>
                     {/if}
-
                     {#if hasTips && !inert}
                         <Tips
                             {me}
@@ -736,12 +833,21 @@
 <style lang="scss">
     $avatar-width-mob: 2.5rem;
 
+    :global(#scrollable-list-chat-messages),
+    :global(#scrollable-list-thread-messages) {
+        overflow-x: hidden !important;
+        overflow-y: scroll !important;
+    }
+
     :global(.container.message_bubble_wrapper .menu-trigger) {
         width: 100%;
     }
+
     .avatar:not(.first) {
         visibility: hidden;
     }
+
+    // TODO is this used at all?
     .emoji-header {
         display: flex;
         justify-content: space-between;
@@ -749,10 +855,47 @@
         padding: $sp3 $sp4;
         background-color: var(--section-bg);
     }
+
     .bot-context {
         display: flex;
         margin-inline-start: $avatar-width-mob;
         margin-bottom: $sp2;
         margin-top: $sp2;
+    }
+
+    :global(.pan-action svg) {
+        transition: scale 200ms ease-out;
+    }
+
+    :global(.pan-action.active svg) {
+        scale: 1.25;
+    }
+
+    :global(.pan-action path) {
+        fill: var(--text-secondary);
+        transition: fill 200ms ease-out;
+    }
+
+    :global(.pan-action.active path) {
+        fill: var(--primary-light);
+    }
+
+    .pan-action {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3rem;
+        height: 3rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &.right {
+            left: -4rem;
+        }
+
+        &.left {
+            right: -4rem;
+        }
     }
 </style>

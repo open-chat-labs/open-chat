@@ -53,7 +53,6 @@
     let unreadCommunities = $derived(
         mergeListOfCombinedUnreadCounts(Array.from($unreadCommunityChannelCountsStore.values())),
     );
-    let numIcons = $derived($favouritesStore.size > 0 ? 6 : 5);
     const iconSize = "1.5rem";
     let claimChitAvailable = $derived(
         !$disableChit && $chitStateStore.nextDailyChitClaim < $now500,
@@ -64,10 +63,21 @@
     let favouritesIndicator = $derived(
         showIndicator(client.mergeCombinedUnreadCounts($unreadFavouriteCountsStore)),
     );
-    let showFavourites = $derived($favouritesStore.size > 0);
     let activityIndicator = $derived.by(() => {
         return $messageActivitySummaryStore.unreadCount > 0;
     });
+
+    let activeItems = $derived.by<Selection[]>(() => {
+        const items: Selection[] = ["chats", "communities"];
+        if ($favouritesStore.size > 0) items.push("favourites");
+        items.push("notification");
+        if (!disableWalletFeature) items.push("wallet");
+        items.push("profile");
+        return items;
+    });
+
+    let numIcons = $derived(activeItems.length);
+    let selectionIndex = $derived(activeItems.indexOf(props.selection));
 
     function showIndicator({ mentions, unmuted }: UnreadCounts): boolean {
         return unmuted > 0 || mentions;
@@ -185,8 +195,7 @@
     borderRadius={["md", "md", "zero", "zero"]}
     background={"var(--background-1)"}
     mainAxisAlignment={"spaceAround"}>
-    <div style={`--num: ${numIcons}`} class:showFavourites class={`selection ${props.selection}`}>
-    </div>
+    <div style={`--num: ${numIcons}; --index: ${selectionIndex}`} class="selection"></div>
     {@render item("chats", { kind: "icon" }, chatIndicator)}
     {@render item("communities", { kind: "icon" }, communityIndicator)}
     {#if $favouritesStore.size > 0}
@@ -233,43 +242,6 @@
         border-radius: var(--rad-sm);
         transition: left ease-in-out 200ms;
         transform: translateX(-50%);
-
-        &.chats {
-            left: var(--offset);
-        }
-
-        &.communities {
-            left: calc(var(--offset) + var(--width));
-        }
-
-        &.notification {
-            left: calc(var(--offset) + (var(--width) * 2));
-        }
-
-        &.wallet {
-            left: calc(var(--offset) + (var(--width) * 3));
-        }
-
-        &.profile {
-            left: calc(var(--offset) + (var(--width) * 4));
-        }
-
-        &.showFavourites {
-            &.favourites {
-                left: calc(var(--offset) + (var(--width) * 2));
-            }
-
-            &.notification {
-                left: calc(var(--offset) + (var(--width) * 3));
-            }
-
-            &.wallet {
-                left: calc(var(--offset) + (var(--width) * 4));
-            }
-
-            &.profile {
-                left: calc(var(--offset) + (var(--width) * 5));
-            }
-        }
+        left: calc(var(--offset) + (var(--width) * var(--index)));
     }
 </style>

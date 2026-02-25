@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Row, ChatCaption } from "component-lib";
     import type { MessageContent, MessageContext } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import AudioContent from "./AudioContent.svelte";
@@ -8,7 +9,7 @@
     import DeletedContent from "./DeletedContent.svelte";
     import FileContent from "./FileContent.svelte";
     import GiphyContent from "./GiphyContent.svelte";
-    import ImageContent from "./ImageContent.svelte";
+    import ImageContentReply from "./ImageContentReply.svelte";
     import MessageContentInitial from "./MessageContentInitial.svelte";
     import MessageReminderContent from "./MessageReminderContent.svelte";
     import MessageReminderCreatedContent from "./MessageReminderCreatedContent.svelte";
@@ -19,14 +20,15 @@
     import PrizeWinnerContent from "./PrizeWinnerContent.svelte";
     import ProposalContent from "./proposals/ProposalContent.svelte";
     import ReportedMessageContent from "./ReportedMessageContent.svelte";
-    import TextContent from "./TextContent.svelte";
     import UserReferralCardContent from "./UserReferralCardContent.svelte";
     import VideoCallContent from "./VideoCallContent.svelte";
     import VideoContent from "./VideoContent.svelte";
+    import TextContentReply from "./TextContentReply.svelte";
 
     interface Props {
         content: MessageContent;
         me?: boolean;
+        displayName?: string;
         truncate?: boolean;
         fill: boolean;
         reply?: boolean;
@@ -44,15 +46,14 @@
         failed: boolean;
         timestamp?: bigint | undefined;
         blockLevelMarkdown: boolean;
-        showPreviews: boolean;
         onExpandMessage?: (() => void) | undefined;
-        onRemovePreview?: (url: string) => void;
         onRegisterVote?: (vote: { type: "delete" | "register"; answerIndex: number }) => void;
     }
 
     let {
         content,
         me = false,
+        displayName,
         truncate = false,
         fill,
         reply = false,
@@ -70,26 +71,25 @@
         failed,
         timestamp = undefined,
         blockLevelMarkdown,
-        showPreviews = true,
         onExpandMessage = undefined,
-        onRemovePreview,
         onRegisterVote,
     }: Props = $props();
 </script>
 
+{#snippet title()}
+    <Row crossAxisAlignment={"center"}>
+        <ChatCaption fontWeight={"bold"}>
+            {displayName}
+        </ChatCaption>
+    </Row>
+{/snippet}
+
 {#if content.kind === "text_content"}
-    <TextContent
-        {me}
-        {fill}
-        {truncate}
-        {pinned}
-        {content}
-        {blockLevelMarkdown}
-        {showPreviews}
-        {onRemovePreview} />
+    <TextContentReply {title} {me} {truncate} {pinned} {content} {blockLevelMarkdown} />
 {:else if content.kind === "image_content"}
-    <ImageContent
-        {edited}
+    <ImageContentReply
+        {me}
+        {title}
         {intersecting}
         {fill}
         {content}
@@ -148,7 +148,7 @@
 {:else if content.kind === "reported_message_content"}
     <ReportedMessageContent {content} />
 {:else if content.kind === "meme_fighter_content"}
-    <ImageContent {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
+    <ImageContentReply {me} {title} {intersecting} {fill} {content} {reply} {pinned} {height} />
 {:else if content.kind === "user_referral_card"}
     <UserReferralCardContent />
 {/if}

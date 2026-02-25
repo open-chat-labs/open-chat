@@ -77,7 +77,12 @@
                 <Container gap={"md"} direction={"vertical"}>
                     {#each gates as gate}
                         {@const token = client.getTokenDetailsForAccessGate(gate)}
-                        <MenuTrigger maskUI fill position={"bottom"} align={"end"}>
+                        <MenuTrigger
+                            maskUI
+                            fill
+                            position={"bottom"}
+                            align={"end"}
+                            withBgEffect={true}>
                             <Container
                                 supplementalClass={"gate_list_item"}
                                 crossAxisAlignment={"center"}
@@ -139,12 +144,3 @@
         </Container>
     </Container>
 </SlidingPageContent>
-
-<style lang="scss">
-    :global(.menu_trigger_clone > .gate_list_item) {
-        background-color: var(--background-1) !important;
-        border-color: transparent !important;
-        box-shadow: var(--menu-sh);
-        opacity: 1 !important;
-    }
-</style>
