@@ -16,6 +16,14 @@ export function androidBundlePlugin({ version }) {
     return {
         name: "android-bundle",
         async writeBundle() {
+            // Only create OTA zip bundles for web builds. When building the APK
+            // directly (OC_APP_TYPE=android) the zips are not needed and would
+            // just bloat the APK.
+            if (process.env.OC_APP_TYPE === "android") {
+                await fs.remove(path.join("build", "downloads"));
+                return;
+            }
+
             const buildDir = "build";
             const distBundleDir = "dist_bundle";
             const downloadDir = path.join(buildDir, "downloads");
@@ -34,6 +42,20 @@ export function androidBundlePlugin({ version }) {
                 await fs.copy(buildDir, distBundleDir, {
                     filter: (src) => !src.includes(path.join(buildDir, "downloads")),
                 });
+
+                // Remove assets not needed in Android bundle
+                // TODO - we can and will revisit whether we need these assets in the bundle _at all_
+                await fs.remove(path.join(distBundleDir, "assets", "screenshots")); // these are all used in the blog section
+                await fs.remove(path.join(distBundleDir, "assets", "blog")); // the app doesn't render the blog
+                await fs.remove(path.join(distBundleDir, "out")); // this is just ts definitions
+
+                // Remove source maps
+                const files = await fs.readdir(distBundleDir, { recursive: true });
+                await Promise.all(
+                    files
+                        .filter((f) => f.endsWith(".map"))
+                        .map((f) => fs.remove(path.join(distBundleDir, f))),
+                );
 
                 // Inject Android Config
                 const indexHtmlPath = path.join(distBundleDir, "index.html");
