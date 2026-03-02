@@ -266,6 +266,9 @@
 
         if (client.isNativeApp()) {
             // Expect user to press back in the app, handle that behaviour here.
+            // Webview will consume the back event, so this will only get called
+            // once the history stack is empty, which is when we want to minimise
+            // the app.
             expectBackPress(() => {
                 try {
                     // if we're back where we started, minimise

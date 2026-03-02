@@ -1,6 +1,5 @@
 <script lang="ts">
     import { fileFromDataTransferItems } from "@src/utils/datatransfer";
-    // import { Column } from "component-lib";
     import {
         messageContextsEqual,
         subscribe,
@@ -83,6 +82,8 @@
     //@ts-ignore
     let messageEntry: MessageEntry;
 
+    let inputTrayVisible = $state(false);
+
     onMount(() => {
         const unsubs = [subscribe("ephemeralMessage", onEphemeralMessage)];
         return () => {
@@ -147,7 +148,7 @@
     });
 </script>
 
-<div class={`footer ${mode}`}>
+<div class={`footer ${mode} ${inputTrayVisible ? "tray_visible" : ""}`}>
     <div class="footer-overlay">
         {#if ephemeralMessageEvent !== undefined}
             <EphemeralMessage
@@ -162,6 +163,7 @@
     </div>
     <MessageEntry
         bind:this={messageEntry}
+        bind:inputTrayVisible
         {onPaste}
         {externalContent}
         {mode}
@@ -197,7 +199,16 @@
     .footer {
         width: 100%;
         position: relative;
-        padding: var(--sp-xs) var(--sp-md) var(--sp-zero);
+        padding: var(--sp-xs) var(--sp-zero) var(--sp-zero);
+        transition: padding-bottom 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+        &:not(.tray_visible) {
+            padding-bottom: var(--device-nav-height);
+        }
+
+        &.tray_visible {
+            padding-bottom: 0;
+        }
     }
 
     .footer-overlay {
