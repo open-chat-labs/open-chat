@@ -203,3 +203,10 @@ jobs:
                   files: |
                       frontend/openchat_${{ env.VERSION }}_full.apk
                       frontend/openchat_${{ env.VERSION }}_store.apk
+
+            - name: Notify Release
+              if: github.event_name == 'release'
+              run: |
+                  curl -s -X POST "${{ secrets.OC_ANDROID_RELEASE_HOOK }}" \
+                    -H "Content-Type: text/plain" \
+                    -d "[Android release ${{ env.VERSION }} available](${{ github.event.release.html_url }})"
