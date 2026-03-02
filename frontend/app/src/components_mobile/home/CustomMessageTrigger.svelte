@@ -129,9 +129,7 @@
 
 <style lang="scss">
     :global(.container.custom_message_selector) {
-        transition:
-            height 200ms ease-in-out,
-            opacity 200ms ease-in-out;
+        transition: opacity 400ms ease-in-out;
         height: 0 !important;
         opacity: 0;
     }

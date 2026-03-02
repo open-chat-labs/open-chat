@@ -139,14 +139,28 @@
     class:light={$currentTheme.mode === "light"}></emoji-picker>
 
 <style lang="scss">
-    :global(.emoji-overlay .modal-content) {
-        background-color: var(--menu-bg);
+    :global {
+        .emoji-overlay .modal-content {
+            background-color: var(--menu-bg);
+        }
+
+        #skintone-list {
+            background: red !important;
+            background-color: var(--background-2) !important;
+            // border-radius: var(--rad-circle);
+            // box-shadow: var(--modal-shadow);
+        }
     }
 
     emoji-picker {
         width: 100%;
+        height: 100%;
+        // flex: 1;
+        display: flex;
+
         // --emoji-padding: 0.3rem;
-        --emoji-size: 2rem;
+        --emoji-size: 1.75rem;
+        // --emoji-padding: 0.25rem;
         --background: transparent;
         --border-size: 0;
         --border-color: var(--bd);
@@ -157,7 +171,7 @@
         --input-border-radius: var(--rad-circle);
         --input-padding: var(--sp-sm) var(--sp-lg);
         --indicator-color: var(--primary);
-        --num-columns: 8 !important;
+        --num-columns: 9 !important;
 
         @media (max-width: 390px) {
             --num-columns: 7 !important;

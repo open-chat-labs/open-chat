@@ -1,7 +1,10 @@
 let visible = $state(false);
 let lastFocusedInput: HTMLElement | undefined = $state();
-let maxHeight: number | undefined = $state();
 let height: number | undefined = $state();
+
+// Guess the soft keyboard height based on the 38% rule. This is only required
+// when we've not "seen" the keyboard yet.
+let maxHeight = Math.min(Math.max(window.innerHeight * 0.38, 260), 380);
 
 function isInput(el: HTMLElement) {
     return el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable;
@@ -25,13 +28,17 @@ export const keyboard = {
         return height ?? 0;
     },
 
+    get maxHeight() {
+        return maxHeight ?? 0;
+    },
+
     set visible(value: boolean) {
         visible = value;
     },
 
     set height(value: number) {
         height = value;
-        maxHeight = value > (maxHeight ?? 0) ? value : maxHeight;
+        maxHeight = value > 0 ? value : maxHeight;
     },
 
     dismiss() {

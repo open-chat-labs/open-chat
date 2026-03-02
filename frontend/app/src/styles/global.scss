@@ -471,28 +471,9 @@ body.native-android {
             padding-bottom: calc(var(--sp-lg) + var(--device-nav-height)) !important;
         }
 
-        .footer {
-            padding-bottom: var(--device-nav-height) !important;
-        }
-
         .transient_sheet,
         .anon-footer {
             padding-bottom: var(--device-nav-height) !important;
-        }
-    }
-
-    // Set paddings when device uses 2 or 3 button navigation
-    &:not(.has-gesture-nav) {
-        .footer {
-            padding-bottom: var(--sp-md) !important;
-        }
-    }
-
-    // Case when keyboard is visible, we want to have a bit of padding between
-    // the top of the keyboard and any UI elements.
-    &.keyboard-visible {
-        .footer {
-            padding-bottom: var(--sp-sm) !important;
         }
     }
 }

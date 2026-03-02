@@ -1,6 +1,6 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
-    import { BodySmall, ColourVars, Container, IconButton, Row, transition } from "component-lib";
+    import { BodySmall, ColourVars, Container, IconButton, Row } from "component-lib";
     import type {
         AttachmentContent,
         BotActionScope,
@@ -31,7 +31,7 @@
         throttleDeadline,
         type CreatedUser,
     } from "openchat-client";
-    import { getContext, tick, onMount } from "svelte";
+    import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Alert from "svelte-material-icons/Alert.svelte";
     import Camera from "svelte-material-icons/CameraOutline.svelte";
@@ -60,6 +60,7 @@
     import PreviewFooter from "./PreviewFooter.svelte";
     import ThrottleCountdown from "./ThrottleCountdown.svelte";
     import ReplyingTo from "./ReplyingTo.svelte";
+    import { keyboard } from "@src/stores/keyboard.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -76,6 +77,7 @@
         externalContent: boolean;
         messageContext: MessageContext;
         user: CreatedUser;
+        inputTrayVisible: boolean;
         onFileSelected: (content: AttachmentContent) => void;
         onPaste: (e: ClipboardEvent) => void;
         onSetTextContent: (txt?: string) => void;
@@ -104,6 +106,7 @@
         externalContent,
         messageContext,
         user,
+        inputTrayVisible = $bindable(),
         onFileSelected,
         onPaste,
         onSetTextContent,
@@ -143,20 +146,159 @@
     let showDirectBotChatWarning = $state(false);
     let commandSent = false;
 
-    let showCustomMessageTrigger = $state(false);
-
     // Update this to force a new textbox instance to be created
     let textboxId = $state(Symbol());
-    let showEmojiPicker = $state(false);
 
-    function toggleEmojiPicker() {
-        transition(["fade"], () => {
-            toggleInteractiveSection("emoji_picker");
-            if (!showEmojiPicker) {
-                inp?.focus();
+    type InputTrayMode =
+        | "closed"
+        | "keyboard_only"
+        | "emoji_selection"
+        | "emoji_search"
+        | "attachments";
+
+    // Control variable to indicate that focus out happened, which changed the
+    // keyboard visibility, and we can take it into account to prevent extended
+    // section hiding prematurely.
+    let emojiSearchFocusedOut = $state(false);
+
+    // Prevents pop handler from running if not necessary!
+    let returnFromPopHandler = $state(false);
+
+    // Track changes in kb visibility to prevent the effect running twice for
+    // same value.
+    let previousKbVisibleValue = $state(keyboard.visible);
+
+    // Current mode for the input tray, section that opens up below the input
+    // and which provides additional message options.
+    let inputTrayMode = $state<InputTrayMode>("closed");
+
+    // Cases in which we show extended options, even when keyboard is visible,
+    // since the extened options provide bottom padding for the input to rise
+    // above the keyboard.
+    $effect(() => {
+        inputTrayVisible = keyboard.visible || inputTrayMode !== "closed";
+    });
+
+    $effect(() => {
+        if (previousKbVisibleValue === keyboard.visible) return;
+
+        // This is a new change, make sure to remember the new state...
+        previousKbVisibleValue = keyboard.visible;
+
+        // console.log(inputTrayMode, keyboard.visible);
+
+        if (!keyboard.visible) {
+            // In case we we're showing emoji search, or we focused out of emoji
+            // search, move to emoji selection.
+            if (inputTrayMode === "emoji_search" || emojiSearchFocusedOut) {
+                inputTrayMode = "emoji_selection";
             }
-        });
+
+            // If we were only showing keyboard before...
+            if (inputTrayMode === "keyboard_only") {
+                inputTrayMode = "closed";
+            }
+
+            emojiSearchFocusedOut = false;
+        } else {
+            if (inputTrayMode === "closed") {
+                inputTrayMode = "keyboard_only";
+            }
+        }
+    });
+
+    // Show emoji!
+    function toggleEmojiPicker() {
+        inputTrayMode = "emoji_selection";
+
+        pushExpandedHistoryState();
     }
+
+    // Show extened options!
+    function toggleAttachments() {
+        inputTrayMode = inputTrayMode === "attachments" ? "closed" : "attachments";
+
+        // Only push history state if attachment options are showing, or pop state
+        // if the options are not showing.
+        inputTrayMode === "attachments" ? pushExpandedHistoryState() : popExpandedHistoryState();
+    }
+
+    function showKeyboard() {
+        inp?.focus();
+    }
+
+    // Should handle cases where usual user interactions are skipped, and
+    // input is focused directly, i.e. user clicking directly into input,
+    // or replying/editing to/a message.
+    function keyboardFocus() {
+        inputTrayMode = "keyboard_only";
+
+        // Reset indicator var...
+        emojiSearchFocusedOut = false;
+
+        // When keyboard shows, we pop any history state that may have been
+        // added due to opening emoji or extended options selectors.
+        popExpandedHistoryState();
+    }
+
+    // State added to indicate expanded section is open. Devices back gesture
+    // can then pop the state from history, and the expanded section will close.
+    function pushExpandedHistoryState() {
+        // Dummy state was not added...
+        if (!history.state.action || history.state.action !== "expanded-ui") {
+            history.pushState({ action: "expanded-ui" }, "");
+        }
+    }
+
+    // Pops expanded history state only if it's set.
+    function popExpandedHistoryState() {
+        if (history.state.action === "expanded-ui") {
+            returnFromPopHandler = true;
+            history.back();
+        }
+    }
+
+    // Runs on BACK gesture/button!
+    function popStateHandler(_e: PopStateEvent) {
+        console.log("handle pop state", inputTrayMode);
+        if (returnFromPopHandler) {
+            // We manually ran pop state, so no need to handle pop any further...
+            returnFromPopHandler = false;
+            return;
+        }
+
+        if (inputTrayMode === "emoji_search") {
+            inputTrayMode = "emoji_selection";
+            return;
+        }
+
+        inputTrayMode = "closed";
+    }
+
+    function inputTrayFocusIn(e: FocusEvent) {
+        // Only handle focus if the originating element is input!
+        const eventOrigin = e.composedPath()[0] as HTMLElement;
+        const isInputOrigin = eventOrigin.tagName === "INPUT";
+
+        inputTrayMode = isInputOrigin ? "emoji_search" : inputTrayMode;
+    }
+
+    function inputTrayFocusOut(_e: FocusEvent) {
+        inputTrayMode = "emoji_selection";
+
+        // Indicate that we just focused out of an input field within the input
+        // tray, i.e. emoji search input, helps us to switch to emoji selection view.
+        emojiSearchFocusedOut = true;
+    }
+
+    // Message input focus in handler!
+    // Note: this did not seem to work by just adding focus attribute.
+    onMount(() => {
+        inp?.addEventListener("focus", keyboardFocus);
+        return () => {
+            inp?.removeEventListener("focus", keyboardFocus);
+        };
+    });
 
     function insertEmoji(emoji: SelectedEmoji) {
         if (emoji.kind === "native") {
@@ -311,25 +453,6 @@
         } else {
             showDirectBotChatWarning = true;
         }
-    }
-
-    type InteractiveSections =
-        | "emoji_picker"
-        | "emoji_search"
-        | "command_selector"
-        | "mention_picker"
-        | "custom_message_trigger";
-
-    // Hides all other interactive sections besides the one selected by the user
-    function toggleInteractiveSection(showSection?: InteractiveSections) {
-        const toggle = (section: InteractiveSections, currentValue: boolean) =>
-            (showSection === section && !currentValue) || false;
-
-        showEmojiPicker = toggle("emoji_picker", showEmojiPicker);
-        showEmojiSearch = toggle("emoji_search", showEmojiSearch);
-        showCommandSelector = toggle("command_selector", showCommandSelector);
-        showMentionPicker = toggle("mention_picker", showMentionPicker);
-        showCustomMessageTrigger = toggle("custom_message_trigger", showCustomMessageTrigger);
     }
 
     function keyPress(e: KeyboardEvent) {
@@ -539,14 +662,6 @@
     );
     let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
 
-    onMount(() => {
-        const focusHandler = () => toggleInteractiveSection();
-        inp?.addEventListener("focus", focusHandler);
-        return () => {
-            inp?.removeEventListener("focus", focusHandler);
-        };
-    });
-
     $effect(() => {
         if (inp) {
             if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
@@ -606,6 +721,8 @@
     );
 </script>
 
+<svelte:window onpopstate={popStateHandler} />
+
 {#if showDirectBotChatWarning}
     <AlertBoxModal
         onClose={() => (showDirectBotChatWarning = false)}
@@ -649,7 +766,8 @@
         gap={"sm"}
         mainAxisAlignment={"spaceBetween"}
         crossAxisAlignment={recording ? "center" : "end"}
-        background={ColourVars.background0}>
+        background={ColourVars.background0}
+        padding={["zero", "md", inputTrayMode !== "closed" ? "sm" : "zero"]}>
         {#if frozen}
             <div class="frozen">
                 <Translatable resourceKey={i18nKey("chatFrozen")} />
@@ -710,18 +828,25 @@
                             crossAxisAlignment="center"
                             mainAxisAlignment="spaceBetween"
                             supplementalClass="message_entry_text_box">
-                            <IconButton
-                                onclick={toggleEmojiPicker}
-                                padding={["sm", "zero", "md", "sm"]}
-                                size={"md"}>
-                                {#snippet icon()}
-                                    {#if showEmojiPicker}
-                                        <Keyboard color={ColourVars.textPlaceholder} />
-                                    {:else}
+                            {#if inputTrayMode !== "emoji_selection"}
+                                <IconButton
+                                    onclick={toggleEmojiPicker}
+                                    padding={["sm", "zero", "md", "sm"]}
+                                    size={"md"}>
+                                    {#snippet icon()}
                                         <StickerEmoji color={ColourVars.textPlaceholder} />
-                                    {/if}
-                                {/snippet}
-                            </IconButton>
+                                    {/snippet}
+                                </IconButton>
+                            {:else}
+                                <IconButton
+                                    onclick={showKeyboard}
+                                    padding={["sm", "zero", "md", "sm"]}
+                                    size={"md"}>
+                                    {#snippet icon()}
+                                        <Keyboard color={ColourVars.textPlaceholder} />
+                                    {/snippet}
+                                </IconButton>
+                            {/if}
                             <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_static_element_interactions -->
                             <div
                                 data-gram="false"
@@ -753,13 +878,13 @@
                                     width={"hug"}
                                     gap={"md"}>
                                     <IconButton
-                                        onclick={() =>
-                                            toggleInteractiveSection("custom_message_trigger")}
+                                        onclick={toggleAttachments}
                                         padding={["sm", "zero", "md", "zero"]}
                                         size={"md"}>
                                         {#snippet icon()}
                                             <div
-                                                class:open={showCustomMessageTrigger}
+                                                class:open={inputTrayMode === "attachments" &&
+                                                    !keyboard.visible}
                                                 class="drawer_trigger">
                                                 <PlusCircle color={ColourVars.textPlaceholder} />
                                             </div>
@@ -833,25 +958,39 @@
         {/if}
     </Container>
 
-    {#if showEmojiPicker}
-        <EmojiOrGif
-            empty={textboxEmpty}
-            ctx={messageContext}
-            onEmojiSelected={insertEmoji}
-            onBackspace={backspace}
-            onClose={toggleEmojiPicker} />
-    {/if}
+    <!-- svelte-ignore a11y_interactive_supports_focus -->
+    <div
+        role="dialog"
+        class={`input_tray ${inputTrayVisible ? "visible" : ""}`}
+        onmousedown={inputTrayFocusIn}
+        onfocusout={inputTrayFocusOut}
+        style:height={`${
+            inputTrayMode !== "closed"
+                ? keyboard.maxHeight + (inputTrayMode === "emoji_search" ? 200 : 0)
+                : 0
+        }px`}
+        style:visibility={inputTrayMode !== "closed" ? "visible" : "hidden"}>
+        {#if inputTrayMode === "emoji_selection" || inputTrayMode === "emoji_search"}
+            <EmojiOrGif
+                empty={textboxEmpty}
+                ctx={messageContext}
+                onEmojiSelected={insertEmoji}
+                onBackspace={backspace}
+                onClose={toggleEmojiPicker} />
+        {/if}
+
+        <CustomMessageTrigger
+            {permittedMessages}
+            {onTokenTransfer}
+            {onCreatePrizeMessage}
+            {onCreateP2PSwapMessage}
+            {onMakeMeme}
+            {onClearAttachment}
+            {onFileSelected}
+            {messageContext}
+            open={inputTrayMode === "attachments"} />
+    </div>
 {/if}
-<CustomMessageTrigger
-    {permittedMessages}
-    {onTokenTransfer}
-    {onCreatePrizeMessage}
-    {onCreateP2PSwapMessage}
-    {onMakeMeme}
-    {onClearAttachment}
-    {onFileSelected}
-    {messageContext}
-    bind:open={showCustomMessageTrigger} />
 
 <style lang="scss">
     .message_entry_wrapper {
@@ -916,6 +1055,22 @@
         justify-content: center;
         align-items: center;
         width: 100%;
+    }
+
+    .input_tray {
+        height: 0;
+        width: 100%;
+        padding-bottom: 0;
+        overflow: hidden;
+        background: var(--background-1);
+        border-radius: var(--rad-lg) var(--rad-lg) 0 0;
+        transition:
+            height 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+            padding-bottom 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+        &.visible {
+            padding-bottom: var(--device-nav-height);
+        }
     }
 
     :global {
