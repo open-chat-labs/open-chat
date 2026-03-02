@@ -37,7 +37,7 @@
         "@types/identicon.js": "^2.3.1",
         "@types/jest": "^29.5.3",
         "@types/md5": "^2.3.2",
-        "svelte": "^5.51.5",
+        "svelte": "^5.53.5",
         "typescript": "^5.9.3",
         "vitest": "^3.1.1",
         "wait-on": "^7.0.1"
