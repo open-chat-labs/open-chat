@@ -4,8 +4,9 @@
         disableP2PSwapFeature,
         disableSendCryptoFeature,
     } from "@src/utils/features";
-    import { BigButton, Container, type SizeMode } from "component-lib";
+    import { Body, ColourVars, Column } from "component-lib";
     import {
+        i18nKey,
         publish,
         type AttachmentContent,
         type MessageContext,
@@ -16,11 +17,10 @@
     import Gift from "svelte-material-icons/GiftOutline.svelte";
     import Gallery from "svelte-material-icons/ImageMultipleOutline.svelte";
     import Swap from "svelte-material-icons/SwapHorizontal.svelte";
-    import { expoInOut } from "svelte/easing";
-    import { fly } from "svelte/transition";
     import Bitcoin from "../icons/Bitcoin.svelte";
     import MemeFighter from "../icons/MemeFighter.svelte";
     import FileAttacher from "./FileAttacher.svelte";
+    import Translatable from "../Translatable.svelte";
 
     interface Props {
         open: boolean;
@@ -44,8 +44,7 @@
         onMakeMeme,
         messageContext,
     }: Props = $props();
-    const width: SizeMode = { size: "6.5rem" };
-    const height: SizeMode = { size: "4.5rem" };
+
     let mediaPermitted = $derived(
         permittedMessages.get("audio") ||
             permittedMessages.get("video") ||
@@ -53,88 +52,81 @@
     );
 </script>
 
-<div transition:fly={{ duration: 300, easing: expoInOut, y: 200 }} class="wrapper">
-    <Container
-        onSwipe={() => {}}
-        padding={open ? ["sm", "md"] : ["zero", "md"]}
-        gap={"sm"}
-        supplementalClass={`custom_message_selector ${open ? "open" : ""}`}
-        onClick={() => (open = false)}>
-        {#if permittedMessages.get("crypto") && !disableSendCryptoFeature}
-            <BigButton {height} {width} onClick={() => onTokenTransfer({})}>
-                {#snippet icon(color)}
-                    <Bitcoin {color} />
-                {/snippet}
-                Send crypto
-            </BigButton>
-        {/if}
-        {#if mediaPermitted}
-            <FileAttacher {onFileSelected}>
-                {#snippet children(onClick)}
-                    <BigButton {height} {width} {onClick}>
-                        {#snippet icon(color)}
-                            <Gallery {color} />
-                        {/snippet}
-                        Gallery
-                    </BigButton>
-                {/snippet}
-            </FileAttacher>
-        {/if}
-        {#if permittedMessages.get("file")}
-            <FileAttacher {onFileSelected}>
-                {#snippet children(onClick)}
-                    <BigButton {height} {width} {onClick}>
-                        {#snippet icon(color)}
-                            <File {color} />
-                        {/snippet}
-                        File
-                    </BigButton>
-                {/snippet}
-            </FileAttacher>
-        {/if}
-        {#if permittedMessages.get("prize") && !disableCreatePrizeFeature}
-            <BigButton {height} {width} onClick={onCreatePrizeMessage}>
-                {#snippet icon(color)}
-                    <Gift {color} />
-                {/snippet}
-                Prize
-            </BigButton>
-        {/if}
-        {#if permittedMessages.get("poll")}
-            <BigButton {height} {width} onClick={() => publish("createPoll", messageContext)}>
-                {#snippet icon(color)}
-                    <Poll {color} />
-                {/snippet}
-                Poll
-            </BigButton>
-        {/if}
-        {#if permittedMessages.get("p2pSwap") && !disableP2PSwapFeature}
-            <BigButton {height} {width} onClick={onCreateP2PSwapMessage}>
-                {#snippet icon(color)}
-                    <Swap {color} />
-                {/snippet}
-                Swap
-            </BigButton>
-        {/if}
-        {#if permittedMessages.get("memeFighter")}
-            <BigButton {height} {width} onClick={onMakeMeme}>
-                {#snippet icon(color)}
-                    <MemeFighter {color} />
-                {/snippet}
-                Meme
-            </BigButton>
-        {/if}
-    </Container>
+{#snippet attachOption(key: string, Icon: any, color: string, onclick: () => void)}
+    <button class="attach-option" {onclick}>
+        <Column gap="sm" crossAxisAlignment="center">
+            <Icon size="1.5rem" {color} />
+            <Body colour="textPrimary" fontWeight="semi-bold">
+                <Translatable resourceKey={i18nKey(key)} />
+            </Body>
+        </Column>
+    </button>
+{/snippet}
+
+<div class="attach-wrapper">
+    <!-- Open Gallery -->
+    {#if mediaPermitted}
+        <FileAttacher {onFileSelected}>
+            {#snippet children(onClick)}
+                {@render attachOption("Open Gallery", Gallery, ColourVars.primary, onClick)}
+            {/snippet}
+        </FileAttacher>
+    {/if}
+
+    <!-- Send File -->
+    {#if permittedMessages.get("file")}
+        <FileAttacher {onFileSelected}>
+            {#snippet children(onClick)}
+                {@render attachOption("Send File", File, ColourVars.secondary, onClick)}
+            {/snippet}
+        </FileAttacher>
+    {/if}
+
+    <!-- Create Poll -->
+    {#if permittedMessages.get("poll")}
+        {@render attachOption("Create Poll", Poll, ColourVars.warning, () =>
+            publish("createPoll", messageContext),
+        )}
+    {/if}
+
+    <!-- Send Crypto -->
+    {#if permittedMessages.get("crypto") && !disableSendCryptoFeature}
+        {@render attachOption("Send Crypto", Bitcoin, ColourVars.tertiary, () =>
+            onTokenTransfer({}),
+        )}
+    {/if}
+
+    <!-- Offer P2P Swap -->
+    {#if permittedMessages.get("p2pSwap") && !disableP2PSwapFeature}
+        {@render attachOption("Offer Swap", Swap, ColourVars.success, onCreateP2PSwapMessage)}
+    {/if}
+
+    <!-- Create Prize -->
+    {#if permittedMessages.get("prize") && !disableCreatePrizeFeature}
+        {@render attachOption("Create Prize", Gift, ColourVars.error, () =>
+            onCreatePrizeMessage?.(),
+        )}
+    {/if}
+
+    <!-- Meme fighter -->
+    {#if permittedMessages.get("memeFighter")}
+        {@render attachOption("Meme Fighter", MemeFighter, ColourVars.textSecondary, onMakeMeme)}
+    {/if}
 </div>
 
 <style lang="scss">
-    :global(.container.custom_message_selector) {
-        transition: opacity 400ms ease-in-out;
-        height: 0 !important;
-        opacity: 0;
+    .attach-wrapper {
+        display: grid;
+        overflow: auto;
+        padding: var(--sp-xl);
+        gap: var(--sp-xxl) var(--sp-xl);
+        grid-template-columns: repeat(3, 1fr);
     }
-    :global(.container.custom_message_selector.open) {
-        height: 6.5rem !important;
-        opacity: 1;
+
+    .attach-option {
+        background-color: transparent;
+        border: none;
+        padding: 0;
+        margin: 0;
     }
 </style>

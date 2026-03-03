@@ -91,10 +91,14 @@
         return fetch(url)
             .then((res) => res.json())
             .then((res: TenorSearchResponse) => {
+                if (!res) return [];
                 pos = `${res.next}`;
                 return res.results;
             })
-            .then((res) => res.map((result, i) => addKey(i, pos, result)))
+            .then((res) => {
+                if (!res) return [];
+                return res.map((result, i) => addKey(i, pos, result));
+            })
             .finally(() => (refreshing = false));
     }
 
@@ -143,7 +147,7 @@
 </script>
 
 <Column padding={["sm", "md", "lg", "md"]}>
-    <Row>
+    <Row supplementalClass="gif-search-row">
         <Search
             padding={["sm", "lg"]}
             background={ColourVars.background1}
@@ -162,6 +166,8 @@
         height={{ size: "calc(var(--vh, 1vh) * 40)" }}
         bind:ref={containerElement}>
         {#each Object.values(gifCache) as item (item.key)}
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <img
                 class="thumb"
                 onclick={() => send(item)}
@@ -173,6 +179,10 @@
 </Container>
 
 <style lang="scss">
+    :global(.gif-search-row) {
+        padding-left: 5.25rem !important;
+    }
+
     .thumb {
         position: absolute;
         cursor: pointer;
