@@ -152,8 +152,8 @@
     type InputTrayMode =
         | "closed"
         | "keyboard_only"
-        | "emoji_selection"
-        | "emoji_search"
+        | "emoji_gif_selection"
+        | "emoji_gif_search"
         | "attachments";
 
     // Control variable to indicate that focus out happened, which changed the
@@ -185,13 +185,11 @@
         // This is a new change, make sure to remember the new state...
         previousKbVisibleValue = keyboard.visible;
 
-        // console.log(inputTrayMode, keyboard.visible);
-
         if (!keyboard.visible) {
             // In case we we're showing emoji search, or we focused out of emoji
             // search, move to emoji selection.
-            if (inputTrayMode === "emoji_search" || emojiSearchFocusedOut) {
-                inputTrayMode = "emoji_selection";
+            if (inputTrayMode === "emoji_gif_search" || emojiSearchFocusedOut) {
+                inputTrayMode = "emoji_gif_selection";
             }
 
             // If we were only showing keyboard before...
@@ -209,7 +207,7 @@
 
     // Show emoji!
     function toggleEmojiPicker() {
-        inputTrayMode = "emoji_selection";
+        inputTrayMode = "emoji_gif_selection";
 
         pushExpandedHistoryState();
     }
@@ -260,15 +258,14 @@
 
     // Runs on BACK gesture/button!
     function popStateHandler(_e: PopStateEvent) {
-        console.log("handle pop state", inputTrayMode);
         if (returnFromPopHandler) {
             // We manually ran pop state, so no need to handle pop any further...
             returnFromPopHandler = false;
             return;
         }
 
-        if (inputTrayMode === "emoji_search") {
-            inputTrayMode = "emoji_selection";
+        if (inputTrayMode === "emoji_gif_search") {
+            inputTrayMode = "emoji_gif_selection";
             return;
         }
 
@@ -280,11 +277,15 @@
         const eventOrigin = e.composedPath()[0] as HTMLElement;
         const isInputOrigin = eventOrigin.tagName === "INPUT";
 
-        inputTrayMode = isInputOrigin ? "emoji_search" : inputTrayMode;
+        inputTrayMode = isInputOrigin ? "emoji_gif_search" : inputTrayMode;
     }
 
-    function inputTrayFocusOut(_e: FocusEvent) {
-        inputTrayMode = "emoji_selection";
+    function inputTrayFocusOut(e: FocusEvent) {
+        // Do not handle blur event for non input elements
+        const eventOrigin = e.composedPath()[0] as HTMLElement;
+        if (eventOrigin.tagName !== "INPUT") return;
+
+        inputTrayMode = "emoji_gif_selection";
 
         // Indicate that we just focused out of an input field within the input
         // tray, i.e. emoji search input, helps us to switch to emoji selection view.
@@ -828,7 +829,7 @@
                             crossAxisAlignment="center"
                             mainAxisAlignment="spaceBetween"
                             supplementalClass="message_entry_text_box">
-                            {#if inputTrayMode !== "emoji_selection"}
+                            {#if inputTrayMode !== "emoji_gif_selection"}
                                 <IconButton
                                     onclick={toggleEmojiPicker}
                                     padding={["sm", "zero", "md", "sm"]}
@@ -966,11 +967,11 @@
         onfocusout={inputTrayFocusOut}
         style:height={`${
             inputTrayMode !== "closed"
-                ? keyboard.maxHeight + (inputTrayMode === "emoji_search" ? 200 : 0)
+                ? keyboard.maxHeight + (inputTrayMode === "emoji_gif_search" ? 200 : 0)
                 : 0
         }px`}
         style:visibility={inputTrayMode !== "closed" ? "visible" : "hidden"}>
-        {#if inputTrayMode === "emoji_selection" || inputTrayMode === "emoji_search"}
+        {#if inputTrayMode === "emoji_gif_selection" || inputTrayMode === "emoji_gif_search"}
             <EmojiOrGif
                 empty={textboxEmpty}
                 ctx={messageContext}

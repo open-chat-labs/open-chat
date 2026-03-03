@@ -56,13 +56,22 @@
 
     function createCustomCss(): string {
         const rules: string[] = [];
+
         if (!$premiumItemsStore.has(PremiumItem.BotEmojis)) {
             rules.push(lockedCategoryCss(0, premiumPrices[PremiumItem.BotEmojis]));
         }
+
         if (!$premiumItemsStore.has(PremiumItem.PopularEmojis)) {
             rules.push(lockedCategoryCss(1, premiumPrices[PremiumItem.PopularEmojis]));
         }
+
+        // Custom CSS rules...
         rules.push(".indicator { transition: none; }");
+        rules.push(".search-row { padding-left: 6rem; }");
+        rules.push(
+            "#skintone-list { background-color: var(--background-2); border-radius: var(--rad-circle); box-shadow: var(--menu-sh); }",
+        );
+
         return rules.join("\n");
     }
 
@@ -142,13 +151,6 @@
     :global {
         .emoji-overlay .modal-content {
             background-color: var(--menu-bg);
-        }
-
-        #skintone-list {
-            background: red !important;
-            background-color: var(--background-2) !important;
-            // border-radius: var(--rad-circle);
-            // box-shadow: var(--modal-shadow);
         }
     }
 
