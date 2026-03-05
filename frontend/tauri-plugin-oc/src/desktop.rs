@@ -41,4 +41,8 @@ impl<R: Runtime> Oc<R> {
     pub fn release_notifications(&self, _payload: ReleaseNotificationsRequest) {
         unimplemented!("not implemented for desktop environment")
     }
+
+    pub fn load_recent_media(&self, _payload: LoadRecentMediaRequest) -> crate::Result<LoadRecentMediaResponse> {
+        unimplemented!("not implemented for desktop environment")
+    }
 }

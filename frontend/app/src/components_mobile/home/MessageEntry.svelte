@@ -980,16 +980,18 @@
                 onClose={toggleEmojiPicker} />
         {/if}
 
-        <CustomMessageTrigger
-            {permittedMessages}
-            {onTokenTransfer}
-            {onCreatePrizeMessage}
-            {onCreateP2PSwapMessage}
-            {onMakeMeme}
-            {onClearAttachment}
-            {onFileSelected}
-            {messageContext}
-            open={inputTrayMode === "attachments"} />
+        {#if inputTrayMode === "attachments"}
+            <CustomMessageTrigger
+                {permittedMessages}
+                {onTokenTransfer}
+                {onCreatePrizeMessage}
+                {onCreateP2PSwapMessage}
+                {onMakeMeme}
+                {onClearAttachment}
+                {onFileSelected}
+                {messageContext}
+                open={true} />
+        {/if}
     </div>
 {/if}
 

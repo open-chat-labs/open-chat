@@ -304,85 +304,97 @@
 
 <Witch />
 
-<ChatEventList
-    bind:this={chatEventList}
-    rootSelector={"chat-messages"}
-    threadRootEvent={undefined}
-    maintainScroll
-    visible={$showMiddle}
-    {readonly}
-    {unreadMessages}
-    {firstUnreadMention}
-    {footer}
-    events={$eventsStore}
-    {chat}
-    bind:initialised
-    bind:messagesDiv
-    bind:messagesDivHeight>
-    {#snippet children({
-        isAccepted,
-        isConfirmed,
-        isFailed,
-        isReadByMe,
-        messageObserver,
-        labelObserver,
-        focusIndex,
-    })}
-        {#if !privatePreview}
-            {#each timeline as timelineItem}
-                {#if timelineItem.kind === "timeline_date"}
-                    <TimelineDate observer={labelObserver} timestamp={timelineItem.timestamp} />
-                {:else}
-                    {#each timelineItem.group as innerGroup (userGroupKey(innerGroup))}
-                        {#each innerGroup as evt, i (eventKey(evt))}
-                            <ChatEvent
-                                observer={messageObserver}
-                                focused={evt.event.kind === "message" &&
-                                    evt.event.messageIndex === focusIndex &&
-                                    !isFailed($failedMessagesStore, evt)}
-                                accepted={isAccepted($unconfirmedStore, evt)}
-                                confirmed={isConfirmed($unconfirmedStore, evt)}
-                                failed={isFailed($failedMessagesStore, evt)}
-                                readByMe={isReadByMe($messagesRead, evt)}
-                                chatId={chat.id}
-                                chatType={chat.kind}
-                                me={isMe(evt)}
-                                first={i + 1 === innerGroup.length}
-                                last={i === 0}
-                                {readonly}
-                                {canPin}
-                                {canBlockUsers}
-                                {canDelete}
-                                {canSendAny}
-                                {canReact}
-                                {canInvite}
-                                {canReplyInThread}
-                                collapsed={isCollapsed(evt, filteredProposals)}
-                                supportsEdit
-                                supportsReply
-                                threadRootMessage={undefined}
-                                publicGroup={(chat.kind === "group_chat" ||
-                                    chat.kind === "channel") &&
-                                    chat.public}
-                                pinned={isPinned($selectedChatPinnedMessagesStore, evt)}
-                                editing={$selectedChatDraftMessageStore?.editingEvent === evt}
-                                onReplyTo={replyTo}
-                                {onRemovePreview}
-                                {onEditEvent}
-                                {onGoToMessageIndex}
-                                onExpandMessage={() => toggleMessageExpansion(evt, true)}
-                                onCollapseMessage={() => toggleMessageExpansion(evt, false)}
-                                event={evt} />
+<div class="chat_messages_wrapper">
+    <ChatEventList
+        bind:this={chatEventList}
+        rootSelector={"chat-messages"}
+        threadRootEvent={undefined}
+        maintainScroll
+        visible={$showMiddle}
+        {readonly}
+        {unreadMessages}
+        {firstUnreadMention}
+        {footer}
+        events={$eventsStore}
+        {chat}
+        bind:initialised
+        bind:messagesDiv
+        bind:messagesDivHeight>
+        {#snippet children({
+            isAccepted,
+            isConfirmed,
+            isFailed,
+            isReadByMe,
+            messageObserver,
+            labelObserver,
+            focusIndex,
+        })}
+            {#if !privatePreview}
+                {#each timeline as timelineItem}
+                    {#if timelineItem.kind === "timeline_date"}
+                        <TimelineDate observer={labelObserver} timestamp={timelineItem.timestamp} />
+                    {:else}
+                        {#each timelineItem.group as innerGroup (userGroupKey(innerGroup))}
+                            {#each innerGroup as evt, i (eventKey(evt))}
+                                <ChatEvent
+                                    observer={messageObserver}
+                                    focused={evt.event.kind === "message" &&
+                                        evt.event.messageIndex === focusIndex &&
+                                        !isFailed($failedMessagesStore, evt)}
+                                    accepted={isAccepted($unconfirmedStore, evt)}
+                                    confirmed={isConfirmed($unconfirmedStore, evt)}
+                                    failed={isFailed($failedMessagesStore, evt)}
+                                    readByMe={isReadByMe($messagesRead, evt)}
+                                    chatId={chat.id}
+                                    chatType={chat.kind}
+                                    me={isMe(evt)}
+                                    first={i + 1 === innerGroup.length}
+                                    last={i === 0}
+                                    {readonly}
+                                    {canPin}
+                                    {canBlockUsers}
+                                    {canDelete}
+                                    {canSendAny}
+                                    {canReact}
+                                    {canInvite}
+                                    {canReplyInThread}
+                                    collapsed={isCollapsed(evt, filteredProposals)}
+                                    supportsEdit
+                                    supportsReply
+                                    threadRootMessage={undefined}
+                                    publicGroup={(chat.kind === "group_chat" ||
+                                        chat.kind === "channel") &&
+                                        chat.public}
+                                    pinned={isPinned($selectedChatPinnedMessagesStore, evt)}
+                                    editing={$selectedChatDraftMessageStore?.editingEvent === evt}
+                                    onReplyTo={replyTo}
+                                    {onRemovePreview}
+                                    {onEditEvent}
+                                    {onGoToMessageIndex}
+                                    onExpandMessage={() => toggleMessageExpansion(evt, true)}
+                                    onCollapseMessage={() => toggleMessageExpansion(evt, false)}
+                                    event={evt} />
+                            {/each}
                         {/each}
-                    {/each}
-                {/if}
-            {/each}
-        {/if}
-        {#if privatePreview}
-            <PrivatePreview />
-        {/if}
-        {#if showAvatar}
-            <InitialChatMessage {chat} />
-        {/if}
-    {/snippet}
-</ChatEventList>
+                    {/if}
+                {/each}
+            {/if}
+            {#if privatePreview}
+                <PrivatePreview />
+            {/if}
+            {#if showAvatar}
+                <InitialChatMessage {chat} />
+            {/if}
+        {/snippet}
+    </ChatEventList>
+</div>
+
+<style lang="scss">
+    .chat_messages_wrapper {
+        position: relative;
+        display: flex;
+        flex: 1;
+        width: 100%;
+        overflow: auto;
+    }
+</style>
