@@ -967,7 +967,7 @@
         onfocusout={inputTrayFocusOut}
         style:height={`${
             inputTrayMode !== "closed"
-                ? keyboard.maxHeight + (inputTrayMode === "emoji_gif_search" ? 200 : 0)
+                ? keyboard.height + (inputTrayMode === "emoji_gif_search" ? 200 : 0)
                 : 0
         }px`}
         style:visibility={inputTrayMode !== "closed" ? "visible" : "hidden"}>

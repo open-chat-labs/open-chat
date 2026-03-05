@@ -181,7 +181,7 @@
             });
 
             keyboard.visible = data.isKeyboardOpen;
-            keyboard.height = data.keyboardHeightDp;
+            keyboard.currentHeight = data.keyboardHeightDp;
             data.isKeyboardOpen
                 ? document.body.classList.add("keyboard-visible")
                 : document.body.classList.remove("keyboard-visible");

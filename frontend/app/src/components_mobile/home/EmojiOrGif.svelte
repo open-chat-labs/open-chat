@@ -54,7 +54,7 @@
     supplementalClass={`emoji_wrapper ${selected}`}
     height="fill"
     overflow="visible"
-    maxHeight={keyboard.maxHeight > 0 ? `${keyboard.maxHeight}px` : "auto"}>
+    maxHeight={keyboard.height > 0 ? `${keyboard.height}px` : "auto"}>
     <div class="emoji-gif-wrapper">
         <Row
             gap="sm"
