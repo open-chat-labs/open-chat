@@ -6,5 +6,11 @@ export { showNotification } from "./commands/showNotification";
 export { signIn } from "./commands/signIn";
 export { signUp } from "./commands/signUp";
 export { svelteReady } from "./commands/svelteReady";
+export {
+    loadRecentMedia,
+    MediaPermissionStatus,
+    RecentMedia,
+    RecentMediaResponse,
+} from "./commands/loadRecentMedia";
 export * from "./models/credentials";
 export * from "./models/error";

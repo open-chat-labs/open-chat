@@ -75,7 +75,7 @@
         events,
         readonly,
         firstUnreadMention,
-        footer,
+        // footer,
         threadRootEvent,
         maintainScroll,
         scrollTopButtonEnabled = false,
@@ -792,54 +792,51 @@
     })}
 </Container>
 
-{#if scrollTopButtonEnabled}
-    <div
-        title={$_("scrollToTop")}
-        class:show={showGoToTop}
-        class="fab to-top"
-        class:rtl={$rtlStore}>
-        <FloatingButton variant="secondary" onClick={scrollToTop}>
-            {#snippet icon(color)}
-                <ArrowUp {color} />
-            {/snippet}
-        </FloatingButton>
-    </div>
-{/if}
+<div class="fab_wrapper" class:rtl={$rtlStore}>
+    {#if scrollTopButtonEnabled}
+        <div title={$_("scrollToTop")} class:show={showGoToTop} class="fab to-top">
+            <FloatingButton variant="secondary" onClick={scrollToTop}>
+                {#snippet icon(color)}
+                    <ArrowUp {color} />
+                {/snippet}
+            </FloatingButton>
+        </div>
+    {/if}
 
-{#if !readonly}
+    {#if !readonly}
+        <div
+            title={$_("goToFirstMention")}
+            class:show={firstUnreadMention !== undefined}
+            class="fab mentions">
+            <FloatingButton variant="secondary" onClick={() => scrollToMention(firstUnreadMention)}>
+                {#snippet icon()}
+                    <div in:pop={{ duration: 1500 }} class="unread">
+                        <div class="mention-count">@</div>
+                    </div>
+                {/snippet}
+            </FloatingButton>
+        </div>
+    {/if}
     <div
-        title={$_("goToFirstMention")}
-        class:show={firstUnreadMention !== undefined}
-        class="fab mentions"
-        class:rtl={$rtlStore}>
-        <FloatingButton variant="secondary" onClick={() => scrollToMention(firstUnreadMention)}>
-            {#snippet icon()}
-                <div in:pop={{ duration: 1500 }} class="unread">
-                    <div class="mention-count">@</div>
-                </div>
+        title={$_("goToLatestMessage")}
+        class:show={showGoToBottom || unreadMessages > 0}
+        class="fab to-bottom">
+        <FloatingButton variant="secondary" onClick={scrollToLast}>
+            {#snippet icon(color)}
+                {#if loadingFromUserScroll}
+                    <div class="spinner"></div>
+                {:else if unreadMessages > 0}
+                    <div in:pop={{ duration: 1500 }} class="unread">
+                        <div class="unread-count">
+                            {unreadMessages > 999 ? "999+" : unreadMessages}
+                        </div>
+                    </div>
+                {:else}
+                    <ArrowDown {color} />
+                {/if}
             {/snippet}
         </FloatingButton>
     </div>
-{/if}
-<div
-    title={$_("goToLatestMessage")}
-    class:show={showGoToBottom || unreadMessages > 0}
-    class="fab to-bottom"
-    class:footer
-    class:rtl={$rtlStore}>
-    <FloatingButton variant="secondary" onClick={scrollToLast}>
-        {#snippet icon(color)}
-            {#if loadingFromUserScroll}
-                <div class="spinner"></div>
-            {:else if unreadMessages > 0}
-                <div in:pop={{ duration: 1500 }} class="unread">
-                    <div class="unread-count">{unreadMessages > 999 ? "999+" : unreadMessages}</div>
-                </div>
-            {:else}
-                <ArrowDown {color} />
-            {/if}
-        {/snippet}
-    </FloatingButton>
 </div>
 
 <style lang="scss">
@@ -847,70 +844,44 @@
         overflow-y: hidden !important;
     }
 
-    /* .scrollable-list {
-        @include message-list();
-        background-color: var(--currentChat-msgs-bg);
-        display: flex;
-        flex-direction: column-reverse;
-        width: 100%;
-
-        &.interrupt {
-            overflow-y: hidden;
-        }
-    } */
-
     .spinner {
         @include loading-spinner(1em, 0.5em, var(--button-spinner), "/assets/plain-spinner.svg");
     }
 
-    .fab {
-        transition: opacity ease-in-out 300ms;
+    .fab_wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-md);
         position: absolute;
-        @include z-index("fab");
-        right: var(--sp-xl);
-        bottom: 0;
-        opacity: 0;
+        bottom: var(--sp-sm);
         pointer-events: none;
+
+        &:not(.rtl) {
+            right: var(--sp-xl);
+        }
+
+        &.rtl {
+            left: var(--sp-md);
+        }
+    }
+
+    .fab {
+        opacity: 0;
+        transition: opacity ease-in-out 300ms;
+        pointer-events: none;
+        @include z-index("fab");
 
         &.show {
             opacity: 1;
             pointer-events: all;
         }
-
-        &.rtl {
-            left: $sp6;
-            right: unset;
-        }
     }
 
-    .mentions {
-        bottom: 140px;
-        bottom: calc(140px + var(--sp-md));
-
-        .mention-count {
-            @include font(bold, normal, fs-140);
-        }
+    .mentions .mention-count {
+        @include font(bold, normal, fs-140);
     }
 
     .unread {
-        color: var(--text-on-primary);
-        text-align: center;
-
-        .unread-count {
-            line-height: 80%;
-        }
-    }
-
-    .to-bottom {
-        bottom: 24px;
-        &.footer {
-            bottom: 60px;
-            bottom: calc(60px + var(--sp-md));
-        }
-    }
-
-    .to-top {
-        top: 95px;
-        height: $sp7;
+        color: var(--primary);
     }
 </style>

@@ -17,6 +17,7 @@ Default permissions for the plugin
 - `allow-get-server-version`
 - `allow-download-update`
 - `allow-restart-app`
+- `allow-load-recent-media`
 
 ## Permission Table
 
@@ -101,6 +102,32 @@ Enables the get_server_version command without any pre-configured scope.
 <td>
 
 Denies the get_server_version command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-load-recent-media`
+
+</td>
+<td>
+
+Enables the load_recent_media command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-load-recent-media`
+
+</td>
+<td>
+
+Denies the load_recent_media command without any pre-configured scope.
 
 </td>
 </tr>

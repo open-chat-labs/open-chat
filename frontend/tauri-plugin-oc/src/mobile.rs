@@ -70,4 +70,8 @@ impl<R: Runtime> Oc<R> {
             .0
             .run_mobile_plugin("restartApp", MinimizeAppRequest::default());
     }
+
+    pub fn load_recent_media(&self, payload: LoadRecentMediaRequest) -> crate::Result<LoadRecentMediaResponse> {
+        self.0.run_mobile_plugin("loadRecentMedia", payload).map_err(Into::into)
+    }
 }

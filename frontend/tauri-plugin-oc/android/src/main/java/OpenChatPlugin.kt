@@ -3,12 +3,14 @@ package com.ocplugin.app
 import android.app.Activity
 import android.app.NotificationManager
 import android.content.Context
+import android.content.pm.PackageManager
 import android.util.Log
 import android.webkit.WebView
 import app.tauri.annotation.Command
 import app.tauri.annotation.TauriPlugin
 import app.tauri.plugin.Invoke
 import app.tauri.plugin.JSObject
+import app.tauri.plugin.JSArray
 import app.tauri.plugin.Plugin
 import com.google.firebase.messaging.FirebaseMessaging
 import com.ocplugin.app.commands.*
@@ -78,6 +80,20 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
     @Command
     fun restartApp(invoke: Invoke) {
         RestartApp(activity).handler(invoke)
+    }
+
+    @Command
+    fun loadRecentMedia(invoke: Invoke) {
+        val media = LoadRecentMedia(activity);
+        if (media.checkPermissionGranted()) {
+            media.handler(invoke)
+        } else {
+            // Save the intent reference, so that we can use it once we get a response from the
+            // permission request within the Main activity. At that point we call the
+            // OCPluginCompanion.resolvePermissionsGranted function.
+            OCPluginCompanion.pendingMediaInvoke = invoke;
+            media.askForPermission()
+        }
     }
 }
 
@@ -164,5 +180,29 @@ object OCPluginCompanion {
         }
 
         return notificationsManager!!
+    }
+
+    // Invoke for media permission request
+    var pendingMediaInvoke: Invoke? = null;
+
+    // This function is called from MainActivity, and handles results of any permission requests.
+    // Each permission request has a unique request code.
+    fun resolvePermissionsGranted(activity: Activity, requestCode: Int,grantResults: IntArray) {
+        when (requestCode) {
+            PERM_CODE_GALLERY -> {
+                if (pendingMediaInvoke != null) {
+                    if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+                        LoadRecentMedia(activity).handler(pendingMediaInvoke!!)
+                    } else {
+                        Log.d(LOG_TAG, "@@@ WARNING: Media permission denied!")
+
+                        // Basically tell the UI that the permission was denied!
+                        pendingMediaInvoke!!.resolve(JSObject().put("permission", "denied").put("media", JSArray()))
+                    }
+                } else {
+                    Log.d(LOG_TAG, "@@@ ERROR: Media invoke not available!")
+                }
+            }
+        }
     }
 }

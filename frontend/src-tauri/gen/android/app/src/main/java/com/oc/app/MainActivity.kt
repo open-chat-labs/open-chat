@@ -10,7 +10,6 @@ import android.webkit.WebChromeClient
 import android.webkit.WebView
 import androidx.activity.addCallback
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.OnBackPressedCallback
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -22,7 +21,7 @@ import com.ocplugin.app.NotificationsManager
 import com.ocplugin.app.OCPluginCompanion
 import kotlinx.coroutines.launch
 
-class MainActivity : TauriActivity() {    
+class MainActivity : TauriActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // Has to be called before super, and only for Android versions <= 14
         enableEdgeToEdgeForAndroid14AndLess()
@@ -45,10 +44,6 @@ class MainActivity : TauriActivity() {
 
         // Raise back pressed, but send no data!
         OCPluginCompanion.triggerRef("back-pressed", JSObject())
-
-        // If you want to allow default Android back afterwards:
-        // this.remove()   // remove callback
-        // onBackPressedDispatcher.onBackPressed() // dispatch again
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -172,5 +167,17 @@ class MainActivity : TauriActivity() {
             // val isDarkMode = (resources.configuration.uiMode and
             //     Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
         }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        
+        Log.d(LOG_TAG, ":::: Permissions result, req code $requestCode, permissions $permissions, grant results $grantResults");
+
+        OCPluginCompanion.resolvePermissionsGranted(this, requestCode, grantResults)
     }
 }

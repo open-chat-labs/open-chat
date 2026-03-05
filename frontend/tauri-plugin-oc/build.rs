@@ -12,6 +12,7 @@ const COMMANDS: &[&str] = &[
     "get_server_version",
     "download_update",
     "restart_app",
+    "load_recent_media",
 ];
 
 fn main() {

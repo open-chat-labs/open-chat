@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-load-recent-media"
+description = "Enables the load_recent_media command without any pre-configured scope."
+commands.allow = ["load_recent_media"]
+
+[[permission]]
+identifier = "deny-load-recent-media"
+description = "Denies the load_recent_media command without any pre-configured scope."
+commands.deny = ["load_recent_media"]

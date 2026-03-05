@@ -1,17 +1,25 @@
 <script lang="ts">
+    import { getContext } from "svelte";
+    import { convertFileSrc } from "@tauri-apps/api/core";
     import {
         disableCreatePrizeFeature,
         disableP2PSwapFeature,
         disableSendCryptoFeature,
     } from "@src/utils/features";
-    import { Body, ColourVars, Column } from "component-lib";
+    import { Body, ColourVars, Column, Row, Subtitle } from "component-lib";
     import {
         i18nKey,
         publish,
         type AttachmentContent,
         type MessageContext,
         type MessagePermission,
+        type OpenChat,
     } from "openchat-client";
+    import {
+        loadRecentMedia,
+        type MediaPermissionStatus,
+        type RecentMedia,
+    } from "tauri-plugin-oc-api";
     import Poll from "svelte-material-icons/ChartBoxOutline.svelte";
     import File from "svelte-material-icons/FileOutline.svelte";
     import Gift from "svelte-material-icons/GiftOutline.svelte";
@@ -21,6 +29,10 @@
     import MemeFighter from "../icons/MemeFighter.svelte";
     import FileAttacher from "./FileAttacher.svelte";
     import Translatable from "../Translatable.svelte";
+    import ShieldAlertOutline from "svelte-material-icons/ShieldAlertOutline.svelte";
+    import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
+
+    const client = getContext<OpenChat>("client");
 
     interface Props {
         open: boolean;
@@ -45,6 +57,19 @@
         messageContext,
     }: Props = $props();
 
+    let mediaPermission = $state<MediaPermissionStatus>("prompt");
+    let media = $state<RecentMedia[]>([]);
+
+    $effect(() => {
+        if (open && client.isNativeAndroid()) {
+            loadRecentMedia().then((res: any) => {
+                console.log("Media response", res);
+                mediaPermission = res.permission;
+                media = res.media;
+            });
+        }
+    });
+
     let mediaPermitted = $derived(
         permittedMessages.get("audio") ||
             permittedMessages.get("video") ||
@@ -52,6 +77,11 @@
     );
 </script>
 
+{#snippet mediaPlaceholder()}
+    <div class="media-placeholder"></div>
+{/snippet}
+
+<!-- Message attachment options -->
 {#snippet attachOption(key: string, Icon: any, color: string, onclick: () => void)}
     <button class="attach-option" {onclick}>
         <Column gap="sm" crossAxisAlignment="center">
@@ -63,70 +93,167 @@
     </button>
 {/snippet}
 
-<div class="attach-wrapper">
-    <!-- Open Gallery -->
-    {#if mediaPermitted}
-        <FileAttacher {onFileSelected}>
-            {#snippet children(onClick)}
-                {@render attachOption("Open Gallery", Gallery, ColourVars.primary, onClick)}
-            {/snippet}
-        </FileAttacher>
+<div class="attachments">
+    {#if mediaPermission === "denied" || (mediaPermission === "granted" && media.length === 0)}
+        <Column padding={["zero", "lg"]}>
+            <Row
+                gap="lg"
+                padding={["sm", "lg"]}
+                borderRadius="md"
+                mainAxisAlignment="center"
+                crossAxisAlignment="center"
+                backgroundColor={ColourVars.background0}>
+                {#if mediaPermission === "denied"}
+                    <!-- TODO wire this in, open settings for user to allow permissions -->
+                    <ShieldAlertOutline size="1.75rem" color={ColourVars.warning} />
+                    <Column gap="xxs">
+                        <Subtitle colour="warning">
+                            <Translatable resourceKey={i18nKey("Media permission not granted")} />
+                        </Subtitle>
+                        <Body colour="textSecondary">
+                            <Translatable resourceKey={i18nKey("Tap here to provide permission")} />
+                        </Body>
+                    </Column>
+                    <ChevronRight size="1.25rem" color={ColourVars.textSecondary} />
+                {:else}
+                    <Subtitle colour="textTertiary" width="hug">
+                        <Translatable resourceKey={i18nKey("No media available")} />
+                    </Subtitle>
+                {/if}
+            </Row>
+        </Column>
+    {:else}
+        <Row width="fill" overflow="auto" supplementalClass="">
+            <Row gap="sm" width="hug" padding={["zero", "zero"]}>
+                {#if mediaPermission === "granted"}
+                    {#each media as m}
+                        <div
+                            class="media-preview"
+                            style:background-image={`url(${
+                                m.thumbnail ?? convertFileSrc(m.filePath)
+                            })`}>
+                        </div>
+                    {/each}
+                {:else}
+                    {#each Array(10) as _}
+                        {@render mediaPlaceholder()}
+                    {/each}
+                {/if}
+            </Row>
+        </Row>
     {/if}
 
-    <!-- Send File -->
-    {#if permittedMessages.get("file")}
-        <FileAttacher {onFileSelected}>
-            {#snippet children(onClick)}
-                {@render attachOption("Send File", File, ColourVars.secondary, onClick)}
-            {/snippet}
-        </FileAttacher>
-    {/if}
+    <div class="attach-wrapper">
+        <div class="attach-buttons">
+            <!-- Open Gallery -->
+            {#if mediaPermitted}
+                <FileAttacher {onFileSelected}>
+                    {#snippet children(onClick)}
+                        {@render attachOption(
+                            "Open Gallery",
+                            Gallery,
+                            ColourVars.textSecondary,
+                            onClick,
+                        )}
+                    {/snippet}
+                </FileAttacher>
+            {/if}
 
-    <!-- Create Poll -->
-    {#if permittedMessages.get("poll")}
-        {@render attachOption("Create Poll", Poll, ColourVars.warning, () =>
-            publish("createPoll", messageContext),
-        )}
-    {/if}
+            <!-- Send File -->
+            {#if permittedMessages.get("file")}
+                <FileAttacher {onFileSelected}>
+                    {#snippet children(onClick)}
+                        {@render attachOption("Send File", File, ColourVars.textSecondary, onClick)}
+                    {/snippet}
+                </FileAttacher>
+            {/if}
 
-    <!-- Send Crypto -->
-    {#if permittedMessages.get("crypto") && !disableSendCryptoFeature}
-        {@render attachOption("Send Crypto", Bitcoin, ColourVars.tertiary, () =>
-            onTokenTransfer({}),
-        )}
-    {/if}
+            <!-- Create Poll -->
+            {#if permittedMessages.get("poll")}
+                {@render attachOption("Create Poll", Poll, ColourVars.textSecondary, () =>
+                    publish("createPoll", messageContext),
+                )}
+            {/if}
 
-    <!-- Offer P2P Swap -->
-    {#if permittedMessages.get("p2pSwap") && !disableP2PSwapFeature}
-        {@render attachOption("Offer Swap", Swap, ColourVars.success, onCreateP2PSwapMessage)}
-    {/if}
+            <!-- Send Crypto -->
+            {#if permittedMessages.get("crypto") && !disableSendCryptoFeature}
+                {@render attachOption("Send Crypto", Bitcoin, ColourVars.textSecondary, () =>
+                    onTokenTransfer({}),
+                )}
+            {/if}
 
-    <!-- Create Prize -->
-    {#if permittedMessages.get("prize") && !disableCreatePrizeFeature}
-        {@render attachOption("Create Prize", Gift, ColourVars.error, () =>
-            onCreatePrizeMessage?.(),
-        )}
-    {/if}
+            <!-- Offer P2P Swap -->
+            {#if permittedMessages.get("p2pSwap") && !disableP2PSwapFeature}
+                {@render attachOption(
+                    "Offer Swap",
+                    Swap,
+                    ColourVars.textSecondary,
+                    onCreateP2PSwapMessage,
+                )}
+            {/if}
 
-    <!-- Meme fighter -->
-    {#if permittedMessages.get("memeFighter")}
-        {@render attachOption("Meme Fighter", MemeFighter, ColourVars.textSecondary, onMakeMeme)}
-    {/if}
+            <!-- Create Prize -->
+            {#if permittedMessages.get("prize") && !disableCreatePrizeFeature}
+                {@render attachOption("Create Prize", Gift, ColourVars.textSecondary, () =>
+                    onCreatePrizeMessage?.(),
+                )}
+            {/if}
+
+            <!-- Meme fighter -->
+            {#if permittedMessages.get("memeFighter")}
+                {@render attachOption(
+                    "Meme Fighter",
+                    MemeFighter,
+                    ColourVars.textSecondary,
+                    onMakeMeme,
+                )}
+            {/if}
+        </div>
+    </div>
 </div>
 
 <style lang="scss">
-    .attach-wrapper {
-        display: grid;
+    .attachments {
+        height: 100%;
+        display: flex;
+        gap: var(--sp-xs);
+        flex-direction: column;
         overflow: auto;
-        padding: var(--sp-xl);
-        gap: var(--sp-xxl) var(--sp-xl);
-        grid-template-columns: repeat(3, 1fr);
-    }
+        animation: fade-in 400ms ease-out forwards;
 
-    .attach-option {
-        background-color: transparent;
-        border: none;
-        padding: 0;
-        margin: 0;
+        .media-preview,
+        .media-placeholder {
+            width: 8rem;
+            height: 8rem;
+            border-radius: 0 0 var(--rad-md) var(--rad-md);
+            background-color: var(--background-0);
+        }
+
+        .media-preview {
+            background-size: cover;
+            background-position: center;
+            image-rendering: crisp-edges;
+        }
+
+        .attach-wrapper {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .attach-buttons {
+            display: grid;
+            width: 100%;
+            padding: var(--sp-xl) var(--sp-xl);
+            gap: var(--sp-xl) var(--sp-xl);
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .attach-option {
+            background-color: transparent;
+            border: none;
+            padding: 0;
+            margin: 0;
+        }
     }
 </style>
