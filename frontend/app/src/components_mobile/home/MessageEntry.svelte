@@ -60,6 +60,7 @@
     import PreviewFooter from "./PreviewFooter.svelte";
     import ThrottleCountdown from "./ThrottleCountdown.svelte";
     import ReplyingTo from "./ReplyingTo.svelte";
+    import DraftMediaMessage from "./DraftMediaMessage.svelte";
     import { keyboard } from "@src/stores/keyboard.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -801,9 +802,13 @@
                     <div
                         class="message_entry_wrapper"
                         class:has_reply={!!replyingTo}
+                        class:has_attachment={!!attachment}
                         class:is_editing={editingEvent !== undefined}>
                         {#if replyingTo}
                             <ReplyingTo readonly {replyingTo} {user} {onCancelReply} />
+                        {/if}
+                        {#if !editingEvent && attachment !== undefined}
+                            <DraftMediaMessage ctx={messageContext} content={attachment} />
                         {/if}
                         {#if editingEvent !== undefined}
                             <Row
@@ -1003,7 +1008,8 @@
         background-color: var(--text-tertiary);
         transition: border-radius 200ms ease-out;
 
-        &.has_reply {
+        &.has_reply,
+        &.has_attachment {
             border-radius: var(--rad-xl) var(--rad-xl) var(--rad-xxl) var(--rad-xxl);
         }
 

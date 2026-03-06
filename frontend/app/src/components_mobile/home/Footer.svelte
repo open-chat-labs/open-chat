@@ -19,7 +19,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
     import EphemeralMessage from "../bots/EphemeralMessage.svelte";
-    import DraftMediaMessage from "./DraftMediaMessage.svelte";
+    // import DraftMediaMessage from "./DraftMediaMessage.svelte";
     import MessageEntry from "./MessageEntry.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -155,11 +155,11 @@
                 onClose={() => (ephemeralMessageEvent = undefined)}
                 event={ephemeralMessageEvent} />
         {/if}
-        {#if editingEvent === undefined && (replyingTo || attachment !== undefined)}
+        <!-- {#if editingEvent === undefined && (replyingTo || attachment !== undefined)}
             {#if attachment !== undefined}
                 <DraftMediaMessage ctx={messageContext} content={attachment} />
             {/if}
-        {/if}
+        {/if} -->
     </div>
     <MessageEntry
         bind:this={messageEntry}

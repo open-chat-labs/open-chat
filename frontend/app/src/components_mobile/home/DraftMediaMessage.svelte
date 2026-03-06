@@ -6,7 +6,7 @@
     import CryptoContent from "./CryptoContent.svelte";
     import FileContent from "./FileContent.svelte";
     import GiphyContent from "./GiphyContent.svelte";
-    import ImageContent from "./ImageContent.svelte";
+    import ImageAttached from "./ImageAttached.svelte";
     import P2PSwapContentInitial from "./P2PSwapContentInitial.svelte";
     import PrizeContentInitial from "./PrizeContentInitial.svelte";
     import VideoContent from "./VideoContent.svelte";
@@ -29,7 +29,7 @@
     {:else if content.kind === "audio_content"}
         <AudioContent me onRemove={removeDraft} edited={false} {content} draft />
     {:else if content.kind === "image_content"}
-        <ImageContent onRemove={removeDraft} edited={false} fill={false} {content} draft />
+        <ImageAttached onRemove={removeDraft} edited={false} fill={false} {content} draft />
     {:else if content.kind === "giphy_content"}
         <GiphyContent onRemove={removeDraft} edited={false} fill={false} {content} draft />
     {:else if content.kind === "crypto_content"}
