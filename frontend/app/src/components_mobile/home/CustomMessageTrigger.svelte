@@ -20,17 +20,20 @@
         type MediaPermissionStatus,
         type RecentMedia,
     } from "tauri-plugin-oc-api";
-    import Poll from "svelte-material-icons/ChartBoxOutline.svelte";
-    import File from "svelte-material-icons/FileOutline.svelte";
-    import Gift from "svelte-material-icons/GiftOutline.svelte";
-    import Gallery from "svelte-material-icons/ImageMultipleOutline.svelte";
-    import Swap from "svelte-material-icons/SwapHorizontal.svelte";
+    import ChartBoxOutline from "svelte-material-icons/ChartBoxOutline.svelte";
+    import FileOutline from "svelte-material-icons/FileOutline.svelte";
+    import GiftOutline from "svelte-material-icons/GiftOutline.svelte";
+    import ImageMultipleOutline from "svelte-material-icons/ImageMultipleOutline.svelte";
+    import SwapHorizontal from "svelte-material-icons/SwapHorizontal.svelte";
+    import FileImageOutline from "svelte-material-icons/FileImageOutline.svelte";
+    import FileVideoOutline from "svelte-material-icons/FileVideoOutline.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
     import MemeFighter from "../icons/MemeFighter.svelte";
     import FileAttacher from "./FileAttacher.svelte";
     import Translatable from "../Translatable.svelte";
     import ShieldAlertOutline from "svelte-material-icons/ShieldAlertOutline.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
+    import { toastStore } from "../../stores/toast";
 
     const client = getContext<OpenChat>("client");
 
@@ -75,6 +78,39 @@
             permittedMessages.get("video") ||
             permittedMessages.get("image"),
     );
+
+    function onMediaSelected(media: RecentMedia) {
+        constructFileObject(media).then((file) => {
+            client
+                .messageContentFromFile(file)
+                .then((content) => {
+                    onFileSelected(content);
+                })
+                .catch((err) => {
+                    toastStore.showFailureToast(i18nKey(err));
+                });
+        });
+    }
+
+    async function constructFileObject(media: RecentMedia): Promise<File> {
+        const { filePath, filename, mimeType } = media;
+        const assetUrl: string = convertFileSrc(filePath);
+
+        try {
+            const response: Response = await fetch(assetUrl);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch asset: ${response.statusText}`);
+            }
+
+            const blob: Blob = await response.blob();
+            return new File([blob], filename, { type: mimeType });
+        } catch (error: any) {
+            // TODO i18n
+            toastStore.showFailureToast(i18nKey(error.toString()));
+            console.error("Error reconstructing File object:", error);
+            throw error;
+        }
+    }
 </script>
 
 {#snippet mediaPlaceholder()}
@@ -123,16 +159,25 @@
             </Row>
         </Column>
     {:else}
-        <Row width="fill" overflow="auto" supplementalClass="">
+        <Row width="fill" overflow="auto">
             <Row gap="sm" width="hug" padding={["zero", "zero"]}>
                 {#if mediaPermission === "granted"}
                     {#each media as m}
-                        <div
+                        <button
                             class="media-preview"
                             style:background-image={`url(${
                                 m.thumbnail ?? convertFileSrc(m.filePath)
-                            })`}>
-                        </div>
+                            })`}
+                            title={m.filename}
+                            onclick={() => onMediaSelected(m)}>
+                            <div class="media-type">
+                                {#if m.mimeType.startsWith("image")}
+                                    <FileImageOutline size="1rem" color={ColourVars.textPrimary} />
+                                {:else}
+                                    <FileVideoOutline size="1rem" color={ColourVars.textPrimary} />
+                                {/if}
+                            </div>
+                        </button>
                     {/each}
                 {:else}
                     {#each Array(10) as _}
@@ -151,7 +196,7 @@
                     {#snippet children(onClick)}
                         {@render attachOption(
                             "Open Gallery",
-                            Gallery,
+                            ImageMultipleOutline,
                             ColourVars.textSecondary,
                             onClick,
                         )}
@@ -163,15 +208,23 @@
             {#if permittedMessages.get("file")}
                 <FileAttacher {onFileSelected}>
                     {#snippet children(onClick)}
-                        {@render attachOption("Send File", File, ColourVars.textSecondary, onClick)}
+                        {@render attachOption(
+                            "Send File",
+                            FileOutline,
+                            ColourVars.textSecondary,
+                            onClick,
+                        )}
                     {/snippet}
                 </FileAttacher>
             {/if}
 
             <!-- Create Poll -->
             {#if permittedMessages.get("poll")}
-                {@render attachOption("Create Poll", Poll, ColourVars.textSecondary, () =>
-                    publish("createPoll", messageContext),
+                {@render attachOption(
+                    "Create Poll",
+                    ChartBoxOutline,
+                    ColourVars.textSecondary,
+                    () => publish("createPoll", messageContext),
                 )}
             {/if}
 
@@ -186,7 +239,7 @@
             {#if permittedMessages.get("p2pSwap") && !disableP2PSwapFeature}
                 {@render attachOption(
                     "Offer Swap",
-                    Swap,
+                    SwapHorizontal,
                     ColourVars.textSecondary,
                     onCreateP2PSwapMessage,
                 )}
@@ -194,7 +247,7 @@
 
             <!-- Create Prize -->
             {#if permittedMessages.get("prize") && !disableCreatePrizeFeature}
-                {@render attachOption("Create Prize", Gift, ColourVars.textSecondary, () =>
+                {@render attachOption("Create Prize", GiftOutline, ColourVars.textSecondary, () =>
                     onCreatePrizeMessage?.(),
                 )}
             {/if}
@@ -225,14 +278,22 @@
         .media-placeholder {
             width: 8rem;
             height: 8rem;
+            border: none;
             border-radius: 0 0 var(--rad-md) var(--rad-md);
             background-color: var(--background-0);
         }
 
         .media-preview {
+            position: relative;
             background-size: cover;
             background-position: center;
-            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+
+            .media-type {
+                position: absolute;
+                right: var(--sp-xs);
+                bottom: var(--sp-xs);
+            }
         }
 
         .attach-wrapper {

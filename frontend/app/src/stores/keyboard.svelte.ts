@@ -45,7 +45,8 @@ export const keyboard = {
     set currentHeight(value: number) {
         currentHeight = value;
 
-        // Update max height if maxHeight of the keyboard changes
+        // Update height if current height of the keyboard changes. Might happen
+        // if user modified/changed the soft keyboard in any way.
         if (value > 0 && height !== value) {
             height = value;
             localStorage.setItem(STORAGE_KEY, height.toString());
