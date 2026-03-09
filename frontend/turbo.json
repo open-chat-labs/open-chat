@@ -12,7 +12,9 @@
         "OC_TENOR_APIKEY",
         "OC_CORS_APIKEY",
         "OC_WEBSITE_VERSION",
-        "OC_DISABLE_WALLET"
+        "OC_DISABLE_WALLET",
+        "OC_APP_STORE",
+        "OC_OTA_UPDATES"
     ],
     "tasks": {
         "deploy:prod": {
