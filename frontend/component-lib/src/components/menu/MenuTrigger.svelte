@@ -4,13 +4,19 @@
         longpress,
         portalState,
         type Alignment,
+        type LongpressAnimation,
         type Position,
     } from "component-lib";
     import { getAllContexts, mount, onDestroy, type Snippet } from "svelte";
     import Menu from "./Menu.svelte";
     import MenuWrapper from "./MenuWrapper.svelte";
 
+    // TODO expand this into discriminated union (with kind property) to allow
+    // additional longpress props to be attached directly with mode.
     type MobileMode = "longpress" | "tap";
+
+    // This value is actually defined in global.scss!
+    const OVERLAY_FADEOUT_DURATION = 250;
 
     interface Props {
         classString?: string;
@@ -25,6 +31,10 @@
         fill?: boolean;
         maskUI?: boolean;
         constrainMask?: string;
+        withBgEffect?: boolean;
+        longpressAnimation?: LongpressAnimation;
+        longpressCooldown?: boolean;
+        customContent?: boolean;
     }
 
     let props: Props = $props();
@@ -39,6 +49,9 @@
     let open = $state(false);
     let useLongpress = $derived(mobileMode === "longpress" && isTouchDevice);
     let menuClone = $state<HTMLElement>();
+
+    const rectRegistry = new WeakMap<HTMLElement, DOMRect>();
+    const styleRegistry = new WeakMap<HTMLElement, string>();
 
     const context = getAllContexts();
 
@@ -68,6 +81,7 @@
                     children: wrappedMenuItems,
                     onClose: closeMenu,
                     trigger: menu,
+                    positionReferenceElement: menuClone,
                 },
                 context,
             }),
@@ -79,9 +93,7 @@
     function closeMenu() {
         open = portalState.close();
 
-        // Fade-out menu clone bg to prevent a "blinking" effect when closing the mneu.
-        menuClone?.classList.add("fadeout");
-        setTimeout(() => menuClone?.remove(), 250);
+        resetNodes();
 
         let overlay = document.getElementById("masked_overlay");
         if (overlay) {
@@ -98,47 +110,111 @@
             document.body.appendChild(overlay);
         }
         overlay.classList.add("active");
+
         if (opaque) {
-            overlay.classList.add("visible");
+            // Create menu clone if one is not set. This would be in case the
+            // scaling animation is disabled, or compatibility mode where
+            // only the longpress handler is provided.
+            if (!menuClone) cloneNode();
 
-            menuClone = menu.cloneNode(true) as HTMLElement;
-            const sourceRect = menu.getBoundingClientRect();
-            let parent = document.body;
-            let { top, left } = sourceRect;
-            if (props.constrainMask !== undefined) {
-                parent = document.getElementById(props.constrainMask) ?? document.body;
-            }
-            const parentRect = parent.getBoundingClientRect();
-            top = sourceRect.top - parentRect.top + parent.scrollTop;
-            left = sourceRect.left - parentRect.left + parent.scrollLeft;
+            // Get menu rect bounds, it was set within the cloneNode
+            const sourceRect = rectRegistry.get(menu);
 
-            menuClone.addEventListener("contextmenu", (e) => e.preventDefault());
-            menuClone.classList.add("menu_trigger_clone");
-            menuClone.style.cssText = `
-                position: absolute;
-                left: ${left}px;
-                top: ${top}px;
-                width: ${sourceRect.width}px;
-                height: ${sourceRect.height}px;
-                transition: opacity 200ms ease-in-out;
-                margin: 0;
-                z-index: 91;
-                pointer-events: auto;
-                opacity: 0.8;
-            `;
+            if (menuClone && sourceRect) {
+                const { parent, left, top, width, height } = calcRectValues(sourceRect);
 
-            parent.appendChild(menuClone);
-            setTimeout(() => {
-                if (menuClone !== undefined) {
-                    menuClone.style.opacity = "1";
+                overlay.classList.add("visible");
+
+                if (props.withBgEffect) {
+                    // Only applied if bg effect is allowed
+                    menu.classList.add("with_bg_effect");
                 }
-            }, 0);
+
+                // Insert cloned node, and keep the original node in memory!
+                menu.parentElement?.insertBefore(menuClone, menu);
+                menu.remove();
+
+                // Apply custom styling to the menu...
+                Object.assign(menu.style, {
+                    position: "absolute",
+                    top: `${top}px`,
+                    left: `${left}px`,
+                    width: `${width}px`,
+                    height: `${height}px`,
+                    margin: 0,
+                    zIndex: 91,
+                    pointerEvents: "auto",
+                });
+
+                // ... and re-attach within the overlay!
+                parent.appendChild(menu);
+            }
         }
+    }
+
+    // Note: when cloning a node that holds an SVG, if that svg has a clip path
+    // that depends on unique ids, the svg may not render. If clip path can't
+    // be removed, we'll need to add logic here to modify the ids in the cloned
+    // node.
+    function cloneNode() {
+        menuClone = menu.cloneNode(true) as HTMLElement;
+        menuClone.style.visibility = "hidden";
+
+        // Prevents context menu from opening
+        menu.addEventListener("contextmenu", (e) => e.preventDefault());
+
+        const sourceRect = menu.getBoundingClientRect();
+        const styleVals = menu.style.cssText;
+
+        // Save rect properties
+        rectRegistry.set(menu, sourceRect);
+        styleRegistry.set(menu, styleVals);
+    }
+
+    function resetNodes() {
+        if (props.withBgEffect) {
+            menu.classList.add("collapse");
+        }
+
+        setTimeout(() => {
+            if (!menuClone || !menu) return;
+
+            // Restore the menu item looks...
+            menu.remove();
+            menu.style.cssText = styleRegistry.get(menu) ?? "";
+            menu.classList.remove("with_bg_effect", "collapse");
+
+            // insert menu to its previous place...
+            menuClone.parentElement?.insertBefore(menu, menuClone);
+
+            // Remove menu clone!
+            menuClone?.remove();
+            menuClone = undefined;
+        }, OVERLAY_FADEOUT_DURATION);
+    }
+
+    function calcRectValues(sourceRect: DOMRect) {
+        const parent = getParentElement();
+        const parentRect = parent.getBoundingClientRect();
+
+        return {
+            parent,
+            top: sourceRect.top - parentRect.top + parent.scrollTop,
+            left: sourceRect.left - parentRect.left + parent.scrollLeft,
+            width: sourceRect.width,
+            height: sourceRect.height,
+        };
+    }
+
+    function getParentElement() {
+        return props.constrainMask
+            ? document.getElementById(props.constrainMask) ?? document.body
+            : document.body;
     }
 </script>
 
 {#snippet wrappedMenuItems()}
-    <Menu centered={props.centered}>
+    <Menu centered={props.centered} customContent={props.customContent}>
         {@render menuItems()}
     </Menu>
 {/snippet}
@@ -149,7 +225,13 @@
         class:open
         class={`menu-trigger noselect ${props.classString}`}
         bind:this={menu}
-        use:longpress={click}>
+        use:longpress={{
+            onlongpress: click,
+            onpressactive: cloneNode,
+            animation: props.longpressAnimation,
+            cooldown: props.longpressCooldown,
+            isOpen: open,
+        }}>
         {@render children()}
     </div>
 {:else}
@@ -166,10 +248,6 @@
 {/if}
 
 <style lang="scss">
-    :global(.menu-trigger.open path) {
-        fill: var(--primary);
-    }
-
     .menu-trigger {
         cursor: pointer;
         &.noselect {

@@ -73,6 +73,7 @@
     import ArchiveOffIcon from "./ArchiveOffIcon.svelte";
     import Markdown from "./Markdown.svelte";
     import BotBadge from "./profile/BotBadge.svelte";
+    import { scrollStatus } from "../../stores/scroll.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -108,6 +109,8 @@
     let muted = $derived(chatSummary.membership.notificationsMuted);
     let atEveryoneMuted = $derived(chatSummary.membership.atEveryoneMuted);
     let LastMessageIcon = $derived(getLastMessageIcon());
+
+    let longpressCooldown = $derived(scrollStatus.isCooldown);
 
     $effect(() => updateUnreadCounts(chatSummary));
 
@@ -348,6 +351,104 @@
     }
 </script>
 
+{#snippet menuItems()}
+    {#if !$favouritesStore.has(chatSummary.id)}
+        <MenuItem onclick={addToFavourites}>
+            {#snippet icon(_, size)}
+                <HeartPlus color={"var(--error)"} {size} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("communities.addToFavourites")} />
+        </MenuItem>
+    {:else}
+        <MenuItem onclick={removeFromFavourites}>
+            {#snippet icon(_, size)}
+                <HeartMinus color={"var(--error)"} {size} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("communities.removeFromFavourites")} />
+        </MenuItem>
+    {/if}
+    {#if !pinned}
+        <MenuItem onclick={pinChat}>
+            {#snippet icon(color, size)}
+                <PinIcon {color} {size} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("pinChat.menuItem")} />
+        </MenuItem>
+    {:else}
+        <MenuItem onclick={unpinChat}>
+            {#snippet icon(color, size)}
+                <PinOffIcon {color} {size} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("pinChat.unpinMenuItem")} />
+        </MenuItem>
+    {/if}
+    {#if notificationsSupported && !externalContent}
+        {#if muted}
+            <MenuItem onclick={() => toggleMuteNotifications(false, undefined)}>
+                {#snippet icon(color, size)}
+                    <BellIcon {color} {size} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("unmuteNotifications")} />
+            </MenuItem>
+        {:else}
+            <MenuItem onclick={() => toggleMuteNotifications(true, undefined)}>
+                {#snippet icon(color, size)}
+                    <MutedIcon {color} {size} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("muteNotifications")} />
+            </MenuItem>
+        {/if}
+        {#if atEveryoneMuted}
+            <MenuItem onclick={() => toggleMuteNotifications(undefined, false)}>
+                {#snippet icon(color, size)}
+                    <MutedIcon {color} {size} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("unmuteAtEveryone")} />
+            </MenuItem>
+        {:else}
+            <MenuItem onclick={() => toggleMuteNotifications(undefined, true)}>
+                {#snippet icon(color, size)}
+                    <MutedIcon {color} {size} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("muteAtEveryone")} />
+            </MenuItem>
+        {/if}
+    {/if}
+    {#if !externalContent}
+        <MenuItem disabled={unreadMessages === 0} onclick={() => client.markAllRead(chatSummary)}>
+            {#snippet icon(color, size)}
+                <CheckboxMultipleMarked {size} {color} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("markAllRead")} />
+        </MenuItem>
+    {/if}
+    {#if !chat.bot}
+        {#if chatSummary.membership.archived}
+            <MenuItem onclick={selectChat}>
+                {#snippet icon(color, size)}
+                    <ArchiveOffIcon {color} {size} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("unarchiveChat")} />
+            </MenuItem>
+        {:else}
+            <MenuItem onclick={archiveChat}>
+                {#snippet icon(color, size)}
+                    <ArchiveIcon {color} {size} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("archiveChat")} />
+            </MenuItem>
+        {/if}
+    {/if}
+    {#if chatSummary.kind !== "direct_chat" && client.canLeaveGroup(chatSummary.id)}
+        <MenuItem danger onclick={leaveGroup}>
+            {#snippet icon(color, size)}
+                <LocationExit {color} {size} />
+            {/snippet}
+            {interpolate($_, i18nKey("leaveGroup", undefined, chatSummary.level, true))}
+        </MenuItem>
+    {/if}
+{/snippet}
+
 {#if visible}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <Container supplementalClass="chat_summary_wrapper" padding={["zero", "sm"]}>
@@ -356,112 +457,16 @@
             maskUI
             classString={"chat_summary_menu_trigger"}
             disabled={$suspendedUserStore || readonly}
-            position={"top"}
+            position={"bottom"}
             align={"end"}
-            mobileMode={"longpress"}>
-            {#snippet menuItems()}
-                {#if !$favouritesStore.has(chatSummary.id)}
-                    <MenuItem onclick={addToFavourites}>
-                        {#snippet icon(_, size)}
-                            <HeartPlus color={"var(--error)"} {size} />
-                        {/snippet}
-                        <Translatable resourceKey={i18nKey("communities.addToFavourites")} />
-                    </MenuItem>
-                {:else}
-                    <MenuItem onclick={removeFromFavourites}>
-                        {#snippet icon(_, size)}
-                            <HeartMinus color={"var(--error)"} {size} />
-                        {/snippet}
-                        <Translatable resourceKey={i18nKey("communities.removeFromFavourites")} />
-                    </MenuItem>
-                {/if}
-                {#if !pinned}
-                    <MenuItem onclick={pinChat}>
-                        {#snippet icon(color, size)}
-                            <PinIcon {color} {size} />
-                        {/snippet}
-                        <Translatable resourceKey={i18nKey("pinChat.menuItem")} />
-                    </MenuItem>
-                {:else}
-                    <MenuItem onclick={unpinChat}>
-                        {#snippet icon(color, size)}
-                            <PinOffIcon {color} {size} />
-                        {/snippet}
-                        <Translatable resourceKey={i18nKey("pinChat.unpinMenuItem")} />
-                    </MenuItem>
-                {/if}
-                {#if notificationsSupported && !externalContent}
-                    {#if muted}
-                        <MenuItem onclick={() => toggleMuteNotifications(false, undefined)}>
-                            {#snippet icon(color, size)}
-                                <BellIcon {color} {size} />
-                            {/snippet}
-                            <Translatable resourceKey={i18nKey("unmuteNotifications")} />
-                        </MenuItem>
-                    {:else}
-                        <MenuItem onclick={() => toggleMuteNotifications(true, undefined)}>
-                            {#snippet icon(color, size)}
-                                <MutedIcon {color} {size} />
-                            {/snippet}
-                            <Translatable resourceKey={i18nKey("muteNotifications")} />
-                        </MenuItem>
-                    {/if}
-                    {#if atEveryoneMuted}
-                        <MenuItem onclick={() => toggleMuteNotifications(undefined, false)}>
-                            {#snippet icon(color, size)}
-                                <MutedIcon {color} {size} />
-                            {/snippet}
-                            <Translatable resourceKey={i18nKey("unmuteAtEveryone")} />
-                        </MenuItem>
-                    {:else}
-                        <MenuItem onclick={() => toggleMuteNotifications(undefined, true)}>
-                            {#snippet icon(color, size)}
-                                <MutedIcon {color} {size} />
-                            {/snippet}
-                            <Translatable resourceKey={i18nKey("muteAtEveryone")} />
-                        </MenuItem>
-                    {/if}
-                {/if}
-                {#if !externalContent}
-                    <MenuItem
-                        disabled={unreadMessages === 0}
-                        onclick={() => client.markAllRead(chatSummary)}>
-                        {#snippet icon(color, size)}
-                            <CheckboxMultipleMarked {size} {color} />
-                        {/snippet}
-                        <Translatable resourceKey={i18nKey("markAllRead")} />
-                    </MenuItem>
-                {/if}
-                {#if !chat.bot}
-                    {#if chatSummary.membership.archived}
-                        <MenuItem onclick={selectChat}>
-                            {#snippet icon(color, size)}
-                                <ArchiveOffIcon {color} {size} />
-                            {/snippet}
-                            <Translatable resourceKey={i18nKey("unarchiveChat")} />
-                        </MenuItem>
-                    {:else}
-                        <MenuItem onclick={archiveChat}>
-                            {#snippet icon(color, size)}
-                                <ArchiveIcon {color} {size} />
-                            {/snippet}
-                            <Translatable resourceKey={i18nKey("archiveChat")} />
-                        </MenuItem>
-                    {/if}
-                {/if}
-                {#if chatSummary.kind !== "direct_chat" && client.canLeaveGroup(chatSummary.id)}
-                    <MenuItem danger onclick={leaveGroup}>
-                        {#snippet icon(color, size)}
-                            <LocationExit {color} {size} />
-                        {/snippet}
-                        {interpolate($_, i18nKey("leaveGroup", undefined, chatSummary.level, true))}
-                    </MenuItem>
-                {/if}
-            {/snippet}
+            mobileMode={"longpress"}
+            withBgEffect={true}
+            {longpressCooldown}
+            {menuItems}>
             <Container
                 onClick={selectChat}
                 supplementalClass={"chat_summary"}
-                padding={["sm", "sm"]}
+                padding={["lg", "sm"]}
                 mainAxisAlignment={"spaceBetween"}
                 crossAxisAlignment={"center"}
                 gap={"lg"}
@@ -566,19 +571,6 @@
 <style lang="scss">
     :global(.chat-name .with_verified) {
         gap: $sp2;
-    }
-
-    :global(.menu_trigger_clone > .chat_summary) {
-        transition:
-            background-color 300ms ease-out,
-            box-shadow 200ms ease;
-        background-color: var(--background-1) !important;
-        box-shadow: var(--menu-sh);
-    }
-
-    :global(.menu_trigger_clone.fadeout > .chat_summary) {
-        background-color: transparent !important;
-        box-shadow: 0 0 0 rgba(0, 0, 0, 0);
     }
 
     :global(.chat_summary .chat-date) {

@@ -73,6 +73,7 @@
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
     import { UpdateGroupOrCommunityState } from "./groupOrCommunity.svelte";
     import StreakInsuranceBuy from "./insurance/StreakInsuranceBuy.svelte";
+    import Architecture from "./landing/Architecture.svelte";
     import BotsList from "./membership/BotsList.svelte";
     import InviteAndShare from "./membership/InviteAndShare.svelte";
     import MemberManagement from "./membership/MemberManagement.svelte";
@@ -119,6 +120,7 @@
 
     const client = getContext<OpenChat>("client");
     type SlidingModalType =
+        | { kind: "architecture" }
         | { kind: "share_message"; share: ShareType }
         | { kind: "forward_message"; msg: Message }
         | { kind: "view_bot_command"; command: CommandDefinition }
@@ -278,6 +280,7 @@
         }
 
         const unsubs = [
+            subscribe("architecture", () => push({ kind: "architecture" })),
             subscribe("forward", (msg) => push({ kind: "forward_message", msg })),
             subscribe("shareMessage", (share) =>
                 push({ kind: "share_message", share: share as unknown as ShareType }),
@@ -683,6 +686,8 @@
                     groupPreviewState.doJoinGroup(client, res);
                     pop();
                 }} />
+        {:else if page.kind === "architecture"}
+            <Architecture />
         {/if}
     </SlidingPage>
 {/each}

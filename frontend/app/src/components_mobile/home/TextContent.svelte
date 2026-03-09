@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ChatText, ChatCaption } from "component-lib";
+    import { ChatText } from "component-lib";
     import type { OpenChat, TextContent } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -20,7 +20,6 @@
         me: boolean;
         blockLevelMarkdown: boolean;
         showPreviews: boolean;
-        reply?: boolean;
         onRemovePreview?: (url: string) => void;
     }
 
@@ -32,7 +31,6 @@
         me,
         blockLevelMarkdown,
         showPreviews,
-        reply = false,
         onRemovePreview,
     }: Props = $props();
 
@@ -60,18 +58,10 @@
     let iconColour = $derived(me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)");
 </script>
 
-{#if reply}
-    <ChatCaption width={"hug"} colour="primaryLight" maxLines={3}>
-        <Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} {text} />
-    </ChatCaption>
-{:else}
-    <ChatText width={"hug"}>
-        <Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} {text} />
-    </ChatText>
-{/if}
-
 {#if previewUrls.length > 0}
     {#if !expanded}
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
         <span onclick={expand} class="expand" title={$_("showPreview")}>
             <ArrowExpand viewBox="0 -3 24 24" size={"1em"} color={iconColour} />
         </span>
@@ -89,6 +79,10 @@
         </IntersectionObserver>
     {/if}
 {/if}
+
+<ChatText width={"hug"}>
+    <Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} {text} />
+</ChatText>
 
 <style lang="scss">
     .expand {
