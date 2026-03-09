@@ -2317,6 +2317,8 @@ export type SetCommunityModerationFlagsResponse =
     | "internal_error"
     | "offline";
 
+export type SetGroupModerationFlagsResponse = "success" | "failure" | "offline";
+
 export type MarkPinnedMessagesReadResponse = Success | OCError | Offline;
 export type ClaimPrizeResponse = Success | OCError | Failure | Offline;
 export type DeclineInvitationResponse = Success | OCError | Offline;

@@ -1,4 +1,5 @@
 use crate::model::cached_hot_groups::CachedPublicGroupSummary;
+use crate::model::moderation_flags::ModerationFlags;
 use crate::model::private_groups::PrivateGroupInfo;
 use crate::{CACHED_HOT_GROUPS_COUNT, MARK_ACTIVE_DURATION};
 use constants::DAY_IN_MS;
@@ -170,6 +171,8 @@ pub struct PublicGroupInfo {
     exclude_from_hotlist: bool,
     gate_config: Option<AccessGateConfigInternal>,
     verified: bool,
+    #[serde(default)]
+    moderation_flags: ModerationFlags,
 }
 
 pub enum UpdateGroupResult {
@@ -201,6 +204,7 @@ impl PublicGroupInfo {
             frozen: None,
             exclude_from_hotlist: false,
             verified: false,
+            moderation_flags: ModerationFlags::default(),
         }
     }
 
@@ -271,6 +275,14 @@ impl PublicGroupInfo {
 
     pub fn gate(&self) -> Option<&AccessGate> {
         self.gate_config.as_ref().map(|g| &g.gate)
+    }
+
+    pub fn set_moderation_flags(&mut self, flags: ModerationFlags) {
+        self.moderation_flags = flags;
+    }
+
+    pub fn moderation_flags(&self) -> &ModerationFlags {
+        &self.moderation_flags
     }
 }
 

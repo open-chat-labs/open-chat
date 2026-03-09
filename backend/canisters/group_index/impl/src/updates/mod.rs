@@ -24,6 +24,7 @@ pub mod revoke_group_verification;
 pub mod set_community_moderation_flags;
 pub mod set_community_or_group_verification;
 pub mod set_community_upgrade_concurrency;
+pub mod set_group_moderation_flags;
 pub mod set_group_upgrade_concurrency;
 pub mod set_max_concurrent_community_canister_upgrades;
 pub mod set_max_concurrent_group_canister_upgrades;
