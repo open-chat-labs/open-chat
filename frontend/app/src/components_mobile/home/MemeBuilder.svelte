@@ -7,6 +7,7 @@
     import { currentTheme } from "../../theme/themes";
     import Translatable from "../Translatable.svelte";
     import MemeFighter from "../icons/MemeFighter.svelte";
+    import { keyboard } from "@src/stores/keyboard.svelte";
 
     interface Props {
         open: boolean;
@@ -56,6 +57,7 @@
     }
 
     function close() {
+        keyboard.disableViewportResize();
         open = false;
     }
 

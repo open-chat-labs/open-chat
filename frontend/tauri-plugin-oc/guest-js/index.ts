@@ -12,5 +12,7 @@ export {
     RecentMedia,
     RecentMediaResponse,
 } from "./commands/loadRecentMedia";
+export { enableViewportResize } from "./commands/enableViewportResize";
+export { disableViewportResize } from "./commands/disableViewportResize";
 export * from "./models/credentials";
 export * from "./models/error";

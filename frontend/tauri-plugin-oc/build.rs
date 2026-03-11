@@ -13,6 +13,8 @@ const COMMANDS: &[&str] = &[
     "download_update",
     "restart_app",
     "load_recent_media",
+    "enable_viewport_resize",
+    "disable_viewport_resize",
 ];
 
 fn main() {

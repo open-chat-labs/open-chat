@@ -82,3 +82,6 @@ pub struct RecentMedia {
     pub file_path: String,
     pub thumbnail: Option<String>,
 }
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct EmptyPayload;

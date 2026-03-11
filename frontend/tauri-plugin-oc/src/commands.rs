@@ -107,3 +107,13 @@ pub(crate) async fn download_update<R: Runtime>(
 
     Ok(false)
 }
+
+#[command]
+pub(crate) async fn enable_viewport_resize<R: Runtime>(app: AppHandle<R>) -> Result<()> {
+    app.oc().toggle_viewport_resize(true)
+}
+
+#[command]
+pub(crate) async fn disable_viewport_resize<R: Runtime>(app: AppHandle<R>) -> Result<()> {
+    app.oc().toggle_viewport_resize(false)
+}

@@ -13,6 +13,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import app.tauri.plugin.JSObject
@@ -116,14 +117,16 @@ class MainActivity : TauriActivity() {
             val isGestureNavigation = navHeightDp <= 36
 
             if (imeVisible) {
-                Log.d(LOG_TAG, "Keyboard OPEN - inset height = $imeHeight")
-                // rootView.updatePadding(bottom = imeHeight)
+                // Log.d(LOG_TAG, "Keyboard OPEN - inset height = $imeHeight")
+                if (OCPluginCompanion.viewportResizeEnabled) {
+                    rootView.updatePadding(bottom = imeHeight)
+                }
             } else {
-                Log.d(LOG_TAG, "Inset changed, or soft keyboard CLOSED - inset height = $imeHeight")
+                // Log.d(LOG_TAG, "Inset changed, or soft keyboard CLOSED - inset height = $imeHeight")
 
                 // If the device is using gesture navigation we let the Svelte part of the app
                 // decide the bottom padding where required.
-                // rootView.updatePadding(bottom = if (isGestureNavigation) 0 else navInsets.bottom)
+                rootView.updatePadding(bottom = if (isGestureNavigation) 0 else navInsets.bottom)
             }
 
             val insetData =
@@ -139,10 +142,11 @@ class MainActivity : TauriActivity() {
             // Report inset changes to Svelte...
             OCPluginCompanion.triggerRef("window-inset-change", insetData)
 
-            // Important: return the insets unchanged
-            // insets
-
-            WindowInsetsCompat.CONSUMED
+            if (OCPluginCompanion.viewportResizeEnabled) {
+                insets
+            } else {
+                WindowInsetsCompat.CONSUMED
+            }
         }
     }
 
@@ -175,9 +179,6 @@ class MainActivity : TauriActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        
-        Log.d(LOG_TAG, ":::: Permissions result, req code $requestCode, permissions $permissions, grant results $grantResults");
-
         OCPluginCompanion.resolvePermissionsGranted(this, requestCode, grantResults)
     }
 }

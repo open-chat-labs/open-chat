@@ -209,7 +209,6 @@
     // Show emoji!
     function toggleEmojiPicker() {
         inputTrayMode = "emoji_gif_selection";
-
         pushExpandedHistoryState();
     }
 
@@ -293,12 +292,20 @@
         emojiSearchFocusedOut = true;
     }
 
-    // Message input focus in handler!
-    // Note: this did not seem to work by just adding focus attribute.
     onMount(() => {
+        // Message input focus in handler!
+        // Note: this did not seem to work by just adding focus attribute.
         inp?.addEventListener("focus", keyboardFocus);
+
+        // When mesasge entry is on screen, the viewport should not just resize
+        // by default, since we want to support the input tray UI where soft
+        // keyboard overlaps some of the UI content.
+        keyboard.disableViewportResize();
         return () => {
             inp?.removeEventListener("focus", keyboardFocus);
+
+            // Enable kb resizing again!
+            keyboard.enableViewportResize();
         };
     });
 
@@ -858,6 +865,7 @@
                                 data-gram="false"
                                 data-gramm_editor="false"
                                 data-enable-grammarly="false"
+                                data-keyboard-ignore="true"
                                 tabindex={0}
                                 bind:this={inp}
                                 class="textbox"

@@ -84,7 +84,7 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
 
     @Command
     fun loadRecentMedia(invoke: Invoke) {
-        val media = LoadRecentMedia(activity);
+        val media = LoadRecentMedia(activity)
         if (media.checkPermissionGranted()) {
             media.handler(invoke)
         } else {
@@ -95,12 +95,25 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
             media.askForPermission()
         }
     }
+
+    @Command
+    fun enableViewportResize(invoke: Invoke) {
+        ViewportResize(activity).enable(invoke)
+    }
+
+    @Command
+    fun disableViewportResize(invoke: Invoke) {
+        ViewportResize(activity).disable(invoke)
+    }
 }
 
 object OCPluginCompanion {
 
     // Indicates that the UI is ready!
     var svelteReady: Boolean = false
+
+    // Allows the viewport to resize when keyboard pops up
+    var viewportResizeEnabled: Boolean = true;
 
     // FCM token cache!
     //
@@ -110,13 +123,13 @@ object OCPluginCompanion {
     fun initFcmTokenCache() {
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             if (!task.isSuccessful) {
-                Log.e(LOG_TAG, "Fetching FCM registration token failed", task.exception)
+                // Log.e(LOG_TAG, "Fetching FCM registration token failed", task.exception)
                 return@addOnCompleteListener
             }
 
             // Get FCM token
             val token = task.result
-            Log.d(LOG_TAG, "FCM Token: $token")
+            // Log.d(LOG_TAG, "FCM Token: $token")
 
             // Cache token locally so that we can query it!
             fcmToken = token
@@ -129,7 +142,7 @@ object OCPluginCompanion {
     fun cacheNewFcmToken(token: String) {
         fcmToken = token
         triggerRef("fcm-token-refresh", JSObject().apply { put("fcmToken", token) })
-        Log.d(LOG_TAG, "FCM token refreshed: $token")
+        // Log.d(LOG_TAG, "FCM token refreshed: $token")
     }
 
     // Fire Svelte handled event
@@ -143,10 +156,10 @@ object OCPluginCompanion {
     fun setTriggerRef(plugin: OpenChatPlugin) {
         triggerRef = { event, payload ->
             if (svelteReady) {
-                Log.d(LOG_TAG, "FIRE EVENT: $event, $payload")
+                // Log.d(LOG_TAG, "FIRE EVENT: $event, $payload")
                 plugin.trigger(event, payload)
             } else {
-                Log.d(LOG_TAG, "ADD EVENT TO QUEUE: $event, $payload")
+                // Log.d(LOG_TAG, "ADD EVENT TO QUEUE: $event, $payload")
                 eventQueue.add(Pair(event, payload.toString()))
             }
         }
@@ -160,7 +173,7 @@ object OCPluginCompanion {
 
     fun flushQueuedEvents() {
         if (svelteReady) {
-            Log.d(LOG_TAG, "Flushing queued events")
+            // Log.d(LOG_TAG, "Flushing queued events")
             eventQueue.forEach { (event, payload) -> triggerRef(event, JSObject(payload)) }
             eventQueue.clear()
         } else {

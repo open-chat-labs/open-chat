@@ -8,7 +8,7 @@
         ONE_DAY,
         publish,
     } from "openchat-client";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Paperclip from "svelte-material-icons/Paperclip.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -20,6 +20,7 @@
     import TokenInput from "./TokenInput.svelte";
     import TransferFeesMessage from "./TransferFeesMessage.svelte";
     import { TokenState } from "./wallet/walletState.svelte";
+    import { keyboard } from "@stores/keyboard.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -53,6 +54,18 @@
         // just grab any old ledger for starters
         return [...$cryptoLookup.keys()].find((l) => l !== fromLedger) ?? "";
     }
+
+    onMount(() => {
+        const wasViewportResizeEnabled = keyboard.viewportResizeEnabled;
+        // If resize is currently not enabled, enable it!
+        if (!wasViewportResizeEnabled) keyboard.enableViewportResize();
+
+        return () => {
+            // If resize was not enabled enabled when the component was mounted,
+            // disable it again.
+            if (!wasViewportResizeEnabled) keyboard.disableViewportResize();
+        };
+    });
 
     $effect(() => {
         if (tokenInputState === "too_low") {

@@ -15,4 +15,6 @@ permissions = [
     "allow-download-update",
     "allow-restart-app",
     "allow-load-recent-media",
+    "allow-enable-viewport-resize",
+    "allow-disable-viewport-resize",
 ]
