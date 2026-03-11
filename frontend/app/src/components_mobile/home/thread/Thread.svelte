@@ -45,6 +45,7 @@
     import MemeBuilder from "../MemeBuilder.svelte";
     import TimelineDate from "../TimelineDate.svelte";
     import ThreadHeader from "./ThreadHeader.svelte";
+    import { keyboard } from "@stores/keyboard.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -207,6 +208,7 @@
     }
 
     function tokenTransfer(detail: { ledger?: string; amount?: bigint }) {
+        keyboard.enableViewportResize();
         creatingCryptoTransfer = {
             ledger: detail.ledger ?? $lastCryptoSent ?? LEDGER_CANISTER_ICP,
             amount: detail.amount ?? BigInt(0),
@@ -214,6 +216,7 @@
     }
 
     function makeMeme() {
+        keyboard.enableViewportResize();
         buildingMeme = true;
         if (memeBuilder !== undefined) {
             memeBuilder.reset();
@@ -296,7 +299,11 @@
         ledger={creatingCryptoTransfer.ledger}
         defaultReceiver={defaultCryptoTransferReceiver()}
         {messageContext}
-        onClose={() => (creatingCryptoTransfer = undefined)} />
+        onClose={() => {
+            // TODO rethink, same as in CurrentChat.svelte
+            keyboard.disableViewportResize();
+            creatingCryptoTransfer = undefined;
+        }} />
 {/if}
 
 <Container background={ColourVars.background0} height={"fill"} direction={"vertical"}>
