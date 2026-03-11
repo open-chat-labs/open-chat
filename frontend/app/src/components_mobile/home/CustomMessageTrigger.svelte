@@ -131,7 +131,7 @@
 
 <div class="attachments">
     {#if mediaPermission === "denied" || (mediaPermission === "granted" && media.length === 0)}
-        <Column padding={["zero", "lg"]}>
+        <Column padding={"lg"}>
             <Row
                 gap="lg"
                 padding={["sm", "lg"]}

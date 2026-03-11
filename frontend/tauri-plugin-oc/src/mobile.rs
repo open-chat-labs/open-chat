@@ -74,4 +74,14 @@ impl<R: Runtime> Oc<R> {
     pub fn load_recent_media(&self, payload: LoadRecentMediaRequest) -> crate::Result<LoadRecentMediaResponse> {
         self.0.run_mobile_plugin("loadRecentMedia", payload).map_err(Into::into)
     }
+
+    pub fn toggle_viewport_resize(&self, toggle: bool) -> crate::Result<()> {
+        let res: Result<(), _> = if toggle {
+            self.0.run_mobile_plugin("enableViewportResize", EmptyPayload::default())
+        } else {
+            self.0.run_mobile_plugin("disableViewportResize", EmptyPayload::default())
+        };
+
+        res.map_err(Into::into)
+    }
 }

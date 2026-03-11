@@ -18,6 +18,8 @@ Default permissions for the plugin
 - `allow-download-update`
 - `allow-restart-app`
 - `allow-load-recent-media`
+- `allow-enable-viewport-resize`
+- `allow-disable-viewport-resize`
 
 ## Permission Table
 
@@ -27,6 +29,32 @@ Default permissions for the plugin
 <th>Description</th>
 </tr>
 
+
+<tr>
+<td>
+
+`oc:allow-disable-viewport-resize`
+
+</td>
+<td>
+
+Enables the disable_viewport_resize command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-disable-viewport-resize`
+
+</td>
+<td>
+
+Denies the disable_viewport_resize command without any pre-configured scope.
+
+</td>
+</tr>
 
 <tr>
 <td>
@@ -50,6 +78,32 @@ Enables the download_update command without any pre-configured scope.
 <td>
 
 Denies the download_update command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-enable-viewport-resize`
+
+</td>
+<td>
+
+Enables the enable_viewport_resize command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-enable-viewport-resize`
+
+</td>
+<td>
+
+Denies the enable_viewport_resize command without any pre-configured scope.
 
 </td>
 </tr>
