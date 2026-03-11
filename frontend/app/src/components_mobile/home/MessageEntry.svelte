@@ -239,18 +239,25 @@
         popExpandedHistoryState();
     }
 
+    function getHistoryStateAction(): string {
+        return `input-tray-${mode}`;
+    }
+
     // State added to indicate expanded section is open. Devices back gesture
     // can then pop the state from history, and the expanded section will close.
     function pushExpandedHistoryState() {
+        const action = getHistoryStateAction();
+
         // Dummy state was not added...
-        if (!history.state.action || history.state.action !== "expanded-ui") {
-            history.pushState({ action: "expanded-ui" }, "");
+        if (!history.state.action || history.state.action !== action) {
+            history.pushState({ action }, "");
         }
     }
 
     // Pops expanded history state only if it's set.
     function popExpandedHistoryState() {
-        if (history.state.action === "expanded-ui") {
+        const action = getHistoryStateAction();
+        if (history.state.action === action) {
             returnFromPopHandler = true;
             history.back();
         }
@@ -297,6 +304,10 @@
         // Note: this did not seem to work by just adding focus attribute.
         inp?.addEventListener("focus", keyboardFocus);
 
+        // This component is also used for threads, so we need to remember the
+        // state of this when the component mounts.
+        const wasViewportResizeEnabled = keyboard.viewportResizeEnabled;
+
         // When mesasge entry is on screen, the viewport should not just resize
         // by default, since we want to support the input tray UI where soft
         // keyboard overlaps some of the UI content.
@@ -304,8 +315,8 @@
         return () => {
             inp?.removeEventListener("focus", keyboardFocus);
 
-            // Enable kb resizing again!
-            keyboard.enableViewportResize();
+            // Enable kb resizing again if it was enabled.
+            if (wasViewportResizeEnabled) keyboard.enableViewportResize();
         };
     });
 

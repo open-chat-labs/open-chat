@@ -235,6 +235,9 @@
     }
 
     function popstate() {
+        // Something else was on the history stack, modal is still open!
+        if (history.state?.isModal) return;
+
         if (modalStack.length > 0) {
             if (top?.kind === "open_thread") {
                 pageReplace(stripThreadFromUrl(removeQueryStringParam("open")));

@@ -21,26 +21,25 @@ function isInput(el: HTMLElement) {
 }
 
 // Find the parent which is scrollable!
-function getScrollParent(node: HTMLElement | null): HTMLElement | null {
-    if (node == null) return null;
+function getScrollParent(node: HTMLElement | null): HTMLElement {
+    // If we hit the top or a null node, fall back to the document's scroller
+    if (!node || node === document.body || node === document.documentElement) {
+        return (document.scrollingElement as HTMLElement) || document.body;
+    }
 
-    // Check if the element has a scrollable overflow property
     const isScrollable = (el: HTMLElement) => {
         const style = window.getComputedStyle(el);
-        const overflow = style.getPropertyValue("overflow") + style.getPropertyValue("overflow-y");
-        return /auto|scroll/.test(overflow);
+        // Checking overflow-y is usually safer for vertical scrolling
+        const overflowY = style.getPropertyValue("overflow-y");
+        return /auto|scroll/.test(overflowY);
     };
 
-    // If this element scrolls, return it. Otherwise, check its parent.
     if (isScrollable(node) && node.scrollHeight > node.clientHeight) {
         return node;
     }
 
-    return (
-        getScrollParent(node.parentNode as HTMLElement) ||
-        (document.scrollingElement as HTMLElement) ||
-        document.body
-    );
+    const parent = node.parentElement;
+    return getScrollParent(parent);
 }
 
 if (window) {
