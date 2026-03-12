@@ -1,7 +1,7 @@
 import { enableViewportResize, disableViewportResize } from "tauri-plugin-oc-api";
 
 const STORAGE_KEY = "openchat_soft_keyboard_height";
-const SCROLL_INTO_VIEW_DELAY = 300;
+const SCROLL_INTO_VIEW_DELAY = 400;
 
 let visible = $state(false);
 // Is zero while the kb is hidden
@@ -42,67 +42,71 @@ function getScrollParent(node: HTMLElement | null): HTMLElement {
     return getScrollParent(parent);
 }
 
+function scrollIntoViewLastFocused() {
+    // Do not scroll into view if keyboard is ignored!
+    if (!lastFocusedInput || lastFocusedInput?.dataset.keyboardIgnore) return;
+
+    // Scroll the focused input into view if not visible!
+    setTimeout(() => {
+        const scrollParent = getScrollParent(lastFocusedInput ?? null);
+        if (lastFocusedInput && scrollParent) {
+            const inputRect = lastFocusedInput.getBoundingClientRect();
+
+            // If the viewport resizing is enabled, we need to scroll the
+            // input into view relative to the bottom of the viewport;
+            // but if the viewport resizing is disabled, we need to scroll
+            // the input relative to the top of the soft keyboard!
+            if (viewportResizeEnabled) {
+                const windowBottom = window.innerHeight;
+
+                // Input ended up below viewport bottom after resize
+                if (inputRect.bottom > windowBottom) {
+                    const distanceToScroll = inputRect.bottom - windowBottom + inputRect.height;
+
+                    scrollParent.scrollTo({
+                        top: scrollParent.scrollTop + distanceToScroll,
+                        behavior: "smooth",
+                    });
+                }
+                // Input ended up above viewport top after resize
+                else if (inputRect.top < 0) {
+                    const distanceToScrollUp = inputRect.top - inputRect.height;
+                    scrollParent.scrollTo({
+                        top: scrollParent.scrollTop + distanceToScrollUp,
+                        behavior: "smooth",
+                    });
+                }
+            } else {
+                // Space between window top and top of the keyboard
+                const keyboardTop = window.innerHeight - height;
+
+                // We take input height into account in cases where keyboard
+                // overlaps the input, but not fully.
+                if (inputRect.bottom > keyboardTop - inputRect.height) {
+                    // This is the distance that the element is below the
+                    // keyboard top, plus the buffer...
+                    const distanceToMove = inputRect.bottom - keyboardTop + inputRect.height + 8;
+
+                    scrollParent.scrollTo({
+                        top: scrollParent.scrollTop + distanceToMove,
+                        behavior: "smooth",
+                    });
+                }
+            }
+        }
+    }, SCROLL_INTO_VIEW_DELAY);
+}
+
 if (window) {
     window.addEventListener("focusin", (e) => {
         const target = e.target;
         if (target instanceof HTMLElement && isInput(target)) {
             lastFocusedInput = target;
-
-            // Do not scroll into view if keyboard is ignored!
-            if (lastFocusedInput?.dataset.keyboardIgnore) return;
-
-            // Scroll the focused input into view if not visible!
-            setTimeout(() => {
-                const scrollParent = getScrollParent(lastFocusedInput ?? null);
-                if (lastFocusedInput && scrollParent) {
-                    const inputRect = lastFocusedInput.getBoundingClientRect();
-
-                    // If the viewport resizing is enabled, we need to scroll the
-                    // input into view relative to the bottom of the viewport;
-                    // but if the viewport resizing is disabled, we need to scroll
-                    // the input relative to the top of the soft keyboard!
-                    if (viewportResizeEnabled) {
-                        const windowBottom = window.innerHeight;
-
-                        // Input ended up below viewport bottom after resize
-                        if (inputRect.bottom > windowBottom) {
-                            const distanceToScroll =
-                                inputRect.bottom - windowBottom + inputRect.height;
-
-                            scrollParent.scrollTo({
-                                top: scrollParent.scrollTop + distanceToScroll,
-                                behavior: "smooth",
-                            });
-                        }
-                        // Input ended up above viewport top after resize
-                        else if (inputRect.top < 0) {
-                            const distanceToScrollUp = inputRect.top - inputRect.height;
-                            scrollParent.scrollTo({
-                                top: scrollParent.scrollTop + distanceToScrollUp,
-                                behavior: "smooth",
-                            });
-                        }
-                    } else {
-                        // Space between window top and top of the keyboard
-                        const keyboardTop = window.innerHeight - height;
-
-                        // We take input height into account in cases where keyboard
-                        // overlaps the input, but not fully.
-                        if (inputRect.bottom > keyboardTop - inputRect.height) {
-                            // This is the distance that the element is below the
-                            // keyboard top, plus the buffer...
-                            const distanceToMove =
-                                inputRect.bottom - keyboardTop + inputRect.height + 8;
-
-                            scrollParent.scrollTo({
-                                top: scrollParent.scrollTop + distanceToMove,
-                                behavior: "smooth",
-                            });
-                        }
-                    }
-                }
-            }, SCROLL_INTO_VIEW_DELAY);
         }
+    });
+
+    window.addEventListener("focusout", () => {
+        lastFocusedInput = undefined;
     });
 }
 
@@ -125,6 +129,8 @@ export const keyboard = {
 
     set visible(value: boolean) {
         visible = value;
+        // Only runs if there is an input focused.
+        scrollIntoViewLastFocused();
     },
 
     set currentHeight(value: number) {
