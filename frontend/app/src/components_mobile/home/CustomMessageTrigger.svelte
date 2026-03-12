@@ -97,6 +97,7 @@
         const assetUrl: string = convertFileSrc(filePath);
 
         try {
+            // TODO check if this is the bottle neck for image loading on slower phones!
             const response: Response = await fetch(assetUrl);
             if (!response.ok) {
                 throw new Error(`Failed to fetch asset: ${response.statusText}`);

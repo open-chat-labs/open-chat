@@ -105,6 +105,7 @@
         // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
         supportsEdit: boolean;
         supportsReply: boolean;
+        disablePan?: boolean;
         onReplyTo?: (replyContext: EnhancedReplyContext) => void;
         onEditMessage?: () => void;
         onCollapseMessage?: () => void;
@@ -147,6 +148,7 @@
         onExpandMessage = undefined,
         supportsEdit,
         supportsReply,
+        disablePan = false,
         onReplyTo,
         onEditMessage,
         onCollapseMessage,
@@ -641,7 +643,7 @@
                 gap={"sm"}
                 overflow={"visible"}
                 mainAxisAlignment={me ? "end" : "start"}
-                pan={msg.deleted
+                pan={msg.deleted || disablePan
                     ? undefined
                     : {
                           oncommit: onPanCommit,

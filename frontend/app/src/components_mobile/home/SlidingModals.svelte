@@ -234,6 +234,7 @@
         }
     }
 
+    // TODO fix double back to close a sliding modal (intermittent issue).
     function popstate() {
         // Something else was on the history stack, modal is still open!
         if (history.state?.isModal) return;
