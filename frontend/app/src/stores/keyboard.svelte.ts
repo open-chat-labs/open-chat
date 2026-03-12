@@ -6,7 +6,7 @@ const SCROLL_INTO_VIEW_DELAY = 400;
 let visible = $state(false);
 // Is zero while the kb is hidden
 let currentHeight: number = $state(0);
-let lastFocusedInput: HTMLElement | undefined = $state();
+let lastFocusedInput: HTMLElement | undefined;
 let viewportResizeEnabled = $state(true);
 
 // Guess the soft keyboard height based on the 38% rule. This is only required
@@ -48,7 +48,9 @@ function scrollIntoViewLastFocused() {
 
     // Scroll the focused input into view if not visible!
     setTimeout(() => {
-        const scrollParent = getScrollParent(lastFocusedInput ?? null);
+        const firstParent = lastFocusedInput?.parentElement ?? null;
+        const scrollParent = getScrollParent(firstParent);
+
         if (lastFocusedInput && scrollParent) {
             const inputRect = lastFocusedInput.getBoundingClientRect();
 

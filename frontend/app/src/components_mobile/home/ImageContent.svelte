@@ -1,15 +1,16 @@
 <script lang="ts">
     import { Button, ColourVars, Column, IconButton } from "component-lib";
-    import type { ImageContent, MemeFighterContent } from "openchat-client";
-    import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
+    import { publish, type ImageContent, type MemeFighterContent } from "openchat-client";
     import Close from "svelte-material-icons/Close.svelte";
+    import EyeOffOutline from "svelte-material-icons/EyeOffOutline.svelte";
+    import FileHidden from "svelte-material-icons/FileHidden.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
     import { lowBandwidth } from "../../stores/settings";
-    import { isTouchDevice } from "../../utils/devices";
+    // import { isTouchDevice } from "../../utils/devices";
     import Translatable from "../Translatable.svelte";
     import ContentCaption from "./ContentCaption.svelte";
-    import ZoomedImage from "./ZoomedImage.svelte";
+    import { scrollStatus } from "@stores/scroll.svelte";
 
     interface Props {
         content: ImageContent | MemeFighterContent;
@@ -38,7 +39,6 @@
     }: Props = $props();
 
     let imgElement: HTMLImageElement | undefined = $state();
-    let zoom = $state(false);
     let landscape = $derived(content.height < content.width);
 
     function normaliseContent(content: ImageContent | MemeFighterContent) {
@@ -60,21 +60,10 @@
         }
     }
 
-    function onClick() {
-        if (!isTouchDevice) {
-            toggleZoom();
+    function focusImage() {
+        if (!scrollStatus.isCooldown) {
+            publish("focusImage", content);
         }
-    }
-
-    function onDoubleClick(e: Event) {
-        e.stopPropagation();
-        if (isTouchDevice) {
-            toggleZoom();
-        }
-    }
-
-    function toggleZoom() {
-        zoom = !zoom;
     }
 
     let normalised = $derived(normaliseContent(content));
@@ -110,8 +99,7 @@
         <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
         <img
             bind:this={imgElement}
-            onclick={onClick}
-            ondblclick={onDoubleClick}
+            onclick={focusImage}
             onerror={onError}
             class="unzoomed"
             class:landscape
@@ -124,11 +112,13 @@
             src={intersecting && !hidden ? normalised.url : normalised.fallback}
             alt={normalised.caption} />
 
-        {#if zoomable && !hidden}
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div class="expand" class:rtl={$rtlStore} class:zoomed={zoom} onclick={toggleZoom}>
-                <ArrowExpand size={"1em"} color={"#fff"} />
+        {#if !zoomable}
+            <div class="status_icon" class:rtl={$rtlStore}>
+                <EyeOffOutline size={"1.75em"} color={ColourVars.textPrimary} />
+            </div>
+        {:else if hidden}
+            <div class="status_icon" class:rtl={$rtlStore}>
+                <FileHidden size={"1.75em"} color={ColourVars.textPrimary} />
             </div>
         {/if}
         {#if draft}
@@ -143,11 +133,9 @@
     </Column>
 {/if}
 
-<ContentCaption caption={normalised.caption} {edited} {blockLevelMarkdown} />
-
-{#if zoomable && zoom && normalised.url !== undefined}
-    <ZoomedImage onClose={toggleZoom} url={normalised.url} />
-{/if}
+<Column padding={["zero", "sm"]}>
+    <ContentCaption caption={normalised.caption} {edited} {blockLevelMarkdown} />
+</Column>
 
 <style lang="scss">
     :global(.container.image_content_mask) {
@@ -169,47 +157,32 @@
         right: var(--sp-md);
     }
 
-    .expand {
-        border-radius: 0 $radius 0 $radius;
-
-        cursor: zoom-in;
-        &.zoomed {
-            cursor: zoom-out;
-            border-bottom-left-radius: var(--modal-rd);
-        }
+    .status_icon {
+        position: absolute;
+        bottom: var(--sp-xs);
+        right: var(--sp-sm);
 
         &.rtl {
-            right: 0;
-            left: unset;
-            border-radius: $radius 0 $radius 0;
-            &.zoomed {
-                border-bottom-right-radius: var(--modal-rd);
-            }
+            left: 0;
+            right: unset;
         }
-
-        position: absolute;
-        padding: $sp2 $sp4;
-        bottom: 0;
-        left: 0;
-        background-color: rgba(0, 0, 0, 0.3);
-        color: #fff;
-    }
-
-    img.zoomable.unzoomed {
-        cursor: zoom-in;
     }
 
     img.unzoomed {
         width: 100%;
         display: block;
-
-        &:not(.landscape) {
-            min-height: 90px;
-            min-width: 0px;
+        border-radius: var(--rad-sm) var(--rad-sm) var(--rad-md) var(--rad-md);
+        &:not(.rtl) {
+            border-top-left-radius: var(--rad-lg);
         }
 
-        &:not(.fill) {
-            border-radius: $radius;
+        &.rtl {
+            border-top-right-radius: var(--rad-lg);
+        }
+
+        &:not(.landscape) {
+            min-height: 6rem;
+            min-width: 0;
         }
 
         &.draft {
@@ -227,7 +200,7 @@
         }
 
         &.reply {
-            max-width: 90px;
+            max-width: 6rem;
             max-height: none;
             height: auto;
             float: right;
@@ -243,7 +216,7 @@
 
         &:not(.landscape).reply {
             max-width: none;
-            max-height: 90px;
+            max-height: 6rem;
             width: auto;
         }
     }

@@ -36,6 +36,9 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        opacity: 1;
+        animation: slide-up 200ms ease-out forwards;
+
         .bg {
             position: absolute;
             inset: -10%;

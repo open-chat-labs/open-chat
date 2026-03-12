@@ -20,7 +20,7 @@
         undeleting: boolean;
         bot: boolean;
         me: boolean;
-        fill: boolean;
+        fill: boolean; // TODO deprecate this!
         accepted: boolean;
         chatType: ChatType;
         readByThem: boolean;
@@ -43,7 +43,6 @@
         expiresAt,
         percentageExpired,
         pinned,
-        fill,
     }: Props = $props();
 
     let textColorVar = $derived(me ? ColourVars.primaryLight : ColourVars.textSecondary);
@@ -65,7 +64,7 @@
 {/snippet}
 
 <Row
-    supplementalClass={`message-metadata ${fill ? "fill" : ""}`}
+    supplementalClass="message-metadata"
     gap={"xs"}
     padding={["xs", "sm", "sm", "md"]}
     crossAxisAlignment={"center"}
@@ -121,16 +120,6 @@
 </Row>
 
 <style lang="scss">
-    :global(.message-metadata.fill) {
-        position: absolute;
-        padding: var(--sp-sm) !important;
-        bottom: 0;
-        right: 0;
-        background-color: rgba(0, 0, 0, 0.3) !important;
-        color: #fff;
-        border-radius: var(--rad-xl) 0 0 0 !important;
-    }
-
     :global(.message-metadata-icons > :not(:first-child)) {
         margin-left: -6px;
         z-index: 1;
