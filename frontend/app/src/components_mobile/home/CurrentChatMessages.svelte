@@ -30,17 +30,21 @@
         selectedChatUserGroupKeysStore,
         selectedCommunitySummaryStore,
         showMiddle,
+        subscribe,
         threadOpenStore,
         unconfirmedStore,
+        type ImageContent,
+        type MemeFighterContent,
     } from "openchat-client";
     import page from "page";
-    import { getContext, untrack, setContext } from "svelte";
+    import { getContext, untrack, setContext, onMount } from "svelte";
     import Witch from "../Witch.svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import ChatEventList from "./ChatEventList.svelte";
     import InitialChatMessage from "./InitialChatMessage.svelte";
     import PrivatePreview from "./PrivatePreview.svelte";
     import TimelineDate from "./TimelineDate.svelte";
+    import ZoomedImage from "./ZoomedImage.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -88,6 +92,23 @@
     let messagesDivHeight: number = $state(0);
     let initialised = $state(false);
     let currentChatId: ChatIdentifier | undefined = $state();
+    let showImage: ImageContent | MemeFighterContent | undefined = $state();
+    let normalisedImage = $derived(showImage ? normalisedImageContent(showImage) : undefined);
+
+    onMount(() => {
+        const unsubs = [
+            subscribe("focusImage", (data) => {
+                if (data !== showImage) {
+                    showImage = data;
+                    console.log("AAA");
+                }
+            }),
+        ];
+
+        return () => {
+            unsubs.forEach((u) => u());
+        };
+    });
 
     // Allows child nodes, like IntersectionObserver to access the root scrollable node to allow rootMargin to be used.
     let scrollState = $state<{ node: HTMLElement | undefined }>({ node: undefined });
@@ -300,6 +321,25 @@
         }
         previousChatId = $selectedChatIdStore;
     });
+
+    function normalisedImageContent(content: ImageContent | MemeFighterContent) {
+        switch (content.kind) {
+            case "image_content":
+                return {
+                    url: content.blobUrl,
+                    caption: content.caption,
+                    fallback: content.thumbnailData,
+                    loadMsg: "loadImage",
+                };
+            case "meme_fighter_content":
+                return {
+                    url: content.url,
+                    caption: undefined,
+                    fallback: "/assets/memefighter.svg",
+                    loadMsg: "loadMeme",
+                };
+        }
+    }
 </script>
 
 <Witch />
@@ -387,6 +427,9 @@
             {/if}
         {/snippet}
     </ChatEventList>
+    {#if normalisedImage}
+        <ZoomedImage onClose={() => (showImage = undefined)} url={normalisedImage.url ?? ""} />
+    {/if}
 </div>
 
 <style lang="scss">
