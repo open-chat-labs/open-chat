@@ -193,7 +193,7 @@
         <div class="attach-buttons">
             <!-- Open Gallery -->
             {#if mediaPermitted}
-                <FileAttacher {onFileSelected}>
+                <FileAttacher accept="image/*,video/*" {onFileSelected}>
                     {#snippet children(onClick)}
                         {@render attachOption(
                             "Open Gallery",
