@@ -26,7 +26,7 @@
     import ImageMultipleOutline from "svelte-material-icons/ImageMultipleOutline.svelte";
     import SwapHorizontal from "svelte-material-icons/SwapHorizontal.svelte";
     import FileImageOutline from "svelte-material-icons/FileImageOutline.svelte";
-    import FileVideoOutline from "svelte-material-icons/FileVideoOutline.svelte";
+    import VideoBox from "svelte-material-icons/VideoBox.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
     import MemeFighter from "../icons/MemeFighter.svelte";
     import FileAttacher from "./FileAttacher.svelte";
@@ -175,7 +175,7 @@
                                 {#if m.mimeType.startsWith("image")}
                                     <FileImageOutline size="1rem" color={ColourVars.textPrimary} />
                                 {:else}
-                                    <FileVideoOutline size="1rem" color={ColourVars.textPrimary} />
+                                    <VideoBox size="1rem" color={ColourVars.textPrimary} />
                                 {/if}
                             </div>
                         </button>

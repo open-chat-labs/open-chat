@@ -5,7 +5,6 @@
     import { i18nKey } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
     import { lowBandwidth } from "../../stores/settings";
-    import { isTouchDevice } from "../../utils/devices";
     import Translatable from "../Translatable.svelte";
 
     interface Props {
@@ -30,8 +29,6 @@
         onRemove,
     }: Props = $props();
 
-    let imgElement: HTMLImageElement | undefined = $state();
-    let zoom = $state(false);
     let landscape = $derived(content.height < content.width);
 
     function normaliseContent(content: ImageContent | MemeFighterContent) {
@@ -53,35 +50,12 @@
         }
     }
 
-    function onClick() {
-        if (!isTouchDevice) {
-            toggleZoom();
-        }
-    }
-
-    function onDoubleClick(e: Event) {
-        e.stopPropagation();
-        if (isTouchDevice) {
-            toggleZoom();
-        }
-    }
-
-    function toggleZoom() {
-        zoom = !zoom;
-    }
-
     let normalised = $derived(normaliseContent(content));
     let hidden = $state(false);
     $effect(() => {
         hidden = $lowBandwidth && !draft;
     });
     let zoomable = $derived(!draft && !reply && !pinned);
-
-    function onError() {
-        if (imgElement) {
-            imgElement.src = normalised.fallback;
-        }
-    }
 </script>
 
 {#if normalised.url !== undefined}
@@ -105,10 +79,6 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <div class="image_wrapper">
                 <img
-                    bind:this={imgElement}
-                    onclick={onClick}
-                    ondblclick={onDoubleClick}
-                    onerror={onError}
                     class="img"
                     class:landscape
                     class:fill
@@ -122,15 +92,13 @@
             </div>
         </div>
 
-        {#if draft}
-            <div class="close">
-                <IconButton size="sm" mode={"dark"} onclick={onRemove}>
-                    {#snippet icon()}
-                        <Close color={ColourVars.textPrimary} />
-                    {/snippet}
-                </IconButton>
-            </div>
-        {/if}
+        <div class="close">
+            <IconButton size="sm" mode={"dark"} onclick={onRemove}>
+                {#snippet icon()}
+                    <Close color={ColourVars.textPrimary} />
+                {/snippet}
+            </IconButton>
+        </div>
     </Column>
 {/if}
 
