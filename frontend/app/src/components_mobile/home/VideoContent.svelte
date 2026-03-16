@@ -32,7 +32,6 @@
         if (videoUrl && videoDuration === undefined) {
             getVideoDuration(videoUrl).then((duration) => {
                 videoDuration = formatDuration(Math.round(duration));
-                console.log("VIDEO DURATION", duration);
             });
         }
     });

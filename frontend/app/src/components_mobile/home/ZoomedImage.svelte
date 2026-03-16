@@ -22,7 +22,8 @@
     );
 
     let container: HTMLDivElement;
-    let containerStartWidth = 0;
+    let imageWidth = $state(0);
+    let imageHeight = $state(0);
     let panzoomInstance: ReturnType<typeof Panzoom>;
 
     const HISTORY_ACTION = "zoomed-image-state";
@@ -39,15 +40,13 @@
             zoomOnPointer: true, // zoom toward cursor/fingers
             touchAction: "none", // important
             pinchAndPan: true,
-            panOnlyWhenZoomed: true,
             smooth: true,
             zoomDoubleClickSpeed: 1, // disable dblclick zoom if unwanted
         });
 
-        containerStartWidth = container.getBoundingClientRect().width;
         container.addEventListener("panzoomend", (_e: any) => {
             const currentScale = panzoomInstance.getScale();
-            currentScale <= DEFAULT_SCALE + SCALE_EPSILON
+            currentScale <= DEFAULT_SCALE + SCALE_EPSILON && imageHeight <= window.innerHeight
                 ? panzoomInstance.reset({ animate: true })
                 : snapToClosestEdge(currentScale);
         });
@@ -79,15 +78,13 @@
     }
 
     function snapToClosestEdge(scale: number) {
-        // Do not snap if we're (almost) at default scale
-        if (scale <= DEFAULT_SCALE + SCALE_EPSILON) return;
-
         const rect = container.getBoundingClientRect();
+
         const spaceLeft = rect.x;
-        const spaceRight = Math.abs(rect.x) + containerStartWidth - rect.width;
+        const spaceRight = imageWidth - rect.x - rect.width;
 
         const spaceTop = rect.y;
-        const spaceBottom = window.innerHeight - Math.abs(rect.y) - rect.height;
+        const spaceBottom = window.innerHeight - rect.y - rect.height;
 
         let snapXBy = 0;
         let snapYBy = 0;
@@ -101,14 +98,20 @@
             snapXBy = spaceRight;
         }
 
-        // Snap to top
-        if (spaceTop < 0 && spaceBottom > 0) {
-            snapYBy = Math.abs(spaceTop);
+        // Snap to top or bottom depending on how much the image is paned outside
+        // the viewport, compared to how much space there is to the edge on the
+        // oposite side. Abs values for spaces are also taken into account since
+        // their relationship determines how the image must pan.
+        if (spaceTop > 0 && spaceBottom < 0) {
+            snapYBy = spaceTop > Math.abs(spaceBottom) ? spaceBottom : -spaceTop;
         }
         // Snap to bottom
-        else if (spaceTop > 0 && spaceBottom < 0) {
-            snapYBy = spaceBottom;
+        else if (spaceTop < 0 && spaceBottom > 0) {
+            // Is there more space to bottom than the image overflows above tells
+            // us to move to the top, otherwise move to the bottom.
+            snapYBy = Math.abs(spaceTop) < spaceBottom ? Math.abs(spaceTop) : spaceBottom;
         }
+        // }
 
         if (snapXBy || snapYBy) {
             panzoomInstance.pan(snapXBy / scale, snapYBy / scale, {
@@ -121,13 +124,19 @@
 
 <svelte:window onpopstate={onClose} />
 
-<div class="zoomed_image">
+<div class="zoomed_image" class:vcentre={window.innerHeight > imageHeight}>
     <!-- <div onclick={onClose} class="bg" style={`background-image: url(${adjustedUrl})`}></div> -->
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div onclick={onClose} class="bg"></div>
     <div bind:this={container} class="panzoom_frame">
-        <img class="image" src={adjustedUrl} alt="zoomable" draggable="false" />
+        <img
+            class="image"
+            src={adjustedUrl}
+            alt="zoomable"
+            draggable="false"
+            bind:clientHeight={imageHeight}
+            bind:clientWidth={imageWidth} />
     </div>
 
     <div class="close">
@@ -142,6 +151,7 @@
 <style lang="scss">
     .zoomed_image {
         @include z-index("overlay");
+        display: flex;
         position: fixed;
         inset: 0;
         top: 0;
@@ -152,13 +162,13 @@
         background: black;
         touch-action: none;
         margin: 0;
-
-        display: flex;
-        justify-content: center;
-        align-items: center;
-
         opacity: 1;
         animation: slide-up 200ms ease-out forwards;
+
+        &.vcentre {
+            justify-content: center;
+            align-items: center;
+        }
 
         .bg {
             position: absolute;
