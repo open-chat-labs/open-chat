@@ -35,6 +35,7 @@ import type {
     UpdatedRules,
     UserGroupDetails,
     VideoCallType,
+    VideoContent,
 } from "..";
 
 export type PubSubEvents = {
@@ -246,4 +247,5 @@ export type PubSubEvents = {
     viewBotCommand: CommandDefinition;
     architecture: undefined;
     focusImage: ImageContent | MemeFighterContent;
+    playVideo: VideoContent;
 };

@@ -35,6 +35,7 @@
         unconfirmedStore,
         type ImageContent,
         type MemeFighterContent,
+        type VideoContent,
     } from "openchat-client";
     import page from "page";
     import { getContext, untrack, setContext, onMount } from "svelte";
@@ -45,6 +46,7 @@
     import PrivatePreview from "./PrivatePreview.svelte";
     import TimelineDate from "./TimelineDate.svelte";
     import ZoomedImage from "./ZoomedImage.svelte";
+    import ZoomedVideo from "./ZoomedVideo.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -93,6 +95,7 @@
     let initialised = $state(false);
     let currentChatId: ChatIdentifier | undefined = $state();
     let showImage: ImageContent | MemeFighterContent | undefined = $state();
+    let videoContent: VideoContent | undefined = $state();
     let normalisedImage = $derived(showImage ? normalisedImageContent(showImage) : undefined);
 
     onMount(() => {
@@ -100,7 +103,13 @@
             subscribe("focusImage", (data) => {
                 if (data !== showImage) {
                     showImage = data;
-                    console.log("AAA");
+                    videoContent = undefined;
+                }
+            }),
+            subscribe("playVideo", (data) => {
+                if (data !== videoContent) {
+                    showImage = undefined;
+                    videoContent = data;
                 }
             }),
         ];
@@ -429,6 +438,9 @@
     </ChatEventList>
     {#if normalisedImage}
         <ZoomedImage onClose={() => (showImage = undefined)} url={normalisedImage.url ?? ""} />
+    {/if}
+    {#if videoContent}
+        <ZoomedVideo onClose={() => (videoContent = undefined)} {videoContent} />
     {/if}
 </div>
 

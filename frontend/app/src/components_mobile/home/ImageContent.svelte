@@ -7,10 +7,10 @@
     import { i18nKey } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
     import { lowBandwidth } from "../../stores/settings";
-    // import { isTouchDevice } from "../../utils/devices";
     import Translatable from "../Translatable.svelte";
     import ContentCaption from "./ContentCaption.svelte";
     import { scrollStatus } from "@stores/scroll.svelte";
+    import { getProxyAdjustedBlobUrl } from "../../utils/media";
 
     interface Props {
         content: ImageContent | MemeFighterContent;
@@ -45,7 +45,7 @@
         switch (content.kind) {
             case "image_content":
                 return {
-                    url: content.blobUrl,
+                    url: getProxyAdjustedBlobUrl(content.blobUrl),
                     caption: content.caption,
                     fallback: content.thumbnailData,
                     loadMsg: "loadImage",

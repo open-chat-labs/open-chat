@@ -51,10 +51,10 @@
 
         &.floating {
             position: absolute;
-            top: 90px;
+            top: 0.375rem;
             left: 50%;
+            transform: translateX(-50%);
             @include z-index("date-label");
-            transform: translateX(calc(-50% - 3px));
         }
     }
 </style>

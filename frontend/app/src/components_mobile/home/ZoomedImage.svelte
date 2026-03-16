@@ -1,6 +1,7 @@
 <script lang="ts">
     import { IconButton } from "component-lib";
     import Close from "svelte-material-icons/Close.svelte";
+    import { getProxyAdjustedBlobUrl } from "../../utils/media";
 
     interface Props {
         url: string;
@@ -8,11 +9,14 @@
     }
 
     let { url, onClose }: Props = $props();
+    let adjustedUrl = $derived(getProxyAdjustedBlobUrl(url));
 </script>
 
 <div class="image-frame">
-    <div onclick={onClose} class="bg" style={`background-image: url(${url})`}></div>
-    <img class="fg" src={url} alt="" />
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div onclick={onClose} class="bg" style={`background-image: url(${adjustedUrl})`}></div>
+    <img class="fg" src={adjustedUrl} alt="" />
     <div class="close">
         <IconButton onclick={onClose}>
             {#snippet icon(color)}

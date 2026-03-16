@@ -2,6 +2,13 @@
 export NODE_OPTIONS="--max-old-space-size=8192"
 export NODE_ENV=development
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ENV_FILE="$SCRIPT_DIR/../.env"
+
+set -a
+source "$ENV_FILE"
+set +a
+
 # I suppose we might have > web | desktop | android | ios < where desktop could be
 # further divider mac/windows/linux etc.
 export OC_APP_TYPE=android
@@ -30,6 +37,10 @@ export OC_VIDEO_BRIDGE_URL=http://$(ipconfig getifaddr en0):5050
 export OC_WALLET_CONNECT_PROJECT_ID=b9aafebed2abfaf8341afd9428c947d5
 export OC_WEBSITE_VERSION=
 export OC_BASE_ORIGIN=http://localhost:5001
+
+# override tenor and translate api keys from local environment (app only)
+export OC_TENOR_APIKEY="$OC_APP_TENOR_APIKEY"
+export OC_PUBLIC_TRANSLATE_API_KEY="$OC_APP_TRANSLATE_API_KEY"
 
 # Run dev app
 npx vite --strictPort --port $OC_DEV_PORT
