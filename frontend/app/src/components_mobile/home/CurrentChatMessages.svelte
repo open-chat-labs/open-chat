@@ -94,21 +94,20 @@
     let messagesDivHeight: number = $state(0);
     let initialised = $state(false);
     let currentChatId: ChatIdentifier | undefined = $state();
-    let showImage: ImageContent | MemeFighterContent | undefined = $state();
+    let imageContent: ImageContent | MemeFighterContent | undefined = $state();
     let videoContent: VideoContent | undefined = $state();
-    let normalisedImage = $derived(showImage ? normalisedImageContent(showImage) : undefined);
 
     onMount(() => {
         const unsubs = [
             subscribe("focusImage", (data) => {
-                if (data !== showImage) {
-                    showImage = data;
+                if (data !== imageContent) {
+                    imageContent = data;
                     videoContent = undefined;
                 }
             }),
             subscribe("playVideo", (data) => {
                 if (data !== videoContent) {
-                    showImage = undefined;
+                    imageContent = undefined;
                     videoContent = data;
                 }
             }),
@@ -330,25 +329,6 @@
         }
         previousChatId = $selectedChatIdStore;
     });
-
-    function normalisedImageContent(content: ImageContent | MemeFighterContent) {
-        switch (content.kind) {
-            case "image_content":
-                return {
-                    url: content.blobUrl,
-                    caption: content.caption,
-                    fallback: content.thumbnailData,
-                    loadMsg: "loadImage",
-                };
-            case "meme_fighter_content":
-                return {
-                    url: content.url,
-                    caption: undefined,
-                    fallback: "/assets/memefighter.svg",
-                    loadMsg: "loadMeme",
-                };
-        }
-    }
 </script>
 
 <Witch />
@@ -436,8 +416,8 @@
             {/if}
         {/snippet}
     </ChatEventList>
-    {#if normalisedImage}
-        <ZoomedImage onClose={() => (showImage = undefined)} url={normalisedImage.url ?? ""} />
+    {#if imageContent}
+        <ZoomedImage onClose={() => (imageContent = undefined)} {imageContent} />
     {/if}
     {#if videoContent}
         <ZoomedVideo onClose={() => (videoContent = undefined)} {videoContent} />

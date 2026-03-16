@@ -1,8 +1,10 @@
 <script lang="ts">
+    import { onMount } from "svelte";
     import { IconButton } from "component-lib";
     import type { VideoContent } from "openchat-client";
     import Close from "svelte-material-icons/Close.svelte";
     import { setPlayingMedia, getProxyAdjustedBlobUrl } from "../../utils/media";
+    import { pushDummyHistoryState, popHistoryStateWithAction } from "../../utils/history";
 
     interface Props {
         videoContent: VideoContent;
@@ -20,7 +22,19 @@
             setPlayingMedia(videoPlayer);
         }
     }
+
+    const action = "zoomed-video-state";
+
+    onMount(() => {
+        pushDummyHistoryState(action);
+        return () => {
+            // This will try and pop the history state, if it's still there!
+            popHistoryStateWithAction(action);
+        };
+    });
 </script>
+
+<svelte:window onpopstate={onClose} />
 
 <div class="video-frame">
     <!-- svelte-ignore a11y_click_events_have_key_events -->
