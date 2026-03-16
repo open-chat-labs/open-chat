@@ -86,12 +86,32 @@
         const spaceLeft = rect.x;
         const spaceRight = Math.abs(rect.x) + containerStartWidth - rect.width;
 
-        // We either snap left or right, or nowhere if there's no space.
-        const snapBy =
-            spaceLeft > 0 ? -spaceLeft / scale : spaceRight > 0 ? spaceRight / scale : undefined;
+        const spaceTop = rect.y;
+        const spaceBottom = window.innerHeight - Math.abs(rect.y) - rect.height;
 
-        if (snapBy) {
-            panzoomInstance.pan(snapBy, 0, {
+        let snapXBy = 0;
+        let snapYBy = 0;
+
+        // Snap to left
+        if (spaceLeft > 0 && spaceRight < 0) {
+            snapXBy = -spaceLeft;
+        }
+        // Snap to right
+        else if (spaceLeft < 0 && spaceRight > 0) {
+            snapXBy = spaceRight;
+        }
+
+        // Snap to top
+        if (spaceTop < 0 && spaceBottom > 0) {
+            snapYBy = Math.abs(spaceTop);
+        }
+        // Snap to bottom
+        else if (spaceTop > 0 && spaceBottom < 0) {
+            snapYBy = spaceBottom;
+        }
+
+        if (snapXBy || snapYBy) {
+            panzoomInstance.pan(snapXBy / scale, snapYBy / scale, {
                 animate: true,
                 relative: true,
             });
