@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { IconButton } from "component-lib";
+    import { IconButton, doubleTap } from "component-lib";
     import Close from "svelte-material-icons/Close.svelte";
     import { getProxyAdjustedBlobUrl } from "../../utils/media";
     import { pushDummyHistoryState, popHistoryStateWithAction } from "../../utils/history";
@@ -119,7 +119,6 @@
             // us to move to the top, otherwise move to the bottom.
             snapYBy = Math.abs(spaceTop) < spaceBottom ? Math.abs(spaceTop) : spaceBottom;
         }
-        // }
 
         if (snapXBy || snapYBy) {
             panzoomInstance.pan(snapXBy / scale, snapYBy / scale, {
@@ -129,7 +128,7 @@
         }
     }
 
-    function onDoubleClick() {
+    function onDoubleTap() {
         const currentScale = panzoomInstance.getScale();
         currentScale <= DEFAULT_SCALE + SCALE_EPSILON
             ? panzoomInstance.zoom(2.5, { animate: true })
@@ -146,7 +145,7 @@
     <div onclick={onClose} class="bg"></div>
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div bind:this={container} class="panzoom_frame" ondblclick={onDoubleClick}>
+    <div bind:this={container} class="panzoom_frame" use:doubleTap={onDoubleTap}>
         <img
             class="image"
             src={adjustedUrl}
