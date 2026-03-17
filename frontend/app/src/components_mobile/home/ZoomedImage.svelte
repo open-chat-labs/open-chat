@@ -33,15 +33,14 @@
     onMount(() => {
         panzoomInstance = Panzoom(container, {
             minScale: 1,
-            maxScale: 6,
+            maxScale: 5,
             animate: true,
             duration: 200,
             easing: "cubic-bezier(0.25, 0.1, 0.25, 1)",
             zoomOnPointer: true, // zoom toward cursor/fingers
-            touchAction: "none", // important
+            touchAction: "none",
             pinchAndPan: true,
             smooth: true,
-            zoomDoubleClickSpeed: 1, // disable dblclick zoom if unwanted
         });
 
         container.addEventListener("panzoomend", (_e: any) => {
@@ -56,6 +55,13 @@
             // This will try and pop the history state, if it's still there!
             popHistoryStateWithAction(HISTORY_ACTION);
         };
+    });
+
+    $effect(() => {
+        if (imageHeight > 0 && imageHeight < window.innerHeight) {
+            console.log("IMG H", imageHeight, window.innerHeight);
+            panzoomInstance.setOptions({ panOnlyWhenZoomed: true });
+        }
     });
 
     function normalisedImageContent(content: ImageContent | MemeFighterContent) {
@@ -77,6 +83,8 @@
         }
     }
 
+    // Finds the closest edge to snap to, if there is space on any side of the
+    // image we're paning/zooming!
     function snapToClosestEdge(scale: number) {
         const rect = container.getBoundingClientRect();
 
@@ -120,6 +128,13 @@
             });
         }
     }
+
+    function onDoubleClick() {
+        const currentScale = panzoomInstance.getScale();
+        currentScale <= DEFAULT_SCALE + SCALE_EPSILON
+            ? panzoomInstance.zoom(2.5, { animate: true })
+            : panzoomInstance.reset({ animate: true });
+    }
 </script>
 
 <svelte:window onpopstate={onClose} />
@@ -129,7 +144,9 @@
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div onclick={onClose} class="bg"></div>
-    <div bind:this={container} class="panzoom_frame">
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div bind:this={container} class="panzoom_frame" ondblclick={onDoubleClick}>
         <img
             class="image"
             src={adjustedUrl}
@@ -200,6 +217,7 @@
         touch-action: none;
         -webkit-user-select: none; /* iOS */
         user-select: none;
+        height: fit-content;
 
         .image {
             width: 100%;
