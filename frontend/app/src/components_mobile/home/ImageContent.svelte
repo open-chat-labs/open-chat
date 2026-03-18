@@ -1,19 +1,22 @@
 <script lang="ts">
-    import { Button, ColourVars, Column, IconButton } from "component-lib";
-    import { publish, type ImageContent, type MemeFighterContent } from "openchat-client";
-    import Close from "svelte-material-icons/Close.svelte";
+    import { ColourVars, Column, CommonButton2 } from "component-lib";
+    import {
+        publish,
+        type ImageContent,
+        type TextContent as TextContentType,
+        type MemeFighterContent,
+    } from "openchat-client";
     import EyeOffOutline from "svelte-material-icons/EyeOffOutline.svelte";
-    import FileHidden from "svelte-material-icons/FileHidden.svelte";
-    import { i18nKey } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
     import { lowBandwidth } from "../../stores/settings";
-    import Translatable from "../Translatable.svelte";
-    import ContentCaption from "./ContentCaption.svelte";
     import { scrollStatus } from "@stores/scroll.svelte";
     import { getProxyAdjustedBlobUrl } from "../../utils/media";
+    import EyeOutline from "svelte-material-icons/EyeOutline.svelte";
+    import TextContent from "./TextContent.svelte";
 
     interface Props {
         content: ImageContent | MemeFighterContent;
+        me: boolean;
         fill: boolean;
         draft?: boolean;
         reply?: boolean;
@@ -22,11 +25,13 @@
         intersecting?: boolean;
         edited: boolean;
         blockLevelMarkdown?: boolean;
+        showPreviews?: boolean;
         onRemove?: () => void;
     }
 
     let {
         content,
+        me,
         fill,
         draft = false,
         reply = false,
@@ -35,11 +40,21 @@
         intersecting = true,
         edited,
         blockLevelMarkdown = false,
-        onRemove,
+        showPreviews = true,
     }: Props = $props();
 
     let imgElement: HTMLImageElement | undefined = $state();
     let landscape = $derived(content.height < content.width);
+    let normalised = $derived(normaliseContent(content));
+    let hidden = $state(false);
+    let zoomable = $derived(!draft && !reply && !pinned);
+    let textContent = $derived<TextContentType | undefined>(
+        normalised ? { kind: "text_content", text: normalised.caption ?? "" } : undefined,
+    );
+
+    $effect(() => {
+        hidden = $lowBandwidth && !draft;
+    });
 
     function normaliseContent(content: ImageContent | MemeFighterContent) {
         switch (content.kind) {
@@ -66,13 +81,6 @@
         }
     }
 
-    let normalised = $derived(normaliseContent(content));
-    let hidden = $state(false);
-    $effect(() => {
-        hidden = $lowBandwidth && !draft;
-    });
-    let zoomable = $derived(!draft && !reply && !pinned);
-
     function onError() {
         if (imgElement) {
             imgElement.src = normalised.fallback;
@@ -81,17 +89,20 @@
 </script>
 
 {#if normalised.url !== undefined}
-    <Column maxWidth={"100%"} width={"hug"}>
+    <Column
+        supplementalClass={`bubble_image_content ${me ? "me" : ""} ${fill ? "fill" : ""}`}
+        maxWidth={"100%"}
+        width={"hug"}>
         {#if hidden}
             <Column
                 height={"fill"}
-                padding={"xl"}
                 supplementalClass={"image_content_mask"}
                 mainAxisAlignment={"center"}
                 crossAxisAlignment={"center"}>
                 {#if !reply && !draft}
-                    <Button height={"hug"} width={"fill"} onClick={() => (hidden = false)}
-                        ><Translatable resourceKey={i18nKey(normalised.loadMsg)} /></Button>
+                    <CommonButton2 onClick={() => (hidden = false)} variant="secondary" mode="text">
+                        <EyeOutline size="2rem" color={ColourVars.textPrimary} />
+                    </CommonButton2>
                 {/if}
             </Column>
         {/if}
@@ -101,7 +112,8 @@
             bind:this={imgElement}
             onclick={focusImage}
             onerror={onError}
-            class="unzoomed"
+            class="image"
+            class:me
             class:landscape
             class:fill
             class:draft
@@ -114,39 +126,57 @@
 
         {#if !zoomable}
             <div class="status_icon" class:rtl={$rtlStore}>
-                <EyeOffOutline size={"1.75em"} color={ColourVars.textPrimary} />
-            </div>
-        {:else if hidden}
-            <div class="status_icon" class:rtl={$rtlStore}>
-                <FileHidden size={"1.75em"} color={ColourVars.textPrimary} />
-            </div>
-        {/if}
-        {#if draft}
-            <div class="close">
-                <IconButton mode={"dark"} onclick={onRemove}>
-                    {#snippet icon()}
-                        <Close color={ColourVars.textPrimary} />
-                    {/snippet}
-                </IconButton>
+                <EyeOffOutline size={"1.25em"} color={ColourVars.textPrimary} />
             </div>
         {/if}
     </Column>
 {/if}
 
-<Column padding={["zero", "sm"]}>
-    <ContentCaption caption={normalised.caption} {edited} {blockLevelMarkdown} />
-</Column>
+{#if textContent?.text}
+    <TextContent content={textContent} {me} {fill} {blockLevelMarkdown} {edited} {showPreviews} />
+{/if}
 
 <style lang="scss">
-    :global(.container.image_content_mask) {
-        position: absolute;
-        top: 0;
-        left: 0;
-        height: 100%;
-        width: 100%;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.5));
+    :global {
+        .bubble_image_content {
+            .image_content_mask {
+                position: absolute;
+                top: 0;
+                left: 0;
+                height: 100%;
+                width: 100%;
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.5));
+            }
+
+            .image,
+            .image_content_mask {
+                border-radius: var(--rad-lg) var(--rad-lg) var(--rad-md) var(--rad-md) !important;
+            }
+
+            &.me {
+                .image,
+                .image_content_mask {
+                    border-top-right-radius: var(--rad-sm) !important;
+                }
+            }
+
+            &:not(.me) {
+                .image,
+                .image_content_mask {
+                    border-top-left-radius: var(--rad-sm) !important;
+                }
+            }
+
+            &.fill {
+                .image,
+                .image_content_mask {
+                    border-bottom-left-radius: var(--rad-lg) !important;
+                    border-bottom-right-radius: var(--rad-lg) !important;
+                }
+            }
+        }
     }
 
     $radius: $sp3;
@@ -168,17 +198,9 @@
         }
     }
 
-    img.unzoomed {
+    .image {
         width: 100%;
         display: block;
-        border-radius: var(--rad-sm) var(--rad-sm) var(--rad-md) var(--rad-md);
-        &:not(.rtl) {
-            border-top-left-radius: var(--rad-lg);
-        }
-
-        &.rtl {
-            border-top-right-radius: var(--rad-lg);
-        }
 
         &:not(.landscape) {
             min-height: 6rem;

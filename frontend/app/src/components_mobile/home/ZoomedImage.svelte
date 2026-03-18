@@ -143,8 +143,6 @@
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div onclick={onClose} class="bg"></div>
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div bind:this={container} class="panzoom_frame" use:doubleTap={onDoubleTap}>
         <img
             class="image"

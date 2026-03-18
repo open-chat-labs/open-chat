@@ -1,6 +1,13 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { ChatFootnote, ColourVars, Container, type ColourVarKeys, Row } from "component-lib";
+    import {
+        ChatFootnote,
+        ColourVars,
+        Container,
+        type ColourVarKeys,
+        type Padding,
+        Row,
+    } from "component-lib";
     import type { ChatType, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import Check from "svelte-material-icons/Check.svelte";
@@ -37,6 +44,7 @@
         undeleting,
         bot,
         me,
+        fill,
         accepted,
         chatType,
         readByThem,
@@ -45,32 +53,39 @@
         pinned,
     }: Props = $props();
 
-    let textColorVar = $derived(me ? ColourVars.primaryLight : ColourVars.textSecondary);
-    let textColorTxt = $derived<ColourVarKeys>(me ? "primaryLight" : "textSecondary");
+    let textColorVar = $derived(
+        fill ? ColourVars.textPrimary : me ? ColourVars.primaryLight : ColourVars.textSecondary,
+    );
+    let textColorTxt = $derived<ColourVarKeys>(
+        fill ? "textPrimary" : me ? "primaryLight" : "textSecondary",
+    );
+    let padding = $derived<Padding>(
+        fill ? (me ? "xs" : ["sm", "md"]) : ["zero", "sm", "xs", "zero"],
+    );
 </script>
 
 {#snippet check(fill: boolean = false)}
     <div class="bubble_check" class:fill>
         <Container
             borderRadius="circle"
-            borderColour={ColourVars.primaryLight}
+            borderColour={fill ? "transparent" : ColourVars.primaryLight}
             borderWidth="thin"
-            backgroundColor={fill ? ColourVars.primaryLight : ColourVars.myChatBubble}>
+            backgroundColor={fill ? "transparent" : ColourVars.primaryLight}>
             <Check
-                size="0.75rem"
-                color={fill ? ColourVars.myChatBubble : ColourVars.primaryLight} />
+                size={fill ? "0.85rem" : "0.75rem"}
+                color={fill ? ColourVars.textPrimary : ColourVars.myChatBubble} />
         </Container>
     </div>
 {/snippet}
 
 <Row
-    supplementalClass="message-metadata"
-    gap={"xs"}
-    padding={["xs", "sm", "sm", "md"]}
+    supplementalClass={`message_metadata ${fill ? "fill" : ""}`}
+    gap={fill ? "zero" : "xxs"}
+    {padding}
     crossAxisAlignment={"center"}
     mainAxisAlignment={"end"}
-    width={"fill"}>
-    <Row gap="xs" width="hug">
+    width={"hug"}>
+    <Row supplementalClass="message_metadata_text" gap="xs" width="hug">
         {#if edited}
             <!-- TODO would a pencil icon here be enough to indicate edited content -->
             <ChatFootnote colour={textColorTxt}>
@@ -82,7 +97,7 @@
             {client.toShortTimeString(new Date(time))}
         </ChatFootnote>
     </Row>
-    <Row supplementalClass="message-metadata-icons" width="hug">
+    <Row supplementalClass="message_metadata_icons" width="hug">
         {#if failed}
             <AlertCircleOutline color={textColorVar} />
         {/if}
@@ -95,15 +110,15 @@
         {#if !bot && !deleted}
             {#if me}
                 {#if accepted}
-                    {@render check(true)}
+                    {@render check(fill)}
                 {:else}
                     <div class="confirming"></div>
                 {/if}
                 {#if chatType === "direct_chat"}
                     {#if readByThem}
-                        {@render check(true)}
+                        {@render check(fill)}
                     {:else}
-                        {@render check(false)}
+                        {@render check(fill)}
                     {/if}
                 {/if}
             {:else if !accepted}
@@ -120,9 +135,39 @@
 </Row>
 
 <style lang="scss">
-    :global(.message-metadata-icons > :not(:first-child)) {
-        margin-left: -6px;
-        z-index: 1;
+    :global {
+        .container.message_metadata {
+            position: absolute;
+            pointer-events: none;
+            bottom: 0;
+            right: 0;
+
+            &.fill {
+                position: absolute;
+                right: 0;
+                bottom: 0;
+
+                .message_metadata_text {
+                    text-shadow: 0 0 0.125rem var(--backdrop);
+                }
+
+                .bubble_check path {
+                    filter: drop-shadow(0 0 0.125rem var(--background-0));
+                }
+            }
+        }
+
+        .message_metadata_icons > :not(:first-child) {
+            z-index: 1;
+
+            &:not(.fill) {
+                margin-left: -0.375rem;
+            }
+
+            &.fill {
+                margin-left: -0.7rem;
+            }
+        }
     }
 
     .confirming {
@@ -133,6 +178,15 @@
 
     .bubble_check {
         border-radius: var(--rad-circle);
-        border: var(--bw-thin) solid var(--my-chat-bubble);
+        border-width: var(--bw-thin);
+        border-style: solid;
+
+        &.fill {
+            border-color: transparent;
+        }
+
+        &:not(.fill) {
+            border-color: var(--my-chat-bubble);
+        }
     }
 </style>

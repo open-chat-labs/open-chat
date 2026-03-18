@@ -81,6 +81,7 @@
     <TextContent
         {me}
         {fill}
+        {edited}
         {truncate}
         {pinned}
         {content}
@@ -89,6 +90,7 @@
         {onRemovePreview} />
 {:else if content.kind === "image_content"}
     <ImageContent
+        {me}
         {edited}
         {intersecting}
         {fill}
@@ -98,7 +100,7 @@
         {height}
         {blockLevelMarkdown} />
 {:else if content.kind === "video_content"}
-    <VideoContent {edited} {content} {reply} {height} {blockLevelMarkdown} />
+    <VideoContent {me} {fill} {edited} {content} {reply} {height} {blockLevelMarkdown} />
 {:else if content.kind === "video_call_content"}
     <VideoCallContent {senderId} {messageIndex} {content} {timestamp} />
 {:else if content.kind === "audio_content"}
@@ -148,7 +150,7 @@
 {:else if content.kind === "reported_message_content"}
     <ReportedMessageContent {content} />
 {:else if content.kind === "meme_fighter_content"}
-    <ImageContent {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
+    <ImageContent {me} {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
 {:else if content.kind === "user_referral_card"}
     <UserReferralCardContent />
 {/if}

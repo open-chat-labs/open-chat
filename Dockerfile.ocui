@@ -5,7 +5,7 @@ WORKDIR /
 
 # Install deps!
 RUN apt-get update
-RUN apt-get install -y curl
+RUN apt-get install -y curl zip
 
 # Install node and confirm commands are available
 RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs

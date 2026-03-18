@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ColourVars, Column, Body } from "component-lib";
+    import { ColourVars, Column, ChatFootnote } from "component-lib";
     import { rtlStore } from "../../stores/rtl";
     import { publish } from "openchat-client";
     import type { VideoContent } from "openchat-client";
@@ -10,6 +10,8 @@
 
     interface Props {
         content: VideoContent;
+        fill: boolean;
+        me: boolean;
         reply?: boolean;
         height?: number | undefined;
         edited: boolean;
@@ -18,6 +20,8 @@
 
     let {
         content,
+        fill,
+        me,
         reply = false,
         height = undefined,
         edited,
@@ -52,11 +56,13 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_interactive_supports_focus -->
-<div role="button" class="video" class:reply class:rtl={$rtlStore} onclick={playVideo}>
+<div role="button" class="video_content" class:reply class:rtl={$rtlStore} onclick={playVideo}>
     <img
         alt="..."
         class="preview_img"
         class:landscape
+        class:fill
+        class:me
         src={imageUrl}
         style={height === undefined ? undefined : `height: ${height}px`} />
 
@@ -65,30 +71,42 @@
     </div>
 
     <div class="duration">
-        <VideoOutline size="1.25rem" color={ColourVars.textPrimary} />
-        <Body fontWeight="bold">{videoDuration ?? "--:--"}</Body>
+        <VideoOutline size="1rem" color={ColourVars.textPrimary} />
+        <ChatFootnote>{videoDuration ?? "--:--"}</ChatFootnote>
     </div>
 </div>
 
-<Column padding={["zero", "sm"]}>
-    <ContentCaption caption={content.caption} {edited} {blockLevelMarkdown} />
-</Column>
+{#if content.caption}
+    <Column padding={["zero", "sm"]}>
+        <ContentCaption caption={content.caption} {edited} {blockLevelMarkdown} />
+    </Column>
+{/if}
 
 <style lang="scss">
-    .video {
+    .video_content {
         display: flex;
         position: relative;
 
         .preview_img {
             width: 100%;
-            border-radius: var(--rad-sm) var(--rad-sm) var(--rad-md) var(--rad-md);
+            border-radius: var(--rad-lg) var(--rad-lg) var(--rad-md) var(--rad-md);
 
-            &:not(.rtl) {
-                border-top-left-radius: var(--rad-lg);
+            &.me {
+                border-top-right-radius: var(--rad-sm);
+
+                &.fill {
+                    border-bottom-left-radius: var(--rad-lg);
+                    border-bottom-right-radius: var(--rad-lg);
+                }
             }
 
-            &.rtl {
-                border-top-right-radius: var(--rad-lg);
+            &:not(.me) {
+                border-top-left-radius: var(--rad-sm);
+
+                &:not(.fill) {
+                    border-bottom-right-radius: var(--rad-md);
+                    border-bottom-left-radius: var(--rad-md);
+                }
             }
 
             &:not(.landscape) {
@@ -115,12 +133,26 @@
         }
 
         .duration {
+            position: absolute;
+            bottom: var(--sp-xxs);
+            left: var(--sp-sm);
             display: flex;
             gap: var(--sp-xs);
-            position: absolute;
-            bottom: var(--sp-xs);
-            left: var(--sp-xs);
             align-items: center;
+            height: 0.75rem;
+        }
+    }
+
+    :global {
+        .video_content {
+            // Same CSS is set for message metadata
+            .duration {
+                text-shadow: 0 0 0.125rem var(--backdrop);
+
+                path {
+                    filter: drop-shadow(0 0 0.125rem var(--background-0));
+                }
+            }
         }
     }
 </style>

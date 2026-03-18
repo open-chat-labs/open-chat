@@ -13,23 +13,25 @@
 
     interface Props {
         content: TextContent;
-        truncate?: boolean;
-        pinned?: boolean;
-        fill: boolean;
         me: boolean;
+        fill: boolean;
         blockLevelMarkdown: boolean;
         showPreviews: boolean;
+        edited: boolean;
+        truncate?: boolean;
+        pinned?: boolean;
         onRemovePreview?: (url: string) => void;
     }
 
     let {
         content,
-        truncate = false,
-        pinned = false,
-        fill,
         me,
+        fill,
         blockLevelMarkdown,
         showPreviews,
+        edited,
+        truncate = false,
+        pinned = false,
         onRemovePreview,
     }: Props = $props();
 
@@ -77,19 +79,45 @@
     {/if}
 {/if}
 
-<Column
-    supplementalClass={`text_content ${truncate ? "truncated" : ""}`}
-    padding={["xs", "sm", "zero"]}>
-    <ChatText width={"hug"} maxLines={truncate ? 3 : undefined}>
-        <Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} {text} />
-    </ChatText>
+<Column supplementalClass={`text_content ${truncate ? "truncated" : ""}`} padding={["xs", "sm"]}>
+    <div class="message_text">
+        <ChatText width={"hug"} maxLines={truncate ? 3 : undefined}>
+            <Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} {text} />
+        </ChatText>
+        <span class="metadata_spacer" class:me class:edited></span>
+    </div>
 </Column>
 
 <style lang="scss">
+    .message_text {
+        line-height: 0;
+    }
+
     .expand {
         cursor: pointer;
         padding: 0 $sp3;
         border-radius: var(--rd);
         background-color: rgba(226, 226, 226, 0.2);
+    }
+
+    .metadata_spacer {
+        display: inline-block;
+        height: 1rem;
+
+        &.me {
+            width: 3rem;
+
+            &.edited {
+                width: 7rem;
+            }
+        }
+
+        &:not(.me) {
+            width: 2rem;
+
+            &.edited {
+                width: 6rem;
+            }
+        }
     }
 </style>
