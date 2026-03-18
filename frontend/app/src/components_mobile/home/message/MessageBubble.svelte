@@ -54,7 +54,6 @@
         onOpenUserProfile: (e?: Event) => void;
         focused?: boolean;
         onGoToMessageIndex?: (args: { index: number }) => void;
-        onDoubleClick?: () => void;
     }
 
     let {
@@ -84,7 +83,6 @@
         onOpenUserProfile,
         focused = false,
         onGoToMessageIndex,
-        onDoubleClick,
     }: Props = $props();
 
     let senderContainer = $state<HTMLDivElement>();
@@ -189,8 +187,7 @@
     background={backgroundColour}
     borderWidth={msg.deleted ? "thick" : "zero"}
     {borderRadius}
-    {borderColour}
-    {onDoubleClick}>
+    {borderColour}>
     {#if showHeader}
         <Container
             width="fill"

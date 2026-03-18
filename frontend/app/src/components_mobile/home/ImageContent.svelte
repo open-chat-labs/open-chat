@@ -27,6 +27,7 @@
         blockLevelMarkdown?: boolean;
         showPreviews?: boolean;
         onRemove?: () => void;
+        onRemovePreview?: (url: string) => void;
     }
 
     let {
@@ -40,17 +41,25 @@
         intersecting = true,
         edited,
         blockLevelMarkdown = false,
-        showPreviews = true,
+        // TODO Fix show previews! Currently if a preview is removed, it also removes the attached image!!!
+        // showPreviews = true,
+        onRemovePreview,
     }: Props = $props();
+
+    const MIN_IMG_WIDTH = 150;
 
     let imgElement: HTMLImageElement | undefined = $state();
     let landscape = $derived(content.height < content.width);
     let normalised = $derived(normaliseContent(content));
     let hidden = $state(false);
+    let imageWidth = $state(0);
     let zoomable = $derived(!draft && !reply && !pinned);
     let textContent = $derived<TextContentType | undefined>(
         normalised ? { kind: "text_content", text: normalised.caption ?? "" } : undefined,
     );
+
+    let narrow = $derived(imageWidth > 0 && imageWidth < MIN_IMG_WIDTH && !!textContent?.text);
+    let maxTextContentWidth = $derived(narrow ? 200 : imageWidth);
 
     $effect(() => {
         hidden = $lowBandwidth && !draft;
@@ -92,7 +101,7 @@
     <Column
         supplementalClass={`bubble_image_content ${me ? "me" : ""} ${fill ? "fill" : ""}`}
         maxWidth={"100%"}
-        width={"hug"}>
+        width={narrow ? "fill" : "hug"}>
         {#if hidden}
             <Column
                 height={"fill"}
@@ -106,24 +115,26 @@
                 {/if}
             </Column>
         {/if}
+        <!-- svelte-ignore a11y_interactive_supports_focus -->
         <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-        <img
-            bind:this={imgElement}
-            onclick={focusImage}
-            onerror={onError}
-            class="image"
-            class:me
-            class:landscape
-            class:fill
-            class:draft
-            class:reply
-            class:zoomable={zoomable && !hidden}
-            class:rtl={$rtlStore}
-            style={height === undefined ? undefined : `height: ${height}px`}
-            src={intersecting && !hidden ? normalised.url : normalised.fallback}
-            alt={normalised.caption} />
-
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div class="image_wrapper" class:narrow onclick={focusImage}>
+            <img
+                bind:this={imgElement}
+                bind:clientWidth={imageWidth}
+                onerror={onError}
+                class="image"
+                class:me
+                class:landscape
+                class:fill
+                class:draft
+                class:reply
+                class:zoomable={zoomable && !hidden}
+                class:rtl={$rtlStore}
+                style={height === undefined ? undefined : `height: ${height}px`}
+                src={intersecting && !hidden ? normalised.url : normalised.fallback}
+                alt={normalised.caption} />
+        </div>
         {#if !zoomable}
             <div class="status_icon" class:rtl={$rtlStore}>
                 <EyeOffOutline size={"1.25em"} color={ColourVars.textPrimary} />
@@ -133,7 +144,15 @@
 {/if}
 
 {#if textContent?.text}
-    <TextContent content={textContent} {me} {fill} {blockLevelMarkdown} {edited} {showPreviews} />
+    <TextContent
+        content={textContent}
+        {me}
+        {fill}
+        {blockLevelMarkdown}
+        {edited}
+        maxWidth={maxTextContentWidth}
+        showPreviews={false}
+        {onRemovePreview} />
 {/if}
 
 <style lang="scss">
@@ -150,27 +169,35 @@
                 background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.5));
             }
 
-            .image,
+            .image_wrapper,
             .image_content_mask {
                 border-radius: var(--rad-lg) var(--rad-lg) var(--rad-md) var(--rad-md) !important;
             }
 
             &.me {
-                .image,
+                .image_wrapper,
                 .image_content_mask {
                     border-top-right-radius: var(--rad-sm) !important;
+                }
+
+                .image_wrapper.narrow {
+                    background-color: var(--primary-muted);
                 }
             }
 
             &:not(.me) {
-                .image,
+                .image_wrapper,
                 .image_content_mask {
                     border-top-left-radius: var(--rad-sm) !important;
+                }
+
+                .image_wrapper.narrow {
+                    background-color: var(--background-1);
                 }
             }
 
             &.fill {
-                .image,
+                .image_wrapper,
                 .image_content_mask {
                     border-bottom-left-radius: var(--rad-lg) !important;
                     border-bottom-right-radius: var(--rad-lg) !important;
@@ -180,6 +207,21 @@
     }
 
     $radius: $sp3;
+
+    .image_wrapper {
+        overflow: hidden;
+
+        &.narrow {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: var(--sp-xs);
+
+            .image {
+                border-radius: var(--rad-md);
+            }
+        }
+    }
 
     .close {
         position: absolute;

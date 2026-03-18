@@ -4555,6 +4555,9 @@ export class OpenChat {
         event: EventWrapper<Message>,
         link: string,
     ): Promise<boolean> {
+        // TODO Fix/enable link preview removal from image_content!
+        // Currently, removing links from image captions also removes the image.
+
         if (event.event.content.kind !== "text_content") {
             return Promise.resolve(false);
         }

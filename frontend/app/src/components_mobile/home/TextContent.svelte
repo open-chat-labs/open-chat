@@ -20,6 +20,7 @@
         edited: boolean;
         truncate?: boolean;
         pinned?: boolean;
+        maxWidth?: number;
         onRemovePreview?: (url: string) => void;
     }
 
@@ -32,6 +33,7 @@
         edited,
         truncate = false,
         pinned = false,
+        maxWidth,
         onRemovePreview,
     }: Props = $props();
 
@@ -79,7 +81,11 @@
     {/if}
 {/if}
 
-<Column supplementalClass={`text_content ${truncate ? "truncated" : ""}`} padding={["xs", "sm"]}>
+<Column
+    supplementalClass={`text_content ${truncate ? "truncated" : ""}`}
+    padding={["xs", "sm"]}
+    overflow={"hidden"}
+    maxWidth={maxWidth ? `${maxWidth}px` : "auto"}>
     <div class="message_text">
         <ChatText width={"hug"} maxLines={truncate ? 3 : undefined}>
             <Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} {text} />

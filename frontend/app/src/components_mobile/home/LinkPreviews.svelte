@@ -6,7 +6,6 @@
         type MultiUserChatIdentifier,
         type OpenChat,
     } from "openchat-client";
-    // import { getContext, onMount } from "svelte";
     import { getContext } from "svelte";
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import { rtlStore } from "../../stores/rtl";
@@ -236,8 +235,8 @@
 
 {#each previews as preview (preview.url)}
     <div bind:this={preview.container} class="preview" class:me>
-        {#if me}
-            <div class="remove-wrapper" class:rtl>
+        {#if me && onRemove}
+            <div class="remove_wrapper" class:rtl>
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div class="remove" onclick={() => removePreview(preview)}>
@@ -290,7 +289,7 @@
         overflow: hidden;
         border-radius: var(--rad-sm);
 
-        .remove-wrapper {
+        .remove_wrapper {
             flex: 0;
             top: 0.35rem;
             right: 0.35rem;

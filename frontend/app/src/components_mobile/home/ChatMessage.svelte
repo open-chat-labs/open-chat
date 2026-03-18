@@ -54,7 +54,7 @@
     import MessageBubble from "./message/MessageBubble.svelte";
     import ReminderBuilder from "./ReminderBuilder.svelte";
     import ReportMessage from "./ReportMessage.svelte";
-    import { confirmMessageDeletion, dclickReply } from "@src/stores/settings";
+    import { confirmMessageDeletion } from "@src/stores/settings";
     import AreYouSure from "../AreYouSure.svelte";
     import BotMessageContext from "../bots/BotMessageContext.svelte";
     import Checkbox from "../Checkbox.svelte";
@@ -255,16 +255,6 @@
     function editMessage() {
         if (canEdit) {
             onEditMessage?.();
-        }
-    }
-
-    function doubleClickMessage() {
-        if (failed || msg.deleted || !$dclickReply) return;
-
-        if (me) {
-            editMessage();
-        } else if (confirmed) {
-            reply();
         }
     }
 
@@ -751,7 +741,6 @@
                             {sender}
                             bind:ref={msgBubbleElement}
                             onOpenUserProfile={openUserProfile}
-                            onDoubleClick={doubleClickMessage}
                             {msg}
                             {fill}
                             {first}

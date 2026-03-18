@@ -98,7 +98,8 @@
         {reply}
         {pinned}
         {height}
-        {blockLevelMarkdown} />
+        {blockLevelMarkdown}
+        {onRemovePreview} />
 {:else if content.kind === "video_content"}
     <VideoContent {me} {fill} {edited} {content} {reply} {height} {blockLevelMarkdown} />
 {:else if content.kind === "video_call_content"}

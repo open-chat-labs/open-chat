@@ -59,7 +59,6 @@
 
     $effect(() => {
         if (imageHeight > 0 && imageHeight < window.innerHeight) {
-            console.log("IMG H", imageHeight, window.innerHeight);
             panzoomInstance.setOptions({ panOnlyWhenZoomed: true });
         }
     });
