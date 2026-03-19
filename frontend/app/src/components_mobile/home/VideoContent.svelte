@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { ColourVars, Column, ChatFootnote } from "component-lib";
+    import { ColourVars, ChatFootnote } from "component-lib";
     import { rtlStore } from "../../stores/rtl";
-    import { publish } from "openchat-client";
+    import { publish, type TextContent as TextContentType } from "openchat-client";
     import type { VideoContent } from "openchat-client";
-    import ContentCaption from "./ContentCaption.svelte";
     import { getProxyAdjustedBlobUrl, getVideoDuration } from "../../utils/media";
     import PlayCircleOutline from "svelte-material-icons/PlayCircleOutline.svelte";
     import VideoOutline from "svelte-material-icons/VideoOutline.svelte";
+    import TextContent from "./TextContent.svelte";
 
     interface Props {
         content: VideoContent;
@@ -32,6 +32,11 @@
     let imageUrl = $derived(getProxyAdjustedBlobUrl(content.imageData.blobUrl));
     let videoUrl = $derived(getProxyAdjustedBlobUrl(content.videoData.blobUrl));
     let videoDuration = $state<string>();
+    let videoPosterWidth = $state(0); // TODO Should we expect very narrow videos, below 150px width resized?
+    let textContent = $derived<TextContentType | undefined>(
+        !!content.caption ? { kind: "text_content", text: content.caption ?? "" } : undefined,
+    );
+
     $effect(() => {
         if (videoUrl && videoDuration === undefined) {
             getVideoDuration(videoUrl).then((duration) => {
@@ -58,6 +63,7 @@
 <!-- svelte-ignore a11y_interactive_supports_focus -->
 <div role="button" class="video_content" class:reply class:rtl={$rtlStore} onclick={playVideo}>
     <img
+        bind:clientWidth={videoPosterWidth}
         alt="..."
         class="preview_img"
         class:landscape
@@ -76,10 +82,15 @@
     </div>
 </div>
 
-{#if content.caption}
-    <Column padding={["zero", "sm"]}>
-        <ContentCaption caption={content.caption} {edited} {blockLevelMarkdown} />
-    </Column>
+{#if textContent}
+    <TextContent
+        content={textContent}
+        {me}
+        {fill}
+        {blockLevelMarkdown}
+        {edited}
+        maxWidth={videoPosterWidth}
+        showPreviews={false} />
 {/if}
 
 <style lang="scss">
