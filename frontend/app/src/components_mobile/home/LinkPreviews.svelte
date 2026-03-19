@@ -1,5 +1,4 @@
 <script lang="ts">
-    // import { previewHeightObserver } from "@utils/previewHeightObserver";
     import {
         eventListScrolling,
         offlineStore,
@@ -74,7 +73,9 @@
 
     let { links, intersecting, pinned, fill, me, onRemove }: Props = $props();
 
+    // svelte-ignore state_referenced_locally
     let previousLinks = links;
+    // svelte-ignore state_referenced_locally
     let previews: Preview[] = $state(links.map(buildPreview));
     let shouldRenderPreviews = $state(false);
     let rtl = $rtlStore;
@@ -196,28 +197,6 @@
             onRemove?.(preview.url);
         }
     }
-
-    // onMount(() => {
-    //     const toUnobserve: Element[] = [];
-    //     for (const preview of previews) {
-    //         if (preview.container) {
-    //             previewHeightObserver.observe(preview.container, preview.url);
-    //             toUnobserve.push(preview.container);
-
-    //             const height = previewHeightObserver.getHeight(preview.url);
-    //             if (height) {
-    //                 preview.container.style.setProperty("min-height", `${height}px`);
-    //             }
-    //             if (preview.kind === "generic") {
-    //                 // If we have a recorded height for this preview then display the container immediately, else hide it
-    //                 // until we have fetched the preview (if any)
-    //                 const display = height ? "flex" : "none";
-    //                 preview.container.style.setProperty("display", display);
-    //             }
-    //         }
-    //     }
-    //     return () => toUnobserve.forEach((e) => previewHeightObserver.unobserve(e));
-    // });
 
     $effect(() => {
         if (intersecting && !$eventListScrolling && !shouldRenderPreviews && !$offlineStore) {

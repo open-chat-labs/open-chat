@@ -111,7 +111,7 @@
         height: 1rem;
 
         &.me {
-            width: 3rem;
+            width: 3.5rem;
 
             &.edited {
                 width: 7rem;
@@ -119,7 +119,7 @@
         }
 
         &:not(.me) {
-            width: 2rem;
+            width: 2.5rem;
 
             &.edited {
                 width: 6rem;

@@ -92,7 +92,7 @@
             </div>
         </div>
 
-        <div class="close">
+        <div class="close" class:rtl={$rtlStore}>
             <IconButton size="sm" mode={"dark"} onclick={onRemove}>
                 {#snippet icon()}
                     <Close color={ColourVars.textPrimary} />
@@ -150,7 +150,14 @@
     .close {
         position: absolute;
         top: var(--sp-xs);
-        right: var(--sp-xs);
+
+        &:not(.rtl) {
+            right: var(--sp-xs);
+        }
+
+        &.rtl {
+            left: var(--sp-xs);
+        }
     }
 
     @keyframes grow-height {

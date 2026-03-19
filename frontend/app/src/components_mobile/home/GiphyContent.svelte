@@ -1,139 +1,150 @@
 <script lang="ts">
-    import {
-        BodySmall,
-        Button,
-        ColourVars,
-        Column,
-        IconButton,
-        Row,
-        Subtitle,
-    } from "component-lib";
-    import { type GiphyContent } from "openchat-client";
-    import Close from "svelte-material-icons/Close.svelte";
+    import { Button, ColourVars, Column } from "component-lib";
+    import { type GiphyContent, type TextContent as TextContentType } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
     import { lowBandwidth } from "../../stores/settings";
     import Translatable from "../Translatable.svelte";
-    import ContentCaption from "./ContentCaption.svelte";
+    import TextContent from "./TextContent.svelte";
+    import FileGifBox from "svelte-material-icons/FileGifBox.svelte";
 
     interface Props {
         content: GiphyContent;
+        me: boolean;
         fill: boolean;
-        draft?: boolean;
         reply?: boolean;
         height?: number | undefined;
         intersecting?: boolean;
         edited: boolean;
         blockLevelMarkdown?: boolean;
-        onRemove?: () => void;
     }
 
     let {
         content,
+        me,
         fill,
-        draft = false,
         reply = false,
-        height = undefined,
+        // height = undefined,
         intersecting = true,
         edited,
         blockLevelMarkdown = false,
-        onRemove,
     }: Props = $props();
 
-    let withCaption = $derived(content.caption !== undefined && content.caption !== "");
+    const MIN_GIF_WIDTH = 150;
+
+    let withCaption = $derived(!!content.caption);
     let image = $derived(content.mobile);
     let landscape = $derived(image.height < image.width);
-    let style = $derived(
-        `${height === undefined ? "" : `height: ${height}px;`} max-width: ${image.width}px;`,
+    let videoWidth = $derived(image.width < MIN_GIF_WIDTH ? MIN_GIF_WIDTH : image.width);
+    let textContent = $derived<TextContentType | undefined>(
+        withCaption ? { kind: "text_content", text: content.caption ?? "" } : undefined,
     );
-
     let hidden = $derived($lowBandwidth);
+    let style = $derived(`max-width: ${videoWidth}px`);
 </script>
 
-{#if draft}
-    <Row
-        gap={"lg"}
-        crossAxisAlignment={"center"}
-        padding={["sm", "lg", "sm", "sm"]}
-        borderRadius={"lg"}
-        background={ColourVars.background1}>
-        <img class={"thumb"} src={content.mobile.url} alt={content.caption ?? content.title} />
-        <Column>
-            <Subtitle ellipsisTruncate fontWeight={"bold"}>
-                {content.title}
-            </Subtitle>
-            <BodySmall colour={"textSecondary"}>
-                <Translatable resourceKey={i18nKey("Sharing a GIF")} />
-            </BodySmall>
+<div class="gif_content_wrapper" class:me class:fill class:rtl={$rtlStore}>
+    {#if !intersecting}
+        <div
+            class="placeholder"
+            class:landscape
+            class:fill
+            class:withCaption
+            title={content.caption ?? content.title}
+            class:reply
+            class:rtl={$rtlStore}>
+        </div>
+    {:else if hidden}
+        <Column
+            height={"fill"}
+            padding={"xl"}
+            supplementalClass={"image_content_mask"}
+            mainAxisAlignment={"center"}
+            crossAxisAlignment={"center"}>
+            {#if !reply}
+                <Button height={"hug"} width={"fill"} onClick={() => (hidden = false)}
+                    ><Translatable resourceKey={i18nKey("loadGif")} /></Button>
+            {/if}
         </Column>
-        <IconButton onclick={onRemove}>
-            {#snippet icon()}
-                <Close color={ColourVars.textSecondary} />
-            {/snippet}
-        </IconButton>
-    </Row>
-{:else}
-    <div class="img-wrapper">
-        {#if !intersecting}
-            <div
-                class="placeholder"
-                class:landscape
-                class:fill
-                class:withCaption
-                {style}
-                class:draft
-                title={content.caption ?? content.title}
-                class:reply
-                class:rtl={$rtlStore}>
-            </div>
-        {:else if hidden}
-            <Column
-                height={"fill"}
-                padding={"xl"}
-                supplementalClass={"image_content_mask"}
-                mainAxisAlignment={"center"}
-                crossAxisAlignment={"center"}>
-                {#if !reply && !draft}
-                    <Button height={"hug"} width={"fill"} onClick={() => (hidden = false)}
-                        ><Translatable resourceKey={i18nKey("loadGif")} /></Button>
-                {/if}
-            </Column>
-            <img
-                class:landscape
-                class:fill
-                class:withCaption
-                class:draft
-                class:reply
-                class:rtl={$rtlStore}
-                {style}
-                src={content.mobile.url}
-                alt={content.caption ?? content.title} />
-        {:else}
-            <video
-                autoplay
-                muted
-                loop
-                playsinline
-                class:landscape
-                class:fill
-                class:withCaption
-                class:draft
-                class:reply
-                class:rtl={$rtlStore}
-                title={content.caption ?? content.title}
-                {style}>
-                <track kind="captions" />
-                <source src={content.desktop.url} type="video/mp4" />
-            </video>
-        {/if}
-    </div>
+        <img
+            class:landscape
+            class:fill
+            class:withCaption
+            class:reply
+            class:rtl={$rtlStore}
+            {style}
+            src={content.mobile.url}
+            alt={content.caption ?? content.title} />
+    {:else}
+        <video
+            autoplay
+            muted
+            loop
+            playsinline
+            bind:clientWidth={videoWidth}
+            class:landscape
+            class:fill
+            class:withCaption
+            class:reply
+            class:rtl={$rtlStore}
+            {style}
+            title={content.caption ?? content.title}>
+            <track kind="captions" />
+            <source src={content.desktop.url} type="video/mp4" />
+        </video>
+    {/if}
+    <FileGifBox size="1.25rem" color={ColourVars.textPrimary} />
+</div>
 
-    <ContentCaption caption={content.caption} {edited} {blockLevelMarkdown} />
+{#if textContent?.text}
+    <TextContent
+        content={textContent}
+        {me}
+        {fill}
+        {blockLevelMarkdown}
+        {edited}
+        maxWidth={videoWidth}
+        showPreviews={false} />
 {/if}
 
 <style lang="scss">
-    .img-wrapper {
+    :global {
+        .gif_content_wrapper svg {
+            opacity: 0.75;
+            position: absolute;
+            bottom: var(--sp-xxs);
+            filter: drop-shadow(0 0 0.125rem var(--backdrop));
+        }
+
+        .gif_content_wrapper:not(.rtl) svg {
+            left: var(--sp-xs);
+        }
+
+        .gif_content_wrapper.rtl svg {
+            right: var(--sp-xs);
+        }
+    }
+
+    .gif_content_wrapper {
         position: relative;
+        overflow: hidden;
+
+        // Border radiuses logic is same for image, gif, video and other media content!
+        // TODO reuse the border radius logic, maybe a mixin?
+        border-radius: var(--rad-lg) var(--rad-lg) var(--rad-md) var(--rad-md);
+
+        &.me {
+            border-top-right-radius: var(--rad-sm);
+        }
+
+        &:not(.me) {
+            border-top-left-radius: var(--rad-sm);
+        }
+
+        &.fill {
+            border-bottom-left-radius: var(--rad-lg);
+            border-bottom-right-radius: var(--rad-lg);
+        }
     }
 
     .mask {
@@ -160,32 +171,6 @@
         width: 100%;
         display: block;
 
-        &:not(.landscape) {
-            min-height: 90px;
-            min-width: 0px;
-        }
-
-        &:not(.fill) {
-            border-radius: $sp4;
-        }
-
-        &.withCaption {
-            margin-bottom: $sp2;
-        }
-
-        &.draft {
-            max-width: calc(var(--vh, 1vh) * 50);
-            max-height: none;
-            height: auto;
-        }
-
-        &:not(.landscape).draft {
-            max-width: none;
-            max-height: calc(var(--vh, 1vh) * 50);
-            width: auto;
-            height: 100%;
-        }
-
         &.reply {
             max-width: 90px;
             max-height: none;
@@ -206,14 +191,5 @@
             max-height: 90px;
             width: auto;
         }
-    }
-
-    .thumb {
-        width: 5rem;
-        height: 5rem;
-        min-height: 5rem !important;
-        flex: 0 0 5rem;
-        aspect-ratio: 1 / 1;
-        object-fit: cover;
     }
 </style>
