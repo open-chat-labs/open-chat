@@ -21,6 +21,7 @@
 
     let intersecting = $state(false);
     let container: HTMLElement;
+    let pending = false;
 
     onMount(() => {
         if (typeof IntersectionObserver !== "undefined") {
@@ -29,12 +30,24 @@
             const observer = new IntersectionObserver(
                 (entries) => {
                     entries.sort((a, b) => b.time - a.time);
-                    intersecting = entries[0].isIntersecting;
-                    if (intersecting) {
-                        onIntersecting?.();
-                        if (unobserveOnIntersect) {
-                            observer.unobserve(container);
-                        }
+                    const entry = entries[0];
+
+                    intersecting = entry.isIntersecting;
+
+                    if (intersecting && !pending) {
+                        pending = true;
+
+                        requestAnimationFrame(() => {
+                            onIntersecting?.();
+
+                            if (unobserveOnIntersect) {
+                                observer.unobserve(container);
+                            }
+
+                            setTimeout(() => {
+                                pending = false;
+                            }, 80);
+                        });
                     }
                 },
                 {
@@ -46,7 +59,6 @@
                     threshold: 0,
                 },
             );
-
             observer.observe(container);
             return () => {
                 if (container) {

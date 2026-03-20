@@ -141,8 +141,9 @@ export const keyboard = {
         currentHeight = value;
 
         // Update height if current height of the keyboard changes. Might happen
-        // if user modified/changed the soft keyboard in any way.
-        if (value > 0 && value > height) {
+        // if user modified/changed the soft keyboard in any way, or a different
+        // type of keyboard was opened, i.e. numbers only
+        if (value > 0) {
             height = value;
             localStorage.setItem(STORAGE_KEY, height.toString());
         }

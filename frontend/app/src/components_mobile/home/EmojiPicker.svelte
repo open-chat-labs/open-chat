@@ -19,12 +19,19 @@
 
     interface Props {
         mode?: "message" | "reaction" | "thread";
+        searchInputPadding?: boolean;
         onEmojiSelected: (emoji: SelectedEmoji) => void;
         onSkintoneChanged?: (tone: SkinTone) => void;
         customEmojis?: Map<string, CustomEmoji>;
     }
 
-    let { mode = "message", onEmojiSelected, onSkintoneChanged, customEmojis }: Props = $props();
+    let {
+        mode = "message",
+        searchInputPadding = false,
+        onEmojiSelected,
+        onSkintoneChanged,
+        customEmojis,
+    }: Props = $props();
     let showPayGate = $state<CustomEmoji>();
 
     function lockedCategoryCss(groupId: number, price: number) {
@@ -67,7 +74,9 @@
 
         // Custom CSS rules...
         rules.push(".indicator { transition: none; }");
-        rules.push(".search-row { padding-left: 6rem; }");
+        if (searchInputPadding) {
+            rules.push(".search-row { padding-left: 6rem; }");
+        }
         rules.push(
             "#skintone-list { background-color: var(--background-2); border-radius: var(--rad-circle); box-shadow: var(--menu-sh); }",
         );

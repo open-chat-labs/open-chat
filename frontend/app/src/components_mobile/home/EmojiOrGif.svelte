@@ -78,6 +78,7 @@
     </div> -->
     {#if selected === "emoji"}
         <EmojiPicker
+            searchInputPadding={true}
             {onEmojiSelected}
             onSkintoneChanged={(tone) => quickReactions.reload(tone)}
             supportCustom={false}

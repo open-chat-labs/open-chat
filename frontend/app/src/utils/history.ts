@@ -12,3 +12,8 @@ export function popHistoryStateWithAction(action: string) {
         history.back();
     }
 }
+
+export default {
+    pushDummyHistoryState,
+    popHistoryStateWithAction,
+};
