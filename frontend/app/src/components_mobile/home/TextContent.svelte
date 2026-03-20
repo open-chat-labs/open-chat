@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ChatText, Column } from "component-lib";
+    import { ChatText, ChatCaption, Column } from "component-lib";
     import type { OpenChat, TextContent } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -21,6 +21,8 @@
         truncate?: boolean;
         pinned?: boolean;
         maxWidth?: number;
+        // Indicates if the text content is rendered in context of a preview
+        isPreview?: boolean;
         onRemovePreview?: (url: string) => void;
     }
 
@@ -34,6 +36,7 @@
         truncate = false,
         pinned = false,
         maxWidth,
+        isPreview = false,
         onRemovePreview,
     }: Props = $props();
 
@@ -87,10 +90,19 @@
     overflow={"hidden"}
     maxWidth={maxWidth ? `${maxWidth}px` : "auto"}>
     <div class="message_text">
-        <ChatText width={"hug"} maxLines={truncate ? 3 : undefined}>
-            <Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} {text} />
-        </ChatText>
-        <span class="metadata_spacer" class:me class:edited></span>
+        {#if isPreview}
+            <ChatCaption
+                width={"hug"}
+                maxLines={truncate ? 3 : undefined}
+                colour={me ? "secondaryLight" : "primaryLight"}>
+                <Markdown inline={!blockLevelMarkdown} suppressLinks={true} {text} />
+            </ChatCaption>
+        {:else}
+            <ChatText width={"hug"} maxLines={truncate ? 3 : undefined}>
+                <Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} {text} />
+            </ChatText>
+            <span class="metadata_spacer" class:me class:edited></span>
+        {/if}
     </div>
 </Column>
 

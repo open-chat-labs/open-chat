@@ -3,6 +3,7 @@
     import { Avatar, Body } from "component-lib";
     import {
         allUsersStore,
+        currentUserIdStore,
         eventListScrolling,
         isSuccessfulEventsResponse,
         OpenChat,
@@ -40,6 +41,7 @@
 
     let previewPromise: Promise<Preview | undefined> | undefined = $state();
     let rendered = $state(false);
+    let senderIsMe = $state(false);
 
     async function loadPreview(): Promise<Preview | undefined> {
         let result = await client.getMessagesByMessageIndex(chatId, threadRootMessageIndex, [
@@ -52,12 +54,14 @@
 
         let message = result.events[0].event;
 
+        senderIsMe = message.sender === $currentUserIdStore;
+
         return {
             content: message.content,
             senderId: message.sender,
             messageId: message.messageId,
             edited: message.edited,
-            displayName: me
+            displayName: senderIsMe
                 ? client.toTitleCase($_("you"))
                 : client.getDisplayName(
                       message.sender,
@@ -85,7 +89,7 @@
             <a class="preview_link" href={url}>
                 <div
                     class="wrapper"
-                    class:me
+                    class:me={senderIsMe}
                     class:p2pSwap={preview.content.kind === "p2p_swap_content"}>
                     <div class="title">
                         <Avatar
@@ -98,7 +102,7 @@
                     <div class="inert">
                         <ChatMessageContent
                             showPreviews
-                            {me}
+                            me={senderIsMe}
                             readonly
                             messageContext={{
                                 chatId,
@@ -113,7 +117,8 @@
                             failed={false}
                             blockLevelMarkdown
                             truncate={true}
-                            reply
+                            reply={false}
+                            isPreview={true}
                             content={preview.content} />
                     </div>
                 </div>
@@ -127,17 +132,20 @@
         width: 100%;
     }
     .wrapper {
-        overflow: hidden;
-        max-height: 300px;
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-xs);
         width: 100%;
-        padding: var(--sp-md) var(--sp-xs);
+        overflow: hidden;
+        padding: var(--sp-sm) var(--sp-xs) var(--sp-xs);
 
         &.me {
-            background-color: var(--primary-muted);
+            // TODO bgs are same as for replies, reduce duplication
+            background-color: var(--background-2);
         }
 
         &:not(.me) {
-            background-color: var(--background-1);
+            background-color: var(--primary-muted);
         }
 
         .inert {

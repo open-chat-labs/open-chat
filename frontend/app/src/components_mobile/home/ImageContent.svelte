@@ -26,6 +26,7 @@
         edited: boolean;
         blockLevelMarkdown?: boolean;
         showPreviews?: boolean;
+        isPreview?: boolean;
         onRemove?: () => void;
         onRemovePreview?: (url: string) => void;
     }
@@ -43,6 +44,7 @@
         blockLevelMarkdown = false,
         // TODO Fix show previews! Currently if a preview is removed, it also removes the attached image!!!
         // showPreviews = true,
+        isPreview = false,
         onRemovePreview,
     }: Props = $props();
 
@@ -152,6 +154,7 @@
         {edited}
         maxWidth={maxTextContentWidth}
         showPreviews={false}
+        {isPreview}
         {onRemovePreview} />
 {/if}
 

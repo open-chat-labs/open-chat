@@ -45,6 +45,7 @@
         timestamp?: bigint | undefined;
         blockLevelMarkdown: boolean;
         showPreviews: boolean;
+        isPreview?: boolean;
         onExpandMessage?: (() => void) | undefined;
         onRemovePreview?: (url: string) => void;
         onRegisterVote?: (vote: { type: "delete" | "register"; answerIndex: number }) => void;
@@ -71,6 +72,7 @@
         timestamp = undefined,
         blockLevelMarkdown,
         showPreviews = true,
+        isPreview = false,
         onExpandMessage = undefined,
         onRemovePreview,
         onRegisterVote,
@@ -87,6 +89,7 @@
         {content}
         {blockLevelMarkdown}
         {showPreviews}
+        {isPreview}
         {onRemovePreview} />
 {:else if content.kind === "image_content"}
     <ImageContent
@@ -99,6 +102,7 @@
         {pinned}
         {height}
         {blockLevelMarkdown}
+        {isPreview}
         {onRemovePreview} />
 {:else if content.kind === "video_content"}
     <VideoContent {me} {fill} {edited} {content} {reply} {height} {blockLevelMarkdown} />
@@ -141,7 +145,8 @@
         {content}
         {reply}
         {height}
-        {blockLevelMarkdown} />
+        {blockLevelMarkdown}
+        {isPreview} />
 {:else if content.kind === "proposal_content"}
     <ProposalContent
         {content}
@@ -159,7 +164,16 @@
 {:else if content.kind === "reported_message_content"}
     <ReportedMessageContent {content} />
 {:else if content.kind === "meme_fighter_content"}
-    <ImageContent {me} {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
+    <ImageContent
+        {me}
+        {edited}
+        {intersecting}
+        {fill}
+        {content}
+        {reply}
+        {pinned}
+        {height}
+        {isPreview} />
 {:else if content.kind === "user_referral_card"}
     <UserReferralCardContent />
 {/if}

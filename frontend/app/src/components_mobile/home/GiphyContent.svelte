@@ -17,6 +17,7 @@
         intersecting?: boolean;
         edited: boolean;
         blockLevelMarkdown?: boolean;
+        isPreview?: boolean;
     }
 
     let {
@@ -28,6 +29,7 @@
         intersecting = true,
         edited,
         blockLevelMarkdown = false,
+        isPreview = false,
     }: Props = $props();
 
     const MIN_GIF_WIDTH = 200;
@@ -104,7 +106,8 @@
         {blockLevelMarkdown}
         {edited}
         maxWidth={videoWidth}
-        showPreviews={false} />
+        showPreviews={false}
+        {isPreview} />
 {/if}
 
 <style lang="scss">

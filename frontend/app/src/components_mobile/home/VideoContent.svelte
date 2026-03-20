@@ -16,6 +16,7 @@
         height?: number | undefined;
         edited: boolean;
         blockLevelMarkdown?: boolean;
+        isPreview?: boolean;
     }
 
     let {
@@ -26,6 +27,7 @@
         height = undefined,
         edited,
         blockLevelMarkdown = false,
+        isPreview = false,
     }: Props = $props();
 
     let landscape = $derived(content.height < content.width);
@@ -90,7 +92,8 @@
         {blockLevelMarkdown}
         {edited}
         maxWidth={videoPosterWidth}
-        showPreviews={false} />
+        showPreviews={false}
+        {isPreview} />
 {/if}
 
 <style lang="scss">
