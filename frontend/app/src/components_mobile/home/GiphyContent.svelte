@@ -30,7 +30,7 @@
         blockLevelMarkdown = false,
     }: Props = $props();
 
-    const MIN_GIF_WIDTH = 150;
+    const MIN_GIF_WIDTH = 200;
 
     let withCaption = $derived(!!content.caption);
     let image = $derived(content.mobile);

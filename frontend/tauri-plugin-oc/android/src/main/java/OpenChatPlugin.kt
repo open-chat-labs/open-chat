@@ -9,8 +9,8 @@ import android.webkit.WebView
 import app.tauri.annotation.Command
 import app.tauri.annotation.TauriPlugin
 import app.tauri.plugin.Invoke
-import app.tauri.plugin.JSObject
 import app.tauri.plugin.JSArray
+import app.tauri.plugin.JSObject
 import app.tauri.plugin.Plugin
 import com.google.firebase.messaging.FirebaseMessaging
 import com.ocplugin.app.commands.*
@@ -91,7 +91,7 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
             // Save the intent reference, so that we can use it once we get a response from the
             // permission request within the Main activity. At that point we call the
             // OCPluginCompanion.resolvePermissionsGranted function.
-            OCPluginCompanion.pendingMediaInvoke = invoke;
+            OCPluginCompanion.pendingMediaInvoke = invoke
             media.askForPermission()
         }
     }
@@ -113,7 +113,7 @@ object OCPluginCompanion {
     var svelteReady: Boolean = false
 
     // Allows the viewport to resize when keyboard pops up
-    var viewportResizeEnabled: Boolean = true;
+    var viewportResizeEnabled: Boolean = true
 
     // FCM token cache!
     //
@@ -189,18 +189,19 @@ object OCPluginCompanion {
 
     fun getNotificationsManager(context: Context): NotificationManager {
         if (notificationsManager == null) {
-            notificationsManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationsManager =
+                    context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         }
 
         return notificationsManager!!
     }
 
     // Invoke for media permission request
-    var pendingMediaInvoke: Invoke? = null;
+    var pendingMediaInvoke: Invoke? = null
 
     // This function is called from MainActivity, and handles results of any permission requests.
     // Each permission request has a unique request code.
-    fun resolvePermissionsGranted(activity: Activity, requestCode: Int,grantResults: IntArray) {
+    fun resolvePermissionsGranted(activity: Activity, requestCode: Int, grantResults: IntArray) {
         when (requestCode) {
             PERM_CODE_GALLERY -> {
                 if (pendingMediaInvoke != null) {
@@ -210,7 +211,9 @@ object OCPluginCompanion {
                         Log.d(LOG_TAG, "@@@ WARNING: Media permission denied!")
 
                         // Basically tell the UI that the permission was denied!
-                        pendingMediaInvoke!!.resolve(JSObject().put("permission", "denied").put("media", JSArray()))
+                        pendingMediaInvoke!!.resolve(
+                                JSObject().put("permission", "denied").put("media", JSArray())
+                        )
                     }
                 } else {
                     Log.d(LOG_TAG, "@@@ ERROR: Media invoke not available!")

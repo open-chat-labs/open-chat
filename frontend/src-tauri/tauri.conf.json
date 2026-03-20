@@ -10,12 +10,7 @@
         "beforeBuildCommand": "echo 'BUILDING ANDROID APK' && npm run android:release"
     },
     "app": {
-        "windows": [
-            {
-                "title": "OpenChat",
-                "url": "/"
-            }
-        ],
+        "windows": [],
         "security": {
             "csp": null,
             "assetProtocol": {

@@ -111,18 +111,18 @@
         height: 1rem;
 
         &.me {
-            width: 3.5rem;
+            width: 3.25rem;
 
             &.edited {
-                width: 7rem;
+                width: 6.5rem;
             }
         }
 
         &:not(.me) {
-            width: 2.5rem;
+            width: 2.25rem;
 
             &.edited {
-                width: 6rem;
+                width: 5.5rem;
             }
         }
     }
