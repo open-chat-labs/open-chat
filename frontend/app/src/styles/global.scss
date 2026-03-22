@@ -446,14 +446,12 @@ a {
 
 html,
 body {
-    // Prevent pinch-zooming on Android devices
-    // Note: tested meta viewport `user-scalable=no`, but seems like Tauri
-    // webview does not respect it
     height: 100%;
-    touch-action: pan-x pan-y;
 }
 
 body.native-android {
+    // Prevent pinch-zooming - Tauri webview does not respect `user-scalable=no`
+    touch-action: pan-x pan-y;
     // Set the status bar height via CSS to avoid issues with bg colour not
     // matching the headers bg.
     &:not(.onboarding) > main,
