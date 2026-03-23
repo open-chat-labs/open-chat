@@ -37,6 +37,9 @@
                     if (intersecting && !pending) {
                         pending = true;
 
+                        // Use rAF to try an push the observer callback to be
+                        // called before the next render frame, then prevent the
+                        // callback from being called again for the next 80ms.
                         requestAnimationFrame(() => {
                             onIntersecting?.();
 

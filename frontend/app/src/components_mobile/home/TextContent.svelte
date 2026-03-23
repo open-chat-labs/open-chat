@@ -67,6 +67,7 @@
         <!-- on low bandwith, observer will trigger once the element is in veiw
              otherwise it will detect intersection at set margin -->
         <IntersectionObserver
+            unobserveOnIntersect={false}
             rootMarginTop={$lowBandwidth ? 0 : 1000}
             rootMarginBottom={$lowBandwidth ? 0 : 1000}
             contextId="scrollable-messages-div">
