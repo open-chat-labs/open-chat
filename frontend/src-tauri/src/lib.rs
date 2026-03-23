@@ -7,9 +7,9 @@ mod navigation;
 pub fn run() {
     #[allow(unused_mut)]
     let mut builder = tauri::Builder::default();
-    
+
     // #[cfg(mobile)] {
-        builder = builder.setup(|app: &mut App| setup_app(app));
+    builder = builder.setup(|app: &mut App| setup_app(app));
     // }
 
     builder
@@ -30,19 +30,15 @@ mod mobile_features {
     // Handles app window setup and navigation interception!
     pub fn setup_app(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         let app_handle = app.handle().clone();
-    
+
         // Init window builder
         // TODO can we recover here if build fails?
-        WebviewWindowBuilder::new(
-            app,
-            MAIN_WINDOW_LABEL,
-            WebviewUrl::App("index.html".into()),
-        )
-        .on_navigation(move |url: &Url|
-            crate::navigation::mobile_on_navigation_handler(&app_handle, url)
-        )
-        .build()?;
-    
+        WebviewWindowBuilder::new(app, MAIN_WINDOW_LABEL, WebviewUrl::App("index.html".into()))
+            .on_navigation(move |url: &Url| {
+                crate::navigation::mobile_on_navigation_handler(&app_handle, url)
+            })
+            .build()?;
+
         Ok(())
     }
 }

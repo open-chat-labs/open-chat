@@ -1,5 +1,5 @@
-use tauri::{AppHandle, Url};
 use tauri::async_runtime;
+use tauri::{AppHandle, Url};
 use tauri_plugin_oc::{OcExt, OpenUrlRequest};
 
 // TODO rewrite remote oc.app urls for nav locally!
@@ -31,7 +31,6 @@ pub fn mobile_on_navigation_handler(app_handle: &AppHandle, url: &Url) -> bool {
     // URL is allowed and we continue navigation!
     false
 }
-
 
 // Check URL
 //

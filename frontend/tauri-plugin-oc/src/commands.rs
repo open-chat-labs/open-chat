@@ -64,7 +64,10 @@ pub(crate) async fn restart_app<R: Runtime>(app: AppHandle<R>) {
 }
 
 #[command]
-pub(crate) async fn load_recent_media<R: Runtime>(app: AppHandle<R>, payload: LoadRecentMediaRequest) -> Result<LoadRecentMediaResponse> {
+pub(crate) async fn load_recent_media<R: Runtime>(
+    app: AppHandle<R>,
+    payload: LoadRecentMediaRequest,
+) -> Result<LoadRecentMediaResponse> {
     app.oc().load_recent_media(payload)
 }
 

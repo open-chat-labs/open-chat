@@ -2025,7 +2025,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "117725a109d387c937a1533ce01b450cbde6b88abceea8473c4d7a85853cda3c"
 dependencies = [
  "lazy_static",
- "windows-sys 0.59.0",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
@@ -5462,9 +5462,9 @@ dependencies = [
 
 [[package]]
 name = "icrc-ledger-types"
-version = "0.1.13"
+version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "263acc94fa47008ad00f76b8d3694efe7f8361870c9ec92cddcc588b571518b7"
+checksum = "87c31beeee0e5ab964861a3d5ea2b5ed7b688b2b22400367a832b1fcf0db1fa4"
 dependencies = [
  "base32",
  "candid",
@@ -5472,6 +5472,7 @@ dependencies = [
  "hex",
  "ic-stable-structures 0.6.9",
  "icrc-cbor",
+ "itertools 0.12.1",
  "minicbor",
  "num-bigint",
  "num-traits",
@@ -10385,6 +10386,7 @@ dependencies = [
  "cfg-if",
  "libc",
  "psm",
+ "windows-sys 0.52.0",
  "windows-sys 0.59.0",
 ]
 

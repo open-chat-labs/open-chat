@@ -13,8 +13,8 @@ let viewportResizeEnabled = $state(true);
 
 // Guess the soft keyboard height based on the 38% rule. This is only required
 // when we've not "seen" the keyboard yet.
-let estHeight = Math.min(Math.max(window.innerHeight * 0.38, 260), 380);
-let storedHeight = localStorage.getItem(STORAGE_KEY);
+const estHeight = Math.min(Math.max(window.innerHeight * 0.38, 260), 380);
+const storedHeight = localStorage.getItem(STORAGE_KEY);
 
 let height = $state(storedHeight ? parseInt(storedHeight, 10) : estHeight);
 
