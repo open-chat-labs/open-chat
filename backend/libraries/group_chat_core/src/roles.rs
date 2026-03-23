@@ -98,11 +98,8 @@ impl GroupRoleInternal {
     }
 
     pub fn can_send_message(&self, message_type: MessageContentType, is_thread: bool, permissions: &GroupPermissions) -> bool {
-        let ps = if is_thread && permissions.thread_permissions.is_some() {
-            permissions
-                .thread_permissions
-                .as_ref()
-                .unwrap_or(&permissions.message_permissions)
+        let ps = if is_thread && let Some(thread_permissions) = permissions.thread_permissions.as_ref() {
+            thread_permissions
         } else {
             &permissions.message_permissions
         };
