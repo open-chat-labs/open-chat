@@ -29,6 +29,7 @@
     supplementalClass={`badges ${size === "large" ? "large" : ""}`}
     crossAxisAlignment={"center"}
     gap={"xs"}
+    width={"hug"}
     padding={["xxs", "zero"]}>
     <Diamond {size} status={diamondStatus} />
     <Verified {size} verified={uniquePerson} />

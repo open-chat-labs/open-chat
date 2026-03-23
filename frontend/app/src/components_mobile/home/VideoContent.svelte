@@ -103,6 +103,7 @@
 
         .preview_img {
             width: 100%;
+            background-color: black;
             border-radius: var(--rad-lg) var(--rad-lg) var(--rad-md) var(--rad-md);
 
             &.me {

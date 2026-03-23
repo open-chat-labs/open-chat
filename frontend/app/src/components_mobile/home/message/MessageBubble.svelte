@@ -1,5 +1,12 @@
 <script lang="ts">
-    import { Body, ColourVars, Container, type BorderRadiusSize, type Radius } from "component-lib";
+    import {
+        Body,
+        ColourVars,
+        Container,
+        type SizeMode,
+        type BorderRadiusSize,
+        type Radius,
+    } from "component-lib";
     import {
         chatIdentifiersEqual,
         chatListScopeStore,
@@ -85,7 +92,6 @@
         onGoToMessageIndex,
     }: Props = $props();
 
-    let senderContainer = $state<HTMLDivElement>();
     let multiUserChat = $derived(chatType === "group_chat" || chatType === "channel");
     let streak = $derived(sender?.streak ?? 0);
     let chitEarned = $derived(sender?.totalChitEarned ?? 0);
@@ -124,13 +130,16 @@
             return ["sm", "xl", "xl", hasThread || !last ? "sm" : "xl"];
         }
     });
-    let senderWidth = $derived.by(() => {
-        if (senderContainer) {
-            return `${senderContainer.offsetWidth}px`;
-        } else {
-            return "auto";
-        }
-    });
+
+    let senderContainer = $state<HTMLDivElement>();
+    let senderWidth = $derived(senderContainer?.offsetWidth ?? 0);
+    let contentWidth = $state(0);
+    let mediaContent = $derived(
+        ["image_content", "video_content", "giphy_content"].indexOf(msg.content.kind) > -1,
+    );
+    let headerWidth = $derived<SizeMode>(
+        mediaContent && contentWidth < senderWidth ? { size: `${contentWidth}px` } : "fill",
+    );
 
     // Show only for deleted messages!
     let borderColour = $derived.by(() => {
@@ -178,11 +187,10 @@
 <Container
     bind:ref
     supplementalClass={classList}
-    gap={"xs"}
+    gap={"xxs"}
     width={"fill"}
     padding={"xs"}
     overflow={"auto"}
-    minWidth={senderWidth}
     direction={"vertical"}
     background={backgroundColour}
     borderWidth={msg.deleted ? "thick" : "zero"}
@@ -190,18 +198,17 @@
     {borderColour}>
     {#if showHeader}
         <Container
-            width="fill"
             bind:ref={senderContainer}
+            width={headerWidth}
             padding={["zero", "sm"]}
             borderRadius={fill
                 ? [borderRadius[0] as BorderRadiusSize, "zero", "lg", "zero"]
                 : "zero"}
-            background={fill ? "rgba(0,0,0,0.3)" : undefined}
             supplementalClass={`message_sender ${fill ? "fill" : ""}`}
             crossAxisAlignment={"center"}
             gap={"xs"}
             onClick={onOpenUserProfile}>
-            <Body fontWeight={"bold"} width={"hug"} colour="textSecondary">
+            <Body fontWeight={"bold"} maxLines={1} colour={"textSecondary"}>
                 {senderDisplayName}
             </Body>
             <Badges
@@ -247,7 +254,9 @@
             {/if}
         </Container>
     {/if}
-    {@render messageContent?.(me)}
+    <div class="message_bubble_content" bind:clientWidth={contentWidth}>
+        {@render messageContent?.(me)}
+    </div>
     {#if !msg.deleted}
         <MessageMetadata
             {failed}
@@ -269,11 +278,17 @@
 
 <style lang="scss">
     :global {
-        .container.message_sender.fill {
-            position: absolute;
-            color: #fff;
-            z-index: 1;
-            width: max-content !important;
+        .container.message_sender {
+            .typo.body {
+                flex: initial !important;
+            }
+
+            .fill {
+                z-index: 1;
+                position: absolute;
+                color: var(--text-primary);
+                text-shadow: 0 0 0.125rem var(--backdrop);
+            }
         }
 
         .container.message_bubble {

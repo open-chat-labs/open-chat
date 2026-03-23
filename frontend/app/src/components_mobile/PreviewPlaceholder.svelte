@@ -50,7 +50,7 @@
 
 <style lang="scss">
     .generic-preview.placeholder {
-        width: 78vw; // Max width of the message bubble
+        width: 100%;
 
         &.me {
             background-color: var(--primary-muted);

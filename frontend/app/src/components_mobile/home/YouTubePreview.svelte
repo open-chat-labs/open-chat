@@ -31,7 +31,7 @@
 
 <style lang="scss">
     iframe {
-        width: 78vw; // Max width of the message bubble
+        width: 100%;
         height: 16rem;
     }
 

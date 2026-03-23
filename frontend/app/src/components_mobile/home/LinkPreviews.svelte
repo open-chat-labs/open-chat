@@ -296,7 +296,7 @@
     }
 
     :global {
-        .container.message_bubble.no_header > .intersection_observer:first-child > .preview {
+        .container.message_bubble.no_header .intersection_observer:first-child > .preview {
             &.me {
                 border-top-left-radius: var(--rad-lg);
             }

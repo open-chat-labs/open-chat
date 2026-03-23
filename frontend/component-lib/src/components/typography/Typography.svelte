@@ -223,7 +223,6 @@
     }
 
     .has_max_lines {
-        width: 100%;
         overflow: hidden;
         display: -webkit-box;
         white-space: unset;

@@ -89,7 +89,8 @@
             <a class="preview_link" href={url}>
                 <div
                     class="wrapper"
-                    class:me={senderIsMe}
+                    class:me
+                    class:sender_is_me={senderIsMe}
                     class:p2pSwap={preview.content.kind === "p2p_swap_content"}>
                     <div class="title">
                         <Avatar
@@ -140,12 +141,18 @@
         padding: var(--sp-sm) var(--sp-xs) var(--sp-xs);
 
         &.me {
-            // TODO bgs are same as for replies, reduce duplication
-            background-color: var(--background-2);
+            &.sender_is_me {
+                // TODO bgs are same as for replies, reduce duplication
+                background-color: var(--background-2);
+            }
+
+            &:not(.sender_is_me) {
+                background-color: var(--primary-muted);
+            }
         }
 
         &:not(.me) {
-            background-color: var(--primary-muted);
+            background-color: var(--background-1);
         }
 
         .inert {

@@ -657,7 +657,7 @@
                     overflow={"visible"}
                     crossAxisAlignment={me ? "end" : "start"}
                     width={"hug"}
-                    maxWidth={"78vw"}
+                    maxWidth={chatId.kind === "direct_chat" ? "78vw" : "75vw"}
                     gap={"xxs"}
                     minWidth={"6rem"}
                     direction={"vertical"}>
