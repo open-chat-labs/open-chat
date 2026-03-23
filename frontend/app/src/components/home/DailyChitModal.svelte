@@ -68,7 +68,7 @@
                 }
             })
             .catch((err) => {
-                toastStore.showFailureToast(i18nKey("dailyChit.failedToClaim"), err);
+                toastStore.showFailureToast(i18nKey("dailyChit.failedToClaim"), JSON.stringify(err));
                 onClose?.();
             })
             .finally(() => {
