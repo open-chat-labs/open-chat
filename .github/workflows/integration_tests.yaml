@@ -33,6 +33,6 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build canister wasms
-        run: ./scripts/generate-all-canister-wasms.sh
+        run: ./scripts/docker-build-all-wasms.sh
       - name: Run integration tests
         run: ./scripts/run-integration-tests.sh local
