@@ -1,18 +1,22 @@
 <script lang="ts">
-    import { Button, ColourVars, Column, IconButton } from "component-lib";
-    import type { ImageContent, MemeFighterContent } from "openchat-client";
-    import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
-    import { i18nKey } from "../../i18n/i18n";
+    import { ColourVars, Column, CommonButton2 } from "component-lib";
+    import {
+        publish,
+        type ImageContent,
+        type TextContent as TextContentType,
+        type MemeFighterContent,
+    } from "openchat-client";
+    import EyeOffOutline from "svelte-material-icons/EyeOffOutline.svelte";
     import { rtlStore } from "../../stores/rtl";
     import { lowBandwidth } from "../../stores/settings";
-    import { isTouchDevice } from "../../utils/devices";
-    import Translatable from "../Translatable.svelte";
-    import ContentCaption from "./ContentCaption.svelte";
-    import ZoomedImage from "./ZoomedImage.svelte";
+    import { scrollStatus } from "@stores/scroll.svelte";
+    import { getProxyAdjustedBlobUrl } from "../../utils/media";
+    import EyeOutline from "svelte-material-icons/EyeOutline.svelte";
+    import TextContent from "./TextContent.svelte";
 
     interface Props {
         content: ImageContent | MemeFighterContent;
+        me: boolean;
         fill: boolean;
         draft?: boolean;
         reply?: boolean;
@@ -21,11 +25,15 @@
         intersecting?: boolean;
         edited: boolean;
         blockLevelMarkdown?: boolean;
+        showPreviews?: boolean;
+        isPreview?: boolean;
         onRemove?: () => void;
+        onRemovePreview?: (url: string) => void;
     }
 
     let {
         content,
+        me,
         fill,
         draft = false,
         reply = false,
@@ -34,18 +42,36 @@
         intersecting = true,
         edited,
         blockLevelMarkdown = false,
-        onRemove,
+        // TODO Fix show previews! Currently if a preview is removed, it also removes the attached image!!!
+        // showPreviews = true,
+        isPreview = false,
+        onRemovePreview,
     }: Props = $props();
 
+    const MIN_IMG_WIDTH = 150;
+
     let imgElement: HTMLImageElement | undefined = $state();
-    let zoom = $state(false);
     let landscape = $derived(content.height < content.width);
+    let normalised = $derived(normaliseContent(content));
+    let hidden = $state(false);
+    let imageWidth = $state(0);
+    let zoomable = $derived(!draft && !reply && !pinned);
+    let textContent = $derived<TextContentType | undefined>(
+        normalised ? { kind: "text_content", text: normalised.caption ?? "" } : undefined,
+    );
+
+    let narrow = $derived(imageWidth > 0 && imageWidth < MIN_IMG_WIDTH && !!textContent?.text);
+    let maxTextContentWidth = $derived(narrow ? 200 : imageWidth);
+
+    $effect(() => {
+        hidden = $lowBandwidth && !draft;
+    });
 
     function normaliseContent(content: ImageContent | MemeFighterContent) {
         switch (content.kind) {
             case "image_content":
                 return {
-                    url: content.blobUrl,
+                    url: getProxyAdjustedBlobUrl(content.blobUrl),
                     caption: content.caption,
                     fallback: content.thumbnailData,
                     loadMsg: "loadImage",
@@ -60,29 +86,11 @@
         }
     }
 
-    function onClick() {
-        if (!isTouchDevice) {
-            toggleZoom();
+    function focusImage() {
+        if (!scrollStatus.isCooldown) {
+            publish("focusImage", content);
         }
     }
-
-    function onDoubleClick(e: Event) {
-        e.stopPropagation();
-        if (isTouchDevice) {
-            toggleZoom();
-        }
-    }
-
-    function toggleZoom() {
-        zoom = !zoom;
-    }
-
-    let normalised = $derived(normaliseContent(content));
-    let hidden = $state(false);
-    $effect(() => {
-        hidden = $lowBandwidth && !draft;
-    });
-    let zoomable = $derived(!draft && !reply && !pinned);
 
     function onError() {
         if (imgElement) {
@@ -92,76 +100,131 @@
 </script>
 
 {#if normalised.url !== undefined}
-    <Column maxWidth={"100%"} width={"hug"}>
+    <Column
+        supplementalClass={`bubble_image_content ${me ? "me" : ""} ${fill ? "fill" : ""}`}
+        maxWidth={"100%"}
+        width={narrow ? "fill" : "hug"}>
         {#if hidden}
             <Column
                 height={"fill"}
-                padding={"xl"}
                 supplementalClass={"image_content_mask"}
                 mainAxisAlignment={"center"}
                 crossAxisAlignment={"center"}>
                 {#if !reply && !draft}
-                    <Button height={"hug"} width={"fill"} onClick={() => (hidden = false)}
-                        ><Translatable resourceKey={i18nKey(normalised.loadMsg)} /></Button>
+                    <CommonButton2 onClick={() => (hidden = false)} variant="secondary" mode="text">
+                        <EyeOutline size="2rem" color={ColourVars.textPrimary} />
+                    </CommonButton2>
                 {/if}
             </Column>
         {/if}
+        <!-- svelte-ignore a11y_interactive_supports_focus -->
         <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-        <img
-            bind:this={imgElement}
-            onclick={onClick}
-            ondblclick={onDoubleClick}
-            onerror={onError}
-            class="unzoomed"
-            class:landscape
-            class:fill
-            class:draft
-            class:reply
-            class:zoomable={zoomable && !hidden}
-            class:rtl={$rtlStore}
-            style={height === undefined ? undefined : `height: ${height}px`}
-            src={intersecting && !hidden ? normalised.url : normalised.fallback}
-            alt={normalised.caption} />
-
-        {#if zoomable && !hidden}
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div class="expand" class:rtl={$rtlStore} class:zoomed={zoom} onclick={toggleZoom}>
-                <ArrowExpand size={"1em"} color={"#fff"} />
-            </div>
-        {/if}
-        {#if draft}
-            <div class="close">
-                <IconButton mode={"dark"} onclick={onRemove}>
-                    {#snippet icon()}
-                        <Close color={ColourVars.textPrimary} />
-                    {/snippet}
-                </IconButton>
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div class="image_wrapper" class:narrow onclick={focusImage}>
+            <img
+                bind:this={imgElement}
+                bind:clientWidth={imageWidth}
+                onerror={onError}
+                class="image"
+                class:me
+                class:landscape
+                class:fill
+                class:draft
+                class:reply
+                class:zoomable={zoomable && !hidden}
+                class:rtl={$rtlStore}
+                style={height === undefined ? undefined : `height: ${height}px`}
+                src={intersecting && !hidden ? normalised.url : normalised.fallback}
+                alt={normalised.caption} />
+        </div>
+        {#if !zoomable}
+            <div class="status_icon" class:rtl={$rtlStore}>
+                <EyeOffOutline size={"1.25em"} color={ColourVars.textPrimary} />
             </div>
         {/if}
     </Column>
 {/if}
 
-<ContentCaption caption={normalised.caption} {edited} {blockLevelMarkdown} />
-
-{#if zoomable && zoom && normalised.url !== undefined}
-    <ZoomedImage onClose={toggleZoom} url={normalised.url} />
+{#if textContent?.text}
+    <TextContent
+        content={textContent}
+        {me}
+        {fill}
+        {blockLevelMarkdown}
+        {edited}
+        maxWidth={maxTextContentWidth}
+        showPreviews={false}
+        {isPreview}
+        {onRemovePreview} />
 {/if}
 
 <style lang="scss">
-    :global(.container.image_content_mask) {
-        position: absolute;
-        top: 0;
-        left: 0;
-        height: 100%;
-        width: 100%;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.5));
+    :global {
+        .bubble_image_content {
+            .image_content_mask {
+                position: absolute;
+                top: 0;
+                left: 0;
+                height: 100%;
+                width: 100%;
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.5));
+            }
+
+            .image_wrapper,
+            .image_content_mask {
+                border-radius: var(--rad-lg) var(--rad-lg) var(--rad-md) var(--rad-md) !important;
+            }
+
+            &.me {
+                .image_wrapper,
+                .image_content_mask {
+                    border-top-right-radius: var(--rad-sm) !important;
+                }
+
+                .image_wrapper.narrow {
+                    background-color: var(--primary-muted);
+                }
+            }
+
+            &:not(.me) {
+                .image_wrapper,
+                .image_content_mask {
+                    border-top-left-radius: var(--rad-sm) !important;
+                }
+
+                .image_wrapper.narrow {
+                    background-color: var(--background-1);
+                }
+            }
+
+            &.fill {
+                .image_wrapper,
+                .image_content_mask {
+                    border-bottom-left-radius: var(--rad-lg) !important;
+                    border-bottom-right-radius: var(--rad-lg) !important;
+                }
+            }
+        }
     }
 
     $radius: $sp3;
+
+    .image_wrapper {
+        overflow: hidden;
+
+        &.narrow {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: var(--sp-xs);
+
+            .image {
+                border-radius: var(--rad-md);
+            }
+        }
+    }
 
     .close {
         position: absolute;
@@ -169,47 +232,24 @@
         right: var(--sp-md);
     }
 
-    .expand {
-        border-radius: 0 $radius 0 $radius;
-
-        cursor: zoom-in;
-        &.zoomed {
-            cursor: zoom-out;
-            border-bottom-left-radius: var(--modal-rd);
-        }
+    .status_icon {
+        position: absolute;
+        bottom: var(--sp-xs);
+        right: var(--sp-sm);
 
         &.rtl {
-            right: 0;
-            left: unset;
-            border-radius: $radius 0 $radius 0;
-            &.zoomed {
-                border-bottom-right-radius: var(--modal-rd);
-            }
+            left: 0;
+            right: unset;
         }
-
-        position: absolute;
-        padding: $sp2 $sp4;
-        bottom: 0;
-        left: 0;
-        background-color: rgba(0, 0, 0, 0.3);
-        color: #fff;
     }
 
-    img.zoomable.unzoomed {
-        cursor: zoom-in;
-    }
-
-    img.unzoomed {
+    .image {
         width: 100%;
         display: block;
 
         &:not(.landscape) {
-            min-height: 90px;
-            min-width: 0px;
-        }
-
-        &:not(.fill) {
-            border-radius: $radius;
+            min-height: 6rem;
+            min-width: 0;
         }
 
         &.draft {
@@ -227,7 +267,7 @@
         }
 
         &.reply {
-            max-width: 90px;
+            max-width: 6rem;
             max-height: none;
             height: auto;
             float: right;
@@ -243,7 +283,7 @@
 
         &:not(.landscape).reply {
             max-width: none;
-            max-height: 90px;
+            max-height: 6rem;
             width: auto;
         }
     }

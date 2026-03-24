@@ -5,6 +5,7 @@
 
     interface Props {
         mode?: "message" | "reaction" | "thread";
+        searchInputPadding?: boolean;
         onEmojiSelected: (selected: SelectedEmoji) => void;
         onSkintoneChanged?: (tone: SkinTone) => void;
         supportCustom?: boolean;
@@ -12,6 +13,7 @@
 
     let {
         mode = "message",
+        searchInputPadding,
         onEmojiSelected,
         onSkintoneChanged,
         supportCustom = false,
@@ -24,6 +26,7 @@
 
 <EmojiPicker
     {mode}
+    {searchInputPadding}
     onEmojiSelected={onEmojiSelectedInternal}
     {onSkintoneChanged}
     customEmojis={supportCustom ? customEmojis : undefined} />

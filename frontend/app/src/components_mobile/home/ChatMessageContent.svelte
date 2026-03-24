@@ -45,6 +45,7 @@
         timestamp?: bigint | undefined;
         blockLevelMarkdown: boolean;
         showPreviews: boolean;
+        isPreview?: boolean;
         onExpandMessage?: (() => void) | undefined;
         onRemovePreview?: (url: string) => void;
         onRegisterVote?: (vote: { type: "delete" | "register"; answerIndex: number }) => void;
@@ -71,6 +72,7 @@
         timestamp = undefined,
         blockLevelMarkdown,
         showPreviews = true,
+        isPreview = false,
         onExpandMessage = undefined,
         onRemovePreview,
         onRegisterVote,
@@ -81,14 +83,17 @@
     <TextContent
         {me}
         {fill}
+        {edited}
         {truncate}
         {pinned}
         {content}
         {blockLevelMarkdown}
         {showPreviews}
+        {isPreview}
         {onRemovePreview} />
 {:else if content.kind === "image_content"}
     <ImageContent
+        {me}
         {edited}
         {intersecting}
         {fill}
@@ -96,9 +101,11 @@
         {reply}
         {pinned}
         {height}
-        {blockLevelMarkdown} />
+        {blockLevelMarkdown}
+        {isPreview}
+        {onRemovePreview} />
 {:else if content.kind === "video_content"}
-    <VideoContent {edited} {fill} {content} {reply} {height} {blockLevelMarkdown} />
+    <VideoContent {me} {fill} {edited} {content} {reply} {height} {blockLevelMarkdown} />
 {:else if content.kind === "video_call_content"}
     <VideoCallContent {senderId} {messageIndex} {content} {timestamp} />
 {:else if content.kind === "audio_content"}
@@ -130,7 +137,16 @@
 {:else if content.kind === "poll_content"}
     <PollContent {readonly} {me} {content} {senderId} {onRegisterVote} />
 {:else if content.kind === "giphy_content"}
-    <GiphyContent {edited} {intersecting} {fill} {content} {reply} {height} {blockLevelMarkdown} />
+    <GiphyContent
+        {me}
+        {edited}
+        {intersecting}
+        {fill}
+        {content}
+        {reply}
+        {height}
+        {blockLevelMarkdown}
+        {isPreview} />
 {:else if content.kind === "proposal_content"}
     <ProposalContent
         {content}
@@ -148,7 +164,16 @@
 {:else if content.kind === "reported_message_content"}
     <ReportedMessageContent {content} />
 {:else if content.kind === "meme_fighter_content"}
-    <ImageContent {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
+    <ImageContent
+        {me}
+        {edited}
+        {intersecting}
+        {fill}
+        {content}
+        {reply}
+        {pinned}
+        {height}
+        {isPreview} />
 {:else if content.kind === "user_referral_card"}
     <UserReferralCardContent />
 {/if}

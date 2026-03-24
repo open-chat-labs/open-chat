@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ChatText } from "component-lib";
+    import { ChatText, ChatCaption, Column } from "component-lib";
     import type { OpenChat, TextContent } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -9,28 +9,34 @@
     import LinkPreviews from "./LinkPreviews.svelte";
     import Markdown from "./Markdown.svelte";
 
-    const SIZE_LIMIT = 1000;
     const client = getContext<OpenChat>("client");
 
     interface Props {
         content: TextContent;
-        truncate?: boolean;
-        pinned?: boolean;
-        fill: boolean;
         me: boolean;
+        fill: boolean;
         blockLevelMarkdown: boolean;
         showPreviews: boolean;
+        edited: boolean;
+        truncate?: boolean;
+        pinned?: boolean;
+        maxWidth?: number;
+        // Indicates if the text content is rendered in context of a preview
+        isPreview?: boolean;
         onRemovePreview?: (url: string) => void;
     }
 
     let {
         content,
-        truncate = false,
-        pinned = false,
-        fill,
         me,
+        fill,
         blockLevelMarkdown,
         showPreviews,
+        edited,
+        truncate = false,
+        pinned = false,
+        maxWidth,
+        isPreview = false,
         onRemovePreview,
     }: Props = $props();
 
@@ -39,21 +45,12 @@
         return urls.length <= 5 ? urls : [];
     }
 
-    function truncateText(text: string): string {
-        // todo - we might be able to do something nicer than this with pure css, but we just need to do
-        // *something* to make sure there a limit to the size of this box
-        if (truncate && text.length > SIZE_LIMIT) {
-            text = text.slice(0, SIZE_LIMIT) + "...";
-        }
-        return text;
-    }
-
     function expand() {
         expanded = true;
     }
 
     let expanded = $derived(!$lowBandwidth && $renderPreviews);
-    let text = $derived(truncateText(content.text));
+    let text = $derived(content.text);
     let previewUrls = $derived(showPreviews ? extractPreviewUrls(content.text) : []);
     let iconColour = $derived(me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)");
 </script>
@@ -66,7 +63,14 @@
             <ArrowExpand viewBox="0 -3 24 24" size={"1em"} color={iconColour} />
         </span>
     {:else}
-        <IntersectionObserver unobserveOnIntersect={false}>
+        <!-- TODO refine the top observer margin of 1000px -->
+        <!-- on low bandwith, observer will trigger once the element is in veiw
+             otherwise it will detect intersection at set margin -->
+        <IntersectionObserver
+            unobserveOnIntersect={false}
+            rootMarginTop={$lowBandwidth ? 0 : 1000}
+            rootMarginBottom={$lowBandwidth ? 0 : 1000}
+            contextId="scrollable-messages-div">
             {#snippet children(intersecting)}
                 <LinkPreviews
                     {me}
@@ -80,15 +84,58 @@
     {/if}
 {/if}
 
-<ChatText width={"hug"}>
-    <Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} {text} />
-</ChatText>
+<Column
+    supplementalClass={`text_content ${truncate ? "truncated" : ""}`}
+    padding={["xs", "sm"]}
+    overflow={"hidden"}
+    maxWidth={maxWidth ? `${maxWidth}px` : "auto"}>
+    <div class="message_text">
+        {#if isPreview}
+            <ChatCaption
+                width={"hug"}
+                maxLines={truncate ? 3 : undefined}
+                colour={me ? "secondaryLight" : "primaryLight"}>
+                <Markdown inline={!blockLevelMarkdown} suppressLinks={true} {text} />
+            </ChatCaption>
+        {:else}
+            <ChatText width={"hug"} maxLines={truncate ? 3 : undefined}>
+                <Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} {text} />
+            </ChatText>
+            <span class="metadata_spacer" class:me class:edited></span>
+        {/if}
+    </div>
+</Column>
 
 <style lang="scss">
+    .message_text {
+        line-height: 0;
+    }
+
     .expand {
         cursor: pointer;
         padding: 0 $sp3;
         border-radius: var(--rd);
         background-color: rgba(226, 226, 226, 0.2);
+    }
+
+    .metadata_spacer {
+        display: inline-block;
+        height: 1rem;
+
+        &.me {
+            width: 3.25rem;
+
+            &.edited {
+                width: 6.5rem;
+            }
+        }
+
+        &:not(.me) {
+            width: 2.25rem;
+
+            &.edited {
+                width: 5.5rem;
+            }
+        }
     }
 </style>

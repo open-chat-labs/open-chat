@@ -2,27 +2,21 @@
 
 <script lang="ts">
     import { i18nKey } from "../../i18n/i18n";
-    import { rtlStore } from "../../stores/rtl";
     import Translatable from "../Translatable.svelte";
+    import { BodySmall, ColourVars, Row } from "component-lib";
+    import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";
 </script>
 
-<div class="reply-wrapper" class:rtl={$rtlStore}>
-    <Translatable resourceKey={i18nKey("unresolvedReply")} />
-</div>
-
-<style lang="scss">
-    .reply-wrapper {
-        border-radius: $sp4;
-        padding: $sp4;
-        background-color: var(--currentChat-msg-bg);
-        color: var(--txt);
-        cursor: pointer;
-        box-shadow: -7px 0px 0px 0px var(--currentChat-msg-reply-accent);
-        border: 2px solid var(--currentChat-msg-reply-accent);
-        margin-bottom: $sp3;
-
-        &.rtl {
-            box-shadow: 7px 0px 0px 0px var(--button-bg);
-        }
-    }
-</style>
+<!-- TODO RTL layout -->
+<Row
+    supplementalClass="reply-wrapper"
+    gap="sm"
+    padding="sm"
+    crossAxisAlignment="center"
+    mainAxisAlignment="center"
+    borderColour={ColourVars.primaryMuted}>
+    <BodySmall italic={true} colour={"primaryLight"} width="hug">
+        <Translatable resourceKey={i18nKey("unresolvedReply")} />
+    </BodySmall>
+    <AlertCircleOutline size="1rem" color={ColourVars.primaryLight} />
+</Row>

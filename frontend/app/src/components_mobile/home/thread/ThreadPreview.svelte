@@ -216,7 +216,8 @@
                         expiresAt={thread.rootMessage.expiresAt}
                         dateFormatter={(date) => client.toDatetimeString(date)}
                         msg={thread.rootMessage.event}
-                        senderContext={thread.rootMessage.event.senderContext} />
+                        senderContext={thread.rootMessage.event.senderContext}
+                        disablePan={true} />
                     {#if missingMessages > 0}
                         <BodySmall
                             height={{ size: "2rem" }}
@@ -262,7 +263,8 @@
                                 expiresAt={evt.expiresAt}
                                 dateFormatter={(date) => client.toDatetimeString(date)}
                                 msg={evt.event}
-                                senderContext={evt.event.senderContext} />
+                                senderContext={evt.event.senderContext}
+                                disablePan={true} />
                         {/each}
                     {/each}
 

@@ -15,31 +15,24 @@
     );
 </script>
 
-<div>
-    <iframe
-        class:pinned
-        class:fill
-        width="100%"
-        height="315"
-        src={`https://www.youtube.com/embed/${youtubeCode}?start=${youtubeStartTime}`}
-        title="YouTube video player"
-        frameborder="0"
-        allow="accelerometer;
+<iframe
+    class:pinned
+    class:fill
+    src={`https://www.youtube.com/embed/${youtubeCode}?start=${youtubeStartTime}`}
+    title="YouTube video player"
+    frameborder="0"
+    allow="accelerometer;
                         autoplay;
                         clipboard-write;
                         encrypted-media;
                         gyroscope;
                         picture-in-picture"
-        allowfullscreen></iframe>
-</div>
+    allowfullscreen></iframe>
 
 <style lang="scss">
     iframe {
-        margin-top: $sp3;
-    }
-
-    iframe:not(.fill) {
-        border-radius: $sp3;
+        width: 100%;
+        height: 16rem;
     }
 
     iframe.pinned {

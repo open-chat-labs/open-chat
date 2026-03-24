@@ -234,7 +234,11 @@
         }
     }
 
+    // TODO fix double back to close a sliding modal (intermittent issue).
     function popstate() {
+        // Something else was on the history stack, modal is still open!
+        if (history.state?.isModal) return;
+
         if (modalStack.length > 0) {
             if (top?.kind === "open_thread") {
                 pageReplace(stripThreadFromUrl(removeQueryStringParam("open")));
@@ -266,6 +270,9 @@
 
         if (client.isNativeApp()) {
             // Expect user to press back in the app, handle that behaviour here.
+            // Webview will consume the back event, so this will only get called
+            // once the history stack is empty, which is when we want to minimise
+            // the app.
             expectBackPress(() => {
                 try {
                     // if we're back where we started, minimise

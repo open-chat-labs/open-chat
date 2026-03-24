@@ -231,6 +231,7 @@
             animation: props.longpressAnimation,
             cooldown: props.longpressCooldown,
             isOpen: open,
+            disabled: disabled,
         }}>
         {@render children()}
     </div>

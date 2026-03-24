@@ -3,8 +3,8 @@
         Body,
         ColourVars,
         Container,
+        type SizeMode,
         type BorderRadiusSize,
-        type Padding,
         type Radius,
     } from "component-lib";
     import {
@@ -61,7 +61,6 @@
         onOpenUserProfile: (e?: Event) => void;
         focused?: boolean;
         onGoToMessageIndex?: (args: { index: number }) => void;
-        onDoubleClick?: () => void;
     }
 
     let {
@@ -91,10 +90,8 @@
         onOpenUserProfile,
         focused = false,
         onGoToMessageIndex,
-        onDoubleClick,
     }: Props = $props();
 
-    let senderContainer = $state<HTMLDivElement>();
     let multiUserChat = $derived(chatType === "group_chat" || chatType === "channel");
     let streak = $derived(sender?.streak ?? 0);
     let chitEarned = $derived(sender?.totalChitEarned ?? 0);
@@ -107,16 +104,10 @@
     );
     let isProposal = $derived(msg.content.kind === "proposal_content");
     let isPrize = $derived(msg.content.kind === "prize_content");
-    let hasReactions = $derived(msg.reactions.length > 0);
+    // let hasReactions = $derived(msg.reactions.length > 0);
     let me = $derived(msg.sender === $currentUserIdStore);
     let showHeader = $derived(
         first && !isProposal && !isPrize && !me && chatType !== "direct_chat",
-    );
-    let hasReply = $derived(msg.repliesTo !== undefined);
-    let replyToMyself = $derived(
-        msg.repliesTo?.kind === "rehydrated_reply_context"
-            ? msg.repliesTo.senderId === $currentUserIdStore
-            : false,
     );
     let backgroundColour = $derived.by(() => {
         if (failed) {
@@ -131,15 +122,6 @@
 
         return ColourVars.background2;
     });
-    let padding = $derived.by<Padding>(() => {
-        if (fill) return "zero";
-        const uniform = hasReactions && !hasThread;
-        if (hasReply) {
-            return ["xs", "xs", uniform ? "xs" : "xxs", "xs"];
-        }
-        return [showHeader ? "xs" : "sm", "sm", uniform ? "sm" : "xxs", "sm"];
-    });
-    let contentPadding = $derived<Padding>(hasReply ? "xs" : "zero");
     let borderRadius = $derived.by<Radius>(() => {
         // top, right, bottom, left
         if (me) {
@@ -148,18 +130,20 @@
             return ["sm", "xl", "xl", hasThread || !last ? "sm" : "xl"];
         }
     });
-    let senderWidth = $derived.by(() => {
-        if (senderContainer) {
-            return `${senderContainer.offsetWidth}px`;
-        } else {
-            return "auto";
-        }
-    });
+
+    let senderContainer = $state<HTMLDivElement>();
+    let senderWidth = $derived(senderContainer?.offsetWidth ?? 0);
+    let contentWidth = $state(0);
+    let mediaContent = $derived(
+        ["image_content", "video_content", "giphy_content"].indexOf(msg.content.kind) > -1,
+    );
+    let headerWidth = $derived<SizeMode>(
+        mediaContent && contentWidth < senderWidth ? { size: `${contentWidth}px` } : "fill",
+    );
 
     // Show only for deleted messages!
     let borderColour = $derived.by(() => {
         if (!msg.deleted) return "transparent";
-        if (me) return ColourVars.myChatBubble;
         return ColourVars.background2;
     });
 
@@ -171,6 +155,9 @@
         // TODO What is this about? Seems to be attached to "me" and participant's message bubbles.
         if (readByMe) {
             classes.push("read_by_me");
+        }
+        if (!showHeader) {
+            classes.push("no_header");
         }
         return classes.join(" ");
     });
@@ -200,31 +187,30 @@
 <Container
     bind:ref
     supplementalClass={classList}
-    overflow={"auto"}
-    {onDoubleClick}
-    minWidth={senderWidth}
-    direction={"vertical"}
-    {borderRadius}
-    {padding}
-    gap={"xs"}
+    gap={"xxs"}
     width={"fill"}
+    padding={"xs"}
+    overflow={"auto"}
+    direction={"vertical"}
     background={backgroundColour}
-    {borderColour}
-    borderWidth={msg.deleted ? "thick" : "zero"}>
+    borderWidth={msg.deleted ? "thick" : "zero"}
+    {borderRadius}
+    {borderColour}>
     {#if showHeader}
         <Container
-            width={"hug"}
             bind:ref={senderContainer}
-            padding={fill ? "xs" : "zero"}
+            width={headerWidth}
+            padding={["zero", "sm"]}
             borderRadius={fill
                 ? [borderRadius[0] as BorderRadiusSize, "zero", "lg", "zero"]
                 : "zero"}
-            background={fill ? "rgba(0,0,0,0.3)" : undefined}
             supplementalClass={`message_sender ${fill ? "fill" : ""}`}
             crossAxisAlignment={"center"}
             gap={"xs"}
             onClick={onOpenUserProfile}>
-            <Body fontWeight={"bold"} width={"hug"}>{senderDisplayName}</Body>
+            <Body fontWeight={"bold"} maxLines={1} colour={"textSecondary"}>
+                {senderDisplayName}
+            </Body>
             <Badges
                 uniquePerson={sender?.isUniquePerson}
                 diamondStatus={sender?.diamondStatus}
@@ -254,19 +240,13 @@
             {/if}
         </Container>
     {/if}
-    {#if msg.repliesTo !== undefined}
+    {#if !msg.deleted && msg.repliesTo !== undefined}
         {@const reply =
             msg.repliesTo.kind === "rehydrated_reply_context" ? msg.repliesTo : undefined}
         <Container
             onClick={reply ? () => zoomToMessage(reply) : undefined}
-            padding={"sm"}
             supplementalClass={`reply-wrapper ${me ? "me" : ""}`}
-            direction={"vertical"}
-            background={me
-                ? replyToMyself
-                    ? ColourVars.background2
-                    : ColourVars.primaryMuted
-                : ColourVars.background0}>
+            direction={"vertical"}>
             {#if msg.repliesTo.kind === "rehydrated_reply_context"}
                 {@render repliesTo(msg.repliesTo)}
             {:else}
@@ -274,55 +254,41 @@
             {/if}
         </Container>
     {/if}
-    <!-- this is a bit of an annoying wrapper -->
-    <Container
-        overflow="visible"
-        borderRadius={fill ? borderRadius : undefined}
-        direction={"vertical"}
-        gap={"xs"}
-        padding={contentPadding}>
+    <div class="message_bubble_content" bind:clientWidth={contentWidth}>
         {@render messageContent?.(me)}
-    </Container>
-    <MessageMetadata
-        {failed}
-        deleted={msg.deleted}
-        {undeleting}
-        {bot}
-        {me}
-        {fill}
-        {accepted}
-        {chatType}
-        {readByThem}
-        {expiresAt}
-        {percentageExpired}
-        {pinned}
-        edited={msg.edited}
-        {time} />
+    </div>
+    {#if !msg.deleted}
+        <MessageMetadata
+            {failed}
+            deleted={msg.deleted}
+            {undeleting}
+            {bot}
+            {me}
+            {fill}
+            {accepted}
+            {chatType}
+            {readByThem}
+            {expiresAt}
+            {percentageExpired}
+            {pinned}
+            edited={msg.edited}
+            {time} />
+    {/if}
 </Container>
 
 <style lang="scss">
     :global {
-        .reply-wrapper {
-            border-radius: var(--rad-sm) !important;
-
-            &:not(.me) {
-                border-top-right-radius: var(--rad-md) !important;
+        .container.message_sender {
+            .typo.body {
+                flex: initial !important;
             }
 
-            &.me {
-                border-top-left-radius: var(--rad-md) !important;
+            .fill {
+                z-index: 1;
+                position: absolute;
+                color: var(--text-primary);
+                text-shadow: 0 0 0.125rem var(--backdrop);
             }
-        }
-
-        .reply-wrapper.me a {
-            color: inherit;
-        }
-
-        .container.message_sender.fill {
-            position: absolute;
-            color: #fff;
-            z-index: 1;
-            width: max-content !important;
         }
 
         .container.message_bubble {
@@ -338,11 +304,17 @@
         }
 
         .container.message_bubble.focused {
-            box-shadow: 0 0 0 4px var(--primary-muted);
+            box-shadow: 0 0 0 0.25rem var(--primary-muted);
         }
 
         .container.message_bubble:not(.read_by_me) {
-            box-shadow: 0 0 0 4px var(--primary-muted);
+            box-shadow: 0 0 0 0.25rem var(--primary-muted);
+        }
+
+        // Removes extra space between sender name and content of the message.
+        // Only applied in cases where title and text content are siblings.
+        .container.message_sender + .container.text_content {
+            padding-top: 0 !important;
         }
     }
 </style>

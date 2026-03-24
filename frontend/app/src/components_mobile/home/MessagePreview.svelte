@@ -1,8 +1,9 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
-    import { Avatar } from "component-lib";
+    import { Avatar, Body } from "component-lib";
     import {
         allUsersStore,
+        currentUserIdStore,
         eventListScrolling,
         isSuccessfulEventsResponse,
         OpenChat,
@@ -40,6 +41,7 @@
 
     let previewPromise: Promise<Preview | undefined> | undefined = $state();
     let rendered = $state(false);
+    let senderIsMe = $state(false);
 
     async function loadPreview(): Promise<Preview | undefined> {
         let result = await client.getMessagesByMessageIndex(chatId, threadRootMessageIndex, [
@@ -52,12 +54,14 @@
 
         let message = result.events[0].event;
 
+        senderIsMe = message.sender === $currentUserIdStore;
+
         return {
             content: message.content,
             senderId: message.sender,
             messageId: message.messageId,
             edited: message.edited,
-            displayName: me
+            displayName: senderIsMe
                 ? client.toTitleCase($_("you"))
                 : client.getDisplayName(
                       message.sender,
@@ -82,25 +86,24 @@
 {#if rendered}
     {#await previewPromise then preview}
         {#if preview}
-            <a href={url}>
+            <a class="preview_link" href={url}>
                 <div
                     class="wrapper"
                     class:me
+                    class:sender_is_me={senderIsMe}
                     class:p2pSwap={preview.content.kind === "p2p_swap_content"}>
                     <div class="title">
                         <Avatar
                             url={client.userAvatarUrl($allUsersStore.get(preview.senderId))}
                             size={"xs"} />
-                        <h4
-                            class="username"
-                            class:text-content={preview.content.kind === "text_content"}>
+                        <Body fontWeight="bold" colour={me ? "textPrimary" : "textSecondary"}>
                             {preview.displayName}
-                        </h4>
+                        </Body>
                     </div>
                     <div class="inert">
                         <ChatMessageContent
                             showPreviews
-                            {me}
+                            me={senderIsMe}
                             readonly
                             messageContext={{
                                 chatId,
@@ -114,8 +117,9 @@
                             fill={false}
                             failed={false}
                             blockLevelMarkdown
-                            truncate
-                            reply
+                            truncate={true}
+                            reply={false}
+                            isPreview={true}
                             content={preview.content} />
                     </div>
                 </div>
@@ -125,19 +129,34 @@
 {/if}
 
 <style lang="scss">
+    .preview_link {
+        width: 100%;
+    }
     .wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-xs);
+        width: 100%;
         overflow: hidden;
-        @include nice-scrollbar();
-        max-height: 300px;
+        padding: var(--sp-sm) var(--sp-xs) var(--sp-xs);
+
+        &.me {
+            &.sender_is_me {
+                // TODO bgs are same as for replies, reduce duplication
+                background-color: var(--background-2);
+            }
+
+            &:not(.sender_is_me) {
+                background-color: var(--primary-muted);
+            }
+        }
+
+        &:not(.me) {
+            background-color: var(--background-1);
+        }
 
         .inert {
             pointer-events: none;
-        }
-
-        &:after {
-            content: "";
-            display: table;
-            clear: both;
         }
 
         &.p2pSwap {
@@ -146,8 +165,10 @@
     }
 
     .title {
-        display: flex;
         gap: $sp3;
+        display: flex;
+        padding: 0 var(--sp-sm);
+
         > * {
             flex: 1;
         }

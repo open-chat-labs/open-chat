@@ -1,6 +1,6 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
-    import { BodySmall, ColourVars, Container, IconButton, Row, transition } from "component-lib";
+    import { BodySmall, ColourVars, Container, IconButton, Row } from "component-lib";
     import type {
         AttachmentContent,
         BotActionScope,
@@ -31,7 +31,7 @@
         throttleDeadline,
         type CreatedUser,
     } from "openchat-client";
-    import { getContext, tick } from "svelte";
+    import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Alert from "svelte-material-icons/Alert.svelte";
     import Camera from "svelte-material-icons/CameraOutline.svelte";
@@ -60,6 +60,8 @@
     import PreviewFooter from "./PreviewFooter.svelte";
     import ThrottleCountdown from "./ThrottleCountdown.svelte";
     import ReplyingTo from "./ReplyingTo.svelte";
+    import DraftMediaMessage from "./DraftMediaMessage.svelte";
+    import { keyboard } from "@src/stores/keyboard.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -76,6 +78,7 @@
         externalContent: boolean;
         messageContext: MessageContext;
         user: CreatedUser;
+        inputTrayVisible: boolean;
         onFileSelected: (content: AttachmentContent) => void;
         onPaste: (e: ClipboardEvent) => void;
         onSetTextContent: (txt?: string) => void;
@@ -104,6 +107,7 @@
         externalContent,
         messageContext,
         user,
+        inputTrayVisible = $bindable(),
         onFileSelected,
         onPaste,
         onSetTextContent,
@@ -143,17 +147,178 @@
     let showDirectBotChatWarning = $state(false);
     let commandSent = false;
 
-    let showCustomMessageTrigger = $state(false);
-
     // Update this to force a new textbox instance to be created
     let textboxId = $state(Symbol());
-    let showEmojiPicker = $state(false);
 
+    type InputTrayMode =
+        | "closed"
+        | "keyboard_only"
+        | "emoji_gif_selection"
+        | "emoji_gif_search"
+        | "attachments";
+
+    // Control variable to indicate that focus out happened, which changed the
+    // keyboard visibility, and we can take it into account to prevent extended
+    // section hiding prematurely.
+    let emojiSearchFocusedOut = $state(false);
+
+    // Prevents pop handler from running if not necessary!
+    let returnFromPopHandler = $state(false);
+
+    // Track changes in kb visibility to prevent the effect running twice for
+    // same value.
+    let previousKbVisibleValue = $state(keyboard.visible);
+
+    // Current mode for the input tray, section that opens up below the input
+    // and which provides additional message options.
+    let inputTrayMode = $state<InputTrayMode>("closed");
+
+    // Cases in which we show extended options, even when keyboard is visible,
+    // since the extened options provide bottom padding for the input to rise
+    // above the keyboard.
+    $effect(() => {
+        inputTrayVisible = keyboard.visible || inputTrayMode !== "closed";
+    });
+
+    $effect(() => {
+        if (previousKbVisibleValue === keyboard.visible) return;
+
+        // This is a new change, make sure to remember the new state...
+        previousKbVisibleValue = keyboard.visible;
+
+        if (!keyboard.visible) {
+            // In case we we're showing emoji search, or we focused out of emoji
+            // search, move to emoji selection.
+            if (inputTrayMode === "emoji_gif_search" || emojiSearchFocusedOut) {
+                inputTrayMode = "emoji_gif_selection";
+            }
+
+            // If we were only showing keyboard before...
+            if (inputTrayMode === "keyboard_only") {
+                inputTrayMode = "closed";
+            }
+
+            emojiSearchFocusedOut = false;
+        } else {
+            if (inputTrayMode === "closed") {
+                inputTrayMode = "keyboard_only";
+            }
+        }
+    });
+
+    // Show emoji!
     function toggleEmojiPicker() {
-        transition(["fade"], () => {
-            showEmojiPicker = !showEmojiPicker;
-        });
+        inputTrayMode = "emoji_gif_selection";
+        pushExpandedHistoryState();
     }
+
+    // Show extened options!
+    function toggleAttachments() {
+        inputTrayMode = inputTrayMode === "attachments" ? "closed" : "attachments";
+
+        // Only push history state if attachment options are showing, or pop state
+        // if the options are not showing.
+        inputTrayMode === "attachments" ? pushExpandedHistoryState() : popExpandedHistoryState();
+    }
+
+    function showKeyboard() {
+        inp?.focus();
+    }
+
+    // Should handle cases where usual user interactions are skipped, and
+    // input is focused directly, i.e. user clicking directly into input,
+    // or replying/editing to/a message.
+    function keyboardFocus() {
+        inputTrayMode = "keyboard_only";
+
+        // Reset indicator var...
+        emojiSearchFocusedOut = false;
+
+        // When keyboard shows, we pop any history state that may have been
+        // added due to opening emoji or extended options selectors.
+        popExpandedHistoryState();
+    }
+
+    function getHistoryStateAction(): string {
+        return `input-tray-${mode}`;
+    }
+
+    // State added to indicate expanded section is open. Devices back gesture
+    // can then pop the state from history, and the expanded section will close.
+    function pushExpandedHistoryState() {
+        const action = getHistoryStateAction();
+
+        // Dummy state was not added...
+        if (!history.state.action || history.state.action !== action) {
+            history.pushState({ action }, "");
+        }
+    }
+
+    // Pops expanded history state only if it's set.
+    function popExpandedHistoryState() {
+        const action = getHistoryStateAction();
+        if (history.state.action === action) {
+            returnFromPopHandler = true;
+            history.back();
+        }
+    }
+
+    // Runs on BACK gesture/button!
+    function popStateHandler(_e: PopStateEvent) {
+        if (returnFromPopHandler) {
+            // We manually ran pop state, so no need to handle pop any further...
+            returnFromPopHandler = false;
+            return;
+        }
+
+        if (inputTrayMode === "emoji_gif_search") {
+            inputTrayMode = "emoji_gif_selection";
+            return;
+        }
+
+        inputTrayMode = "closed";
+    }
+
+    function inputTrayFocusIn(e: FocusEvent) {
+        // Only handle focus if the originating element is input!
+        const eventOrigin = e.composedPath()[0] as HTMLElement;
+        const isInputOrigin = eventOrigin.tagName === "INPUT";
+
+        inputTrayMode = isInputOrigin ? "emoji_gif_search" : inputTrayMode;
+    }
+
+    function inputTrayFocusOut(e: FocusEvent) {
+        // Do not handle blur event for non input elements
+        const eventOrigin = e.composedPath()[0] as HTMLElement;
+        if (eventOrigin.tagName !== "INPUT") return;
+
+        inputTrayMode = "emoji_gif_selection";
+
+        // Indicate that we just focused out of an input field within the input
+        // tray, i.e. emoji search input, helps us to switch to emoji selection view.
+        emojiSearchFocusedOut = true;
+    }
+
+    onMount(() => {
+        // Message input focus in handler!
+        // Note: this did not seem to work by just adding focus attribute.
+        inp?.addEventListener("focus", keyboardFocus);
+
+        // This component is also used for threads, so we need to remember the
+        // state of this when the component mounts.
+        const wasViewportResizeEnabled = keyboard.viewportResizeEnabled;
+
+        // When mesasge entry is on screen, the viewport should not just resize
+        // by default, since we want to support the input tray UI where soft
+        // keyboard overlaps some of the UI content.
+        keyboard.disableViewportResize();
+        return () => {
+            inp?.removeEventListener("focus", keyboardFocus);
+
+            // Enable kb resizing again if it was enabled.
+            if (wasViewportResizeEnabled) keyboard.enableViewportResize();
+        };
+    });
 
     function insertEmoji(emoji: SelectedEmoji) {
         if (emoji.kind === "native") {
@@ -498,6 +663,7 @@
         const result = regexList.some((regex) => regex.test(text));
         return result;
     }
+
     let directChatBotId = $derived(client.directChatWithBot(chat));
     let directBot = $derived(
         directChatBotId ? botState.externalBots.get(directChatBotId) : undefined,
@@ -515,6 +681,7 @@
         permittedMessages.get("image") || permittedMessages.get("video"),
     );
     let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
+
     $effect(() => {
         if (inp) {
             if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
@@ -550,16 +717,19 @@
             previousEditingEvent = undefined;
         }
     });
+
     trackedEffect("attachment-focus", () => {
         if (attachment !== undefined || replyingTo !== undefined) {
             inp?.focus();
         }
     });
+
     trackedEffect("screen-width-focus", () => {
         if ($screenWidth === ScreenWidth.Large) {
             inp?.focus();
         }
     });
+
     let placeholder = $derived(
         !canEnterText
             ? i18nKey("sendTextDisabled")
@@ -570,6 +740,8 @@
                 : i18nKey("enterMessage"),
     );
 </script>
+
+<svelte:window onpopstate={popStateHandler} />
 
 {#if showDirectBotChatWarning}
     <AlertBoxModal
@@ -614,7 +786,8 @@
         gap={"sm"}
         mainAxisAlignment={"spaceBetween"}
         crossAxisAlignment={recording ? "center" : "end"}
-        background={ColourVars.background0}>
+        background={ColourVars.background0}
+        padding={["zero", "md", inputTrayMode !== "closed" ? "sm" : "zero"]}>
         {#if frozen}
             <div class="frozen">
                 <Translatable resourceKey={i18nKey("chatFrozen")} />
@@ -647,9 +820,13 @@
                     <div
                         class="message_entry_wrapper"
                         class:has_reply={!!replyingTo}
+                        class:has_attachment={!!attachment}
                         class:is_editing={editingEvent !== undefined}>
                         {#if replyingTo}
                             <ReplyingTo readonly {replyingTo} {user} {onCancelReply} />
+                        {/if}
+                        {#if !editingEvent && attachment !== undefined}
+                            <DraftMediaMessage ctx={messageContext} content={attachment} />
                         {/if}
                         {#if editingEvent !== undefined}
                             <Row
@@ -667,38 +844,45 @@
                             </Row>
                         {/if}
                         <Row
-                            gap={"sm"}
-                            minHeight={"3.5rem"}
-                            maxHeight={"calc(var(--vh, 1vh) * 50)"}
+                            gap="sm"
+                            minHeight="3.5rem"
+                            maxHeight="calc(var(--vh, 1vh) * 50)"
                             padding="xs"
-                            crossAxisAlignment={"end"}
-                            mainAxisAlignment={"spaceBetween"}
-                            supplementalClass={"message_entry_text_box"}>
-                            <IconButton
-                                onclick={toggleEmojiPicker}
-                                padding={["sm", "zero", "md", "sm"]}
-                                size={"md"}>
-                                {#snippet icon()}
-                                    {#if showEmojiPicker}
-                                        <Keyboard color={ColourVars.textPlaceholder} />
-                                    {:else}
+                            overflow="auto"
+                            crossAxisAlignment="center"
+                            mainAxisAlignment="spaceBetween"
+                            supplementalClass="message_entry_text_box">
+                            {#if inputTrayMode !== "emoji_gif_selection"}
+                                <IconButton
+                                    onclick={toggleEmojiPicker}
+                                    padding={["sm", "zero", "md", "sm"]}
+                                    size={"md"}>
+                                    {#snippet icon()}
                                         <StickerEmoji color={ColourVars.textPlaceholder} />
-                                    {/if}
-                                {/snippet}
-                            </IconButton>
+                                    {/snippet}
+                                </IconButton>
+                            {:else}
+                                <IconButton
+                                    onclick={showKeyboard}
+                                    padding={["sm", "zero", "md", "sm"]}
+                                    size={"md"}>
+                                    {#snippet icon()}
+                                        <Keyboard color={ColourVars.textPlaceholder} />
+                                    {/snippet}
+                                </IconButton>
+                            {/if}
                             <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_static_element_interactions -->
                             <div
                                 data-gram="false"
                                 data-gramm_editor="false"
                                 data-enable-grammarly="false"
+                                data-keyboard-ignore="true"
                                 tabindex={0}
                                 bind:this={inp}
-                                onblur={saveSelection}
                                 class="textbox"
                                 class:recording
                                 class:empty={textboxEmpty}
                                 contenteditable
-                                onpaste={onPaste}
                                 placeholder={interpolate($_, placeholder)}
                                 use:translatable={{
                                     key: placeholder,
@@ -707,6 +891,8 @@
                                     top: 12,
                                 }}
                                 spellcheck
+                                onblur={saveSelection}
+                                onpaste={onPaste}
                                 oninput={onInput}
                                 onkeypress={keyPress}>
                             </div>
@@ -717,13 +903,13 @@
                                     width={"hug"}
                                     gap={"md"}>
                                     <IconButton
-                                        onclick={() =>
-                                            (showCustomMessageTrigger = !showCustomMessageTrigger)}
+                                        onclick={toggleAttachments}
                                         padding={["sm", "zero", "md", "zero"]}
                                         size={"md"}>
                                         {#snippet icon()}
                                             <div
-                                                class:open={showCustomMessageTrigger}
+                                                class:open={inputTrayMode === "attachments" &&
+                                                    !keyboard.visible}
                                                 class="drawer_trigger">
                                                 <PlusCircle color={ColourVars.textPlaceholder} />
                                             </div>
@@ -797,25 +983,41 @@
         {/if}
     </Container>
 
-    {#if showEmojiPicker}
-        <EmojiOrGif
-            empty={textboxEmpty}
-            ctx={messageContext}
-            onEmojiSelected={insertEmoji}
-            onBackspace={backspace}
-            onClose={toggleEmojiPicker} />
-    {/if}
+    <!-- svelte-ignore a11y_interactive_supports_focus -->
+    <div
+        role="dialog"
+        class={`input_tray ${inputTrayVisible ? "visible" : ""}`}
+        onmousedown={inputTrayFocusIn}
+        onfocusout={inputTrayFocusOut}
+        style:height={`${
+            inputTrayMode !== "closed"
+                ? keyboard.height + (inputTrayMode === "emoji_gif_search" ? 200 : 0)
+                : 0
+        }px`}
+        style:visibility={inputTrayMode !== "closed" ? "visible" : "hidden"}>
+        {#if inputTrayMode === "emoji_gif_selection" || inputTrayMode === "emoji_gif_search"}
+            <EmojiOrGif
+                empty={textboxEmpty}
+                ctx={messageContext}
+                onEmojiSelected={insertEmoji}
+                onBackspace={backspace}
+                onClose={toggleEmojiPicker} />
+        {/if}
+
+        {#if inputTrayMode === "attachments"}
+            <CustomMessageTrigger
+                {permittedMessages}
+                {onTokenTransfer}
+                {onCreatePrizeMessage}
+                {onCreateP2PSwapMessage}
+                {onMakeMeme}
+                {onClearAttachment}
+                {onFileSelected}
+                {messageContext}
+                open={true} />
+        {/if}
+    </div>
 {/if}
-<CustomMessageTrigger
-    {permittedMessages}
-    {onTokenTransfer}
-    {onCreatePrizeMessage}
-    {onCreateP2PSwapMessage}
-    {onMakeMeme}
-    {onClearAttachment}
-    {onFileSelected}
-    {messageContext}
-    bind:open={showCustomMessageTrigger} />
 
 <style lang="scss">
     .message_entry_wrapper {
@@ -825,7 +1027,8 @@
         background-color: var(--text-tertiary);
         transition: border-radius 200ms ease-out;
 
-        &.has_reply {
+        &.has_reply,
+        &.has_attachment {
             border-radius: var(--rad-xl) var(--rad-xl) var(--rad-xxl) var(--rad-xxl);
         }
 
@@ -880,6 +1083,22 @@
         justify-content: center;
         align-items: center;
         width: 100%;
+    }
+
+    .input_tray {
+        height: 0;
+        width: 100%;
+        padding-bottom: 0;
+        overflow: hidden;
+        background: var(--background-1);
+        border-radius: var(--rad-lg) var(--rad-lg) 0 0;
+        transition:
+            height 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+            padding-bottom 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+        &.visible {
+            padding-bottom: var(--device-nav-height);
+        }
     }
 
     :global {

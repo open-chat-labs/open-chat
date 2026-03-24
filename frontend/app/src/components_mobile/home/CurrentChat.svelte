@@ -47,6 +47,7 @@
     import ExternalContent from "./ExternalContent.svelte";
     import Footer from "./Footer.svelte";
     import MemeBuilder from "./MemeBuilder.svelte";
+    import { keyboard } from "@stores/keyboard.svelte";
 
     interface Props {
         chat: ChatSummary;
@@ -134,6 +135,7 @@
     }
 
     function tokenTransfer(detail: { ledger?: string; amount?: bigint }) {
+        keyboard.enableViewportResize();
         creatingCryptoTransfer = {
             ledger: detail.ledger ?? $lastCryptoSent ?? LEDGER_CANISTER_ICP,
             amount: detail.amount ?? BigInt(0),
@@ -156,6 +158,7 @@
     }
 
     function makeMeme() {
+        keyboard.enableViewportResize();
         buildingMeme = true;
         if (memeBuilder !== undefined) {
             memeBuilder.reset();
@@ -335,7 +338,10 @@
         ledger={creatingCryptoTransfer.ledger}
         defaultReceiver={defaultCryptoTransferReceiver()}
         {messageContext}
-        onClose={() => (creatingCryptoTransfer = undefined)} />
+        onClose={() => {
+            keyboard.disableViewportResize();
+            creatingCryptoTransfer = undefined;
+        }} />
 {/if}
 
 <MemeBuilder onSend={onSendMessageWithContent} bind:this={memeBuilder} bind:open={buildingMeme} />

@@ -38,7 +38,7 @@
     import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import { _, isLoading } from "svelte-i18n";
-    import { getFcmToken, openUrl, svelteReady } from "tauri-plugin-oc-api";
+    import { getFcmToken, svelteReady } from "tauri-plugin-oc-api";
     import Head from "./Head.svelte";
     import NotificationsBar from "./home/NotificationsBar.svelte";
     import ActiveCall from "./home/video/ActiveCall.svelte";
@@ -47,6 +47,7 @@
     import Router from "./Router.svelte";
     import Snow from "./Snow.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
+    import { keyboard } from "@src/stores/keyboard.svelte";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -96,26 +97,6 @@
                 import.meta.env.OC_ACCOUNT_LINKING_CODES_ENABLED! === "true",
             baseOrigin: import.meta.env.OC_BASE_ORIGIN!,
         });
-
-        if (client.isNativeApp()) {
-            // Open external links in a browser!
-            window.addEventListener("click", (event) => {
-                // TODO add any oc paths here that we wish to open in a browser
-                const forbiddenPaths: Set<string> = new Set([]);
-                const target = event.target as HTMLElement | null;
-                const link = target?.closest("a") as HTMLAnchorElement | null;
-
-                if (link && link.href) {
-                    const url = new URL(link.href);
-                    // the markdown plugin will have set the target to _blank for external link (hopefully!)
-                    if (link.target === "_blank" || forbiddenPaths.has(url.pathname)) {
-                        // this is an external link
-                        event.preventDefault();
-                        openUrl({ url: url.toString() });
-                    }
-                }
-            });
-        }
 
         return client;
     }
@@ -179,6 +160,8 @@
                 navBarHeight: data.navHeightDp,
             });
 
+            keyboard.visible = data.isKeyboardOpen;
+            keyboard.currentHeight = data.keyboardHeightDp;
             data.isKeyboardOpen
                 ? document.body.classList.add("keyboard-visible")
                 : document.body.classList.remove("keyboard-visible");

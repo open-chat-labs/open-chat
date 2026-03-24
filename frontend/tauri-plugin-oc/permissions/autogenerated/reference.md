@@ -17,6 +17,9 @@ Default permissions for the plugin
 - `allow-get-server-version`
 - `allow-download-update`
 - `allow-restart-app`
+- `allow-load-recent-media`
+- `allow-enable-viewport-resize`
+- `allow-disable-viewport-resize`
 
 ## Permission Table
 
@@ -26,6 +29,32 @@ Default permissions for the plugin
 <th>Description</th>
 </tr>
 
+
+<tr>
+<td>
+
+`oc:allow-disable-viewport-resize`
+
+</td>
+<td>
+
+Enables the disable_viewport_resize command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-disable-viewport-resize`
+
+</td>
+<td>
+
+Denies the disable_viewport_resize command without any pre-configured scope.
+
+</td>
+</tr>
 
 <tr>
 <td>
@@ -49,6 +78,32 @@ Enables the download_update command without any pre-configured scope.
 <td>
 
 Denies the download_update command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-enable-viewport-resize`
+
+</td>
+<td>
+
+Enables the enable_viewport_resize command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-enable-viewport-resize`
+
+</td>
+<td>
+
+Denies the enable_viewport_resize command without any pre-configured scope.
 
 </td>
 </tr>
@@ -101,6 +156,32 @@ Enables the get_server_version command without any pre-configured scope.
 <td>
 
 Denies the get_server_version command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-load-recent-media`
+
+</td>
+<td>
+
+Enables the load_recent_media command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-load-recent-media`
+
+</td>
+<td>
+
+Denies the load_recent_media command without any pre-configured scope.
 
 </td>
 </tr>

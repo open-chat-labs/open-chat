@@ -1,6 +1,5 @@
 <script lang="ts">
     import { fileFromDataTransferItems } from "@src/utils/datatransfer";
-    // import { Column } from "component-lib";
     import {
         messageContextsEqual,
         subscribe,
@@ -20,7 +19,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
     import EphemeralMessage from "../bots/EphemeralMessage.svelte";
-    import DraftMediaMessage from "./DraftMediaMessage.svelte";
+    // import DraftMediaMessage from "./DraftMediaMessage.svelte";
     import MessageEntry from "./MessageEntry.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -82,6 +81,8 @@
     let ephemeralMessageEvent = $state<EphemeralMessageEvent>();
     //@ts-ignore
     let messageEntry: MessageEntry;
+
+    let inputTrayVisible = $state(false);
 
     onMount(() => {
         const unsubs = [subscribe("ephemeralMessage", onEphemeralMessage)];
@@ -147,21 +148,22 @@
     });
 </script>
 
-<div class={`footer ${mode}`}>
+<div class={`footer ${mode} ${inputTrayVisible ? "tray_visible" : ""}`}>
     <div class="footer-overlay">
         {#if ephemeralMessageEvent !== undefined}
             <EphemeralMessage
                 onClose={() => (ephemeralMessageEvent = undefined)}
                 event={ephemeralMessageEvent} />
         {/if}
-        {#if editingEvent === undefined && (replyingTo || attachment !== undefined)}
+        <!-- {#if editingEvent === undefined && (replyingTo || attachment !== undefined)}
             {#if attachment !== undefined}
                 <DraftMediaMessage ctx={messageContext} content={attachment} />
             {/if}
-        {/if}
+        {/if} -->
     </div>
     <MessageEntry
         bind:this={messageEntry}
+        bind:inputTrayVisible
         {onPaste}
         {externalContent}
         {mode}
@@ -197,7 +199,16 @@
     .footer {
         width: 100%;
         position: relative;
-        padding: var(--sp-xs) var(--sp-md) var(--sp-zero);
+        padding: var(--sp-xs) var(--sp-zero) var(--sp-zero);
+        transition: padding-bottom 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+        &:not(.tray_visible) {
+            padding-bottom: var(--device-nav-height);
+        }
+
+        &.tray_visible {
+            padding-bottom: 0;
+        }
     }
 
     .footer-overlay {

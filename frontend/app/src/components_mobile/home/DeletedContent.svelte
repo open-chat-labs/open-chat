@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { BodySmall } from "component-lib";
+    import { BodySmall, Column } from "component-lib";
     import {
         OPENCHAT_BOT_USER_ID,
         selectedChatWebhooksStore,
@@ -21,7 +21,7 @@
         me: boolean;
     }
 
-    let { content, undeleting, me }: Props = $props();
+    let { content, undeleting }: Props = $props();
 
     let date = $derived(new Date(Number(content.timestamp)));
     let timestampStr = $derived(
@@ -36,28 +36,30 @@
     );
 </script>
 
-<BodySmall fontWeight={"light"} colour={me ? "primaryLight" : "textSecondary"}>
-    {#if undeleting}
-        <Translatable
-            resourceKey={i18nKey("undeletingMessage", {
-                username,
-                timestamp: timestampStr,
-            })} />
-    {:else if content.deletedBy === OPENCHAT_BOT_USER_ID}
-        <Markdown
-            text={$_("messageDeletedByOpenChatBot", {
-                values: {
+<Column padding={["xs", "sm"]}>
+    <BodySmall fontWeight={"light"} colour={"textTertiary"} italic={true}>
+        {#if undeleting}
+            <Translatable
+                resourceKey={i18nKey("undeletingMessage", {
                     username,
                     timestamp: timestampStr,
-                    rules: "/guidelines?section=3",
-                    modclub: "https://modclub.ai/",
-                },
-            })} />
-    {:else}
-        <Translatable
-            resourceKey={i18nKey("messageDeleted", {
-                username,
-                timestamp: timestampStr,
-            })} />
-    {/if}
-</BodySmall>
+                })} />
+        {:else if content.deletedBy === OPENCHAT_BOT_USER_ID}
+            <Markdown
+                text={$_("messageDeletedByOpenChatBot", {
+                    values: {
+                        username,
+                        timestamp: timestampStr,
+                        rules: "/guidelines?section=3",
+                        modclub: "https://modclub.ai/",
+                    },
+                })} />
+        {:else}
+            <Translatable
+                resourceKey={i18nKey("messageDeleted", {
+                    username,
+                    timestamp: timestampStr,
+                })} />
+        {/if}
+    </BodySmall>
+</Column>

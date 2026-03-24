@@ -19,12 +19,19 @@
 
     interface Props {
         mode?: "message" | "reaction" | "thread";
+        searchInputPadding?: boolean;
         onEmojiSelected: (emoji: SelectedEmoji) => void;
         onSkintoneChanged?: (tone: SkinTone) => void;
         customEmojis?: Map<string, CustomEmoji>;
     }
 
-    let { mode = "message", onEmojiSelected, onSkintoneChanged, customEmojis }: Props = $props();
+    let {
+        mode = "message",
+        searchInputPadding = false,
+        onEmojiSelected,
+        onSkintoneChanged,
+        customEmojis,
+    }: Props = $props();
     let showPayGate = $state<CustomEmoji>();
 
     function lockedCategoryCss(groupId: number, price: number) {
@@ -56,13 +63,24 @@
 
     function createCustomCss(): string {
         const rules: string[] = [];
+
         if (!$premiumItemsStore.has(PremiumItem.BotEmojis)) {
             rules.push(lockedCategoryCss(0, premiumPrices[PremiumItem.BotEmojis]));
         }
+
         if (!$premiumItemsStore.has(PremiumItem.PopularEmojis)) {
             rules.push(lockedCategoryCss(1, premiumPrices[PremiumItem.PopularEmojis]));
         }
+
+        // Custom CSS rules...
         rules.push(".indicator { transition: none; }");
+        if (searchInputPadding) {
+            rules.push(".search-row { padding-left: 6rem; }");
+        }
+        rules.push(
+            "#skintone-list { background-color: var(--background-2); border-radius: var(--rad-circle); box-shadow: var(--menu-sh); }",
+        );
+
         return rules.join("\n");
     }
 
@@ -139,14 +157,21 @@
     class:light={$currentTheme.mode === "light"}></emoji-picker>
 
 <style lang="scss">
-    :global(.emoji-overlay .modal-content) {
-        background-color: var(--menu-bg);
+    :global {
+        .emoji-overlay .modal-content {
+            background-color: var(--menu-bg);
+        }
     }
 
     emoji-picker {
         width: 100%;
+        height: 100%;
+        // flex: 1;
+        display: flex;
+
         // --emoji-padding: 0.3rem;
-        --emoji-size: 2rem;
+        --emoji-size: 1.75rem;
+        // --emoji-padding: 0.25rem;
         --background: transparent;
         --border-size: 0;
         --border-color: var(--bd);
@@ -157,7 +182,7 @@
         --input-border-radius: var(--rad-circle);
         --input-padding: var(--sp-sm) var(--sp-lg);
         --indicator-color: var(--primary);
-        --num-columns: 8 !important;
+        --num-columns: 9 !important;
 
         @media (max-width: 390px) {
             --num-columns: 7 !important;

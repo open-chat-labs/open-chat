@@ -1,13 +1,11 @@
 <script lang="ts">
-    import { previewHeightObserver } from "@utils/previewHeightObserver";
     import {
         eventListScrolling,
-        iconSize,
         offlineStore,
         type MultiUserChatIdentifier,
         type OpenChat,
     } from "openchat-client";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import { rtlStore } from "../../stores/rtl";
     import GenericPreviewComponent from "./GenericPreview.svelte";
@@ -75,7 +73,9 @@
 
     let { links, intersecting, pinned, fill, me, onRemove }: Props = $props();
 
+    // svelte-ignore state_referenced_locally
     let previousLinks = links;
+    // svelte-ignore state_referenced_locally
     let previews: Preview[] = $state(links.map(buildPreview));
     let shouldRenderPreviews = $state(false);
     let rtl = $rtlStore;
@@ -198,28 +198,6 @@
         }
     }
 
-    onMount(() => {
-        const toUnobserve: Element[] = [];
-        for (const preview of previews) {
-            if (preview.container) {
-                previewHeightObserver.observe(preview.container, preview.url);
-                toUnobserve.push(preview.container);
-
-                const height = previewHeightObserver.getHeight(preview.url);
-                if (height) {
-                    preview.container.style.setProperty("min-height", `${height}px`);
-                }
-                if (preview.kind === "generic") {
-                    // If we have a recorded height for this preview then display the container immediately, else hide it
-                    // until we have fetched the preview (if any)
-                    const display = height ? "flex" : "none";
-                    preview.container.style.setProperty("display", display);
-                }
-            }
-        }
-        return () => toUnobserve.forEach((e) => previewHeightObserver.unobserve(e));
-    });
-
     $effect(() => {
         if (intersecting && !$eventListScrolling && !shouldRenderPreviews && !$offlineStore) {
             shouldRenderPreviews = true;
@@ -235,20 +213,13 @@
 </script>
 
 {#each previews as preview (preview.url)}
-    <div
-        class="preview"
-        bind:this={preview.container}
-        class:visible={preview.kind !== "generic" && preview.kind !== "message"}
-        class:me>
-        {#if me}
-            <div class="remove-wrapper" class:rtl>
+    <div bind:this={preview.container} class="preview" class:me>
+        {#if me && onRemove}
+            <div class="remove_wrapper" class:rtl>
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div class="remove" onclick={() => removePreview(preview)}>
-                    <CloseIcon
-                        viewBox="0 0 24 24"
-                        size={$iconSize}
-                        color={ColourVars.textSecondary} />
+                    <CloseIcon viewBox="0 0 24 24" size="1.25rem" color={ColourVars.primaryLight} />
                 </div>
             </div>
         {/if}
@@ -291,25 +262,24 @@
 
 <style lang="scss">
     .preview {
-        display: none;
+        position: relative;
         word-break: break-word;
         flex-direction: row-reverse;
+        overflow: hidden;
+        border-radius: var(--rad-sm);
 
-        &.visible {
-            display: flex;
-        }
-
-        .remove-wrapper {
+        .remove_wrapper {
             flex: 0;
-            right: 0.25rem;
+            top: 0.35rem;
+            right: 0.35rem;
             position: absolute;
-            padding: var(--sp-xs);
+            padding: var(--sp-xxs);
             border-radius: var(--rad-circle);
-            background-color: var(--backdrop);
+            background-color: var(--primary-muted);
 
             &.rtl {
                 right: unset;
-                left: 0.25rem;
+                left: 0.35rem;
             }
         }
 
@@ -321,6 +291,19 @@
         .inner {
             flex: 1;
             max-width: 100%;
+            display: flex;
+        }
+    }
+
+    :global {
+        .container.message_bubble.no_header .intersection_observer:first-child > .preview {
+            &.me {
+                border-top-left-radius: var(--rad-lg);
+            }
+
+            &:not(.me) {
+                border-top-right-radius: var(--rad-lg);
+            }
         }
     }
 </style>

@@ -72,6 +72,9 @@ type Props = {
     // Helps us prevent longpress-ing again when the menu is already shown, by
     // reseting a local var when isOpen value changes.
     isOpen?: boolean;
+    // Longpress can be set up on an element, but this prop will determine if it
+    // works or not.
+    disabled?: boolean;
 };
 
 // TODO this should basically just be props, but for backwards compatibility we use a union.
@@ -86,6 +89,7 @@ export function longpress(node: HTMLElement, args?: LongpressArg) {
         animation = "none",
         cooldown = false,
         delay = 600,
+        disabled = false,
     } = processArgs(args);
 
     let scaleAnimationEnabled = animation === "scale";
@@ -130,7 +134,7 @@ export function longpress(node: HTMLElement, args?: LongpressArg) {
     }
 
     function onTouchStart(e: TouchEvent) {
-        if (cooldown || menuShown || isEdgeTouch(e)) {
+        if (disabled || cooldown || menuShown || isEdgeTouch(e)) {
             return;
         }
 
@@ -207,6 +211,7 @@ export function longpress(node: HTMLElement, args?: LongpressArg) {
             const a = processArgs(newArgs);
             cooldown = a.cooldown ?? false;
             menuShown = a.isOpen ?? false;
+            disabled = a.disabled ?? false;
         },
         destroy() {
             if (isTouchDevice) {

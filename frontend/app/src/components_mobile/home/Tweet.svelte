@@ -18,11 +18,7 @@
     });
 
     $effect(() => {
-        if (
-            tweetWrapper !== undefined &&
-            !rendering &&
-            supported
-        ) {
+        if (tweetWrapper !== undefined && !rendering && supported) {
             tweetWrapper.innerHTML = "";
 
             rendering = (<any>window).twttr?.widgets.createTweet(tweetId, tweetWrapper, {
@@ -38,4 +34,17 @@
     });
 </script>
 
-<div bind:this={tweetWrapper}></div>
+<div class="tweet_wrapper" bind:this={tweetWrapper}></div>
+
+<style lang="scss">
+    :global {
+        .tweet_wrapper .twitter-tweet-rendered {
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+        }
+    }
+    .tweet_wrapper {
+        display: flex;
+        width: 100%;
+    }
+</style>

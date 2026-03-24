@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OpenUrlRequest {
     pub url: String,
@@ -57,3 +57,31 @@ pub struct ReleaseNotificationsRequest {
     pub channel_id: Option<String>,
     pub thread_index: Option<String>,
 }
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct LoadRecentMediaRequest {
+    pub count: Option<usize>,
+    pub offset: Option<usize>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LoadRecentMediaResponse {
+    pub permission: String,
+    pub media: Vec<RecentMedia>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RecentMedia {
+    pub uri: String,
+    pub filename: String,
+    pub mime_type: String,
+    pub date_added: u32,
+    pub is_video: bool,
+    pub file_path: String,
+    pub thumbnail: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct EmptyPayload;

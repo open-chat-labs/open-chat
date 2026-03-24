@@ -7,11 +7,12 @@
     const client = getContext<OpenChat>("client");
 
     interface Props {
+        accept?: string;
         onFileSelected: (content: AttachmentContent) => void;
         children: Snippet<[() => void]>;
     }
 
-    let { onFileSelected, children }: Props = $props();
+    let { accept, onFileSelected, children }: Props = $props();
 
     let fileinput: HTMLInputElement | undefined = $state();
 
@@ -39,4 +40,4 @@
 </script>
 
 {@render children(click)}
-<input bind:this={fileinput} hidden type="file" onchange={fileSelected} />
+<input bind:this={fileinput} hidden type="file" {accept} onchange={fileSelected} />

@@ -42,6 +42,7 @@
         localUpdates,
         ONE_DAY,
     } from "openchat-client";
+    import { onMount } from "svelte";
     import Account from "svelte-material-icons/AccountOutline.svelte";
     import Diamond from "svelte-material-icons/DiamondOutline.svelte";
     import Lifetime from "svelte-material-icons/DiamondStone.svelte";
@@ -60,6 +61,7 @@
     import TokenInput from "./TokenInput.svelte";
     import TransferFeesMessage from "./TransferFeesMessage.svelte";
     import { TokenState } from "./wallet/walletState.svelte";
+    import { keyboard } from "@stores/keyboard.svelte";
 
     const OC_FEE_PERCENTAGE = 5n;
     const streaks = [3, 7, 14, 30, 100, 365];
@@ -106,6 +108,18 @@
     let valid = $derived(numberOfWinnersValid && tokenInputState === "ok");
     let selectMinChitEarned = $state(false);
     let selectMinStreak = $state(false);
+
+    onMount(() => {
+        const wasViewportResizeEnabled = keyboard.viewportResizeEnabled;
+        // If resize is currently not enabled, enable it!
+        if (!wasViewportResizeEnabled) keyboard.enableViewportResize();
+
+        return () => {
+            // If resize was not enabled enabled when the component was mounted,
+            // disable it again.
+            if (!wasViewportResizeEnabled) keyboard.disableViewportResize();
+        };
+    });
 
     function onDiamondChanged(t: "standard" | "lifetime") {
         switch (t) {

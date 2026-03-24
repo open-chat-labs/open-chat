@@ -670,6 +670,11 @@
     {@render renderMenuItem("blockUser")}
 {/if}
 
+<!-- Retry message send -->
+{#if failed}
+    {@render renderMenuItem("retryMessage")}
+{/if}
+
 <!-- Delete message -->
 {#if canDeleteMessage}
     {@render renderMenuItem(multiUserChat || me ? "deleteMessage" : "deleteMessageForMe")}
@@ -688,9 +693,4 @@
 <!-- Un-delete a message -->
 {#if canUndelete}
     {@render renderMenuItem("undeleteMessage")}
-{/if}
-
-<!-- Retry message send -->
-{#if failed}
-    {@render renderMenuItem("retryMessage")}
 {/if}

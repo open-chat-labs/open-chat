@@ -5,11 +5,8 @@
         Avatar,
         Container,
         Column,
-        IconButton,
         MenuTrigger,
-        Row,
         Sheet,
-        Subtitle,
         type PanDirection,
     } from "component-lib";
     import {
@@ -37,7 +34,6 @@
         type UserSummary,
     } from "openchat-client";
     import { getContext, onDestroy, onMount, tick } from "svelte";
-    import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { quickReactions } from "../../stores/quickReactions";
     import { now } from "../../stores/time";
@@ -54,7 +50,7 @@
     import MessageBubble from "./message/MessageBubble.svelte";
     import ReminderBuilder from "./ReminderBuilder.svelte";
     import ReportMessage from "./ReportMessage.svelte";
-    import { confirmMessageDeletion, dclickReply } from "@src/stores/settings";
+    import { confirmMessageDeletion } from "@src/stores/settings";
     import AreYouSure from "../AreYouSure.svelte";
     import BotMessageContext from "../bots/BotMessageContext.svelte";
     import Checkbox from "../Checkbox.svelte";
@@ -67,8 +63,12 @@
     import Reply from "svelte-material-icons/Reply.svelte";
     import SquareEditOutline from "svelte-material-icons/SquareEditOutline.svelte";
     import ShareOutline from "svelte-material-icons/ShareOutline.svelte";
+    import { keyboard } from "@stores/keyboard.svelte";
+    import historyUtils from "@utils/history";
 
     const client = getContext<OpenChat>("client");
+
+    const EMOJI_PICKER_STATE_ACTION = "emoji_picker_action";
 
     interface Props {
         chatId: ChatIdentifier;
@@ -105,6 +105,7 @@
         // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
         supportsEdit: boolean;
         supportsReply: boolean;
+        disablePan?: boolean;
         onReplyTo?: (replyContext: EnhancedReplyContext) => void;
         onEditMessage?: () => void;
         onCollapseMessage?: () => void;
@@ -147,6 +148,7 @@
         onExpandMessage = undefined,
         supportsEdit,
         supportsReply,
+        disablePan = false,
         onReplyTo,
         onEditMessage,
         onCollapseMessage,
@@ -256,16 +258,6 @@
         }
     }
 
-    function doubleClickMessage() {
-        if (failed || msg.deleted || !$dclickReply) return;
-
-        if (me) {
-            editMessage();
-        } else if (confirmed) {
-            reply();
-        }
-    }
-
     function tipMessage(ledger: string) {
         tipping = ledger;
     }
@@ -315,6 +307,7 @@
                 });
         }
         showEmojiPicker = false;
+        historyUtils.popHistoryStateWithAction(EMOJI_PICKER_STATE_ACTION);
     }
 
     function recalculateMediaDimensions() {
@@ -523,22 +516,22 @@
 {/if}
 
 {#if showEmojiPicker && canReact}
-    <Sheet onDismiss={() => (showEmojiPicker = false)}>
-        <Row padding={"lg"} mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
-            <Subtitle fontWeight={"bold"}>
-                <Translatable resourceKey={i18nKey("chooseReaction")} />
-            </Subtitle>
-            <IconButton onclick={() => (showEmojiPicker = false)}>
-                {#snippet icon(color)}
-                    <Close {color} />
-                {/snippet}
-            </IconButton>
-        </Row>
-        <EmojiPicker
-            onEmojiSelected={selectReaction}
-            onSkintoneChanged={(tone) => quickReactions.reload(tone)}
-            supportCustom={true}
-            mode={"reaction"} />
+    <Sheet
+        onDismiss={() => {
+            showEmojiPicker = false;
+            historyUtils.popHistoryStateWithAction(EMOJI_PICKER_STATE_ACTION);
+        }}>
+        <div
+            class="emoji_picker_wrapper"
+            style:padding-bottom={keyboard.visible ? `${keyboard.currentHeight - 64}px` : "0"}>
+            <Column height="fill" overflow="auto" minHeight={keyboard.visible ? "35vh" : "50vh"}>
+                <EmojiPicker
+                    onEmojiSelected={selectReaction}
+                    onSkintoneChanged={(tone) => quickReactions.reload(tone)}
+                    supportCustom={true}
+                    mode={"reaction"} />
+            </Column>
+        </div>
     </Sheet>
 {/if}
 
@@ -628,6 +621,7 @@
     <pre>showChatMenu: {showChatMenu}</pre>
     <pre>ephemeral: {ephemeral}</pre>
 {/if}
+
 {#if expiresAt === undefined || percentageExpired < 100}
     <IntersectionObserverComponent>
         {#snippet children(intersecting)}
@@ -640,11 +634,13 @@
                 gap={"sm"}
                 overflow={"visible"}
                 mainAxisAlignment={me ? "end" : "start"}
-                pan={{
-                    oncommit: onPanCommit,
-                    onmove: onPanMove,
-                    isScrolling: scrollStatus.isScrolling || scrollStatus.isCooldown,
-                }}>
+                pan={msg.deleted || disablePan
+                    ? undefined
+                    : {
+                          oncommit: onPanCommit,
+                          onmove: onPanMove,
+                          isScrolling: scrollStatus.isScrolling || scrollStatus.isCooldown,
+                      }}>
                 {#if showAvatar}
                     <div class:first class="avatar">
                         <Avatar
@@ -661,7 +657,7 @@
                     overflow={"visible"}
                     crossAxisAlignment={me ? "end" : "start"}
                     width={"hug"}
-                    maxWidth={"85%"}
+                    maxWidth={chatId.kind === "direct_chat" ? "78vw" : "75vw"}
                     gap={"xxs"}
                     minWidth={"6rem"}
                     direction={"vertical"}>
@@ -699,6 +695,7 @@
                                     {confirmed}
                                     {failed}
                                     {canShare}
+                                    deleted={msg.deleted}
                                     {me}
                                     {canReact}
                                     {canPin}
@@ -723,6 +720,9 @@
                                     {onCollapseMessage}
                                     showEmojiPicker={() => {
                                         showEmojiPicker = true;
+                                        historyUtils.pushDummyHistoryState(
+                                            EMOJI_PICKER_STATE_ACTION,
+                                        );
                                     }}
                                     onReply={reply}
                                     {onRetrySend}
@@ -745,7 +745,6 @@
                             {sender}
                             bind:ref={msgBubbleElement}
                             onOpenUserProfile={openUserProfile}
-                            onDoubleClick={doubleClickMessage}
                             {msg}
                             {fill}
                             {first}
@@ -836,7 +835,8 @@
     :global(#scrollable-list-chat-messages),
     :global(#scrollable-list-thread-messages) {
         overflow-x: hidden !important;
-        overflow-y: scroll !important;
+        overflow-y: auto !important;
+        overflow-anchor: auto;
     }
 
     :global(.container.message_bubble_wrapper .menu-trigger) {
@@ -897,5 +897,13 @@
         &.left {
             right: -4rem;
         }
+    }
+
+    .emoji_picker_wrapper {
+        flex: 1;
+        width: 100%;
+        display: flex;
+        overflow: hidden;
+        flex-direction: column;
     }
 </style>

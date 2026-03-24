@@ -17,7 +17,9 @@ import type {
     FullWebhookDetails,
     GrantedBotPermissions,
     GroupChatSummary,
+    ImageContent,
     Level,
+    MemeFighterContent,
     Message,
     MessageContext,
     MultiUserChat,
@@ -33,6 +35,7 @@ import type {
     UpdatedRules,
     UserGroupDetails,
     VideoCallType,
+    VideoContent,
 } from "..";
 
 export type PubSubEvents = {
@@ -243,4 +246,6 @@ export type PubSubEvents = {
     createSwap: { fromLedger: string; ctx: MessageContext };
     viewBotCommand: CommandDefinition;
     architecture: undefined;
+    focusImage: ImageContent | MemeFighterContent;
+    playVideo: VideoContent;
 };

@@ -2,6 +2,7 @@
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { eventListScrolling } from "openchat-client";
     import { ChatCaption, Column, Label } from "component-lib";
+    // import PreviewPlaceholder from "../PreviewPlaceholder.svelte";
 
     type LinkInfo = {
         url: string;
@@ -48,14 +49,25 @@
     }
 
     trackedEffect("generic-preview", () => {
-        // make sure we only actually *load* the preview once
+        // Make sure we only actually *load* the preview once, and start only
+        // if the link is in view.
+        if (previewPromise || !intersecting) return;
         previewPromise = previewPromise ?? loadPreview(url);
-        previewPromise.then((preview) => {
-            if (preview && intersecting && !$eventListScrolling) {
-                rendered = true;
-                onRendered(url);
-            }
-        });
+    });
+
+    // Render link preview separately from it being loaded, since any links
+    // rendered previousl can push the links above out of view, which would
+    // mean tha they get loaded, but not rendered if we're only checking the
+    // render condtion within the then handler (which was the case before).
+    $effect(() => {
+        if (previewPromise && !rendered && intersecting) {
+            previewPromise?.then((preview) => {
+                if (preview && !$eventListScrolling) {
+                    rendered = true;
+                    onRendered(url);
+                }
+            });
+        }
     });
 
     const urlDomain = $derived.by(() => {
@@ -68,50 +80,26 @@
     const urlColour = $derived(me ? "textPrimary" : "secondary");
 </script>
 
-{#snippet previewPlaceholder()}
-    <div class="generic-preview placeholder" class:me>
-        <div class="image-preview">
-            <!-- TODO add image icon -->
-        </div>
-        <Column padding={["sm", "md"]} gap="sm" width="fill">
-            <div class="title-preview">
-                <div class="row w100"></div>
-                <div class="row w75"></div>
-            </div>
-            <div class="desc-preview">
-                <div class="row w95"></div>
-                <div class="row w60"></div>
-            </div>
-            <div class="domain-preview">
-                <div class="row w25"></div>
-            </div>
-        </Column>
-    </div>
-{/snippet}
-
 {#if rendered}
-    {#await previewPromise}
-        {@render previewPlaceholder()}
-    {:then preview}
+    {#await previewPromise then preview}
         {#if preview}
             <a href={preview.url} target="_blank">
                 <div class="generic-preview" class:me>
                     {#if preview.image}
-                        <img
-                            class="image"
-                            src={preview.image}
-                            alt={preview.imageAlt ?? "link preview image"} />
+                        <img class="image" src={preview.image} alt={preview.imageAlt ?? ""} />
                     {/if}
                     {#if preview.title || preview.description || urlDomain}
                         <Column padding={["sm", "md"]} gap="sm">
-                            {#if preview.title}
+                            {#if preview.title && preview.description}
+                                <!-- This renders only if title and description are available -->
                                 <Label fontWeight="bold" colour={textColour} maxLines={2}>
                                     {preview.title}
                                 </Label>
                             {/if}
-                            {#if preview.description}
+                            {#if preview.description || preview.title}
                                 <ChatCaption colour={textColour} maxLines={3}>
-                                    {preview.description}
+                                    <!-- If we don't have description, render title instead -->
+                                    {preview.description ?? preview.title}
                                 </ChatCaption>
                             {/if}
                             {#if urlDomain}
@@ -125,17 +113,19 @@
             </a>
         {/if}
     {/await}
-{:else}
-    {@render previewPlaceholder()}
+    <!-- TODO render placeholder in case it takes a while to get the link info -->
+    <!-- {:else} <PreviewPlaceholder kind="generic_preview" {me} /> -->
 {/if}
 
 <style lang="scss">
     .generic-preview {
-        margin: -0.5rem -0.5rem 0 -0.5rem;
+        // Prevet preveiws from breaking anchoring, this should avoid any scroll
+        // jitters while previews are loading, even if they're supposed to load
+        // offscreen
+        overflow-anchor: none;
 
         .image {
-            max-height: 18rem;
-            max-width: 100%;
+            width: 100%;
         }
 
         &.me {
@@ -144,50 +134,6 @@
 
         &:not(.me) {
             background-color: var(--background-1);
-        }
-    }
-
-    .generic-preview.placeholder {
-        .row {
-            width: 50%;
-            height: 1rem;
-            margin: 0.25rem 0;
-            border-radius: var(--rad-lg);
-
-            &.w100 {
-                width: 100%;
-            }
-            &.w95 {
-                width: 95%;
-            }
-            &.w75 {
-                width: 75%;
-            }
-            &.w65 {
-                width: 65%;
-            }
-            &.w25 {
-                width: 25%;
-            }
-        }
-
-        &.me .row {
-            background-color: var(--primary-light);
-        }
-
-        &:not(.me) .row {
-            background-color: var(--background-2);
-        }
-
-        .image-preview {
-            height: 6rem;
-        }
-
-        .image-preview,
-        .title-preview,
-        .desc-preview,
-        .domain-preview {
-            width: 100%;
         }
     }
 </style>

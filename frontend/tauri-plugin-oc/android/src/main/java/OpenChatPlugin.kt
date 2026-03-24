@@ -3,11 +3,13 @@ package com.ocplugin.app
 import android.app.Activity
 import android.app.NotificationManager
 import android.content.Context
+import android.content.pm.PackageManager
 import android.util.Log
 import android.webkit.WebView
 import app.tauri.annotation.Command
 import app.tauri.annotation.TauriPlugin
 import app.tauri.plugin.Invoke
+import app.tauri.plugin.JSArray
 import app.tauri.plugin.JSObject
 import app.tauri.plugin.Plugin
 import com.google.firebase.messaging.FirebaseMessaging
@@ -79,12 +81,39 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
     fun restartApp(invoke: Invoke) {
         RestartApp(activity).handler(invoke)
     }
+
+    @Command
+    fun loadRecentMedia(invoke: Invoke) {
+        val media = LoadRecentMedia(activity)
+        if (media.checkPermissionGranted()) {
+            media.handler(invoke)
+        } else {
+            // Save the intent reference, so that we can use it once we get a response from the
+            // permission request within the Main activity. At that point we call the
+            // OCPluginCompanion.resolvePermissionsGranted function.
+            OCPluginCompanion.pendingMediaInvoke = invoke
+            media.askForPermission()
+        }
+    }
+
+    @Command
+    fun enableViewportResize(invoke: Invoke) {
+        ViewportResize(activity).enable(invoke)
+    }
+
+    @Command
+    fun disableViewportResize(invoke: Invoke) {
+        ViewportResize(activity).disable(invoke)
+    }
 }
 
 object OCPluginCompanion {
 
     // Indicates that the UI is ready!
     var svelteReady: Boolean = false
+
+    // Allows the viewport to resize when keyboard pops up
+    var viewportResizeEnabled: Boolean = true
 
     // FCM token cache!
     //
@@ -94,13 +123,13 @@ object OCPluginCompanion {
     fun initFcmTokenCache() {
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             if (!task.isSuccessful) {
-                Log.e(LOG_TAG, "Fetching FCM registration token failed", task.exception)
+                // Log.e(LOG_TAG, "Fetching FCM registration token failed", task.exception)
                 return@addOnCompleteListener
             }
 
             // Get FCM token
             val token = task.result
-            Log.d(LOG_TAG, "FCM Token: $token")
+            // Log.d(LOG_TAG, "FCM Token: $token")
 
             // Cache token locally so that we can query it!
             fcmToken = token
@@ -113,7 +142,7 @@ object OCPluginCompanion {
     fun cacheNewFcmToken(token: String) {
         fcmToken = token
         triggerRef("fcm-token-refresh", JSObject().apply { put("fcmToken", token) })
-        Log.d(LOG_TAG, "FCM token refreshed: $token")
+        // Log.d(LOG_TAG, "FCM token refreshed: $token")
     }
 
     // Fire Svelte handled event
@@ -127,10 +156,10 @@ object OCPluginCompanion {
     fun setTriggerRef(plugin: OpenChatPlugin) {
         triggerRef = { event, payload ->
             if (svelteReady) {
-                Log.d(LOG_TAG, "FIRE EVENT: $event, $payload")
+                // Log.d(LOG_TAG, "FIRE EVENT: $event, $payload")
                 plugin.trigger(event, payload)
             } else {
-                Log.d(LOG_TAG, "ADD EVENT TO QUEUE: $event, $payload")
+                // Log.d(LOG_TAG, "ADD EVENT TO QUEUE: $event, $payload")
                 eventQueue.add(Pair(event, payload.toString()))
             }
         }
@@ -144,7 +173,7 @@ object OCPluginCompanion {
 
     fun flushQueuedEvents() {
         if (svelteReady) {
-            Log.d(LOG_TAG, "Flushing queued events")
+            // Log.d(LOG_TAG, "Flushing queued events")
             eventQueue.forEach { (event, payload) -> triggerRef(event, JSObject(payload)) }
             eventQueue.clear()
         } else {
@@ -160,9 +189,36 @@ object OCPluginCompanion {
 
     fun getNotificationsManager(context: Context): NotificationManager {
         if (notificationsManager == null) {
-            notificationsManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationsManager =
+                    context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         }
 
         return notificationsManager!!
+    }
+
+    // Invoke for media permission request
+    var pendingMediaInvoke: Invoke? = null
+
+    // This function is called from MainActivity, and handles results of any permission requests.
+    // Each permission request has a unique request code.
+    fun resolvePermissionsGranted(activity: Activity, requestCode: Int, grantResults: IntArray) {
+        when (requestCode) {
+            PERM_CODE_GALLERY -> {
+                if (pendingMediaInvoke != null) {
+                    if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+                        LoadRecentMedia(activity).handler(pendingMediaInvoke!!)
+                    } else {
+                        Log.d(LOG_TAG, "@@@ WARNING: Media permission denied!")
+
+                        // Basically tell the UI that the permission was denied!
+                        pendingMediaInvoke!!.resolve(
+                                JSObject().put("permission", "denied").put("media", JSArray())
+                        )
+                    }
+                } else {
+                    Log.d(LOG_TAG, "@@@ ERROR: Media invoke not available!")
+                }
+            }
+        }
     }
 }

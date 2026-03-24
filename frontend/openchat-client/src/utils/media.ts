@@ -244,95 +244,115 @@ export async function quantiseWaveform(
     return { samples, durationMs };
 }
 
+type MessageContentOpts = {
+    loadBlob?: boolean;
+    assetUrl?: string;
+};
+
 export async function messageContentFromFile(
     file: File,
     isDiamond: boolean,
+    opts?: MessageContentOpts,
 ): Promise<AttachmentContent> {
+    const { loadBlob = true } = opts ?? {};
+
+    const constructMessageContent = async (
+        resolve: (arg: AttachmentContent) => void,
+        reject: (reason?: unknown) => void,
+        e?: ProgressEvent<FileReader>,
+    ) => {
+        const mimeType = file.type;
+        const isImage = /^image/.test(mimeType);
+        const isSVG = mimeType === "image/svg+xml";
+        const isGif = isImage && /gif/.test(mimeType);
+        const isVideo = /^video/.test(mimeType);
+        const isAudio = /^audio/.test(mimeType);
+        const isFile = !(isImage || isVideo || isAudio);
+        let data = (e?.target?.result as ArrayBuffer) ?? new ArrayBuffer();
+        let content: MessageContent;
+        const maxSizes = isDiamond ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
+
+        if (isVideo && data.byteLength > maxSizes.video) {
+            reject("maxVideoSize");
+            return;
+        } else if (isAudio && data.byteLength > maxSizes.audio) {
+            reject("maxAudioSize");
+            return;
+        } else if (isFile && data.byteLength > maxSizes.file) {
+            reject("maxFileSize");
+            return;
+        }
+
+        const blobUrl = dataToBlobUrl(data, mimeType);
+
+        if (isImage) {
+            const extract = await extractImageThumbnail(blobUrl, mimeType);
+
+            if (!isGif || data.byteLength > maxSizes.image) {
+                data = (await stripMetaDataAndResize(blobUrl, mimeType)).data;
+            }
+
+            content = {
+                kind: "image_content",
+                mimeType: isSVG ? "image/png" : mimeType,
+                width: extract.dimensions.width,
+                height: extract.dimensions.height,
+                blobData: new Uint8Array(data),
+                thumbnailData: extract.url,
+                blobUrl: blobUrl,
+            };
+        } else if (isVideo) {
+            const [thumb, image] = await extractVideoThumbnail(blobUrl, mimeType);
+
+            content = {
+                kind: "video_content",
+                mimeType: mimeType,
+                width: image.dimensions.width,
+                height: image.dimensions.height,
+                imageData: {
+                    blobData: new Uint8Array(image.data),
+                    blobUrl: image.url,
+                },
+                videoData: {
+                    blobData: new Uint8Array(data),
+                    blobUrl: blobUrl,
+                },
+                thumbnailData: thumb.url,
+            };
+        } else if (isAudio) {
+            const quantised = await quantiseWaveform(data.slice(0));
+            content = {
+                kind: "audio_content",
+                mimeType: mimeType,
+                blobData: new Uint8Array(data),
+                blobUrl: blobUrl,
+                ...quantised,
+            };
+        } else {
+            content = {
+                kind: "file_content",
+                name: file.name,
+                mimeType: mimeType,
+                blobData: new Uint8Array(data),
+                blobUrl: blobUrl,
+                fileSize: data.byteLength,
+            };
+        }
+        resolve(content);
+    };
+
     return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsArrayBuffer(file);
-        reader.onload = async (e: ProgressEvent<FileReader>) => {
-            if (!e.target) return;
+        if (loadBlob) {
+            const reader = new FileReader();
+            reader.readAsArrayBuffer(file);
+            reader.onload = async (e: ProgressEvent<FileReader>) => {
+                if (!e.target) return;
 
-            const mimeType = file.type;
-            const isImage = /^image/.test(mimeType);
-            const isSVG = mimeType === "image/svg+xml";
-            const isGif = isImage && /gif/.test(mimeType);
-            const isVideo = /^video/.test(mimeType);
-            const isAudio = /^audio/.test(mimeType);
-            const isFile = !(isImage || isVideo || isAudio);
-            let data = e.target.result as ArrayBuffer;
-            let content: MessageContent;
-            const maxSizes = isDiamond ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
-
-            if (isVideo && data.byteLength > maxSizes.video) {
-                reject("maxVideoSize");
-                return;
-            } else if (isAudio && data.byteLength > maxSizes.audio) {
-                reject("maxAudioSize");
-                return;
-            } else if (isFile && data.byteLength > maxSizes.file) {
-                reject("maxFileSize");
-                return;
-            }
-
-            const blobUrl = dataToBlobUrl(data, mimeType);
-
-            if (isImage) {
-                const extract = await extractImageThumbnail(blobUrl, mimeType);
-
-                if (!isGif || data.byteLength > maxSizes.image) {
-                    data = (await stripMetaDataAndResize(blobUrl, mimeType)).data;
-                }
-
-                content = {
-                    kind: "image_content",
-                    mimeType: isSVG ? "image/png" : mimeType,
-                    width: extract.dimensions.width,
-                    height: extract.dimensions.height,
-                    blobData: new Uint8Array(data),
-                    thumbnailData: extract.url,
-                    blobUrl: blobUrl,
-                };
-            } else if (isVideo) {
-                const [thumb, image] = await extractVideoThumbnail(blobUrl, mimeType);
-
-                content = {
-                    kind: "video_content",
-                    mimeType: mimeType,
-                    width: image.dimensions.width,
-                    height: image.dimensions.height,
-                    imageData: {
-                        blobData: new Uint8Array(image.data),
-                        blobUrl: image.url,
-                    },
-                    videoData: {
-                        blobData: new Uint8Array(data),
-                        blobUrl: blobUrl,
-                    },
-                    thumbnailData: thumb.url,
-                };
-            } else if (isAudio) {
-                const quantised = await quantiseWaveform(data.slice(0));
-                content = {
-                    kind: "audio_content",
-                    mimeType: mimeType,
-                    blobData: new Uint8Array(data),
-                    blobUrl: blobUrl,
-                    ...quantised,
-                };
-            } else {
-                content = {
-                    kind: "file_content",
-                    name: file.name,
-                    mimeType: mimeType,
-                    blobData: new Uint8Array(data),
-                    blobUrl: blobUrl,
-                    fileSize: data.byteLength,
-                };
-            }
-            resolve(content);
-        };
+                constructMessageContent(resolve, reject);
+            };
+        } else {
+            constructMessageContent(resolve, reject);
+        }
     });
 }
 

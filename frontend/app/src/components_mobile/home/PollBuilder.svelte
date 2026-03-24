@@ -18,7 +18,7 @@
         type PollContent,
         type TotalPollVotes,
     } from "openchat-client";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import Chart from "svelte-material-icons/ChartBoxOutline.svelte";
@@ -29,6 +29,7 @@
     import Translatable from "../Translatable.svelte";
     import DurationSelector from "./DurationSelector.svelte";
     import SlidingPageContent from "./SlidingPageContent.svelte";
+    import { keyboard } from "@stores/keyboard.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -74,6 +75,18 @@
     let validQuestion = $derived(poll.pollQuestion.length > 0);
     let validAnswers = $derived(enoughAnswers && uniqueAnswers && emptyAnswers === 0);
     let valid = $derived(validQuestion && validAnswers);
+
+    onMount(() => {
+        const wasViewportResizeEnabled = keyboard.viewportResizeEnabled;
+        // If resize is currently not enabled, enable it!
+        if (!wasViewportResizeEnabled) keyboard.enableViewportResize();
+
+        return () => {
+            // If resize was not enabled enabled when the component was mounted,
+            // disable it again.
+            if (!wasViewportResizeEnabled) keyboard.disableViewportResize();
+        };
+    });
 
     export function resetPoll() {
         poll = emptyPoll();

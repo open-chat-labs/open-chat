@@ -26,10 +26,10 @@ class MainActivity : TauriActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // Has to be called before super, and only for Android versions <= 14
         enableEdgeToEdgeForAndroid14AndLess()
-        
+
         super.onCreate(savedInstanceState)
         WebView.setWebContentsDebuggingEnabled(true)
-        
+
         try {
             handleWindowInsets()
             handleNotificationIntent(intent)
@@ -39,16 +39,12 @@ class MainActivity : TauriActivity() {
 
         onBackPressedDispatcher.addCallback(this) { interceptBack() }
     }
-    
+
     private fun interceptBack() {
         Log.d(LOG_TAG, "Back pressed/swiped intercepted in MainActivity")
 
         // Raise back pressed, but send no data!
         OCPluginCompanion.triggerRef("back-pressed", JSObject())
-
-        // If you want to allow default Android back afterwards:
-        // this.remove()   // remove callback
-        // onBackPressedDispatcher.onBackPressed() // dispatch again
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -63,12 +59,13 @@ class MainActivity : TauriActivity() {
     override fun onWebViewCreate(webView: WebView) {
         super.onWebViewCreate(webView)
 
-        webView.webChromeClient = object : WebChromeClient() {
-            override fun onPermissionRequest(request: PermissionRequest) {
-                // Grant camera & mic to the WebView
-                request.grant(request.resources)
-            }
-        }
+        webView.webChromeClient =
+                object : WebChromeClient() {
+                    override fun onPermissionRequest(request: PermissionRequest) {
+                        // Grant camera & mic to the WebView
+                        request.grant(request.resources)
+                    }
+                }
     }
 
     private fun handleNotificationIntent(intent: Intent) {
@@ -88,7 +85,7 @@ class MainActivity : TauriActivity() {
 
     fun handleWindowInsets() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        
+
         val rootView = findViewById<View>(android.R.id.content)
 
         // Set a window insets change listener:
@@ -96,23 +93,21 @@ class MainActivity : TauriActivity() {
         // - Allows us to set the bottom inset for the soft keyboard or device nav, depending if
         //   the keyboard is visible or not!
         //
-        // Setting only `android:windowSoftInputMode="adjustResize"` in the AndroidManifest.xml does not
-        // seem to work by itself, but adds to this and can improve resize behaviour for web/hybrid apps.
-        ViewCompat.setOnApplyWindowInsetsListener(rootView) { _, insets ->            
+        // Setting only `android:windowSoftInputMode="adjustResize"` in the AndroidManifest.xml does
+        // not
+        // seem to work by itself, but adds to this and can improve resize behaviour for web/hybrid
+        // apps.
+        ViewCompat.setOnApplyWindowInsetsListener(rootView) { _, insets ->
             // Insets relevant for soft keyboard open/close
             val imeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
             val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
             val imeHeight = imeInsets.bottom
-            
+
             // Insets for the status bar...
-            val statusBarInsets = insets.getInsets(
-                WindowInsetsCompat.Type.statusBars()
-            )
-            
+            val statusBarInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+
             // Insets for the nav bar...
-            val navInsets = insets.getInsets(
-                WindowInsetsCompat.Type.navigationBars()
-            )
+            val navInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
 
             // Get the nav bar height in dp...
             val density = rootView.resources.displayMetrics.density
@@ -120,32 +115,38 @@ class MainActivity : TauriActivity() {
 
             // Detect if the app is using gesture navigation!
             val isGestureNavigation = navHeightDp <= 36
-            
+
             if (imeVisible) {
-                Log.d(LOG_TAG, "Keyboard OPEN - inset height = $imeHeight")
-                rootView.updatePadding(bottom = imeHeight)
+                // Log.d(LOG_TAG, "Keyboard OPEN - inset height = $imeHeight")
+                if (OCPluginCompanion.viewportResizeEnabled) {
+                    rootView.updatePadding(bottom = imeHeight)
+                }
             } else {
-                Log.d(LOG_TAG, "Inset changed, or soft keyboard CLOSED - inset height = $imeHeight")
+                // Log.d(LOG_TAG, "Inset changed, or soft keyboard CLOSED - inset height = $imeHeight")
 
                 // If the device is using gesture navigation we let the Svelte part of the app
                 // decide the bottom padding where required.
                 rootView.updatePadding(bottom = if (isGestureNavigation) 0 else navInsets.bottom)
             }
-            
-            val insetData = JSObject()
-                .put("isKeyboardOpen", imeVisible)
-                .put("isGestureNavigation", isGestureNavigation)
-                .put("navHeightDp", navHeightDp)
-                .put("statusBarHeightDp", statusBarInsets.top / density)
-                .put("keyboardHeightDp", imeHeight / density)
-                .put("apiLevel", Build.VERSION.SDK_INT)
-                .put("osVersion", Build.VERSION.RELEASE)
-                
+
+            val insetData =
+                JSObject()
+                    .put("isKeyboardOpen", imeVisible)
+                    .put("isGestureNavigation", isGestureNavigation)
+                    .put("navHeightDp", navHeightDp)
+                    .put("statusBarHeightDp", statusBarInsets.top / density)
+                    .put("keyboardHeightDp", imeHeight / density)
+                    .put("apiLevel", Build.VERSION.SDK_INT)
+                    .put("osVersion", Build.VERSION.RELEASE)
+
             // Report inset changes to Svelte...
             OCPluginCompanion.triggerRef("window-inset-change", insetData)
 
-            // Important: return the insets unchanged
-            insets
+            if (OCPluginCompanion.viewportResizeEnabled) {
+                insets
+            } else {
+                WindowInsetsCompat.CONSUMED
+            }
         }
     }
 
@@ -159,7 +160,7 @@ class MainActivity : TauriActivity() {
             enableEdgeToEdge()
             Log.d(LOG_TAG, "Edge-to-edge enabled for Android <= 14")
 
-            // Set to FALSE for White icons (Dark backgrounds) 
+            // Set to FALSE for White icons (Dark backgrounds)
             // Set to TRUE for Dark icons (Light backgrounds)
             val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
             windowInsetsController.isAppearanceLightStatusBars = false
@@ -167,8 +168,17 @@ class MainActivity : TauriActivity() {
 
             // TODO dynamically set the status bar and nav bar colours based on the app theme!
             // The code below is how to figure out if we're using a dark theme.
-            // val isDarkMode = (resources.configuration.uiMode and 
+            // val isDarkMode = (resources.configuration.uiMode and
             //     Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
         }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        OCPluginCompanion.resolvePermissionsGranted(this, requestCode, grantResults)
     }
 }

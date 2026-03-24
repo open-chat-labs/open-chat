@@ -61,6 +61,9 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             commands::restart_app,
             commands::get_server_version,
             commands::download_update,
+            commands::load_recent_media,
+            commands::enable_viewport_resize,
+            commands::disable_viewport_resize,
         ])
         .register_uri_scheme_protocol("oc", |ctx, request| {
             let handle = ctx.app_handle().clone();

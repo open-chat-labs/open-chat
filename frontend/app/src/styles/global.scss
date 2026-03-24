@@ -446,14 +446,12 @@ a {
 
 html,
 body {
-    // Prevent pinch-zooming on Android devices
-    // Note: tested meta viewport `user-scalable=no`, but seems like Tauri
-    // webview does not respect it
     height: 100%;
-    touch-action: pan-x pan-y;
 }
 
 body.native-android {
+    // Prevent pinch-zooming - Tauri webview does not respect `user-scalable=no`
+    touch-action: pan-x pan-y;
     // Set the status bar height via CSS to avoid issues with bg colour not
     // matching the headers bg.
     &:not(.onboarding) > main,
@@ -471,28 +469,9 @@ body.native-android {
             padding-bottom: calc(var(--sp-lg) + var(--device-nav-height)) !important;
         }
 
-        .footer {
-            padding-bottom: var(--device-nav-height) !important;
-        }
-
         .transient_sheet,
         .anon-footer {
             padding-bottom: var(--device-nav-height) !important;
-        }
-    }
-
-    // Set paddings when device uses 2 or 3 button navigation
-    &:not(.has-gesture-nav) {
-        .footer {
-            padding-bottom: var(--sp-md) !important;
-        }
-    }
-
-    // Case when keyboard is visible, we want to have a bit of padding between
-    // the top of the keyboard and any UI elements.
-    &.keyboard-visible {
-        .footer {
-            padding-bottom: var(--sp-sm) !important;
         }
     }
 }
@@ -652,6 +631,15 @@ svelte-virtual-list-viewport {
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+@keyframes move-to-right {
+    from {
+        left: -20rem;
+    }
+    to {
+        left: calc(100% + 20rem);
     }
 }
 

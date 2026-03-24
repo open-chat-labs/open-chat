@@ -98,7 +98,7 @@
         {height}
         {blockLevelMarkdown} />
 {:else if content.kind === "video_content"}
-    <VideoContent {edited} {fill} {content} {reply} {height} {blockLevelMarkdown} />
+    <VideoContent {me} {edited} {fill} {content} {reply} {height} {blockLevelMarkdown} />
 {:else if content.kind === "video_call_content"}
     <VideoCallContent {senderId} {messageIndex} {content} {timestamp} />
 {:else if content.kind === "audio_content"}
@@ -130,7 +130,15 @@
 {:else if content.kind === "poll_content"}
     <PollContent {readonly} {me} {content} {senderId} {onRegisterVote} />
 {:else if content.kind === "giphy_content"}
-    <GiphyContent {edited} {intersecting} {fill} {content} {reply} {height} {blockLevelMarkdown} />
+    <GiphyContent
+        {me}
+        {edited}
+        {intersecting}
+        {fill}
+        {content}
+        {reply}
+        {height}
+        {blockLevelMarkdown} />
 {:else if content.kind === "proposal_content"}
     <ProposalContent
         {content}

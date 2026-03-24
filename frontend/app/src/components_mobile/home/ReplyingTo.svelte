@@ -49,7 +49,7 @@
     maxHeight={"10rem"}
     width="fill"
     gap={"zero"}>
-    <div class="reply_wrapper" class:me class:with_padding={!hasDedicatedReplyContent}>
+    <div class="replying_wrapper" class:me class:with_padding={!hasDedicatedReplyContent}>
         <div class="cancel_reply" class:filled={fillReplyCancel}>
             <IconButton onclick={onCancelReply} size="sm">
                 {#snippet icon(_color)}
@@ -58,7 +58,7 @@
             </IconButton>
         </div>
         {#if hasDedicatedReplyContent}
-            <div class="reply_content" class:me>
+            <div class="replying_content" class:me>
                 <ChatMessageReplyContent
                     {displayName}
                     {readonly}
@@ -83,7 +83,7 @@
                     {displayName}
                 </ChatCaption>
             </Row>
-            <div class="reply_content no_padding" class:me>
+            <div class="replying_content no_padding" class:me>
                 <ChatMessageContent
                     showPreviews={false}
                     {readonly}
@@ -112,7 +112,7 @@
     }
 
     :global {
-        .reply_wrapper {
+        .replying_wrapper {
             width: 100%;
             position: relative;
             padding-left: var(--sp-xl);
@@ -157,9 +157,9 @@
             }
         }
 
-        .reply_content {
+        .replying_content {
             pointer-events: none;
-            padding: var(--sp-xs);
+            padding: var(--sp-sm) var(--sp-xs);
             padding-left: 0;
 
             &.no_padding {
