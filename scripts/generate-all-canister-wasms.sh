@@ -30,7 +30,6 @@ cargo build --locked --target wasm32-unknown-unknown --release \
   --package group_canister_impl \
   --package group_index_canister_impl \
   --package identity_canister_impl \
-  --package local_user_index_canister_impl \
   --package market_maker_canister_impl \
   --package neuron_controller_canister_impl \
   --package notifications_index_canister_impl \
@@ -45,6 +44,10 @@ cargo build --locked --target wasm32-unknown-unknown --release \
   --package translations_canister_impl \
   --package user_canister_impl \
   --package user_index_canister_impl || exit 1
+
+# Build this separately since that results in a slightly smaller wasm and we are right on the size limit
+cargo build --locked --target wasm32-unknown-unknown --release \
+  --package local_user_index_canister_impl || exit 1
 
 echo Optimising wasms
 if ! cargo install --list | grep -Fxq "ic-wasm v0.9.0:"
