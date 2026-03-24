@@ -3174,8 +3174,11 @@ export class OpenChat {
 
     diffGroupPermissions = diffGroupPermissions;
 
-    messageContentFromFile(file: File): Promise<AttachmentContent> {
-        return messageContentFromFile(file, isDiamondStore.value);
+    messageContentFromFile(file: File, assetUrl?: string): Promise<AttachmentContent> {
+        return messageContentFromFile(file, isDiamondStore.value, {
+            loadBlob: !this.isNativeApp(),
+            assetUrl,
+        });
     }
 
     formatFileSize = formatFileSize;

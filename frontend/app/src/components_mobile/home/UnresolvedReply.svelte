@@ -9,7 +9,7 @@
 
 <!-- TODO RTL layout -->
 <Row
-    supplementalClass="reply-wrapper"
+    supplementalClass="reply_wrapper"
     gap="sm"
     padding="sm"
     crossAxisAlignment="center"

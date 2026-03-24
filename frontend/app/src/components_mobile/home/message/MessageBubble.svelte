@@ -245,7 +245,7 @@
             msg.repliesTo.kind === "rehydrated_reply_context" ? msg.repliesTo : undefined}
         <Container
             onClick={reply ? () => zoomToMessage(reply) : undefined}
-            supplementalClass={`reply-wrapper ${me ? "me" : ""}`}
+            supplementalClass={`reply_wrapper ${me ? "me" : ""}`}
             direction={"vertical"}>
             {#if msg.repliesTo.kind === "rehydrated_reply_context"}
                 {@render repliesTo(msg.repliesTo)}

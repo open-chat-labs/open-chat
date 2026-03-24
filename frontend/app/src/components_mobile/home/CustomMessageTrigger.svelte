@@ -82,10 +82,8 @@
     function onMediaSelected(media: RecentMedia) {
         constructFileObject(media).then((file) => {
             client
-                .messageContentFromFile(file)
-                .then((content) => {
-                    onFileSelected(content);
-                })
+                .messageContentFromFile(file, convertFileSrc(media.filePath))
+                .then(onFileSelected)
                 .catch((err) => {
                     toastStore.showFailureToast(i18nKey(err));
                 });

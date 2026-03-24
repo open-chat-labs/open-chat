@@ -2,6 +2,7 @@ import type { AttachmentContent, Message, MessageContent } from "openchat-shared
 import { dataToBlobUrl } from "./blob";
 
 const THUMBNAIL_DIMS = dimensions(30, 30);
+const DEFAULT_JPEG_QUALITY = 0.75;
 
 export type MaxMediaSizes = {
     image: number;
@@ -50,58 +51,90 @@ function scaleToFit(toScale: Dimensions, maxDimensions: Dimensions): Dimensions 
     }
 }
 
-export async function extractImageThumbnail(
-    blobUrl: string,
-    mimeType: string,
-): Promise<MediaExtract> {
-    return new Promise<MediaExtract>((resolve, _) => {
-        const img = new Image();
-        img.onload = () =>
-            resolve(changeDimensions(img, mimeType, dimensions(img.width, img.height)));
-        img.src = blobUrl;
-    });
+export async function extractImageThumbnail(file: File, mimeType: string): Promise<MediaExtract> {
+    const bitmap = await createImageBitmap(file);
+    return changeDimensions(bitmap, mimeType, dimensions(bitmap.width, bitmap.height));
 }
 
 export async function extractVideoThumbnail(
-    blobUrl: string,
+    file: File,
     mimeType: string,
 ): Promise<[MediaExtract, MediaExtract]> {
-    return new Promise<[MediaExtract, MediaExtract]>((resolve, _) => {
-        const video = document.createElement("video");
-        video.addEventListener("loadedmetadata", () => {
-            // if the currentTime is set too early the "seeked" event does not fire on iOS
-            // Can't find a better way to deal with it than this
-            let attempts = 0;
-            const loop = window.setInterval(() => {
-                if (attempts > 10) window.clearInterval(loop);
-                video.currentTime = 1;
-                attempts += 1;
-            }, 100);
-            video.addEventListener("seeked", () => {
-                window.clearInterval(loop);
-                resolve(
-                    Promise.all([
-                        changeDimensions(
-                            video,
-                            mimeType,
-                            dimensions(video.videoWidth, video.videoHeight),
-                        ),
-                        changeDimensions(
-                            video,
-                            mimeType,
-                            dimensions(video.videoWidth, video.videoHeight),
-                            dimensions(video.videoWidth, video.videoHeight),
-                        ),
-                    ]),
-                );
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.muted = true; // helps with autoplay/seek on some browsers
+
+    // Create a temporary object URL from the File
+    const objectUrl = URL.createObjectURL(file);
+    video.src = objectUrl;
+
+    try {
+        // Wait for metadata to load
+        await new Promise<void>((resolve, reject) => {
+            video.addEventListener("loadedmetadata", () => resolve(), { once: true });
+            video.addEventListener("error", () => reject(new Error("Video failed to load")), {
+                once: true,
             });
         });
-        video.src = blobUrl;
-    });
+
+        // Seek to 1 second (with safety for iOS)
+        video.currentTime = 1;
+
+        // Wait for the seek to complete
+        await new Promise<void>((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error("Seek timeout")), 5000);
+
+            video.addEventListener(
+                "seeked",
+                () => {
+                    clearTimeout(timeout);
+                    resolve();
+                },
+                { once: true },
+            );
+
+            // Fallback: if seeked doesn't fire, try at 0.5s too
+            if (video.readyState < 2) {
+                setTimeout(() => {
+                    if (video.currentTime !== 1) video.currentTime = 0.5;
+                }, 300);
+            }
+        });
+
+        // Now create both thumbnails using the video element
+        const originalDim = dimensions(video.videoWidth, video.videoHeight);
+        const [thumbnail, fullSize] = await Promise.all([
+            changeDimensions(video, mimeType, originalDim, THUMBNAIL_DIMS),
+            changeDimensions(video, mimeType, originalDim, originalDim),
+        ]);
+
+        return [thumbnail, fullSize];
+    } finally {
+        // Always clean up the object URL
+        URL.revokeObjectURL(objectUrl);
+        video.src = "";
+        // helps release memory
+        video.load();
+    }
 }
 
-export function changeDimensions(
-    original: HTMLImageElement | HTMLVideoElement,
+export async function stripMetaDataAndResize(file: File, mimeType: string): Promise<MediaExtract> {
+    // Directly create bitmap from the File (works on web + Tauri, no tainting)
+    const bitmap = await createImageBitmap(file);
+    const result = await changeDimensions(
+        bitmap,
+        mimeType,
+        dimensions(bitmap.width, bitmap.height),
+        MAX_DIMENSIONS,
+    );
+
+    // Free memory as soon as we're done with the bitmap
+    bitmap.close();
+    return result;
+}
+
+export async function changeDimensions(
+    source: ImageBitmap | HTMLImageElement | HTMLVideoElement,
     mimeType: string,
     originalDimensions: Dimensions,
     newDimensions: Dimensions = THUMBNAIL_DIMS,
@@ -112,24 +145,25 @@ export function changeDimensions(
     canvas.height = height;
 
     const context = canvas.getContext("2d")!;
-    context.drawImage(original, 0, 0, canvas.width, canvas.height);
+    context.drawImage(source, 0, 0, width, height);
+
     const resultMimeType = mimeType === "image/jpeg" ? "image/jpeg" : "image/png";
 
-    return new Promise((resolve) => {
-        canvas.toBlob((blob) => {
-            if (blob) {
-                const reader = new FileReader();
-                reader.addEventListener("loadend", () => {
-                    resolve({
-                        dimensions: originalDimensions,
-                        url: canvas.toDataURL(mimeType),
-                        data: reader.result as ArrayBuffer,
-                    });
-                });
-                reader.readAsArrayBuffer(blob);
-            }
-        }, resultMimeType);
+    const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob(resolve, resultMimeType, DEFAULT_JPEG_QUALITY);
     });
+
+    if (!blob) {
+        throw new Error("Failed to create blob from canvas");
+    }
+
+    const arrayBuffer = await blob.arrayBuffer();
+
+    return {
+        dimensions: originalDimensions,
+        url: canvas.toDataURL(resultMimeType, DEFAULT_JPEG_QUALITY),
+        data: arrayBuffer,
+    };
 }
 
 type MediaExtract = {
@@ -159,20 +193,6 @@ export function fillMessage(msg: Message): boolean {
     } else {
         return false;
     }
-}
-
-export function stripMetaDataAndResize(blobUrl: string, mimeType: string): Promise<MediaExtract> {
-    // if our image is too big, we'll just create a new version with fixed dimensions
-    // there's no very easy way to reduce it to a specific file size
-    return new Promise<MediaExtract>((resolve, _) => {
-        const img = new Image();
-        img.onload = () => {
-            resolve(
-                changeDimensions(img, mimeType, dimensions(img.width, img.height), MAX_DIMENSIONS),
-            );
-        };
-        img.src = blobUrl;
-    });
 }
 
 export function audioRecordingMimeType(): "audio/webm" | "audio/mp4" | undefined {
@@ -254,7 +274,7 @@ export async function messageContentFromFile(
     isDiamond: boolean,
     opts?: MessageContentOpts,
 ): Promise<AttachmentContent> {
-    const { loadBlob = true } = opts ?? {};
+    const { loadBlob = true, assetUrl } = opts ?? {};
 
     const constructMessageContent = async (
         resolve: (arg: AttachmentContent) => void,
@@ -286,10 +306,10 @@ export async function messageContentFromFile(
         const blobUrl = dataToBlobUrl(data, mimeType);
 
         if (isImage) {
-            const extract = await extractImageThumbnail(blobUrl, mimeType);
+            const extract = await extractImageThumbnail(file, mimeType);
 
             if (!isGif || data.byteLength > maxSizes.image) {
-                data = (await stripMetaDataAndResize(blobUrl, mimeType)).data;
+                data = (await stripMetaDataAndResize(file, mimeType)).data;
             }
 
             content = {
@@ -299,10 +319,12 @@ export async function messageContentFromFile(
                 height: extract.dimensions.height,
                 blobData: new Uint8Array(data),
                 thumbnailData: extract.url,
-                blobUrl: blobUrl,
+                blobUrl: assetUrl ?? blobUrl,
             };
+
+            console.log("CONTENT CONSTRUCTED", content);
         } else if (isVideo) {
-            const [thumb, image] = await extractVideoThumbnail(blobUrl, mimeType);
+            const [thumb, image] = await extractVideoThumbnail(file, mimeType);
 
             content = {
                 kind: "video_content",
@@ -315,7 +337,7 @@ export async function messageContentFromFile(
                 },
                 videoData: {
                     blobData: new Uint8Array(data),
-                    blobUrl: blobUrl,
+                    blobUrl: assetUrl ?? blobUrl,
                 },
                 thumbnailData: thumb.url,
             };
@@ -325,7 +347,7 @@ export async function messageContentFromFile(
                 kind: "audio_content",
                 mimeType: mimeType,
                 blobData: new Uint8Array(data),
-                blobUrl: blobUrl,
+                blobUrl: assetUrl ?? blobUrl,
                 ...quantised,
             };
         } else {
@@ -334,10 +356,11 @@ export async function messageContentFromFile(
                 name: file.name,
                 mimeType: mimeType,
                 blobData: new Uint8Array(data),
-                blobUrl: blobUrl,
+                blobUrl: assetUrl ?? blobUrl,
                 fileSize: data.byteLength,
             };
         }
+
         resolve(content);
     };
 
@@ -347,7 +370,6 @@ export async function messageContentFromFile(
             reader.readAsArrayBuffer(file);
             reader.onload = async (e: ProgressEvent<FileReader>) => {
                 if (!e.target) return;
-
                 constructMessageContent(resolve, reject);
             };
         } else {
