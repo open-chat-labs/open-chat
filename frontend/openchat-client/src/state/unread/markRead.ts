@@ -40,14 +40,6 @@ export class MessagesRead {
         }));
     }
 
-    get isEmpty() {
-        return (
-            this.readUpTo === undefined &&
-            this.threads.size === 0 &&
-            this.dateReadPinned === undefined
-        );
-    }
-
     get empty() {
         return (
             this.readUpTo === undefined &&
