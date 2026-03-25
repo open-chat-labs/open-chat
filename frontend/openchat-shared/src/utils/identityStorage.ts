@@ -1,4 +1,4 @@
-import { IdbStorage } from "@dfinity/auth-client";
+import { IdbStorage } from "@icp-sdk/auth/client";
 import { SignIdentity } from "@icp-sdk/core/agent";
 import {
     DelegationChain,

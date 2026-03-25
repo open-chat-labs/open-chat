@@ -15,6 +15,8 @@ export function initialiseTracking({ icUrl, userGeekApiKey }: OpenChatConfig): v
 
 export function startTrackingSession(identityPrincipal: string): void {
     if (shouldTrack) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
         Usergeek.setPrincipal(Principal.fromText(identityPrincipal));
         Usergeek.trackSession();
     }
