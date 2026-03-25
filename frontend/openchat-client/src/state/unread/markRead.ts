@@ -40,6 +40,14 @@ export class MessagesRead {
         }));
     }
 
+    get isEmpty() {
+        return (
+            this.readUpTo === undefined &&
+            this.threads.size === 0 &&
+            this.dateReadPinned === undefined
+        );
+    }
+
     get empty() {
         return (
             this.readUpTo === undefined &&
@@ -389,8 +397,10 @@ export class MessageReadTracker {
         }
         this.#store.update((s) => {
             s.serverState.set(chatId, serverState);
-            if (chatState !== undefined) {
+            if (chatState !== undefined && !chatState.empty) {
                 s.state.set(chatId, chatState);
+            } else {
+                s.state.delete(chatId);
             }
             return s;
         });
