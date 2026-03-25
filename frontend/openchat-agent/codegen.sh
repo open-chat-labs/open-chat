@@ -1,15 +1,19 @@
-#!/usr/bin/env bash
+#!/bin/bash
+
+set -eu
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR
 
-function generateTsAndJs {
+generateTsAndJs() {
   candidFile=$1
   outDir=$2
 
-  didc bind $candidFile -t ts | sed -e 's/@dfinity/@icp-sdk\/core/g' > $outDir/types.d.ts
-  didc bind $candidFile -t js > $outDir/idl.js
+  mkdir -p "$outDir"
+
+  didc bind "$candidFile" -t ts | sed 's|@dfinity/|@icp-sdk/core/|g' > "$outDir/types.d.ts"
+  didc bind "$candidFile" -t js > "$outDir/idl.js"
 }
 
 generateTsAndJs ../../backend/canisters/market_maker/api/can.did ./src/services/marketMaker/candid
