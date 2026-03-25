@@ -4,7 +4,7 @@ import {
     HttpAgent,
     type Identity,
     isV2ResponseBody,
-    isV3ResponseBody,
+    isV4ResponseBody,
     lookupResultToBuffer,
     polling,
     RejectError,
@@ -106,12 +106,13 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
                 callSync: onRequestAccepted === undefined,
             });
 
-            if (isV3ResponseBody(response.body)) {
-                // const certTime = this.agent.replicaTime;
+            if (isV4ResponseBody(response.body)) {
                 const certificate = await Certificate.create({
                     certificate: response.body.certificate,
                     rootKey: this.agent.rootKey!,
-                    canisterId: canisterIdPrincipal,
+                    principal: {
+                        canisterId: canisterIdPrincipal,
+                    },
                     blsVerify: undefined,
                 });
                 const path = [utf8ToBytes("request_status"), requestId];
@@ -193,7 +194,11 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
                     onRequestAccepted();
                 }
 
-                const { reply } = await polling.pollForResponse(this.agent, canisterIdPrincipal, requestId);
+                const { reply } = await polling.pollForResponse(
+                    this.agent,
+                    canisterIdPrincipal,
+                    requestId,
+                );
                 return Promise.resolve(
                     mapper(
                         MsgpackCanisterAgent.deserializeResponse(
@@ -246,7 +251,14 @@ export abstract class SingleCanisterMsgpackAgent extends MsgpackCanisterAgent {
         requestValidator: In,
         responseValidator: Resp,
     ): Promise<Out> {
-        return this.executeMsgpackQuery(this.canisterId, methodName, args, mapper, requestValidator, responseValidator);
+        return this.executeMsgpackQuery(
+            this.canisterId,
+            methodName,
+            args,
+            mapper,
+            requestValidator,
+            responseValidator,
+        );
     }
 
     protected async update<In extends TSchema, Resp extends TSchema, Out>(
@@ -257,7 +269,15 @@ export abstract class SingleCanisterMsgpackAgent extends MsgpackCanisterAgent {
         responseValidator: Resp,
         onRequestAccepted?: () => void,
     ): Promise<Out> {
-        return this.executeMsgpackUpdate(this.canisterId, methodName, args, mapper, requestValidator, responseValidator, onRequestAccepted);
+        return this.executeMsgpackUpdate(
+            this.canisterId,
+            methodName,
+            args,
+            mapper,
+            requestValidator,
+            responseValidator,
+            onRequestAccepted,
+        );
     }
 }
 
@@ -274,7 +294,14 @@ export abstract class MultiCanisterMsgpackAgent extends MsgpackCanisterAgent {
         requestValidator: In,
         responseValidator: Resp,
     ): Promise<Out> {
-        return this.executeMsgpackQuery(canisterId, methodName, args, mapper, requestValidator, responseValidator);
+        return this.executeMsgpackQuery(
+            canisterId,
+            methodName,
+            args,
+            mapper,
+            requestValidator,
+            responseValidator,
+        );
     }
 
     protected async update<In extends TSchema, Resp extends TSchema, Out>(
@@ -286,7 +313,14 @@ export abstract class MultiCanisterMsgpackAgent extends MsgpackCanisterAgent {
         responseValidator: Resp,
         onRequestAccepted?: () => void,
     ): Promise<Out> {
-        return this.executeMsgpackUpdate(canisterId, methodName, args, mapper, requestValidator, responseValidator, onRequestAccepted);
+        return this.executeMsgpackUpdate(
+            canisterId,
+            methodName,
+            args,
+            mapper,
+            requestValidator,
+            responseValidator,
+            onRequestAccepted,
+        );
     }
 }
-

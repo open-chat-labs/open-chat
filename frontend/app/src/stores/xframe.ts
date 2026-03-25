@@ -1,4 +1,4 @@
-import { AuthClient } from "@dfinity/auth-client";
+import { AuthClient } from "@icp-sdk/auth/client";
 import { routerReadyStore, xframeOverrides, type XFrameOverrides } from "openchat-client";
 import page from "page";
 import { get } from "svelte/store";
