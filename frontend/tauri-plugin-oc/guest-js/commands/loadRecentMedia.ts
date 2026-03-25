@@ -14,6 +14,7 @@ export type RecentMedia = {
     dateAdded: number;
     isVideo: boolean;
     filePath: string;
+    size: number;
     thumbnail?: string;
 };
 

@@ -80,6 +80,7 @@ pub struct RecentMedia {
     pub date_added: u32,
     pub is_video: bool,
     pub file_path: String,
+    pub size: usize,
     pub thumbnail: Option<String>,
 }
 

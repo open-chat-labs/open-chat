@@ -1,4 +1,5 @@
-import type { AttachmentContent, Message, MessageContent } from "openchat-shared";
+import type { AttachmentContent, Message } from "openchat-shared";
+import { LazyFile } from "openchat-shared";
 import { dataToBlobUrl } from "./blob";
 
 const THUMBNAIL_DIMS = dimensions(30, 30);
@@ -51,64 +52,51 @@ function scaleToFit(toScale: Dimensions, maxDimensions: Dimensions): Dimensions 
     }
 }
 
-export async function extractImageThumbnail(file: File, mimeType: string): Promise<MediaExtract> {
+export async function extractImageThumbnail(file: File): Promise<MediaExtract> {
     const bitmap = await createImageBitmap(file);
-    return changeDimensions(bitmap, mimeType, dimensions(bitmap.width, bitmap.height));
+    return changeDimensions(bitmap, file.type, dimensions(bitmap.width, bitmap.height));
 }
 
-export async function extractVideoThumbnail(
-    file: File,
-    mimeType: string,
-): Promise<[MediaExtract, MediaExtract]> {
+export async function extractVideoThumbnail(file: File): Promise<[MediaExtract, MediaExtract]> {
+    const objectUrl = URL.createObjectURL(file);
     const video = document.createElement("video");
     video.preload = "metadata";
-    video.muted = true; // helps with autoplay/seek on some browsers
-
-    // Create a temporary object URL from the File
-    const objectUrl = URL.createObjectURL(file);
+    video.muted = true; // may help with autoplay/seek on some browsers
     video.src = objectUrl;
 
     try {
-        // Wait for metadata to load
         await new Promise<void>((resolve, reject) => {
             video.addEventListener("loadedmetadata", () => resolve(), { once: true });
-            video.addEventListener("error", () => reject(new Error("Video failed to load")), {
+            video.addEventListener("error", () => reject(new Error("failed to load video")), {
                 once: true,
             });
         });
 
-        // Seek to 1 second (with safety for iOS)
+        // Seek to 1 seecond, should be okay with iOS
         video.currentTime = 1;
 
         // Wait for the seek to complete
         await new Promise<void>((resolve, reject) => {
-            const timeout = setTimeout(() => reject(new Error("Seek timeout")), 5000);
-
+            const seekTimeout = setTimeout(() => reject(new Error("video seek timeout")), 5000);
             video.addEventListener(
                 "seeked",
                 () => {
-                    clearTimeout(timeout);
+                    clearTimeout(seekTimeout);
                     resolve();
                 },
                 { once: true },
             );
 
-            // Fallback: if seeked doesn't fire, try at 0.5s too
-            if (video.readyState < 2) {
-                setTimeout(() => {
-                    if (video.currentTime !== 1) video.currentTime = 0.5;
-                }, 300);
-            }
+            // TODO any fallbacks for video.readyState < 2?
         });
 
-        // Now create both thumbnails using the video element
         const originalDim = dimensions(video.videoWidth, video.videoHeight);
-        const [thumbnail, fullSize] = await Promise.all([
-            changeDimensions(video, mimeType, originalDim, THUMBNAIL_DIMS),
-            changeDimensions(video, mimeType, originalDim, originalDim),
+        const resized = await Promise.all([
+            changeDimensions(video, file.type, originalDim, THUMBNAIL_DIMS),
+            changeDimensions(video, file.type, originalDim, originalDim),
         ]);
 
-        return [thumbnail, fullSize];
+        return resized;
     } finally {
         // Always clean up the object URL
         URL.revokeObjectURL(objectUrl);
@@ -118,12 +106,12 @@ export async function extractVideoThumbnail(
     }
 }
 
-export async function stripMetaDataAndResize(file: File, mimeType: string): Promise<MediaExtract> {
+export async function stripMetaDataAndResize(file: File): Promise<MediaExtract> {
     // Directly create bitmap from the File (works on web + Tauri, no tainting)
     const bitmap = await createImageBitmap(file);
     const result = await changeDimensions(
         bitmap,
-        mimeType,
+        file.type,
         dimensions(bitmap.width, bitmap.height),
         MAX_DIMENSIONS,
     );
@@ -173,14 +161,8 @@ type MediaExtract = {
 };
 
 export function fillMessage(msg: Message): boolean {
-    if (msg.forwarded || msg.content.kind === "meme_fighter_content") {
-        return false;
-    }
-
-    if (msg.content.kind === "prize_content") {
-        return true;
-    }
-
+    if (msg.forwarded || msg.content.kind === "meme_fighter_content") return false;
+    if (msg.content.kind === "prize_content") return true;
     if (
         msg.content.kind === "image_content" ||
         msg.content.kind === "video_content" ||
@@ -209,10 +191,8 @@ function reduceWaveform(channels: Float32Array[]): Uint8Array {
     const targetSamples = 120;
     const bits = 8;
     const maxLevel = (1 << bits) - 1;
-
     const frameCount = channels[0].length;
     const samplesPerBucket = frameCount / targetSamples;
-
     const samples = new Uint8Array(targetSamples);
 
     function summariseBlock(start: number, end: number) {
@@ -264,116 +244,156 @@ export async function quantiseWaveform(
     return { samples, durationMs };
 }
 
-type MessageContentOpts = {
-    loadBlob?: boolean;
-    assetUrl?: string;
-};
+// HANDLE ATTACHED MEDIA
+
+type MediaType = "image" | "svg" | "gif" | "video" | "audio" | "file";
+
+function mimeToMediaType(mimeType: string): MediaType {
+    if (/^video/.test(mimeType)) return "video";
+    if (/^audio/.test(mimeType)) return "audio";
+    if (/^image/.test(mimeType)) {
+        if (/gif/.test(mimeType)) return "gif";
+        else return "image";
+    }
+    if (mimeType === "image/svg+xml") return "svg";
+
+    return "file";
+}
+
+// Process selected image!
+//
+// Creates a thumbnail, and resizes the image if necessary. Returns the content
+// data shape.
+// TODO blob data should be loaded lazyily for any content
+async function handleImageFile(
+    file: File,
+    maxSizes: MaxMediaSizes,
+    mediaType: MediaType,
+): Promise<AttachmentContent> {
+    const isGif = mediaType === "gif";
+    const isSvg = mediaType === "svg";
+
+    // Get image thumbnail!
+    const bitmap = await createImageBitmap(file);
+    const thumbnail = await changeDimensions(
+        bitmap,
+        file.type,
+        dimensions(bitmap.width, bitmap.height),
+    );
+    bitmap.close();
+
+    // If it's not gif, and file size is larger than allowed, resize!
+    const data =
+        !isGif || file.size > maxSizes.image
+            ? (await stripMetaDataAndResize(file)).data
+            : await file.arrayBuffer();
+    const blobUrl = dataToBlobUrl(data, file.type);
+
+    return {
+        kind: "image_content",
+        mimeType: isSvg ? "image/png" : file.type,
+        width: thumbnail.dimensions.width,
+        height: thumbnail.dimensions.height,
+        blobData: new Uint8Array(data),
+        thumbnailData: thumbnail.url,
+        blobUrl: blobUrl,
+    };
+}
+
+// Handle video files
+//
+// Extracts video thumbnail and a full image, then reads the video data and
+// returns the attachment content.
+// TODO blob data should be loaded lazyily for any content
+async function handleVideoFile(file: File): Promise<AttachmentContent> {
+    const [thumb, image] = await extractVideoThumbnail(file);
+
+    // TODO resize video instead of checking max dims?
+    const data = await file.arrayBuffer();
+    const blobUrl = dataToBlobUrl(data, file.type);
+
+    return {
+        kind: "video_content",
+        mimeType: file.type,
+        width: image.dimensions.width,
+        height: image.dimensions.height,
+        imageData: {
+            blobData: new Uint8Array(image.data),
+            blobUrl: image.url,
+        },
+        videoData: {
+            blobData: new Uint8Array(data),
+            blobUrl: blobUrl,
+        },
+        thumbnailData: thumb.url,
+    };
+}
+
+// Handle audio files
+//
+// Waveform is quantised and attachment content returned.
+// TODO - blob data should be loaded lazyily for any content
+// TODO - should we be concerned about reducing audio size?
+async function handleAudioFiles(file: File): Promise<AttachmentContent> {
+    const data = await file.arrayBuffer();
+    const blobUrl = dataToBlobUrl(data, file.type);
+    const quantised = await quantiseWaveform(data.slice(0));
+    return {
+        kind: "audio_content",
+        mimeType: file.type,
+        blobData: new Uint8Array(data),
+        blobUrl: blobUrl,
+        ...quantised,
+    };
+}
+
+// Handle regular files
+//
+// Anything that's not an image, video, audio...
+async function handleRegularFiles(file: File): Promise<AttachmentContent> {
+    const data = await file.arrayBuffer();
+    const blobUrl = dataToBlobUrl(data, file.type);
+    return {
+        kind: "file_content",
+        name: file.name,
+        mimeType: file.type,
+        blobData: new Uint8Array(data),
+        blobUrl: blobUrl,
+        fileSize: data.byteLength,
+    };
+}
 
 export async function messageContentFromFile(
-    file: File,
+    file: File | LazyFile,
     isDiamond: boolean,
-    opts?: MessageContentOpts,
 ): Promise<AttachmentContent> {
-    const { loadBlob = true, assetUrl } = opts ?? {};
-
-    const constructMessageContent = async (
-        resolve: (arg: AttachmentContent) => void,
-        reject: (reason?: unknown) => void,
-        e?: ProgressEvent<FileReader>,
-    ) => {
-        const mimeType = file.type;
-        const isImage = /^image/.test(mimeType);
-        const isSVG = mimeType === "image/svg+xml";
-        const isGif = isImage && /gif/.test(mimeType);
-        const isVideo = /^video/.test(mimeType);
-        const isAudio = /^audio/.test(mimeType);
-        const isFile = !(isImage || isVideo || isAudio);
-        let data = (e?.target?.result as ArrayBuffer) ?? new ArrayBuffer();
-        let content: MessageContent;
+    return new Promise(async (resolve, reject) => {
+        const dataSizeInBytes = file.size;
+        const mediaType = mimeToMediaType(file.type);
         const maxSizes = isDiamond ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
+        const f: File = file instanceof LazyFile ? await file.load() : file;
 
-        if (isVideo && data.byteLength > maxSizes.video) {
-            reject("maxVideoSize");
-            return;
-        } else if (isAudio && data.byteLength > maxSizes.audio) {
-            reject("maxAudioSize");
-            return;
-        } else if (isFile && data.byteLength > maxSizes.file) {
-            reject("maxFileSize");
-            return;
-        }
+        switch (mediaType) {
+            case "image":
+            case "gif":
+            case "svg":
+                resolve(await handleImageFile(f, maxSizes, mediaType));
+                break;
 
-        const blobUrl = dataToBlobUrl(data, mimeType);
+            case "video":
+                if (dataSizeInBytes > maxSizes.video) return reject("maxVideoSize");
+                resolve(await handleVideoFile(f));
+                break;
 
-        if (isImage) {
-            const extract = await extractImageThumbnail(file, mimeType);
+            case "audio":
+                if (dataSizeInBytes > maxSizes.audio) return reject("maxAudioSize");
+                resolve(await handleAudioFiles(f));
+                break;
 
-            if (!isGif || data.byteLength > maxSizes.image) {
-                data = (await stripMetaDataAndResize(file, mimeType)).data;
-            }
-
-            content = {
-                kind: "image_content",
-                mimeType: isSVG ? "image/png" : mimeType,
-                width: extract.dimensions.width,
-                height: extract.dimensions.height,
-                blobData: new Uint8Array(data),
-                thumbnailData: extract.url,
-                blobUrl: assetUrl ?? blobUrl,
-            };
-
-            console.log("CONTENT CONSTRUCTED", content);
-        } else if (isVideo) {
-            const [thumb, image] = await extractVideoThumbnail(file, mimeType);
-
-            content = {
-                kind: "video_content",
-                mimeType: mimeType,
-                width: image.dimensions.width,
-                height: image.dimensions.height,
-                imageData: {
-                    blobData: new Uint8Array(image.data),
-                    blobUrl: image.url,
-                },
-                videoData: {
-                    blobData: new Uint8Array(data),
-                    blobUrl: assetUrl ?? blobUrl,
-                },
-                thumbnailData: thumb.url,
-            };
-        } else if (isAudio) {
-            const quantised = await quantiseWaveform(data.slice(0));
-            content = {
-                kind: "audio_content",
-                mimeType: mimeType,
-                blobData: new Uint8Array(data),
-                blobUrl: assetUrl ?? blobUrl,
-                ...quantised,
-            };
-        } else {
-            content = {
-                kind: "file_content",
-                name: file.name,
-                mimeType: mimeType,
-                blobData: new Uint8Array(data),
-                blobUrl: assetUrl ?? blobUrl,
-                fileSize: data.byteLength,
-            };
-        }
-
-        resolve(content);
-    };
-
-    return new Promise((resolve, reject) => {
-        if (loadBlob) {
-            const reader = new FileReader();
-            reader.readAsArrayBuffer(file);
-            reader.onload = async (e: ProgressEvent<FileReader>) => {
-                if (!e.target) return;
-                constructMessageContent(resolve, reject);
-            };
-        } else {
-            constructMessageContent(resolve, reject);
+            // File is default!
+            default:
+                if (dataSizeInBytes > maxSizes.file) return reject("maxFileSize");
+                resolve(handleRegularFiles(f));
         }
     });
 }

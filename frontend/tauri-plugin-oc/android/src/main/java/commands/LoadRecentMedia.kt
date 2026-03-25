@@ -2,8 +2,8 @@ package com.ocplugin.app.commands
 
 import android.Manifest
 import android.app.Activity
-import android.content.ContentUris
 import android.content.ContentResolver
+import android.content.ContentUris
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -19,7 +19,11 @@ import app.tauri.plugin.Invoke
 import app.tauri.plugin.JSArray
 import app.tauri.plugin.JSObject
 import com.ocplugin.app.LOG_TAG
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.launch
 
 // Permissions request code for gallery access...
 const val PERM_CODE_GALLERY = 1001
@@ -39,6 +43,7 @@ data class MediaFile(
     val dateAdded: Long,
     val isVideo: Boolean,
     val filePath: String,
+    val size: Int,
     val thumbnail: String? = null
 )
 
@@ -76,13 +81,15 @@ class LoadRecentMedia(private val activity: Activity) {
                     obj.put("dateAdded", item.dateAdded)
                     obj.put("isVideo", item.isVideo)
                     obj.put("filePath", item.filePath)
+                    obj.put("size", item.size)
                     obj.put("thumbnail", item.thumbnail)
                     resultData.put(obj)
                 }
 
-                invoke.resolve(JSObject()
-                    .put("permission", "granted")
-                    .put("media", resultData)
+                invoke.resolve(
+                    JSObject()
+                        .put("permission", "granted")
+                        .put("media", resultData)
                 )
 
             } catch (e: Exception) {
@@ -96,7 +103,10 @@ class LoadRecentMedia(private val activity: Activity) {
     fun getRequiredPermissions(): Array<String> {
         // Android v21+ has slightly different permissions that are required
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            return arrayOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO)
+            return arrayOf(
+                Manifest.permission.READ_MEDIA_IMAGES,
+                Manifest.permission.READ_MEDIA_VIDEO
+            )
         }
 
         // For older Android versions...
@@ -128,10 +138,12 @@ class LoadRecentMedia(private val activity: Activity) {
             MediaStore.Files.FileColumns.DATE_ADDED,
             MediaStore.Files.FileColumns.MEDIA_TYPE,
             MediaStore.Files.FileColumns.DATA,
+            MediaStore.Files.FileColumns.SIZE,
         )
 
-        val selection = ("${MediaStore.Files.FileColumns.MEDIA_TYPE}=${MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE} OR " +
-                "${MediaStore.Files.FileColumns.MEDIA_TYPE}=${MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO}")
+        val selection =
+            ("${MediaStore.Files.FileColumns.MEDIA_TYPE}=${MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE} OR " +
+                    "${MediaStore.Files.FileColumns.MEDIA_TYPE}=${MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO}")
 
         val cursor = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Modern approach: Use a Bundle for arguments
@@ -139,13 +151,20 @@ class LoadRecentMedia(private val activity: Activity) {
                 putInt(ContentResolver.QUERY_ARG_LIMIT, count)
                 putInt(ContentResolver.QUERY_ARG_OFFSET, offset)
                 putString(ContentResolver.QUERY_ARG_SQL_SELECTION, selection)
-                putStringArray(ContentResolver.QUERY_ARG_SORT_COLUMNS, arrayOf(MediaStore.Files.FileColumns.DATE_ADDED))
-                putInt(ContentResolver.QUERY_ARG_SORT_DIRECTION, ContentResolver.QUERY_SORT_DIRECTION_DESCENDING)
+                putStringArray(
+                    ContentResolver.QUERY_ARG_SORT_COLUMNS,
+                    arrayOf(MediaStore.Files.FileColumns.DATE_ADDED)
+                )
+                putInt(
+                    ContentResolver.QUERY_ARG_SORT_DIRECTION,
+                    ContentResolver.QUERY_SORT_DIRECTION_DESCENDING
+                )
             }
             activity.contentResolver.query(queryUri, projection, queryArgs, null)
         } else {
             // Legacy fallback: Use the sortOrder string (risky, but usually works on older APIs)
-            val sortOrder = "${MediaStore.Files.FileColumns.DATE_ADDED} DESC LIMIT $count OFFSET $offset"
+            val sortOrder =
+                "${MediaStore.Files.FileColumns.DATE_ADDED} DESC LIMIT $count OFFSET $offset"
             activity.contentResolver.query(queryUri, projection, selection, null, sortOrder)
         }
 
@@ -156,6 +175,8 @@ class LoadRecentMedia(private val activity: Activity) {
             val dateCol = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATE_ADDED)
             val typeCol = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MEDIA_TYPE)
             val dataCol = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA)
+            val sizeCol = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.SIZE)
+
 
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idCol)
@@ -164,6 +185,7 @@ class LoadRecentMedia(private val activity: Activity) {
                 val date = cursor.getLong(dateCol)
                 val type = cursor.getInt(typeCol)
                 val isVideo = type == MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO
+                val size = cursor.getInt(sizeCol)
                 val filePath = cursor.getString(dataCol)
 
                 // 4. Construct the actual Content URI
@@ -174,7 +196,18 @@ class LoadRecentMedia(private val activity: Activity) {
 
                 val contentUri = ContentUris.withAppendedId(baseUri, id)
 
-                mediaList.add(MediaFile(id, contentUri.toString(), name, mime, date, isVideo, filePath))
+                mediaList.add(
+                    MediaFile(
+                        id,
+                        contentUri.toString(),
+                        name,
+                        mime,
+                        date,
+                        isVideo,
+                        filePath,
+                        size
+                    )
+                )
             }
         }
 

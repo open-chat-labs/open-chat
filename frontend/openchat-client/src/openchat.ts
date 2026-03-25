@@ -21,6 +21,7 @@ import {
     ErrorCode,
     ICP_SYMBOL,
     IdentityStorage,
+    LazyFile,
     LARGE_GROUP_THRESHOLD,
     LEDGER_CANISTER_CHAT,
     MessageContextMap,
@@ -3174,11 +3175,8 @@ export class OpenChat {
 
     diffGroupPermissions = diffGroupPermissions;
 
-    messageContentFromFile(file: File, assetUrl?: string): Promise<AttachmentContent> {
-        return messageContentFromFile(file, isDiamondStore.value, {
-            loadBlob: !this.isNativeApp(),
-            assetUrl,
-        });
+    messageContentFromFile(file: File | LazyFile): Promise<AttachmentContent> {
+        return messageContentFromFile(file, isDiamondStore.value);
     }
 
     formatFileSize = formatFileSize;
