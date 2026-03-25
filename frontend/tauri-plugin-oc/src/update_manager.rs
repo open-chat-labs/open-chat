@@ -101,7 +101,10 @@ impl<R: Runtime> UpdateManager<R> {
         };
 
         if server_version > current_version {
-            println!("New version available: {} (current={})", server_version, current_version);
+            println!(
+                "New version available: {} (current={})",
+                server_version, current_version
+            );
             self.download_and_install(&server_version).await?;
             return Ok(true);
         }

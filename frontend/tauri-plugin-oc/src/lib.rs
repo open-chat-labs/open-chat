@@ -42,7 +42,8 @@ fn load_cache_into_memory(cache_dir: &std::path::Path) -> HashMap<String, Cached
             let path = entry.path();
             if path.is_file() {
                 if let Ok(data) = std::fs::read(&path) {
-                    let name = path.file_name()
+                    let name = path
+                        .file_name()
                         .unwrap_or_default()
                         .to_string_lossy()
                         .to_string();
