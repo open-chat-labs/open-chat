@@ -40,19 +40,19 @@ fn load_cache_into_memory(cache_dir: &std::path::Path) -> HashMap<String, Cached
     if let Ok(entries) = std::fs::read_dir(cache_dir) {
         for entry in entries.flatten() {
             let path = entry.path();
-            if path.is_file() {
-                if let Ok(data) = std::fs::read(&path) {
-                    let name = path
-                        .file_name()
-                        .unwrap_or_default()
-                        .to_string_lossy()
-                        .to_string();
-                    let mime_type = mime_guess::from_path(&name)
-                        .first_or_octet_stream()
-                        .as_ref()
-                        .to_string();
-                    cache.insert(name, CachedAsset { data, mime_type });
-                }
+            if path.is_file()
+                && let Ok(data) = std::fs::read(&path)
+            {
+                let name = path
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string();
+                let mime_type = mime_guess::from_path(&name)
+                    .first_or_octet_stream()
+                    .as_ref()
+                    .to_string();
+                cache.insert(name, CachedAsset { data, mime_type });
             }
         }
     }
@@ -133,10 +133,10 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             }
 
             // SPA fallback: if no extension, serve cached index.html
-            if std::path::Path::new(path).extension().is_none() {
-                if let Some(asset) = cache.get("index.html") {
-                    return build_response(asset.data.clone(), &asset.mime_type);
-                }
+            if std::path::Path::new(path).extension().is_none()
+                && let Some(asset) = cache.get("index.html")
+            {
+                return build_response(asset.data.clone(), &asset.mime_type);
             }
 
             // Fallback to bundled assets
@@ -145,10 +145,10 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             }
 
             // SPA fallback for bundled assets
-            if std::path::Path::new(path).extension().is_none() {
-                if let Some(asset) = handle.asset_resolver().get("index.html".to_string()) {
-                    return build_response(asset.bytes, &asset.mime_type);
-                }
+            if std::path::Path::new(path).extension().is_none()
+                && let Some(asset) = handle.asset_resolver().get("index.html".to_string())
+            {
+                return build_response(asset.bytes, &asset.mime_type);
             }
 
             tauri::http::Response::builder()

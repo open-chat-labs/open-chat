@@ -62,10 +62,10 @@ impl<R: Runtime> UpdateManager<R> {
     }
 
     pub fn get_bundled_version(&self) -> Option<Version> {
-        if let Some(asset) = self.app_handle.asset_resolver().get("version".to_string()) {
-            if let Ok(info) = serde_json::from_slice::<ServerVersion>(&asset.bytes) {
-                return Version::parse(info.version.trim_start_matches('v')).ok();
-            }
+        if let Some(asset) = self.app_handle.asset_resolver().get("version".to_string())
+            && let Ok(info) = serde_json::from_slice::<ServerVersion>(&asset.bytes)
+        {
+            return Version::parse(info.version.trim_start_matches('v')).ok();
         }
         // Fallback to package info
         self.app_handle
