@@ -1,3 +1,6 @@
+use std::collections::HashMap;
+use std::sync::{Arc, OnceLock};
+
 use tauri::{
     Manager, Runtime,
     plugin::{Builder, TauriPlugin},
@@ -22,6 +25,43 @@ use desktop::Oc;
 #[cfg(mobile)]
 use mobile::Oc;
 
+struct CachedAsset {
+    data: Vec<u8>,
+    mime_type: String,
+}
+
+/// Load all files from the cache directory into memory.
+fn load_cache_into_memory(cache_dir: &std::path::Path) -> HashMap<String, CachedAsset> {
+    let mut cache = HashMap::new();
+    let version_path = cache_dir.join("version.json");
+    if !version_path.exists() {
+        return cache;
+    }
+    if let Ok(entries) = std::fs::read_dir(cache_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_file()
+                && let Ok(data) = std::fs::read(&path)
+            {
+                let name = path
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string();
+                let mime_type = mime_guess::from_path(&name)
+                    .first_or_octet_stream()
+                    .as_ref()
+                    .to_string();
+                cache.insert(name, CachedAsset { data, mime_type });
+            }
+        }
+    }
+    if !cache.is_empty() {
+        println!("Loaded {} cached assets into memory", cache.len());
+    }
+    cache
+}
+
 /// Extensions to [`tauri::App`], [`tauri::AppHandle`] and [`tauri::Window`] to access the oc APIs.
 pub trait OcExt<R: Runtime> {
     fn oc(&self) -> &Oc<R>;
@@ -33,11 +73,12 @@ impl<R: Runtime, T: Manager<R>> crate::OcExt<R> for T {
     }
 }
 
+const ORIGIN: &str = "https://tauri.localhost";
+
 fn build_response(data: Vec<u8>, mime_type: &str) -> tauri::http::Response<Vec<u8>> {
     tauri::http::Response::builder()
         .header("Content-Type", mime_type)
-        .header("Access-Control-Allow-Origin", "*")
-        .header("Cache-Control", "no-cache")
+        .header("Access-Control-Allow-Origin", ORIGIN)
         .body(data)
         .unwrap_or_else(|_| {
             tauri::http::Response::builder()
@@ -49,6 +90,8 @@ fn build_response(data: Vec<u8>, mime_type: &str) -> tauri::http::Response<Vec<u
 
 /// Initializes the plugin.
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
+    let memory_cache: Arc<OnceLock<HashMap<String, CachedAsset>>> = Arc::new(OnceLock::new());
+
     Builder::new("oc")
         .invoke_handler(tauri::generate_handler![
             commands::open_url,
@@ -65,7 +108,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             commands::enable_viewport_resize,
             commands::disable_viewport_resize,
         ])
-        .register_uri_scheme_protocol("oc", |ctx, request| {
+        .register_uri_scheme_protocol("tauri", move |ctx, request| {
             let handle = ctx.app_handle().clone();
 
             let path = request.uri().path();
@@ -75,45 +118,37 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
                 path.trim_start_matches('/')
             };
 
-            // Check cache
-            let update_manager = update_manager::UpdateManager::new(handle.clone());
-            if let Some(cache_dir) = update_manager.get_cache_dir() {
-                let cached_file = cache_dir.join(path);
-                if cached_file.exists()
-                    && cached_file.is_file()
-                    && let Ok(data) = std::fs::read(&cached_file)
-                {
-                    let mime_type = mime_guess::from_path(path)
-                        .first_or_octet_stream()
-                        .as_ref()
-                        .to_string();
-                    return build_response(data, &mime_type);
+            // Lazily load cached assets into memory on first request
+            let cache = memory_cache.get_or_init(|| {
+                let um = update_manager::UpdateManager::new(handle.clone());
+                match um.get_cache_dir() {
+                    Some(dir) => load_cache_into_memory(&dir),
+                    None => HashMap::new(),
                 }
+            });
 
-                // SPA Fallback (Cache): If not found and no extension, serve cached index.html
-                if std::path::Path::new(path).extension().is_none() {
-                    let index_path = "index.html";
-                    let cached_index = cache_dir.join(index_path);
-                    if cached_index.exists()
-                        && cached_index.is_file()
-                        && let Ok(data) = std::fs::read(&cached_index)
-                    {
-                        return build_response(data, "text/html");
-                    }
-                }
+            // Serve from in-memory cache
+            if let Some(asset) = cache.get(path) {
+                return build_response(asset.data.clone(), &asset.mime_type);
             }
 
-            // Fallback to assets
+            // SPA fallback: if no extension, serve cached index.html
+            if std::path::Path::new(path).extension().is_none()
+                && let Some(asset) = cache.get("index.html")
+            {
+                return build_response(asset.data.clone(), &asset.mime_type);
+            }
+
+            // Fallback to bundled assets
             if let Some(asset) = handle.asset_resolver().get(path.to_string()) {
                 return build_response(asset.bytes, &asset.mime_type);
             }
 
-            // SPA Fallback (Assets): If not found and no extension, serve asset index.html
-            if std::path::Path::new(path).extension().is_none() {
-                let index_path = "index.html";
-                if let Some(asset) = handle.asset_resolver().get(index_path.to_string()) {
-                    return build_response(asset.bytes, "text/html");
-                }
+            // SPA fallback for bundled assets
+            if std::path::Path::new(path).extension().is_none()
+                && let Some(asset) = handle.asset_resolver().get("index.html".to_string())
+            {
+                return build_response(asset.bytes, &asset.mime_type);
             }
 
             tauri::http::Response::builder()
