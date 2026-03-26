@@ -73,7 +73,7 @@
 {/snippet}
 
 {#snippet fileReplyView()}
-    <Column>
+    <Column gap={hasContent ? "zero" : "xs"}>
         {@render title?.()}
         {@render fileTextContent()}
         <Row gap="xs" crossAxisAlignment="center" padding={["zero", "xxs", "zero", "zero"]}>
