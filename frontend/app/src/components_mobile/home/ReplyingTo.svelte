@@ -38,7 +38,7 @@
 
     // This is transitional, until we adjust replies for different content types.
     let hasDedicatedReplyContent = $derived(
-        ["text_content", "image_content"].indexOf(replyingTo.content.kind) > -1,
+        ["text_content", "image_content", "file_content"].indexOf(replyingTo.content.kind) > -1,
     );
 </script>
 
@@ -75,7 +75,8 @@
                     truncate
                     edited={replyingTo.edited}
                     content={replyingTo.content}
-                    reply />
+                    reply
+                    draft />
             </div>
         {:else}
             <Row crossAxisAlignment={"center"}>

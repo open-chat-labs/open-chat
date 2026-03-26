@@ -32,6 +32,7 @@
         truncate?: boolean;
         fill: boolean;
         reply?: boolean;
+        draft?: boolean;
         pinned?: boolean;
         height?: number | undefined;
         readonly: boolean;
@@ -57,6 +58,7 @@
         truncate = false,
         fill,
         reply = false,
+        draft = false,
         pinned = false,
         height = undefined,
         readonly,
@@ -104,7 +106,7 @@
 {:else if content.kind === "audio_content"}
     <AudioContent {me} {edited} {content} {blockLevelMarkdown} />
 {:else if content.kind === "file_content"}
-    <FileContent {edited} {me} {content} {blockLevelMarkdown} />
+    <FileContent {title} {edited} {me} {content} {blockLevelMarkdown} {draft} reply />
 {:else if content.kind === "deleted_content"}
     <DeletedContent {me} {content} {undeleting} />
 {:else if content.kind === "blocked_content"}

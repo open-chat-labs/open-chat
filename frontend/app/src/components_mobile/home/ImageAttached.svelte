@@ -159,15 +159,4 @@
             left: var(--sp-xs);
         }
     }
-
-    @keyframes grow-height {
-        from {
-            max-height: 0;
-            opacity: 0;
-        }
-        100% {
-            max-height: 15rem;
-            opacity: 1;
-        }
-    }
 </style>

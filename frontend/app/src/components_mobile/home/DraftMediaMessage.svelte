@@ -39,9 +39,7 @@
     {:else if content.kind === "prize_content_initial"}
         <PrizeContentInitial onRemove={removeDraft} {content} />
     {:else if content.kind === "file_content"}
-        <div class="file-preview">
-            <FileContent edited={false} me {content} draft />
-        </div>
+        <FileContent onRemove={removeDraft} edited={false} me {content} draft />
     {/if}
 </Row>
 

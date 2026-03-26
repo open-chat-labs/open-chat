@@ -37,7 +37,7 @@
     );
 </script>
 
-<Column supplementalClass={`replies_to ${me ? "me" : ""}`} padding="sm" borderRadius="sm">
+<Column supplementalClass={`replies_to ${me ? "me" : ""}`} padding="sm" borderRadius="md">
     {#if repliesTo.content !== undefined}
         <ChatMessageReplyContent
             {me}

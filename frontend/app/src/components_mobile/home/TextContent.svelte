@@ -15,6 +15,7 @@
         content: TextContent;
         me: boolean;
         fill: boolean;
+        reply?: boolean;
         blockLevelMarkdown: boolean;
         showPreviews: boolean;
         edited: boolean;
@@ -30,6 +31,7 @@
         content,
         me,
         fill,
+        reply = false,
         blockLevelMarkdown,
         showPreviews,
         edited,
@@ -86,7 +88,7 @@
 
 <Column
     supplementalClass={`text_content ${truncate ? "truncated" : ""}`}
-    padding={["xs", "sm"]}
+    padding={["xs", reply ? "zero" : "sm"]}
     overflow={"hidden"}
     maxWidth={maxWidth ? `${maxWidth}px` : "auto"}>
     <div class="message_text">

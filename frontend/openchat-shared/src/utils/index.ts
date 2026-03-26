@@ -11,6 +11,7 @@ export * from "./immutable";
 export * from "./lazy";
 export * from "./logging";
 export * from "./map";
+export * from "./mime";
 export * from "./network";
 export * from "./notifications";
 export * from "./promise";

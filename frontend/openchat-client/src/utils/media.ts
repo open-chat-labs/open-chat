@@ -350,6 +350,7 @@ async function handleAudioFiles(file: File): Promise<AttachmentContent> {
 // Handle regular files
 //
 // Anything that's not an image, video, audio...
+// TODO extract an image from the file where possible (i.e. first page of pdf document)
 async function handleRegularFiles(file: File): Promise<AttachmentContent> {
     const data = await file.arrayBuffer();
     const blobUrl = dataToBlobUrl(data, file.type);
