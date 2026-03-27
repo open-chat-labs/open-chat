@@ -41,7 +41,6 @@
     interface Props {
         open: boolean;
         permittedMessages: Map<MessagePermission, boolean>;
-        onClearAttachment: () => void;
         onTokenTransfer: (args: { ledger?: string; amount?: bigint }) => void;
         onCreatePrizeMessage?: () => void;
         onCreateP2PSwapMessage: () => void;

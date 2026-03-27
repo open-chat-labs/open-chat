@@ -299,6 +299,16 @@
         emojiSearchFocusedOut = true;
     }
 
+    // Switch back to attachments view after attachment is cleared, if the view
+    // is on keyboard!
+    function onRemoveAttachment() {
+        if (inputTrayMode === "keyboard_only") {
+            inputTrayMode = "attachments";
+        }
+
+        onClearAttachment();
+    }
+
     onMount(() => {
         // Message input focus in handler!
         // Note: this did not seem to work by just adding focus attribute.
@@ -826,7 +836,7 @@
                             <ReplyingTo readonly {replyingTo} {user} {onCancelReply} />
                         {/if}
                         {#if !editingEvent && attachment !== undefined}
-                            <DraftMediaMessage ctx={messageContext} content={attachment} />
+                            <DraftMediaMessage {onRemoveAttachment} content={attachment} />
                         {/if}
                         {#if editingEvent !== undefined}
                             <Row
@@ -1011,7 +1021,6 @@
                 {onCreatePrizeMessage}
                 {onCreateP2PSwapMessage}
                 {onMakeMeme}
-                {onClearAttachment}
                 {onFileSelected}
                 {messageContext}
                 open={true} />

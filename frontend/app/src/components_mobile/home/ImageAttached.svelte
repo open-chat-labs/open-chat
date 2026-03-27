@@ -93,7 +93,7 @@
         </div>
 
         <div class="close" class:rtl={$rtlStore}>
-            <IconButton size="sm" mode={"dark"} onclick={onRemove}>
+            <IconButton size="sm" onclick={onRemove}>
                 {#snippet icon()}
                     <Close color={ColourVars.textPrimary} />
                 {/snippet}

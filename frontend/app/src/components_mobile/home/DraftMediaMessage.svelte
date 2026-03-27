@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Row } from "component-lib";
-    import type { AttachmentContent, MessageContext } from "openchat-client";
-    import { currentUserIdStore, localUpdates } from "openchat-client";
+    import type { AttachmentContent } from "openchat-client";
+    import { currentUserIdStore } from "openchat-client";
     import AudioContent from "./AudioContent.svelte";
     import CryptoContent from "./CryptoContent.svelte";
     import FileContent from "./FileContent.svelte";
@@ -13,35 +13,36 @@
 
     interface Props {
         content: AttachmentContent;
-        ctx: MessageContext;
+        onRemoveAttachment?: () => void;
     }
 
-    let { content, ctx }: Props = $props();
-
-    function removeDraft() {
-        localUpdates.draftMessages.delete(ctx);
-    }
+    let { content, onRemoveAttachment }: Props = $props();
 </script>
 
 <Row>
     {#if content.kind === "video_content"}
-        <VideoAttached onRemove={removeDraft} {content} />
+        <VideoAttached onRemove={onRemoveAttachment} {content} />
     {:else if content.kind === "audio_content"}
         <!-- Audio content does not have a separate "attached" version -->
-        <AudioContent me onRemove={removeDraft} edited={false} {content} draft />
+        <AudioContent me onRemove={onRemoveAttachment} edited={false} {content} draft />
     {:else if content.kind === "image_content"}
-        <ImageAttached onRemove={removeDraft} fill={false} {content} draft />
+        <ImageAttached onRemove={onRemoveAttachment} fill={false} {content} draft />
     {:else if content.kind === "giphy_content"}
-        <GiphyAttached onRemove={removeDraft} {content} />
+        <GiphyAttached onRemove={onRemoveAttachment} {content} />
     {:else if content.kind === "crypto_content"}
-        <CryptoContent onRemove={removeDraft} me {content} draft senderId={$currentUserIdStore} />
+        <CryptoContent
+            onRemove={onRemoveAttachment}
+            me
+            {content}
+            draft
+            senderId={$currentUserIdStore} />
     {:else if content.kind === "p2p_swap_content_initial"}
-        <P2PSwapContentInitial onRemove={removeDraft} {content} />
+        <P2PSwapContentInitial onRemove={onRemoveAttachment} {content} />
     {:else if content.kind === "prize_content_initial"}
-        <PrizeContentInitial onRemove={removeDraft} {content} />
+        <PrizeContentInitial onRemove={onRemoveAttachment} {content} />
     {:else if content.kind === "file_content"}
         <!-- File content does not have a separate "attached" version -->
-        <FileContent onRemove={removeDraft} edited={false} me {content} draft />
+        <FileContent onRemove={onRemoveAttachment} edited={false} me {content} draft />
     {/if}
 </Row>
 

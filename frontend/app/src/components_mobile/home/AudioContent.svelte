@@ -30,7 +30,6 @@
     import { onMount, type Snippet } from "svelte";
     import WaveSurfer from "wavesurfer.js";
     import { rtlStore } from "@stores/rtl";
-    // import ContentCaption from "./ContentCaption.svelte";
     import TextContent from "./TextContent.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Pause from "svelte-material-icons/PauseCircleOutline.svelte";
