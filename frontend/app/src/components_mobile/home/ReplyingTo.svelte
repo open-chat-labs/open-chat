@@ -37,8 +37,11 @@
     );
 
     // This is transitional, until we adjust replies for different content types.
+    // TODO this should be the primary way to render replying to content!
     let hasDedicatedReplyContent = $derived(
-        ["text_content", "image_content", "file_content"].indexOf(replyingTo.content.kind) > -1,
+        ["text_content", "image_content", "file_content", "audio_content"].indexOf(
+            replyingTo.content.kind,
+        ) > -1,
     );
 </script>
 

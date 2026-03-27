@@ -27,6 +27,7 @@
     {#if content.kind === "video_content"}
         <VideoAttached onRemove={removeDraft} {content} />
     {:else if content.kind === "audio_content"}
+        <!-- Audio content does not have a separate "attached" version -->
         <AudioContent me onRemove={removeDraft} edited={false} {content} draft />
     {:else if content.kind === "image_content"}
         <ImageAttached onRemove={removeDraft} fill={false} {content} draft />
@@ -39,6 +40,7 @@
     {:else if content.kind === "prize_content_initial"}
         <PrizeContentInitial onRemove={removeDraft} {content} />
     {:else if content.kind === "file_content"}
+        <!-- File content does not have a separate "attached" version -->
         <FileContent onRemove={removeDraft} edited={false} me {content} draft />
     {/if}
 </Row>

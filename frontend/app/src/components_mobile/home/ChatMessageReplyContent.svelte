@@ -104,7 +104,7 @@
 {:else if content.kind === "video_call_content"}
     <VideoCallContent {senderId} {messageIndex} {content} {timestamp} />
 {:else if content.kind === "audio_content"}
-    <AudioContent {me} {edited} {content} {blockLevelMarkdown} />
+    <AudioContent {title} {me} {edited} {content} {blockLevelMarkdown} {draft} reply />
 {:else if content.kind === "file_content"}
     <FileContent {title} {edited} {me} {content} {blockLevelMarkdown} {draft} reply />
 {:else if content.kind === "deleted_content"}

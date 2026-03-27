@@ -15,6 +15,7 @@
     } from "component-lib";
     import type { FileContent, OpenChat, TextContent as TextContentType } from "openchat-client";
     import { mimeTypeToHumanReadable } from "openchat-client";
+    import { getProxyAdjustedBlobUrl } from "../../utils/media";
     import TextContent from "./TextContent.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import FileUploadOutline from "svelte-material-icons/FileUploadOutline.svelte";
@@ -134,7 +135,7 @@
     {@const backgroundColor = me ? ColourVars.primaryMuted : ColourVars.background1}
     {#if content.blobUrl}
         <a
-            href={content.blobUrl}
+            href={getProxyAdjustedBlobUrl(content.blobUrl)}
             title={$_("downloadFile", { values: { name: content.name } })}
             download={content.name}
             role="button"
