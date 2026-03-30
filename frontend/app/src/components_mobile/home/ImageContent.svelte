@@ -51,16 +51,17 @@
     const MIN_IMG_WIDTH = 150;
 
     let imgElement: HTMLImageElement | undefined = $state();
+    let imageWidth = $state(0);
     let landscape = $derived(content.height < content.width);
     let normalised = $derived(normaliseContent(content));
     let hidden = $state(false);
-    let imageWidth = $state(0);
     let zoomable = $derived(!draft && !reply && !pinned);
     let textContent = $derived<TextContentType | undefined>(
         normalised ? { kind: "text_content", text: normalised.caption ?? "" } : undefined,
     );
+    let hasContent = $derived(!!textContent?.text);
 
-    let narrow = $derived(imageWidth > 0 && imageWidth < MIN_IMG_WIDTH && !!textContent?.text);
+    let narrow = $derived(imageWidth > 0 && imageWidth < MIN_IMG_WIDTH && hasContent);
     let maxTextContentWidth = $derived(narrow ? 200 : imageWidth);
 
     $effect(() => {

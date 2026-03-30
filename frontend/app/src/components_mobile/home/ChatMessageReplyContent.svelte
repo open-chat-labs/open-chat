@@ -100,7 +100,7 @@
         {height}
         {blockLevelMarkdown} />
 {:else if content.kind === "video_content"}
-    <VideoContent {me} {edited} {fill} {content} {reply} {height} {blockLevelMarkdown} />
+    <VideoContent {title} {me} {edited} {fill} {content} {reply} {height} {blockLevelMarkdown} />
 {:else if content.kind === "video_call_content"}
     <VideoCallContent {senderId} {messageIndex} {content} {timestamp} />
 {:else if content.kind === "audio_content"}

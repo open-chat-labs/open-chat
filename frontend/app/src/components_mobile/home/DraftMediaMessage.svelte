@@ -9,7 +9,7 @@
     import ImageAttached from "./ImageAttached.svelte";
     import P2PSwapContentInitial from "./P2PSwapContentInitial.svelte";
     import PrizeContentInitial from "./PrizeContentInitial.svelte";
-    import VideoAttached from "./VideoAttached.svelte";
+    import VideoContent from "./VideoContent.svelte";
 
     interface Props {
         content: AttachmentContent;
@@ -21,12 +21,18 @@
 
 <Row>
     {#if content.kind === "video_content"}
-        <VideoAttached onRemove={onRemoveAttachment} {content} />
+        <VideoContent
+            onRemove={onRemoveAttachment}
+            {content}
+            me
+            draft
+            edited={false}
+            fill={false} />
     {:else if content.kind === "audio_content"}
         <!-- Audio content does not have a separate "attached" version -->
-        <AudioContent me onRemove={onRemoveAttachment} edited={false} {content} draft />
+        <AudioContent onRemove={onRemoveAttachment} {content} me draft edited={false} />
     {:else if content.kind === "image_content"}
-        <ImageAttached onRemove={onRemoveAttachment} fill={false} {content} draft />
+        <ImageAttached onRemove={onRemoveAttachment} {content} fill={false} draft />
     {:else if content.kind === "giphy_content"}
         <GiphyAttached onRemove={onRemoveAttachment} {content} />
     {:else if content.kind === "crypto_content"}
