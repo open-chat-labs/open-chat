@@ -320,15 +320,18 @@ export class DataClient extends EventTarget {
         const bucketClient = new StorageBucketClient(this.identity, this.agent, bucketCanisterId);
 
         let chunksCompleted = 0;
+        let error: unknown | undefined = undefined;
 
         const promises = chunkIndexes.map(async (chunkIndex) => {
+            if (error !== undefined) return;
+
             const start = chunkIndex * chunkSize;
             const end = Math.min(start + chunkSize, fileSize);
             const chunkBytes = new Uint8Array(bytes.slice(start, end));
 
             let attempt = 0;
 
-            while (attempt++ < 5) {
+            while (error === undefined) {
                 try {
                     const chunkResponse = await bucketClient.uploadChunk(
                         fileId,
@@ -348,13 +351,20 @@ export class DataClient extends EventTarget {
                         return;
                     }
                 } catch (e) {
-                    console.log("Error uploading chunk " + chunkIndex, e);
+                    attempt++;
+                    if (attempt >= 5) {
+                        error = e;
+                        console.error("Error uploading chunk " + chunkIndex, e);
+                    } else {
+                        console.log(`Error uploading chunk ${chunkIndex}, retrying`, e, attempt);
+                    }
                 }
             }
-            throw new Error("Failed to upload chunk");
         });
 
         await Promise.all(promises);
+
+        if (error) throw error;
 
         return {
             canisterId: bucketCanisterId,
