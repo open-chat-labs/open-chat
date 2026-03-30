@@ -9,7 +9,7 @@
     import DeletedContent from "./DeletedContent.svelte";
     import FileContent from "./FileContent.svelte";
     import GiphyContent from "./GiphyContent.svelte";
-    import ImageContentReply from "./ImageContentReply.svelte";
+    import ImageContent from "./ImageContent.svelte";
     import MessageContentInitial from "./MessageContentInitial.svelte";
     import MessageReminderContent from "./MessageReminderContent.svelte";
     import MessageReminderCreatedContent from "./MessageReminderCreatedContent.svelte";
@@ -89,9 +89,10 @@
 {#if content.kind === "text_content"}
     <TextContentReply {title} {me} {truncate} {pinned} {content} {blockLevelMarkdown} />
 {:else if content.kind === "image_content"}
-    <ImageContentReply
+    <ImageContent
         {me}
         {title}
+        {edited}
         {intersecting}
         {fill}
         {content}
@@ -158,7 +159,7 @@
 {:else if content.kind === "reported_message_content"}
     <ReportedMessageContent {content} />
 {:else if content.kind === "meme_fighter_content"}
-    <ImageContentReply {me} {title} {intersecting} {fill} {content} {reply} {pinned} {height} />
+    <ImageContent {me} {title} {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
 {:else if content.kind === "user_referral_card"}
     <UserReferralCardContent />
 {/if}

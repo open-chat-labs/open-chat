@@ -107,7 +107,6 @@
 {/snippet}
 
 <!-- Message draft of a video -->
-<!-- TODO moved draft rendering from VideoAttached.svelte -->
 {#snippet draftView()}
     <Column width={"fill"}>
         <div class="video_draft">
