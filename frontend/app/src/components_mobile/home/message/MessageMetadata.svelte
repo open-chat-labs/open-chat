@@ -64,16 +64,26 @@
     );
 </script>
 
-{#snippet check(fill: boolean = false)}
+{#snippet check(checked: boolean)}
     <div class="bubble_check" class:fill>
         <Container
             borderRadius="circle"
             borderColour={fill ? "transparent" : ColourVars.primaryLight}
             borderWidth="thin"
-            backgroundColor={fill ? "transparent" : ColourVars.primaryLight}>
+            backgroundColor={fill
+                ? "transparent"
+                : checked
+                  ? ColourVars.primaryLight
+                  : ColourVars.myChatBubble}>
             <Check
                 size={fill ? "0.85rem" : "0.75rem"}
-                color={fill ? ColourVars.textPrimary : ColourVars.myChatBubble} />
+                color={fill
+                    ? checked
+                        ? ColourVars.textPrimary
+                        : ColourVars.textSecondary
+                    : checked
+                      ? ColourVars.myChatBubble
+                      : ColourVars.primaryLight} />
         </Container>
     </div>
 {/snippet}
@@ -109,17 +119,9 @@
         {/if}
         {#if !bot && !deleted}
             {#if me}
-                {#if accepted}
-                    {@render check(fill)}
-                {:else}
-                    <div class="confirming"></div>
-                {/if}
+                {@render check(accepted)}
                 {#if chatType === "direct_chat"}
-                    {#if readByThem}
-                        {@render check(fill)}
-                    {:else}
-                        {@render check(fill)}
-                    {/if}
+                    {@render check(readByThem)}
                 {/if}
             {:else if !accepted}
                 <div class="confirming"></div>
