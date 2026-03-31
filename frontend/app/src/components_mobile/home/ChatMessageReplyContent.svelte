@@ -113,7 +113,7 @@
 {:else if content.kind === "blocked_content"}
     <BlockedContent />
 {:else if content.kind === "crypto_content"}
-    <CryptoContent {senderId} {content} {me} />
+    <CryptoContent {title} {senderId} {content} {me} {edited} {blockLevelMarkdown} reply />
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
 {:else if content.kind === "bot_placeholder_content"}

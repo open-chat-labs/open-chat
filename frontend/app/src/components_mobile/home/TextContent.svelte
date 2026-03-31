@@ -91,7 +91,7 @@
     padding={["xs", reply ? "zero" : "sm"]}
     overflow={"hidden"}
     maxWidth={maxWidth ? `${maxWidth}px` : "auto"}>
-    <div class="message_text">
+    <div class="message_text" class:me class:reply>
         {#if isPreview}
             <ChatCaption
                 width={"hug"}

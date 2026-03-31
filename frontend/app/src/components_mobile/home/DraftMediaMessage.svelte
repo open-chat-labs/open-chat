@@ -31,7 +31,6 @@
     {:else if content.kind === "audio_content"}
         <AudioContent onRemove={onRemoveAttachment} {content} me draft edited={false} />
     {:else if content.kind === "image_content"}
-        <!-- <ImageAttached onRemove={onRemoveAttachment} {content} fill={false} draft /> -->
         <ImageContent
             onRemove={onRemoveAttachment}
             {content}

@@ -102,7 +102,6 @@
         {pinned}
         {height}
         {blockLevelMarkdown}
-        {isPreview}
         {onRemovePreview} />
 {:else if content.kind === "video_content"}
     <VideoContent {me} {fill} {edited} {content} {reply} {height} {blockLevelMarkdown} />
@@ -117,7 +116,7 @@
 {:else if content.kind === "blocked_content"}
     <BlockedContent />
 {:else if content.kind === "crypto_content"}
-    <CryptoContent {senderId} {content} {me} />
+    <CryptoContent {senderId} {content} {me} {reply} {edited} {blockLevelMarkdown} />
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
 {:else if content.kind === "bot_placeholder_content"}
@@ -164,16 +163,7 @@
 {:else if content.kind === "reported_message_content"}
     <ReportedMessageContent {content} />
 {:else if content.kind === "meme_fighter_content"}
-    <ImageContent
-        {me}
-        {edited}
-        {intersecting}
-        {fill}
-        {content}
-        {reply}
-        {pinned}
-        {height}
-        {isPreview} />
+    <ImageContent {me} {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
 {:else if content.kind === "user_referral_card"}
     <UserReferralCardContent />
 {/if}

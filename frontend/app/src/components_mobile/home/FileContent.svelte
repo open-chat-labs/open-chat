@@ -5,7 +5,6 @@
     import {
         Body,
         BodySmall,
-        ChatCaption,
         ColourVars,
         Column,
         IconButton,
@@ -16,7 +15,7 @@
     import type { FileContent, OpenChat, TextContent as TextContentType } from "openchat-client";
     import { mimeTypeToHumanReadable } from "openchat-client";
     import { getProxyAdjustedBlobUrl } from "../../utils/media";
-    import TextContent from "./TextContent.svelte";
+    import MessageRenderer from "./MessageRenderer.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import FileUploadOutline from "svelte-material-icons/FileUploadOutline.svelte";
 
@@ -45,10 +44,9 @@
         onRemove,
     }: Props = $props();
 
-    let textContent = $derived<TextContentType | undefined>(
+    let normalisedContent = $derived<TextContentType | undefined>(
         !!content.caption ? { kind: "text_content", text: content.caption ?? "" } : undefined,
     );
-    let hasContent = $derived(!!textContent?.text);
 </script>
 
 {#snippet fileContent(borderRadius: Radius, backgroundColor: string, padding?: Padding)}
@@ -60,7 +58,7 @@
         {borderRadius}
         {backgroundColor}>
         <Row>
-            <Body>{content.name}</Body>
+            <Body fontWeight="semi-bold">{content.name}</Body>
         </Row>
         <Row crossAxisAlignment="center" gap="xs">
             <FileUploadOutline size="1rem" color={ColourVars[subtextColour]} />
@@ -73,45 +71,21 @@
     </Column>
 {/snippet}
 
-{#snippet fileReplyView()}
-    <Column gap={hasContent ? "zero" : "xs"}>
+{#snippet replyView(textContent?: Snippet)}
+    <Column>
         {@render title?.()}
-        {@render fileTextContent()}
-        <Row gap="xs" crossAxisAlignment="center" padding={["zero", "xxs", "zero", "zero"]}>
-            {#if hasContent}
-                {@const textColor = me ? "secondary" : "primary"}
-                <FileUploadOutline size="1rem" color={ColourVars[textColor]} />
-                <ChatCaption fontWeight="semi-bold" colour={textColor}>{content.name}</ChatCaption>
-            {:else}
-                {@const textColor = me ? "secondaryLight" : "primaryLight"}
-                <FileUploadOutline size="1rem" color={ColourVars[textColor]} />
-                <BodySmall fontWeight="semi-bold" colour={textColor}>
-                    {content.name}
-                </BodySmall>
-            {/if}
+        <Row gap="xs" crossAxisAlignment="center" padding={["xs", "xxs", "xxs", "zero"]}>
+            {@const textColor = me ? "secondary" : "primary"}
+            <FileUploadOutline size="1rem" color={ColourVars[textColor]} />
+            <Body fontWeight="semi-bold" colour={textColor}>
+                {content.name}
+            </Body>
         </Row>
+        {@render textContent?.()}
     </Column>
 {/snippet}
 
-{#snippet fileTextContent()}
-    {#if textContent?.text}
-        <TextContent
-            content={textContent}
-            {me}
-            {reply}
-            fill={false}
-            {blockLevelMarkdown}
-            {edited}
-            showPreviews={false}
-            isPreview={draft || reply} />
-    {/if}
-{/snippet}
-
-{#if reply}
-    <!-- User is replying to a message with file attached, and it's still in draft-->
-    <!-- User has replied to a file content message, and we're rendering the message -->
-    {@render fileReplyView()}
-{:else if draft}
+{#snippet draftView(textContent?: Snippet)}
     <!-- User is sending a new file, and it's still in draft -->
     <Column padding="xs">
         <Column
@@ -119,7 +93,7 @@
             backgroundColor={ColourVars.background0}
             borderRadius="lg">
             {@render fileContent("zero", "background1")}
-            {@render fileTextContent()}
+            {@render textContent?.()}
         </Column>
     </Column>
     <div class="close" class:rtl={$rtlStore}>
@@ -129,7 +103,9 @@
             {/snippet}
         </IconButton>
     </div>
-{:else}
+{/snippet}
+
+{#snippet regularView(textContent?: Snippet)}
     <!-- User has sent a message with file attached, and we're rendering the message -->
     {@const borderRadius: Radius = [me ? "lg" : "md", me ? "md" : "lg", "md", "md"]}
     {@const backgroundColor = me ? ColourVars.primaryMuted : ColourVars.background1}
@@ -142,13 +118,25 @@
             target="_blank"
             class:rtl={$rtlStore}
             class:draft
-            class:no_content={!reply && !textContent?.text}
+            class:no_content={!reply && !textContent}
             class="file_content">
             {@render fileContent(borderRadius, backgroundColor, ["sm", "md"])}
         </a>
-        {@render fileTextContent()}
+        {@render textContent?.()}
     {/if}
-{/if}
+{/snippet}
+
+<MessageRenderer
+    {replyView}
+    {draftView}
+    {regularView}
+    caption={normalisedContent?.text}
+    {me}
+    {reply}
+    {draft}
+    {edited}
+    {blockLevelMarkdown}
+    {onRemove} />
 
 <style lang="scss">
     :global(.file_draft_contents) {
