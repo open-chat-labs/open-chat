@@ -2655,11 +2655,8 @@ export function apiDexId(dex: DexId): TExchangeId {
     switch (dex) {
         case "icpswap":
             return "ICPSwap";
-        case "kongswap":
-            return "KongSwap";
-        case "sonic":
-            throw new Error("Unsupported dex sonic");
-        // return "Sonic";
+        default:
+            throw new UnsupportedValueError("Unsupported dex", dex);
     }
 }
 

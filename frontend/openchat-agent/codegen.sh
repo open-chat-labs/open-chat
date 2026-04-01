@@ -24,8 +24,6 @@ generateTsAndJs ./src/services/bitcoin/candid/can.did ./src/services/bitcoin/can
 generateTsAndJs ./src/services/ckbtcMinter/candid/can.did ./src/services/ckbtcMinter/candid
 generateTsAndJs ./src/services/dexes/icpSwap/index/candid/can.did ./src/services/dexes/icpSwap/index/candid
 generateTsAndJs ./src/services/dexes/icpSwap/pool/candid/can.did ./src/services/dexes/icpSwap/pool/candid
-generateTsAndJs ./src/services/dexes/kongswap/candid/can.did ./src/services/dexes/kongswap/candid
-generateTsAndJs ./src/services/dexes/sonic/swaps/candid/can.did ./src/services/dexes/sonic/swaps/candid
 generateTsAndJs ./src/services/icpcoins/candid/can.did ./src/services/icpcoins/candid
 generateTsAndJs ./src/services/icpLedgerIndex/candid/can.did ./src/services/icpLedgerIndex/candid
 generateTsAndJs ./src/services/ledger/candid/can.did ./src/services/ledger/candid
