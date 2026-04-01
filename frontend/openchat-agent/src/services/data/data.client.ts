@@ -332,6 +332,7 @@ export class DataClient extends EventTarget {
             let attempt = 0;
 
             while (error === undefined) {
+                attempt++;
                 try {
                     const chunkResponse = await bucketClient.uploadChunk(
                         fileId,
@@ -351,7 +352,6 @@ export class DataClient extends EventTarget {
                         return;
                     }
                 } catch (e) {
-                    attempt++;
                     if (attempt >= 5) {
                         error = e;
                         console.error("Error uploading chunk " + chunkIndex, e);
