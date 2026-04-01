@@ -227,6 +227,11 @@ export const GroupRegisterWebhookArgs = Type.Object({
     avatar: Type.Optional(Type.String()),
 });
 
+export type GroupDeleteHistoryArgs = Static<typeof GroupDeleteHistoryArgs>;
+export const GroupDeleteHistoryArgs = Type.Object({
+    before: Type.BigInt(),
+});
+
 export type GroupSelectedUpdatesArgs = Static<typeof GroupSelectedUpdatesArgs>;
 export const GroupSelectedUpdatesArgs = Type.Object({
     updates_since: Type.BigInt(),
@@ -510,11 +515,7 @@ export const CommunityRole = Type.Union([
 ]);
 
 export type ExchangeId = Static<typeof ExchangeId>;
-export const ExchangeId = Type.Union([
-    Type.Literal("ICPSwap"),
-    Type.Literal("Sonic"),
-    Type.Literal("KongSwap"),
-]);
+export const ExchangeId = Type.Literal("ICPSwap");
 
 export type ProposalDecisionStatus = Static<typeof ProposalDecisionStatus>;
 export const ProposalDecisionStatus = Type.Union([
@@ -902,6 +903,7 @@ export const ChatEventType = Type.Union([
     Type.Literal("Frozen"),
     Type.Literal("Unfrozen"),
     Type.Literal("DisappearingMessagesUpdated"),
+    Type.Literal("HistoryDeleted"),
     Type.Literal("MessagePinned"),
     Type.Literal("MessageUnpinned"),
     Type.Literal("MembersJoined"),
@@ -2908,6 +2910,12 @@ export const CommunityDeleteMessagesArgs = Type.Object({
     message_ids: Type.Array(MessageId),
     as_platform_moderator: Type.Optional(Type.Boolean()),
     new_achievement: Type.Boolean(),
+});
+
+export type CommunityDeleteChannelHistoryArgs = Static<typeof CommunityDeleteChannelHistoryArgs>;
+export const CommunityDeleteChannelHistoryArgs = Type.Object({
+    channel_id: ChannelId,
+    before: Type.BigInt(),
 });
 
 export type CommunityRemoveMemberFromChannelArgs = Static<
@@ -5536,6 +5544,12 @@ export const MembersResponse = Type.Union([
     }),
 ]);
 
+export type HistoryDeleted = Static<typeof HistoryDeleted>;
+export const HistoryDeleted = Type.Object({
+    before: Type.BigInt(),
+    deleted_by: UserId,
+});
+
 export type RoleChanged = Static<typeof RoleChanged>;
 export const RoleChanged = Type.Object({
     user_ids: Type.Array(UserId),
@@ -6646,17 +6660,9 @@ export const UserSetProfileBackgroundArgs = Type.Object({
 });
 
 export type UserSwapTokensExchangeArgs = Static<typeof UserSwapTokensExchangeArgs>;
-export const UserSwapTokensExchangeArgs = Type.Union([
-    Type.Object({
-        ICPSwap: UserSwapTokensExchangeSwapArgs,
-    }),
-    Type.Object({
-        KongSwap: UserSwapTokensExchangeSwapArgs,
-    }),
-    Type.Object({
-        Sonic: UserSwapTokensExchangeSwapArgs,
-    }),
-]);
+export const UserSwapTokensExchangeArgs = Type.Object({
+    ICPSwap: UserSwapTokensExchangeSwapArgs,
+});
 
 export type UserSwapTokensArgs = Static<typeof UserSwapTokensArgs>;
 export const UserSwapTokensArgs = Type.Object({
@@ -8816,6 +8822,9 @@ export const ChatEvent = Type.Union([
     }),
     Type.Object({
         BotUpdated: BotUpdated,
+    }),
+    Type.Object({
+        HistoryDeleted: HistoryDeleted,
     }),
     Type.Literal("FailedToDeserialize"),
 ]);

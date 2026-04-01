@@ -622,9 +622,7 @@ export interface EventsTimeToLiveUpdated {
   'new_ttl' : [] | [Milliseconds],
   'updated_by' : UserId,
 }
-export type ExchangeId = { 'Sonic' : null } |
-  { 'KongSwap' : null } |
-  { 'ICPSwap' : null };
+export type ExchangeId = { 'ICPSwap' : null };
 export interface ExternalUrlUpdated {
   'new_url' : [] | [string],
   'updated_by' : UserId,

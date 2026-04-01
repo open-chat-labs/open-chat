@@ -2,7 +2,6 @@ use crate::guards::caller_is_owner;
 use crate::model::token_swaps::TokenSwap;
 use crate::timer_job_types::{ProcessTokenSwapJob, TimerJob};
 use crate::token_swaps::icpswap::ICPSwapClient;
-use crate::token_swaps::kongswap::KongSwapClient;
 use crate::token_swaps::swap_client::SwapClient;
 use crate::{Data, RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
@@ -212,7 +211,7 @@ pub(crate) async fn process_token_swap(
     };
 
     // Should we skip withdrawing if the swap failed, and it used ICRC2, and auto withdrawals
-    // is false? (This isn't possible right now because only KongSwap is using ICRC2)
+    // is false?
     if !swap_client.auto_withdrawals() && extract_result(&token_swap.withdrawn_from_dex_at).is_none() {
         if let Err(error) = swap_client.withdraw(successful_swap, amount_out).await {
             let msg = format!("{error:?}");
@@ -257,8 +256,6 @@ fn build_swap_client(args: &Args, state: &RuntimeState) -> Box<dyn SwapClient> {
                 icpswap.zero_for_one,
             ))
         }
-        ExchangeArgs::KongSwap(kongswap) => Box::new(KongSwapClient::new(kongswap.swap_canister_id, input_token, output_token)),
-        ExchangeArgs::Sonic(_) => unimplemented!(),
     }
 }
 
