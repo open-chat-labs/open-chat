@@ -364,7 +364,7 @@ export class DataClient extends EventTarget {
 
         await Promise.all(promises);
 
-        if (error) throw error;
+        if (error !== undefined) throw error;
 
         return {
             canisterId: bucketCanisterId,
