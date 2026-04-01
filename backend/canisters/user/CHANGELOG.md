@@ -6,13 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
-### Fixed
-
-- Fix event iterator ([#8855](https://github.com/open-chat-labs/open-chat/pull/8855))
-
 ### Changed
 
 - Remove option to verify using delegation when updating PIN ([#8811](https://github.com/open-chat-labs/open-chat/pull/8811))
+
+### Removed
+
+- Remove all references to KongSwap and Sonic ([#8922](https://github.com/open-chat-labs/open-chat/pull/8922))
+
+### Fixed
+
+- Fix event iterator ([#8855](https://github.com/open-chat-labs/open-chat/pull/8855))
 
 ## [[2.0.1952-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1952-user)] - 2026-01-14
 
