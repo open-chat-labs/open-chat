@@ -25,6 +25,7 @@
         "rollbar": "^2.26.5"
     },
     "devDependencies": {
+        "jsdom": "^26.1.0",
         "@testing-library/jest-dom": "^6.0.0",
         "@types/identicon.js": "^2.3.1",
         "@types/jest": "^29.5.3",

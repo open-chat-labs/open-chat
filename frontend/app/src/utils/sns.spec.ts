@@ -6,8 +6,8 @@ function createTestBot(): ExternalBot {
         kind: "external_bot",
         name: "test_bot",
         avatarUrl: "avatar_url",
-        id: "bot_id",
-        ownerId: "owner_id",
+        id: "aaaaa-aa",
+        ownerId: "aaaaa-aa",
         endpoint: "https://my_bot",
         registrationStatus: { kind: "public" },
         definition: {
