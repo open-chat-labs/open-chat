@@ -21,7 +21,6 @@
     },
     "author": "julian.jelfs@gmail.com",
     "dependencies": {
-        "@dfinity/ledger-icrc": "^7.1.0",
         "@noble/hashes": "^1.8.0",
         "@sinclair/typebox": "^0.34.33",
         "idb": "^7.1.1",
@@ -37,6 +36,7 @@
         "@types/identicon.js": "^2.3.1",
         "@types/jest": "^29.5.3",
         "@types/md5": "^2.3.2",
+        "jsdom": "^26.1.0",
         "ts2typebox": "^1.6.2",
         "typescript": "^5.9.3",
         "vitest": "^3.1.1",

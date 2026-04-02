@@ -9,6 +9,7 @@
     import Refresh from "svelte-material-icons/Refresh.svelte";
     import TokenSelector from "./wallet/TokenSelector.svelte";
     import { TokenState } from "./wallet/walletState.svelte";
+    import { getProxyAdjustedBlobUrl } from "../../utils/media";
 
     const client = getContext<OpenChat>("client");
 
@@ -55,7 +56,7 @@
             mainAxisAlignment={"spaceBetween"}
             crossAxisAlignment={"center"}
             padding={["sm", "md"]}>
-            <Avatar url={tokenState.logo}></Avatar>
+            <Avatar url={getProxyAdjustedBlobUrl(tokenState.logo) ?? tokenState.logo}></Avatar>
             <Column>
                 <Body width={"hug"} fontWeight={"bold"}>{tokenState.symbol}</Body>
                 <BodySmall

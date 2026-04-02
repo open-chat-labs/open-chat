@@ -9,7 +9,7 @@
     import DeletedContent from "./DeletedContent.svelte";
     import FileContent from "./FileContent.svelte";
     import GiphyContent from "./GiphyContent.svelte";
-    import ImageContentReply from "./ImageContentReply.svelte";
+    import ImageContent from "./ImageContent.svelte";
     import MessageContentInitial from "./MessageContentInitial.svelte";
     import MessageReminderContent from "./MessageReminderContent.svelte";
     import MessageReminderCreatedContent from "./MessageReminderCreatedContent.svelte";
@@ -32,6 +32,7 @@
         truncate?: boolean;
         fill: boolean;
         reply?: boolean;
+        draft?: boolean;
         pinned?: boolean;
         height?: number | undefined;
         readonly: boolean;
@@ -57,6 +58,7 @@
         truncate = false,
         fill,
         reply = false,
+        draft = false,
         pinned = false,
         height = undefined,
         readonly,
@@ -87,9 +89,10 @@
 {#if content.kind === "text_content"}
     <TextContentReply {title} {me} {truncate} {pinned} {content} {blockLevelMarkdown} />
 {:else if content.kind === "image_content"}
-    <ImageContentReply
+    <ImageContent
         {me}
         {title}
+        {edited}
         {intersecting}
         {fill}
         {content}
@@ -98,19 +101,19 @@
         {height}
         {blockLevelMarkdown} />
 {:else if content.kind === "video_content"}
-    <VideoContent {me} {edited} {fill} {content} {reply} {height} {blockLevelMarkdown} />
+    <VideoContent {title} {me} {edited} {fill} {content} {reply} {height} {blockLevelMarkdown} />
 {:else if content.kind === "video_call_content"}
     <VideoCallContent {senderId} {messageIndex} {content} {timestamp} />
 {:else if content.kind === "audio_content"}
-    <AudioContent {me} {edited} {content} {blockLevelMarkdown} />
+    <AudioContent {title} {me} {edited} {content} {blockLevelMarkdown} {draft} reply />
 {:else if content.kind === "file_content"}
-    <FileContent {edited} {me} {content} {blockLevelMarkdown} />
+    <FileContent {title} {edited} {me} {content} {blockLevelMarkdown} {draft} reply />
 {:else if content.kind === "deleted_content"}
     <DeletedContent {me} {content} {undeleting} />
 {:else if content.kind === "blocked_content"}
     <BlockedContent />
 {:else if content.kind === "crypto_content"}
-    <CryptoContent {senderId} {content} {me} />
+    <CryptoContent {title} {senderId} {content} {me} {edited} {blockLevelMarkdown} reply />
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
 {:else if content.kind === "bot_placeholder_content"}
@@ -124,7 +127,15 @@
 {:else if content.kind === "prize_content"}
     <PrizeContent chatId={messageContext.chatId} {messageId} {content} {me} {intersecting} />
 {:else if content.kind === "p2p_swap_content"}
-    <P2PSwapContent {senderId} {messageContext} {messageId} {content} {me} {reply} {pinned} />
+    <P2PSwapContent
+        {title}
+        {senderId}
+        {messageContext}
+        {messageId}
+        {content}
+        {me}
+        {reply}
+        {pinned} />
 {:else if content.kind === "prize_winner_content"}
     <PrizeWinnerContent {content} />
 {:else if content.kind === "poll_content"}
@@ -156,7 +167,7 @@
 {:else if content.kind === "reported_message_content"}
     <ReportedMessageContent {content} />
 {:else if content.kind === "meme_fighter_content"}
-    <ImageContentReply {me} {title} {intersecting} {fill} {content} {reply} {pinned} {height} />
+    <ImageContent {me} {title} {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
 {:else if content.kind === "user_referral_card"}
     <UserReferralCardContent />
 {/if}

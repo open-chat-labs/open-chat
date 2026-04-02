@@ -10,6 +10,7 @@
     import {
         i18nKey,
         publish,
+        LazyFile,
         type AttachmentContent,
         type MessageContext,
         type MessagePermission,
@@ -40,7 +41,6 @@
     interface Props {
         open: boolean;
         permittedMessages: Map<MessagePermission, boolean>;
-        onClearAttachment: () => void;
         onTokenTransfer: (args: { ledger?: string; amount?: bigint }) => void;
         onCreatePrizeMessage?: () => void;
         onCreateP2PSwapMessage: () => void;
@@ -66,7 +66,6 @@
     $effect(() => {
         if (open && client.isNativeAndroid()) {
             loadRecentMedia().then((res: any) => {
-                console.log("Media response", res);
                 mediaPermission = res.permission;
                 media = res.media;
             });
@@ -79,38 +78,19 @@
             permittedMessages.get("image"),
     );
 
+    // Construct dummy file object, and provide blobUrl that will allow Tauri to
+    // access the binary data associated with the file.
     function onMediaSelected(media: RecentMedia) {
-        constructFileObject(media).then((file) => {
-            client
-                .messageContentFromFile(file)
-                .then((content) => {
-                    onFileSelected(content);
-                })
-                .catch((err) => {
-                    toastStore.showFailureToast(i18nKey(err));
-                });
-        });
-    }
-
-    async function constructFileObject(media: RecentMedia): Promise<File> {
-        const { filePath, filename, mimeType } = media;
-        const assetUrl: string = convertFileSrc(filePath);
-
-        try {
-            // TODO check if this is the bottle neck for image loading on slower phones!
-            const response: Response = await fetch(assetUrl);
-            if (!response.ok) {
-                throw new Error(`Failed to fetch asset: ${response.statusText}`);
-            }
-
-            const blob: Blob = await response.blob();
-            return new File([blob], filename, { type: mimeType });
-        } catch (error: any) {
-            // TODO i18n
-            toastStore.showFailureToast(i18nKey(error.toString()));
-            console.error("Error reconstructing File object:", error);
-            throw error;
-        }
+        console.log(media);
+        const { filename, mimeType, size } = media;
+        const assetUrl = convertFileSrc(media.filePath);
+        const lazyFile = LazyFile.fromUrl(assetUrl, filename, mimeType, size);
+        client
+            .messageContentFromFile(lazyFile)
+            .then(onFileSelected)
+            .catch((err) => {
+                toastStore.showFailureToast(i18nKey(err));
+            });
     }
 </script>
 

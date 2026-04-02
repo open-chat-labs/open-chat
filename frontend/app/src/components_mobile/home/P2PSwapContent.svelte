@@ -1,11 +1,12 @@
 <script lang="ts">
+    import { type Snippet, getContext } from "svelte";
     import {
         Avatar,
-        BodySmall,
+        Body,
         Button,
+        ChatCaption,
         ColourVars,
         Column,
-        type Padding,
         Row,
         Subtitle,
     } from "component-lib";
@@ -15,7 +16,7 @@
         MessageContext,
         OpenChat,
         P2PSwapContent,
-        ResourceKey,
+        P2PSwapContentInitial,
     } from "openchat-client";
     import {
         enhancedCryptoLookup as cryptoLookup,
@@ -23,125 +24,138 @@
         isDiamondStore,
         publish,
     } from "openchat-client";
-    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
-    import Clock from "svelte-material-icons/Clock.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
     import { now500 } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
-    import AreYouSure from "../AreYouSure.svelte";
-    import MulticolourText from "../MulticolourText.svelte";
-    import Translatable from "../Translatable.svelte";
-    import AcceptP2PSwapModal from "./AcceptP2PSwapModal.svelte";
-    import ContentCaption from "./ContentCaption.svelte";
-    import Markdown from "./Markdown.svelte";
-    import P2PSwapProgress from "./P2PSwapProgress.svelte";
     import { TokenState } from "./wallet/walletState.svelte";
+    import { getProxyAdjustedBlobUrl } from "../../utils/media";
+    import Markdown from "./Markdown.svelte";
+    import MessageRenderer from "./MessageRenderer.svelte";
+    import Translatable from "../Translatable.svelte";
+    import AreYouSure from "../AreYouSure.svelte";
+    import AcceptP2PSwapModal from "./AcceptP2PSwapModal.svelte";
+    import P2PSwapProgress from "./P2PSwapProgress.svelte";
+    import Cached from "svelte-material-icons/Cached.svelte";
+    import Check from "svelte-material-icons/Check.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
+    import CloseCircleOutline from "svelte-material-icons/CloseCircleOutline.svelte";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        senderId: string;
-        content: P2PSwapContent;
-        messageContext: MessageContext;
-        messageId: bigint;
-        me: boolean;
-        reply: boolean;
-        pinned: boolean;
+        content: P2PSwapContentInitial | P2PSwapContent;
+        messageContext?: MessageContext;
+        senderId?: string;
+        messageId?: bigint;
+        title?: Snippet;
+        me?: boolean;
+        reply?: boolean;
+        draft?: boolean;
+        edited?: boolean;
+        pinned?: boolean;
+        blockLevelMarkdown?: boolean;
+        onRemove?: () => void;
     }
 
-    let { senderId, content, messageContext, messageId, me, reply, pinned }: Props = $props();
+    let {
+        content,
+        messageContext,
+        senderId,
+        messageId,
+        title,
+        me = false,
+        reply = false,
+        draft = false,
+        edited = false,
+        pinned = false,
+        blockLevelMarkdown = false,
+        onRemove,
+    }: Props = $props();
 
+    let fromState = $derived(new TokenState($cryptoLookup.get(content.token0.ledger)!));
+    let toState = $derived(new TokenState($cryptoLookup.get(content.token1.ledger)!));
     let confirming = $state(false);
     let showDetails = $state(false);
-
-    let fromDetails = $derived($cryptoLookup.get(content.token0.ledger)!);
-    let toDetails = $derived($cryptoLookup.get(content.token1.ledger)!);
-    let fromState = $derived(new TokenState(fromDetails));
-    let toState = $derived(new TokenState(toDetails));
-    let finished = $derived($now500 >= Number(content.expiresAt));
+    let finished = $derived(
+        content.kind === "p2p_swap_content" ? $now500 >= Number(content.expiresAt) : undefined,
+    );
     let timeRemaining = $derived(
-        finished
-            ? $_("p2pSwap.expired")
-            : client.formatTimeRemaining($now500, Number(content.expiresAt)),
+        !finished && content.kind === "p2p_swap_content"
+            ? client.formatTimeRemaining($now500, Number(content.expiresAt))
+            : $_("p2pSwap.expired"),
     );
-    let acceptedByYou = $derived(
-        (content.status.kind === "p2p_swap_reserved" &&
-            content.status.reservedBy === $currentUserIdStore) ||
-            ((content.status.kind === "p2p_swap_accepted" ||
-                content.status.kind === "p2p_swap_completed") &&
-                content.status.acceptedBy === $currentUserIdStore),
+    let recipientId = $derived(
+        content.kind === "p2p_swap_content"
+            ? content.status.kind === "p2p_swap_reserved"
+                ? content.status.reservedBy
+                : content.status.kind === "p2p_swap_accepted" ||
+                    content.status.kind === "p2p_swap_completed"
+                  ? content.status.acceptedBy
+                  : undefined
+            : undefined,
     );
-
+    let acceptedByYou = $derived(recipientId === $currentUserIdStore);
     let fromAmount = $derived(client.formatTokens(content.token0Amount, content.token0.decimals));
     let toAmount = $derived(client.formatTokens(content.token1Amount, content.token1.decimals));
-    let buttonDisabled = $derived(content.status.kind !== "p2p_swap_open" || reply || pinned);
+    let buttonDisabled = $derived(
+        (content.kind === "p2p_swap_content" && content.status.kind !== "p2p_swap_open") ||
+            reply ||
+            pinned,
+    );
 
-    type Labels = {
-        instructionText?: string;
-        buttonText: ResourceKey;
-        summaryText: ResourceKey;
-    };
+    let buttonLabelKey = $derived.by<string | undefined>(() => {
+        if (content.kind !== "p2p_swap_content") return;
+        const ifAcceptedByYou = (labelKey: string) =>
+            acceptedByYou || me ? labelKey : "p2pSwap.notAvailable";
 
-    let labels = $derived.by<Labels>(() => {
-        let instructionText: string | undefined = undefined;
-        let buttonText: ResourceKey = i18nKey("");
+        switch (content.status.kind) {
+            case "p2p_swap_open":
+                return me ? "p2pSwap.cancel" : "p2pSwap.accept";
 
-        if (content.status.kind === "p2p_swap_open") {
-            if (me) {
-                instructionText = undefined;
-                buttonText = i18nKey("p2pSwap.cancel");
-            } else {
-                instructionText = undefined;
-                buttonText = i18nKey("p2pSwap.accept");
-            }
-        } else if (content.status.kind === "p2p_swap_cancelled") {
-            instructionText = undefined;
-            buttonText = i18nKey("p2pSwap.cancelled");
-        } else if (content.status.kind === "p2p_swap_expired") {
-            instructionText = undefined;
-            buttonText = i18nKey("p2pSwap.expired");
-        } else if (content.status.kind === "p2p_swap_reserved") {
-            if (acceptedByYou) {
-                instructionText = $_("p2pSwap.youReserved");
-            } else {
-                instructionText = $_("p2pSwap.reservedBy", {
-                    values: { user: `@UserId(${content.status.reservedBy})` },
-                });
-            }
-            buttonText = i18nKey("p2pSwap.reserved");
-        } else if (content.status.kind === "p2p_swap_accepted") {
-            if (acceptedByYou) {
-                instructionText = $_("p2pSwap.youAccepted");
-            } else {
-                instructionText = $_("p2pSwap.acceptedBy", {
-                    values: { user: `@UserId(${content.status.acceptedBy})` },
-                });
-            }
-            buttonText = i18nKey("p2pSwap.accepted");
-        } else if (content.status.kind === "p2p_swap_completed") {
-            if (acceptedByYou) {
-                instructionText = $_("p2pSwap.youCompleted");
-            } else {
-                instructionText = $_("p2pSwap.completed", {
-                    values: { user: `@UserId(${content.status.acceptedBy})` },
-                });
-            }
-            buttonText = i18nKey("p2pSwap.accepted");
+            case "p2p_swap_cancelled":
+                return "p2pSwap.cancelled";
+
+            case "p2p_swap_expired":
+                return "p2pSwap.expired";
+
+            case "p2p_swap_reserved":
+            case "p2p_swap_accepted":
+                return ifAcceptedByYou("p2pSwap.progress.pendingCompletion");
+
+            case "p2p_swap_completed":
+                return ifAcceptedByYou("p2pSwap.progress.success");
         }
+    });
 
-        return {
-            instructionText,
-            buttonText,
-            summaryText: i18nKey("p2pSwap.summary", {
-                fromAmount,
-                toAmount,
-                fromToken: content.token0.symbol,
-                toToken: content.token1.symbol,
-            }),
-        };
+    let headerLabelKey = $derived.by<string | undefined>(() => {
+        if (content.kind !== "p2p_swap_content") return;
+
+        switch (content.status.kind) {
+            case "p2p_swap_open":
+                return timeRemaining;
+
+            case "p2p_swap_cancelled":
+                return "p2pSwap.cancelled";
+
+            case "p2p_swap_expired":
+                return "p2pSwap.expired";
+
+            case "p2p_swap_reserved":
+                return acceptedByYou ? "p2pSwap.reserved" : "p2pSwap.progress.acceptedBy";
+
+            case "p2p_swap_accepted":
+                return acceptedByYou ? "p2pSwap.accepted" : "p2pSwap.progress.acceptedBy";
+
+            case "p2p_swap_completed":
+                return acceptedByYou
+                    ? "p2pSwap.progress.completed"
+                    : recipientId
+                      ? "p2pSwap.progress.acceptedBy"
+                      : "p2pSwap.accepted";
+        }
     });
 
     function onAcceptOrCancel(e: MouseEvent) {
@@ -155,28 +169,31 @@
     }
 
     function cancel(yes: boolean): Promise<void> {
-        confirming = false;
+        if (messageContext && messageId) {
+            confirming = false;
 
-        if (yes && me) {
-            client
-                .cancelP2PSwap(
-                    messageContext.chatId,
-                    messageContext.threadRootMessageIndex,
-                    messageId,
-                )
-                .then((resp) => {
-                    if (resp.kind !== "success") {
-                        showFailureToast(resp, false);
-                    } else {
-                        client.refreshAccountBalance(content.token1.ledger);
-                    }
-                });
+            if (yes && me) {
+                client
+                    .cancelP2PSwap(
+                        messageContext.chatId,
+                        messageContext.threadRootMessageIndex,
+                        messageId,
+                    )
+                    .then((resp) => {
+                        if (resp.kind !== "success") {
+                            showFailureToast(resp, false);
+                        } else {
+                            client.refreshAccountBalance(content.token1.ledger);
+                        }
+                    });
+            }
         }
 
         return Promise.resolve();
     }
 
     function accept() {
+        if (!messageContext || !messageId) return;
         confirming = false;
 
         if (!me) {
@@ -252,105 +269,180 @@
             onAccept={accept}
             onClose={() => (confirming = false)} />
     {/if}
-{:else if showDetails}
+{:else if showDetails && senderId && content.kind === "p2p_swap_content"}
     <P2PSwapProgress {senderId} {content} onClose={() => (showDetails = false)} />
 {/if}
 
-{#snippet token(
-    label: string,
-    state: TokenState,
-    amount: bigint,
-    padding: Padding = ["md", "lg", "md", "sm"],
-)}
-    <Row
-        gap={"lg"}
-        crossAxisAlignment={"center"}
-        {padding}
-        borderRadius={"lg"}
-        background={ColourVars.background1}>
-        <Avatar size={"lg"} url={state.logo} />
-        <Column>
-            <Subtitle ellipsisTruncate fontWeight={"bold"}>
-                <MulticolourText
-                    parts={[
-                        {
-                            text: i18nKey(label),
-                            colour: "textPrimary",
-                        },
-                        {
-                            text: i18nKey(`${state.formatTokens(amount)} ${state.symbol}`),
-                            colour: "primary",
-                        },
-                    ]} />
-            </Subtitle>
-            <BodySmall colour={"textSecondary"}>
-                {`= ${state.formatConvertedTokens(amount)}`}
-            </BodySmall>
+{#snippet replyView(textContent?: Snippet)}
+    <Row gap="sm" minWidth="12rem">
+        <Column width="fill" gap="xs" padding={["xs", "zero"]}>
+            {@render title?.()}
+            {#if textContent}
+                {@render textContent()}
+            {:else}
+                <Row gap="xs" crossAxisAlignment="center">
+                    <Cached
+                        color={me ? ColourVars.secondaryLight : ColourVars.primaryLight}
+                        size="1.25rem" />
+                    <ChatCaption colour={me ? "secondaryLight" : "primaryLight"}>
+                        <Translatable
+                            resourceKey={i18nKey("p2pSwap.summaryShort", {
+                                fromAmount,
+                                toAmount,
+                                fromToken: content.token0.symbol,
+                                toToken: content.token1.symbol,
+                            })} />
+                    </ChatCaption>
+                </Row>
+            {/if}
         </Column>
     </Row>
 {/snippet}
 
-<Column
-    padding={["lg", "zero"]}
-    gap={"md"}
-    crossAxisAlignment={"center"}
-    mainAxisAlignment={"center"}>
-    {#if content.status.kind === "p2p_swap_open"}
+{#snippet draftView()}
+    <Column padding="xs">
+        <Column padding="xs" borderRadius="lg" background={ColourVars.background2}>
+            <Row
+                gap={"xs"}
+                padding={["xs", "lg", "xs", "md"]}
+                crossAxisAlignment={"center"}
+                borderRadius={["lg", "lg", "md", "md"]}>
+                <Body width="hug" colour="textSecondary" fontWeight="semi-bold">
+                    <Translatable resourceKey={i18nKey("p2pSwap.builderTitle")} />
+                </Body>
+            </Row>
+            {@render swapView()}
+        </Column>
+    </Column>
+{/snippet}
+
+{#snippet regularView(textContent?: Snippet)}
+    {@const statusKind = content.kind === "p2p_swap_content" ? content.status.kind : undefined}
+    <Column padding={["zero", "zero", textContent ? "zero" : "xl"]}>
+        <Column
+            gap="xs"
+            padding={me ? "xs" : "zero"}
+            backgroundColor={ColourVars.background2}
+            borderRadius={[me ? "lg" : "md", !me ? "lg" : "md", "lg", "lg"]}>
+            <Row supplementalClass="swap_header_title" padding={["sm", "sm", "zero"]}>
+                <Body
+                    align="end"
+                    fontWeight="bold"
+                    colour={statusKind === "p2p_swap_completed" && acceptedByYou
+                        ? "primary"
+                        : "textSecondary"}>
+                    <Translatable resourceKey={i18nKey(headerLabelKey ?? "")} />
+                    {#if recipientId && recipientId !== $currentUserIdStore}
+                        <Markdown text={`@UserId(${recipientId})`} inline />
+                    {/if}
+                </Body>
+            </Row>
+            {@render swapView(onSwapClick)}
+            <Row width="fill">
+                <!-- In DMs Swaps should have a decline option -->
+                <Button
+                    loading={(me || acceptedByYou) &&
+                        (statusKind === "p2p_swap_reserved" || statusKind === "p2p_swap_accepted")}
+                    disabled={buttonDisabled}
+                    onClick={onAcceptOrCancel}>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            buttonLabelKey ?? (me ? "p2pSwap.cancel" : "p2pSwap.accept"),
+                        )} />
+                    {#snippet icon(color: string)}
+                        {@const size = "1rem"}
+                        <!-- for reserved and accepted statuses we don't show an icon, since a loader is showing -->
+                        {#if statusKind === "p2p_swap_open"}
+                            {#if me}
+                                <CloseCircleOutline {size} {color} />
+                            {:else}
+                                <Cached {size} {color} />
+                            {/if}
+                        {:else if acceptedByYou || me}
+                            {#if statusKind === "p2p_swap_completed"}
+                                <Check {size} {color} />
+                            {:else if statusKind === "p2p_swap_cancelled" || statusKind === "p2p_swap_expired"}
+                                <Close {size} {color} />
+                            {/if}
+                        {/if}
+                    {/snippet}
+                </Button>
+            </Row>
+        </Column>
+    </Column>
+    {@render textContent?.()}
+{/snippet}
+
+<MessageRenderer
+    {replyView}
+    {draftView}
+    {regularView}
+    caption={content.caption}
+    {me}
+    {reply}
+    {draft}
+    {edited}
+    {blockLevelMarkdown}
+    {onRemove} />
+
+{#snippet tokenDetailsView(tokenState: TokenState, amount: bigint, isTopSection: boolean = false)}
+    <Row
+        width="fill"
+        gap="lg"
+        borderRadius="md"
+        padding={[!isTopSection ? "lg" : "md", "md", isTopSection ? "lg" : "md", "md"]}
+        background={ColourVars.background0}
+        crossAxisAlignment="center">
+        <Avatar size={"md"} url={getProxyAdjustedBlobUrl(tokenState.logo) ?? tokenState.logo} />
+        <Column width="fill">
+            <Subtitle fontWeight="bold">{tokenState.symbol}</Subtitle>
+            <Body colour="textSecondary" fontWeight="bold" maxLines={1}>
+                {tokenState.token.name}
+            </Body>
+        </Column>
+        <Column width="hug">
+            <Subtitle fontWeight="bold" align="end">
+                {tokenState.formatTokens(amount)}
+            </Subtitle>
+            <Body colour="primary" fontWeight="bold" align="end">
+                ≈ {tokenState.formatConvertedTokens(amount)}
+            </Body>
+        </Column>
+    </Row>
+{/snippet}
+
+{#snippet swapView(onClick?: () => void)}
+    <Column gap="xs" crossAxisAlignment={"center"} {onClick}>
+        {@render tokenDetailsView(fromState, content.token0Amount, true)}
         <Row
-            padding={["sm", "md"]}
-            borderRadius={"md"}
-            mainAxisAlignment={"center"}
-            width={"hug"}
-            backgroundColor={ColourVars.background1}
-            crossAxisAlignment={"center"}
-            gap={"xs"}>
-            <Clock size={"1em"} color={"#ffffff"} />
-            <BodySmall colour={"textSecondary"}>
-                {timeRemaining}
-            </BodySmall>
-        </Row>
-    {/if}
-    <Column minWidth={"16rem"} onClick={onSwapClick} crossAxisAlignment={"center"} gap={"xs"}>
-        {@render token("Swap ", fromState, content.token0Amount, ["md", "lg", "xl", "sm"])}
-        <Row
-            supplementalClass={"swap_content_down_arrow"}
-            width={{ size: "2.5rem" }}
-            height={{ size: "2.5rem" }}
+            supplementalClass={"swap_initial_down_arrow"}
+            width={{ size: "2rem" }}
+            height={{ size: "2rem" }}
             borderRadius={"circle"}
             borderWidth={"extraThick"}
-            borderColour={me ? ColourVars.primary : ColourVars.background2}
-            background={ColourVars.background1}
+            borderColour={ColourVars.background2}
+            background={ColourVars.background0}
             mainAxisAlignment={"center"}
             crossAxisAlignment={"center"}>
-            <ArrowDown size={"1.2rem"} />
+            <ArrowDown size={"1rem"} />
         </Row>
-        {@render token("For ", toState, content.token1Amount, ["xl", "lg", "md", "sm"])}
+        {@render tokenDetailsView(toState, content.token1Amount)}
     </Column>
-    <ContentCaption caption={content.caption} edited={false} />
-    {#if labels.instructionText !== undefined}
-        <BodySmall>
-            <Markdown text={labels.instructionText} />
-        </BodySmall>
-    {/if}
-    <Row overflow={"visible"} background={ColourVars.background1} borderRadius={"sm"}>
-        <Button
-            secondary
-            width={"fill"}
-            loading={content.status.kind === "p2p_swap_reserved" ||
-                content.status.kind === "p2p_swap_accepted"}
-            disabled={buttonDisabled}
-            onClick={onAcceptOrCancel}>
-            <Translatable resourceKey={labels.buttonText} />
-        </Button>
-    </Row>
-</Column>
+{/snippet}
 
 <style lang="scss">
-    :global(.container.swap_content_down_arrow) {
-        position: absolute;
-        width: 2.5rem;
-        height: 2.5rem;
-        transform: translateY(4rem);
-        z-index: 1;
+    :global {
+        .container.swap_initial_down_arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-1rem);
+            width: 2rem;
+            height: 2rem;
+            z-index: 1;
+        }
+
+        .swap_header_title profile-link {
+            text-decoration: none !important;
+        }
     }
 </style>

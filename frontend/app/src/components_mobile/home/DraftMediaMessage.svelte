@@ -1,55 +1,57 @@
 <script lang="ts">
     import { Row } from "component-lib";
-    import type { AttachmentContent, MessageContext } from "openchat-client";
-    import { currentUserIdStore, localUpdates } from "openchat-client";
+    import type { AttachmentContent } from "openchat-client";
+    import { currentUserIdStore } from "openchat-client";
     import AudioContent from "./AudioContent.svelte";
     import CryptoContent from "./CryptoContent.svelte";
     import FileContent from "./FileContent.svelte";
     import GiphyAttached from "./GiphyAttached.svelte";
-    import ImageAttached from "./ImageAttached.svelte";
-    import P2PSwapContentInitial from "./P2PSwapContentInitial.svelte";
+    import ImageContent from "./ImageContent.svelte";
+    import P2PSwapContent from "./P2PSwapContent.svelte";
     import PrizeContentInitial from "./PrizeContentInitial.svelte";
-    import VideoAttached from "./VideoAttached.svelte";
+    import VideoContent from "./VideoContent.svelte";
 
     interface Props {
         content: AttachmentContent;
-        ctx: MessageContext;
+        onRemoveAttachment?: () => void;
     }
 
-    let { content, ctx }: Props = $props();
-
-    function removeDraft() {
-        localUpdates.draftMessages.delete(ctx);
-    }
+    let { content, onRemoveAttachment }: Props = $props();
 </script>
 
 <Row>
     {#if content.kind === "video_content"}
-        <VideoAttached onRemove={removeDraft} {content} />
+        <VideoContent
+            onRemove={onRemoveAttachment}
+            {content}
+            me
+            draft
+            edited={false}
+            fill={false} />
     {:else if content.kind === "audio_content"}
-        <AudioContent me onRemove={removeDraft} edited={false} {content} draft />
+        <AudioContent onRemove={onRemoveAttachment} {content} me draft edited={false} />
     {:else if content.kind === "image_content"}
-        <ImageAttached onRemove={removeDraft} fill={false} {content} draft />
+        <ImageContent
+            onRemove={onRemoveAttachment}
+            {content}
+            me
+            draft
+            edited={false}
+            fill={false} />
     {:else if content.kind === "giphy_content"}
-        <GiphyAttached onRemove={removeDraft} {content} />
+        <GiphyAttached onRemove={onRemoveAttachment} {content} />
     {:else if content.kind === "crypto_content"}
-        <CryptoContent onRemove={removeDraft} me {content} draft senderId={$currentUserIdStore} />
+        <CryptoContent
+            onRemove={onRemoveAttachment}
+            {content}
+            me
+            draft
+            senderId={$currentUserIdStore} />
     {:else if content.kind === "p2p_swap_content_initial"}
-        <P2PSwapContentInitial onRemove={removeDraft} {content} />
+        <P2PSwapContent draft me onRemove={onRemoveAttachment} {content} />
     {:else if content.kind === "prize_content_initial"}
-        <PrizeContentInitial onRemove={removeDraft} {content} />
+        <PrizeContentInitial onRemove={onRemoveAttachment} {content} />
     {:else if content.kind === "file_content"}
-        <div class="file-preview">
-            <FileContent edited={false} me {content} draft />
-        </div>
+        <FileContent onRemove={onRemoveAttachment} edited={false} me {content} draft />
     {/if}
 </Row>
-
-<style lang="scss">
-    .file-preview {
-        border-radius: $sp4;
-        padding: $sp3;
-        color: var(--currentChat-msg-me-txt);
-        background-color: var(--currentChat-msg-me-bg);
-    }
-</style>

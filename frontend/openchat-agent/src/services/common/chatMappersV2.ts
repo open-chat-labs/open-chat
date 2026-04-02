@@ -1,4 +1,3 @@
-import { decodeIcrcAccount } from "@dfinity/ledger-icrc";
 import type { Principal } from "@icp-sdk/core/principal";
 import type {
     AcceptP2PSwapResponse,
@@ -128,6 +127,7 @@ import {
     botCommunityPermissionList,
     chatIdentifiersEqual,
     codeToText,
+    decodeIcrcAccount,
     isAccountIdentifierValid,
     messagePermissionsList,
     nullMembership,

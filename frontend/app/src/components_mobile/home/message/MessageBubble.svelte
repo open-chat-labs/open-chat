@@ -245,7 +245,7 @@
             msg.repliesTo.kind === "rehydrated_reply_context" ? msg.repliesTo : undefined}
         <Container
             onClick={reply ? () => zoomToMessage(reply) : undefined}
-            supplementalClass={`reply-wrapper ${me ? "me" : ""}`}
+            supplementalClass={`reply_wrapper ${me ? "me" : ""}`}
             direction={"vertical"}>
             {#if msg.repliesTo.kind === "rehydrated_reply_context"}
                 {@render repliesTo(msg.repliesTo)}
@@ -297,6 +297,10 @@
 
         .container.message_bubble a {
             color: inherit;
+        }
+
+        .container.message_bubble .typo {
+            text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
         }
 
         .container.message_bubble .markdown-wrapper {

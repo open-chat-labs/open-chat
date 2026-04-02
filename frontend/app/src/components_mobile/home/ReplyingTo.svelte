@@ -37,8 +37,16 @@
     );
 
     // This is transitional, until we adjust replies for different content types.
+    // TODO this should be the primary way to render replying to content!
     let hasDedicatedReplyContent = $derived(
-        ["text_content", "image_content"].indexOf(replyingTo.content.kind) > -1,
+        [
+            "text_content",
+            "image_content",
+            "file_content",
+            "audio_content",
+            "video_content",
+            "p2p_swap_content",
+        ].indexOf(replyingTo.content.kind) > -1,
     );
 </script>
 
@@ -75,7 +83,8 @@
                     truncate
                     edited={replyingTo.edited}
                     content={replyingTo.content}
-                    reply />
+                    reply
+                    draft />
             </div>
         {:else}
             <Row crossAxisAlignment={"center"}>
@@ -117,7 +126,7 @@
             position: relative;
             padding-left: var(--sp-xl);
             background-color: var(--background-2);
-            border-radius: var(--rad-lg) var(--rad-lg) var(--rad-sm) var(--rad-sm);
+            border-radius: var(--rad-lg) var(--rad-lg) var(--rad-md) var(--rad-md);
 
             &:before {
                 content: "";
@@ -143,8 +152,8 @@
 
         .cancel_reply {
             position: absolute;
-            right: -0.05rem;
-            top: -0.05rem;
+            right: 0;
+            top: 0;
             z-index: 1;
 
             &.filled {

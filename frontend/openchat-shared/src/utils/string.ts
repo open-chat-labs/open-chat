@@ -1,5 +1,5 @@
-import { decodeIcrcAccount } from "@dfinity/ledger-icrc";
 import { Principal } from "@icp-sdk/core/principal";
+import { decodeIcrcAccount } from "./icrcAccount";
 
 export const HEX_REGEX = new RegExp("^[A-Fa-f0-9]+$");
 

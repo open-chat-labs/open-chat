@@ -37,7 +37,7 @@
     );
 </script>
 
-<Column supplementalClass={`replies_to ${me ? "me" : ""}`} padding="sm">
+<Column supplementalClass={`replies_to ${me ? "me" : ""}`} padding="sm" borderRadius="md">
     {#if repliesTo.content !== undefined}
         <ChatMessageReplyContent
             {me}
@@ -90,15 +90,21 @@
             }
         }
 
-        .reply-wrapper.me .replies_to.me {
-            background-color: var(--background-2);
+        // Rules for a reply on my message.
+        .reply_wrapper.me > .replies_to {
+            border-top-left-radius: var(--rad-lg) !important;
+
+            &.me {
+                background-color: var(--background-2);
+            }
+
+            &:not(.me) {
+                background-color: var(--primary-muted);
+            }
         }
 
-        .reply-wrapper.me .replies_to:not(.me) {
-            background-color: var(--primary-muted);
-        }
-
-        .reply-wrapper:not(.me) .replies_to {
+        .reply_wrapper:not(.me) > .replies_to {
+            border-top-right-radius: var(--rad-lg) !important;
             background-color: var(--background-0);
         }
     }

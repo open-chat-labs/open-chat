@@ -1,7 +1,7 @@
 <script lang="ts">
     import { ChatText, ChatCaption, Column } from "component-lib";
     import type { OpenChat, TextContent } from "openchat-client";
-    import { getContext } from "svelte";
+    import { getContext, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
     import { lowBandwidth, renderPreviews } from "../../stores/settings";
@@ -12,9 +12,10 @@
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        content: TextContent;
+        content: TextContent | Snippet;
         me: boolean;
         fill: boolean;
+        reply?: boolean;
         blockLevelMarkdown: boolean;
         showPreviews: boolean;
         edited: boolean;
@@ -30,6 +31,7 @@
         content,
         me,
         fill,
+        reply = false,
         blockLevelMarkdown,
         showPreviews,
         edited,
@@ -49,9 +51,12 @@
         expanded = true;
     }
 
+    let textContent = $derived<TextContent | undefined>("kind" in content ? content : undefined);
+    let snippetContent = $derived<Snippet | undefined>("kind" in content ? undefined : content);
+
     let expanded = $derived(!$lowBandwidth && $renderPreviews);
-    let text = $derived(content.text);
-    let previewUrls = $derived(showPreviews ? extractPreviewUrls(content.text) : []);
+    let text = $derived(textContent?.text);
+    let previewUrls = $derived(showPreviews && text ? extractPreviewUrls(text) : []);
     let iconColour = $derived(me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)");
 </script>
 
@@ -86,21 +91,26 @@
 
 <Column
     supplementalClass={`text_content ${truncate ? "truncated" : ""}`}
-    padding={["xs", "sm"]}
+    padding={["xs", reply ? "zero" : "sm"]}
     overflow={"hidden"}
     maxWidth={maxWidth ? `${maxWidth}px` : "auto"}>
-    <div class="message_text">
-        {#if isPreview}
-            <ChatCaption
-                width={"hug"}
-                maxLines={truncate ? 3 : undefined}
-                colour={me ? "secondaryLight" : "primaryLight"}>
-                <Markdown inline={!blockLevelMarkdown} suppressLinks={true} {text} />
-            </ChatCaption>
-        {:else}
-            <ChatText width={"hug"} maxLines={truncate ? 3 : undefined}>
-                <Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} {text} />
-            </ChatText>
+    <div class="message_text" class:me class:reply>
+        {#if text}
+            {#if isPreview}
+                <ChatCaption
+                    width={"hug"}
+                    maxLines={truncate ? 3 : undefined}
+                    colour={me ? "secondaryLight" : "primaryLight"}>
+                    <Markdown inline={!blockLevelMarkdown} suppressLinks={true} {text} />
+                </ChatCaption>
+            {:else}
+                <ChatText width={"hug"} maxLines={truncate ? 3 : undefined}>
+                    <Markdown inline={!blockLevelMarkdown} suppressLinks={true} {text} />
+                </ChatText>
+                <span class="metadata_spacer" class:me class:edited></span>
+            {/if}
+        {:else if snippetContent}
+            {@render snippetContent?.()}
             <span class="metadata_spacer" class:me class:edited></span>
         {/if}
     </div>

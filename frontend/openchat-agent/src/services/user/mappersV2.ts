@@ -1,4 +1,3 @@
-import { encodeIcrcAccount } from "@dfinity/ledger-icrc";
 import { Principal } from "@icp-sdk/core/principal";
 import type {
     Achievement,
@@ -57,6 +56,7 @@ import type {
 } from "openchat-shared";
 import {
     CommonResponses,
+    encodeIcrcAccount,
     nullMembership,
     ROLE_OWNER,
     toBigInt32,

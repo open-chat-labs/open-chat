@@ -19,12 +19,12 @@
     },
     "author": "julian.jelfs@gmail.com",
     "dependencies": {
-        "@dfinity/ledger-icrc": "^4.0.0",
         "@sinclair/typebox": "^0.34.33",
         "drange": "^2.0.1",
         "rollbar": "^2.26.5"
     },
     "devDependencies": {
+        "jsdom": "^26.1.0",
         "@testing-library/jest-dom": "^6.0.0",
         "@types/identicon.js": "^2.3.1",
         "@types/jest": "^29.5.3",
