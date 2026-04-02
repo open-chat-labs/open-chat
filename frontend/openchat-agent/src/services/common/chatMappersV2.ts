@@ -1,4 +1,4 @@
-import { decodeIcrcAccount } from "@dfinity/ledger-icrc";
+import { decodeIcrcAccount } from "@icp-sdk/canisters/ledger/icrc";
 import type { Principal } from "@icp-sdk/core/principal";
 import type {
     AcceptP2PSwapResponse,
