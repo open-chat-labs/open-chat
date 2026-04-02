@@ -368,35 +368,30 @@ export async function messageContentFromFile(
     file: File | LazyFile,
     isDiamond: boolean,
 ): Promise<AttachmentContent> {
-    return new Promise(async (resolve, reject) => {
-        const dataSizeInBytes = file.size;
-        const mediaType = mimeToMediaType(file.type);
-        const maxSizes = isDiamond ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
-        const f: File = file instanceof LazyFile ? await file.load() : file;
+    const dataSizeInBytes = file.size;
+    const mediaType = mimeToMediaType(file.type);
+    const maxSizes = isDiamond ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
+    const f: File = file instanceof LazyFile ? await file.load() : file;
 
-        switch (mediaType) {
-            case "image":
-            case "gif":
-            case "svg":
-                resolve(await handleImageFile(f, maxSizes, mediaType));
-                break;
+    switch (mediaType) {
+        case "image":
+        case "gif":
+        case "svg":
+            return await handleImageFile(f, maxSizes, mediaType);
 
-            case "video":
-                if (dataSizeInBytes > maxSizes.video) return reject("maxVideoSize");
-                resolve(await handleVideoFile(f));
-                break;
+        case "video":
+            if (dataSizeInBytes > maxSizes.video) throw "maxVideoSize";
+            return await handleVideoFile(f);
 
-            case "audio":
-                if (dataSizeInBytes > maxSizes.audio) return reject("maxAudioSize");
-                resolve(await handleAudioFiles(f));
-                break;
+        case "audio":
+            if (dataSizeInBytes > maxSizes.audio) throw "maxAudioSize";
+            return await handleAudioFiles(f);
 
-            // File is default!
-            default:
-                if (dataSizeInBytes > maxSizes.file) return reject("maxFileSize");
-                resolve(handleRegularFiles(f));
-        }
-    });
+        // File is default!
+        default:
+            if (dataSizeInBytes > maxSizes.file) throw "maxFileSize";
+            return await handleRegularFiles(f);
+    }
 }
 
 /** twitter link */
