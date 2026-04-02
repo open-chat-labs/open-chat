@@ -59,7 +59,7 @@
         justify-content: center;
         align-items: center;
         border: var(--bw-thick) solid transparent;
-        border-radius: var(--rad-sm);
+        border-radius: var(--rad-md);
         color: var(--text-on-primary);
         cursor: pointer;
         transition:
@@ -77,7 +77,7 @@
             content: "";
             position: absolute;
             inset: calc(-1 * var(--bw-thick));
-            border-radius: var(--rad-sm);
+            border-radius: var(--rad-md);
             background: var(--gradient);
             z-index: -1;
         }
@@ -86,7 +86,7 @@
             content: "";
             position: absolute;
             inset: calc(-1 * var(--bw-thick));
-            border-radius: var(--rad-sm);
+            border-radius: var(--rad-md);
             background: var(--error);
             z-index: -1;
         }

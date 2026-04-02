@@ -7,7 +7,7 @@
     import FileContent from "./FileContent.svelte";
     import GiphyAttached from "./GiphyAttached.svelte";
     import ImageContent from "./ImageContent.svelte";
-    import P2PSwapContentInitial from "./P2PSwapContentInitial.svelte";
+    import P2PSwapContent from "./P2PSwapContent.svelte";
     import PrizeContentInitial from "./PrizeContentInitial.svelte";
     import VideoContent from "./VideoContent.svelte";
 
@@ -43,24 +43,15 @@
     {:else if content.kind === "crypto_content"}
         <CryptoContent
             onRemove={onRemoveAttachment}
-            me
             {content}
+            me
             draft
             senderId={$currentUserIdStore} />
     {:else if content.kind === "p2p_swap_content_initial"}
-        <P2PSwapContentInitial onRemove={onRemoveAttachment} {content} />
+        <P2PSwapContent draft me onRemove={onRemoveAttachment} {content} />
     {:else if content.kind === "prize_content_initial"}
         <PrizeContentInitial onRemove={onRemoveAttachment} {content} />
     {:else if content.kind === "file_content"}
         <FileContent onRemove={onRemoveAttachment} edited={false} me {content} draft />
     {/if}
 </Row>
-
-<style lang="scss">
-    .file-preview {
-        border-radius: $sp4;
-        padding: $sp3;
-        color: var(--currentChat-msg-me-txt);
-        background-color: var(--currentChat-msg-me-bg);
-    }
-</style>

@@ -46,7 +46,13 @@
     let locked = $derived(gates.some((g) => isLocked(g)));
 </script>
 
-<Container gap={"sm"} direction={"vertical"} padding={"lg"} background={ColourVars.background1}>
+<!-- TODO check this section, in designs it was from edge to edge, but it's not rendered as such -->
+<Container
+    gap={"sm"}
+    direction={"vertical"}
+    padding={"lg"}
+    borderRadius="md"
+    background={ColourVars.background1}>
     <Container crossAxisAlignment={"center"}>
         <Container>
             <CommonButton

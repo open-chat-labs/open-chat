@@ -50,20 +50,31 @@
     let minAmount = $derived(fromDetails.transferFee * BigInt(10));
     let valid = $derived(error === undefined && fromAmountValid && toAmountValid);
 
+    let wasViewportResizeEnabled = $state(false);
+
     function initialToLedger() {
         // just grab any old ledger for starters
         return [...$cryptoLookup.keys()].find((l) => l !== fromLedger) ?? "";
     }
 
+    function reinstateViewportResize() {
+        if (!wasViewportResizeEnabled) keyboard.disableViewportResize();
+
+        // This will prevent disableViewportResize call in case when this
+        // function was called before component un-mount.
+        wasViewportResizeEnabled = true;
+    }
+
     onMount(() => {
-        const wasViewportResizeEnabled = keyboard.viewportResizeEnabled;
+        wasViewportResizeEnabled = keyboard.viewportResizeEnabled;
+
         // If resize is currently not enabled, enable it!
-        if (!wasViewportResizeEnabled) keyboard.enableViewportResize();
+        if (!keyboard.viewportResizeEnabled) keyboard.enableViewportResize();
 
         return () => {
             // If resize was not enabled enabled when the component was mounted,
             // disable it again.
-            if (!wasViewportResizeEnabled) keyboard.disableViewportResize();
+            reinstateViewportResize();
         };
     });
 
@@ -122,7 +133,15 @@
 
         localUpdates.draftMessages.setAttachment(messageContext, content);
         onClose();
-        return Promise.resolve();
+
+        // Component unload does not happen fast enough for the viewport resize
+        // to reinstate to it's original value if we're immediately focusing
+        // message entry.
+        reinstateViewportResize();
+
+        // Resolve on next animation frame to allow viewport resize to reinstate
+        // Note: this may work without rAF, but to be on the safe side.
+        return new Promise((resolve) => requestAnimationFrame(() => resolve()));
     }
 
     function onSelectFromToken(ledger: string, _: string) {

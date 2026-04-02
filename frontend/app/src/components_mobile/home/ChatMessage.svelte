@@ -666,9 +666,9 @@
                             class={`pan-action ${panDirection}`}
                             class:active={panFactor >= 1}
                             style:opacity={panFactor}>
-                            {#if me && panDirection === "left"}
+                            {#if me && canEdit && panDirection === "left"}
                                 <SquareEditOutline size="1.5rem" />
-                            {:else if !me && panDirection === "left"}
+                            {:else if !me && canShare && panDirection === "left"}
                                 <ShareOutline size="1.5rem" />
                             {:else}
                                 <Reply size="1.5rem" />

@@ -75,16 +75,6 @@
 <Column gap="sm">
     {@render title?.()}
     <Container wrap mainAxisAlignment={"spaceAround"} gap={"xs"}>
-        {#each values as value}
-            <Chip
-                fill
-                onClick={() => (selectedValue = value)}
-                mode={value === selectedValue ? "rounded" : "unselected"}>
-                {value}
-            </Chip>
-        {/each}
-    </Container>
-    <Container wrap mainAxisAlignment={"spaceAround"} gap={"xs"}>
         {#each units as unit}
             <Chip
                 fill
@@ -94,6 +84,16 @@
                 }}
                 mode={unit === selectedUnit ? "rounded" : "unselected"}>
                 {unit}
+            </Chip>
+        {/each}
+    </Container>
+    <Container wrap mainAxisAlignment={"spaceAround"} gap={"xs"}>
+        {#each values as value}
+            <Chip
+                fill
+                onClick={() => (selectedValue = value)}
+                mode={value === selectedValue ? "rounded" : "unselected"}>
+                {value}
             </Chip>
         {/each}
     </Container>

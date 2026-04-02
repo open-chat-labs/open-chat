@@ -2,16 +2,12 @@
     import { Avatar, Body, BodySmall, ColourVars, Column, Row, Subtitle } from "component-lib";
     import { getContext, type Snippet } from "svelte";
     import type { CryptocurrencyContent, OpenChat } from "openchat-client";
-    import {
-        currentUserIdStore,
-        enhancedCryptoLookup,
-        exchangeRatesLookupStore,
-    } from "openchat-client";
+    import { currentUserIdStore, enhancedCryptoLookup } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import Markdown from "./Markdown.svelte";
-    import { TokenState, formatConvertedValue } from "./wallet/walletState.svelte";
+    import { TokenState } from "./wallet/walletState.svelte";
     import MessageRenderer from "./MessageRenderer.svelte";
     import Alert from "svelte-material-icons/AlertRhombusOutline.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
@@ -52,18 +48,6 @@
             ? client.buildTransactionUrl(content.transfer.blockIndex, content.transfer.ledger)
             : undefined,
     );
-
-    let usdUnitValue = $derived(
-        exchangeRatesLookupStore.value.get(tokenState.symbol.toLowerCase())?.toUSD ?? 0,
-    );
-    let transferAmountWithFees = $derived(
-        content.transfer.amountE8s + (content.transfer.feeE8s ?? 0n),
-    );
-    let transferValue = $derived.by(() => {
-        const value = Number(transferAmountWithFees) * usdUnitValue;
-        const divider = 10 ** tokenState.decimals;
-        return value / divider;
-    });
 
     function username(userId: string): string {
         return userId === currentUserIdStore.value ? $_("you") : `@UserId(${userId})`;
@@ -116,7 +100,7 @@
                 {tokenState.formatTokens(content.transfer.amountE8s)}
             </Subtitle>
             <Body colour="primary" fontWeight="bold" align="end">
-                ≈ {formatConvertedValue("usd", transferValue)}
+                ≈ {tokenState.formatConvertedTokens(content.transfer.amountE8s)}
             </Body>
         </Column>
     </Row>
@@ -145,7 +129,7 @@
                 padding={["xs", "lg", "xs", "md"]}
                 crossAxisAlignment={"center"}
                 borderRadius={["lg", "lg", "md", "md"]}>
-                <Body width="hug" colour="textPrimary">Sending to</Body>
+                <Body width="hug" colour="textSecondary" fontWeight="semi-bold">Sending to</Body>
                 <Body width="hug" colour="primary" maxLines={1}>
                     <Markdown text={username(content.transfer.recipient)} inline={true} />
                 </Body>
