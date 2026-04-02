@@ -7,12 +7,12 @@ import {
 } from "@icp-sdk/core/identity";
 import { Principal } from "@icp-sdk/core/principal";
 import {
-    type AgentConfig,
     getBotDefinition,
     IdentityAgent,
     OpenChatAgent,
     setCachedWebAuthnKey,
     setCommunityReferral,
+    type AgentConfig,
 } from "openchat-agent";
 import {
     buildIdentityFromJson,
@@ -37,13 +37,13 @@ import {
     type RemoveIdentityLinkResponse,
     type SetAuthIdentity,
     type SetMinLogLevel,
+    type SetAuthIdentityResponse,
     type VerifyAccountLinkingCodeResponse,
+    type WorkerEvent,
     type WebAuthnKey,
     type WebAuthnKeyFull,
-    type WorkerEvent,
     type WorkerRequest,
     type WorkerResponseInner,
-    type SetAuthIdentityResponse,
 } from "openchat-shared";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -343,7 +343,7 @@ function getAction(
     >,
     agent: OpenChatAgent,
     config: AgentConfig,
-): Promise<WorkerResponseInner> | Stream<WorkerResponseInner> {
+) {
     const kind = payload.kind;
     switch (kind) {
         case "getCurrentUser":

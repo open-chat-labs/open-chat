@@ -3,7 +3,6 @@
     "version": "1.0.0",
     "description": "Typescript library defining the OpenChat domain",
     "main": "lib/index.js",
-    "types": "src/index.ts",
     "scripts": {
         "build": "npm run clean && tsc",
         "build:docker": "npm run build",
