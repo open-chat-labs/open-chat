@@ -1,4 +1,4 @@
-/// <reference path="./types.d.ts" />
+import "./types";
 
 export * from "./domain";
 export * from "./utils";
