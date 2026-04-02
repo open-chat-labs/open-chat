@@ -1,12 +1,6 @@
 import { Database } from "emoji-picker-element";
 import type { NativeEmoji, EmojiSkin } from "emoji-picker-element/shared";
 
-declare module "emoji-picker-element" {
-    interface Database {
-        getAllNativeEmojis(): Promise<NativeEmoji[]>;
-    }
-}
-
 const emojiSet = new Set<string>();
 const emojiRegex = /^\p{Extended_Pictographic}$/u;
 let initializing = false;
@@ -22,8 +16,7 @@ function initEmojiSet(): void {
     if (emojiSet.size > 0 || initializing) return;
     initializing = true;
 
-    emojiDatabase
-        .getAllNativeEmojis()
+    getAllNativeEmojis()
         .then((emojis: NativeEmoji[]) => {
             emojis.forEach((e: NativeEmoji) => {
                 emojiSet.add(e.unicode);
@@ -38,3 +31,33 @@ function initEmojiSet(): void {
 
 // Initial call to start the async process
 initEmojiSet();
+
+function getAllNativeEmojis(): Promise<NativeEmoji[]> {
+    return emojiDatabase.ready().then(
+        () =>
+            new Promise<NativeEmoji[]>((resolve, reject) => {
+                const request = indexedDB.open("emoji-picker-element-en");
+
+                request.onerror = () =>
+                    reject(request.error ?? new Error("Failed to open emoji database"));
+
+                request.onsuccess = () => {
+                    const db = request.result;
+                    const transaction = db.transaction("emoji", "readonly");
+                    const store = transaction.objectStore("emoji");
+                    const index = store.index("group-order");
+                    const getAllRequest = index.getAll();
+
+                    getAllRequest.onerror = () => {
+                        db.close();
+                        reject(getAllRequest.error ?? new Error("Failed to read emoji database"));
+                    };
+
+                    getAllRequest.onsuccess = () => {
+                        db.close();
+                        resolve(getAllRequest.result as NativeEmoji[]);
+                    };
+                };
+            }),
+    );
+}

@@ -4,9 +4,9 @@
         Body,
         BodySmall,
         ColourVars,
+        Column,
         CommonButton2,
         Container,
-        Column,
         Switch,
     } from "component-lib";
     import {
@@ -191,11 +191,8 @@
             });
     }
 
-    function dexName(dex: DexId): string {
-        switch (dex) {
-            case "icpswap":
-                return "ICPSwap";
-        }
+    function dexName(_dex: DexId): string {
+        return "ICPSwap";
     }
 
     function loadSwaps(ledger: string) {
