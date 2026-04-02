@@ -510,11 +510,7 @@ export const CommunityRole = Type.Union([
 ]);
 
 export type ExchangeId = Static<typeof ExchangeId>;
-export const ExchangeId = Type.Union([
-    Type.Literal("ICPSwap"),
-    Type.Literal("Sonic"),
-    Type.Literal("KongSwap"),
-]);
+export const ExchangeId = Type.Literal("ICPSwap");
 
 export type ProposalDecisionStatus = Static<typeof ProposalDecisionStatus>;
 export const ProposalDecisionStatus = Type.Union([
@@ -6646,17 +6642,9 @@ export const UserSetProfileBackgroundArgs = Type.Object({
 });
 
 export type UserSwapTokensExchangeArgs = Static<typeof UserSwapTokensExchangeArgs>;
-export const UserSwapTokensExchangeArgs = Type.Union([
-    Type.Object({
-        ICPSwap: UserSwapTokensExchangeSwapArgs,
-    }),
-    Type.Object({
-        KongSwap: UserSwapTokensExchangeSwapArgs,
-    }),
-    Type.Object({
-        Sonic: UserSwapTokensExchangeSwapArgs,
-    }),
-]);
+export const UserSwapTokensExchangeArgs = Type.Object({
+    ICPSwap: UserSwapTokensExchangeSwapArgs,
+});
 
 export type UserSwapTokensArgs = Static<typeof UserSwapTokensArgs>;
 export const UserSwapTokensArgs = Type.Object({

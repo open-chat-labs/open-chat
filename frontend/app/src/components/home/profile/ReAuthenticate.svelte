@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AuthClient } from "@dfinity/auth-client";
+    import { AuthClient } from "@icp-sdk/auth/client";
     import { DelegationChain, DelegationIdentity, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
     import {
         AuthProvider,
@@ -156,17 +156,22 @@
         const identity = DelegationIdentity.fromDelegation(key, delegation);
         const principal = identity.getPrincipal().toString();
         if (principal !== client.AuthPrincipal) {
-            authStep = "choose_provider";
-            error = "identity.failure.principalMismatch";
-        } else {
-            const signInProofJwt = await client.getSignInProof(key, delegation);
-            onSuccess({
-                key,
-                delegation,
-                provider,
-                signInProofJwt,
-            });
+            const authPrincipals = await client.getAuthenticationPrincipals();
+            const isPrincipalValid = authPrincipals.some((p) => p.principal === principal);
+            if (!isPrincipalValid) {
+                authStep = "choose_provider";
+                error = "identity.failure.principalMismatch";
+                return;
+            }
         }
+
+        const signInProofJwt = await client.getSignInProof(key, delegation);
+        onSuccess({
+            key,
+            delegation,
+            provider,
+            signInProofJwt,
+        });
     }
 </script>
 

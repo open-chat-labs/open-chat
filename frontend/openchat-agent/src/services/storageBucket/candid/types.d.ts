@@ -1,6 +1,6 @@
-import type { Principal } from '@dfinity/principal';
-import type { ActorMethod } from '@dfinity/agent';
-import type { IDL } from '@dfinity/candid';
+import type { Principal } from '@icp-sdk/core/principal';
+import type { ActorMethod } from '@icp-sdk/core/agent';
+import type { IDL } from '@icp-sdk/core/candid';
 
 export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
 export type AccessGate = { 'UniquePerson' : null } |
@@ -289,6 +289,7 @@ export type ChatEvent = { 'Empty' : null } |
   { 'MembersAddedToDefaultChannel' : MembersAddedToDefaultChannel } |
   { 'ChatFrozen' : GroupFrozen } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
+  { 'HistoryDeleted' : HistoryDeleted } |
   { 'UsersUnblocked' : UsersUnblocked } |
   { 'ChatUnfrozen' : GroupUnfrozen } |
   { 'ExternalUrlUpdated' : ExternalUrlUpdated } |
@@ -318,6 +319,7 @@ export type ChatEventType = { 'NameChanged' : null } |
   { 'MessagePollVote' : null } |
   { 'Message' : null } |
   { 'PermissionsChanged' : null } |
+  { 'HistoryDeleted' : null } |
   {
     /**
      * Membership category
@@ -471,6 +473,7 @@ export interface CurrentUserSummary {
   'is_platform_operator' : boolean,
   'diamond_membership_status' : DiamondMembershipStatusFull,
   'is_unique_person' : boolean,
+  'hide_online_status' : boolean,
   'user_id' : UserId,
   'is_bot' : boolean,
   'display_name' : [] | [string],
@@ -622,9 +625,7 @@ export interface EventsTimeToLiveUpdated {
   'new_ttl' : [] | [Milliseconds],
   'updated_by' : UserId,
 }
-export type ExchangeId = { 'Sonic' : null } |
-  { 'KongSwap' : null } |
-  { 'ICPSwap' : null };
+export type ExchangeId = { 'ICPSwap' : null };
 export interface ExternalUrlUpdated {
   'new_url' : [] | [string],
   'updated_by' : UserId,
@@ -837,6 +838,10 @@ export interface GroupVisibilityChanged {
   'messages_visible_to_non_members' : [] | [boolean],
 }
 export type Hash = Uint8Array | number[];
+export interface HistoryDeleted {
+  'before' : TimestampMillis,
+  'deleted_by' : UserId,
+}
 export type ICP = Tokens;
 export interface ICPRegistrationFee {
   'recipient' : AccountIdentifier,
@@ -1641,6 +1646,7 @@ export interface UserSummary {
   'diamond_member' : boolean,
   'diamond_membership_status' : DiamondMembershipStatus,
   'is_unique_person' : boolean,
+  'hide_online_status' : boolean,
   'user_id' : UserId,
   'is_bot' : boolean,
   'display_name' : [] | [string],
@@ -1653,6 +1659,7 @@ export interface UserSummaryStable {
   'profile_background_id' : [] | [bigint],
   'diamond_membership_status' : DiamondMembershipStatus,
   'is_unique_person' : boolean,
+  'hide_online_status' : boolean,
   'is_bot' : boolean,
   'display_name' : [] | [string],
   'avatar_id' : [] | [bigint],

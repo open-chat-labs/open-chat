@@ -1822,6 +1822,7 @@ export class OpenChatAgent extends EventTarget {
         const groupsAddedUpdatedIds = new Set([
             ...groupsAdded.map((g) => g.id.groupId),
             ...groupUpdates.map((g) => g.id.groupId),
+            ...userCanisterGroupUpdates.map((g) => g.id.groupId),
         ]);
         const groupsAddedUpdated = groupChats
             .filter((g) => groupsAddedUpdatedIds.has(g.id.groupId))
@@ -1830,6 +1831,7 @@ export class OpenChatAgent extends EventTarget {
         const communitiesAddedUpdatedIds = new Set([
             ...communitiesAdded.map((c) => c.id.communityId),
             ...communityUpdates.map((c) => c.id.communityId),
+            ...userCanisterCommunityUpdates.map((c) => c.id.communityId),
         ]);
         const communitiesAddedUpdated = communities
             .filter((c) => communitiesAddedUpdatedIds.has(c.id.communityId))
@@ -3260,7 +3262,6 @@ export class OpenChatAgent extends EventTarget {
                         };
                         setCachedRegistry(updated);
                         this._registryValue = updated;
-                        this._dexesAgent.get().updateTokenDetails(updated.tokenDetails);
                         resolve([updated, true], true);
                     } else if (updates.kind === "success_no_updates" && current !== undefined) {
                         resolve([current, false], true);

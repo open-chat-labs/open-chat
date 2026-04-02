@@ -118,6 +118,7 @@ import type {
 import {
     bytesToBigint,
     bytesToHexString,
+    consolidateBytes,
     identity,
     mapOptional,
     optionUpdateV2,
@@ -739,7 +740,9 @@ export function userCanisterCommunitySummaryUpdates(
     };
 }
 
-export function communitiesUpdates(value: UserUpdatesCommunitiesUpdates | undefined): CommunitiesUpdates {
+export function communitiesUpdates(
+    value: UserUpdatesCommunitiesUpdates | undefined,
+): CommunitiesUpdates {
     return {
         added: value?.added.map(userCanisterCommunitySummary) ?? [],
         updated: value?.updated.map(userCanisterCommunitySummaryUpdates) ?? [],
@@ -756,7 +759,9 @@ export function favouriteChatsUpdates(
     };
 }
 
-export function groupChatsUpdates(value: UserUpdatesGroupChatsUpdates | undefined): GroupChatsUpdates {
+export function groupChatsUpdates(
+    value: UserUpdatesGroupChatsUpdates | undefined,
+): GroupChatsUpdates {
     return {
         added: value?.added.map(userCanisterGroupSummary) ?? [],
         updated: value?.updated.map(userCanisterGroupSummaryUpdates) ?? [],
@@ -764,7 +769,9 @@ export function groupChatsUpdates(value: UserUpdatesGroupChatsUpdates | undefine
     };
 }
 
-export function directChatsUpdates(value: UserUpdatesDirectChatsUpdates | undefined): DirectChatsUpdates {
+export function directChatsUpdates(
+    value: UserUpdatesDirectChatsUpdates | undefined,
+): DirectChatsUpdates {
     return {
         added: value?.added.map(directChatSummary) ?? [],
         updated: value?.updated.map(directChatSummaryUpdates) ?? [],
@@ -949,7 +956,7 @@ export function withdrawCryptoResponse(
 function formatIcrc1Account(value: AccountICRC1): string {
     return encodeIcrcAccount({
         owner: Principal.fromText(principalBytesToString(value.owner)),
-        subaccount: value?.subaccount,
+        subaccount: mapOptional(value?.subaccount, consolidateBytes),
     });
 }
 
@@ -1024,15 +1031,6 @@ export function apiExchangeArgs(args: ExchangeTokenSwapArgs): UserSwapTokensExch
         return {
             ICPSwap: value,
         };
-    } else if (args.dex === "kongswap") {
-        return {
-            KongSwap: value,
-        };
-    } else if (args.dex === "sonic") {
-        throw new Error("Unsupported DEX sonic");
-        // return {
-        //     Sonic: value
-        // }
     }
     throw new UnsupportedValueError("Unexpected dex", args.dex);
 }

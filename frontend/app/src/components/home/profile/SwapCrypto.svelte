@@ -184,12 +184,6 @@
         switch (dex) {
             case "icpswap":
                 return "ICPSwap";
-
-            case "sonic":
-                return "Sonic";
-
-            case "kongswap":
-                return "KongSwap";
         }
     }
 

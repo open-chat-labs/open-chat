@@ -53,7 +53,7 @@ impl<R: Runtime> UpdateManager<R> {
         let version_file = cache_dir.join("version.json");
 
         if version_file.exists()
-            && let Ok(file) = fs::File::open(version_file)
+            && let Ok(file) = fs::File::open(&version_file)
             && let Ok(info) = serde_json::from_reader::<_, CachedVersion>(file)
         {
             return Version::parse(&info.version).ok();
@@ -62,7 +62,12 @@ impl<R: Runtime> UpdateManager<R> {
     }
 
     pub fn get_bundled_version(&self) -> Option<Version> {
-        // This relies on the package version in tauri.conf.json being in sync with the PWA version
+        if let Some(asset) = self.app_handle.asset_resolver().get("version".to_string())
+            && let Ok(info) = serde_json::from_slice::<ServerVersion>(&asset.bytes)
+        {
+            return Version::parse(info.version.trim_start_matches('v')).ok();
+        }
+        // Fallback to package info
         self.app_handle
             .package_info()
             .version
@@ -90,13 +95,16 @@ impl<R: Runtime> UpdateManager<R> {
             .unwrap_or_else(|| Version::parse("0.0.0").unwrap());
 
         let current_version = if cached_version > bundled_version {
-            cached_version
+            cached_version.clone()
         } else {
-            bundled_version
+            bundled_version.clone()
         };
 
         if server_version > current_version {
-            println!("New version available: {}", server_version);
+            println!(
+                "New version available: {} (current={})",
+                server_version, current_version
+            );
             self.download_and_install(&server_version).await?;
             return Ok(true);
         }
@@ -163,11 +171,6 @@ impl<R: Runtime> UpdateManager<R> {
             fs::create_dir_all(&cache_dir)?;
         }
 
-        // Extract to a temp dir first then move? Or just extract.
-        // We'll extract to the cache directory.
-        // Important: We need to handle clearing old versions or overwriting.
-
-        // For simplicity, we extract all.
         archive.extract(&cache_dir)?;
 
         // Write version file
@@ -175,7 +178,7 @@ impl<R: Runtime> UpdateManager<R> {
             version: version.to_string(),
         };
         let version_file = cache_dir.join("version.json");
-        let file = fs::File::create(version_file)?;
+        let file = fs::File::create(&version_file)?;
         serde_json::to_writer(file, &version_info)?;
 
         println!("Update installed to {:?}", cache_dir);
