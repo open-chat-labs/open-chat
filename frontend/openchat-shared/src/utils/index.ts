@@ -5,6 +5,7 @@ export * from "./chat";
 export * from "./emailSignInSessionStorage";
 export * from "./error";
 export * from "./i18n";
+export * from "./icrcAccount";
 export * from "./identity";
 export * from "./identityStorage";
 export * from "./immutable";

@@ -2609,7 +2609,16 @@ export class OpenChatAgent extends EventTarget {
                 });
             });
         } else {
-            return this.userClient.getPublicProfile();
+            return new Stream((resolve, reject) => {
+                this.userClient.getPublicProfile().subscribe({
+                    onResult: (res, final) => {
+                        resolve(res, final);
+                    },
+                    onError: (err) => {
+                        reject(err);
+                    },
+                });
+            });
         }
     }
 

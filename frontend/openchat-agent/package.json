@@ -21,8 +21,6 @@
     },
     "author": "julian.jelfs@gmail.com",
     "dependencies": {
-        "@dfinity/utils": "^4.2.1",
-        "@icp-sdk/canisters": "^3.2.0",
         "@noble/hashes": "^1.8.0",
         "@sinclair/typebox": "^0.34.33",
         "idb": "^7.1.1",

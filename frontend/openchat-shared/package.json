@@ -3,6 +3,7 @@
     "version": "1.0.0",
     "description": "Typescript library defining the OpenChat domain",
     "main": "lib/index.js",
+    "types": "src/index.ts",
     "scripts": {
         "build": "npm run clean && tsc",
         "build:docker": "npm run build",
@@ -19,8 +20,6 @@
     },
     "author": "julian.jelfs@gmail.com",
     "dependencies": {
-        "@dfinity/utils": "^4.2.1",
-        "@icp-sdk/canisters": "^3.2.0",
         "@sinclair/typebox": "^0.34.33",
         "drange": "^2.0.1",
         "rollbar": "^2.26.5"

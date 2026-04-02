@@ -97,6 +97,8 @@ export default {
 
         alias({
             entries: [
+                { find: "@dfinity/agent", replacement: "@icp-sdk/core/agent" },
+                { find: "@dfinity/auth-client", replacement: "@icp-sdk/auth/client" },
                 { find: "@src", replacement: path.resolve(__dirname, "src") },
                 { find: "@actions", replacement: path.resolve(__dirname, "src/actions") },
                 { find: "@i18n", replacement: path.resolve(__dirname, "src/i18n") },

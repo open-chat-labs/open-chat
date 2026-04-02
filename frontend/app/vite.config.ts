@@ -137,6 +137,8 @@ export default defineConfig({
     ],
     resolve: {
         alias: {
+            "@dfinity/agent": "@icp-sdk/core/agent",
+            "@dfinity/auth-client": "@icp-sdk/auth/client",
             "@src": path.resolve(__dirname, "./src"),
             "@actions": path.resolve(__dirname, "./src/actions"),
             "@i18n": path.resolve(__dirname, "./src/i18n"),
