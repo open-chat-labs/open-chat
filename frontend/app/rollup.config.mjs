@@ -223,7 +223,7 @@ export default {
                 process.env.OC_PREVIEW_PROXY_URL,
             ),
             "import.meta.env.OC_METERED_APIKEY": JSON.stringify(process.env.OC_METERED_APIKEY),
-            "import.meta.env.OC_TENOR_APIKEY": JSON.stringify(process.env.OC_TENOR_APIKEY),
+            "import.meta.env.OC_KLIPY_APIKEY": JSON.stringify(process.env.OC_KLIPY_APIKEY),
             "import.meta.env.OC_CORS_APIKEY": JSON.stringify(process.env.OC_CORS_APIKEY),
             "import.meta.env.OC_PUBLIC_TRANSLATE_API_KEY": JSON.stringify(
                 process.env.OC_PUBLIC_TRANSLATE_API_KEY,

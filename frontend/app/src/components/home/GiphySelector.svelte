@@ -1,9 +1,9 @@
 <script lang="ts">
     import {
-        type GiphyContent,
         mobileWidth,
-        type TenorObject,
-        type TenorSearchResponse,
+        type GiphyContent,
+        type KlipyObject,
+        type KlipySearchResponse,
     } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";
@@ -14,7 +14,7 @@
     import Overlay from "../Overlay.svelte";
     import Translatable from "../Translatable.svelte";
 
-    type KeyedTenorObject = TenorObject & { key: string };
+    type KeyedKlipyObject = KlipyObject & { key: string };
 
     interface Props {
         open: boolean;
@@ -26,31 +26,31 @@
     let refreshing = false;
     let message = $state("");
     let searchTerm = $state("");
-    let gifs: KeyedTenorObject[] = $state([]);
+    let gifs: KeyedKlipyObject[] = $state([]);
     let gifCache: Record<
         string,
-        KeyedTenorObject & { top: number; left: number; calculatedHeight: number }
+        KeyedKlipyObject & { top: number; left: number; calculatedHeight: number }
     > = $state({});
     let timer: number | undefined;
     let modalWidth = $state(0);
     let pageSize = 25;
-    let selectedGif: KeyedTenorObject | undefined = $state();
+    let selectedGif: KeyedKlipyObject | undefined = $state();
     let containerElement: HTMLDivElement;
     const gutter = 5;
     let imgWidth = $state(0);
     let pos = "";
 
-    const TRENDING_API_URL = `https://tenor.googleapis.com/v2/featured?contentfilter=off&media_filter=tinygif,mediumgif,mp4&key=${
-        import.meta.env.OC_TENOR_APIKEY
+    const TRENDING_API_URL = `https://api.klipy.com/v2/featured?contentfilter=off&media_filter=tinygif,mediumgif,mp4&key=${
+        import.meta.env.OC_KLIPY_APIKEY
     }&limit=${pageSize}`;
-    const SEARCH_API_URL = `https://tenor.googleapis.com/v2/search?contentfilter=off&media_filter=tinygif,mediumgif,mp4&key=${
-        import.meta.env.OC_TENOR_APIKEY
+    const SEARCH_API_URL = `https://api.klipy.com/v2/search?contentfilter=off&media_filter=tinygif,mediumgif,mp4&key=${
+        import.meta.env.OC_KLIPY_APIKEY
     }&limit=${pageSize}&q=`;
 
     function sumOfHeightsForColumn(
         cache: Record<
             string,
-            KeyedTenorObject & { top: number; left: number; calculatedHeight: number }
+            KeyedKlipyObject & { top: number; left: number; calculatedHeight: number }
         >,
         row: number,
         col: number,
@@ -69,11 +69,11 @@
         numCols: number,
         cache: Record<
             string,
-            KeyedTenorObject & { top: number; left: number; calculatedHeight: number }
+            KeyedKlipyObject & { top: number; left: number; calculatedHeight: number }
         >,
-        gif: KeyedTenorObject,
+        gif: KeyedKlipyObject,
         i: number,
-    ): Record<string, KeyedTenorObject & { top: number; left: number; calculatedHeight: number }> {
+    ): Record<string, KeyedKlipyObject & { top: number; left: number; calculatedHeight: number }> {
         const col = i % numCols;
         const row = Math.floor(i / numCols);
         const scale = gif.media_formats.tinygif.dims[0] / imgWidth;
@@ -107,7 +107,7 @@
         }, 500);
     }
 
-    function addKey(index: number, pos: string, gif: TenorObject): KeyedTenorObject {
+    function addKey(index: number, pos: string, gif: KlipyObject): KeyedKlipyObject {
         return {
             key: `${index}_${pos}`,
             ...gif,
@@ -122,7 +122,7 @@
                 : `${SEARCH_API_URL}${searchTerm}&pos=${pos}`;
         return fetch(url)
             .then((res) => res.json())
-            .then((res: TenorSearchResponse) => {
+            .then((res: KlipySearchResponse) => {
                 pos = `${res.next}`;
                 return res.results;
             })
@@ -164,7 +164,7 @@
         }
     }
 
-    function selectGif(gif: KeyedTenorObject) {
+    function selectGif(gif: KeyedKlipyObject) {
         selectedGif = gif;
     }
 
@@ -221,7 +221,7 @@
                             type={"text"}
                             autofocus
                             countdown
-                            placeholder={i18nKey("search")}
+                            placeholder={i18nKey("Search KLIPY")}
                             {onChange}
                             value={searchTerm} />
                     </div>
@@ -253,7 +253,7 @@
                     {/if}
                     {#if selectedGif === undefined}
                         <div class="powered-by">
-                            <img src="/assets/powered_by_tenor.svg" alt="Powered by Tenor" />
+                            <img src="/assets/powered_by_klipy.svg" alt="Powered by KLIPY" />
                         </div>
                     {/if}
                     <div class="message">
@@ -309,8 +309,8 @@
 
     .powered-by {
         text-align: center;
-        background-color: black;
-        padding: $sp3 0;
+        background-color: #fff;
+        padding: $sp2 0;
 
         img {
             max-width: 300px;

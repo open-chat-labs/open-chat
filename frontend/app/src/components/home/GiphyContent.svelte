@@ -64,6 +64,7 @@
             </div>
         {/if}
         <img
+            class="gif"
             class:landscape
             class:fill
             class:withCaption
@@ -91,6 +92,9 @@
             <source src={content.desktop.url} type="video/mp4" />
         </video>
     {/if}
+    <div class="attribution">
+        <img src="/assets/klipy_logo.svg" alt="Powered by KLIPY" />
+    </div>
 </div>
 
 <ContentCaption caption={content.caption} {edited} {blockLevelMarkdown} />
@@ -98,6 +102,16 @@
 <style lang="scss">
     .img-wrapper {
         position: relative;
+    }
+
+    .attribution {
+        position: absolute;
+        bottom: $sp3;
+        left: $sp1;
+
+        img {
+            width: 4rem;
+        }
     }
 
     .mask {
@@ -119,7 +133,7 @@
     }
 
     .placeholder,
-    img,
+    img.gif,
     video {
         width: 100%;
         display: block;

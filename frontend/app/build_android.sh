@@ -29,8 +29,8 @@ export OC_VAPID_PUBLIC_KEY=BD8RU5tDBbFTDFybDoWhFzlL5+mYptojI6qqqqiit68KSt17+vt33
 export OC_VIDEO_BRIDGE_URL=https://d7ufu5rwdb6eb.cloudfront.net
 export OC_WALLET_CONNECT_PROJECT_ID=adf8b4a7c5514a8229981aabdee2e246
 
-# override tenor and translate api keys from local environment (app only)
-export OC_TENOR_APIKEY="$OC_APP_TENOR_APIKEY"
+# override klipy and translate api keys from local environment (app only)
+export OC_KLIPY_APIKEY="$OC_APP_KLIPY_APIKEY"
 export OC_PUBLIC_TRANSLATE_API_KEY="$OC_APP_TRANSLATE_API_KEY"
 
 export OC_II_DERIVATION_ORIGIN=https://6hsbt-vqaaa-aaaaf-aaafq-cai.ic0.app
