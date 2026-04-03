@@ -41,5 +41,5 @@ export type KlipyObject = {
     tags: string[];
     title: string;
     url: string;
-    media_formats: Record;
+    media_formats: Record<KlipyContentFormat, KlipyMediaObject>;
 };
