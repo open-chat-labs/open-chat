@@ -2,7 +2,6 @@
     import { ColourVars, Column, IconButton, Row } from "component-lib";
     import { type GiphyContent } from "openchat-client";
     import Close from "svelte-material-icons/Close.svelte";
-    import FileGifBox from "svelte-material-icons/FileGifBox.svelte";
     import { rtlStore } from "../../stores/rtl";
     // import { lowBandwidth } from "../../stores/settings";
 
@@ -26,7 +25,9 @@
         backgroundColor={ColourVars.background0}>
         <div class="gif_preview" class:rtl={$rtlStore}>
             <img class={"gif"} src={content.mobile.url} alt={content.caption ?? content.title} />
-            <FileGifBox size={"1.25rem"} color={ColourVars.textPrimary} />
+            <div class="attribution">
+                <img src="/assets/klipy_logo.svg" alt="Powered by KLIPY" />
+            </div>
         </div>
         <!-- <Column
             width="hug"
@@ -73,6 +74,16 @@
 
     .gif_preview {
         position: relative;
+
+        .attribution {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+
+            img {
+                width: 4rem;
+            }
+        }
     }
 
     .gif {

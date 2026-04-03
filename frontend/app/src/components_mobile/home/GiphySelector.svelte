@@ -1,9 +1,9 @@
 <script lang="ts">
     import { ColourVars, Column, Container, Row, Search } from "component-lib";
-    import { type GiphyContent, type TenorObject, type TenorSearchResponse } from "openchat-client";
+    import { type GiphyContent, type KlipyObject, type KlipySearchResponse } from "openchat-client";
     import { onMount } from "svelte";
 
-    type KeyedTenorObject = TenorObject & { key: string };
+    type KeyedKlipyObject = KlipyObject & { key: string };
 
     interface Props {
         onSend: (content: GiphyContent) => void;
@@ -15,10 +15,10 @@
 
     let refreshing = $state(false);
     let searchTerm = $state<string>();
-    let gifs: KeyedTenorObject[] = $state([]);
+    let gifs: KeyedKlipyObject[] = $state([]);
     let gifCache: Record<
         string,
-        KeyedTenorObject & { top: number; left: number; calculatedHeight: number }
+        KeyedKlipyObject & { top: number; left: number; calculatedHeight: number }
     > = $state({});
     let pageSize = 25;
     let containerElement: HTMLDivElement;
@@ -26,17 +26,17 @@
     let imgWidth = $state(0);
     let pos = "";
 
-    const TRENDING_API_URL = `https://tenor.googleapis.com/v2/featured?contentfilter=off&media_filter=tinygif,mediumgif,mp4&key=${
-        import.meta.env.OC_TENOR_APIKEY
+    const TRENDING_API_URL = `https://api.klipy.com/v2/featured?contentfilter=off&media_filter=tinygif,mediumgif,mp4&key=${
+        import.meta.env.OC_KLIPY_APIKEY
     }&limit=${pageSize}`;
-    const SEARCH_API_URL = `https://tenor.googleapis.com/v2/search?contentfilter=off&media_filter=tinygif,mediumgif,mp4&key=${
-        import.meta.env.OC_TENOR_APIKEY
+    const SEARCH_API_URL = `https://api.klipy.com/v2/search?contentfilter=off&media_filter=tinygif,mediumgif,mp4&key=${
+        import.meta.env.OC_KLIPY_APIKEY
     }&limit=${pageSize}&q=`;
 
     function sumOfHeightsForColumn(
         cache: Record<
             string,
-            KeyedTenorObject & { top: number; left: number; calculatedHeight: number }
+            KeyedKlipyObject & { top: number; left: number; calculatedHeight: number }
         >,
         row: number,
         col: number,
@@ -55,11 +55,11 @@
         numCols: number,
         cache: Record<
             string,
-            KeyedTenorObject & { top: number; left: number; calculatedHeight: number }
+            KeyedKlipyObject & { top: number; left: number; calculatedHeight: number }
         >,
-        gif: KeyedTenorObject,
+        gif: KeyedKlipyObject,
         i: number,
-    ): Record<string, KeyedTenorObject & { top: number; left: number; calculatedHeight: number }> {
+    ): Record<string, KeyedKlipyObject & { top: number; left: number; calculatedHeight: number }> {
         const col = i % numCols;
         const row = Math.floor(i / numCols);
         const scale = gif.media_formats.tinygif.dims[0] / imgWidth;
@@ -75,7 +75,7 @@
         return cache;
     }
 
-    function addKey(index: number, pos: string, gif: TenorObject): KeyedTenorObject {
+    function addKey(index: number, pos: string, gif: KlipyObject): KeyedKlipyObject {
         return {
             key: `${index}_${pos}`,
             ...gif,
@@ -90,7 +90,7 @@
                 : `${SEARCH_API_URL}${searchTerm}&pos=${pos}`;
         return fetch(url)
             .then((res) => res.json())
-            .then((res: TenorSearchResponse) => {
+            .then((res: KlipySearchResponse) => {
                 if (!res) return [];
                 pos = `${res.next}`;
                 return res.results;
@@ -109,7 +109,7 @@
         nextPage();
     }
 
-    function send(gif: KeyedTenorObject) {
+    function send(gif: KeyedKlipyObject) {
         if (gif !== undefined) {
             const content: GiphyContent = {
                 kind: "giphy_content",
@@ -156,7 +156,7 @@
             bind:value={searchTerm}
             onSearch={reset}
             onClear={() => reset()}
-            placeholder={"Search Tenor..."} />
+            placeholder={"Search KLIPY..."} />
     </Row>
 </Column>
 

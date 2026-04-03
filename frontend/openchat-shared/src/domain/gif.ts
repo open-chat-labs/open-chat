@@ -1,10 +1,10 @@
-export type TenorSearchResponse = {
+export type KlipySearchResponse = {
     locale: string;
     next: number;
-    results: TenorObject[];
+    results: KlipyObject[];
 };
 
-export type TenorContentFormat =
+export type KlipyContentFormat =
     | "preview"
     | "gif"
     | "mediumgif"
@@ -24,14 +24,14 @@ export type TenorContentFormat =
     | "tinygif_transparent"
     | "nanogif_transparent";
 
-export type TenorMediaObject = {
+export type KlipyMediaObject = {
     url: string;
     dims: number[];
     duration: number;
     size: number;
 };
 
-export type TenorObject = {
+export type KlipyObject = {
     content_description: string;
     created: number;
     flags: string[];
@@ -41,5 +41,5 @@ export type TenorObject = {
     tags: string[];
     title: string;
     url: string;
-    media_formats: Record<TenorContentFormat, TenorMediaObject>;
+    media_formats: Record<KlipyContentFormat, KlipyMediaObject>;
 };

@@ -36,7 +36,7 @@ interface ImportMetaEnv {
     readonly OC_SIGN_IN_WITH_ETHEREUM_CANISTER: string;
     readonly OC_SIGN_IN_WITH_SOLANA_CANISTER: string;
     readonly OC_STORAGE_INDEX_CANISTER: string;
-    readonly OC_TENOR_APIKEY: string;
+    readonly OC_KLIPY_APIKEY: string;
     readonly OC_TRANSLATIONS_CANISTER: string;
     readonly OC_USER_INDEX_CANISTER: string;
     readonly OC_USERGEEK_APIKEY: string;

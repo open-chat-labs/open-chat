@@ -127,7 +127,7 @@ jobs:
                   echo "OC_DFX_NETWORK=ic" >> .env
                   echo "OC_APP_TYPE=android" >> .env
                   echo "OC_WEBSITE_VERSION=${{ env.VERSION }}" >> .env
-                  echo "OC_APP_TENOR_APIKEY=${{ secrets.GH_TENOR_API_KEY || 'dummy_tenor_key' }}" >> .env
+                  echo "OC_APP_KLIPY_APIKEY=${{ secrets.GH_KLIPY_API_KEY || 'dummy_klipy_key' }}" >> .env
                   echo "OC_APP_TRANSLATE_API_KEY=${{ secrets.GH_TRANSLATE_API_KEY || 'dummy_translate_key' }}" >> .env
                   echo "OC_ROLLBAR_ACCESS_TOKEN=${{ secrets.GH_ROLLBAR_ACCESS_TOKEN || 'dummy_rollbar_token' }}" >> .env
                   echo "OC_USERGEEK_APIKEY=${{ secrets.GH_USERGEEK_APIKEY || 'dummy_usergeek_key' }}" >> .env

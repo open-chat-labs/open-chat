@@ -1,12 +1,11 @@
 <script lang="ts">
-    import { Button, ColourVars, Column } from "component-lib";
+    import { Button, Column } from "component-lib";
     import { type GiphyContent, type TextContent as TextContentType } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
     import { lowBandwidth } from "../../stores/settings";
     import Translatable from "../Translatable.svelte";
     import TextContent from "./TextContent.svelte";
-    import FileGifBox from "svelte-material-icons/FileGifBox.svelte";
 
     interface Props {
         content: GiphyContent;
@@ -69,6 +68,7 @@
             {/if}
         </Column>
         <img
+            class="gif"
             class:landscape
             class:fill
             class:withCaption
@@ -95,7 +95,9 @@
             <source src={content.desktop.url} type="video/mp4" />
         </video>
     {/if}
-    <FileGifBox size="1.25rem" color={ColourVars.textPrimary} />
+    <div class="attribution">
+        <img src="/assets/klipy_logo.svg" alt="Powered by KLIPY" />
+    </div>
 </div>
 
 {#if textContent?.text}
@@ -148,6 +150,16 @@
             border-bottom-left-radius: var(--rad-lg);
             border-bottom-right-radius: var(--rad-lg);
         }
+
+        .attribution {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+
+            img {
+                width: 4rem;
+            }
+        }
     }
 
     .mask {
@@ -169,7 +181,7 @@
     }
 
     .placeholder,
-    img,
+    img.gif,
     video {
         width: 100%;
         display: block;
