@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { keyboard } from "@src/stores/keyboard.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { BodySmall, ColourVars, Container, IconButton, Row } from "component-lib";
     import type {
@@ -35,8 +36,8 @@
     import { _ } from "svelte-i18n";
     import Alert from "svelte-material-icons/Alert.svelte";
     import Camera from "svelte-material-icons/CameraOutline.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
     import Check from "svelte-material-icons/Check.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
     import Keyboard from "svelte-material-icons/KeyboardOutline.svelte";
     import PlusCircle from "svelte-material-icons/PlusCircleOutline.svelte";
     import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
@@ -52,16 +53,15 @@
     import Translatable from "../Translatable.svelte";
     import AudioAttacher from "./AudioAttacher.svelte";
     import CustomMessageTrigger from "./CustomMessageTrigger.svelte";
+    import DraftMediaMessage from "./DraftMediaMessage.svelte";
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
     import EmojiOrGif from "./EmojiOrGif.svelte";
     import FileAttacher from "./FileAttacher.svelte";
     import MarkdownToggle from "./MarkdownToggle.svelte";
     import MentionPicker from "./MentionPicker.svelte";
     import PreviewFooter from "./PreviewFooter.svelte";
-    import ThrottleCountdown from "./ThrottleCountdown.svelte";
     import ReplyingTo from "./ReplyingTo.svelte";
-    import DraftMediaMessage from "./DraftMediaMessage.svelte";
-    import { keyboard } from "@src/stores/keyboard.svelte";
+    import ThrottleCountdown from "./ThrottleCountdown.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -769,7 +769,11 @@
 {/if}
 
 {#if showMentionPicker}
-    <MentionPicker supportsUserGroups offset={70} onMention={mention} prefix={mentionPrefix} />
+    <MentionPicker
+        supportsUserGroups
+        offset={inputTrayMode !== "closed" ? 70 + keyboard.height : 70}
+        onMention={mention}
+        prefix={mentionPrefix} />
 {/if}
 
 {#if showCommandSelector}
