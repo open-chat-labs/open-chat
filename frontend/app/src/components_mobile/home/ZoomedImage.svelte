@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-    import { IconButton, doubleTap } from "component-lib";
-    import Close from "svelte-material-icons/Close.svelte";
-    import { getProxyAdjustedBlobUrl } from "../../utils/media";
-    import { pushDummyHistoryState, popHistoryStateWithAction } from "../../utils/history";
     import Panzoom from "@panzoom/panzoom";
-    import type { MemeFighterContent, ImageContent } from "openchat-client";
+    import { IconButton, doubleTap } from "component-lib";
+    import type { ImageContent, MemeFighterContent } from "openchat-client";
+    import { onMount } from "svelte";
+    import Close from "svelte-material-icons/Close.svelte";
+    import { popHistoryStateWithAction, pushDummyHistoryState } from "../../utils/history";
+    import { getProxyAdjustedBlobUrl } from "../../utils/media";
 
     // TODO add reactions, forward, reply and other menu and conversation options to this screen!
 
@@ -26,7 +26,6 @@
     let imageHeight = $state(0);
     let panzoomInstance: ReturnType<typeof Panzoom>;
 
-    const HISTORY_ACTION = "zoomed-image-state";
     const DEFAULT_SCALE = 1;
     const SCALE_EPSILON = 0.02;
 
@@ -50,10 +49,10 @@
                 : snapToClosestEdge(currentScale);
         });
 
-        pushDummyHistoryState(HISTORY_ACTION);
+        pushDummyHistoryState("zoomed_image_state");
         return () => {
             // This will try and pop the history state, if it's still there!
-            popHistoryStateWithAction(HISTORY_ACTION);
+            popHistoryStateWithAction("zoomed_image_state");
         };
     });
 

@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { onMount } from "svelte";
     import { IconButton } from "component-lib";
     import type { VideoContent } from "openchat-client";
+    import { onMount } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import { setPlayingMedia, getProxyAdjustedBlobUrl } from "../../utils/media";
-    import { pushDummyHistoryState, popHistoryStateWithAction } from "../../utils/history";
+    import { popHistoryStateWithAction, pushDummyHistoryState } from "../../utils/history";
+    import { getProxyAdjustedBlobUrl, setPlayingMedia } from "../../utils/media";
 
     interface Props {
         videoContent: VideoContent;
@@ -23,13 +23,11 @@
         }
     }
 
-    const action = "zoomed-video-state";
-
     onMount(() => {
-        pushDummyHistoryState(action);
+        pushDummyHistoryState("zoomed_video_state");
         return () => {
             // This will try and pop the history state, if it's still there!
-            popHistoryStateWithAction(action);
+            popHistoryStateWithAction("zoomed_video_state");
         };
     });
 </script>

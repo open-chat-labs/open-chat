@@ -1,13 +1,16 @@
 <script lang="ts">
+    import { confirmMessageDeletion } from "@src/stores/settings";
     import { trackedEffect } from "@src/utils/effects.svelte";
+    import { keyboard } from "@stores/keyboard.svelte";
+    import { popHistoryStateWithAction, pushDummyHistoryState } from "@utils/history";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import {
         Avatar,
-        Container,
         Column,
+        Container,
         MenuTrigger,
-        Sheet,
         type PanDirection,
+        Sheet,
     } from "component-lib";
     import {
         type ChatIdentifier,
@@ -34,13 +37,20 @@
         type UserSummary,
     } from "openchat-client";
     import { getContext, onDestroy, onMount, tick } from "svelte";
+    import Reply from "svelte-material-icons/Reply.svelte";
+    import ShareOutline from "svelte-material-icons/ShareOutline.svelte";
+    import SquareEditOutline from "svelte-material-icons/SquareEditOutline.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { quickReactions } from "../../stores/quickReactions";
+    import { scrollStatus } from "../../stores/scroll.svelte";
     import { now } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
     import { canShareMessage } from "../../utils/share";
     import { removeQueryStringParam } from "../../utils/urls";
+    import AreYouSure from "../AreYouSure.svelte";
+    import BotMessageContext from "../bots/BotMessageContext.svelte";
     import BotProfile, { type BotProfileProps } from "../bots/BotProfile.svelte";
+    import Checkbox from "../Checkbox.svelte";
     import Translatable from "../Translatable.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import ChatMessageMenu from "./ChatMessageMenu.svelte";
@@ -48,27 +58,15 @@
     import EmojiPicker from "./EmojiPickerWrapper.svelte";
     import IntersectionObserverComponent from "./IntersectionObserver.svelte";
     import MessageBubble from "./message/MessageBubble.svelte";
-    import ReminderBuilder from "./ReminderBuilder.svelte";
-    import ReportMessage from "./ReportMessage.svelte";
-    import { confirmMessageDeletion } from "@src/stores/settings";
-    import AreYouSure from "../AreYouSure.svelte";
-    import BotMessageContext from "../bots/BotMessageContext.svelte";
-    import Checkbox from "../Checkbox.svelte";
     import Reactions from "./message/Reactions.svelte";
     import ThreadSummary from "./message/ThreadSummary.svelte";
     import Tips from "./message/Tips.svelte";
+    import ReminderBuilder from "./ReminderBuilder.svelte";
     import RepliesTo from "./RepliesTo.svelte";
+    import ReportMessage from "./ReportMessage.svelte";
     import TipBuilder from "./TipBuilder.svelte";
-    import { scrollStatus } from "../../stores/scroll.svelte";
-    import Reply from "svelte-material-icons/Reply.svelte";
-    import SquareEditOutline from "svelte-material-icons/SquareEditOutline.svelte";
-    import ShareOutline from "svelte-material-icons/ShareOutline.svelte";
-    import { keyboard } from "@stores/keyboard.svelte";
-    import historyUtils from "@utils/history";
 
     const client = getContext<OpenChat>("client");
-
-    const EMOJI_PICKER_STATE_ACTION = "emoji_picker_action";
 
     interface Props {
         chatId: ChatIdentifier;
@@ -307,7 +305,7 @@
                 });
         }
         showEmojiPicker = false;
-        historyUtils.popHistoryStateWithAction(EMOJI_PICKER_STATE_ACTION);
+        popHistoryStateWithAction("emoji_picker_action");
     }
 
     function recalculateMediaDimensions() {
@@ -519,7 +517,7 @@
     <Sheet
         onDismiss={() => {
             showEmojiPicker = false;
-            historyUtils.popHistoryStateWithAction(EMOJI_PICKER_STATE_ACTION);
+            popHistoryStateWithAction("emoji_picker_action");
         }}>
         <div
             class="emoji_picker_wrapper"
@@ -720,9 +718,7 @@
                                     {onCollapseMessage}
                                     showEmojiPicker={() => {
                                         showEmojiPicker = true;
-                                        historyUtils.pushDummyHistoryState(
-                                            EMOJI_PICKER_STATE_ACTION,
-                                        );
+                                        pushDummyHistoryState("emoji_picker_action");
                                     }}
                                     onReply={reply}
                                     {onRetrySend}
