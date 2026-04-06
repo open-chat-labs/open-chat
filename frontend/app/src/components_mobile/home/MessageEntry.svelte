@@ -1,6 +1,11 @@
 <script lang="ts">
     import { keyboard } from "@src/stores/keyboard.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
+    import {
+        popHistoryStateWithAction,
+        pushDummyHistoryState,
+        type CustomHistoryAction,
+    } from "@src/utils/history";
     import { BodySmall, ColourVars, Container, IconButton, Row } from "component-lib";
     import type {
         AttachmentContent,
@@ -239,27 +244,20 @@
         popExpandedHistoryState();
     }
 
-    function getHistoryStateAction(): string {
+    function getHistoryStateAction(): CustomHistoryAction {
         return `input-tray-${mode}`;
     }
 
     // State added to indicate expanded section is open. Devices back gesture
     // can then pop the state from history, and the expanded section will close.
     function pushExpandedHistoryState() {
-        const action = getHistoryStateAction();
-
-        // Dummy state was not added...
-        if (!history.state.action || history.state.action !== action) {
-            history.pushState({ action }, "");
-        }
+        pushDummyHistoryState(getHistoryStateAction());
     }
 
     // Pops expanded history state only if it's set.
     function popExpandedHistoryState() {
-        const action = getHistoryStateAction();
-        if (history.state.action === action) {
+        if (popHistoryStateWithAction(getHistoryStateAction())) {
             returnFromPopHandler = true;
-            history.back();
         }
     }
 
