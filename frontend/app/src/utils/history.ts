@@ -15,9 +15,7 @@ export type CustomHistoryAction =
 // Adding a dummy stae
 export function pushDummyHistoryState(action: CustomHistoryAction, allowNesting = false) {
     previousState = { ...history.state, action };
-    if (allowNesting) {
-        history.pushState(previousState, "");
-    } else if (!history.state.action || history.state.action !== action) {
+    if (allowNesting || !history.state.action || history.state.action !== action) {
         history.pushState(previousState, "");
     }
 }
