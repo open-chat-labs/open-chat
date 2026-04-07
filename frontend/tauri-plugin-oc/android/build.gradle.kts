@@ -39,6 +39,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> db98bfe3f (fix suppressed links in message texts)
     kotlin {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
