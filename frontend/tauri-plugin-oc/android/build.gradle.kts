@@ -39,15 +39,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    sourceSets {
-        getByName("main") {
-            // cleaner way to add generated KSP code in Gradle 8.x
-            java.srcDirs(
-                "build/generated/ksp/debug/kotlin",
-                "build/generated/ksp/release/kotlin"
-            )
-        }
-    }
 
     kotlin {
         compilerOptions {
