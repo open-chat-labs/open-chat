@@ -170,6 +170,7 @@
     let botProfile: BotProfileProps | undefined = $state(undefined);
     let confirmedReadByThem = $derived(client.messageIsReadByThem(chatId, msg.messageIndex));
     let readByThem = $derived(confirmedReadByThem || $unconfirmedReadByThem.has(msg.messageId));
+    let contentWidth = $state<number>();
 
     trackedEffect("read-by-them", () => {
         if (confirmedReadByThem && $unconfirmedReadByThem.has(msg.messageId)) {
@@ -759,11 +760,17 @@
                             {onGoToMessageIndex}
                             {chatType}>
                             {#snippet repliesTo(reply)}
-                                <RepliesTo {readonly} {chatId} {intersecting} repliesTo={reply} />
+                                <RepliesTo
+                                    {contentWidth}
+                                    {readonly}
+                                    {chatId}
+                                    {intersecting}
+                                    repliesTo={reply} />
                             {/snippet}
 
                             {#snippet messageContent(me)}
                                 <ChatMessageContent
+                                    bind:contentWidth
                                     senderId={msg.sender}
                                     showPreviews
                                     {readonly}
