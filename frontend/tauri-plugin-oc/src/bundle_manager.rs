@@ -43,7 +43,7 @@ where
         let um = update_manager::UpdateManager::new(handle.clone());
         um.get_cache_dir()
             .map(|dir| load_cache_into_memory(&dir))
-            .unwrap_or_else(|| HashMap::new())
+            .unwrap_or_default()
     });
 
     // Serve from in-memory cache
@@ -52,10 +52,10 @@ where
     }
 
     // SPA fallback: if no extension, serve cached index.html
-    if Path::new(path).extension().is_none() {
-        if let Some(asset) = cache.get("index.html") {
-            return build_response(asset.data.clone(), &asset.mime_type);
-        }
+    if Path::new(path).extension().is_none()
+        && let Some(asset) = cache.get("index.html")
+    {
+        return build_response(asset.data.clone(), &asset.mime_type);
     }
 
     // Fallback to Tauri's default assets resolver
@@ -64,10 +64,10 @@ where
     }
 
     // Final SPA fallback for default assets resolver with assumed file to resolve!
-    if Path::new(path).extension().is_none() {
-        if let Some(asset) = handle.asset_resolver().get("index.html".to_string()) {
-            return build_response(asset.bytes, &asset.mime_type);
-        }
+    if Path::new(path).extension().is_none()
+        && let Some(asset) = handle.asset_resolver().get("index.html".to_string())
+    {
+        return build_response(asset.bytes, &asset.mime_type);
     }
 
     Response::builder().status(404).body(Vec::new()).unwrap()
