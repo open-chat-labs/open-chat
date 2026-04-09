@@ -16,6 +16,7 @@
 
     interface Props {
         content: VideoContent;
+        contentWidth?: number;
         title?: Snippet;
         fill: boolean;
         me: boolean;
@@ -30,6 +31,7 @@
 
     let {
         content,
+        contentWidth = $bindable(),
         title,
         fill,
         me,
@@ -47,9 +49,12 @@
     let imageUrl = $derived(getProxyAdjustedBlobUrl(content.imageData.blobUrl));
     let videoUrl = $derived(getProxyAdjustedBlobUrl(content.videoData.blobUrl));
     let videoDuration = $state<string>();
-    let posterHeight = $derived(draft || reply ? 70 : height ?? 400);
+    let posterHeight = $derived(draft || reply ? 70 : (height ?? 400));
     let posterWidth = $derived((posterHeight * content.width) / content.height);
 
+    $effect(() => {
+        contentWidth = posterWidth;
+    });
     $effect(() => {
         if (videoUrl && videoDuration === undefined) {
             getVideoDuration(videoUrl).then((duration) => {

@@ -26,6 +26,7 @@
 
     interface Props {
         content: MessageContent;
+        contentWidth?: number;
         me?: boolean;
         truncate?: boolean;
         fill: boolean;
@@ -46,6 +47,7 @@
         blockLevelMarkdown: boolean;
         showPreviews: boolean;
         isPreview?: boolean;
+        hasReplySibling?: boolean;
         onExpandMessage?: (() => void) | undefined;
         onRemovePreview?: (url: string) => void;
         onRegisterVote?: (vote: { type: "delete" | "register"; answerIndex: number }) => void;
@@ -53,6 +55,7 @@
 
     let {
         content,
+        contentWidth = $bindable(),
         me = false,
         truncate = false,
         fill,
@@ -93,6 +96,7 @@
         {onRemovePreview} />
 {:else if content.kind === "image_content"}
     <ImageContent
+        bind:contentWidth
         {me}
         {edited}
         {intersecting}
@@ -104,7 +108,15 @@
         {blockLevelMarkdown}
         {onRemovePreview} />
 {:else if content.kind === "video_content"}
-    <VideoContent {me} {fill} {edited} {content} {reply} {height} {blockLevelMarkdown} />
+    <VideoContent
+        bind:contentWidth
+        {me}
+        {fill}
+        {edited}
+        {content}
+        {reply}
+        {height}
+        {blockLevelMarkdown} />
 {:else if content.kind === "video_call_content"}
     <VideoCallContent {senderId} {messageIndex} {content} {timestamp} />
 {:else if content.kind === "audio_content"}
