@@ -4763,19 +4763,6 @@ dependencies = [
 [[package]]
 name = "ic-cbor"
 version = "3.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ad96f92a9aa201f4578e80409e7f02a0561b4229f0032ea4f24c5a2ecebd15e"
-dependencies = [
- "candid",
- "ic-certification 3.1.0",
- "leb128",
- "nom",
- "thiserror 1.0.69",
-]
-
-[[package]]
-name = "ic-cbor"
-version = "3.1.0"
 source = "git+https://github.com/hpeebles/response-verification?rev=a1dfbe2b339752c9771ac0c55395ee420f3dbd6f#a1dfbe2b339752c9771ac0c55395ee420f3dbd6f"
 dependencies = [
  "candid",
@@ -4847,7 +4834,7 @@ version = "3.1.0"
 source = "git+https://github.com/hpeebles/response-verification?rev=a1dfbe2b339752c9771ac0c55395ee420f3dbd6f#a1dfbe2b339752c9771ac0c55395ee420f3dbd6f"
 dependencies = [
  "candid",
- "ic-cbor 3.1.0 (git+https://github.com/hpeebles/response-verification?rev=a1dfbe2b339752c9771ac0c55395ee420f3dbd6f)",
+ "ic-cbor",
  "ic-certification 3.1.0",
  "ic-verify-bls-signature 0.6.0",
  "leb128",
@@ -5511,7 +5498,7 @@ name = "identity_utils"
 version = "0.1.0"
 dependencies = [
  "constants",
- "ic-cbor 3.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ic-cbor",
  "ic-certificate-verification",
  "ic-certification 3.1.0",
  "oc_error_codes",

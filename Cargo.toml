@@ -294,6 +294,7 @@ debug = false
 
 [patch.crates-io]
 aws-sign-v4 = { git = "https://github.com/hpeebles/aws-sign-v4", rev = "33b65dfde0676544a23c41608da77bd0a117d9ce" }
+ic-cbor = { git = "https://github.com/hpeebles/response-verification", rev = "a1dfbe2b339752c9771ac0c55395ee420f3dbd6f" }
 ic-certificate-verification = { git = "https://github.com/hpeebles/response-verification", rev = "a1dfbe2b339752c9771ac0c55395ee420f3dbd6f" }
 ic-certification = { git = "https://github.com/hpeebles/response-verification", rev = "a1dfbe2b339752c9771ac0c55395ee420f3dbd6f" }
 ic-http-certification = { git = "https://github.com/hpeebles/response-verification", rev = "a1dfbe2b339752c9771ac0c55395ee420f3dbd6f" }
