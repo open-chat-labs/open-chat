@@ -210,12 +210,12 @@ http = "1"
 ic-agent = "0.40"
 ic-canister-sig-creation = "1"
 ic-captcha = "1"
-ic-cbor = { git = "https://github.com/hpeebles/response-verification", rev = "a1dfbe2b339752c9771ac0c55395ee420f3dbd6f" }
+ic-cbor = "3"
 ic-cdk = "0.18"
 ic-cdk-timers = "0.12"
-ic-certificate-verification = { git = "https://github.com/hpeebles/response-verification", rev = "a1dfbe2b339752c9771ac0c55395ee420f3dbd6f", default-features = false }
-ic-certification = { git = "https://github.com/hpeebles/response-verification", rev = "a1dfbe2b339752c9771ac0c55395ee420f3dbd6f" }
-ic-http-certification = { git = "https://github.com/hpeebles/response-verification", rev = "a1dfbe2b339752c9771ac0c55395ee420f3dbd6f" }
+ic-certificate-verification = { version = "3", default-features = false }
+ic-certification = "3"
+ic-http-certification = "3"
 ic-ledger-types = "0.15"
 ic-management-canister-types = "0.3"
 ic_principal = "0.1"
@@ -294,5 +294,9 @@ debug = false
 
 [patch.crates-io]
 aws-sign-v4 = { git = "https://github.com/hpeebles/aws-sign-v4", rev = "33b65dfde0676544a23c41608da77bd0a117d9ce" }
+ic-cbor = { git = "https://github.com/hpeebles/response-verification", rev = "a1dfbe2b339752c9771ac0c55395ee420f3dbd6f" }
+ic-certificate-verification = { git = "https://github.com/hpeebles/response-verification", rev = "a1dfbe2b339752c9771ac0c55395ee420f3dbd6f" }
+ic-certification = { git = "https://github.com/hpeebles/response-verification", rev = "a1dfbe2b339752c9771ac0c55395ee420f3dbd6f" }
+ic-http-certification = { git = "https://github.com/hpeebles/response-verification", rev = "a1dfbe2b339752c9771ac0c55395ee420f3dbd6f" }
 rmp-serde = { git = "https://github.com/hpeebles/msgpack-rust", rev = "832a3f48e67eea56c869715ae6e1045583dd011b" }
 ts-rs = { git = "https://github.com/hpeebles/ts-rs", rev = "96e2b23ee8fb6131fefb504a0795af38fb2d01fb" }
