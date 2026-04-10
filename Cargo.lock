@@ -12087,7 +12087,6 @@ dependencies = [
  "icrc_ledger_canister_c2c_client",
  "identity_canister",
  "identity_canister_c2c_client",
- "identity_utils",
  "itertools 0.14.0",
  "jwt",
  "ledger_utils",
