@@ -210,12 +210,12 @@ http = "1"
 ic-agent = "0.40"
 ic-canister-sig-creation = "1"
 ic-captcha = "1"
-ic-cbor = "3"
+ic-cbor = { git = "https://github.com/hpeebles/response-verification", rev = "a1dfbe2b339752c9771ac0c55395ee420f3dbd6f" }
 ic-cdk = "0.18"
 ic-cdk-timers = "0.12"
-ic-certificate-verification = "3"
-ic-certification = "3"
-ic-http-certification = "3"
+ic-certificate-verification = { git = "https://github.com/hpeebles/response-verification", rev = "a1dfbe2b339752c9771ac0c55395ee420f3dbd6f", default-features = false }
+ic-certification = { git = "https://github.com/hpeebles/response-verification", rev = "a1dfbe2b339752c9771ac0c55395ee420f3dbd6f" }
+ic-http-certification = { git = "https://github.com/hpeebles/response-verification", rev = "a1dfbe2b339752c9771ac0c55395ee420f3dbd6f" }
 ic-ledger-types = "0.15"
 ic-management-canister-types = "0.3"
 ic_principal = "0.1"
