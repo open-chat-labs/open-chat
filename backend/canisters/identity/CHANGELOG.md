@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove all code relating to captchas ([#8809](https://github.com/open-chat-labs/open-chat/pull/8809))
 
+### Fixed
+
+- Update `ic-certificate-verification` to work with v4 certificates ([#8933](https://github.com/open-chat-labs/open-chat/pull/8933))
+
 ## [[2.0.1959](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1959-identity)] - 2026-01-19
 
 ### Changed
