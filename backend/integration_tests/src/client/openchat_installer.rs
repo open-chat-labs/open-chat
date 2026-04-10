@@ -42,10 +42,10 @@ pub mod happy_path {
             },
         );
 
-        assert!(matches!(
-            response,
-            openchat_installer_canister::install_canisters::Response::Success
-        ));
+        assert!(
+            matches!(response, openchat_installer_canister::install_canisters::Response::Success),
+            "{response:?}"
+        );
     }
 
     pub fn upload_wasm_in_chunks(

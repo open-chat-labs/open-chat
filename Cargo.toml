@@ -181,7 +181,7 @@ async-channel = "2"
 async-trait = "0.1"
 aws-config = "1"
 aws-sdk-dynamodb = "1"
-aws-sign-v4 = "0.3.0"
+aws-sign-v4 = "0.3"
 aws-types = "1"
 base64 = "0.22"
 bitflags = { version = "2", features = ["serde"] }
@@ -210,12 +210,12 @@ http = "1"
 ic-agent = "0.40"
 ic-canister-sig-creation = "1"
 ic-captcha = "1"
-ic-cbor = "2"
+ic-cbor = { git = "https://github.com/hpeebles/response-verification", rev = "a1dfbe2b339752c9771ac0c55395ee420f3dbd6f" }
 ic-cdk = "0.18"
 ic-cdk-timers = "0.12"
-ic-certificate-verification = "2"
-ic-certification = "2"
-ic-http-certification = "2"
+ic-certificate-verification = { git = "https://github.com/hpeebles/response-verification", rev = "a1dfbe2b339752c9771ac0c55395ee420f3dbd6f", default-features = false }
+ic-certification = { git = "https://github.com/hpeebles/response-verification", rev = "a1dfbe2b339752c9771ac0c55395ee420f3dbd6f" }
+ic-http-certification = { git = "https://github.com/hpeebles/response-verification", rev = "a1dfbe2b339752c9771ac0c55395ee420f3dbd6f" }
 ic-ledger-types = "0.15"
 ic-management-canister-types = "0.3"
 ic_principal = "0.1"
