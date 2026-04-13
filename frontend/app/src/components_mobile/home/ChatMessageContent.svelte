@@ -106,6 +106,7 @@
         {pinned}
         {height}
         {blockLevelMarkdown}
+        {isPreview}
         {onRemovePreview} />
 {:else if content.kind === "video_content"}
     <VideoContent
@@ -116,7 +117,8 @@
         {content}
         {reply}
         {height}
-        {blockLevelMarkdown} />
+        {blockLevelMarkdown}
+        {isPreview} />
 {:else if content.kind === "video_call_content"}
     <VideoCallContent {senderId} {messageIndex} {content} {timestamp} />
 {:else if content.kind === "audio_content"}
@@ -142,7 +144,15 @@
 {:else if content.kind === "prize_content"}
     <PrizeContent chatId={messageContext.chatId} {messageId} {content} {me} {intersecting} />
 {:else if content.kind === "p2p_swap_content"}
-    <P2PSwapContent {senderId} {messageContext} {messageId} {content} {me} {reply} {pinned} />
+    <P2PSwapContent
+        {senderId}
+        {messageContext}
+        {messageId}
+        {content}
+        {me}
+        {reply}
+        {pinned}
+        {isPreview} />
 {:else if content.kind === "prize_winner_content"}
     <PrizeWinnerContent {content} />
 {:else if content.kind === "poll_content"}

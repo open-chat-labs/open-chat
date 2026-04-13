@@ -2,13 +2,12 @@
     import {
         Body,
         Column,
-        CommonButton,
-        Input,
-        InputIconButton,
+        CommonButton2,
         Row,
-        StatusCard,
         Switch,
         transition,
+        ExpandingTextArea,
+        ColourVars,
     } from "component-lib";
     import {
         ONE_DAY,
@@ -18,26 +17,39 @@
         type PollContent,
         type TotalPollVotes,
     } from "openchat-client";
+    import { dragHandle, dragHandleZone, type DndEvent } from "svelte-dnd-action";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import Chart from "svelte-material-icons/ChartBoxOutline.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
-    import Plus from "svelte-material-icons/Plus.svelte";
+    import ArrowLeftThin from "svelte-material-icons/ArrowLeftThin.svelte";
+    import UnfoldMoreHorizontal from "svelte-material-icons/UnfoldMoreHorizontal.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import Setting from "../Setting.svelte";
     import Translatable from "../Translatable.svelte";
     import DurationSelector from "./DurationSelector.svelte";
     import SlidingPageContent from "./SlidingPageContent.svelte";
     import { keyboard } from "@stores/keyboard.svelte";
+    import { flip } from "svelte/animate";
 
     const client = getContext<OpenChat>("client");
 
     type Step = "definition" | "settings";
 
     const MAX_QUESTION_LENGTH = 250;
-    const MAX_ANSWER_LENGTH = 50;
+    const MAX_ANSWER_LENGTH = 75;
     const MAX_ANSWERS = 10;
+
+    const flipDurationMs = 300;
+
+    type Answer = {
+        _id: number;
+        value: string;
+    };
+
+    let answerId = 0;
+    const emptyAnswer = () => ({ _id: answerId++, value: "" });
+    const isAnswerEmpty = ({ value }: Answer): boolean => value.length === 0;
 
     type CandidatePoll = {
         pollQuestion: string;
@@ -45,7 +57,7 @@
         showVotesBeforeEndDate: boolean;
         allowMultipleVotesPerUser: boolean;
         allowUserToChangeVote: boolean;
-        pollAnswers: string[];
+        pollAnswers: Answer[];
         duration: bigint;
     };
 
@@ -57,23 +69,15 @@
     let { messageContext, onClose }: Props = $props();
 
     let step = $state<Step>("definition");
+    // let step = $state<Step>("settings");
     let poll: CandidatePoll = $state(emptyPoll());
-
-    let emptyAnswers = $derived(
-        poll.pollAnswers.reduce((n, a) => {
-            if (a.length === 0) {
-                return n + 1;
-            }
-            return n;
-        }, 0),
-    );
-    let enoughAnswers = $derived(poll.pollAnswers.length >= 2);
+    let enoughAnswers = $derived(poll.pollAnswers.filter((a) => !isAnswerEmpty(a)).length >= 2);
     let uniqueAnswers = $derived.by(() => {
-        const a = poll.pollAnswers.map((a) => a.toUpperCase());
+        const a = poll.pollAnswers.map((a) => a.value.toUpperCase());
         return a.length === new Set(a).size;
     });
     let validQuestion = $derived(poll.pollQuestion.length > 0);
-    let validAnswers = $derived(enoughAnswers && uniqueAnswers && emptyAnswers === 0);
+    let validAnswers = $derived(enoughAnswers && uniqueAnswers);
     let valid = $derived(validQuestion && validAnswers);
 
     onMount(() => {
@@ -94,36 +98,78 @@
 
     function emptyPoll() {
         return {
-            pollQuestion: "Which is the best chat app?",
+            pollQuestion: "",
             anonymous: true,
             showVotesBeforeEndDate: true,
             allowMultipleVotesPerUser: false,
             allowUserToChangeVote: true,
-            pollAnswers: ["OpenChat", "Nah - it's OpenChat"],
+            pollAnswers: [emptyAnswer(), emptyAnswer()],
             duration: BigInt(ONE_DAY),
         };
+    }
+
+    let addingAnswer = $state(false);
+    function addAnswer() {
+        if (addingAnswer) return;
+
+        addingAnswer = true;
+        const emptyCount = poll.pollAnswers.filter(isAnswerEmpty).length;
+
+        // Only add a new field if there are NO empty slots left
+        if (emptyCount === 0 && poll.pollAnswers.length < MAX_ANSWERS) {
+            transition(["fade"], () => {
+                poll.pollAnswers = [...poll.pollAnswers, emptyAnswer()];
+            });
+        }
+
+        setTimeout(() => (addingAnswer = false), 100);
+    }
+
+    function checkInputIfEmpty(idx: number) {
+        const emptyCount = poll.pollAnswers.filter(isAnswerEmpty).length;
+
+        // Remove if input is empty, and there's at least one more empty answer
+        if (emptyCount > 1 && isAnswerEmpty(poll.pollAnswers[idx])) {
+            deleteAnswer(idx);
+        }
+    }
+
+    function deleteAnswer(idx: number) {
+        transition(["fade"], () => {
+            // Remove the answer at idx
+            poll.pollAnswers = poll.pollAnswers.reduce((all, a, i) => {
+                if (i !== idx) all.push(a);
+                return all;
+            }, [] as Answer[]);
+
+            // Ensure we always end with exactly one empty slot (if there are non-empty answers)
+            normalizeTrailingEmpty();
+        });
+    }
+
+    // Helper to keep the "one trailing empty" rule
+    function normalizeTrailingEmpty() {
+        const nonEmpty = poll.pollAnswers.filter((a) => !isAnswerEmpty(a));
+
+        if (nonEmpty.length === 0) {
+            poll.pollAnswers = [emptyAnswer(), emptyAnswer()];
+        } else {
+            // Keep non-empty + one empty at the end
+            poll.pollAnswers = [...nonEmpty, emptyAnswer()];
+        }
+    }
+
+    function handleDndConsider(e: CustomEvent<DndEvent<Answer>>) {
+        poll.pollAnswers = e.detail.items;
+    }
+
+    function handleDndFinalize(e: CustomEvent<DndEvent<Answer>>) {
+        poll.pollAnswers = e.detail.items;
     }
 
     function setStep(s: Step) {
         transition(["fade"], () => {
             step = s;
-        });
-    }
-
-    function addAnswer() {
-        transition(["fade"], () => {
-            poll.pollAnswers.push("");
-        });
-    }
-
-    function deleteAnswer(idx: number) {
-        transition(["fade"], () => {
-            poll.pollAnswers = poll.pollAnswers.reduce((all, a, i) => {
-                if (i !== idx) {
-                    all.push(a);
-                }
-                return all;
-            }, [] as string[]);
         });
     }
 
@@ -151,7 +197,12 @@
                 showVotesBeforeEndDate: poll.showVotesBeforeEndDate,
                 endDate: BigInt(+new Date()) + poll.duration,
                 anonymous: poll.anonymous,
-                options: [...poll.pollAnswers.values()],
+                options: [
+                    ...poll.pollAnswers
+                        .filter(({ value }) => value.length > 0)
+                        .map((a) => a.value)
+                        .values(),
+                ],
             },
             ended: false,
         };
@@ -176,78 +227,93 @@
 
 <SlidingPageContent
     onBack={back}
-    title={i18nKey(`Create a poll ${step === "definition" ? 1 : 2} / 2`)}
-    subtitle={i18nKey("Duration, question and answers")}>
-    <Column height={"fill"} gap={"xxl"} padding={["lg", "xxl"]}>
+    title={i18nKey(`Create a poll`)}
+    subtitle={i18nKey(`Step ${step === "definition" ? 1 : 2} / 2`)}>
+    <Column height={"fill"} gap={"xxl"} padding={["xxl", "lg", "huge"]}>
         {#if step === "definition"}
             <Column gap={"md"}>
-                <Body fontWeight={"bold"}>
-                    <Translatable resourceKey={i18nKey("Poll question")} />
-                </Body>
-                <Input
-                    bind:value={poll.pollQuestion}
-                    autofocus
-                    minlength={1}
+                <Column gap="sm" padding={["zero", "lg"]}>
+                    <Body fontWeight={"bold"}>
+                        <Translatable resourceKey={i18nKey("Poll question")} />
+                    </Body>
+                    <Body colour="textSecondary">
+                        <Translatable
+                            resourceKey={i18nKey(
+                                'What do you want to ask in this poll? For example "Which is the best chat app?"...',
+                            )} />
+                    </Body>
+                </Column>
+                <ExpandingTextArea
                     maxlength={MAX_QUESTION_LENGTH}
                     countdown
+                    bind:value={poll.pollQuestion}
                     placeholder={interpolate($_, i18nKey("Enter your question here"))}>
                     {#snippet subtext()}
+                        <Translatable resourceKey={i18nKey("Question is required!")} />
+                    {/snippet}
+                </ExpandingTextArea>
+            </Column>
+
+            <Column gap={"lg"}>
+                <Column gap="sm" padding={["zero", "lg"]}>
+                    <Body fontWeight={"bold"}>
+                        <Translatable resourceKey={i18nKey("Poll answers")} />
+                    </Body>
+                    <Body colour="textSecondary">
                         <Translatable
-                            resourceKey={i18nKey("What do you want to ask in this poll?")} />
-                    {/snippet}
-                </Input>
+                            resourceKey={i18nKey(
+                                "At least two (2) answers are required to create a poll!",
+                            )} />
+                    </Body>
+                </Column>
+                <Column gap="sm">
+                    <div
+                        class={"dropzone"}
+                        use:dragHandleZone={{
+                            items: poll.pollAnswers,
+                            flipDurationMs,
+                            dropTargetStyle: {},
+                        }}
+                        onconsider={handleDndConsider}
+                        onfinalize={handleDndFinalize}>
+                        {#each poll.pollAnswers as ans, i (ans._id)}
+                            <div animate:flip={{ duration: flipDurationMs }}>
+                                <Row gap="sm">
+                                    <ExpandingTextArea
+                                        placeholder={interpolate(
+                                            $_,
+                                            i18nKey("Provide a unique answer"),
+                                        )}
+                                        maxlength={MAX_ANSWER_LENGTH}
+                                        countdown
+                                        bind:value={poll.pollAnswers[i].value}
+                                        onkeypress={() => setTimeout(addAnswer, 50)}
+                                        onblur={() => checkInputIfEmpty(i)} />
+                                    <div
+                                        use:dragHandle
+                                        aria-label="drag-handle for answer {i}"
+                                        class="handle">
+                                        <UnfoldMoreHorizontal
+                                            size="1.5rem"
+                                            color={ColourVars.textSecondary} />
+                                    </div>
+                                </Row>
+                            </div>
+                        {/each}
+                    </div>
+                </Column>
             </Column>
-
-            <Column gap={"md"}>
-                <Body fontWeight={"bold"}>
-                    <Translatable resourceKey={i18nKey("Poll answers (min 2)")} />
-                </Body>
-                {#each poll.pollAnswers as _, i}
-                    {#snippet iconButtons(color: string)}
-                        <InputIconButton onClick={() => deleteAnswer(i)}>
-                            <Close {color} />
-                        </InputIconButton>
-                    {/snippet}
-
-                    <Input
-                        iconButtons={i >= 2 ? iconButtons : undefined}
-                        maxlength={MAX_ANSWER_LENGTH}
-                        minlength={1}
-                        placeholder={"Provide a unique answer"}
-                        bind:value={poll.pollAnswers[i]}>
-                    </Input>
-                {/each}
-            </Column>
-
-            {#if !valid}
-                <StatusCard
-                    mode={"warning"}
-                    title={"Poll is not currently valid"}
-                    body={"Please make sure that you have a question and at least two answers. Each answer must be different."}>
-                </StatusCard>
-            {/if}
-
-            <Row mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
-                <CommonButton
-                    disabled={poll.pollAnswers.length >= MAX_ANSWERS}
-                    onClick={() => addAnswer()}
-                    mode={"active"}
-                    size={"small_text"}>
-                    {#snippet icon(color, size)}
-                        <Plus {color} {size} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("Add answer")} />
-                </CommonButton>
-                <CommonButton
+            <Row mainAxisAlignment={"end"} crossAxisAlignment={"center"} padding={["zero", "sm"]}>
+                <CommonButton2
                     disabled={!valid}
                     onClick={() => setStep("settings")}
-                    mode={"active"}
-                    size={"medium"}>
+                    variant="primary"
+                    mode="text">
                     {#snippet icon(color, size)}
                         <ArrowRight {color} {size} />
                     {/snippet}
                     <Translatable resourceKey={i18nKey("To settings")} />
-                </CommonButton>
+                </CommonButton2>
             </Row>
         {:else if step === "settings"}
             <Setting
@@ -308,16 +374,36 @@
             </Setting>
 
             <Row mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
-                <CommonButton onClick={back} mode={"active"} size={"small_text"}>
+                <CommonButton2 onClick={back} variant="primary" mode="text">
+                    {#snippet icon(color, size)}
+                        <ArrowLeftThin {color} {size} />
+                    {/snippet}
                     <Translatable resourceKey={i18nKey("back")} />
-                </CommonButton>
-                <CommonButton disabled={!valid} onClick={start} mode={"active"} size={"medium"}>
+                </CommonButton2>
+                <CommonButton2 disabled={!valid} onClick={start} variant="primary" mode="regular">
                     {#snippet icon(color, size)}
                         <Chart {color} {size} />
                     {/snippet}
                     <Translatable resourceKey={i18nKey("Publish poll")} />
-                </CommonButton>
+                </CommonButton2>
             </Row>
         {/if}
     </Column>
 </SlidingPageContent>
+
+<style lang="scss">
+    .handle {
+        display: flex;
+        flex-direction: column;
+        height: 3.5rem;
+        justify-content: center;
+        padding: var(--sp-xs);
+    }
+
+    .dropzone {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-md);
+    }
+</style>

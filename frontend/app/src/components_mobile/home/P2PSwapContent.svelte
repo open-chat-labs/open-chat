@@ -56,6 +56,7 @@
         draft?: boolean;
         edited?: boolean;
         pinned?: boolean;
+        isPreview?: boolean;
         blockLevelMarkdown?: boolean;
         onRemove?: () => void;
     }
@@ -71,6 +72,7 @@
         draft = false,
         edited = false,
         pinned = false,
+        isPreview = false,
         blockLevelMarkdown = false,
         onRemove,
     }: Props = $props();
@@ -279,22 +281,21 @@
             {@render title?.()}
             {#if textContent}
                 {@render textContent()}
-            {:else}
-                <Row gap="xs" crossAxisAlignment="center">
-                    <Cached
-                        color={me ? ColourVars.secondaryLight : ColourVars.primaryLight}
-                        size="1.25rem" />
-                    <ChatCaption colour={me ? "secondaryLight" : "primaryLight"}>
-                        <Translatable
-                            resourceKey={i18nKey("p2pSwap.summaryShort", {
-                                fromAmount,
-                                toAmount,
-                                fromToken: content.token0.symbol,
-                                toToken: content.token1.symbol,
-                            })} />
-                    </ChatCaption>
-                </Row>
             {/if}
+            <Row gap="xs" crossAxisAlignment="center">
+                <Cached
+                    color={me ? ColourVars.secondaryLight : ColourVars.primaryLight}
+                    size="1.25rem" />
+                <ChatCaption colour={me ? "secondaryLight" : "primaryLight"}>
+                    <Translatable
+                        resourceKey={i18nKey("p2pSwap.summaryShort", {
+                            fromAmount,
+                            toAmount,
+                            fromToken: content.token0.symbol,
+                            toToken: content.token1.symbol,
+                        })} />
+                </ChatCaption>
+            </Row>
         </Column>
     </Row>
 {/snippet}
@@ -383,6 +384,7 @@
     {draft}
     {edited}
     {blockLevelMarkdown}
+    {isPreview}
     {onRemove} />
 
 {#snippet tokenDetailsView(tokenState: TokenState, amount: bigint, isTopSection: boolean = false)}

@@ -32,6 +32,7 @@
         edited: boolean;
         blockLevelMarkdown?: boolean;
         showPreviews?: boolean;
+        isPreview?: boolean;
         onRemove?: () => void;
         onRemovePreview?: (url: string) => void;
     }
@@ -52,6 +53,7 @@
         // TODO Fix show previews! Currently if a preview is removed, it also removes the attached image!!!
         // showPreviews = true,
         // onRemovePreview,
+        isPreview = false,
         onRemove,
     }: Props = $props();
 
@@ -236,6 +238,7 @@
     {draft}
     {edited}
     {blockLevelMarkdown}
+    {isPreview}
     {onRemove} />
 
 <style lang="scss">

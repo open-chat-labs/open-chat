@@ -154,7 +154,14 @@
 
         &:disabled {
             cursor: not-allowed;
-            background: var(--disabled-button);
+
+            &:not(.text) {
+                background: var(--disabled-button);
+            }
+
+            &.primary.text {
+                color: var(--disabled-button);
+            }
         }
 
         &.regular {
@@ -175,16 +182,22 @@
             color: var(--primary);
         }
 
-        &.primary.text:active {
+        &.primary.text:not(.disabled):active {
             color: var(--primary-light);
         }
     }
 
     :global {
         .common_button_2 {
-            &.primary.text:active {
+            &.primary.text:not(.disabled):active {
                 .icon path {
                     fill: var(--primary-light) !important;
+                }
+            }
+
+            &.primary.text.disabled {
+                .icon path {
+                    fill: var(--disabled-button) !important;
                 }
             }
         }
