@@ -11,12 +11,11 @@ import autoprefixer from "autoprefixer";
 import fs from "fs-extra";
 import path from "path";
 import rimraf from "rimraf";
-import analyze from "rollup-plugin-analyzer";
 import copy from "rollup-plugin-copy";
-import filesize from "rollup-plugin-filesize";
 import inject from "rollup-plugin-inject";
 import execute from "rollup-plugin-shell";
 import svelte from "rollup-plugin-svelte";
+import { visualizer } from "rollup-plugin-visualizer";
 import styles from "rollup-styles";
 import { sveltePreprocess } from "svelte-preprocess";
 import { sourcemapNewline } from "../sourcemapNewline.mjs";
@@ -321,10 +320,20 @@ export default {
             },
         }),
 
+        ...(process.env.ANALYZE
+            ? [
+                  visualizer({
+                      filename: "bundle_stats.html",
+                      open: false,
+                      gzipSize: true,
+                      brotliSize: true,
+                  }),
+              ]
+            : []),
+
         // We're building for production (npm run build
         // instead of npm run dev), minify
         terser(),
-        ...(process.env.ANALYZE ? [analyze({ summaryOnly: true }), filesize()] : []),
 
         // Pull in the worker and service worker
         copy({
