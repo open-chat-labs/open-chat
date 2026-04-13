@@ -105,15 +105,6 @@ export default defineConfig({
                         }
                     }
 
-                    // Serve worker code-split chunks (e.g. chunk-abc123.js)
-                    const chunkMatch = req.url?.match(/^\/([^?]+\.js)/);
-                    if (chunkMatch) {
-                        const workerLib = path.resolve(__dirname, "../openchat-worker/lib/");
-                        if (serveFile(chunkMatch[1], workerLib)) {
-                            return;
-                        }
-                    }
-
                     next();
                 });
             },
