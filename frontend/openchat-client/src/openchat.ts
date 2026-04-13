@@ -9895,17 +9895,31 @@ export class OpenChat {
                     "PUSH: notification clicked existing client routing to: ",
                     event.data.path,
                 );
-                navigator.serviceWorker.controller?.postMessage({
-                    type: "NOTIFICATION_CLICKED_ACK",
-                    path: event.data.path,
-                });
-                void pageNavigate(event.data.path).catch((error) => {
-                    console.error(
-                        "PUSH: failed to route existing client after notification click",
-                        event.data.path,
-                        error,
-                    );
-                });
+                const acknowledgeNotificationClick = async (): Promise<void> => {
+                    const ackMessage = {
+                        type: "NOTIFICATION_CLICKED_ACK",
+                        path: event.data.path,
+                    };
+
+                    if (event.source != null && "postMessage" in event.source) {
+                        (event.source as { postMessage: (msg: unknown) => void }).postMessage(
+                            ackMessage,
+                        );
+                        return;
+                    }
+
+                    const registration = await navigator.serviceWorker.ready;
+                    registration.active?.postMessage(ackMessage);
+                };
+                void pageNavigate(event.data.path)
+                    .then(() => acknowledgeNotificationClick())
+                    .catch((error) => {
+                        console.error(
+                            "PUSH: failed to route existing client after notification click",
+                            event.data.path,
+                            error,
+                        );
+                    });
             }
         });
 

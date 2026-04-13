@@ -218,7 +218,8 @@ async function handleClientMessage(event: ExtendableMessageEvent): Promise<void>
         }
 
         case "NOTIFICATION_CLICKED_ACK": {
-            dequeueNotificationClick(event.source.id, event.data.path);
+            const path = typeof event.data.path === "string" ? event.data.path : undefined;
+            dequeueNotificationClick(event.source.id, path);
             return;
         }
     }
