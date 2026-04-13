@@ -30,11 +30,11 @@ object NotificationsManager {
     // notification is for). If the app is in the background, or closed, the notification is displayed.
     suspend fun processReceivedNotification(context: Context, data: Map<String, String>, appIsInForeground: Boolean) {
         try {
-            Log.d(LOG_TAG, ">>>> Received notification: $data")
+            Log.d(OC_TAG_NOT, ">>>> Received notification: $data")
 
             val newNotification = NotificationDecoder.decode(data)
             if (newNotification == null) {
-                Log.e(LOG_TAG, "!!!! Notification data failed decoding: $data")
+                Log.e(OC_TAG_NOT, "!!!! Notification data failed decoding: $data")
                 return
             }
 
@@ -54,7 +54,7 @@ object NotificationsManager {
             }
 
         } catch(e: Exception) {
-            Log.e(LOG_TAG, "!!!! Error processing notification", e)
+            Log.e(OC_TAG_NOT, "!!!! Error processing notification", e)
         }
     }
 
@@ -67,10 +67,10 @@ object NotificationsManager {
         val dao = AppDb.get().notificationDao()
         val notification = dao.getById(notificationId)
 
-        Log.d(LOG_TAG, ">>>> Process previously saved notification: $notification")
+        Log.d(OC_TAG_NOT, ">>>> Process previously saved notification: $notification")
 
         if (notification == null) {
-            Log.e(LOG_TAG, "!!!! Failed to load existing notification with id: $notificationId")
+            Log.e(OC_TAG_NOT, "!!!! Failed to load existing notification with id: $notificationId")
             return
         }
 
@@ -163,12 +163,12 @@ object NotificationsManager {
     suspend fun releaseNotificationsAfterTapOrDismissed(context: Context, intentPayload: String, isTaped: Boolean) {
         try {
             val notificationJson = JSObject(intentPayload)
-            Log.d(LOG_TAG, "#### Taped or dismissed notification JSON: $notificationJson")
+            Log.d(OC_TAG_NOT, "#### Taped or dismissed notification JSON: $notificationJson")
 
             val contextId = ContextId(notificationJson.getInt("contextId"))
             val marked = DBManager.releaseNotificationsForContext(contextId)
-            Log.d(LOG_TAG, "#### Release notifications for context: $contextId")
-            Log.d(LOG_TAG, "#### Release count: $marked")
+            Log.d(OC_TAG_NOT, "#### Release notifications for context: $contextId")
+            Log.d(OC_TAG_NOT, "#### Release count: $marked")
 
             // TODO | This might have to move to a service, since we will probably sync dismissed
             // TODO | notifications with the other clients a user might be using.
@@ -184,10 +184,12 @@ object NotificationsManager {
 
             // Send notification data to Svelte code, which will then determine where to navigate
             if (isTaped) {
+
+                Log.d(OC_TAG_NOT, "#### Notification tap: $notificationJson")
                 OCPluginCompanion.triggerRef("notification-tap", notificationJson)
             }
         } catch (e: Exception) {
-            Log.e(LOG_TAG, "Error processing notification tap", e)
+            Log.e(OC_TAG_NOT, "Error processing notification tap", e)
         }
     }
 
@@ -205,17 +207,17 @@ object NotificationsManager {
     ): Boolean {
         val conversation = Conversation.fromParts(senderId, groupId, communityId, channelId, threadIndex)
         if (conversation == null) {
-            Log.e(LOG_TAG, "Release notifications after UI context accessed, invalid conversation!")
+            Log.e(OC_TAG_NOT, "Release notifications after UI context accessed, invalid conversation!")
             return false
         }
 
         val contextId = conversation.toContextId()
         val marked = DBManager.releaseNotificationsForContext(contextId)
-        Log.d(LOG_TAG, "#### Release conversation: $conversation")
-        Log.d(LOG_TAG, "#### Release count: $marked")
+        Log.d(OC_TAG_NOT, "#### Release conversation: $conversation")
+        Log.d(OC_TAG_NOT, "#### Release count: $marked")
 
         if (marked > 0) {
-            Log.d(LOG_TAG, "#### Notifications released!!!")
+            Log.d(OC_TAG_NOT, "#### Notifications released!!!")
 
             // TODO same as for the tap, move to a service
             DBManager.cleanUpReleasedNotifications()
@@ -269,10 +271,10 @@ object NotificationsManager {
                 .setPublicVersion(publicSummary)
                 .build()
 
-            Log.d(LOG_TAG, "#### Set summary notification: $summary")
+            Log.d(OC_TAG_NOT, "#### Set summary notification: $summary")
             notificationManager.notify(SUMMARY_NOTIFICATION_ID, summaryNotification)
         } else {
-            Log.d(LOG_TAG, "#### Summary notification CANCELED!")
+            Log.d(OC_TAG_NOT, "#### Summary notification CANCELED!")
             notificationManager.cancel(SUMMARY_NOTIFICATION_ID)
         }
     }
