@@ -33,7 +33,7 @@ export function generateCspForScripts(inlineScripts, development) {
         frame-src *;
         object-src 'none';
         base-uri 'self';
-        form-action 'self';${ production ? "\nupgrade-insecure-requests;" : ""}
+        form-action 'self';${production ? "\nupgrade-insecure-requests;" : ""}
         script-src 'self' https://www.instagram.com https://scripts.wobbl3.com/ https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(" ",)} ${development ? "http://localhost:* http://127.0.0.1:*" : ""};
         connect-src 'self'${development ? " ws: http:" : ""}${production || isNative ? " wss: https:" : ""}${isNative ? " ipc: http://ipc.localhost https://asset.localhost asset: *" : ""};`;
 
@@ -145,11 +145,75 @@ export function initEnv() {
     };
 }
 
-// Put external dependencies into their own bundle so that they get cached separately
-export function manualChunks(id) {
+// Cache for the graph-based lazy-reachability check.  Shared across all manualChunks
+// calls within a single build so each module is only traversed once.  Reset via the
+// resetManualChunksCache plugin below before each Rollup build so that watch-mode
+// rebuilds always start with a clean slate.
+const lazyModuleCache = new Map();
+
+// Returns true when every path from `id` back to a bundle entry point passes through
+// at least one dynamic import(), meaning the module will never be loaded on the initial
+// page render.  Circular imports are handled by optimistically treating a module as lazy
+// while its own reachability is still being computed (the sentinel value).
+function isOnlyDynamicallyReachable(id, getModuleInfo) {
+    const cached = lazyModuleCache.get(id);
+    if (cached !== undefined) return cached;
+
+    // Sentinel: treat as lazy while we compute (handles cycles correctly — if a cycle
+    // exists entirely within lazy modules the optimistic true will be confirmed, and if
+    // the cycle includes a statically-reachable module the sentinel will be overwritten
+    // with false once a non-lazy importer is found).
+    lazyModuleCache.set(id, true);
+
+    const info = getModuleInfo(id);
+    if (!info || info.isEntry) {
+        lazyModuleCache.set(id, false);
+        return false;
+    }
+
+    // No static importers and at least one dynamic importer → only reachable via
+    // dynamic import().  Guard against orphaned/unreachable modules (zero importers of
+    // any kind) by requiring at least one dynamic importer.
+    if (info.importers.length === 0) {
+        const result = info.dynamicImporters.length > 0;
+        lazyModuleCache.set(id, result);
+        return result;
+    }
+
+    // Lazy only when every static importer is itself only lazily reachable.
+    const result = info.importers.every((importer) =>
+        isOnlyDynamicallyReachable(importer, getModuleInfo),
+    );
+    lazyModuleCache.set(id, result);
+    return result;
+}
+
+// Put external dependencies into their own bundle so that they get cached separately.
+// Any node_modules package that is exclusively reachable through dynamic import() calls
+// (i.e. no static import path exists from any entry point) is left out of the vendor
+// chunk so Rollup can co-locate it with the lazy chunk that first requires it.  This
+// automatically covers transitive deps of lazy flows like wallet sign-in or meme builder
+// without needing to maintain a manual exclusion list.
+export function manualChunks(id, { getModuleInfo }) {
     if (id.includes("node_modules")) {
+        if (isOnlyDynamicallyReachable(id, getModuleInfo)) {
+            // Return undefined — Rollup places this module in whichever lazy chunk
+            // imports it (or a shared lazy chunk when multiple lazy importers exist).
+            return undefined;
+        }
         return "vendor";
     }
+}
+
+// Rollup plugin that clears the manualChunks cache before every build.  Add it to the
+// plugins array in rollup.config.mjs so watch-mode rebuilds start with a fresh cache.
+export function resetManualChunksCache() {
+    return {
+        name: "reset-manual-chunks-cache",
+        buildStart() {
+            lazyModuleCache.clear();
+        },
+    };
 }
 
 export function copyFile(fromPath, toPath, file) {

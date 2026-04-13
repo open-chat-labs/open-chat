@@ -8,4 +8,3 @@ updates:
       - dependency-name: "dompurify"
       - dependency-name: "@types/dompurify"
       - dependency-name: "marked"
-      - dependency-name: "@types/marked"
