@@ -27,6 +27,7 @@ import {
     initEnv,
     manualChunks,
     maybeStringify,
+    resetManualChunksCache,
 } from "./rollup.extras.mjs";
 
 // this is a bit ridiculous but there we are ...
@@ -77,6 +78,7 @@ export default {
         manualChunks,
     },
     plugins: [
+        resetManualChunksCache(),
         clean(),
         svelte({
             preprocess: sveltePreprocess({
