@@ -37,7 +37,7 @@ function dimensions(width: number, height: number): Dimensions {
     return { width, height };
 }
 
-function scaleToFit(toScale: Dimensions, maxDimensions: Dimensions): Dimensions {
+export function scaleToFit(toScale: Dimensions, maxDimensions: Dimensions): Dimensions {
     const aspectRatio = toScale.width / toScale.height;
     const maxAspectRatio = maxDimensions.width / maxDimensions.height;
 
@@ -93,7 +93,12 @@ export async function extractVideoThumbnail(file: File): Promise<[MediaExtract, 
         const originalDim = dimensions(video.videoWidth, video.videoHeight);
         const resized = await Promise.all([
             changeDimensions(video, file.type, originalDim, THUMBNAIL_DIMS),
-            changeDimensions(video, file.type, originalDim, originalDim),
+            changeDimensions(
+                video,
+                file.type,
+                originalDim,
+                scaleToFit(originalDim, dimensions(1000, 1000)),
+            ),
         ]);
 
         return resized;
