@@ -21,9 +21,9 @@ import {
     ErrorCode,
     ICP_SYMBOL,
     IdentityStorage,
-    LazyFile,
     LARGE_GROUP_THRESHOLD,
     LEDGER_CANISTER_CHAT,
+    LazyFile,
     MessageContextMap,
     NoMeetingToJoin,
     ONE_DAY,
@@ -9895,9 +9895,23 @@ export class OpenChat {
                     "PUSH: notification clicked existing client routing to: ",
                     event.data.path,
                 );
+                navigator.serviceWorker.controller?.postMessage({
+                    type: "NOTIFICATION_CLICKED_ACK",
+                    path: event.data.path,
+                });
                 pageNavigate(event.data.path);
             }
         });
+
+        navigator.serviceWorker.ready
+            .then((registration) => {
+                registration.active?.postMessage({
+                    type: "NOTIFICATION_CLIENT_READY",
+                });
+            })
+            .catch((err) => {
+                console.debug("PUSH: unable to notify service worker that client is ready", err);
+            });
 
         notificationStatus.subscribe(
             (status) => {

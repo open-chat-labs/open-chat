@@ -40,6 +40,8 @@ self.__WB_DISABLE_DEV_LOGS = true;
 
 declare const self: ServiceWorkerGlobalScope;
 
+const pendingNotificationClicks = new Map<string, string[]>();
+
 const FILE_ICON =
     "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAABmJLR0QA/wD/AP+gvaeTAAAA30lEQVRoge2ZMQ6CQBBFn8baA2jNPS09ig29dyIWcAEtxMRY6Cw7O6Pmv2QLEpj/X4YKQAhhoQN6YAKulecQ3J0OuDgUT5PoncuHS3i8NqkSr6Fecx7nWFuwNNhrTphEhEBTiSiBZhKRAk0kogXcJTIEXCWyBEwSK2Nw6TOWOVbe5q0XDv0aNoFZ1s0VbernNyCBbCSQjQSykUA2EshGAtlIIBsJZCOBbCSQjeWrxARsn65rPm6VMn66wbKBs0ORpbhk74GB+t9JpWcAdh4CzINO3Ffauvg4Z7mVF+KfuQEADATf0SgDdQAAAABJRU5ErkJggg==";
 
@@ -109,6 +111,10 @@ self.addEventListener("notificationclick", (ev: NotificationEvent) => {
     ev.waitUntil(handleNotificationClick(ev));
 });
 
+self.addEventListener("message", (ev: ExtendableMessageEvent) => {
+    ev.waitUntil(handleClientMessage(ev));
+});
+
 async function handlePushNotification(event: PushEvent): Promise<void> {
     const id = Date.now().toString();
     console.debug("SW: push notification received", id);
@@ -161,6 +167,8 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
 async function handleNotificationClick(event: NotificationEvent): Promise<void> {
     event.notification.close();
 
+    const path = event.notification.data.path as string;
+
     const windowClients = await self.clients.matchAll({
         type: "window",
         includeUncontrolled: true,
@@ -168,19 +176,76 @@ async function handleNotificationClick(event: NotificationEvent): Promise<void> 
 
     if (windowClients.length > 0) {
         const window = windowClients[0];
+        queueNotificationClick(window.id, path);
         window.postMessage({
             type: "NOTIFICATION_CLICKED",
-            path: event.notification.data.path,
+            path,
         });
         await window.focus();
     } else {
-        const urlToOpen = new URL(event.notification.data.path, self.location.origin);
+        const urlToOpen = new URL(path, self.location.origin);
         console.debug("SW: notification clicked no open clients. Opening: ", urlToOpen);
         const window = await self.clients.openWindow(urlToOpen);
-        window?.postMessage({
-            type: "NOTIFICATION_CLICKED",
-            path: event.notification.data.path,
-        });
+        if (window) {
+            queueNotificationClick(window.id, path);
+            window.postMessage({
+                type: "NOTIFICATION_CLICKED",
+                path,
+            });
+        }
+    }
+}
+
+async function handleClientMessage(event: ExtendableMessageEvent): Promise<void> {
+    if (!(event.source instanceof Client) || !event.data || typeof event.data.type !== "string") {
+        return;
+    }
+
+    switch (event.data.type) {
+        case "NOTIFICATION_CLIENT_READY": {
+            const pending = pendingNotificationClicks.get(event.source.id);
+            if (pending === undefined || pending.length === 0) {
+                return;
+            }
+
+            pending.forEach((path) => {
+                event.source.postMessage({
+                    type: "NOTIFICATION_CLICKED",
+                    path,
+                });
+            });
+            return;
+        }
+
+        case "NOTIFICATION_CLICKED_ACK": {
+            dequeueNotificationClick(event.source.id, event.data.path);
+            return;
+        }
+    }
+}
+
+function queueNotificationClick(clientId: string, path: string): void {
+    const pending = pendingNotificationClicks.get(clientId) ?? [];
+    pending.push(path);
+    pendingNotificationClicks.set(clientId, pending);
+}
+
+function dequeueNotificationClick(clientId: string, path: string | undefined): void {
+    if (path === undefined) {
+        pendingNotificationClicks.delete(clientId);
+        return;
+    }
+
+    const pending = pendingNotificationClicks.get(clientId);
+    if (pending === undefined) {
+        return;
+    }
+
+    const remaining = pending.filter((pendingPath) => pendingPath !== path);
+    if (remaining.length === 0) {
+        pendingNotificationClicks.delete(clientId);
+    } else {
+        pendingNotificationClicks.set(clientId, remaining);
     }
 }
 
