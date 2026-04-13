@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { start } from "@memefighter/maker-core";
+
     import {
         iconSize,
         mobileWidth,
@@ -31,8 +31,9 @@
 
     export function reset() {
         memeUrl = undefined;
-        tick().then(() => {
+        tick().then(async () => {
             if (iframe) {
+                const { start } = await import("@memefighter/maker-core");
                 start({
                     iframe,
                     styleVariables,

@@ -33,7 +33,7 @@ export function generateCspForScripts(inlineScripts, development) {
         frame-src *;
         object-src 'none';
         base-uri 'self';
-        form-action 'self';${ production ? "\nupgrade-insecure-requests;" : ""}
+        form-action 'self';${production ? "\nupgrade-insecure-requests;" : ""}
         script-src 'self' https://www.instagram.com https://scripts.wobbl3.com/ https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(" ",)} ${development ? "http://localhost:* http://127.0.0.1:*" : ""};
         connect-src 'self'${development ? " ws: http:" : ""}${production || isNative ? " wss: https:" : ""}${isNative ? " ipc: http://ipc.localhost https://asset.localhost asset: *" : ""};`;
 
@@ -145,9 +145,26 @@ export function initEnv() {
     };
 }
 
-// Put external dependencies into their own bundle so that they get cached separately
+// Put external dependencies into their own bundle so that they get cached separately.
+// The packages below are intentionally excluded so Rollup co-locates them with whichever
+// lazy component chunk first imports them.  They are only reachable via dynamic import()
+// so they will never be loaded on the initial page load.
+//   • @wagmi / @metamask / @solana / bs58 / viem  – wallet sign-in (SigninWithEth/Sol)
+//   • @memefighter/maker-core                      – meme builder (MemeBuilder)
 export function manualChunks(id) {
     if (id.includes("node_modules")) {
+        if (
+            id.includes("/@wagmi/") ||
+            id.includes("/@metamask/") ||
+            id.includes("/@solana/") ||
+            id.includes("/bs58/") ||
+            id.includes("/viem/") ||
+            id.includes("/@memefighter/")
+        ) {
+            // Return undefined — Rollup will automatically place these modules in whichever
+            // lazy chunk imports them (or a shared lazy chunk if multiple importers exist).
+            return undefined;
+        }
         return "vendor";
     }
 }

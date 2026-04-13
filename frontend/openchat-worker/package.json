@@ -10,7 +10,7 @@
         "dev:mobile": "npm run dev",
         "wait": "npm run clean && wait-on lib/worker.js",
         "android:release": "npm run build",
-        "clean": "rm -f lib/worker.js",
+        "clean": "rm -rf lib/*",
         "typecheck": "tsc --noEmit",
         "lint": "eslint ./src --fix",
         "codegen": "sh ./codegen.sh"

@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { start } from "@memefighter/maker-core";
     import { Column, CommonButton, Row, Sheet, Subtitle } from "component-lib";
     import { iconSize, type MemeFighterContent as MemeFighterContentType } from "openchat-client";
     import { tick } from "svelte";
@@ -25,8 +24,9 @@
 
     export function reset() {
         memeUrl = undefined;
-        tick().then(() => {
+        tick().then(async () => {
             if (iframe) {
+                const { start } = await import("@memefighter/maker-core");
                 start({
                     iframe,
                     styleVariables,
