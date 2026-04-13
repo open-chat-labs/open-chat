@@ -587,7 +587,7 @@ import { Poller } from "./utils/poller";
 import { showTrace } from "./utils/profiling";
 import { indexIsInRanges } from "./utils/range";
 import { RecentlyActiveUsersTracker } from "./utils/recentlyActiveUsersTracker";
-import { pageRedirect, pageReplace, routeForScope } from "./utils/routes";
+import { pageNavigate, pageRedirect, pageReplace, routeForScope } from "./utils/routes";
 import {
     createRemoteVideoStartedEvent,
     filterWebRtcMessage,
@@ -9895,7 +9895,7 @@ export class OpenChat {
                     "PUSH: notification clicked existing client routing to: ",
                     event.data.path,
                 );
-                page(event.data.path);
+                pageNavigate(event.data.path);
             }
         });
 

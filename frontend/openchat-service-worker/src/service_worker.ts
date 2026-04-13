@@ -176,7 +176,11 @@ async function handleNotificationClick(event: NotificationEvent): Promise<void> 
     } else {
         const urlToOpen = new URL(event.notification.data.path, self.location.origin);
         console.debug("SW: notification clicked no open clients. Opening: ", urlToOpen);
-        await self.clients.openWindow(urlToOpen);
+        const window = await self.clients.openWindow(urlToOpen);
+        window?.postMessage({
+            type: "NOTIFICATION_CLICKED",
+            path: event.notification.data.path,
+        });
     }
 }
 

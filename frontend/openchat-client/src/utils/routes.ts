@@ -40,6 +40,10 @@ export function pageRedirect(url: string) {
     return getRouter().then((r) => r.redirect(url));
 }
 
+export function pageNavigate(url: string) {
+    return getRouter().then((r) => r(url));
+}
+
 function qs(ctx: PageJS.Context): URLSearchParams {
     return new URLSearchParams(ctx.querystring);
 }
