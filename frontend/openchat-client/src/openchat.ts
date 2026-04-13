@@ -21,9 +21,9 @@ import {
     ErrorCode,
     ICP_SYMBOL,
     IdentityStorage,
-    LazyFile,
     LARGE_GROUP_THRESHOLD,
     LEDGER_CANISTER_CHAT,
+    LazyFile,
     MessageContextMap,
     NoMeetingToJoin,
     ONE_DAY,
@@ -587,7 +587,7 @@ import { Poller } from "./utils/poller";
 import { showTrace } from "./utils/profiling";
 import { indexIsInRanges } from "./utils/range";
 import { RecentlyActiveUsersTracker } from "./utils/recentlyActiveUsersTracker";
-import { pageRedirect, pageReplace, routeForScope } from "./utils/routes";
+import { pageNavigate, pageRedirect, pageReplace, routeForScope } from "./utils/routes";
 import {
     createRemoteVideoStartedEvent,
     filterWebRtcMessage,
@@ -9895,9 +9895,49 @@ export class OpenChat {
                     "PUSH: notification clicked existing client routing to: ",
                     event.data.path,
                 );
-                page(event.data.path);
+                const acknowledgeNotificationClick = async (): Promise<void> => {
+                    const ackMessage = {
+                        type: "NOTIFICATION_CLICKED_ACK",
+                        path: event.data.path,
+                    };
+
+                    if (event.source != null && "postMessage" in event.source) {
+                        (event.source as { postMessage: (msg: unknown) => void }).postMessage(
+                            ackMessage,
+                        );
+                        return;
+                    }
+
+                    const registration = await navigator.serviceWorker.ready;
+                    if (registration.active != null) {
+                        registration.active.postMessage(ackMessage);
+                    } else {
+                        console.error(
+                            "PUSH: unable to send NOTIFICATION_CLICKED_ACK - no active service worker",
+                        );
+                    }
+                };
+                void pageNavigate(event.data.path)
+                    .then(() => acknowledgeNotificationClick())
+                    .catch((error) => {
+                        console.error(
+                            "PUSH: failed to route existing client after notification click",
+                            event.data.path,
+                            error,
+                        );
+                    });
             }
         });
+
+        navigator.serviceWorker.ready
+            .then((registration) => {
+                registration.active?.postMessage({
+                    type: "NOTIFICATION_CLIENT_READY",
+                });
+            })
+            .catch((err) => {
+                console.debug("PUSH: unable to notify service worker that client is ready", err);
+            });
 
         notificationStatus.subscribe(
             (status) => {
