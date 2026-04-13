@@ -203,13 +203,14 @@ async function handleClientMessage(event: ExtendableMessageEvent): Promise<void>
 
     switch (event.data.type) {
         case "NOTIFICATION_CLIENT_READY": {
-            const pending = pendingNotificationClicks.get(event.source.id);
+            const source = event.source;
+            const pending = pendingNotificationClicks.get(source.id);
             if (pending === undefined || pending.length === 0) {
                 return;
             }
 
             pending.forEach((path) => {
-                event.source.postMessage({
+                source.postMessage({
                     type: "NOTIFICATION_CLICKED",
                     path,
                 });
