@@ -20,6 +20,7 @@
 
     interface Props {
         content: ImageContent | MemeFighterContent;
+        contentWidth?: number;
         title?: Snippet;
         me: boolean;
         fill: boolean;
@@ -37,6 +38,7 @@
 
     let {
         content,
+        contentWidth = $bindable(),
         title,
         me,
         fill,
@@ -69,6 +71,9 @@
     let narrow = $derived(imageWidth > 0 && imageWidth < MIN_IMG_WIDTH && hasContent);
     let maxTextContentWidth = $derived(narrow ? 200 : imageWidth);
 
+    $effect(() => {
+        contentWidth = maxTextContentWidth;
+    });
     $effect(() => {
         hidden = $lowBandwidth && !draft;
     });

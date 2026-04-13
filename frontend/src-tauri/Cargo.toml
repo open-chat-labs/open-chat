@@ -16,7 +16,7 @@ tauri-build = { workspace = true, features = [] }
 [dependencies]
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
-tauri = { workspace = true }
+tauri = { workspace = true, features = ["protocol-asset"] }
 tauri-plugin-deep-link = { workspace = true }
 tauri-plugin-devtools = { workspace = true }
 tauri-plugin-notification = { workspace = true }

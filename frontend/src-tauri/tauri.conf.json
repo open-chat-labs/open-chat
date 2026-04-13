@@ -1,12 +1,12 @@
 {
-    "$schema": "https://schema.tauri.app/config/2",
+    "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
     "productName": "OpenChat",
     "version": "0.1.0",
     "identifier": "com.oc.app",
     "build": {
         "frontendDist": "../app/build",
         "devUrl": "http://localhost:5003",
-        "beforeDevCommand": "echo 'Make sure dev server is running'",
+        "beforeDevCommand": "echo 'run dev server'",
         "beforeBuildCommand": "echo 'BUILDING ANDROID APK' && npm run android:release"
     },
     "app": {

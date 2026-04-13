@@ -19,9 +19,10 @@
         repliesTo: RehydratedReplyContext;
         readonly: boolean;
         intersecting: boolean;
+        contentWidth?: number;
     }
 
-    let { repliesTo, readonly, intersecting }: Props = $props();
+    let { repliesTo, readonly, intersecting, contentWidth }: Props = $props();
 
     let debug = false;
 
@@ -37,7 +38,11 @@
     );
 </script>
 
-<Column supplementalClass={`replies_to ${me ? "me" : ""}`} padding="sm" borderRadius="md">
+<Column
+    width={contentWidth ? { size: `${contentWidth}px` } : undefined}
+    supplementalClass={`replies_to ${me ? "me" : ""}`}
+    padding="sm"
+    borderRadius="md">
     {#if repliesTo.content !== undefined}
         <ChatMessageReplyContent
             {me}

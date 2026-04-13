@@ -24,6 +24,7 @@
         maxWidth?: number;
         // Indicates if the text content is rendered in context of a preview
         isPreview?: boolean;
+        suppressLinks?: boolean;
         onRemovePreview?: (url: string) => void;
     }
 
@@ -39,6 +40,7 @@
         pinned = false,
         maxWidth,
         isPreview = false,
+        suppressLinks = false,
         onRemovePreview,
     }: Props = $props();
 
@@ -101,11 +103,11 @@
                     width={"hug"}
                     maxLines={truncate ? 3 : undefined}
                     colour={me ? "secondaryLight" : "primaryLight"}>
-                    <Markdown inline={!blockLevelMarkdown} suppressLinks={true} {text} />
+                    <Markdown inline={!blockLevelMarkdown} {suppressLinks} {text} />
                 </ChatCaption>
             {:else}
                 <ChatText width={"hug"} maxLines={truncate ? 3 : undefined}>
-                    <Markdown inline={!blockLevelMarkdown} suppressLinks={true} {text} />
+                    <Markdown inline={!blockLevelMarkdown} {suppressLinks} {text} />
                 </ChatText>
                 <span class="metadata_spacer" class:me class:edited></span>
             {/if}

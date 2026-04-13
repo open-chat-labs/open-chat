@@ -2,7 +2,7 @@ use crate::state::AuthResult;
 use crate::{env, get_query_param_value, state};
 use email_magic_links::DoubleSignedMagicLink;
 use ic_cdk::{query, update};
-use ic_http_certification::{HttpRequest, HttpResponse};
+use ic_http_certification::{HttpRequest, HttpResponse, StatusCode};
 
 #[query(hidden = true)]
 fn http_request(request: HttpRequest) -> HttpResponse {
@@ -31,35 +31,30 @@ fn handle_http_request(request: HttpRequest, update: bool) -> HttpResponse {
             let (status_code, body, upgrade) =
                 match state::mutate(|s| s.process_auth_request(magic_link, code, update, env::now())) {
                     AuthResult::Success => (
-                        200,
+                        StatusCode::OK,
                         "Successfully signed in! You may now close this tab and return to OpenChat".to_string(),
                         false,
                     ),
-                    AuthResult::RequiresUpgrade => (200, "".to_string(), true),
-                    AuthResult::LinkExpired => (400, "Link expired".to_string(), false),
-                    AuthResult::LinkInvalid(error) => (400, format!("Link invalid: {error}"), false),
-                    AuthResult::CodeIncorrect => (400, "Code incorrect".to_string(), false),
+                    AuthResult::RequiresUpgrade => (StatusCode::OK, "".to_string(), true),
+                    AuthResult::LinkExpired => (StatusCode::BAD_REQUEST, "Link expired".to_string(), false),
+                    AuthResult::LinkInvalid(error) => (StatusCode::BAD_REQUEST, format!("Link invalid: {error}"), false),
+                    AuthResult::CodeIncorrect => (StatusCode::BAD_REQUEST, "Code incorrect".to_string(), false),
                 };
 
-            HttpResponse {
-                status_code,
-                headers: vec![
+            HttpResponse::builder()
+                .with_status_code(status_code)
+                .with_headers(vec![
                     ("content-type".to_string(), "text/plain".to_string()),
                     ("content-length".to_string(), body.len().to_string()),
-                ],
-                body: body.into_bytes(),
-                upgrade: upgrade.then_some(true),
-            }
+                ])
+                .with_body(body.into_bytes())
+                .with_upgrade(upgrade)
+                .build()
         }
         _ => not_found(),
     }
 }
 
-fn not_found() -> HttpResponse {
-    HttpResponse {
-        status_code: 404,
-        headers: Vec::new(),
-        body: Vec::new(),
-        upgrade: None,
-    }
+fn not_found() -> HttpResponse<'static> {
+    HttpResponse::builder().with_status_code(StatusCode::NOT_FOUND).build()
 }
