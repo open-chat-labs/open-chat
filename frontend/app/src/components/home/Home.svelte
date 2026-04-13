@@ -72,7 +72,6 @@
         preferredDarkThemeName,
         themeType,
     } from "../../theme/themes";
-    import { scream } from "../../utils/scream";
     import type { Share } from "../../utils/share";
     import { removeQueryStringParam } from "../../utils/urls";
     import AreYouSure from "../AreYouSure.svelte";
@@ -299,7 +298,8 @@
         modal = { kind: "remove_bot" };
     }
 
-    function summonWitch() {
+    async function summonWitch() {
+        const { scream } = await import("../../utils/scream");
         const isHalloweenTheme = $currentThemeName === "halloween";
         if (!isHalloweenTheme) {
             themeType.set("dark");

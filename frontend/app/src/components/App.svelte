@@ -16,7 +16,6 @@
         expectNotificationTap,
         expectPushNotifications,
     } from "@utils/native/notification_channels";
-    import "@utils/scream";
     import {
         isLandingPageRoute,
         isScrollingRoute,

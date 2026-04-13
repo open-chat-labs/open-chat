@@ -19,7 +19,6 @@
         expectPushNotifications,
         expectWindowInsetChange,
     } from "@utils/native/notification_channels";
-    import "@utils/scream";
     import { portalState } from "component-lib";
     import {
         type ChatIdentifier,
