@@ -9909,7 +9909,13 @@ export class OpenChat {
                     }
 
                     const registration = await navigator.serviceWorker.ready;
-                    registration.active?.postMessage(ackMessage);
+                    if (registration.active != null) {
+                        registration.active.postMessage(ackMessage);
+                    } else {
+                        console.error(
+                            "PUSH: unable to send NOTIFICATION_CLICKED_ACK - no active service worker",
+                        );
+                    }
                 };
                 void pageNavigate(event.data.path)
                     .then(() => acknowledgeNotificationClick())
