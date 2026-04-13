@@ -9899,7 +9899,13 @@ export class OpenChat {
                     type: "NOTIFICATION_CLICKED_ACK",
                     path: event.data.path,
                 });
-                pageNavigate(event.data.path);
+                void pageNavigate(event.data.path).catch((error) => {
+                    console.error(
+                        "PUSH: failed to route existing client after notification click",
+                        event.data.path,
+                        error,
+                    );
+                });
             }
         });
 
