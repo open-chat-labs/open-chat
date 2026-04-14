@@ -1,10 +1,6 @@
 <script lang="ts">
-    import { Button, Column } from "component-lib";
     import { type GiphyContent, type TextContent as TextContentType } from "openchat-client";
-    import { i18nKey } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
-    import { lowBandwidth } from "../../stores/settings";
-    import Translatable from "../Translatable.svelte";
     import TextContent from "./TextContent.svelte";
 
     interface Props {
@@ -24,7 +20,7 @@
         me,
         fill,
         reply = false,
-        // height = undefined,
+        height = undefined,
         intersecting = true,
         edited,
         blockLevelMarkdown = false,
@@ -40,8 +36,9 @@
     let textContent = $derived<TextContentType | undefined>(
         withCaption ? { kind: "text_content", text: content.caption ?? "" } : undefined,
     );
-    let hidden = $derived($lowBandwidth);
-    let style = $derived(`max-width: ${videoWidth}px`);
+    let style = $derived(
+        `${height === undefined ? "" : `height: ${height}px;`} max-width: ${image.width}px;`,
+    );
 </script>
 
 <div class="gif_content_wrapper" class:me class:fill class:rtl={$rtlStore}>
@@ -50,33 +47,12 @@
             class="placeholder"
             class:landscape
             class:fill
+            {style}
             class:withCaption
             title={content.caption ?? content.title}
             class:reply
             class:rtl={$rtlStore}>
         </div>
-    {:else if hidden}
-        <Column
-            height={"fill"}
-            padding={"xl"}
-            supplementalClass={"image_content_mask"}
-            mainAxisAlignment={"center"}
-            crossAxisAlignment={"center"}>
-            {#if !reply}
-                <Button height={"hug"} width={"fill"} onClick={() => (hidden = false)}
-                    ><Translatable resourceKey={i18nKey("loadGif")} /></Button>
-            {/if}
-        </Column>
-        <img
-            class="gif"
-            class:landscape
-            class:fill
-            class:withCaption
-            class:reply
-            class:rtl={$rtlStore}
-            {style}
-            src={content.mobile.url}
-            alt={content.caption ?? content.title} />
     {:else}
         <video
             autoplay
@@ -160,24 +136,6 @@
                 width: 4rem;
             }
         }
-    }
-
-    .mask {
-        position: absolute;
-        top: 0;
-        left: 0;
-        height: 100%;
-        width: 100%;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.5));
-    }
-
-    .reveal {
-        position: absolute;
-        top: calc(50% - 20px);
-        width: 100%;
-        text-align: center;
     }
 
     .placeholder,

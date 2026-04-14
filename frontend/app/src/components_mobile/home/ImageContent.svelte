@@ -1,22 +1,22 @@
 <script lang="ts">
-    import { type Snippet } from "svelte";
+    import { scrollStatus } from "@stores/scroll.svelte";
     import { Button, ChatCaption, ColourVars, Column, CommonButton2, Row } from "component-lib";
     import {
         publish,
         type ImageContent,
-        type TextContent as TextContentType,
         type MemeFighterContent,
+        type TextContent as TextContentType,
     } from "openchat-client";
+    import { type Snippet } from "svelte";
+    import EyeOffOutline from "svelte-material-icons/EyeOffOutline.svelte";
+    import EyeOutline from "svelte-material-icons/EyeOutline.svelte";
+    import ImageOutline from "svelte-material-icons/ImageOutline.svelte";
+    import { i18nKey } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
     import { lowBandwidth } from "../../stores/settings";
-    import { scrollStatus } from "@stores/scroll.svelte";
     import { getProxyAdjustedBlobUrl } from "../../utils/media";
-    import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import MessageRenderer from "./MessageRenderer.svelte";
-    import EyeOutline from "svelte-material-icons/EyeOutline.svelte";
-    import EyeOffOutline from "svelte-material-icons/EyeOffOutline.svelte";
-    import ImageOutline from "svelte-material-icons/ImageOutline.svelte";
 
     interface Props {
         content: ImageContent | MemeFighterContent;
@@ -142,7 +142,7 @@
             <Column
                 height={"fill"}
                 padding={"xl"}
-                supplementalClass={"draft_image_content_mask"}
+                supplementalClass={"image_content_mask"}
                 mainAxisAlignment={"center"}
                 crossAxisAlignment={"center"}>
                 {#if !reply && !draft}
@@ -180,7 +180,7 @@
         {#if hidden}
             <Column
                 height={"fill"}
-                supplementalClass={"regular_image_content_mask"}
+                supplementalClass={"image_content_mask"}
                 mainAxisAlignment={"center"}
                 crossAxisAlignment={"center"}>
                 {#if !reply && !draft}
@@ -240,9 +240,8 @@
 
 <style lang="scss">
     :global {
-        .draft_image_content_mask,
-        .regular_image_content_mask {
-            position: absolute;
+        .image_content_mask {
+            position: absolute !important;
             top: 0;
             left: 0;
             height: 100%;
