@@ -356,6 +356,8 @@ export class SheetBehavior {
         this._animationTo = target;
         this._animationDuration = this._snapDuration(this._animationFrom, target);
 
+        console.log("SNAP TO", target, this._expandedHeight, this._collapsedHeight);
+
         this._switch({
             transient: () => {
                 // Either set translation to zero, or full height of the sheet

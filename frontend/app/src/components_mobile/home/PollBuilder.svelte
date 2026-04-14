@@ -1,13 +1,15 @@
 <script lang="ts">
     import {
+        AnchoredSheet,
         Body,
+        ColourVars,
         Column,
         CommonButton2,
+        fraction,
         Row,
         Switch,
         transition,
         ExpandingTextArea,
-        ColourVars,
     } from "component-lib";
     import {
         ONE_DAY,
@@ -20,9 +22,9 @@
     import { dragHandle, dragHandleZone, type DndEvent } from "svelte-dnd-action";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
-    import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
+    import Cog from "svelte-material-icons/Cog.svelte";
+    import Check from "svelte-material-icons/Check.svelte";
     import Chart from "svelte-material-icons/ChartBoxOutline.svelte";
-    import ArrowLeftThin from "svelte-material-icons/ArrowLeftThin.svelte";
     import UnfoldMoreHorizontal from "svelte-material-icons/UnfoldMoreHorizontal.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import Setting from "../Setting.svelte";
@@ -32,14 +34,11 @@
     import { keyboard } from "@stores/keyboard.svelte";
     import { flip } from "svelte/animate";
 
-    const client = getContext<OpenChat>("client");
-
-    type Step = "definition" | "settings";
-
     const MAX_QUESTION_LENGTH = 250;
     const MAX_ANSWER_LENGTH = 75;
     const MAX_ANSWERS = 10;
 
+    const client = getContext<OpenChat>("client");
     const flipDurationMs = 300;
 
     type Answer = {
@@ -68,8 +67,7 @@
 
     let { messageContext, onClose }: Props = $props();
 
-    let step = $state<Step>("definition");
-    // let step = $state<Step>("settings");
+    let anchoredSheet: AnchoredSheet;
     let poll: CandidatePoll = $state(emptyPoll());
     let enoughAnswers = $derived(poll.pollAnswers.filter((a) => !isAnswerEmpty(a)).length >= 2);
     let uniqueAnswers = $derived.by(() => {
@@ -167,12 +165,6 @@
         poll.pollAnswers = e.detail.items;
     }
 
-    function setStep(s: Step) {
-        transition(["fade"], () => {
-            step = s;
-        });
-    }
-
     function createPollVotes(): TotalPollVotes {
         if (poll.anonymous) {
             return { kind: "anonymous_poll_votes", votes: {} };
@@ -217,178 +209,187 @@
     }
 
     function back() {
-        if (step === "definition") {
-            publish("closeModalPage");
-        } else {
-            setStep("definition");
-        }
+        publish("closeModalPage");
     }
 </script>
 
-<SlidingPageContent
-    onBack={back}
-    title={i18nKey(`Create a poll`)}
-    subtitle={i18nKey(`Step ${step === "definition" ? 1 : 2} / 2`)}>
+<SlidingPageContent onBack={back} title={i18nKey(`Create a poll`)} subtitle={i18nKey("")}>
     <Column height={"fill"} gap={"xxl"} padding={["xxl", "lg", "huge"]}>
-        {#if step === "definition"}
-            <Column gap={"md"}>
-                <Column gap="sm" padding={["zero", "lg"]}>
-                    <Body fontWeight={"bold"}>
-                        <Translatable resourceKey={i18nKey("Poll question")} />
-                    </Body>
-                    <Body colour="textSecondary">
-                        <Translatable
-                            resourceKey={i18nKey(
-                                'What do you want to ask in this poll? For example "Which is the best chat app?"...',
-                            )} />
-                    </Body>
-                </Column>
-                <ExpandingTextArea
-                    maxlength={MAX_QUESTION_LENGTH}
-                    countdown
-                    bind:value={poll.pollQuestion}
-                    placeholder={interpolate($_, i18nKey("Enter your question here"))}>
-                    {#snippet subtext()}
-                        <Translatable resourceKey={i18nKey("Question is required!")} />
-                    {/snippet}
-                </ExpandingTextArea>
+        <Column gap={"md"}>
+            <Column gap="sm" padding={["zero", "lg"]}>
+                <Body fontWeight={"bold"}>
+                    <Translatable resourceKey={i18nKey("Poll question")} />
+                </Body>
+                <Body colour="textSecondary">
+                    <Translatable
+                        resourceKey={i18nKey(
+                            'What do you want to ask in this poll? For example "Which is the best chat app?"...',
+                        )} />
+                </Body>
             </Column>
-
-            <Column gap={"lg"}>
-                <Column gap="sm" padding={["zero", "lg"]}>
-                    <Body fontWeight={"bold"}>
-                        <Translatable resourceKey={i18nKey("Poll answers")} />
-                    </Body>
-                    <Body colour="textSecondary">
-                        <Translatable
-                            resourceKey={i18nKey(
-                                "At least two (2) answers are required to create a poll!",
-                            )} />
-                    </Body>
-                </Column>
-                <Column gap="sm">
-                    <div
-                        class={"dropzone"}
-                        use:dragHandleZone={{
-                            items: poll.pollAnswers,
-                            flipDurationMs,
-                            dropTargetStyle: {},
-                        }}
-                        onconsider={handleDndConsider}
-                        onfinalize={handleDndFinalize}>
-                        {#each poll.pollAnswers as ans, i (ans._id)}
-                            <div animate:flip={{ duration: flipDurationMs }}>
-                                <Row gap="sm">
-                                    <ExpandingTextArea
-                                        placeholder={interpolate(
-                                            $_,
-                                            i18nKey("Provide a unique answer"),
-                                        )}
-                                        maxlength={MAX_ANSWER_LENGTH}
-                                        countdown
-                                        bind:value={poll.pollAnswers[i].value}
-                                        onkeypress={() => setTimeout(addAnswer, 50)}
-                                        onblur={() => checkInputIfEmpty(i)} />
-                                    <div
-                                        use:dragHandle
-                                        aria-label="drag-handle for answer {i}"
-                                        class="handle">
-                                        <UnfoldMoreHorizontal
-                                            size="1.5rem"
-                                            color={ColourVars.textSecondary} />
-                                    </div>
-                                </Row>
-                            </div>
-                        {/each}
-                    </div>
-                </Column>
-            </Column>
-            <Row mainAxisAlignment={"end"} crossAxisAlignment={"center"} padding={["zero", "sm"]}>
-                <CommonButton2
-                    disabled={!valid}
-                    onClick={() => setStep("settings")}
-                    variant="primary"
-                    mode="text">
-                    {#snippet icon(color, size)}
-                        <ArrowRight {color} {size} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("To settings")} />
-                </CommonButton2>
-            </Row>
-        {:else if step === "settings"}
-            <Setting
-                toggle={() => (poll.anonymous = !poll.anonymous)}
-                info={"Polls are anonymous by default. If you make it public, everyone will be able to ssee each others votes."}>
-                <Switch
-                    onChange={() => (poll.anonymous = !poll.anonymous)}
-                    width={"fill"}
-                    reverse
-                    checked={!poll.anonymous}>
-                    <Translatable resourceKey={i18nKey("Public poll")} />
-                </Switch>
-            </Setting>
-
-            <DurationSelector bind:duration={poll.duration}>
-                {#snippet title()}
-                    <Body fontWeight={"bold"}>
-                        <Translatable resourceKey={i18nKey("Poll duration")} />
-                    </Body>
+            <ExpandingTextArea
+                maxlength={MAX_QUESTION_LENGTH}
+                countdown
+                bind:value={poll.pollQuestion}
+                placeholder={interpolate($_, i18nKey("Enter your question here"))}>
+                {#snippet subtext()}
+                    <Translatable resourceKey={i18nKey("Question is required!")} />
                 {/snippet}
-            </DurationSelector>
+            </ExpandingTextArea>
+        </Column>
 
-            <Setting
-                toggle={() => (poll.allowMultipleVotesPerUser = !poll.allowMultipleVotesPerUser)}
-                info={"Users can only vote for a single option by default, but if you would like to allow users to vote for multiple options, toggle this on."}>
-                <Switch
-                    onChange={() =>
-                        (poll.allowMultipleVotesPerUser = !poll.allowMultipleVotesPerUser)}
-                    width={"fill"}
-                    reverse
-                    checked={poll.allowMultipleVotesPerUser}>
-                    <Translatable resourceKey={i18nKey("Allow multiple votes")} />
-                </Switch>
-            </Setting>
-
-            <Setting
-                toggle={() => (poll.allowUserToChangeVote = !poll.allowUserToChangeVote)}
-                info={"With this option on, once they vote, users will not be able to change their opinion."}>
-                <Switch
-                    onChange={() => (poll.allowUserToChangeVote = !poll.allowUserToChangeVote)}
-                    width={"fill"}
-                    reverse
-                    checked={!poll.allowUserToChangeVote}>
-                    <Translatable resourceKey={i18nKey("Users cannot change their votes")} />
-                </Switch>
-            </Setting>
-
-            <Setting
-                toggle={() => (poll.showVotesBeforeEndDate = !poll.showVotesBeforeEndDate)}
-                info={"If you don't want the poll participants to see the results before the poll ends, turn this option on."}>
-                <Switch
-                    onChange={() => (poll.showVotesBeforeEndDate = !poll.showVotesBeforeEndDate)}
-                    width={"fill"}
-                    reverse
-                    checked={!poll.showVotesBeforeEndDate}>
-                    <Translatable resourceKey={i18nKey("Hide votes before end of the poll")} />
-                </Switch>
-            </Setting>
-
-            <Row mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
-                <CommonButton2 onClick={back} variant="primary" mode="text">
-                    {#snippet icon(color, size)}
-                        <ArrowLeftThin {color} {size} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("back")} />
-                </CommonButton2>
-                <CommonButton2 disabled={!valid} onClick={start} variant="primary" mode="regular">
-                    {#snippet icon(color, size)}
-                        <Chart {color} {size} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("Publish poll")} />
-                </CommonButton2>
-            </Row>
-        {/if}
+        <Column gap={"lg"}>
+            <Column gap="sm" padding={["zero", "lg"]}>
+                <Body fontWeight={"bold"}>
+                    <Translatable resourceKey={i18nKey("Poll answers")} />
+                </Body>
+                <Body colour="textSecondary">
+                    <Translatable
+                        resourceKey={i18nKey(
+                            "At least two (2) answers are required to create a poll!",
+                        )} />
+                </Body>
+            </Column>
+            <Column gap="sm">
+                <div
+                    class={"dropzone"}
+                    use:dragHandleZone={{
+                        items: poll.pollAnswers,
+                        flipDurationMs,
+                        dropTargetStyle: {},
+                    }}
+                    onconsider={handleDndConsider}
+                    onfinalize={handleDndFinalize}>
+                    {#each poll.pollAnswers as ans, i (ans._id)}
+                        <div animate:flip={{ duration: flipDurationMs }}>
+                            <Row gap="sm">
+                                <ExpandingTextArea
+                                    placeholder={interpolate(
+                                        $_,
+                                        i18nKey("Provide a unique answer"),
+                                    )}
+                                    maxlength={MAX_ANSWER_LENGTH}
+                                    countdown
+                                    bind:value={poll.pollAnswers[i].value}
+                                    oninput={addAnswer}
+                                    onblur={() => checkInputIfEmpty(i)} />
+                                <div
+                                    use:dragHandle
+                                    aria-label="drag-handle for answer {i}"
+                                    class="handle">
+                                    <UnfoldMoreHorizontal
+                                        size="1.5rem"
+                                        color={ColourVars.textSecondary} />
+                                </div>
+                            </Row>
+                        </div>
+                    {/each}
+                </div>
+            </Column>
+        </Column>
     </Column>
+
+    <AnchoredSheet bind:this={anchoredSheet} maxViewportHeightFraction={fraction(0.8)}>
+        {#snippet collapsedContent()}
+            <Column padding={["sm", "lg", "xl"]}>
+                <Row mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
+                    <CommonButton2
+                        onClick={() => anchoredSheet.expand()}
+                        variant="primary"
+                        mode="text">
+                        {#snippet icon(color, size)}
+                            <Cog {color} {size} />
+                        {/snippet}
+                        <Translatable resourceKey={i18nKey("Settings")} />
+                    </CommonButton2>
+                    <CommonButton2
+                        disabled={!valid}
+                        onClick={start}
+                        variant="primary"
+                        mode="regular">
+                        {#snippet icon(color, size)}
+                            <Chart {color} {size} />
+                        {/snippet}
+                        <Translatable resourceKey={i18nKey("Publish")} />
+                    </CommonButton2>
+                </Row>
+            </Column>
+        {/snippet}
+        {#snippet expandedContent()}
+            <Column gap="xxl" padding={["lg", "xl", "huge"]}>
+                <DurationSelector bind:duration={poll.duration}>
+                    {#snippet title()}
+                        <Body fontWeight={"bold"}>
+                            <Translatable resourceKey={i18nKey("Poll duration")} />
+                        </Body>
+                    {/snippet}
+                </DurationSelector>
+
+                <Setting
+                    toggle={() => (poll.anonymous = !poll.anonymous)}
+                    info={"Polls are anonymous by default. If you make it public, everyone will be able to ssee each others votes."}>
+                    <Switch
+                        onChange={() => (poll.anonymous = !poll.anonymous)}
+                        width={"fill"}
+                        reverse
+                        checked={!poll.anonymous}>
+                        <Translatable resourceKey={i18nKey("Public poll")} />
+                    </Switch>
+                </Setting>
+
+                <Setting
+                    toggle={() =>
+                        (poll.allowMultipleVotesPerUser = !poll.allowMultipleVotesPerUser)}
+                    info={"Users can only vote for a single option by default, but if you would like to allow users to vote for multiple options, toggle this on."}>
+                    <Switch
+                        onChange={() =>
+                            (poll.allowMultipleVotesPerUser = !poll.allowMultipleVotesPerUser)}
+                        width={"fill"}
+                        reverse
+                        checked={poll.allowMultipleVotesPerUser}>
+                        <Translatable resourceKey={i18nKey("Allow multiple votes")} />
+                    </Switch>
+                </Setting>
+
+                <Setting
+                    toggle={() => (poll.allowUserToChangeVote = !poll.allowUserToChangeVote)}
+                    info={"With this option on, once they vote, users will not be able to change their opinion."}>
+                    <Switch
+                        onChange={() => (poll.allowUserToChangeVote = !poll.allowUserToChangeVote)}
+                        width={"fill"}
+                        reverse
+                        checked={!poll.allowUserToChangeVote}>
+                        <Translatable resourceKey={i18nKey("Users cannot change their votes")} />
+                    </Switch>
+                </Setting>
+
+                <Setting
+                    toggle={() => (poll.showVotesBeforeEndDate = !poll.showVotesBeforeEndDate)}
+                    info={"If you don't want the poll participants to see the results before the poll ends, turn this option on."}>
+                    <Switch
+                        onChange={() =>
+                            (poll.showVotesBeforeEndDate = !poll.showVotesBeforeEndDate)}
+                        width={"fill"}
+                        reverse
+                        checked={!poll.showVotesBeforeEndDate}>
+                        <Translatable resourceKey={i18nKey("Hide votes before end of the poll")} />
+                    </Switch>
+                </Setting>
+
+                <Row mainAxisAlignment={"end"} crossAxisAlignment={"center"}>
+                    <CommonButton2
+                        onClick={() => anchoredSheet.collapse()}
+                        variant="primary"
+                        mode="text">
+                        {#snippet icon(color, size)}
+                            <Check {color} {size} />
+                        {/snippet}
+                        <Translatable resourceKey={i18nKey("Done")} />
+                    </CommonButton2>
+                </Row>
+            </Column>
+        {/snippet}
+    </AnchoredSheet>
 </SlidingPageContent>
 
 <style lang="scss">
