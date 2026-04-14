@@ -9926,6 +9926,13 @@ export class OpenChat {
                             error,
                         );
                     });
+            } else if (event.data.type === "SW_UPDATED") {
+                // A new service worker just activated. Reload so this tab starts
+                // a fresh navigation under the new SW. This avoids the iOS WebKit
+                // blank-white-screen bug caused by the SW changing controller
+                // mid-navigation when clients.claim() was used.
+                console.debug("SW_CLIENT: new service worker activated, reloading for clean handover");
+                window.location.reload();
             }
         });
 

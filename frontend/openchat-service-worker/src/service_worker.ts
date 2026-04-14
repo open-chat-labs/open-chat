@@ -98,9 +98,17 @@ self.addEventListener("install", (ev) => {
 });
 
 self.addEventListener("activate", (ev) => {
-    // upon activation take control of all clients (tabs & windows)
-    ev.waitUntil(self.clients.claim());
-    console.debug("SW: activated");
+    // Notify any existing window clients that the SW has updated so they can
+    // reload cleanly. We deliberately do NOT call self.clients.claim() here:
+    // claiming mid-navigation is a known cause of blank white screens on iOS
+    // WebKit because WebKit can drop the in-flight navigation response when
+    // the controlling SW changes underneath it.
+    ev.waitUntil(
+        self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+            console.debug(`SW: activated, notifying ${clients.length} client(s) to reload`);
+            clients.forEach((client) => client.postMessage({ type: "SW_UPDATED" }));
+        }),
+    );
 });
 
 self.addEventListener("push", (ev: PushEvent) => {
