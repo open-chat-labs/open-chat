@@ -14,6 +14,7 @@
         disabled?: boolean;
         spellcheck?: boolean;
         scrollIntoView?: boolean;
+        onfocus?: () => void;
         onblur?: () => void;
         onpaste?: (e: ClipboardEvent) => void;
         oninput?: () => void;
@@ -32,6 +33,7 @@
         disabled = false,
         spellcheck = false,
         scrollIntoView = true,
+        onfocus,
         onblur,
         onpaste,
         oninput,
@@ -89,7 +91,7 @@
     }
 </script>
 
-<Container direction={"vertical"} gap={"xs"}>
+<Container direction={"vertical"} gap={"xs"} overflow="visible">
     <Container
         supplementalClass="dl_expanding_textarea"
         gap={"sm"}
@@ -109,10 +111,12 @@
             {id}
             {placeholder}
             {spellcheck}
+            {onfocus}
             onblur={handleBlur}
             onpaste={handlePaste}
             oninput={handleInput}
             onkeypress={handleKeyPress}
+            tabindex="0"
             data-gram="false"
             data-gramm_editor="false"
             data-enable-grammarly="false"
