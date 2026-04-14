@@ -37,7 +37,7 @@
         withCaption ? { kind: "text_content", text: content.caption ?? "" } : undefined,
     );
     let style = $derived(
-        `${height === undefined ? "" : `height: ${height}px;`} max-width: ${image.width}px;`,
+        `${height === undefined ? "" : `height: ${height}px;`} max-width: ${videoWidth}px;`,
     );
 </script>
 
