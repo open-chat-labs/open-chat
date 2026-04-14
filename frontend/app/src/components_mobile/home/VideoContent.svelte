@@ -39,7 +39,8 @@
         draft = false,
         height = undefined,
         edited,
-        blockLevelMarkdown = false, // isPreview = false,
+        blockLevelMarkdown = false,
+        isPreview = false,
         onRemove,
     }: Props = $props();
 
@@ -175,6 +176,7 @@
     {draft}
     {edited}
     {blockLevelMarkdown}
+    {isPreview}
     {onRemove} />
 
 <style lang="scss">

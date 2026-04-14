@@ -133,15 +133,6 @@
             botState.messageFormatter = formatter;
         });
 
-        if (client.isNativeAndroid()) {
-            // Inform the native android app that svelte code is ready! SetTimeout
-            // delays the fn execution until the call stack is empty, just to
-            // make sure anything else non-async that needs to run is done.
-            //
-            // Once Svelte app is ready, native code can start pushing events.
-            setTimeout(svelteReady);
-        }
-
         const unsubKeyboard = setupKeyboardTracking();
         return () => {
             window.removeEventListener("orientationchange", calculateHeight);
@@ -213,6 +204,13 @@
                     }
                 });
             });
+
+            // Inform the native android app that svelte code is ready! SetTimeout
+            // delays the fn execution until the call stack is empty, just to
+            // make sure anything else non-async that needs to run is done.
+            //
+            // Once Svelte app is ready, native code can start pushing events.
+            setTimeout(svelteReady);
         }
     }
 

@@ -24,6 +24,7 @@ export { default as Search } from "./components/forms/Search.svelte";
 export { default as Option } from "./components/forms/select/Option.svelte";
 export { default as Select } from "./components/forms/select/Select.svelte";
 export { default as TextArea } from "./components/forms/TextArea.svelte";
+export { default as ExpandingTextArea } from "./components/forms/ExpandingTextArea.svelte";
 export { default as ListAction } from "./components/ListAction.svelte";
 export { default as Logo } from "./components/Logo.svelte";
 export { default as Menu } from "./components/menu/Menu.svelte";

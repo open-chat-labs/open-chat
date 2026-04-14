@@ -75,6 +75,11 @@ export class SheetBehavior {
                 // TODO make the default height configurable
                 // TODO plugin instantShow
                 this._collapsedHeight = this.sheet?.offsetHeight ?? 100;
+
+                // Setting the initial height, important for css height
+                // animation to run correctly when sheet is expanded initially
+                // with the expand function and not dragged.
+                this._setSheetHeight(this._collapsedHeight);
             },
         });
 

@@ -10,6 +10,10 @@ AwEHoUQDQgAE7M8gHSA3XRsUiMyzXSOvHNY2VmtWdmaukrZIsQN3e4BCLRgdD+fz
 PH/bMYMukTdUe8iN6WzgEUiqIVaa+8AbPg==
 -----END EC PRIVATE KEY-----"
 export IS_PRODUCTION="false"
-export GCLOUD_SA_JSON_PATH=""
+
+# Only set if .env doesn't exist (fallback for missing .env)
+if [ ! -f ".env" ]; then
+    export GCLOUD_SA_JSON_PATH=""
+fi
 
 cargo run -p notification_pusher_cli

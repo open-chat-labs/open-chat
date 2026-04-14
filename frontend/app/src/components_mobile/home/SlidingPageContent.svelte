@@ -16,7 +16,11 @@
     let { avatar, children, title, subtitle, onBack, menu }: Props = $props();
 </script>
 
-<Container background={ColourVars.background0} height={"fill"} direction={"vertical"}>
+<Container
+    background={ColourVars.background0}
+    height={"fill"}
+    direction={"vertical"}
+    overflow="hidden">
     <SlidingPageHeader {menu} {avatar} subtitleKey={subtitle} {onBack} titleKey={title} />
     {@render children()}
 </Container>

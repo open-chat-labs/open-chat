@@ -156,10 +156,10 @@ object OCPluginCompanion {
     fun setTriggerRef(plugin: OpenChatPlugin) {
         triggerRef = { event, payload ->
             if (svelteReady) {
-                // Log.d(LOG_TAG, "FIRE EVENT: $event, $payload")
+                Log.d(LOG_TAG, "FIRE EVENT: $event, $payload")
                 plugin.trigger(event, payload)
             } else {
-                // Log.d(LOG_TAG, "ADD EVENT TO QUEUE: $event, $payload")
+                Log.d(LOG_TAG, "ADD EVENT TO QUEUE: $event, $payload")
                 eventQueue.add(Pair(event, payload.toString()))
             }
         }

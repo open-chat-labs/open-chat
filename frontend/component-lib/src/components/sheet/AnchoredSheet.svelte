@@ -41,6 +41,10 @@
     export function collapse(instant?: boolean) {
         return sheetBehavior.collapse(instant);
     }
+
+    export function expand(instant?: boolean) {
+        return sheetBehavior.expand(instant);
+    }
 </script>
 
 <!-- TODO | There is still duplication in this file and SheetWrapper as they have

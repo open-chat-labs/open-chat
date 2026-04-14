@@ -46,7 +46,7 @@ function getScrollParent(node: HTMLElement | null): HTMLElement {
 
 function scrollIntoViewLastFocused() {
     // Do not scroll into view if keyboard is ignored!
-    if (!lastFocusedInput || lastFocusedInput?.dataset.keyboardIgnore) return;
+    if (!lastFocusedInput || lastFocusedInput?.dataset.keyboardIgnore === "true") return;
 
     // Scroll the focused input into view if not visible!
     setTimeout(() => {

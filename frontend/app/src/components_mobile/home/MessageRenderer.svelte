@@ -20,6 +20,7 @@
         blockLevelMarkdown?: boolean;
         showPreviews?: boolean;
         maxCaptionWidth?: number;
+        isPreview?: boolean;
         onRemove?: () => void;
     }
 
@@ -36,6 +37,7 @@
         blockLevelMarkdown = false,
         showPreviews = false,
         maxCaptionWidth,
+        isPreview = false,
         onRemove,
     }: Props = $props();
 
@@ -47,7 +49,7 @@
     // - render - Render a regular view for this message
     type RendererMode = "draft" | "reply" | "render";
 
-    let mode = $derived<RendererMode>(reply ? "reply" : draft ? "draft" : "render");
+    let mode = $derived<RendererMode>(reply || isPreview ? "reply" : draft ? "draft" : "render");
 
     let textContent = $derived<TextContentType | undefined>(
         !!caption ? { kind: "text_content", text: caption ?? "" } : undefined,

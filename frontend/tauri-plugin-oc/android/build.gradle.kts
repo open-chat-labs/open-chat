@@ -39,6 +39,12 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    sourceSets {
+        getByName("main") {
+            // cleaner way to add generated KSP code in Gradle 8.x
+            java.srcDirs("build/generated/ksp/debug/kotlin", "build/generated/ksp/release/kotlin")
+        }
+    }
 
     kotlin {
         compilerOptions {
@@ -54,8 +60,8 @@ dependencies {
 
     implementation(project(":tauri-android"))
 
-    implementation("androidx.credentials:credentials:1.5.0")
-    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
+    implementation("androidx.credentials:credentials:1.6.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.6.0")
     implementation("com.google.android.gms:play-services-auth:21.5.1")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
@@ -63,7 +69,7 @@ dependencies {
 
     implementation("androidx.browser:browser:1.10.0")
 
-    implementation(platform("com.google.firebase:firebase-bom:34.11.0"))
+    implementation(platform("com.google.firebase:firebase-bom:34.12.0"))
     implementation("com.google.firebase:firebase-messaging")
 
     implementation("io.coil-kt.coil3:coil:3.4.0")
