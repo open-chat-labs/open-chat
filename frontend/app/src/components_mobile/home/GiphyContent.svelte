@@ -139,7 +139,6 @@
     }
 
     .placeholder,
-    img.gif,
     video {
         width: 100%;
         display: block;
