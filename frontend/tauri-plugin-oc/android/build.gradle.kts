@@ -10,7 +10,9 @@ android {
     namespace = "com.ocplugin.app"
     compileSdk = 36
 
-    buildFeatures { buildConfig = true }
+    buildFeatures {
+        buildConfig = true
+    }
 
     defaultConfig {
         minSdk = 21
@@ -19,13 +21,15 @@ android {
     }
 
     buildTypes {
-        debug { buildConfigField("String", "AVATAR_BASE_URL", "\"http://%s.raw.localhost:8080\"") }
+        debug {
+            buildConfigField("String", "AVATAR_BASE_URL", "\"http://%s.raw.localhost:8080\"")
+        }
         release {
             buildConfigField("String", "AVATAR_BASE_URL", "\"https://%s.raw.icp0.io\"")
             isMinifyEnabled = false
             proguardFiles(
-                    getDefaultProguardFile("proguard-android-optimize.txt"),
-                    "proguard-rules.pro"
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
             )
         }
     }
@@ -42,7 +46,11 @@ android {
         }
     }
 
-    kotlin { compilerOptions { jvmTarget.set(JvmTarget.JVM_17) } }
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
+    }
 }
 
 dependencies {
