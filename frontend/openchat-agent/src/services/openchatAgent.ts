@@ -243,7 +243,6 @@ import {
     setCachedExternalAchievements,
     setCachedMessageIfNotExists,
     updateCachedProposalTallies,
-    type Database,
 } from "../utils/caching";
 import {
     buildBlobUrl,
@@ -329,7 +328,6 @@ export class OpenChatAgent extends EventTarget {
     private _exchangeRateClients: ExchangeRateClient[];
     private _groupInvite: GroupInvite | undefined;
     private _registryValue: RegistryValue | undefined;
-    private db: Database;
     private _logger: Logger;
     private _cachePrimer: CachePrimer | undefined = undefined;
     private _chatEventsReader: CachedChatEventsReader;
@@ -356,7 +354,7 @@ export class OpenChatAgent extends EventTarget {
         this._logger = config.logger;
         console.log("url", config.icUrl);
         this._agent = createHttpAgentSync(identity, config.icUrl);
-        this.db = initDb(this.principal);
+        initDb(this.principal);
         this._onlineClient = new OnlineClient(identity, this._agent, config.onlineCanister);
         this._userClient = AnonUserClient.create();
         this._userIndexClient = new UserIndexClient(
@@ -387,11 +385,11 @@ export class OpenChatAgent extends EventTarget {
             new IcpCoinsClient(identity, this._agent),
             new IcpSwapClient(),
         ];
-        this._localUserIndexClient = new LocalUserIndexClient(identity, this._agent, this.db);
+        this._localUserIndexClient = new LocalUserIndexClient(identity, this._agent);
         this._ledgerClient = new LedgerClient(identity, this._agent);
         this._ledgerIndexClient = new LedgerIndexClient(identity, this._agent);
-        this._groupClient = new GroupClient(identity, this._agent, config, this.db);
-        this._communityClient = new CommunityClient(identity, this._agent, config, this.db);
+        this._groupClient = new GroupClient(identity, this._agent, config);
+        this._communityClient = new CommunityClient(identity, this._agent, config);
 
         if (config.groupInvite !== undefined) {
             this.groupInvite = config.groupInvite;
@@ -401,7 +399,6 @@ export class OpenChatAgent extends EventTarget {
             this._userClient,
             this._groupClient,
             this._communityClient,
-            this.db,
         );
 
         this._bitcoinClient = new Lazy(
@@ -474,7 +471,7 @@ export class OpenChatAgent extends EventTarget {
         const userClient =
             userId === ANON_USER_ID
                 ? AnonUserClient.create()
-                : new UserClient(userId, this.identity, this._agent, this.config, this.db);
+                : new UserClient(userId, this.identity, this._agent, this.config);
 
         this._userClient = userClient;
         this._chatEventsReader.setUserClient(userClient);
@@ -555,7 +552,7 @@ export class OpenChatAgent extends EventTarget {
             const { chatId, threadRootMessageIndex } = messageContext;
 
             if (offline()) {
-                recordFailedMessage(this.db, chatId, event, threadRootMessageIndex);
+                recordFailedMessage(chatId, event, threadRootMessageIndex);
                 return resolve([CommonResponses.offline(), event.event], true);
             }
 
@@ -1455,8 +1452,8 @@ export class OpenChatAgent extends EventTarget {
                         a.reason.kind === "achievement_unlocked"
                             ? a.reason.type
                             : a.reason.kind === "external_achievement_unlocked"
-                            ? a.reason.name
-                            : undefined;
+                              ? a.reason.name
+                              : undefined;
 
                     if (name !== undefined) {
                         achievements.mutate((ac) => ac.add(name));
@@ -1551,20 +1548,20 @@ export class OpenChatAgent extends EventTarget {
                     directChatUpdates = userResponse.directChats.updated;
                     directChatsRemoved = userResponse.directChats.removed;
                     directChatsRemoved.forEach((id) => {
-                        deleteEventsForChatOrCommunity(this.db, id);
+                        deleteEventsForChatOrCommunity(id);
                     });
 
                     groupsAdded = userResponse.groupChats.added;
                     groupsRemoved = userResponse.groupChats.removed;
                     groupsRemoved.forEach((id) => {
-                        deleteEventsForChatOrCommunity(this.db, id);
+                        deleteEventsForChatOrCommunity(id);
                     });
                     userCanisterGroupUpdates = userResponse.groupChats.updated;
 
                     communitiesAdded = userResponse.communities.added;
                     communitiesRemoved = userResponse.communities.removed;
                     communitiesRemoved.forEach((id) => {
-                        deleteEventsForChatOrCommunity(this.db, id);
+                        deleteEventsForChatOrCommunity(id);
                     });
                     userCanisterCommunityUpdates = userResponse.communities.updated;
 
@@ -1808,7 +1805,7 @@ export class OpenChatAgent extends EventTarget {
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);
 
         if (this.userClient.userId !== ANON_USER_ID) {
-            setCachedChats(this.db, this.principal, state, updatedEvents);
+            setCachedChats(this.principal, state, updatedEvents);
         }
 
         const directChatsAddedUpdatedIds = new Set([
@@ -1889,7 +1886,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     #initializeCachePrimer(userCanisterLocalUserIndex: string): Promise<CachePrimer> {
-        return getCachePrimerEventIndexes(this.db).then((idx) => {
+        return getCachePrimerEventIndexes().then((idx) => {
             return (this._cachePrimer = new CachePrimer(
                 userCanisterLocalUserIndex,
                 idx,
@@ -1916,8 +1913,8 @@ export class OpenChatAgent extends EventTarget {
             previousUpdatesTimestamp === undefined
                 ? maxC2cCalls
                 : durationSincePreviousUpdates < 10 * ONE_MINUTE_MILLIS
-                ? maxC2cCalls * 4
-                : maxC2cCalls * 20;
+                  ? maxC2cCalls * 4
+                  : maxC2cCalls * 20;
 
         const promises: Promise<WaitAllResult<GroupAndCommunitySummaryUpdatesResponseBatch>>[] = [];
         for (const [localUserIndex, requests] of requestsByLocalUserIndex) {
@@ -1982,7 +1979,7 @@ export class OpenChatAgent extends EventTarget {
 
     getUpdates(initialLoad: boolean): Stream<UpdatesResult | undefined> {
         return new Stream(async (resolve, reject) => {
-            const cachedState = await getCachedChats(this.db, this.principal);
+            const cachedState = await getCachedChats(this.principal);
             const isOffline = offline();
             if (cachedState && initialLoad) {
                 resolve(
@@ -2579,7 +2576,7 @@ export class OpenChatAgent extends EventTarget {
         if (offline()) return Promise.resolve("");
 
         const userClient = userId
-            ? new UserClient(userId, this.identity, this._agent, this.config, this.db)
+            ? new UserClient(userId, this.identity, this._agent, this.config)
             : this.userClient;
         return userClient.getBio();
     }
@@ -2591,13 +2588,7 @@ export class OpenChatAgent extends EventTarget {
                 if (deleted) {
                     resolve(undefined, true);
                 }
-                const userClient = new UserClient(
-                    userId,
-                    this.identity,
-                    this._agent,
-                    this.config,
-                    this.db,
-                );
+                const userClient = new UserClient(userId, this.identity, this._agent, this.config);
                 const result = userClient.getPublicProfile();
                 result.subscribe({
                     onResult: (res, final) => {
@@ -2996,7 +2987,7 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         message: EventWrapper<Message>,
     ): Promise<void> {
-        return setCachedMessageIfNotExists(this.db, chatId, message, threadRootMessageIndex);
+        return setCachedMessageIfNotExists(chatId, message, threadRootMessageIndex);
     }
 
     freezeGroup(
@@ -3070,7 +3061,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     loadFailedMessages(): Promise<Map<string, Record<number, EventWrapper<Message>>>> {
-        return loadFailedMessages(this.db).then(
+        return loadFailedMessages().then(
             (messages) => messages.toMap() as Map<string, Record<number, EventWrapper<Message>>>,
         );
     }
@@ -3080,7 +3071,7 @@ export class OpenChatAgent extends EventTarget {
         messageId: bigint,
         threadRootMessageIndex?: number,
     ): Promise<void> {
-        return removeFailedMessage(this.db, chatId, messageId, threadRootMessageIndex);
+        return removeFailedMessage(chatId, messageId, threadRootMessageIndex);
     }
 
     async claimPrize(
@@ -3750,7 +3741,7 @@ export class OpenChatAgent extends EventTarget {
         if (localUserIndexFromCache !== undefined) {
             return localUserIndexFromCache;
         }
-        return new UserClient(userId, this.identity, this._agent, this.config, this.db)
+        return new UserClient(userId, this.identity, this._agent, this.config)
             .localUserIndex()
             .then((localUserIndex) => {
                 return cacheLocalUserIndexForUser(userId, localUserIndex);
@@ -3918,7 +3909,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     async markAchievementsSeen(): Promise<void> {
-        const cachedState = await getCachedChats(this.db, this.principal);
+        const cachedState = await getCachedChats(this.principal);
         if (cachedState !== undefined) {
             return this.userClient.markAchievementsSeen(cachedState.latestUserCanisterUpdates);
         }
@@ -4176,7 +4167,7 @@ export class OpenChatAgent extends EventTarget {
 
     getBots(initialLoad: boolean): Stream<BotsResponse> {
         return new Stream(async (resolve, reject) => {
-            const cachedBots = await getCachedBots(this.db, this.principal);
+            const cachedBots = await getCachedBots(this.principal);
             const isOffline = offline();
             if (cachedBots && initialLoad) {
                 resolve(cachedBots, isOffline);
@@ -4184,7 +4175,7 @@ export class OpenChatAgent extends EventTarget {
             if (!isOffline) {
                 try {
                     const updates = await this._userIndexClient.getBots(cachedBots);
-                    setCachedBots(this.db, this.principal, updates);
+                    setCachedBots(this.principal, updates);
                     resolve(updates, true);
                 } catch (err) {
                     reject(err);
@@ -4286,7 +4277,7 @@ export class OpenChatAgent extends EventTarget {
             return [];
         }
 
-        return await updateCachedProposalTallies(this.db, chatId, response);
+        return await updateCachedProposalTallies(chatId, response);
     }
 
     async #updateCachedProposalTallies(localUserIndex: string, chatIds: MultiUserChatIdentifier[]) {
@@ -4296,7 +4287,7 @@ export class OpenChatAgent extends EventTarget {
         );
 
         for (const [chatId, tallies] of response) {
-            await updateCachedProposalTallies(this.db, chatId, tallies);
+            await updateCachedProposalTallies(chatId, tallies);
         }
     }
 

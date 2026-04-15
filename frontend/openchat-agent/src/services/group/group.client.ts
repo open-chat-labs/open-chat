@@ -51,12 +51,7 @@ import type {
     VideoCallParticipantsResponse,
     VideoCallPresence,
 } from "openchat-shared";
-import {
-    MAX_EVENTS,
-    MAX_MESSAGES,
-    offline,
-    random32,
-} from "openchat-shared";
+import { MAX_EVENTS, MAX_MESSAGES, offline, random32 } from "openchat-shared";
 import type { AgentConfig } from "../../config";
 import {
     ActiveProposalTalliesResponse,
@@ -129,7 +124,6 @@ import {
     UnitResult,
 } from "../../typebox";
 import {
-    type Database,
     getCachedEventsByIndex,
     getCachedGroupDetails,
     recordFailedMessage,
@@ -184,14 +178,16 @@ import {
     convertToCommunitySuccess,
 } from "./mappersV2";
 
-export class GroupClient extends MultiCanisterMsgpackAgent implements IChatEventsReader<GroupChatIdentifier> {
+export class GroupClient
+    extends MultiCanisterMsgpackAgent
+    implements IChatEventsReader<GroupChatIdentifier>
+{
     private readonly _inviteCodes: Map<string, bigint> = new Map();
 
     constructor(
         identity: Identity,
         agent: HttpAgent,
         private config: AgentConfig,
-        private db: Database,
     ) {
         super(identity, agent, "Group");
     }
@@ -204,8 +200,12 @@ export class GroupClient extends MultiCanisterMsgpackAgent implements IChatEvent
         return this._inviteCodes.get(groupId);
     }
 
-    getCachedEventsByIndex(groupId: string, eventIndexes: number[], threadRootMessageIndex: number | undefined) {
-        return getCachedEventsByIndex(this.db, eventIndexes, {
+    getCachedEventsByIndex(
+        groupId: string,
+        eventIndexes: number[],
+        threadRootMessageIndex: number | undefined,
+    ) {
+        return getCachedEventsByIndex(eventIndexes, {
             chatId: this.groupIdToChatId(groupId),
             threadRootMessageIndex,
         });
@@ -227,8 +227,7 @@ export class GroupClient extends MultiCanisterMsgpackAgent implements IChatEvent
             chatId.groupId,
             "events_by_index",
             args,
-            (resp) =>
-                mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
             GroupEventsByIndexArgs,
             GroupEventsResponse,
         );
@@ -253,8 +252,7 @@ export class GroupClient extends MultiCanisterMsgpackAgent implements IChatEvent
             chatId.groupId,
             "events_window",
             args,
-            (resp) =>
-                mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
             GroupEventsWindowArgs,
             GroupEventsResponse,
         );
@@ -281,8 +279,7 @@ export class GroupClient extends MultiCanisterMsgpackAgent implements IChatEvent
             chatId.groupId,
             "events",
             args,
-            (resp) =>
-                mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
             GroupEventsArgs,
             GroupEventsResponse,
         );
@@ -364,7 +361,7 @@ export class GroupClient extends MultiCanisterMsgpackAgent implements IChatEvent
         const chatId = this.groupIdToChatId(groupId);
 
         // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
-        removeFailedMessage(this.db, chatId, event.event.messageId, threadRootMessageIndex);
+        removeFailedMessage(chatId, event.event.messageId, threadRootMessageIndex);
 
         const dataClient = new DataClient(this.identity, this.agent, this.config);
         const uploadContentPromise = event.event.forwarded
@@ -403,7 +400,6 @@ export class GroupClient extends MultiCanisterMsgpackAgent implements IChatEvent
                 .then((resp) => {
                     const retVal: [SendMessageResponse, Message] = [resp, newEvent.event];
                     setCachedMessageFromSendResponse(
-                        this.db,
                         chatId,
                         newEvent,
                         threadRootMessageIndex,
@@ -411,7 +407,7 @@ export class GroupClient extends MultiCanisterMsgpackAgent implements IChatEvent
                     return retVal;
                 })
                 .catch((err) => {
-                    recordFailedMessage(this.db, chatId, newEvent, threadRootMessageIndex);
+                    recordFailedMessage(chatId, newEvent, threadRootMessageIndex);
                     throw err;
                 });
         });
@@ -453,8 +449,8 @@ export class GroupClient extends MultiCanisterMsgpackAgent implements IChatEvent
                     gateConfig === undefined
                         ? "NoChange"
                         : gateConfig.gate.kind === "no_gate"
-                        ? "SetToNone"
-                        : { SetToSome: apiAccessGateConfig(gateConfig) },
+                          ? "SetToNone"
+                          : { SetToSome: apiAccessGateConfig(gateConfig) },
                 messages_visible_to_non_members: messagesVisibleToNonMembers,
             },
             (resp) => mapResult(resp, updateGroupSuccess),
@@ -575,8 +571,11 @@ export class GroupClient extends MultiCanisterMsgpackAgent implements IChatEvent
         );
     }
 
-    async getGroupDetails(groupId: string, chatLastUpdated: bigint): Promise<GroupChatDetailsResponse> {
-        const fromCache = await getCachedGroupDetails(this.db, groupId);
+    async getGroupDetails(
+        groupId: string,
+        chatLastUpdated: bigint,
+    ): Promise<GroupChatDetailsResponse> {
+        const fromCache = await getCachedGroupDetails(groupId);
         if (fromCache !== undefined) {
             if (fromCache.timestamp >= chatLastUpdated || offline()) {
                 return fromCache;
@@ -587,7 +586,7 @@ export class GroupClient extends MultiCanisterMsgpackAgent implements IChatEvent
 
         const response = await this.getGroupDetailsFromBackend(groupId);
         if (typeof response === "object" && "members" in response) {
-            await setCachedGroupDetails(this.db, groupId, response);
+            await setCachedGroupDetails(groupId, response);
         }
         return response;
     }
@@ -606,10 +605,13 @@ export class GroupClient extends MultiCanisterMsgpackAgent implements IChatEvent
         );
     }
 
-    private async getGroupDetailsUpdates(groupId: string, previous: GroupChatDetails): Promise<GroupChatDetails> {
+    private async getGroupDetailsUpdates(
+        groupId: string,
+        previous: GroupChatDetails,
+    ): Promise<GroupChatDetails> {
         const response = await this.getGroupDetailsUpdatesFromBackend(groupId, previous);
         if (response.timestamp > previous.timestamp) {
-            await setCachedGroupDetails(this.db, groupId, response);
+            await setCachedGroupDetails(groupId, response);
         }
         return response;
     }
@@ -625,8 +627,7 @@ export class GroupClient extends MultiCanisterMsgpackAgent implements IChatEvent
             groupId,
             "selected_updates_v2",
             args,
-            (value) =>
-                groupDetailsUpdatesResponse(value, this.config.blobUrlPattern, groupId),
+            (value) => groupDetailsUpdatesResponse(value, this.config.blobUrlPattern, groupId),
             GroupSelectedUpdatesArgs,
             GroupSelectedUpdatesResponse,
         );
@@ -672,8 +673,7 @@ export class GroupClient extends MultiCanisterMsgpackAgent implements IChatEvent
             chatId.groupId,
             "messages_by_message_index",
             args,
-            (resp) =>
-                mapResult(resp, (value) => getMessagesSuccess(value, this.principal, chatId)),
+            (resp) => mapResult(resp, (value) => getMessagesSuccess(value, this.principal, chatId)),
             GroupMessagesByMessageIndexArgs,
             GroupMessagesByMessageIndexResponse,
         );
@@ -817,7 +817,10 @@ export class GroupClient extends MultiCanisterMsgpackAgent implements IChatEvent
                 threads: threadRootMessageIndexes,
                 latest_client_thread_update: latestClientThreadUpdate,
             },
-            (resp) => mapResult(resp, (value) => threadPreviewsSuccess(value, this.groupIdToChatId(groupId))),
+            (resp) =>
+                mapResult(resp, (value) =>
+                    threadPreviewsSuccess(value, this.groupIdToChatId(groupId)),
+                ),
             GroupThreadPreviewsArgs,
             GroupThreadPreviewsResponse,
         );
@@ -889,7 +892,11 @@ export class GroupClient extends MultiCanisterMsgpackAgent implements IChatEvent
         );
     }
 
-    convertToCommunity(groupId: string, historyVisible: boolean, rules: Rules): Promise<ConvertToCommunityResponse> {
+    convertToCommunity(
+        groupId: string,
+        historyVisible: boolean,
+        rules: Rules,
+    ): Promise<ConvertToCommunityResponse> {
         return this.update(
             groupId,
             "convert_into_community",
@@ -985,7 +992,11 @@ export class GroupClient extends MultiCanisterMsgpackAgent implements IChatEvent
         );
     }
 
-    joinVideoCall(groupId: string, messageId: bigint, newAchievement: boolean): Promise<JoinVideoCallResponse> {
+    joinVideoCall(
+        groupId: string,
+        messageId: bigint,
+        newAchievement: boolean,
+    ): Promise<JoinVideoCallResponse> {
         return this.update(
             groupId,
             "join_video_call",
@@ -1050,7 +1061,11 @@ export class GroupClient extends MultiCanisterMsgpackAgent implements IChatEvent
         );
     }
 
-    updateInstalledBot(groupId: string, botId: string, grantedPermissions: GrantedBotPermissions): Promise<boolean> {
+    updateInstalledBot(
+        groupId: string,
+        botId: string,
+        grantedPermissions: GrantedBotPermissions,
+    ): Promise<boolean> {
         return this.update(
             groupId,
             "update_bot",
@@ -1190,6 +1205,6 @@ export class GroupClient extends MultiCanisterMsgpackAgent implements IChatEvent
         return {
             kind: "group_chat",
             groupId,
-        }
+        };
     }
 }

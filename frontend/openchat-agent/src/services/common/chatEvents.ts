@@ -19,7 +19,6 @@ import {
     Stream,
 } from "openchat-shared";
 import {
-    type Database,
     getCachedEvents,
     getCachedEventsByIndex,
     getCachedEventsWindowByMessageIndex,
@@ -65,7 +64,6 @@ export class CachedChatEventsReader {
         private userClient: IChatEventsReader<DirectChatIdentifier>,
         private readonly groupClient: IChatEventsReader<GroupChatIdentifier>,
         private readonly communityClient: IChatEventsReader<ChannelIdentifier>,
-        private readonly db: Database,
     ) {}
 
     setUserClient(userClient: IChatEventsReader<DirectChatIdentifier>) {
@@ -159,7 +157,6 @@ export class CachedChatEventsReader {
         return new Stream(async (resolve, reject) => {
             try {
                 const [cachedEvents, missing, dirty] = await getCachedEvents(
-                    this.db,
                     eventIndexRange,
                     { chatId, threadRootMessageIndex },
                     startIndex,
@@ -188,7 +185,7 @@ export class CachedChatEventsReader {
                             maxEvents,
                         )
                         .then((resp) => {
-                            setCachedEvents(this.db, chatId, resp, threadRootMessageIndex);
+                            setCachedEvents(chatId, resp, threadRootMessageIndex);
                             resolve(resp, true);
                         })
                         .catch((err) => {
@@ -210,7 +207,7 @@ export class CachedChatEventsReader {
                                     startIndex,
                                     ascending,
                                 ).then((resp) => {
-                                    setCachedEvents(this.db, chatId, resp, threadRootMessageIndex);
+                                    setCachedEvents(chatId, resp, threadRootMessageIndex);
                                     resolve(resp, true);
                                 });
                             } else {
@@ -242,7 +239,7 @@ export class CachedChatEventsReader {
         latestKnownUpdate: bigint | undefined,
     ): Stream<EventsResponse<ChatEvent>> {
         return new Stream((resolve, reject) => {
-            getCachedEventsByIndex(this.db, eventIndexes, {
+            getCachedEventsByIndex(eventIndexes, {
                 chatId,
                 threadRootMessageIndex,
             })
@@ -282,7 +279,6 @@ export class CachedChatEventsReader {
             try {
                 const [cachedEvents, missing, dirty, totalMiss] =
                     await getCachedEventsWindowByMessageIndex(
-                        this.db,
                         eventIndexRange,
                         { chatId, threadRootMessageIndex },
                         messageIndex,
@@ -312,7 +308,7 @@ export class CachedChatEventsReader {
                             maxEvents,
                         )
                         .then((resp) => {
-                            setCachedEvents(this.db, chatId, resp, threadRootMessageIndex);
+                            setCachedEvents(chatId, resp, threadRootMessageIndex);
                             resolve(resp, true);
                         })
                         .catch((err) => {
@@ -341,7 +337,7 @@ export class CachedChatEventsReader {
                                     eventIndexRange,
                                     messageIndex,
                                 ).then((resp) => {
-                                    setCachedEvents(this.db, chatId, resp, threadRootMessageIndex);
+                                    setCachedEvents(chatId, resp, threadRootMessageIndex);
                                     resolve(resp, true);
                                 });
                             } else {
@@ -375,7 +371,6 @@ export class CachedChatEventsReader {
         return new Stream(async (resolve, reject) => {
             try {
                 const fromCache = await loadMessagesByMessageIndex(
-                    this.db,
                     chatId,
                     threadRootMessageIndex,
                     messageIndexes,
@@ -391,7 +386,7 @@ export class CachedChatEventsReader {
                             latestKnownUpdate,
                         )
                         .then((resp) => {
-                            setCachedEvents(this.db, chatId, resp, threadRootMessageIndex);
+                            setCachedEvents(chatId, resp, threadRootMessageIndex);
                             return resp;
                         });
 
@@ -439,7 +434,7 @@ export class CachedChatEventsReader {
         return reader
             .chatEventsByIndex(chatId, toFetch, threadRootMessageIndex, latestKnownUpdate)
             .then((resp) => {
-                setCachedEvents(this.db, chatId, resp, threadRootMessageIndex);
+                setCachedEvents(chatId, resp, threadRootMessageIndex);
                 resolve(resp, true);
             })
             .catch(reject);

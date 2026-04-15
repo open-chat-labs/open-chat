@@ -68,7 +68,6 @@ import {
     UnitResult,
 } from "../../typebox";
 import {
-    type Database,
     getCachedEvents,
     getCachedEventsByIndex,
     getCachedEventsWindowByMessageIndex,
@@ -106,7 +105,7 @@ import {
 } from "./mappers";
 
 export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
-    constructor(identity: Identity, agent: HttpAgent, private db: Database) {
+    constructor(identity: Identity, agent: HttpAgent) {
         super(identity, agent, "LocalUserIndex");
     }
 
@@ -174,7 +173,6 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
                 };
                 if (cachePrimer && request.latestKnownUpdate !== undefined) {
                     setCachePrimerEventIndex(
-                        this.db,
                         request.context.chatId,
                         max(cached.events, (e) => e.index),
                     );
@@ -194,14 +192,12 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
 
                 if (response.kind === "success") {
                     await setCachedEvents(
-                        this.db,
                         request.context.chatId,
                         response.result,
                         request.context.threadRootMessageIndex,
                     );
                     if (cachePrimer) {
                         setCachePrimerEventIndex(
-                            this.db,
                             request.context.chatId,
                             max(response.result.events, (e) => e.index),
                         );
@@ -237,7 +233,6 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
     ): Promise<[EventsSuccessResult<ChatEvent>, Set<number>, Set<number>, boolean?]> {
         if (args.kind === "page") {
             return getCachedEvents(
-                this.db,
                 args.eventIndexRange,
                 context,
                 args.startIndex,
@@ -250,7 +245,6 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
         }
         if (args.kind === "window") {
             return getCachedEventsWindowByMessageIndex(
-                this.db,
                 args.eventIndexRange,
                 context,
                 args.midPoint,
@@ -261,7 +255,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
             );
         }
         if (args.kind === "by_index") {
-            return getCachedEventsByIndex(this.db, args.events, context, allowDirty);
+            return getCachedEventsByIndex(args.events, context, allowDirty);
         }
         throw new UnsupportedValueError("Unexpected ChatEventsArgs type", args);
     }

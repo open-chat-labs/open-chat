@@ -1,5 +1,5 @@
 import type { Principal } from "@icp-sdk/core/principal";
-import { openDbAndGetCachedChats } from "../../utils/caching";
+import { getCachedChats } from "../../utils/caching";
 import { ReplicaNotUpToDateError } from "../error";
 import {
     chatIdentifiersEqual,
@@ -36,7 +36,7 @@ async function getChat(
     principal: Principal,
     chatId: ChatIdentifier,
 ): Promise<ChatSummary | undefined> {
-    const chats = await openDbAndGetCachedChats(principal);
+    const chats = await getCachedChats(principal);
     if (chats === undefined) return undefined;
 
     switch (chatId.kind) {

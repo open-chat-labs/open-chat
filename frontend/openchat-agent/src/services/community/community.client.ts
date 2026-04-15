@@ -180,7 +180,6 @@ import {
     setCachedCommunityDetails,
     setCachedGroupDetails,
     setCachedMessageFromSendResponse,
-    type Database,
 } from "../../utils/caching";
 import { mergeCommunityDetails, mergeGroupChatDetails } from "../../utils/chat";
 import {
@@ -241,14 +240,16 @@ import {
     updateCommunitySuccess,
 } from "./mappersV2";
 
-export class CommunityClient extends MultiCanisterMsgpackAgent implements IChatEventsReader<ChannelIdentifier> {
+export class CommunityClient
+    extends MultiCanisterMsgpackAgent
+    implements IChatEventsReader<ChannelIdentifier>
+{
     private readonly _inviteCodes: Map<string, bigint> = new Map();
 
     constructor(
         identity: Identity,
         agent: HttpAgent,
         private config: AgentConfig,
-        private db: Database,
     ) {
         super(identity, agent, "Community");
     }
@@ -754,7 +755,7 @@ export class CommunityClient extends MultiCanisterMsgpackAgent implements IChatE
         communityId: string,
         communityLastUpdated: bigint,
     ): Promise<CommunityDetailsResponse> {
-        const fromCache = await getCachedCommunityDetails(this.db, communityId);
+        const fromCache = await getCachedCommunityDetails(communityId);
         if (fromCache != null) {
             if (fromCache.lastUpdated >= communityLastUpdated || offline()) {
                 return fromCache;
@@ -765,7 +766,7 @@ export class CommunityClient extends MultiCanisterMsgpackAgent implements IChatE
 
         const response = await this.getCommunityDetailsFromBackend(communityId);
         if (response.kind === "success") {
-            await setCachedCommunityDetails(this.db, communityId, response);
+            await setCachedCommunityDetails(communityId, response);
         }
         return response;
     }
@@ -789,7 +790,7 @@ export class CommunityClient extends MultiCanisterMsgpackAgent implements IChatE
     ): Promise<CommunityDetails> {
         const details = await this.getCommunityDetailsUpdatesFromBackend(communityId, previous);
         if (details.lastUpdated > previous.lastUpdated) {
-            await setCachedCommunityDetails(this.db, communityId, details);
+            await setCachedCommunityDetails(communityId, details);
         }
         return details;
     }
@@ -829,7 +830,7 @@ export class CommunityClient extends MultiCanisterMsgpackAgent implements IChatE
         chatLastUpdated: bigint,
     ): Promise<GroupChatDetailsResponse> {
         const cacheKey = `${chatId.communityId}_${chatId.channelId}`;
-        const fromCache = await getCachedGroupDetails(this.db, cacheKey);
+        const fromCache = await getCachedGroupDetails(cacheKey);
         if (fromCache !== undefined) {
             if (fromCache.timestamp >= chatLastUpdated || offline()) {
                 return fromCache;
@@ -840,7 +841,7 @@ export class CommunityClient extends MultiCanisterMsgpackAgent implements IChatE
 
         const response = await this.getChannelDetailsFromBackend(chatId);
         if (typeof response === "object" && "members" in response) {
-            await setCachedGroupDetails(this.db, cacheKey, response);
+            await setCachedGroupDetails(cacheKey, response);
         }
         return response;
     }
@@ -875,7 +876,7 @@ export class CommunityClient extends MultiCanisterMsgpackAgent implements IChatE
     ): Promise<GroupChatDetails> {
         const response = await this.getChannelDetailsUpdatesFromBackend(chatId, previous);
         if (response.timestamp > previous.timestamp) {
-            await setCachedGroupDetails(this.db, cacheKey, response);
+            await setCachedGroupDetails(cacheKey, response);
         }
         return response;
     }
@@ -930,7 +931,7 @@ export class CommunityClient extends MultiCanisterMsgpackAgent implements IChatE
         onRequestAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
         // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
-        removeFailedMessage(this.db, chatId, event.event.messageId, threadRootMessageIndex);
+        removeFailedMessage(chatId, event.event.messageId, threadRootMessageIndex);
 
         const dataClient = new DataClient(this.identity, this.agent, this.config);
         const uploadContentPromise = event.event.forwarded
@@ -970,7 +971,6 @@ export class CommunityClient extends MultiCanisterMsgpackAgent implements IChatE
                 .then((resp) => {
                     const retVal: [SendMessageResponse, Message] = [resp, newEvent.event];
                     setCachedMessageFromSendResponse(
-                        this.db,
                         chatId,
                         newEvent,
                         threadRootMessageIndex,
@@ -978,7 +978,7 @@ export class CommunityClient extends MultiCanisterMsgpackAgent implements IChatE
                     return retVal;
                 })
                 .catch((err) => {
-                    recordFailedMessage(this.db, chatId, newEvent, threadRootMessageIndex);
+                    recordFailedMessage(chatId, newEvent, threadRootMessageIndex);
                     throw err;
                 });
         });
@@ -1211,10 +1211,10 @@ export class CommunityClient extends MultiCanisterMsgpackAgent implements IChatE
                     gateConfig === undefined
                         ? "NoChange"
                         : gateConfig.gate.kind === "no_gate"
-                        ? "SetToNone"
-                        : {
-                              SetToSome: apiAccessGateConfig(gateConfig),
-                          },
+                          ? "SetToNone"
+                          : {
+                                SetToSome: apiAccessGateConfig(gateConfig),
+                            },
                 avatar:
                     avatar === undefined
                         ? "NoChange"
@@ -1259,10 +1259,10 @@ export class CommunityClient extends MultiCanisterMsgpackAgent implements IChatE
                     gateConfig === undefined
                         ? "NoChange"
                         : gateConfig.gate.kind === "no_gate"
-                        ? "SetToNone"
-                        : {
-                              SetToSome: apiAccessGateConfig(gateConfig),
-                          },
+                          ? "SetToNone"
+                          : {
+                                SetToSome: apiAccessGateConfig(gateConfig),
+                            },
                 avatar:
                     avatar === undefined
                         ? "NoChange"
