@@ -4,7 +4,6 @@
 
     interface Props {
         id?: string;
-        inp?: HTMLElement;
         value?: string;
         placeholder?: string;
         subtext?: Snippet;
@@ -14,6 +13,7 @@
         disabled?: boolean;
         spellcheck?: boolean;
         scrollIntoView?: boolean;
+        maxHeight?: string;
         onfocus?: () => void;
         onblur?: () => void;
         onpaste?: (e: ClipboardEvent) => void;
@@ -23,7 +23,6 @@
 
     let {
         id,
-        inp = $bindable(),
         value = $bindable(),
         placeholder,
         subtext,
@@ -33,6 +32,7 @@
         disabled = false,
         spellcheck = false,
         scrollIntoView = true,
+        maxHeight = "none",
         onfocus,
         onblur,
         onpaste,
@@ -42,29 +42,42 @@
 
     let remaining = $derived(maxlength - (value?.length ?? 0));
     let warn = $derived(remaining <= 5);
-    let editor: HTMLElement | null = $state(null);
+    let textarea: HTMLTextAreaElement | null = $state(null);
 
-    // Sync external value changes into the editor
+    // Auto-grow the textarea height
+    function autoGrow() {
+        if (!textarea) return;
+        textarea.style.height = "auto";
+        textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+
+    // Sync external value changes
     $effect(() => {
-        if (editor && value !== editor.innerHTML) {
-            editor.innerHTML = value ?? "";
+        if (textarea && value !== textarea.value) {
+            if (countdown) {
+                value = (value?.length ?? 0) > maxlength ? value?.substring(0, maxlength) : value;
+            }
+
+            textarea.value = value ?? "";
+            autoGrow();
         }
     });
 
+    // Clean empty garbage (simplified for plain text)
     function cleanContent() {
-        if (!editor) return;
-        let html = editor.innerHTML.trim();
-        // Remove common empty garbage that breaks :empty and placeholder
-        if (
-            html === "<br>" ||
-            html === "<div><br></div>" ||
-            html === "&nbsp;" ||
-            html === "<p><br></p>" ||
-            html === "<p></p>"
-        ) {
-            editor.innerHTML = "";
+        if (!value) return;
+        const trimmed = value.trim();
+        if (trimmed === "" || trimmed === "\n") {
             value = "";
         }
+    }
+
+    function handleInput(e: Event) {
+        const ta = e.target as HTMLTextAreaElement;
+        value = ta.value;
+        cleanContent();
+        autoGrow();
+        oninput?.();
     }
 
     function handleBlur() {
@@ -72,23 +85,22 @@
         onblur?.();
     }
 
-    function handleInput() {
-        cleanContent();
-        value = editor?.innerHTML ?? ""; // sync to bound value
-        oninput?.();
-    }
-
     function handlePaste(e: ClipboardEvent) {
-        // TODO strip and keep text only
         onpaste?.(e);
         setTimeout(() => {
             cleanContent();
+            autoGrow();
         }, 10);
     }
 
     function handleKeyPress(e: KeyboardEvent) {
         onkeypress?.(e);
     }
+
+    // Initial auto-grow when component mounts with value
+    $effect(() => {
+        if (textarea && value) autoGrow();
+    });
 </script>
 
 <Container direction={"vertical"} gap={"xs"} overflow="visible">
@@ -99,34 +111,38 @@
         padding={["lg", "xl"]}
         crossAxisAlignment={"start"}
         background={ColourVars.textTertiary}>
-        <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_static_element_interactions -->
-        <div
-            bind:this={editor}
-            bind:this={inp}
-            contenteditable
+        <textarea
+            bind:this={textarea}
+            bind:value
             class="expandable-textarea"
             class:disabled
             class:has_countdown={!!countdown}
-            data-placeholder={placeholder}
             {id}
             {placeholder}
             {spellcheck}
+            {disabled}
+            rows="1"
+            {maxlength}
+            style="max-height: {maxHeight};"
             {onfocus}
             onblur={handleBlur}
             onpaste={handlePaste}
             oninput={handleInput}
             onkeypress={handleKeyPress}
-            tabindex="0"
             data-gram="false"
             data-gramm_editor="false"
             data-enable-grammarly="false"
             data-lpignore="true"
             data-keyboard-ignore={!scrollIntoView}>
-        </div>
+        </textarea>
+
         {#if countdown}
-            <div class:warn class="countdown">{remaining}</div>
+            <div class:warn class={`countdown w_${remaining.toString().length}_nums`}>
+                {remaining}
+            </div>
         {/if}
     </Container>
+
     {#if subtext}
         <div class="subtext">
             <BodySmall colour={error ? "error" : "textSecondary"}>
@@ -138,7 +154,6 @@
 
 <style lang="scss">
     :global(.dl_expanding_textarea) {
-        // TODO this is custom border radius, we should make it standard as xxxl
         border-radius: 1.75rem !important;
     }
 
@@ -153,8 +168,6 @@
         resize: none;
         outline: none;
         padding-top: var(--sp-xxs);
-
-        // Allow it to grow vertically
         box-sizing: border-box;
         word-wrap: break-word;
 
@@ -162,11 +175,13 @@
             padding-right: 2.5rem;
         }
 
-        &:empty::before {
-            content: attr(data-placeholder);
+        &::placeholder {
             color: var(--text-placeholder);
-            pointer-events: none;
-            height: var(--typo-body-lh);
+        }
+
+        /* Hide scrollbar visually while allowing growth */
+        &::-webkit-scrollbar {
+            display: none;
         }
     }
 
@@ -176,10 +191,19 @@
 
     .countdown {
         position: absolute;
-        width: 2rem;
         top: calc(var(--sp-lg) + var(--sp-xxs));
         right: var(--sp-xl);
         color: var(--text-secondary);
+
+        &.w_2_nums {
+            width: 1.25rem;
+        }
+        &.w_3_nums {
+            width: 1.75rem;
+        }
+        &.w_4_nums {
+            width: 2.25rem;
+        }
 
         &.warn {
             color: var(--warning);
