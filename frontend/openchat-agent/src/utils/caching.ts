@@ -1121,7 +1121,20 @@ export function getDb(): Database | undefined {
 }
 
 export function initDb(principal: Principal): Database {
-    db = openCache(principal);
+    const promise = openCache(principal).then((dbInstance) => {
+        dbInstance.addEventListener("close", () => {
+            if (db === promise) {
+                db = undefined;
+            }
+        });
+        return dbInstance;
+    });
+    db = promise;
+    promise.catch(() => {
+        if (db === promise) {
+            db = undefined;
+        }
+    });
     return db;
 }
 
