@@ -182,7 +182,6 @@ import {
     removeFailedMessage,
     setCachedMessageFromSendResponse,
     setCachedPublicProfile,
-    type Database,
 } from "../../utils/caching";
 import {
     apiOptionUpdateV2,
@@ -238,7 +237,10 @@ import {
     withdrawCryptoResponse,
 } from "./mappersV2";
 
-export class UserClient extends SingleCanisterMsgpackAgent implements IChatEventsReader<DirectChatIdentifier> {
+export class UserClient
+    extends SingleCanisterMsgpackAgent
+    implements IChatEventsReader<DirectChatIdentifier>
+{
     userId: string;
 
     constructor(
@@ -246,7 +248,6 @@ export class UserClient extends SingleCanisterMsgpackAgent implements IChatEvent
         identity: Identity,
         agent: HttpAgent,
         private config: AgentConfig,
-        private db: Database,
     ) {
         super(identity, agent, userId, "User");
         this.userId = userId;
@@ -400,8 +401,7 @@ export class UserClient extends SingleCanisterMsgpackAgent implements IChatEvent
         return this.query(
             "events_by_index",
             args,
-            (resp) =>
-                mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
             UserEventsByIndexArgs,
             UserEventsResponse,
         );
@@ -425,8 +425,7 @@ export class UserClient extends SingleCanisterMsgpackAgent implements IChatEvent
         return this.query(
             "events_window",
             args,
-            (resp) =>
-                mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
             UserEventsWindowArgs,
             UserEventsResponse,
         );
@@ -454,8 +453,7 @@ export class UserClient extends SingleCanisterMsgpackAgent implements IChatEvent
         return this.query(
             "events",
             args,
-            (resp) =>
-                mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
             UserEventsArgs,
             UserEventsResponse,
         );
@@ -476,8 +474,7 @@ export class UserClient extends SingleCanisterMsgpackAgent implements IChatEvent
         return this.query(
             "messages_by_message_index",
             args,
-            (resp) =>
-                mapResult(resp, (value) => getMessagesSuccess(value, this.principal, chatId)),
+            (resp) => mapResult(resp, (value) => getMessagesSuccess(value, this.principal, chatId)),
             UserMessagesByMessageIndexArgs,
             UserMessagesByMessageIndexResponse,
         );
@@ -567,7 +564,7 @@ export class UserClient extends SingleCanisterMsgpackAgent implements IChatEvent
         pin: string | undefined,
         onRequestAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
-        removeFailedMessage(this.db, chatId, event.event.messageId, threadRootMessageIndex);
+        removeFailedMessage(chatId, event.event.messageId, threadRootMessageIndex);
 
         const dataClient = new DataClient(this.identity, this.agent, this.config);
         const uploadContentPromise = event.event.forwarded
@@ -601,7 +598,6 @@ export class UserClient extends SingleCanisterMsgpackAgent implements IChatEvent
                 .then((resp) => {
                     const retVal: [SendMessageResponse, Message] = [resp, newEvent.event];
                     setCachedMessageFromSendResponse(
-                        this.db,
                         chatId,
                         newEvent,
                         threadRootMessageIndex,
@@ -609,7 +605,7 @@ export class UserClient extends SingleCanisterMsgpackAgent implements IChatEvent
                     return retVal;
                 })
                 .catch((err) => {
-                    recordFailedMessage(this.db, chatId, newEvent, threadRootMessageIndex);
+                    recordFailedMessage(chatId, newEvent, threadRootMessageIndex);
                     throw err;
                 });
         });
@@ -625,7 +621,7 @@ export class UserClient extends SingleCanisterMsgpackAgent implements IChatEvent
         messageFilterFailed: bigint | undefined,
         pin: string | undefined,
     ): Promise<[SendMessageResponse, Message]> {
-        removeFailedMessage(this.db, groupId, event.event.messageId, threadRootMessageIndex);
+        removeFailedMessage(groupId, event.event.messageId, threadRootMessageIndex);
         return this.sendMessageWithTransferToGroupToBackend(
             groupId,
             recipientId,
@@ -636,9 +632,9 @@ export class UserClient extends SingleCanisterMsgpackAgent implements IChatEvent
             messageFilterFailed,
             pin,
         )
-            .then(setCachedMessageFromSendResponse(this.db, groupId, event, threadRootMessageIndex))
+            .then(setCachedMessageFromSendResponse(groupId, event, threadRootMessageIndex))
             .catch((err) => {
-                recordFailedMessage(this.db, groupId, event);
+                recordFailedMessage(groupId, event);
                 throw err;
             });
     }
@@ -718,7 +714,7 @@ export class UserClient extends SingleCanisterMsgpackAgent implements IChatEvent
         messageFilterFailed: bigint | undefined,
         pin: string | undefined,
     ): Promise<[SendMessageResponse, Message]> {
-        removeFailedMessage(this.db, chatId, event.event.messageId, threadRootMessageIndex);
+        removeFailedMessage(chatId, event.event.messageId, threadRootMessageIndex);
         return this.sendMessageWithTransferToChannelToBackend(
             chatId,
             recipientId,
@@ -730,9 +726,9 @@ export class UserClient extends SingleCanisterMsgpackAgent implements IChatEvent
             messageFilterFailed,
             pin,
         )
-            .then(setCachedMessageFromSendResponse(this.db, chatId, event, threadRootMessageIndex))
+            .then(setCachedMessageFromSendResponse(chatId, event, threadRootMessageIndex))
             .catch((err) => {
-                recordFailedMessage(this.db, chatId, event);
+                recordFailedMessage(chatId, event);
                 throw err;
             });
     }

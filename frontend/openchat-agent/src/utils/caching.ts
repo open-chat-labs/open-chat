@@ -1,7 +1,6 @@
 import type { Principal } from "@icp-sdk/core/principal";
 import {
     deleteDB,
-    openDB,
     type DBSchema,
     type IDBPCursorWithValue,
     type IDBPDatabase,
@@ -56,9 +55,9 @@ import {
     isSuccessfulEventsResponse,
     updateCreatedUser,
 } from "openchat-shared";
+import { IndexedDbConnectionManager } from "./indexedDb";
 
 const CACHE_VERSION = 148;
-const EARLIEST_SUPPORTED_MIGRATION = 138;
 const MAX_INDEX = 9999999999;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
@@ -152,12 +151,6 @@ export interface ChatSchema extends DBSchema {
     };
 }
 
-type MigrationFunction<T> = (
-    db: IDBPDatabase<T>,
-    principal: Principal,
-    transaction: IDBPTransaction<T, StoreNames<T>[], "versionchange">,
-) => Promise<void>;
-
 // async function createBotsStore(
 //     db: IDBPDatabase<ChatSchema>,
 //     _principal: Principal,
@@ -182,7 +175,6 @@ type MigrationFunction<T> = (
 //
 async function clearChatsStore(
     _db: IDBPDatabase<ChatSchema>,
-    _principal: Principal,
     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
 ) {
     await tx.objectStore("chats").clear();
@@ -197,7 +189,6 @@ async function clearChatsStore(
 // }
 async function clearCachePrimerStore(
     _db: IDBPDatabase<ChatSchema>,
-    _principal: Principal,
     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
 ) {
     await tx.objectStore("cachePrimer").clear();
@@ -205,7 +196,6 @@ async function clearCachePrimerStore(
 
 async function clearCommunityDetailsStore(
     _db: IDBPDatabase<ChatSchema>,
-    _principal: Principal,
     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
 ) {
     await tx.objectStore("community_details").clear();
@@ -221,7 +211,6 @@ async function clearCommunityDetailsStore(
 //
 async function clearEvents(
     _db: IDBPDatabase<ChatSchema>,
-    _principal: Principal,
     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
 ) {
     await tx.objectStore("chat_events").clear();
@@ -246,16 +235,14 @@ async function clearEvents(
 
 async function clearChatsAndCurrentUser(
     _db: IDBPDatabase<ChatSchema>,
-    _principal: Principal,
     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
 ) {
-    await clearChatsStore(_db, _principal, tx);
+    await clearChatsStore(_db, tx);
     await tx.objectStore("currentUser").clear();
 }
 
 async function createPublicProfileStore(
     db: IDBPDatabase<ChatSchema>,
-    _principal: Principal,
     _tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
 ) {
     if (db.objectStoreNames.contains("publicProfile")) {
@@ -264,95 +251,7 @@ async function createPublicProfileStore(
     db.createObjectStore("publicProfile");
 }
 
-const migrations: Record<number, MigrationFunction<ChatSchema>> = {
-    139: clearCommunityDetailsStore,
-    140: clearEvents,
-    141: clearChatsAndCurrentUser,
-    142: createPublicProfileStore,
-    143: clearCommunityDetailsStore,
-    144: clearChatsStore,
-    145: clearChatsStore,
-    146: clearCachePrimerStore,
-    147: clearEvents,
-    148: clearCachePrimerStore,
-};
-
-async function migrate(
-    db: IDBPDatabase<ChatSchema>,
-    principal: Principal,
-    from: number,
-    to: number,
-    transaction: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-) {
-    for (let version = from + 1; version <= to; version++) {
-        if (migrations[version]) {
-            console.debug(`DB: applying migration for version ${version}`);
-            await migrations[version](db, principal, transaction);
-        }
-    }
-}
-
-function nuke(db: IDBPDatabase<ChatSchema>) {
-    if (db.objectStoreNames.contains("chat_events")) {
-        db.deleteObjectStore("chat_events");
-    }
-    if (db.objectStoreNames.contains("thread_events")) {
-        db.deleteObjectStore("thread_events");
-    }
-    if (db.objectStoreNames.contains("chats")) {
-        db.deleteObjectStore("chats");
-    }
-    if (db.objectStoreNames.contains("bots")) {
-        db.deleteObjectStore("bots");
-    }
-    if (db.objectStoreNames.contains("group_details")) {
-        db.deleteObjectStore("group_details");
-    }
-    if (db.objectStoreNames.contains("community_details")) {
-        db.deleteObjectStore("community_details");
-    }
-    if (db.objectStoreNames.contains("failed_chat_messages")) {
-        db.deleteObjectStore("failed_chat_messages");
-    }
-    if (db.objectStoreNames.contains("failed_thread_messages")) {
-        db.deleteObjectStore("failed_thread_messages");
-    }
-    if (db.objectStoreNames.contains("cachePrimer")) {
-        db.deleteObjectStore("cachePrimer");
-    }
-    if (db.objectStoreNames.contains("currentUser")) {
-        db.deleteObjectStore("currentUser");
-    }
-    if (db.objectStoreNames.contains("publicProfile")) {
-        db.deleteObjectStore("publicProfile");
-    }
-    if (db.objectStoreNames.contains("localUserIndex")) {
-        db.deleteObjectStore("localUserIndex");
-    }
-    if (db.objectStoreNames.contains("externalAchievements")) {
-        db.deleteObjectStore("externalAchievements");
-    }
-    if (db.objectStoreNames.contains("activityFeed")) {
-        db.deleteObjectStore("activityFeed");
-    }
-    const chatEvents = db.createObjectStore("chat_events");
-    chatEvents.createIndex("messageIdx", "messageKey");
-    chatEvents.createIndex("expiresAt", "expiresAt");
-    const threadEvents = db.createObjectStore("thread_events");
-    threadEvents.createIndex("messageIdx", "messageKey");
-    db.createObjectStore("chats");
-    db.createObjectStore("group_details");
-    db.createObjectStore("community_details");
-    db.createObjectStore("failed_chat_messages");
-    db.createObjectStore("failed_thread_messages");
-    db.createObjectStore("cachePrimer");
-    db.createObjectStore("currentUser");
-    db.createObjectStore("publicProfile");
-    db.createObjectStore("localUserIndex");
-    db.createObjectStore("externalAchievements");
-    db.createObjectStore("activityFeed");
-    db.createObjectStore("bots");
-}
+let idbConnectionManager: IndexedDbConnectionManager<ChatSchema> | undefined = undefined;
 
 function padMessageIndex(i: number): string {
     return i.toString().padStart(10, "0");
@@ -377,42 +276,18 @@ export function createCacheKey(context: MessageContext, index: number): string {
     return `${messageContextToString(context)}_${padMessageIndex(index)}`;
 }
 
-function openCache(principal: Principal): Database {
-    return openDB<ChatSchema>(`openchat_db_${principal}`, CACHE_VERSION, {
-        upgrade(db, previousVersion, newVersion, transaction) {
-            if (
-                previousVersion == null ||
-                previousVersion < EARLIEST_SUPPORTED_MIGRATION ||
-                newVersion == null
-            ) {
-                nuke(db);
-            } else {
-                console.debug(`DB: migrating database from ${previousVersion} to ${newVersion}`);
-                migrate(db, principal, previousVersion, newVersion, transaction).then(() => {
-                    console.debug(
-                        `DB: migration from ${previousVersion} to ${newVersion} complete`,
-                    );
-                });
-            }
-        },
-    });
-}
-
-export async function getCachedBots(
-    db: Database,
-    principal: Principal,
-): Promise<BotsResponse | undefined> {
+export async function getCachedBots(principal: Principal): Promise<BotsResponse | undefined> {
+    const db = getDbOrThrow();
     return (await db).get("bots", principal.toString());
 }
 
-export async function setCachedBots(db: Database, principal: Principal, bots: BotsResponse) {
+export async function setCachedBots(principal: Principal, bots: BotsResponse) {
+    const db = getDbOrThrow();
     (await db).put("bots", bots, principal.toString());
 }
 
-export async function getCachedChats(
-    db: Database,
-    principal: Principal,
-): Promise<ChatStateFull | undefined> {
+export async function getCachedChats(principal: Principal): Promise<ChatStateFull | undefined> {
+    const db = getDbOrThrow();
     const resolvedDb = await db;
     const chats = await resolvedDb.get("chats", principal.toString());
 
@@ -428,11 +303,11 @@ export async function getCachedChats(
 }
 
 export async function setCachedChats(
-    db: Database,
     principal: Principal,
     chatState: ChatStateFull,
     updatedEvents: ChatMap<UpdatedEvent[]>,
 ): Promise<void> {
+    const db = getDbOrThrow();
     const directChats = chatState.directChats.map(makeChatSummarySerializable);
     const groupChats = chatState.groupChats.map(makeChatSummarySerializable);
     const communities = chatState.communities.map(makeCommunitySerializable);
@@ -476,7 +351,8 @@ export async function setCachedChats(
     await tx.done;
 }
 
-export async function deleteEventsForChatOrCommunity(db: Database, chatOrCommunityId: string) {
+export async function deleteEventsForChatOrCommunity(chatOrCommunityId: string) {
+    const db = getDbOrThrow();
     try {
         const tx = (await db).transaction("chat_events", "readwrite", { durability: "relaxed" });
         const store = tx.objectStore("chat_events");
@@ -492,7 +368,6 @@ export async function deleteEventsForChatOrCommunity(db: Database, chatOrCommuni
 }
 
 export async function getCachedEvents(
-    db: Database,
     eventIndexRange: IndexRange,
     context: MessageContext,
     startIndex: number,
@@ -502,6 +377,7 @@ export async function getCachedEvents(
     maxMissing = 50,
     allowDirty = true,
 ): Promise<[EventsSuccessResult<ChatEvent>, Set<number>, Set<number>]> {
+    const db = getDbOrThrow();
     console.debug("CACHE: ", context, eventIndexRange, startIndex, ascending);
     const start = Date.now();
 
@@ -535,7 +411,6 @@ export async function getCachedEvents(
 }
 
 export async function getCachedEventsWindowByMessageIndex(
-    db: Database,
     eventIndexRange: IndexRange,
     context: MessageContext,
     messageIndex: number,
@@ -544,14 +419,13 @@ export async function getCachedEventsWindowByMessageIndex(
     maxMissing = 50,
     allowDirty = true,
 ): Promise<[EventsSuccessResult<ChatEvent>, Set<number>, Set<number>, boolean]> {
-    const eventIndex = await getNearestCachedEventIndexForMessageIndex(db, context, messageIndex);
+    const eventIndex = await getNearestCachedEventIndexForMessageIndex(context, messageIndex);
 
     if (eventIndex === undefined) {
         return [emptyEventsResponse(), new Set(), new Set(), true];
     }
 
     const [events, missing, dirty] = await getCachedEventsWindow(
-        db,
         eventIndexRange,
         context,
         eventIndex,
@@ -565,7 +439,6 @@ export async function getCachedEventsWindowByMessageIndex(
 }
 
 export async function getCachedEventsWindow(
-    db: Database,
     eventIndexRange: IndexRange,
     context: MessageContext,
     startIndex: number,
@@ -574,6 +447,7 @@ export async function getCachedEventsWindow(
     maxMissing = 50,
     allowDirty = true,
 ): Promise<[EventsSuccessResult<ChatEvent>, Set<number>, Set<number>]> {
+    const db = getDbOrThrow();
     console.debug("CACHE: window: ", eventIndexRange, startIndex);
     const start = Date.now();
     const resolvedDb = await db;
@@ -656,11 +530,11 @@ async function getCachedEventByIndex(
 }
 
 export async function getCachedEventsByIndex(
-    db: Database,
     eventIndexes: number[],
     context: MessageContext,
     allowDirty = true,
 ): Promise<[EventsSuccessResult<ChatEvent>, Set<number>, Set<number>]> {
+    const db = getDbOrThrow();
     const events: EventWrapper<ChatEvent>[] = [];
     const expiredEventRanges: ExpiredEventsRange[] = [];
     const missing = new Set<number>();
@@ -697,12 +571,11 @@ export async function getCachedEventsByIndex(
 // This optimises the case where we looking for the next unread message. We won't have that
 // but we probably *will* have the message before.
 export async function getNearestCachedEventIndexForMessageIndex(
-    db: Database,
     context: MessageContext,
     messageIndex: number,
     iterations = 0,
 ): Promise<number | undefined> {
-    const eventIndex = await getCachedEventIndexByMessageIndex(db, context, messageIndex);
+    const eventIndex = await getCachedEventIndexByMessageIndex(context, messageIndex);
     if (eventIndex === undefined && iterations === 0 && messageIndex > 0) {
         console.debug(
             "EV: we didn't find the event index for ",
@@ -710,21 +583,16 @@ export async function getNearestCachedEventIndexForMessageIndex(
             " recursing to look for event index for ",
             messageIndex - 1,
         );
-        return getNearestCachedEventIndexForMessageIndex(
-            db,
-            context,
-            messageIndex - 1,
-            iterations + 1,
-        );
+        return getNearestCachedEventIndexForMessageIndex(context, messageIndex - 1, iterations + 1);
     }
     return eventIndex;
 }
 
 async function getCachedEventIndexByMessageIndex(
-    db: Database,
     context: MessageContext,
     messageIndex: number,
 ): Promise<number | undefined> {
+    const db = getDbOrThrow();
     const store = context.threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
     const cacheKey = createCacheKey(context, messageIndex);
     const cacheKeyUpperBound = createCacheKey(context, MAX_INDEX);
@@ -754,8 +622,9 @@ function makeSerialisable<T extends ChatEvent>(
     removeBlobs: boolean,
     threadRootMessageIndex?: number,
 ): EnhancedWrapper<T> {
-    if (ev.event.kind !== "message")
+    if (ev.event.kind !== "message") {
         return { ...ev, kind: "event", chatId: { ...chatId }, messageKey: undefined };
+    }
 
     return {
         ...ev,
@@ -803,18 +672,17 @@ function removeReplyContent(
 }
 
 export async function removeFailedMessage(
-    db: Database,
     chatId: ChatIdentifier,
     messageId: bigint,
     threadRootMessageIndex?: number,
 ): Promise<void> {
+    const db = getDbOrThrow();
     const store =
         threadRootMessageIndex !== undefined ? "failed_thread_messages" : "failed_chat_messages";
     (await db).delete(store, createFailedCacheKey({ chatId, threadRootMessageIndex }, messageId));
 }
 
 export async function recordFailedMessage<T extends Message>(
-    db: Database,
     chatId: ChatIdentifier,
     event: EventWrapper<T>,
     threadRootMessageIndex?: number,
@@ -823,6 +691,7 @@ export async function recordFailedMessage<T extends Message>(
         return;
     }
 
+    const db = getDbOrThrow();
     const store =
         threadRootMessageIndex !== undefined ? "failed_thread_messages" : "failed_chat_messages";
     const key = createFailedCacheKey({ chatId, threadRootMessageIndex }, event.event.messageId);
@@ -856,9 +725,10 @@ function rebuildBlobUrls(content: MessageContent): MessageContent {
     return content;
 }
 
-export async function loadFailedMessages(
-    db: Database,
-): Promise<MessageContextMap<Record<string, EventWrapper<Message>>>> {
+export async function loadFailedMessages(): Promise<
+    MessageContextMap<Record<string, EventWrapper<Message>>>
+> {
+    const db = getDbOrThrow();
     const chatMessages = await (await db).getAll("failed_chat_messages");
     const threadMessages = await (await db).getAll("failed_thread_messages");
     return [...chatMessages, ...threadMessages].reduce((res, ev) => {
@@ -877,11 +747,11 @@ export async function loadFailedMessages(
 }
 
 export async function setCachedEvents(
-    db: Database,
     chatId: ChatIdentifier,
     resp: EventsResponse<ChatEvent>,
     threadRootMessageIndex: number | undefined,
 ): Promise<void> {
+    const db = getDbOrThrow();
     if (!isSuccessfulEventsResponse(resp)) return;
     const store = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
 
@@ -927,10 +797,10 @@ export async function setCachedEvents(
 }
 
 export async function updateCachedProposalTallies(
-    db: Database,
     chatId: ChatIdentifier,
     tallies: [number, Tally][],
 ): Promise<EventWrapper<Message>[]> {
+    const db = getDbOrThrow();
     const tx = (await db).transaction(["chat_events"], "readwrite", {
         durability: "relaxed",
     });
@@ -965,31 +835,30 @@ export async function updateCachedProposalTallies(
 }
 
 export function setCachedMessageFromSendResponse(
-    db: Database,
     chatId: ChatIdentifier,
     sentEvent: EventWrapper<Message>,
     threadRootMessageIndex?: number,
 ): ([resp, message]: [SendMessageResponse, Message]) => [SendMessageResponse, Message] {
     return ([resp, message]: [SendMessageResponse, Message]) => {
         if (resp.kind !== "success" && resp.kind !== "transfer_success") {
-            recordFailedMessage(db, chatId, sentEvent, threadRootMessageIndex);
+            recordFailedMessage(chatId, sentEvent, threadRootMessageIndex);
             return [resp, message];
         }
 
         const event = messageToEvent(message, resp);
 
-        setCachedMessageIfNotExists(db, chatId, event, threadRootMessageIndex);
+        setCachedMessageIfNotExists(chatId, event, threadRootMessageIndex);
 
         return [resp, event.event];
     };
 }
 
 export async function setCachedMessageIfNotExists(
-    db: Database,
     chatId: ChatIdentifier,
     messageEvent: EventWrapper<Message>,
     threadRootMessageIndex?: number,
 ): Promise<void> {
+    const db = getDbOrThrow();
     const key = createCacheKey({ chatId, threadRootMessageIndex }, messageEvent.index);
     const store = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
     const tx = (await db).transaction([store], "readwrite", {
@@ -1005,15 +874,16 @@ export async function setCachedMessageIfNotExists(
     await tx.done;
 }
 
-export function getCachePrimerEventIndexes(db: Database): Promise<Record<string, number>> {
+export function getCachePrimerEventIndexes(): Promise<Record<string, number>> {
+    const db = getDbOrThrow();
     return readAll(db, "cachePrimer");
 }
 
 export async function setCachePrimerEventIndex(
-    db: Database,
     chatId: ChatIdentifier,
     eventIndexLoadedUpTo: number,
 ): Promise<void> {
+    const db = getDbOrThrow();
     const key = chatIdentifierToString(chatId);
     const tx = (await db).transaction(["cachePrimer"], "readwrite", {
         durability: "relaxed",
@@ -1085,84 +955,99 @@ function messageToEvent(
 }
 
 export async function getCachedCommunityDetails(
-    db: Database,
     communityId: string,
 ): Promise<CommunityDetails | undefined> {
+    const db = getDbOrThrow();
     return (await db).get("community_details", communityId);
 }
 
-export async function getCachedGroupDetails(
-    db: Database,
-    chatId: string,
-): Promise<GroupChatDetails | undefined> {
+export async function getCachedGroupDetails(chatId: string): Promise<GroupChatDetails | undefined> {
+    const db = getDbOrThrow();
     return (await db).get("group_details", chatId);
 }
 
 export async function setCachedCommunityDetails(
-    db: Database,
     communityId: string,
     communityDetails: CommunityDetails,
 ): Promise<void> {
+    const db = getDbOrThrow();
     await (await db).put("community_details", communityDetails, communityId);
 }
 
 export async function setCachedGroupDetails(
-    db: Database,
     chatId: string,
     groupDetails: GroupChatDetails,
 ): Promise<void> {
+    const db = getDbOrThrow();
     await (await db).put("group_details", groupDetails, chatId);
 }
 
-let db: Database | undefined;
+function getDb(): Database | undefined {
+    return idbConnectionManager?.getDb();
+}
 
-export function getDb(): Database | undefined {
+function getDbOrThrow(): Database {
+    const db = getDb();
+    if (db === undefined) throw new Error("IndexedDb connection is not initialized");
     return db;
 }
 
-export function initDb(principal: Principal): Database {
-    if (db !== undefined) {
-        return db;
-    }
-
-    const promise = openCache(principal).then((dbInstance) => {
-        dbInstance.addEventListener("close", () => {
-            console.warn("Idb connection closed");
-            if (db === promise) {
-                db = undefined;
-            }
-        });
-        return dbInstance;
-    });
-    db = promise;
-    promise.catch((err) => {
-        console.error("Failed to open Idb connection", err);
-        if (db === promise) {
-            db = undefined;
-        }
-    });
-    return db;
+export function initDb(principal: Principal) {
+    idbConnectionManager = IndexedDbConnectionManager.create<ChatSchema>(
+        `openchat_db_${principal}`,
+        [
+            { name: "chats" },
+            { name: "bots" },
+            {
+                name: "chat_events",
+                indexes: {
+                    messageIdx: "messageIdx",
+                    expiresAt: "expiresAt",
+                },
+            },
+            {
+                name: "thread_events",
+                indexes: {
+                    messageIdx: "messageIdx",
+                },
+            },
+            {
+                name: "group_details",
+            },
+            { name: "community_details" },
+            { name: "failed_chat_messages" },
+            { name: "failed_thread_messages" },
+            { name: "cachePrimer" },
+            { name: "currentUser" },
+            { name: "publicProfile" },
+            { name: "localUserIndex" },
+            { name: "externalAchievements" },
+            { name: "activityFeed" },
+        ],
+        CACHE_VERSION,
+    )
+        .withMigration(139, clearCommunityDetailsStore)
+        .withMigration(140, clearEvents)
+        .withMigration(141, clearChatsAndCurrentUser)
+        .withMigration(142, createPublicProfileStore)
+        .withMigration(143, clearCommunityDetailsStore)
+        .withMigration(144, clearChatsStore)
+        .withMigration(145, clearChatsStore)
+        .withMigration(146, clearCachePrimerStore)
+        .withMigration(147, clearEvents)
+        .withMigration(148, clearCachePrimerStore);
 }
 
 export function closeDb(): void {
-    db = undefined;
-}
-
-export async function openDbAndGetCachedChats(
-    principal: Principal,
-): Promise<ChatStateFull | undefined> {
-    db = initDb(principal);
-    if (db !== undefined) {
-        return getCachedChats(db, principal);
-    }
+    idbConnectionManager = undefined;
 }
 
 export async function loadMessagesByMessageIndex(
-    db: Database,
     chatId: ChatIdentifier,
     threadRootMessageIndex: number | undefined,
     messagesIndexes: number[],
 ): Promise<{ messageEvents: EventWrapper<Message>[]; missing: Set<number>; dirty: Set<number> }> {
+    const db = getDbOrThrow();
     const store = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
     const resolvedDb = await db;
 
@@ -1470,7 +1355,7 @@ function tryStartExpiredEventSweeper() {
 
 // TODO we can improve this by replacing these events with expired event ranges
 async function runExpiredEventSweeper() {
-    if (db === undefined) return;
+    const db = getDbOrThrow();
     const transaction = (await db).transaction(["chat_events", "thread_events"], "readwrite");
     const eventsStore = transaction.objectStore("chat_events");
     const threadEventsStore = transaction.objectStore("thread_events");
@@ -1511,7 +1396,7 @@ async function runExpiredEventSweeper() {
 }
 
 export async function getCachedPublicProfile(userId: string): Promise<PublicProfile | undefined> {
-    if (db === undefined) return;
+    const db = getDbOrThrow();
     return (await db).get("publicProfile", userId);
 }
 
@@ -1519,12 +1404,12 @@ export async function setCachedPublicProfile(
     userId: string,
     profile: PublicProfile,
 ): Promise<void> {
-    if (db === undefined) return;
+    const db = getDbOrThrow();
     (await db).put("publicProfile", profile, userId);
 }
 
 export async function getCachedCurrentUser(principal: string): Promise<CreatedUser | undefined> {
-    if (db === undefined) return;
+    const db = getDbOrThrow();
     return (await db).get("currentUser", principal);
 }
 
@@ -1532,7 +1417,7 @@ export async function mergeCachedCurrentUser(
     principal: string,
     updated: CurrentUserSummary,
 ): Promise<void> {
-    if (db === undefined) return;
+    const db = getDbOrThrow();
     const current = await getCachedCurrentUser(principal);
     if (current) {
         const merged = updateCreatedUser(current, updated);
@@ -1541,7 +1426,7 @@ export async function mergeCachedCurrentUser(
 }
 
 export async function setCachedCurrentUser(principal: string, user: CreatedUser): Promise<void> {
-    if (db === undefined) return;
+    const db = getDbOrThrow();
     (await db).put("currentUser", user, principal);
 }
 
@@ -1549,6 +1434,7 @@ export async function setCurrentUserDiamondStatusInCache(
     principal: string,
     diamondStatus: DiamondMembershipStatus,
 ): Promise<void> {
+    const db = getDbOrThrow();
     const user = await getCachedCurrentUser(principal);
     if (user === undefined || db === undefined) return;
     (await db).put(
@@ -1562,7 +1448,7 @@ export async function setCurrentUserDiamondStatusInCache(
 }
 
 export async function getLocalUserIndexForUser(userId: string): Promise<string | undefined> {
-    if (db === undefined) return;
+    const db = getDbOrThrow();
     return (await db).get("localUserIndex", userId);
 }
 
@@ -1570,7 +1456,7 @@ export async function cacheLocalUserIndexForUser(
     userId: string,
     localUserIndex: string,
 ): Promise<string> {
-    if (db === undefined) return localUserIndex;
+    const db = getDbOrThrow();
     (await db).put("localUserIndex", localUserIndex, userId);
     return localUserIndex;
 }
@@ -1578,6 +1464,7 @@ export async function cacheLocalUserIndexForUser(
 export async function clearCache(principal: string): Promise<void> {
     const name = `openchat_db_${principal}`;
     try {
+        const db = getDb();
         if (db !== undefined) {
             (await db).close();
         }
@@ -1591,7 +1478,7 @@ export async function clearCache(principal: string): Promise<void> {
 export async function getCachedExternalAchievements(): Promise<
     { lastUpdated: bigint; achievements: ExternalAchievement[] } | undefined
 > {
-    if (db === undefined) return undefined;
+    const db = getDbOrThrow();
     return (await db).get("externalAchievements", "value");
 }
 
@@ -1599,18 +1486,18 @@ export async function setCachedExternalAchievements(
     lastUpdated: bigint,
     achievements: ExternalAchievement[],
 ): Promise<void> {
-    if (db === undefined) return;
+    const db = getDbOrThrow();
     (await db).put("externalAchievements", { lastUpdated, achievements }, "value");
 }
 
 export async function getActivityFeedEvents(): Promise<MessageActivityEvent[]> {
-    if (db === undefined) return [];
+    const db = getDbOrThrow();
     const result = await (await db).get("activityFeed", "value");
     return result ?? [];
 }
 
 export async function setActivityFeedEvents(activity: MessageActivityEvent[]): Promise<void> {
-    if (db === undefined) return;
+    const db = getDbOrThrow();
     (await db).put("activityFeed", activity, "value");
 }
 
