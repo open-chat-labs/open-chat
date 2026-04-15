@@ -377,7 +377,7 @@ export function createCacheKey(context: MessageContext, index: number): string {
     return `${messageContextToString(context)}_${padMessageIndex(index)}`;
 }
 
-export function openCache(principal: Principal): Database {
+function openCache(principal: Principal): Database {
     return openDB<ChatSchema>(`openchat_db_${principal}`, CACHE_VERSION, {
         upgrade(db, previousVersion, newVersion, transaction) {
             if (
@@ -1121,6 +1121,10 @@ export function getDb(): Database | undefined {
 }
 
 export function initDb(principal: Principal): Database {
+    if (db !== undefined) {
+        return db;
+    }
+
     const promise = openCache(principal).then((dbInstance) => {
         dbInstance.addEventListener("close", () => {
             console.warn("Idb connection closed");
@@ -1147,7 +1151,7 @@ export function closeDb(): void {
 export async function openDbAndGetCachedChats(
     principal: Principal,
 ): Promise<ChatStateFull | undefined> {
-    db ??= openCache(principal);
+    db = initDb(principal);
     if (db !== undefined) {
         return getCachedChats(db, principal);
     }
