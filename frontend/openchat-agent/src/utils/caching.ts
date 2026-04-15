@@ -1001,14 +1001,14 @@ export function initDb(principal: Principal) {
             {
                 name: "chat_events",
                 indexes: {
-                    messageIdx: "messageIdx",
+                    messageIdx: "messageKey",
                     expiresAt: "expiresAt",
                 },
             },
             {
                 name: "thread_events",
                 indexes: {
-                    messageIdx: "messageIdx",
+                    messageIdx: "messageKey",
                 },
             },
             {
@@ -1026,16 +1026,16 @@ export function initDb(principal: Principal) {
         ],
         CACHE_VERSION,
     )
-        .withMigration(139, clearCommunityDetailsStore)
-        .withMigration(140, clearEvents)
-        .withMigration(141, clearChatsAndCurrentUser)
-        .withMigration(142, createPublicProfileStore)
-        .withMigration(143, clearCommunityDetailsStore)
+        .withMigration(138, clearCommunityDetailsStore)
+        .withMigration(139, clearEvents)
+        .withMigration(140, clearChatsAndCurrentUser)
+        .withMigration(141, createPublicProfileStore)
+        .withMigration(142, clearCommunityDetailsStore)
+        .withMigration(143, clearChatsStore)
         .withMigration(144, clearChatsStore)
-        .withMigration(145, clearChatsStore)
-        .withMigration(146, clearCachePrimerStore)
-        .withMigration(147, clearEvents)
-        .withMigration(148, clearCachePrimerStore);
+        .withMigration(145, clearCachePrimerStore)
+        .withMigration(146, clearEvents)
+        .withMigration(147, clearCachePrimerStore);
 }
 
 export function closeDb(): void {
@@ -1355,7 +1355,8 @@ function tryStartExpiredEventSweeper() {
 
 // TODO we can improve this by replacing these events with expired event ranges
 async function runExpiredEventSweeper() {
-    const db = getDbOrThrow();
+    const db = getDb();
+    if (db === undefined) return;
     const transaction = (await db).transaction(["chat_events", "thread_events"], "readwrite");
     const eventsStore = transaction.objectStore("chat_events");
     const threadEventsStore = transaction.objectStore("thread_events");
@@ -1436,7 +1437,7 @@ export async function setCurrentUserDiamondStatusInCache(
 ): Promise<void> {
     const db = getDbOrThrow();
     const user = await getCachedCurrentUser(principal);
-    if (user === undefined || db === undefined) return;
+    if (user === undefined) return;
     (await db).put(
         "currentUser",
         {
