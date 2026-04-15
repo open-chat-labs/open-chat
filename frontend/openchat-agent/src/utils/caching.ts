@@ -1123,6 +1123,7 @@ export function getDb(): Database | undefined {
 export function initDb(principal: Principal): Database {
     const promise = openCache(principal).then((dbInstance) => {
         dbInstance.addEventListener("close", () => {
+            console.warn("Idb connection closed");
             if (db === promise) {
                 db = undefined;
             }
@@ -1130,7 +1131,8 @@ export function initDb(principal: Principal): Database {
         return dbInstance;
     });
     db = promise;
-    promise.catch(() => {
+    promise.catch((err) => {
+        console.error("Failed to open Idb connection", err);
         if (db === promise) {
             db = undefined;
         }
