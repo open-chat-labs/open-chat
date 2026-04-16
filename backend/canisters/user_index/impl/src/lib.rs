@@ -542,9 +542,7 @@ impl Data {
             .map(|c| c as u32)
         {
             let band = (chit / size) * size;
-            let key = if band > 0 { (chit / band) * band } else { 0 };
-
-            bands.entry(key).and_modify(|e| *e += 1).or_insert(1);
+            bands.entry(band).and_modify(|e| *e += 1).or_insert(1);
         }
 
         bands

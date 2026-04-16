@@ -50,11 +50,7 @@ fn run() {
         let mut check_gate_actions = Vec::new();
         let mut any_lapsed = false;
 
-        loop {
-            let Some(member) = state.data.expiring_members.pop_if_expires_before(now) else {
-                break;
-            };
-
+        while let Some(member) = state.data.expiring_members.pop_if_expires_before(now) {
             // If there is no longer a gate then continue
             let Some(gate_config) = state.data.chat.gate_config.value.as_ref() else {
                 continue;
