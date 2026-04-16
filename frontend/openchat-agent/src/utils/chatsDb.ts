@@ -69,7 +69,7 @@ type EnhancedWrapper<T extends ChatEvent> = EventWrapper<T> & {
     dirty?: boolean;
 };
 
-export interface ChatSchema extends DBSchema {
+interface ChatSchema extends DBSchema {
     chats: {
         key: string;
         value: ChatStateFull;
@@ -252,13 +252,13 @@ async function createPublicProfileStore(
 }
 
 export class ChatsDb {
-    private readonly idbConnectionManager: IndexedDbConnectionManager<ChatSchema>;
+    private readonly connectionManager: IndexedDbConnectionManager<ChatSchema>;
     private readonly principalString: string;
     private expiredEventSweeperJob: NodeJS.Timeout | undefined;
 
     constructor(principal: Principal) {
         this.principalString = principal.toString();
-        this.idbConnectionManager = IndexedDbConnectionManager.create<ChatSchema>(
+        this.connectionManager = IndexedDbConnectionManager.create<ChatSchema>(
             `openchat_db_${this.principalString}`,
             [
                 { name: "chats" },
@@ -302,7 +302,7 @@ export class ChatsDb {
     }
 
     getDb(): Database {
-        return this.idbConnectionManager.getDb();
+        return this.connectionManager.getDb();
     }
 
     async getCachedBots(): Promise<BotsResponse | undefined> {
