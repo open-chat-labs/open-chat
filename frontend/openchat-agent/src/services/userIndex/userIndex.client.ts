@@ -136,8 +136,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
     getCurrentUser(): Stream<CurrentUserResponse> {
         return new Stream(async (resolve, reject) => {
             try {
-                const principal = this.identity.getPrincipal().toString();
-                const cachedUser = await this.chatsDb.getCachedCurrentUser(principal);
+                const cachedUser = await this.chatsDb.getCachedCurrentUser();
 
                 const isOffline = offline();
 
@@ -154,7 +153,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                         UserIndexCurrentUserResponse,
                     );
                     if (liveUser.kind === "created_user") {
-                        this.chatsDb.setCachedCurrentUser(principal, liveUser);
+                        this.chatsDb.setCachedCurrentUser(liveUser);
                     }
                     resolve(liveUser, true);
                 }
@@ -229,7 +228,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         );
 
         if (mergedResponse.currentUser) {
-            this.chatsDb.mergeCachedCurrentUser(this.principal.toString(), mergedResponse.currentUser);
+            this.chatsDb.mergeCachedCurrentUser(mergedResponse.currentUser);
         }
 
         if (mergedResponse.serverTimestamp !== undefined) {
@@ -519,9 +518,8 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             UserIndexPayForDiamondMembershipResponse,
         ).then((res) => {
             if (res.kind === "success") {
-                const principal = this.identity.getPrincipal().toString();
                 setUserDiamondStatusInCache(userId, res.status);
-                this.chatsDb.setCurrentUserDiamondStatusInCache(principal, res.status);
+                this.chatsDb.setCurrentUserDiamondStatusInCache(res.status);
             }
             return res;
         });

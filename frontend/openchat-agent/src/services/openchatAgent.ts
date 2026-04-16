@@ -3934,11 +3934,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     async clearCachedData(): Promise<void> {
-        await Promise.all([
-            this._chatsDb.clearCache(this.principal.toString()),
-            clearUserCache(),
-            clearReferralCache(),
-        ]);
+        await Promise.all([this._chatsDb.clearCache(), clearUserCache(), clearReferralCache()]);
     }
 
     async getExternalAchievements(): Promise<ExternalAchievement[]> {

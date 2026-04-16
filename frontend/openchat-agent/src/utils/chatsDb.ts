@@ -253,11 +253,13 @@ async function createPublicProfileStore(
 
 export class ChatsDb {
     private readonly idbConnectionManager: IndexedDbConnectionManager<ChatSchema>;
+    private readonly principalString: string;
     private expiredEventSweeperJob: NodeJS.Timeout | undefined;
 
-    constructor(private readonly principal: Principal) {
+    constructor(principal: Principal) {
+        this.principalString = principal.toString();
         this.idbConnectionManager = IndexedDbConnectionManager.create<ChatSchema>(
-            `openchat_db_${principal}`,
+            `openchat_db_${this.principalString}`,
             [
                 { name: "chats" },
                 { name: "bots" },
@@ -304,16 +306,16 @@ export class ChatsDb {
     }
 
     async getCachedBots(): Promise<BotsResponse | undefined> {
-        return (await this.getDb()).get("bots", this.principal.toString());
+        return (await this.getDb()).get("bots", this.principalString);
     }
 
     setCachedBots(bots: BotsResponse) {
-        this.getDb().then((db) => db.put("bots", bots, this.principal.toString()));
+        this.getDb().then((db) => db.put("bots", bots, this.principalString));
     }
 
     async getCachedChats(): Promise<ChatStateFull | undefined> {
         const resolvedDb = await this.getDb();
-        const chats = await resolvedDb.get("chats", this.principal.toString());
+        const chats = await resolvedDb.get("chats", this.principalString);
 
         if (chats && chats.latestUserCanisterUpdates < BigInt(Date.now() - 30 * ONE_DAY)) {
             const storeNames = resolvedDb.objectStoreNames;
@@ -361,10 +363,7 @@ export class ChatsDb {
             });
         });
 
-        const promises = [
-            chatsStore.put(stateToCache, this.principal.toString()),
-            ...markDirtyRequests,
-        ];
+        const promises = [chatsStore.put(stateToCache, this.principalString), ...markDirtyRequests];
 
         await Promise.all(promises);
         await tx.done;
@@ -893,29 +892,28 @@ export class ChatsDb {
         this.getDb().then((db) => db.put("publicProfile", profile, userId));
     }
 
-    async getCachedCurrentUser(principal: string): Promise<CreatedUser | undefined> {
-        return (await this.getDb()).get("currentUser", principal);
+    async getCachedCurrentUser(): Promise<CreatedUser | undefined> {
+        return (await this.getDb()).get("currentUser", this.principalString);
     }
 
-    async mergeCachedCurrentUser(principal: string, updated: CurrentUserSummary): Promise<void> {
-        const current = await this.getCachedCurrentUser(principal);
+    async mergeCachedCurrentUser(updated: CurrentUserSummary): Promise<void> {
+        const current = await this.getCachedCurrentUser();
         if (current) {
             const merged = updateCreatedUser(current, updated);
-            (await this.getDb()).put("currentUser", merged, principal);
+            (await this.getDb()).put("currentUser", merged, this.principalString);
         }
     }
 
-    setCachedCurrentUser(principal: string, user: CreatedUser): void {
-        this.getDb().then((db) => db.put("currentUser", user, principal));
+    setCachedCurrentUser(user: CreatedUser): void {
+        this.getDb().then((db) => db.put("currentUser", user, this.principalString));
     }
 
     async setCurrentUserDiamondStatusInCache(
-        principal: string,
         diamondStatus: DiamondMembershipStatus,
     ): Promise<void> {
-        const user = await this.getCachedCurrentUser(principal);
+        const user = await this.getCachedCurrentUser();
         if (user === undefined) return;
-        (await this.getDb()).put("currentUser", { ...user, diamondStatus }, principal);
+        (await this.getDb()).put("currentUser", { ...user, diamondStatus }, this.principalString);
     }
 
     async getLocalUserIndexForUser(userId: string): Promise<string | undefined> {
@@ -927,8 +925,8 @@ export class ChatsDb {
         return localUserIndex;
     }
 
-    async clearCache(principal: string): Promise<void> {
-        const name = `openchat_db_${principal}`;
+    async clearCache(): Promise<void> {
+        const name = `openchat_db_${this.principalString}`;
         try {
             (await this.getDb()).close();
             await deleteDB(name);
@@ -967,41 +965,51 @@ export class ChatsDb {
     async runExpiredEventSweeper() {
         const db = this.getDb();
         if (db === undefined) return;
-        const transaction = (await db).transaction(["chat_events", "thread_events"], "readwrite");
-        const eventsStore = transaction.objectStore("chat_events");
-        const threadEventsStore = transaction.objectStore("thread_events");
-        const index = eventsStore.index("expiresAt");
-        const batchSize = 100;
-        const expiredKeys = await index.getAllKeys(IDBKeyRange.upperBound(Date.now()), batchSize);
+        const tx = (await db).transaction(["chat_events", "thread_events"], "readwrite");
+        try {
+            const eventsStore = tx.objectStore("chat_events");
+            const threadEventsStore = tx.objectStore("thread_events");
+            const index = eventsStore.index("expiresAt");
+            const batchSize = 100;
+            const expiredKeys = await index.getAllKeys(
+                IDBKeyRange.upperBound(Date.now()),
+                batchSize,
+            );
 
-        async function deleteKey(key: string): Promise<void> {
-            const value = await eventsStore.get(key);
-            if (value?.kind !== "event") {
-                return;
+            async function deleteKey(key: string): Promise<void> {
+                const value = await eventsStore.get(key);
+                if (value?.kind !== "event") {
+                    return;
+                }
+
+                const promises: Promise<void>[] = [eventsStore.delete(key)];
+
+                if (
+                    value.event.kind === "message" &&
+                    value.event.thread !== undefined &&
+                    value.messageKey !== undefined
+                ) {
+                    const threadKey = value.messageKey.replace(/_0+/, "_");
+                    promises.push(
+                        threadEventsStore.delete(
+                            IDBKeyRange.bound(threadKey + "_", threadKey + "_Z"),
+                        ),
+                    );
+                }
+
+                await Promise.all(promises);
             }
 
-            const promises: Promise<void>[] = [eventsStore.delete(key)];
+            await Promise.all(expiredKeys.map(deleteKey));
+            await tx.done;
 
-            if (
-                value.event.kind === "message" &&
-                value.event.thread !== undefined &&
-                value.messageKey !== undefined
-            ) {
-                const threadKey = value.messageKey.replace(/_0+/, "_");
-                promises.push(
-                    threadEventsStore.delete(IDBKeyRange.bound(threadKey + "_", threadKey + "_Z")),
-                );
+            this.expiredEventSweeperJob = undefined;
+
+            if (expiredKeys.length === batchSize) {
+                this.tryStartExpiredEventSweeper();
             }
-
-            await Promise.all(promises);
-        }
-
-        await Promise.all(expiredKeys.map(deleteKey));
-
-        this.expiredEventSweeperJob = undefined;
-
-        if (expiredKeys.length === batchSize) {
-            this.tryStartExpiredEventSweeper();
+        } catch {
+            tx.abort();
         }
     }
 }
@@ -1350,7 +1358,7 @@ function mergeRanges(left: ExpiredEventsRange, right: ExpiredEventsRange): Expir
 
 function isContiguous(left: ExpiredEventsRange, right: ExpiredEventsRange): boolean {
     if (left.start <= right.start) {
-        return right.start >= left.end + 1;
+        return right.start <= left.end + 1;
     } else {
         return left.start <= right.end + 1;
     }
