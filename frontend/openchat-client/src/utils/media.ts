@@ -111,9 +111,11 @@ export async function extractVideoThumbnail(file: File): Promise<[MediaExtract, 
     }
 }
 
-export async function stripMetaDataAndResize(file: File): Promise<MediaExtract> {
+export async function stripMetaDataAndResize(
+    file: File,
+    bitmap: ImageBitmap,
+): Promise<MediaExtract> {
     // Directly create bitmap from the File (works on web + Tauri, no tainting)
-    const bitmap = await createImageBitmap(file);
     const result = await changeDimensions(
         bitmap,
         file.type,
@@ -256,11 +258,11 @@ type MediaType = "image" | "svg" | "gif" | "video" | "audio" | "file";
 function mimeToMediaType(mimeType: string): MediaType {
     if (/^video/.test(mimeType)) return "video";
     if (/^audio/.test(mimeType)) return "audio";
+    if (mimeType === "image/svg+xml") return "svg";
     if (/^image/.test(mimeType)) {
         if (/gif/.test(mimeType)) return "gif";
         else return "image";
     }
-    if (mimeType === "image/svg+xml") return "svg";
 
     return "file";
 }
@@ -278,29 +280,49 @@ async function handleImageFile(
     const isGif = mediaType === "gif";
     const isSvg = mediaType === "svg";
 
-    // Get image thumbnail!
-    const bitmap = await createImageBitmap(file);
-    const thumbnail = await changeDimensions(
-        bitmap,
-        file.type,
-        dimensions(bitmap.width, bitmap.height),
-    );
-    bitmap.close();
+    let thumbnailData: string; // data URL for the thumbnail
+    let thumbWidth: number;
+    let thumbHeight: number;
+    let originalData: ArrayBuffer;
 
-    // If it's not gif, and file size is larger than allowed, resize!
-    const data =
-        !isGif || file.size > maxSizes.image
-            ? (await stripMetaDataAndResize(file)).data
-            : await file.arrayBuffer();
-    const blobUrl = dataToBlobUrl(data, file.type);
+    if (isSvg) {
+        // Special handling for SVG: render it to a canvas for raster thumbnail
+        const result = await createSvgThumbnail(file, /* desired max size */ 300); // adjust size as needed
+        thumbnailData = result.dataUrl;
+        thumbWidth = result.width;
+        thumbHeight = result.height;
+        originalData = await file.arrayBuffer();
+    } else {
+        // Raster images (jpg, png, webp, etc.)
+        const bitmap = await createImageBitmap(file);
+        const thumbnail = await changeDimensions(
+            bitmap,
+            file.type,
+            dimensions(bitmap.width, bitmap.height),
+        );
+
+        thumbnailData = thumbnail.url;
+        thumbWidth = thumbnail.dimensions.width;
+        thumbHeight = thumbnail.dimensions.height;
+
+        // Reuse the same bitmap for resizing
+        originalData =
+            !isGif || file.size > maxSizes.image
+                ? (await stripMetaDataAndResize(file, bitmap)).data
+                : await file.arrayBuffer();
+
+        bitmap.close();
+    }
+
+    const blobUrl = dataToBlobUrl(originalData, file.type);
 
     return {
         kind: "image_content",
-        mimeType: isSvg ? "image/png" : file.type,
-        width: thumbnail.dimensions.width,
-        height: thumbnail.dimensions.height,
-        blobData: new Uint8Array(data),
-        thumbnailData: thumbnail.url,
+        mimeType: isSvg ? "image/svg+xml" : file.type,
+        width: thumbWidth,
+        height: thumbHeight,
+        blobData: new Uint8Array(originalData),
+        thumbnailData: thumbnailData,
         blobUrl: blobUrl,
     };
 }
@@ -463,4 +485,94 @@ function containsLink(text: string, match: RegExpMatchArray | null): boolean {
 
 function matchesLink(text: string, match: RegExpMatchArray | null): boolean {
     return match ? match[0] === text : false;
+}
+
+async function createSvgThumbnail(
+    svgFile: File,
+    maxDimension: number = 400, // max width or height of the resulting thumbnail
+): Promise<{ dataUrl: string; width: number; height: number }> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            const svgText = e.target?.result as string;
+            if (!svgText) {
+                reject(new Error("Failed to read SVG file"));
+                return;
+            }
+
+            // Parse SVG to determine intrinsic dimensions
+            const parser = new DOMParser();
+            const svgDoc = parser.parseFromString(svgText, "image/svg+xml");
+            const svgElement = svgDoc.documentElement as unknown as SVGSVGElement;
+
+            // Get width/height attributes or fall back to viewBox
+            let origWidth = parseFloat(svgElement.getAttribute("width") || "0");
+            let origHeight = parseFloat(svgElement.getAttribute("height") || "0");
+
+            if (!origWidth || !origHeight) {
+                const viewBox = svgElement.getAttribute("viewBox");
+                if (viewBox) {
+                    const parts = viewBox.trim().split(/\s+/);
+                    if (parts.length === 4) {
+                        origWidth = parseFloat(parts[2]);
+                        origHeight = parseFloat(parts[3]);
+                    }
+                }
+            }
+
+            // Final fallback if still no size (very common with SVGs)
+            if (!origWidth || !origHeight || isNaN(origWidth) || isNaN(origHeight)) {
+                origWidth = 200;
+                origHeight = 200;
+            }
+
+            // Calculate thumbnail size while preserving aspect ratio
+            const scale = Math.min(maxDimension / origWidth, maxDimension / origHeight, 1);
+            const thumbWidth = Math.round(origWidth * scale);
+            const thumbHeight = Math.round(origHeight * scale);
+
+            // Create offscreen canvas
+            const canvas = document.createElement("canvas");
+            canvas.width = thumbWidth;
+            canvas.height = thumbHeight;
+
+            const ctx = canvas.getContext("2d", { alpha: true });
+            if (!ctx) {
+                reject(new Error("Could not get 2D canvas context"));
+                return;
+            }
+
+            const img = new Image();
+
+            img.onload = () => {
+                // Draw the SVG onto the canvas at the desired thumbnail size
+                ctx.drawImage(img, 0, 0, thumbWidth, thumbHeight);
+
+                // Convert to PNG data URL (high quality)
+                const dataUrl = canvas.toDataURL("image/png", 0.95);
+
+                // Clean up the blob URL
+                URL.revokeObjectURL(img.src);
+
+                resolve({
+                    dataUrl,
+                    width: thumbWidth,
+                    height: thumbHeight,
+                });
+            };
+
+            img.onerror = () => {
+                URL.revokeObjectURL(img.src); // still clean up on error
+                reject(new Error("Failed to load SVG into Image element"));
+            };
+
+            // Use blob URL — this is reliable for SVGs
+            const blobUrl = URL.createObjectURL(svgFile);
+            img.src = blobUrl;
+        };
+
+        reader.onerror = () => reject(new Error("Failed to read SVG as text"));
+        reader.readAsText(svgFile);
+    });
 }
