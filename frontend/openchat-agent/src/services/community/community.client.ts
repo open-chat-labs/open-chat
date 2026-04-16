@@ -172,15 +172,7 @@ import {
     Empty as TEmpty,
     UnitResult,
 } from "../../typebox";
-import {
-    getCachedCommunityDetails,
-    getCachedGroupDetails,
-    recordFailedMessage,
-    removeFailedMessage,
-    setCachedCommunityDetails,
-    setCachedGroupDetails,
-    setCachedMessageFromSendResponse,
-} from "../../utils/caching";
+import { type ChatsDb } from "../../utils/chatsDb";
 import { mergeCommunityDetails, mergeGroupChatDetails } from "../../utils/chat";
 import {
     apiOptionUpdateV2,
@@ -250,6 +242,7 @@ export class CommunityClient
         identity: Identity,
         agent: HttpAgent,
         private config: AgentConfig,
+        private readonly chatsDb: ChatsDb,
     ) {
         super(identity, agent, "Community");
     }
@@ -526,7 +519,7 @@ export class CommunityClient
             chatId.communityId,
             "events",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
             CommunityEventsArgs,
             CommunityEventsResponse,
         );
@@ -549,7 +542,7 @@ export class CommunityClient
             chatId.communityId,
             "events_by_index",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
             CommunityEventsByIndexArgs,
             CommunityEventsResponse,
         );
@@ -575,7 +568,7 @@ export class CommunityClient
             chatId.communityId,
             "events_window",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
             CommunityEventsWindowArgs,
             CommunityEventsResponse,
         );
@@ -599,7 +592,10 @@ export class CommunityClient
             chatId.communityId,
             "messages_by_message_index",
             args,
-            (resp) => mapResult(resp, (value) => getMessagesSuccess(value, this.principal, chatId)),
+            (resp) =>
+                mapResult(resp, (value) =>
+                    getMessagesSuccess(value, chatId, this.chatsDb),
+                ),
             CommunityMessagesByMessageIndexArgs,
             CommunityMessagesByMessageIndexResponse,
         );
@@ -755,7 +751,7 @@ export class CommunityClient
         communityId: string,
         communityLastUpdated: bigint,
     ): Promise<CommunityDetailsResponse> {
-        const fromCache = await getCachedCommunityDetails(communityId);
+        const fromCache = await this.chatsDb.getCachedCommunityDetails(communityId);
         if (fromCache != null) {
             if (fromCache.lastUpdated >= communityLastUpdated || offline()) {
                 return fromCache;
@@ -766,7 +762,7 @@ export class CommunityClient
 
         const response = await this.getCommunityDetailsFromBackend(communityId);
         if (response.kind === "success") {
-            await setCachedCommunityDetails(communityId, response);
+            await this.chatsDb.setCachedCommunityDetails(communityId, response);
         }
         return response;
     }
@@ -790,7 +786,7 @@ export class CommunityClient
     ): Promise<CommunityDetails> {
         const details = await this.getCommunityDetailsUpdatesFromBackend(communityId, previous);
         if (details.lastUpdated > previous.lastUpdated) {
-            await setCachedCommunityDetails(communityId, details);
+            await this.chatsDb.setCachedCommunityDetails(communityId, details);
         }
         return details;
     }
@@ -830,7 +826,7 @@ export class CommunityClient
         chatLastUpdated: bigint,
     ): Promise<GroupChatDetailsResponse> {
         const cacheKey = `${chatId.communityId}_${chatId.channelId}`;
-        const fromCache = await getCachedGroupDetails(cacheKey);
+        const fromCache = await this.chatsDb.getCachedGroupDetails(cacheKey);
         if (fromCache !== undefined) {
             if (fromCache.timestamp >= chatLastUpdated || offline()) {
                 return fromCache;
@@ -841,7 +837,7 @@ export class CommunityClient
 
         const response = await this.getChannelDetailsFromBackend(chatId);
         if (typeof response === "object" && "members" in response) {
-            await setCachedGroupDetails(cacheKey, response);
+            await this.chatsDb.setCachedGroupDetails(cacheKey, response);
         }
         return response;
     }
@@ -876,7 +872,7 @@ export class CommunityClient
     ): Promise<GroupChatDetails> {
         const response = await this.getChannelDetailsUpdatesFromBackend(chatId, previous);
         if (response.timestamp > previous.timestamp) {
-            await setCachedGroupDetails(cacheKey, response);
+            await this.chatsDb.setCachedGroupDetails(cacheKey, response);
         }
         return response;
     }
@@ -931,7 +927,7 @@ export class CommunityClient
         onRequestAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
         // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
-        removeFailedMessage(chatId, event.event.messageId, threadRootMessageIndex);
+        this.chatsDb.removeFailedMessage(chatId, event.event.messageId, threadRootMessageIndex);
 
         const dataClient = new DataClient(this.identity, this.agent, this.config);
         const uploadContentPromise = event.event.forwarded
@@ -970,7 +966,7 @@ export class CommunityClient
             )
                 .then((resp) => {
                     const retVal: [SendMessageResponse, Message] = [resp, newEvent.event];
-                    setCachedMessageFromSendResponse(
+                    this.chatsDb.setCachedMessageFromSendResponse(
                         chatId,
                         newEvent,
                         threadRootMessageIndex,
@@ -978,7 +974,7 @@ export class CommunityClient
                     return retVal;
                 })
                 .catch((err) => {
-                    recordFailedMessage(chatId, newEvent, threadRootMessageIndex);
+                    this.chatsDb.recordFailedMessage(chatId, newEvent, threadRootMessageIndex);
                     throw err;
                 });
         });

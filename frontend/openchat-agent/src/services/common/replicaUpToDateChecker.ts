@@ -1,5 +1,4 @@
-import type { Principal } from "@icp-sdk/core/principal";
-import { getCachedChats } from "../../utils/caching";
+import type { ChatsDb } from "../../utils/chatsDb";
 import { ReplicaNotUpToDateError } from "../error";
 import {
     chatIdentifiersEqual,
@@ -9,12 +8,12 @@ import {
 } from "openchat-shared";
 
 export async function ensureReplicaIsUpToDate(
-    principal: Principal,
+    chatsDb: ChatsDb,
     chatId: ChatIdentifier,
     replicaChatLastUpdated: bigint,
     suppressError = false,
 ): Promise<undefined | ReplicaNotUpToDate> {
-    const clientChat = await getChat(principal, chatId);
+    const clientChat = await getChat(chatsDb, chatId);
 
     if (clientChat !== undefined && replicaChatLastUpdated < clientChat.lastUpdated) {
         if (suppressError) {
@@ -32,11 +31,8 @@ export async function ensureReplicaIsUpToDate(
     }
 }
 
-async function getChat(
-    principal: Principal,
-    chatId: ChatIdentifier,
-): Promise<ChatSummary | undefined> {
-    const chats = await getCachedChats(principal);
+async function getChat(chatsDb: ChatsDb, chatId: ChatIdentifier): Promise<ChatSummary | undefined> {
+    const chats = await chatsDb.getCachedChats();
     if (chats === undefined) return undefined;
 
     switch (chatId.kind) {

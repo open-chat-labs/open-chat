@@ -80,12 +80,7 @@ import {
     UserIndexUsersArgs,
     UserIndexUsersResponse,
 } from "../../typebox";
-import {
-    getCachedCurrentUser,
-    mergeCachedCurrentUser,
-    setCachedCurrentUser,
-    setCurrentUserDiamondStatusInCache,
-} from "../../utils/caching";
+import type { ChatsDb } from "../../utils/chatsDb";
 import { groupBy } from "../../utils/list";
 import {
     identity,
@@ -133,6 +128,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         agent: HttpAgent,
         canisterId: string,
         private blobUrlPattern: string,
+        private readonly chatsDb: ChatsDb,
     ) {
         super(identity, agent, canisterId, "UserIndex");
     }
@@ -141,7 +137,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         return new Stream(async (resolve, reject) => {
             try {
                 const principal = this.identity.getPrincipal().toString();
-                const cachedUser = await getCachedCurrentUser(principal);
+                const cachedUser = await this.chatsDb.getCachedCurrentUser(principal);
 
                 const isOffline = offline();
 
@@ -158,7 +154,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                         UserIndexCurrentUserResponse,
                     );
                     if (liveUser.kind === "created_user") {
-                        setCachedCurrentUser(principal, liveUser);
+                        this.chatsDb.setCachedCurrentUser(principal, liveUser);
                     }
                     resolve(liveUser, true);
                 }
@@ -233,7 +229,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         );
 
         if (mergedResponse.currentUser) {
-            mergeCachedCurrentUser(this.principal.toString(), mergedResponse.currentUser);
+            this.chatsDb.mergeCachedCurrentUser(this.principal.toString(), mergedResponse.currentUser);
         }
 
         if (mergedResponse.serverTimestamp !== undefined) {
@@ -525,7 +521,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             if (res.kind === "success") {
                 const principal = this.identity.getPrincipal().toString();
                 setUserDiamondStatusInCache(userId, res.status);
-                setCurrentUserDiamondStatusInCache(principal, res.status);
+                this.chatsDb.setCurrentUserDiamondStatusInCache(principal, res.status);
             }
             return res;
         });

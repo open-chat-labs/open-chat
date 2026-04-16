@@ -176,13 +176,7 @@ import {
     UserWithdrawCryptoResponse,
     UserWithdrawViaOneSecArgs,
 } from "../../typebox";
-import {
-    getCachedPublicProfile,
-    recordFailedMessage,
-    removeFailedMessage,
-    setCachedMessageFromSendResponse,
-    setCachedPublicProfile,
-} from "../../utils/caching";
+import type { ChatsDb } from "../../utils/chatsDb";
 import {
     apiOptionUpdateV2,
     identity,
@@ -248,6 +242,7 @@ export class UserClient
         identity: Identity,
         agent: HttpAgent,
         private config: AgentConfig,
+        private readonly chatsDb: ChatsDb,
     ) {
         super(identity, agent, userId, "User");
         this.userId = userId;
@@ -401,7 +396,7 @@ export class UserClient
         return this.query(
             "events_by_index",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
             UserEventsByIndexArgs,
             UserEventsResponse,
         );
@@ -425,7 +420,7 @@ export class UserClient
         return this.query(
             "events_window",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
             UserEventsWindowArgs,
             UserEventsResponse,
         );
@@ -453,7 +448,7 @@ export class UserClient
         return this.query(
             "events",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
             UserEventsArgs,
             UserEventsResponse,
         );
@@ -474,7 +469,10 @@ export class UserClient
         return this.query(
             "messages_by_message_index",
             args,
-            (resp) => mapResult(resp, (value) => getMessagesSuccess(value, this.principal, chatId)),
+            (resp) =>
+                mapResult(resp, (value) =>
+                    getMessagesSuccess(value, chatId, this.chatsDb),
+                ),
             UserMessagesByMessageIndexArgs,
             UserMessagesByMessageIndexResponse,
         );
@@ -564,7 +562,7 @@ export class UserClient
         pin: string | undefined,
         onRequestAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
-        removeFailedMessage(chatId, event.event.messageId, threadRootMessageIndex);
+        this.chatsDb.removeFailedMessage(chatId, event.event.messageId, threadRootMessageIndex);
 
         const dataClient = new DataClient(this.identity, this.agent, this.config);
         const uploadContentPromise = event.event.forwarded
@@ -597,7 +595,7 @@ export class UserClient
             )
                 .then((resp) => {
                     const retVal: [SendMessageResponse, Message] = [resp, newEvent.event];
-                    setCachedMessageFromSendResponse(
+                    this.chatsDb.setCachedMessageFromSendResponse(
                         chatId,
                         newEvent,
                         threadRootMessageIndex,
@@ -605,7 +603,7 @@ export class UserClient
                     return retVal;
                 })
                 .catch((err) => {
-                    recordFailedMessage(chatId, newEvent, threadRootMessageIndex);
+                    this.chatsDb.recordFailedMessage(chatId, newEvent, threadRootMessageIndex);
                     throw err;
                 });
         });
@@ -621,7 +619,7 @@ export class UserClient
         messageFilterFailed: bigint | undefined,
         pin: string | undefined,
     ): Promise<[SendMessageResponse, Message]> {
-        removeFailedMessage(groupId, event.event.messageId, threadRootMessageIndex);
+        this.chatsDb.removeFailedMessage(groupId, event.event.messageId, threadRootMessageIndex);
         return this.sendMessageWithTransferToGroupToBackend(
             groupId,
             recipientId,
@@ -632,9 +630,15 @@ export class UserClient
             messageFilterFailed,
             pin,
         )
-            .then(setCachedMessageFromSendResponse(groupId, event, threadRootMessageIndex))
+            .then(
+                this.chatsDb.setCachedMessageFromSendResponse(
+                    groupId,
+                    event,
+                    threadRootMessageIndex,
+                ),
+            )
             .catch((err) => {
-                recordFailedMessage(groupId, event);
+                this.chatsDb.recordFailedMessage(groupId, event);
                 throw err;
             });
     }
@@ -714,7 +718,7 @@ export class UserClient
         messageFilterFailed: bigint | undefined,
         pin: string | undefined,
     ): Promise<[SendMessageResponse, Message]> {
-        removeFailedMessage(chatId, event.event.messageId, threadRootMessageIndex);
+        this.chatsDb.removeFailedMessage(chatId, event.event.messageId, threadRootMessageIndex);
         return this.sendMessageWithTransferToChannelToBackend(
             chatId,
             recipientId,
@@ -726,9 +730,15 @@ export class UserClient
             messageFilterFailed,
             pin,
         )
-            .then(setCachedMessageFromSendResponse(chatId, event, threadRootMessageIndex))
+            .then(
+                this.chatsDb.setCachedMessageFromSendResponse(
+                    chatId,
+                    event,
+                    threadRootMessageIndex,
+                ),
+            )
             .catch((err) => {
-                recordFailedMessage(chatId, event);
+                this.chatsDb.recordFailedMessage(chatId, event);
                 throw err;
             });
     }
@@ -1054,7 +1064,7 @@ export class UserClient
     getPublicProfile(): Stream<PublicProfile> {
         return new Stream(async (resolve, reject) => {
             try {
-                const cachedProfile = await getCachedPublicProfile(this.userId);
+                const cachedProfile = await this.chatsDb.getCachedPublicProfile(this.userId);
 
                 const isOffline = offline();
 
@@ -1070,7 +1080,7 @@ export class UserClient
                         TEmpty,
                         UserPublicProfileResponse,
                     );
-                    setCachedPublicProfile(this.userId, liveProfile);
+                    this.chatsDb.setCachedPublicProfile(this.userId, liveProfile);
                     resolve(liveProfile, true);
                 }
             } catch (err) {
