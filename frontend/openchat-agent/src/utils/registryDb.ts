@@ -3,6 +3,7 @@ import type { RegistryValue } from "openchat-shared";
 import { IndexedDbConnectionManager } from "./indexedDb";
 
 const CACHE_VERSION = 18;
+const STORE_NAME = "registry";
 const KEY = "registry";
 
 interface RegistrySchema extends DBSchema {
@@ -17,19 +18,19 @@ export class RegistryDb {
 
     constructor() {
         this.connectionManager = IndexedDbConnectionManager.create<RegistrySchema>(
-            KEY,
-            [{ name: "registry" }],
+            "openchat_registry",
+            [{ name: STORE_NAME }],
             CACHE_VERSION,
         );
     }
 
     async get(): Promise<RegistryValue | undefined> {
         const db = await this.connectionManager.getDb();
-        return db.get("registry", KEY);
+        return db.get(STORE_NAME, KEY);
     }
 
     async set(value: RegistryValue): Promise<void> {
         const db = await this.connectionManager.getDb();
-        await db.put("registry", value, KEY);
+        await db.put(STORE_NAME, value, KEY);
     }
 }
