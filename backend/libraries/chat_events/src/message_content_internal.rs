@@ -99,15 +99,11 @@ impl MessageContentInternal {
                     return ValidateNewMessageContentResult::Error(ContentValidationError::InvalidPoll(reason));
                 }
             }
-            MessageContentInitial::Prize(p) => {
-                if p.end_date <= now {
-                    return ValidateNewMessageContentResult::Error(ContentValidationError::PrizeEndDateInThePast);
-                }
+            MessageContentInitial::Prize(p) if p.end_date <= now => {
+                return ValidateNewMessageContentResult::Error(ContentValidationError::PrizeEndDateInThePast);
             }
-            MessageContentInitial::Encrypted(e) => {
-                if e.encrypted_data.len() > MAX_TEXT_LENGTH_USIZE {
-                    return ValidateNewMessageContentResult::Error(ContentValidationError::TextTooLong(MAX_TEXT_LENGTH));
-                }
+            MessageContentInitial::Encrypted(e) if e.encrypted_data.len() > MAX_TEXT_LENGTH_USIZE => {
+                return ValidateNewMessageContentResult::Error(ContentValidationError::TextTooLong(MAX_TEXT_LENGTH));
             }
             MessageContentInitial::GovernanceProposal(_)
             | MessageContentInitial::MessageReminderCreated(_)
