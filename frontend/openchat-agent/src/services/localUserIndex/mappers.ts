@@ -1,4 +1,3 @@
-import { Principal } from "@icp-sdk/core/principal";
 import type {
     AccessTokenType,
     BotActionScope,
@@ -56,6 +55,7 @@ import {
     principalBytesToString,
     principalStringToBytes,
 } from "../../utils/mapping";
+import type { ChatsDb } from "../../utils/chatsDb";
 import {
     apiChatIdentifier,
     communityChannelSummary,
@@ -309,9 +309,9 @@ function eventsArgsInner(
 }
 
 export async function chatEventsBatchResponse(
-    principal: Principal,
     requests: ChatEventsArgs[],
     value: LocalUserIndexChatEventsResponse,
+    chatsDb: ChatsDb,
 ): Promise<ChatEventsBatchResponse> {
     const responses = [] as ChatEventsResponse[];
     for (let i = 0; i < requests.length; i++) {
@@ -320,8 +320,8 @@ export async function chatEventsBatchResponse(
         if ("Success" in response) {
             const result = await getEventsSuccess(
                 response.Success,
-                principal,
                 args.context.chatId,
+                chatsDb,
                 true,
             );
             responses.push(
