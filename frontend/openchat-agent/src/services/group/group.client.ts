@@ -123,14 +123,7 @@ import {
     Empty as TEmpty,
     UnitResult,
 } from "../../typebox";
-import {
-    getCachedEventsByIndex,
-    getCachedGroupDetails,
-    recordFailedMessage,
-    removeFailedMessage,
-    setCachedGroupDetails,
-    setCachedMessageFromSendResponse,
-} from "../../utils/caching";
+import { type ChatsDb } from "../../utils/chatsDb";
 import { mergeGroupChatDetails } from "../../utils/chat";
 import {
     apiOptionUpdateV2,
@@ -188,6 +181,7 @@ export class GroupClient
         identity: Identity,
         agent: HttpAgent,
         private config: AgentConfig,
+        private readonly chatsDb: ChatsDb,
     ) {
         super(identity, agent, "Group");
     }
@@ -205,7 +199,7 @@ export class GroupClient
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
     ) {
-        return getCachedEventsByIndex(eventIndexes, {
+        return this.chatsDb.getCachedEventsByIndex(eventIndexes, {
             chatId: this.groupIdToChatId(groupId),
             threadRootMessageIndex,
         });
@@ -227,7 +221,7 @@ export class GroupClient
             chatId.groupId,
             "events_by_index",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
             GroupEventsByIndexArgs,
             GroupEventsResponse,
         );
@@ -252,7 +246,7 @@ export class GroupClient
             chatId.groupId,
             "events_window",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
             GroupEventsWindowArgs,
             GroupEventsResponse,
         );
@@ -279,7 +273,7 @@ export class GroupClient
             chatId.groupId,
             "events",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, this.principal, chatId)),
+            (resp) => mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
             GroupEventsArgs,
             GroupEventsResponse,
         );
@@ -361,7 +355,7 @@ export class GroupClient
         const chatId = this.groupIdToChatId(groupId);
 
         // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
-        removeFailedMessage(chatId, event.event.messageId, threadRootMessageIndex);
+        this.chatsDb.removeFailedMessage(chatId, event.event.messageId, threadRootMessageIndex);
 
         const dataClient = new DataClient(this.identity, this.agent, this.config);
         const uploadContentPromise = event.event.forwarded
@@ -399,7 +393,7 @@ export class GroupClient
             )
                 .then((resp) => {
                     const retVal: [SendMessageResponse, Message] = [resp, newEvent.event];
-                    setCachedMessageFromSendResponse(
+                    this.chatsDb.setCachedMessageFromSendResponse(
                         chatId,
                         newEvent,
                         threadRootMessageIndex,
@@ -407,7 +401,7 @@ export class GroupClient
                     return retVal;
                 })
                 .catch((err) => {
-                    recordFailedMessage(chatId, newEvent, threadRootMessageIndex);
+                    this.chatsDb.recordFailedMessage(chatId, newEvent, threadRootMessageIndex);
                     throw err;
                 });
         });
@@ -575,7 +569,7 @@ export class GroupClient
         groupId: string,
         chatLastUpdated: bigint,
     ): Promise<GroupChatDetailsResponse> {
-        const fromCache = await getCachedGroupDetails(groupId);
+        const fromCache = await this.chatsDb.getCachedGroupDetails(groupId);
         if (fromCache !== undefined) {
             if (fromCache.timestamp >= chatLastUpdated || offline()) {
                 return fromCache;
@@ -586,7 +580,7 @@ export class GroupClient
 
         const response = await this.getGroupDetailsFromBackend(groupId);
         if (typeof response === "object" && "members" in response) {
-            await setCachedGroupDetails(groupId, response);
+            await this.chatsDb.setCachedGroupDetails(groupId, response);
         }
         return response;
     }
@@ -611,7 +605,7 @@ export class GroupClient
     ): Promise<GroupChatDetails> {
         const response = await this.getGroupDetailsUpdatesFromBackend(groupId, previous);
         if (response.timestamp > previous.timestamp) {
-            await setCachedGroupDetails(groupId, response);
+            await this.chatsDb.setCachedGroupDetails(groupId, response);
         }
         return response;
     }
@@ -673,7 +667,10 @@ export class GroupClient
             chatId.groupId,
             "messages_by_message_index",
             args,
-            (resp) => mapResult(resp, (value) => getMessagesSuccess(value, this.principal, chatId)),
+            (resp) =>
+                mapResult(resp, (value) =>
+                    getMessagesSuccess(value, chatId, this.chatsDb),
+                ),
             GroupMessagesByMessageIndexArgs,
             GroupMessagesByMessageIndexResponse,
         );

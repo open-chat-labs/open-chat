@@ -1,4 +1,3 @@
-import type { Principal } from "@icp-sdk/core/principal";
 import type {
     AcceptP2PSwapResponse,
     AccessGate,
@@ -271,18 +270,19 @@ import {
     principalBytesToString,
     principalStringToBytes,
 } from "../../utils/mapping";
+import type { ChatsDb } from "../../utils/chatsDb";
 import type { ApiPrincipal } from "../index";
 import { ensureReplicaIsUpToDate } from "./replicaUpToDateChecker";
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
 export async function getEventsSuccess(
     value: TEventsResponse,
-    principal: Principal,
     chatId: ChatIdentifier,
+    chatsDb: ChatsDb,
     suppressError = false,
 ): Promise<EventsResponse<ChatEvent>> {
     const error = await ensureReplicaIsUpToDate(
-        principal,
+        chatsDb,
         chatId,
         value.chat_last_updated,
         suppressError,
@@ -623,10 +623,13 @@ export function botCommandArg(api: BotCommandArg): CommandArg {
 
 export function tips(value: [ApiPrincipal, [ApiPrincipal, bigint][]][]): TipsReceived {
     return value.reduce((agg, [ledger, tips]) => {
-        agg[principalBytesToString(ledger)] = tips.reduce((userTips, [userId, amount]) => {
-            userTips[principalBytesToString(userId)] = amount;
-            return userTips;
-        }, {} as Record<string, bigint>);
+        agg[principalBytesToString(ledger)] = tips.reduce(
+            (userTips, [userId, amount]) => {
+                userTips[principalBytesToString(userId)] = amount;
+                return userTips;
+            },
+            {} as Record<string, bigint>,
+        );
         return agg;
     }, {} as TipsReceived);
 }
@@ -1021,19 +1024,25 @@ function totalPollVotes(value: TTotalVotes): TotalPollVotes {
     if ("Anonymous" in value) {
         return {
             kind: "anonymous_poll_votes",
-            votes: Object.entries(value.Anonymous).reduce((agg, [idx, num]) => {
-                agg[Number(idx)] = num;
-                return agg;
-            }, {} as Record<number, number>),
+            votes: Object.entries(value.Anonymous).reduce(
+                (agg, [idx, num]) => {
+                    agg[Number(idx)] = num;
+                    return agg;
+                },
+                {} as Record<number, number>,
+            ),
         };
     }
     if ("Visible" in value) {
         return {
             kind: "visible_poll_votes",
-            votes: Object.entries(value.Visible).reduce((agg, [idx, userIds]) => {
-                agg[Number(idx)] = userIds.map(principalBytesToString);
-                return agg;
-            }, {} as Record<number, string[]>),
+            votes: Object.entries(value.Visible).reduce(
+                (agg, [idx, userIds]) => {
+                    agg[Number(idx)] = userIds.map(principalBytesToString);
+                    return agg;
+                },
+                {} as Record<number, string[]>,
+            ),
         };
     }
     if ("Hidden" in value) {
@@ -2324,12 +2333,12 @@ export function groupSubtype(subtype: TGroupSubtype): GroupSubtype {
 
 export async function getMessagesSuccess(
     value: TMessagesResponse,
-    principal: Principal,
     chatId: ChatIdentifier,
+    chatsDb: ChatsDb,
     suppressError = false,
 ): Promise<EventsResponse<Message>> {
     const error = await ensureReplicaIsUpToDate(
-        principal,
+        chatsDb,
         chatId,
         value.chat_last_updated,
         suppressError,

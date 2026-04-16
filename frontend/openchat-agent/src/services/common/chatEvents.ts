@@ -18,13 +18,7 @@ import {
     ResponseTooLargeError,
     Stream,
 } from "openchat-shared";
-import {
-    getCachedEvents,
-    getCachedEventsByIndex,
-    getCachedEventsWindowByMessageIndex,
-    loadMessagesByMessageIndex,
-    setCachedEvents,
-} from "../../utils/caching";
+import type { ChatsDb } from "../../utils/chatsDb";
 
 export interface IChatEventsReader<C extends ChatIdentifier = ChatIdentifier> {
     chatEvents(
@@ -64,6 +58,7 @@ export class CachedChatEventsReader {
         private userClient: IChatEventsReader<DirectChatIdentifier>,
         private readonly groupClient: IChatEventsReader<GroupChatIdentifier>,
         private readonly communityClient: IChatEventsReader<ChannelIdentifier>,
+        private readonly chatsDb: ChatsDb,
     ) {}
 
     setUserClient(userClient: IChatEventsReader<DirectChatIdentifier>) {
@@ -156,7 +151,7 @@ export class CachedChatEventsReader {
     ): Stream<EventsResponse<ChatEvent>> {
         return new Stream(async (resolve, reject) => {
             try {
-                const [cachedEvents, missing, dirty] = await getCachedEvents(
+                const [cachedEvents, missing, dirty] = await this.chatsDb.getCachedEvents(
                     eventIndexRange,
                     { chatId, threadRootMessageIndex },
                     startIndex,
@@ -185,7 +180,7 @@ export class CachedChatEventsReader {
                             maxEvents,
                         )
                         .then((resp) => {
-                            setCachedEvents(chatId, resp, threadRootMessageIndex);
+                            this.chatsDb.setCachedEvents(chatId, resp, threadRootMessageIndex);
                             resolve(resp, true);
                         })
                         .catch((err) => {
@@ -207,7 +202,7 @@ export class CachedChatEventsReader {
                                     startIndex,
                                     ascending,
                                 ).then((resp) => {
-                                    setCachedEvents(chatId, resp, threadRootMessageIndex);
+                                    this.chatsDb.setCachedEvents(chatId, resp, threadRootMessageIndex);
                                     resolve(resp, true);
                                 });
                             } else {
@@ -239,7 +234,7 @@ export class CachedChatEventsReader {
         latestKnownUpdate: bigint | undefined,
     ): Stream<EventsResponse<ChatEvent>> {
         return new Stream((resolve, reject) => {
-            getCachedEventsByIndex(eventIndexes, {
+            this.chatsDb.getCachedEventsByIndex(eventIndexes, {
                 chatId,
                 threadRootMessageIndex,
             })
@@ -278,7 +273,7 @@ export class CachedChatEventsReader {
         return new Stream(async (resolve, reject) => {
             try {
                 const [cachedEvents, missing, dirty, totalMiss] =
-                    await getCachedEventsWindowByMessageIndex(
+                    await this.chatsDb.getCachedEventsWindowByMessageIndex(
                         eventIndexRange,
                         { chatId, threadRootMessageIndex },
                         messageIndex,
@@ -308,7 +303,7 @@ export class CachedChatEventsReader {
                             maxEvents,
                         )
                         .then((resp) => {
-                            setCachedEvents(chatId, resp, threadRootMessageIndex);
+                            this.chatsDb.setCachedEvents(chatId, resp, threadRootMessageIndex);
                             resolve(resp, true);
                         })
                         .catch((err) => {
@@ -337,7 +332,7 @@ export class CachedChatEventsReader {
                                     eventIndexRange,
                                     messageIndex,
                                 ).then((resp) => {
-                                    setCachedEvents(chatId, resp, threadRootMessageIndex);
+                                    this.chatsDb.setCachedEvents(chatId, resp, threadRootMessageIndex);
                                     resolve(resp, true);
                                 });
                             } else {
@@ -370,7 +365,7 @@ export class CachedChatEventsReader {
     ): Stream<EventsResponse<Message>> {
         return new Stream(async (resolve, reject) => {
             try {
-                const fromCache = await loadMessagesByMessageIndex(
+                const fromCache = await this.chatsDb.loadMessagesByMessageIndex(
                     chatId,
                     threadRootMessageIndex,
                     messageIndexes,
@@ -386,7 +381,7 @@ export class CachedChatEventsReader {
                             latestKnownUpdate,
                         )
                         .then((resp) => {
-                            setCachedEvents(chatId, resp, threadRootMessageIndex);
+                            this.chatsDb.setCachedEvents(chatId, resp, threadRootMessageIndex);
                             return resp;
                         });
 
@@ -434,7 +429,7 @@ export class CachedChatEventsReader {
         return reader
             .chatEventsByIndex(chatId, toFetch, threadRootMessageIndex, latestKnownUpdate)
             .then((resp) => {
-                setCachedEvents(chatId, resp, threadRootMessageIndex);
+                this.chatsDb.setCachedEvents(chatId, resp, threadRootMessageIndex);
                 resolve(resp, true);
             })
             .catch(reject);
@@ -580,3 +575,4 @@ async function chunkedChatEventsWindowFromBackend(
 
     return aggregatedResponse;
 }
+
