@@ -248,7 +248,7 @@ import {
     deleteCommunityReferral,
     getCommunityReferral,
 } from "../utils/referralCache";
-import { getCachedRegistry, setCachedRegistry } from "../utils/registryCache";
+import { RegistryDb } from "../utils/registryDb";
 import { Updatable, UpdatableOption } from "../utils/updatable";
 import {
     clearCache as clearUserCache,
@@ -312,6 +312,7 @@ export class OpenChatAgent extends EventTarget {
     private _cachePrimer: CachePrimer | undefined = undefined;
     private _chatEventsReader: CachedChatEventsReader;
     private _chatsDb: ChatsDb;
+    private _registryDb: RegistryDb;
 
     // Lazy loaded clients which may never end up being used
     private _bitcoinClient: Lazy<BitcoinClient>;
@@ -336,6 +337,7 @@ export class OpenChatAgent extends EventTarget {
         console.log("url", config.icUrl);
         this._agent = createHttpAgentSync(identity, config.icUrl);
         this._chatsDb = new ChatsDb(this.principal);
+        this._registryDb = new RegistryDb();
         this._onlineClient = new OnlineClient(identity, this._agent, config.onlineCanister);
         this._userClient = AnonUserClient.create();
         this._userIndexClient = new UserIndexClient(
@@ -3209,7 +3211,7 @@ export class OpenChatAgent extends EventTarget {
 
     getRegistry(): Stream<[RegistryValue, boolean]> {
         return new Stream(async (resolve, reject) => {
-            const current = await getCachedRegistry();
+            const current = await this._registryDb.get();
             const isOffline = offline();
             if (current !== undefined) {
                 this._registryValue = current;
@@ -3243,7 +3245,7 @@ export class OpenChatAgent extends EventTarget {
                                 updates.currentAirdropChannel,
                             ),
                         };
-                        setCachedRegistry(updated);
+                        this._registryDb.set(updated);
                         this._registryValue = updated;
                         resolve([updated, true], true);
                     } else if (updates.kind === "success_no_updates" && current !== undefined) {
