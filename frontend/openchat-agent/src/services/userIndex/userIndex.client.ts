@@ -89,16 +89,7 @@ import {
     principalStringToBytes,
     toVoid,
 } from "../../utils/mapping";
-import {
-    getCachedUsers,
-    getSuspendedUsersSyncedUpTo,
-    setCachedDeletedUserIds,
-    setCachedUsers,
-    setDisplayNameInCache,
-    setSuspendedUsersSyncedUpTo,
-    setUserDiamondStatusInCache,
-    setUsernameInCache,
-} from "../../utils/userCache";
+import type { UserDb } from "../../utils/userCache";
 import { SingleCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 import {
     apiBotDefinition,
@@ -129,6 +120,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         canisterId: string,
         private blobUrlPattern: string,
         private readonly chatsDb: ChatsDb,
+        private readonly userDb: UserDb,
     ) {
         super(identity, agent, canisterId, "UserIndex");
     }
@@ -202,8 +194,8 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
     async getUsers(users: UsersArgs, allowStale: boolean): Promise<UsersResponse> {
         const allUsers = users.userGroups.flatMap((g) => g.users);
 
-        const fromCache = await getCachedUsers(allUsers);
-        const suspendedUsersSyncedTo = await getSuspendedUsersSyncedUpTo();
+        const fromCache = await this.userDb.getCachedUsers(allUsers);
+        const suspendedUsersSyncedTo = await this.userDb.getSuspendedUsersSyncedUpTo();
 
         // We throw away all of the updatedSince values passed in and instead use the values from the cache, this
         // ensures the cache is always correct and doesn't miss any updates
@@ -221,27 +213,29 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             fromCache,
         );
 
-        setCachedDeletedUserIds(apiResponse.deletedUserIds);
+        this.userDb.setCachedDeletedUserIds(apiResponse.deletedUserIds);
 
-        setCachedUsers(mergedResponse.users).catch((err) =>
-            console.error("Failed to save users to the cache", err),
-        );
+        this.userDb
+            .setCachedUsers(mergedResponse.users)
+            .catch((err) => console.error("Failed to save users to the cache", err));
 
         if (mergedResponse.currentUser) {
             this.chatsDb.mergeCachedCurrentUser(mergedResponse.currentUser);
         }
 
         if (mergedResponse.serverTimestamp !== undefined) {
-            setSuspendedUsersSyncedUpTo(mergedResponse.serverTimestamp).catch((err) =>
-                console.error("Failed to set 'suspended users synced up to' in the cache", err),
-            );
+            this.userDb
+                .setSuspendedUsersSyncedUpTo(mergedResponse.serverTimestamp)
+                .catch((err) =>
+                    console.error("Failed to set 'suspended users synced up to' in the cache", err),
+                );
         }
 
         return mergedResponse;
     }
 
     async populateUserCache(userIds: string[]): Promise<void> {
-        const fromCache = await getCachedUsers(userIds);
+        const fromCache = await this.userDb.getCachedUsers(userIds);
 
         if (fromCache.length === userIds.length) {
             return;
@@ -263,10 +257,10 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             }
         }
 
-        setCachedUsers(users).catch((err) =>
-            console.error("Failed to save users to the cache", err),
-        );
-        setCachedDeletedUserIds(apiResponse.deletedUserIds);
+        this.userDb
+            .setCachedUsers(users)
+            .catch((err) => console.error("Failed to save users to the cache", err));
+        this.userDb.setCachedDeletedUserIds(apiResponse.deletedUserIds);
     }
 
     private getUsersFromBackend(
@@ -435,7 +429,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             UserIndexSetUsernameResponse,
         ).then((res) => {
             if (res === "success") {
-                setUsernameInCache(userId, username);
+                this.userDb.setUsernameInCache(userId, username);
             }
             return res;
         });
@@ -455,7 +449,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             UserIndexSetDisplayNameResponse,
         ).then((res) => {
             if (res === "success") {
-                setDisplayNameInCache(userId, displayName);
+                this.userDb.setDisplayNameInCache(userId, displayName);
             }
             return res;
         });
@@ -518,7 +512,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             UserIndexPayForDiamondMembershipResponse,
         ).then((res) => {
             if (res.kind === "success") {
-                setUserDiamondStatusInCache(userId, res.status);
+                this.userDb.setUserDiamondStatusInCache(userId, res.status);
                 this.chatsDb.setCurrentUserDiamondStatusInCache(res.status);
             }
             return res;

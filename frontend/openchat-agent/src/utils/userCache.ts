@@ -1,11 +1,9 @@
-import { deleteDB, openDB, type DBSchema, type IDBPDatabase } from "idb";
+import { deleteDB, type DBSchema } from "idb";
 import { deletedUser, type DiamondMembershipStatus, type UserSummary } from "openchat-shared";
+import { IndexedDbConnectionManager } from "./indexedDb";
 
 const CACHE_VERSION = 13;
-
-let db: UserDatabase | undefined;
-
-export type UserDatabase = Promise<IDBPDatabase<UserSchema>>;
+const DB_NAME = "openchat_users";
 
 export interface UserSchema extends DBSchema {
     users: {
@@ -24,190 +22,144 @@ export interface UserSchema extends DBSchema {
     };
 }
 
-export function lazyOpenUserCache(): UserDatabase {
-    if (db) return db;
-    console.log("user db undefined, opening db");
-    db = openUserCache();
-    return db;
-}
+export class UserDb {
+    private readonly connectionManager: IndexedDbConnectionManager<UserSchema>;
 
-function openUserCache(): UserDatabase {
-    return openDB<UserSchema>(`openchat_users`, CACHE_VERSION, {
-        upgrade(db, _oldVersion, _newVersion, _transaction) {
-            if (db.objectStoreNames.contains("users")) {
-                db.deleteObjectStore("users");
-            }
-            if (db.objectStoreNames.contains("suspendedUsersSyncedUpTo")) {
-                db.deleteObjectStore("suspendedUsersSyncedUpTo");
-            }
-            if (db.objectStoreNames.contains("deletedUserIds")) {
-                db.deleteObjectStore("deletedUserIds");
-            }
-            db.createObjectStore("users");
-            db.createObjectStore("suspendedUsersSyncedUpTo");
-            db.createObjectStore("deletedUserIds");
-        },
-    });
-}
-
-export async function getCachedUsers(userIds: string[]): Promise<UserSummary[]> {
-    const resolvedDb = await lazyOpenUserCache();
-
-    const fromCache = await Promise.all(userIds.map((u) => resolvedDb.get("users", u)));
-
-    return fromCache.reduce((users, next) => {
-        if (next !== undefined) users.push(next);
-        return users;
-    }, [] as UserSummary[]);
-}
-
-export async function getAllUsers(): Promise<UserSummary[]> {
-    const users = await (await lazyOpenUserCache()).getAll("users");
-    const deleted = await getDeletedUserIdsList();
-    return [...users, ...deleted.map(deletedUser)];
-}
-
-async function getDeletedUserIdsList(): Promise<string[]> {
-    return (await lazyOpenUserCache()).getAll("deletedUserIds");
-}
-
-export async function isUserIdDeleted(userId: string): Promise<boolean> {
-    const user = await (await lazyOpenUserCache()).get("deletedUserIds", userId);
-    return user !== undefined;
-}
-
-export async function setCachedUsers(users: UserSummary[]): Promise<void> {
-    if (users.length === 0) return;
-    writeCachedUsersToDatabase(lazyOpenUserCache(), users);
-}
-
-export async function setCachedDeletedUserIds(deletedUserIds: Set<string>): Promise<void> {
-    if (deletedUserIds.size === 0) return;
-    const db = await lazyOpenUserCache();
-    const tx = (await db).transaction(["deletedUserIds", "users"], "readwrite", {
-        durability: "relaxed",
-    });
-    const deletedStore = tx.objectStore("deletedUserIds");
-    const userStore = tx.objectStore("users");
-
-    // insert all the deletedIds into the deletedUserIds store
-    const inserts = [...deletedUserIds].map((userId) => deletedStore.put(userId, userId));
-
-    // delete all the deletedIds from the main userStore
-    const deletes = [...deletedUserIds].map((userId) => userStore.delete(userId));
-
-    await Promise.all([...inserts, ...deletes]);
-    await tx.done;
-}
-
-export async function writeCachedUsersToDatabase(
-    db: UserDatabase,
-    users: UserSummary[],
-): Promise<void> {
-    // in this one case we will open the db every time because we expect this to be done from the service worker
-    const tx = (await db).transaction("users", "readwrite", {
-        durability: "relaxed",
-    });
-    const store = tx.objectStore("users");
-    Promise.all(users.map((u) => store.put(u, u.userId)));
-    await tx.done;
-}
-
-export async function setUsernameInCache(userId: string, username: string): Promise<void> {
-    const tx = (await lazyOpenUserCache()).transaction("users", "readwrite", {
-        durability: "relaxed",
-    });
-    const store = tx.objectStore("users");
-    const user = await store.get(userId);
-    if (user !== undefined) {
-        user.username = username;
-        await store.put(user, userId);
+    constructor() {
+        this.connectionManager = IndexedDbConnectionManager.create<UserSchema>(
+            DB_NAME,
+            [{ name: "users" }, { name: "suspendedUsersSyncedUpTo" }, { name: "deletedUserIds" }],
+            CACHE_VERSION,
+        );
     }
-    await tx.done;
-}
 
-export async function setDisplayNameInCache(
-    userId: string,
-    displayName: string | undefined,
-): Promise<void> {
-    const tx = (await lazyOpenUserCache()).transaction("users", "readwrite", {
-        durability: "relaxed",
-    });
-    const store = tx.objectStore("users");
-    const user = await store.get(userId);
-    if (user !== undefined) {
-        user.displayName = displayName;
-        await store.put(user, userId);
+    async getCachedUsers(userIds: string[]): Promise<UserSummary[]> {
+        const db = await this.connectionManager.getDb();
+        const fromCache = await Promise.all(userIds.map((u) => db.get("users", u)));
+        return fromCache.reduce((users, next) => {
+            if (next !== undefined) users.push(next);
+            return users;
+        }, [] as UserSummary[]);
     }
-    await tx.done;
-}
 
-export async function setUserDiamondStatusInCache(
-    userId: string,
-    status: DiamondMembershipStatus,
-): Promise<void> {
-    const tx = (await lazyOpenUserCache()).transaction("users", "readwrite", {
-        durability: "relaxed",
-    });
-    const store = tx.objectStore("users");
-    const user = await store.get(userId);
-    if (user !== undefined) {
-        user.diamondStatus = status.kind;
-        await store.put(user, userId);
+    async getAllUsers(): Promise<UserSummary[]> {
+        const db = await this.connectionManager.getDb();
+        const users = await db.getAll("users");
+        const deleted = await db.getAll("deletedUserIds");
+        return [...users, ...deleted.map(deletedUser)];
     }
-    await tx.done;
-}
 
-export async function getSuspendedUsersSyncedUpTo(): Promise<bigint | undefined> {
-    const resolvedDb = await lazyOpenUserCache();
-    return await resolvedDb.get("suspendedUsersSyncedUpTo", "value");
-}
-
-export async function setSuspendedUsersSyncedUpTo(value: bigint): Promise<void> {
-    const resolvedDb = await lazyOpenUserCache();
-    await resolvedDb.put("suspendedUsersSyncedUpTo", value, "value");
-}
-
-export async function userSuspended(userId: string, suspended: boolean) {
-    const tx = (await lazyOpenUserCache()).transaction("users", "readwrite", {
-        durability: "relaxed",
-    });
-    const store = tx.objectStore("users");
-    const user = await store.get(userId);
-    if (user !== undefined) {
-        user.suspended = suspended;
-        await store.put(user, userId);
+    async isUserIdDeleted(userId: string): Promise<boolean> {
+        const db = await this.connectionManager.getDb();
+        const user = await db.get("deletedUserIds", userId);
+        return user !== undefined;
     }
-    await tx.done;
-}
 
-export async function setChitInfoInCache(
-    userId: string,
-    chitBalance: number,
-    streak: number,
-): Promise<void> {
-    const tx = (await lazyOpenUserCache()).transaction("users", "readwrite", {
-        durability: "relaxed",
-    });
-    const store = tx.objectStore("users");
-    const user = await store.get(userId);
-    if (user !== undefined) {
-        user.chitBalance = chitBalance;
-        user.streak = streak;
-        await store.put(user, userId);
+    async setCachedUsers(users: UserSummary[]): Promise<void> {
+        if (users.length === 0) return;
+        const db = await this.connectionManager.getDb();
+        const tx = db.transaction("users", "readwrite", { durability: "relaxed" });
+        const store = tx.objectStore("users");
+        await Promise.all(users.map((u) => store.put(u, u.userId)));
+        await tx.done;
     }
-    await tx.done;
-}
 
-export async function clearCache(): Promise<void> {
-    const name = `openchat_users`;
-    try {
-        if (db !== undefined) {
-            (await db).close();
+    async setCachedDeletedUserIds(deletedUserIds: Set<string>): Promise<void> {
+        if (deletedUserIds.size === 0) return;
+        const db = await this.connectionManager.getDb();
+        const tx = db.transaction(["deletedUserIds", "users"], "readwrite", {
+            durability: "relaxed",
+        });
+        const deletedStore = tx.objectStore("deletedUserIds");
+        const userStore = tx.objectStore("users");
+        const inserts = [...deletedUserIds].map((userId) => deletedStore.put(userId, userId));
+        const deletes = [...deletedUserIds].map((userId) => userStore.delete(userId));
+        await Promise.all([...inserts, ...deletes]);
+        await tx.done;
+    }
+
+    async setUsernameInCache(userId: string, username: string): Promise<void> {
+        const db = await this.connectionManager.getDb();
+        const tx = db.transaction("users", "readwrite", { durability: "relaxed" });
+        const store = tx.objectStore("users");
+        const user = await store.get(userId);
+        if (user !== undefined) {
+            user.username = username;
+            await store.put(user, userId);
         }
-        await deleteDB(name);
-        console.log("deleted db: ", name);
-    } catch (err) {
-        console.error("Unable to delete db: ", name, err);
+        await tx.done;
+    }
+
+    async setDisplayNameInCache(userId: string, displayName: string | undefined): Promise<void> {
+        const db = await this.connectionManager.getDb();
+        const tx = db.transaction("users", "readwrite", { durability: "relaxed" });
+        const store = tx.objectStore("users");
+        const user = await store.get(userId);
+        if (user !== undefined) {
+            user.displayName = displayName;
+            await store.put(user, userId);
+        }
+        await tx.done;
+    }
+
+    async setUserDiamondStatusInCache(
+        userId: string,
+        status: DiamondMembershipStatus,
+    ): Promise<void> {
+        const db = await this.connectionManager.getDb();
+        const tx = db.transaction("users", "readwrite", { durability: "relaxed" });
+        const store = tx.objectStore("users");
+        const user = await store.get(userId);
+        if (user !== undefined) {
+            user.diamondStatus = status.kind;
+            await store.put(user, userId);
+        }
+        await tx.done;
+    }
+
+    async getSuspendedUsersSyncedUpTo(): Promise<bigint | undefined> {
+        const db = await this.connectionManager.getDb();
+        return db.get("suspendedUsersSyncedUpTo", "value");
+    }
+
+    async setSuspendedUsersSyncedUpTo(value: bigint): Promise<void> {
+        const db = await this.connectionManager.getDb();
+        await db.put("suspendedUsersSyncedUpTo", value, "value");
+    }
+
+    async userSuspended(userId: string, suspended: boolean): Promise<void> {
+        const db = await this.connectionManager.getDb();
+        const tx = db.transaction("users", "readwrite", { durability: "relaxed" });
+        const store = tx.objectStore("users");
+        const user = await store.get(userId);
+        if (user !== undefined) {
+            user.suspended = suspended;
+            await store.put(user, userId);
+        }
+        await tx.done;
+    }
+
+    async setChitInfoInCache(userId: string, chitBalance: number, streak: number): Promise<void> {
+        const db = await this.connectionManager.getDb();
+        const tx = db.transaction("users", "readwrite", { durability: "relaxed" });
+        const store = tx.objectStore("users");
+        const user = await store.get(userId);
+        if (user !== undefined) {
+            user.chitBalance = chitBalance;
+            user.streak = streak;
+            await store.put(user, userId);
+        }
+        await tx.done;
+    }
+
+    async clearCache(): Promise<void> {
+        try {
+            const db = await this.connectionManager.getDb();
+            db.close();
+            await deleteDB(DB_NAME);
+            console.log("deleted db: ", DB_NAME);
+        } catch (err) {
+            console.error("Unable to delete db: ", DB_NAME, err);
+        }
     }
 }
