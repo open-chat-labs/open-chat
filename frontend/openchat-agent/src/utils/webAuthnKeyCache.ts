@@ -1,47 +1,50 @@
-import { openDB, type DBSchema, type IDBPDatabase } from "idb";
-import type { WebAuthnKeyFull } from "openchat-shared";
+import { type DBSchema } from "idb";
+import { Lazy, type WebAuthnKeyFull } from "openchat-shared";
 import { bytesToHexString } from "./mapping";
+import { IndexedDbConnectionManager } from "./indexedDb";
 
 const CACHE_VERSION = 1;
-const STORE_NAME = "webauthn_keys";
+const STORE_NAME = "webauthn_keys" as const;
 
-let db: WebAuthnKeyDatabase | undefined;
-
-export type WebAuthnKeyDatabase = Promise<IDBPDatabase<WebAuthnKeySchema>>;
-
-export interface WebAuthnKeySchema extends DBSchema {
-    [STORE_NAME]: {
+interface WebAuthnKeySchema extends DBSchema {
+    webauthn_keys: {
         key: string;
         value: WebAuthnKeyFull;
     };
 }
 
-export function lazyOpenWebAuthnKeyCache(): WebAuthnKeyDatabase {
-    if (db) return db;
-    console.log("WebAuthnKey db undefined, opening db");
-    db = openWebAuthnKeyCache();
-    return db;
+export class WebAuthnDb {
+    private readonly connectionManager: IndexedDbConnectionManager<WebAuthnKeySchema>;
+
+    constructor() {
+        this.connectionManager = IndexedDbConnectionManager.create<WebAuthnKeySchema>(
+            "openchat_webauthn_keys",
+            [{ name: STORE_NAME }],
+            CACHE_VERSION,
+        );
+    }
+
+    async getCachedWebAuthnKey(credentialId: Uint8Array): Promise<WebAuthnKeyFull | undefined> {
+        const db = await this.connectionManager.getDb();
+        const key = bytesToHexString(credentialId);
+        return db.get(STORE_NAME, key);
+    }
+
+    async setCachedWebAuthnKey(value: WebAuthnKeyFull): Promise<void> {
+        const db = await this.connectionManager.getDb();
+        const key = bytesToHexString(value.credentialId);
+        await db.put(STORE_NAME, value, key);
+    }
 }
 
-function openWebAuthnKeyCache(): WebAuthnKeyDatabase {
-    return openDB<WebAuthnKeySchema>(`openchat_webauthn_keys`, CACHE_VERSION, {
-        upgrade(db, _oldVersion, _newVersion, _transaction) {
-            if (db.objectStoreNames.contains(STORE_NAME)) {
-                db.deleteObjectStore(STORE_NAME);
-            }
-            db.createObjectStore(STORE_NAME);
-        },
-    });
+const WebAuthnDbInstance = new Lazy(() => new WebAuthnDb());
+
+export function getCachedWebAuthnKey(
+    credentialId: Uint8Array,
+): Promise<WebAuthnKeyFull | undefined> {
+    return WebAuthnDbInstance.get().getCachedWebAuthnKey(credentialId);
 }
 
-export async function getCachedWebAuthnKey(credentialId: Uint8Array): Promise<WebAuthnKeyFull | undefined> {
-    const resolvedDb = await lazyOpenWebAuthnKeyCache();
-    const key = bytesToHexString(credentialId);
-    return await resolvedDb.get(STORE_NAME, key);
-}
-
-export async function setCachedWebAuthnKey(value: WebAuthnKeyFull): Promise<void> {
-    const resolvedDb = await lazyOpenWebAuthnKeyCache();
-    const key = bytesToHexString(value.credentialId);
-    await resolvedDb.put(STORE_NAME, value, key);
+export function setCachedWebAuthnKey(value: WebAuthnKeyFull): Promise<void> {
+    return WebAuthnDbInstance.get().setCachedWebAuthnKey(value);
 }
