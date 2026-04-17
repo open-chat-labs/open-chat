@@ -11,7 +11,6 @@ import {
     IdentityAgent,
     OpenChatAgent,
     setCachedWebAuthnKey,
-    setCommunityReferral,
     type AgentConfig,
 } from "openchat-agent";
 import {
