@@ -1,5 +1,6 @@
 import { deleteDB, type DBSchema } from "idb";
 import { IndexedDbConnectionManager } from "./indexedDb";
+import { Lazy } from "openchat-shared";
 
 const CACHE_VERSION = 2;
 const STORE_NAME = "community_referrals" as const;
@@ -66,4 +67,29 @@ export class ReferralDb {
             console.error("Unable to delete db: ", name, err);
         }
     }
+}
+
+const ReferralDbInstance = new Lazy(() => new ReferralDb());
+
+export async function setCommunityReferral(
+    communityId: string,
+    userId: string,
+    timestamp: number,
+): Promise<void> {
+    return ReferralDbInstance.get().setCommunityReferral(communityId, userId, timestamp);
+}
+
+export async function deleteCommunityReferral(communityId: string): Promise<void> {
+    return ReferralDbInstance.get().deleteCommunityReferral(communityId);
+}
+
+export async function getCommunityReferral(
+    communityId: string,
+    timestamp: number,
+): Promise<string | undefined> {
+    return ReferralDbInstance.get().getCommunityReferral(communityId, timestamp);
+}
+
+export async function clearCache(): Promise<void> {
+    return ReferralDbInstance.get().clearCache();
 }

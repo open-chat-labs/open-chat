@@ -243,10 +243,19 @@ import { bytesToHexString, mapOptional } from "../utils/mapping";
 import { mean } from "../utils/maths";
 import { AsyncMessageContextMap } from "../utils/messageContext";
 // import { isMainnet } from "../utils/network";
-import { ReferralDb } from "../utils/referralCache";
+import {
+    clearCache as clearReferralCache,
+    deleteCommunityReferral,
+    getCommunityReferral,
+} from "../utils/referralCache";
 import { RegistryDb } from "../utils/registryDb";
 import { Updatable, UpdatableOption } from "../utils/updatable";
-import { UserDb } from "../utils/userCache";
+import {
+    clearCache as clearUserCache,
+    getAllUsers,
+    isUserIdDeleted,
+    userSuspended,
+} from "../utils/userCache";
 import { BitcoinClient } from "./bitcoin/bitcoin.client";
 import { CkbtcMinterClient } from "./ckbtcMinter/ckbtcMinter.client";
 import { CachedChatEventsReader } from "./common/chatEvents";
@@ -303,9 +312,7 @@ export class OpenChatAgent extends EventTarget {
     private _cachePrimer: CachePrimer | undefined = undefined;
     private _chatEventsReader: CachedChatEventsReader;
     private _chatsDb: ChatsDb;
-    private _userDb: UserDb;
     private _registryDb: RegistryDb;
-    private _referralDb: ReferralDb;
 
     // Lazy loaded clients which may never end up being used
     private _bitcoinClient: Lazy<BitcoinClient>;
@@ -330,9 +337,7 @@ export class OpenChatAgent extends EventTarget {
         console.log("url", config.icUrl);
         this._agent = createHttpAgentSync(identity, config.icUrl);
         this._chatsDb = new ChatsDb(this.principal);
-        this._userDb = new UserDb();
         this._registryDb = new RegistryDb();
-        this._referralDb = new ReferralDb();
         this._onlineClient = new OnlineClient(identity, this._agent, config.onlineCanister);
         this._userClient = AnonUserClient.create();
         this._userIndexClient = new UserIndexClient(
@@ -341,7 +346,6 @@ export class OpenChatAgent extends EventTarget {
             config.userIndexCanister,
             config.blobUrlPattern,
             this._chatsDb,
-            this._userDb,
         );
         this._groupIndexClient = new GroupIndexClient(
             identity,
@@ -432,9 +436,7 @@ export class OpenChatAgent extends EventTarget {
 
     getAllCachedUsers(): Promise<UserSummary[]> {
         return measure("getAllUsers", () =>
-            this._userDb
-                .getAllUsers()
-                .then((users) => users.map((u) => this.rehydrateUserSummary(u))),
+            getAllUsers().then((users) => users.map((u) => this.rehydrateUserSummary(u))),
         );
     }
 
@@ -454,14 +456,7 @@ export class OpenChatAgent extends EventTarget {
         const userClient =
             userId === ANON_USER_ID
                 ? AnonUserClient.create()
-                : new UserClient(
-                      userId,
-                      this.identity,
-                      this._agent,
-                      this.config,
-                      this._chatsDb,
-                      this._userDb,
-                  );
+                : new UserClient(userId, this.identity, this._agent, this.config, this._chatsDb);
 
         this._userClient = userClient;
         this._chatEventsReader.setUserClient(userClient);
@@ -484,11 +479,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     private getCommunityReferral(communityId: string): Promise<string | undefined> {
-        return this._referralDb.getCommunityReferral(communityId, Date.now());
-    }
-
-    setCommunityReferral(communityId: string, referredBy: string): Promise<void> {
-        return this._referralDb.setCommunityReferral(communityId, referredBy, Date.now());
+        return getCommunityReferral(communityId, Date.now());
     }
 
     translationsClient(): TranslationsClient {
@@ -2225,7 +2216,7 @@ export class OpenChatAgent extends EventTarget {
                     )
                     .then((resp) => {
                         if (resp.kind === "success" || resp.kind === "success_joined_community") {
-                            this._referralDb.deleteCommunityReferral(chatId.communityId);
+                            deleteCommunityReferral(chatId.communityId);
                         }
                         if (resp.kind === "success") {
                             return {
@@ -2259,7 +2250,7 @@ export class OpenChatAgent extends EventTarget {
             .joinCommunity(localUserIndex, id.communityId, inviteCode, credentialArgs, referredBy)
             .then((resp) => {
                 if (resp.kind === "success") {
-                    this._referralDb.deleteCommunityReferral(id.communityId);
+                    deleteCommunityReferral(id.communityId);
                 }
                 return resp;
             });
@@ -2570,14 +2561,7 @@ export class OpenChatAgent extends EventTarget {
         if (offline()) return Promise.resolve("");
 
         const userClient = userId
-            ? new UserClient(
-                  userId,
-                  this.identity,
-                  this._agent,
-                  this.config,
-                  this._chatsDb,
-                  this._userDb,
-              )
+            ? new UserClient(userId, this.identity, this._agent, this.config, this._chatsDb)
             : this.userClient;
         return userClient.getBio();
     }
@@ -2585,7 +2569,7 @@ export class OpenChatAgent extends EventTarget {
     getPublicProfile(userId?: string): Stream<PublicProfile | undefined> {
         if (userId) {
             return new Stream(async (resolve, reject) => {
-                const deleted = await this._userDb.isUserIdDeleted(userId);
+                const deleted = await isUserIdDeleted(userId);
                 if (deleted) {
                     resolve(undefined, true);
                 }
@@ -2595,7 +2579,6 @@ export class OpenChatAgent extends EventTarget {
                     this._agent,
                     this.config,
                     this._chatsDb,
-                    this._userDb,
                 );
                 const result = userClient.getPublicProfile();
                 result.subscribe({
@@ -3051,7 +3034,7 @@ export class OpenChatAgent extends EventTarget {
 
         return this._userIndexClient.suspendUser(userId, reason).then((resp) => {
             if (resp === "success") {
-                this._userDb.userSuspended(userId, true);
+                userSuspended(userId, true);
             }
             return resp;
         });
@@ -3062,7 +3045,7 @@ export class OpenChatAgent extends EventTarget {
 
         return this._userIndexClient.unsuspendUser(userId).then((resp) => {
             if (resp === "success") {
-                this._userDb.userSuspended(userId, false);
+                userSuspended(userId, false);
             }
             return resp;
         });
@@ -3752,14 +3735,7 @@ export class OpenChatAgent extends EventTarget {
         if (localUserIndexFromCache !== undefined) {
             return localUserIndexFromCache;
         }
-        return new UserClient(
-            userId,
-            this.identity,
-            this._agent,
-            this.config,
-            this._chatsDb,
-            this._userDb,
-        )
+        return new UserClient(userId, this.identity, this._agent, this.config, this._chatsDb)
             .localUserIndex()
             .then((localUserIndex) => {
                 return this._chatsDb.cacheLocalUserIndexForUser(userId, localUserIndex);
@@ -3960,11 +3936,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     async clearCachedData(): Promise<void> {
-        await Promise.all([
-            this._chatsDb.clearCache(),
-            this._userDb.clearCache(),
-            this._referralDb.clearCache(),
-        ]);
+        await Promise.all([this._chatsDb.clearCache(), clearUserCache(), clearReferralCache()]);
     }
 
     async getExternalAchievements(): Promise<ExternalAchievement[]> {
