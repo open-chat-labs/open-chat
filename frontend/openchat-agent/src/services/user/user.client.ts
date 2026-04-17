@@ -185,7 +185,7 @@ import {
     principalStringToBytes,
     toVoid,
 } from "../../utils/mapping";
-import { setChitInfoInCache } from "../../utils/userCache";
+import type { UserDb } from "../../utils/userCache";
 import { SingleCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 import type { IChatEventsReader } from "../common/chatEvents";
 import {
@@ -243,6 +243,7 @@ export class UserClient
         agent: HttpAgent,
         private config: AgentConfig,
         private readonly chatsDb: ChatsDb,
+        private readonly userDb: UserDb,
     ) {
         super(identity, agent, userId, "User");
         this.userId = userId;
@@ -469,10 +470,7 @@ export class UserClient
         return this.query(
             "messages_by_message_index",
             args,
-            (resp) =>
-                mapResult(resp, (value) =>
-                    getMessagesSuccess(value, chatId, this.chatsDb),
-                ),
+            (resp) => mapResult(resp, (value) => getMessagesSuccess(value, chatId, this.chatsDb)),
             UserMessagesByMessageIndexArgs,
             UserMessagesByMessageIndexResponse,
         );
@@ -1460,7 +1458,7 @@ export class UserClient
         ).then((res) => {
             if (res.kind === "success") {
                 // Note this only updates the users db, the chats db will be updated by the updates loop
-                setChitInfoInCache(this.userId, res.chitBalance, res.streak);
+                this.userDb.setChitInfoInCache(this.userId, res.chitBalance, res.streak);
             }
             return res;
         });

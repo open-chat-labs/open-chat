@@ -246,12 +246,7 @@ import { AsyncMessageContextMap } from "../utils/messageContext";
 import { ReferralDb } from "../utils/referralCache";
 import { RegistryDb } from "../utils/registryDb";
 import { Updatable, UpdatableOption } from "../utils/updatable";
-import {
-    clearCache as clearUserCache,
-    getAllUsers,
-    isUserIdDeleted,
-    userSuspended,
-} from "../utils/userCache";
+import { UserDb } from "../utils/userCache";
 import { BitcoinClient } from "./bitcoin/bitcoin.client";
 import { CkbtcMinterClient } from "./ckbtcMinter/ckbtcMinter.client";
 import { CachedChatEventsReader } from "./common/chatEvents";
@@ -308,6 +303,7 @@ export class OpenChatAgent extends EventTarget {
     private _cachePrimer: CachePrimer | undefined = undefined;
     private _chatEventsReader: CachedChatEventsReader;
     private _chatsDb: ChatsDb;
+    private _userDb: UserDb;
     private _registryDb: RegistryDb;
     private _referralDb: ReferralDb;
 
@@ -334,6 +330,7 @@ export class OpenChatAgent extends EventTarget {
         console.log("url", config.icUrl);
         this._agent = createHttpAgentSync(identity, config.icUrl);
         this._chatsDb = new ChatsDb(this.principal);
+        this._userDb = new UserDb();
         this._registryDb = new RegistryDb();
         this._referralDb = new ReferralDb();
         this._onlineClient = new OnlineClient(identity, this._agent, config.onlineCanister);
@@ -344,6 +341,7 @@ export class OpenChatAgent extends EventTarget {
             config.userIndexCanister,
             config.blobUrlPattern,
             this._chatsDb,
+            this._userDb,
         );
         this._groupIndexClient = new GroupIndexClient(
             identity,
@@ -434,7 +432,9 @@ export class OpenChatAgent extends EventTarget {
 
     getAllCachedUsers(): Promise<UserSummary[]> {
         return measure("getAllUsers", () =>
-            getAllUsers().then((users) => users.map((u) => this.rehydrateUserSummary(u))),
+            this._userDb
+                .getAllUsers()
+                .then((users) => users.map((u) => this.rehydrateUserSummary(u))),
         );
     }
 
@@ -454,7 +454,14 @@ export class OpenChatAgent extends EventTarget {
         const userClient =
             userId === ANON_USER_ID
                 ? AnonUserClient.create()
-                : new UserClient(userId, this.identity, this._agent, this.config, this._chatsDb);
+                : new UserClient(
+                      userId,
+                      this.identity,
+                      this._agent,
+                      this.config,
+                      this._chatsDb,
+                      this._userDb,
+                  );
 
         this._userClient = userClient;
         this._chatEventsReader.setUserClient(userClient);
@@ -2563,7 +2570,14 @@ export class OpenChatAgent extends EventTarget {
         if (offline()) return Promise.resolve("");
 
         const userClient = userId
-            ? new UserClient(userId, this.identity, this._agent, this.config, this._chatsDb)
+            ? new UserClient(
+                  userId,
+                  this.identity,
+                  this._agent,
+                  this.config,
+                  this._chatsDb,
+                  this._userDb,
+              )
             : this.userClient;
         return userClient.getBio();
     }
@@ -2571,7 +2585,7 @@ export class OpenChatAgent extends EventTarget {
     getPublicProfile(userId?: string): Stream<PublicProfile | undefined> {
         if (userId) {
             return new Stream(async (resolve, reject) => {
-                const deleted = await isUserIdDeleted(userId);
+                const deleted = await this._userDb.isUserIdDeleted(userId);
                 if (deleted) {
                     resolve(undefined, true);
                 }
@@ -2581,6 +2595,7 @@ export class OpenChatAgent extends EventTarget {
                     this._agent,
                     this.config,
                     this._chatsDb,
+                    this._userDb,
                 );
                 const result = userClient.getPublicProfile();
                 result.subscribe({
@@ -3036,7 +3051,7 @@ export class OpenChatAgent extends EventTarget {
 
         return this._userIndexClient.suspendUser(userId, reason).then((resp) => {
             if (resp === "success") {
-                userSuspended(userId, true);
+                this._userDb.userSuspended(userId, true);
             }
             return resp;
         });
@@ -3047,7 +3062,7 @@ export class OpenChatAgent extends EventTarget {
 
         return this._userIndexClient.unsuspendUser(userId).then((resp) => {
             if (resp === "success") {
-                userSuspended(userId, false);
+                this._userDb.userSuspended(userId, false);
             }
             return resp;
         });
@@ -3737,7 +3752,14 @@ export class OpenChatAgent extends EventTarget {
         if (localUserIndexFromCache !== undefined) {
             return localUserIndexFromCache;
         }
-        return new UserClient(userId, this.identity, this._agent, this.config, this._chatsDb)
+        return new UserClient(
+            userId,
+            this.identity,
+            this._agent,
+            this.config,
+            this._chatsDb,
+            this._userDb,
+        )
             .localUserIndex()
             .then((localUserIndex) => {
                 return this._chatsDb.cacheLocalUserIndexForUser(userId, localUserIndex);
@@ -3940,7 +3962,7 @@ export class OpenChatAgent extends EventTarget {
     async clearCachedData(): Promise<void> {
         await Promise.all([
             this._chatsDb.clearCache(),
-            clearUserCache(),
+            this._userDb.clearCache(),
             this._referralDb.clearCache(),
         ]);
     }
