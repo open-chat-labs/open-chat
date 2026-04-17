@@ -243,7 +243,12 @@ import { bytesToHexString, mapOptional } from "../utils/mapping";
 import { mean } from "../utils/maths";
 import { AsyncMessageContextMap } from "../utils/messageContext";
 // import { isMainnet } from "../utils/network";
-import { ReferralDb } from "../utils/referralCache";
+import {
+    clearReferralCache,
+    deleteCommunityReferral,
+    getCommunityReferral,
+    setCommunityReferral,
+} from "../utils/referralCache";
 import { RegistryDb } from "../utils/registryDb";
 import { Updatable, UpdatableOption } from "../utils/updatable";
 import { UserDb } from "../utils/userCache";
@@ -305,7 +310,6 @@ export class OpenChatAgent extends EventTarget {
     private _chatsDb: ChatsDb;
     private _userDb: UserDb;
     private _registryDb: RegistryDb;
-    private _referralDb: ReferralDb;
 
     // Lazy loaded clients which may never end up being used
     private _bitcoinClient: Lazy<BitcoinClient>;
@@ -332,7 +336,6 @@ export class OpenChatAgent extends EventTarget {
         this._chatsDb = new ChatsDb(this.principal);
         this._userDb = new UserDb();
         this._registryDb = new RegistryDb();
-        this._referralDb = new ReferralDb();
         this._onlineClient = new OnlineClient(identity, this._agent, config.onlineCanister);
         this._userClient = AnonUserClient.create();
         this._userIndexClient = new UserIndexClient(
@@ -484,11 +487,11 @@ export class OpenChatAgent extends EventTarget {
     }
 
     private getCommunityReferral(communityId: string): Promise<string | undefined> {
-        return this._referralDb.getCommunityReferral(communityId, Date.now());
+        return getCommunityReferral(communityId, Date.now());
     }
 
     setCommunityReferral(communityId: string, referredBy: string): Promise<void> {
-        return this._referralDb.setCommunityReferral(communityId, referredBy, Date.now());
+        return setCommunityReferral(communityId, referredBy, Date.now());
     }
 
     translationsClient(): TranslationsClient {
@@ -2225,7 +2228,7 @@ export class OpenChatAgent extends EventTarget {
                     )
                     .then((resp) => {
                         if (resp.kind === "success" || resp.kind === "success_joined_community") {
-                            this._referralDb.deleteCommunityReferral(chatId.communityId);
+                            deleteCommunityReferral(chatId.communityId);
                         }
                         if (resp.kind === "success") {
                             return {
@@ -2259,7 +2262,7 @@ export class OpenChatAgent extends EventTarget {
             .joinCommunity(localUserIndex, id.communityId, inviteCode, credentialArgs, referredBy)
             .then((resp) => {
                 if (resp.kind === "success") {
-                    this._referralDb.deleteCommunityReferral(id.communityId);
+                    deleteCommunityReferral(id.communityId);
                 }
                 return resp;
             });
@@ -3963,7 +3966,7 @@ export class OpenChatAgent extends EventTarget {
         await Promise.all([
             this._chatsDb.clearCache(),
             this._userDb.clearCache(),
-            this._referralDb.clearCache(),
+            clearReferralCache(),
         ]);
     }
 
