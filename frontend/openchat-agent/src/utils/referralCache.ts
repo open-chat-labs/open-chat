@@ -90,6 +90,6 @@ export async function getCommunityReferral(
     return ReferralDbInstance.get().getCommunityReferral(communityId, timestamp);
 }
 
-export async function clearCache(): Promise<void> {
+export async function clearReferralCache(): Promise<void> {
     return ReferralDbInstance.get().clearCache();
 }
