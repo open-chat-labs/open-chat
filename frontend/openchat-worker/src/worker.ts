@@ -11,7 +11,6 @@ import {
     IdentityAgent,
     OpenChatAgent,
     setCachedWebAuthnKey,
-    setCommunityReferral,
     type AgentConfig,
 } from "openchat-agent";
 import {
@@ -1280,11 +1279,7 @@ function getAction(
             return agent.clearCachedData();
 
         case "setCommunityReferral":
-            return setCommunityReferral(
-                payload.communityId.communityId,
-                payload.referredBy,
-                Date.now(),
-            );
+            return agent.setCommunityReferral(payload.communityId.communityId, payload.referredBy);
 
         case "getExternalAchievements":
             return agent.getExternalAchievements();
