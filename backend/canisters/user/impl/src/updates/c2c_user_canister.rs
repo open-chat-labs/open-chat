@@ -312,12 +312,9 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
                     .events
                     .main_events_reader()
                     .message_event_internal(args.message_id.into())
+                    .filter(|m| m.event.sender != caller_user_id)
                 {
-                    if message_event.event.sender != caller_user_id
-                        && !state.data.suspended.value
-                        && !args.username.is_empty()
-                        && !chat.notifications_muted.value
-                    {
+                    if !state.data.suspended.value && !args.username.is_empty() && !chat.notifications_muted.value {
                         let notification =
                             DirectChatUserNotificationPayload::DirectReactionAdded(DirectReactionAddedNotification {
                                 them: chat.them,
@@ -346,9 +343,9 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
                         },
                         now,
                     );
-                }
 
-                state.award_achievement_and_notify(Achievement::HadMessageReactedTo, now);
+                    state.award_achievement_and_notify(Achievement::HadMessageReactedTo, now);
+                }
             }
         } else {
             let _ = chat.events.remove_reaction(add_remove_reaction_args);
