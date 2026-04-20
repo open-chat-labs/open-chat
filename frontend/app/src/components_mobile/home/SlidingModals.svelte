@@ -225,6 +225,7 @@
     let modalStack = $state<SlidingModalType[]>([]);
     let top = $derived(modalStack[modalStack.length - 1]);
     let historyDepth = $state(0);
+    let recursivePop = false;
 
     function push(modal: SlidingModalType) {
         if (!modalStack.find((m) => m.kind === modal.kind)) {
@@ -245,12 +246,26 @@
             modalStack.pop();
         }
         historyDepth = historyDepth - 1;
+        if (recursivePop) {
+            if (modalStack.length > 0) {
+                pop();
+            } else {
+                recursivePop = false;
+            }
+        }
     }
 
     function pop() {
         // we simply need to call history.back() as that will trigger
         // popstate which will take care of popping the modalStack
         history.back();
+    }
+
+    function popStack() {
+        if (!recursivePop && modalStack.length > 0) {
+            recursivePop = true;
+            pop();
+        }
     }
 
     function closeThread() {
@@ -497,7 +512,7 @@
             ),
             subscribe("userProfileAbout", () => push({ kind: "user_profile_about" })),
             subscribe("closeModalPage", pop),
-            subscribe("closeModalStack", () => (modalStack = [])),
+            subscribe("closeModalStack", popStack),
             subscribe("userProfileChatsAndVideo", () =>
                 push({ kind: "user_profile_chats_and_video" }),
             ),

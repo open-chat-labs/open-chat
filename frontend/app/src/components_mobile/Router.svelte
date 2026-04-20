@@ -129,7 +129,7 @@
 
             // Finally - we are in a position to specify the *type* of transition
             const transitionType = routeToTransitionType(params, routeStore.value);
-            (document as any).startViewTransition({
+            const trans = (document as any).startViewTransition({
                 update: () => {
                     client.setRouteParams(ctx, params);
                     scrollToTop();
@@ -137,6 +137,10 @@
                     return tick();
                 },
                 types: [transitionType],
+            });
+            trans.ready.catch(() => {});
+            trans.finished.catch(() => {
+                console.debug("Transition was skipped or interrupted");
             });
         };
     }
