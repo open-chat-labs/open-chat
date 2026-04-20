@@ -10,5 +10,9 @@ export async function transition(types: TransitionType[], fn: () => void | Promi
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (document as any).startViewTransition(() => fn()?.then(tick), { type: types });
+    const trans = (document as any).startViewTransition(() => fn()?.then(tick), { type: types });
+    trans.ready.catch(() => {});
+    trans.finished.catch(() => {
+        console.debug("Transition was skipped or interrupted");
+    });
 }
