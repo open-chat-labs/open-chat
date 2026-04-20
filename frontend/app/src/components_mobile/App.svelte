@@ -128,6 +128,13 @@
         ];
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
+        // visualViewport.resize fires when the iOS virtual keyboard appears/disappears
+        // in PWA (home-screen) mode, where window.resize does not.
+        // Guarded to non-native apps only to avoid conflicting with the native
+        // keyboard handling system (expectWindowInsetChange) in the Tauri app.
+        if (!client.isNativeApp()) {
+            window.visualViewport?.addEventListener("resize", calculateHeight);
+        }
 
         const unsub = _.subscribe((formatter) => {
             botState.messageFormatter = formatter;
@@ -137,6 +144,9 @@
         return () => {
             window.removeEventListener("orientationchange", calculateHeight);
             window.removeEventListener("unhandledrejection", unhandledError);
+            if (!client.isNativeApp()) {
+                window.visualViewport?.removeEventListener("resize", calculateHeight);
+            }
             unsubs.forEach((u) => u());
             unsub();
             unsubKeyboard();
@@ -224,9 +234,16 @@
     }
 
     function calculateHeight() {
-        // fix the issue with 100vh layouts in various mobile browsers
-        let vh = window.innerHeight * 0.01;
-        document.documentElement.style.setProperty("--vh", `${vh}px`);
+        // fix the issue with 100vh layouts in various mobile browsers.
+        // In PWA (home-screen) mode on iOS, window.innerHeight does NOT shrink
+        // when the virtual keyboard appears, but visualViewport.height does.
+        // The native Tauri app has its own keyboard handling via expectWindowInsetChange,
+        // so we only use visualViewport.height for non-native builds.
+        const viewportHeight =
+            !client.isNativeApp() && window.visualViewport
+                ? window.visualViewport.height
+                : window.innerHeight;
+        document.documentElement.style.setProperty("--vh", `${viewportHeight * 0.01}px`);
     }
 
     function unhandledError(ev: Event) {
