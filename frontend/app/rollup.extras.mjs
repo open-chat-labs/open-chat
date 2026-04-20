@@ -25,8 +25,8 @@ export function generateCspForScripts(inlineScripts, development) {
     const isNative = process.env.OC_APP_TYPE === "android" || process.env.OC_APP_TYPE === "ios";
     const csp = `
         default-src 'self';
-        img-src * 'self' data: blob:${isNative && development ? ` ${process.env.OC_IC_URL}` : ""}${isNative ? " asset: https://asset.localhost content: *" : ""};
-        media-src * 'self' data: blob:${isNative && development ? ` ${process.env.OC_IC_URL}` : ""}${isNative ? " asset: https://asset.localhost content: *" : ""};
+        img-src * 'self' data: blob:${isNative && development ? ` ${process.env.OC_IC_URL}` : ""}${isNative ? " asset: http://asset.localhost content: *" : ""};
+        media-src * 'self' data: blob:${isNative && development ? ` ${process.env.OC_IC_URL}` : ""}${isNative ? " asset: http://asset.localhost content: *" : ""};
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com/ https://cdnjs.cloudflare.com/;
         style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com/ https://cdnjs.cloudflare.com/;
         font-src 'self' https://fonts.gstatic.com/ data:;
@@ -34,8 +34,8 @@ export function generateCspForScripts(inlineScripts, development) {
         object-src 'none';
         base-uri 'self';
         form-action 'self';${production ? "\nupgrade-insecure-requests;" : ""}
-        script-src 'self' https://www.instagram.com https://scripts.wobbl3.com/ https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(" ",)} ${development ? "http://localhost:* http://127.0.0.1:*" : ""};
-        connect-src 'self'${development ? " ws: http:" : ""}${production || isNative ? " wss: https:" : ""}${isNative ? " ipc: http://ipc.localhost https://asset.localhost asset: *" : ""};`;
+        script-src 'self' https://www.instagram.com https://scripts.wobbl3.com/ https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(" ")} ${development ? "http://localhost:* http://127.0.0.1:*" : ""};
+        connect-src 'self'${development ? " ws: http:" : ""}${production || isNative ? " wss: https:" : ""}${isNative ? " ipc: http://ipc.localhost http://asset.localhost asset: *" : ""};`;
 
     return csp;
 }
