@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Fix event iterator ([#8855](https://github.com/open-chat-labs/open-chat/pull/8855))
+- Fix reaction activity bug if user reacts on their own message ([#8960](https://github.com/open-chat-labs/open-chat/pull/8960))
 
 ## [[2.0.1952-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1952-user)] - 2026-01-14
 
