@@ -258,20 +258,17 @@
         <Column gap={"md"}>
             <Column gap="sm" padding={["zero", "lg"]}>
                 <Body fontWeight={"bold"}>
-                    <Translatable resourceKey={i18nKey("poll.questionLabel")} />
+                    <Translatable resourceKey={i18nKey("poll.app.questionLabel")} />
                 </Body>
             </Column>
             <ExpandingTextArea
                 maxlength={MAX_QUESTION_LENGTH}
                 countdown
                 bind:value={poll.pollQuestion}
-                placeholder={interpolate($_, i18nKey("Enter your question here"))}
+                placeholder={interpolate($_, i18nKey("poll.app.questionInputPlaceholder"))}
                 onfocus={inputFocused}>
                 {#snippet subtext()}
-                    <Translatable
-                        resourceKey={i18nKey(
-                            "What do you want to ask in this poll? Question is required.",
-                        )} />
+                    <Translatable resourceKey={i18nKey("poll.app.questionInputSubtext")} />
                 {/snippet}
             </ExpandingTextArea>
         </Column>
@@ -279,13 +276,10 @@
         <Column gap={"lg"}>
             <Column gap="sm" padding={["zero", "lg"]}>
                 <Body fontWeight={"bold"}>
-                    <Translatable resourceKey={i18nKey("Poll answers")} />
+                    <Translatable resourceKey={i18nKey("poll.app.answerLabel")} />
                 </Body>
                 <Body colour="textSecondary">
-                    <Translatable
-                        resourceKey={i18nKey(
-                            "At least two (2) answers are required to create a poll!",
-                        )} />
+                    <Translatable resourceKey={i18nKey("poll.app.answerRequirements")} />
                 </Body>
             </Column>
             <Column gap="sm">
@@ -304,7 +298,7 @@
                                 <ExpandingTextArea
                                     placeholder={interpolate(
                                         $_,
-                                        i18nKey("Provide a unique answer"),
+                                        i18nKey("poll.app.answerPlaceholder"),
                                     )}
                                     maxlength={MAX_ANSWER_LENGTH}
                                     countdown
@@ -344,7 +338,8 @@
                         <Column width="fill">
                             <Row width="hug" gap="xs" crossAxisAlignment="end">
                                 <Body fontWeight="bold" colour="primary">
-                                    <Translatable resourceKey={i18nKey("Additional settings")} />
+                                    <Translatable
+                                        resourceKey={i18nKey("poll.app.additionalSettings")} />
                                 </Body>
                                 <Column padding={["zero", "zero", "xxs"]} width="hug">
                                     <Cog size="1rem" color={ColourVars.primary} />
@@ -369,7 +364,7 @@
                         {#snippet icon(color, size)}
                             <Chart {color} {size} />
                         {/snippet}
-                        <Translatable resourceKey={i18nKey("Publish")} />
+                        <Translatable resourceKey={i18nKey("poll.app.publish")} />
                     </CommonButton2>
                 </Row>
             {/snippet}
@@ -377,33 +372,35 @@
                 <Column gap="xxl" padding={["xl", "xl", "huge"]}>
                     <Setting
                         toggle={() => (poll.anonymous = !poll.anonymous)}
-                        info={"Polls are anonymous by default. If you make it public, everyone will be able to ssee each others votes."}>
+                        info={"poll.app.settings.publicSwitchInfo"}>
                         <Switch
                             onChange={() => (poll.anonymous = !poll.anonymous)}
                             width={"fill"}
                             reverse
                             checked={!poll.anonymous}>
-                            <Translatable resourceKey={i18nKey("Public poll")} />
+                            <Translatable
+                                resourceKey={i18nKey("poll.app.settings.publicSwitchLabel")} />
                         </Switch>
                     </Setting>
 
                     <Setting
                         toggle={() =>
                             (poll.allowMultipleVotesPerUser = !poll.allowMultipleVotesPerUser)}
-                        info={"Users can only vote for a single option by default, but if you would like to allow users to vote for multiple options, toggle this on."}>
+                        info={"poll.app.settings.multipleVotesInfo"}>
                         <Switch
                             onChange={() =>
                                 (poll.allowMultipleVotesPerUser = !poll.allowMultipleVotesPerUser)}
                             width={"fill"}
                             reverse
                             checked={poll.allowMultipleVotesPerUser}>
-                            <Translatable resourceKey={i18nKey("Allow multiple votes")} />
+                            <Translatable
+                                resourceKey={i18nKey("poll.app.settings.multipleVotesLabel")} />
                         </Switch>
                     </Setting>
 
                     <Setting
                         toggle={() => (poll.allowUserToChangeVote = !poll.allowUserToChangeVote)}
-                        info={"With this option on, once they vote, users will not be able to change their opinion."}>
+                        info={"poll.app.settings.changeVoteInfo"}>
                         <Switch
                             onChange={() =>
                                 (poll.allowUserToChangeVote = !poll.allowUserToChangeVote)}
@@ -411,13 +408,13 @@
                             reverse
                             checked={!poll.allowUserToChangeVote}>
                             <Translatable
-                                resourceKey={i18nKey("Users cannot change their votes")} />
+                                resourceKey={i18nKey("poll.app.settings.changeVoteLabel")} />
                         </Switch>
                     </Setting>
 
                     <Setting
                         toggle={() => (poll.showVotesBeforeEndDate = !poll.showVotesBeforeEndDate)}
-                        info={"If you don't want the poll participants to see the results before the poll ends, turn this option on."}>
+                        info={"poll.app.settings.hideVotesInfo"}>
                         <Switch
                             onChange={() =>
                                 (poll.showVotesBeforeEndDate = !poll.showVotesBeforeEndDate)}
@@ -425,7 +422,7 @@
                             reverse
                             checked={!poll.showVotesBeforeEndDate}>
                             <Translatable
-                                resourceKey={i18nKey("Hide votes before end of the poll")} />
+                                resourceKey={i18nKey("poll.app.settings.hideVotesLabel")} />
                         </Switch>
                     </Setting>
 
@@ -437,7 +434,8 @@
                             {#snippet icon(color, size)}
                                 <Check {color} {size} />
                             {/snippet}
-                            <Translatable resourceKey={i18nKey("Done")} />
+                            <Translatable
+                                resourceKey={i18nKey("poll.app.settings.closeSettings")} />
                         </CommonButton2>
                     </Row>
                 </Column>

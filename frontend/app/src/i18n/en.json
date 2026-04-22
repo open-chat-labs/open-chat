@@ -156,6 +156,13 @@
     "andNMore": ", and {n} more",
     "appearance": "Appearance",
     "apply": "Apply",
+    "appWallet": {
+        "header": {
+            "asset": "Asset",
+            "holdings": "Holdings",
+            "total": "Total"
+        }
+    },
     "architecture": "Architecture",
     "archiveChat": "Archive chat",
     "archiveChatFailed": "Failed to archive chat",
@@ -709,12 +716,12 @@
     "editMessage": "Edit",
     "enableNotifications": "Would you like to enable notifications?",
     "enableNotificationsMenu": "Enable notifications",
-    "enjoyYourStorage": "You can now enjoy posting pictures and videos!",
     "enterBio": "Tell us something about yourself",
     "enterCaption": "Enter a caption",
     "enterInviteCode": "Enter your invite code",
     "enterMessage": "Enter a message...",
     "enterToSend": "Enter key sends message",
+    "enjoyYourStorage": "You can now enjoy posting pictures and videos!",
     "errorBlurb": "Sorry, we encountered an unexpected error. Please try reloading OpenChat.",
     "errorEditingMessage": "An unexpected error occurred editing your message",
     "errorLoadingChats": "Unable to load your chats",
@@ -1197,8 +1204,8 @@
         "notAvailable": "Not available",
         "progress": {
             "accepted": "[Transfer of {amount1} {token1}]({token1TxnIn}) from {user1} to escrow",
-            "accepting": "Accepted by {user1}",
             "acceptedBy": "Accepted by",
+            "accepting": "Accepted by {user1}",
             "cancelled": "Cancelled",
             "cancelled_pending": "Cancelled pending refund",
             "completed": "Completed",
@@ -1337,17 +1344,6 @@
     "placeholderContent": "Please wait, your message will load shortly",
     "pleaseDeposit": "Please press the \"Confirm\" button if you are happy to pay {amount} ICP from the above account to upgrade your storage to {limit}",
     "poll": {
-        "app": {
-            "votesArePublic": "Votes are public",
-            "votesAreAnon": "Votes are anonymous",
-            "multiVote": "Multiple votes allowed",
-            "singleVote": "Single vote allowed",
-            "canChangeVote": "You may change vote",
-            "cantChangeVote": "You cannot change vote",
-            "resultsWillShow": "Results will show after poll end",
-            "plusMoreVotes": "more votes",
-            "viewPollVotesTitle": "View poll votes"
-        },
         "addAnotherAnswer": "Add another answer",
         "addAnswer": "Add at least 2 answers",
         "allowChangeVotes": "Allow users to change vote",
@@ -1355,6 +1351,36 @@
         "anonymous": "Anonymous",
         "answersLabel": "Answers",
         "answerText": "Enter answer text...",
+        "app": {
+            "additionalSettings": "Additional settings",
+            "answerLabel": "Poll answers",
+            "answerPlaceholder": "Provide a unique answer",
+            "answerRequirements": "At least two (2) answers are required to create a poll!",
+            "canChangeVote": "You may change vote",
+            "cantChangeVote": "You cannot change vote",
+            "multiVote": "Multiple votes allowed",
+            "plusMoreVotes": "more votes",
+            "publish": "Publish",
+            "questionInputPlaceholder": "Enter your question here",
+            "questionInputSubtext": "What do you want to ask in this poll? Question is required.",
+            "questionLabel": "Poll question",
+            "resultsWillShow": "Results will show after poll end",
+            "settings": {
+                "changeVoteInfo": "With this option on, once they vote, users will not be able to change their opinion.",
+                "changeVoteLabel": "Users cannot change their votes",
+                "closeSettings": "Done",
+                "hideVotesInfo": "If you don't want the poll participants to see the results before the poll ends, turn this option on.",
+                "hideVotesLabel": "Hide votes before end of the poll",
+                "multipleVotesInfo": "Users can only vote for a single option by default, but if you would like to allow users to vote for multiple options, toggle this on.",
+                "multipleVotesLabel": "Allow multiple votes",
+                "publicSwitchInfo": "Polls are anonymous by default. If you make it public, everyone will be able to see each others votes.",
+                "publicSwitchLabel": "Public poll"
+            },
+            "singleVote": "Single vote allowed",
+            "viewPollVotesTitle": "View poll votes",
+            "votesAreAnon": "Votes are anonymous",
+            "votesArePublic": "Votes are public"
+        },
         "atLeastTwo": "Minimum of 2",
         "create": "Create a poll",
         "finished": "Poll has finished",
@@ -1585,9 +1611,9 @@
         "emailInvalid": "Invalid email address, please try again",
         "emailPlaceholder": "Enter your email address (optional)",
         "emailRules": "This is optionally used for account recovery",
-        "enjoy": "Enjoy chatting on The Internet Computer",
         "enterDisplayName": "Choose a display name",
         "enterUsername": "Choose a username",
+        "enjoy": "Enjoy chatting on The Internet Computer",
         "failedToGetFee": "Failed to generate a registration fee",
         "findReferrer": "Did someone refer you?",
         "goBack": "Go back",
@@ -1762,8 +1788,8 @@
     },
     "stopRecording": "Stop recording",
     "storage": "Storage",
-    "storageUsed": "{used}GB used of {limit}GB",
     "storagePercentRemaining": " / {percent}% remaining",
+    "storageUsed": "{used}GB used of {limit}GB",
     "streakInsurance": {
         "addDay": "Add a day",
         "atRisk": "Your streak is at risk",
@@ -2073,13 +2099,6 @@
     },
     "viewer": "viewer",
     "wallet": "Wallet",
-    "appWallet": {
-        "header": {
-            "asset": "Asset",
-            "holdings": "Holdings",
-            "total": "Total"
-        }
-    },
     "walletSettings": "Wallet settings",
     "webhook": {
         "avatarLabel": "Avatar",
