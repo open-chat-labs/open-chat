@@ -111,7 +111,7 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
                 message_id: message.message_id,
                 event_index: result.event_index,
                 activity: MessageActivity::Reaction,
-                timestamp: state.env.now(),
+                timestamp: now,
                 user_id: Some(agent),
             }),
             now,
