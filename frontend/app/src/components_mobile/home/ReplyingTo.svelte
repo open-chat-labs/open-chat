@@ -46,6 +46,7 @@
             "audio_content",
             "video_content",
             "p2p_swap_content",
+            "poll_content",
         ].indexOf(replyingTo.content.kind) > -1,
     );
 </script>

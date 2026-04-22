@@ -1337,6 +1337,17 @@
     "placeholderContent": "Please wait, your message will load shortly",
     "pleaseDeposit": "Please press the \"Confirm\" button if you are happy to pay {amount} ICP from the above account to upgrade your storage to {limit}",
     "poll": {
+        "app": {
+            "votesArePublic": "Votes are public",
+            "votesAreAnon": "Votes are anonymous",
+            "multiVote": "Multiple votes allowed",
+            "singleVote": "Single vote allowed",
+            "canChangeVote": "You may change vote",
+            "cantChangeVote": "You cannot change vote",
+            "resultsWillShow": "Results will show after poll end",
+            "plusMoreVotes": "more votes",
+            "viewPollVotesTitle": "View poll votes"
+        },
         "addAnotherAnswer": "Add another answer",
         "addAnswer": "Add at least 2 answers",
         "allowChangeVotes": "Allow users to change vote",
@@ -1362,6 +1373,7 @@
         "poll": "Poll",
         "pollDuration": "Poll duration",
         "pollEnds": "Poll ends {end}",
+        "public": "Public",
         "questionLabel": "Question",
         "settings": "Settings",
         "showBeforeEnd": "Show votes before poll ends",

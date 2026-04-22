@@ -81,21 +81,19 @@
     type ShortStatusKeys = {
         visibility: string;
         voteType: string;
-        viewResults: string;
+        voteEdit: string;
+        viewResults: string | undefined;
     };
 
-    // TODO i18n !!!
     // Internationalisation required here, and in the component layout.
     let shortStatus = $derived.by<ShortStatusKeys>(() => {
-        const editableOrfinal = poll.allowUserToChangeVote ? "(editable)" : "(final)";
         return {
-            visibility: poll.anonymous ? "Anonymous" : "Public",
-            voteType: poll.allowMultipleVotesPerUser
-                ? `Multi votes ${editableOrfinal}`
-                : `Single vote ${editableOrfinal}`,
-            viewResults: poll.showVotesBeforeEndDate
-                ? "Results visible early"
-                : "Results visible after end",
+            visibility: poll.anonymous ? "poll.anonymous" : "poll.app.public",
+            voteType: poll.allowMultipleVotesPerUser ? "poll.app.multiVote" : "poll.app.singleVote",
+            voteEdit: poll.allowUserToChangeVote
+                ? "poll.app.canChangeVote"
+                : "poll.app.cantChangeVote",
+            viewResults: poll.showVotesBeforeEndDate ? undefined : "poll.app.resultsWillShow",
         };
     });
 
@@ -233,7 +231,7 @@
     // we expect the keyboard to show, but it has not shown yet.
     let preemptiveHideOptions = $state(false);
     function inputFocused() {
-        if (!keyboard.visible) {
+        if (client.isNativeApp() && !keyboard.visible) {
             preemptiveHideOptions = true;
         }
     }
@@ -246,13 +244,13 @@
     });
 </script>
 
-<SlidingPageContent onBack={back} title={i18nKey(`Create a poll`)}>
+<SlidingPageContent onBack={back} title={i18nKey("poll.create")}>
     <Column height={"fill"} gap={"xxl"} padding={["xxl", "lg", "huge"]}>
         <Column gap="sm" padding={["zero", "lg"]}>
             <DurationSelector bind:duration={poll.duration}>
                 {#snippet title()}
                     <Body fontWeight={"bold"}>
-                        <Translatable resourceKey={i18nKey("Poll duration")} />
+                        <Translatable resourceKey={i18nKey("poll.pollDuration")} />
                     </Body>
                 {/snippet}
             </DurationSelector>
@@ -260,7 +258,7 @@
         <Column gap={"md"}>
             <Column gap="sm" padding={["zero", "lg"]}>
                 <Body fontWeight={"bold"}>
-                    <Translatable resourceKey={i18nKey("Poll question")} />
+                    <Translatable resourceKey={i18nKey("poll.questionLabel")} />
                 </Body>
             </Column>
             <ExpandingTextArea
@@ -352,11 +350,14 @@
                                     <Cog size="1rem" color={ColourVars.primary} />
                                 </Column>
                             </Row>
-                            <BodySmall colour="textSecondary">
-                                <!-- TODO i18n -->
+                            <BodySmall colour="textSecondary" maxLines={3}>
                                 <Translatable resourceKey={i18nKey(shortStatus.visibility)} /> •
                                 <Translatable resourceKey={i18nKey(shortStatus.voteType)} /> •
-                                <Translatable resourceKey={i18nKey(shortStatus.viewResults)} />
+                                <Translatable resourceKey={i18nKey(shortStatus.voteEdit)} />
+                                {#if shortStatus.viewResults}
+                                    • <Translatable
+                                        resourceKey={i18nKey(shortStatus.viewResults)} />
+                                {/if}
                             </BodySmall>
                         </Column>
                     </Row>

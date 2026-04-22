@@ -187,6 +187,14 @@ export type PublicProfile = {
     backgroundId?: bigint;
 };
 
+export type ReducedPublicProfile = {
+    username: string;
+    displayName: string | undefined;
+    isCurentUser: boolean;
+    blobData?: Uint8Array<ArrayBufferLike>;
+    blobUrl?: string;
+};
+
 export type UsersArgs = {
     userGroups: {
         users: string[];
