@@ -89,10 +89,14 @@ export const defaults = {
     force: false,
 };
 
+function viewportRect(): DOMRect {
+    return new DOMRect(0, 0, window.innerWidth, window.innerHeight);
+}
+
 export function reposition(
     trigger: HTMLElement,
     popup: HTMLElement,
-    opt?: Partial<NanoPopOptions>,
+    opt?: Partial<NanoPopOptions>
 ): PositionMatch | null {
     const pos = repositionInternal(trigger, popup, opt);
     return pos ? pos : repositionInternal(trigger, popup, { ...opt, force: true });
@@ -107,7 +111,7 @@ export function reposition(
 const repositionInternal = (
     trigger: HTMLElement,
     popup: HTMLElement,
-    opt?: Partial<NanoPopOptions>,
+    opt?: Partial<NanoPopOptions>
 ): PositionMatch | null => {
     const {
         container,
@@ -119,7 +123,7 @@ const repositionInternal = (
         positionFlipOrder,
         force,
     } = {
-        container: document.documentElement.getBoundingClientRect(),
+        container: viewportRect(),
         ...defaults,
         ...opt,
     };
@@ -200,7 +204,7 @@ const repositionInternal = (
                 if (positionTotal > positionMaximum) {
                     popup.style.setProperty(
                         overrideProp,
-                        `${positionSize - (positionTotal - positionMaximum)}px`,
+                        `${positionSize - (positionTotal - positionMaximum)}px`
                     );
                 }
                 if (positionVal < positionMinimum) {
@@ -225,11 +229,11 @@ const repositionInternal = (
                     if (variantTotal > variantMaximum) {
                         popup.style.setProperty(
                             overrideProp,
-                            `${variantSize - (variantTotal - variantMaximum)}px`,
+                            `${variantSize - (variantTotal - variantMaximum)}px`
                         );
                     }
                     if (variantVal < variantMinimum) {
-                        const diff = variantMinimum - positionVal;
+                        const diff = variantMinimum - variantVal;
                         popup.style.setProperty(overrideProp, `${variantSize - diff}px`);
                         variantVal += diff;
                     }
