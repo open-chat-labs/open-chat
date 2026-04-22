@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ColourVars, Label } from "component-lib";
+    import { ColourVars, Label, type AvatarSize } from "component-lib";
     import { type Snippet } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Container from "./Container.svelte";
@@ -8,9 +8,10 @@
     interface Props {
         children?: Snippet;
         avatarUrl?: string;
+        avatarSize?: AvatarSize;
         onRemove?: () => void;
     }
-    let { children, onRemove, avatarUrl }: Props = $props();
+    let { children, onRemove, avatarUrl, avatarSize = "sm" }: Props = $props();
 </script>
 
 <Container
@@ -25,7 +26,7 @@
     borderWidth={"thick"}
     onClick={onRemove}>
     {#if avatarUrl}
-        <Avatar size={"sm"} url={avatarUrl}></Avatar>
+        <Avatar size={avatarSize} url={avatarUrl}></Avatar>
     {/if}
     <Label colour={"secondaryLight"} width={"hug"}>
         {@render children?.()}

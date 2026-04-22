@@ -28,6 +28,7 @@ import type {
     NeuronGate,
     Notification,
     PaymentGate,
+    PollContent,
     PublicProfile,
     ReadonlySet,
     ResourceKey,
@@ -139,6 +140,7 @@ export type PubSubEvents = {
         initialLoad: boolean;
     };
     createPoll: MessageContext;
+    pollPublicVotes: { content: PollContent; senderId: string };
     createPrize: MessageContext;
     attachGif: [MessageContext, string];
     tokenTransfer: {
