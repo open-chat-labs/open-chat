@@ -608,6 +608,7 @@ import { startSwCheckPoller } from "./utils/updateSw";
 import { addQueryStringParam } from "./utils/url";
 import {
     buildUsernameList,
+    buildReducedProfileDataList,
     compareIsNotYouThenUsername,
     compareUsername,
     formatLastOnlineDate,
@@ -2862,6 +2863,7 @@ export class OpenChat {
     buildUserAvatarUrl = buildUserAvatarUrl;
     buildUserBackgroundUrl = buildUserBackgroundUrl;
     buildUsernameList = buildUsernameList;
+    buildReducedProfileDataList = buildReducedProfileDataList;
     groupMessagesByDate = groupMessagesByDate;
     fillMessage = fillMessage;
     audioRecordingMimeType = audioRecordingMimeType;
@@ -3824,7 +3826,7 @@ export class OpenChat {
             // now a new latest message and if so, mark it as a local chat summary update.
             let latestMessageIndex =
                 threadRootMessageIndex === undefined
-                    ? allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1
+                    ? (allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1)
                     : undefined;
             let newLatestMessage: EventWrapper<Message> | undefined = undefined;
 
@@ -8979,7 +8981,7 @@ export class OpenChat {
     }
 
     getStreak(userId: string | undefined) {
-        return userId ? userStore.get(userId)?.streak ?? 0 : 0;
+        return userId ? (userStore.get(userId)?.streak ?? 0) : 0;
     }
 
     getBotDefinition(endpoint: string): Promise<BotDefinitionResponse> {

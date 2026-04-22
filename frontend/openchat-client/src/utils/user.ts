@@ -1,4 +1,10 @@
-import type { MessageFormatter, PublicProfile, UserLookup, UserSummary } from "openchat-shared";
+import type {
+    MessageFormatter,
+    PublicProfile,
+    UserLookup,
+    UserSummary,
+    ReducedPublicProfile,
+} from "openchat-shared";
 
 export function formatLastOnlineDate(
     formatter: MessageFormatter,
@@ -75,6 +81,30 @@ export function buildUsernameList(
     }
 
     return usernames;
+}
+
+export function buildReducedProfileDataList(
+    userIds: Set<string>,
+    myUserId: string | undefined,
+    users: UserLookup,
+    maxUsernames = 99,
+): ReducedPublicProfile[] {
+    return Array.from(userIds)
+        .slice(0, maxUsernames * 1.5)
+        .map((uid) => {
+            const userSummary = users.get(uid);
+            if (userSummary && userSummary.kind === "user") {
+                return {
+                    userId: uid,
+                    username: userSummary.username,
+                    displayName: userSummary.displayName,
+                    isCurentUser: myUserId === uid,
+                    blobData: userSummary.blobData,
+                    blobUrl: userSummary.blobUrl,
+                };
+            }
+        })
+        .filter((reducedProfile) => reducedProfile !== undefined);
 }
 
 export function nullUser(username: string): UserSummary {

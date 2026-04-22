@@ -33,6 +33,7 @@
         type ReadonlySet,
         type TokenBalanceGate,
         type UserGroupDetails,
+        type PollContent,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { minimizeApp } from "tauri-plugin-oc-api";
@@ -82,6 +83,7 @@
     import P2PSwapContentBuilder from "./P2PSwapContentBuilder.svelte";
     import PinnedMessages from "./pinned/PinnedMessages.svelte";
     import PollBuilder from "./PollBuilder.svelte";
+    import PollPublicVotes from "./PollPublicVotes.svelte";
     import PrizeContentBuilder from "./PrizeContentBuilder.svelte";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import Rules from "./Rules.svelte";
@@ -154,6 +156,7 @@
         | { kind: "user_groups"; community: CommunitySummary }
         | { kind: "streak_insurance" }
         | { kind: "create_poll"; messageContext: MessageContext }
+        | { kind: "poll_public_votes"; content: PollContent; senderId: string }
         | { kind: "create_prize"; messageContext: MessageContext }
         | { kind: "evaluate_community_access_gate" }
         | { kind: "evaluate_group_access_gate" }
@@ -315,6 +318,9 @@
             subscribe("closeThread", closeThread),
             subscribe("createPoll", (messageContext) =>
                 push({ kind: "create_poll", messageContext }),
+            ),
+            subscribe("pollPublicVotes", ({ content, senderId }) =>
+                push({ kind: "poll_public_votes", content, senderId }),
             ),
             subscribe("createPrize", (messageContext) =>
                 push({ kind: "create_prize", messageContext }),
@@ -677,6 +683,8 @@
             <StreakInsuranceBuy onClose={pop} />
         {:else if page.kind === "create_poll"}
             <PollBuilder messageContext={page.messageContext} onClose={pop} />
+        {:else if page.kind === "poll_public_votes"}
+            <PollPublicVotes content={page.content} senderId={page.senderId} onClose={pop} />
         {:else if page.kind === "create_prize"}
             <PrizeContentBuilder context={page.messageContext} onClose={pop} />
         {:else if page.kind === "create_swap"}

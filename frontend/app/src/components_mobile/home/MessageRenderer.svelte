@@ -8,9 +8,9 @@
     import Close from "svelte-material-icons/Close.svelte";
 
     interface Props {
-        draftView: Snippet<[Snippet?]>;
         replyView: Snippet<[Snippet?]>;
         regularView: Snippet<[Snippet?]>;
+        draftView?: Snippet<[Snippet?]>;
         caption?: string;
         draft?: boolean;
         reply?: boolean;
@@ -25,9 +25,9 @@
     }
 
     let {
-        draftView,
         replyView,
         regularView,
+        draftView,
         caption,
         reply = false,
         draft = false,
@@ -74,7 +74,9 @@
 
 {#if mode === "reply"}
     {@render replyView(textContentArg)}
-{:else if mode === "draft"}
+{:else if mode === "render"}
+    {@render regularView(textContentArg)}
+{:else if mode === "draft" && draftView}
     {@render draftView(textContentArg)}
     <div class="close" class:rtl={$rtlStore}>
         <IconButton size="sm" onclick={onRemove}>
@@ -83,8 +85,6 @@
             {/snippet}
         </IconButton>
     </div>
-{:else}
-    {@render regularView(textContentArg)}
 {/if}
 
 <style lang="scss">
