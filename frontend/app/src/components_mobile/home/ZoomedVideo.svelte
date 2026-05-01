@@ -80,6 +80,7 @@
         animation: slide-up 200ms ease-out forwards;
 
         .player {
+            position: absolute;
             width: 100%;
             height: 100%;
 
