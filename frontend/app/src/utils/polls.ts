@@ -37,7 +37,7 @@ export function votedFor(content: PollContent, idx: number): boolean {
 }
 
 export function voteCount(content: PollContent, idx: number): number {
-    let total = content.votes.total;
+    const total = content.votes.total;
     switch (total.kind) {
         case "anonymous_poll_votes":
             return total.votes[idx] ?? 0;

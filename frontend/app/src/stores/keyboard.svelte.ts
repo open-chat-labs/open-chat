@@ -112,6 +112,36 @@ if (window && IS_NATIVE_APP) {
     window.addEventListener("focusout", () => {
         lastFocusedInput = undefined;
     });
+
+    // Use visualViewport as a real-time backup for keyboard height detection.
+    // On cold start the first time the keyboard appears, expectWindowInsetChange
+    // may fire after a delay, while keyboard.height is still the initial estimate
+    // which can be too small, leaving the input tray shorter than the keyboard.
+    // visualViewport.height always reflects the actual visible area (keyboard
+    // excluded) even in native apps with disableViewportResize(), so we can use
+    // the difference to keep keyboard.height accurate in real time.
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", () => {
+            const kbHeight = Math.round(
+                window.innerHeight - (window.visualViewport?.height ?? window.innerHeight),
+            );
+            // Only update stored height when keyboard height looks valid (> 100px to avoid
+            // triggering on minor viewport changes unrelated to the keyboard).
+            if (kbHeight > 100) {
+                height = kbHeight;
+                localStorage.setItem(STORAGE_KEY, kbHeight.toString());
+            }
+
+            // Re-scroll into view whenever the viewport resizes while the keyboard
+            // is visible. On cold start the height starts as an estimate and/or the
+            // viewport may not have resized yet when the initial scroll fires, leaving
+            // the input tray hidden behind the keyboard. Rescrolling here ensures the
+            // input is visible once the layout has settled.
+            if (visible) {
+                scrollIntoViewLastFocused();
+            }
+        });
+    }
 }
 
 export const keyboard = {

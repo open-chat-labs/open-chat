@@ -161,8 +161,11 @@
                 navBarHeight: data.navHeightDp,
             });
 
-            keyboard.visible = data.isKeyboardOpen;
+            // Set currentHeight BEFORE visible so that when keyboard.visible = true
+            // triggers reactive effects (e.g. input tray height), keyboard.height is
+            // already the correct value rather than the cold-start estimate.
             keyboard.currentHeight = data.keyboardHeightDp;
+            keyboard.visible = data.isKeyboardOpen;
             data.isKeyboardOpen
                 ? document.body.classList.add("keyboard-visible")
                 : document.body.classList.remove("keyboard-visible");
