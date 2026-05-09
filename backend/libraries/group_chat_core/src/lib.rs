@@ -1,8 +1,9 @@
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageSuccess,
     DeleteUndeleteMessagesArgs, EditMessageArgs, EventPusher, ExpiredThread, GroupGateUpdatedInternal, MessageContentInternal,
-    NullEventPusher, PushEventResultInternal, PushMessageArgs, Reader, RegisterPollVoteArgs, RegisterPollVoteSuccess,
-    RemoveEventsResult, ReservePrizeSuccess, TipMessageArgs, UndeleteMessageSuccess, UpdateMessageSuccess,
+    MessageInternal, NullEventPusher, PushEventResultInternal, PushMessageArgs, Reader, RegisterPollVoteArgs,
+    RegisterPollVoteSuccess, RemoveEventsResult, ReservePrizeSuccess, TipMessageArgs, UndeleteMessageSuccess,
+    UpdateMessageSuccess,
 };
 use group_community_common::MemberUpdate;
 use itertools::Itertools;
@@ -878,7 +879,7 @@ impl GroupChatCore {
         reaction: Reaction,
         now: TimestampMillis,
         event_pusher: P,
-    ) -> OCResult<UpdateMessageSuccess> {
+    ) -> OCResult<UpdateMessageSuccess<MessageInternal>> {
         if matches!(caller, Caller::Webhook(_) | Caller::Bot(_)) {
             return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }

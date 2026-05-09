@@ -807,7 +807,7 @@ impl ChatEvents {
         &mut self,
         args: AddRemoveReactionArgs,
         event_pusher: Option<P>,
-    ) -> OCResult<UpdateMessageSuccess> {
+    ) -> OCResult<UpdateMessageSuccess<MessageInternal>> {
         if !args.reaction.is_valid() {
             return Err(OCErrorCode::InvalidReaction.with_message(format!("{:?}", args.reaction)));
         }
@@ -847,7 +847,7 @@ impl ChatEvents {
         chat: Chat,
         anonymized_id: String,
         mut event_pusher: Option<P>,
-    ) -> Result<(), UpdateEventError> {
+    ) -> Result<MessageInternal, UpdateEventError> {
         let added = if let Some((_, users)) = message.reactions.iter_mut().find(|(r, _)| *r == args.reaction) {
             users.insert(args.user_id)
         } else {
@@ -878,7 +878,7 @@ impl ChatEvents {
             );
         }
 
-        Ok(())
+        Ok(message.clone())
     }
 
     pub fn remove_reaction(&mut self, args: AddRemoveReactionArgs) -> OCResult<UpdateMessageSuccess> {
