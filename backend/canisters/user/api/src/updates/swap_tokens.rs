@@ -50,7 +50,13 @@ pub type ICPSwapArgs = ExchangeSwapArgs;
 #[ts_export(user, swap_tokens)]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct TacoArgs {
+    /// The TACO exchange canister that handles swap_multi_hop / swap_split_routes
+    /// (production: qioex-5iaaa-aaaan-q52ba-cai).
     pub swap_canister_id: CanisterId,
+    /// The exchange-treasury canister that holds deposited tokens — this is the
+    /// account TACO's `checkReceive` validates the user's ICRC1 transfer against
+    /// (production: qbnpl-laaaa-aaaan-q52aq-cai). Distinct from swap_canister_id.
+    pub treasury_canister_id: CanisterId,
 }
 
 #[ts_export(user, swap_tokens)]

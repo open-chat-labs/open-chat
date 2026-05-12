@@ -27,14 +27,21 @@ const SPLIT_IMPROVEMENT_DENOMINATOR: u128 = 1000;
 #[derive(Serialize, Deserialize)]
 pub struct TacoExchangeClient {
     swap_canister_id: CanisterId,
+    treasury_canister_id: CanisterId,
     input_token: TokenInfo,
     output_token: TokenInfo,
 }
 
 impl TacoExchangeClient {
-    pub fn new(swap_canister_id: CanisterId, input_token: TokenInfo, output_token: TokenInfo) -> Self {
+    pub fn new(
+        swap_canister_id: CanisterId,
+        treasury_canister_id: CanisterId,
+        input_token: TokenInfo,
+        output_token: TokenInfo,
+    ) -> Self {
         TacoExchangeClient {
             swap_canister_id,
+            treasury_canister_id,
             input_token,
             output_token,
         }
@@ -55,10 +62,13 @@ impl SwapClient for TacoExchangeClient {
     }
 
     async fn deposit_account(&self) -> Result<Account, C2CError> {
-        // TACO verifies deposits by inspecting the ledger block; the recipient
-        // is the exchange canister's default account.
+        // TACO verifies deposits by inspecting the ledger block, looking for a
+        // transfer to its `treasury_principal` (the exchange-treasury canister,
+        // NOT the exchange canister itself — see TACO's checkReceive at
+        // src/exchange/main.mo line 11235 and the treasury trader's reference
+        // at src/swap/taco_swap.mo:19,440).
         Ok(Account {
-            owner: self.swap_canister_id,
+            owner: self.treasury_canister_id,
             subaccount: None,
         })
     }

@@ -262,7 +262,12 @@ fn build_swap_client(args: &Args, state: &RuntimeState) -> Box<dyn SwapClient> {
                 icpswap.zero_for_one,
             ))
         }
-        ExchangeArgs::Taco(taco) => Box::new(TacoExchangeClient::new(taco.swap_canister_id, input_token, output_token)),
+        ExchangeArgs::Taco(taco) => Box::new(TacoExchangeClient::new(
+            taco.swap_canister_id,
+            taco.treasury_canister_id,
+            input_token,
+            output_token,
+        )),
     }
 }
 
