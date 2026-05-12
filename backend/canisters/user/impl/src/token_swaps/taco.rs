@@ -3,7 +3,7 @@ use crate::token_swaps::nat_to_u128;
 use async_trait::async_trait;
 use candid::Nat;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use taco_exchange_canister::get_expected_receive_amount_batch_multi as batch_multi;
 use taco_exchange_canister::{SplitLeg, SwapHop, SwapResult};
 use types::icrc1::Account;
@@ -287,94 +287,131 @@ fn flatten_batch(batch: &batch_multi::Response) -> Vec<QuoteEntry> {
     out
 }
 
+// Pre-enumerated bp tuples whose components are all ∈ {1000..9000} and sum to
+// 10000 — the ONLY tuples that can form a full-coverage 2- or 3-leg split with
+// the 10-fraction probe grid. The optimizer iterates these directly instead of
+// scanning every pair / triple of entries, collapsing the search from
+// C(50,2)+C(50,3) ≈ 21,000 iterations to ≈ 810.
+const TWO_LEG_BP_PAIRS: &[(u128, u128)] = &[
+    (1000, 9000),
+    (2000, 8000),
+    (3000, 7000),
+    (4000, 6000),
+    (5000, 5000),
+];
+
+const THREE_LEG_BP_TRIPLES: &[(u128, u128, u128)] = &[
+    (1000, 1000, 8000),
+    (1000, 2000, 7000),
+    (1000, 3000, 6000),
+    (1000, 4000, 5000),
+    (2000, 2000, 6000),
+    (2000, 3000, 5000),
+    (2000, 4000, 4000),
+    (3000, 3000, 4000),
+];
+
 // Route × fraction optimizer.
 //
-// 1. Flatten the BatchMulti grid into entries `{ bp, route, expected_out, edge_keys }`.
-// 2. Baseline = top expected_out among entries at bp == 10000 (unsplit best).
-// 3. Enumerate 2-leg and 3-leg combinations whose `bp`s sum to 10000 exactly,
-//    whose routes are distinct, and whose edge_keys sets are pairwise disjoint.
+// 1. Flatten the BatchMulti grid into entries `{ bp, route, expected_out, edge_keys }`
+//    and group them by bp (an entry lives in exactly one group).
+// 2. Baseline = top expected_out at the 100% fraction (unsplit best).
+// 3. For each precomputed bp tuple that sums to 10000, look up the matching
+//    entry groups and consider their cross-product, pruning combos that share
+//    a route_key or any normalized pool edge.
 // 4. Pick the combination with the largest sum of expected_out.
 // 5. Accept the split only if it beats the baseline by > 0.1%; otherwise fall
 //    back to the baseline's single route.
 //
-// This matches the TACO frontend's `useSwapFlow` composable behaviour
-// (`Split Route 0.4% better output` in the screenshot at chat).
+// Matches the TACO frontend's `useSwapFlow` algorithm (Split Route badge in the
+// screenshot at chat).
 fn build_swap_plan(batch: &batch_multi::Response) -> SwapPlan {
     let entries = flatten_batch(batch);
     if entries.is_empty() {
         return SwapPlan::None;
     }
 
-    // Baseline: top route at the 100% fraction.
-    let baseline_entry = entries.iter().filter(|e| e.bp == 10000).max_by_key(|e| e.expected_out);
-    let baseline_out = baseline_entry.map(|e| e.expected_out).unwrap_or(0);
+    // Group entries by their bp. Each entry belongs to exactly one group.
+    let mut by_bp: HashMap<u128, Vec<usize>> = HashMap::new();
+    for (idx, e) in entries.iter().enumerate() {
+        by_bp.entry(e.bp).or_default().push(idx);
+    }
+    let empty: Vec<usize> = Vec::new();
+    let group = |bp: u128| -> &Vec<usize> { by_bp.get(&bp).unwrap_or(&empty) };
 
-    // Search for the highest-output split plan.
-    let mut best_plan: Option<Vec<&QuoteEntry>> = None;
+    // Baseline: highest-output entry at the 100% fraction.
+    let baseline_idx = group(10000)
+        .iter()
+        .copied()
+        .max_by_key(|&i| entries[i].expected_out);
+    let baseline_out = baseline_idx.map(|i| entries[i].expected_out).unwrap_or(0);
+
+    let mut best_plan: Option<Vec<usize>> = None;
     let mut best_total: u128 = 0;
 
-    let n = entries.len();
-
-    // 2-leg combos
-    for i in 0..n {
-        for j in (i + 1)..n {
-            let a = &entries[i];
-            let b = &entries[j];
-            if a.bp + b.bp != 10000 {
-                continue;
+    // ── 2-leg search ────────────────────────────────────────────────────────
+    for &(bp_a, bp_b) in TWO_LEG_BP_PAIRS {
+        let group_a = group(bp_a);
+        if bp_a == bp_b {
+            // Two legs from the same fraction — pick unordered pairs (xi < xj).
+            for (xi, &i) in group_a.iter().enumerate() {
+                for &j in &group_a[xi + 1..] {
+                    try_record_pair(&entries, i, j, &mut best_total, &mut best_plan);
+                }
             }
-            if a.route_key == b.route_key {
-                continue;
-            }
-            if edges_overlap(&a.edge_keys, &b.edge_keys) {
-                continue;
-            }
-            let total = a.expected_out + b.expected_out;
-            if total > best_total {
-                best_total = total;
-                best_plan = Some(vec![a, b]);
+        } else {
+            let group_b = group(bp_b);
+            for &i in group_a {
+                for &j in group_b {
+                    try_record_pair(&entries, i, j, &mut best_total, &mut best_plan);
+                }
             }
         }
     }
 
-    // 3-leg combos (TACO's swap_split_routes caps at 3 legs)
+    // ── 3-leg search ────────────────────────────────────────────────────────
     if MAX_LEGS >= 3 {
-        for i in 0..n {
-            for j in (i + 1)..n {
-                let a = &entries[i];
-                let b = &entries[j];
-                if a.bp + b.bp >= 10000 {
+        for &(bp_a, bp_b, bp_c) in THREE_LEG_BP_TRIPLES {
+            let group_a = group(bp_a);
+            let group_b = group(bp_b);
+            let group_c = group(bp_c);
+            let same_ab = bp_a == bp_b;
+            let same_bc = bp_b == bp_c;
+
+            for (xi, &i) in group_a.iter().enumerate() {
+                let b_start = if same_ab { xi + 1 } else { 0 };
+                if b_start >= group_b.len() {
                     continue;
                 }
-                if a.route_key == b.route_key {
-                    continue;
-                }
-                if edges_overlap(&a.edge_keys, &b.edge_keys) {
-                    continue;
-                }
-                for k in (j + 1)..n {
-                    let c = &entries[k];
-                    if a.bp + b.bp + c.bp != 10000 {
+                for (offset_j, &j) in group_b[b_start..].iter().enumerate() {
+                    if !pair_compatible(&entries[i], &entries[j]) {
                         continue;
                     }
-                    if c.route_key == a.route_key || c.route_key == b.route_key {
+                    let xj = b_start + offset_j;
+                    let c_start = if same_bc { xj + 1 } else { 0 };
+                    if c_start >= group_c.len() {
                         continue;
                     }
-                    if edges_overlap(&a.edge_keys, &c.edge_keys) || edges_overlap(&b.edge_keys, &c.edge_keys) {
-                        continue;
-                    }
-                    let total = a.expected_out + b.expected_out + c.expected_out;
-                    if total > best_total {
-                        best_total = total;
-                        best_plan = Some(vec![a, b, c]);
+                    for &k in &group_c[c_start..] {
+                        if !pair_compatible(&entries[i], &entries[k])
+                            || !pair_compatible(&entries[j], &entries[k])
+                        {
+                            continue;
+                        }
+                        let total =
+                            entries[i].expected_out + entries[j].expected_out + entries[k].expected_out;
+                        if total > best_total {
+                            best_total = total;
+                            best_plan = Some(vec![i, j, k]);
+                        }
                     }
                 }
             }
         }
     }
 
-    // Acceptance: split must beat baseline by >0.1%, OR baseline must be unusable
-    // (no 100%-fraction route returned anything).
+    // Acceptance: split must beat baseline by >0.1%, or baseline must be
+    // unusable (no 100%-fraction route returned anything).
     let threshold = baseline_out.saturating_mul(SPLIT_IMPROVEMENT_NUMERATOR) / SPLIT_IMPROVEMENT_DENOMINATOR;
     let accept_split = match (best_plan.as_ref(), baseline_out) {
         (Some(_), 0) => true,
@@ -386,26 +423,48 @@ fn build_swap_plan(batch: &batch_multi::Response) -> SwapPlan {
         let legs = best_plan
             .unwrap()
             .into_iter()
-            .map(|e| PlannedLeg {
-                bp: e.bp,
-                route: e.route.clone(),
+            .map(|idx| PlannedLeg {
+                bp: entries[idx].bp,
+                route: entries[idx].route.clone(),
             })
             .collect();
         return SwapPlan::Multi(legs);
     }
 
-    if let Some(e) = baseline_entry {
-        return SwapPlan::Single(e.route.clone());
+    if let Some(i) = baseline_idx {
+        return SwapPlan::Single(entries[i].route.clone());
     }
 
-    // No 100%-fraction route exists. Fall back to the highest-output entry we saw
-    // (best-effort) — but only as a single-route execution since we have no
-    // viable split.
+    // No 100%-fraction route exists. Best-effort: pick the highest-output entry
+    // across the whole grid and execute it as a single route.
     if let Some(e) = entries.iter().max_by_key(|e| e.expected_out) {
         return SwapPlan::Single(e.route.clone());
     }
 
     SwapPlan::None
+}
+
+fn pair_compatible(a: &QuoteEntry, b: &QuoteEntry) -> bool {
+    a.route_key != b.route_key && !edges_overlap(&a.edge_keys, &b.edge_keys)
+}
+
+fn try_record_pair(
+    entries: &[QuoteEntry],
+    i: usize,
+    j: usize,
+    best_total: &mut u128,
+    best_plan: &mut Option<Vec<usize>>,
+) {
+    let a = &entries[i];
+    let b = &entries[j];
+    if !pair_compatible(a, b) {
+        return;
+    }
+    let total = a.expected_out + b.expected_out;
+    if total > *best_total {
+        *best_total = total;
+        *best_plan = Some(vec![i, j]);
+    }
 }
 
 // Build [SplitLeg] from a Multi plan: amount_in = total × bp / 10000, with the
