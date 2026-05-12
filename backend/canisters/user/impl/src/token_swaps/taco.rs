@@ -56,8 +56,45 @@ impl SwapClient for TacoExchangeClient {
 
     fn auto_withdrawals(&self) -> bool {
         // TACO pushes the swap output back to the caller automatically as part
-        // of swapMultiHop / swapSplitRoutes, so OC's separate withdraw step is
-        // a no-op.
+        // of swap_multi_hop / swap_split_routes, so OC's separate withdraw step
+        // is a no-op.
+        //
+        // EVENTUAL-CONSISTENCY NOTE — this is NOT the same guarantee ICPSwap
+        // gives. ICPSwap's withdraw() awaits the actual ICRC1 transfer, so the
+        // tokens are in the user canister before SuccessResult is returned.
+        // TACO's transfer queue is async:
+        //
+        //   1. swap_multi_hop / swap_split_routes calls treasury.receive
+        //      TransferTasks(queue, immediate = false) at the end. The
+        //      `immediate` flag is `isInAllowedCanisters(caller)` which is
+        //      FALSE for OC user canisters (TACO's allowedCanisters list is
+        //      TACO-internal canisters only).
+        //   2. With immediate=false, receiveTransferTasks just appends to
+        //      transferQueue and sets a 5-second setTimer to drain a batch
+        //      via transferTimer(false). See
+        //      TACO_Backend/src/exchange/treasury.mo:141-190.
+        //   3. swap_multi_hop returns to us as soon as receiveTransferTasks
+        //      returns. The actual icrc1_transfer to this canister lands
+        //      ~5-10 seconds later when the timer fires.
+        //
+        // Consequence: when OC reports SuccessResult { amount_out } to the
+        // user, the tokens may not yet be in the user canister's balance.
+        // They arrive a few seconds later via TACO's transfer timer. A
+        // frontend that polls the wallet balance right after success will
+        // briefly see stale state. Same for refunds on TACO-level failures
+        // (SlippageExceeded, etc.) — the refund queued by TACO also rides
+        // the 5s timer.
+        //
+        // Long-term fixes (not implemented):
+        //  - implement `withdraw()` as a polling check that waits for the
+        //    balance to reflect the expected amount before returning, OR
+        //  - have TACO governance add OC user canisters to allowedCanisters
+        //    so swap_multi_hop calls with immediate=true and drains the
+        //    transfer queue synchronously before returning.
+        //
+        // No correctness issue: TACO's BlocksDone guard makes retries
+        // idempotent, and tokens always arrive eventually via the queued
+        // transfer.
         true
     }
 
