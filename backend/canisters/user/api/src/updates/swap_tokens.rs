@@ -19,18 +19,21 @@ pub struct Args {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum ExchangeArgs {
     ICPSwap(ICPSwapArgs),
+    Taco(TacoArgs),
 }
 
 impl ExchangeArgs {
     pub fn exchange_id(&self) -> ExchangeId {
         match self {
             ExchangeArgs::ICPSwap(_) => ExchangeId::ICPSwap,
+            ExchangeArgs::Taco(_) => ExchangeId::Taco,
         }
     }
 
     pub fn swap_canister_id(&self) -> CanisterId {
         match self {
             ExchangeArgs::ICPSwap(a) => a.swap_canister_id,
+            ExchangeArgs::Taco(a) => a.swap_canister_id,
         }
     }
 }
@@ -43,6 +46,12 @@ pub struct ExchangeSwapArgs {
 }
 
 pub type ICPSwapArgs = ExchangeSwapArgs;
+
+#[ts_export(user, swap_tokens)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct TacoArgs {
+    pub swap_canister_id: CanisterId,
+}
 
 #[ts_export(user, swap_tokens)]
 #[derive(Serialize, Deserialize, Debug)]
