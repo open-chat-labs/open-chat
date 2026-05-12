@@ -3,6 +3,7 @@ use crate::token_swaps::nat_to_u128;
 use async_trait::async_trait;
 use candid::Nat;
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use taco_exchange_canister::get_expected_receive_amount_batch_multi as batch_multi;
 use taco_exchange_canister::{SplitLeg, SwapHop, SwapResult};
 use types::icrc1::Account;
@@ -10,10 +11,18 @@ use types::{C2CError, CanisterId, TokenInfo};
 
 // 10-fraction probe grid (10%, 20%, ..., 100%). Mirrors the treasury trader's
 // scenario builder at TACO_Backend/src/treasury/treasury.mo:10646 — top-5 routes
-// per fraction, single inter-canister call.
-const PROBE_FRACTIONS_BP: [u128; 10] = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000];
+// per fraction, single inter-canister call. Together with the route × fraction
+// enumerator below this lets us discover asymmetric splits (e.g. 30%/70%)
+// without further round-trips.
+const NUM_FRACTIONS: usize = 10;
+const STEP_BP: u128 = 1000;
 const TOP_ROUTES_PER_FRACTION: u128 = 5;
 const MAX_LEGS: usize = 3;
+// 0.1% — must beat the unsplit baseline by this margin before we'll take on the
+// extra slippage risk of a multi-leg execution. Matches the frontend's
+// useSwapFlow composable.
+const SPLIT_IMPROVEMENT_NUMERATOR: u128 = 1001;
+const SPLIT_IMPROVEMENT_DENOMINATOR: u128 = 1000;
 
 #[derive(Serialize, Deserialize)]
 pub struct TacoExchangeClient {
@@ -83,13 +92,14 @@ impl SwapClient for TacoExchangeClient {
         let token_in = self.input_token.ledger.to_string();
         let token_out = self.output_token.ledger.to_string();
 
-        // Build the 10-fraction × top-5 grid request. We probe at `usable * bp / 10000`
-        // (a pre-fee estimate good enough for route ranking; exact bps comes back
-        // in the response).
-        let probes: Vec<batch_multi::Request> = PROBE_FRACTIONS_BP
-            .iter()
-            .filter_map(|bp| {
-                let amt = usable.saturating_mul(*bp) / 10000;
+        // Build the 10-fraction × top-5 grid. Probe amounts are `usable * (i+1) / 10`
+        // — a pre-trading-fee estimate good enough for routing; the exact bps
+        // comes back inline in the response and is applied to the execution
+        // amount below.
+        let probes: Vec<batch_multi::Request> = (0..NUM_FRACTIONS)
+            .filter_map(|i| {
+                let bp = ((i as u128) + 1) * STEP_BP;
+                let amt = usable.saturating_mul(bp) / 10000;
                 if amt == 0 {
                     None
                 } else {
@@ -112,51 +122,51 @@ impl SwapClient for TacoExchangeClient {
         )
         .await?;
 
-        // Pull the live trading fee bps from any route (every route in the response
-        // carries the same ICPfee snapshot).
+        // Pull the live trading fee bps from any route in the response (every
+        // route carries the same ICPfee snapshot). Defensively clamp to TACO's
+        // enforced range [1, 50].
         let fee_bps = match extract_trading_fee_bps(&batch) {
-            Some(bps) => bps,
+            Some(bps) => bps.clamp(1, 50),
             None => return Ok(Err("TACO swap: no routes returned for any fraction".to_string())),
         };
-        // Defensive clamp against the canister's enforced range [1, 50] bps.
-        let fee_bps_clamped = fee_bps.clamp(1, 50);
 
         // Compute the true amount_in such that the recorded deposit covers
-        //   amount_in * (10000 + fee_bps) / 10000 + tfee.
-        let amount_in_total = usable.saturating_mul(10000) / (10000 + fee_bps_clamped);
+        //   amount_in * (10000 + fee_bps) / 10000 + tfee  ← TACO's checkReceive.
+        let amount_in_total = usable.saturating_mul(10000) / (10000 + fee_bps);
         if amount_in_total == 0 {
             return Ok(Err("TACO swap: deposit too small to cover trading fee".to_string()));
         }
 
-        // Greedy disjoint-pool selection (mirrors hopsSharePool at
-        // TACO_Backend/src/treasury/treasury.mo:10895, max 3 legs).
-        let selected = build_split_plan(&batch);
-        if selected.is_empty() {
-            return Ok(Err("TACO swap: no usable routes after disjoint-pool filtering".to_string()));
-        }
+        // Route × fraction enumeration — same algorithm the TACO frontend's
+        // useSwapFlow composable runs (and the screenshot at chat shows producing
+        // a 30/70 split). Disjoint-pool constraint mirrors hopsSharePool from
+        // TACO_Backend/src/treasury/treasury.mo:10895.
+        let plan = build_swap_plan(&batch);
 
-        if selected.len() == 1 {
-            execute_swap_multi_hop(
+        match plan {
+            SwapPlan::Single(route) => execute_swap_multi_hop(
                 self.swap_canister_id,
                 token_in,
                 token_out,
                 amount_in_total,
-                selected.into_iter().next().unwrap(),
+                route,
                 min_amount_out,
                 block_index,
             )
-            .await
-        } else {
-            let legs = make_split_legs(&selected, amount_in_total, min_amount_out);
-            execute_swap_split_routes(
-                self.swap_canister_id,
-                token_in,
-                token_out,
-                legs,
-                min_amount_out,
-                block_index,
-            )
-            .await
+            .await,
+            SwapPlan::Multi(legs) => {
+                let split_legs = make_split_legs(&legs, amount_in_total, min_amount_out);
+                execute_swap_split_routes(
+                    self.swap_canister_id,
+                    token_in,
+                    token_out,
+                    split_legs,
+                    min_amount_out,
+                    block_index,
+                )
+                .await
+            }
+            SwapPlan::None => Ok(Err("TACO swap: no viable route found".to_string())),
         }
     }
 
@@ -164,6 +174,31 @@ impl SwapClient for TacoExchangeClient {
         // auto_withdrawals() == true means swap_tokens.rs skips this call.
         Ok(amount)
     }
+}
+
+// ── plan types ──────────────────────────────────────────────────────────────
+
+enum SwapPlan {
+    Single(Vec<SwapHop>),
+    Multi(Vec<PlannedLeg>),
+    None,
+}
+
+#[derive(Clone)]
+struct PlannedLeg {
+    /// Basis points of the total amount allocated to this leg (sums to 10000
+    /// across all legs of a Multi plan).
+    bp: u128,
+    route: Vec<SwapHop>,
+}
+
+#[derive(Clone)]
+struct QuoteEntry {
+    bp: u128,
+    route: Vec<SwapHop>,
+    expected_out: u128,
+    route_key: String,
+    edge_keys: Vec<String>,
 }
 
 // ── helpers ─────────────────────────────────────────────────────────────────
@@ -176,16 +211,19 @@ fn extract_trading_fee_bps(batch: &batch_multi::Response) -> Option<u128> {
         .map(|r| nat_to_u128(r.trading_fee_bps.clone()))
 }
 
-// Bidirectional pool-edge overlap check — verbatim port of `hopsSharePool` at
-// TACO_Backend/src/treasury/treasury.mo:10895. Returns true if any hop in `a`
-// shares a pool with any hop in `b` (a pool is identified by its unordered
-// token pair, so {A→B} and {B→A} are the same pool).
-fn routes_share_pool_edge(a: &[SwapHop], b: &[SwapHop]) -> bool {
-    for ha in a {
-        for hb in b {
-            if (ha.token_in == hb.token_in && ha.token_out == hb.token_out)
-                || (ha.token_in == hb.token_out && ha.token_out == hb.token_in)
-            {
+fn normalize_edge(a: &str, b: &str) -> String {
+    if a < b {
+        format!("{a}|{b}")
+    } else {
+        format!("{b}|{a}")
+    }
+}
+
+// Two leg's pool sets overlap iff they share any normalized edge.
+fn edges_overlap(a: &[String], b: &[String]) -> bool {
+    for ea in a {
+        for eb in b {
+            if ea == eb {
                 return true;
             }
         }
@@ -193,83 +231,212 @@ fn routes_share_pool_edge(a: &[SwapHop], b: &[SwapHop]) -> bool {
     false
 }
 
-// Walk all routes returned by BatchMulti (across all fractions), dedupe by route
-// token path, then greedily keep routes that don't share any pool edge with an
-// already-kept route. Stop at MAX_LEGS. Order follows discovery (matches
-// treasury's iteration over `tacoDistinctRoutes`).
-fn build_split_plan(batch: &batch_multi::Response) -> Vec<Vec<SwapHop>> {
-    let mut seen_route_keys: std::collections::HashSet<String> = std::collections::HashSet::new();
-    let mut kept: Vec<Vec<SwapHop>> = Vec::new();
+// Materialize hops for a quote entry. For direct routes the canister returns
+// hopDetails = [] AND routeTokens = [tokenSell, tokenBuy]; synthesize a single
+// hop from the route_tokens in that case.
+fn hops_from_route(route: &batch_multi::QuoteRoute) -> Vec<SwapHop> {
+    if !route.hop_details.is_empty() {
+        return route
+            .hop_details
+            .iter()
+            .map(|h| SwapHop {
+                token_in: h.token_in.clone(),
+                token_out: h.token_out.clone(),
+            })
+            .collect();
+    }
+    if route.route_tokens.len() == 2 {
+        return vec![SwapHop {
+            token_in: route.route_tokens[0].clone(),
+            token_out: route.route_tokens[1].clone(),
+        }];
+    }
+    Vec::new()
+}
 
-    for req in batch {
+// Flatten BatchMulti into entries (one per (fraction, route)). Dedupes by
+// (bp, route_key) so each fraction sees each route at most once.
+fn flatten_batch(batch: &batch_multi::Response) -> Vec<QuoteEntry> {
+    let mut out: Vec<QuoteEntry> = Vec::new();
+    let mut seen: HashSet<(u128, String)> = HashSet::new();
+    for (i, req) in batch.iter().enumerate() {
+        let bp = ((i as u128) + 1) * STEP_BP;
         for route in &req.routes {
-            if route.expected_buy_amount == Nat::from(0u32) {
+            let expected = nat_to_u128(route.expected_buy_amount.clone());
+            if expected == 0 {
                 continue;
             }
-            let hops: Vec<SwapHop> = route
-                .hop_details
-                .iter()
-                .map(|h| SwapHop {
-                    token_in: h.token_in.clone(),
-                    token_out: h.token_out.clone(),
-                })
-                .collect();
-            // For direct routes the canister returns hopDetails = [] AND
-            // routeTokens = [tokenSell, tokenBuy]; synthesize a single hop.
-            let hops = if hops.is_empty() && route.route_tokens.len() == 2 {
-                vec![SwapHop {
-                    token_in: route.route_tokens[0].clone(),
-                    token_out: route.route_tokens[1].clone(),
-                }]
-            } else {
-                hops
-            };
+            let hops = hops_from_route(route);
             if hops.is_empty() {
                 continue;
             }
-            let key = route.route_tokens.join("→");
-            if !seen_route_keys.insert(key) {
+            let route_key = route.route_tokens.join("→");
+            if !seen.insert((bp, route_key.clone())) {
                 continue;
             }
-            if kept.iter().any(|k| routes_share_pool_edge(k, &hops)) {
+            let edge_keys: Vec<String> = hops.iter().map(|h| normalize_edge(&h.token_in, &h.token_out)).collect();
+            out.push(QuoteEntry {
+                bp,
+                route: hops,
+                expected_out: expected,
+                route_key,
+                edge_keys,
+            });
+        }
+    }
+    out
+}
+
+// Route × fraction optimizer.
+//
+// 1. Flatten the BatchMulti grid into entries `{ bp, route, expected_out, edge_keys }`.
+// 2. Baseline = top expected_out among entries at bp == 10000 (unsplit best).
+// 3. Enumerate 2-leg and 3-leg combinations whose `bp`s sum to 10000 exactly,
+//    whose routes are distinct, and whose edge_keys sets are pairwise disjoint.
+// 4. Pick the combination with the largest sum of expected_out.
+// 5. Accept the split only if it beats the baseline by > 0.1%; otherwise fall
+//    back to the baseline's single route.
+//
+// This matches the TACO frontend's `useSwapFlow` composable behaviour
+// (`Split Route 0.4% better output` in the screenshot at chat).
+fn build_swap_plan(batch: &batch_multi::Response) -> SwapPlan {
+    let entries = flatten_batch(batch);
+    if entries.is_empty() {
+        return SwapPlan::None;
+    }
+
+    // Baseline: top route at the 100% fraction.
+    let baseline_entry = entries.iter().filter(|e| e.bp == 10000).max_by_key(|e| e.expected_out);
+    let baseline_out = baseline_entry.map(|e| e.expected_out).unwrap_or(0);
+
+    // Search for the highest-output split plan.
+    let mut best_plan: Option<Vec<&QuoteEntry>> = None;
+    let mut best_total: u128 = 0;
+
+    let n = entries.len();
+
+    // 2-leg combos
+    for i in 0..n {
+        for j in (i + 1)..n {
+            let a = &entries[i];
+            let b = &entries[j];
+            if a.bp + b.bp != 10000 {
                 continue;
             }
-            kept.push(hops);
-            if kept.len() >= MAX_LEGS {
-                return kept;
+            if a.route_key == b.route_key {
+                continue;
+            }
+            if edges_overlap(&a.edge_keys, &b.edge_keys) {
+                continue;
+            }
+            let total = a.expected_out + b.expected_out;
+            if total > best_total {
+                best_total = total;
+                best_plan = Some(vec![a, b]);
             }
         }
     }
 
-    kept
+    // 3-leg combos (TACO's swap_split_routes caps at 3 legs)
+    if MAX_LEGS >= 3 {
+        for i in 0..n {
+            for j in (i + 1)..n {
+                let a = &entries[i];
+                let b = &entries[j];
+                if a.bp + b.bp >= 10000 {
+                    continue;
+                }
+                if a.route_key == b.route_key {
+                    continue;
+                }
+                if edges_overlap(&a.edge_keys, &b.edge_keys) {
+                    continue;
+                }
+                for k in (j + 1)..n {
+                    let c = &entries[k];
+                    if a.bp + b.bp + c.bp != 10000 {
+                        continue;
+                    }
+                    if c.route_key == a.route_key || c.route_key == b.route_key {
+                        continue;
+                    }
+                    if edges_overlap(&a.edge_keys, &c.edge_keys) || edges_overlap(&b.edge_keys, &c.edge_keys) {
+                        continue;
+                    }
+                    let total = a.expected_out + b.expected_out + c.expected_out;
+                    if total > best_total {
+                        best_total = total;
+                        best_plan = Some(vec![a, b, c]);
+                    }
+                }
+            }
+        }
+    }
+
+    // Acceptance: split must beat baseline by >0.1%, OR baseline must be unusable
+    // (no 100%-fraction route returned anything).
+    let threshold = baseline_out.saturating_mul(SPLIT_IMPROVEMENT_NUMERATOR) / SPLIT_IMPROVEMENT_DENOMINATOR;
+    let accept_split = match (best_plan.as_ref(), baseline_out) {
+        (Some(_), 0) => true,
+        (Some(_), _) => best_total > threshold,
+        (None, _) => false,
+    };
+
+    if accept_split {
+        let legs = best_plan
+            .unwrap()
+            .into_iter()
+            .map(|e| PlannedLeg {
+                bp: e.bp,
+                route: e.route.clone(),
+            })
+            .collect();
+        return SwapPlan::Multi(legs);
+    }
+
+    if let Some(e) = baseline_entry {
+        return SwapPlan::Single(e.route.clone());
+    }
+
+    // No 100%-fraction route exists. Fall back to the highest-output entry we saw
+    // (best-effort) — but only as a single-route execution since we have no
+    // viable split.
+    if let Some(e) = entries.iter().max_by_key(|e| e.expected_out) {
+        return SwapPlan::Single(e.route.clone());
+    }
+
+    SwapPlan::None
 }
 
-// Build [SplitLeg] from selected routes: equal-split with remainder in the last
-// leg, pro-rata `minLegOut`. Mirrors treasury.mo:11851.
-fn make_split_legs(routes: &[Vec<SwapHop>], total: u128, min_out_total: u128) -> Vec<SplitLeg> {
-    let num_legs = routes.len();
-    let per_leg = total / num_legs as u128;
-    routes
-        .iter()
-        .enumerate()
-        .map(|(i, route)| {
-            let amount_in = if i == num_legs - 1 {
-                total.saturating_sub(per_leg.saturating_mul((num_legs - 1) as u128))
-            } else {
-                per_leg
-            };
-            let min_leg_out = if total > 0 {
-                min_out_total.saturating_mul(amount_in) / total
-            } else {
-                0
-            };
-            SplitLeg {
-                amount_in: amount_in.into(),
-                route: route.clone(),
-                min_leg_out: min_leg_out.into(),
-            }
-        })
-        .collect()
+// Build [SplitLeg] from a Multi plan: amount_in = total × bp / 10000, with the
+// LAST leg carrying any rounding remainder so the sum is exactly `total`. The
+// per-leg `minLegOut` is the pro-rata slice of the global min_amount_out (sums
+// to min_amount_out within rounding).
+fn make_split_legs(legs: &[PlannedLeg], total: u128, min_out_total: u128) -> Vec<SplitLeg> {
+    let n = legs.len();
+    let mut allocated_in: u128 = 0;
+    let mut allocated_min: u128 = 0;
+    let mut out = Vec::with_capacity(n);
+    for (i, leg) in legs.iter().enumerate() {
+        let (amount_in, min_leg_out) = if i + 1 == n {
+            (
+                total.saturating_sub(allocated_in),
+                min_out_total.saturating_sub(allocated_min),
+            )
+        } else {
+            let a = total.saturating_mul(leg.bp) / 10000;
+            let m = min_out_total.saturating_mul(leg.bp) / 10000;
+            allocated_in = allocated_in.saturating_add(a);
+            allocated_min = allocated_min.saturating_add(m);
+            (a, m)
+        };
+        out.push(SplitLeg {
+            amount_in: amount_in.into(),
+            route: leg.route.clone(),
+            min_leg_out: min_leg_out.into(),
+        });
+    }
+    out
 }
 
 async fn execute_swap_multi_hop(
