@@ -1,1 +1,1 @@
-pub mod get_expected_multi_hop_amount;
+pub mod get_expected_receive_amount_batch_multi;

@@ -16,6 +16,15 @@ pub struct SwapHop {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct SplitLeg {
+    #[serde(rename = "amountIn")]
+    pub amount_in: Nat,
+    pub route: Vec<SwapHop>,
+    #[serde(rename = "minLegOut")]
+    pub min_leg_out: Nat,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct SwapOk {
     #[serde(rename = "amountIn")]
     pub amount_in: Nat,
