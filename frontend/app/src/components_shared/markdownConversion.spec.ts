@@ -50,6 +50,30 @@ describe("markdown roundtrip", () => {
         );
     });
 
+    it("markdown link", () => {
+        expect(roundtrip("[testing links](https://www.bbc.co.uk/news/articles/crlp991nw41o)")).toBe(
+            "[testing links](https://www.bbc.co.uk/news/articles/crlp991nw41o)",
+        );
+    });
+
+    it("markdown link with trailing text", () => {
+        expect(
+            roundtrip(
+                "[what about this](https://www.bbc.co.uk/news/articles/crlp991nw41o) I hope this still works",
+            ),
+        ).toBe(
+            "[what about this](https://www.bbc.co.uk/news/articles/crlp991nw41o) I hope this still works",
+        );
+    });
+
+    it("markdown link with parentheses in URL", () => {
+        expect(
+            roundtrip(
+                "[Wikipedia link](https://en.wikipedia.org/wiki/Foo_(bar)) and more text",
+            ),
+        ).toBe("[Wikipedia link](https://en.wikipedia.org/wiki/Foo_(bar)) and more text");
+    });
+
     it("heading level 1", () => {
         expect(roundtrip("# Heading")).toBe("# Heading");
     });

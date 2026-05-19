@@ -192,9 +192,9 @@ export function parseInline(text: string): any[] {
                 continue;
             }
         }
-        // link: [text](url)
+        // link: [text](url) — url may contain balanced parens e.g. Wikipedia links
         if (text[pos] === "[") {
-            const m = /^\[([^\]]*)\]\(([^)]*)\)/.exec(text.slice(pos));
+            const m = /^\[([^\]]*)\]\(([^()]*(?:\([^()]*\)[^()]*)*)\)/.exec(text.slice(pos));
             if (m) {
                 flush(pos);
                 nodes.push({

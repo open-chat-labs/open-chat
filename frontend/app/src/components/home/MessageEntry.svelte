@@ -193,38 +193,6 @@
         containsMarkdown = detectMarkdown(inputContent);
     }
 
-    function uptoCaret(
-        inputContent: string | null,
-        fn: (slice: string, node: Node, pos: number) => void,
-    ): void {
-        if (inputContent === null) return;
-
-        const selection = window.getSelection();
-        if (selection === null) return;
-        const anchorNode = selection.anchorNode;
-        if (anchorNode?.textContent == null) return;
-        const text = anchorNode.textContent;
-
-        const slice = text.slice(0, selection.anchorOffset);
-        fn(slice, anchorNode, selection.anchorOffset);
-    }
-
-    function triggerEmojiLookup(inputContent: string | null): void {
-        uptoCaret(inputContent, (slice: string, node: Node, pos: number) => {
-            const matches = slice.match(emojiRegex);
-            if (matches !== null) {
-                if (matches.index !== undefined) {
-                    rangeToReplace = [node, matches.index, pos];
-                    emojiQuery = matches[1].toLowerCase() || undefined;
-                    showEmojiSearch = true;
-                }
-            } else {
-                showEmojiSearch = false;
-                emojiQuery = undefined;
-            }
-        });
-    }
-
     function triggerCommandSelector(inputContent: string | null): void {
         const commandMatch = inputContent?.match(/^\/.*/);
         if (commandMatch) {
@@ -400,16 +368,6 @@
         editor?.focus();
     }
 
-    // function setCaretTo(node: Node, pos: number) {
-    //     const range = document.createRange();
-    //     range.selectNodeContents(node);
-    //     range.setStart(node, pos);
-    //     range.collapse(true);
-    //     const sel = window.getSelection();
-    //     sel?.removeAllRanges();
-    //     sel?.addRange(range);
-    // }
-
     function replaceTextWith(replacement: string) {
         editor?.setContent(replacement);
         onSetTextContent(editor?.getMarkdown());
@@ -455,6 +413,7 @@
             editingEvent !== undefined ||
             attachment !== undefined,
     );
+
     let excessiveLinks = $derived(client.extractEnabledLinks(textContent ?? "").length > 5);
     let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
     $effect(() => {
@@ -749,14 +708,6 @@
         overflow-wrap: anywhere;
         border: var(--bw) solid var(--entry-input-bd);
         box-shadow: var(--entry-input-sh);
-
-        &.empty:before {
-            content: attr(placeholder);
-            color: var(--placeholder);
-            pointer-events: none;
-            display: block; /* For Firefox */
-            position: absolute;
-        }
 
         &.recording {
             display: none;

@@ -6,6 +6,7 @@
 <script lang="ts">
     import { rtlStore } from "@src/stores/rtl";
     import { Editor, type Content } from "@tiptap/core";
+    import Link from "@tiptap/extension-link";
     import Placeholder from "@tiptap/extension-placeholder";
     import StarterKit from "@tiptap/starter-kit";
     import { isTouchOnlyDevice } from "component-lib";
@@ -80,7 +81,6 @@
 
     function userOrGroupToInsert(user: UserOrUserGroup): Content {
         const label = client.userOrUserGroupName(user);
-        console.log("User: ", user, label);
         switch (user.kind) {
             case "everyone":
                 return "@everyone";
@@ -197,8 +197,9 @@
         editor = new Editor({
             element: editorEl,
             extensions: [
-                StarterKit.configure({ link: { openOnClick: false } }),
+                StarterKit.configure({ link: false }),
                 Placeholder.configure({ placeholder }),
+                Link.extend({ inclusive() { return false; } }).configure({ openOnClick: false }),
                 UserMentionExtension,
                 GroupMentionExtension,
             ],
