@@ -74,6 +74,7 @@ fn block_user_who_is_no_longer_group_member_succeeds() {
             chat_id: group_id,
             invite_code: None,
             verified_credential_args: None,
+            composite_gate_index: None,
         },
     );
 

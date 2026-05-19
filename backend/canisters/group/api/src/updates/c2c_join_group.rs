@@ -18,6 +18,7 @@ pub struct Args {
     pub unique_person_proof: Option<UniquePersonProof>,
     #[serde(default)]
     pub total_chit_earned: i32,
+    pub composite_gate_index: Option<u8>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

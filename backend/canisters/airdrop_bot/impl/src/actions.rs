@@ -90,6 +90,7 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) -> Resul
             invite_code: None,
             referred_by: None,
             verified_credential_args: None,
+            composite_gate_index: None,
         },
     )
     .await

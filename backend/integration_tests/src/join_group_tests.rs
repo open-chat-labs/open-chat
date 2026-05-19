@@ -95,6 +95,7 @@ fn join_private_group_using_invite_code_succeeds() {
             chat_id: group_id,
             invite_code: Some(invite_code),
             verified_credential_args: None,
+            composite_gate_index: None,
         },
     );
 

@@ -66,6 +66,7 @@ fn join_private_community_fails() {
             invite_code: None,
             referred_by: None,
             verified_credential_args: None,
+            composite_gate_index: None,
         },
     );
 
@@ -147,6 +148,7 @@ fn join_private_community_using_invite_code_succeeds() {
             invite_code: Some(invite_code),
             referred_by: None,
             verified_credential_args: None,
+            composite_gate_index: None,
         },
     );
 
