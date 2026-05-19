@@ -107,6 +107,10 @@ export default {
                 { find: "@theme", replacement: path.resolve(__dirname, "src/theme") },
                 { find: "@utils", replacement: path.resolve(__dirname, "src/utils") },
                 { find: "@styles", replacement: path.resolve(__dirname, "src/styles") },
+                {
+                    find: "@shared_components",
+                    replacement: path.resolve(__dirname, "src/components_shared"),
+                },
             ],
         }),
 
