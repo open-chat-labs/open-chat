@@ -16,7 +16,7 @@
     import Checkbox from "../../Checkbox.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Diamond from "../../icons/Diamond.svelte";
-    import Loading from "../../Loading.svelte";
+    import Loading from "@shared_components/Loading.svelte";
     import Translatable from "../../Translatable.svelte";
     import AccountInfo from "../AccountInfo.svelte";
     import Congratulations from "./Congratulations.svelte";

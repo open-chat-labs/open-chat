@@ -26,7 +26,7 @@
     import Avatar from "../../Avatar.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
-    import Typing from "../../Typing.svelte";
+    import Typing from "@shared_components/Typing.svelte";
     import Markdown from "../../home/Markdown.svelte";
 
     const client = getContext<OpenChat>("client");

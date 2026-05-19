@@ -13,7 +13,7 @@
     import Avatar from "../Avatar.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
-    import VirtualList from "../VirtualList.svelte";
+    import VirtualList from "@shared_components/VirtualList.svelte";
 
     const client = getContext<OpenChat>("client");
 

@@ -25,7 +25,7 @@
     import { toastStore } from "../../stores/toast";
     import ErrorMessage from "../ErrorMessage.svelte";
     import HoverIcon from "../HoverIcon.svelte";
-    import Logo from "../Logo.svelte";
+    import Logo from "@shared_components/Logo.svelte";
     import Tooltip from "../tooltip/Tooltip.svelte";
     import Translatable from "../Translatable.svelte";
     import BotAvatar from "./BotAvatar.svelte";

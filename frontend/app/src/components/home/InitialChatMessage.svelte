@@ -18,8 +18,8 @@
     import Avatar from "../Avatar.svelte";
     import BotCommands from "../bots/BotCommands.svelte";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
-    import ProposalBot from "../ProposalBot.svelte";
-    import Robot from "../Robot.svelte";
+    import ProposalBot from "@shared_components/ProposalBot.svelte";
+    import Robot from "@shared_components/Robot.svelte";
     import Translatable from "../Translatable.svelte";
     import Markdown from "./Markdown.svelte";
 

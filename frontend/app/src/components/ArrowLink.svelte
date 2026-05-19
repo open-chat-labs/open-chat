@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
-    import Arrow from "./Arrow.svelte";
+    import Arrow from "@shared_components/Arrow.svelte";
 
     interface Props {
         url: string;

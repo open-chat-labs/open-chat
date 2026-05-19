@@ -39,7 +39,7 @@
     } from "openchat-client";
     import page from "page";
     import { getContext, untrack, setContext, onMount } from "svelte";
-    import Witch from "../Witch.svelte";
+    import Witch from "@shared_components/Witch.svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import ChatEventList from "./ChatEventList.svelte";
     import InitialChatMessage from "./InitialChatMessage.svelte";

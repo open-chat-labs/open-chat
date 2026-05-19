@@ -33,7 +33,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import Logo from "../Logo.svelte";
+    import Logo from "@shared_components/Logo.svelte";
     import Translatable from "../Translatable.svelte";
     import BotAvatar from "./BotAvatar.svelte";
 

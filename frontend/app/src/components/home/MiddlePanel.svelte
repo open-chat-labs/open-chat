@@ -21,7 +21,7 @@
     import { activeVideoCall, type ActiveVideoCall } from "../../stores/video";
     import { currentTheme } from "../../theme/themes";
     import UninstalledDirectBot from "../bots/UninstalledDirectBot.svelte";
-    import Loading from "../Loading.svelte";
+    import Loading from "@shared_components/Loading.svelte";
     import ExploreCommunities from "./communities/explore/Explore.svelte";
     import CurrentChat from "./CurrentChat.svelte";
     import NoChatSelected from "./NoChatSelected.svelte";

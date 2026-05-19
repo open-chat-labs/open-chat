@@ -69,7 +69,7 @@
     import MemeFighter from "../icons/MemeFighter.svelte";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
     import Translatable from "../Translatable.svelte";
-    import Typing from "../Typing.svelte";
+    import Typing from "@shared_components/Typing.svelte";
     import ArchiveOffIcon from "./ArchiveOffIcon.svelte";
     import Markdown from "./Markdown.svelte";
     import BotBadge from "./profile/BotBadge.svelte";

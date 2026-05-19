@@ -9,7 +9,7 @@
     import { getContext, type Snippet } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Avatar from "../../Avatar.svelte";
-    import FilteredUsername from "../../FilteredUsername.svelte";
+    import FilteredUsername from "@shared_components/FilteredUsername.svelte";
     import Translatable from "../../Translatable.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import Badges from "../profile/Badges.svelte";

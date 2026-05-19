@@ -5,7 +5,7 @@
     import { emojiDatabase } from "../../utils/emojis";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
-    import VirtualList from "../VirtualList.svelte";
+    import VirtualList from "@shared_components/VirtualList.svelte";
 
     type EmojiSummary = {
         unicode: string;

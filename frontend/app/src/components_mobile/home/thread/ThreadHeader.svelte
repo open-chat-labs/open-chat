@@ -17,7 +17,7 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { now } from "../../../stores/time";
-    import Typing from "../../Typing.svelte";
+    import Typing from "@shared_components/Typing.svelte";
     import Markdown from "../../home/Markdown.svelte";
 
     const client = getContext<OpenChat>("client");

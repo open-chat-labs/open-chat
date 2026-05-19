@@ -54,7 +54,7 @@
     import { pop } from "../../utils/transition";
     import { buildDisplayName } from "../../utils/user";
     import Avatar from "../Avatar.svelte";
-    import { clamp, swipe } from "../chatSwipe";
+    import { clamp, swipe } from "@shared_components/chatSwipe";
     import HeartMinus from "../icons/HeartMinus.svelte";
     import HeartPlus from "../icons/HeartPlus.svelte";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
@@ -62,7 +62,7 @@
     import MenuIcon from "../MenuIcon.svelte";
     import MenuItem from "../MenuItem.svelte";
     import Translatable from "../Translatable.svelte";
-    import Typing from "../Typing.svelte";
+    import Typing from "@shared_components/Typing.svelte";
     import ArchiveOffIcon from "./ArchiveOffIcon.svelte";
     import Markdown from "./Markdown.svelte";
     import Badges from "./profile/Badges.svelte";

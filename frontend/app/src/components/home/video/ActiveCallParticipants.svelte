@@ -13,7 +13,7 @@
     import { activeVideoCall } from "../../../stores/video";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import Translatable from "../../Translatable.svelte";
-    import VirtualList from "../../VirtualList.svelte";
+    import VirtualList from "@shared_components/VirtualList.svelte";
     import ActiveCallParticipant from "./ActiveCallParticipant.svelte";
     import ActiveCallParticipantsHeader from "./ActiveCallParticipantsHeader.svelte";
 
