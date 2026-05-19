@@ -10,7 +10,7 @@ import typescript from "@rollup/plugin-typescript";
 import autoprefixer from "autoprefixer";
 import fs from "fs-extra";
 import path from "path";
-import rimraf from "rimraf";
+import { rimrafSync } from "rimraf";
 import copy from "rollup-plugin-copy";
 import inject from "rollup-plugin-inject";
 import execute from "rollup-plugin-shell";
@@ -36,7 +36,7 @@ function clean() {
         name: "clean-build",
         renderStart() {
             console.log("cleaning up the build directory");
-            rimraf.sync(path.join(__dirname, "build"));
+            rimrafSync(path.join(__dirname, "build"));
             fs.mkdirSync("build");
             fs.mkdirSync("build/.well-known");
             if (version) {
