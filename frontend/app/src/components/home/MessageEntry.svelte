@@ -1,4 +1,5 @@
 <script lang="ts">
+    import RichTextEditor from "@shared_components/RichTextEditor.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import type {
         AttachmentContent,
@@ -29,6 +30,7 @@
         random64,
         screenWidth,
         ScreenWidth,
+        selectedChatMembersStore,
         selectedCommunitySummaryStore,
         selectedCommunityUserGroupsStore,
         throttleDeadline,
@@ -39,7 +41,6 @@
     import Close from "svelte-material-icons/Close.svelte";
     import ContentSaveEditOutline from "svelte-material-icons/ContentSaveMoveOutline.svelte";
     import Send from "svelte-material-icons/Send.svelte";
-    import { translatable } from "../../actions/translatable";
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import { enterSend, useBlockLevelMarkdown } from "../../stores/settings";
     import { snowing } from "../../stores/snow";
@@ -122,9 +123,13 @@
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
 
+    let editor = $state<RichTextEditor>();
+    let editorEmpty = $state(true);
+    let editorKey = $state(Symbol());
+
     const mentionRegex = /@(\w*)$/;
     const emojiRegex = /:(\w+):?$/;
-    let inp: HTMLDivElement | undefined = $state();
+    // let inp: HTMLDivElement | undefined = $state();
     let audioMimeType = client.audioRecordingMimeType();
     let selectedRange: Range | undefined = $state();
     let recording: boolean = $state(false);
@@ -170,7 +175,7 @@
             range.deleteContents();
             range.insertNode(node);
             range.collapse(false);
-            const inputContent = inp?.textContent ?? "";
+            const inputContent = editor?.getMarkdown() ?? "";
             triggerCommandSelector(inputContent);
             onSetTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
         }
@@ -181,11 +186,12 @@
     }
 
     function onInput() {
-        const inputContent = inp?.textContent ?? "";
+        // const inputContent = inp?.textContent ?? "";
+        const inputContent = editor?.getMarkdown() ?? "";
         onSetTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
         triggerCommandSelector(inputContent);
-        triggerMentionLookup(inputContent);
-        triggerEmojiLookup(inputContent);
+        // triggerMentionLookup(inputContent);
+        // triggerEmojiLookup(inputContent);
         triggerTypingTimer();
         containsMarkdown = detectMarkdown(inputContent);
     }
@@ -275,7 +281,7 @@
     }
 
     function sendADirectBotMessage(bot: ExternalBot) {
-        const txt = inp?.textContent?.trim() ?? "";
+        const txt = editor?.getMarkdown() ?? "";
         const userMessageId = random64();
         const botMessageId = random64();
 
@@ -381,7 +387,7 @@
     function sendMessage() {
         if (showCommandSelector || messageIsEmpty) return;
 
-        const txt = inp?.innerText?.trim() ?? "";
+        const txt = editor?.getMarkdown() ?? "";
 
         if (!parseCommands(txt)) {
             onSendMessage(expandMentions(txt));
@@ -391,9 +397,7 @@
     }
 
     function afterSendMessage() {
-        if (inp) {
-            inp.textContent = "";
-        }
+        editor?.clear();
         onSetTextContent();
 
         messageActions?.close();
@@ -402,7 +406,7 @@
         // After sending a message we must force a new textbox instance to be created, otherwise on iPhone the
         // predictive text doesn't notice the text has been cleared so the suggestions don't make sense.
         textboxId = Symbol();
-        tick().then(() => inp?.focus());
+        tick().then(() => editor?.focus());
     }
 
     export function saveSelection() {
@@ -413,60 +417,62 @@
     }
 
     function restoreSelection() {
-        if (!inp) return;
+        if (!editor) return;
 
-        inp?.focus();
-        if (!selectedRange || !selectedRange.intersectsNode(inp)) {
-            const range = new Range();
-            range.selectNodeContents(inp);
-            range.collapse(false);
-            selectedRange = range;
-        }
+        editor.focus();
 
-        const selection = window.getSelection()!;
-        selection.removeAllRanges();
-        selection.addRange(selectedRange);
+        // if (!selectedRange || !selectedRange.intersectsNode(inp)) {
+        //     const range = new Range();
+        //     range.selectNodeContents(inp);
+        //     range.collapse(false);
+        //     selectedRange = range;
+        // }
+
+        // const selection = window.getSelection()!;
+        // selection.removeAllRanges();
+        // selection.addRange(selectedRange);
     }
 
     function setCaretToEnd() {
-        if (!inp) return;
-
-        const range = document.createRange();
-        range.selectNodeContents(inp);
-        range.collapse(false);
-        const sel = window.getSelection();
-        sel?.removeAllRanges();
-        sel?.addRange(range);
+        // if (!inp) return;
+        // const range = document.createRange();
+        // range.selectNodeContents(inp);
+        // range.collapse(false);
+        // const sel = window.getSelection();
+        // sel?.removeAllRanges();
+        // sel?.addRange(range);
     }
 
-    function setCaretTo(node: Node, pos: number) {
-        const range = document.createRange();
-        range.selectNodeContents(node);
-        range.setStart(node, pos);
-        range.collapse(true);
-        const sel = window.getSelection();
-        sel?.removeAllRanges();
-        sel?.addRange(range);
-    }
+    // function setCaretTo(node: Node, pos: number) {
+    //     const range = document.createRange();
+    //     range.selectNodeContents(node);
+    //     range.setStart(node, pos);
+    //     range.collapse(true);
+    //     const sel = window.getSelection();
+    //     sel?.removeAllRanges();
+    //     sel?.addRange(range);
+    // }
 
     function replaceTextWith(replacement: string) {
-        if (rangeToReplace === undefined) return;
+        editor?.setContent(replacement);
 
-        const [node, start, end] = rangeToReplace;
+        // if (rangeToReplace === undefined) return;
 
-        const replaced = `${node.textContent?.slice(
-            0,
-            start,
-        )}${replacement} ${node.textContent?.slice(end)}`;
-        node.textContent = replaced;
+        // const [node, start, end] = rangeToReplace;
 
-        onSetTextContent(inp?.textContent || undefined);
+        // const replaced = `${node.textContent?.slice(
+        //     0,
+        //     start,
+        // )}${replacement} ${node.textContent?.slice(end)}`;
+        // node.textContent = replaced;
 
-        tick().then(() => {
-            setCaretTo(node, start + replacement.length + 1);
-        });
+        onSetTextContent(editor?.getMarkdown());
 
-        rangeToReplace = undefined;
+        // tick().then(() => {
+        //     setCaretTo(node, start + replacement.length + 1);
+        // });
+
+        // rangeToReplace = undefined;
     }
 
     function mention(userOrGroup: UserOrUserGroup): void {
@@ -526,31 +532,39 @@
     let excessiveLinks = $derived(client.extractEnabledLinks(textContent ?? "").length > 5);
     let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
     $effect(() => {
-        if (inp) {
+        if (editor) {
             if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
                 if (editingEvent.event.content.kind === "text_content") {
-                    inp.textContent = formatUserGroupMentions(
-                        formatUserMentions(
-                            client.stripLinkDisabledMarker(editingEvent.event.content.text),
+                    editor.setContent(
+                        formatUserGroupMentions(
+                            formatUserMentions(
+                                client.stripLinkDisabledMarker(editingEvent.event.content.text),
+                            ),
                         ),
                     );
-                    selectedRange = undefined;
-                    restoreSelection();
+                    // inp.textContent = formatUserGroupMentions(
+                    //     formatUserMentions(
+                    //         client.stripLinkDisabledMarker(editingEvent.event.content.text),
+                    //     ),
+                    // );
+                    // selectedRange = undefined;
+                    // restoreSelection();
                 } else if ("caption" in editingEvent.event.content) {
-                    inp.textContent = editingEvent.event.content.caption ?? "";
-                    selectedRange = undefined;
-                    restoreSelection();
+                    editor.setContent(editingEvent.event.content.caption ?? "");
+                    // selectedRange = undefined;
+                    // restoreSelection();
                 }
                 previousEditingEvent = editingEvent;
-                containsMarkdown = detectMarkdown(inp.textContent);
+                containsMarkdown = detectMarkdown(editor.getMarkdown());
             } else {
                 const text = textContent ?? "";
                 // Only set the textbox text when required rather than every time, because doing so sets the focus back to
                 // the start of the textbox on some devices.
-                if (inp.textContent !== text) {
-                    inp.textContent = text;
-                    // TODO - figure this out
-                    // setCaretToEnd();
+                if (editor.getMarkdown() !== text) {
+                    editor.setContent(text);
+                    // inp.textContent = text;
+                    // // TODO - figure this out
+                    // // setCaretToEnd();
                     containsMarkdown = detectMarkdown(text);
                 }
             }
@@ -569,12 +583,12 @@
     });
     trackedEffect("attachment-focus", () => {
         if (attachment !== undefined || replyingTo !== undefined) {
-            inp?.focus();
+            editor?.focus();
         }
     });
     trackedEffect("screen-width-focus", () => {
         if ($screenWidth === ScreenWidth.Large) {
-            inp?.focus();
+            editor?.focus();
         }
     });
     let placeholder = $derived(
@@ -674,7 +688,7 @@
                         <div class="note">{$_("excessiveLinksNote")}</div>
                     {/if}
                     <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_static_element_interactions -->
-                    <div
+                    <!-- <div
                         data-gram="false"
                         data-gramm_editor="false"
                         data-enable-grammarly="false"
@@ -696,7 +710,16 @@
                         spellcheck
                         oninput={onInput}
                         onkeypress={keyPress}>
-                    </div>
+                    </div> -->
+
+                    <RichTextEditor
+                        bind:this={editor}
+                        bind:empty={editorEmpty}
+                        placeholder={interpolate($_, placeholder)}
+                        members={$selectedChatMembersStore}
+                        myUserId={$currentUserIdStore}
+                        onsubmit={sendMessage}
+                        oninput={onInput} />
 
                     {#if containsMarkdown}
                         <MarkdownToggle {editingEvent} />
