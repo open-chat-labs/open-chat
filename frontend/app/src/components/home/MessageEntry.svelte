@@ -15,7 +15,6 @@
         OpenChat,
         SelectedEmoji,
         User,
-        UserOrUserGroup,
     } from "openchat-client";
     import {
         allUsersStore,
@@ -190,8 +189,6 @@
         const inputContent = editor?.getMarkdown() ?? "";
         onSetTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
         triggerCommandSelector(inputContent);
-        // triggerMentionLookup(inputContent);
-        // triggerEmojiLookup(inputContent);
         triggerTypingTimer();
         containsMarkdown = detectMarkdown(inputContent);
     }
@@ -224,23 +221,6 @@
             } else {
                 showEmojiSearch = false;
                 emojiQuery = undefined;
-            }
-        });
-    }
-
-    function triggerMentionLookup(inputContent: string | null): void {
-        if (chat.kind === "direct_chat" || chat.memberCount <= 1) return;
-        uptoCaret(inputContent, (slice: string, node: Node, pos: number) => {
-            const matches = slice.match(mentionRegex);
-            if (matches !== null) {
-                if (matches.index !== undefined) {
-                    rangeToReplace = [node, matches.index, pos];
-                    mentionPrefix = matches[1].toLowerCase() || undefined;
-                    showMentionPicker = true;
-                }
-            } else {
-                showMentionPicker = false;
-                mentionPrefix = undefined;
             }
         });
     }
@@ -417,30 +397,7 @@
     }
 
     function restoreSelection() {
-        if (!editor) return;
-
-        editor.focus();
-
-        // if (!selectedRange || !selectedRange.intersectsNode(inp)) {
-        //     const range = new Range();
-        //     range.selectNodeContents(inp);
-        //     range.collapse(false);
-        //     selectedRange = range;
-        // }
-
-        // const selection = window.getSelection()!;
-        // selection.removeAllRanges();
-        // selection.addRange(selectedRange);
-    }
-
-    function setCaretToEnd() {
-        // if (!inp) return;
-        // const range = document.createRange();
-        // range.selectNodeContents(inp);
-        // range.collapse(false);
-        // const sel = window.getSelection();
-        // sel?.removeAllRanges();
-        // sel?.addRange(range);
+        editor?.focus();
     }
 
     // function setCaretTo(node: Node, pos: number) {
@@ -455,38 +412,7 @@
 
     function replaceTextWith(replacement: string) {
         editor?.setContent(replacement);
-
-        // if (rangeToReplace === undefined) return;
-
-        // const [node, start, end] = rangeToReplace;
-
-        // const replaced = `${node.textContent?.slice(
-        //     0,
-        //     start,
-        // )}${replacement} ${node.textContent?.slice(end)}`;
-        // node.textContent = replaced;
-
         onSetTextContent(editor?.getMarkdown());
-
-        // tick().then(() => {
-        //     setCaretTo(node, start + replacement.length + 1);
-        // });
-
-        // rangeToReplace = undefined;
-    }
-
-    function mention(userOrGroup: UserOrUserGroup): void {
-        const username = client.userOrUserGroupName(userOrGroup);
-        const userLabel = `@${username}`;
-
-        replaceTextWith(userLabel);
-
-        showMentionPicker = false;
-    }
-
-    function cancelMention() {
-        showMentionPicker = false;
-        setCaretToEnd();
     }
 
     function completeEmoji(emoji: string) {
@@ -542,17 +468,8 @@
                             ),
                         ),
                     );
-                    // inp.textContent = formatUserGroupMentions(
-                    //     formatUserMentions(
-                    //         client.stripLinkDisabledMarker(editingEvent.event.content.text),
-                    //     ),
-                    // );
-                    // selectedRange = undefined;
-                    // restoreSelection();
                 } else if ("caption" in editingEvent.event.content) {
                     editor.setContent(editingEvent.event.content.caption ?? "");
-                    // selectedRange = undefined;
-                    // restoreSelection();
                 }
                 previousEditingEvent = editingEvent;
                 containsMarkdown = detectMarkdown(editor.getMarkdown());
@@ -562,9 +479,6 @@
                 // the start of the textbox on some devices.
                 if (editor.getMarkdown() !== text) {
                     editor.setContent(text);
-                    // inp.textContent = text;
-                    // // TODO - figure this out
-                    // // setCaretToEnd();
                     containsMarkdown = detectMarkdown(text);
                 }
             }
@@ -617,14 +531,7 @@
         command={botState.selectedCommand} />
 {/if}
 
-{#if showMentionPicker}
-    <MentionPicker
-        supportsUserGroups
-        offset={messageEntryHeight}
-        onClose={cancelMention}
-        onMention={mention}
-        prefix={mentionPrefix} />
-{/if}
+{#if showMentionPicker}{/if}
 
 {#if showCommandSelector}
     <CommandSelector
@@ -712,14 +619,24 @@
                         onkeypress={keyPress}>
                     </div> -->
 
-                    <RichTextEditor
-                        bind:this={editor}
-                        bind:empty={editorEmpty}
-                        placeholder={interpolate($_, placeholder)}
-                        members={$selectedChatMembersStore}
-                        myUserId={$currentUserIdStore}
-                        onsubmit={sendMessage}
-                        oninput={onInput} />
+                    <div class="textbox">
+                        <RichTextEditor
+                            bind:this={editor}
+                            bind:empty={editorEmpty}
+                            placeholder={interpolate($_, placeholder)}
+                            members={$selectedChatMembersStore}
+                            onsubmit={sendMessage}
+                            oninput={onInput}>
+                            {#snippet mentionPicker(args)}
+                                <MentionPicker
+                                    supportsUserGroups
+                                    offset={messageEntryHeight}
+                                    onClose={args.onClose}
+                                    onMention={args.onMention}
+                                    prefix={args.query} />
+                            {/snippet}
+                        </RichTextEditor>
+                    </div>
 
                     {#if containsMarkdown}
                         <MarkdownToggle {editingEvent} />
@@ -828,7 +745,7 @@
         overflow-x: hidden;
         overflow-y: auto;
         user-select: text;
-        white-space: pre-wrap;
+        // white-space: pre-wrap;
         overflow-wrap: anywhere;
         border: var(--bw) solid var(--entry-input-bd);
         box-shadow: var(--entry-input-sh);

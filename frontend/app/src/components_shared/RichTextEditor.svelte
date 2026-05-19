@@ -5,16 +5,24 @@
 
 <script lang="ts">
     import { rtlStore } from "@src/stores/rtl";
-    import { Editor } from "@tiptap/core";
+    import { Editor, type Content } from "@tiptap/core";
     import Placeholder from "@tiptap/extension-placeholder";
     import StarterKit from "@tiptap/starter-kit";
     import { isTouchOnlyDevice } from "component-lib";
     import type { NativeEmoji } from "emoji-picker-element/shared";
-    import { allUsersStore, type Member, type ReadonlyMap } from "openchat-client";
-    import { onDestroy, onMount } from "svelte";
+    import { OpenChat, type Member, type ReadonlyMap, type UserOrUserGroup } from "openchat-client";
+    import { getContext, onDestroy, onMount, type Snippet } from "svelte";
     import { markdownToDoc, nodeToMarkdown } from "./markdownConversion";
-    import { MentionExtension } from "./mentionExtension";
+    import { GroupMentionExtension, UserMentionExtension } from "./mentionExtension";
     import SuggestionPopup, { type SuggestionItem } from "./SuggestionPopup.svelte";
+
+    const client = getContext<OpenChat>("client");
+
+    type MentionPickerArgs = {
+        onMention: (u: UserOrUserGroup) => void;
+        onClose: () => void;
+        query: string;
+    };
 
     interface Props {
         placeholder?: string;
@@ -24,8 +32,8 @@
         onfocus?: () => void;
         onblur?: () => void;
         members?: ReadonlyMap<string, Member>;
-        myUserId?: string;
         empty?: boolean;
+        mentionPicker: Snippet<[MentionPickerArgs]>;
     }
 
     let {
@@ -36,27 +44,21 @@
         onfocus,
         onblur,
         members,
-        myUserId,
         empty = $bindable(true),
+        mentionPicker,
     }: Props = $props();
-
-    let allMembers = $derived(
-        members ? [...members.values()].filter((member) => member.userId !== myUserId) : [],
-    );
 
     let editorEl: HTMLDivElement;
     let editor: Editor;
 
     // Emoji suggestion state
-    type Suggestion = { query: string; from: number; x: number; y: number };
+    type Suggestion = { query: string; from: number; x: number; y: number; height: number };
     let emojiSuggestion = $state<Suggestion>();
     let emojiResults = $state<NativeEmoji[]>([]);
     let emojiSelectedIndex = $state(0);
 
     // Mention suggestion state
     let mentionSuggestion = $state<Suggestion>();
-    let mentionResults = $state<Member[]>([]);
-    let mentionSelectedIndex = $state(0);
 
     $effect(() => {
         const q = emojiSuggestion?.query;
@@ -76,53 +78,38 @@
         }
     });
 
-    $effect(() => {
-        const q = mentionSuggestion?.query ?? "";
-
-        if (mentionSuggestion && allMembers.length > 0) {
-            if (q.length === 0) {
-                mentionResults = allMembers;
-            } else {
-                const lower = q.toLowerCase();
-                const starts: Member[] = [],
-                    contains: Member[] = [];
-                for (const m of allMembers) {
-                    const name = nameForMember(m);
-                    if (name !== undefined) {
-                        if (name.startsWith(lower)) starts.push(m);
-                        else if (name.includes(lower)) contains.push(m);
-                    }
-                }
-                mentionResults = [...starts, ...contains];
+    function userOrGroupToInsert(user: UserOrUserGroup): Content {
+        const label = client.userOrUserGroupName(user);
+        console.log("User: ", user, label);
+        switch (user.kind) {
+            case "everyone":
+                return "@everyone";
+            case "bot":
+            case "user": {
+                return {
+                    type: "user_mention",
+                    attrs: { userId: user.userId, username: label },
+                };
             }
-
-            mentionResults = mentionResults.slice(0, 8);
-            mentionSelectedIndex = 0;
-        } else {
-            mentionResults = [];
+            case "user_group": {
+                return {
+                    type: "group_mention",
+                    attrs: { groupId: user.id, groupname: label },
+                };
+            }
         }
-    });
-
-    function nameForMember(member: Member): string | undefined {
-        const user = $allUsersStore.get(member.userId);
-        return user?.displayName ?? user?.username;
     }
 
-    function insertMention(member: Member) {
+    function insertMention(user: UserOrUserGroup) {
         if (!mentionSuggestion) return;
         const { from: cursorPos } = editor.state.selection;
-        const name = nameForMember(member);
         editor
             .chain()
             .deleteRange({ from: mentionSuggestion.from, to: cursorPos })
-            .insertContent({
-                type: "mention",
-                attrs: { userId: member.userId.toString(), username: name },
-            })
+            .insertContent(userOrGroupToInsert(user))
             .insertContent(" ")
             .run();
         mentionSuggestion = undefined;
-        mentionResults = [];
     }
 
     function checkSuggestion() {
@@ -133,11 +120,13 @@
         if (emojiMatch) {
             const colonPos = from - emojiMatch[0].length;
             const coords = editor.view.coordsAtPos(colonPos);
+            const height = editor.view.dom.clientHeight;
             emojiSuggestion = {
                 query: emojiMatch[1],
                 from: colonPos,
                 x: coords.left,
                 y: coords.top,
+                height,
             };
         } else {
             emojiSuggestion = undefined;
@@ -147,11 +136,13 @@
         if (mentionMatch && members) {
             const atPos = from - mentionMatch[0].length;
             const coords = editor.view.coordsAtPos(atPos);
+            const height = editor.view.dom.clientHeight;
             mentionSuggestion = {
                 query: mentionMatch[1],
                 from: atPos,
                 x: coords.left,
                 y: coords.top,
+                height,
             };
         } else {
             mentionSuggestion = undefined;
@@ -178,13 +169,8 @@
         })),
     );
 
-    let mentionItems = $derived<SuggestionItem[]>(
-        mentionResults.map((m) => ({ key: m.userId.toString(), label: `@${nameForMember(m)}` })),
-    );
-
-    function onMentionSelect(key: string) {
-        const member = mentionResults.find((m) => m.userId.toString() === key);
-        if (member) insertMention(member);
+    function onMentionSelect(user: UserOrUserGroup) {
+        insertMention(user);
     }
 
     export function getMarkdown(): string {
@@ -213,7 +199,8 @@
             extensions: [
                 StarterKit.configure({ link: { openOnClick: false } }),
                 Placeholder.configure({ placeholder }),
-                MentionExtension,
+                UserMentionExtension,
+                GroupMentionExtension,
             ],
             editorProps: {
                 handleKeyDown: (_view, event) => {
@@ -242,29 +229,15 @@
                             }
                         }
                     }
-                    if (mentionSuggestion && mentionResults.length > 0) {
+                    if (mentionSuggestion !== undefined) {
                         switch (event.key) {
                             case "Escape":
                                 mentionSuggestion = undefined;
-                                mentionResults = [];
-                                return true;
-                            case "ArrowDown":
-                                mentionSelectedIndex =
-                                    (mentionSelectedIndex + 1) % mentionResults.length;
-                                return true;
-                            case "ArrowUp":
-                                mentionSelectedIndex =
-                                    (mentionSelectedIndex - 1 + mentionResults.length) %
-                                    mentionResults.length;
                                 return true;
                             case "Enter":
                             case "Tab": {
-                                const member = mentionResults[mentionSelectedIndex];
-                                if (member) {
-                                    event.preventDefault();
-                                    insertMention(member);
-                                    return true;
-                                }
+                                event.preventDefault();
+                                return true;
                             }
                         }
                     }
@@ -315,13 +288,12 @@
         onselect={insertEmoji} />
 {/if}
 
-{#if mentionSuggestion && mentionItems.length > 0}
-    <SuggestionPopup
-        items={mentionItems}
-        selectedIndex={mentionSelectedIndex}
-        x={mentionSuggestion.x}
-        y={mentionSuggestion.y}
-        onselect={onMentionSelect} />
+{#if mentionSuggestion}
+    {@render mentionPicker({
+        onMention: onMentionSelect,
+        onClose: () => (mentionSuggestion = undefined),
+        query: mentionSuggestion.query,
+    })}
 {/if}
 
 <style lang="scss">

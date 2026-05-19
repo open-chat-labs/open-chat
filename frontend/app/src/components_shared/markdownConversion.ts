@@ -56,8 +56,10 @@ export function nodeToMarkdown(node: any): string {
             return (node.content ?? [])
                 .map((item: any, i: number) => `${i + 1}. ${nodeToMarkdown(item)}`)
                 .join("\n");
-        case "mention":
+        case "user_mention":
             return `@UserId(${node.attrs.userId})`;
+        case "group_mention":
+            return `@UserGroup(${node.attrs.groupId})`;
         case "horizontalRule":
             return "---";
         default:
@@ -81,10 +83,21 @@ export function parseInline(text: string): any[] {
             if (m) {
                 flush(pos);
                 nodes.push({
-                    type: "mention",
+                    type: "user_mention",
                     attrs: { userId: m[1], username: `UserId(${m[1]})` },
                 });
                 pos += m[0].length;
+                textStart = pos;
+                continue;
+            }
+            const g = /^@UserGroup\((\d+)\)/.exec(text.slice(pos));
+            if (g) {
+                flush(pos);
+                nodes.push({
+                    type: "group_mention",
+                    attrs: { groupId: g[1], groupname: `UserGroup(${g[1]})` },
+                });
+                pos += g[0].length;
                 textStart = pos;
                 continue;
             }
