@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Added `HistoryDeleted` chat event variant ([#8855](https://github.com/open-chat-labs/open-chat/pull/8855))
 
+### Changed
+
+- Allow specifying which inner composite gate to check ([#8987](https://github.com/open-chat-labs/open-chat/pull/8987))
+
 ## [[2.0.1948](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1948-local_user_index)] - 2026-01-14
 
 ### Added
