@@ -11,6 +11,14 @@ object DBManager {
         return AppDb.get().notificationDao().markAsReadForContext(contextId)
     }
 
+    suspend fun releaseAllNotifications(): Int {
+        return AppDb.get().notificationDao().markAllAsRead()
+    }
+
+    suspend fun activeContextIds(): List<ContextId> {
+        return AppDb.get().notificationDao().activeContextIds()
+    }
+
     suspend fun cleanUpReleasedNotifications(): Int {
         return AppDb.get().notificationDao().cleanup()
     }
