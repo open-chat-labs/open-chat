@@ -2,7 +2,7 @@
     import { Avatar, SectionHeader } from "component-lib";
     import { activeVideoCall } from "../../../stores/video";
     import FancyLoader from "../../icons/FancyLoader.svelte";
-    import Typing from "../../Typing.svelte";
+    import Typing from "@shared_components/Typing.svelte";
     import ActiveCallActions from "./ActiveCallActions.svelte";
     import type { VideoCallChat } from "./callChat";
 

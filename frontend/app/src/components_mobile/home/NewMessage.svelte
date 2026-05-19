@@ -20,7 +20,7 @@
     import page from "page";
     import { getContext } from "svelte";
     import AccountMultiplePlusOutline from "svelte-material-icons/AccountMultiplePlusOutline.svelte";
-    import FilteredUsername from "../FilteredUsername.svelte";
+    import FilteredUsername from "@shared_components/FilteredUsername.svelte";
     import MatchingUser from "../MatchingUser.svelte";
     import Translatable from "../Translatable.svelte";
     import ChatListSearch from "./ChatListSearch.svelte";

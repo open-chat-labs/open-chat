@@ -20,7 +20,7 @@
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import HoverIcon from "../HoverIcon.svelte";
-    import Loading from "../Loading.svelte";
+    import Loading from "@shared_components/Loading.svelte";
     import SectionHeader from "../SectionHeader.svelte";
     import Translatable from "../Translatable.svelte";
     import RecommendedGroup from "./RecommendedGroup.svelte";

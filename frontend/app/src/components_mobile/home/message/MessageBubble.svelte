@@ -24,7 +24,7 @@
     } from "openchat-client";
     import page from "page";
     import { getContext, type Snippet } from "svelte";
-    import Typing from "../../Typing.svelte";
+    import Typing from "@shared_components/Typing.svelte";
     import Badges from "../profile/Badges.svelte";
     import BotBadge from "../profile/BotBadge.svelte";
     import RoleIcon from "../profile/RoleIcon.svelte";

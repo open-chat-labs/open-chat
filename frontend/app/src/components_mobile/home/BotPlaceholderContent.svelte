@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Typing from "../Typing.svelte";
+    import Typing from "@shared_components/Typing.svelte";
 </script>
 
 <span class="placeholder">

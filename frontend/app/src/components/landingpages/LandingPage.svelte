@@ -6,7 +6,7 @@
     import { routeStore, runningInIframe, type OpenChat } from "openchat-client";
     import { getContext, type Component } from "svelte";
     import { showMenuForLandingRoute } from "../../utils/urls";
-    import Loading from "../Loading.svelte";
+    import Loading from "@shared_components/Loading.svelte";
     import BlogPage from "./BlogPage.svelte";
     import Content from "./Content.svelte";
     import FeaturesPage from "./FeaturesPage.svelte";

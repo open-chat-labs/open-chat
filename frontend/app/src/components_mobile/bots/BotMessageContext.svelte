@@ -4,7 +4,7 @@
     import type { BotContextCommand } from "openchat-shared";
     import { getContext } from "svelte";
     import CogOutline from "svelte-material-icons/CogOutline.svelte";
-    import Typing from "../Typing.svelte";
+    import Typing from "@shared_components/Typing.svelte";
     import Markdown from "../home/Markdown.svelte";
 
     const client = getContext<OpenChat>("client");

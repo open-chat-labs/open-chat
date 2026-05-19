@@ -9,7 +9,7 @@
     import { toastStore } from "../stores/toast";
     import { Debouncer } from "../utils/debouncer";
     import { trimLeadingAtSymbol } from "../utils/user";
-    import Loading from "./Loading.svelte";
+    import Loading from "@shared_components/Loading.svelte";
     import MatchingUser from "./MatchingUser.svelte";
     import Translatable from "./Translatable.svelte";
 

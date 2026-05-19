@@ -1,6 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "../i18n/i18n";
-    import Translatable from "./Translatable.svelte";
+    import Translatable from "../components/Translatable.svelte";
     import { _ } from "svelte-i18n";
 
     interface Props {

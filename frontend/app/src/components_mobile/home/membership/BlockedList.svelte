@@ -6,7 +6,7 @@
     import AccountCancel from "svelte-material-icons/AccountCancelOutline.svelte";
     import Account from "svelte-material-icons/AccountGroupOutline.svelte";
     import Translatable from "../../Translatable.svelte";
-    import VirtualList from "../../VirtualList.svelte";
+    import VirtualList from "@shared_components/VirtualList.svelte";
     import NothingToSee from "../NothingToSee.svelte";
     import BlockedUser from "./BlockedUser.svelte";
     import type { MemberManagement } from "./membersState.svelte";
