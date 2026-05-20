@@ -143,21 +143,29 @@ impl SwapClient for TacoExchangeClient {
         // — a pre-trading-fee estimate good enough for routing; the exact bps
         // comes back inline in the response and is applied to the execution
         // amount below.
-        let probes: Vec<batch_multi::Request> = (0..NUM_FRACTIONS)
+        // Collect bps in parallel with probes so flatten_batch can label the
+        // response entries with the actual submitted bp — without this, dropping
+        // zero-amount probes via filter_map would shift the index and mislabel
+        // surviving entries (e.g. a response for the 30% probe would be tagged
+        // as 10% by index-derived bp).
+        let (probes, probe_bps): (Vec<batch_multi::Request>, Vec<u128>) = (0..NUM_FRACTIONS)
             .filter_map(|i| {
                 let bp = ((i as u128) + 1) * STEP_BP;
                 let amt = usable.saturating_mul(bp) / 10000;
                 if amt == 0 {
                     None
                 } else {
-                    Some(batch_multi::Request {
-                        token_sell: token_in.clone(),
-                        token_buy: token_out.clone(),
-                        amount_sell: amt.into(),
-                    })
+                    Some((
+                        batch_multi::Request {
+                            token_sell: token_in.clone(),
+                            token_buy: token_out.clone(),
+                            amount_sell: amt.into(),
+                        },
+                        bp,
+                    ))
                 }
             })
-            .collect();
+            .unzip();
 
         if probes.is_empty() {
             return Ok(Err("TACO swap: amount too small for any probe fraction".to_string()));
@@ -188,7 +196,7 @@ impl SwapClient for TacoExchangeClient {
         // useSwapFlow composable runs (and the screenshot at chat shows producing
         // a 30/70 split). Disjoint-pool constraint mirrors hopsSharePool from
         // TACO_Backend/src/treasury/treasury.mo:10895.
-        let plan = build_swap_plan(&batch);
+        let plan = build_swap_plan(&batch, &probe_bps);
 
         match plan {
             SwapPlan::Single(route) => execute_swap_multi_hop(
@@ -380,8 +388,8 @@ const THREE_LEG_BP_TRIPLES: &[(u128, u128, u128)] = &[
 //
 // Worst case is still the 5 pair tuples + 8 triple tuples × 5-route groups
 // (~810 iterations); typical case prunes most of that out before any real work.
-fn build_swap_plan(batch: &batch_multi::Response) -> SwapPlan {
-    let entries = flatten_batch(batch);
+fn build_swap_plan(batch: &batch_multi::Response, probe_bps: &[u128]) -> SwapPlan {
+    let entries = flatten_batch(batch, probe_bps);
     if entries.is_empty() {
         return SwapPlan::None;
     }
