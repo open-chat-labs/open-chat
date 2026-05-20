@@ -64,7 +64,7 @@
         "rollup-styles": "^1.5.0",
         "svelte": "^5.55.7",
         "svelte-check": "^4.3.4",
-        "turbo": "^2.1.2"
+        "turbo": "^2.9.14"
     },
     "dependencies": {
         "@icp-sdk/auth": "^5.0.0",
