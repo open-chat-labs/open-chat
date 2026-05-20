@@ -13,7 +13,7 @@
     import Overlay from "../Overlay.svelte";
     import Select from "../Select.svelte";
     import Translatable from "../Translatable.svelte";
-    import Markdown from "./Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
 
     interface Props {
         chatId: ChatIdentifier;

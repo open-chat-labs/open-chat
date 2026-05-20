@@ -50,7 +50,7 @@
     import AccessGateSummary from "../AccessGateSummary.svelte";
     import ImportToCommunity from "../communities/Import.svelte";
     import { updateGroupState } from "../createOrUpdateGroup/group.svelte";
-    import Markdown from "../Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import BotsSummary from "../membership/BotsSummary.svelte";
     import MembersSummary from "../membership/MembersSummary.svelte";
     import Separator from "../Separator.svelte";

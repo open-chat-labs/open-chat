@@ -11,7 +11,7 @@
     import CogOutline from "svelte-material-icons/CogOutline.svelte";
     import Avatar from "../Avatar.svelte";
     import Typing from "@shared_components/Typing.svelte";
-    import Markdown from "../home/Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import Tooltip from "../tooltip/Tooltip.svelte";
 
     const client = getContext<OpenChat>("client");

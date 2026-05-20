@@ -13,7 +13,7 @@
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import FilteredUsername from "@shared_components/FilteredUsername.svelte";
-    import Markdown from "../home/Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import BotBadge from "../home/profile/BotBadge.svelte";
     import Translatable from "../Translatable.svelte";
     import BotAvatar from "./BotAvatar.svelte";

@@ -18,7 +18,7 @@
     import Avatar from "../../Avatar.svelte";
     import Link from "../../Link.svelte";
     import Translatable from "../../Translatable.svelte";
-    import Markdown from "../Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import MessageReaction from "../MessageReaction.svelte";
     import TipThumbnail from "../TipThumbnail.svelte";
     import ActivityIcon from "./ActivityIcon.svelte";

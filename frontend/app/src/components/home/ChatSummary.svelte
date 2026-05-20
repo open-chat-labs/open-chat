@@ -64,7 +64,7 @@
     import Translatable from "../Translatable.svelte";
     import Typing from "@shared_components/Typing.svelte";
     import ArchiveOffIcon from "./ArchiveOffIcon.svelte";
-    import Markdown from "./Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import Badges from "./profile/Badges.svelte";
     import BotBadge from "./profile/BotBadge.svelte";
     import VideoCallIcon from "./video/VideoCallIcon.svelte";

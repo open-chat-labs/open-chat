@@ -18,7 +18,7 @@
     import Translatable from "../../Translatable.svelte";
     import AccountInfo from "../AccountInfo.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
-    import Markdown from "../Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import AccessGateExpiry from "./AccessGateExpiry.svelte";
 
     const client = getContext<OpenChat>("client");

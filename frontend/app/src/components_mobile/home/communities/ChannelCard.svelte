@@ -20,7 +20,7 @@
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
-    import Markdown from "../Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
 
     interface Props {
         channel: ChannelMatch;

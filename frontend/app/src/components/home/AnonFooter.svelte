@@ -2,7 +2,7 @@
     import type { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import Markdown from "./Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
 </script>

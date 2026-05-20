@@ -6,7 +6,7 @@
     import { lowBandwidth, renderPreviews } from "../../stores/settings";
     import IntersectionObserver from "./IntersectionObserver.svelte";
     import LinkPreviews from "./LinkPreviews.svelte";
-    import Markdown from "./Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
 
     const SIZE_LIMIT = 1000;
     const client = getContext<OpenChat>("client");

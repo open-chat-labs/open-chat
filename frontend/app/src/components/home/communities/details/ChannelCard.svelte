@@ -22,7 +22,7 @@
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import Avatar from "../../../Avatar.svelte";
     import AccessGateIcon from "../../access/AccessGateIcon.svelte";
-    import Markdown from "../../Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
 
     interface Props {
         channel: ChannelMatch;
