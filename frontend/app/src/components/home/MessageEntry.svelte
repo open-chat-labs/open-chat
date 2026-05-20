@@ -284,7 +284,6 @@
 
         let mentioned = Array.from(mentionedMap, ([_, user]) => user);
 
-        console.log("Contains markdown: ", containsMarkdown);
         return [expandedText, mentioned, containsMarkdown];
     }
 
