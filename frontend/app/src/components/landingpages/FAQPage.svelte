@@ -11,7 +11,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import { copyToClipboard } from "../../utils/urls";
     import CollapsibleCard from "../CollapsibleCard.svelte";
-    import Markdown from "../home/Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import Translatable from "../Translatable.svelte";
     import Headline from "./Headline.svelte";
 

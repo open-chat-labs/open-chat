@@ -12,7 +12,7 @@
     import ModalContent from "../../ModalContent.svelte";
     import Translatable from "../../Translatable.svelte";
     import HumanityConfirmation from "../HumanityConfirmation.svelte";
-    import Markdown from "../Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import LinkAccounts from "./LinkAccounts.svelte";
     import LinkAccountsModal from "./LinkAccountsModal.svelte";
 

@@ -30,7 +30,7 @@
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
-    import Markdown from "../../home/Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import SlidingPageContent from "../../home/SlidingPageContent.svelte";
     import MulticolourText from "../../MulticolourText.svelte";
     import Translatable from "../../Translatable.svelte";

@@ -5,7 +5,7 @@
     import { i18nKey, interpolate } from "../i18n/i18n";
     import Button from "./Button.svelte";
     import ButtonGroup from "./ButtonGroup.svelte";
-    import Markdown from "./home/Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import Input from "./Input.svelte";
     import ModalContent from "./ModalContent.svelte";
     import Overlay from "./Overlay.svelte";

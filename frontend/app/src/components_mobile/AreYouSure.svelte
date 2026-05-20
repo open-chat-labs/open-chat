@@ -6,7 +6,7 @@
     import Check from "svelte-material-icons/Check.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey, interpolate } from "../i18n/i18n";
-    import Markdown from "./home/Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import Translatable from "./Translatable.svelte";
 
     interface Props {

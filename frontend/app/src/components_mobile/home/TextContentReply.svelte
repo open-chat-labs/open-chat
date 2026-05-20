@@ -3,7 +3,7 @@
     import type { TextContent } from "openchat-client";
     import { type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
-    import Markdown from "./Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
 
     const SIZE_LIMIT = 200;
 

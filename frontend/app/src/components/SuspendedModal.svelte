@@ -1,7 +1,7 @@
 <script lang="ts">
     import { currentUserStore } from "openchat-client";
     import { i18nKey } from "../i18n/i18n";
-    import Markdown from "./home/Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import ModalContent from "./ModalContent.svelte";
     import Translatable from "./Translatable.svelte";
 

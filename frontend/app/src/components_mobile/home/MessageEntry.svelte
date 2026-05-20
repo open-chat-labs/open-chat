@@ -1,4 +1,5 @@
 <script lang="ts">
+    import RichTextEditor from "@shared_components/RichTextEditor.svelte";
     import { keyboard } from "@src/stores/keyboard.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import {
@@ -19,7 +20,6 @@
         OpenChat,
         SelectedEmoji,
         User,
-        UserOrUserGroup,
     } from "openchat-client";
     import {
         allUsersStore,
@@ -32,6 +32,7 @@
         random64,
         screenWidth,
         ScreenWidth,
+        selectedChatMembersStore,
         selectedCommunitySummaryStore,
         selectedCommunityUserGroupsStore,
         throttleDeadline,
@@ -46,9 +47,8 @@
     import Keyboard from "svelte-material-icons/KeyboardOutline.svelte";
     import PlusCircle from "svelte-material-icons/PlusCircleOutline.svelte";
     import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
-    import { translatable } from "../../actions/translatable";
     import { i18nKey, interpolate } from "../../i18n/i18n";
-    import { enterSend, useBlockLevelMarkdown } from "../../stores/settings";
+    import { enterSend } from "../../stores/settings";
     import { snowing } from "../../stores/snow";
     import AlertBoxModal from "../AlertBoxModal.svelte";
     import CommandBuilder from "../bots/CommandInstanceBuilder.svelte";
@@ -62,7 +62,6 @@
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
     import EmojiOrGif from "./EmojiOrGif.svelte";
     import FileAttacher from "./FileAttacher.svelte";
-    import MarkdownToggle from "./MarkdownToggle.svelte";
     import MentionPicker from "./MentionPicker.svelte";
     import PreviewFooter from "./PreviewFooter.svelte";
     import ReplyingTo from "./ReplyingTo.svelte";
@@ -131,23 +130,18 @@
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
 
-    const mentionRegex = /@(\w*)$/;
-    const emojiRegex = /:(\w+):?$/;
-    let inp: HTMLDivElement | undefined = $state();
+    let editor = $state<RichTextEditor>();
+    let editorEmpty = $state(true);
+
+    let messageEntryHeight = $state<number>(0);
     let audioMimeType = client.audioRecordingMimeType();
-    let selectedRange: Range | undefined = $state();
     let recording: boolean = $state(false);
     let percentRecorded: number = $state(0);
     let previousEditingEvent: EventWrapper<Message> | undefined = $state();
     let lastTypingUpdate: number = 0;
     let typingTimer: number | undefined = undefined;
     let audioSupported: boolean = $state("mediaDevices" in navigator);
-    let showMentionPicker = $state(false);
     let showCommandSelector: boolean = $state(false);
-    let showEmojiSearch = $state(false);
-    let mentionPrefix: string | undefined = $state();
-    let emojiQuery: string | undefined = $state();
-    let rangeToReplace: [Node, number, number] | undefined = undefined;
     let containsMarkdown = $state(false);
     let showDirectBotChatWarning = $state(false);
     let commandSent = false;
@@ -227,7 +221,7 @@
     }
 
     function showKeyboard() {
-        inp?.focus();
+        editor?.focus();
     }
 
     // Should handle cases where usual user interactions are skipped, and
@@ -308,10 +302,6 @@
     }
 
     onMount(() => {
-        // Message input focus in handler!
-        // Note: this did not seem to work by just adding focus attribute.
-        inp?.addEventListener("focus", keyboardFocus);
-
         // This component is also used for threads, so we need to remember the
         // state of this when the component mounts.
         const wasViewportResizeEnabled = keyboard.viewportResizeEnabled;
@@ -321,101 +311,25 @@
         // keyboard overlaps some of the UI content.
         keyboard.disableViewportResize();
         return () => {
-            inp?.removeEventListener("focus", keyboardFocus);
-
             // Enable kb resizing again if it was enabled.
             if (wasViewportResizeEnabled) keyboard.enableViewportResize();
         };
     });
 
     function insertEmoji(emoji: SelectedEmoji) {
-        if (emoji.kind === "native") {
-            replaceSelectionWithNode(document.createTextNode(emoji.unicode));
-        } else {
-            const el = document.createElement("custom-emoji");
-            el.dataset.id = emoji.code;
-            replaceSelectionWithNode(el);
-        }
+        editor?.insertEmoji(emoji);
     }
 
     function backspace() {
         document.execCommand("delete");
     }
 
-    export function replaceSelectionWithNode(node: Node) {
-        restoreSelection();
-        let range = window.getSelection()?.getRangeAt(0);
-        if (range !== undefined) {
-            range.deleteContents();
-            range.insertNode(node);
-            range.collapse(false);
-            const inputContent = inp?.textContent ?? "";
-            triggerCommandSelector(inputContent);
-            onSetTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
-        }
-    }
-
-    export function replaceSelection(text: string) {
-        replaceSelectionWithNode(document.createTextNode(text));
-    }
-
     function onInput() {
-        const inputContent = inp?.textContent ?? "";
+        const inputContent = editor?.getMarkdown() ?? "";
         onSetTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
         triggerCommandSelector(inputContent);
-        triggerMentionLookup(inputContent);
-        triggerEmojiLookup(inputContent);
         triggerTypingTimer();
         containsMarkdown = detectMarkdown(inputContent);
-    }
-
-    function uptoCaret(
-        inputContent: string | null,
-        fn: (slice: string, node: Node, pos: number) => void,
-    ): void {
-        if (inputContent === null) return;
-
-        const selection = window.getSelection();
-        if (selection === null) return;
-        const anchorNode = selection.anchorNode;
-        if (anchorNode?.textContent == null) return;
-        const text = anchorNode.textContent;
-
-        const slice = text.slice(0, selection.anchorOffset);
-        fn(slice, anchorNode, selection.anchorOffset);
-    }
-
-    function triggerEmojiLookup(inputContent: string | null): void {
-        uptoCaret(inputContent, (slice: string, node: Node, pos: number) => {
-            const matches = slice.match(emojiRegex);
-            if (matches !== null) {
-                if (matches.index !== undefined) {
-                    rangeToReplace = [node, matches.index, pos];
-                    emojiQuery = matches[1].toLowerCase() || undefined;
-                    showEmojiSearch = true;
-                }
-            } else {
-                showEmojiSearch = false;
-                emojiQuery = undefined;
-            }
-        });
-    }
-
-    function triggerMentionLookup(inputContent: string | null): void {
-        if (chat.kind === "direct_chat" || chat.memberCount <= 1) return;
-        uptoCaret(inputContent, (slice: string, node: Node, pos: number) => {
-            const matches = slice.match(mentionRegex);
-            if (matches !== null) {
-                if (matches.index !== undefined) {
-                    rangeToReplace = [node, matches.index, pos];
-                    mentionPrefix = matches[1].toLowerCase() || undefined;
-                    showMentionPicker = true;
-                }
-            } else {
-                showMentionPicker = false;
-                mentionPrefix = undefined;
-            }
-        });
     }
 
     function triggerCommandSelector(inputContent: string | null): void {
@@ -454,7 +368,7 @@
     }
 
     function sendADirectBotMessage(bot: ExternalBot) {
-        const txt = inp?.textContent?.trim() ?? "";
+        const txt = editor?.getMarkdown() ?? "";
         const userMessageId = random64();
         const botMessageId = random64();
 
@@ -473,7 +387,7 @@
                 { kind: "text_content", text: txt },
                 userMessageId,
                 $currentUserIdStore,
-                $useBlockLevelMarkdown,
+                containsMarkdown,
             );
             client.executeBotCommand(scope, commandInstance, true);
             localUpdates.draftMessages.delete(messageContext);
@@ -483,7 +397,7 @@
         }
     }
 
-    function keyPress(e: KeyboardEvent) {
+    function keyDown(e: KeyboardEvent) {
         if (e.key === "Enter" && !e.shiftKey) {
             if (directBot) {
                 if (!showCommandSelector && !messageIsEmpty) {
@@ -547,7 +461,7 @@
 
         let mentioned = Array.from(mentionedMap, ([_, user]) => user);
 
-        return [expandedText, mentioned, containsMarkdown && $useBlockLevelMarkdown];
+        return [expandedText, mentioned, containsMarkdown];
     }
 
     function parseCommands(txt: string): boolean {
@@ -560,7 +474,7 @@
     function sendMessage() {
         if (showCommandSelector || messageIsEmpty) return;
 
-        const txt = inp?.innerText?.trim() ?? "";
+        const txt = editor?.getMarkdown() ?? "";
 
         if (!parseCommands(txt)) {
             onSendMessage(expandMentions(txt));
@@ -570,9 +484,7 @@
     }
 
     function afterSendMessage() {
-        if (inp) {
-            inp.textContent = "";
-        }
+        editor?.clear();
         onSetTextContent();
 
         onStopTyping();
@@ -580,74 +492,7 @@
         // After sending a message we must force a new textbox instance to be created, otherwise on iPhone the
         // predictive text doesn't notice the text has been cleared so the suggestions don't make sense.
         textboxId = Symbol();
-        tick().then(() => inp?.focus());
-    }
-
-    export function saveSelection() {
-        try {
-            // seeing errors in the logs to do with this
-            selectedRange = window.getSelection()?.getRangeAt(0);
-        } catch (_err) {}
-    }
-
-    function restoreSelection() {
-        if (!inp) return;
-
-        inp?.focus();
-        if (!selectedRange || !selectedRange.intersectsNode(inp)) {
-            const range = new Range();
-            range.selectNodeContents(inp);
-            range.collapse(false);
-            selectedRange = range;
-        }
-
-        const selection = window.getSelection()!;
-        selection.removeAllRanges();
-        selection.addRange(selectedRange);
-    }
-
-    function setCaretTo(node: Node, pos: number) {
-        const range = document.createRange();
-        range.selectNodeContents(node);
-        range.setStart(node, pos);
-        range.collapse(true);
-        const sel = window.getSelection();
-        sel?.removeAllRanges();
-        sel?.addRange(range);
-    }
-
-    function replaceTextWith(replacement: string) {
-        if (rangeToReplace === undefined) return;
-
-        const [node, start, end] = rangeToReplace;
-
-        const replaced = `${node.textContent?.slice(
-            0,
-            start,
-        )}${replacement} ${node.textContent?.slice(end)}`;
-        node.textContent = replaced;
-
-        onSetTextContent(inp?.textContent || undefined);
-
-        tick().then(() => {
-            setCaretTo(node, start + replacement.length + 1);
-        });
-
-        rangeToReplace = undefined;
-    }
-
-    function mention(userOrGroup: UserOrUserGroup): void {
-        const username = client.userOrUserGroupName(userOrGroup);
-        const userLabel = `@${username}`;
-
-        replaceTextWith(userLabel);
-
-        showMentionPicker = false;
-    }
-
-    function completeEmoji(emoji: string) {
-        replaceTextWith(emoji);
-        showEmojiSearch = false;
+        tick().then(() => editor?.focus());
     }
 
     function detectMarkdown(text: string | null) {
@@ -691,31 +536,27 @@
     let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
 
     $effect(() => {
-        if (inp) {
+        if (editor) {
             if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
                 if (editingEvent.event.content.kind === "text_content") {
-                    inp.textContent = formatUserGroupMentions(
-                        formatUserMentions(
-                            client.stripLinkDisabledMarker(editingEvent.event.content.text),
+                    editor.setContent(
+                        formatUserGroupMentions(
+                            formatUserMentions(
+                                client.stripLinkDisabledMarker(editingEvent.event.content.text),
+                            ),
                         ),
                     );
-                    selectedRange = undefined;
-                    restoreSelection();
                 } else if ("caption" in editingEvent.event.content) {
-                    inp.textContent = editingEvent.event.content.caption ?? "";
-                    selectedRange = undefined;
-                    restoreSelection();
+                    editor.setContent(editingEvent.event.content.caption ?? "");
                 }
                 previousEditingEvent = editingEvent;
-                containsMarkdown = detectMarkdown(inp.textContent);
+                containsMarkdown = detectMarkdown(editor.getMarkdown());
             } else {
                 const text = textContent ?? "";
                 // Only set the textbox text when required rather than every time, because doing so sets the focus back to
                 // the start of the textbox on some devices.
-                if (inp.textContent !== text) {
-                    inp.textContent = text;
-                    // TODO - figure this out
-                    // setCaretToEnd();
+                if (editor.getMarkdown() !== text) {
+                    editor.setContent(text);
                     containsMarkdown = detectMarkdown(text);
                 }
             }
@@ -728,13 +569,13 @@
 
     trackedEffect("attachment-focus", () => {
         if (attachment !== undefined || replyingTo !== undefined) {
-            inp?.focus();
+            editor?.focus();
         }
     });
 
     trackedEffect("screen-width-focus", () => {
         if ($screenWidth === ScreenWidth.Large) {
-            inp?.focus();
+            editor?.focus();
         }
     });
 
@@ -766,14 +607,6 @@
         command={botState.selectedCommand} />
 {/if}
 
-{#if showMentionPicker}
-    <MentionPicker
-        supportsUserGroups
-        offset={inputTrayMode !== "closed" ? 70 + keyboard.height : 70}
-        onMention={mention}
-        prefix={mentionPrefix} />
-{/if}
-
 {#if showCommandSelector}
     <CommandSelector
         selectedBotId={directChatBotId}
@@ -782,14 +615,6 @@
         onCommandSent={() => cancelCommandSelector(true)}
         onNoMatches={() => cancelCommandSelector(false)}
         onCancel={() => cancelCommandSelector(false)} />
-{/if}
-
-{#if showEmojiSearch}
-    <EmojiAutocompleter
-        offset={80}
-        onClose={() => (showEmojiSearch = false)}
-        onSelect={completeEmoji}
-        query={emojiQuery} />
 {/if}
 
 {#if !$anonUserStore}
@@ -855,12 +680,13 @@
                                 </IconButton>
                             </Row>
                         {/if}
-                        <Row
+                        <Container
+                            bind:clientHeight={messageEntryHeight}
                             gap="sm"
                             minHeight="3.5rem"
                             maxHeight="calc(var(--vh, 1vh) * 50)"
                             padding="xs"
-                            overflow="auto"
+                            overflow="visible"
                             crossAxisAlignment="center"
                             mainAxisAlignment="spaceBetween"
                             supplementalClass="message_entry_text_box">
@@ -883,30 +709,33 @@
                                     {/snippet}
                                 </IconButton>
                             {/if}
-                            <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_static_element_interactions -->
-                            <div
-                                data-gram="false"
-                                data-gramm_editor="false"
-                                data-enable-grammarly="false"
-                                data-keyboard-ignore="true"
-                                tabindex={0}
-                                bind:this={inp}
-                                class="textbox"
-                                class:recording
-                                class:empty={textboxEmpty}
-                                contenteditable
-                                placeholder={interpolate($_, placeholder)}
-                                use:translatable={{
-                                    key: placeholder,
-                                    position: "absolute",
-                                    right: 12,
-                                    top: 12,
-                                }}
-                                spellcheck
-                                onblur={saveSelection}
-                                onpaste={onPaste}
-                                oninput={onInput}
-                                onkeypress={keyPress}>
+
+                            <div class="textbox">
+                                <RichTextEditor
+                                    bind:this={editor}
+                                    bind:empty={editorEmpty}
+                                    placeholder={interpolate($_, placeholder)}
+                                    members={$selectedChatMembersStore}
+                                    {onPaste}
+                                    onfocus={keyboardFocus}
+                                    onKeydown={keyDown}
+                                    onsubmit={sendMessage}
+                                    oninput={onInput}>
+                                    {#snippet mentionPicker(args)}
+                                        <MentionPicker
+                                            supportsUserGroups
+                                            offset={messageEntryHeight}
+                                            onMention={args.onMention}
+                                            prefix={args.query} />
+                                    {/snippet}
+                                    {#snippet emojiPicker(args)}
+                                        <EmojiAutocompleter
+                                            offset={messageEntryHeight}
+                                            onClose={args.onClose}
+                                            onSelect={args.onSelect}
+                                            query={args.query} />
+                                    {/snippet}
+                                </RichTextEditor>
                             </div>
 
                             {#if editingEvent === undefined}
@@ -945,11 +774,7 @@
                                     {/if}
                                 </Container>
                             {/if}
-
-                            {#if containsMarkdown}
-                                <MarkdownToggle {editingEvent} />
-                            {/if}
-                        </Row>
+                        </Container>
                     </div>
                 {/key}
             {:else}
@@ -1033,7 +858,7 @@
 <style lang="scss">
     .message_entry_wrapper {
         width: 100%;
-        overflow: auto;
+        // overflow: auto;
         border-radius: var(--rad-huge);
         background-color: var(--text-tertiary);
         transition: border-radius 200ms ease-out;
@@ -1063,22 +888,13 @@
         border: 0;
         overflow-x: hidden;
         padding: var(--sp-md) 0 var(--sp-md) 0;
-        overflow-y: auto;
+        // overflow-y: visible;
         user-select: text;
-        white-space: pre-wrap;
         overflow-wrap: anywhere;
         flex: auto;
         font-size: var(--typo-chatText-sz);
         line-height: var(--typo-chatText-lh);
         color: var(--text-primary);
-
-        &.empty:before {
-            content: attr(placeholder);
-            color: var(--text-placeholder);
-            pointer-events: none;
-            display: block; /* For Firefox */
-            position: absolute;
-        }
 
         &.recording {
             display: none;

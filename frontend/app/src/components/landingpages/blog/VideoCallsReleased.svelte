@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Markdown from "../../home/Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import ExternalLink from "../ExternalLink.svelte";
 </script>
 

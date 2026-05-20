@@ -6,7 +6,7 @@
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
-    import Markdown from "./Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import { TokenState } from "./wallet/walletState.svelte";
     import MessageRenderer from "./MessageRenderer.svelte";
     import Alert from "svelte-material-icons/AlertRhombusOutline.svelte";

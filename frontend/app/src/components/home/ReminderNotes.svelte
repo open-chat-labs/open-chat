@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Markdown from "./Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
 
     interface Props {
         notes: string | undefined;
