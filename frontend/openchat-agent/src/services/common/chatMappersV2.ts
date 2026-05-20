@@ -2664,6 +2664,8 @@ export function apiDexId(dex: DexId): TExchangeId {
     switch (dex) {
         case "icpswap":
             return "ICPSwap";
+        case "taco":
+            return "Taco";
         default:
             throw new UnsupportedValueError("Unsupported dex", dex);
     }
