@@ -49,6 +49,7 @@ async fn c2c_join_channel_impl(args: Args) -> Response {
             verified_credential_args: args.verified_credential_args.clone(),
             unique_person_proof: args.unique_person_proof.clone(),
             total_chit_earned: args.total_chit_earned,
+            composite_gate_index: args.composite_gate_index,
         })
         .await
         {
@@ -79,6 +80,7 @@ pub(crate) fn join_channel_synchronously(
     diamond_membership_expires_at: Option<TimestampMillis>,
     unique_person_proof: Option<UniquePersonProof>,
     total_chit_earned: i32,
+    composite_gate_index: Option<u8>,
     explicit_join: bool,
 ) {
     let is_unique_person = unique_person_proof.is_some();
@@ -91,6 +93,7 @@ pub(crate) fn join_channel_synchronously(
             unique_person_proof,
             None,
             total_chit_earned,
+            composite_gate_index,
             state,
         )
     }) {
@@ -129,6 +132,7 @@ async fn check_gate_then_join_channel(args: &Args) -> Response {
             args.unique_person_proof.clone(),
             args.verified_credential_args.clone(),
             args.total_chit_earned,
+            args.composite_gate_index,
             state,
         )
     }) {
@@ -162,6 +166,7 @@ fn is_permitted_to_join(
     unique_person_proof: Option<UniquePersonProof>,
     verified_credential_args: Option<VerifiedCredentialGateArgs>,
     total_chit_earned: i32,
+    composite_gate_index: Option<u8>,
     state: &RuntimeState,
 ) -> Result<Option<(AccessGateConfigInternal, CheckGateArgs)>, Response> {
     if state.data.is_frozen() {
@@ -213,6 +218,7 @@ fn is_permitted_to_join(
                         }),
                         referred_by_member: false,
                         total_chit_earned,
+                        composite_gate_index,
                         now: state.env.now(),
                     },
                 )

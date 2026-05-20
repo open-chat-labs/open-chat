@@ -69,6 +69,7 @@ fn c2c_create_proposals_channel_impl(args: Args, state: &mut RuntimeState) -> Re
             verified_credential_args: None,
             unique_person_proof: None,
             total_chit_earned: 0,
+            composite_gate_index: None,
         },
         Vec::new(),
         state,
