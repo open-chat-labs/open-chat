@@ -9,6 +9,34 @@ import com.ocplugin.app.data.NotificationCompanion
 
 object IntentsManager {
 
+    // Request code for the summary notification's delete intent. Per-notification delete
+    // intents use the notification's DB row id (a positive, auto-incremented Long) as the
+    // request code, so a negative constant here can never collide with them.
+    private const val SUMMARY_DELETE_REQUEST_CODE = -1
+
+    // Summary notification delete intent!
+    //
+    // When the user swipes away the collapsed notification group (which is the summary),
+    // Android removes the children from the UI but does NOT fire their individual delete
+    // intents. This intent lets the dismiss receiver reconcile the DB by releasing ALL
+    // active notifications, so the summary can't reappear with stale counts.
+    fun buildDeleteIntentForSummary(context: Context): PendingIntent {
+        val packageName = context.packageName
+        val dismissReceiverClass = Class.forName("$packageName.NotificationDismissReceiver")
+        val intent = Intent(context, dismissReceiverClass).apply {
+            putExtra("summaryDismiss", true)
+        }
+
+        val pendingIntentFlags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+
+        return PendingIntent.getBroadcast(
+            context,
+            SUMMARY_DELETE_REQUEST_CODE,
+            intent,
+            pendingIntentFlags,
+        )
+    }
+
     // Notification pending intent!
     //
     // Build pending intent with the notification data! Once the user taps on the notification
