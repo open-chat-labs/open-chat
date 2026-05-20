@@ -13,7 +13,7 @@ export interface PotentialOrderDetails {
   'amount_init' : bigint,
   'amount_sell' : bigint,
 }
-export interface QuoteResponse {
+export interface QuoteRoute {
   'expectedBuyAmount' : bigint,
   'fee' : bigint,
   'priceImpact' : number,
@@ -21,9 +21,23 @@ export interface QuoteResponse {
   'canFulfillFully' : boolean,
   'potentialOrderDetails' : [] | [PotentialOrderDetails],
   'hopDetails' : Array<HopDetail>,
+  'routeTokens' : Array<string>,
+  'tradingFeeBps' : bigint,
 }
+export interface RequestResponse {
+  'routes' : Array<QuoteRoute>,
+}
+export interface Request {
+  'tokenSell' : string,
+  'tokenBuy' : string,
+  'amountSell' : bigint,
+}
+export type BatchMultiResponse = Array<RequestResponse>;
 export interface _SERVICE {
-  'getExpectedReceiveAmount' : ActorMethod<[string, string, bigint], QuoteResponse>,
+  'getExpectedReceiveAmountBatchMulti' : ActorMethod<
+    [Array<Request>, bigint],
+    BatchMultiResponse
+  >,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

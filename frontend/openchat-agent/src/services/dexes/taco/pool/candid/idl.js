@@ -11,7 +11,7 @@ export const idlFactory = ({ IDL }) => {
     'amount_init' : IDL.Nat,
     'amount_sell' : IDL.Nat,
   });
-  const QuoteResponse = IDL.Record({
+  const QuoteRoute = IDL.Record({
     'expectedBuyAmount' : IDL.Nat,
     'fee' : IDL.Nat,
     'priceImpact' : IDL.Float64,
@@ -19,11 +19,21 @@ export const idlFactory = ({ IDL }) => {
     'canFulfillFully' : IDL.Bool,
     'potentialOrderDetails' : IDL.Opt(PotentialOrderDetails),
     'hopDetails' : IDL.Vec(HopDetail),
+    'routeTokens' : IDL.Vec(IDL.Text),
+    'tradingFeeBps' : IDL.Nat,
+  });
+  const RequestResponse = IDL.Record({
+    'routes' : IDL.Vec(QuoteRoute),
+  });
+  const Request = IDL.Record({
+    'tokenSell' : IDL.Text,
+    'tokenBuy' : IDL.Text,
+    'amountSell' : IDL.Nat,
   });
   return IDL.Service({
-    'getExpectedReceiveAmount' : IDL.Func(
-        [IDL.Text, IDL.Text, IDL.Nat],
-        [QuoteResponse],
+    'getExpectedReceiveAmountBatchMulti' : IDL.Func(
+        [IDL.Vec(Request), IDL.Nat],
+        [IDL.Vec(RequestResponse)],
         ['query'],
       ),
   });

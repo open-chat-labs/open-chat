@@ -1,7 +1,9 @@
 import type { IDL } from "@icp-sdk/core/candid";
-import { QuoteResponse, _SERVICE } from "./types";
+import { BatchMultiResponse, Request, QuoteRoute, _SERVICE } from "./types";
 export {
-    QuoteResponse as ApiQuoteResponse,
+    BatchMultiResponse as ApiBatchMultiResponse,
+    Request as ApiBatchMultiRequest,
+    QuoteRoute as ApiQuoteRoute,
     _SERVICE as TacoExchangePoolService,
 };
 

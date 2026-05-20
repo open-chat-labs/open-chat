@@ -1,7 +1,11 @@
-import type { ApiQuoteResponse } from "./candid/idl";
+import type { ApiBatchMultiResponse } from "./candid/idl";
+import { buildSwapPlan } from "./optimizer";
 
-// TACO's getExpectedReceiveAmount returns a rich quote record. OC only needs
-// the headline output amount for ranking quotes.
-export function quoteResponse(candid: ApiQuoteResponse): bigint {
-    return candid.expectedBuyAmount;
+// Run the same split-route optimizer the user_canister backend uses at
+// execution time, so the displayed quote matches the actual deliverable.
+export function batchMultiQuoteResponse(
+    candid: ApiBatchMultiResponse,
+    bps: bigint[],
+): bigint {
+    return buildSwapPlan(candid, bps).expectedOut;
 }
