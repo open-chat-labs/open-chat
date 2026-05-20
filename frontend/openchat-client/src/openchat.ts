@@ -6146,6 +6146,13 @@ export class OpenChat {
             .catch(() => false);
     }
 
+    setGroupModerationFlags(groupId: string, flags: number): Promise<boolean> {
+        return this.#worker
+            .send({ kind: "setGroupModerationFlags", groupId, flags })
+            .then((resp) => resp === "success")
+            .catch(() => false);
+    }
+
     setGroupUpgradeConcurrency(value: number): Promise<boolean> {
         return this.#worker
             .send({ kind: "setGroupUpgradeConcurrency", value })

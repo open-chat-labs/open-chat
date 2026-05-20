@@ -36,6 +36,7 @@ import {
     type Logout,
     type RemoveIdentityLinkResponse,
     type SetAuthIdentity,
+    type SetAuthIdentityResponse,
     type SetMinLogLevel,
     type SetAuthIdentityResponse,
     type VerifyAccountLinkingCodeResponse,
@@ -789,6 +790,9 @@ function getAction(
 
         case "setCommunityModerationFlags":
             return agent.setCommunityModerationFlags(payload.communityId, payload.flags);
+
+        case "setGroupModerationFlags":
+            return agent.setGroupModerationFlags(payload.groupId, payload.flags);
 
         case "setGroupUpgradeConcurrency":
             return agent.setGroupUpgradeConcurrency(payload.value);
