@@ -1,30 +1,10 @@
 <script lang="ts">
     import VirtualList from "@shared_components/VirtualList.svelte";
-    import type { NativeEmoji } from "emoji-picker-element/shared";
-    import {
-        customEmojis as allCustomEmojis,
-        mobileWidth,
-        premiumItemsStore,
-        type SelectedEmoji,
-    } from "openchat-client";
+    import { mobileWidth, type EmojiSummary, type SelectedEmoji } from "openchat-client";
     import { untrack } from "svelte";
-    import { emojiDatabase } from "../../utils/emojis";
+    import { searchAllEmojis, summaryToSelectedEmoji } from "../../utils/emojis";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
-
-    type NativeEmojiSummary = {
-        kind: "native";
-        unicode: string;
-        code: string;
-    };
-
-    type CustomEmojiSummary = {
-        kind: "custom";
-        url: string;
-        code: string;
-    };
-
-    type EmojiSummary = NativeEmojiSummary | CustomEmojiSummary;
 
     interface Props {
         query: string | undefined;
@@ -46,45 +26,12 @@
         }
     });
 
-    function searchCustomEmojis(query: string): CustomEmojiSummary[] {
-        const lower = query.toLowerCase();
-        return [...allCustomEmojis.values()]
-            .filter(
-                (e) =>
-                    $premiumItemsStore.has(e.premiumItem) &&
-                    e.code.toLowerCase().includes(lower),
-            )
-            .map((e) => ({ kind: "custom", url: e.url, code: e.code }));
-    }
-
     function search(query: string) {
         untrack(() => {
-            emojiDatabase.getPreferredSkinTone().then((tone) => {
-                emojiDatabase.getEmojiBySearchQuery(query!).then((m) => {
-                    const native: NativeEmojiSummary[] = (m as NativeEmoji[])
-                        .filter((m) => m.version < 14)
-                        .map((match) => {
-                            const unicode =
-                                match.skins?.find((s) => s.tone === tone)?.unicode ?? match.unicode;
-                            return {
-                                kind: "native" as const,
-                                unicode,
-                                code: match.shortcodes
-                                    ? match.shortcodes[match.shortcodes.length - 1]
-                                    : match.annotation,
-                            };
-                        });
-                    matches = [...searchCustomEmojis(query), ...native];
-                });
+            searchAllEmojis(query).then((m) => {
+                matches = m;
             });
         });
-    }
-
-    function summaryToSelectedEmoji(match: EmojiSummary): SelectedEmoji {
-        if (match.kind === "native") {
-            return { kind: "native", unicode: match.unicode };
-        }
-        return allCustomEmojis.get(match.code)!;
     }
 
     function select(match: EmojiSummary) {
@@ -124,9 +71,7 @@
     <Menu>
         <VirtualList keyFn={(e) => e.code} items={matches}>
             {#snippet children(match, itemIndex)}
-                <MenuItem
-                    selected={itemIndex === index}
-                    onclick={() => select(match)}>
+                <MenuItem selected={itemIndex === index} onclick={() => select(match)}>
                     {#snippet icon()}
                         <div class="emoji">
                             {#if match.kind === "native"}
@@ -164,6 +109,7 @@
         max-height: calc(var(--vh, 1vh) * 50);
         overflow: auto;
         box-shadow: var(--menu-inverted-sh);
+        left: 0;
     }
     .emoji {
         @include font(book, normal, fs-160);

@@ -148,7 +148,6 @@
     }
 
     function onInput() {
-        // const inputContent = inp?.textContent ?? "";
         const inputContent = editor?.getMarkdown() ?? "";
         onSetTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
         triggerCommandSelector(inputContent);

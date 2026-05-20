@@ -39,3 +39,17 @@ const popularEmojis = [...popularEmojiFiles].map((e) =>
 );
 
 export const customEmojis = new Map([...botEmojis, ...popularEmojis].map((e) => [e.code, e]));
+
+export type NativeEmojiSummary = {
+    kind: "native";
+    unicode: string;
+    code: string;
+};
+
+export type CustomEmojiSummary = {
+    kind: "custom";
+    url: string;
+    code: string;
+};
+
+export type EmojiSummary = NativeEmojiSummary | CustomEmojiSummary;

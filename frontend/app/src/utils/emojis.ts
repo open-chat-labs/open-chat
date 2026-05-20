@@ -1,5 +1,13 @@
 import { Database } from "emoji-picker-element";
-import type { NativeEmoji, EmojiSkin } from "emoji-picker-element/shared";
+import type { EmojiSkin, NativeEmoji } from "emoji-picker-element/shared";
+import {
+    type CustomEmojiSummary,
+    type EmojiSummary,
+    type NativeEmojiSummary,
+    type SelectedEmoji,
+    customEmojis as allCustomEmojis,
+    premiumItemsStore,
+} from "openchat-client";
 
 const emojiSet = new Set<string>();
 const emojiRegex = /^\p{Extended_Pictographic}$/u;
@@ -8,6 +16,44 @@ let initializing = false;
 export const emojiDatabase = new Database();
 
 const customEmojiRegex = /^!emoji\([^)]+\)$/;
+
+export function summaryToSelectedEmoji(match: EmojiSummary): SelectedEmoji {
+    if (match.kind === "native") {
+        return { kind: "native", unicode: match.unicode };
+    }
+    return allCustomEmojis.get(match.code)!;
+}
+
+export function searchAllEmojis(query: string) {
+    return emojiDatabase.getPreferredSkinTone().then((tone) => {
+        return emojiDatabase.getEmojiBySearchQuery(query!).then((m) => {
+            const native: NativeEmojiSummary[] = (m as NativeEmoji[])
+                .filter((m) => m.version < 14)
+                .map((match) => {
+                    const unicode =
+                        match.skins?.find((s) => s.tone === tone)?.unicode ?? match.unicode;
+                    return {
+                        kind: "native" as const,
+                        unicode,
+                        code: match.shortcodes
+                            ? match.shortcodes[match.shortcodes.length - 1]
+                            : match.annotation,
+                    };
+                });
+            return [...searchCustomEmojis(query), ...native];
+        });
+    });
+}
+
+export function searchCustomEmojis(query: string): CustomEmojiSummary[] {
+    const lower = query.toLowerCase();
+    return [...allCustomEmojis.values()]
+        .filter(
+            (e) =>
+                premiumItemsStore.value.has(e.premiumItem) && e.code.toLowerCase().includes(lower),
+        )
+        .map((e) => ({ kind: "custom", url: e.url, code: e.code }));
+}
 
 export function isSingleEmoji(text: string): boolean {
     if (customEmojiRegex.test(text)) return true;
