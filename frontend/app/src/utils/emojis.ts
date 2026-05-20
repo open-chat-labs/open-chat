@@ -7,7 +7,10 @@ let initializing = false;
 
 export const emojiDatabase = new Database();
 
+const customEmojiRegex = /^!emoji\([^)]+\)$/;
+
 export function isSingleEmoji(text: string): boolean {
+    if (customEmojiRegex.test(text)) return true;
     initEmojiSet();
     return emojiSet.has(text) || emojiRegex.test(text);
 }

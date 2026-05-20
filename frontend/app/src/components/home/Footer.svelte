@@ -137,16 +137,11 @@
     }
 
     function onDataTransfer(data: DataTransfer): void {
-        const text = data.getData("text/plain") || data.getData("text/uri-list");
-        if (text) {
-            messageEntry.replaceSelection(text);
-        }
         messageContentFromDataTransferItemList([...data.items]);
     }
 
     function onPaste(e: ClipboardEvent) {
         if (e.clipboardData) {
-            messageEntry.saveSelection();
             onDataTransfer(e.clipboardData);
             e.preventDefault();
         }
@@ -180,7 +175,7 @@
                             </HoverIcon>
                         </span>
                     </div>
-                    <EmojiPicker onEmojiSelected={emojiSelected} {mode} supportCustom={false} />
+                    <EmojiPicker onEmojiSelected={emojiSelected} {mode} supportCustom={true} />
                 </span>
             {/snippet}
             {#snippet footer()}

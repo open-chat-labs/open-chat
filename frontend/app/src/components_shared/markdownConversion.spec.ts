@@ -74,6 +74,24 @@ describe("markdown roundtrip", () => {
         ).toBe("[Wikipedia link](https://en.wikipedia.org/wiki/Foo_(bar)) and more text");
     });
 
+    it("custom emoji standalone", () => {
+        expect(
+            roundtrip('!emoji(bots_wave)'),
+        ).toBe('!emoji(bots_wave)');
+    });
+
+    it("custom emoji inline with text", () => {
+        expect(
+            roundtrip('Hello !emoji(bots_wave) world'),
+        ).toBe('Hello !emoji(bots_wave) world');
+    });
+
+    it("multiple custom emojis", () => {
+        expect(
+            roundtrip('!emoji(bots_wave)!emoji(popular_heart)'),
+        ).toBe('!emoji(bots_wave)!emoji(popular_heart)');
+    });
+
     it("heading level 1", () => {
         expect(roundtrip("# Heading")).toBe("# Heading");
     });
@@ -107,8 +125,10 @@ describe("markdown roundtrip", () => {
     });
 
     it("multiple paragraphs", () => {
+        // Consecutive paragraphs are serialized with \n (soft line break) so
+        // marked renders <br> rather than spaced <p> elements
         expect(roundtrip("First paragraph\n\nSecond paragraph")).toBe(
-            "First paragraph\n\nSecond paragraph",
+            "First paragraph\nSecond paragraph",
         );
     });
 

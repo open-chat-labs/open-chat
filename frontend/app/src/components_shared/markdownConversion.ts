@@ -31,8 +31,27 @@ export function nodeToMarkdown(node: any): string {
     const children: string[] = (node.content ?? []).map(nodeToMarkdown);
 
     switch (node.type) {
-        case "doc":
-            return children.join("\n\n").trim();
+        case "doc": {
+            const content: any[] = node.content ?? [];
+            const parts: string[] = [];
+            let i = 0;
+            while (i < content.length) {
+                const curr = content[i];
+                if (curr.type === "paragraph") {
+                    // Consecutive plain paragraphs → single newlines so marked renders <br>
+                    let group = nodeToMarkdown(curr);
+                    while (i + 1 < content.length && content[i + 1].type === "paragraph") {
+                        i++;
+                        group += "\n" + nodeToMarkdown(content[i]);
+                    }
+                    parts.push(group);
+                } else {
+                    parts.push(nodeToMarkdown(curr));
+                }
+                i++;
+            }
+            return parts.join("\n\n").trim();
+        }
         case "paragraph":
             return children.join("");
         case "hardBreak":
@@ -60,6 +79,8 @@ export function nodeToMarkdown(node: any): string {
             return `@UserId(${node.attrs.userId})`;
         case "group_mention":
             return `@UserGroup(${node.attrs.groupId})`;
+        case "custom_emoji":
+            return `!emoji(${node.attrs.id})`;
         case "horizontalRule":
             return "---";
         default:
@@ -188,6 +209,17 @@ export function parseInline(text: string): any[] {
                     marks: [{ type: "underline" }],
                 });
                 pos = end + 4;
+                textStart = pos;
+                continue;
+            }
+        }
+        // custom emoji: !emoji(code)
+        if (text[pos] === "!" && text.startsWith("!emoji(", pos)) {
+            const m = /^!emoji\(([^)]+)\)/.exec(text.slice(pos));
+            if (m) {
+                flush(pos);
+                nodes.push({ type: "custom_emoji", attrs: { id: m[1] } });
+                pos += m[0].length;
                 textStart = pos;
                 continue;
             }

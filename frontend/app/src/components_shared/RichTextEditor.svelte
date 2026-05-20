@@ -1,26 +1,37 @@
-<script module lang="ts">
-    import Database from "emoji-picker-element/database";
-    const emojiDb = new Database();
-</script>
-
 <script lang="ts">
     import { rtlStore } from "@src/stores/rtl";
     import { Editor, type Content } from "@tiptap/core";
+    import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
     import Link from "@tiptap/extension-link";
     import Placeholder from "@tiptap/extension-placeholder";
     import StarterKit from "@tiptap/starter-kit";
     import { isTouchOnlyDevice } from "component-lib";
-    import type { NativeEmoji } from "emoji-picker-element/shared";
-    import { OpenChat, type Member, type ReadonlyMap, type UserOrUserGroup } from "openchat-client";
+    import "highlight.js/styles/base16/helios.css";
+    import { common, createLowlight } from "lowlight";
+    import {
+        OpenChat,
+        type Member,
+        type ReadonlyMap,
+        type SelectedEmoji,
+        type UserOrUserGroup,
+    } from "openchat-client";
     import { getContext, onDestroy, onMount, type Snippet } from "svelte";
+    import { CustomEmojiExtension } from "./customEmojiExtension";
     import { markdownToDoc, nodeToMarkdown } from "./markdownConversion";
     import { GroupMentionExtension, UserMentionExtension } from "./mentionExtension";
-    import SuggestionPopup, { type SuggestionItem } from "./SuggestionPopup.svelte";
+
+    const lowlight = createLowlight(common);
 
     const client = getContext<OpenChat>("client");
 
     type MentionPickerArgs = {
         onMention: (u: UserOrUserGroup) => void;
+        onClose: () => void;
+        query: string;
+    };
+
+    type EmojiPickerArgs = {
+        onSelect: (e: SelectedEmoji) => void;
         onClose: () => void;
         query: string;
     };
@@ -32,9 +43,12 @@
         oninput?: () => void;
         onfocus?: () => void;
         onblur?: () => void;
+        onPaste?: (e: ClipboardEvent) => void;
+        onKeydown?: (e: KeyboardEvent) => void;
         members?: ReadonlyMap<string, Member>;
         empty?: boolean;
         mentionPicker: Snippet<[MentionPickerArgs]>;
+        emojiPicker: Snippet<[EmojiPickerArgs]>;
     }
 
     let {
@@ -44,9 +58,12 @@
         oninput,
         onfocus,
         onblur,
+        onPaste,
+        onKeydown,
         members,
         empty = $bindable(true),
         mentionPicker,
+        emojiPicker,
     }: Props = $props();
 
     let editorEl: HTMLDivElement;
@@ -55,29 +72,9 @@
     // Emoji suggestion state
     type Suggestion = { query: string; from: number; x: number; y: number; height: number };
     let emojiSuggestion = $state<Suggestion>();
-    let emojiResults = $state<NativeEmoji[]>([]);
-    let emojiSelectedIndex = $state(0);
 
     // Mention suggestion state
     let mentionSuggestion = $state<Suggestion>();
-
-    $effect(() => {
-        const q = emojiSuggestion?.query;
-        if (q && q.length > 0) {
-            let cancelled = false;
-            emojiDb.getEmojiBySearchQuery(q).then((emojis) => {
-                if (!cancelled) {
-                    emojiResults = (emojis as NativeEmoji[]).filter((e) => e.unicode).slice(0, 8);
-                    emojiSelectedIndex = 0;
-                }
-            });
-            return () => {
-                cancelled = true;
-            };
-        } else {
-            emojiResults = [];
-        }
-    });
 
     function userOrGroupToInsert(user: UserOrUserGroup): Content {
         const label = client.userOrUserGroupName(user);
@@ -149,25 +146,27 @@
         }
     }
 
-    function insertEmoji(unicode: string) {
+    function emojiToContent(emoji: SelectedEmoji): Content {
+        if (emoji.kind === "native") {
+            return emoji.unicode;
+        }
+        return { type: "custom_emoji", attrs: { id: emoji.code } };
+    }
+
+    function onEmojiSelect(emoji: SelectedEmoji) {
         if (!emojiSuggestion) return;
         const { from: cursorPos } = editor.state.selection;
         editor
             .chain()
             .deleteRange({ from: emojiSuggestion.from, to: cursorPos })
-            .insertContent(unicode)
+            .insertContent(emojiToContent(emoji))
             .run();
         emojiSuggestion = undefined;
-        emojiResults = [];
     }
 
-    let emojiItems = $derived<SuggestionItem[]>(
-        emojiResults.map((e) => ({
-            key: e.unicode,
-            label: `:${e.shortcodes?.[0] ?? e.annotation}:`,
-            icon: e.unicode,
-        })),
-    );
+    export function insertEmoji(emoji: SelectedEmoji): void {
+        editor?.chain().focus().insertContent(emojiToContent(emoji)).run();
+    }
 
     function onMentionSelect(user: UserOrUserGroup) {
         insertMention(user);
@@ -197,36 +196,29 @@
         editor = new Editor({
             element: editorEl,
             extensions: [
-                StarterKit.configure({ link: false }),
+                StarterKit.configure({ link: false, codeBlock: false }),
                 Placeholder.configure({ placeholder }),
-                Link.extend({ inclusive() { return false; } }).configure({ openOnClick: false }),
+                Link.extend({
+                    inclusive() {
+                        return false;
+                    },
+                }).configure({ openOnClick: false }),
                 UserMentionExtension,
                 GroupMentionExtension,
+                CustomEmojiExtension,
+                CodeBlockLowlight.configure({ lowlight, enableTabIndentation: true }),
             ],
             editorProps: {
                 handleKeyDown: (_view, event) => {
-                    if (emojiSuggestion && emojiResults.length > 0) {
+                    if (emojiSuggestion !== undefined) {
                         switch (event.key) {
                             case "Escape":
                                 emojiSuggestion = undefined;
-                                emojiResults = [];
-                                return true;
-                            case "ArrowDown":
-                                emojiSelectedIndex = (emojiSelectedIndex + 1) % emojiResults.length;
-                                return true;
-                            case "ArrowUp":
-                                emojiSelectedIndex =
-                                    (emojiSelectedIndex - 1 + emojiResults.length) %
-                                    emojiResults.length;
                                 return true;
                             case "Enter":
                             case "Tab": {
-                                const emoji = emojiResults[emojiSelectedIndex];
-                                if (emoji) {
-                                    event.preventDefault();
-                                    insertEmoji(emoji.unicode);
-                                    return true;
-                                }
+                                event.preventDefault();
+                                return true;
                             }
                         }
                     }
@@ -247,6 +239,69 @@
                         onsubmit?.();
                         return true;
                     }
+                    if (event.key === "Enter" && event.shiftKey && !isTouchOnlyDevice) {
+                        if (editor.isActive("codeBlock")) {
+                            const anchor = editor.state.selection.$anchor;
+                            const textBefore = editor.state.doc.textBetween(
+                                anchor.start(),
+                                anchor.pos,
+                            );
+                            if (textBefore.endsWith("\n\n")) {
+                                // Two empty lines: delete them and exit the code block
+                                editor
+                                    .chain()
+                                    .command(({ tr }) => {
+                                        tr.delete(anchor.pos - 2, anchor.pos);
+                                        return true;
+                                    })
+                                    .exitCode()
+                                    .run();
+                            } else {
+                                editor
+                                    .chain()
+                                    .command(({ tr }) => {
+                                        tr.insertText("\n");
+                                        return true;
+                                    })
+                                    .run();
+                            }
+                            event.preventDefault();
+                            return true;
+                        }
+                        if (editor.isActive("listItem")) {
+                            const isEmpty =
+                                editor.state.selection.$anchor.parent.textContent.length === 0;
+                            if (isEmpty) {
+                                editor.chain().liftListItem("listItem").run();
+                            } else {
+                                editor.chain().splitListItem("listItem").run();
+                            }
+                        } else if (editor.isActive("heading")) {
+                            editor.chain().splitBlock().setNode("paragraph").run();
+                        } else {
+                            const anchor = editor.state.selection.$anchor;
+                            const blockText = anchor.parent.textContent;
+                            const fenceMatch = blockText.match(/^```(\w*)$/);
+                            if (fenceMatch) {
+                                editor
+                                    .chain()
+                                    .command(({ tr }) => {
+                                        tr.delete(anchor.start(), anchor.pos);
+                                        return true;
+                                    })
+                                    .setNode(
+                                        "codeBlock",
+                                        fenceMatch[1] ? { language: fenceMatch[1] } : {},
+                                    )
+                                    .run();
+                            } else {
+                                editor.chain().splitBlock().run();
+                            }
+                        }
+                        event.preventDefault();
+                        return true;
+                    }
+                    onKeydown?.(event);
                     return false;
                 },
             },
@@ -264,6 +319,7 @@
             onSelectionUpdate: () => {
                 checkSuggestion();
             },
+            onPaste: (e: ClipboardEvent) => onPaste?.(e),
         });
 
         if (autofocus) {
@@ -280,13 +336,12 @@
 
 <div bind:this={editorEl} class="editor_wrapper" dir={$rtlStore ? "rtl" : "ltr"}></div>
 
-{#if emojiSuggestion && emojiItems.length > 0}
-    <SuggestionPopup
-        items={emojiItems}
-        selectedIndex={emojiSelectedIndex}
-        x={emojiSuggestion.x}
-        y={emojiSuggestion.y}
-        onselect={insertEmoji} />
+{#if emojiSuggestion}
+    {@render emojiPicker({
+        onSelect: onEmojiSelect,
+        onClose: () => (emojiSuggestion = undefined),
+        query: emojiSuggestion.query,
+    })}
 {/if}
 
 {#if mentionSuggestion}
@@ -307,10 +362,11 @@
         outline: none;
         width: 100%;
         min-width: 0;
-        color: var(--text-primary);
-        font-size: var(--typo-chatText-sz);
-        line-height: var(--typo-chatText-lh);
+        color: var(var(--txt), var(--text-primary));
+        font-size: var(--typo-chatText-sz, 15px);
+        line-height: var(--typo-chatText-lh, 19px);
         max-height: 10rem;
+        max-height: calc(var(--vh, 1vh) * 50);
         overflow-x: auto;
         overflow-y: auto;
     }
@@ -412,7 +468,7 @@
 
     :global(.ProseMirror p.is-editor-empty:first-child::before) {
         content: attr(data-placeholder);
-        color: var(--chat-input-placeholder);
+        color: var(--txt-light, var(--chat-input-placeholder));
         pointer-events: none;
         float: left;
         height: 0;

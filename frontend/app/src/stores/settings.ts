@@ -66,10 +66,6 @@ export const exploreGroupsDismissed = new LocalStorageBoolStore(
     false,
 );
 export const browseChannels = new LocalStorageBoolStore(configKeys.browseChannels, true);
-export const useBlockLevelMarkdown = new LocalStorageBoolStore(
-    configKeys.useBlockLevelMarkdown,
-    false,
-);
 export const hideTokenBalances = new LocalStorageBoolStore(configKeys.hideChitIcon, false);
 
 export const communityVisibilityOpen = new LocalStorageBoolStore(

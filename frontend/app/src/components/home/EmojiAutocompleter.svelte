@@ -1,21 +1,35 @@
 <script lang="ts">
+    import VirtualList from "@shared_components/VirtualList.svelte";
     import type { NativeEmoji } from "emoji-picker-element/shared";
-    import { mobileWidth } from "openchat-client";
+    import {
+        customEmojis as allCustomEmojis,
+        mobileWidth,
+        premiumItemsStore,
+        type SelectedEmoji,
+    } from "openchat-client";
     import { untrack } from "svelte";
     import { emojiDatabase } from "../../utils/emojis";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
-    import VirtualList from "@shared_components/VirtualList.svelte";
 
-    type EmojiSummary = {
+    type NativeEmojiSummary = {
+        kind: "native";
         unicode: string;
         code: string;
     };
 
+    type CustomEmojiSummary = {
+        kind: "custom";
+        url: string;
+        code: string;
+    };
+
+    type EmojiSummary = NativeEmojiSummary | CustomEmojiSummary;
+
     interface Props {
         query: string | undefined;
         offset: number;
-        onSelect: (emoji: string) => void;
+        onSelect: (emoji: SelectedEmoji) => void;
         onClose: () => void;
     }
 
@@ -32,29 +46,49 @@
         }
     });
 
+    function searchCustomEmojis(query: string): CustomEmojiSummary[] {
+        const lower = query.toLowerCase();
+        return [...allCustomEmojis.values()]
+            .filter(
+                (e) =>
+                    $premiumItemsStore.has(e.premiumItem) &&
+                    e.code.toLowerCase().includes(lower),
+            )
+            .map((e) => ({ kind: "custom", url: e.url, code: e.code }));
+    }
+
     function search(query: string) {
         untrack(() => {
             emojiDatabase.getPreferredSkinTone().then((tone) => {
                 emojiDatabase.getEmojiBySearchQuery(query!).then((m) => {
-                    matches = (m as NativeEmoji[])
+                    const native: NativeEmojiSummary[] = (m as NativeEmoji[])
                         .filter((m) => m.version < 14)
                         .map((match) => {
                             const unicode =
                                 match.skins?.find((s) => s.tone === tone)?.unicode ?? match.unicode;
                             return {
+                                kind: "native" as const,
                                 unicode,
                                 code: match.shortcodes
                                     ? match.shortcodes[match.shortcodes.length - 1]
                                     : match.annotation,
                             };
                         });
+                    matches = [...searchCustomEmojis(query), ...native];
                 });
             });
         });
     }
 
-    function select(emoji: string) {
-        onSelect(emoji);
+    function summaryToSelectedEmoji(match: EmojiSummary): SelectedEmoji {
+        if (match.kind === "native") {
+            return { kind: "native", unicode: match.unicode };
+        }
+        return allCustomEmojis.get(match.code)!;
+    }
+
+    function select(match: EmojiSummary) {
+        onSelect(summaryToSelectedEmoji(match));
     }
 
     function onKeyDown(ev: KeyboardEvent): void {
@@ -77,7 +111,7 @@
             case "Enter":
                 const match = matches[index];
                 if (match) {
-                    select(match.unicode);
+                    select(match);
                     ev.preventDefault();
                     ev.stopPropagation();
                 }
@@ -88,12 +122,18 @@
 
 <div class="picker" style={`bottom: ${offset}px; height: ${matches.length * ITEM_HEIGHT}px`}>
     <Menu>
-        <VirtualList keyFn={(e) => e.unicode} items={matches}>
+        <VirtualList keyFn={(e) => e.code} items={matches}>
             {#snippet children(match, itemIndex)}
-                <MenuItem selected={itemIndex === index} onclick={() => select(match.unicode)}>
+                <MenuItem
+                    selected={itemIndex === index}
+                    onclick={() => select(match)}>
                     {#snippet icon()}
                         <div class="emoji">
-                            {match.unicode}
+                            {#if match.kind === "native"}
+                                {match.unicode}
+                            {:else}
+                                <img class="custom-emoji" src={match.url} alt={match.code} />
+                            {/if}
                         </div>
                     {/snippet}
                     {#snippet text()}
@@ -128,5 +168,12 @@
     .emoji {
         @include font(book, normal, fs-160);
         margin-right: $sp4;
+    }
+
+    .custom-emoji {
+        width: 1em;
+        height: 1em;
+        object-fit: contain;
+        vertical-align: middle;
     }
 </style>

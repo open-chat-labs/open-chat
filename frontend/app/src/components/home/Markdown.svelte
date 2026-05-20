@@ -47,6 +47,7 @@
 
             // replace userIds & emojis *after* markdown parsing so that we can fully disallow html in the markdown source
             parsed = replaceUserIds(parsed);
+            parsed = replaceCustomEmojis(parsed);
 
             parsed = replaceSpoilers(parsed);
         } catch (err: any) {
@@ -64,6 +65,12 @@
 
     function replaceSpoilers(input: string): string {
         return input.replace(/\|\|([^|]+?)\|\|/g, "<spoiler-span>$1</spoiler-span>");
+    }
+
+    function replaceCustomEmojis(text: string): string {
+        return text.replace(/!emoji\(([^)]+)\)/g, (_, code) => {
+            return `<custom-emoji data-id="${code}"></custom-emoji>`;
+        });
     }
 
     function replaceUserIds(text: string): string {
@@ -160,5 +167,9 @@
         line-height: 3.5rem;
         color: "inherit";
         @include pop(300ms);
+
+        :global(custom-emoji) {
+            height: 3.5rem;
+        }
     }
 </style>

@@ -48,7 +48,7 @@
     import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
     import { translatable } from "../../actions/translatable";
     import { i18nKey, interpolate } from "../../i18n/i18n";
-    import { enterSend, useBlockLevelMarkdown } from "../../stores/settings";
+    import { enterSend } from "../../stores/settings";
     import { snowing } from "../../stores/snow";
     import AlertBoxModal from "../AlertBoxModal.svelte";
     import CommandBuilder from "../bots/CommandInstanceBuilder.svelte";
@@ -62,7 +62,6 @@
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
     import EmojiOrGif from "./EmojiOrGif.svelte";
     import FileAttacher from "./FileAttacher.svelte";
-    import MarkdownToggle from "./MarkdownToggle.svelte";
     import MentionPicker from "./MentionPicker.svelte";
     import PreviewFooter from "./PreviewFooter.svelte";
     import ReplyingTo from "./ReplyingTo.svelte";
@@ -473,7 +472,7 @@
                 { kind: "text_content", text: txt },
                 userMessageId,
                 $currentUserIdStore,
-                $useBlockLevelMarkdown,
+                containsMarkdown,
             );
             client.executeBotCommand(scope, commandInstance, true);
             localUpdates.draftMessages.delete(messageContext);
@@ -547,7 +546,7 @@
 
         let mentioned = Array.from(mentionedMap, ([_, user]) => user);
 
-        return [expandedText, mentioned, containsMarkdown && $useBlockLevelMarkdown];
+        return [expandedText, mentioned, containsMarkdown];
     }
 
     function parseCommands(txt: string): boolean {
@@ -944,10 +943,6 @@
                                         </FileAttacher>
                                     {/if}
                                 </Container>
-                            {/if}
-
-                            {#if containsMarkdown}
-                                <MarkdownToggle {editingEvent} />
                             {/if}
                         </Row>
                     </div>

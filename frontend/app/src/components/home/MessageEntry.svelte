@@ -41,7 +41,7 @@
     import ContentSaveEditOutline from "svelte-material-icons/ContentSaveMoveOutline.svelte";
     import Send from "svelte-material-icons/Send.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
-    import { enterSend, useBlockLevelMarkdown } from "../../stores/settings";
+    import { enterSend } from "../../stores/settings";
     import { snowing } from "../../stores/snow";
     import AlertBoxModal from "../AlertBoxModal.svelte";
     import CommandBuilder from "../bots/CommandInstanceBuilder.svelte";
@@ -51,7 +51,6 @@
     import Translatable from "../Translatable.svelte";
     import AudioAttacher from "./AudioAttacher.svelte";
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
-    import MarkdownToggle from "./MarkdownToggle.svelte";
     import MentionPicker from "./MentionPicker.svelte";
     import MessageActions from "./MessageActions.svelte";
     import PreviewFooter from "./PreviewFooter.svelte";
@@ -124,27 +123,18 @@
 
     let editor = $state<RichTextEditor>();
     let editorEmpty = $state(true);
-    let editorKey = $state(Symbol());
 
-    const mentionRegex = /@(\w*)$/;
-    const emojiRegex = /:(\w+):?$/;
     // let inp: HTMLDivElement | undefined = $state();
     let audioMimeType = client.audioRecordingMimeType();
-    let selectedRange: Range | undefined = $state();
     let recording: boolean = $state(false);
     let percentRecorded: number = $state(0);
     let previousEditingEvent: EventWrapper<Message> | undefined = $state();
     let lastTypingUpdate: number = 0;
     let typingTimer: number | undefined = undefined;
     let audioSupported: boolean = $state("mediaDevices" in navigator);
-    let showMentionPicker = $state(false);
     let showCommandSelector: boolean = $state(false);
-    let showEmojiSearch = $state(false);
-    let mentionPrefix: string | undefined = $state();
-    let emojiQuery: string | undefined = $state();
     let messageEntryHeight: number = $state(0);
     let messageActions: MessageActions | undefined = $state();
-    let rangeToReplace: [Node, number, number] | undefined = undefined;
     let previousChatId = $state(chat.id);
     let containsMarkdown = $state(false);
     let showDirectBotChatWarning = $state(false);
@@ -153,35 +143,8 @@
     // Update this to force a new textbox instance to be created
     let textboxId = $state(Symbol());
 
-    // TODO - note that this is not actually going to work yet - there is a lot
-    // more to do to make the message entry component work with non-text elements
-    // But we will come back to this a bit later. Custom emoji reactions is a
-    // much easier place to start
     export function insertEmoji(emoji: SelectedEmoji) {
-        if (emoji.kind === "native") {
-            replaceSelectionWithNode(document.createTextNode(emoji.unicode));
-        } else {
-            const el = document.createElement("custom-emoji");
-            el.dataset.id = emoji.code;
-            replaceSelectionWithNode(el);
-        }
-    }
-
-    export function replaceSelectionWithNode(node: Node) {
-        restoreSelection();
-        let range = window.getSelection()?.getRangeAt(0);
-        if (range !== undefined) {
-            range.deleteContents();
-            range.insertNode(node);
-            range.collapse(false);
-            const inputContent = editor?.getMarkdown() ?? "";
-            triggerCommandSelector(inputContent);
-            onSetTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
-        }
-    }
-
-    export function replaceSelection(text: string) {
-        replaceSelectionWithNode(document.createTextNode(text));
+        editor?.insertEmoji(emoji);
     }
 
     function onInput() {
@@ -248,7 +211,7 @@
                 { kind: "text_content", text: txt },
                 userMessageId,
                 $currentUserIdStore,
-                $useBlockLevelMarkdown,
+                containsMarkdown,
             );
             client.executeBotCommand(scope, commandInstance, true);
             localUpdates.draftMessages.delete(messageContext);
@@ -258,7 +221,7 @@
         }
     }
 
-    function keyPress(e: KeyboardEvent) {
+    function keyDown(e: KeyboardEvent) {
         if (e.key === "Enter" && !e.shiftKey) {
             if (directBot) {
                 if (!showCommandSelector && !messageIsEmpty) {
@@ -322,7 +285,8 @@
 
         let mentioned = Array.from(mentionedMap, ([_, user]) => user);
 
-        return [expandedText, mentioned, containsMarkdown && $useBlockLevelMarkdown];
+        console.log("Contains markdown: ", containsMarkdown);
+        return [expandedText, mentioned, containsMarkdown];
     }
 
     function parseCommands(txt: string): boolean {
@@ -355,27 +319,6 @@
         // predictive text doesn't notice the text has been cleared so the suggestions don't make sense.
         textboxId = Symbol();
         tick().then(() => editor?.focus());
-    }
-
-    export function saveSelection() {
-        try {
-            // seeing errors in the logs to do with this
-            selectedRange = window.getSelection()?.getRangeAt(0);
-        } catch (_err) {}
-    }
-
-    function restoreSelection() {
-        editor?.focus();
-    }
-
-    function replaceTextWith(replacement: string) {
-        editor?.setContent(replacement);
-        onSetTextContent(editor?.getMarkdown());
-    }
-
-    function completeEmoji(emoji: string) {
-        replaceTextWith(emoji);
-        showEmojiSearch = false;
     }
 
     function detectMarkdown(text: string | null) {
@@ -490,8 +433,6 @@
         command={botState.selectedCommand} />
 {/if}
 
-{#if showMentionPicker}{/if}
-
 {#if showCommandSelector}
     <CommandSelector
         selectedBotId={directChatBotId}
@@ -500,14 +441,6 @@
         onCommandSent={() => cancelCommandSelector(true)}
         onNoMatches={() => cancelCommandSelector(false)}
         onCancel={() => cancelCommandSelector(false)} />
-{/if}
-
-{#if showEmojiSearch}
-    <EmojiAutocompleter
-        offset={messageEntryHeight}
-        onClose={() => (showEmojiSearch = false)}
-        onSelect={completeEmoji}
-        query={emojiQuery} />
 {/if}
 
 <div
@@ -553,30 +486,6 @@
                     {#if excessiveLinks}
                         <div class="note">{$_("excessiveLinksNote")}</div>
                     {/if}
-                    <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_static_element_interactions -->
-                    <!-- <div
-                        data-gram="false"
-                        data-gramm_editor="false"
-                        data-enable-grammarly="false"
-                        tabindex={0}
-                        bind:this={inp}
-                        onblur={saveSelection}
-                        class="textbox"
-                        class:recording
-                        class:empty={messageIsEmpty}
-                        contenteditable
-                        onpaste={onPaste}
-                        placeholder={interpolate($_, placeholder)}
-                        use:translatable={{
-                            key: placeholder,
-                            position: "absolute",
-                            right: 12,
-                            top: 12,
-                        }}
-                        spellcheck
-                        oninput={onInput}
-                        onkeypress={keyPress}>
-                    </div> -->
 
                     <div class="textbox">
                         <RichTextEditor
@@ -584,6 +493,8 @@
                             bind:empty={editorEmpty}
                             placeholder={interpolate($_, placeholder)}
                             members={$selectedChatMembersStore}
+                            {onPaste}
+                            onKeydown={keyDown}
                             onsubmit={sendMessage}
                             oninput={onInput}>
                             {#snippet mentionPicker(args)}
@@ -594,12 +505,15 @@
                                     onMention={args.onMention}
                                     prefix={args.query} />
                             {/snippet}
+                            {#snippet emojiPicker(args)}
+                                <EmojiAutocompleter
+                                    offset={messageEntryHeight}
+                                    onClose={args.onClose}
+                                    onSelect={args.onSelect}
+                                    query={args.query} />
+                            {/snippet}
                         </RichTextEditor>
                     </div>
-
-                    {#if containsMarkdown}
-                        <MarkdownToggle {editingEvent} />
-                    {/if}
                 </div>
             {/key}
         {:else}
