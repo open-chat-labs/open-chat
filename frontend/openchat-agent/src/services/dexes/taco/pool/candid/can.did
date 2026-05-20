@@ -1,0 +1,47 @@
+// Trimmed candid for the TACO exchange — only the slice OpenChat queries for
+// per-pool quotes. Full canister exposed at:
+// https://dashboard.internetcomputer.org/canister/qioex-5iaaa-aaaan-q52ba-cai
+//
+// OC uses getExpectedReceiveAmountBatchMulti (NOT the single getExpectedReceiveAmount)
+// so the frontend quote reflects TACO's split-route optimizer — matching what
+// the user_canister backend will actually deliver at execution time.
+
+type HopDetail = record {
+  tokenIn: text;
+  tokenOut: text;
+  amountIn: nat;
+  amountOut: nat;
+  fee: nat;
+  priceImpact: float64;
+};
+
+type PotentialOrderDetails = record {
+  amount_init: nat;
+  amount_sell: nat;
+};
+
+type QuoteRoute = record {
+  expectedBuyAmount: nat;
+  fee: nat;
+  priceImpact: float64;
+  routeDescription: text;
+  canFulfillFully: bool;
+  potentialOrderDetails: opt PotentialOrderDetails;
+  hopDetails: vec HopDetail;
+  routeTokens: vec text;
+  tradingFeeBps: nat;
+};
+
+type RequestResponse = record {
+  routes: vec QuoteRoute;
+};
+
+type Request = record {
+  tokenSell: text;
+  tokenBuy: text;
+  amountSell: nat;
+};
+
+service : {
+  getExpectedReceiveAmountBatchMulti: (vec Request, nat) -> (vec RequestResponse) query;
+}

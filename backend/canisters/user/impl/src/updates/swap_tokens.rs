@@ -3,6 +3,7 @@ use crate::model::token_swaps::TokenSwap;
 use crate::timer_job_types::{ProcessTokenSwapJob, TimerJob};
 use crate::token_swaps::icpswap::ICPSwapClient;
 use crate::token_swaps::swap_client::SwapClient;
+use crate::token_swaps::taco::TacoExchangeClient;
 use crate::{Data, RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -173,8 +174,13 @@ pub(crate) async fn process_token_swap(
     let swap_result = if let Some(r) = extract_result(&token_swap.swap_result).cloned() {
         r
     } else {
+        let deposit_block_index = extract_result(&token_swap.transfer_or_approval).copied();
         match swap_client
-            .swap(amount_to_dex.saturating_sub(args.input_token.fee), args.min_output_amount)
+            .swap(
+                amount_to_dex.saturating_sub(args.input_token.fee),
+                args.min_output_amount,
+                deposit_block_index,
+            )
             .await
         {
             Ok(r) => {
@@ -256,6 +262,12 @@ fn build_swap_client(args: &Args, state: &RuntimeState) -> Box<dyn SwapClient> {
                 icpswap.zero_for_one,
             ))
         }
+        ExchangeArgs::Taco(taco) => Box::new(TacoExchangeClient::new(
+            taco.swap_canister_id,
+            taco.treasury_canister_id,
+            input_token,
+            output_token,
+        )),
     }
 }
 

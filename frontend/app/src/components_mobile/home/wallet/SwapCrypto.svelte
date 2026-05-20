@@ -191,8 +191,13 @@
             });
     }
 
-    function dexName(_dex: DexId): string {
-        return "ICPSwap";
+    function dexName(dex: DexId): string {
+        switch (dex) {
+            case "icpswap":
+                return "ICPSwap";
+            case "taco":
+                return "TACO";
+        }
     }
 
     function loadSwaps(ledger: string) {

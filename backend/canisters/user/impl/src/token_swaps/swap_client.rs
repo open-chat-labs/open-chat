@@ -14,7 +14,12 @@ pub trait SwapClient {
     }
     async fn deposit_account(&self) -> Result<Account, C2CError>;
     async fn deposit(&self, amount: u128) -> Result<u128, C2CError>;
-    async fn swap(&self, amount: u128, min_amount_out: u128) -> Result<Result<SwapSuccess, String>, C2CError>;
+    async fn swap(
+        &self,
+        amount: u128,
+        min_amount_out: u128,
+        deposit_block_index: Option<u64>,
+    ) -> Result<Result<SwapSuccess, String>, C2CError>;
     async fn withdraw(&self, successful_swap: bool, amount: u128) -> Result<u128, C2CError>;
 }
 
