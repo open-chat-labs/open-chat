@@ -303,11 +303,13 @@ fn hops_from_route(route: &batch_multi::QuoteRoute) -> Vec<SwapHop> {
 
 // Flatten BatchMulti into entries (one per (fraction, route)). Dedupes by
 // (bp, route_key) so each fraction sees each route at most once.
-fn flatten_batch(batch: &batch_multi::Response) -> Vec<QuoteEntry> {
+// `bps` must contain the actual basis-points for each submitted probe, in the
+// same order as the batch request. This avoids mislabeling responses when
+// zero-amount probes were filtered out before submission.
+fn flatten_batch(batch: &batch_multi::Response, bps: &[u128]) -> Vec<QuoteEntry> {
     let mut out: Vec<QuoteEntry> = Vec::new();
     let mut seen: HashSet<(u128, String)> = HashSet::new();
-    for (i, req) in batch.iter().enumerate() {
-        let bp = ((i as u128) + 1) * STEP_BP;
+    for (req, bp) in batch.iter().zip(bps.iter().copied()) {
         for route in &req.routes {
             let expected = nat_to_u128(route.expected_buy_amount.clone());
             if expected == 0 {
