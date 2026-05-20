@@ -11,6 +11,15 @@ import kotlinx.coroutines.launch
 class NotificationDismissReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         
+        // Summary (collapsed group) was swiped away: reconcile the whole DB, since
+        // Android won't fire the children's individual delete intents in this case.
+        if (intent.getBooleanExtra("summaryDismiss", false)) {
+            ProcessLifecycleOwner.get().lifecycleScope.launch {
+                NotificationsManager.releaseAllNotificationsAfterSummaryDismissed(context)
+            }
+            return
+        }
+
         // TODO This code is exactly the same as in the MainActivity!!!!
         val notificationPayload = intent.getStringExtra("notificationPayload")
 
