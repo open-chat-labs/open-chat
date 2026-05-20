@@ -139,10 +139,16 @@ object NotificationsManager {
         // The aggregate count on the lock screen comes from the group summary's public
         // version (see setSummaryNotification); this only needs to be a safe placeholder.
         // TODO i18n
+        // Shown on the lock screen when there is only one chat with unread messages
+        // (single child: Android skips the group summary and renders this child's
+        // public version). When >= 2 chats have unread messages, the group summary
+        // takes over with its own text.
+        val count = notifications.size
+        val publicText = "$count new message${if (count > 1) "s" else ""}"
         val publicVersion = NotificationCompat.Builder(context, MESSAGES_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_small)
             .setContentTitle("OpenChat")
-            .setContentText("New message")
+            .setContentText(publicText)
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
             .build()
 
