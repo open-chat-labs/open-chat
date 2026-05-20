@@ -46,6 +46,7 @@
 
             // replace userIds & emojis *after* markdown parsing so that we can fully disallow html in the markdown source
             parsed = replaceUserIds(parsed);
+            parsed = replaceCustomEmojis(parsed);
         } catch (err: any) {
             client.logError("Error parsing markdown: ", err);
         }
@@ -58,6 +59,12 @@
             return "unsafe";
         }
     });
+
+    function replaceCustomEmojis(text: string): string {
+        return text.replace(/!emoji\(([^)]+)\)/g, (_, code) => {
+            return `<custom-emoji data-id="${code}"></custom-emoji>`;
+        });
+    }
 
     function replaceUserIds(text: string): string {
         return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
@@ -145,5 +152,9 @@
         line-height: 3.5rem;
         color: "inherit";
         @include pop(300ms);
+
+        :global(custom-emoji) {
+            height: 3.5rem;
+        }
     }
 </style>
