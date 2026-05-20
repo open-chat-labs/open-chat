@@ -8,6 +8,7 @@
             "@src/*": ["./src/*"],
             "@actions/*": ["./src/actions/*"],
             "@i18n/*": ["./src/i18n/*"],
+            "@shared_components/*": ["./src/components_shared/*"],
             "@stores/*": ["./src/stores/*"],
             "@theme/*": ["./src/theme/*"],
             "@utils/*": ["./src/utils/*"],

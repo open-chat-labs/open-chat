@@ -20,7 +20,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import type { RemoteData } from "../../../utils/remoteData";
     import HoverIcon from "../../HoverIcon.svelte";
-    import Loading from "../../Loading.svelte";
+    import Loading from "@shared_components/Loading.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
     import Translatable from "../../Translatable.svelte";
     import PinnedMessage from "./PinnedMessage.svelte";

@@ -4,7 +4,7 @@
     import { allUsersStore, iconSize, selectedCommunityMembersStore } from "openchat-client";
     import { getContext } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
-    import VirtualList from "../VirtualList.svelte";
+    import VirtualList from "@shared_components/VirtualList.svelte";
     import MentionPickerLogic from "./MentionPickerLogic.svelte";
 
     const client = getContext<OpenChat>("client");

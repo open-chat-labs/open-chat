@@ -37,7 +37,7 @@
     import { toastStore } from "../../../stores/toast";
     import { randomSentence } from "../../../utils/randomMsg";
     import AreYouSure from "../../AreYouSure.svelte";
-    import Loading from "../../Loading.svelte";
+    import Loading from "@shared_components/Loading.svelte";
     import ChatEvent from "../ChatEvent.svelte";
     import ChatEventList from "../ChatEventList.svelte";
     import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";

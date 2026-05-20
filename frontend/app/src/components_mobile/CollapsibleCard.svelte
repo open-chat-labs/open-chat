@@ -5,7 +5,7 @@
 
     import type { ResourceKey } from "openchat-client";
     import { type Snippet } from "svelte";
-    import Arrow from "./Arrow.svelte";
+    import Arrow from "@shared_components/Arrow.svelte";
     import Translatable from "./Translatable.svelte";
 
     interface Props {

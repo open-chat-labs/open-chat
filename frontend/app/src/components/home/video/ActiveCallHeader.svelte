@@ -8,7 +8,7 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
-    import Typing from "../../Typing.svelte";
+    import Typing from "@shared_components/Typing.svelte";
     import ActiveCallActions from "./ActiveCallActions.svelte";
     import type { VideoCallChat } from "./callChat";
 

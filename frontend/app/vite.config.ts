@@ -142,6 +142,7 @@ export default defineConfig({
             "@src": path.resolve(__dirname, "./src"),
             "@actions": path.resolve(__dirname, "./src/actions"),
             "@i18n": path.resolve(__dirname, "./src/i18n"),
+            "@shared_components": path.resolve(__dirname, "./src/components_shared"),
             "@stores": path.resolve(__dirname, "./src/stores"),
             "@theme": path.resolve(__dirname, "./src/theme"),
             "@utils": path.resolve(__dirname, "./src/utils"),

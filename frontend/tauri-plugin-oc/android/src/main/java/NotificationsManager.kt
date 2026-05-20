@@ -22,6 +22,13 @@ object NotificationsManager {
     private const val NOTIFICATIONS_GROUP_KEY = "notifications_group_key"
     private const val SUMMARY_NOTIFICATION_ID = 0
 
+    // contextId is a String.hashCode() and can be ANY 32-bit int (including 0), so a
+    // per-context notification id could collide with SUMMARY_NOTIFICATION_ID. Posting
+    // message notifications and the summary under distinct tags makes the (tag, id) pair
+    // unique regardless of hash collisions.
+    private const val MSG_NOTIFICATION_TAG = "oc_msg"
+    private const val SUMMARY_NOTIFICATION_TAG = "oc_summary"
+
     // Process received notification
     //
     // This function decodes and saves the notification to local DB, and then checks if the app is
@@ -128,6 +135,23 @@ object NotificationsManager {
             .build()
         ShortcutManagerCompat.pushDynamicShortcut(context, shortcut)
 
+        // Redacted version shown on a secure lock screen so message contents don't leak.
+        // The aggregate count on the lock screen comes from the group summary's public
+        // version (see setSummaryNotification); this only needs to be a safe placeholder.
+        // TODO i18n
+        // Shown on the lock screen when there is only one chat with unread messages
+        // (single child: Android skips the group summary and renders this child's
+        // public version). When >= 2 chats have unread messages, the group summary
+        // takes over with its own text.
+        val count = notifications.size
+        val publicText = "$count new message${if (count > 1) "s" else ""}"
+        val publicVersion = NotificationCompat.Builder(context, MESSAGES_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification_small)
+            .setContentTitle("OpenChat")
+            .setContentText(publicText)
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+            .build()
+
         val notificationBuilder = NotificationCompat.Builder(context, MESSAGES_CHANNEL_ID)
             .setStyle(messagingStyle)
             .setShortcutId(shortcutContext)
@@ -139,6 +163,8 @@ object NotificationsManager {
             .setGroup(NOTIFICATIONS_GROUP_KEY)
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+            .setPublicVersion(publicVersion)
             .setContentIntent(
                 IntentsManager.buildPendingIntentForNotification(context, notification)
             )
@@ -147,7 +173,7 @@ object NotificationsManager {
             )
 
         val nm = OCPluginCompanion.getNotificationsManager(context)
-        nm.notify(notification.contextId.value, notificationBuilder.build())
+        nm.notify(MSG_NOTIFICATION_TAG, notification.contextId.value, notificationBuilder.build())
 
         // TODO summary notification requires a bit more testing
         setSummaryNotification(context)
@@ -223,7 +249,8 @@ object NotificationsManager {
             DBManager.cleanUpReleasedNotifications()
 
             // Cancel any notifications for this context
-            OCPluginCompanion.getNotificationsManager(context).cancel(contextId.value)
+            OCPluginCompanion.getNotificationsManager(context)
+                .cancel(MSG_NOTIFICATION_TAG, contextId.value)
 
             // TODO summary notification requires a bit more testing
             // Update summary notification
@@ -264,18 +291,44 @@ object NotificationsManager {
                 )
                 .setGroup(NOTIFICATIONS_GROUP_KEY)
                 .setGroupSummary(true)
+                .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
                 .setAutoCancel(true)
                 .setSilent(true)
                 .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setPublicVersion(publicSummary)
+                .setDeleteIntent(IntentsManager.buildDeleteIntentForSummary(context))
                 .build()
 
             Log.d(OC_TAG_NOT, "#### Set summary notification: $summary")
-            notificationManager.notify(SUMMARY_NOTIFICATION_ID, summaryNotification)
+            notificationManager.notify(SUMMARY_NOTIFICATION_TAG, SUMMARY_NOTIFICATION_ID, summaryNotification)
         } else {
             Log.d(OC_TAG_NOT, "#### Summary notification CANCELED!")
-            notificationManager.cancel(SUMMARY_NOTIFICATION_ID)
+            notificationManager.cancel(SUMMARY_NOTIFICATION_TAG, SUMMARY_NOTIFICATION_ID)
+        }
+    }
+
+    // Release everything after the summary (collapsed group) is swiped away.
+    //
+    // Android removes the grouped children from the UI when the summary is dismissed but
+    // does NOT fire their per-context delete intents, so without this the DB rows stay
+    // isReleased = 0 and the summary later reappears with stale counts.
+    suspend fun releaseAllNotificationsAfterSummaryDismissed(context: Context) {
+        try {
+            val nm = OCPluginCompanion.getNotificationsManager(context)
+            val contextIds = DBManager.activeContextIds()
+            val marked = DBManager.releaseAllNotifications()
+            Log.d(OC_TAG_NOT, "#### Summary dismissed; released all ($marked) across ${contextIds.size} contexts")
+
+            if (marked > 0) {
+                DBManager.cleanUpReleasedNotifications()
+            }
+
+            // Defensively clear any children the system left behind, plus the summary.
+            contextIds.forEach { nm.cancel(MSG_NOTIFICATION_TAG, it.value) }
+            nm.cancel(SUMMARY_NOTIFICATION_TAG, SUMMARY_NOTIFICATION_ID)
+        } catch (e: Exception) {
+            Log.e(OC_TAG_NOT, "Error releasing all notifications after summary dismissed", e)
         }
     }
 }

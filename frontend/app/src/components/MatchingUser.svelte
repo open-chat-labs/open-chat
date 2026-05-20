@@ -3,7 +3,7 @@
     import { AvatarSize, currentUserIdStore } from "openchat-client";
     import { getContext } from "svelte";
     import Avatar from "./Avatar.svelte";
-    import FilteredUsername from "./FilteredUsername.svelte";
+    import FilteredUsername from "@shared_components/FilteredUsername.svelte";
     import Badges from "./home/profile/Badges.svelte";
 
     const client = getContext<OpenChat>("client");

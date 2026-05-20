@@ -5,6 +5,7 @@ use escrow_canister::*;
 generate_msgpack_query_call!(lookup_swap);
 
 // Updates
+generate_msgpack_update_call!(cancel_swap);
 generate_msgpack_update_call!(create_swap);
 generate_msgpack_update_call!(notify_deposit);
 
@@ -92,6 +93,20 @@ pub mod happy_path {
         match response {
             escrow_canister::notify_deposit::Response::Success(result) => result,
             response => panic!("'notify_deposit' error: {response:?}"),
+        }
+    }
+
+    pub fn cancel_swap(env: &mut PocketIc, sender: Principal, escrow_canister_id: CanisterId, swap_id: u32) {
+        let response = super::cancel_swap(
+            env,
+            sender,
+            escrow_canister_id,
+            &escrow_canister::cancel_swap::Args { swap_id },
+        );
+
+        match response {
+            escrow_canister::cancel_swap::Response::Success => {}
+            response => panic!("'cancel_swap' error: {response:?}"),
         }
     }
 }

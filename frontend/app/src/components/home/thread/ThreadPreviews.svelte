@@ -3,7 +3,7 @@
     import { toastStore } from "@src/stores/toast";
     import { debouncedDerived, threadsByChatStore, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
-    import Loading from "../../Loading.svelte";
+    import Loading from "@shared_components/Loading.svelte";
     import { default as ThreadPreviewComponent } from "./ThreadPreview.svelte";
 
     const client = getContext<OpenChat>("client");

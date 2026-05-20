@@ -30,7 +30,7 @@
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
     import SectionHeader from "../SectionHeader.svelte";
     import Translatable from "../Translatable.svelte";
-    import Typing from "../Typing.svelte";
+    import Typing from "@shared_components/Typing.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import ChatSubtext from "./ChatSubtext.svelte";
     import CurrentChatMenu from "./CurrentChatMenu.svelte";

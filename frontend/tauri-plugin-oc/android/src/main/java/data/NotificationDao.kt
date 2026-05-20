@@ -30,6 +30,16 @@ interface NotificationDao {
     """)
     suspend fun markAsReadForContext(contextId: ContextId): Int
 
+    @Query("""
+        UPDATE notifications
+        SET isReleased = 1
+        WHERE isReleased = 0
+    """)
+    suspend fun markAllAsRead(): Int
+
+    @Query("SELECT DISTINCT contextId FROM notifications WHERE isReleased = 0")
+    suspend fun activeContextIds(): List<ContextId>
+
     @Query("SELECT COUNT(*) FROM notifications WHERE isReleased = 0")
     suspend fun activeNotificationsCount(): Int
 

@@ -8,7 +8,7 @@
         ROLE_OWNER,
         type FullMember,
     } from "openchat-client";
-    import VirtualList from "../../VirtualList.svelte";
+    import VirtualList from "@shared_components/VirtualList.svelte";
     import Member from "./Member.svelte";
     import type { MemberManagement } from "./membersState.svelte";
 

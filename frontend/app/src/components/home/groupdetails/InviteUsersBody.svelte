@@ -12,7 +12,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import Button from "../../Button.svelte";
-    import Loading from "../../Loading.svelte";
+    import Loading from "@shared_components/Loading.svelte";
     import Translatable from "../../Translatable.svelte";
     import InviteUsersWithLink from "../InviteUsersWithLink.svelte";
     import SelectUsers from "../SelectUsers.svelte";

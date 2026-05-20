@@ -27,7 +27,7 @@
         "md5": "^2.3.0",
         "openchat-shared": "*",
         "peerjs": "^1.4.7",
-        "svelte-i18n": "^4.0.1",
+        "svelte-i18n": "^3.7.1",
         "tauri-plugin-oc-api": "file:../tauri-plugin-oc",
         "usergeek-ic-js": "^1.0.6"
     },
@@ -37,7 +37,7 @@
         "@types/identicon.js": "^2.3.1",
         "@types/jest": "^29.5.3",
         "@types/md5": "^2.3.2",
-        "svelte": "^5.53.5",
+        "svelte": "^5.55.7",
         "typescript": "^5.9.3",
         "vitest": "^3.1.1",
         "wait-on": "^7.0.1"

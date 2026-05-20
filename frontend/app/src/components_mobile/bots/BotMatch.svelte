@@ -2,7 +2,7 @@
     import { BodySmall, Container, IconButton } from "component-lib";
     import { type ExternalBot } from "openchat-shared";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
-    import FilteredUsername from "../FilteredUsername.svelte";
+    import FilteredUsername from "@shared_components/FilteredUsername.svelte";
     import Markdown from "../home/Markdown.svelte";
     import BotBadge from "../home/profile/BotBadge.svelte";
     import BotAvatar from "./BotAvatar.svelte";
