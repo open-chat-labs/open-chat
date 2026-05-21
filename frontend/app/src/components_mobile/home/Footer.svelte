@@ -128,7 +128,6 @@
     function onPaste(e: ClipboardEvent) {
         if (e.clipboardData) {
             onDataTransfer(e.clipboardData);
-            e.preventDefault();
         }
     }
 

@@ -493,7 +493,6 @@
                             members={$selectedChatMembersStore}
                             {onPaste}
                             onKeydown={keyDown}
-                            onsubmit={sendMessage}
                             oninput={onInput}>
                             {#snippet mentionPicker(args)}
                                 <MentionPicker

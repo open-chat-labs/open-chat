@@ -9,8 +9,8 @@
     import "highlight.js/styles/base16/helios.css";
     import { common, createLowlight } from "lowlight";
     import {
-        OpenChat,
         type Member,
+        type OpenChat,
         type ReadonlyMap,
         type SelectedEmoji,
         type UserOrUserGroup,
@@ -39,7 +39,6 @@
     interface Props {
         placeholder?: string;
         autofocus?: boolean;
-        onsubmit?: () => void;
         oninput?: () => void;
         onfocus?: () => void;
         onblur?: () => void;
@@ -54,7 +53,6 @@
     let {
         placeholder,
         autofocus = false,
-        onsubmit,
         oninput,
         onfocus,
         onblur,
@@ -196,7 +194,7 @@
         editor = new Editor({
             element: editorEl,
             extensions: [
-                StarterKit.configure({ link: false, codeBlock: false }),
+                StarterKit.configure({ link: false, codeBlock: false, trailingNode: false }),
                 Placeholder.configure({ placeholder }),
                 Link.extend({
                     inclusive() {
@@ -233,11 +231,6 @@
                                 return true;
                             }
                         }
-                    }
-                    if (event.key === "Enter" && !event.shiftKey && !isTouchOnlyDevice) {
-                        event.preventDefault();
-                        onsubmit?.();
-                        return true;
                     }
                     if (event.key === "Enter" && event.shiftKey && !isTouchOnlyDevice) {
                         if (editor.isActive("codeBlock")) {
@@ -277,7 +270,12 @@
                                 editor.chain().splitListItem("listItem").run();
                             }
                         } else if (editor.isActive("heading")) {
-                            editor.chain().splitBlock().setNode("paragraph").run();
+                            // Two separate commands so each sees the committed state.
+                            // A single chain() can map positions past the doc end when
+                            // there is no trailing node.
+                            if (editor.commands.splitBlock()) {
+                                editor.commands.setNode("paragraph");
+                            }
                         } else {
                             const anchor = editor.state.selection.$anchor;
                             const blockText = anchor.parent.textContent;
@@ -362,7 +360,7 @@
         outline: none;
         width: 100%;
         min-width: 0;
-        color: var(var(--txt), var(--text-primary));
+        color: var(--txt, var(--text-primary));
         font-size: var(--typo-chatText-sz, 15px);
         line-height: var(--typo-chatText-lh, 19px);
         max-height: 10rem;
