@@ -9,7 +9,7 @@ function createDefault(): DOMPurify.DOMPurify {
         ALLOWED_ATTR: ["target", "href", "class", "user-id", "suppress-links", "src", "alt"],
         CUSTOM_ELEMENT_HANDLING: {
             tagNameCheck: (tag) => tag === "profile-link" || tag === "custom-emoji" || tag === "spoiler-span",
-            attributeNameCheck: (attr) => ["text", "userId"].includes(attr),
+            attributeNameCheck: (attr) => ["text", "userId", "data-id"].includes(attr),
             allowCustomizedBuiltInElements: true,
         },
     });
@@ -23,7 +23,7 @@ function createOneLine(): DOMPurify.DOMPurify {
         FORBID_TAGS: ["br"],
         CUSTOM_ELEMENT_HANDLING: {
             tagNameCheck: (tag) => tag === "profile-link" || tag === "custom-emoji" || tag === "spoiler-span",
-            attributeNameCheck: (attr) => ["text", "userId"].includes(attr),
+            attributeNameCheck: (attr) => ["text", "userId", "data-id"].includes(attr),
             allowCustomizedBuiltInElements: true,
         },
     });

@@ -10,7 +10,7 @@
     import { getContext } from "svelte";
     import WithVerifiedBadge from "../../../icons/WithVerifiedBadge.svelte";
     import Translatable from "../../../Translatable.svelte";
-    import Markdown from "../../Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
 

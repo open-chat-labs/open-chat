@@ -18,7 +18,7 @@
     import Translatable from "../../../Translatable.svelte";
     import WithVerifiedBadge from "../../../icons/WithVerifiedBadge.svelte";
     import IntersectionObserver from "../../IntersectionObserver.svelte";
-    import Markdown from "../../Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import AccessGateChip from "../../access_gates/AccessGateChip.svelte";
     import CommunityBanner from "./CommunityBanner.svelte";
 

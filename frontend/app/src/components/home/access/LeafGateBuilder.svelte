@@ -26,7 +26,7 @@
     import Legend from "../../Legend.svelte";
     import Select from "../../Select.svelte";
     import Translatable from "../../Translatable.svelte";
-    import Markdown from "../Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import CredentialSelector from "./CredentialSelector.svelte";
 
     const client = getContext<OpenChat>("client");

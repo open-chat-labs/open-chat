@@ -1,10 +1,10 @@
 <script lang="ts">
+    import VirtualList from "@shared_components/VirtualList.svelte";
     import { Avatar, Body, ColourVars, Column, MenuItem, Row } from "component-lib";
     import type { OpenChat, UserOrUserGroup } from "openchat-client";
     import { allUsersStore, iconSize, selectedCommunityMembersStore } from "openchat-client";
     import { getContext } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
-    import VirtualList from "@shared_components/VirtualList.svelte";
     import MentionPickerLogic from "./MentionPickerLogic.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -125,6 +125,7 @@
         overflow: auto;
         z-index: 10000;
         width: toRem(250);
+        left: 0;
 
         &.inline {
             position: relative;

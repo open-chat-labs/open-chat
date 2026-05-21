@@ -5,7 +5,7 @@
     import FailedIcon from "svelte-material-icons/CloseCircle.svelte";
     import { currentTheme } from "../theme/themes";
     import { interpolate } from "../i18n/i18n";
-    import Markdown from "./home/Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import type { ResourceKey } from "openchat-client";
 
     interface Props {

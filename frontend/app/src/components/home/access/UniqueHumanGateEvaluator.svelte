@@ -12,7 +12,7 @@
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import Translatable from "../../Translatable.svelte";
     import HumanityConfirmation from "../HumanityConfirmation.svelte";
-    import Markdown from "../Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import LinkAccounts from "../profile/LinkAccounts.svelte";
     import AccessGateExpiry from "./AccessGateExpiry.svelte";
 

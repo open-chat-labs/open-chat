@@ -45,7 +45,7 @@
     import AccountInfo from "../AccountInfo.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import DurationSelector from "../DurationSelector.svelte";
-    import Markdown from "../Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import RemoveBot from "./RemoveBot.svelte";
     import TransferSnsFunds from "./TransferSNSFunds.svelte";
     import VerificationProposal from "./VerificationProposal.svelte";

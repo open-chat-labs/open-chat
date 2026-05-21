@@ -30,7 +30,7 @@
     import SpinningToken from "../icons/SpinningToken.svelte";
     import Translatable from "../Translatable.svelte";
     import AcceptP2PSwapModal from "./AcceptP2PSwapModal.svelte";
-    import Markdown from "./Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import P2PSwapProgress from "./P2PSwapProgress.svelte";
 
     const client = getContext<OpenChat>("client");

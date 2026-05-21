@@ -25,7 +25,7 @@
     import QRCode from "../QRCode.svelte";
     import Toggle from "../Toggle.svelte";
     import Translatable from "../Translatable.svelte";
-    import Markdown from "./Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
 
     interface Props {
         container: MultiUserChat | CommunitySummary;

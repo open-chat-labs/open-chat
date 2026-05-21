@@ -26,7 +26,7 @@
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
     import Translatable from "../Translatable.svelte";
     import AccessGateIcon from "./access/AccessGateIcon.svelte";
-    import Markdown from "./Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import Footer from "./upgrade/Footer.svelte";
 
     const client = getContext<OpenChat>("client");
