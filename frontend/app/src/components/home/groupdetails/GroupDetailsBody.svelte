@@ -28,7 +28,7 @@
     import DisappearingMessagesSummary from "../DisappearingMessagesSummary.svelte";
     import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";
     import InviteUsersWithLink from "../InviteUsersWithLink.svelte";
-    import Markdown from "../Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import Stats from "../Stats.svelte";
     import AdvancedSection from "./AdvancedSection.svelte";
 

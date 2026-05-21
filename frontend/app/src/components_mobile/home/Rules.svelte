@@ -20,7 +20,7 @@
     import { UpdateGroupState } from "./createOrUpdateGroup/group.svelte";
     import GroupCard from "./createOrUpdateGroup/GroupCard.svelte";
     import { MAX_RULES_LENGTH, type UpdateGroupOrCommunityState } from "./groupOrCommunity.svelte";
-    import Markdown from "./Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import SlidingPageContent from "./SlidingPageContent.svelte";
 
     interface Props {

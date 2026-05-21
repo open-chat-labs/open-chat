@@ -20,7 +20,7 @@
     import { toastStore } from "../../stores/toast";
     import EditableAvatar from "../EditableAvatar.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import Markdown from "../home/Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import SingleUserSelector from "../home/SingleUserSelector.svelte";
     import Tabs, { type Tab } from "../Tabs.svelte";
     import Translatable from "../Translatable.svelte";

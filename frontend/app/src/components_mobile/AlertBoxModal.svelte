@@ -3,7 +3,7 @@
     import { type ResourceKey } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { interpolate } from "../i18n/i18n";
-    import Markdown from "./home/Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
 
     interface Props {
         title: ResourceKey;

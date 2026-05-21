@@ -1,4 +1,5 @@
 <script lang="ts">
+    import RichTextEditor from "@shared_components/RichTextEditor.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import type {
         AttachmentContent,
@@ -14,7 +15,6 @@
         OpenChat,
         SelectedEmoji,
         User,
-        UserOrUserGroup,
     } from "openchat-client";
     import {
         allUsersStore,
@@ -29,6 +29,7 @@
         random64,
         screenWidth,
         ScreenWidth,
+        selectedChatMembersStore,
         selectedCommunitySummaryStore,
         selectedCommunityUserGroupsStore,
         throttleDeadline,
@@ -39,9 +40,8 @@
     import Close from "svelte-material-icons/Close.svelte";
     import ContentSaveEditOutline from "svelte-material-icons/ContentSaveMoveOutline.svelte";
     import Send from "svelte-material-icons/Send.svelte";
-    import { translatable } from "../../actions/translatable";
     import { i18nKey, interpolate } from "../../i18n/i18n";
-    import { enterSend, useBlockLevelMarkdown } from "../../stores/settings";
+    import { enterSend } from "../../stores/settings";
     import { snowing } from "../../stores/snow";
     import AlertBoxModal from "../AlertBoxModal.svelte";
     import CommandBuilder from "../bots/CommandInstanceBuilder.svelte";
@@ -51,7 +51,6 @@
     import Translatable from "../Translatable.svelte";
     import AudioAttacher from "./AudioAttacher.svelte";
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
-    import MarkdownToggle from "./MarkdownToggle.svelte";
     import MentionPicker from "./MentionPicker.svelte";
     import MessageActions from "./MessageActions.svelte";
     import PreviewFooter from "./PreviewFooter.svelte";
@@ -122,25 +121,20 @@
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
 
-    const mentionRegex = /@(\w*)$/;
-    const emojiRegex = /:(\w+):?$/;
-    let inp: HTMLDivElement | undefined = $state();
+    let editor = $state<RichTextEditor>();
+    let editorEmpty = $state(true);
+
+    // let inp: HTMLDivElement | undefined = $state();
     let audioMimeType = client.audioRecordingMimeType();
-    let selectedRange: Range | undefined = $state();
     let recording: boolean = $state(false);
     let percentRecorded: number = $state(0);
     let previousEditingEvent: EventWrapper<Message> | undefined = $state();
     let lastTypingUpdate: number = 0;
     let typingTimer: number | undefined = undefined;
     let audioSupported: boolean = $state("mediaDevices" in navigator);
-    let showMentionPicker = $state(false);
     let showCommandSelector: boolean = $state(false);
-    let showEmojiSearch = $state(false);
-    let mentionPrefix: string | undefined = $state();
-    let emojiQuery: string | undefined = $state();
     let messageEntryHeight: number = $state(0);
     let messageActions: MessageActions | undefined = $state();
-    let rangeToReplace: [Node, number, number] | undefined = undefined;
     let previousChatId = $state(chat.id);
     let containsMarkdown = $state(false);
     let showDirectBotChatWarning = $state(false);
@@ -149,94 +143,16 @@
     // Update this to force a new textbox instance to be created
     let textboxId = $state(Symbol());
 
-    // TODO - note that this is not actually going to work yet - there is a lot
-    // more to do to make the message entry component work with non-text elements
-    // But we will come back to this a bit later. Custom emoji reactions is a
-    // much easier place to start
     export function insertEmoji(emoji: SelectedEmoji) {
-        if (emoji.kind === "native") {
-            replaceSelectionWithNode(document.createTextNode(emoji.unicode));
-        } else {
-            const el = document.createElement("custom-emoji");
-            el.dataset.id = emoji.code;
-            replaceSelectionWithNode(el);
-        }
-    }
-
-    export function replaceSelectionWithNode(node: Node) {
-        restoreSelection();
-        let range = window.getSelection()?.getRangeAt(0);
-        if (range !== undefined) {
-            range.deleteContents();
-            range.insertNode(node);
-            range.collapse(false);
-            const inputContent = inp?.textContent ?? "";
-            triggerCommandSelector(inputContent);
-            onSetTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
-        }
-    }
-
-    export function replaceSelection(text: string) {
-        replaceSelectionWithNode(document.createTextNode(text));
+        editor?.insertEmoji(emoji);
     }
 
     function onInput() {
-        const inputContent = inp?.textContent ?? "";
+        const inputContent = editor?.getMarkdown() ?? "";
         onSetTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
         triggerCommandSelector(inputContent);
-        triggerMentionLookup(inputContent);
-        triggerEmojiLookup(inputContent);
         triggerTypingTimer();
         containsMarkdown = detectMarkdown(inputContent);
-    }
-
-    function uptoCaret(
-        inputContent: string | null,
-        fn: (slice: string, node: Node, pos: number) => void,
-    ): void {
-        if (inputContent === null) return;
-
-        const selection = window.getSelection();
-        if (selection === null) return;
-        const anchorNode = selection.anchorNode;
-        if (anchorNode?.textContent == null) return;
-        const text = anchorNode.textContent;
-
-        const slice = text.slice(0, selection.anchorOffset);
-        fn(slice, anchorNode, selection.anchorOffset);
-    }
-
-    function triggerEmojiLookup(inputContent: string | null): void {
-        uptoCaret(inputContent, (slice: string, node: Node, pos: number) => {
-            const matches = slice.match(emojiRegex);
-            if (matches !== null) {
-                if (matches.index !== undefined) {
-                    rangeToReplace = [node, matches.index, pos];
-                    emojiQuery = matches[1].toLowerCase() || undefined;
-                    showEmojiSearch = true;
-                }
-            } else {
-                showEmojiSearch = false;
-                emojiQuery = undefined;
-            }
-        });
-    }
-
-    function triggerMentionLookup(inputContent: string | null): void {
-        if (chat.kind === "direct_chat" || chat.memberCount <= 1) return;
-        uptoCaret(inputContent, (slice: string, node: Node, pos: number) => {
-            const matches = slice.match(mentionRegex);
-            if (matches !== null) {
-                if (matches.index !== undefined) {
-                    rangeToReplace = [node, matches.index, pos];
-                    mentionPrefix = matches[1].toLowerCase() || undefined;
-                    showMentionPicker = true;
-                }
-            } else {
-                showMentionPicker = false;
-                mentionPrefix = undefined;
-            }
-        });
     }
 
     function triggerCommandSelector(inputContent: string | null): void {
@@ -275,7 +191,7 @@
     }
 
     function sendADirectBotMessage(bot: ExternalBot) {
-        const txt = inp?.textContent?.trim() ?? "";
+        const txt = editor?.getMarkdown() ?? "";
         const userMessageId = random64();
         const botMessageId = random64();
 
@@ -294,7 +210,7 @@
                 { kind: "text_content", text: txt },
                 userMessageId,
                 $currentUserIdStore,
-                $useBlockLevelMarkdown,
+                containsMarkdown,
             );
             client.executeBotCommand(scope, commandInstance, true);
             localUpdates.draftMessages.delete(messageContext);
@@ -304,7 +220,7 @@
         }
     }
 
-    function keyPress(e: KeyboardEvent) {
+    function keyDown(e: KeyboardEvent) {
         if (e.key === "Enter" && !e.shiftKey) {
             if (directBot) {
                 if (!showCommandSelector && !messageIsEmpty) {
@@ -368,7 +284,7 @@
 
         let mentioned = Array.from(mentionedMap, ([_, user]) => user);
 
-        return [expandedText, mentioned, containsMarkdown && $useBlockLevelMarkdown];
+        return [expandedText, mentioned, containsMarkdown];
     }
 
     function parseCommands(txt: string): boolean {
@@ -381,7 +297,7 @@
     function sendMessage() {
         if (showCommandSelector || messageIsEmpty) return;
 
-        const txt = inp?.innerText?.trim() ?? "";
+        const txt = editor?.getMarkdown() ?? "";
 
         if (!parseCommands(txt)) {
             onSendMessage(expandMentions(txt));
@@ -391,9 +307,7 @@
     }
 
     function afterSendMessage() {
-        if (inp) {
-            inp.textContent = "";
-        }
+        editor?.clear();
         onSetTextContent();
 
         messageActions?.close();
@@ -402,90 +316,7 @@
         // After sending a message we must force a new textbox instance to be created, otherwise on iPhone the
         // predictive text doesn't notice the text has been cleared so the suggestions don't make sense.
         textboxId = Symbol();
-        tick().then(() => inp?.focus());
-    }
-
-    export function saveSelection() {
-        try {
-            // seeing errors in the logs to do with this
-            selectedRange = window.getSelection()?.getRangeAt(0);
-        } catch (_err) {}
-    }
-
-    function restoreSelection() {
-        if (!inp) return;
-
-        inp?.focus();
-        if (!selectedRange || !selectedRange.intersectsNode(inp)) {
-            const range = new Range();
-            range.selectNodeContents(inp);
-            range.collapse(false);
-            selectedRange = range;
-        }
-
-        const selection = window.getSelection()!;
-        selection.removeAllRanges();
-        selection.addRange(selectedRange);
-    }
-
-    function setCaretToEnd() {
-        if (!inp) return;
-
-        const range = document.createRange();
-        range.selectNodeContents(inp);
-        range.collapse(false);
-        const sel = window.getSelection();
-        sel?.removeAllRanges();
-        sel?.addRange(range);
-    }
-
-    function setCaretTo(node: Node, pos: number) {
-        const range = document.createRange();
-        range.selectNodeContents(node);
-        range.setStart(node, pos);
-        range.collapse(true);
-        const sel = window.getSelection();
-        sel?.removeAllRanges();
-        sel?.addRange(range);
-    }
-
-    function replaceTextWith(replacement: string) {
-        if (rangeToReplace === undefined) return;
-
-        const [node, start, end] = rangeToReplace;
-
-        const replaced = `${node.textContent?.slice(
-            0,
-            start,
-        )}${replacement} ${node.textContent?.slice(end)}`;
-        node.textContent = replaced;
-
-        onSetTextContent(inp?.textContent || undefined);
-
-        tick().then(() => {
-            setCaretTo(node, start + replacement.length + 1);
-        });
-
-        rangeToReplace = undefined;
-    }
-
-    function mention(userOrGroup: UserOrUserGroup): void {
-        const username = client.userOrUserGroupName(userOrGroup);
-        const userLabel = `@${username}`;
-
-        replaceTextWith(userLabel);
-
-        showMentionPicker = false;
-    }
-
-    function cancelMention() {
-        showMentionPicker = false;
-        setCaretToEnd();
-    }
-
-    function completeEmoji(emoji: string) {
-        replaceTextWith(emoji);
-        showEmojiSearch = false;
+        tick().then(() => editor?.focus());
     }
 
     function detectMarkdown(text: string | null) {
@@ -523,34 +354,31 @@
             editingEvent !== undefined ||
             attachment !== undefined,
     );
+
     let excessiveLinks = $derived(client.extractEnabledLinks(textContent ?? "").length > 5);
     let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
     $effect(() => {
-        if (inp) {
+        if (editor) {
             if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
                 if (editingEvent.event.content.kind === "text_content") {
-                    inp.textContent = formatUserGroupMentions(
-                        formatUserMentions(
-                            client.stripLinkDisabledMarker(editingEvent.event.content.text),
+                    editor.setContent(
+                        formatUserGroupMentions(
+                            formatUserMentions(
+                                client.stripLinkDisabledMarker(editingEvent.event.content.text),
+                            ),
                         ),
                     );
-                    selectedRange = undefined;
-                    restoreSelection();
                 } else if ("caption" in editingEvent.event.content) {
-                    inp.textContent = editingEvent.event.content.caption ?? "";
-                    selectedRange = undefined;
-                    restoreSelection();
+                    editor.setContent(editingEvent.event.content.caption ?? "");
                 }
                 previousEditingEvent = editingEvent;
-                containsMarkdown = detectMarkdown(inp.textContent);
+                containsMarkdown = detectMarkdown(editor.getMarkdown());
             } else {
                 const text = textContent ?? "";
                 // Only set the textbox text when required rather than every time, because doing so sets the focus back to
                 // the start of the textbox on some devices.
-                if (inp.textContent !== text) {
-                    inp.textContent = text;
-                    // TODO - figure this out
-                    // setCaretToEnd();
+                if (editor.getMarkdown() !== text) {
+                    editor.setContent(text);
                     containsMarkdown = detectMarkdown(text);
                 }
             }
@@ -569,12 +397,12 @@
     });
     trackedEffect("attachment-focus", () => {
         if (attachment !== undefined || replyingTo !== undefined) {
-            inp?.focus();
+            editor?.focus();
         }
     });
     trackedEffect("screen-width-focus", () => {
         if ($screenWidth === ScreenWidth.Large) {
-            inp?.focus();
+            editor?.focus();
         }
     });
     let placeholder = $derived(
@@ -603,15 +431,6 @@
         command={botState.selectedCommand} />
 {/if}
 
-{#if showMentionPicker}
-    <MentionPicker
-        supportsUserGroups
-        offset={messageEntryHeight}
-        onClose={cancelMention}
-        onMention={mention}
-        prefix={mentionPrefix} />
-{/if}
-
 {#if showCommandSelector}
     <CommandSelector
         selectedBotId={directChatBotId}
@@ -620,14 +439,6 @@
         onCommandSent={() => cancelCommandSelector(true)}
         onNoMatches={() => cancelCommandSelector(false)}
         onCancel={() => cancelCommandSelector(false)} />
-{/if}
-
-{#if showEmojiSearch}
-    <EmojiAutocompleter
-        offset={messageEntryHeight}
-        onClose={() => (showEmojiSearch = false)}
-        onSelect={completeEmoji}
-        query={emojiQuery} />
 {/if}
 
 <div
@@ -673,34 +484,33 @@
                     {#if excessiveLinks}
                         <div class="note">{$_("excessiveLinksNote")}</div>
                     {/if}
-                    <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_static_element_interactions -->
-                    <div
-                        data-gram="false"
-                        data-gramm_editor="false"
-                        data-enable-grammarly="false"
-                        tabindex={0}
-                        bind:this={inp}
-                        onblur={saveSelection}
-                        class="textbox"
-                        class:recording
-                        class:empty={messageIsEmpty}
-                        contenteditable
-                        onpaste={onPaste}
-                        placeholder={interpolate($_, placeholder)}
-                        use:translatable={{
-                            key: placeholder,
-                            position: "absolute",
-                            right: 12,
-                            top: 12,
-                        }}
-                        spellcheck
-                        oninput={onInput}
-                        onkeypress={keyPress}>
-                    </div>
 
-                    {#if containsMarkdown}
-                        <MarkdownToggle {editingEvent} />
-                    {/if}
+                    <div class="textbox">
+                        <RichTextEditor
+                            bind:this={editor}
+                            bind:empty={editorEmpty}
+                            placeholder={interpolate($_, placeholder)}
+                            members={$selectedChatMembersStore}
+                            {onPaste}
+                            onKeydown={keyDown}
+                            oninput={onInput}>
+                            {#snippet mentionPicker(args)}
+                                <MentionPicker
+                                    supportsUserGroups
+                                    offset={messageEntryHeight}
+                                    onClose={args.onClose}
+                                    onMention={args.onMention}
+                                    prefix={args.query} />
+                            {/snippet}
+                            {#snippet emojiPicker(args)}
+                                <EmojiAutocompleter
+                                    offset={messageEntryHeight}
+                                    onClose={args.onClose}
+                                    onSelect={args.onSelect}
+                                    query={args.query} />
+                            {/snippet}
+                        </RichTextEditor>
+                    </div>
                 </div>
             {/key}
         {:else}
@@ -805,18 +615,10 @@
         overflow-x: hidden;
         overflow-y: auto;
         user-select: text;
-        white-space: pre-wrap;
+        // white-space: pre-wrap;
         overflow-wrap: anywhere;
         border: var(--bw) solid var(--entry-input-bd);
         box-shadow: var(--entry-input-sh);
-
-        &.empty:before {
-            content: attr(placeholder);
-            color: var(--placeholder);
-            pointer-events: none;
-            display: block; /* For Firefox */
-            position: absolute;
-        }
 
         &.recording {
             display: none;

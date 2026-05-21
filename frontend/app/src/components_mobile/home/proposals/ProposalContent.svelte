@@ -34,7 +34,7 @@
     import { toastStore } from "../../../stores/toast";
     import { round2 } from "../../../utils/math";
     import Translatable from "../../Translatable.svelte";
-    import Markdown from "../Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import ProposalProgressLayout from "./ProposalProgressLayout.svelte";
     import ProposalVoteButton from "./ProposalVoteButton.svelte";
     import ProposalVotingProgress from "./ProposalVotingProgress.svelte";

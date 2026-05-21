@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Markdown from "@src/components/home/Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import { Avatar } from "component-lib";
     import type { ExternalBotLike, GrantedBotPermissions, OpenChat } from "openchat-client";
     import { allUsersStore, currentUserIdStore } from "openchat-client";

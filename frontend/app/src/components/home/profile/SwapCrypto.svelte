@@ -23,7 +23,7 @@
     import Translatable from "../../Translatable.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import CryptoSelector from "../CryptoSelector.svelte";
-    import Markdown from "../Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import TokenInput from "../TokenInput.svelte";
     import SwapProgress, { type SwapOutcome } from "./SwapProgress.svelte";
 

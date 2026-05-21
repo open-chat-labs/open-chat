@@ -32,7 +32,7 @@
     import { toastStore } from "../../stores/toast";
     import { TokenState } from "./wallet/walletState.svelte";
     import { getProxyAdjustedBlobUrl } from "../../utils/media";
-    import Markdown from "./Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import MessageRenderer from "./MessageRenderer.svelte";
     import Translatable from "../Translatable.svelte";
     import AreYouSure from "../AreYouSure.svelte";

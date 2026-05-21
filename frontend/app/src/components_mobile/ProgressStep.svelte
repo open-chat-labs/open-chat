@@ -6,7 +6,7 @@
     import FailedIcon from "svelte-material-icons/CloseCircle.svelte";
     import { interpolate } from "../i18n/i18n";
     import { currentTheme } from "../theme/themes";
-    import Markdown from "./home/Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import Spinner from "./icons/Spinner.svelte";
 
     interface Props {

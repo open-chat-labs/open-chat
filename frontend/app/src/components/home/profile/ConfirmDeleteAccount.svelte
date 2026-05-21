@@ -5,7 +5,7 @@
     import Translatable from "../../Translatable.svelte";
     import { interpolate } from "../../../i18n/i18n";
     import { _ } from "svelte-i18n";
-    import Markdown from "../Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Button from "../../Button.svelte";
     import { getContext } from "svelte";

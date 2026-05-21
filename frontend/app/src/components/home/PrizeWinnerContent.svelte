@@ -5,7 +5,7 @@
     import { _ } from "svelte-i18n";
     import SpinningToken from "../icons/SpinningToken.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
-    import Markdown from "./Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
 
