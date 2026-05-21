@@ -3,7 +3,7 @@
     import { Editor, type Content } from "@tiptap/core";
     import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
     import Link from "@tiptap/extension-link";
-    
+
     import StarterKit from "@tiptap/starter-kit";
     import { isTouchOnlyDevice } from "component-lib";
     import "highlight.js/styles/base16/helios.css";
@@ -213,6 +213,8 @@
                                 emojiSuggestion = undefined;
                                 return true;
                             case "Enter":
+                            case "ArrowDown":
+                            case "ArrowUp":
                             case "Tab": {
                                 event.preventDefault();
                                 return true;
@@ -225,6 +227,8 @@
                                 mentionSuggestion = undefined;
                                 return true;
                             case "Enter":
+                            case "ArrowDown":
+                            case "ArrowUp":
                             case "Tab": {
                                 event.preventDefault();
                                 return true;

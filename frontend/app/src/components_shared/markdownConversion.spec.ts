@@ -68,28 +68,22 @@ describe("markdown roundtrip", () => {
 
     it("markdown link with parentheses in URL", () => {
         expect(
-            roundtrip(
-                "[Wikipedia link](https://en.wikipedia.org/wiki/Foo_(bar)) and more text",
-            ),
+            roundtrip("[Wikipedia link](https://en.wikipedia.org/wiki/Foo_(bar)) and more text"),
         ).toBe("[Wikipedia link](https://en.wikipedia.org/wiki/Foo_(bar)) and more text");
     });
 
     it("custom emoji standalone", () => {
-        expect(
-            roundtrip('!emoji(bots_wave)'),
-        ).toBe('!emoji(bots_wave)');
+        expect(roundtrip("!emoji(bots_wave)")).toBe("!emoji(bots_wave)");
     });
 
     it("custom emoji inline with text", () => {
-        expect(
-            roundtrip('Hello !emoji(bots_wave) world'),
-        ).toBe('Hello !emoji(bots_wave) world');
+        expect(roundtrip("Hello !emoji(bots_wave) world")).toBe("Hello !emoji(bots_wave) world");
     });
 
     it("multiple custom emojis", () => {
-        expect(
-            roundtrip('!emoji(bots_wave)!emoji(popular_heart)'),
-        ).toBe('!emoji(bots_wave)!emoji(popular_heart)');
+        expect(roundtrip("!emoji(bots_wave)!emoji(popular_heart)")).toBe(
+            "!emoji(bots_wave)!emoji(popular_heart)",
+        );
     });
 
     it("heading level 1", () => {
