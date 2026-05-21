@@ -66,13 +66,6 @@
     }
 
     function nextGate() {
-        // If we are advancing past a composite OR gate, record the selected index
-        if (currentGate !== undefined && isCompositeGate(currentGate) && currentGate.operator === "or") {
-            const selectedIndex = currentGate.gates.findIndex((_, i) => !optionalGatesByIndex.has(i));
-            if (selectedIndex !== -1) {
-                compositeGateIndex = selectedIndex;
-            }
-        }
         result = iterator.next();
         if (!result.done) {
             currentGate = result.value;
@@ -80,7 +73,7 @@
                 optionalGatesByIndex = new Map(
                     currentGate.gates.map((g, i) => [
                         i,
-                        { ...g, level: currentGate?.level, expiry: currentGate?.expiry },
+                        { ...g, level: currentGate?.level, expiry: currentGate?.expiry, collectionName: currentGate?.collectionName },
                     ]),
                 );
             }
@@ -154,10 +147,11 @@
 
         const found = optionalGatesByIndex.has(i);
         optionalGatesByIndex = new Map(
-            parent.gates.map((g, i) => [i, { ...g, level: parent.level, expiry: parent.expiry }]),
+            parent.gates.map((g, i) => [i, { ...g, level: parent.level, expiry: parent.expiry, collectionName: parent.collectionName }]),
         );
         if (found) {
             optionalGatesByIndex.delete(i);
+            compositeGateIndex = i;
         }
         optionalGatesByIndex = optionalGatesByIndex;
     }
