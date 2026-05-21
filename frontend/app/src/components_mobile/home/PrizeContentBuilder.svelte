@@ -24,7 +24,7 @@
         Body,
         Chip,
         Column,
-        CommonButton,
+        CommonButton2,
         InputTextButton,
         NumberInput,
         Row,
@@ -311,11 +311,26 @@
         }} />
 {/if}
 
-<SlidingPageContent title={i18nKey("Create a prize")}>
-    <Column height={"fill"} gap={"xxl"} padding={["lg", "xxl"]}>
-        <CryptoSelector {draftAmount} showRefresh bind:ledger />
+{#snippet sectionTitle(key: string, padding: boolean = true)}
+    <Row padding={["zero", padding ? "xs" : "zero"]}>
+        <Body fontWeight="semi-bold">
+            <Translatable resourceKey={i18nKey(key)} />
+        </Body>
+    </Row>
+{/snippet}
 
-        <Column gap={"xs"}>
+<SlidingPageContent title={i18nKey("Create a prize")}>
+    <Column height={"fill"} gap={"xxl"} padding={["xxl", "lg", "huge"]}>
+        <!-- -->
+        <!-- Token select -->
+        <Column gap={"md"}>
+            {@render sectionTitle("Select the prize token")}
+            <CryptoSelector {draftAmount} showRefresh bind:ledger />
+        </Column>
+
+        <!-- Withdrawal amount -->
+        <Column gap="md">
+            {@render sectionTitle("Total prize amount")}
             <TokenInput
                 balance={tokenState.cryptoBalance}
                 {ledger}
@@ -332,132 +347,144 @@
                         )} />
                 {/snippet}
             </TokenInput>
-
-            <TransferFeesMessage
-                symbol={tokenState.symbol}
-                tokenDecimals={tokenState.decimals}
-                transferFees={totalFees} />
+            <Row padding={["zero", "sm"]}>
+                <TransferFeesMessage
+                    symbol={tokenState.symbol}
+                    tokenDecimals={tokenState.decimals}
+                    transferFees={totalFees} />
+            </Row>
         </Column>
 
-        <NumberInput error={!numberOfWinnersValid} min={1} max={1000} bind:value={numberOfWinners}>
-            {#snippet subtext()}
-                <Translatable resourceKey={i18nKey("Please enter a number between 1 and 1000")} />
-            {/snippet}
-            {#snippet textButtons()}
-                <InputTextButton onClick={() => (numberOfWinners = 1000)}>
-                    <Translatable resourceKey={i18nKey("tokenTransfer.max")} />
-                </InputTextButton>
-            {/snippet}
-        </NumberInput>
-
-        <DurationSelector bind:duration={selectedDuration}>
-            {#snippet title()}
-                <Body fontWeight={"bold"}>
-                    <Translatable resourceKey={i18nKey("Prize expiry time")} />
-                </Body>
-            {/snippet}
-        </DurationSelector>
-
-        <Setting
-            toggle={toggleDistribution}
-            info={"By default, prize amounts per winner are randomised, meaning that winnings between users will be different. If you'd like each of the winners to get equal amounts of the prize, turn this option on."}>
-            <Switch
-                onChange={toggleDistribution}
-                width={"fill"}
-                reverse
-                checked={distribution === "equal"}>
-                <Translatable resourceKey={i18nKey("Distribute evenly")} />
-            </Switch>
-        </Setting>
-
-        <Column gap={"sm"}>
-            <Body fontWeight={"bold"}>
-                <Translatable resourceKey={i18nKey("Claim restrictions")} />
-            </Body>
-            <Body colour={"textSecondary"}>
-                <Translatable
-                    resourceKey={i18nKey(
-                        "Set limitations on who can claim prizes. By default any user can claim a prize. Select which restrictions should apply below. ",
-                    )} />
-            </Body>
-        </Column>
-
-        <Row wrap gap={"sm"}>
-            <Chip
-                onClick={() => (requiresAuth = !requiresAuth)}
-                onRemove={requiresAuth ? () => (requiresAuth = false) : undefined}
-                mode={requiresAuth ? "filter" : "default"}>
-                {#snippet icon(color)}
-                    <Fingerprint {color} />
-                {/snippet}
-                <Translatable resourceKey={i18nKey("Requires authentication")} />
-            </Chip>
-            <Chip
-                onClick={() => onDiamondChanged("standard")}
-                onRemove={diamondType === "standard" ? () => (diamondType = "none") : undefined}
-                mode={diamondType === "standard" ? "filter" : "default"}>
-                {#snippet icon(color)}
-                    <Diamond {color} />
-                {/snippet}
-                <Translatable resourceKey={i18nKey("Diamond membership")} />
-            </Chip>
-            <Chip
-                onClick={() => onDiamondChanged("lifetime")}
-                onRemove={diamondType === "lifetime" ? () => (diamondType = "none") : undefined}
-                mode={diamondType === "lifetime" ? "filter" : "default"}>
-                {#snippet icon(color)}
-                    <Lifetime {color} />
-                {/snippet}
-                <Translatable resourceKey={i18nKey("Lifetime diamond membership")} />
-            </Chip>
-            <Chip
-                onClick={() => (uniquePersonOnly = !uniquePersonOnly)}
-                onRemove={uniquePersonOnly ? () => (uniquePersonOnly = false) : undefined}
-                mode={uniquePersonOnly ? "filter" : "default"}>
-                {#snippet icon(color)}
-                    <Account {color} />
-                {/snippet}
-                <Translatable resourceKey={i18nKey("Unique person")} />
-            </Chip>
-            <Chip
-                onClick={() => (selectMinChitEarned = true)}
-                onRemove={minChitEarned > 0 ? () => (minChitEarned = 0) : undefined}
-                mode={minChitEarned > 0 ? "filter" : "default"}>
-                {#snippet icon(color)}
-                    <Flash {color} />
-                {/snippet}
-                {#if minChitEarned > 0}
+        <!-- Number of winners -->
+        <Column gap="md">
+            {@render sectionTitle("Number of winners")}
+            <NumberInput
+                error={!numberOfWinnersValid}
+                min={1}
+                max={1000}
+                bind:value={numberOfWinners}>
+                {#snippet subtext()}
                     <Translatable
-                        resourceKey={i18nKey(`CHIT earned: ${chitBands.get(minChitEarned)}`)} />
-                {:else}
-                    <Translatable resourceKey={i18nKey(`CHIT earned`)} />
-                {/if}
-            </Chip>
-            <Chip
-                onClick={() => (selectMinStreak = true)}
-                onRemove={minStreak > 0 ? () => (minStreak = 0) : undefined}
-                mode={minStreak > 0 ? "filter" : "default"}>
-                {#snippet icon(color)}
-                    <LightningBolt {color} />
+                        resourceKey={i18nKey("Please enter a number between 1 and 1000")} />
                 {/snippet}
-                {#if minStreak > 0}
-                    <Translatable resourceKey={i18nKey(`Users with streak: ${minStreak}d`)} />
-                {:else}
-                    <Translatable resourceKey={i18nKey(`Users with streak`)} />
-                {/if}
-            </Chip>
-        </Row>
+                {#snippet textButtons()}
+                    <InputTextButton onClick={() => (numberOfWinners = 1000)}>
+                        <Translatable resourceKey={i18nKey("tokenTransfer.max")} />
+                    </InputTextButton>
+                {/snippet}
+            </NumberInput>
+        </Column>
 
+        <!-- Prize expiry -->
+        <Column gap="md">
+            {@render sectionTitle("Prize expiry time")}
+            <DurationSelector bind:duration={selectedDuration} />
+        </Column>
+
+        <!-- Distribution -->
+        <Column padding={["zero", "xs"]}>
+            <Setting
+                toggle={toggleDistribution}
+                info={"By default, prize amounts per winner are randomised, meaning that winnings between users will be different. If you'd like each of the winners to get equal amounts of the prize, turn this option on."}>
+                <Switch
+                    onChange={toggleDistribution}
+                    width={"fill"}
+                    reverse
+                    checked={distribution === "equal"}>
+                    <Translatable resourceKey={i18nKey("Distribute evenly")} />
+                </Switch>
+            </Setting>
+        </Column>
+
+        <!-- Distribution -->
+        <Column gap={"lg"} padding={["zero", "xs"]}>
+            <Column gap={"sm"}>
+                {@render sectionTitle("Claim restrictions", false)}
+                <Body colour={"textSecondary"}>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            "Set limitations on who can claim prizes. By default any user can claim a prize. Select which restrictions should apply below. ",
+                        )} />
+                </Body>
+            </Column>
+            <Row wrap gap={"sm"}>
+                <Chip
+                    onClick={() => (requiresAuth = !requiresAuth)}
+                    onRemove={requiresAuth ? () => (requiresAuth = false) : undefined}
+                    mode={requiresAuth ? "filter" : "default"}>
+                    {#snippet icon(color)}
+                        <Fingerprint {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("Requires authentication")} />
+                </Chip>
+                <Chip
+                    onClick={() => onDiamondChanged("standard")}
+                    onRemove={diamondType === "standard" ? () => (diamondType = "none") : undefined}
+                    mode={diamondType === "standard" ? "filter" : "default"}>
+                    {#snippet icon(color)}
+                        <Diamond {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("Diamond membership")} />
+                </Chip>
+                <Chip
+                    onClick={() => onDiamondChanged("lifetime")}
+                    onRemove={diamondType === "lifetime" ? () => (diamondType = "none") : undefined}
+                    mode={diamondType === "lifetime" ? "filter" : "default"}>
+                    {#snippet icon(color)}
+                        <Lifetime {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("Lifetime diamond membership")} />
+                </Chip>
+                <Chip
+                    onClick={() => (uniquePersonOnly = !uniquePersonOnly)}
+                    onRemove={uniquePersonOnly ? () => (uniquePersonOnly = false) : undefined}
+                    mode={uniquePersonOnly ? "filter" : "default"}>
+                    {#snippet icon(color)}
+                        <Account {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("Unique person")} />
+                </Chip>
+                <Chip
+                    onClick={() => (selectMinChitEarned = true)}
+                    onRemove={minChitEarned > 0 ? () => (minChitEarned = 0) : undefined}
+                    mode={minChitEarned > 0 ? "filter" : "default"}>
+                    {#snippet icon(color)}
+                        <Flash {color} />
+                    {/snippet}
+                    {#if minChitEarned > 0}
+                        <Translatable
+                            resourceKey={i18nKey(`CHIT earned: ${chitBands.get(minChitEarned)}`)} />
+                    {:else}
+                        <Translatable resourceKey={i18nKey(`CHIT earned`)} />
+                    {/if}
+                </Chip>
+                <Chip
+                    onClick={() => (selectMinStreak = true)}
+                    onRemove={minStreak > 0 ? () => (minStreak = 0) : undefined}
+                    mode={minStreak > 0 ? "filter" : "default"}>
+                    {#snippet icon(color)}
+                        <LightningBolt {color} />
+                    {/snippet}
+                    {#if minStreak > 0}
+                        <Translatable resourceKey={i18nKey(`Users with streak: ${minStreak}d`)} />
+                    {:else}
+                        <Translatable resourceKey={i18nKey(`Users with streak`)} />
+                    {/if}
+                </Chip>
+            </Row>
+        </Column>
+
+        <!-- Buttons -->
         <Row mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
-            <CommonButton onClick={onClose} mode={"active"} size={"small_text"}>
-                <Translatable resourceKey={i18nKey("back")} />
-            </CommonButton>
-            <CommonButton disabled={!valid} onClick={send} mode={"active"} size={"medium"}>
+            <CommonButton2 variant="primary" mode="text" onClick={onClose}>
+                <Translatable resourceKey={i18nKey("cancel")} />
+            </CommonButton2>
+            <CommonButton2 variant="primary" mode="regular" disabled={!valid} onClick={send}>
                 {#snippet icon(color, size)}
                     <Gift {color} {size} />
                 {/snippet}
                 <Translatable resourceKey={i18nKey("Attach prize")} />
-            </CommonButton>
+            </CommonButton2>
         </Row>
     </Column>
 </SlidingPageContent>

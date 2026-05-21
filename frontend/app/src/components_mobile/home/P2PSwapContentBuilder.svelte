@@ -197,7 +197,8 @@
                     converted={fromState.formatConvertedTokens(fromAmount)}
                     bind:status={tokenInputState}
                     bind:valid={fromAmountValid}
-                    bind:amount={fromAmount}>
+                    bind:amount={fromAmount}
+                    descriptionKey="Use the options above to select a specific percentage of your total token amount you would like to swap.">
                     {#snippet subtext()}
                         {`Minimum amount ${fromState.formatTokens(minAmount)} ${fromState.symbol}`}
                     {/snippet}

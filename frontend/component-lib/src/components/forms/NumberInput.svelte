@@ -39,7 +39,7 @@
     }: Props = $props();
 
     let hasInternalButtons = $derived(textButtons);
-    let padding = $derived<Padding>(hasInternalButtons ? ["xs", "xs", "xs", "md"] : ["xs", "xl"]);
+    let padding = $derived<Padding>(["xs", hasInternalButtons ? "xs" : "xl", "xs", "xl"]);
     let inp: HTMLInputElement;
 
     onMount(() => {
