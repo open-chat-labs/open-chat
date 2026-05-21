@@ -103,7 +103,7 @@
 {:else if content.kind === "video_content"}
     <VideoContent {title} {me} {edited} {fill} {content} {reply} {height} {blockLevelMarkdown} />
 {:else if content.kind === "video_call_content"}
-    <VideoCallContent {senderId} {messageIndex} {content} {timestamp} />
+    <VideoCallContent {me} {title} {reply} {senderId} {messageIndex} {content} {timestamp} />
 {:else if content.kind === "audio_content"}
     <AudioContent {title} {me} {edited} {content} {blockLevelMarkdown} {draft} reply />
 {:else if content.kind === "file_content"}
