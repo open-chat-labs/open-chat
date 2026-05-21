@@ -27,7 +27,7 @@ async fn c2c_join_channel(args: Args) -> Response {
     execute_update_async(|| c2c_join_channel_impl(args)).await
 }
 
-async fn c2c_join_channel_impl(args: Args) -> Response {
+async fn c2c_join_channel_impl(mut args: Args) -> Response {
     if read_state(|state| {
         state
             .data
@@ -49,11 +49,15 @@ async fn c2c_join_channel_impl(args: Args) -> Response {
             verified_credential_args: args.verified_credential_args.clone(),
             unique_person_proof: args.unique_person_proof.clone(),
             total_chit_earned: args.total_chit_earned,
-            composite_gate_index: args.composite_gate_index,
+            composite_gate_index: None,
         })
         .await
         {
             community_canister::c2c_join_community::Response::Success(_) => {
+                // In the case where we need to join community and channel, avoid using
+                // `composite_gate_index` since it is only an optimisation, and we don't know which
+                // level it applies to
+                args.composite_gate_index = None;
                 let response = check_gate_then_join_channel(&args).await;
                 if matches!(response, Success(_) | AlreadyInChannel(_)) {
                     let summary = read_state(|state| {
