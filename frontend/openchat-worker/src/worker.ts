@@ -468,10 +468,10 @@ function getAction(
             return agent.leaveGroup(payload.chatId);
 
         case "joinGroup":
-            return agent.joinGroup(payload.chatId, payload.credentialArgs);
+            return agent.joinGroup(payload.chatId, payload.credentialArgs, payload.compositeGateIndex);
 
         case "joinCommunity":
-            return agent.joinCommunity(payload.id, payload.credentialArgs);
+            return agent.joinCommunity(payload.id, payload.credentialArgs, payload.compositeGateIndex);
 
         case "updateGroup":
             return agent.updateGroup(

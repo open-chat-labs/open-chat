@@ -1715,6 +1715,7 @@ export class OpenChat {
         chat: MultiUserChat,
         credentials: string[],
         paymentApprovals: PaymentGateApprovals,
+        compositeGateIndex?: number,
     ): Promise<ClientJoinGroupResponse> {
         const approveResponse = await this.approveAccessGatePayments(chat, paymentApprovals);
         if (approveResponse.kind !== "success") {
@@ -1726,6 +1727,7 @@ export class OpenChat {
                 kind: "joinGroup",
                 chatId: chat.id,
                 credentialArgs: this.#buildVerifiedCredentialArgs(credentials),
+                compositeGateIndex,
             })
             .then((resp) => {
                 return withPausedStores(() => {
@@ -8583,6 +8585,7 @@ export class OpenChat {
         community: CommunitySummary,
         credentials: string[],
         paymentApprovals: PaymentGateApprovals,
+        compositeGateIndex?: number,
     ): Promise<ClientJoinCommunityResponse> {
         const approveResponse = await this.approveAccessGatePayments(community, paymentApprovals);
         if (approveResponse.kind !== "success") {
@@ -8594,6 +8597,7 @@ export class OpenChat {
                 kind: "joinCommunity",
                 id: community.id,
                 credentialArgs: this.#buildVerifiedCredentialArgs(credentials),
+                compositeGateIndex,
             })
             .then((resp) => {
                 if (resp.kind === "success") {

@@ -30,6 +30,7 @@
             onSuccess({
                 credentials: accessApprovalState.credentials,
                 paymentApprovals: accessApprovalState.paymentApprovals,
+                compositeGateIndex: accessApprovalState.compositeGateIndex,
             });
         }
     });

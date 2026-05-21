@@ -656,9 +656,6 @@
         gateCheck: GateCheckSucceeded | undefined,
     ): Promise<void> {
         joining = group;
-        const credentials = gateCheck?.credentials ?? [];
-        const paymentApprovals = gateCheck?.paymentApprovals ?? new Map();
-
         if (gateCheck === undefined) {
             const gates = client.accessGatesForChat(group, true);
             const passed = client.doesUserMeetAccessGates(gates);
@@ -681,8 +678,12 @@
             }
         }
 
+        const credentials = gateCheck?.credentials ?? [];
+        const paymentApprovals = gateCheck?.paymentApprovals ?? new Map();
+        const compositeGateIndex = gateCheck?.compositeGateIndex;
+
         return client
-            .joinGroup(group, credentials, paymentApprovals)
+            .joinGroup(group, credentials, paymentApprovals, compositeGateIndex)
             .then((resp) => {
                 if (resp.kind === "blocked") {
                     toastStore.showFailureToast(i18nKey("youreBlocked"));

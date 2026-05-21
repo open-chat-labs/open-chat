@@ -2193,6 +2193,7 @@ export class OpenChatAgent extends EventTarget {
     async joinGroup(
         chatId: MultiUserChatIdentifier,
         credentialArgs: VerifiedCredentialArgs | undefined,
+        compositeGateIndex?: number,
     ): Promise<JoinGroupResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
@@ -2201,7 +2202,7 @@ export class OpenChatAgent extends EventTarget {
                 const localUserIndex = await this._groupClient.localUserIndex(chatId.groupId);
                 const groupInviteCode = this._groupClient.inviteCode(chatId.groupId);
                 return this._localUserIndexClient
-                    .joinGroup(localUserIndex, chatId.groupId, groupInviteCode, credentialArgs)
+                    .joinGroup(localUserIndex, chatId.groupId, groupInviteCode, credentialArgs, compositeGateIndex)
                     .then((resp) => {
                         if (resp.kind === "success") {
                             return {
@@ -2225,6 +2226,7 @@ export class OpenChatAgent extends EventTarget {
                         communityInviteCode,
                         credentialArgs,
                         referredBy,
+                        compositeGateIndex,
                     )
                     .then((resp) => {
                         if (resp.kind === "success" || resp.kind === "success_joined_community") {
@@ -2252,6 +2254,7 @@ export class OpenChatAgent extends EventTarget {
     async joinCommunity(
         id: CommunityIdentifier,
         credentialArgs: VerifiedCredentialArgs | undefined,
+        compositeGateIndex?: number,
     ): Promise<JoinCommunityResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
@@ -2259,7 +2262,7 @@ export class OpenChatAgent extends EventTarget {
         const localUserIndex = await this._communityClient.localUserIndex(id.communityId);
         const referredBy = await this.getCommunityReferral(id.communityId);
         return this._localUserIndexClient
-            .joinCommunity(localUserIndex, id.communityId, inviteCode, credentialArgs, referredBy)
+            .joinCommunity(localUserIndex, id.communityId, inviteCode, credentialArgs, referredBy, compositeGateIndex)
             .then((resp) => {
                 if (resp.kind === "success") {
                     deleteCommunityReferral(id.communityId);

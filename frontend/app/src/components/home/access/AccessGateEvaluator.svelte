@@ -44,6 +44,7 @@
     let currentGate: EnhancedAccessGate | undefined = $state();
     let credentials: string[] = [];
     let paymentApprovals: PaymentGateApprovals = new Map();
+    let compositeGateIndex: number | undefined = undefined;
     let optionalGatesByIndex: Map<number, LeafGate> = $state(new Map());
     let optionalInvalid = $derived(
         currentGate?.kind === "composite_gate" &&
@@ -65,6 +66,13 @@
     }
 
     function nextGate() {
+        // If we are advancing past a composite OR gate, record the selected index
+        if (currentGate !== undefined && isCompositeGate(currentGate) && currentGate.operator === "or") {
+            const selectedIndex = currentGate.gates.findIndex((_, i) => !optionalGatesByIndex.has(i));
+            if (selectedIndex !== -1) {
+                compositeGateIndex = selectedIndex;
+            }
+        }
         result = iterator.next();
         if (!result.done) {
             currentGate = result.value;
@@ -86,7 +94,7 @@
             }
         } else {
             currentGate = undefined;
-            onSuccess({ credentials, paymentApprovals });
+            onSuccess({ credentials, paymentApprovals, compositeGateIndex });
         }
     }
 

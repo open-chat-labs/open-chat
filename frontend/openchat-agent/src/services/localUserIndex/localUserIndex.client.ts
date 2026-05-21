@@ -99,7 +99,11 @@ import {
 } from "./mappers";
 
 export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
-    constructor(identity: Identity, agent: HttpAgent, private readonly chatsDb: ChatsDb) {
+    constructor(
+        identity: Identity,
+        agent: HttpAgent,
+        private readonly chatsDb: ChatsDb,
+    ) {
         super(identity, agent, "LocalUserIndex");
     }
 
@@ -315,6 +319,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
         inviteCode: bigint | undefined,
         credentialArgs: VerifiedCredentialArgs | undefined,
         referredBy?: string,
+        compositeGateIndex?: number,
     ): Promise<JoinCommunityResponse> {
         return this.update(
             localUserIndex,
@@ -324,6 +329,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
                 invite_code: mapOptional(inviteCode, identity),
                 verified_credential_args: mapOptional(credentialArgs, apiVerifiedCredentialArgs),
                 referred_by: maybePrincipalStringToBytes(referredBy),
+                composite_gate_index: compositeGateIndex,
             },
             joinCommunityResponse,
             LocalUserIndexJoinCommunityArgs,
@@ -336,6 +342,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
         chatId: string,
         inviteCode: bigint | undefined,
         credentialArgs: VerifiedCredentialArgs | undefined,
+        compositeGateIndex?: number,
     ): Promise<JoinGroupResponse> {
         return this.update(
             localUserIndex,
@@ -344,6 +351,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
                 chat_id: principalStringToBytes(chatId),
                 invite_code: inviteCode,
                 verified_credential_args: mapOptional(credentialArgs, apiVerifiedCredentialArgs),
+                composite_gate_index: compositeGateIndex,
             },
             joinGroupResponse,
             LocalUserIndexJoinGroupArgs,
@@ -357,6 +365,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
         inviteCode: bigint | undefined,
         credentialArgs: VerifiedCredentialArgs | undefined,
         referredBy?: string,
+        compositeGateIndex?: number,
     ): Promise<JoinGroupResponse> {
         return this.update(
             localUserIndex,
@@ -367,6 +376,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
                 invite_code: mapOptional(inviteCode, identity),
                 verified_credential_args: mapOptional(credentialArgs, apiVerifiedCredentialArgs),
                 referred_by: maybePrincipalStringToBytes(referredBy),
+                composite_gate_index: compositeGateIndex,
             },
             (resp) => {
                 return joinChannelResponse(resp, id.communityId);
