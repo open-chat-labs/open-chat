@@ -3,7 +3,7 @@
     import { Editor, type Content } from "@tiptap/core";
     import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
     import Link from "@tiptap/extension-link";
-
+    import { Placeholder } from "@tiptap/extensions";
     import StarterKit from "@tiptap/starter-kit";
     import { isTouchOnlyDevice } from "component-lib";
     import "highlight.js/styles/base16/helios.css";
@@ -195,6 +195,7 @@
             element: editorEl,
             extensions: [
                 StarterKit.configure({ link: false, codeBlock: false, trailingNode: false }),
+                Placeholder.configure({ placeholder }),
                 Link.extend({
                     inclusive() {
                         return false;
@@ -335,11 +336,11 @@
     });
 </script>
 
-<div class="editor_container">
-    <div bind:this={editorEl} class="editor_wrapper" dir={$rtlStore ? "rtl" : "ltr"}></div>
-    {#if empty && placeholder}
-        <div class="placeholder-text" aria-hidden="true">{placeholder}</div>
-    {/if}
+<div
+    style={placeholder ? `--dynamic-placeholder: "${placeholder}"` : undefined}
+    bind:this={editorEl}
+    class="editor_wrapper"
+    dir={$rtlStore ? "rtl" : "ltr"}>
 </div>
 
 {#if emojiSuggestion}
@@ -472,19 +473,11 @@
         cursor: default;
     }
 
-    .editor_container {
-        position: relative;
-        width: 100%;
-        min-width: 0;
-    }
-
-    .placeholder-text {
-        position: absolute;
-        top: 0;
-        left: 0;
-        pointer-events: none;
+    :global(.ProseMirror p.is-editor-empty:first-child::before) {
+        content: var(--dynamic-placeholder, attr(data-placeholder));
         color: var(--txt-light, var(--chat-input-placeholder));
-        font-size: var(--typo-chatText-sz, 15px);
-        line-height: var(--typo-chatText-lh, 19px);
+        pointer-events: none;
+        float: left;
+        height: 0;
     }
 </style>
