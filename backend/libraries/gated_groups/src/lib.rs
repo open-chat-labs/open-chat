@@ -215,18 +215,18 @@ fn check_verified_credential_gate(
 }
 
 async fn check_composite_gate(gate: CompositeGate, args: CheckGateArgs) -> CheckIfPassesGateResult {
-    if let Some(result) = check_composite_gate_synchronously(gate.clone(), args.clone()) {
-        return result;
-    }
-
     if !gate.and
         && let Some(gate_index) = args.composite_gate_index
     {
         return if let Some(inner) = gate.inner.get(gate_index as usize) {
             check_non_composite_gate(inner.clone(), args).await
         } else {
-            CheckIfPassesGateResult::Error(OCErrorCode::InvalidAccessGate.with_message("Gate index out of range"))
+            CheckIfPassesGateResult::Error(OCErrorCode::InvalidRequest.with_message("Gate index out of range"))
         };
+    }
+
+    if let Some(result) = check_composite_gate_synchronously(gate.clone(), args.clone()) {
+        return result;
     }
 
     let count = gate.inner.len();
