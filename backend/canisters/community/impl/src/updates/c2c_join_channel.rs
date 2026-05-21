@@ -159,6 +159,7 @@ async fn check_gate_then_join_channel(args: &Args) -> Response {
     })
 }
 
+#[allow(clippy::too_many_arguments)]
 fn is_permitted_to_join(
     channel_id: ChannelId,
     user_principal: Principal,
