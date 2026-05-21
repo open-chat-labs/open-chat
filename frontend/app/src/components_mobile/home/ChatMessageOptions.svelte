@@ -202,7 +202,7 @@
         if (disposition && disposition.includes("filename=")) {
             filename = disposition.split("filename=")[1].split(";")[0].replace(/"/g, "");
         } else {
-            filename = url.split("/").pop() || filename;
+            filename = new URL(url).pathname.split("/").pop() || filename;
         }
 
         switch (msg.content.kind) {
