@@ -22,7 +22,7 @@
 <style lang="scss">
     .input_text_button {
         all: unset;
-        height: 2.5rem;
+        height: 3rem;
         padding: 0 var(--sp-xl);
         background-color: var(--background-1);
         border-radius: var(--rad-circle);
