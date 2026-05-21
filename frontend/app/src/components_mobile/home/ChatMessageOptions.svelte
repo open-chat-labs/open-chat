@@ -209,7 +209,7 @@
             case "audio_content":
             case "video_content":
             case "image_content":
-                return msg.content.caption?.split(" ")?.join("_") ?? filename;
+                return msg.content.caption?.split(" ")?.join("_").slice(0, 100) ?? filename;
             case "file_content":
                 return msg.content.name;
             default:
