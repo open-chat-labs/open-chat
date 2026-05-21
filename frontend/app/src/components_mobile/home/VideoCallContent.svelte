@@ -18,7 +18,7 @@
         selectedChatSummaryStore,
         type VideoCallContent,
     } from "openchat-client";
-    import { getContext } from "svelte";
+    import { getContext, type Snippet } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { activeVideoCall } from "../../stores/video";
     import Translatable from "../Translatable.svelte";
@@ -28,6 +28,7 @@
     import Clock from "svelte-material-icons/ClockOutline.svelte";
     import Participants from "svelte-material-icons/AccountMultipleOutline.svelte";
     import { now500 } from "@stores/time";
+    import MessageRenderer from "./MessageRenderer.svelte";
 
     const client = getContext<OpenChat>("client");
     const DISPLAYED_PARTICIPANTS = 4;
@@ -38,9 +39,11 @@
         timestamp: bigint | undefined;
         senderId: string;
         me: boolean;
+        title?: Snippet;
+        reply?: boolean;
     }
 
-    let { content, messageIndex, timestamp, me }: Props = $props();
+    let { content, messageIndex, timestamp, me, title, reply = false }: Props = $props();
 
     let inCall = $derived(
         $activeVideoCall !== undefined &&
@@ -102,95 +105,118 @@
     }
 </script>
 
-<Column gap={"sm"} padding={["zero", "zero", "xl"]} minWidth="60vw">
-    <Column
-        padding={me ? "xs" : "zero"}
-        borderRadius={["lg", "lg", "md", "md"]}
-        backgroundColor={ColourVars.background2}>
-        <!-- Details -->
-        <Column gap="xs">
-            <!-- Title -->
-            <Column gap="xxs" padding={["xxs", "sm"]}>
-                <Row gap="xs" crossAxisAlignment="center">
-                    <Video size="1.5rem" />
-                    <ChatCaption fontWeight="semi-bold" width="hug">
-                        <!-- TODO i18n -->
-                        <Translatable resourceKey={i18nKey(callTitle)} />
-                    </ChatCaption>
-                </Row>
-                <Row gap="sm" padding="xxs">
-                    <Row width="hug" gap="xs" crossAxisAlignment="center">
-                        <Participants size="1rem" color={ColourVars.textSecondary} />
-                        <BodySmall colour="textSecondary">
-                            {content.participants.length}
-                        </BodySmall>
-                    </Row>
-                    {#if duration !== undefined}
-                        <Row width="hug" gap="xs" crossAxisAlignment="center">
-                            <Clock size="1rem" color={ColourVars.textSecondary} />
-                            <BodySmall colour="textSecondary">
-                                {duration}
-                            </BodySmall>
-                        </Row>
-                    {/if}
-                </Row>
-            </Column>
-
-            <!-- Participants -->
-            <Row
-                supplementalClass="vc_participants"
-                gap="xs"
-                padding={["sm", "md"]}
-                borderRadius="md"
-                crossAxisAlignment="center"
-                backgroundColor={ColourVars.background0}>
-                {#each [...content.participants].slice(0, DISPLAYED_PARTICIPANTS) as participantId}
-                    <Avatar
-                        url={client.userAvatarUrl($allUsersStore.get(participantId.userId))}
-                        size={"md"} />
-                {/each}
-                {#if content.participants.length > DISPLAYED_PARTICIPANTS}
-                    <div class="extra">
-                        <Body align="center">
-                            {`+${content.participants.length - DISPLAYED_PARTICIPANTS}`}
-                        </Body>
-                    </div>
-                {/if}
-            </Row>
-
-            <!-- Buttons! -->
-            {#if inCall}
-                <Button disabled={finished} onClick={leaveCall}>
-                    {#snippet icon(color)}
-                        <PhoneRemove {color} />
-                    {/snippet}
+{#snippet replyView()}
+    <Row gap="sm" minWidth="12rem">
+        <Column width="fill" gap="xxs" padding={["xs", "zero"]}>
+            {@render title?.()}
+            <Row gap="xs" crossAxisAlignment="center">
+                <Video
+                    color={me ? ColourVars.secondaryLight : ColourVars.primaryLight}
+                    size="1.25rem" />
+                <ChatCaption colour={me ? "secondaryLight" : "primaryLight"}>
                     <Translatable
                         resourceKey={i18nKey(
-                            content.ended ? "videoCall.ended" : "videoCall.leave",
+                            `videoCall.${content.callType === "broadcast" ? "broadcastType" : "defaultType"}`,
                         )} />
-                </Button>
-            {:else}
-                <Button disabled={finished} onClick={joinCall}>
-                    {#snippet icon(color)}
-                        {#if !finished}
-                            <PhoneJoin {color} />
+                </ChatCaption>
+            </Row>
+        </Column>
+    </Row>
+{/snippet}
+
+{#snippet regularView()}
+    <Column gap={"sm"} padding={["zero", "zero", "xl"]} minWidth="60vw">
+        <Column
+            padding={me ? "xs" : "zero"}
+            borderRadius={["lg", "lg", "md", "md"]}
+            backgroundColor={ColourVars.background2}>
+            <!-- Details -->
+            <Column gap="xs">
+                <!-- Title -->
+                <Column gap="xxs" padding={["xxs", "sm"]}>
+                    <Row gap="xs" crossAxisAlignment="center">
+                        <Video size="1.5rem" />
+                        <ChatCaption fontWeight="semi-bold" width="hug">
+                            <!-- TODO i18n -->
+                            <Translatable resourceKey={i18nKey(callTitle)} />
+                        </ChatCaption>
+                    </Row>
+                    <Row gap="sm" padding="xxs">
+                        <Row width="hug" gap="xs" crossAxisAlignment="center">
+                            <Participants size="1rem" color={ColourVars.textSecondary} />
+                            <BodySmall colour="textSecondary">
+                                {content.participants.length}
+                            </BodySmall>
+                        </Row>
+                        {#if duration !== undefined}
+                            <Row width="hug" gap="xs" crossAxisAlignment="center">
+                                <Clock size="1rem" color={ColourVars.textSecondary} />
+                                <BodySmall colour="textSecondary">
+                                    {duration}
+                                </BodySmall>
+                            </Row>
                         {/if}
-                    {/snippet}
-                    <Column mainAxisAlignment={"center"} crossAxisAlignment={"center"}>
-                        <Body width={"hug"} fontWeight={"bold"} colour={"textOnPrimary"}>
-                            <Translatable
-                                resourceKey={endedDate
-                                    ? i18nKey("videoCall.endedAt", {
-                                          time: client.toShortTimeString(endedDate),
-                                      })
-                                    : i18nKey("videoCall.join")} />
-                        </Body>
-                    </Column>
-                </Button>
-            {/if}
+                    </Row>
+                </Column>
+
+                <!-- Participants -->
+                <Row
+                    supplementalClass="vc_participants"
+                    gap="xs"
+                    padding={["sm", "md"]}
+                    borderRadius="md"
+                    crossAxisAlignment="center"
+                    backgroundColor={ColourVars.background0}>
+                    {#each [...content.participants].slice(0, DISPLAYED_PARTICIPANTS) as participantId}
+                        <Avatar
+                            url={client.userAvatarUrl($allUsersStore.get(participantId.userId))}
+                            size={"md"} />
+                    {/each}
+                    {#if content.participants.length > DISPLAYED_PARTICIPANTS}
+                        <div class="extra">
+                            <Body align="center">
+                                {`+${content.participants.length - DISPLAYED_PARTICIPANTS}`}
+                            </Body>
+                        </div>
+                    {/if}
+                </Row>
+
+                <!-- Buttons! -->
+                {#if inCall}
+                    <Button disabled={finished} onClick={leaveCall}>
+                        {#snippet icon(color)}
+                            <PhoneRemove {color} />
+                        {/snippet}
+                        <Translatable
+                            resourceKey={i18nKey(
+                                content.ended ? "videoCall.ended" : "videoCall.leave",
+                            )} />
+                    </Button>
+                {:else}
+                    <Button disabled={finished} onClick={joinCall}>
+                        {#snippet icon(color)}
+                            {#if !finished}
+                                <PhoneJoin {color} />
+                            {/if}
+                        {/snippet}
+                        <Column mainAxisAlignment={"center"} crossAxisAlignment={"center"}>
+                            <Body width={"hug"} fontWeight={"bold"} colour={"textOnPrimary"}>
+                                <Translatable
+                                    resourceKey={endedDate
+                                        ? i18nKey("videoCall.endedAt", {
+                                              time: client.toShortTimeString(endedDate),
+                                          })
+                                        : i18nKey("videoCall.join")} />
+                            </Body>
+                        </Column>
+                    </Button>
+                {/if}
+            </Column>
         </Column>
     </Column>
-</Column>
+{/snippet}
+
+<MessageRenderer {replyView} {regularView} {me} {reply} />
 
 <style lang="scss">
     :global {
