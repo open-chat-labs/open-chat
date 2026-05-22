@@ -54,7 +54,6 @@
     import CommandBuilder from "../bots/CommandInstanceBuilder.svelte";
     import CommandSelector from "../bots/CommandSelector.svelte";
     import Send from "../icons/Send.svelte";
-    import Progress from "../Progress.svelte";
     import Translatable from "../Translatable.svelte";
     import AudioAttacher from "./AudioAttacher.svelte";
     import CustomMessageTrigger from "./CustomMessageTrigger.svelte";
@@ -64,6 +63,7 @@
     import FileAttacher from "./FileAttacher.svelte";
     import MentionPicker from "./MentionPicker.svelte";
     import PreviewFooter from "./PreviewFooter.svelte";
+    import RecordingWaveform from "./RecordingWaveform.svelte";
     import ReplyingTo from "./ReplyingTo.svelte";
     import ThrottleCountdown from "./ThrottleCountdown.svelte";
 
@@ -134,8 +134,8 @@
     let editorEmpty = $state(true);
 
     let messageEntryHeight = $state<number>(0);
+    let activeStream: MediaStream | undefined = $state(undefined);
     let audioMimeType = client.audioRecordingMimeType();
-    let recording: boolean = $state(false);
     let percentRecorded: number = $state(0);
     let previousEditingEvent: EventWrapper<Message> | undefined = $state();
     let lastTypingUpdate: number = 0;
@@ -622,7 +622,7 @@
         overflow={"visible"}
         gap={"sm"}
         mainAxisAlignment={"spaceBetween"}
-        crossAxisAlignment={recording ? "center" : "end"}
+        crossAxisAlignment={activeStream !== undefined ? "center" : "end"}
         background={ColourVars.background0}
         padding={["zero", "md", inputTrayMode !== "closed" ? "sm" : "zero"]}>
         {#if frozen}
@@ -650,8 +650,8 @@
         {:else if $throttleDeadline > 0}
             <ThrottleCountdown deadline={$throttleDeadline} />
         {:else}
-            {#if recording}
-                <Progress size={"3rem"} percent={percentRecorded} />
+            {#if activeStream !== undefined}
+                <RecordingWaveform stream={activeStream} />
             {:else if canEnterText}
                 {#key textboxId}
                     <div
@@ -785,11 +785,10 @@
             {#if directChatBotId === undefined}
                 <Container crossAxisAlignment={"center"} gap={"xs"} width={"hug"}>
                     {#if editingEvent === undefined}
-                        {#if permittedMessages.get("audio") && messageIsEmpty && audioMimeType !== undefined && audioSupported}
+                        {#if permittedMessages.get("audio") && messageIsEmpty && audioMimeType !== undefined && audioSupported && (activeStream !== undefined || editorEmpty)}
                             <AudioAttacher
                                 mimeType={audioMimeType}
-                                bind:percentRecorded
-                                bind:recording
+                                bind:activeStream
                                 bind:supported={audioSupported}
                                 onAudioCaptured={onFileSelected} />
                         {:else if canEnterText}

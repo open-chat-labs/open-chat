@@ -1,7 +1,7 @@
 <script lang="ts">
     import { IconButton } from "component-lib";
     import { quantiseWaveform, type AudioContent, type OpenChat } from "openchat-client";
-    import { getContext, onMount } from "svelte";
+    import { getContext, onDestroy, onMount } from "svelte";
     import Microphone from "svelte-material-icons/MicrophoneOutline.svelte";
     import RadioboxMarked from "svelte-material-icons/RadioboxMarked.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -10,22 +10,18 @@
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        recording?: boolean;
-        percentRecorded?: number;
+        activeStream?: MediaStream;
         mimeType: string;
         supported: boolean;
         onAudioCaptured: (content: AudioContent) => void;
     }
 
     let {
-        recording = $bindable(false),
-        percentRecorded = $bindable(0),
+        activeStream = $bindable(undefined),
         mimeType,
         supported = $bindable(),
         onAudioCaptured,
     }: Props = $props();
-
-    percentRecorded;
 
     let mediaRecorder: MediaRecorder | undefined;
 
@@ -52,6 +48,15 @@
         }
     });
 
+    onDestroy(() => {
+        if (mediaRecorder && mediaRecorder.state === "recording") {
+            mediaRecorder.stop();
+        }
+        activeStream?.getTracks().forEach((track) => track.stop());
+        activeStream = undefined;
+        mediaRecorder = undefined;
+    });
+
     function stopRecording() {
         if (mediaRecorder && mediaRecorder.state === "recording") {
             mediaRecorder.stop();
@@ -59,7 +64,7 @@
     }
 
     function toggle() {
-        if (recording) {
+        if (activeStream !== undefined) {
             stopRecording();
         } else {
             record();
@@ -71,18 +76,16 @@
             navigator.mediaDevices
                 .getUserMedia({ audio: true, video: false })
                 .then((stream) => {
-                    recording = true;
+                    activeStream = stream;
                     const recordedChunks: Blob[] = [];
                     const maxSizes = client.maxMediaSizes();
                     let totalSize = 0;
                     let truncated = false;
-                    percentRecorded = 0;
                     mediaRecorder = new MediaRecorder(stream, { mimeType });
 
                     mediaRecorder.addEventListener("dataavailable", (e) => {
                         if (e.data.size > 0) recordedChunks.push(e.data);
                         totalSize += e.data.size;
-                        percentRecorded = (totalSize / maxSizes.audio) * 100;
                         if (totalSize >= maxSizes.audio) {
                             truncated = true;
                             stopRecording();
@@ -90,22 +93,25 @@
                     });
 
                     mediaRecorder.addEventListener("stop", async () => {
-                        const data = await new Blob(recordedChunks).arrayBuffer();
-                        mediaRecorder = undefined;
-                        recording = false;
-                        if (truncated) {
-                            // let the user know if we stopped recording prematurely
-                            toastStore.showFailureToast(i18nKey("maxAudioSize"));
+                        try {
+                            const data = await new Blob(recordedChunks).arrayBuffer();
+                            if (truncated) {
+                                // let the user know if we stopped recording prematurely
+                                toastStore.showFailureToast(i18nKey("maxAudioSize"));
+                            }
+                            const quantised = await quantiseWaveform(data.slice(0));
+                            onAudioCaptured({
+                                kind: "audio_content",
+                                mimeType: mimeType,
+                                blobData: new Uint8Array(data),
+                                blobUrl: client.dataToBlobUrl(data, mimeType),
+                                ...quantised,
+                            });
+                        } finally {
+                            mediaRecorder = undefined;
+                            stream.getTracks().forEach((track) => track.stop());
+                            activeStream = undefined;
                         }
-                        const quantised = await quantiseWaveform(data.slice(0));
-                        onAudioCaptured({
-                            kind: "audio_content",
-                            mimeType: mimeType,
-                            blobData: new Uint8Array(data),
-                            blobUrl: client.dataToBlobUrl(data, mimeType),
-                            ...quantised,
-                        });
-                        stream.getTracks().forEach((track) => track.stop());
                     });
 
                     mediaRecorder.start(200);
@@ -118,7 +124,7 @@
 {#if supported}
     <IconButton padding={"md"} size={"lg"} mode={"primary"} onclick={toggle}>
         {#snippet icon(color)}
-            {#if recording}
+            {#if activeStream !== undefined}
                 <RadioboxMarked {color} />
             {:else}
                 <Microphone {color} />
