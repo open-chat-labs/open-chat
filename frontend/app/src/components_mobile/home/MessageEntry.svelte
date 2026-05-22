@@ -136,7 +136,6 @@
     let messageEntryHeight = $state<number>(0);
     let activeStream: MediaStream | undefined = $state(undefined);
     let audioMimeType = client.audioRecordingMimeType();
-    let percentRecorded: number = $state(0);
     let previousEditingEvent: EventWrapper<Message> | undefined = $state();
     let lastTypingUpdate: number = 0;
     let typingTimer: number | undefined = undefined;
