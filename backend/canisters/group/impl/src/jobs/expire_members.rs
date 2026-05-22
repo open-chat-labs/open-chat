@@ -72,6 +72,7 @@ fn run() {
                     verified_credential_args: None,
                     referred_by_member: false,
                     total_chit_earned: 0,
+                    composite_gate_index: None,
                     now: state.env.now(),
                 };
 

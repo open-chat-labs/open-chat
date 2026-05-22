@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `delete_channel_history` endpoint + fix event iterator ([#8855](https://github.com/open-chat-labs/open-chat/pull/8855))
 
+### Changed
+
+- Allow specifying which inner composite gate to check ([#8987](https://github.com/open-chat-labs/open-chat/pull/8987))
+
 ### Fixed
 
 - Use `>=` rather than `>` when checking neuron gate dissolve delay ([#8840](https://github.com/open-chat-labs/open-chat/pull/8840))

@@ -24,6 +24,7 @@ async fn join_channel(args: Args) -> Response {
         verified_credential_args: args.verified_credential_args.clone(),
         unique_person_proof: user_details.unique_person_proof.clone(),
         total_chit_earned: user_details.chit.total_earned,
+        composite_gate_index: args.composite_gate_index,
     };
     match community_canister_c2c_client::c2c_join_channel(args.community_id.into(), &c2c_args).await {
         Ok(response) => match response {

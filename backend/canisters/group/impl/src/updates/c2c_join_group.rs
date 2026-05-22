@@ -80,6 +80,7 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> OCResult<IsPermitt
                     }),
                 referred_by_member: false,
                 total_chit_earned: args.total_chit_earned,
+                composite_gate_index: args.composite_gate_index,
                 now: state.env.now(),
             }),
         )

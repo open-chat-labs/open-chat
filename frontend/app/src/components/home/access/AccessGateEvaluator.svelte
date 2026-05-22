@@ -44,6 +44,7 @@
     let currentGate: EnhancedAccessGate | undefined = $state();
     let credentials: string[] = [];
     let paymentApprovals: PaymentGateApprovals = new Map();
+    let compositeGateIndex: number | undefined = undefined;
     let optionalGatesByIndex: Map<number, LeafGate> = $state(new Map());
     let optionalInvalid = $derived(
         currentGate?.kind === "composite_gate" &&
@@ -72,7 +73,7 @@
                 optionalGatesByIndex = new Map(
                     currentGate.gates.map((g, i) => [
                         i,
-                        { ...g, level: currentGate?.level, expiry: currentGate?.expiry },
+                        { ...g, level: currentGate?.level, expiry: currentGate?.expiry, collectionName: currentGate?.collectionName },
                     ]),
                 );
             }
@@ -86,7 +87,7 @@
             }
         } else {
             currentGate = undefined;
-            onSuccess({ credentials, paymentApprovals });
+            onSuccess({ credentials, paymentApprovals, compositeGateIndex });
         }
     }
 
@@ -146,10 +147,11 @@
 
         const found = optionalGatesByIndex.has(i);
         optionalGatesByIndex = new Map(
-            parent.gates.map((g, i) => [i, { ...g, level: parent.level, expiry: parent.expiry }]),
+            parent.gates.map((g, i) => [i, { ...g, level: parent.level, expiry: parent.expiry, collectionName: parent.collectionName }]),
         );
         if (found) {
             optionalGatesByIndex.delete(i);
+            compositeGateIndex = i;
         }
         optionalGatesByIndex = optionalGatesByIndex;
     }

@@ -2521,6 +2521,7 @@ export const LocalUserIndexJoinCommunityArgs = Type.Object({
     invite_code: Type.Optional(Type.BigInt()),
     referred_by: Type.Optional(UserId),
     verified_credential_args: Type.Optional(VerifiedCredentialGateArgs),
+    composite_gate_index: Type.Optional(Type.Number()),
 });
 
 export type LocalUserIndexJoinChannelArgs = Static<typeof LocalUserIndexJoinChannelArgs>;
@@ -2530,6 +2531,7 @@ export const LocalUserIndexJoinChannelArgs = Type.Object({
     invite_code: Type.Optional(Type.BigInt()),
     referred_by: Type.Optional(UserId),
     verified_credential_args: Type.Optional(VerifiedCredentialGateArgs),
+    composite_gate_index: Type.Optional(Type.Number()),
 });
 
 export type LocalUserIndexInviteUsersToChannelFailedResult = Static<
@@ -6149,6 +6151,7 @@ export const LocalUserIndexJoinGroupArgs = Type.Object({
     chat_id: ChatId,
     invite_code: Type.Optional(Type.BigInt()),
     verified_credential_args: Type.Optional(VerifiedCredentialGateArgs),
+    composite_gate_index: Type.Optional(Type.Number()),
 });
 
 export type LocalUserIndexUninstallBotArgs = Static<typeof LocalUserIndexUninstallBotArgs>;

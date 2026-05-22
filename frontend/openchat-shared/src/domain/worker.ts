@@ -1216,6 +1216,7 @@ type JoinGroup = {
     credentialArgs: VerifiedCredentialArgs | undefined;
     kind: "joinGroup";
     referredBy?: string;
+    compositeGateIndex?: number;
 };
 
 type JoinCommunity = {
@@ -1223,6 +1224,7 @@ type JoinCommunity = {
     credentialArgs: VerifiedCredentialArgs | undefined;
     kind: "joinCommunity";
     referredBy?: string;
+    compositeGateIndex?: number;
 };
 
 type LeaveGroup = {

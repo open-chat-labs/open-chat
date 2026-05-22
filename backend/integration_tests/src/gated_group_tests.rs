@@ -68,6 +68,7 @@ fn public_group_diamond_member_gate_check(is_diamond: bool, is_invited: bool) {
             chat_id: group_id,
             invite_code: None,
             verified_credential_args: None,
+            composite_gate_index: None,
         },
     );
 
@@ -141,6 +142,7 @@ fn public_group_token_balance_gate_check(has_sufficient_balance: bool) {
             chat_id: group_id,
             invite_code: None,
             verified_credential_args: None,
+            composite_gate_index: None,
         },
     );
 
@@ -208,7 +210,6 @@ fn public_group_composite_gate_check(is_diamond: bool, has_sufficient_balance: b
                 })
                 .into(),
             ),
-
             messages_visible_to_non_members: None,
         },
     ) {
@@ -234,6 +235,7 @@ fn public_group_composite_gate_check(is_diamond: bool, has_sufficient_balance: b
             chat_id: group_id,
             invite_code: None,
             verified_credential_args: None,
+            composite_gate_index: None,
         },
     );
 
@@ -326,4 +328,104 @@ fn owner_receives_transfer_after_user_joins_via_payment_gate(composite_gate: boo
     let balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(user1.user_id));
 
     assert_eq!(balance - original_balance, (amount * 98) / 100);
+}
+
+#[test]
+fn only_selected_composite_gate_checked_if_index_provided() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let user1 = client::register_diamond_user(env, canister_ids, *controller);
+
+    let group_name = random_string();
+
+    let group_id = match client::user::create_group(
+        env,
+        user1.principal,
+        user1.user_id.into(),
+        &user_canister::create_group::Args {
+            is_public: true,
+            name: group_name.clone(),
+            description: format!("{group_name}_description"),
+            avatar: None,
+            history_visible_to_new_joiners: true,
+            permissions_v2: None,
+            rules: Rules::default(),
+            events_ttl: None,
+            gate_config: Some(
+                AccessGate::Composite(CompositeGate {
+                    inner: vec![
+                        AccessGateNonComposite::Payment(PaymentGate {
+                            ledger_canister_id: canister_ids.icp_ledger,
+                            amount: 1_0000_0000,
+                            fee: 10_000,
+                        }),
+                        AccessGateNonComposite::Payment(PaymentGate {
+                            ledger_canister_id: canister_ids.chat_ledger,
+                            amount: 1_0000_0000,
+                            fee: 100_000,
+                        }),
+                    ],
+                    and: false,
+                })
+                .into(),
+            ),
+            messages_visible_to_non_members: None,
+        },
+    ) {
+        user_canister::create_group::Response::Success(result) => result.chat_id,
+        response => panic!("'create_group' error: {response:?}"),
+    };
+
+    let user2 = client::register_user(env, canister_ids);
+
+    let initial_balance = 10_0000_0000;
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user2.user_id, initial_balance);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user2.user_id, initial_balance);
+
+    client::ledger::happy_path::approve(
+        env,
+        user2.user_id.into(),
+        canister_ids.icp_ledger,
+        Principal::from(group_id),
+        initial_balance,
+    );
+    client::ledger::happy_path::approve(
+        env,
+        user2.user_id.into(),
+        canister_ids.chat_ledger,
+        Principal::from(group_id),
+        initial_balance,
+    );
+
+    let join_group_response = client::local_user_index::join_group(
+        env,
+        user2.principal,
+        canister_ids.local_user_index(env, group_id),
+        &local_user_index_canister::join_group::Args {
+            chat_id: group_id,
+            invite_code: None,
+            verified_credential_args: None,
+            composite_gate_index: Some(1),
+        },
+    );
+
+    assert!(
+        matches!(
+            join_group_response,
+            local_user_index_canister::join_group::Response::Success(_)
+        ),
+        "{join_group_response:?}"
+    );
+
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id),
+        initial_balance - 10_000
+    );
+    assert!(client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user2.user_id) < initial_balance - 100_000);
 }
