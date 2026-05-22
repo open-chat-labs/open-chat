@@ -75,7 +75,7 @@
     import Toggle from "../../Toggle.svelte";
     import Translatable from "../../Translatable.svelte";
     import UsernameInput from "../../UsernameInput.svelte";
-    import Markdown from "../Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import Stats from "../Stats.svelte";
     import Expiry from "../upgrade/Expiry.svelte";
     import AccountLinkingCode from "./AccountLinkingCode.svelte";

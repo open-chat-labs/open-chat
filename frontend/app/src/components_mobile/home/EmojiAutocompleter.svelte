@@ -1,18 +1,13 @@
 <script lang="ts">
     import { ColourVars, Column, MenuItem } from "component-lib";
-    import type { NativeEmoji } from "emoji-picker-element/shared";
+    import { type EmojiSummary, type SelectedEmoji } from "openchat-client";
     import { untrack } from "svelte";
-    import { emojiDatabase } from "../../utils/emojis";
-
-    type EmojiSummary = {
-        unicode: string;
-        code: string;
-    };
+    import { searchAllEmojis, summaryToSelectedEmoji } from "../../utils/emojis";
 
     interface Props {
         query: string | undefined;
         offset: number;
-        onSelect: (emoji: string) => void;
+        onSelect: (emoji: SelectedEmoji) => void;
         onClose: () => void;
     }
 
@@ -31,27 +26,14 @@
 
     function search(query: string) {
         untrack(() => {
-            emojiDatabase.getPreferredSkinTone().then((tone) => {
-                emojiDatabase.getEmojiBySearchQuery(query!).then((m) => {
-                    matches = (m as NativeEmoji[])
-                        .filter((m) => m.version < 14)
-                        .map((match) => {
-                            const unicode =
-                                match.skins?.find((s) => s.tone === tone)?.unicode ?? match.unicode;
-                            return {
-                                unicode,
-                                code: match.shortcodes
-                                    ? match.shortcodes[match.shortcodes.length - 1]
-                                    : match.annotation,
-                            };
-                        });
-                });
+            searchAllEmojis(query).then((m) => {
+                matches = m;
             });
         });
     }
 
-    function select(emoji: string) {
-        onSelect(emoji);
+    function select(match: EmojiSummary) {
+        onSelect(summaryToSelectedEmoji(match));
     }
 
     function onKeyDown(ev: KeyboardEvent): void {
@@ -74,7 +56,7 @@
             case "Enter":
                 const match = matches[index];
                 if (match) {
-                    select(match.unicode);
+                    select(match);
                     ev.preventDefault();
                     ev.stopPropagation();
                 }
@@ -86,10 +68,14 @@
 <div class="picker" style={`bottom: ${offset}px; height: ${matches.length * ITEM_HEIGHT}px`}>
     <Column backgroundColor={ColourVars.background1}>
         {#each matches as match, i}
-            <MenuItem selected={i === index} onclick={() => select(match.unicode)}>
+            <MenuItem selected={i === index} onclick={() => select(match)}>
                 {#snippet icon()}
                     <div class="emoji">
-                        {match.unicode}
+                        {#if match.kind === "native"}
+                            {match.unicode}
+                        {:else}
+                            <img class="custom-emoji" src={match.url} alt={match.code} />
+                        {/if}
                     </div>
                 {/snippet}
                 :{match.code}:
@@ -115,9 +101,17 @@
         width: 100%;
         max-height: calc(var(--vh, 1vh) * 50);
         overflow: auto;
+        left: 0;
     }
     .emoji {
         @include font(book, normal, fs-160);
         margin-right: $sp4;
+    }
+
+    .custom-emoji {
+        width: 1em;
+        height: 1em;
+        object-fit: contain;
+        vertical-align: middle;
     }
 </style>

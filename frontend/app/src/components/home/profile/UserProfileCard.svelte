@@ -27,7 +27,7 @@
     import { toastStore } from "../../../stores/toast";
     import Avatar from "../../Avatar.svelte";
     import Translatable from "../../Translatable.svelte";
-    import Markdown from "../Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import Badges from "./Badges.svelte";
     import ChitBalance from "./ChitBalance.svelte";
     import CustomBackgroundOverlay from "./CustomBackgroundOverlay.svelte";

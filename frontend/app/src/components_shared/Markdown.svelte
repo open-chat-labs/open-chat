@@ -4,10 +4,11 @@
     import type { OpenChat, ReadonlyMap, UserGroupSummary } from "openchat-client";
     import { allUsersStore, userGroupSummariesStore } from "openchat-client";
     import { getContext } from "svelte";
-    import { DOMPurifyDefault, DOMPurifyOneLine } from "../../utils/domPurify";
-    import { isSingleEmoji } from "../../utils/emojis";
+    import { DOMPurifyDefault, DOMPurifyOneLine } from "../utils/domPurify";
+    import { isSingleEmoji } from "../utils/emojis";
 
     const client = getContext<OpenChat>("client");
+
     interface Props {
         text: string;
         inline?: boolean;
@@ -22,6 +23,7 @@
         inline = true,
         oneLine = false,
         twoLine = false,
+        threeLine = false,
         suppressLinks = false,
     }: Props = $props();
 
@@ -47,7 +49,7 @@
 
             // replace userIds & emojis *after* markdown parsing so that we can fully disallow html in the markdown source
             parsed = replaceUserIds(parsed);
-
+            parsed = replaceCustomEmojis(parsed);
             parsed = replaceSpoilers(parsed);
         } catch (err: any) {
             client.logError("Error parsing markdown: ", err);
@@ -64,6 +66,12 @@
 
     function replaceSpoilers(input: string): string {
         return input.replace(/\|\|([^|]+?)\|\|/g, "<spoiler-span>$1</spoiler-span>");
+    }
+
+    function replaceCustomEmojis(text: string): string {
+        return text.replace(/!emoji\(([^)]+)\)/g, (_, code) => {
+            return `<custom-emoji data-id="${code}"></custom-emoji>`;
+        });
     }
 
     function replaceUserIds(text: string): string {
@@ -116,6 +124,7 @@
     class:inline
     class:oneLine
     class:twoLine
+    class:threeLine
     class:suppressLinks
     class:singleEmoji>
     {@html sanitized}
@@ -140,6 +149,7 @@
             display: -webkit-box;
             -webkit-box-orient: vertical;
             white-space: unset;
+            overflow: hidden;
         }
 
         &.twoLine {
@@ -160,5 +170,9 @@
         line-height: 3.5rem;
         color: "inherit";
         @include pop(300ms);
+
+        :global(custom-emoji) {
+            height: 3.5rem;
+        }
     }
 </style>

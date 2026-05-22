@@ -7,7 +7,7 @@
     import TextBoxOutline from "svelte-material-icons/TextBoxOutline.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import FilteredUsername from "@shared_components/FilteredUsername.svelte";
-    import Markdown from "../home/Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import BotBadge from "../home/profile/BotBadge.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import Menu from "../Menu.svelte";

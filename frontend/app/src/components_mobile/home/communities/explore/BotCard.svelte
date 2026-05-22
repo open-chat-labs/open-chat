@@ -3,7 +3,7 @@
     import { allUsersStore, botState, type ExternalBotLike } from "openchat-client";
     import RobotSolid from "svelte-material-icons/Robot.svelte";
     import BotAvatar from "../../../bots/BotAvatar.svelte";
-    import Markdown from "../../Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
 
     interface Props {
         bot: ExternalBotLike;

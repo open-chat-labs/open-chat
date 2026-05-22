@@ -5,7 +5,7 @@
     import AlertBox from "./AlertBox.svelte";
     import Button from "./Button.svelte";
     import ButtonGroup from "./ButtonGroup.svelte";
-    import Markdown from "./home/Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import ModalContent from "./ModalContent.svelte";
     import Overlay from "./Overlay.svelte";
     import Translatable from "./Translatable.svelte";

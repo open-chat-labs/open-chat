@@ -21,6 +21,7 @@
         icon?: Snippet;
         converted?: string;
         placeholder?: string;
+        descriptionKey?: string;
     }
 
     let {
@@ -37,6 +38,7 @@
         icon,
         disabled = false,
         placeholder = "Withdrawal amount",
+        descriptionKey,
     }: Props = $props();
 
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
@@ -103,7 +105,7 @@
 {/snippet}
 
 <!-- TODO i18n -->
-<Container direction="vertical" width="fill" gap="md">
+<Container direction="vertical" width="fill" gap="xs">
     <NumberInput
         bind:value={displayValue}
         {disabled}
@@ -119,23 +121,22 @@
             : undefined} />
 
     {#if balance}
-        <Container direction="vertical" padding={["zero", "xs"]}>
+        <Container direction="vertical" padding={["zero", "sm"]}>
             <Row mainAxisAlignment={"spaceBetween"} gap={"sm"}>
                 {@render percentage(25)}
                 {@render percentage(50)}
                 {@render percentage(75)}
                 {@render percentage(100)}
             </Row>
-            <Row padding={["zero", "xs"]} gap="md">
-                <BodySmall colour="textSecondary">
-                    <Translatable
-                        resourceKey={i18nKey(
-                            "Use the options above to select a specific percentage of your total token amount you would like to swap.",
-                        )} />
-                </BodySmall>
-                <!-- TODO converted should be a part of the input? -->
-                <!-- {@render converted?.()} -->
-            </Row>
+            {#if descriptionKey !== undefined}
+                <Row padding={["zero", "xs"]} gap="md">
+                    <BodySmall colour="textSecondary">
+                        <Translatable resourceKey={i18nKey(descriptionKey)} />
+                    </BodySmall>
+                    <!-- TODO converted should be a part of the input? -->
+                    <!-- {@render converted?.()} -->
+                </Row>
+            {/if}
         </Container>
     {/if}
 </Container>

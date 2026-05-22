@@ -53,7 +53,6 @@ export const configKeys = {
     communityInviteUsersSections: "openchat_community_invite_users_section",
     referredUsersOpen: "openchat_referred_users_section",
     browseChannels: "openchat_browse_channels",
-    useBlockLevelMarkdown: "openchat_block_markdown",
     hideTokenBalances: "openchat_hide_token_balances",
     linkDeviceSection: "link_account_with_native_app",
     chatListFilter: "openchat_chat_list_filter",

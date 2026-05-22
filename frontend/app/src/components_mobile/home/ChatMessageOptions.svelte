@@ -2,7 +2,7 @@
     import { confirmMessageDeletion } from "@src/stores/settings";
     import { disableTipsFeature } from "@src/utils/features";
     import { urlForMediaContent } from "@src/utils/media";
-    import { ColourVars, MenuItem, IconButton, type Padding } from "component-lib";
+    import { ColourVars, IconButton, MenuItem, type Padding } from "component-lib";
     import {
         chatListScopeStore,
         cryptoLookup,
@@ -40,8 +40,8 @@
     import Refresh from "svelte-material-icons/Refresh.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
-    import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
     import ShareOutline from "svelte-material-icons/ShareOutline.svelte";
+    import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
     import SquareEditOutline from "svelte-material-icons/SquareEditOutline.svelte";
     import TranslateIcon from "svelte-material-icons/Translate.svelte";
     import TranslateOff from "svelte-material-icons/TranslateOff.svelte";
@@ -197,6 +197,26 @@
         );
     }
 
+    function downloadName(url: string, disposition: string | null) {
+        let filename: string = msg.content.kind;
+        if (disposition && disposition.includes("filename=")) {
+            filename = disposition.split("filename=")[1].split(";")[0].replace(/"/g, "");
+        } else {
+            filename = new URL(url).pathname.split("/").pop() || filename;
+        }
+
+        switch (msg.content.kind) {
+            case "audio_content":
+            case "video_content":
+            case "image_content":
+                return msg.content.caption?.split(" ")?.join("_").slice(0, 100) ?? filename;
+            case "file_content":
+                return msg.content.name;
+            default:
+                return filename;
+        }
+    }
+
     async function download(url: string) {
         if (!url) return;
 
@@ -210,14 +230,7 @@
             const objectUrl = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = objectUrl;
-            const disposition = res.headers.get("content-disposition");
-            let filename = "download";
-            if (disposition && disposition.includes("filename=")) {
-                filename = disposition.split("filename=")[1].split(";")[0].replace(/"/g, "");
-            } else {
-                filename = url.split("/").pop() || "download";
-            }
-            a.download = filename;
+            a.download = downloadName(url, res.headers.get("content-disposition"));
             a.click();
             URL.revokeObjectURL(objectUrl);
         } catch (err) {

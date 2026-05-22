@@ -8,7 +8,7 @@
     import { interpolate } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import Translatable from "../../Translatable.svelte";
-    import Markdown from "../Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import ReAuthenticate from "./ReAuthenticate.svelte";
 
     const client = getContext<OpenChat>("client");

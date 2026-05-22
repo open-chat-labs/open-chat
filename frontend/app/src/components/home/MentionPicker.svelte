@@ -1,4 +1,5 @@
 <script lang="ts">
+    import VirtualList from "@shared_components/VirtualList.svelte";
     import type { OpenChat, UserOrUserGroup } from "openchat-client";
     import {
         allUsersStore,
@@ -13,7 +14,6 @@
     import Avatar from "../Avatar.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
-    import VirtualList from "@shared_components/VirtualList.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -237,6 +237,7 @@
         max-height: calc(var(--vh, 1vh) * 50);
         overflow: auto;
         z-index: 10000;
+        left: 0;
 
         &.up {
             box-shadow: var(--menu-inverted-sh);

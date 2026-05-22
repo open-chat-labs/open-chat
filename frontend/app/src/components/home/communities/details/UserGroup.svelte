@@ -21,7 +21,7 @@
     import Translatable from "../../../Translatable.svelte";
     import VirtualList from "@shared_components/VirtualList.svelte";
     import User from "../../groupdetails/User.svelte";
-    import Markdown from "../../Markdown.svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
 

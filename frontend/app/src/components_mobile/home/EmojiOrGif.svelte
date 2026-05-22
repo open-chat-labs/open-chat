@@ -81,7 +81,7 @@
             searchInputPadding={true}
             {onEmojiSelected}
             onSkintoneChanged={(tone) => quickReactions.reload(tone)}
-            supportCustom={false}
+            supportCustom
             mode={"reaction"} />
     {:else}
         <GiphySelector onSend={sendGiphy} />
