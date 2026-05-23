@@ -206,6 +206,7 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
                 mute_notification: message.message_filter_failed.is_some(),
                 mentioned: Vec::new(),
                 block_level_markdown: message.block_level_markdown,
+                og_previews: message.og_previews,
                 now,
             },
             None,

@@ -21,7 +21,7 @@ use types::{
     ChatEventType, ChatType, CompletedCryptoTransaction, DiamondMembershipStatus, DirectChatCreated, EventContext, EventIndex,
     EventMetaData, EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated,
     GroupFrozen, GroupUnfrozen, HydratedMention, Mention, Message, MessageEditedEventPayload, MessageEventPayload, MessageId,
-    MessageIndex, MessageMatch, MessageTippedEventPayload, Milliseconds, MultiUserChat, OCResult, OptionUpdate,
+    MessageIndex, MessageMatch, MessageTippedEventPayload, Milliseconds, MultiUserChat, OCResult, OgPreview, OptionUpdate,
     P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction,
     PollVotes, ProposalRewardStatus, ProposalUpdate, Reaction, ReactionAddedEventPayload, RegisterVoteResult,
     ReserveP2PSwapSuccess, SenderContext, Tally, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall,
@@ -207,6 +207,7 @@ impl ChatEvents {
             thread_summary: None,
             forwarded: args.forwarded,
             block_level_markdown: args.block_level_markdown,
+            og_previews: args.og_previews,
         };
 
         add_to_metrics(
@@ -1160,6 +1161,7 @@ impl ChatEvents {
                         forwarded: false,
                         sender_is_bot: true,
                         block_level_markdown: false,
+                        og_previews: Vec::new(),
                         now,
                     },
                     Some(event_pusher),
@@ -2509,6 +2511,7 @@ pub struct PushMessageArgs {
     pub forwarded: bool,
     pub sender_is_bot: bool,
     pub block_level_markdown: bool,
+    pub og_previews: Vec<OgPreview>,
     pub now: TimestampMillis,
 }
 

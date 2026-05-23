@@ -826,6 +826,7 @@ mod tests {
                     forwarded: false,
                     sender_is_bot: false,
                     block_level_markdown: false,
+                    og_previews: Vec::new(),
                 },
                 None,
             );

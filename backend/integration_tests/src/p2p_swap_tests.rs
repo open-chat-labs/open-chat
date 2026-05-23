@@ -60,6 +60,7 @@ fn p2p_swap_in_direct_chat_succeeds() {
             block_level_markdown: false,
             message_filter_failed: None,
             pin: None,
+            og_previews: Vec::new(),
         },
     );
 
@@ -179,6 +180,7 @@ fn p2p_swap_in_group_succeeds() {
             rules_accepted: None,
             message_filter_failed: None,
             pin: None,
+            og_previews: Vec::new(),
         },
     );
 
@@ -275,6 +277,7 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
             block_level_markdown: false,
             message_filter_failed: None,
             pin: None,
+            og_previews: Vec::new(),
         },
     );
 
@@ -405,6 +408,7 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
             rules_accepted: None,
             message_filter_failed: None,
             pin: None,
+            og_previews: Vec::new(),
         },
     );
 
@@ -518,6 +522,7 @@ fn deposit_refunded_if_swap_expires() {
             block_level_markdown: false,
             message_filter_failed: None,
             pin: None,
+            og_previews: Vec::new(),
         },
     );
 
@@ -617,6 +622,7 @@ fn p2p_swap_blocked_if_token_disabled(input_token: bool) {
             rules_accepted: None,
             message_filter_failed: None,
             pin: None,
+            og_previews: Vec::new(),
         },
     );
 

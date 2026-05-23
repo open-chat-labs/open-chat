@@ -36,6 +36,7 @@ fn handle_webhook_impl(args: Args, state: &mut RuntimeState) -> OCResult<Success
         rules_accepted: None,
         message_filter_failed: None,
         new_achievement: false,
+        og_previews: Vec::new(),
     };
 
     send_message_impl(send_message_args, Some(Caller::Webhook(args.id)), true, state)

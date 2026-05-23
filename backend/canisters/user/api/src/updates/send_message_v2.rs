@@ -2,8 +2,8 @@ use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
-    ChatId, CompletedCryptoTransaction, EventIndex, MessageContentInitial, MessageId, MessageIndex, PinNumberWrapper,
-    ReplyContext, TimestampMillis, UserId,
+    ChatId, CompletedCryptoTransaction, EventIndex, MessageContentInitial, MessageId, MessageIndex, OgPreview,
+    PinNumberWrapper, ReplyContext, TimestampMillis, UserId,
 };
 
 #[ts_export(user, send_message)]
@@ -18,6 +18,8 @@ pub struct Args {
     pub block_level_markdown: bool,
     pub message_filter_failed: Option<u64>,
     pub pin: Option<PinNumberWrapper>,
+    #[serde(default)]
+    pub og_previews: Vec<OgPreview>,
 }
 
 #[expect(clippy::large_enum_variant)]

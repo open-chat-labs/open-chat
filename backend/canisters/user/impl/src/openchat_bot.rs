@@ -161,6 +161,7 @@ pub(crate) fn send_message_with_reply(
         mute_notification,
         mentioned,
         block_level_markdown: false,
+        og_previews: Vec::new(),
         now: state.env.now(),
     };
 

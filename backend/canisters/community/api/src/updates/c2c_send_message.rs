@@ -1,6 +1,6 @@
 use chat_events::MessageContentInternal;
 use serde::{Deserialize, Serialize};
-use types::{ChannelId, GroupReplyContext, MessageId, MessageIndex, User, Version};
+use types::{ChannelId, GroupReplyContext, MessageId, MessageIndex, OgPreview, User, Version};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
@@ -14,6 +14,8 @@ pub struct Args {
     pub mentioned: Vec<User>,
     pub forwarding: bool,
     pub block_level_markdown: bool,
+    #[serde(default)]
+    pub og_previews: Vec<OgPreview>,
     pub community_rules_accepted: Option<Version>,
     pub channel_rules_accepted: Option<Version>,
     pub message_filter_failed: Option<u64>,

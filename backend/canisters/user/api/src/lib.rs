@@ -5,7 +5,8 @@ use std::collections::HashMap;
 use types::{
     Achievement, BotDefinitionUpdate, CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId,
     DiamondMembershipPlanDuration, EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
-    P2PSwapStatus, PhoneNumber, Reaction, ReferralStatus, SuspensionDuration, TimestampMillis, UniquePersonProof, User, UserId,
+    OgPreview, P2PSwapStatus, PhoneNumber, Reaction, ReferralStatus, SuspensionDuration, TimestampMillis, UniquePersonProof,
+    User, UserId,
 };
 
 mod lifecycle;
@@ -220,6 +221,8 @@ pub struct SendMessageArgs {
     pub forwarding: bool,
     pub block_level_markdown: bool,
     pub message_filter_failed: Option<u64>,
+    #[serde(default)]
+    pub og_previews: Vec<OgPreview>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

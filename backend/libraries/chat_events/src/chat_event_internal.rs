@@ -9,7 +9,7 @@ use types::{
     EventsTimeToLiveUpdated, ExternalUrlUpdated, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
     GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged,
     HistoryDeleted, MemberJoinedInternal, MemberLeft, MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, Message,
-    MessageContent, MessageContentType, MessageId, MessageIndex, MessagePinned, MessageUnpinned, MultiUserChat,
+    MessageContent, MessageContentType, MessageId, MessageIndex, MessagePinned, MessageUnpinned, MultiUserChat, OgPreview,
     PermissionsChanged, PushIfNotContains, Reaction, ReplyContext, RoleChanged, SenderContext, ThreadSummary, TimestampMillis,
     Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked, is_default,
 };
@@ -303,6 +303,8 @@ pub struct MessageInternal {
     pub forwarded: bool,
     #[serde(rename = "b", default, skip_serializing_if = "is_default")]
     pub block_level_markdown: bool,
+    #[serde(rename = "og", default, skip_serializing_if = "Vec::is_empty")]
+    pub og_previews: Vec<OgPreview>,
 }
 
 impl MessageInternal {
@@ -328,6 +330,7 @@ impl MessageInternal {
             forwarded: self.forwarded,
             thread_summary: self.thread_summary.as_ref().map(|t| t.hydrate(my_user_id)),
             block_level_markdown: self.block_level_markdown,
+            og_previews: self.og_previews,
         }
     }
 
@@ -599,6 +602,7 @@ mod tests {
             thread_summary: None,
             forwarded: false,
             block_level_markdown: false,
+            og_previews: Vec::new(),
         };
 
         let message_bytes_len = msgpack::serialize_then_unwrap(&message).len();

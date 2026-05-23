@@ -83,6 +83,7 @@ pub mod happy_path {
                 block_level_markdown: false,
                 message_filter_failed: None,
                 pin: None,
+                og_previews: Vec::new(),
             },
         );
 
@@ -116,6 +117,7 @@ pub mod happy_path {
                 message_filter_failed: None,
 
                 pin: None,
+                og_previews: Vec::new(),
             },
         );
 
