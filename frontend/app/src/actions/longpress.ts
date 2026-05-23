@@ -1,9 +1,14 @@
- 
 import { eventListLastScrolled } from "openchat-client";
 import { get } from "svelte/store";
 import { isTouchDevice, mobileOperatingSystem } from "../utils/devices";
 
 const SCROLL_PROXIMITY = 750;
+
+// On Android, Chromium WebView starts a native drag-and-drop session on
+// longpress of images, which leaves the WebView stuck and swallowing taps.
+// This attribute pairs with a global rule in global.scss that suppresses
+// the native drag/callout on the target and its descendants.
+const ANDROID_DRAG_FIX_ATTR = "data-longpress-android";
 
 function suppressNextClick() {
     if (mobileOperatingSystem !== "iOS") return;
@@ -58,6 +63,10 @@ export function longpress(node: HTMLElement, onlongpress: (e: TouchEvent) => voi
     }
 
     if (isTouchDevice) {
+        if (mobileOperatingSystem === "Android") {
+            node.setAttribute(ANDROID_DRAG_FIX_ATTR, "");
+        }
+
         node.addEventListener("touchend", clearLongPressTimer);
         node.addEventListener("touchmove", onTouchMove);
         node.addEventListener("touchstart", onTouchStart);
