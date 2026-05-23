@@ -748,6 +748,7 @@ function chatMessage(): EventWrapper<Message> {
             forwarded: false,
             blockLevelMarkdown: false,
             tips: {},
+            ogPreviews: [],
         },
     };
 }

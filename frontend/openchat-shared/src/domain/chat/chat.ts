@@ -2479,6 +2479,7 @@ export type NewUnconfirmedMessage = {
     forwarded: boolean;
     blockLevelMarkdown: boolean;
     senderContext?: SenderContext;
+    ogPreviews: OgPreview[];
 };
 
 export type VideoCallInProgress = {

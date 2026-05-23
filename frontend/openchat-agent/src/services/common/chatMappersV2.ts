@@ -556,7 +556,7 @@ export function message(value: TMessage): Message {
         thread: mapOptional(value.thread_summary, threadSummary),
         blockLevelMarkdown: value.block_level_markdown ?? false,
         senderContext: mapOptional(value.sender_context, senderContext),
-        ogPreviews: mapOptional(value.og_previews, (p) => p.map(ogPreview)),
+        ogPreviews: (value.og_previews ?? []).map(ogPreview),
     };
 }
 
@@ -2077,6 +2077,17 @@ export function apiProposalVote(vote: boolean): number {
 function apiTextContent(domain: TextContent): TTextContent {
     return {
         text: domain.text,
+    };
+}
+
+export function apiOgPreview(domain: OgPreview): TOgPreview {
+    return {
+        url: domain.url,
+        title: domain.title,
+        description: domain.description,
+        image: domain.image
+            ? { url: domain.image.url, width: domain.image.width, height: domain.image.height }
+            : undefined,
     };
 }
 

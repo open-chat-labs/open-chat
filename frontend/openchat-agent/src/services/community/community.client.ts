@@ -213,6 +213,7 @@ import {
     updateGroupSuccess,
     videoCallParticipantsSuccess,
     webhookDetails,
+    apiOgPreview,
 } from "../common/chatMappersV2";
 import { DataClient } from "../data/data.client";
 import { apiOptionalGroupPermissions, apiUpdatedRules } from "../group/mappersV2";
@@ -954,7 +955,7 @@ export class CommunityClient
                 message_filter_failed: messageFilterFailed,
                 block_level_markdown: newEvent.event.blockLevelMarkdown,
                 new_achievement: newAchievement,
-                og_previews: [],
+                og_previews: newEvent.event.ogPreviews?.map(apiOgPreview) ?? [],
             };
             return this.update(
                 chatId.communityId,

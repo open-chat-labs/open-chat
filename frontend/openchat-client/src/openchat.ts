@@ -4339,6 +4339,7 @@ export class OpenChat {
             repliesTo: draftMessage?.replyingTo,
             forwarded,
             blockLevelMarkdown,
+            ogPreviews: [],
         };
 
         return this.#sendMessageCommon(
@@ -9384,6 +9385,7 @@ export class OpenChat {
                 forwarded: false,
                 blockLevelMarkdown,
                 senderContext: botContext,
+                ogPreviews: [],
             });
             localUpdates.addUnconfirmed(context, event);
             publish("sentMessage", { context, event });
