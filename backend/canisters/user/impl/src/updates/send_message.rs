@@ -295,7 +295,7 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
                 forwarded: false,
                 sender_is_bot: false,
                 block_level_markdown: args.block_level_markdown,
-                og_previews: args.og_previews.clone(),
+                og_previews: Vec::new(),
                 now,
                 sender_context: None,
             },
