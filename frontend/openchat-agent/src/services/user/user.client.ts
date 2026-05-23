@@ -582,6 +582,7 @@ export class UserClient
                 message_filter_failed: messageFilterFailed,
                 pin,
                 block_level_markdown: newEvent.event.blockLevelMarkdown,
+                og_previews: [],
             };
             return this.update(
                 "send_message_v2",
@@ -668,6 +669,7 @@ export class UserClient
             block_level_markdown: true,
             message_filter_failed: messageFilterFailed,
             pin,
+            og_previews: [],
         };
         return this.update(
             "send_message_with_transfer_to_group",
@@ -771,6 +773,7 @@ export class UserClient
             channel_rules_accepted: channelRulesAccepted,
             message_filter_failed: messageFilterFailed,
             pin,
+            og_previews: [],
         };
         return this.update(
             "send_message_with_transfer_to_channel",

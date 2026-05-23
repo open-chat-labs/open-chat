@@ -380,6 +380,7 @@ export class GroupClient
                 message_filter_failed: messageFilterFailed,
                 block_level_markdown: newEvent.event.blockLevelMarkdown,
                 new_achievement: newAchievement,
+                og_previews: [],
             };
 
             return this.update(

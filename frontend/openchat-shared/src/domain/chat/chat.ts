@@ -693,6 +693,19 @@ export const PollContentSchema = Type.Object({
 });
 export type PollContent = Static<typeof PollContentSchema>;
 
+export type OgPreviewImage = {
+    url: string;
+    width: number;
+    height: number;
+};
+
+export type OgPreview = {
+    url: string;
+    title: string;
+    description: string;
+    image?: OgPreviewImage;
+};
+
 export const TextContentSchema = Type.Object({
     kind: Type.Literal("text_content"),
     text: Type.String(),
@@ -785,6 +798,7 @@ export type Message<T extends MessageContent = MessageContent> = {
     thread?: ThreadSummary;
     blockLevelMarkdown: boolean;
     senderContext?: SenderContext;
+    ogPreviews?: OgPreview[];
 };
 
 export type BotContextCommand = {
