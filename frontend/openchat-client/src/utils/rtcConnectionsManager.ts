@@ -56,7 +56,7 @@ export class RtcConnectionsManager {
 
     public async init(me: string, meteredApiKey: string): Promise<Peer> {
         if (this._peer?.destroyed) {
-            resetAfterConnectionClosed();
+            this.resetAfterConnectionClosed();
         } else if (this._peer) {
             return Promise.resolve(this._peer);
         }
