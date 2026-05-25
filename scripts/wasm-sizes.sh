@@ -55,13 +55,22 @@ file_size_bytes() {
     wc -c < "$1" | tr -d '[:space:]'
 }
 
+shopt -s nullglob
+gz_files=("$WASMS_DIR"/*.wasm.gz)
+shopt -u nullglob
+
+if (( ${#gz_files[@]} == 0 )); then
+    echo "No .wasm.gz files found in $WASMS_DIR" >&2
+    exit 1
+fi
+
 tmp_wasm=$(mktemp /tmp/wasm_sizes_XXXXXX.wasm)
 trap 'rm -f "$tmp_wasm"' EXIT
 
 printf "%-35s %12s %12s %18s\n" "CANISTER" "ZIPPED" "UNZIPPED" "CODE SECTION"
 printf "%-35s %12s %12s %18s\n" "-------" "------" "--------" "------------"
 
-for gz_file in "$WASMS_DIR"/*.wasm.gz; do
+for gz_file in "${gz_files[@]}"; do
     canister=$(basename "$gz_file" .wasm.gz)
 
     zipped_bytes=$(file_size_bytes "$gz_file")
