@@ -8,7 +8,7 @@ WASMS_DIR="./wasms"
 
 # Python snippet to extract the code section (ID=10) size from a wasm binary
 READ_CODE_SIZE=$(cat <<'PYEOF'
-import sys, struct
+import sys
 
 def read_leb128(data, pos):
     result = 0
