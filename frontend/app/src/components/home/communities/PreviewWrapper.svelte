@@ -43,6 +43,7 @@
         if (previewingCommunity && $selectedCommunitySummaryStore) {
             const credentials = gateCheck?.credentials ?? [];
             const paymentApprovals = gateCheck?.paymentApprovals ?? new Map();
+            const compositeGateIndex = gateCheck?.compositeGateIndex;
             const gateConfigWithLevel: EnhancedAccessGate = {
                 ...$selectedCommunitySummaryStore.gateConfig.gate,
                 level: "community",
@@ -75,7 +76,7 @@
             joiningCommunity = true;
 
             return client
-                .joinCommunity($selectedCommunitySummaryStore, credentials, paymentApprovals)
+                .joinCommunity($selectedCommunitySummaryStore, credentials, paymentApprovals, compositeGateIndex)
                 .then((resp) => {
                     if (resp.kind === "gate_check_failed") {
                         gateCheckFailed = gateConfigWithLevel;

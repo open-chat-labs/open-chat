@@ -74,6 +74,7 @@ fn join_private_channel_fails() {
             invite_code: None,
             referred_by: None,
             verified_credential_args: None,
+            composite_gate_index: None,
         },
     );
 
@@ -147,6 +148,7 @@ fn join_community_and_channel_in_single_call_succeeds() {
             invite_code: None,
             referred_by: None,
             verified_credential_args: None,
+            composite_gate_index: None,
         },
     );
 
@@ -201,6 +203,7 @@ fn invite_non_community_member_to_channel_succeeds() {
             invite_code: None,
             referred_by: None,
             verified_credential_args: None,
+            composite_gate_index: None,
         },
     );
 

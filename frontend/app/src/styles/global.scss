@@ -535,6 +535,20 @@ svelte-virtual-list-viewport {
     }
 }
 
+// On Android, Chromium WebView starts a native drag-and-drop session on
+// longpress of images (and selectable content), backed by a DropDataProvider
+// ContentProvider. Tauri doesn't register that provider, so the session fails
+// to attach data and the WebView gets stuck — subsequent taps stop dispatching
+// to JS. The `longpress` action tags its target with this attribute on Android
+// so the rule below suppresses the native drag/callout for the target and any
+// descendant (including lazy-loaded images).
+[data-longpress-android],
+[data-longpress-android] * {
+    -webkit-touch-callout: none;
+    -webkit-user-drag: none;
+}
+
+
 /* KEYFRAMES */
 
 @keyframes fade-in {

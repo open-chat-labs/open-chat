@@ -200,6 +200,7 @@
                 <img
                     bind:this={imgElement}
                     bind:clientWidth={imageWidth}
+                    draggable="false"
                     onerror={onError}
                     class="image"
                     class:me

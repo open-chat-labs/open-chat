@@ -55,7 +55,11 @@ export class RtcConnectionsManager {
     }
 
     public async init(me: string, meteredApiKey: string): Promise<Peer> {
-        if (this._peer) return Promise.resolve(this._peer);
+        if (this._peer?.destroyed) {
+            this.resetAfterConnectionClosed();
+        } else if (this._peer) {
+            return Promise.resolve(this._peer);
+        }
 
         const iceServers = await this.getIceServers(meteredApiKey);
 
@@ -85,13 +89,14 @@ export class RtcConnectionsManager {
             this._peer.on("disconnected", () => {
                 console.debug("RTC: peer lost connection will try to reconnect");
 
-                if (this._peer) {
+                if (this._peer && !this._peer.destroyed) {
                     this._peer.reconnect();
                 }
             });
 
             this._peer.on("close", () => {
                 console.debug("RTC: peer connection closed");
+                this.resetAfterConnectionClosed();
             });
 
             this._peer.on("error", (err) => {
@@ -139,6 +144,11 @@ export class RtcConnectionsManager {
             }
         });
     };
+
+    private resetAfterConnectionClosed() {
+        this.connections.clear();
+        this._peer = undefined;
+    }
 }
 
 export const rtcConnectionsManager = new RtcConnectionsManager();
