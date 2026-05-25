@@ -71,7 +71,7 @@ const matchCallback = ({ request }: { request: Request }) => request.mode === "n
 const networkTimeoutSeconds = 3;
 // Validates an HTML document response is complete by checking for a closing </html> tag.
 // A partial download (truncated body) won't have one even if it has a valid status code.
-async function isValidDocumentResponse(response: Response): Promise<boolean> {
+async function isValidDocumentResponse(response: Response | undefined): Promise<boolean> {
     if (!response || response.status !== 200) return false;
 
     try {
@@ -106,16 +106,18 @@ registerRoute(
                     return null;
                 },
             },
-            // If the cached document is empty/corrupt, reject it so NetworkFirst retries the network.
+            // If the cached document is empty/corrupt, delete it and return null so
+            // NetworkFirst fetches from the network and caches a fresh copy.
             {
-                cachedResponseWillBeUsed: async ({ cachedResponse }) => {
+                cachedResponseWillBeUsed: async ({ cachedResponse, cache }) => {
                     if (!cachedResponse) return null;
                     if (await isValidDocumentResponse(cachedResponse)) {
                         return cachedResponse;
                     }
                     console.warn(
-                        "SW: cached document is invalid/empty, discarding and falling back to network",
+                        "SW: cached document is invalid/empty, deleting and falling back to network",
                     );
+                    await cache.delete("openchat_document");
                     return null;
                 },
             },
