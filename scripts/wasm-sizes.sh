@@ -39,10 +39,16 @@ PYEOF
 
 human_readable() {
     local bytes=$1
-    if   (( bytes >= 1048576 )); then printf "%.2f MB" "$(echo "scale=2; $bytes/1048576" | bc)"
-    elif (( bytes >= 1024 ));    then printf "%.2f KB" "$(echo "scale=2; $bytes/1024" | bc)"
-    else printf "%d B" "$bytes"
-    fi
+    python3 -c '
+import sys
+bytes = int(sys.argv[1])
+if bytes >= 1048576:
+    print(f"{bytes / 1048576:.2f} MB", end="")
+elif bytes >= 1024:
+    print(f"{bytes / 1024:.2f} KB", end="")
+else:
+    print(f"{bytes} B", end="")
+' "$bytes"
 }
 
 file_size_bytes() {
