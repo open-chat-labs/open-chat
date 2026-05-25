@@ -109,7 +109,7 @@ registerRoute(
             // If the cached document is empty/corrupt, delete it and return null so
             // NetworkFirst fetches from the network and caches a fresh copy.
             {
-                cachedResponseWillBeUsed: async ({ cachedResponse, cache }) => {
+                cachedResponseWillBeUsed: async ({ cachedResponse, cacheName }) => {
                     if (!cachedResponse) return null;
                     if (await isValidDocumentResponse(cachedResponse)) {
                         return cachedResponse;
@@ -117,6 +117,7 @@ registerRoute(
                     console.warn(
                         "SW: cached document is invalid/empty, deleting and falling back to network",
                     );
+                    const cache = await caches.open(cacheName);
                     await cache.delete("openchat_document");
                     return null;
                 },
