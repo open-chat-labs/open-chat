@@ -76,8 +76,7 @@ async function isValidDocumentResponse(response: Response): Promise<boolean> {
 
     try {
         const text = await response.clone().text();
-        const tail = text.trimEnd();
-        return tail.slice(-7).toLowerCase() === "</html>";
+        return text.trimEnd().slice(-7).toLowerCase() === "</html>";
     } catch {
         return false;
     }
