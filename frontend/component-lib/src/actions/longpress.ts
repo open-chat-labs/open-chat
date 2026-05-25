@@ -6,23 +6,11 @@ const SCALE_EFFECT_TARGET = "0.95";
 // Menu activates after 80% of the original delay time has passed.
 const MENU_ACTIVATION_THRESHOLD = 0.8;
 
-// Experience tells us that we get a strange rogue click event that fires after a long-press
-// on Safari and we need to deliberately ignore this. No this is not nice.
-function suppressNextClick() {
-    if (mobileOperatingSystem !== "iOS") return;
-
-    window.addEventListener(
-        "click",
-        (e: MouseEvent) => {
-            e.stopPropagation();
-            e.preventDefault();
-        },
-        {
-            capture: true,
-            once: true,
-        },
-    );
-}
+// On Android, Chromium WebView starts a native drag-and-drop session on
+// longpress of images, which leaves the WebView stuck and swallowing taps.
+// This attribute pairs with a global rule in global.scss that suppresses
+// the native drag/callout on the target and its descendants.
+const ANDROID_DRAG_FIX_ATTR = "data-longpress-android";
 
 // On android, OS level gestures will prevent touchmove events coming through
 // and cause spurious firing of longpress events. Therefore we need to exclude
@@ -160,9 +148,6 @@ export function longpress(node: HTMLElement, args?: LongpressArg) {
         // users may release the longpress target before full timeout has
         // passed and no menu showed.
         longPressTimer = window.setTimeout(() => {
-            if (mobileOperatingSystem === "iOS") {
-                suppressNextClick();
-            }
             menuShown = true;
             restoreTargetScale();
             onlongpress(e);
@@ -173,6 +158,16 @@ export function longpress(node: HTMLElement, args?: LongpressArg) {
         // (Note: with this enabled pan/swipe feature of the message bubble does not work since
         // it depends on the same event type.)
         // e.stopImmediatePropagation();
+    }
+
+    function onTouchEnd(e: TouchEvent) {
+        clearLongPressTimer();
+        restoreTargetScale();
+        if (menuShown && mobileOperatingSystem === "iOS") {
+            // preventDefault() on touchend suppresses the ghost click iOS synthesises after
+            // a long press.
+            e.preventDefault();
+        }
     }
 
     function onTouchMove(e: TouchEvent) {
@@ -194,10 +189,11 @@ export function longpress(node: HTMLElement, args?: LongpressArg) {
     }
 
     if (isTouchDevice) {
-        node.addEventListener("touchend", () => {
-            clearLongPressTimer();
-            restoreTargetScale();
-        });
+        if (mobileOperatingSystem === "Android") {
+            node.setAttribute(ANDROID_DRAG_FIX_ATTR, "");
+        }
+
+        node.addEventListener("touchend", onTouchEnd);
         node.addEventListener("touchcancel", clearLongPressTimer);
         node.addEventListener("touchleave", clearLongPressTimer);
         node.addEventListener("touchmove", onTouchMove, { passive: true });
@@ -215,7 +211,7 @@ export function longpress(node: HTMLElement, args?: LongpressArg) {
         },
         destroy() {
             if (isTouchDevice) {
-                node.removeEventListener("touchend", clearLongPressTimer);
+                node.removeEventListener("touchend", onTouchEnd);
                 node.removeEventListener("touchcancel", clearLongPressTimer);
                 node.removeEventListener("touchleave", clearLongPressTimer);
                 node.removeEventListener("touchmove", onTouchMove);
