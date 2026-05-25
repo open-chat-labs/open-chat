@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
@@ -75,10 +76,10 @@ for gz_file in "${gz_files[@]}"; do
 
     zipped_bytes=$(file_size_bytes "$gz_file")
 
-    gunzip -c "$gz_file" > "$tmp_wasm"
+    gunzip -c "$gz_file" > "$tmp_wasm" || { echo "ERROR: failed to decompress $gz_file" >&2; exit 1; }
     unzipped_bytes=$(file_size_bytes "$tmp_wasm")
 
-    code_bytes=$(python3 -c "$READ_CODE_SIZE" "$tmp_wasm")
+    code_bytes=$(python3 -c "$READ_CODE_SIZE" "$tmp_wasm") || { echo "ERROR: failed to parse wasm for $canister" >&2; exit 1; }
 
     printf "%-35s %12s %12s %18s\n" \
         "$canister" \
