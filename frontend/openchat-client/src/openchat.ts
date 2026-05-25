@@ -3803,6 +3803,8 @@ export class OpenChat {
             msg.blockLevelMarkdown,
             [],
             true,
+            undefined,
+            msg.ogPreviews,
         );
     }
 
@@ -4321,6 +4323,7 @@ export class OpenChat {
         mentioned: User[] = [],
         forwarded: boolean = false,
         messageIdIfRetrying?: bigint,
+        ogPreviews: Message["ogPreviews"] = [],
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
         const chat = allChatsStore.value.get(chatId);
@@ -4339,7 +4342,7 @@ export class OpenChat {
             repliesTo: draftMessage?.replyingTo,
             forwarded,
             blockLevelMarkdown,
-            ogPreviews: [],
+            ogPreviews: ogPreviews ?? [],
         };
 
         return this.#sendMessageCommon(
