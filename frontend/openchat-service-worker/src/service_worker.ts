@@ -27,7 +27,6 @@ import {
     toTitleCase,
     UnsupportedValueError,
 } from "openchat-shared";
-import { CacheableResponsePlugin } from "workbox-cacheable-response";
 import { ExpirationPlugin } from "workbox-expiration";
 import { staticResourceCache } from "workbox-recipes";
 import { registerRoute } from "workbox-routing";
@@ -70,6 +69,18 @@ staticResourceCache({
 
 const matchCallback = ({ request }: { request: Request }) => request.mode === "navigate";
 const networkTimeoutSeconds = 3;
+// Validates an HTML document response is complete by checking for a closing </html> tag.
+// A partial download (truncated body) won't have one even if it has a valid status code.
+async function isValidDocumentResponse(response: Response): Promise<boolean> {
+    if (!response || response.status !== 200) return false;
+
+    try {
+        const text = await response.clone().text();
+        return text.trimEnd().toLowerCase().endsWith("</html>");
+    } catch {
+        return false;
+    }
+}
 
 registerRoute(
     matchCallback,
@@ -82,9 +93,27 @@ registerRoute(
             ignoreSearch: true,
         },
         plugins: [
-            new CacheableResponsePlugin({
-                statuses: [0, 200],
-            }),
+            // Only cache real, non-empty 200 responses.
+            {
+                cacheWillUpdate: async ({ response }) => {
+                    if (await isValidDocumentResponse(response)) {
+                        return response;
+                    }
+                    console.warn("SW: refusing to cache invalid/empty document response", response?.status);
+                    return null;
+                },
+            },
+            // If the cached document is empty/corrupt, reject it so NetworkFirst retries the network.
+            {
+                cachedResponseWillBeUsed: async ({ cachedResponse }) => {
+                    if (!cachedResponse) return null;
+                    if (await isValidDocumentResponse(cachedResponse)) {
+                        return cachedResponse;
+                    }
+                    console.warn("SW: cached document is invalid/empty, discarding and falling back to network");
+                    return null;
+                },
+            },
             {
                 cacheKeyWillBeUsed: async () => "openchat_document",
             },
