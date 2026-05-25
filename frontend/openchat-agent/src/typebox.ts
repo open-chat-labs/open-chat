@@ -8384,6 +8384,7 @@ export const CommunityEditMessageArgs = Type.Object({
     content: MessageContentInitial,
     block_level_markdown: Type.Optional(Type.Boolean()),
     new_achievement: Type.Boolean(),
+    og_previews: Type.Array(OgPreview),
 });
 
 export type CommunityUpdateChannelArgs = Static<typeof CommunityUpdateChannelArgs>;
@@ -8443,6 +8444,7 @@ export const GroupEditMessageArgs = Type.Object({
     content: MessageContentInitial,
     block_level_markdown: Type.Optional(Type.Boolean()),
     new_achievement: Type.Boolean(),
+    og_previews: Type.Array(OgPreview),
 });
 
 export type UserCreateGroupArgs = Static<typeof UserCreateGroupArgs>;
@@ -8551,6 +8553,7 @@ export const UserEditMessageArgs = Type.Object({
     message_id: MessageId,
     content: MessageContentInitial,
     block_level_markdown: Type.Optional(Type.Boolean()),
+    og_previews: Type.Array(OgPreview),
 });
 
 export type ChatSummaryGroup = Static<typeof ChatSummaryGroup>;

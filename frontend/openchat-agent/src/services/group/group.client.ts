@@ -329,6 +329,7 @@ export class GroupClient
                     message_id: message.messageId,
                     block_level_markdown: blockLevelMarkdown,
                     new_achievement: newAchievement,
+                    og_previews: message.ogPreviews?.map(apiOgPreview) ?? [],
                 };
                 return this.update(
                     groupId,

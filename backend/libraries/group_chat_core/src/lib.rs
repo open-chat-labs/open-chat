@@ -587,6 +587,7 @@ impl GroupChatCore {
                     rules_accepted,
                     suppressed,
                     block_level_markdown,
+                    og_previews,
                     now,
                 );
             }
@@ -669,6 +670,7 @@ impl GroupChatCore {
         rules_accepted: Option<Version>,
         suppressed: bool,
         block_level_markdown: bool,
+        og_previews: Vec<OgPreview>,
         now: TimestampMillis,
     ) -> OCResult<SendMessageSuccess> {
         let PrepareSendMessageSuccess {
@@ -683,6 +685,7 @@ impl GroupChatCore {
             message_id,
             content,
             block_level_markdown: Some(block_level_markdown),
+            og_previews,
             finalise_bot_message: finalise,
             now,
         };

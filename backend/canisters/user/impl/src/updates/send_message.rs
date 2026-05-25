@@ -224,6 +224,7 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
                 message_id: args.message_id,
                 content,
                 block_level_markdown: Some(args.block_level_markdown),
+                og_previews: args.og_previews,
                 finalise_bot_message: finalised,
                 now,
             };

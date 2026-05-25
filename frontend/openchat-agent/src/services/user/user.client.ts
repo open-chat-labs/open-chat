@@ -542,6 +542,7 @@ export class UserClient
                     thread_root_message_index: threadRootMessageIndex,
                     message_id: message.messageId,
                     block_level_markdown: blockLevelMarkdown,
+                    og_previews: message.ogPreviews?.map(apiOgPreview) ?? [],
                 };
                 return this.update(
                     "edit_message_v2",

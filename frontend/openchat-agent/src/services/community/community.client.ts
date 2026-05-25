@@ -479,6 +479,7 @@ export class CommunityClient
                         message_id: message.messageId,
                         block_level_markdown: blockLevelMarkdown,
                         new_achievement: newAchievement,
+                        og_previews: message.ogPreviews?.map(apiOgPreview) ?? [],
                     },
                     unitResult,
                     CommunityEditMessageArgs,

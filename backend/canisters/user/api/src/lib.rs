@@ -245,6 +245,8 @@ pub struct EditMessageArgs {
     pub message_id: MessageId,
     pub content: MessageContent,
     pub block_level_markdown: Option<bool>,
+    #[serde(default)]
+    pub og_previews: Vec<OgPreview>,
 }
 
 #[ts_export(user)]

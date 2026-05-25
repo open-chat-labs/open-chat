@@ -344,6 +344,7 @@ impl ChatEvents {
 
             let old_length = message.content.text_length();
             message.content = args.content;
+            message.og_previews = args.og_previews;
 
             let document = Document::from(&message.content);
 
@@ -2522,6 +2523,7 @@ pub struct EditMessageArgs {
     pub message_id: MessageId,
     pub content: MessageContentInternal,
     pub block_level_markdown: Option<bool>,
+    pub og_previews: Vec<OgPreview>,
     pub finalise_bot_message: bool,
     pub now: TimestampMillis,
 }
