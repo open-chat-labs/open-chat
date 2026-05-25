@@ -4342,7 +4342,7 @@ export class OpenChat {
             repliesTo: draftMessage?.replyingTo,
             forwarded,
             blockLevelMarkdown,
-            ogPreviews: ogPreviews ?? [],
+            ogPreviews,
         };
 
         return this.#sendMessageCommon(
