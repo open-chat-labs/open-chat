@@ -593,15 +593,13 @@ export class UserClient
                 UserSendMessageResponse,
                 onRequestAccepted,
             )
-                .then((resp) => {
-                    const retVal: [SendMessageResponse, Message] = [resp, newEvent.event];
+                .then((resp) =>
                     this.chatsDb.setCachedMessageFromSendResponse(
                         chatId,
                         newEvent,
                         threadRootMessageIndex,
-                    )(retVal);
-                    return retVal;
-                })
+                    )([resp, newEvent.event]),
+                )
                 .catch((err) => {
                     this.chatsDb.recordFailedMessage(chatId, newEvent, threadRootMessageIndex);
                     throw err;
