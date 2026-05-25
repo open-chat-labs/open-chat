@@ -45,17 +45,21 @@ human_readable() {
     fi
 }
 
+file_size_bytes() {
+    wc -c < "$1" | tr -d '[:space:]'
+}
+
 printf "%-35s %12s %12s %18s\n" "CANISTER" "ZIPPED" "UNZIPPED" "CODE SECTION"
 printf "%-35s %12s %12s %18s\n" "-------" "------" "--------" "------------"
 
 for gz_file in "$WASMS_DIR"/*.wasm.gz; do
     canister=$(basename "$gz_file" .wasm.gz)
 
-    zipped_bytes=$(stat -f%z "$gz_file")
+    zipped_bytes=$(file_size_bytes "$gz_file")
 
     tmp_wasm=$(mktemp /tmp/wasm_sizes_XXXXXX.wasm)
     gunzip -c "$gz_file" > "$tmp_wasm"
-    unzipped_bytes=$(stat -f%z "$tmp_wasm")
+    unzipped_bytes=$(file_size_bytes "$tmp_wasm")
 
     code_bytes=$(python3 -c "$READ_CODE_SIZE" "$tmp_wasm")
     rm -f "$tmp_wasm"
