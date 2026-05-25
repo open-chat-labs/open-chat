@@ -76,7 +76,8 @@ async function isValidDocumentResponse(response: Response): Promise<boolean> {
 
     try {
         const text = await response.clone().text();
-        return text.trimEnd().toLowerCase().endsWith("</html>");
+        const tail = text.trimEnd();
+        return tail.slice(-7).toLowerCase() === "</html>";
     } catch {
         return false;
     }
@@ -99,7 +100,10 @@ registerRoute(
                     if (await isValidDocumentResponse(response)) {
                         return response;
                     }
-                    console.warn("SW: refusing to cache invalid/empty document response", response?.status);
+                    console.warn(
+                        "SW: refusing to cache invalid/empty document response",
+                        response?.status,
+                    );
                     return null;
                 },
             },
@@ -110,7 +114,9 @@ registerRoute(
                     if (await isValidDocumentResponse(cachedResponse)) {
                         return cachedResponse;
                     }
-                    console.warn("SW: cached document is invalid/empty, discarding and falling back to network");
+                    console.warn(
+                        "SW: cached document is invalid/empty, discarding and falling back to network",
+                    );
                     return null;
                 },
             },
