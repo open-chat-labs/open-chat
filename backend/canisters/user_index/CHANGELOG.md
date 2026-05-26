@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `set_openai_api_key` endpoint ([#9021](https://github.com/open-chat-labs/open-chat/pull/9021))
+
 ### Changed
 
 - Skip serializing fields with default values when fetching user data ([#8847](https://github.com/open-chat-labs/open-chat/pull/8847))
