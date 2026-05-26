@@ -146,6 +146,7 @@ pub mod happy_path {
                 message_id,
                 content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
                 block_level_markdown,
+                og_previews: Vec::new(),
             },
         );
 
