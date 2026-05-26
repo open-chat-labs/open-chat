@@ -29,4 +29,4 @@ RUN cargo install --version 0.9.11 ic-wasm
 COPY . /build
 WORKDIR /build
 
-RUN if [[ -z "$canister_name" ]] ; then sh ./scripts/generate-all-canister-wasms.sh ; else sh ./scripts/generate-wasm.sh $canister_name ; fi
+RUN if [[ -z "$canister_name" ]] ; then bash ./scripts/generate-all-canister-wasms.sh ; else bash ./scripts/generate-wasm.sh $canister_name ; fi
