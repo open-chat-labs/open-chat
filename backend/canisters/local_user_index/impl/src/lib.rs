@@ -500,6 +500,7 @@ impl RuntimeState {
             fcm_token_count: self.data.fcm_token_store.len(),
             blocked_user_pairs: self.data.blocked_users.len() as u64,
             oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
+            openai_api_key_set: self.data.openai_api_key.is_some(),
             cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
             bots: self
                 .data
@@ -582,6 +583,7 @@ struct Data {
     pub fcm_token_store: FcmTokenStore,
     pub premium_items: PremiumItems,
     pub blocked_username_patterns: Vec<String>,
+    pub openai_api_key: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -616,6 +618,7 @@ impl Data {
         canister_pool_target_size: u16,
         video_call_operators: Vec<Principal>,
         oc_secret_key_der: Vec<u8>,
+        openai_api_key: Option<String>,
         test_mode: bool,
     ) -> Self {
         Data {
@@ -672,6 +675,7 @@ impl Data {
             fcm_token_store: FcmTokenStore::default(),
             premium_items: PremiumItems::default(),
             blocked_username_patterns: Vec::new(),
+            openai_api_key,
         }
     }
 }
@@ -733,6 +737,7 @@ pub struct Metrics {
     pub fcm_token_count: usize,
     pub blocked_user_pairs: u64,
     pub oc_secret_key_initialized: bool,
+    pub openai_api_key_set: bool,
     pub cycles_balance_check_queue_len: u32,
     pub bots: Vec<BotMetrics>,
     pub blocked_username_patterns: Vec<String>,

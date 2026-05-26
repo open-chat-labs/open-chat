@@ -21,5 +21,6 @@ pub struct Args {
     pub oc_secret_key_der: Vec<u8>,
     pub rng_seed: [u8; 32],
     pub ic_root_key: Vec<u8>,
+    pub openai_api_key: Option<String>,
     pub test_mode: bool,
 }

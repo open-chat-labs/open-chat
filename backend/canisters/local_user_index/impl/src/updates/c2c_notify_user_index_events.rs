@@ -333,6 +333,9 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 state.data.blocked_username_patterns.retain(|p| *p != ev.pattern);
             }
         }
+        UserIndexEvent::SetOpenAIApiKey(ev) => {
+            state.data.openai_api_key = ev.api_key;
+        }
     }
 }
 
