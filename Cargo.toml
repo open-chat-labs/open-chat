@@ -291,7 +291,6 @@ lto = true
 opt-level = "z"
 codegen-units = 1
 debug = false
-panic = "abort"
 
 [patch.crates-io]
 aws-sign-v4 = { git = "https://github.com/hpeebles/aws-sign-v4", rev = "33b65dfde0676544a23c41608da77bd0a117d9ce" }
