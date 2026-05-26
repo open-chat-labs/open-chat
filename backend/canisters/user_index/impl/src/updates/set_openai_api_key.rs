@@ -14,5 +14,3 @@ fn set_openai_api_key_impl(args: Args, state: &mut RuntimeState) -> Response {
     state.data.openai_api_key = Some(args.api_key);
     Ok(()).into()
 }
-
-
