@@ -82,6 +82,38 @@ async function isValidDocumentResponse(response: Response | undefined): Promise<
     }
 }
 
+async function logInvalidDocumentResponse(label: string, response: Response | undefined): Promise<void> {
+    if (!response) {
+        console.warn(`SW: ${label} - response was undefined`);
+        return;
+    }
+
+    let bodyText = "";
+    let bodyLength = 0;
+    try {
+        bodyText = await response.clone().text();
+        bodyLength = bodyText.length;
+    } catch {
+        bodyText = "<failed to read body>";
+    }
+
+    const headers: Record<string, string> = {};
+    response.headers.forEach((value, key) => {
+        headers[key] = value;
+    });
+
+    console.warn(`SW: ${label}`, {
+        status: response.status,
+        statusText: response.statusText,
+        url: response.url,
+        type: response.type,
+        redirected: response.redirected,
+        bodyLength,
+        bodyTail: bodyText.slice(-50),
+        headers,
+    });
+}
+
 registerRoute(
     matchCallback,
     new NetworkFirst({
@@ -99,10 +131,7 @@ registerRoute(
                     if (await isValidDocumentResponse(response)) {
                         return response;
                     }
-                    console.warn(
-                        "SW: refusing to cache invalid/empty document response",
-                        response?.status,
-                    );
+                    await logInvalidDocumentResponse("refusing to cache invalid/empty document response", response);
                     return null;
                 },
             },
@@ -114,9 +143,7 @@ registerRoute(
                     if (await isValidDocumentResponse(cachedResponse)) {
                         return cachedResponse;
                     }
-                    console.warn(
-                        "SW: cached document is invalid/empty, deleting and falling back to network",
-                    );
+                    await logInvalidDocumentResponse("cached document is invalid/empty, deleting and falling back to network", cachedResponse);
                     const cache = await caches.open(cacheName);
                     await cache.delete("openchat_document");
                     return null;
