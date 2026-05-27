@@ -92,6 +92,7 @@ fn mention_user_and_check_activity_feed(chat_type: ChatType) {
                     rules_accepted: None,
                     message_filter_failed: None,
                     new_achievement: false,
+                    og_previews: Vec::new(),
                 },
             );
         }
@@ -115,6 +116,7 @@ fn mention_user_and_check_activity_feed(chat_type: ChatType) {
                     channel_rules_accepted: None,
                     message_filter_failed: None,
                     new_achievement: false,
+                    og_previews: Vec::new(),
                 },
             );
         }

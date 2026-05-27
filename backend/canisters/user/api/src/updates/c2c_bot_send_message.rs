@@ -1,6 +1,6 @@
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
-use types::{BotInitiator, BotMessageContent, EventIndex, MessageId, MessageIndex, ReplyContext, UserId};
+use types::{BotInitiator, BotMessageContent, EventIndex, MessageId, MessageIndex, OgPreview, ReplyContext, UserId};
 
 use super::send_message_v2::{self, SuccessResult};
 
@@ -16,6 +16,8 @@ pub struct Args {
     pub bot_name: String,
     pub block_level_markdown: bool,
     pub finalised: bool,
+    #[serde(default)]
+    pub og_previews: Vec<OgPreview>,
 }
 
 impl From<Args> for send_message_v2::Args {
@@ -33,6 +35,7 @@ impl From<Args> for send_message_v2::Args {
             message_filter_failed: None,
             recipient: value.bot_id,
             pin: None,
+            og_previews: value.og_previews,
         }
     }
 }

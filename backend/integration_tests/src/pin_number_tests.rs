@@ -189,6 +189,7 @@ fn transfer_requires_correct_pin(test_case: u32) {
                 3 => None,
                 _ => unreachable!(),
             },
+            og_previews: Vec::new(),
         },
     );
 

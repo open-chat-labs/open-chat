@@ -59,6 +59,7 @@ fn suspend_user() {
             block_level_markdown: false,
             message_filter_failed: None,
             pin: None,
+            og_previews: Vec::new(),
         },
     );
     assert!(matches!(
@@ -83,6 +84,7 @@ fn suspend_user() {
             rules_accepted: None,
             message_filter_failed: None,
             new_achievement: false,
+            og_previews: Vec::new(),
         },
     );
     assert!(matches!(
@@ -109,6 +111,7 @@ fn suspend_user() {
             channel_rules_accepted: None,
             message_filter_failed: None,
             new_achievement: false,
+            og_previews: Vec::new(),
         },
     );
     assert!(matches!(
@@ -142,6 +145,7 @@ fn suspend_user() {
             block_level_markdown: false,
             message_filter_failed: None,
             pin: None,
+            og_previews: Vec::new(),
         },
     );
     assert!(matches!(
@@ -166,6 +170,7 @@ fn suspend_user() {
             rules_accepted: None,
             message_filter_failed: None,
             new_achievement: false,
+            og_previews: Vec::new(),
         },
     );
     assert!(matches!(
@@ -192,6 +197,7 @@ fn suspend_user() {
             channel_rules_accepted: None,
             message_filter_failed: None,
             new_achievement: false,
+            og_previews: Vec::new(),
         },
     );
     assert!(matches!(
