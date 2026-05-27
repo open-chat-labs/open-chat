@@ -14,11 +14,11 @@
     interface Props {
         content: TextContent | Snippet;
         me: boolean;
-        fill: boolean;
+        fill?: boolean;
         reply?: boolean;
-        blockLevelMarkdown: boolean;
-        showPreviews: boolean;
-        edited: boolean;
+        blockLevelMarkdown?: boolean;
+        showPreviews?: boolean;
+        edited?: boolean;
         truncate?: boolean;
         pinned?: boolean;
         maxWidth?: number;
@@ -31,11 +31,11 @@
     let {
         content,
         me,
-        fill,
+        fill = false,
         reply = false,
-        blockLevelMarkdown,
-        showPreviews,
-        edited,
+        blockLevelMarkdown = false,
+        showPreviews = false,
+        edited = false,
         truncate = false,
         pinned = false,
         maxWidth,

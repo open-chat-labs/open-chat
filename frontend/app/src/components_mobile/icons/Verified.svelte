@@ -9,13 +9,14 @@
         verified: boolean;
         size?: BadgeSize;
         tooltip?: ResourceKey;
+        borderColor?: string;
     }
 
-    let { verified, size = "default", tooltip }: Props = $props();
+    let { verified, size = "default", tooltip, borderColor }: Props = $props();
 </script>
 
 {#snippet renderCheck()}
-    <BadgeContainer {size} backgroundColor={ColourVars.secondary}>
+    <BadgeContainer {size} {borderColor} backgroundColor={ColourVars.secondary}>
         <Check size={size === "large" ? "1rem" : "0.625rem"} />
     </BadgeContainer>
 {/snippet}

@@ -11,6 +11,6 @@
     let { resourceKey }: Props = $props();
 </script>
 
-<span use:translatable={{ key: resourceKey }}>
+<span use:translatable={{ key: resourceKey }} style="display:inline;">
     {interpolate($_, resourceKey)}
 </span>

@@ -9,9 +9,10 @@
         earned: number;
         showTooltip?: boolean;
         size?: BadgeSize;
+        borderColor?: string;
     }
 
-    let { earned, showTooltip = true, size = "default" }: Props = $props();
+    let { earned, showTooltip = true, size = "default", borderColor }: Props = $props();
 
     let closest = $derived(findClosestChitBand(earned));
 
@@ -24,6 +25,7 @@
 {#snippet renderChit()}
     <BadgeContainer
         {size}
+        {borderColor}
         supplementalClass="chit-badge"
         backgroundColor={ColourVars.tertiaryMuted}
         backgroundImage={"/assets/oc_logo_no_bg.svg"}>
