@@ -75,6 +75,7 @@ fn p2p_swap_in_channel_succeeds() {
             channel_rules_accepted: None,
             message_filter_failed: None,
             pin: None,
+            og_previews: Vec::new(),
         },
     );
 
@@ -185,6 +186,7 @@ fn cancel_p2p_swap_in_channel_succeeds(delete_message: bool) {
             channel_rules_accepted: None,
             message_filter_failed: None,
             pin: None,
+            og_previews: Vec::new(),
         },
     );
 

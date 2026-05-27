@@ -73,6 +73,7 @@ fn prize_messages_can_be_claimed_successfully() {
             rules_accepted: None,
             message_filter_failed: None,
             pin: None,
+            og_previews: Vec::new(),
         },
     );
 
@@ -181,6 +182,7 @@ fn prize_message_requiring_reauthentication() {
             rules_accepted: None,
             message_filter_failed: None,
             pin: None,
+            og_previews: Vec::new(),
         },
     );
 
@@ -298,6 +300,7 @@ fn unclaimed_prizes_get_refunded(case: u32) {
             rules_accepted: None,
             message_filter_failed: None,
             pin: None,
+            og_previews: Vec::new(),
         },
     );
 
@@ -394,6 +397,7 @@ fn old_transactions_fixed_by_updating_created_date() {
             rules_accepted: None,
             message_filter_failed: None,
             pin: None,
+            og_previews: Vec::new(),
         },
     );
 

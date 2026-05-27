@@ -264,6 +264,19 @@ type Mention = record {
     event_index : EventIndex;
 };
 
+type OgPreviewImage = record {
+    url : text;
+    width : nat32;
+    height : nat32;
+};
+
+type OgPreview = record {
+    url : text;
+    title : text;
+    description : text;
+    image : opt OgPreviewImage;
+};
+
 type Message = record {
     message_index : MessageIndex;
     message_id : MessageId;
@@ -277,6 +290,7 @@ type Message = record {
     edited : bool;
     forwarded : bool;
     block_level_markdown : bool;
+    og_previews : vec OgPreview;
 };
 
 type MessageEventWrapper = record {

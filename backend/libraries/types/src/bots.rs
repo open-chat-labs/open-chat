@@ -2,8 +2,8 @@ use crate::bitflags::{decode_from_bitflags, encode_as_bitflags};
 use crate::{
     AudioContent, CanisterId, Chat, ChatEventCategory, ChatEventType, ChatId, ChatPermission, CommunityEventCategory,
     CommunityEventType, CommunityId, CommunityOrGroup, CommunityPermission, FileContent, GiphyContent, GroupRole, ImageContent,
-    MessageContentInitial, MessageId, MessagePermission, OptionUpdate, PollContent, TextContent, TimestampMillis, UserId,
-    VideoContent, is_default,
+    MessageContentInitial, MessageId, MessagePermission, OgPreview, OptionUpdate, PollContent, TextContent, TimestampMillis,
+    UserId, VideoContent, is_default,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -300,6 +300,7 @@ pub struct BotMessage {
     pub content: MessageContentInitial,
     pub message_id: Option<MessageId>,
     pub block_level_markdown: Option<bool>,
+    pub og_previews: Option<Vec<OgPreview>>,
 }
 
 #[ts_export]

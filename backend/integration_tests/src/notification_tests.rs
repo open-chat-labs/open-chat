@@ -194,6 +194,7 @@ fn group_message_notification_muted(case: u32) {
             rules_accepted: None,
             message_filter_failed: None,
             new_achievement: false,
+            og_previews: Vec::new(),
         },
     );
 

@@ -129,6 +129,7 @@ fn polls_ended_correctly() {
             message_filter_failed: None,
             block_level_markdown: false,
             new_achievement: false,
+            og_previews: Vec::new(),
         },
     );
 
@@ -256,6 +257,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, poll_config: P
             message_filter_failed: None,
             block_level_markdown: false,
             new_achievement: false,
+            og_previews: Vec::new(),
         },
     );
 

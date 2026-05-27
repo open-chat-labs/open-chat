@@ -1,6 +1,6 @@
 use crate::{
-    Achievement, BotCaller, BotCommand, CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction,
-    ThreadSummary, UserId, is_default,
+    Achievement, BotCaller, BotCommand, CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, OgPreview,
+    Reaction, ThreadSummary, UserId, is_default,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -32,6 +32,9 @@ pub struct Message {
     #[serde(default, skip_serializing_if = "is_default")]
     #[ts(as = "Option<bool>", optional)]
     pub block_level_markdown: bool,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<OgPreview>>", optional)]
+    pub og_previews: Vec<OgPreview>,
 }
 
 impl Message {
