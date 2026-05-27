@@ -89,7 +89,6 @@
     let progressWidth = $state(0);
     let showRestrictionDetails = $state(false);
     let mouseEvent = $state<MouseEvent>();
-    let hasTextContent = $derived(content.caption && content.caption.length > 0);
     let normalisedTextContent = $derived.by<TextContentType | undefined>(() => {
         if (content.caption && content.caption.length > 0) {
             return {
@@ -98,6 +97,7 @@
             };
         }
     });
+    let hasTextContent = $derived(normalisedTextContent !== undefined);
 
     async function claim(
         e: MouseEvent,
@@ -236,6 +236,7 @@
                             )} />
                     </Body>
                     <Body width="fill" colour="primary">
+                        <!-- TODO i18n -->
                         <Translatable resourceKey={i18nKey("prize draw")} />
                     </Body>
                 </Row>
@@ -255,7 +256,7 @@
     {/if}
 {/snippet}
 
-<!-- TODO edit prize message text content -->
+<!-- TODO allow prize message to be edited - to update their text caption -->
 {#snippet regularView()}
     {#if content.kind === "prize_content"}
         {#if showAuthentication}
