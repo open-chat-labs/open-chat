@@ -57,6 +57,7 @@ mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
+mod no_inline_anchor;
 mod queries;
 mod updates;
 

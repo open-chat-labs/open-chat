@@ -31,8 +31,13 @@ then
   echo Installing ic-wasm
   cargo install --version 0.9.11 ic-wasm || exit 1
 fi
-ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm shrink ||exit 1
-ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm optimize Oz || exit 1
+ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm shrink $NAME_SECTION_FLAG || exit 1
+ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm optimize Oz $NAME_SECTION_FLAG || exit 1
+# Note: wasm-opt's single-use inliner can inflate serde deserialize functions for large
+# enums past ICP's 1,000,000 function-complexity limit. If this happens, add a second
+# wasm-level call site for the offending type's deserialize function (see
+# local_user_index/impl/src/no_inline_anchor.rs for the pattern). Two call sites prevent
+# single-use inlining of that function.
 
 echo Compressing wasm
 mkdir -p wasms
