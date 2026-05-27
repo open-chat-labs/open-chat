@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_time::now_millis;
 use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_notify_user_index_events::*;
-use local_user_index_canister::{UserIndexEvent, UserRegistered};
+use local_user_index_canister::{UserIndexBotEvent, UserIndexEvent, UserRegistered};
 use p256_key_pair::P256KeyPair;
 use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
@@ -91,43 +91,70 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             );
         }
         UserIndexEvent::UserRegistered(ev) => handle_user_registered(ev, **now, state),
-        UserIndexEvent::BotRegistered(ev) => {
-            state.data.bots.add(
-                ev.user_principal,
-                ev.bot_id,
-                ev.owner_id,
-                ev.name.clone(),
-                ev.commands,
-                ev.endpoint,
-                ev.autonomous_config,
-                ev.default_subscriptions,
-                ev.permitted_install_location,
-                ev.data_encoding,
-            );
-
-            let this_canister_id = state.env.canister_id();
-            if ev.notification_canister == this_canister_id {
-                // This local_user_index canister has been nominated to notify the bot
-                state.push_bot_notification(
-                    BotNotification {
-                        event: BotEvent::Lifecycle(BotLifecycleEvent::Registered(BotRegisteredEvent {
-                            bot_id: ev.bot_id,
-                            bot_name: ev.name,
-                        })),
-                        recipients: vec![ev.bot_id],
-                        timestamp: **now,
-                    },
-                    this_canister_id,
-                    **now,
+        UserIndexEvent::BotEvent(ev) => match *ev {
+            UserIndexBotEvent::BotRegistered(ev) => {
+                state.data.bots.add(
+                    ev.user_principal,
+                    ev.bot_id,
+                    ev.owner_id,
+                    ev.name.clone(),
+                    ev.commands,
+                    ev.endpoint,
+                    ev.autonomous_config,
+                    ev.default_subscriptions,
+                    ev.permitted_install_location,
+                    ev.data_encoding,
                 );
+
+                let this_canister_id = state.env.canister_id();
+                if ev.notification_canister == this_canister_id {
+                    // This local_user_index canister has been nominated to notify the bot
+                    state.push_bot_notification(
+                        BotNotification {
+                            event: BotEvent::Lifecycle(BotLifecycleEvent::Registered(BotRegisteredEvent {
+                                bot_id: ev.bot_id,
+                                bot_name: ev.name,
+                            })),
+                            recipients: vec![ev.bot_id],
+                            timestamp: **now,
+                        },
+                        this_canister_id,
+                        **now,
+                    );
+                }
             }
-        }
-        UserIndexEvent::BotPublished(ev) => {
-            state.data.bots.publish(ev.bot_id);
-        }
-        UserIndexEvent::BotUpdated(ev) => {
-            state.data.bots.update(ev.bot_id, ev.owner_id, ev.endpoint, ev.definition);
-        }
+            UserIndexBotEvent::BotPublished(ev) => {
+                state.data.bots.publish(ev.bot_id);
+            }
+            UserIndexBotEvent::BotUpdated(ev) => {
+                state.data.bots.update(ev.bot_id, ev.owner_id, ev.endpoint, ev.definition);
+            }
+            UserIndexBotEvent::BotRemoved(ev) => {
+                state.data.bots.remove(&ev.user_id);
+            }
+            UserIndexBotEvent::BotUninstall(location, bot_id) => match location {
+                BotInstallationLocation::Community(community_id) => {
+                    state.push_event_to_community(community_id.into(), CommunityEvent::BotRemoved(bot_id), **now);
+                }
+                BotInstallationLocation::Group(group_id) => {
+                    state.push_event_to_group(group_id.into(), GroupEvent::BotRemoved(bot_id), **now);
+                }
+                BotInstallationLocation::User(user_id) => {
+                    state.push_event_to_user(user_id.into(), UserEvent::BotRemoved(bot_id), **now);
+                }
+            },
+            UserIndexBotEvent::BotUpdateInstallation(location, ev) => match location {
+                BotInstallationLocation::Community(community_id) => {
+                    state.push_event_to_community(community_id.into(), CommunityEvent::BotUpdated(ev), **now);
+                }
+                BotInstallationLocation::Group(group_id) => {
+                    state.push_event_to_group(group_id.into(), GroupEvent::BotUpdated(ev), **now);
+                }
+                BotInstallationLocation::User(user_id) => {
+                    state.push_event_to_user(user_id.into(), UserEvent::BotUpdated(Box::new(ev)), **now);
+                }
+            },
+        },
         UserIndexEvent::PlatformOperatorStatusChanged(ev) => {
             state
                 .data
@@ -223,9 +250,6 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 .global_users
                 .update_user_principal(update.old_principal, update.new_principal);
         }
-        UserIndexEvent::BotRemoved(ev) => {
-            state.data.bots.remove(&ev.user_id);
-        }
         UserIndexEvent::DeleteUser(ev) => {
             if state.data.local_users.contains(&ev.user_id) {
                 state.data.users_to_delete_queue.push_back(UserToDelete {
@@ -297,28 +321,6 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 state.data.global_users.insert_unique_person_proof(user.user_id, proof);
             }
         }
-        UserIndexEvent::BotUninstall(location, bot_id) => match location {
-            BotInstallationLocation::Community(community_id) => {
-                state.push_event_to_community(community_id.into(), CommunityEvent::BotRemoved(bot_id), **now);
-            }
-            BotInstallationLocation::Group(group_id) => {
-                state.push_event_to_group(group_id.into(), GroupEvent::BotRemoved(bot_id), **now);
-            }
-            BotInstallationLocation::User(user_id) => {
-                state.push_event_to_user(user_id.into(), UserEvent::BotRemoved(bot_id), **now);
-            }
-        },
-        UserIndexEvent::BotUpdateInstallation(location, ev) => match location {
-            BotInstallationLocation::Community(community_id) => {
-                state.push_event_to_community(community_id.into(), CommunityEvent::BotUpdated(ev), **now);
-            }
-            BotInstallationLocation::Group(group_id) => {
-                state.push_event_to_group(group_id.into(), GroupEvent::BotUpdated(ev), **now);
-            }
-            BotInstallationLocation::User(user_id) => {
-                state.push_event_to_user(user_id.into(), UserEvent::BotUpdated(Box::new(ev)), **now);
-            }
-        },
         UserIndexEvent::UserBlocked(user_id, blocked) => {
             state.data.blocked_users.insert((blocked, user_id), ());
         }

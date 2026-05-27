@@ -6,7 +6,7 @@ use crate::{
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use local_user_index_canister::{BotUpdated, UserIndexEvent};
+use local_user_index_canister::{BotUpdated, UserIndexBotEvent, UserIndexEvent};
 use types::{BotDefinitionUpdate, OptionUpdate};
 use url::Url;
 use user_index_canister::update_bot::{Response::*, *};
@@ -79,12 +79,12 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         let bot = state.data.users.get_bot(&args.bot_id).unwrap();
 
         state.push_event_to_all_local_user_indexes(
-            UserIndexEvent::BotUpdated(BotUpdated {
+            UserIndexEvent::BotEvent(Box::new(UserIndexBotEvent::BotUpdated(BotUpdated {
                 bot_id: args.bot_id,
                 owner_id: bot.owner,
                 endpoint: bot.endpoint.clone(),
                 definition,
-            }),
+            }))),
             None,
         );
 
@@ -94,7 +94,10 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
             for (location, details) in bot.installations.iter() {
                 state.data.user_index_event_sync_queue.push(
                     details.local_user_index,
-                    UserIndexEvent::BotUpdateInstallation(*location, installation_update.clone()),
+                    UserIndexEvent::BotEvent(Box::new(UserIndexBotEvent::BotUpdateInstallation(
+                        *location,
+                        installation_update.clone(),
+                    ))),
                 );
             }
         }

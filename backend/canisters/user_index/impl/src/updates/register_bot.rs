@@ -7,7 +7,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{ONE_GB, USER_LIMIT};
 use event_store_producer::EventBuilder;
-use local_user_index_canister::{BotRegistered, UserIndexEvent};
+use local_user_index_canister::{BotRegistered, UserIndexBotEvent, UserIndexEvent};
 use rand::Rng;
 use std::collections::HashMap;
 use storage_index_canister::add_or_update_users::UserConfig;
@@ -82,7 +82,7 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
     let notification_canister = state.get_random_local_user_index_canister();
 
     state.push_event_to_all_local_user_indexes(
-        UserIndexEvent::BotRegistered(BotRegistered {
+        UserIndexEvent::BotEvent(Box::new(UserIndexBotEvent::BotRegistered(BotRegistered {
             bot_id,
             owner_id,
             user_principal: args.principal,
@@ -94,7 +94,7 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
             default_subscriptions: args.definition.default_subscriptions.clone(),
             data_encoding: args.definition.data_encoding.unwrap_or_default(),
             notification_canister,
-        }),
+        }))),
         None,
     );
 

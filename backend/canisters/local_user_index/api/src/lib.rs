@@ -23,18 +23,23 @@ pub use queries::*;
 pub use updates::*;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum UserIndexEvent {
-    UsernameChanged(UsernameChanged),
-    DisplayNameChanged(DisplayNameChanged),
-    PhoneNumberConfirmed(PhoneNumberConfirmed),
-    StorageUpgraded(StorageUpgraded),
-    UserRegistered(UserRegistered),
+pub enum UserIndexBotEvent {
     BotRegistered(BotRegistered),
     BotPublished(BotPublished),
     BotUpdated(BotUpdated),
     BotRemoved(BotRemoved),
     BotUninstall(BotInstallationLocation, UserId),
     BotUpdateInstallation(BotInstallationLocation, BotDefinitionUpdate),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum UserIndexEvent {
+    UsernameChanged(UsernameChanged),
+    DisplayNameChanged(DisplayNameChanged),
+    PhoneNumberConfirmed(PhoneNumberConfirmed),
+    StorageUpgraded(StorageUpgraded),
+    UserRegistered(UserRegistered),
+    BotEvent(Box<UserIndexBotEvent>),
     PlatformOperatorStatusChanged(PlatformOperatorStatusChanged),
     PlatformModeratorStatusChanged(PlatformModeratorStatusChanged),
     MaxConcurrentCanisterUpgradesChanged(MaxConcurrentCanisterUpgradesChanged),
