@@ -6,6 +6,7 @@
         currentUserIdStore,
         eventListScrolling,
         isSuccessfulEventsResponse,
+        type OgPreview,
         OpenChat,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
@@ -22,6 +23,7 @@
         messageId: bigint;
         edited: boolean;
         displayName: string;
+        ogPreviews: OgPreview[];
     };
 
     const client = getContext<OpenChat>("client");
@@ -68,6 +70,7 @@
                       $selectedCommunityMembersStore,
                       $selectedChatWebhooksStore,
                   ),
+            ogPreviews: message.ogPreviews ?? [],
         };
     }
 
@@ -102,7 +105,6 @@
                     </div>
                     <div class="inert">
                         <ChatMessageContent
-                            showPreviews
                             me={senderIsMe}
                             readonly
                             messageContext={{
@@ -120,7 +122,8 @@
                             truncate={true}
                             reply={false}
                             isPreview={true}
-                            content={preview.content} />
+                            content={preview.content}
+                            ogPreviews={preview.ogPreviews} />
                     </div>
                 </div>
             </a>

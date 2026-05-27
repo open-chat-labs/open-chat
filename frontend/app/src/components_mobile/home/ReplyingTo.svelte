@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ColourVars, Column, IconButton, Row, ChatCaption } from "component-lib";
+    import { ChatCaption, ColourVars, Column, IconButton, Row } from "component-lib";
     import type { CreatedUser, EnhancedReplyContext, OpenChat } from "openchat-client";
     import { selectedChatWebhooksStore, selectedCommunityMembersStore } from "openchat-client";
     import { getContext } from "svelte";
@@ -96,7 +96,6 @@
             </Row>
             <div class="replying_content no_padding" class:me>
                 <ChatMessageContent
-                    showPreviews={false}
                     {readonly}
                     {timestamp}
                     messageContext={replyingTo.sourceContext}
@@ -111,6 +110,7 @@
                     truncate
                     edited={replyingTo.edited}
                     content={replyingTo.content}
+                    ogPreviews={[]}
                     reply />
             </div>
         {/if}

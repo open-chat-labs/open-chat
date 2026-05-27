@@ -9,8 +9,9 @@
         OpenChat,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
-        type MultiUserChatIdentifier,
         type MessageContent,
+        type MultiUserChatIdentifier,
+        type OgPreview,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -24,6 +25,7 @@
         messageId: bigint;
         edited: boolean;
         displayName: string;
+        ogPreviews: OgPreview[];
     };
 
     const client = getContext<OpenChat>("client");
@@ -34,7 +36,7 @@
         threadRootMessageIndex: number | undefined;
         messageIndex: number;
         intersecting: boolean;
-        onRendered: (url: string) => void;
+        onRendered?: (url: string) => void;
     }
 
     const { url, chatId, threadRootMessageIndex, messageIndex, intersecting, onRendered }: Props =
@@ -44,11 +46,9 @@
     let rendered = $state(false);
 
     async function loadPreview(): Promise<Preview | undefined> {
-        const result = await client.getMessagesByMessageIndex(
-            chatId,
-            threadRootMessageIndex,
-            [messageIndex],
-        );
+        const result = await client.getMessagesByMessageIndex(chatId, threadRootMessageIndex, [
+            messageIndex,
+        ]);
 
         if (!isSuccessfulEventsResponse(result)) {
             return;
@@ -70,6 +70,7 @@
                       $selectedCommunityMembersStore,
                       $selectedChatWebhooksStore,
                   ),
+            ogPreviews: message.ogPreviews ?? [],
         };
     }
 
@@ -79,7 +80,7 @@
         previewPromise.then((preview) => {
             if (preview && intersecting && !$eventListScrolling) {
                 rendered = true;
-                onRendered(url);
+                onRendered?.(url);
             }
         });
     });
@@ -106,7 +107,6 @@
                     </div>
                     <div class="inert">
                         <ChatMessageContent
-                            showPreviews
                             me={preview.me}
                             readonly
                             messageContext={{
@@ -123,7 +123,8 @@
                             blockLevelMarkdown
                             truncate
                             reply
-                            content={preview.content} />
+                            content={preview.content}
+                            ogPreviews={preview.ogPreviews} />
                     </div>
                 </div>
             </a>

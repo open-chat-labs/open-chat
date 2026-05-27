@@ -93,7 +93,6 @@
                 {/snippet}
                 {#snippet messageContent(me)}
                     <ChatMessageContent
-                        showPreviews={false}
                         readonly
                         pinned
                         {senderId}
@@ -107,7 +106,8 @@
                         {me}
                         {intersecting}
                         content={msg.content}
-                        blockLevelMarkdown={msg.blockLevelMarkdown} />
+                        blockLevelMarkdown={msg.blockLevelMarkdown}
+                        ogPreviews={msg.ogPreviews} />
                 {/snippet}
             </MessageBubble>
         {/snippet}

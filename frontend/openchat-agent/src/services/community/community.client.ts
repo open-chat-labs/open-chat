@@ -172,8 +172,8 @@ import {
     Empty as TEmpty,
     UnitResult,
 } from "../../typebox";
-import { type ChatsDb } from "../../utils/chatsDb";
 import { mergeCommunityDetails, mergeGroupChatDetails } from "../../utils/chat";
+import { type ChatsDb } from "../../utils/chatsDb";
 import {
     apiOptionUpdateV2,
     identity,
@@ -190,6 +190,7 @@ import {
     apiGroupPermissions,
     apiMaybeAccessGateConfig,
     apiMessageContent,
+    apiOgPreview,
     apiUser as apiUserV2,
     apiVideoCallPresence,
     changeRoleResult,
@@ -213,7 +214,6 @@ import {
     updateGroupSuccess,
     videoCallParticipantsSuccess,
     webhookDetails,
-    apiOgPreview,
 } from "../common/chatMappersV2";
 import { DataClient } from "../data/data.client";
 import { apiOptionalGroupPermissions, apiUpdatedRules } from "../group/mappersV2";
@@ -594,10 +594,7 @@ export class CommunityClient
             chatId.communityId,
             "messages_by_message_index",
             args,
-            (resp) =>
-                mapResult(resp, (value) =>
-                    getMessagesSuccess(value, chatId, this.chatsDb),
-                ),
+            (resp) => mapResult(resp, (value) => getMessagesSuccess(value, chatId, this.chatsDb)),
             CommunityMessagesByMessageIndexArgs,
             CommunityMessagesByMessageIndexResponse,
         );

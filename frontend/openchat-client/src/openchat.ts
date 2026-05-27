@@ -561,6 +561,7 @@ import {
     disableLinksInText,
     extractDisabledLinks,
     extractEnabledLinks,
+    fetchOgPreviews,
     stripLinkDisabledMarker,
 } from "./utils/linkPreviews";
 import { groupBy, groupWhile, keepMax, partition, toRecord, toRecord2 } from "./utils/list";
@@ -570,15 +571,9 @@ import {
     FREE_MAX_SIZES,
     audioRecordingMimeType,
     communityMessageRegex,
-    containsSocialVideoLink,
     fillMessage,
     groupMessageRegex,
-    instagramRegex,
-    isSocialVideoLink,
     messageContentFromFile,
-    spotifyRegex,
-    twitterLinkRegex,
-    youtubeRegex,
     type MaxMediaSizes,
 } from "./utils/media";
 import { mergeKeepingOnlyChanged } from "./utils/object";
@@ -607,8 +602,8 @@ import { initialiseTracking, startTrackingSession, trackEvent } from "./utils/tr
 import { startSwCheckPoller } from "./utils/updateSw";
 import { addQueryStringParam } from "./utils/url";
 import {
-    buildUsernameList,
     buildReducedProfileDataList,
+    buildUsernameList,
     compareIsNotYouThenUsername,
     compareUsername,
     formatLastOnlineDate,
@@ -2736,12 +2731,8 @@ export class OpenChat {
 
     isTyping = isTyping;
     trackEvent = trackEvent;
-    twitterLinkRegex = twitterLinkRegex;
-    youtubeRegex = youtubeRegex;
     communityMessageRegex = communityMessageRegex;
     groupMessageRegex = groupMessageRegex;
-    instagramRegex = instagramRegex;
-    spotifyRegex = spotifyRegex;
     metricsEqual = metricsEqual;
     getMembersString = getMembersString;
     compareIsNotYouThenUsername = compareIsNotYouThenUsername;
@@ -4358,19 +4349,21 @@ export class OpenChat {
         return shouldThrottle(isDiamondStore.value);
     }
 
-    sendMessageWithAttachment(
+    async sendMessageWithAttachment(
         messageContext: MessageContext,
         textContent: string | undefined,
         blockLevelMarkdown: boolean,
         attachment: AttachmentContent | undefined,
         mentioned: User[] = [],
-    ): void {
+    ): Promise<void> {
         this.sendMessageWithContent(
             messageContext,
             this.#getMessageContent(textContent, attachment),
             blockLevelMarkdown,
             mentioned,
             false,
+            undefined,
+            await fetchOgPreviews(extractEnabledLinks(textContent)),
         );
     }
 
@@ -4489,8 +4482,6 @@ export class OpenChat {
     }
 
     getDisplayDate = getDisplayDate;
-    isSocialVideoLink = isSocialVideoLink;
-    containsSocialVideoLink = containsSocialVideoLink;
     calculateMediaDimensions = calculateMediaDimensions;
     dataToBlobUrl = dataToBlobUrl;
     askForNotificationPermission = askForNotificationPermission;
@@ -10421,11 +10412,6 @@ export class OpenChat {
             return mobileWidth.value
                 ? { width: content.mobile.width, height: content.mobile.height }
                 : { width: content.desktop.width, height: content.desktop.height };
-        } else if (
-            content.kind === "text_content" &&
-            (this.isSocialVideoLink(content.text) || this.containsSocialVideoLink(content.text))
-        ) {
-            return { width: 560, height: 315 };
         }
 
         return undefined;

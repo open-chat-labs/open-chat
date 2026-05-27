@@ -700,6 +700,7 @@ export type OgPreviewImage = {
 };
 
 export type OgPreview = {
+    kind: "opengraph";
     url: string;
     title: string;
     description: string;
@@ -2539,3 +2540,20 @@ export function emptyEventsResponse<T extends ChatEvent>(): EventsSuccessResult<
         latestEventIndex: undefined,
     };
 }
+
+export type LinkPreview = MessagePreview | GenericPreview | OgPreview;
+
+export type LinkPreviewBase = {
+    url: string;
+};
+
+export type MessagePreview = LinkPreviewBase & {
+    kind: "message";
+    chatId: MultiUserChatIdentifier;
+    threadRootMessageIndex: number | undefined;
+    messageIndex: number;
+};
+
+export type GenericPreview = LinkPreviewBase & {
+    kind: "generic";
+};

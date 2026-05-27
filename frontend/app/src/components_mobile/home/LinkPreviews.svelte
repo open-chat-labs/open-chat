@@ -1,8 +1,9 @@
 <script lang="ts">
+    import { ColourVars } from "component-lib";
     import {
         eventListScrolling,
         offlineStore,
-        type MultiUserChatIdentifier,
+        type LinkPreview,
         type OpenChat,
     } from "openchat-client";
     import { getContext } from "svelte";
@@ -14,51 +15,6 @@
     import SpotifyPreviewComponent from "./SpotifyPreview.svelte";
     import Tweet from "./Tweet.svelte";
     import YouTubePreview from "./YouTubePreview.svelte";
-    import { ColourVars } from "component-lib";
-
-    type Preview =
-        | SpotifyPreview
-        | YoutubePreview
-        | TwitterPreview
-        | InstagramPreview
-        | MessagePreview
-        | GenericPreview;
-
-    type PreviewBase = {
-        url: string;
-        container?: HTMLElement;
-    };
-
-    type YoutubePreview = PreviewBase & {
-        kind: "youtube";
-        regexMatch: RegExpMatchArray;
-    };
-
-    type InstagramPreview = PreviewBase & {
-        kind: "instagram";
-        regexMatch: RegExpMatchArray;
-    };
-
-    type TwitterPreview = PreviewBase & {
-        kind: "twitter";
-        tweetId: string;
-    };
-
-    type SpotifyPreview = PreviewBase & {
-        kind: "spotify";
-        regexMatch: RegExpMatchArray;
-    };
-
-    type MessagePreview = PreviewBase & {
-        kind: "message";
-        chatId: MultiUserChatIdentifier;
-        threadRootMessageIndex: number | undefined;
-        messageIndex: number;
-    };
-
-    type GenericPreview = PreviewBase & {
-        kind: "generic";
-    };
 
     const client = getContext<OpenChat>("client");
 
@@ -76,7 +32,7 @@
     // svelte-ignore state_referenced_locally
     let previousLinks = links;
     // svelte-ignore state_referenced_locally
-    let previews: Preview[] = $state(links.map(buildPreview));
+    let previews: LinkPreview[] = $state(links.map(buildPreview));
     let shouldRenderPreviews = $state(false);
     let rtl = $rtlStore;
 

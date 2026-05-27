@@ -1,18 +1,13 @@
 <script lang="ts">
+    import type { YoutubePreview } from "openchat-client";
+
     interface Props {
         pinned: boolean;
         fill: boolean;
-        youtubeMatch: RegExpMatchArray;
+        youtubeMatch: YoutubePreview;
     }
 
     let { pinned, fill, youtubeMatch }: Props = $props();
-
-    let youtubeCode = $derived(
-        youtubeMatch && (youtubeMatch[1] ?? youtubeMatch[2] ?? youtubeMatch[3])?.split("?")[0],
-    );
-    let youtubeStartTime = $derived(
-        youtubeMatch ? new URL(youtubeMatch[0]).searchParams.get("t") || "0" : "0",
-    );
 </script>
 
 <div>
@@ -22,7 +17,7 @@
         width="100%"
         height="315"
         referrerpolicy="origin"
-        src={`https://www.youtube.com/embed/${youtubeCode}?start=${youtubeStartTime}`}
+        src={`https://www.youtube.com/embed/${youtubeMatch.videoId}?start=${youtubeMatch.startTime}`}
         title="YouTube video player"
         frameborder="0"
         allow="accelerometer;

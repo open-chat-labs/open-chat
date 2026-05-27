@@ -1,5 +1,7 @@
 import type { EventWrapper, Message } from "openchat-shared";
 
+export const MAX_LINK_PREVIEWS = 1;
+
 // Originally taken from here - https://stackoverflow.com/a/6041965
 const URL_REGEX = new RegExp(
     `(https?):\\/\\/(localhost|[\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:\\/~+#-]*[\\w@?^=%&\\/~+#-])`,
@@ -7,15 +9,13 @@ const URL_REGEX = new RegExp(
 );
 
 export function extractUrls(text: string): string[] {
-    const matches = text.match(URL_REGEX);
-    if (!matches) return [];
-
-    return [
-        ...matches.reduce((set, next) => {
-            set.add(next);
-            return set;
-        }, new Set<string>()),
-    ];
+    // Replace [display](url) with just the destination url so the display text
+    // URL is not matched separately from the (potentially different) href URL.
+    const withoutMarkdownDisplayText = text.replace(/\[[^\]]*\]\((https?:\/\/[^)]*)\)/g, "$1");
+    return [...new Set(withoutMarkdownDisplayText.match(URL_REGEX) ?? [])].slice(
+        0,
+        MAX_LINK_PREVIEWS,
+    );
 }
 
 export function addQueryStringParam(name: string, val: string): string {
