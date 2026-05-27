@@ -20,4 +20,3 @@ pub extern "C" fn anchor() {
     // All that matters is that this call instruction appears in the wasm binary.
     let _: Result<Box<types::Message>, _> = msgpack::deserialize_from_slice(&[]);
 }
-
