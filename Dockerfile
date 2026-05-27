@@ -3,7 +3,7 @@ FROM ubuntu:24.04 AS builder
 SHELL ["bash", "-c"]
 
 ARG git_commit_id
-ARG rust_version=1.90.0
+ARG rust_version=1.95.0
 ARG canister_name
 
 ENV GIT_COMMIT_ID=$git_commit_id
@@ -29,4 +29,4 @@ RUN cargo install --version 0.9.11 ic-wasm
 COPY . /build
 WORKDIR /build
 
-RUN if [[ -z "$canister_name" ]] ; then sh ./scripts/generate-all-canister-wasms.sh ; else sh ./scripts/generate-wasm.sh $canister_name ; fi
+RUN if [[ -z "$canister_name" ]] ; then bash ./scripts/generate-all-canister-wasms.sh ; else bash ./scripts/generate-wasm.sh $canister_name ; fi
