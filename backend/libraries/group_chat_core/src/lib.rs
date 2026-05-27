@@ -20,10 +20,10 @@ use types::{
     EventsResponse, ExternalUrlUpdated, GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions,
     GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention,
     MAX_RETURNED_MENTIONS, MemberLeft, MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessageMatch,
-    MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OCResult, OptionUpdate,
-    OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged, Reaction, ReserveP2PSwapSuccess, RoleChanged,
-    Rules, SelectedGroupUpdates, SenderContext, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType,
-    UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall, VideoCallPresence, VoteOperation,
+    MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OCResult, OgPreview,
+    OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged, Reaction, ReserveP2PSwapSuccess,
+    RoleChanged, Rules, SelectedGroupUpdates, SenderContext, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId,
+    UserType, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall, VideoCallPresence, VoteOperation,
     WebhookDetails,
 };
 use utils::document::validate_avatar;
@@ -560,6 +560,7 @@ impl GroupChatCore {
         block_level_markdown: bool,
         event_pusher: P,
         finalised: bool,
+        og_previews: Vec<OgPreview>,
         now: TimestampMillis,
     ) -> OCResult<SendMessageSuccess> {
         // If there is an existing message with the same message id then this is invalid unless
@@ -586,6 +587,7 @@ impl GroupChatCore {
                     rules_accepted,
                     suppressed,
                     block_level_markdown,
+                    og_previews,
                     now,
                 );
             }
@@ -625,6 +627,7 @@ impl GroupChatCore {
             forwarded: forwarding,
             sender_is_bot: caller.is_bot(),
             block_level_markdown,
+            og_previews,
             now,
         };
 
@@ -667,6 +670,7 @@ impl GroupChatCore {
         rules_accepted: Option<Version>,
         suppressed: bool,
         block_level_markdown: bool,
+        og_previews: Vec<OgPreview>,
         now: TimestampMillis,
     ) -> OCResult<SendMessageSuccess> {
         let PrepareSendMessageSuccess {
@@ -681,6 +685,7 @@ impl GroupChatCore {
             message_id,
             content,
             block_level_markdown: Some(block_level_markdown),
+            og_previews,
             finalise_bot_message: finalise,
             now,
         };

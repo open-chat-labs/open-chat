@@ -16,6 +16,7 @@ fn handle_direct_message(_args: Args) -> Response {
             content: MessageContentInitial::Text(TextContent { text }),
             message_id: None,
             block_level_markdown: None,
+            og_previews: None,
         }],
     })
 }

@@ -196,6 +196,7 @@ pub mod happy_path {
                 channel_rules_accepted: None,
                 message_filter_failed: None,
                 new_achievement: false,
+                og_previews: Vec::new(),
             },
         );
 
@@ -235,6 +236,7 @@ pub mod happy_path {
                 channel_rules_accepted: None,
                 message_filter_failed: None,
                 new_achievement: false,
+                og_previews: Vec::new(),
             },
         );
 
@@ -271,6 +273,7 @@ pub mod happy_path {
                 channel_rules_accepted: None,
                 community_id,
                 pin: None,
+                og_previews: Vec::new(),
             },
         );
 

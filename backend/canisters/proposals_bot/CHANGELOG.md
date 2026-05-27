@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `og_previews` field to messages for handling OpenGraph previews ([#9002](https://github.com/open-chat-labs/open-chat/pull/9002))
+
 ## [[2.0.1957](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1957-proposals_bot)] - 2026-01-16
 
 ### Added

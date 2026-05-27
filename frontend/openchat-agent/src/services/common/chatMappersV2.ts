@@ -110,6 +110,7 @@ import type {
     VideoContent,
     WebhookDetails,
     VersionedRules,
+    OgPreview,
 } from "openchat-shared";
 import {
     CommonResponses,
@@ -241,6 +242,7 @@ import type {
     Tally as TTally,
     TextContent as TTextContent,
     ThreadPreview as TThreadPreview,
+    OgPreview as TOgPreview,
     ThreadSummary as TThreadSummary,
     TokenInfo as TTokenInfo,
     Tokens as TTokens,
@@ -554,6 +556,7 @@ export function message(value: TMessage): Message {
         thread: mapOptional(value.thread_summary, threadSummary),
         blockLevelMarkdown: value.block_level_markdown ?? false,
         senderContext: mapOptional(value.sender_context, senderContext),
+        ogPreviews: (value.og_previews ?? []).map(ogPreview),
     };
 }
 
@@ -1228,6 +1231,17 @@ function textContent(value: TTextContent): TextContent {
     return {
         kind: "text_content",
         text: value.text,
+    };
+}
+
+function ogPreview(value: TOgPreview): OgPreview {
+    return {
+        url: value.url,
+        title: value.title,
+        description: value.description,
+        image: value.image
+            ? { url: value.image.url, width: value.image.width, height: value.image.height }
+            : undefined,
     };
 }
 
@@ -2063,6 +2077,17 @@ export function apiProposalVote(vote: boolean): number {
 function apiTextContent(domain: TextContent): TTextContent {
     return {
         text: domain.text,
+    };
+}
+
+export function apiOgPreview(domain: OgPreview): TOgPreview {
+    return {
+        url: domain.url,
+        title: domain.title,
+        description: domain.description,
+        image: domain.image
+            ? { url: domain.image.url, width: domain.image.width, height: domain.image.height }
+            : undefined,
     };
 }
 

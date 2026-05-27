@@ -113,6 +113,7 @@ pub(crate) fn send_message_impl(
             queue: &mut state.data.local_user_index_event_sync_queue,
         },
         finalised,
+        args.og_previews,
         now,
     )?;
 
@@ -163,6 +164,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> OCResult<Su
                 queue: &mut state.data.local_user_index_event_sync_queue,
             },
             true,
+            args.og_previews,
             now,
         )?;
 

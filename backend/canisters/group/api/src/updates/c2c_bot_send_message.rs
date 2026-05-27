@@ -1,6 +1,6 @@
 use crate::send_message_v2;
 use serde::{Deserialize, Serialize};
-use types::{BotInitiator, BotMessageContent, EventIndex, GroupReplyContext, MessageId, MessageIndex, UserId};
+use types::{BotInitiator, BotMessageContent, EventIndex, GroupReplyContext, MessageId, MessageIndex, OgPreview, UserId};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -13,6 +13,8 @@ pub struct Args {
     pub bot_name: String,
     pub block_level_markdown: bool,
     pub finalised: bool,
+    #[serde(default)]
+    pub og_previews: Vec<OgPreview>,
 }
 
 impl From<Args> for send_message_v2::Args {
@@ -30,6 +32,7 @@ impl From<Args> for send_message_v2::Args {
             rules_accepted: None,
             message_filter_failed: None,
             new_achievement: false,
+            og_previews: value.og_previews,
         }
     }
 }

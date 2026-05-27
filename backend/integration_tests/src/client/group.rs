@@ -81,6 +81,7 @@ pub mod happy_path {
                 rules_accepted: None,
                 message_filter_failed: None,
                 new_achievement: false,
+                og_previews: Vec::new(),
             },
         );
 
@@ -116,6 +117,7 @@ pub mod happy_path {
                 rules_accepted: None,
                 message_filter_failed: None,
                 new_achievement: false,
+                og_previews: Vec::new(),
             },
         );
 
@@ -150,6 +152,7 @@ pub mod happy_path {
                 rules_accepted: None,
                 group_id: group_chat_id,
                 pin: None,
+                og_previews: Vec::new(),
             },
         );
 
