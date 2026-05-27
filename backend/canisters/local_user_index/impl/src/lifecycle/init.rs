@@ -39,5 +39,6 @@ fn init(args: Args) {
 
     init_state(env, data, args.wasm_version);
 
+    crate::no_inline_anchor::anchor();
     info!(version = %args.wasm_version, "Initialization complete");
 }
