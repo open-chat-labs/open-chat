@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_invite_users_to_channel;
 use local_user_index_canister::invite_users_to_channel::{Response::*, *};
-use types::{ChannelId, CommunityId, MessageContent, TextContent, UserId};
+use types::{ChannelId, CommunityId, MessageContentInitial, TextContent, UserId};
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
@@ -80,7 +80,7 @@ pub(crate) fn send_channel_invitation(
     let text = format!(
         "You have been invited to the channel [{channel_name}](/community/{community_id}/channel/{channel_id}) in the community [{community_name}](/community/{community_id}) by @UserId({invited_by})."
     );
-    let message = MessageContent::Text(TextContent { text });
+    let message = MessageContentInitial::Text(TextContent { text });
 
     for user_id in invited_users {
         state.push_oc_bot_message_to_user(user_id, message.clone(), now);

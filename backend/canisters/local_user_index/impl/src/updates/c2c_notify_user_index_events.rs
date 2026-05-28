@@ -200,9 +200,6 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 );
             }
         }
-        UserIndexEvent::OpenChatBotMessage(ev) => {
-            state.push_event_to_user(ev.user_id, UserEvent::OpenChatBotMessage(Box::new(ev.message)), **now);
-        }
         UserIndexEvent::OpenChatBotMessageV2(ev) => {
             state.push_event_to_user(
                 ev.user_id,

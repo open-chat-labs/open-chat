@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Button, type ButtonProps } from "component-lib";
+    import { CommonButton2, type ButtonProps } from "component-lib";
     import { onMount } from "svelte";
     import { suspectedAutomationBot } from "../stores/automation";
     import { isTouchDevice } from "../utils/devices";
@@ -42,6 +42,6 @@
     }
 </script>
 
-<Button onClick={internalOnclick} {...rest}>
+<CommonButton2 variant="primary" mode="regular" onClick={internalOnclick} {...rest}>
     {@render children?.()}
-</Button>
+</CommonButton2>

@@ -8,10 +8,10 @@ use types::nns::CryptoAmount;
 use types::{
     AutonomousConfig, BotCommandDefinition, BotDataEncoding, BotDefinition, BotDefinitionUpdate, BotInstallationLocation,
     BotSubscriptions, BuildVersion, CanisterId, ChannelLatestMessageIndex, ChannelUserNotificationPayload, ChatId, CommunityId,
-    CyclesTopUp, DiamondMembershipPlanDuration, GroupChatUserNotificationPayload, MessageContent, MessageContentInitial,
-    MessageId, MessageIndex, Notification, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis,
-    UniquePersonProof, UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment,
-    UserId, UserNotificationPayload, UserType, is_default,
+    CyclesTopUp, DiamondMembershipPlanDuration, GroupChatUserNotificationPayload, MessageContentInitial, MessageId,
+    MessageIndex, Notification, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis, UniquePersonProof,
+    UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
+    UserNotificationPayload, UserType, is_default,
 };
 
 mod lifecycle;
@@ -43,7 +43,6 @@ pub enum UserIndexEvent {
     UserJoinedGroup(UserJoinedGroup),
     UserJoinedCommunityOrChannel(UserJoinedCommunityOrChannel),
     DiamondMembershipPaymentReceived(DiamondMembershipPaymentReceived),
-    OpenChatBotMessage(Box<OpenChatBotMessage>),
     OpenChatBotMessageV2(Box<OpenChatBotMessageV2>),
     ReferralCodeAdded(ReferralCodeAdded),
     UserPrincipalUpdated(UpdateUserPrincipalArgs),
@@ -225,12 +224,6 @@ pub struct DiamondMembershipPaymentReceived {
     pub duration: DiamondMembershipPlanDuration,
     pub recurring: bool,
     pub send_bot_message: bool,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct OpenChatBotMessage {
-    pub user_id: UserId,
-    pub message: MessageContent,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

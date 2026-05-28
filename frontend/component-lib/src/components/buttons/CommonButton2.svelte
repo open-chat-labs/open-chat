@@ -164,10 +164,6 @@
             }
         }
 
-        &.regular {
-            border-radius: var(--rad-lg);
-        }
-
         &.primary.small:not(.disabled),
         &.primary.regular:not(.disabled) {
             background: var(--primary);
