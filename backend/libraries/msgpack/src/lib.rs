@@ -33,7 +33,7 @@ pub fn serialize_then_unwrap<T: Serialize>(value: T) -> Vec<u8> {
     serialize_to_vec(value).unwrap()
 }
 
-pub fn deserialize_then_unwrap<'a, T: DeserializeOwned>(bytes: &'a [u8]) -> T {
+pub fn deserialize_then_unwrap<T: DeserializeOwned>(bytes: &[u8]) -> T {
     deserialize(bytes).unwrap()
 }
 
