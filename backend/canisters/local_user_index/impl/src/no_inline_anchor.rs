@@ -1,3 +1,5 @@
+use canister_time::now_millis;
+
 /// Creates a second wasm-level call site for `Box<types::Message>::deserialize`,
 /// preventing wasm-opt's single-use function inliner from inlining it into
 /// `ChatEvent::visit_enum`.
@@ -20,10 +22,15 @@
 /// why `msgpack::deserialize` (the `R: Read` variant) was changed to go through SliceReader
 /// too — ensuring any future callers also share the same monomorphisation.
 pub fn anchor() {
-    // Passing an empty slice produces an immediate decode error, which we discard.
-    // The only purpose of this call is to emit a `call` instruction in the wasm binary.
-    // std::hint::black_box prevents the compiler from constant-folding/eliminating the call.
-    let _ = msgpack::deserialize_from_slice::<Box<types::Message>>(
-        std::hint::black_box(&[]),
-    );
+    let now = now_millis();
+
+    if now > i64::MAX as u64 {
+        // This branch never executes at runtime (IC timestamps are far below i64::MAX),
+        // but the compiler cannot prove that because now_millis() resolves to the opaque
+        // ic0.time wasm import whose return value is unknown at compile time.
+        // wasm-opt counts call sites statically, so the call instruction below is present
+        // in the binary and counts as a second call site for Box<types::Message>::deserialize,
+        // preventing single-use inlining regardless of runtime reachability.
+        let _ = msgpack::deserialize_from_slice::<Box<types::Message>>(&now.to_be_bytes());
+    }
 }
