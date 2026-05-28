@@ -1,7 +1,6 @@
 <script lang="ts">
-    import { ChatText, Column, ColourVars, Row } from "component-lib";
+    import { ChatCaption, Column, ColourVars, Row, Spinner } from "component-lib";
     import { type ResourceKey } from "openchat-client";
-    import FancyLoader from "../icons/FancyLoader.svelte";
     import Translatable from "../Translatable.svelte";
     import TextContent from "./TextContent.svelte";
 
@@ -14,22 +13,20 @@
 </script>
 
 <Column padding={"zero"} maxWidth="70vw" mainAxisAlignment={"center"}>
-    {#if !failed}
-        <Row
-            padding="md"
-            borderRadius={["lg", "md", "md", "md"]}
-            backgroundColor={ColourVars.background2}>
-            <div class="spinner">
-                <FancyLoader />
-            </div>
-        </Row>
-    {/if}
     <Row>
-        <TextContent me fill={false} edited={false} showPreviews={false} blockLevelMarkdown={false}>
+        {#if !failed}
+            <Row width="hug" height="fill" padding={["xs", "md"]} crossAxisAlignment="center">
+                <Spinner
+                    size="1.5rem"
+                    backgroundColour={ColourVars.primaryLight}
+                    foregroundColour={ColourVars.primaryMuted} />
+            </Row>
+        {/if}
+        <TextContent me>
             {#snippet content()}
-                <ChatText italic={true}>
+                <ChatCaption colour={failed ? "error" : "primaryLight"}>
                     <Translatable resourceKey={text} />
-                </ChatText>
+                </ChatCaption>
             {/snippet}
         </TextContent>
     </Row>

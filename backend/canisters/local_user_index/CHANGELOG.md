@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Allow specifying which inner composite gate to check ([#8987](https://github.com/open-chat-labs/open-chat/pull/8987))
+- Switch to pushing `OpenChatBotMessageV2` events ([#9026](https://github.com/open-chat-labs/open-chat/pull/9026))
 
 ## [[2.0.1948](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1948-local_user_index)] - 2026-01-14
 

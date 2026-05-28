@@ -17,8 +17,8 @@
     let { transferFees, tokenDecimals, symbol, networkFee }: Props = $props();
 </script>
 
-<Container crossAxisAlignment={"center"} gap={"sm"}>
-    <Info viewBox={"0 2 24 24"} size={"1rem"} color={ColourVars.warning} />
+<Container crossAxisAlignment="center" gap="sm">
+    <Info size="1rem" color={ColourVars.warning} />
     <Container direction={"vertical"}>
         <BodySmall colour={"warning"}>
             <Translatable

@@ -99,8 +99,6 @@ pub enum LocalUserIndexEvent {
     StorageUpgraded(Box<StorageUpgraded>),
     ReferredUserRegistered(Box<ReferredUserRegistered>),
     UserSuspended(Box<UserSuspended>),
-    // TODO: This should take MessageContentInitial
-    OpenChatBotMessage(Box<MessageContent>),
     OpenChatBotMessageV2(Box<OpenChatBotMessageV2>),
     UserJoinedGroup(Box<UserJoinedGroup>),
     UserJoinedCommunityOrChannel(Box<UserJoinedCommunityOrChannel>),

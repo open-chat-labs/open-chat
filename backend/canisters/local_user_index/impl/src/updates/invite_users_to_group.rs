@@ -4,7 +4,7 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::invite_users_to_group::{Response::*, *};
-use types::{ChatId, MessageContent, TextContent, UserId};
+use types::{ChatId, MessageContentInitial, TextContent, UserId};
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
@@ -55,7 +55,7 @@ pub(crate) fn send_group_invitation(
 ) {
     let now = state.env.now();
     let text = format!("You have been invited to the group [{group_name}](/group/{group_id}) by @UserId({invited_by}).");
-    let message = MessageContent::Text(TextContent { text });
+    let message = MessageContentInitial::Text(TextContent { text });
 
     for user_id in invited_users {
         state.push_oc_bot_message_to_user(user_id, message.clone(), now);

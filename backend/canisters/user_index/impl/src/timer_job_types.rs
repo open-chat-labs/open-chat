@@ -5,11 +5,11 @@ use crate::{mutate_state, read_state};
 use canister_timer_jobs::Job;
 use constants::{CHAT_LEDGER_CANISTER_ID, ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, SECOND_IN_MS};
 use ic_ledger_types::Tokens;
-use local_user_index_canister::{OpenChatBotMessage, UserIndexEvent};
+use local_user_index_canister::{OpenChatBotMessageV2, UserIndexEvent};
 use serde::{Deserialize, Serialize};
 use types::{
-    ChatId, CommunityId, DiamondMembershipFees, DiamondMembershipPlanDuration, MessageContent, Milliseconds, TextContent,
-    UserId,
+    ChatId, CommunityId, DiamondMembershipFees, DiamondMembershipPlanDuration, MessageContentInitial, Milliseconds,
+    TextContent, UserId,
 };
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -109,9 +109,10 @@ impl Job for RecurringDiamondMembershipPayment {
                     mutate_state(|state| {
                         state.push_event_to_local_user_index(
                             user_id,
-                            UserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
+                            UserIndexEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
                                 user_id,
-                                message: MessageContent::Text(TextContent {
+                                thread_root_message_id: None,
+                                content: MessageContentInitial::Text(TextContent {
                                     text: format!(
                                         "Failed to take payment for Diamond membership due to insufficient funds.
 Payment amount: {}
@@ -122,6 +123,7 @@ If you would like to extend your Diamond membership you will need to top up your
                                         Tokens::from_e8s(balance)
                                     ),
                                 }),
+                                mentioned: Vec::new(),
                             })),
                         );
                         state

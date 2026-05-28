@@ -36,7 +36,7 @@ use tracing::error;
 use types::{
     BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion, CanisterId,
     ChannelLatestMessageIndex, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
-    CommunityId, Cycles, DiamondMembershipDetails, IdempotentEnvelope, MessageContent, Milliseconds, Notification,
+    CommunityId, Cycles, DiamondMembershipDetails, IdempotentEnvelope, MessageContentInitial, Milliseconds, Notification,
     NotificationEnvelope, ReferralType, TimestampMillis, Timestamped, UserId, UserNotificationEnvelope,
     VerifiedCredentialGateArgs,
 };
@@ -239,14 +239,24 @@ impl RuntimeState {
         );
     }
 
-    pub fn push_oc_bot_message_to_user(&mut self, user_id: UserId, content: MessageContent, now: TimestampMillis) {
+    pub fn push_oc_bot_message_to_user(&mut self, user_id: UserId, content: MessageContentInitial, now: TimestampMillis) {
         if self.data.local_users.contains(&user_id) {
-            self.push_event_to_user(user_id, UserEvent::OpenChatBotMessage(Box::new(content)), now);
+            self.push_event_to_user(
+                user_id,
+                UserEvent::OpenChatBotMessageV2(Box::new(user_canister::OpenChatBotMessageV2 {
+                    thread_root_message_id: None,
+                    content,
+                    mentioned: Vec::new(),
+                })),
+                now,
+            );
         } else {
             self.push_event_to_user_index(
-                UserIndexEvent::OpenChatBotMessage(Box::new(user_index_canister::OpenChatBotMessage {
+                UserIndexEvent::OpenChatBotMessageV2(Box::new(user_index_canister::OpenChatBotMessageV2 {
                     user_id,
-                    message: content,
+                    thread_root_message_id: None,
+                    content,
+                    mentioned: Vec::new(),
                 })),
                 now,
             );

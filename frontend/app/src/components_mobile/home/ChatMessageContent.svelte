@@ -136,7 +136,11 @@
 {:else if content.kind === "bot_placeholder_content"}
     <BotPlaceholderContent />
 {:else if content.kind === "prize_content_initial"}
-    <MessageContentInitial text={i18nKey("prizes.creatingYourPrizeMessage")} {failed} />
+    <MessageContentInitial
+        text={i18nKey(
+            failed ? "prizes.creatingPrizeMessageFailed" : "prizes.creatingYourPrizeMessage",
+        )}
+        {failed} />
 {:else if content.kind === "p2p_swap_content_initial"}
     <MessageContentInitial
         text={i18nKey(failed ? "p2pSwap.failedToCreateMessage" : "p2pSwap.creatingYourMessage")}
