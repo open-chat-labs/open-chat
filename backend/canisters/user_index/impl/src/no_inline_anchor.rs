@@ -1,8 +1,8 @@
 use canister_time::now_nanos;
 use local_user_index_canister::{
-    BotRegistered, BotUpdated, DiamondMembershipPaymentReceived, ExternalAchievementAwarded,
-    OpenChatBotMessageV2, PhoneNumberConfirmed, ReferralCodeAdded, StorageUpgraded, UserDetailsFull,
-    UserIndexEvent, UserJoinedCommunityOrChannel, UserJoinedGroup, UserRegistered, UserSuspended,
+    BotRegistered, BotUpdated, DiamondMembershipPaymentReceived, ExternalAchievementAwarded, OpenChatBotMessageV2,
+    PhoneNumberConfirmed, ReferralCodeAdded, StorageUpgraded, UserDetailsFull, UserIndexEvent, UserJoinedCommunityOrChannel,
+    UserJoinedGroup, UserRegistered, UserSuspended,
 };
 
 /// Creates additional wasm-level call sites for `local_user_index_canister::UserIndexEvent::visit_enum`
