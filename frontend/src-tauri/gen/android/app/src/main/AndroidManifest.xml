@@ -86,4 +86,7 @@
 
         <receiver android:name=".NotificationDismissReceiver" />
     </application>
+    <!-- ANDROID FS PLUGIN. AUTO-GENERATED. DO NOT REMOVE. -->
+    
+    <!-- ANDROID FS PLUGIN. AUTO-GENERATED. DO NOT REMOVE. -->
 </manifest>
