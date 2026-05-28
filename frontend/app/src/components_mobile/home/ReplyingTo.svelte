@@ -48,6 +48,8 @@
             "p2p_swap_content",
             "poll_content",
             "video_call_content",
+            "prize_content",
+            "prize_content_initial",
         ].indexOf(replyingTo.content.kind) > -1,
     );
 </script>

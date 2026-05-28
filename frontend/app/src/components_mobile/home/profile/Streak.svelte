@@ -16,9 +16,10 @@
         showTooltip?: boolean;
         disabled?: boolean;
         size?: BadgeSize;
+        borderColor?: string;
     }
 
-    let { days = 0, showTooltip = true, size = "default" }: Props = $props();
+    let { days = 0, showTooltip = true, size = "default", borderColor }: Props = $props();
 
     function streakFromDays(days: number): Streak {
         return days < 3
@@ -62,7 +63,11 @@
 </script>
 
 {#snippet renderStreak()}
-    <BadgeContainer {size} supplementalClass="streak-badge" backgroundColor={ColourVars.error}>
+    <BadgeContainer
+        {size}
+        {borderColor}
+        supplementalClass="streak-badge"
+        backgroundColor={ColourVars.error}>
         {#if size === "default"}
             <Caption align="center" fontWeight="bold">{num}</Caption>
         {:else}
