@@ -2,7 +2,7 @@ use crate::guards::caller_is_local_user_index;
 use crate::{RuntimeState, execute_update, openchat_bot};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use types::{Achievement, DiamondMembershipPlanDuration, MessageContentInitial, ReferralStatus, Timestamped};
+use types::{Achievement, DiamondMembershipPlanDuration, ReferralStatus, Timestamped};
 use user_canister::c2c_local_user_index::*;
 use user_canister::mark_read::ChannelMessagesRead;
 use user_canister::{LocalUserIndexEvent, UserCanisterEvent};
@@ -52,10 +52,6 @@ fn process_event(event: LocalUserIndexEvent, state: &mut RuntimeState) {
         }
         LocalUserIndexEvent::UserSuspended(ev) => {
             openchat_bot::send_user_suspended_message(&ev, state);
-        }
-        LocalUserIndexEvent::OpenChatBotMessage(content) => {
-            let initial_content: MessageContentInitial = (*content).into();
-            openchat_bot::send_message(initial_content.into(), Vec::new(), false, state);
         }
         LocalUserIndexEvent::OpenChatBotMessageV2(message) => {
             openchat_bot::send_message(message.content.into(), message.mentioned, false, state);
