@@ -107,7 +107,7 @@ macro_rules! generate_c2c_call {
                 method_name,
                 args,
                 msgpack::serialize_to_vec,
-                |r| msgpack::deserialize_from_slice(r),
+                |r| msgpack::deserialize(r),
                 None,
             )
             .await
@@ -125,7 +125,7 @@ macro_rules! generate_c2c_call {
                 method_name,
                 args,
                 msgpack::serialize_to_vec,
-                |r| msgpack::deserialize_from_slice(r),
+                |r| msgpack::deserialize(r),
                 Some($timeout_seconds),
             )
             .await
