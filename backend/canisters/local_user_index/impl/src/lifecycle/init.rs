@@ -34,6 +34,7 @@ fn init(args: Args) {
         canister_pool_target_size,
         args.video_call_operators,
         args.oc_secret_key_der,
+        args.openai_api_key,
         args.test_mode,
     );
 

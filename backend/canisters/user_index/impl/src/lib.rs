@@ -411,6 +411,7 @@ struct Data {
     pub premium_items: PremiumItems,
     #[serde(default)]
     pub blocked_username_patterns: Vec<String>,
+    pub openai_api_key: Option<String>,
 }
 
 impl Data {
@@ -495,6 +496,7 @@ impl Data {
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
             premium_items: PremiumItems::default(),
             blocked_username_patterns: Vec::new(),
+            openai_api_key: None,
         };
 
         // Register the ProposalsBot
@@ -609,6 +611,7 @@ impl Default for Data {
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
             premium_items: PremiumItems::default(),
             blocked_username_patterns: Vec::new(),
+            openai_api_key: None,
         }
     }
 }
