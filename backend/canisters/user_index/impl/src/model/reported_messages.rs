@@ -1,9 +1,9 @@
 use chat_events::deep_message_links;
-use local_user_index_canister::{OpenChatBotMessage, UserIndexEvent};
+use local_user_index_canister::{OpenChatBotMessageV2, UserIndexEvent};
 use modclub_canister::{getProviderRules::Rule, subscribe::ContentResult};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{Chat, MessageContent, MessageId, MessageIndex, TextContent, TimestampMillis, UserId};
+use types::{Chat, MessageContentInitial, MessageId, MessageIndex, TextContent, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct ReportedMessages {
@@ -220,9 +220,11 @@ pub fn build_message_to_sender(reported_message: &ReportedMessage) -> UserIndexE
 }
 
 fn build_oc_bot_message(text: String, user_id: UserId) -> UserIndexEvent {
-    UserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
+    UserIndexEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
         user_id,
-        message: MessageContent::Text(TextContent { text }),
+        thread_root_message_id: None,
+        content: MessageContentInitial::Text(TextContent { text }),
+        mentioned: Vec::new(),
     }))
 }
 
