@@ -143,7 +143,7 @@
             : 0,
     );
     let percentage = $derived(
-        content.kind === "prize_content" ? (content.winnerCount / total) * 100 : 0,
+        content.kind === "prize_content" && total > 0 ? (content.winnerCount / total) * 100 : 0,
     );
     let claimedByYou = $derived(content.kind === "prize_content" ? content.userIsWinner : false);
     let finished = $derived($now500 >= Number(content.endDate));
