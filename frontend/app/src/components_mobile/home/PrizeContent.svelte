@@ -311,7 +311,7 @@
                             mainAxisAlignment="center"
                             onClick={() => (showRestrictionDetails = true)}>
                             <!-- If chit features are turned off minChitEarned is zero, and chit badge cannot be rendered. -->
-                            <!-- Streak badge can still be forced to show, since that prize constriction is returned. -->
+                            <!-- Streak badge can still be forced to show, since that prize restriction is returned. -->
                             <Badges
                                 size="large"
                                 forceStreakBadge
