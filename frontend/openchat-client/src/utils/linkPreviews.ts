@@ -140,16 +140,11 @@ function extractLinkUrls(text: string): string[] {
     return links;
 }
 
-export function classifyUrl(url: string): LinkPreview {
+export function classifyUrl(url: string): LinkPreview | undefined {
     const messagePreview = parseMessageUrl(url);
     if (messagePreview) {
         return messagePreview;
     }
-
-    return {
-        kind: "generic",
-        url,
-    };
 }
 
 function parseMessageUrl(urlText: string): MessagePreview | undefined {

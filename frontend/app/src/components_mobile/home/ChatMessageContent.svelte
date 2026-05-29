@@ -85,10 +85,8 @@
 {#if content.kind === "text_content"}
     <TextContent
         {me}
-        {fill}
         {edited}
         {truncate}
-        {pinned}
         {content}
         {blockLevelMarkdown}
         {isPreview}

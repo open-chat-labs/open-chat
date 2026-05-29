@@ -137,7 +137,7 @@
 
         .banner {
             width: 100%;
-            max-height: 14rem;
+            max-height: 20rem;
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;

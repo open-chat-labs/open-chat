@@ -21,9 +21,13 @@
     let ogPreviewMap = $derived(new Map(ogPreviews.map((p) => [p.url, p])));
 
     let urls = $derived<LinkPreview[]>(
-        extractUrls(text).map((url) => {
-            return ogPreviewMap.get(url) ?? classifyUrl(url);
-        }),
+        extractUrls(text).reduce((urls, url) => {
+            const u = ogPreviewMap.get(url) ?? classifyUrl(url);
+            if (u !== undefined) {
+                urls.push(u);
+            }
+            return urls;
+        }, [] as LinkPreview[]),
     );
 
     let rtl = $rtlStore;
@@ -36,9 +40,11 @@
 </script>
 
 {#each urls as p (p.url)}
-    <div class="preview" class:visible={p.kind !== "generic" && p.kind !== "message"} class:me>
-        {#if me}
+    <div class="preview" class:me>
+        {#if me && onRemove}
             <div class="remove-wrapper" class:rtl>
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div class="remove" onclick={() => removePreview(p)}>
                     <CloseIcon viewBox="0 0 24 24" size={$iconSize} color={"var(--button-txt)"} />
                 </div>
@@ -61,7 +67,7 @@
 
 <style lang="scss">
     .preview {
-        display: none;
+        position: relative;
         margin-top: $sp4;
         border-color: var(--currentChat-msg-separator);
         flex-direction: row-reverse;
@@ -71,19 +77,18 @@
             border-color: var(--currentChat-msg-me-separator);
         }
 
-        &.visible {
-            display: flex;
-        }
-
         .remove-wrapper {
             flex: 0;
-            position: relative;
-            left: 6px;
-            visibility: hidden;
+            top: 0.35rem;
+            right: 0.35rem;
+            position: absolute;
+            padding: var(--sp-xxs);
+            border-radius: var(--rad-circle);
+            background-color: var(--currentChat-msg-me-bg);
 
             &.rtl {
-                right: 6px;
-                left: unset;
+                right: unset;
+                left: 0.35rem;
             }
         }
 

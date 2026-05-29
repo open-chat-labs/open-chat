@@ -10,13 +10,11 @@
     interface Props {
         content: TextContent | Snippet;
         me: boolean;
-        fill?: boolean;
         reply?: boolean;
         blockLevelMarkdown?: boolean;
         showPreviews?: boolean;
         edited?: boolean;
         truncate?: boolean;
-        pinned?: boolean;
         maxWidth?: number;
         // Indicates if the text content is rendered in context of a preview
         isPreview?: boolean;
@@ -28,12 +26,10 @@
     let {
         content,
         me,
-        fill = false,
         reply = false,
         blockLevelMarkdown = false,
         edited = false,
         truncate = false,
-        pinned = false,
         maxWidth,
         isPreview = false,
         suppressLinks = false,
@@ -47,26 +43,20 @@
     let text = $derived(textContent?.text);
 </script>
 
-{#if ogPreviews.length > 0}
-    <!-- TODO refine the top observer margin of 1000px -->
-    <!-- on low bandwith, observer will trigger once the element is in veiw
-             otherwise it will detect intersection at set margin -->
-    <IntersectionObserver
-        unobserveOnIntersect={false}
-        rootMarginTop={$lowBandwidth ? 0 : 1000}
-        rootMarginBottom={$lowBandwidth ? 0 : 1000}
-        contextId="scrollable-messages-div">
-        {#snippet children(intersecting)}
-            <LinkPreviews
-                {me}
-                {pinned}
-                {fill}
-                {ogPreviews}
-                {intersecting}
-                onRemove={onRemovePreview} />
-        {/snippet}
-    </IntersectionObserver>
-{/if}
+<IntersectionObserver
+    unobserveOnIntersect={false}
+    rootMarginTop={$lowBandwidth ? 0 : 1000}
+    rootMarginBottom={$lowBandwidth ? 0 : 1000}
+    contextId="scrollable-messages-div">
+    {#snippet children(intersecting)}
+        <LinkPreviews
+            text={text ?? ""}
+            {me}
+            {ogPreviews}
+            {intersecting}
+            onRemove={onRemovePreview} />
+    {/snippet}
+</IntersectionObserver>
 
 <Column
     supplementalClass={`text_content ${truncate ? "truncated" : ""}`}

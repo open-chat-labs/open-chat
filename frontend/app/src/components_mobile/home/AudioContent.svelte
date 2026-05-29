@@ -15,6 +15,8 @@
 </script>
 
 <script lang="ts">
+    import { i18nKey } from "@src/i18n/i18n";
+    import { rtlStore } from "@stores/rtl";
     import {
         Body,
         BodySmall,
@@ -28,15 +30,13 @@
     } from "component-lib";
     import type { AudioContent, TextContent as TextContentType } from "openchat-client";
     import { onMount, type Snippet } from "svelte";
-    import WaveSurfer from "wavesurfer.js";
-    import { rtlStore } from "@stores/rtl";
-    import TextContent from "./TextContent.svelte";
     import Close from "svelte-material-icons/Close.svelte";
+    import MicrophoneOutline from "svelte-material-icons/MicrophoneOutline.svelte";
     import Pause from "svelte-material-icons/PauseCircleOutline.svelte";
     import Play from "svelte-material-icons/PlayCircleOutline.svelte";
-    import MicrophoneOutline from "svelte-material-icons/MicrophoneOutline.svelte";
+    import WaveSurfer from "wavesurfer.js";
     import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "@src/i18n/i18n";
+    import TextContent from "./TextContent.svelte";
 
     interface Props {
         content: AudioContent;
@@ -198,7 +198,6 @@
             content={textContent}
             {me}
             {reply}
-            fill={false}
             {blockLevelMarkdown}
             {edited}
             showPreviews={false}

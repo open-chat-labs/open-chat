@@ -6,12 +6,12 @@
         currentUserIdStore,
         eventListScrolling,
         isSuccessfulEventsResponse,
-        type OgPreview,
         OpenChat,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
         type MessageContent,
         type MultiUserChatIdentifier,
+        type OgPreview,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -35,7 +35,7 @@
         threadRootMessageIndex: number | undefined;
         messageIndex: number;
         intersecting: boolean;
-        onRendered: (url: string) => void;
+        onRendered?: (url: string) => void;
     }
 
     let { url, me, chatId, threadRootMessageIndex, messageIndex, intersecting, onRendered }: Props =
@@ -80,7 +80,7 @@
         previewPromise.then((preview) => {
             if (preview && intersecting && !$eventListScrolling) {
                 rendered = true;
-                onRendered(url);
+                onRendered?.(url);
             }
         });
     });
