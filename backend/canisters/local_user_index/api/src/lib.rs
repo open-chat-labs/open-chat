@@ -57,6 +57,7 @@ pub enum UserIndexEvent {
     UpdateChitBalance(UserId, ChitBalance),
     SetPremiumItemCost(SetPremiumItemCost),
     UpdateBlockedUsernamePatterns(UpdateBlockedUsernamePatterns),
+    SetOpenAIApiKey(SetOpenAIApiKey),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -419,4 +420,9 @@ pub struct SetPremiumItemCost {
 pub struct UpdateBlockedUsernamePatterns {
     pub pattern: String,
     pub add: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SetOpenAIApiKey {
+    pub api_key: Option<String>,
 }
