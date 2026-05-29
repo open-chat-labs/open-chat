@@ -30,7 +30,6 @@ import {
 import { ExpirationPlugin } from "workbox-expiration";
 import { staticResourceCache } from "workbox-recipes";
 import { registerRoute } from "workbox-routing";
-import { NetworkFirst } from "workbox-strategies";
 import { CustomCachePlugin } from "./cache_plugin";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -68,33 +67,47 @@ staticResourceCache({
 });
 
 const matchCallback = ({ request }: { request: Request }) => request.mode === "navigate";
-const networkTimeoutSeconds = 3;
-// Validates an HTML document response is complete by checking for a closing </html> tag.
-// A partial download (truncated body) won't have one even if it has a valid status code.
+const DOCUMENT_CACHE_NAME = "openchat_network_first";
+const DOCUMENT_CACHE_KEY = "openchat_document";
+const NETWORK_TIMEOUT_MS = 8000;
+
+// A valid document response must be a 200 with a non-empty body.
+// Note: iOS occasionally returns a synthetic empty 200 for navigation requests
+// (e.g. when the app is backgrounded/foregrounded or on a network blip).
 async function isValidDocumentResponse(response: Response | undefined): Promise<boolean> {
     if (!response || response.status !== 200) return false;
 
+    // Read only the first chunk rather than buffering the entire document.
+    // content-length cannot be trusted – iOS synthetic empty 200 responses
+    // can carry a non-zero header with a zero-byte body.
+    const body = response.clone().body;
+    if (!body) return false;
+    const reader = body.getReader();
     try {
-        const text = await response.clone().text();
-        return text.trimEnd().slice(-7).toLowerCase() === "</html>";
+        const { value } = await reader.read();
+        return value !== undefined && value.byteLength > 0;
     } catch {
         return false;
+    } finally {
+        await reader.cancel();
     }
 }
 
-async function logInvalidDocumentResponse(label: string, response: Response | undefined): Promise<void> {
+async function logInvalidDocumentResponse(
+    label: string,
+    response: Response | undefined,
+): Promise<void> {
     if (!response) {
         console.warn(`SW: ${label} - response was undefined`);
         return;
     }
 
-    let bodyText = "";
     let bodyLength = 0;
     try {
-        bodyText = await response.clone().text();
-        bodyLength = bodyText.length;
+        const buf = await response.clone().arrayBuffer();
+        bodyLength = buf.byteLength;
     } catch {
-        bodyText = "<failed to read body>";
+        bodyLength = -1;
     }
 
     const headers: Record<string, string> = {};
@@ -109,52 +122,102 @@ async function logInvalidDocumentResponse(label: string, response: Response | un
         type: response.type,
         redirected: response.redirected,
         bodyLength,
-        bodyTail: bodyText.slice(-50),
         headers,
     });
 }
 
-registerRoute(
-    matchCallback,
-    new NetworkFirst({
-        networkTimeoutSeconds,
-        cacheName: "openchat_network_first",
-        matchOptions: {
-            ignoreVary: true,
-            ignoreMethod: true,
-            ignoreSearch: true,
-        },
-        plugins: [
-            // Only cache real, non-empty 200 responses.
-            {
-                cacheWillUpdate: async ({ response }) => {
-                    if (await isValidDocumentResponse(response)) {
-                        return response;
-                    }
-                    await logInvalidDocumentResponse("refusing to cache invalid/empty document response", response);
-                    return null;
-                },
-            },
-            // If the cached document is empty/corrupt, delete it and return null so
-            // NetworkFirst fetches from the network and caches a fresh copy.
-            {
-                cachedResponseWillBeUsed: async ({ cachedResponse, cacheName }) => {
-                    if (!cachedResponse) return null;
-                    if (await isValidDocumentResponse(cachedResponse)) {
-                        return cachedResponse;
-                    }
-                    await logInvalidDocumentResponse("cached document is invalid/empty, deleting and falling back to network", cachedResponse);
-                    const cache = await caches.open(cacheName);
-                    await cache.delete("openchat_document");
-                    return null;
-                },
-            },
-            {
-                cacheKeyWillBeUsed: async () => "openchat_document",
-            },
-        ],
-    }),
-);
+// Fetch the document from the network with a timeout, returning undefined on
+// timeout or network error.
+async function fetchWithTimeout(
+    request: Request,
+    timeoutMs: number,
+): Promise<Response | undefined> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        return await fetch(request, { signal: controller.signal });
+    } catch {
+        return undefined;
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+// A self-reloading fallback page shown when neither the network nor the cache
+// can provide a valid document. It immediately reloads so the user is not
+// stuck on a blank white screen.
+function makeReloadFallbackResponse(): Response {
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script>location.reload();</script>
+</head>
+<body></body>
+</html>`;
+    return new Response(html, {
+        status: 200,
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+    });
+}
+
+registerRoute(matchCallback, async ({ request }) => {
+    const cache = await caches.open(DOCUMENT_CACHE_NAME);
+
+    // Returns a valid cached response, or null (and purges any corrupt entry).
+    async function getCachedDocument(): Promise<Response | null> {
+        const cached = await cache.match(DOCUMENT_CACHE_KEY);
+        if (!cached) return null;
+        if (await isValidDocumentResponse(cached)) return cached;
+        await logInvalidDocumentResponse("SW: cached document is invalid/empty – deleting", cached);
+        await cache.delete(DOCUMENT_CACHE_KEY);
+        return null;
+    }
+
+    // Try the network. If iOS returns a synthetic empty 200, retry once.
+    // If the network times out or fails outright there is no point retrying – fall through to the cache.
+    const networkResponse = await fetchWithTimeout(request, NETWORK_TIMEOUT_MS);
+
+    if (!networkResponse) {
+        console.warn("SW: network fetch timed out or failed – falling back to cache");
+    } else if (await isValidDocumentResponse(networkResponse)) {
+        await cache.put(DOCUMENT_CACHE_KEY, networkResponse.clone());
+        return networkResponse;
+    } else {
+        await logInvalidDocumentResponse(
+            "SW: invalid/empty network response – retrying",
+            networkResponse,
+        );
+
+        const retryResponse = await fetchWithTimeout(request, NETWORK_TIMEOUT_MS);
+
+        if (!retryResponse) {
+            console.warn("SW: retry timed out or failed – falling back to cache");
+        } else if (await isValidDocumentResponse(retryResponse)) {
+            await cache.put(DOCUMENT_CACHE_KEY, retryResponse.clone());
+            return retryResponse;
+        } else {
+            await logInvalidDocumentResponse(
+                "SW: invalid/empty network response on retry – falling back to cache",
+                retryResponse,
+            );
+        }
+    }
+
+    // Network failed or kept returning an invalid response – serve the cached document.
+    const cached = await getCachedDocument();
+    if (cached) {
+        console.warn("SW: serving cached document after invalid/failed network response");
+        return cached;
+    }
+
+    // Nothing valid anywhere – return a self-reloading placeholder so the user
+    // is not left on a blank white screen.
+    console.error(
+        "SW: no valid document available from network or cache – serving reload fallback",
+    );
+    return makeReloadFallbackResponse();
+});
 
 // Always install updated SW immediately
 self.addEventListener("install", (ev) => {
