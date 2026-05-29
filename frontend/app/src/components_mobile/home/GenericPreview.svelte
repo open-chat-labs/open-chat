@@ -40,7 +40,7 @@
 </script>
 
 {#if ogPreview}
-    <a href={safeUrl} target="_blank">
+    <a href={safeUrl} target="_blank" rel="noopener noreferrer">
         <div class="generic-preview" class:me>
             {#if img}
                 <img
