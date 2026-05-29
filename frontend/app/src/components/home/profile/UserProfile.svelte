@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Markdown from "@shared_components/Markdown.svelte";
     import { menuCloser } from "component-lib";
     import {
         type BotClientConfigData,
@@ -49,7 +50,6 @@
         linkDeviceSectionOpen,
         lowBandwidth,
         referralOpen,
-        renderPreviews,
         restrictedSectionOpen,
         statsSectionOpen,
         storageSectionOpen,
@@ -75,7 +75,6 @@
     import Toggle from "../../Toggle.svelte";
     import Translatable from "../../Translatable.svelte";
     import UsernameInput from "../../UsernameInput.svelte";
-    import Markdown from "@shared_components/Markdown.svelte";
     import Stats from "../Stats.svelte";
     import Expiry from "../upgrade/Expiry.svelte";
     import AccountLinkingCode from "./AccountLinkingCode.svelte";
@@ -526,13 +525,6 @@
                         onChange={() => lowBandwidth.toggle()}
                         label={i18nKey("lowBandwidth")}
                         checked={$lowBandwidth} />
-                    <Toggle
-                        id={"render-previews"}
-                        disabled={$lowBandwidth}
-                        small
-                        onChange={() => renderPreviews.toggle()}
-                        label={i18nKey("renderPreviews")}
-                        checked={$renderPreviews && !$lowBandwidth} />
                     <Toggle
                         id={"hide-blocked"}
                         small

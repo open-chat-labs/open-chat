@@ -2,7 +2,6 @@
     import { i18nKey } from "@src/i18n/i18n";
     import {
         lowBandwidth,
-        renderPreviews,
         videoCameraOn,
         videoMicOn,
         videoSpeakerView,
@@ -67,13 +66,6 @@
                 info={"If you're having connection issues or just want to save bandwidth, enabling this option will try to optimise the app's data traffic."}>
                 <Switch width={"fill"} reverse bind:checked={$lowBandwidth}>
                     <Translatable resourceKey={i18nKey("lowBandwidth")}></Translatable>
-                </Switch>
-            </Setting>
-            <Setting
-                toggle={() => renderPreviews.toggle()}
-                info={"When you share links in your message, with this option turned on, a preview will ne automatically rendered. Turn it off if you don't want to see previews."}>
-                <Switch width={"fill"} reverse bind:checked={$renderPreviews}>
-                    <Translatable resourceKey={i18nKey("renderPreviews")}></Translatable>
                 </Switch>
             </Setting>
             <Setting
