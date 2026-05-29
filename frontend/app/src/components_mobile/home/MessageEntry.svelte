@@ -889,6 +889,7 @@
         user-select: text;
         overflow-wrap: anywhere;
         flex: auto;
+        min-width: 0;
         font-size: var(--typo-chatText-sz);
         line-height: var(--typo-chatText-lh);
         color: var(--text-primary);

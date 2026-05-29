@@ -371,11 +371,12 @@
         min-width: 0;
         color: var(--txt, var(--text-primary));
         font-size: 1rem;
-        line-height: var(--typo-chatText-lh, 19px);
+        line-height: 1.3;
         max-height: 10rem;
         max-height: calc(var(--vh, 1vh) * 50);
-        overflow-x: auto;
+        overflow-x: hidden;
         overflow-y: auto;
+        overflow-wrap: anywhere !important;
     }
 
     :global(.ProseMirror p) {
