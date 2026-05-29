@@ -4,6 +4,7 @@ import {
     type LocalReaction,
     type MessageContent,
     type MessageReminderCreatedContent,
+    type OgPreview,
     type P2PSwapStatus,
     type Tally,
     type ThreadSummary,
@@ -21,7 +22,6 @@ export type LocalTipsReceived = Map<string, Map<string, bigint>>;
 export class MessageLocalUpdates {
     deleted?: MessageDeleted;
     editedContent?: MessageContent;
-    linkRemoved: boolean = false;
     cancelledReminder?: MessageReminderCreatedContent;
     undeletedContent?: MessageContent;
     revealedContent?: MessageContent;
@@ -35,6 +35,7 @@ export class MessageLocalUpdates {
     blockLevelMarkdown?: boolean;
     proposalTally?: Tally;
     lastUpdated: number = 0;
+    ogPreviews?: OgPreview[];
 }
 
 export const messageLocalUpdates = writable<MessageMap<MessageLocalUpdates>>(

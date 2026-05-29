@@ -28,6 +28,7 @@ import {
     type MessageContext,
     type MessageReminderCreatedContent,
     type MultiUserChat,
+    type OgPreview,
     type OptionalChatPermissions,
     type OptionUpdate,
     type P2PSwapStatus,
@@ -865,11 +866,9 @@ export class GlobalLocalState {
             (upd) => {
                 upd.editedContent = msg.content;
                 upd.blockLevelMarkdown = blockLevelMarkdown;
-                upd.linkRemoved = false;
                 return (upd) => {
                     upd.editedContent = undefined;
                     upd.blockLevelMarkdown = undefined;
-                    upd.linkRemoved = false;
                     return upd;
                 };
             },
@@ -922,15 +921,13 @@ export class GlobalLocalState {
         );
     }
 
-    markLinkRemoved(messageId: bigint, content: MessageContent) {
+    markLinkRemoved(messageId: bigint, ogPreviews?: OgPreview[]) {
         return this.#modifyMessageUpdates(
             messageId,
             (upd) => {
-                upd.editedContent = content;
-                upd.linkRemoved = true;
+                upd.ogPreviews = ogPreviews;
                 return (upd) => {
-                    upd.editedContent = undefined;
-                    upd.linkRemoved = false;
+                    upd.ogPreviews = undefined;
                     return upd;
                 };
             },

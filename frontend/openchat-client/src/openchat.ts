@@ -558,10 +558,9 @@ import formatFileSize from "./utils/fileSize";
 import { gaTrack } from "./utils/ga";
 import { calculateMediaDimensions } from "./utils/layout";
 import {
-    disableLinksInText,
-    extractDisabledLinks,
     extractEnabledLinks,
     fetchOgPreviews,
+    removeOpenGraphPreviews,
     stripLinkDisabledMarker,
 } from "./utils/linkPreviews";
 import { groupBy, groupWhile, keepMax, partition, toRecord, toRecord2 } from "./utils/list";
@@ -1969,7 +1968,6 @@ export class OpenChat {
     contentTypeToPermission = contentTypeToPermission;
     stripLinkDisabledMarker = stripLinkDisabledMarker;
     extractEnabledLinks = extractEnabledLinks;
-    disableLinksInText = disableLinksInText;
 
     communityAvatarUrl(id: string, avatar: DataContent): string {
         return avatar?.blobUrl ?? buildIdenticonUrl(id);
@@ -4488,7 +4486,7 @@ export class OpenChat {
     setSoftDisabled = setSoftDisabled;
     gaTrack = gaTrack;
 
-    editMessageWithAttachment(
+    async editMessageWithAttachment(
         messageContext: MessageContext,
         textContent: string | undefined,
         blockLevelMarkdown: boolean,
@@ -4502,11 +4500,6 @@ export class OpenChat {
         }
 
         if (textContent || attachment) {
-            if (textContent && editingEvent.event.content.kind === "text_content") {
-                const disabledLinks = extractDisabledLinks(editingEvent.event.content.text);
-                textContent = disableLinksInText(textContent, disabledLinks);
-            }
-
             const captioned =
                 attachment ??
                 (isCaptionedContent(editingEvent.event.content)
@@ -4517,6 +4510,7 @@ export class OpenChat {
                 ...editingEvent.event,
                 edited: true,
                 content: this.#getMessageContent(textContent ?? undefined, captioned),
+                ogPreviews: await fetchOgPreviews(extractEnabledLinks(textContent)),
             };
             const updatedBlockLevelMarkdown =
                 msg.blockLevelMarkdown === blockLevelMarkdown ? undefined : blockLevelMarkdown;
@@ -4562,13 +4556,10 @@ export class OpenChat {
             return Promise.resolve(false);
         }
 
-        const text = disableLinksInText(event.event.content.text, [link]);
-
         const msg = {
-            ...event.event,
-            content: this.#getMessageContent(text, undefined),
+            ...removeOpenGraphPreviews(event.event, [link]),
         };
-        const undo = localUpdates.markLinkRemoved(msg.messageId, msg.content);
+        const undo = localUpdates.markLinkRemoved(msg.messageId, msg.ogPreviews);
 
         return this.#worker
             .send({

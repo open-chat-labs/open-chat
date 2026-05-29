@@ -851,7 +851,6 @@ export type LocalMessageUpdates = {
         timestamp: bigint;
     };
     editedContent?: MessageContent;
-    linkRemoved: boolean;
     cancelledReminder?: MessageContent;
     undeletedContent?: MessageContent;
     revealedContent?: MessageContent;
@@ -864,6 +863,7 @@ export type LocalMessageUpdates = {
     hiddenMessageRevealed?: boolean;
     blockLevelMarkdown?: boolean;
     lastUpdated: number;
+    ogPreviews?: OgPreview[];
 };
 
 export type EventsResponse<T extends ChatEvent> =

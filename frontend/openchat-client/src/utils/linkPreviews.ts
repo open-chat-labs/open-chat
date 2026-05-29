@@ -1,4 +1,9 @@
-import { type LinkPreview, type MessagePreview, type OgPreview } from "openchat-shared";
+import {
+    type LinkPreview,
+    type Message,
+    type MessagePreview,
+    type OgPreview,
+} from "openchat-shared";
 import { communityMessageRegex, groupMessageRegex } from "./media";
 import { extractUrls } from "./url";
 
@@ -26,27 +31,15 @@ export function stripLinkDisabledMarker(text: string): string {
 }
 
 export function extractEnabledLinks(text?: string): string[] {
-    return text
-        ? extractLinkUrls(text)
-              .filter(({ url: _, preview }) => preview)
-              .map(({ url, preview: _ }) => url)
-        : [];
+    return text ? extractLinkUrls(text) : [];
 }
 
-export function extractDisabledLinks(text: string): string[] {
-    return extractLinkUrls(text)
-        .filter(({ url: _, preview }) => !preview)
-        .map(({ url, preview: _ }) => url);
-}
-
-export function disableLinksInText(text: string, urls: string[]): string {
-    for (const url of urls) {
-        if (!url.endsWith(LINK_REMOVED)) {
-            text = text.replace(url, url + LINK_REMOVED);
-        }
-    }
-
-    return text;
+export function removeOpenGraphPreviews(msg: Message, urls: string[]): Message {
+    if (msg.ogPreviews === undefined) return msg;
+    return {
+        ...msg,
+        ogPreviews: msg.ogPreviews.filter((p) => !urls.find((u) => p.url === u)),
+    };
 }
 
 function getImageDimensions(url: string): Promise<{ width: number; height: number } | undefined> {
@@ -135,13 +128,13 @@ export async function fetchOgPreviews(urls: string[]): Promise<OgPreview[]> {
     return results.filter((r): r is OgPreview => r !== null);
 }
 
-function extractLinkUrls(text: string): { url: string; preview: boolean }[] {
+function extractLinkUrls(text: string): string[] {
     const links = [];
     for (const url of extractUrls(text)) {
         if (url.endsWith(LINK_REMOVED)) {
-            links.push({ url: url.substring(0, url.length - LINK_REMOVED.length), preview: false });
+            links.push(url.substring(0, url.length - LINK_REMOVED.length));
         } else {
-            links.push({ url: url, preview: true });
+            links.push(url);
         }
     }
     return links;
