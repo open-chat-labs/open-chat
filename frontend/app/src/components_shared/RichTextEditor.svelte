@@ -370,7 +370,7 @@
         width: 100%;
         min-width: 0;
         color: var(--txt, var(--text-primary));
-        font-size: var(--typo-chatText-sz, 16px);
+        font-size: 1rem;
         line-height: var(--typo-chatText-lh, 19px);
         max-height: 10rem;
         max-height: calc(var(--vh, 1vh) * 50);
