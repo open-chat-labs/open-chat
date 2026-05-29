@@ -6,11 +6,11 @@ use ic_cdk_timers::TimerId;
 use ic_ledger_types::{BlockIndex, Tokens};
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use ledger_utils::icrc1::make_transfer;
-use local_user_index_canister::OpenChatBotMessage;
+use local_user_index_canister::OpenChatBotMessageV2;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
-use types::{MessageContent, TextContent};
+use types::{MessageContentInitial, TextContent};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -77,7 +77,7 @@ fn inform_referrer(pending_payment: &PendingPayment, block_index: BlockIndex, st
         amount_text = format!("[{amount_text}]({link})");
     }
 
-    let message = MessageContent::Text(TextContent {
+    let content = MessageContentInitial::Text(TextContent {
         text: format!(
             "You have received a referral reward of {amount_text}. This is because one of the users you referred has made a Diamond membership payment."
         ),
@@ -85,6 +85,11 @@ fn inform_referrer(pending_payment: &PendingPayment, block_index: BlockIndex, st
 
     state.push_event_to_local_user_index(
         user_id,
-        LocalUserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage { user_id, message })),
+        LocalUserIndexEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
+            user_id,
+            thread_root_message_id: None,
+            content,
+            mentioned: Vec::new(),
+        })),
     );
 }

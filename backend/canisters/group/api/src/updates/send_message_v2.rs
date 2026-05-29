@@ -1,7 +1,9 @@
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{EventIndex, GroupReplyContext, MessageContentInitial, MessageId, MessageIndex, TimestampMillis, User, Version};
+use types::{
+    EventIndex, GroupReplyContext, MessageContentInitial, MessageId, MessageIndex, OgPreview, TimestampMillis, User, Version,
+};
 
 #[ts_export(group, send_message)]
 #[derive(Serialize, Deserialize, Debug)]
@@ -18,6 +20,8 @@ pub struct Args {
     pub rules_accepted: Option<Version>,
     pub message_filter_failed: Option<u64>,
     pub new_achievement: bool,
+    #[serde(default)]
+    pub og_previews: Vec<OgPreview>,
 }
 
 #[ts_export(group, send_message)]

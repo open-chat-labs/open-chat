@@ -6,10 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1986](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1986-user_index)] - 2026-05-29
+
+### Added
+
+- Add `og_previews` field to messages for handling OpenGraph previews ([#9002](https://github.com/open-chat-labs/open-chat/pull/9002))
+- Add `set_openai_api_key` endpoint ([#9021](https://github.com/open-chat-labs/open-chat/pull/9021))
+
 ### Changed
 
 - Skip serializing fields with default values when fetching user data ([#8847](https://github.com/open-chat-labs/open-chat/pull/8847))
 - Store `hide_online_status` against each user ([#8848](https://github.com/open-chat-labs/open-chat/pull/8848))
+- Switch to pushing `OpenChatBotMessageV2` events ([#9025](https://github.com/open-chat-labs/open-chat/pull/9025))
+- Hack to reduce function complexity back under limit ([#9027](https://github.com/open-chat-labs/open-chat/pull/9027))
 
 ## [[2.0.1947](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1947-user_index)] - 2026-01-14
 

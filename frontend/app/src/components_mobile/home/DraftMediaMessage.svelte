@@ -8,7 +8,7 @@
     import GiphyAttached from "./GiphyAttached.svelte";
     import ImageContent from "./ImageContent.svelte";
     import P2PSwapContent from "./P2PSwapContent.svelte";
-    import PrizeContentInitial from "./PrizeContentInitial.svelte";
+    import PrizeContent from "./PrizeContent.svelte";
     import VideoContent from "./VideoContent.svelte";
 
     interface Props {
@@ -50,7 +50,7 @@
     {:else if content.kind === "p2p_swap_content_initial"}
         <P2PSwapContent draft me onRemove={onRemoveAttachment} {content} />
     {:else if content.kind === "prize_content_initial"}
-        <PrizeContentInitial onRemove={onRemoveAttachment} {content} />
+        <PrizeContent me draft onRemove={onRemoveAttachment} {content} />
     {:else if content.kind === "file_content"}
         <FileContent onRemove={onRemoveAttachment} edited={false} me {content} draft />
     {/if}

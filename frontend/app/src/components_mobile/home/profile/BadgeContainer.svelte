@@ -10,6 +10,7 @@
         supplementalClass?: string;
         backgroundColor?: string;
         backgroundImage?: string;
+        borderColor?: string;
     }
 
     let {
@@ -18,6 +19,7 @@
         supplementalClass,
         backgroundColor = ColourVars.primary,
         backgroundImage,
+        borderColor = ColourVars.background0,
     }: Props = $props();
 
     let remSize = size === "large" ? "2rem" : "1.375rem";
@@ -36,7 +38,7 @@
         parentDirection={"vertical"}
         borderStyle={"solid"}
         borderWidth={"thick"}
-        borderColour={ColourVars.background0}
+        borderColour={borderColor}
         overflow={"visible"}>
         {@render children()}
     </Container>

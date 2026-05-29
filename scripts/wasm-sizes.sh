@@ -87,4 +87,3 @@ for gz_file in "${gz_files[@]}"; do
         "$(human_readable $unzipped_bytes)" \
         "$(human_readable $code_bytes)"
 done
-

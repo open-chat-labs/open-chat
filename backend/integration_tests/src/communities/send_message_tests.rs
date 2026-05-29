@@ -104,6 +104,7 @@ fn send_crypto_in_channel(with_c2c_error: bool) {
             channel_rules_accepted: None,
             message_filter_failed: None,
             pin: None,
+            og_previews: Vec::new(),
         },
     );
 
@@ -205,6 +206,7 @@ fn send_prize_in_channel() {
             channel_rules_accepted: None,
             message_filter_failed: None,
             pin: None,
+            og_previews: Vec::new(),
         },
     );
 
@@ -714,6 +716,7 @@ fn send_dummy_message_with_rules(
             channel_rules_accepted,
             message_filter_failed: None,
             new_achievement: false,
+            og_previews: Vec::new(),
         },
     )
 }

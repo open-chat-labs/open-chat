@@ -123,6 +123,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
                 oc_secret_key_der: state.data.oc_key_pair.secret_key_der().to_vec(),
                 rng_seed: state.env.rng().r#gen(),
                 ic_root_key: ic_cdk::api::root_key(),
+                openai_api_key: state.data.openai_api_key.clone(),
                 test_mode: state.data.test_mode,
             },
         })

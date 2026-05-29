@@ -1,6 +1,6 @@
 use chat_events::MessageContentInternal;
 use serde::{Deserialize, Serialize};
-use types::{GroupReplyContext, MessageId, MessageIndex, User, Version};
+use types::{GroupReplyContext, MessageId, MessageIndex, OgPreview, User, Version};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
@@ -15,6 +15,8 @@ pub struct Args {
     pub block_level_markdown: bool,
     pub rules_accepted: Option<Version>,
     pub message_filter_failed: Option<u64>,
+    #[serde(default)]
+    pub og_previews: Vec<OgPreview>,
 }
 
 pub type Response = crate::send_message_v2::Response;

@@ -4,7 +4,7 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::invite_users_to_community::{Response::*, *};
-use types::{CommunityId, MessageContent, TextContent, UserId};
+use types::{CommunityId, MessageContentInitial, TextContent, UserId};
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
@@ -57,7 +57,7 @@ fn commit(
     let text = format!(
         "You have been invited to the community [{community_name}](/community/{community_id}) by @UserId({invited_by})."
     );
-    let message = MessageContent::Text(TextContent { text });
+    let message = MessageContentInitial::Text(TextContent { text });
 
     for user_id in invited_users {
         state.push_oc_bot_message_to_user(user_id, message.clone(), now);

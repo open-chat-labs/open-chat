@@ -9,7 +9,7 @@ use oc_error_codes::{OCError, OCErrorCode};
 use rand::Rng;
 use types::{
     BotActionScope, BotInitiator, BotMessageContent, ChannelId, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex,
-    UserId,
+    OgPreview, UserId,
 };
 
 #[update(candid = true, json = true, msgpack = true)]
@@ -28,6 +28,7 @@ async fn bot_send_message(args: Args) -> Response {
         args.content,
         args.block_level_markdown,
         args.finalised,
+        args.og_previews.unwrap_or_default(),
     )
     .await
 }
@@ -52,6 +53,7 @@ async fn bot_send_message_impl(
     content: BotMessageContent,
     block_level_markdown: bool,
     finalised: bool,
+    og_previews: Vec<OgPreview>,
 ) -> Response {
     let context = match mutate_state(|state| extract_message_access_context(context, channel_id, thread, message_id, state)) {
         Ok(context) => context,
@@ -72,6 +74,7 @@ async fn bot_send_message_impl(
                 content,
                 block_level_markdown,
                 finalised,
+                og_previews,
             )
             .await
         }
@@ -87,6 +90,7 @@ async fn bot_send_message_impl(
                 content,
                 block_level_markdown,
                 finalised,
+                og_previews,
             )
             .await
         }
@@ -103,6 +107,7 @@ async fn bot_send_message_impl(
                 content,
                 block_level_markdown,
                 finalised,
+                og_previews,
             )
             .await
         }
@@ -163,6 +168,7 @@ async fn send_message_to_channel(
     content: BotMessageContent,
     block_level_markdown: bool,
     finalised: bool,
+    og_previews: Vec<OgPreview>,
 ) -> Response {
     use Response::*;
 
@@ -179,6 +185,7 @@ async fn send_message_to_channel(
             bot_name,
             block_level_markdown,
             finalised,
+            og_previews,
         },
     )
     .await
@@ -209,6 +216,7 @@ async fn send_message_to_group(
     content: BotMessageContent,
     block_level_markdown: bool,
     finalised: bool,
+    og_previews: Vec<OgPreview>,
 ) -> Response {
     use Response::*;
 
@@ -224,6 +232,7 @@ async fn send_message_to_group(
             bot_name,
             block_level_markdown,
             finalised,
+            og_previews,
         },
     )
     .await
@@ -255,6 +264,7 @@ async fn send_message_to_user(
     content: BotMessageContent,
     block_level_markdown: bool,
     finalised: bool,
+    og_previews: Vec<OgPreview>,
 ) -> Response {
     use Response::*;
 
@@ -271,6 +281,7 @@ async fn send_message_to_user(
             bot_name,
             block_level_markdown,
             finalised,
+            og_previews,
         },
     )
     .await

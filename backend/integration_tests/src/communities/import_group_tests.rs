@@ -222,6 +222,7 @@ fn pending_prizes_transferred_to_community() {
             rules_accepted: None,
             message_filter_failed: None,
             pin: None,
+            og_previews: Vec::new(),
         },
     );
 
@@ -305,6 +306,7 @@ fn private_replies_to_group_updated_to_community() {
             block_level_markdown: false,
             message_filter_failed: None,
             pin: None,
+            og_previews: Vec::new(),
         },
     );
 

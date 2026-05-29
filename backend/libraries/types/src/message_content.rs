@@ -776,3 +776,20 @@ impl Debug for ThumbnailData {
         f.debug_struct("ThumbnailData").field("byte_length", &self.0.len()).finish()
     }
 }
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct OgPreviewImage {
+    pub url: String,
+    pub width: u32,
+    pub height: u32,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct OgPreview {
+    pub url: String,
+    pub title: String,
+    pub description: String,
+    pub image: Option<OgPreviewImage>,
+}

@@ -27,6 +27,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         message_id: args.message_id,
         content: args.content.into(),
         block_level_markdown: args.block_level_markdown,
+        og_previews: args.og_previews,
         finalise_bot_message: false,
         now,
     };

@@ -64,6 +64,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             queue: &mut state.data.local_user_index_event_sync_queue,
         },
         true,
+        Vec::new(),
         now,
     )?;
 
