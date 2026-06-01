@@ -15,3 +15,9 @@ const val SHARE_TARGET_CATEGORY = "com.oc.app.category.SHARE_TARGET"
 // distinguish them from other dynamic shortcuts (e.g. notification
 // conversation shortcuts) when refreshing the set.
 const val SHARE_SHORTCUT_ID_PREFIX = "share_"
+
+// Intent extra that carries the OpenChat chat id when a share is delivered
+// via a Direct Share shortcut. We use a custom key (rather than
+// Intent.EXTRA_SHORTCUT_ID) because Android sets that to the shortcut's
+// own id (e.g. "share_<chatId>"), and we want the bare chat id.
+const val EXTRA_CHAT_ID = "com.oc.app.extra.CHAT_ID"

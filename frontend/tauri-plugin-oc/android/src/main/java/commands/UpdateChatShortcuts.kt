@@ -10,6 +10,7 @@ import app.tauri.annotation.InvokeArg
 import app.tauri.plugin.Invoke
 import app.tauri.plugin.JSObject
 import com.ocplugin.app.AvatarHelper
+import com.ocplugin.app.EXTRA_CHAT_ID
 import com.ocplugin.app.LOG_TAG
 import com.ocplugin.app.SHARE_SHORTCUT_ID_PREFIX
 import com.ocplugin.app.SHARE_TARGET_CATEGORY
@@ -77,16 +78,15 @@ class UpdateChatShortcuts(private val activity: Activity) {
     }
 
     // Builds the Intent that fires when the user taps a chat shortcut from the
-    // share sheet. EXTRA_SHORTCUT_ID is supplied by Android automatically when
-    // launched via a shortcut, but we also set it explicitly so direct launches
-    // from the launcher (long-press app icon) carry it too.
+    // share sheet. We put the chat id under our own extra (not EXTRA_SHORTCUT_ID,
+    // which Android overwrites with the shortcut's full id "share_<chatId>").
     private fun buildShareIntent(chatId: String): Intent {
         val packageName = activity.packageName
         val mainActivityClass = Class.forName("$packageName.MainActivity")
         return Intent(activity, mainActivityClass).apply {
             action = Intent.ACTION_SEND
             type = "*/*"
-            putExtra(Intent.EXTRA_SHORTCUT_ID, chatId)
+            putExtra(EXTRA_CHAT_ID, chatId)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
     }

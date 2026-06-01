@@ -25,7 +25,16 @@ object ShareIntentManager {
 
         val mimeType = intent.type ?: "*/*"
         val text = intent.getStringExtra(Intent.EXTRA_TEXT)
-        val shortcutId = intent.getStringExtra(Intent.EXTRA_SHORTCUT_ID)
+        // Prefer our custom extra (set explicitly on the shortcut's intent
+        // template). Fall back to Android's auto-populated EXTRA_SHORTCUT_ID,
+        // which arrives as the shortcut's full id ("share_<chatId>"), so we
+        // strip our known prefix to recover the bare chat id.
+        val shortcutId = intent.getStringExtra(EXTRA_CHAT_ID)
+            ?: intent.getStringExtra(Intent.EXTRA_SHORTCUT_ID)?.let { sid ->
+                if (sid.startsWith(SHARE_SHORTCUT_ID_PREFIX))
+                    sid.removePrefix(SHARE_SHORTCUT_ID_PREFIX)
+                else null
+            }
 
         val uris: List<Uri> = when (action) {
             Intent.ACTION_SEND -> {
