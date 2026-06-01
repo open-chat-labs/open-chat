@@ -277,17 +277,15 @@
             }
 
             const res = await fetch(url);
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status} ${res.statusText}`);
+            }
 
             const meta = getDownloadMeta(res);
             if (!meta) {
                 throw new Error("Unknown download mime type or kind!");
             }
             const { mimeType, contentKind } = meta;
-
-            if (!res.ok) {
-                throw new Error(`HTTP ${res.status} ${res.statusText}`);
-            }
-
             const filename =
                 msg.content.kind === "file_content"
                     ? msg.content.name

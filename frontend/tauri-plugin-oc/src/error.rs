@@ -10,7 +10,7 @@ pub enum Error {
     #[error(transparent)]
     AndroidFs(#[from] tauri_plugin_android_fs::Error),
 
-    #[error("iOS: downloading a file, invalid file name")]
+    #[error("iOS: invalid file name for download")]
     IOSInvalidFileName,
 
     #[cfg(mobile)]
