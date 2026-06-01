@@ -1188,10 +1188,11 @@ export class OpenChatAgent extends EventTarget {
                 return {
                     ...ev,
                     event: {
+                    event: {
                         ...ev.event,
                         content: rehydratedContent,
                         repliesTo: rehydratedReplyContext ?? originalReplyContext,
-                        messagePreviews,
+                        messagePreviews: messagePreviews.length > 0 ? messagePreviews : ev.event.messagePreviews,
                     },
                 };
             }
