@@ -128,6 +128,7 @@ import type {
     PublicGroupSummaryResponse,
     PublicProfile,
     Referral,
+    RehydratedMessagePreview,
     RegisterPollVoteResponse,
     RegisterProposalVoteResponse,
     RegisterUserResponse,
@@ -241,6 +242,7 @@ import { createHttpAgentSync } from "../utils/httpAgent";
 import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
 import { bytesToHexString, mapOptional } from "../utils/mapping";
 import { mean } from "../utils/maths";
+import { extractMessagePreviews } from "../utils/linkPreviews";
 import { AsyncMessageContextMap } from "../utils/messageContext";
 // import { isMainnet } from "../utils/network";
 import {
@@ -876,6 +878,7 @@ export class OpenChatAgent extends EventTarget {
                 threadRootMessageIndex,
                 latestKnownUpdate,
             )
+            .aggregate(mergeEventStreamResponses, emptyEventsResponse())
             .mapAsync((resp) =>
                 this.rehydrateEventResponse(
                     chatId,
@@ -903,6 +906,7 @@ export class OpenChatAgent extends EventTarget {
                 threadRootMessageIndex,
                 latestKnownUpdate,
             )
+            .aggregate(mergeEventStreamResponses, emptyEventsResponse())
             .mapAsync((resp) =>
                 this.rehydrateEventResponse(
                     chatId,
@@ -921,6 +925,7 @@ export class OpenChatAgent extends EventTarget {
     ): Stream<EventsResponse<ChatEvent>> {
         return this._chatEventsReader
             .chatEventsByIndex(chatId, eventIndexes, threadRootMessageIndex, latestKnownUpdate)
+            .aggregate(mergeEventStreamResponses, emptyEventsResponse())
             .mapAsync((resp) =>
                 this.rehydrateEventResponse(
                     chatId,
@@ -1000,11 +1005,6 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
     ): AsyncMessageContextMap<number> {
         return events.reduce<AsyncMessageContextMap<number>>((result, ev) => {
-            // todo - can we also find message previews here by extracting urls from the message content
-            // well - yes we can and that would get the content loaded.
-            // But the issue is that the data ends up being keyed by event index and we would need it to be
-            // keyed on message index.
-            // Can't really think of a way round this at the moment.
             if (
                 ev.event.kind === "message" &&
                 ev.event.repliesTo &&
@@ -1075,14 +1075,49 @@ export class OpenChatAgent extends EventTarget {
         return mapped;
     }
 
+    private findMissingMessagePreviewsByChat<T extends ChatEvent>(
+        events: EventWrapper<T>[],
+    ): AsyncMessageContextMap<number> {
+        return events.reduce<AsyncMessageContextMap<number>>((result, ev) => {
+            if (ev.event.kind === "message" && ev.event.content.kind === "text_content") {
+                for (const preview of extractMessagePreviews(ev.event.content.text)) {
+                    result.insert(
+                        { chatId: preview.chatId, threadRootMessageIndex: preview.threadRootMessageIndex },
+                        preview.messageIndex,
+                    );
+                }
+            }
+            return result;
+        }, new AsyncMessageContextMap());
+    }
+
+    private async resolveMissingMessagePreviews<T extends ChatEvent>(
+        events: EventWrapper<T>[],
+    ): Promise<AsyncMessageContextMap<EventWrapper<Message>>> {
+        const contextMap = this.findMissingMessagePreviewsByChat(events);
+
+        if (contextMap.length === 0) return Promise.resolve(new AsyncMessageContextMap());
+
+        const mapped = await contextMap.asyncMap((ctx, idxs) => {
+            return this._chatEventsReader
+                .messagesByMessageIndex(ctx.chatId, ctx.threadRootMessageIndex, idxs, undefined)
+                .aggregate(mergeEventStreamResponses, emptyEventsResponse())
+                .toPromise()
+                .then((resp) => this.messagesFromEventsResponse(ctx, resp));
+        });
+
+        return mapped;
+    }
+
     private rehydrateEvent<T extends ChatEvent>(
         ev: EventWrapper<T>,
         defaultChatId: ChatIdentifier,
         missingReplies: AsyncMessageContextMap<EventWrapper<Message>>,
+        missingMessagePreviews: AsyncMessageContextMap<EventWrapper<Message>>,
         threadRootMessageIndex: number | undefined,
     ): EventWrapper<T> {
         if (ev.event.kind === "message") {
-            const messagePreviews: Message[] = [];
+            const messagePreviews: RehydratedMessagePreview[] = [];
             const originalContent = ev.event.content;
             const rehydratedContent = this.rehydrateMessageContent(originalContent);
 
@@ -1121,6 +1156,27 @@ export class OpenChatAgent extends EventTarget {
                 }
             }
 
+            if (ev.event.content.kind === "text_content") {
+                for (const preview of extractMessagePreviews(ev.event.content.text)) {
+                    const context = {
+                        chatId: preview.chatId,
+                        threadRootMessageIndex: preview.threadRootMessageIndex,
+                    };
+                    const messages = missingMessagePreviews.lookup(context);
+                    const msg = messages.find(
+                        (me) => me.event.messageIndex === preview.messageIndex,
+                    )?.event;
+                    if (msg) {
+                        messagePreviews.push({
+                            url: preview.url,
+                            chatId: preview.chatId,
+                            threadRootMessageIndex: preview.threadRootMessageIndex,
+                            message: msg,
+                        });
+                    }
+                }
+            }
+
             if (
                 originalContent !== rehydratedContent ||
                 rehydratedReplyContext !== undefined ||
@@ -1150,15 +1206,18 @@ export class OpenChatAgent extends EventTarget {
             return resp;
         }
 
-        const missing = await this.resolveMissingIndexes(
-            currentChatId,
-            resp.events,
-            threadRootMessageIndex,
-            latestKnownUpdate,
-        );
+        const [missing, missingPreviews] = await Promise.all([
+            this.resolveMissingIndexes(
+                currentChatId,
+                resp.events,
+                threadRootMessageIndex,
+                latestKnownUpdate,
+            ),
+            this.resolveMissingMessagePreviews(resp.events),
+        ]);
 
         resp.events = resp.events.map((e) =>
-            this.rehydrateEvent(e, currentChatId, missing, threadRootMessageIndex),
+            this.rehydrateEvent(e, currentChatId, missing, missingPreviews, threadRootMessageIndex),
         );
         return resp;
     }
@@ -1234,13 +1293,16 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventWrapper<Message>> {
-        const missing = await this.resolveMissingIndexes(
-            chatId,
-            [message],
-            threadRootMessageIndex,
-            latestKnownUpdate,
-        );
-        return this.rehydrateEvent(message, chatId, missing, threadRootMessageIndex);
+        const [missing, missingPreviews] = await Promise.all([
+            this.resolveMissingIndexes(
+                chatId,
+                [message],
+                threadRootMessageIndex,
+                latestKnownUpdate,
+            ),
+            this.resolveMissingMessagePreviews([message]),
+        ]);
+        return this.rehydrateEvent(message, chatId, missing, missingPreviews, threadRootMessageIndex);
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
@@ -3003,6 +3065,7 @@ export class OpenChatAgent extends EventTarget {
                 r,
                 thread.chatId,
                 threadMissing,
+                new AsyncMessageContextMap(),
                 thread.rootMessage.event.messageIndex,
             ),
         );
@@ -3010,6 +3073,7 @@ export class OpenChatAgent extends EventTarget {
             thread.rootMessage,
             thread.chatId,
             rootMissing,
+            new AsyncMessageContextMap(),
             undefined,
         );
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { MessageContent, MessageContext, OgPreview } from "openchat-client";
+    import type { MessageContent, MessageContext, OgPreview, RehydratedMessagePreview } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import AudioContent from "./AudioContent.svelte";
     import BlockedContent from "./BlockedContent.svelte";
@@ -48,6 +48,7 @@
         onRemovePreview?: (url: string) => void;
         onRegisterVote?: (vote: { type: "delete" | "register"; answerIndex: number }) => void;
         ogPreviews?: OgPreview[];
+        messagePreviews?: RehydratedMessagePreview[];
     }
 
     let {
@@ -74,6 +75,7 @@
         onRemovePreview,
         onRegisterVote,
         ogPreviews = [],
+        messagePreviews = [],
     }: Props = $props();
 </script>
 
@@ -87,7 +89,8 @@
         {edited}
         {blockLevelMarkdown}
         {onRemovePreview}
-        {ogPreviews} />
+        {ogPreviews}
+        {messagePreviews} />
 {:else if content.kind === "image_content"}
     <ImageContent
         {edited}

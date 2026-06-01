@@ -1,13 +1,13 @@
 <script lang="ts">
-    import { classifyUrl, extractUrls, iconSize, type LinkPreview } from "openchat-client";
-    import type { OgPreview } from "openchat-shared";
+    import { iconSize } from "openchat-client";
+    import type { OgPreview, RehydratedMessagePreview } from "openchat-shared";
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import { rtlStore } from "../../stores/rtl";
     import GenericPreviewComponent from "./GenericPreview.svelte";
     import MessagePreviewComponent from "./MessagePreview.svelte";
 
     interface Props {
-        text: string;
+        messagePreviews: RehydratedMessagePreview[];
         ogPreviews: OgPreview[];
         intersecting: boolean;
         pinned: boolean;
@@ -16,51 +16,40 @@
         onRemove?: (url: string) => void;
     }
 
-    let { text, ogPreviews, intersecting, me, onRemove }: Props = $props();
-
-    let ogPreviewMap = $derived(new Map(ogPreviews.map((p) => [p.url, p])));
-
-    let urls = $derived<LinkPreview[]>(
-        extractUrls(text).reduce((urls, url) => {
-            const u = ogPreviewMap.get(url) ?? classifyUrl(url);
-            if (u !== undefined) {
-                urls.push(u);
-            }
-            return urls;
-        }, [] as LinkPreview[]),
-    );
+    let { messagePreviews, ogPreviews, intersecting, me, onRemove }: Props = $props();
 
     let rtl = $rtlStore;
 
-    function removePreview(preview: LinkPreview | undefined) {
-        if (preview) {
-            onRemove?.(preview.url);
-        }
+    function removePreview(url: string) {
+        onRemove?.(url);
     }
 </script>
 
-{#each urls as p (p.url)}
-    <div class="preview" class:me>
-        {#if me && onRemove}
-            <div class="remove-wrapper" class:rtl>
-                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <div class="remove" onclick={() => removePreview(p)}>
-                    <CloseIcon viewBox="0 0 24 24" size={$iconSize} color={"var(--button-txt)"} />
-                </div>
+{#snippet remove(url: string)}
+    {#if me && onRemove}
+        <div class="remove-wrapper" class:rtl>
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div class="remove" onclick={() => removePreview(url)}>
+                <CloseIcon viewBox="0 0 24 24" size={$iconSize} color={"var(--button-txt)"} />
             </div>
-        {/if}
+        </div>
+    {/if}
+{/snippet}
+
+{#each messagePreviews as p (p.url)}
+    <div class="preview" class:me>
+        {@render remove(p.url)}
         <div class="inner" class:me>
-            {#if p.kind === "message"}
-                <MessagePreviewComponent
-                    url={p.url}
-                    chatId={p.chatId}
-                    threadRootMessageIndex={p.threadRootMessageIndex}
-                    messageIndex={p.messageIndex}
-                    {intersecting} />
-            {:else if p.kind === "opengraph"}
-                <GenericPreviewComponent {me} ogPreview={p} />
-            {/if}
+            <MessagePreviewComponent preview={p} {intersecting} />
+        </div>
+    </div>
+{/each}
+{#each ogPreviews as p (p.url)}
+    <div class="preview" class:me>
+        {@render remove(p.url)}
+        <div class="inner" class:me>
+            <GenericPreviewComponent {me} ogPreview={p} />
         </div>
     </div>
 {/each}

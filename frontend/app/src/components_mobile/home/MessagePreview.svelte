@@ -1,135 +1,78 @@
 <script lang="ts">
-    import { trackedEffect } from "@src/utils/effects.svelte";
     import { Avatar, Body } from "component-lib";
     import {
         allUsersStore,
         currentUserIdStore,
-        eventListScrolling,
-        isSuccessfulEventsResponse,
         OpenChat,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
-        type MessageContent,
-        type MultiUserChatIdentifier,
-        type OgPreview,
+        type RehydratedMessagePreview,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ChatMessageContent from "./ChatMessageContent.svelte";
 
-    type Preview = {
-        content: MessageContent;
-        senderId: string;
-        messageId: bigint;
-        edited: boolean;
-        displayName: string;
-        ogPreviews: OgPreview[];
-    };
-
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        url: string;
+        preview: RehydratedMessagePreview;
         me: boolean;
-        chatId: MultiUserChatIdentifier;
-        threadRootMessageIndex: number | undefined;
-        messageIndex: number;
         intersecting: boolean;
         onRendered?: (url: string) => void;
     }
 
-    let { url, me, chatId, threadRootMessageIndex, messageIndex, intersecting, onRendered }: Props =
-        $props();
+    const { preview, me, intersecting }: Props = $props();
 
-    let previewPromise: Promise<Preview | undefined> | undefined = $state();
-    let rendered = $state(false);
-    let senderIsMe = $state(false);
-
-    async function loadPreview(): Promise<Preview | undefined> {
-        let result = await client.getMessagesByMessageIndex(chatId, threadRootMessageIndex, [
-            messageIndex,
-        ]);
-
-        if (!isSuccessfulEventsResponse(result)) {
-            return;
-        }
-
-        let message = result.events[0].event;
-
-        senderIsMe = message.sender === $currentUserIdStore;
-
-        return {
-            content: message.content,
-            senderId: message.sender,
-            messageId: message.messageId,
-            edited: message.edited,
-            displayName: senderIsMe
-                ? client.toTitleCase($_("you"))
-                : client.getDisplayName(
-                      message.sender,
-                      $selectedCommunityMembersStore,
-                      $selectedChatWebhooksStore,
-                  ),
-            ogPreviews: message.ogPreviews,
-        };
-    }
-
-    trackedEffect("message-preview", () => {
-        // make sure we only actually *load* the preview once
-        previewPromise = previewPromise ?? loadPreview();
-        previewPromise.then((preview) => {
-            if (preview && intersecting && !$eventListScrolling) {
-                rendered = true;
-                onRendered?.(url);
-            }
-        });
-    });
+    let senderIsMe = $derived(preview.message.sender === $currentUserIdStore);
+    let displayName = $derived(
+        senderIsMe
+            ? client.toTitleCase($_("you"))
+            : client.getDisplayName(
+                  preview.message.sender,
+                  $selectedCommunityMembersStore,
+                  $selectedChatWebhooksStore,
+              ),
+    );
 </script>
 
-{#if rendered}
-    {#await previewPromise then preview}
-        {#if preview}
-            <a class="preview_link" href={url}>
-                <div
-                    class="wrapper"
-                    class:me
-                    class:sender_is_me={senderIsMe}
-                    class:p2pSwap={preview.content.kind === "p2p_swap_content"}>
-                    <div class="title">
-                        <Avatar
-                            url={client.userAvatarUrl($allUsersStore.get(preview.senderId))}
-                            size={"xs"} />
-                        <Body fontWeight="bold" colour={me ? "textPrimary" : "textSecondary"}>
-                            {preview.displayName}
-                        </Body>
-                    </div>
-                    <div class="inert">
-                        <ChatMessageContent
-                            me={senderIsMe}
-                            readonly
-                            messageContext={{
-                                chatId,
-                                threadRootMessageIndex,
-                            }}
-                            {intersecting}
-                            messageId={preview.messageId}
-                            {messageIndex}
-                            senderId={preview.senderId}
-                            edited={preview.edited}
-                            fill={false}
-                            failed={false}
-                            blockLevelMarkdown
-                            truncate={true}
-                            reply={false}
-                            isPreview={true}
-                            content={preview.content}
-                            ogPreviews={preview.ogPreviews} />
-                    </div>
-                </div>
-            </a>
-        {/if}
-    {/await}
-{/if}
+<a class="preview_link" href={preview.url}>
+    <div
+        class="wrapper"
+        class:me
+        class:sender_is_me={senderIsMe}
+        class:p2pSwap={preview.message.content.kind === "p2p_swap_content"}>
+        <div class="title">
+            <Avatar
+                url={client.userAvatarUrl($allUsersStore.get(preview.message.sender))}
+                size={"xs"} />
+            <Body fontWeight="bold" colour={me ? "textPrimary" : "textSecondary"}>
+                {displayName}
+            </Body>
+        </div>
+        <div class="inert">
+            <ChatMessageContent
+                me={senderIsMe}
+                readonly
+                messageContext={{
+                    chatId: preview.chatId,
+                    threadRootMessageIndex: preview.threadRootMessageIndex,
+                }}
+                {intersecting}
+                messageId={preview.message.messageId}
+                messageIndex={preview.message.messageIndex}
+                senderId={preview.message.sender}
+                edited={preview.message.edited}
+                fill={false}
+                failed={false}
+                blockLevelMarkdown
+                truncate={true}
+                reply={false}
+                isPreview={true}
+                content={preview.message.content}
+                ogPreviews={preview.message.ogPreviews} />
+        </div>
+    </div>
+</a>
 
 <style lang="scss">
     .preview_link {

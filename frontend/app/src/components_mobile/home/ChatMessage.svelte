@@ -790,7 +790,8 @@
                                     {onRemovePreview}
                                     {onRegisterVote}
                                     {onExpandMessage}
-                                    ogPreviews={msg.ogPreviews} />
+                                    ogPreviews={msg.ogPreviews}
+                                    messagePreviews={msg.messagePreviews} />
                             {/snippet}
                         </MessageBubble>
                     </MenuTrigger>
