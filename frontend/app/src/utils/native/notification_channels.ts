@@ -9,7 +9,6 @@ const NEW_FCM_TOKEN_EVENT = "fcm-token";
 const NOTIFICATION_TAP_EVENT = "notification-tap";
 const BACK_PRESS_EVENT = "back-pressed";
 const WINDOW_INSET_CHANGE_EVENT = "window-inset-change";
-const SHARE_TARGET_EVENT = "share-target";
 
 type PushNotification = {
     id: number;
@@ -221,41 +220,4 @@ export async function expectWindowInsetChange(
     handler: (data: WindowInsetChange) => void,
 ): Promise<PluginListener> {
     return addPluginListener(TAURI_PLUGIN_NAME, WINDOW_INSET_CHANGE_EVENT, handler);
-}
-
-/**
- * Payload delivered when the user selects OpenChat from the system share sheet,
- * or taps one of our Direct Share chat shortcuts.
- */
-export interface SharedFile {
-    /** Absolute path of the file on app cache storage. The native side copies
-     *  incoming content URIs into the cache so the temporary read grant from
-     *  the source app cannot expire while the user composes. */
-    path: string;
-    name: string;
-    mimeType: string | null;
-    size: number;
-}
-
-export interface ShareTarget {
-    /** Original mime type from the source share intent. */
-    mimeType: string;
-    /** Plain text payload (EXTRA_TEXT). Present for text/URL shares. */
-    text: string | null;
-    /** Chat id this share was directed at, when launched from a Direct Share
-     *  shortcut. Null when launched via "OpenChat" in the generic share sheet. */
-    shortcutId: string | null;
-    /** Files copied into app cache, ready to feed into the upload path. */
-    files: SharedFile[];
-}
-
-/**
- * Subscribe to share intents delivered from the Android system share sheet.
- * Fires on cold-start shares too (the native side queues the event until
- * Svelte signals svelteReady).
- */
-export async function expectShareTarget(
-    handler: (share: ShareTarget) => void,
-): Promise<PluginListener> {
-    return addPluginListener(TAURI_PLUGIN_NAME, SHARE_TARGET_EVENT, handler);
 }
