@@ -129,6 +129,7 @@ describe("thread utils", () => {
                     deleted: false,
                     blockLevelMarkdown: false,
                     ogPreviews: [],
+                    messagePreviews: [],
                 },
             },
         );

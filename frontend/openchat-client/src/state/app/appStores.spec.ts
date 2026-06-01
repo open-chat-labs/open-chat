@@ -749,6 +749,7 @@ function chatMessage(): EventWrapper<Message> {
             blockLevelMarkdown: false,
             tips: {},
             ogPreviews: [],
+            messagePreviews: [],
         },
     };
 }

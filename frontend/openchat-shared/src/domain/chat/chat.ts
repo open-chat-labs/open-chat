@@ -800,6 +800,7 @@ export type Message<T extends MessageContent = MessageContent> = {
     blockLevelMarkdown: boolean;
     senderContext?: SenderContext;
     ogPreviews: OgPreview[];
+    messagePreviews: Message[];
 };
 
 export type BotContextCommand = {

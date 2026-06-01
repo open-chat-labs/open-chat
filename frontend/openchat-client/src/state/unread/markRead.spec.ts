@@ -27,6 +27,7 @@ describe("mark messages read", () => {
                 deleted: false,
                 blockLevelMarkdown: false,
                 ogPreviews: [],
+                messagePreviews: [],
             },
             index: 0,
             timestamp: BigInt(0),
