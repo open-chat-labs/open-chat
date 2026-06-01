@@ -16,6 +16,7 @@ const COMMANDS: &[&str] = &[
     "enable_viewport_resize",
     "disable_viewport_resize",
     "save_media",
+    "update_chat_shortcuts",
 ];
 
 fn main() {

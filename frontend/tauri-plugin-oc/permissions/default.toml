@@ -18,4 +18,5 @@ permissions = [
     "allow-enable-viewport-resize",
     "allow-disable-viewport-resize",
     "allow-save-media",
+    "allow-update-chat-shortcuts",
 ]

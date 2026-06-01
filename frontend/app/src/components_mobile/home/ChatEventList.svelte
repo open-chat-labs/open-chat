@@ -463,11 +463,13 @@
     }
 
     function shouldLoadPreviousMessages() {
+        if (!chat) return false;
         morePrevAvailable = client.morePreviousMessagesAvailable(chat.id, threadRootEvent);
         return visible && insideTopThreshold() && morePrevAvailable;
     }
 
     function shouldLoadNewMessages() {
+        if (!chat) return false;
         moreNewAvailable = client.moreNewMessagesAvailable(chat.id, threadRootEvent);
         return visible && insideBottomThreshold() && moreNewAvailable;
     }

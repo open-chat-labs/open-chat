@@ -91,4 +91,13 @@ impl<R: Runtime> Oc<R> {
 
         res.map_err(Into::into)
     }
+
+    pub fn update_chat_shortcuts(
+        &self,
+        payload: UpdateChatShortcutsRequest,
+    ) -> crate::Result<UpdateChatShortcutsResponse> {
+        self.0
+            .run_mobile_plugin("updateChatShortcuts", payload)
+            .map_err(Into::into)
+    }
 }

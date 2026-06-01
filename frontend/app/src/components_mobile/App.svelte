@@ -17,8 +17,11 @@
         expectNewFcmToken,
         expectNotificationTap,
         expectPushNotifications,
+        expectShareTarget,
         expectWindowInsetChange,
+        type ShareTarget,
     } from "@utils/native/notification_channels";
+    import type { Share } from "@utils/share";
     import "@utils/scream";
     import { portalState } from "component-lib";
     import {
@@ -30,6 +33,7 @@
         fontSize,
         identityStateStore,
         inititaliseLogger,
+        publish,
         routeForChatIdentifier,
         routeForScope,
         subscribe,
@@ -177,6 +181,25 @@
         setStatusAndNavBarSizesForNativeApp();
     }
 
+    function handleShareTarget(shareTarget: ShareTarget) {
+        // Reuse the existing in-app "share message" flow: SlidingModals already
+        // subscribes to "shareMessage" and renders ShareMessageModal, which
+        // wraps SelectChatModal and pre-fills the chosen chat's draft via
+        // localUpdates.draftMessages.setTextContent.
+        // TODO shortcutId fast-path (Direct Share) — skip the picker and page
+        //      straight to the chat the shortcut maps to.
+        // TODO file payloads — read shareTarget.files[].path into File objects
+        //      via the Tauri fs plugin before attaching to share.files.
+        const text = shareTarget.text ?? "";
+        const share: Share = {
+            title: undefined,
+            text: text.length > 0 ? text : undefined,
+            url: undefined,
+            files: [],
+        };
+        publish("shareMessage", share);
+    }
+
     // Sets up push notifications and FCM token management for native apps
     function setupNativeApp() {
         const addFcmToken = (token: string) => {
@@ -193,6 +216,11 @@
 
             // Listen for notifications user has tapped on
             expectNotificationTap().catch(console.error);
+
+            // Listen for content shared into OpenChat from the system share sheet
+            // (or via a Direct Share chat shortcut). Cold-start shares are queued
+            // by the native side and delivered once svelteReady fires below.
+            expectShareTarget(handleShareTarget).catch(console.error);
 
             // Expect FCM token refreshes
             expectNewFcmToken(addFcmToken);

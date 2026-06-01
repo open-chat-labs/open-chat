@@ -12,8 +12,10 @@
 
     let { onClose, share }: Props = $props();
 
+    $inspect("SHARE", share);
+
     function shareMessage(chatId: ChatIdentifier) {
-        page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
+        console.log("ROUTE TO CHAT", chatId);
 
         const shareText = share.text ?? "";
         const shareTitle = share.title ?? "";
@@ -29,7 +31,13 @@
         }
 
         localUpdates.draftMessages.setTextContent({ chatId }, text);
+
+        // onClose() calls history.back() to consume the dummy history entry
+        // the sliding modal pushed when it opened. Navigating before that
+        // back() settles makes the back() rewind past our new route, so we
+        // defer the page() until after popstate has fired.
         onClose();
+        setTimeout(() => page(routeForChatIdentifier($chatListScopeStore.kind, chatId)));
     }
 </script>
 

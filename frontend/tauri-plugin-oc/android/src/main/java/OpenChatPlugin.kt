@@ -105,6 +105,11 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
     fun disableViewportResize(invoke: Invoke) {
         ViewportResize(activity).disable(invoke)
     }
+
+    @Command
+    fun updateChatShortcuts(invoke: Invoke) {
+        UpdateChatShortcuts(activity).handler(invoke)
+    }
 }
 
 object OCPluginCompanion {
