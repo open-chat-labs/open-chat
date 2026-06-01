@@ -4365,14 +4365,14 @@ export class OpenChat {
         return shouldThrottle(isDiamondStore.value);
     }
 
-    async sendMessageWithAttachment(
+    sendMessageWithAttachment(
         messageContext: MessageContext,
         textContent: string | undefined,
         blockLevelMarkdown: boolean,
         attachment: AttachmentContent | undefined,
         mentioned: User[] = [],
-    ): Promise<void> {
-        this.sendMessageWithContent(
+    ) {
+        return this.sendMessageWithContent(
             messageContext,
             this.#getMessageContent(textContent, attachment),
             blockLevelMarkdown,
