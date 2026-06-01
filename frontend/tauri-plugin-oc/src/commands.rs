@@ -144,8 +144,10 @@ pub(crate) async fn save_media<R: Runtime>(
 
         println!("OC_LOG: Download file: {:?}, {:?}", pub_dir, filename);
 
+        let mime = (!mime_type.trim().is_empty()).then_some(mime_type.as_str());
+
         storage
-            .write_new(None, pub_dir, &filename, Some(&mime_type), &data)
+            .write_new(None, pub_dir, &filename, mime, &data)
             .await?;
     }
 
@@ -154,8 +156,8 @@ pub(crate) async fn save_media<R: Runtime>(
     // to Info.plist
     #[cfg(target_os = "ios")]
     {
-        use std::fs;
         use std::path::Path;
+        use tokio::fs;
 
         let safe_filename = Path::new(&filename)
             .file_name()
@@ -168,12 +170,11 @@ pub(crate) async fn save_media<R: Runtime>(
             _ => base_dir.clone(),
         };
 
-        if !sub_dir.exists() {
-            fs::create_dir_all(&sub_dir).map_err(crate::Error::Io)?;
-        }
+        // create_dir_all is idempotent
+        fs::create_dir_all(&sub_dir).await?;
 
         let file_path = sub_dir.join(safe_filename);
-        fs::write(&file_path, &data).map_err(crate::Error::Io)?;
+        fs::write(&file_path, &data).await?;
     }
 
     Ok(())

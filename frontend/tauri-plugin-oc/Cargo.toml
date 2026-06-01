@@ -6,17 +6,17 @@ exclude = ["/examples", "/dist-js", "/guest-js", "/node_modules"]
 links = "tauri-plugin-oc"
 
 [dependencies]
+futures-util = "0.3"
+mime_guess = "2.0"
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls"] }
+semver = "1.0"
 serde = { workspace = true }
 serde_json = { workspace = true }
 tauri = { workspace = true }
-thiserror = { workspace = true }
-reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls"] }
 tauri-plugin-android-fs = { workspace = true }
-futures-util = "0.3"
-zip = "2.2.2"
-semver = "1.0"
+thiserror = { workspace = true }
 tokio = { workspace = true, features = ["fs", "io-util"] }
-mime_guess = "2.0"
+zip = "2.2.2"
 
 [build-dependencies]
 tauri-plugin = { version = "2.4.0", features = ["build"] }
