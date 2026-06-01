@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Typing from "@shared_components/Typing.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import {
@@ -55,7 +56,6 @@
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
     import Translatable from "../Translatable.svelte";
-    import Typing from "@shared_components/Typing.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import ChatMessageMenu from "./ChatMessageMenu.svelte";
     import EmojiPicker from "./EmojiPickerWrapper.svelte";
@@ -663,7 +663,6 @@
 
                             <ChatMessageContent
                                 senderId={msg.sender}
-                                showPreviews
                                 {readonly}
                                 {fill}
                                 {me}
@@ -681,7 +680,8 @@
                                 blockLevelMarkdown={msg.blockLevelMarkdown}
                                 {onRemovePreview}
                                 {onRegisterVote}
-                                {onExpandMessage} />
+                                {onExpandMessage}
+                                ogPreviews={msg.ogPreviews} />
 
                             {#if !inert}
                                 <TimeAndTicks

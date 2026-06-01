@@ -81,7 +81,6 @@
         {#if repliesTo.content !== undefined}
             <div class="inert">
                 <ChatMessageContent
-                    showPreviews
                     {me}
                     {readonly}
                     messageContext={repliesTo.sourceContext}
@@ -96,7 +95,8 @@
                     truncate
                     reply
                     {onRemovePreview}
-                    content={repliesTo.content} />
+                    content={repliesTo.content}
+                    ogPreviews={[]} />
             </div>
             {#if debug}
                 <pre>EventIdx: {repliesTo.eventIndex}</pre>

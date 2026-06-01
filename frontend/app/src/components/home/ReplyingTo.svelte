@@ -1,6 +1,10 @@
 <script lang="ts">
     import type { CreatedUser, EnhancedReplyContext, OpenChat } from "openchat-client";
-    import { iconSize, selectedChatWebhooksStore, selectedCommunityMembersStore } from "openchat-client";
+    import {
+        iconSize,
+        selectedChatWebhooksStore,
+        selectedCommunityMembersStore,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -25,7 +29,11 @@
     let displayName = $derived(
         me
             ? client.toTitleCase($_("you"))
-            : client.getDisplayName(replyingTo.sender?.userId, $selectedCommunityMembersStore, $selectedChatWebhooksStore),
+            : client.getDisplayName(
+                  replyingTo.sender?.userId,
+                  $selectedCommunityMembersStore,
+                  $selectedChatWebhooksStore,
+              ),
     );
 </script>
 
@@ -44,7 +52,6 @@
     </h4>
     <div class="reply-content">
         <ChatMessageContent
-            showPreviews={false}
             {readonly}
             {timestamp}
             messageContext={replyingTo.sourceContext}
@@ -59,6 +66,7 @@
             truncate
             edited={replyingTo.edited}
             content={replyingTo.content}
+            ogPreviews={[]}
             reply />
     </div>
 </div>

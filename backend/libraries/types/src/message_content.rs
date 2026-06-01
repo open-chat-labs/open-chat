@@ -778,7 +778,7 @@ impl Debug for ThumbnailData {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct OgPreviewImage {
     pub url: String,
     pub width: u32,
@@ -786,7 +786,7 @@ pub struct OgPreviewImage {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct OgPreview {
     pub url: String,
     pub title: String,

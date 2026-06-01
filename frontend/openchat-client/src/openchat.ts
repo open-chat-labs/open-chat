@@ -224,6 +224,7 @@ import {
     type NervousSystemDetails,
     type NewUnconfirmedMessage,
     type Notification,
+    type OgPreview,
     type OneSecForwardingStatus,
     type OneSecTransferFees,
     type OptionUpdate,
@@ -558,9 +559,9 @@ import formatFileSize from "./utils/fileSize";
 import { gaTrack } from "./utils/ga";
 import { calculateMediaDimensions } from "./utils/layout";
 import {
-    disableLinksInText,
-    extractDisabledLinks,
     extractEnabledLinks,
+    fetchOgPreviews,
+    removeOpenGraphPreviews,
     stripLinkDisabledMarker,
 } from "./utils/linkPreviews";
 import { groupBy, groupWhile, keepMax, partition, toRecord, toRecord2 } from "./utils/list";
@@ -570,15 +571,9 @@ import {
     FREE_MAX_SIZES,
     audioRecordingMimeType,
     communityMessageRegex,
-    containsSocialVideoLink,
     fillMessage,
     groupMessageRegex,
-    instagramRegex,
-    isSocialVideoLink,
     messageContentFromFile,
-    spotifyRegex,
-    twitterLinkRegex,
-    youtubeRegex,
     type MaxMediaSizes,
 } from "./utils/media";
 import { mergeKeepingOnlyChanged } from "./utils/object";
@@ -607,8 +602,8 @@ import { initialiseTracking, startTrackingSession, trackEvent } from "./utils/tr
 import { startSwCheckPoller } from "./utils/updateSw";
 import { addQueryStringParam } from "./utils/url";
 import {
-    buildUsernameList,
     buildReducedProfileDataList,
+    buildUsernameList,
     compareIsNotYouThenUsername,
     compareUsername,
     formatLastOnlineDate,
@@ -1974,7 +1969,6 @@ export class OpenChat {
     contentTypeToPermission = contentTypeToPermission;
     stripLinkDisabledMarker = stripLinkDisabledMarker;
     extractEnabledLinks = extractEnabledLinks;
-    disableLinksInText = disableLinksInText;
 
     communityAvatarUrl(id: string, avatar: DataContent): string {
         return avatar?.blobUrl ?? buildIdenticonUrl(id);
@@ -2736,12 +2730,8 @@ export class OpenChat {
 
     isTyping = isTyping;
     trackEvent = trackEvent;
-    twitterLinkRegex = twitterLinkRegex;
-    youtubeRegex = youtubeRegex;
     communityMessageRegex = communityMessageRegex;
     groupMessageRegex = groupMessageRegex;
-    instagramRegex = instagramRegex;
-    spotifyRegex = spotifyRegex;
     metricsEqual = metricsEqual;
     getMembersString = getMembersString;
     compareIsNotYouThenUsername = compareIsNotYouThenUsername;
@@ -3804,7 +3794,7 @@ export class OpenChat {
             [],
             true,
             undefined,
-            msg.ogPreviews,
+            msg.ogPreviews.length > 0 ? Promise.resolve(msg.ogPreviews) : undefined,
         );
     }
 
@@ -4009,6 +3999,7 @@ export class OpenChat {
         message: NewUnconfirmedMessage,
         mentioned: User[] = [],
         retrying: boolean,
+        ogPreviewsPromise?: Promise<OgPreview[]>,
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
 
@@ -4040,6 +4031,21 @@ export class OpenChat {
 
             // add the *new* event to unconfirmed
             localUpdates.addUnconfirmed(messageContext, messageEvent);
+        }
+
+        // Fetch og previews lazily so the message appears in the UI immediately.
+        // We await here (after pushing to localUpdates) so the worker call still
+        // sends og_previews to the backend in the same request.
+        if (ogPreviewsPromise !== undefined) {
+            const ogPreviews = await ogPreviewsPromise;
+            if (ogPreviews.length > 0) {
+                messageEvent.event.ogPreviews = ogPreviews;
+                localUpdates.setUnconfirmedOgPreviews(
+                    messageContext,
+                    messageEvent.event.messageId,
+                    ogPreviews,
+                );
+            }
         }
 
         const canRetry = canRetryMessage(message.content);
@@ -4323,7 +4329,7 @@ export class OpenChat {
         mentioned: User[] = [],
         forwarded: boolean = false,
         messageIdIfRetrying?: bigint,
-        ogPreviews: Message["ogPreviews"] = [],
+        ogPreviewsPromise?: Promise<OgPreview[]>,
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
         const chat = allChatsStore.value.get(chatId);
@@ -4342,7 +4348,7 @@ export class OpenChat {
             repliesTo: draftMessage?.replyingTo,
             forwarded,
             blockLevelMarkdown,
-            ogPreviews,
+            ogPreviews: [], // This will get filled in later
         };
 
         return this.#sendMessageCommon(
@@ -4351,6 +4357,7 @@ export class OpenChat {
             msg,
             mentioned,
             messageIdIfRetrying !== undefined,
+            ogPreviewsPromise,
         );
     }
 
@@ -4364,13 +4371,15 @@ export class OpenChat {
         blockLevelMarkdown: boolean,
         attachment: AttachmentContent | undefined,
         mentioned: User[] = [],
-    ): void {
-        this.sendMessageWithContent(
+    ) {
+        return this.sendMessageWithContent(
             messageContext,
             this.#getMessageContent(textContent, attachment),
             blockLevelMarkdown,
             mentioned,
             false,
+            undefined,
+            fetchOgPreviews(extractEnabledLinks(textContent)),
         );
     }
 
@@ -4489,15 +4498,13 @@ export class OpenChat {
     }
 
     getDisplayDate = getDisplayDate;
-    isSocialVideoLink = isSocialVideoLink;
-    containsSocialVideoLink = containsSocialVideoLink;
     calculateMediaDimensions = calculateMediaDimensions;
     dataToBlobUrl = dataToBlobUrl;
     askForNotificationPermission = askForNotificationPermission;
     setSoftDisabled = setSoftDisabled;
     gaTrack = gaTrack;
 
-    editMessageWithAttachment(
+    async editMessageWithAttachment(
         messageContext: MessageContext,
         textContent: string | undefined,
         blockLevelMarkdown: boolean,
@@ -4511,29 +4518,31 @@ export class OpenChat {
         }
 
         if (textContent || attachment) {
-            if (textContent && editingEvent.event.content.kind === "text_content") {
-                const disabledLinks = extractDisabledLinks(editingEvent.event.content.text);
-                textContent = disableLinksInText(textContent, disabledLinks);
-            }
-
             const captioned =
                 attachment ??
                 (isCaptionedContent(editingEvent.event.content)
                     ? editingEvent.event.content
                     : undefined);
 
-            const msg = {
+            const msg: Message = {
                 ...editingEvent.event,
                 edited: true,
                 content: this.#getMessageContent(textContent ?? undefined, captioned),
+                ogPreviews: [], // This will get filled in asynchronously after local updates are set
             };
             const updatedBlockLevelMarkdown =
                 msg.blockLevelMarkdown === blockLevelMarkdown ? undefined : blockLevelMarkdown;
 
+            // Apply content update to local state immediately — don't block on og preview fetch.
             const undo = localUpdates.markMessageContentEdited(msg, updatedBlockLevelMarkdown);
             localUpdates.draftMessages.delete(messageContext);
 
             const newAchievement = !achievementsStore.value.has("edited_message");
+
+            // Fetch og previews in the background; content change is already visible in the UI.
+            const ogPreviews = await fetchOgPreviews(extractEnabledLinks(textContent));
+            msg.ogPreviews = ogPreviews;
+            const undoOgPreviews = localUpdates.setEditedOgPreviews(msg.messageId, ogPreviews);
 
             return this.#worker
                 .send({
@@ -4547,12 +4556,14 @@ export class OpenChat {
                 .then((resp) => {
                     if (resp.kind !== "success") {
                         undo();
+                        undoOgPreviews();
                         return false;
                     }
                     return true;
                 })
                 .catch(() => {
                     undo();
+                    undoOgPreviews();
                     return false;
                 });
         }
@@ -4571,13 +4582,10 @@ export class OpenChat {
             return Promise.resolve(false);
         }
 
-        const text = disableLinksInText(event.event.content.text, [link]);
-
         const msg = {
-            ...event.event,
-            content: this.#getMessageContent(text, undefined),
+            ...removeOpenGraphPreviews(event.event, [link]),
         };
-        const undo = localUpdates.markLinkRemoved(msg.messageId, msg.content);
+        const undo = localUpdates.markLinkRemoved(msg.messageId, msg.ogPreviews);
 
         return this.#worker
             .send({
@@ -10421,11 +10429,6 @@ export class OpenChat {
             return mobileWidth.value
                 ? { width: content.mobile.width, height: content.mobile.height }
                 : { width: content.desktop.width, height: content.desktop.height };
-        } else if (
-            content.kind === "text_content" &&
-            (this.isSocialVideoLink(content.text) || this.containsSocialVideoLink(content.text))
-        ) {
-            return { width: 560, height: 315 };
         }
 
         return undefined;
