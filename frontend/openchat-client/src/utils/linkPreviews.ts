@@ -147,9 +147,12 @@ export function classifyUrl(url: string): LinkPreview | undefined {
 }
 
 function parseMessageUrl(urlText: string): MessagePreview | undefined {
-    const url = new URL(urlText);
-    if (!url) return;
-
+    let url: URL;
+    try {
+        url = new URL(urlText);
+    } catch {
+        return;
+    }
     if (
         url.hostname !== "oc.app" &&
         !url.hostname.endsWith(".oc.app") &&
