@@ -2559,7 +2559,7 @@ export type RehydratedMessagePreview = {
     url: string;
     chatId: MultiUserChatIdentifier;
     threadRootMessageIndex: number | undefined;
-    message: Message;
+    message: Omit<Message, "messagePreviews">;
 };
 
 export type GenericPreview = LinkPreviewBase & {
