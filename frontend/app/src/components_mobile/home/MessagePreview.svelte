@@ -18,7 +18,6 @@
         preview: RehydratedMessagePreview;
         me: boolean;
         intersecting: boolean;
-        onRendered?: (url: string) => void;
     }
 
     const { preview, me, intersecting }: Props = $props();
