@@ -11,7 +11,8 @@ const groupMessageRegex = /\/group\/([a-z0-9_-]+)\/(\d+)(?:\/(\d+))?/i;
 
 function extractUrls(text: string): string[] {
     const withoutMarkdownDisplayText = text.replace(/\[[^\]]*\]\((https?:\/\/[^)]*)\)/g, "$1");
-    return [...new Set(withoutMarkdownDisplayText.match(URL_REGEX) ?? [])];
+    const urls = withoutMarkdownDisplayText.match(URL_REGEX) ?? [];
+    return [...new Set(urls.filter((u) => !u.endsWith("#LINK_REMOVED")))];
 }
 
 function parseOCMessageUrl(urlText: string): MessagePreview | undefined {
