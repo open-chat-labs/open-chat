@@ -1,5 +1,6 @@
 import { theme as neon } from "component-lib";
 import type { Theme } from "../types";
+import { mobileOperatingSystem } from "../../utils/devices";
 
 const primary = neon.colours.primary.toString();
 const primaryMuted = neon.colours.primaryMuted.toString();
@@ -17,11 +18,21 @@ const txtTertiary = neon.colours.textTertiary.toString();
 const txtPlaceholder = neon.colours.textPlaceholder.toString();
 // const buttonGradient = neon.colours.gradientInverted.toString();
 
+// Prefer Inter font on Android, and system fonts on iOS. Inter is optimised
+// for legibility and does well in chat apps.
+const os = mobileOperatingSystem.toLowerCase();
+const fontFamily =
+    os === "android"
+        ? '"Inter", system-ui, Roboto, "Noto Sans", sans-serif'
+        : os === "ios"
+          ? "-apple-system, system-ui, sans-serif"
+          : "Roboto, sans-serif";
+
 export function getTheme(base: Theme): Theme {
     // it's ok to mutate the theme passed in because it's a clone
     base.author = "2yfsq-kaaaa-aaaaf-aaa4q-cai";
-    base.font = '"Manrope", sans-serif';
-    base["font-bold"] = '"Manrope", sans-serif';
+    base.font = fontFamily;
+    base["font-bold"] = fontFamily;
     base.mode = "dark";
     base.name = "neon_dark";
     base.label = "Neon";
@@ -82,11 +93,6 @@ export function getTheme(base: Theme): Theme {
     base.entry.bg = "none";
     base.entry.input.bg = base.input.bg;
     base.entry.input.sh = "none";
-
-    // TODO - not convinced that Manrope for the default body text is good.
-    // Works well for headers but not for default message text - roboto (the current default) feels better
-    // base.font = '"Manrope", sans-serif';
-
     base.chatSearch.bg = base.input.bg;
     base.chatSearch.sh = "none";
 

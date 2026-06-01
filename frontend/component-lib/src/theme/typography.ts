@@ -9,7 +9,7 @@ export class FontWeights {
         return [
             new CssVariable("font-weight-light", "300"),
             new CssVariable("font-weight-normal", "400"),
-            new CssVariable("font-weight-semi-bold", "700"),
+            new CssVariable("font-weight-semi-bold", "600"),
             new CssVariable("font-weight-bold", "900"),
         ];
     }

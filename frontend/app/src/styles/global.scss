@@ -190,6 +190,24 @@ html {
     box-sizing: inherit;
 }
 
+/* These affect the android app */
+/* Inter Variable - Regular & Bold range */
+@font-face {
+    font-family: "Inter";
+    src: url("/fonts/Inter-VariableFont_opsz,wght.woff2") format("woff2");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+/* Inter Variable - Italic range */
+@font-face {
+    font-family: "Inter";
+    src: url("/fonts/Inter-Italic-VariableFont_opsz,wght.woff2") format("woff2");
+    font-weight: 100 900;
+    font-style: italic;
+    font-display: swap;
+}
+
 :root {
     --bg: #121212;
     --prize: #f79413;
