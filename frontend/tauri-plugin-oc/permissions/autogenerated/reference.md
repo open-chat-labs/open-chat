@@ -20,6 +20,7 @@ Default permissions for the plugin
 - `allow-load-recent-media`
 - `allow-enable-viewport-resize`
 - `allow-disable-viewport-resize`
+- `allow-save-media`
 
 ## Permission Table
 
@@ -338,6 +339,32 @@ Enables the restart_app command without any pre-configured scope.
 <td>
 
 Denies the restart_app command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-save-media`
+
+</td>
+<td>
+
+Enables the save_media command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-save-media`
+
+</td>
+<td>
+
+Denies the save_media command without any pre-configured scope.
 
 </td>
 </tr>

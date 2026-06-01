@@ -86,3 +86,12 @@ pub struct RecentMedia {
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct EmptyPayload;
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SaveMediaRequest {
+    pub kind: String,
+    pub filename: String,
+    pub data: Vec<u8>,
+    pub mime_type: String,
+}

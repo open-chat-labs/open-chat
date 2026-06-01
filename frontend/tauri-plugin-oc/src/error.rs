@@ -6,6 +6,13 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     #[error(transparent)]
     Io(#[from] std::io::Error),
+
+    #[error(transparent)]
+    AndroidFs(#[from] tauri_plugin_android_fs::Error),
+
+    #[error("iOS: downloading a file, invalid file name")]
+    IOSInvalidFileName,
+
     #[cfg(mobile)]
     #[error(transparent)]
     PluginInvoke(#[from] tauri::plugin::mobile::PluginInvokeError),
