@@ -1099,8 +1099,9 @@ export class OpenChatAgent extends EventTarget {
         if (contextMap.length === 0) return Promise.resolve(new AsyncMessageContextMap());
 
         const mapped = await contextMap.asyncMap((ctx, idxs) => {
+            const uniqueIdxs = [...new Set(idxs)];
             return this._chatEventsReader
-                .messagesByMessageIndex(ctx.chatId, ctx.threadRootMessageIndex, idxs, undefined)
+                .messagesByMessageIndex(ctx.chatId, ctx.threadRootMessageIndex, uniqueIdxs, undefined)
                 .aggregate(mergeEventStreamResponses, emptyEventsResponse())
                 .toPromise()
                 .then((resp) => this.messagesFromEventsResponse(ctx, resp));
