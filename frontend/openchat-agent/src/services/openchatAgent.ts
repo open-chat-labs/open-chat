@@ -1166,12 +1166,14 @@ export class OpenChatAgent extends EventTarget {
                     const msg = messages.find(
                         (me) => me.event.messageIndex === preview.messageIndex,
                     )?.event;
-                    if (msg) {
                         messagePreviews.push({
                             url: preview.url,
                             chatId: preview.chatId,
                             threadRootMessageIndex: preview.threadRootMessageIndex,
-                            message: msg,
+                            message: {
+                                ...msg,
+                                content: structuredClone(this.rehydrateMessageContent(msg.content)),
+                            },
                         });
                     }
                 }
