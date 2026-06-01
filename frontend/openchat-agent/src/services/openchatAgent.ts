@@ -1167,6 +1167,7 @@ export class OpenChatAgent extends EventTarget {
                     const msg = messages.find(
                         (me) => me.event.messageIndex === preview.messageIndex,
                     )?.event;
+                    if(msg) {
                         messagePreviews.push({
                             url: preview.url,
                             chatId: preview.chatId,
@@ -1188,11 +1189,10 @@ export class OpenChatAgent extends EventTarget {
                 return {
                     ...ev,
                     event: {
-                    event: {
                         ...ev.event,
                         content: rehydratedContent,
                         repliesTo: rehydratedReplyContext ?? originalReplyContext,
-                        messagePreviews: messagePreviews.length > 0 ? messagePreviews : ev.event.messagePreviews,
+                        messagePreviews,
                     },
                 };
             }
