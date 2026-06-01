@@ -224,6 +224,7 @@ import {
     type NervousSystemDetails,
     type NewUnconfirmedMessage,
     type Notification,
+    type OgPreview,
     type OneSecForwardingStatus,
     type OneSecTransferFees,
     type OptionUpdate,
@@ -3793,7 +3794,7 @@ export class OpenChat {
             [],
             true,
             undefined,
-            msg.ogPreviews,
+            msg.ogPreviews.length > 0 ? Promise.resolve(msg.ogPreviews) : undefined,
         );
     }
 
@@ -3998,6 +3999,7 @@ export class OpenChat {
         message: NewUnconfirmedMessage,
         mentioned: User[] = [],
         retrying: boolean,
+        ogPreviewsPromise?: Promise<OgPreview[]>,
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
 
@@ -4029,6 +4031,21 @@ export class OpenChat {
 
             // add the *new* event to unconfirmed
             localUpdates.addUnconfirmed(messageContext, messageEvent);
+        }
+
+        // Fetch og previews lazily so the message appears in the UI immediately.
+        // We await here (after pushing to localUpdates) so the worker call still
+        // sends og_previews to the backend in the same request.
+        if (ogPreviewsPromise !== undefined) {
+            const ogPreviews = await ogPreviewsPromise;
+            if (ogPreviews.length > 0) {
+                messageEvent.event.ogPreviews = ogPreviews;
+                localUpdates.setUnconfirmedOgPreviews(
+                    messageContext,
+                    messageEvent.event.messageId,
+                    ogPreviews,
+                );
+            }
         }
 
         const canRetry = canRetryMessage(message.content);
@@ -4312,7 +4329,7 @@ export class OpenChat {
         mentioned: User[] = [],
         forwarded: boolean = false,
         messageIdIfRetrying?: bigint,
-        ogPreviews: Message["ogPreviews"] = [],
+        ogPreviewsPromise?: Promise<OgPreview[]>,
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
         const chat = allChatsStore.value.get(chatId);
@@ -4331,7 +4348,7 @@ export class OpenChat {
             repliesTo: draftMessage?.replyingTo,
             forwarded,
             blockLevelMarkdown,
-            ogPreviews,
+            ogPreviews: [], // This will get filled in later
         };
 
         return this.#sendMessageCommon(
@@ -4340,6 +4357,7 @@ export class OpenChat {
             msg,
             mentioned,
             messageIdIfRetrying !== undefined,
+            ogPreviewsPromise,
         );
     }
 
@@ -4361,7 +4379,7 @@ export class OpenChat {
             mentioned,
             false,
             undefined,
-            await fetchOgPreviews(extractEnabledLinks(textContent)),
+            fetchOgPreviews(extractEnabledLinks(textContent)),
         );
     }
 
@@ -4506,19 +4524,25 @@ export class OpenChat {
                     ? editingEvent.event.content
                     : undefined);
 
-            const msg = {
+            const msg: Message = {
                 ...editingEvent.event,
                 edited: true,
                 content: this.#getMessageContent(textContent ?? undefined, captioned),
-                ogPreviews: await fetchOgPreviews(extractEnabledLinks(textContent)),
+                ogPreviews: [], // This will get filled in asynchronously after local updates are set
             };
             const updatedBlockLevelMarkdown =
                 msg.blockLevelMarkdown === blockLevelMarkdown ? undefined : blockLevelMarkdown;
 
+            // Apply content update to local state immediately — don't block on og preview fetch.
             const undo = localUpdates.markMessageContentEdited(msg, updatedBlockLevelMarkdown);
             localUpdates.draftMessages.delete(messageContext);
 
             const newAchievement = !achievementsStore.value.has("edited_message");
+
+            // Fetch og previews in the background; content change is already visible in the UI.
+            const ogPreviews = await fetchOgPreviews(extractEnabledLinks(textContent));
+            msg.ogPreviews = ogPreviews;
+            const undoOgPreviews = localUpdates.setEditedOgPreviews(msg.messageId, ogPreviews);
 
             return this.#worker
                 .send({
@@ -4532,12 +4556,14 @@ export class OpenChat {
                 .then((resp) => {
                     if (resp.kind !== "success") {
                         undo();
+                        undoOgPreviews();
                         return false;
                     }
                     return true;
                 })
                 .catch(() => {
                     undo();
+                    undoOgPreviews();
                     return false;
                 });
         }

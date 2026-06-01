@@ -479,7 +479,7 @@ export class CommunityClient
                         message_id: message.messageId,
                         block_level_markdown: blockLevelMarkdown,
                         new_achievement: newAchievement,
-                        og_previews: message.ogPreviews?.map(apiOgPreview) ?? [],
+                        og_previews: message.ogPreviews.map(apiOgPreview),
                     },
                     unitResult,
                     CommunityEditMessageArgs,
@@ -953,7 +953,7 @@ export class CommunityClient
                 message_filter_failed: messageFilterFailed,
                 block_level_markdown: newEvent.event.blockLevelMarkdown,
                 new_achievement: newAchievement,
-                og_previews: newEvent.event.ogPreviews?.map(apiOgPreview) ?? [],
+                og_previews: newEvent.event.ogPreviews.map(apiOgPreview),
             };
             return this.update(
                 chatId.communityId,

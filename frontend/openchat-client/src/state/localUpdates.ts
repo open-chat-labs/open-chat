@@ -935,6 +935,37 @@ export class GlobalLocalState {
         );
     }
 
+    setEditedOgPreviews(messageId: bigint, ogPreviews: OgPreview[]): UndoLocalUpdate {
+        return this.#modifyMessageUpdates(
+            messageId,
+            (upd) => {
+                upd.ogPreviews = ogPreviews;
+                return (upd) => {
+                    upd.ogPreviews = undefined;
+                    return upd;
+                };
+            },
+            "setEditedOgPreviews",
+        );
+    }
+
+    setUnconfirmedOgPreviews(key: MessageContext, messageId: bigint, ogPreviews: OgPreview[]) {
+        this.#unconfirmed.update((map) => {
+            const state = map.get(key);
+            if (state) {
+                const msg = state.get(messageId);
+                if (msg) {
+                    state.set(messageId, {
+                        ...msg,
+                        event: { ...msg.event, ogPreviews },
+                    });
+                    map.set(key, state);
+                }
+            }
+            return map;
+        });
+    }
+
     markReaction(messageId: bigint, reaction: LocalReaction) {
         return this.#modifyMessageUpdates(
             messageId,

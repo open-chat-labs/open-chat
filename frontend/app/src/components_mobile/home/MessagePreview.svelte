@@ -70,7 +70,7 @@
                       $selectedCommunityMembersStore,
                       $selectedChatWebhooksStore,
                   ),
-            ogPreviews: message.ogPreviews ?? [],
+            ogPreviews: message.ogPreviews,
         };
     }
 

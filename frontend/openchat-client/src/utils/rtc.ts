@@ -159,7 +159,7 @@ export function parseWebRtcMessage(chatId: ChatIdentifier, msg: WebRtcMessage): 
                 ...msg.message,
                 messageId: toBigInt64(msg.message.messageId),
                 timestamp: BigInt(Date.now()),
-                ogPreviews: msg.message.ogPreviews ?? [],
+                ogPreviews: msg.message.ogPreviews,
             },
         };
     }

@@ -799,7 +799,7 @@ export type Message<T extends MessageContent = MessageContent> = {
     thread?: ThreadSummary;
     blockLevelMarkdown: boolean;
     senderContext?: SenderContext;
-    ogPreviews?: OgPreview[];
+    ogPreviews: OgPreview[];
 };
 
 export type BotContextCommand = {

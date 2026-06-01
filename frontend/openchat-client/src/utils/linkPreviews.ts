@@ -35,7 +35,6 @@ export function extractEnabledLinks(text?: string): string[] {
 }
 
 export function removeOpenGraphPreviews(msg: Message, urls: string[]): Message {
-    if (msg.ogPreviews === undefined) return msg;
     return {
         ...msg,
         ogPreviews: msg.ogPreviews.filter((p) => !urls.find((u) => p.url === u)),
