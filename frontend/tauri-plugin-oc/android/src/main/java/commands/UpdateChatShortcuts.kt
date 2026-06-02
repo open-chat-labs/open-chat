@@ -81,9 +81,7 @@ class UpdateChatShortcuts(private val activity: Activity) {
     // share sheet. We put the chat id under our own extra (not EXTRA_SHORTCUT_ID,
     // which Android overwrites with the shortcut's full id "share_<chatId>").
     private fun buildShareIntent(chatId: String): Intent {
-        val packageName = activity.packageName
-        val mainActivityClass = Class.forName("$packageName.MainActivity")
-        return Intent(activity, mainActivityClass).apply {
+        return Intent(activity, activity::class.java).apply {
             action = Intent.ACTION_SEND
             type = "*/*"
             putExtra(EXTRA_CHAT_ID, chatId)
