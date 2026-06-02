@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.Parcelable
 import android.provider.OpenableColumns
 import android.util.Log
@@ -22,12 +24,20 @@ object ShareIntentManager {
     private const val MAX_CACHED_SHARE_AGE_MS = 24L * 60 * 60 * 1000
 
     // Returns true if the intent was a share intent (handled), false otherwise.
+    // Caller is typically MainActivity.onCreate / onNewIntent (UI thread); the
+    // intent-shape inspection happens synchronously so the bool is accurate,
+    // but the file copy and event dispatch are moved to a background thread —
+    // a multi-MB shared video would otherwise jank the activity launch and
+    // risk an ANR on slower devices.
     fun handle(context: Context, intent: Intent): Boolean {
         val action = intent.action ?: return false
         if (action != Intent.ACTION_SEND && action != Intent.ACTION_SEND_MULTIPLE) {
             return false
         }
 
+        // Snapshot everything we need off the intent on the calling thread.
+        // Intents shouldn't be mutated after delivery in practice, but reading
+        // extras off-thread risks tripping over Bundle's internal lazy unparcel.
         val mimeType = intent.type ?: "*/*"
         val text = intent.getStringExtra(Intent.EXTRA_TEXT)
         // Prefer our custom extra (set explicitly on the shortcut's intent
@@ -40,7 +50,6 @@ object ShareIntentManager {
                     sid.removePrefix(SHARE_SHORTCUT_ID_PREFIX)
                 else null
             }
-
         val uris: List<Uri> = when (action) {
             Intent.ACTION_SEND -> {
                 val uri = getParcelableExtraCompat(intent, Intent.EXTRA_STREAM, Uri::class.java)
@@ -52,19 +61,38 @@ object ShareIntentManager {
             }
             else -> emptyList()
         }
+        val appContext = context.applicationContext
 
-        // Copy each URI to app cache so the temporary read grant (tied to the
-        // source activity) can't expire while the user is composing.
-        val files = uris.mapNotNull { copyToCache(context, it) }
+        Thread {
+            // Copy each URI to app cache so the source app's temporary read
+            // grant can't expire while the user is composing.
+            val files = uris.mapNotNull { copyToCache(appContext, it) }
 
-        val payload = JSObject()
-            .put("mimeType", mimeType)
-            .put("text", text)
-            .put("shortcutId", shortcutId)
-            .put("files", JSArray().apply { files.forEach { put(it.toJSObject()) } })
+            val payload = JSObject()
+                .put("mimeType", mimeType)
+                .put("text", text)
+                .put("shortcutId", shortcutId)
+                .put("files", JSArray().apply { files.forEach { put(it.toJSObject()) } })
 
-        Log.d(LOG_TAG, "Share intent received: $payload")
-        OCPluginCompanion.triggerRef(SHARE_EVENT, payload)
+            // Stats-only log, debug builds only — the raw payload contains
+            // arbitrary user-shared text and file paths we shouldn't ship
+            // into logcat on release devices.
+            if (BuildConfig.DEBUG) {
+                Log.d(
+                    LOG_TAG,
+                    "Share intent received: mime=$mimeType, files=${files.size}, hasText=${text != null}, hasShortcutId=${shortcutId != null}",
+                )
+            }
+
+            // triggerRef either dispatches via Tauri's plugin.trigger (which
+            // expects the main thread for the JS side) or appends to
+            // eventQueue (a plain MutableList that flushQueuedEvents iterates
+            // on the main thread). Either path wants the main thread.
+            Handler(Looper.getMainLooper()).post {
+                OCPluginCompanion.triggerRef(SHARE_EVENT, payload)
+            }
+        }.start()
+
         return true
     }
 
