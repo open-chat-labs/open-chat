@@ -1,7 +1,7 @@
 <script lang="ts">
     import Markdown from "@shared_components/Markdown.svelte";
     import { ChatCaption, ChatText, Column } from "component-lib";
-    import type { OgPreview, TextContent } from "openchat-client";
+    import type { OgPreview, RehydratedMessagePreview, TextContent } from "openchat-client";
     import { type Snippet } from "svelte";
     import { lowBandwidth } from "../../stores/settings";
     import IntersectionObserver from "./IntersectionObserver.svelte";
@@ -21,6 +21,7 @@
         suppressLinks?: boolean;
         onRemovePreview?: (url: string) => void;
         ogPreviews?: OgPreview[];
+        messagePreviews?: RehydratedMessagePreview[];
     }
 
     let {
@@ -35,6 +36,7 @@
         suppressLinks = false,
         onRemovePreview,
         ogPreviews = [],
+        messagePreviews = [],
     }: Props = $props();
 
     let textContent = $derived<TextContent | undefined>("kind" in content ? content : undefined);
@@ -50,9 +52,9 @@
     contextId="scrollable-messages-div">
     {#snippet children(intersecting)}
         <LinkPreviews
-            text={text ?? ""}
             {me}
             {ogPreviews}
+            {messagePreviews}
             {intersecting}
             onRemove={onRemovePreview} />
     {/snippet}

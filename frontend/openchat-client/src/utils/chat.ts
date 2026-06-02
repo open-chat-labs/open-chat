@@ -297,6 +297,7 @@ export function createMessage(
             blockLevelMarkdown: message.blockLevelMarkdown,
             senderContext: message.senderContext,
             ogPreviews: message.ogPreviews,
+            messagePreviews: [],
         },
         timestamp: message.timestamp,
         index: eventIndex,

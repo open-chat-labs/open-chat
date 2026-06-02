@@ -800,6 +800,7 @@ export type Message<T extends MessageContent = MessageContent> = {
     blockLevelMarkdown: boolean;
     senderContext?: SenderContext;
     ogPreviews: OgPreview[];
+    messagePreviews: RehydratedMessagePreview[];
 };
 
 export type BotContextCommand = {
@@ -2552,6 +2553,13 @@ export type MessagePreview = LinkPreviewBase & {
     chatId: MultiUserChatIdentifier;
     threadRootMessageIndex: number | undefined;
     messageIndex: number;
+};
+
+export type RehydratedMessagePreview = {
+    url: string;
+    chatId: MultiUserChatIdentifier;
+    threadRootMessageIndex: number | undefined;
+    message: Omit<Message, "messagePreviews">;
 };
 
 export type GenericPreview = LinkPreviewBase & {
