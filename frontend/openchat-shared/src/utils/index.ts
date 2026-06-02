@@ -10,6 +10,7 @@ export * from "./identity";
 export * from "./identityStorage";
 export * from "./immutable";
 export * from "./lazy";
+export * from "./linkPreviews";
 export * from "./logging";
 export * from "./map";
 export * from "./mime";
