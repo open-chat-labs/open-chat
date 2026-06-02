@@ -152,6 +152,16 @@ describe("extractEnabledLinks", () => {
         expect(result).toHaveLength(0);
     });
 
+    test("does not count filtered OC message URLs towards the limit", () => {
+        const text = [
+            "https://oc.app/group/mygroup/1",
+            "https://oc.app/group/mygroup/2",
+            "https://oc.app/group/mygroup/3",
+            "https://example.com",
+        ].join(" ");
+        expect(extractEnabledLinks(text)).toEqual(["https://example.com"]);
+    });
+
     test("strips LINK_REMOVED suffix", () => {
         const result = extractEnabledLinks("https://example.com#LINK_REMOVED");
         expect(result).toContain("https://example.com");
