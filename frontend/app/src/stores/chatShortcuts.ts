@@ -91,3 +91,16 @@ export function startChatShortcutPusher(client: OpenChat): () => void {
         );
     });
 }
+
+/**
+ * Clear all Direct Share chat shortcuts. Used on logout so the previous
+ * user's chats don't sit on the system share sheet until the next user's
+ * chat list hydrates. Fire-and-forget: the JS context typically dies right
+ * after this (logout reloads the page), but the native Kotlin side keeps
+ * running and will process the IPC regardless.
+ */
+export function clearChatShortcuts(): void {
+    updateChatShortcuts({ chats: [] }).catch((err) =>
+        console.error("Failed to clear chat shortcuts", err),
+    );
+}

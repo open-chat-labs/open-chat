@@ -34,6 +34,10 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
 
         // Init FCM token cache, have it populated with a token!
         OCPluginCompanion.initFcmTokenCache()
+
+        // Sweep shared files older than 24h out of the app cache. Runs on a
+        // background thread, so this doesn't block the activity launch.
+        ShareIntentManager.cleanupStaleShares(activity)
     }
 
     @Command

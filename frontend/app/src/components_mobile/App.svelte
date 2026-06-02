@@ -40,7 +40,7 @@
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import { _, isLoading } from "svelte-i18n";
     import { getFcmToken, svelteReady } from "tauri-plugin-oc-api";
-    import { startChatShortcutPusher } from "@stores/chatShortcuts";
+    import { clearChatShortcuts, startChatShortcutPusher } from "@stores/chatShortcuts";
     import Head from "./Head.svelte";
     import NotificationsBar from "./home/NotificationsBar.svelte";
     import ActiveCall from "./home/video/ActiveCall.svelte";
@@ -273,6 +273,7 @@
             (ev.reason?.name === "SessionExpiryError" ||
                 ev.reason?.name === "InvalidDelegationError")
         ) {
+            if (client.isNativeApp()) clearChatShortcuts();
             client.logout();
             ev.preventDefault();
         }

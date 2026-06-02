@@ -15,6 +15,11 @@ object ShareIntentManager {
 
     private const val SHARE_EVENT = "share-target"
     private const val CACHE_SUBDIR = "shares"
+    // Cached shared files live until either (a) they are consumed by the
+    // composer and uploaded, or (b) the user abandons the share. We keep
+    // them around for a day so users who get distracted mid-share can come
+    // back, but no longer — otherwise the directory grows unboundedly.
+    private const val MAX_CACHED_SHARE_AGE_MS = 24L * 60 * 60 * 1000
 
     // Returns true if the intent was a share intent (handled), false otherwise.
     fun handle(context: Context, intent: Intent): Boolean {
@@ -61,6 +66,28 @@ object ShareIntentManager {
         Log.d(LOG_TAG, "Share intent received: $payload")
         OCPluginCompanion.triggerRef(SHARE_EVENT, payload)
         return true
+    }
+
+    // Sweep stale files out of the shares cache directory. Safe to call on
+    // any thread; runs the actual I/O in a background thread so the caller
+    // (typically the plugin's load() callback) doesn't block.
+    fun cleanupStaleShares(context: Context) {
+        Thread {
+            try {
+                val cacheRoot = File(context.cacheDir, CACHE_SUBDIR)
+                if (!cacheRoot.isDirectory) return@Thread
+                val threshold = System.currentTimeMillis() - MAX_CACHED_SHARE_AGE_MS
+                cacheRoot.listFiles()?.forEach { file ->
+                    if (file.isFile && file.lastModified() < threshold) {
+                        if (!file.delete()) {
+                            Log.w(LOG_TAG, "Could not delete stale shared file: ${file.name}")
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(LOG_TAG, "Failed to clean stale shared files", e)
+            }
+        }.start()
     }
 
     private data class CachedFile(
