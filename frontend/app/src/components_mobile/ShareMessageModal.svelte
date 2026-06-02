@@ -51,7 +51,7 @@
             client
                 .messageContentFromFile(firstFile)
                 .then((content) => localUpdates.draftMessages.setAttachment({ chatId }, content))
-                .catch((err) => toastStore.showFailureToast(i18nKey(String(err))));
+                .catch((err) => toastStore.showFailureToast(i18nKey(err)));
         }
 
         onShare(chatId);
