@@ -31,7 +31,7 @@ export function stripLinkDisabledMarker(text: string): string {
 }
 
 export function extractEnabledLinks(text?: string): string[] {
-    return text ? extractLinkUrls(text) : [];
+    return text ? extractLinkUrls(text).filter((url) => classifyUrl(url) === undefined) : [];
 }
 
 export function removeOpenGraphPreviews(msg: Message, urls: string[]): Message {
