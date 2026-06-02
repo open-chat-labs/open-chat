@@ -1,4 +1,5 @@
 import { addPluginListener, convertFileSrc, type PluginListener } from "@tauri-apps/api/core";
+import { pendingShareStore } from "@stores/pendingShare";
 import {
     type ChatIdentifier,
     LazyFile,
@@ -6,7 +7,6 @@ import {
     localUpdates,
     OpenChat,
     pageNavigate,
-    publish,
     routeForChatIdentifier,
 } from "openchat-client";
 import { get } from "svelte/store";
@@ -165,5 +165,8 @@ export function handleShareTarget(client: OpenChat, shareTarget: ShareTarget): v
         url: undefined,
         files: files as unknown as File[],
     };
-    publish("shareMessage", share);
+    // Use a writable store rather than publish() so cold-start shares that
+    // arrive before SlidingModals has subscribed don't get dropped. The
+    // store retains the value; SlidingModals reads it on mount.
+    pendingShareStore.set(share);
 }

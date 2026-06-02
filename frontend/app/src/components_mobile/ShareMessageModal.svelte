@@ -1,7 +1,6 @@
 <script lang="ts">
     import type { ChatIdentifier, OpenChat } from "openchat-client";
-    import { chatListScopeStore, localUpdates, routeForChatIdentifier } from "openchat-client";
-    import page from "page";
+    import { localUpdates } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../i18n/i18n";
     import type { Share } from "../utils/share";
@@ -10,10 +9,19 @@
 
     interface Props {
         share: Share;
+        /** Called when the user backs out of the picker without choosing a chat. */
         onClose: () => void;
+        /**
+         * Called when the user has picked a chat. The caller is responsible
+         * for both closing the modal *and* navigating to the chat — keeping
+         * those atomic from the caller's side avoids the popstate race that
+         * arises if the modal calls onClose (history.back) and then tries
+         * to navigate independently.
+         */
+        onShare: (chatId: ChatIdentifier) => void;
     }
 
-    let { onClose, share }: Props = $props();
+    let { onClose, onShare, share }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -46,12 +54,7 @@
                 .catch((err) => toastStore.showFailureToast(i18nKey(String(err))));
         }
 
-        // onClose() calls history.back() to consume the dummy history entry
-        // the sliding modal pushed when it opened. Navigating before that
-        // back() settles makes the back() rewind past our new route, so we
-        // defer the page() until after popstate has fired.
-        onClose();
-        setTimeout(() => page(routeForChatIdentifier($chatListScopeStore.kind, chatId)));
+        onShare(chatId);
     }
 </script>
 
