@@ -107,6 +107,14 @@ pub(crate) async fn disable_viewport_resize<R: Runtime>(app: AppHandle<R>) -> Re
     app.oc().toggle_viewport_resize(false)
 }
 
+#[command]
+pub(crate) async fn update_chat_shortcuts<R: Runtime>(
+    app: AppHandle<R>,
+    payload: UpdateChatShortcutsRequest,
+) -> Result<UpdateChatShortcutsResponse> {
+    app.oc().update_chat_shortcuts(payload)
+}
+
 // This command is only used to save files to local public storage.
 //
 // Note: this command is not handled by kotlin code.

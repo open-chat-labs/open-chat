@@ -1,6 +1,6 @@
 import type { EventWrapper, Message } from "openchat-shared";
 
-export const MAX_LINK_PREVIEWS = 3;
+const MAX_LINK_PREVIEWS = 3;
 
 // Originally taken from here - https://stackoverflow.com/a/6041965
 const URL_REGEX = new RegExp(

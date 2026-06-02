@@ -1,6 +1,6 @@
 <script lang="ts">
     import Markdown from "@shared_components/Markdown.svelte";
-    import type { OgPreview, TextContent } from "openchat-client";
+    import type { OgPreview, RehydratedMessagePreview, TextContent } from "openchat-client";
     import { _ } from "svelte-i18n";
     import IntersectionObserver from "./IntersectionObserver.svelte";
     import LinkPreviews from "./LinkPreviews.svelte";
@@ -17,6 +17,7 @@
         blockLevelMarkdown: boolean;
         onRemovePreview?: (url: string) => void;
         ogPreviews?: OgPreview[];
+        messagePreviews?: RehydratedMessagePreview[];
     }
 
     let {
@@ -29,6 +30,7 @@
         blockLevelMarkdown,
         onRemovePreview,
         ogPreviews = [],
+        messagePreviews = [],
     }: Props = $props();
 
     function truncateText(text: string): string {
@@ -46,11 +48,11 @@
 <IntersectionObserver unobserveOnIntersect={false}>
     {#snippet children(intersecting)}
         <LinkPreviews
-            text={content.text}
             {me}
             {pinned}
             {fill}
             {ogPreviews}
+            {messagePreviews}
             {intersecting}
             onRemove={onRemovePreview} />
     {/snippet}

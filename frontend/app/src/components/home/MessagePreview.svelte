@@ -1,142 +1,92 @@
 <script lang="ts">
-    import { trackedEffect } from "@src/utils/effects.svelte";
     import {
         allUsersStore,
         AvatarSize,
         currentUserIdStore,
-        eventListScrolling,
-        isSuccessfulEventsResponse,
         OpenChat,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
-        type MessageContent,
-        type MultiUserChatIdentifier,
-        type OgPreview,
+        type RehydratedMessagePreview,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Avatar from "../Avatar.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
 
-    type Preview = {
-        content: MessageContent;
-        senderId: string;
-        me: boolean;
-        messageId: bigint;
-        edited: boolean;
-        displayName: string;
-        ogPreviews: OgPreview[];
-    };
-
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        url: string;
-        chatId: MultiUserChatIdentifier;
-        threadRootMessageIndex: number | undefined;
-        messageIndex: number;
+        preview: RehydratedMessagePreview;
         intersecting: boolean;
-        onRendered?: (url: string) => void;
     }
 
-    const { url, chatId, threadRootMessageIndex, messageIndex, intersecting, onRendered }: Props =
-        $props();
+    const { preview, intersecting }: Props = $props();
 
-    let previewPromise: Promise<Preview | undefined> | undefined = $state();
-    let rendered = $state(false);
-
-    async function loadPreview(): Promise<Preview | undefined> {
-        const result = await client.getMessagesByMessageIndex(chatId, threadRootMessageIndex, [
-            messageIndex,
-        ]);
-
-        if (!isSuccessfulEventsResponse(result)) {
-            return;
-        }
-
-        const message = result.events[0].event;
-        const me = message.sender === $currentUserIdStore;
-
-        return {
-            content: message.content,
-            senderId: message.sender,
-            me,
-            messageId: message.messageId,
-            edited: message.edited,
-            displayName: me
-                ? client.toTitleCase($_("you"))
-                : client.getDisplayName(
-                      message.sender,
-                      $selectedCommunityMembersStore,
-                      $selectedChatWebhooksStore,
-                  ),
-            ogPreviews: message.ogPreviews,
-        };
-    }
-
-    trackedEffect("message-preview", () => {
-        // make sure we only actually *load* the preview once
-        previewPromise = previewPromise ?? loadPreview();
-        previewPromise.then((preview) => {
-            if (preview && intersecting && !$eventListScrolling) {
-                rendered = true;
-                onRendered?.(url);
-            }
-        });
-    });
+    let me = $derived(preview.message.sender === $currentUserIdStore);
+    let displayName = $derived(
+        me
+            ? client.toTitleCase($_("you"))
+            : client.getDisplayName(
+                  preview.message.sender,
+                  $selectedCommunityMembersStore,
+                  $selectedChatWebhooksStore,
+              ),
+    );
 </script>
 
-{#if rendered}
-    {#await previewPromise then preview}
-        {#if preview}
-            <a href={url}>
-                <div
-                    class="wrapper"
-                    class:me={preview.me}
-                    class:p2pSwap={preview.content.kind === "p2p_swap_content"}>
-                    <div class="title">
-                        <Avatar
-                            url={client.userAvatarUrl($allUsersStore.get(preview.senderId))}
-                            userId={preview.senderId}
-                            size={AvatarSize.Tiny} />
-                        <h4
-                            class="username"
-                            class:text-content={preview.content.kind === "text_content"}>
-                            {preview.displayName}
-                        </h4>
-                    </div>
-                    <div class="inert">
-                        <ChatMessageContent
-                            me={preview.me}
-                            readonly
-                            messageContext={{
-                                chatId,
-                                threadRootMessageIndex,
-                            }}
-                            {intersecting}
-                            messageId={preview.messageId}
-                            {messageIndex}
-                            senderId={preview.senderId}
-                            edited={preview.edited}
-                            fill={false}
-                            failed={false}
-                            blockLevelMarkdown
-                            truncate
-                            reply
-                            content={preview.content}
-                            ogPreviews={preview.ogPreviews} />
-                    </div>
-                </div>
-            </a>
-        {/if}
-    {/await}
-{/if}
+<a href={preview.url}>
+    <div
+        class="wrapper"
+        class:me
+        class:p2pSwap={preview.message.content.kind === "p2p_swap_content"}>
+        <div class="title">
+            <Avatar
+                url={client.userAvatarUrl($allUsersStore.get(preview.message.sender))}
+                userId={preview.message.sender}
+                size={AvatarSize.Tiny} />
+            <h4
+                class="username"
+                class:text-content={preview.message.content.kind === "text_content"}>
+                {displayName}
+            </h4>
+        </div>
+        <div class="inert">
+            <ChatMessageContent
+                {me}
+                readonly
+                messageContext={{
+                    chatId: preview.chatId,
+                    threadRootMessageIndex: preview.threadRootMessageIndex,
+                }}
+                {intersecting}
+                messageId={preview.message.messageId}
+                messageIndex={preview.message.messageIndex}
+                senderId={preview.message.sender}
+                edited={preview.message.edited}
+                fill={false}
+                failed={false}
+                blockLevelMarkdown
+                truncate
+                reply
+                content={preview.message.content}
+                ogPreviews={preview.message.ogPreviews} />
+        </div>
+    </div>
+</a>
 
 <style lang="scss">
     .wrapper {
+        padding: $sp3;
+        border-radius: $sp3;
+        background-color: color-mix(in srgb, var(--currentChat-msg-bg), black 15%);
         overflow: hidden;
         @include nice-scrollbar();
         max-height: 300px;
+        margin-bottom: $sp2;
+
+        &.me {
+            background-color: color-mix(in srgb, var(--currentChat-msg-me-bg), black 15%);
+        }
 
         .inert {
             pointer-events: none;
