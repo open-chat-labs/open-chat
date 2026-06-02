@@ -39,7 +39,6 @@
 
 {#each messagePreviews as p (p.url)}
     <div class="preview" class:me>
-        {@render remove(p.url)}
         <div class="inner" class:me>
             <MessagePreviewComponent preview={p} {intersecting} />
         </div>

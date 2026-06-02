@@ -31,7 +31,7 @@ export function stripLinkDisabledMarker(text: string): string {
 }
 
 export function extractEnabledLinks(text?: string): string[] {
-    return text ? extractLinkUrls(text).filter((url) => classifyUrl(url) === undefined) : [];
+    return text ? extractLinkUrls(text).filter((url) => !localUrl(url)) : [];
 }
 
 export function removeOpenGraphPreviews(msg: Message, urls: string[]): Message {
@@ -146,6 +146,21 @@ export function classifyUrl(url: string): LinkPreview | undefined {
     }
 }
 
+function localUrl(url: string | URL): boolean {
+    if (typeof url === "string") {
+        try {
+            url = new URL(url);
+        } catch {
+            return false;
+        }
+    }
+    return (
+        url.hostname === "oc.app" ||
+        url.hostname.endsWith(".oc.app") ||
+        url.hostname === "localhost"
+    );
+}
+
 function parseMessageUrl(urlText: string): MessagePreview | undefined {
     let url: URL;
     try {
@@ -153,11 +168,8 @@ function parseMessageUrl(urlText: string): MessagePreview | undefined {
     } catch {
         return;
     }
-    if (
-        url.hostname !== "oc.app" &&
-        !url.hostname.endsWith(".oc.app") &&
-        url.hostname !== "localhost"
-    ) {
+
+    if (!localUrl(url)) {
         return;
     }
 
