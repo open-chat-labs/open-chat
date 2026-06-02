@@ -116,11 +116,15 @@ export async function stripMetaDataAndResize(
     bitmap: ImageBitmap,
 ): Promise<MediaExtract> {
     // Directly create bitmap from the File (works on web + Tauri, no tainting)
+    // skipDataUrl: the caller (handleImageFile) only reads .data from the
+    // result — the data URL would be a full second JPEG encode of the same
+    // 1500x1500 canvas, used by no one.
     const result = await changeDimensions(
         bitmap,
         file.type,
         dimensions(bitmap.width, bitmap.height),
         MAX_DIMENSIONS,
+        true,
     );
 
     // Free memory as soon as we're done with the bitmap
@@ -133,6 +137,7 @@ export async function changeDimensions(
     mimeType: string,
     originalDimensions: Dimensions,
     newDimensions: Dimensions = THUMBNAIL_DIMS,
+    skipDataUrl: boolean = false,
 ): Promise<MediaExtract> {
     const { width, height } = scaleToFit(originalDimensions, newDimensions);
     const canvas = document.createElement("canvas");
@@ -144,25 +149,40 @@ export async function changeDimensions(
 
     const resultMimeType = mimeType === "image/jpeg" ? "image/jpeg" : "image/png";
 
-    const blob = await new Promise<Blob | null>((resolve) => {
-        canvas.toBlob(resolve, resultMimeType, DEFAULT_JPEG_QUALITY);
-    });
-
-    if (!blob) {
-        throw new Error("Failed to create blob from canvas");
-    }
-
-    const arrayBuffer = await blob.arrayBuffer();
+    // We deliberately avoid canvas.toBlob: on Samsung's release WebView its
+    // async callback pipeline takes ~4s per call regardless of canvas size,
+    // while synchronous canvas.toDataURL on the same canvas returns in
+    // milliseconds. We encode once via toDataURL and recover the raw bytes
+    // by base64-decoding the data: URL with atob — fetch(dataUrl) would be
+    // simpler but Tauri's default CSP blocks data: URLs in connect-src.
+    const url = canvas.toDataURL(resultMimeType, DEFAULT_JPEG_QUALITY);
+    const arrayBuffer = dataUrlToArrayBuffer(url);
 
     return {
         dimensions: originalDimensions,
-        url: canvas.toDataURL(resultMimeType, DEFAULT_JPEG_QUALITY),
+        // skipDataUrl avoids retaining the (potentially MB-sized) base64
+        // string on the resize path, where the caller only reads .data.
+        url: skipDataUrl ? "" : url,
         data: arrayBuffer,
     };
 }
 
+function dataUrlToArrayBuffer(dataUrl: string): ArrayBuffer {
+    const commaIdx = dataUrl.indexOf(",");
+    if (commaIdx < 0) throw new Error("Malformed data URL");
+    const binaryString = atob(dataUrl.slice(commaIdx + 1));
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
+
 type MediaExtract = {
     dimensions: Dimensions;
+    /** Data URL of the encoded canvas. Empty string when the caller passed
+     *  skipDataUrl=true on changeDimensions — that opt-out path doesn't
+     *  read it and skipping the retention saves the base64 string memory. */
     url: string;
     data: ArrayBuffer;
 };
@@ -277,7 +297,7 @@ async function handleImageFile(
     maxSizes: MaxMediaSizes,
     mediaType: MediaType,
 ): Promise<AttachmentContent> {
-    const isGif = mediaType === "gif";
+    // const isGif = mediaType === "gif";
     const isSvg = mediaType === "svg";
 
     let thumbnailData: string; // data URL for the thumbnail
@@ -305,11 +325,18 @@ async function handleImageFile(
         thumbWidth = thumbnail.dimensions.width;
         thumbHeight = thumbnail.dimensions.height;
 
-        // Reuse the same bitmap for resizing
-        originalData =
-            !isGif || file.size > maxSizes.image
-                ? (await stripMetaDataAndResize(file, bitmap)).data
-                : await file.arrayBuffer();
+        // Only re-encode when the image truly needs it. Re-encoding an
+        // already-small image just to strip EXIF would force every share
+        // through canvas, which is a few hundred ms even on the fast path.
+        // Gate on file size (the actual upload ceiling) with a high
+        // pixel-dimension safety net for pathological "tiny file, enormous
+        // bitmap" cases that would blow up receiver memory on decode.
+        const needsResize =
+            file.size > maxSizes.image || bitmap.width > 5000 || bitmap.height > 5000;
+
+        originalData = needsResize
+            ? (await stripMetaDataAndResize(file, bitmap)).data
+            : await file.arrayBuffer();
 
         bitmap.close();
     }
@@ -398,7 +425,16 @@ export async function messageContentFromFile(
     const dataSizeInBytes = file.size;
     const mediaType = mimeToMediaType(file.type);
     const maxSizes = isDiamond ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
-    const f: File = file instanceof LazyFile ? await file.load() : file;
+    let f: File = file instanceof LazyFile ? await file.load() : file;
+    // For the real-File path (system file picker / drag-drop) the File is
+    // backed by the underlying file on disk and its bytes are read lazily.
+    // Force the bytes into the JS heap up-front by re-wrapping the File
+    // around an ArrayBuffer. The LazyFile path already does this inside
+    // load(), so we only need to materialise non-LazyFile sources.
+    if (!(file instanceof LazyFile)) {
+        const bytes = await f.arrayBuffer();
+        f = new File([bytes], f.name, { type: f.type });
+    }
 
     switch (mediaType) {
         case "image":
