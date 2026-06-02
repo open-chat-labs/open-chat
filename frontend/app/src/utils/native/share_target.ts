@@ -159,6 +159,14 @@ export function handleShareTarget(client: OpenChat, shareTarget: ShareTarget): v
             f.size,
         ),
     );
+    // Share.files is typed File[] because its other consumer is the Web
+    // Share API (navigator.share), which genuinely requires DOM File.
+    // Here we hand it LazyFile instead — strictly an unsound cast, but
+    // safe in practice: the only downstream consumer of Share.files via
+    // this code path is messageContentFromFile, which accepts File | LazyFile.
+    // If a future caller of Share.files starts calling File-specific methods
+    // (slice, stream, text, etc.) on items from a share-target payload, this
+    // cast will need revisiting — probably by splitting the type.
     const share: Share = {
         title: undefined,
         text: text.length > 0 ? text : undefined,
