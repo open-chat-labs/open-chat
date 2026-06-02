@@ -76,17 +76,6 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 }),
             );
         }
-        LocalUserIndexEvent::OpenChatBotMessage(ev) => {
-            state.push_event_to_local_user_index(
-                ev.user_id,
-                UserIndexEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
-                    user_id: ev.user_id,
-                    thread_root_message_id: None,
-                    content: ev.message.into(),
-                    mentioned: Vec::new(),
-                })),
-            );
-        }
         LocalUserIndexEvent::OpenChatBotMessageV2(ev) => {
             state.push_event_to_local_user_index(
                 ev.user_id,

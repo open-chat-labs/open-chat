@@ -1,9 +1,9 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
-    BotInstallationLocation, BotPermissions, CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, MessageContent,
-    MessageContentInitial, MessageId, MessageIndex, NotifyChit, PremiumItemPurchase, StreakInsuranceClaim,
-    StreakInsurancePayment, TimestampMillis, UniquePersonProof, User, UserId,
+    BotInstallationLocation, BotPermissions, CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, MessageContentInitial,
+    MessageId, MessageIndex, NotifyChit, PremiumItemPurchase, StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis,
+    UniquePersonProof, User, UserId,
 };
 
 mod lifecycle;
@@ -19,7 +19,6 @@ pub enum LocalUserIndexEvent {
     UserRegistered(Box<UserRegistered>),
     UserJoinedGroup(Box<UserJoinedGroup>),
     UserJoinedCommunityOrChannel(Box<UserJoinedCommunityOrChannel>),
-    OpenChatBotMessage(Box<OpenChatBotMessage>),
     OpenChatBotMessageV2(Box<OpenChatBotMessageV2>),
     UserSetProfileBackground(Box<(UserId, Option<u128>)>),
     NotifyUniquePersonProof(Box<(UserId, UniquePersonProof)>),
@@ -67,12 +66,6 @@ pub struct UserJoinedCommunityOrChannel {
 pub struct JoinUserToGroup {
     pub user_id: UserId,
     pub chat_id: ChatId,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct OpenChatBotMessage {
-    pub user_id: UserId,
-    pub message: MessageContent,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
