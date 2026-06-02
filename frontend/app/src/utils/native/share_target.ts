@@ -120,7 +120,7 @@ export function shareToChat(
             firstFile.size,
         );
         client
-            .messageContentFromFile(lazy as unknown as File)
+            .messageContentFromFile(lazy)
             .then((content) => localUpdates.draftMessages.setAttachment({ chatId }, content))
             .catch((err) => console.error("Failed to attach shared file", err));
     }
