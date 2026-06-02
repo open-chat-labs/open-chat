@@ -15,5 +15,11 @@ export {
 export { saveMediaToDevice, type SaveMediaRequest } from "./commands/saveMedia";
 export { enableViewportResize } from "./commands/enableViewportResize";
 export { disableViewportResize } from "./commands/disableViewportResize";
+export {
+    updateChatShortcuts,
+    type ChatShortcut,
+    type UpdateChatShortcutsRequest,
+    type UpdateChatShortcutsResponse,
+} from "./commands/updateChatShortcuts";
 export * from "./models/credentials";
 export * from "./models/error";

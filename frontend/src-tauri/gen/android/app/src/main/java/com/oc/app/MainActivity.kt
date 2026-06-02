@@ -20,6 +20,7 @@ import app.tauri.plugin.JSObject
 import com.ocplugin.app.LOG_TAG
 import com.ocplugin.app.NotificationsManager
 import com.ocplugin.app.OCPluginCompanion
+import com.ocplugin.app.ShareIntentManager
 import kotlinx.coroutines.launch
 
 class MainActivity : TauriActivity() {
@@ -33,6 +34,7 @@ class MainActivity : TauriActivity() {
         try {
             handleWindowInsets()
             handleNotificationIntent(intent)
+            ShareIntentManager.handle(this, intent)
         } catch (e: Exception) {
             Log.e(LOG_TAG, "Error occurred $e")
         }
@@ -51,6 +53,7 @@ class MainActivity : TauriActivity() {
         super.onNewIntent(intent)
         try {
             handleNotificationIntent(intent)
+            ShareIntentManager.handle(this, intent)
         } catch (e: Exception) {
             Log.e(LOG_TAG, "Error occurred $e")
         }

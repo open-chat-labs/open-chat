@@ -5,8 +5,11 @@
     import { removeQueryStringParam, stripThreadFromUrl } from "@src/utils/urls";
     import { portalState } from "component-lib";
     import {
+        chatListScopeStore,
+        type ChatIdentifier,
         OpenChat,
         pageReplace,
+        routeForChatIdentifier,
         selectedChatMembersStore,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
@@ -38,6 +41,7 @@
     import { getContext, onMount } from "svelte";
     import { minimizeApp } from "tauri-plugin-oc-api";
     import { expectBackPress } from "../../utils/native/notification_channels";
+    import { pendingShareStore } from "@stores/pendingShare";
     import type { Share as ShareType } from "../../utils/share";
     import BotBuilderModal from "../bots/BotBuilderModal.svelte";
     import BotDetailsPage from "../bots/BotDetailsPage.svelte";
@@ -264,6 +268,18 @@
         history.back();
     }
 
+    // Specialised close-and-navigate path used by the share picker.
+    // Going via pop() (history.back) races page.js's popstate handler, which
+    // re-dispatches the previous URL's route — that fights our subsequent
+    // navigation on some WebViews (Samsung release builds especially). Doing
+    // the modalStack pop directly + a pageReplace gives us a single
+    // history.replaceState write with no popstate event in the middle.
+    function shareToChosenChat(chatId: ChatIdentifier) {
+        modalStack.pop();
+        historyDepth = historyDepth - 1;
+        pageReplace(routeForChatIdentifier($chatListScopeStore.kind, chatId));
+    }
+
     function popStack() {
         if (!recursivePop && modalStack.length > 0) {
             recursivePop = true;
@@ -308,6 +324,15 @@
             subscribe("shareMessage", (share) =>
                 push({ kind: "share_message", share: share as unknown as ShareType }),
             ),
+            // Android share-target events use a store (rather than pubsub) so
+            // cold-start shares that arrive before this onMount runs aren't
+            // dropped. We consume on subscribe and clear so opening the modal
+            // a second time requires a fresh share.
+            pendingShareStore.subscribe((share) => {
+                if (share === undefined) return;
+                push({ kind: "share_message", share });
+                pendingShareStore.set(undefined);
+            }),
             subscribe("viewBotCommand", (command) => push({ kind: "view_bot_command", command })),
             subscribe("registerBot", () => push({ kind: "register_bot" })),
             subscribe("updateBot", () => push({ kind: "update_bot" })),
@@ -539,7 +564,10 @@
         {:else if page.kind === "forward_message"}
             <ForwardMessageModal onClose={pop} msg={page.msg} />
         {:else if page.kind === "share_message"}
-            <ShareMessageModal onClose={pop} share={page.share} />
+            <ShareMessageModal
+                onClose={pop}
+                onShare={shareToChosenChat}
+                share={page.share} />
         {:else if page.kind === "register_bot"}
             <BotBuilderModal onClose={pop} mode={"register"} />
         {:else if page.kind === "update_bot"}

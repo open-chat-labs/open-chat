@@ -55,6 +55,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
         commands::enable_viewport_resize,
         commands::disable_viewport_resize,
         commands::save_media,
+        commands::update_chat_shortcuts,
     ]);
 
     // Only register the custom protocol handler when not in debug mode

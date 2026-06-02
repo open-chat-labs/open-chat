@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--
+        Declares MainActivity as a share target so dynamic ShortcutInfoCompat
+        instances tagged with the SHARE_TARGET category will surface in the
+        Direct Share row of the system share sheet.
+    -->
+    <share-target android:targetClass="com.oc.app.MainActivity">
+        <data android:mimeType="*/*" />
+        <category android:name="com.oc.app.category.SHARE_TARGET" />
+    </share-target>
+</shortcuts>

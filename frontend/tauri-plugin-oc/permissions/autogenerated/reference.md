@@ -21,6 +21,7 @@ Default permissions for the plugin
 - `allow-enable-viewport-resize`
 - `allow-disable-viewport-resize`
 - `allow-save-media`
+- `allow-update-chat-shortcuts`
 
 ## Permission Table
 
@@ -469,6 +470,32 @@ Enables the svelte_ready command without any pre-configured scope.
 <td>
 
 Denies the svelte_ready command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-update-chat-shortcuts`
+
+</td>
+<td>
+
+Enables the update_chat_shortcuts command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-update-chat-shortcuts`
+
+</td>
+<td>
+
+Denies the update_chat_shortcuts command without any pre-configured scope.
 
 </td>
 </tr>

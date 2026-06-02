@@ -95,3 +95,23 @@ pub struct SaveMediaRequest {
     pub data: Vec<u8>,
     pub mime_type: String,
 }
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChatShortcut {
+    pub id: String,
+    pub name: String,
+    pub avatar_url: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateChatShortcutsRequest {
+    pub chats: Vec<ChatShortcut>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateChatShortcutsResponse {
+    pub count: usize,
+}
