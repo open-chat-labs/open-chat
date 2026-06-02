@@ -4582,8 +4582,6 @@ export class OpenChat {
             return Promise.resolve(false);
         }
 
-        // TODO - this no longer works for message previews. We need to replace the link with ${link}#link_removed
-        // which is annoying because that is literally the code that we removed
         const msg = {
             ...removeOpenGraphPreviews(event.event, [link]),
         };
