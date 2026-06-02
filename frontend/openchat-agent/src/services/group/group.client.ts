@@ -329,7 +329,7 @@ export class GroupClient
                     message_id: message.messageId,
                     block_level_markdown: blockLevelMarkdown,
                     new_achievement: newAchievement,
-                    og_previews: message.ogPreviews?.map(apiOgPreview) ?? [],
+                    og_previews: message.ogPreviews.map(apiOgPreview),
                 };
                 return this.update(
                     groupId,
@@ -382,7 +382,7 @@ export class GroupClient
                 message_filter_failed: messageFilterFailed,
                 block_level_markdown: newEvent.event.blockLevelMarkdown,
                 new_achievement: newAchievement,
-                og_previews: newEvent.event.ogPreviews?.map(apiOgPreview) ?? [],
+                og_previews: newEvent.event.ogPreviews.map(apiOgPreview),
             };
 
             return this.update(

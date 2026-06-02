@@ -64,6 +64,7 @@ import type {
     MultiUserChatIdentifier,
     NumberArray32,
     OCError,
+    OgPreview,
     P2PSwapContent,
     P2PSwapContentInitial,
     P2PSwapStatus,
@@ -101,6 +102,7 @@ import type {
     UpdatedEvent,
     User,
     UserGroupSummary,
+    VersionedRules,
     VideoCallContent,
     VideoCallInProgress,
     VideoCallParticipant,
@@ -109,8 +111,6 @@ import type {
     VideoCallType,
     VideoContent,
     WebhookDetails,
-    VersionedRules,
-    OgPreview,
 } from "openchat-shared";
 import {
     CommonResponses,
@@ -222,6 +222,7 @@ import type {
     MessagesResponse as TMessagesResponse,
     MultiUserChat as TMultiUserChat,
     OCError as TOCError,
+    OgPreview as TOgPreview,
     P2PSwapContent as TP2PSwapContent,
     P2PSwapContentInitial as TP2PSwapContentInitial,
     P2PSwapStatus as TP2PSwapStatus,
@@ -242,7 +243,6 @@ import type {
     Tally as TTally,
     TextContent as TTextContent,
     ThreadPreview as TThreadPreview,
-    OgPreview as TOgPreview,
     ThreadSummary as TThreadSummary,
     TokenInfo as TTokenInfo,
     Tokens as TTokens,
@@ -260,6 +260,7 @@ import type {
     VideoCall,
     VideoCallParticipants,
 } from "../../typebox";
+import type { ChatsDb } from "../../utils/chatsDb";
 import { toRecord2 } from "../../utils/list";
 import {
     bigintToBytes,
@@ -272,7 +273,6 @@ import {
     principalBytesToString,
     principalStringToBytes,
 } from "../../utils/mapping";
-import type { ChatsDb } from "../../utils/chatsDb";
 import type { ApiPrincipal } from "../index";
 import { ensureReplicaIsUpToDate } from "./replicaUpToDateChecker";
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -557,6 +557,7 @@ export function message(value: TMessage): Message {
         blockLevelMarkdown: value.block_level_markdown ?? false,
         senderContext: mapOptional(value.sender_context, senderContext),
         ogPreviews: (value.og_previews ?? []).map(ogPreview),
+        messagePreviews: [], // this will be rehydrated later
     };
 }
 
@@ -1236,6 +1237,7 @@ function textContent(value: TTextContent): TextContent {
 
 function ogPreview(value: TOgPreview): OgPreview {
     return {
+        kind: "opengraph",
         url: value.url,
         title: value.title,
         description: value.description,

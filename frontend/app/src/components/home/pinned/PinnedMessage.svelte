@@ -114,7 +114,6 @@
                 {/if}
 
                 <ChatMessageContent
-                    showPreviews={false}
                     readonly
                     pinned
                     {senderId}
@@ -128,7 +127,8 @@
                     {me}
                     {intersecting}
                     content={msg.content}
-                    blockLevelMarkdown={msg.blockLevelMarkdown} />
+                    blockLevelMarkdown={msg.blockLevelMarkdown}
+                    ogPreviews={msg.ogPreviews} />
             </div>
         {/snippet}
     </IntersectionObserver>

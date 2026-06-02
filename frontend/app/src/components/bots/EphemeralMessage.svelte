@@ -77,7 +77,6 @@
                 senderId={bot.id}
                 fill={false}
                 readonly={true}
-                showPreviews={false}
                 content={event.message.messageContent} />
         </div>
         <div class="countdown">

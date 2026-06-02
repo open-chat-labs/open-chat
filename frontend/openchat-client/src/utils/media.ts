@@ -421,24 +421,6 @@ export async function messageContentFromFile(
     }
 }
 
-/** twitter link */
-export const twitterLinkRegex = (): RegExp =>
-    /https?:\/\/(twitter|x)\.com\/[^/]+\/status(es)?\/(\d+)[?^ ]*/i;
-
-/** Youtube link handling - various formats
- * https://youtu.be/SWgxgpGZerc
- * https://www.youtube.com/watch?v=SWgxgpGZerc
- * https://youtube.com/shorts/u1I0Z8ePtKM?feature=share
- * https://www.youtube.com/shorts/u1I0Z8ePtKM
- */
-export const youtubeRegex = (): RegExp =>
-    /https:\/\/(?:www.youtube.com\/watch\?v=([^/\s]*)|youtu.be\/([^/\s]*)|(?:www\.)?youtube.com\/shorts\/([^/\s]*))/i;
-
-export const instagramRegex = (): RegExp =>
-    /(?:https?:\/\/)?(?:www\.|m\.)?(?:instagram\.com|instagr\.am)\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/;
-
-export const spotifyRegex = (): RegExp => /\/(album|artist|show|episode|track|playlist)\/(\w+)/i;
-
 // https://oc.app/community/yf5kc-uaaaa-aaaar-a7qfq-cai/channel/2656124989/1863
 // or https://oc.app/community/yf5kc-uaaaa-aaaar-a7qfq-cai/channel/2656124989/1863/2
 export const communityMessageRegex = (): RegExp =>
@@ -447,45 +429,6 @@ export const communityMessageRegex = (): RegExp =>
 // https://oc.app/group/s5ihe-dqaaa-aaaac-a3elq-cai/172
 // or https://oc.app/group/s5ihe-dqaaa-aaaac-a3elq-cai/172/3
 export const groupMessageRegex = (): RegExp => /\/group\/([a-z0-9_-]+)\/(\d+)(?:\/(\d+))?/i;
-
-export function isYoutubeLink(text: string): boolean {
-    return matchesLink(text, text.match(youtubeRegex()));
-}
-
-export function containsYoutubeLink(text: string): boolean {
-    return containsLink(text, text.match(youtubeRegex()));
-}
-
-/** DSocial link handling - not currently used */
-export const dsocialRegex = (): RegExp =>
-    /https:\/\/(?:dsocial.app|dwqte-viaaa-aaaai-qaufq-cai.ic0.app)\/([^\s/]*)(?:[^ ]*)/i;
-
-export function isDsocialLink(text: string): boolean {
-    return matchesLink(text, text.match(dsocialRegex()));
-}
-
-export function containsDsocialLink(text: string): boolean {
-    return containsLink(text, text.match(dsocialRegex()));
-}
-
-/** indicates that the message is a video link and nothing else */
-export function isSocialVideoLink(text: string): boolean {
-    return isYoutubeLink(text);
-}
-
-/** indicates that the message contains a video link but also has other content */
-export function containsSocialVideoLink(text: string): boolean {
-    return containsYoutubeLink(text);
-    // return containsDsocialLink(text) || containsYoutubeLink(text);
-}
-
-function containsLink(text: string, match: RegExpMatchArray | null): boolean {
-    return match ? match[0] !== text : false;
-}
-
-function matchesLink(text: string, match: RegExpMatchArray | null): boolean {
-    return match ? match[0] === text : false;
-}
 
 async function createSvgThumbnail(
     svgFile: File,

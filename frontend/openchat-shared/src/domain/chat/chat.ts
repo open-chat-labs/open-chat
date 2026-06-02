@@ -700,6 +700,7 @@ export type OgPreviewImage = {
 };
 
 export type OgPreview = {
+    kind: "opengraph";
     url: string;
     title: string;
     description: string;
@@ -798,7 +799,8 @@ export type Message<T extends MessageContent = MessageContent> = {
     thread?: ThreadSummary;
     blockLevelMarkdown: boolean;
     senderContext?: SenderContext;
-    ogPreviews?: OgPreview[];
+    ogPreviews: OgPreview[];
+    messagePreviews: RehydratedMessagePreview[];
 };
 
 export type BotContextCommand = {
@@ -850,7 +852,6 @@ export type LocalMessageUpdates = {
         timestamp: bigint;
     };
     editedContent?: MessageContent;
-    linkRemoved: boolean;
     cancelledReminder?: MessageContent;
     undeletedContent?: MessageContent;
     revealedContent?: MessageContent;
@@ -863,6 +864,7 @@ export type LocalMessageUpdates = {
     hiddenMessageRevealed?: boolean;
     blockLevelMarkdown?: boolean;
     lastUpdated: number;
+    ogPreviews?: OgPreview[];
 };
 
 export type EventsResponse<T extends ChatEvent> =
@@ -2539,3 +2541,27 @@ export function emptyEventsResponse<T extends ChatEvent>(): EventsSuccessResult<
         latestEventIndex: undefined,
     };
 }
+
+export type LinkPreview = MessagePreview | GenericPreview | OgPreview;
+
+export type LinkPreviewBase = {
+    url: string;
+};
+
+export type MessagePreview = LinkPreviewBase & {
+    kind: "message";
+    chatId: MultiUserChatIdentifier;
+    threadRootMessageIndex: number | undefined;
+    messageIndex: number;
+};
+
+export type RehydratedMessagePreview = {
+    url: string;
+    chatId: MultiUserChatIdentifier;
+    threadRootMessageIndex: number | undefined;
+    message: Omit<Message, "messagePreviews">;
+};
+
+export type GenericPreview = LinkPreviewBase & {
+    kind: "generic";
+};

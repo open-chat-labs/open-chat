@@ -53,6 +53,8 @@
     import { copyToClipboard } from "../../utils/urls";
     import Bitcoin from "../icons/Bitcoin.svelte";
     import Translatable from "../Translatable.svelte";
+    import { saveMediaToDevice } from "tauri-plugin-oc-api";
+    import { getProxyAdjustedBlobUrl } from "../../utils/media";
 
     const client = getContext<OpenChat>("client");
 
@@ -197,42 +199,122 @@
         );
     }
 
-    function downloadName(url: string, disposition: string | null) {
-        let filename: string = msg.content.kind;
-        if (disposition && disposition.includes("filename=")) {
-            filename = disposition.split("filename=")[1].split(";")[0].replace(/"/g, "");
-        } else {
-            filename = new URL(url).pathname.split("/").pop() || filename;
+    // Simple MIME -> extension mapping - add more as required!
+    const MIME_EXTENSION_MAP: Record<string, string> = {
+        "image/jpeg": "jpg",
+        "image/png": "png",
+        "image/gif": "gif",
+        "image/webp": "webp",
+        "video/mp4": "mp4",
+        "video/webm": "webm",
+        "audio/mpeg": "mp3",
+        "audio/ogg": "ogg",
+        "audio/wav": "wav",
+        "application/pdf": "pdf",
+    };
+
+    function getExtensionFromMime(mime: string): string | null {
+        return MIME_EXTENSION_MAP[mime] || null;
+    }
+
+    function getFilenameFromResponse(res: Response, url: string, mimeType: string): string {
+        const disposition = res.headers.get("content-disposition");
+
+        // Primary... try from content-disposition
+        if (disposition) {
+            // Try modern filename* (UTF-8)
+            const utf8Match = /filename\*=UTF-8''(.+?)(?:;|$)/i.exec(disposition);
+            if (utf8Match) {
+                try {
+                    return decodeURIComponent(utf8Match[1].trim());
+                } catch {}
+            }
+
+            // Try regular filename=
+            const filenameMatch = /filename\s*=\s*["']?([^"';]+)["']?/i.exec(disposition);
+            if (filenameMatch) {
+                return filenameMatch[1].trim();
+            }
         }
 
+        // Fallback... extract from URL if available
+        try {
+            const urlObj = new URL(url);
+            let filename = urlObj.pathname.split("/").pop()?.split("?")[0] || "";
+            if (filename) return filename;
+        } catch {}
+
+        // Default...
+        const defaultName = `${msg.content.kind}_download_${Date.now()}`;
+        const ext = getExtensionFromMime(mimeType);
+        return ext ? `${defaultName}.${ext}` : defaultName;
+    }
+
+    type DownloadMeta = { mimeType: string; contentKind: "image" | "video" | "file" };
+
+    function getDownloadMeta(res: Response): DownloadMeta | undefined {
         switch (msg.content.kind) {
-            case "audio_content":
-            case "video_content":
             case "image_content":
-                return msg.content.caption?.split(" ")?.join("_").slice(0, 100) ?? filename;
+                return { mimeType: msg.content.mimeType, contentKind: "image" };
+            case "giphy_content":
+                return { mimeType: "image/gif", contentKind: "image" };
+            case "video_content":
+                return { mimeType: msg.content.mimeType, contentKind: "video" };
             case "file_content":
-                return msg.content.name;
+                return { mimeType: msg.content.mimeType, contentKind: "file" };
             default:
-                return filename;
+                const mime = res.headers.get("content-type")?.split(";")[0].trim();
+                return mime ? { mimeType: mime, contentKind: "file" } : undefined;
         }
     }
 
-    async function download(url: string) {
-        if (!url) return;
-
+    async function download(urlArg: string) {
         try {
+            const url = getProxyAdjustedBlobUrl(urlArg);
+
+            if (!url) {
+                throw new Error("Cannot download this content!");
+            }
+
             const res = await fetch(url);
             if (!res.ok) {
-                console.error("Unable to download media", res.status, res.statusText);
-                toastStore.showFailureToast(i18nKey("Unable to download media"));
+                throw new Error(`HTTP ${res.status} ${res.statusText}`);
             }
-            const blob = await res.blob();
-            const objectUrl = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = objectUrl;
-            a.download = downloadName(url, res.headers.get("content-disposition"));
-            a.click();
-            URL.revokeObjectURL(objectUrl);
+
+            const meta = getDownloadMeta(res);
+            if (!meta) {
+                throw new Error("Unknown download mime type or kind!");
+            }
+            const { mimeType, contentKind } = meta;
+            const filename =
+                msg.content.kind === "file_content"
+                    ? msg.content.name
+                    : getFilenameFromResponse(res, url, mimeType);
+
+            if (client.isNativeApp()) {
+                // This should work for a device, by using a tauri command
+                // to save the file bytes to the correct location.
+                await saveMediaToDevice({
+                    kind: contentKind,
+                    filename,
+                    // TODO: sending raw bytes to rust may be memory heavy for
+                    // large videos, since bytes get serialised via Tauri's IPC.
+                    // Consider fetching from URL in Rust command!
+                    data: new Uint8Array(await res.arrayBuffer()),
+                    mimeType,
+                });
+            } else {
+                const blob = await res.blob();
+                const objectUrl = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = objectUrl;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(objectUrl);
+            }
+
+            // TODO expand this and show the path where the file was saved!
+            toastStore.showSuccessToast(i18nKey("File downloaded!"));
         } catch (err) {
             console.error("Unable to download media", err);
             toastStore.showFailureToast(i18nKey("Unable to download media"));

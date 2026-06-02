@@ -772,7 +772,6 @@
                                 <ChatMessageContent
                                     bind:contentWidth
                                     senderId={msg.sender}
-                                    showPreviews
                                     {readonly}
                                     {fill}
                                     {me}
@@ -790,7 +789,9 @@
                                     blockLevelMarkdown={msg.blockLevelMarkdown}
                                     {onRemovePreview}
                                     {onRegisterVote}
-                                    {onExpandMessage} />
+                                    {onExpandMessage}
+                                    ogPreviews={msg.ogPreviews}
+                                    messagePreviews={msg.messagePreviews} />
                             {/snippet}
                         </MessageBubble>
                     </MenuTrigger>

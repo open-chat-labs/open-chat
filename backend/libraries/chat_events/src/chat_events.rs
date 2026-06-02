@@ -337,7 +337,7 @@ impl ChatEvents {
         let new_text = args.content.text();
         let block_level_markdown_update = args.block_level_markdown.filter(|md| *md != message.block_level_markdown);
 
-        if new_text != existing_text || block_level_markdown_update.is_some() {
+        if new_text != existing_text || block_level_markdown_update.is_some() || args.og_previews != message.og_previews {
             let edited = new_text.map(|t| t.replace("#LINK_REMOVED", ""))
                 != existing_text.map(|t| t.replace("#LINK_REMOVED", ""))
                 || block_level_markdown_update.is_some();

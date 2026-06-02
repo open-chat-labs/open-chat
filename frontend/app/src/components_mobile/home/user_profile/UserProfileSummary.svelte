@@ -1,6 +1,7 @@
 <script lang="ts">
     import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
     import { i18nKey } from "@src/i18n/i18n";
+    import { clearChatShortcuts } from "@stores/chatShortcuts";
     import { Body, Container, IconButton, MenuItem, MenuTrigger } from "component-lib";
     import {
         allUsersStore,
@@ -80,7 +81,12 @@
                             <MenuItem onclick={appSettings}>
                                 <Translatable resourceKey={i18nKey("App settings")} />
                             </MenuItem>
-                            <MenuItem danger onclick={() => client.logout()}>
+                            <MenuItem
+                                danger
+                                onclick={() => {
+                                    if (client.isNativeApp()) clearChatShortcuts();
+                                    client.logout();
+                                }}>
                                 <Translatable resourceKey={i18nKey("Logout")} />
                             </MenuItem>
                         {/snippet}

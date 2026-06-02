@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-update-chat-shortcuts"
+description = "Enables the update_chat_shortcuts command without any pre-configured scope."
+commands.allow = ["update_chat_shortcuts"]
+
+[[permission]]
+identifier = "deny-update-chat-shortcuts"
+description = "Denies the update_chat_shortcuts command without any pre-configured scope."
+commands.deny = ["update_chat_shortcuts"]

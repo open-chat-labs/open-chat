@@ -75,7 +75,7 @@
                 senderId={bot.id}
                 fill={false}
                 readonly={true}
-                showPreviews={false}
+                ogPreviews={[]}
                 content={event.message.messageContent} />
         </div>
         <Row height={{ size: "0.75rem" }}>

@@ -233,7 +233,6 @@
     {regularView}
     caption={textContent?.text}
     maxCaptionWidth={!reply && !draft ? maxTextContentWidth : undefined}
-    {fill}
     {me}
     {reply}
     {draft}

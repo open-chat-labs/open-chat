@@ -268,7 +268,7 @@ export function getMembersString(
     const sorted = memberIds
         .map((id) => userLookup.get(id) ?? nullUser(unknownUser))
         .sort(compareUsersFn ?? compareUsername)
-        .map((p) => `**${p.userId === user.userId ? you : p.displayName ?? p.username}**`);
+        .map((p) => `**${p.userId === user.userId ? you : (p.displayName ?? p.username)}**`);
 
     // TODO Improve i18n, don't hardcode 'and'
     return sorted.length > 1
@@ -297,6 +297,7 @@ export function createMessage(
             blockLevelMarkdown: message.blockLevelMarkdown,
             senderContext: message.senderContext,
             ogPreviews: message.ogPreviews,
+            messagePreviews: [],
         },
         timestamp: message.timestamp,
         index: eventIndex,
@@ -1140,7 +1141,7 @@ export function canSendGroupMessage(
 
     const messagePermissions =
         mode === "thread"
-            ? chat.permissions.threadPermissions ?? chat.permissions.messagePermissions
+            ? (chat.permissions.threadPermissions ?? chat.permissions.messagePermissions)
             : chat.permissions.messagePermissions;
 
     if (permission === "prize" && mode === "thread") {
@@ -1531,9 +1532,11 @@ function mergeLocalUpdates(
 
     if (localUpdates?.editedContent !== undefined) {
         message.content = localUpdates.editedContent;
-        if (!localUpdates.linkRemoved) {
-            message.edited = true;
-        }
+        message.edited = true;
+    }
+
+    if (localUpdates?.ogPreviews !== undefined) {
+        message.ogPreviews = localUpdates.ogPreviews;
     }
 
     if (localUpdates?.undeletedContent !== undefined) {

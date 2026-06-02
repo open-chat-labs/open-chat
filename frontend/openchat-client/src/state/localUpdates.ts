@@ -28,6 +28,7 @@ import {
     type MessageContext,
     type MessageReminderCreatedContent,
     type MultiUserChat,
+    type OgPreview,
     type OptionalChatPermissions,
     type OptionUpdate,
     type P2PSwapStatus,
@@ -865,11 +866,9 @@ export class GlobalLocalState {
             (upd) => {
                 upd.editedContent = msg.content;
                 upd.blockLevelMarkdown = blockLevelMarkdown;
-                upd.linkRemoved = false;
                 return (upd) => {
                     upd.editedContent = undefined;
                     upd.blockLevelMarkdown = undefined;
-                    upd.linkRemoved = false;
                     return upd;
                 };
             },
@@ -922,20 +921,49 @@ export class GlobalLocalState {
         );
     }
 
-    markLinkRemoved(messageId: bigint, content: MessageContent) {
+    markLinkRemoved(messageId: bigint, ogPreviews?: OgPreview[]) {
         return this.#modifyMessageUpdates(
             messageId,
             (upd) => {
-                upd.editedContent = content;
-                upd.linkRemoved = true;
+                upd.ogPreviews = ogPreviews;
                 return (upd) => {
-                    upd.editedContent = undefined;
-                    upd.linkRemoved = false;
+                    upd.ogPreviews = undefined;
                     return upd;
                 };
             },
             "markLinkRemoved",
         );
+    }
+
+    setEditedOgPreviews(messageId: bigint, ogPreviews: OgPreview[]): UndoLocalUpdate {
+        return this.#modifyMessageUpdates(
+            messageId,
+            (upd) => {
+                upd.ogPreviews = ogPreviews;
+                return (upd) => {
+                    upd.ogPreviews = undefined;
+                    return upd;
+                };
+            },
+            "setEditedOgPreviews",
+        );
+    }
+
+    setUnconfirmedOgPreviews(key: MessageContext, messageId: bigint, ogPreviews: OgPreview[]) {
+        this.#unconfirmed.update((map) => {
+            const state = map.get(key);
+            if (state) {
+                const msg = state.get(messageId);
+                if (msg) {
+                    state.set(messageId, {
+                        ...msg,
+                        event: { ...msg.event, ogPreviews },
+                    });
+                    map.set(key, state);
+                }
+            }
+            return map;
+        });
     }
 
     markReaction(messageId: bigint, reaction: LocalReaction) {

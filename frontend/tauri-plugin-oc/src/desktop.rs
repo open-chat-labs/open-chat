@@ -52,4 +52,11 @@ impl<R: Runtime> Oc<R> {
     pub fn toggle_viewport_resize(&self, _toggle: bool) -> crate::Result<()> {
         unimplemented!("not implemented for desktop environment")
     }
+
+    pub fn update_chat_shortcuts(
+        &self,
+        _payload: UpdateChatShortcutsRequest,
+    ) -> crate::Result<UpdateChatShortcutsResponse> {
+        unimplemented!("not implemented for desktop environment")
+    }
 }
