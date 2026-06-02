@@ -563,7 +563,7 @@ import {
     fetchOgPreviews,
     removeOpenGraphPreviews,
     stripLinkDisabledMarker,
-} from "./utils/linkPreviews";
+} from "openchat-shared";
 import { groupBy, groupWhile, keepMax, partition, toRecord, toRecord2 } from "./utils/list";
 import { getUserCountryCode } from "./utils/location";
 import {
@@ -4379,7 +4379,7 @@ export class OpenChat {
             mentioned,
             false,
             undefined,
-            fetchOgPreviews(extractEnabledLinks(textContent)),
+            fetchOgPreviews(extractEnabledLinks(textContent), import.meta.env.OC_PREVIEW_PROXY_URL),
         );
     }
 
@@ -4540,7 +4540,7 @@ export class OpenChat {
             const newAchievement = !achievementsStore.value.has("edited_message");
 
             // Fetch og previews in the background; content change is already visible in the UI.
-            const ogPreviews = await fetchOgPreviews(extractEnabledLinks(textContent));
+            const ogPreviews = await fetchOgPreviews(extractEnabledLinks(textContent), import.meta.env.OC_PREVIEW_PROXY_URL);
             msg.ogPreviews = ogPreviews;
             const undoOgPreviews = localUpdates.setEditedOgPreviews(msg.messageId, ogPreviews);
 

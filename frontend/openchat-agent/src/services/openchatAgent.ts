@@ -242,7 +242,7 @@ import { createHttpAgentSync } from "../utils/httpAgent";
 import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
 import { bytesToHexString, mapOptional } from "../utils/mapping";
 import { mean } from "../utils/maths";
-import { extractMessagePreviews } from "../utils/linkPreviews";
+import { extractMessagePreviews } from "openchat-shared";
 import { AsyncMessageContextMap } from "../utils/messageContext";
 // import { isMainnet } from "../utils/network";
 import {
