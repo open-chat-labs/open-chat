@@ -142,9 +142,17 @@ object ShareIntentManager {
             val cacheRoot = File(context.cacheDir, CACHE_SUBDIR).apply { mkdirs() }
             val target = uniqueChildFile(cacheRoot, safeName)
 
-            val bytesCopied = resolver.openInputStream(uri)?.use { input ->
-                target.outputStream().use { output -> input.copyTo(output) }
-            } ?: 0L
+            // openInputStream can return null if the provider doesn't recognise
+            // the URI or refuses to open it. Bail out rather than handing back
+            // a CachedFile pointing at a path we never actually wrote.
+            val input = resolver.openInputStream(uri)
+            if (input == null) {
+                Log.w(LOG_TAG, "openInputStream returned null for shared URI; dropping entry")
+                return null
+            }
+            val bytesCopied = input.use { src ->
+                target.outputStream().use { output -> src.copyTo(output) }
+            }
 
             CachedFile(
                 path = target.absolutePath,
