@@ -113,10 +113,13 @@ export function startChatShortcutPusher(client: OpenChat): () => void {
 
     let lastPushedKey = "";
     return topShortcutsStore.subscribe((chats) => {
-        // Skip the transient empty emit during chat-list hydration — pushing
-        // an empty list prunes existing shortcuts, leaving a window where the
-        // system share sheet has none.
-        if (chats.length === 0) return;
+        // Skip *only* the transient empty emit that fires during initial
+        // chat-list hydration (before we've pushed anything). A genuine
+        // transition to zero sendable chats — e.g. the user just left every
+        // group / deleted every DM — needs to propagate so the native side
+        // can prune the stale share-target tiles. We detect "haven't pushed
+        // yet" by the sentinel empty-string initial value of lastPushedKey.
+        if (chats.length === 0 && lastPushedKey === "") return;
         const key = JSON.stringify(chats);
         if (key === lastPushedKey) return;
         lastPushedKey = key;
