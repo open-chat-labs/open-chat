@@ -168,12 +168,7 @@ describe("extractEnabledLinks", () => {
     });
 
     test(`limits to ${MAX_LINK_PREVIEWS} links`, () => {
-        const urls = [
-            "https://a.com",
-            "https://b.com",
-            "https://c.com",
-            "https://d.com",
-        ];
+        const urls = ["https://a.com", "https://b.com", "https://c.com", "https://d.com"];
         const result = extractEnabledLinks(urls.join(" "));
         expect(result).toHaveLength(MAX_LINK_PREVIEWS);
     });

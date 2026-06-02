@@ -121,14 +121,12 @@ export function extractMessagePreviews(text: string): MessagePreview[] {
 // Strips LINK_REMOVED suffix, limits to MAX_LINK_PREVIEWS, and excludes OC message URLs.
 export function extractEnabledLinks(text?: string): string[] {
     if (!text) return [];
-    const links: string[] = [];
-    for (const url of extractRawUrls(text).slice(0, MAX_LINK_PREVIEWS)) {
-        const stripped = url.endsWith(LINK_REMOVED)
-            ? url.substring(0, url.length - LINK_REMOVED.length)
-            : url;
-        links.push(stripped);
-    }
-    return links.filter((url) => classifyUrl(url) === undefined);
+    return extractRawUrls(text)
+        .map((url) =>
+            url.endsWith(LINK_REMOVED) ? url.substring(0, url.length - LINK_REMOVED.length) : url,
+        )
+        .filter((url) => classifyUrl(url) === undefined)
+        .slice(0, MAX_LINK_PREVIEWS);
 }
 
 function getImageDimensions(url: string): Promise<{ width: number; height: number } | undefined> {
