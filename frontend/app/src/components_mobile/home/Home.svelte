@@ -37,6 +37,7 @@
         routeForScope,
         routeStore,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
+        selectedChatIdStore,
         selectedChatSummaryStore,
         subscribe,
         suspendedUserStore,
@@ -95,7 +96,6 @@
         kind: "delete_direct_chat";
         chatId: DirectChatIdentifier;
         blockUser: boolean;
-        doubleCheck: { challenge: ResourceKey; response: ResourceKey };
     };
 
     type ConfirmLeaveEvent = {
@@ -305,13 +305,19 @@
     }
 
     function deleteDirectChat(chatId: DirectChatIdentifier, blockUser: boolean): Promise<void> {
-        page(routeForScope($chatListScopeStore));
+        // Only redirect when deleting the chat we're currently viewing. The
+        // delete can now be triggered from the chat list for a non-selected
+        // chat, in which case we must leave the current route untouched.
+        const viewingThisChat = chatIdentifiersEqual($selectedChatIdStore, chatId);
+        if (viewingThisChat) {
+            page(routeForScope($chatListScopeStore));
+        }
         return client.deleteDirectChat(chatId, blockUser).then((success) => {
             if (!success) {
-                toastStore.showFailureToast(
-                    i18nKey("deleteGroupFailure", undefined, "group", true),
-                );
-                page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
+                toastStore.showFailureToast(i18nKey("deleteDirectChatFailure"));
+                if (viewingThisChat) {
+                    page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
+                }
             }
         });
     }

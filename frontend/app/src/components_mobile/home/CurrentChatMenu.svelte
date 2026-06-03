@@ -11,13 +11,13 @@
         type MultiUserChat,
         notificationsSupported,
         type OpenChat,
-        OPENCHAT_BOT_USER_ID,
         platformModeratorStore,
         publish,
         selectedChatPinnedMessagesStore,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import { canDeleteDirectChat, publishDeleteDirectChat } from "../../utils/directChat";
     import { toastStore } from "../../stores/toast";
     import Translatable from "../Translatable.svelte";
 
@@ -54,13 +54,9 @@
     let userId = $derived(
         selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "",
     );
-    let themIfDirectChat = $derived(userId ? $allUsersStore.get(userId) : undefined);
     let isBot = $derived($allUsersStore.get(userId)?.kind === "bot");
     let isSuspended = $derived($allUsersStore.get(userId)?.suspended ?? false);
-    let canDeleteDirectChat = $derived(
-        selectedChatSummary.kind === "direct_chat" &&
-            selectedChatSummary.id.userId !== OPENCHAT_BOT_USER_ID,
-    );
+    let showDeleteDirectChat = $derived(canDeleteDirectChat(selectedChatSummary));
 
     function toggleMuteNotifications(
         mute: boolean | undefined,
@@ -182,19 +178,6 @@
             });
     }
 
-    function deleteDirectChat() {
-        if (selectedChatSummary.kind === "direct_chat" && themIfDirectChat !== undefined) {
-            publish("deleteDirectChat", {
-                kind: "delete_direct_chat",
-                chatId: selectedChatSummary.id,
-                blockUser: false,
-                doubleCheck: {
-                    challenge: i18nKey("typeGroupName", { name: themIfDirectChat.username }),
-                    response: i18nKey(themIfDirectChat.username),
-                },
-            });
-        }
-    }
 </script>
 
 <MenuItem onclick={searchChat}>
@@ -295,8 +278,8 @@
         <Translatable resourceKey={i18nKey("bots.manage.remove")} />
     </MenuItem>
 {/if}
-{#if canDeleteDirectChat}
-    <MenuItem danger onclick={deleteDirectChat}>
+{#if showDeleteDirectChat}
+    <MenuItem danger onclick={() => publishDeleteDirectChat(selectedChatSummary)}>
         <Translatable resourceKey={i18nKey("deleteChat")} />
     </MenuItem>
 {/if}

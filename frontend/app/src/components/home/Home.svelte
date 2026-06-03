@@ -145,7 +145,6 @@
         kind: "delete_direct_chat";
         chatId: DirectChatIdentifier;
         blockUser: boolean;
-        doubleCheck: { challenge: ResourceKey; response: ResourceKey };
     };
 
     type ConfirmDeleteEvent = {
@@ -443,11 +442,18 @@
             case "leave_community":
                 return leaveCommunity(confirmActionEvent.communityId);
             case "delete_direct_chat":
-                return deleteDirectChat(confirmActionEvent.chatId, confirmActionEvent.blockUser).then(
-                    (_) => {
-                        setRightPanelHistory([]);
-                    },
+            case "delete_direct_chat": {
+                const viewingThisChat = chatIdentifiersEqual(
+                    $selectedChatIdStore,
+                    confirmActionEvent.chatId,
                 );
+                return deleteDirectChat(
+                    confirmActionEvent.chatId,
+                    confirmActionEvent.blockUser,
+                ).then(() => {
+                    if (viewingThisChat) setRightPanelHistory([]);
+                });
+            }
             case "delete_community":
                 return deleteCommunity(confirmActionEvent.communityId).then((_) => {
                     setRightPanelHistory([]);
@@ -465,11 +471,19 @@
     }
 
     function deleteDirectChat(chatId: DirectChatIdentifier, blockUser: boolean): Promise<void> {
-        page(routeForScope($chatListScopeStore));
+        // Only redirect when deleting the chat we're currently viewing. The
+        // delete can now be triggered from the chat list for a non-selected
+        // chat, in which case we must leave the current route untouched.
+        const viewingThisChat = chatIdentifiersEqual($selectedChatIdStore, chatId);
+        if (viewingThisChat) {
+            page(routeForScope($chatListScopeStore));
+        }
         return client.deleteDirectChat(chatId, blockUser).then((success) => {
             if (!success) {
-                toastStore.showFailureToast(i18nKey("deleteGroupFailure", undefined, "group", true));
-                page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
+                toastStore.showFailureToast(i18nKey("deleteDirectChatFailure"));
+                if (viewingThisChat) {
+                    page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
+                }
             }
         });
     }
@@ -1016,7 +1030,6 @@
 {#if confirmActionEvent !== undefined}
     <AreYouSure
         doubleCheck={confirmActionEvent.kind === "delete" ||
-        confirmActionEvent.kind === "delete_direct_chat" ||
         confirmActionEvent.kind === "delete_community"
             ? confirmActionEvent.doubleCheck
             : undefined}
