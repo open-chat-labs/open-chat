@@ -297,7 +297,6 @@ async function handleImageFile(
     maxSizes: MaxMediaSizes,
     mediaType: MediaType,
 ): Promise<AttachmentContent> {
-    // const isGif = mediaType === "gif";
     const isSvg = mediaType === "svg";
 
     let thumbnailData: string; // data URL for the thumbnail
