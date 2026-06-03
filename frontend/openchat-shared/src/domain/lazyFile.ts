@@ -30,6 +30,11 @@ export class LazyFile {
         if (!this._realFile) {
             if (this._assetUrl) {
                 const response = await fetch(this._assetUrl);
+                if (!response.ok) {
+                    throw new Error(
+                        `Failed to load asset (${response.status} ${response.statusText}): ${this._assetUrl}`,
+                    );
+                }
                 // Force the bytes fully into the JS heap by reading into an
                 // ArrayBuffer rather than a Blob. On Tauri Android, a Blob
                 // from the asset-protocol fetch can stay lazily backed by
