@@ -334,11 +334,13 @@ async function handleImageFile(
         const needsResize =
             file.size > maxSizes.image || bitmap.width > 5000 || bitmap.height > 5000;
 
-        originalData = needsResize
-            ? (await stripMetaDataAndResize(file, bitmap)).data
-            : await file.arrayBuffer();
-
-        bitmap.close();
+        if (needsResize) {
+            // stripMetaDataAndResize() takes ownership and closes the bitmap.
+            originalData = (await stripMetaDataAndResize(file, bitmap)).data;
+        } else {
+            originalData = await file.arrayBuffer();
+            bitmap.close();
+        }
     }
 
     const blobUrl = dataToBlobUrl(originalData, file.type);
