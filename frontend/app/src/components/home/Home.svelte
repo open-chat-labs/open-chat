@@ -1,6 +1,8 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
+    import { flushPendingNavigation } from "@src/utils/navigation";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
+    import { portalState } from "component-lib";
     import type {
         CandidateGroupChat,
         ChannelIdentifier,
@@ -247,6 +249,11 @@
             subscribe("notFound", () => (modal = { kind: "not_found" })),
             subscribe("copyUrl", copyUrl),
             subscribe("suspendUser", suspendUser),
+            subscribe("closeModalStack", () => {
+                // TODO - not 100% sure that this is all we need to do here
+                portalState.close();
+                flushPendingNavigation();
+            }),
         ];
         client.initialiseNotifications();
         document.body.addEventListener("profile-clicked", profileClicked);
@@ -443,11 +450,12 @@
             case "leave_community":
                 return leaveCommunity(confirmActionEvent.communityId);
             case "delete_direct_chat":
-                return deleteDirectChat(confirmActionEvent.chatId, confirmActionEvent.blockUser).then(
-                    (_) => {
-                        setRightPanelHistory([]);
-                    },
-                );
+                return deleteDirectChat(
+                    confirmActionEvent.chatId,
+                    confirmActionEvent.blockUser,
+                ).then((_) => {
+                    setRightPanelHistory([]);
+                });
             case "delete_community":
                 return deleteCommunity(confirmActionEvent.communityId).then((_) => {
                     setRightPanelHistory([]);
@@ -468,7 +476,9 @@
         page(routeForScope($chatListScopeStore));
         return client.deleteDirectChat(chatId, blockUser).then((success) => {
             if (!success) {
-                toastStore.showFailureToast(i18nKey("deleteGroupFailure", undefined, "group", true));
+                toastStore.showFailureToast(
+                    i18nKey("deleteGroupFailure", undefined, "group", true),
+                );
                 page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
             }
         });
