@@ -113,8 +113,37 @@ function routeHasThread(route: RouteParams): boolean {
     return false;
 }
 
+function isSameChat(from: RouteParams, toPath: string): boolean {
+    if (
+        from.kind !== "global_chat_selected_route" &&
+        from.kind !== "selected_channel_route" &&
+        from.kind !== "favourites_route"
+    )
+        return false;
+    if (!from.chatId) return false;
+
+    const pathname = toPath.split("?")[0];
+
+    if (from.chatId.kind === "channel") {
+        // Channel paths: .../channel/<channelId>[/<msgIdx>...]
+        const m = pathname.match(/\/channel\/([^/]+)/);
+        if (!m) return false;
+        const toChannelSeg = m[1];
+        const fromChannelSeg = String(from.chatId.channelId);
+        if (toChannelSeg !== fromChannelSeg) return false;
+        // Only replace if no message index follows
+        return !pathname.match(/\/channel\/[^/]+\/\d/);
+    }
+
+    const id =
+        from.chatId.kind === "group_chat" ? from.chatId.groupId : from.chatId.userId;
+    const segs = pathname.split("/").filter(Boolean);
+    if (!segs.includes(id)) return false;
+    const idIdx = segs.lastIndexOf(id);
+    return idIdx === segs.length - 1;
+}
+
 /**
- * Determines whether a navigation should push a new history entry, replace the
  * current one, or pop back to the previous one.
  *
  * Rules (chats is the root tab — back always returns there):
@@ -131,7 +160,7 @@ function routeHasThread(route: RouteParams): boolean {
  *   chat + thread → chat + thread          → replace  (switch thread)
  *   chat     → chats                       → pop
  *   chat     → non-root tab                → replace  (leave chat, switch tab)
- *   chat     → chat                        → replace  (lateral at depth)
+ *   chat     → chat                        → push    (lateral at depth)
  *   anything else                          → replace
  */
 export function navigationMode(
@@ -165,7 +194,9 @@ export function navigationMode(
         const toThread = pathHasThread(to);
         if (!fromThread && toThread) return "push"; // opening a thread
         if (fromThread && !toThread) return "pop"; // closing a thread
-        return "replace"; // lateral (thread↔thread or chat↔chat)
+        if (fromThread && toThread) return "replace"; // thread → thread
+        if (isSameChat(from, to)) return "replace"; // same chat, different message index
+        return "push"; // chat → different chat
     }
 
     return "replace";

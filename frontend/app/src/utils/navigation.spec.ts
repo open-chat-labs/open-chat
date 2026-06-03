@@ -103,16 +103,16 @@ const P = {
     otherGroup: "/group/group_2",
     otherGroupThread: "/group/group_2/42/7",
     community: "/community/comm_1",
-    channel: "/community/comm_1/channel/chan_1",
-    channelMsg: "/community/comm_1/channel/chan_1/42",
-    channelMsgOpen: "/community/comm_1/channel/chan_1/42?open=true",
-    channelThread: "/community/comm_1/channel/chan_1/42/7",
-    otherChannel: "/community/comm_1/channel/chan_2",
-    otherChannelThread: "/community/comm_1/channel/chan_2/42/7",
+    channel: "/community/comm_1/channel/123",
+    channelMsg: "/community/comm_1/channel/123/42",
+    channelMsgOpen: "/community/comm_1/channel/123/42?open=true",
+    channelThread: "/community/comm_1/channel/123/42/7",
+    otherChannel: "/community/comm_1/channel/456",
+    otherChannelThread: "/community/comm_1/channel/456/42/7",
     favGroup: "/favourite/group/group_1",
     favGroupThread: "/favourite/group/group_1/42/7",
-    favChannel: "/favourite/community/comm_1/channel/chan_1",
-    favChannelThread: "/favourite/community/comm_1/channel/chan_1/42/7",
+    favChannel: "/favourite/community/comm_1/channel/123",
+    favChannelThread: "/favourite/community/comm_1/channel/123/42/7",
 };
 
 // ---------------------------------------------------------------------------
@@ -281,13 +281,13 @@ describe("navigationMode", () => {
     });
 
     describe("chat → chat (lateral, no threads)", () => {
-        it("replaces when switching between group/direct chats", () => {
-            expect(navigationMode(P.otherGroup, chat)).toBe("replace");
-            expect(navigationMode(P.user, chat)).toBe("replace");
+        it("pushes when switching between group/direct chats", () => {
+            expect(navigationMode(P.otherGroup, chat)).toBe("push");
+            expect(navigationMode(P.user, chat)).toBe("push");
         });
 
-        it("replaces when switching between channels", () => {
-            expect(navigationMode(P.otherChannel, channel)).toBe("replace");
+        it("pushes when switching between channels", () => {
+            expect(navigationMode(P.otherChannel, channel)).toBe("push");
         });
 
         it("replaces when navigating to the same chat", () => {
@@ -295,9 +295,9 @@ describe("navigationMode", () => {
             expect(navigationMode(P.channel, channel)).toBe("replace");
         });
 
-        it("replaces when navigating to a chat with a message index (no thread)", () => {
-            expect(navigationMode(P.groupMsg, chat)).toBe("replace");
-            expect(navigationMode(P.channelMsg, channel)).toBe("replace");
+        it("pushes when navigating to a different chat with a message index (no thread)", () => {
+            expect(navigationMode(P.groupMsg, chat)).toBe("push");
+            expect(navigationMode(P.channelMsg, channel)).toBe("push");
         });
     });
 
