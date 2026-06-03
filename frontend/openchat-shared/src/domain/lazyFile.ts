@@ -30,8 +30,22 @@ export class LazyFile {
         if (!this._realFile) {
             if (this._assetUrl) {
                 const response = await fetch(this._assetUrl);
-                const blob = await response.blob();
-                this._realFile = new File([blob], this._name, { type: this._type });
+                if (!response.ok) {
+                    throw new Error(
+                        `Failed to load asset (${response.status} ${response.statusText}): ${this._assetUrl}`,
+                    );
+                }
+                // Force the bytes fully into the JS heap by reading into an
+                // ArrayBuffer rather than a Blob. On Tauri Android, a Blob
+                // from the asset-protocol fetch can stay lazily backed by
+                // the underlying file — and a File constructed from it
+                // inherits that laziness. Downstream, createImageBitmap
+                // parses just enough to know dimensions, then the first
+                // drawImage from that bitmap stalls for seconds while the
+                // remaining pixels are realised. Reading into an
+                // ArrayBuffer here pays the read once, eagerly.
+                const bytes = await response.arrayBuffer();
+                this._realFile = new File([bytes], this._name, { type: this._type });
             } else {
                 throw new Error("No file or URL to load from");
             }
