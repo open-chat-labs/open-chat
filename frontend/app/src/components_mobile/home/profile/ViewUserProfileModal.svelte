@@ -18,7 +18,7 @@
     } from "openchat-client";
 
     import { CommonButton, Container, Sheet } from "component-lib";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext, onMount } from "svelte";
     import AccountCancel from "svelte-material-icons/AccountCancelOutline.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
@@ -186,7 +186,7 @@
     }
 
     function showUserProfile() {
-        page("/profile_summary");
+        navigate("/profile_summary");
         onClose();
     }
 

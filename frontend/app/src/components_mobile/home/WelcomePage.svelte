@@ -20,7 +20,7 @@
         type CommunitySummary,
         type OpenChat,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import RightChevron from "svelte-material-icons/ChevronRight.svelte";
@@ -60,7 +60,7 @@
         });
     }
     function goToCommunity(id: CommunityIdentifier) {
-        page(`/community/${id.communityId}`);
+        navigate(`/community/${id.communityId}`);
     }
 </script>
 
@@ -195,7 +195,7 @@
                     </MulticolourText>
                 </Body>
             </Container>
-            <Button onClick={() => page("/communities")}>
+            <Button onClick={() => navigate("/communities")}>
                 {#snippet icon(color)}
                     <RightChevron {color} />
                 {/snippet}

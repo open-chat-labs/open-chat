@@ -1,6 +1,6 @@
 import { AuthClient } from "@icp-sdk/auth/client";
 import { routerReadyStore, xframeOverrides, type XFrameOverrides } from "openchat-client";
-import page from "page";
+import { navigate } from "@utils/navigation";
 import { get } from "svelte/store";
 import { setModifiedTheme } from "../theme/themes";
 import type { Theme } from "../theme/types";
@@ -108,7 +108,7 @@ init();
 function pageWhenReady(path: string, timeout = 50, attempts = 0) {
     if (get(routerReadyStore)) {
         console.debug("XFRAME_TARGET: changing path to ", path);
-        page(path);
+        navigate(path);
     } else {
         if (attempts < 10) {
             console.debug("XFRAME_TARGET: queueing route change ", path);

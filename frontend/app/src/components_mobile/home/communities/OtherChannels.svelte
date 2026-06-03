@@ -12,7 +12,7 @@
         type CommunitySummary,
         type OpenChat,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
@@ -88,7 +88,7 @@
         if ($selectedCommunitySummaryStore === undefined) return;
         if (!match.public && !match.invited) return;
         client.popRightPanelHistory();
-        page(routeForChatIdentifier($chatListScopeStore.kind, match.id));
+        navigate(routeForChatIdentifier($chatListScopeStore.kind, match.id));
         onClose();
     }
 </script>

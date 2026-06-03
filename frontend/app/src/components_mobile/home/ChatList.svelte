@@ -24,7 +24,7 @@
         unreadDirectAndGroupCountsStore,
         unreadFavouriteCountsStore,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext, tick } from "svelte";
     import Pencil from "svelte-material-icons/LeadPencil.svelte";
     import ChatListFilters, { type ChatListFilter } from "./ChatListFilters.svelte";
@@ -66,7 +66,7 @@
 
     function chatSelected({ id }: ChatSummaryType): void {
         const url = routeForChatIdentifier($chatListScopeStore.kind, id);
-        page(url);
+        navigate(url);
     }
 
     function onScopeChanged() {

@@ -6,7 +6,7 @@
         routeForChatIdentifier,
         subscribe,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Bug from "svelte-material-icons/Bug.svelte";
@@ -34,7 +34,7 @@
                 communityId: "dgegb-daaaa-aaaar-arlhq-cai",
                 channelId: 2235218862,
             } as ChatIdentifier;
-            page(routeForChatIdentifier("community", chatId));
+            navigate(routeForChatIdentifier("community", chatId));
             localUpdates.draftMessages.setTextContent({ chatId }, withDetail);
             toastStore.hideToast();
         }

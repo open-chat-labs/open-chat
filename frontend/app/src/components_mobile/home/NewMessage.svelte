@@ -17,7 +17,7 @@
         type GroupSearchResponse,
         type UserSummary,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import AccountMultiplePlusOutline from "svelte-material-icons/AccountMultiplePlusOutline.svelte";
     import FilteredUsername from "@shared_components/FilteredUsername.svelte";
@@ -93,7 +93,7 @@
 
     function selectGroup(match: GroupMatch | GroupChatSummary) {
         const id = match.kind === "group_chat" ? match.id : match.chatId;
-        page(routeForChatIdentifier($chatListScopeStore.kind, id));
+        navigate(routeForChatIdentifier($chatListScopeStore.kind, id));
         publish("closeModalStack");
     }
 </script>

@@ -13,7 +13,7 @@ import {
     type UpdatedRules,
     type VersionedRules,
 } from "openchat-client";
-import page from "page";
+import { navigate } from "@utils/navigation";
 import { UpdateGroupOrCommunityState } from "../../groupOrCommunity.svelte";
 
 export const MAX_RULES_LENGTH = 1024;
@@ -232,7 +232,7 @@ class UpdateCommunityState extends UpdateGroupOrCommunityState {
                 .then((response) => {
                     if (response.kind === "success") {
                         toastStore.showSuccessToast(i18nKey("communities.created"));
-                        page(`/community/${response.id}`);
+                        navigate(`/community/${response.id}`);
                         this.#optionallyInviteUsers(client, response.id).catch((_err) => {
                             toastStore.showFailureToast(i18nKey("inviteUsersFailed"));
                         });

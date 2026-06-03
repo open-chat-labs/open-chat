@@ -1,9 +1,10 @@
-import { publish, routeStore } from "openchat-client";
+import { publish, routeStore, routerReadyStore, subscribe } from "openchat-client";
 import type { RouteParams } from "openchat-shared";
 import page from "page";
+import { get } from "svelte/store";
 import { onPopstate, syncCurrentHistoryState } from "./history";
 
-export type NavigationIntent = "in-app" | "notification";
+export type NavigationIntent = "in-app" | "notification" | "auto";
 export type NavigationMode = "push" | "pop" | "replace";
 
 type PendingNavigation = {
@@ -13,7 +14,9 @@ type PendingNavigation = {
 
 const TAB_ROUTES: RouteParams["kind"][] = [
     "chat_list_route",
+    "communities_route",
     "notifications_route",
+    "wallet_route",
     "profile_summary_route",
 ];
 
@@ -58,6 +61,14 @@ const ROUTE_MATCHERS: Array<{ regexp: RegExp; kind: RouteParams["kind"] }> = (
             path: "/group/:chatId/:messageIndex?/:threadMessageIndex?",
             kind: "global_chat_selected_route",
         },
+        {
+            path: "/chats/user/:chatId/:messageIndex?/:threadMessageIndex?",
+            kind: "global_chat_selected_route",
+        },
+        {
+            path: "/chats/group/:chatId/:messageIndex?/:threadMessageIndex?",
+            kind: "global_chat_selected_route",
+        },
     ] as Array<{ path: string; kind: RouteParams["kind"] }>
 ).map(({ path, kind }) => ({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -78,8 +89,11 @@ function pathToRouteKind(path: string): RouteParams["kind"] {
  * meaning a thread panel will be open at the destination.
  */
 function pathHasThread(path: string): boolean {
-    const segs = path.split("?")[0].split("/").filter(Boolean);
+    const [pathname, qs] = path.split("?");
+    if (qs && new URLSearchParams(qs).get("open") === "true") return true;
+    const segs = pathname.split("/").filter(Boolean);
     if (segs[0] === "group" || segs[0] === "user") return segs.length >= 4;
+    if (segs[0] === "chats" && (segs[1] === "group" || segs[1] === "user")) return segs.length >= 5;
     if (segs[0] === "community" && segs[2] === "channel") return segs.length >= 6;
     if (segs[0] === "favourite") {
         if (segs[1] === "group" || segs[1] === "user") return segs.length >= 5;
@@ -94,7 +108,7 @@ function routeHasThread(route: RouteParams): boolean {
         route.kind === "selected_channel_route" ||
         route.kind === "favourites_route"
     ) {
-        return route.threadMessageIndex !== undefined;
+        return route.threadMessageIndex !== undefined || route.open;
     }
     return false;
 }
@@ -109,6 +123,9 @@ function routeHasThread(route: RouteParams): boolean {
  *   non-root tab → chats                   → pop
  *   non-root tab → non-root tab            → replace  (lateral)
  *   non-root tab → chat                    → push
+ *   community → channel (same community)   → push
+ *   community → chats                      → pop
+ *   channel   → community                  → push
  *   chat (no thread) → same chat + thread  → push     (open thread)
  *   chat + thread → same chat (no thread)  → pop      (close thread)
  *   chat + thread → chat + thread          → replace  (switch thread)
@@ -122,20 +139,25 @@ export function navigationMode(
     from: RouteParams,
     intent: NavigationIntent = "in-app",
 ): NavigationMode {
-    if (intent === "notification") return "replace";
+    if (intent === "notification" || intent === "auto") return "replace";
 
     const toKind = pathToRouteKind(to);
     const fromIsRootTab = from.kind === ROOT_TAB;
     const fromIsNonRootTab = TAB_ROUTES.includes(from.kind) && !fromIsRootTab;
     const fromIsChat = ["global_chat_selected_route", "selected_channel_route"].includes(from.kind);
+    const fromIsCommunity = from.kind === "selected_community_route";
     const toIsRootTab = toKind === ROOT_TAB;
     const toIsNonRootTab = TAB_ROUTES.includes(toKind) && !toIsRootTab;
     const toIsChat = ["global_chat_selected_route", "selected_channel_route"].includes(toKind);
+    const toIsCommunity = toKind === "selected_community_route";
 
     if (fromIsRootTab && !toIsRootTab) return "push";
     if (fromIsNonRootTab && toIsRootTab) return "pop";
     if (fromIsNonRootTab && toIsNonRootTab) return "replace";
     if (fromIsNonRootTab && toIsChat) return "push";
+    if (fromIsCommunity && toIsChat) return "push";
+    if (fromIsCommunity && toIsRootTab) return "pop";
+    if (fromIsChat && toIsCommunity) return "push";
     if (fromIsChat && toIsRootTab) return "pop";
     if (fromIsChat && toIsNonRootTab) return "replace";
     if (fromIsChat && toIsChat) {
@@ -169,8 +191,18 @@ function handlePopstate(event: PopStateEvent) {
     }
 }
 
-function doNavigate(to: string, intent: NavigationIntent) {
+function doNavigate(to: string, intent: NavigationIntent, retries = 0) {
+    if (!get(routerReadyStore)) {
+        if (retries >= 10) {
+            console.error("ROUTER: router not ready after 10 retries, giving up");
+            return;
+        }
+        console.debug("ROUTER: router not ready, retrying in 100ms");
+        window.setTimeout(() => doNavigate(to, intent, retries + 1), 100);
+        return;
+    }
     const mode = navigationMode(to, routeStore.value, intent);
+    console.log("Navigating: (from, to, mode)", routeStore.value, to, mode);
     switch (mode) {
         case "push":
             pushDepth++;
@@ -224,9 +256,11 @@ export function hasPendingNavigation(): boolean {
 export function initNavigationHistoryTracking() {
     syncCurrentHistoryState(history.state);
     window.addEventListener("popstate", handlePopstate);
+    const unsubNavigateTo = subscribe("navigateTo", ({ url, intent }) => navigate(url, intent ?? "in-app"));
 
     return () => {
         window.removeEventListener("popstate", handlePopstate);
+        unsubNavigateTo();
     };
 }
 

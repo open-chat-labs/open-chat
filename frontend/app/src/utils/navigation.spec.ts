@@ -38,6 +38,22 @@ const chatWithThread: RouteParams = {
     scope: { kind: "none" },
 };
 
+// open=true without a threadMessageIndex — thread panel opened via query string
+const chatWithOpenThread: RouteParams = {
+    kind: "global_chat_selected_route",
+    chatType: "group_chat",
+    chatId,
+    messageIndex: 42,
+    open: true,
+    scope: { kind: "none" },
+};
+
+const community: RouteParams = {
+    kind: "selected_community_route",
+    communityId,
+    scope: { kind: "none" },
+};
+
 const channel: RouteParams = {
     kind: "selected_channel_route",
     chatId: channelId,
@@ -56,6 +72,16 @@ const channelWithThread: RouteParams = {
     scope: { kind: "none" },
 };
 
+// open=true without a threadMessageIndex — thread panel opened via query string
+const channelWithOpenThread: RouteParams = {
+    kind: "selected_channel_route",
+    chatId: channelId,
+    communityId,
+    messageIndex: 42,
+    open: true,
+    scope: { kind: "none" },
+};
+
 const notFound: RouteParams = { kind: "not_found_route", scope: { kind: "none" } };
 
 // ---------------------------------------------------------------------------
@@ -69,13 +95,17 @@ const P = {
     profile: "/profile_summary",
     group: "/group/group_1",
     groupMsg: "/group/group_1/42",
+    groupMsgOpen: "/group/group_1/42?open=true",
+    chatsMsgOpen: "/chats/group/group_1/42?open=true",
     groupThread: "/group/group_1/42/7",
     user: "/user/user_1",
     userThread: "/user/user_1/42/7",
     otherGroup: "/group/group_2",
     otherGroupThread: "/group/group_2/42/7",
+    community: "/community/comm_1",
     channel: "/community/comm_1/channel/chan_1",
     channelMsg: "/community/comm_1/channel/chan_1/42",
+    channelMsgOpen: "/community/comm_1/channel/chan_1/42?open=true",
     channelThread: "/community/comm_1/channel/chan_1/42/7",
     otherChannel: "/community/comm_1/channel/chan_2",
     otherChannelThread: "/community/comm_1/channel/chan_2/42/7",
@@ -144,6 +174,25 @@ describe("navigationMode", () => {
         });
     });
 
+    describe("community -> channel", () => {
+        it("same community is a push", () => {
+            expect(navigationMode(P.channel, community)).toBe("push");
+        });
+    });
+
+    describe("community -> chats", () => {
+        it("should be a pop", () => {
+            expect(navigationMode(P.chats, community)).toBe("pop");
+            expect(navigationMode(P.chatsRoot, community)).toBe("pop");
+        });
+    });
+
+    describe("channel -> community", () => {
+        it("should be a push", () => {
+            expect(navigationMode(P.community, channel)).toBe("push");
+        });
+    });
+
     describe("chat → root tab", () => {
         it("pops when returning to chats from a group/direct chat", () => {
             expect(navigationMode(P.chats, chat)).toBe("pop");
@@ -179,8 +228,17 @@ describe("navigationMode", () => {
             expect(navigationMode(P.userThread, chat)).toBe("push");
         });
 
+        it("pushes when opening a thread via ?open=true in a group/direct chat", () => {
+            expect(navigationMode(P.groupMsgOpen, chat)).toBe("push");
+            expect(navigationMode(P.chatsMsgOpen, chat)).toBe("push");
+        });
+
         it("pushes when opening a thread in a channel", () => {
             expect(navigationMode(P.channelThread, channel)).toBe("push");
+        });
+
+        it("pushes when opening a thread via ?open=true query string", () => {
+            expect(navigationMode(P.channelMsgOpen, channel)).toBe("push");
         });
 
         it("pushes when opening a thread via favourites path", () => {
@@ -195,9 +253,19 @@ describe("navigationMode", () => {
             expect(navigationMode(P.groupMsg, chatWithThread)).toBe("pop");
         });
 
+        it("pops when closing a thread opened via ?open=true in a group/direct chat", () => {
+            expect(navigationMode(P.groupMsg, chatWithOpenThread)).toBe("pop");
+            expect(navigationMode(P.group, chatWithOpenThread)).toBe("pop");
+        });
+
         it("pops when closing a thread in a channel", () => {
             expect(navigationMode(P.channel, channelWithThread)).toBe("pop");
             expect(navigationMode(P.channelMsg, channelWithThread)).toBe("pop");
+        });
+
+        it("pops when closing a thread opened via ?open=true", () => {
+            expect(navigationMode(P.channelMsg, channelWithOpenThread)).toBe("pop");
+            expect(navigationMode(P.channel, channelWithOpenThread)).toBe("pop");
         });
     });
 

@@ -8,6 +8,7 @@ import prettier from "eslint-plugin-prettier";
 import { defineConfig, globalIgnores } from "eslint/config";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
+import noPagejsDirect from "./eslint-rules/no-pagejs-direct.mjs";
 
 // __dirname equivalent
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -34,6 +35,7 @@ export default defineConfig([
             "@typescript-eslint": typescriptEslint,
             prettier,
             svelte,
+            local: { rules: { "no-pagejs-direct": noPagejsDirect } },
         },
         extends: compat.extends(
             "eslint:recommended",
@@ -43,6 +45,21 @@ export default defineConfig([
         rules: {
             "@typescript-eslint/no-explicit-any": ["error"],
             "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+            "local/no-pagejs-direct": "error",
+        },
+    },
+    // Explicit exceptions: files that are permitted to import page.js directly.
+    // navigation.ts owns the routing API; the others bootstrap or register page.js routes,
+    // and SlidingModals does a URL-sync replace inside a popstate handler.
+    {
+        files: [
+            "app/src/utils/navigation.ts",
+            "app/src/components/Router.svelte",
+            "app/src/components_mobile/Router.svelte",
+            "app/src/components_mobile/home/SlidingModals.svelte",
+        ],
+        rules: {
+            "local/no-pagejs-direct": "off",
         },
     },
     globalIgnores(["**/candid/*.ts", "**/candid/*.js"]),

@@ -1,7 +1,7 @@
 import { addPluginListener, PluginListener } from "@tauri-apps/api/core";
 import { isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notification";
-import { pageNavigate } from "openchat-client";
 import { showNotification } from "tauri-plugin-oc-api";
+import { navigate } from "@utils/navigation";
 
 const TAURI_PLUGIN_NAME = "oc";
 const PUSH_NOTIFICATION_EVENT = "push-notification";
@@ -123,19 +123,19 @@ export async function expectNotificationTap(): Promise<PluginListener> {
             switch (notification.type) {
                 case "DM": {
                     if (notification.senderId) {
-                        pageNavigate(`/user/${notification.senderId}`);
+                        navigate(`/user/${notification.senderId}`);
                     }
                     break;
                 }
                 case "GROUP": {
                     if (notification.groupId) {
-                        pageNavigate(`/group/${notification.groupId}${threadIndexPath}`);
+                        navigate(`/group/${notification.groupId}${threadIndexPath}`);
                     }
                     break;
                 }
                 case "CHANNEL": {
                     if (notification.communityId && notification.channelId) {
-                        pageNavigate(
+                        navigate(
                             `/community/${notification.communityId}/channel/${notification.channelId}${threadIndexPath}`,
                         );
                     }

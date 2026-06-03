@@ -1,17 +1,7 @@
+
 <script lang="ts">
-    import {
-        chatListScopeStore,
-        isLocked,
-        mobileWidth,
-        type MultiUserChat,
-        type OpenChat,
-        pageReplace,
-        platformModeratorStore,
-        publish,
-        ROLE_NONE,
-        routeForScope,
-        selectedCommunitySummaryStore,
-    } from "openchat-client";
+    import { navigate } from "@utils/navigation";
+    import { chatListScopeStore, isLocked, mobileWidth, type MultiUserChat, type OpenChat, platformModeratorStore, publish, ROLE_NONE, routeForScope, selectedCommunitySummaryStore } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
@@ -49,14 +39,14 @@
     function cancelPreview() {
         if (previewingCommunity && $selectedCommunitySummaryStore) {
             client.removeCommunity($selectedCommunitySummaryStore.id);
-            pageReplace(routeForScope(client.getDefaultScope()));
+            navigate(routeForScope(client.getDefaultScope()));
         } else {
             if (!chat.public) {
                 client.declineInvitation(chat.id);
             }
             client.removePreviewedChat(chat.id);
             if ($mobileWidth || !client.selectDefaultChat(false)) {
-                pageReplace(routeForScope($chatListScopeStore));
+                navigate(routeForScope($chatListScopeStore));
             }
         }
     }

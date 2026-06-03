@@ -10,7 +10,7 @@
         routeForMessage,
         type MessageActivityEvent,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
@@ -71,7 +71,7 @@
     }
 
     function selectEvent(ev: MessageActivityEvent) {
-        page(
+        navigate(
             routeForMessage(
                 messageContextToChatListScope(ev.messageContext).kind,
                 ev.messageContext,

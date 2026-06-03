@@ -8,7 +8,7 @@
         type CommunitySummary,
         type UnreadCounts,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
@@ -35,7 +35,7 @@
     function selectCommunity(community: CommunitySummary) {
         anchoredSheet.collapse(true);
         activityFeedShowing.set(false);
-        page(`/community/${community.id.communityId}`);
+        navigate(`/community/${community.id.communityId}`);
     }
 
     function hasUnread(community: CommunitySummary): [boolean, UnreadCounts] {
@@ -99,7 +99,7 @@
     }
 
     function exploreCommunities() {
-        page("/communities");
+        navigate("/communities");
     }
 </script>
 

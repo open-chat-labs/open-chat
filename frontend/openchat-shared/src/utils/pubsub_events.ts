@@ -185,6 +185,7 @@ export type PubSubEvents = {
     closeModalPage: undefined;
     closeThread: undefined;
     closeModalStack: undefined;
+    navigateTo: { url: string; intent?: "in-app" | "notification" | "auto" };
     updateGroupDetails: undefined;
     updateRules: unknown;
     updateAccessGates: unknown;

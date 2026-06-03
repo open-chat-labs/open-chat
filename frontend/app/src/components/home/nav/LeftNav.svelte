@@ -29,7 +29,7 @@
         unreadDirectAndGroupCountsStore,
         unreadFavouriteCountsStore,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext, onMount, tick } from "svelte";
     import { type DndEvent, dndzone } from "svelte-dnd-action";
     import ArrowRight from "svelte-material-icons/ArrowExpandRight.svelte";
@@ -105,22 +105,22 @@
 
     function exploreCommunities() {
         activityFeedShowing.set(false);
-        page("/communities");
+        navigate("/communities");
     }
 
     function directAndGroupChats() {
         activityFeedShowing.set(false);
-        page("/chats");
+        navigate("/chats");
     }
 
     function favouriteChats() {
         activityFeedShowing.set(false);
-        page("/favourite");
+        navigate("/favourite");
     }
 
     function selectCommunity(community: CommunitySummary) {
         activityFeedShowing.set(false);
-        page(`/community/${community.id.communityId}`);
+        navigate(`/community/${community.id.communityId}`);
     }
 
     function closeIfOpen() {
@@ -129,7 +129,7 @@
 
     function showActivityFeed() {
         if ($routeStore.kind === "communities_route") {
-            page("/");
+            navigate("/");
         }
         activityFeedShowing.set(true);
     }

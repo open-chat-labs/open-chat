@@ -4,11 +4,11 @@
     import { communityPreviewState, groupPreviewState } from "@src/utils/preview.svelte";
     import { removeQueryStringParam, stripThreadFromUrl } from "@src/utils/urls";
     import { pendingShareStore } from "@stores/pendingShare";
+    import { navigate } from "@utils/navigation";
     import { portalState } from "component-lib";
     import {
         chatListScopeStore,
         OpenChat,
-        pageReplace,
         routeForChatIdentifier,
         selectedChatMembersStore,
         selectedChatSummaryStore,
@@ -39,6 +39,7 @@
         type TokenBalanceGate,
         type UserGroupDetails,
     } from "openchat-client";
+    import page from "page";
     import { getContext, onMount } from "svelte";
     import { minimizeApp } from "tauri-plugin-oc-api";
     import { expectBackPress } from "../../utils/native/notification_channels";
@@ -248,7 +249,12 @@
         const { previousAction } = onPopstate(ev);
         if (previousAction === "sliding_modal" && modalStack.length > 0) {
             if (top?.kind === "open_thread") {
-                pageReplace(stripThreadFromUrl(removeQueryStringParam("open")));
+                // Direct page.replace here is intentional: we are already inside a popstate
+                // handler (the user pressed back) so the history is already unwinding.
+                // Calling navigate() would re-trigger the modal-close cycle and cause a
+                // recursive history.back(). This is URL synchronisation, not navigation.
+                // TODO - this is also very fishy - we shouldn't have to do special hacks for closing threads.
+                page.replace(stripThreadFromUrl(removeQueryStringParam("open")));
                 activeVideoCall.threadOpen(false);
             }
             modalStack.pop();
@@ -279,12 +285,12 @@
     // Going via pop() (history.back) races page.js's popstate handler, which
     // re-dispatches the previous URL's route — that fights our subsequent
     // navigation on some WebViews (Samsung release builds especially). Doing
-    // the modalStack pop directly + a pageReplace gives us a single
+    // the modalStack pop directly + a navigate gives us a single
     // history.replaceState write with no popstate event in the middle.
     function shareToChosenChat(chatId: ChatIdentifier) {
         modalStack.pop();
         historyDepth = historyDepth - 1;
-        pageReplace(routeForChatIdentifier($chatListScopeStore.kind, chatId));
+        navigate(routeForChatIdentifier($chatListScopeStore.kind, chatId));
     }
 
     function popStack() {

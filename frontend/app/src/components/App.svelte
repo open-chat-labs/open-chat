@@ -43,7 +43,7 @@
         routeStore,
         subscribe,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import { _, isLoading } from "svelte-i18n";
@@ -612,7 +612,7 @@
 
     function joinVideoCall(chatId: ChatIdentifier, callType: VideoCallType) {
         incomingVideoCall.set(undefined);
-        page(routeForChatIdentifier("none", chatId));
+        navigate(routeForChatIdentifier("none", chatId));
         videoCallElement?.startOrJoinVideoCall(chatId, callType, true);
     }
 
@@ -634,7 +634,7 @@
 
 <ActiveCall
     {showLandingPage}
-    onClearSelection={() => page(routeForScope($chatListScopeStore))}
+    onClearSelection={() => navigate(routeForScope($chatListScopeStore))}
     bind:this={videoCallElement} />
 
 <VideoCallAccessRequests />

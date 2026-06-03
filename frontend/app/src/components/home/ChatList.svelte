@@ -29,7 +29,7 @@
         unreadFavouriteCountsStore,
         type UserSummary,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext, tick } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { chatListView } from "../../stores/chatListView";
@@ -91,7 +91,7 @@
     function cancelPreview() {
         if ($selectedCommunitySummaryStore) {
             client.removeCommunity($selectedCommunitySummaryStore.id);
-            page(routeForScope(client.getDefaultScope()));
+            navigate(routeForScope(client.getDefaultScope()));
         }
     }
 
@@ -104,13 +104,13 @@
      * the routing will take care of the rest
      */
     function selectGroup({ chatId }: GroupMatch): void {
-        page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
+        navigate(routeForChatIdentifier($chatListScopeStore.kind, chatId));
         searchTerm = "";
     }
 
     function chatSelected({ id }: ChatSummaryType): void {
         const url = routeForChatIdentifier($chatListScopeStore.kind, id);
-        page(url);
+        navigate(url);
         searchTerm = "";
     }
 

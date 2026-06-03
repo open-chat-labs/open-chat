@@ -8,41 +8,8 @@ import {
     type NullScope,
     type RouteParams,
 } from "openchat-shared";
-import page from "page";
-import { get } from "svelte/store";
-import { routerReadyStore } from "../state";
 
 const noScope: NullScope = { kind: "none" };
-
-// if we attempt to use the router before it is set up it will blow up
-function getRouter(): Promise<typeof page> {
-    return new Promise((resolve) => {
-        function checkReadiness(iterations: number = 0) {
-            if (iterations > 10)
-                throw new Error("Router readiness check has failed - router cannot be used");
-
-            if (get(routerReadyStore)) {
-                resolve(page);
-            } else {
-                console.debug("ROUTER: router not ready, trying again in 100ms");
-                window.setTimeout(() => checkReadiness(iterations + 1), 100);
-            }
-        }
-        checkReadiness();
-    });
-}
-
-export function pageReplace(url: string) {
-    return getRouter().then((r) => r.replace(url));
-}
-
-export function pageRedirect(url: string) {
-    return getRouter().then((r) => r.redirect(url));
-}
-
-export function pageNavigate(url: string) {
-    return getRouter().then((r) => r(url));
-}
 
 function qs(ctx: PageJS.Context): URLSearchParams {
     return new URLSearchParams(ctx.querystring);

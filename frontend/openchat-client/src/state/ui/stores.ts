@@ -1,5 +1,6 @@
 import { dequal } from "dequal";
 import {
+    publish,
     ScreenWidth,
     type Dimensions,
     type FontScale,
@@ -9,7 +10,6 @@ import {
     type XFrameOverrides,
 } from "openchat-shared";
 import { type Readable } from "svelte/store";
-import { pageReplace } from "../../utils/routes";
 import { derived, writable } from "../../utils/stores";
 import { isCanisterUrl, removeQueryStringParam } from "../../utils/url";
 import { LocalStorageStore } from "../localStorageStore";
@@ -116,7 +116,7 @@ export const lastRightPanelState = derived(
 );
 export function setRightPanelHistory(history: RightPanelContent[]) {
     if (rightPanelHistory.value.find((p) => p.kind === "message_thread_panel") !== undefined) {
-        pageReplace(removeQueryStringParam("open"));
+        publish("navigateTo", { url: removeQueryStringParam("open") });
     }
     rightPanelHistory.set(history);
 }

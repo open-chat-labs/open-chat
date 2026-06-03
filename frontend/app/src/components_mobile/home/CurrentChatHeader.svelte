@@ -1,5 +1,7 @@
 <script lang="ts">
+    import Typing from "@shared_components/Typing.svelte";
     import { activeVideoCall } from "@src/stores/video";
+    import { navigate } from "@utils/navigation";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import { Avatar, Container, SectionHeader } from "component-lib";
     import type { ChatSummary, DiamondMembershipStatus } from "openchat-client";
@@ -17,7 +19,6 @@
         type OpenChat,
         type TypersByKey,
     } from "openchat-client";
-    import page from "page";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Video from "svelte-material-icons/VideoOutline.svelte";
@@ -25,7 +26,6 @@
     import { now } from "../../stores/time";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
     import Translatable from "../Translatable.svelte";
-    import Typing from "@shared_components/Typing.svelte";
     import ChatSubtext from "./ChatSubtext.svelte";
     import CurrentChatMenu from "./CurrentChatMenu.svelte";
     import Badges from "./profile/Badges.svelte";
@@ -68,6 +68,7 @@
     function clearSelection() {
         // publish("clearSelection");
         // This *might* be problematic sometimes, but it's close to right than what we had
+        // TODO - come back and look at this later. It might be wrong.
         history.back();
     }
 
@@ -150,14 +151,14 @@
 
     function navigateToCommunity(e: Event) {
         if ($selectedCommunitySummaryStore !== undefined) {
-            page(`/community/${$selectedCommunitySummaryStore.id.communityId}`);
+            navigate(`/community/${$selectedCommunitySummaryStore.id.communityId}`);
             e.stopPropagation();
         }
     }
 
     function navigateToChannel(e: Event) {
         if ($selectedCommunitySummaryStore !== undefined) {
-            page(routeForChatIdentifier("community", selectedChatSummary.id));
+            navigate(routeForChatIdentifier("community", selectedChatSummary.id));
             e.stopPropagation();
         }
     }

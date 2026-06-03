@@ -8,7 +8,7 @@
         type GroupChatSummary,
         type OpenChat,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
@@ -48,7 +48,7 @@
     function go() {
         if (channelId !== undefined) {
             close();
-            page(routeForChatIdentifier(scope ?? $chatListScopeStore.kind, channelId));
+            navigate(routeForChatIdentifier(scope ?? $chatListScopeStore.kind, channelId));
         }
     }
 

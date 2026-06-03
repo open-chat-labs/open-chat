@@ -9,7 +9,7 @@
         routeForScope,
         type MultiUserChat,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
@@ -32,9 +32,9 @@
     function deleteChat() {
         deleting = true;
         if (chat.id.kind === "channel") {
-            page(`/community/${chat.id.communityId}`);
+            navigate(`/community/${chat.id.communityId}`);
         } else {
-            page(routeForScope($chatListScopeStore));
+            navigate(routeForScope($chatListScopeStore));
         }
         client
             .deleteGroup(chat.id)
@@ -48,7 +48,7 @@
                     toastStore.showFailureToast(
                         i18nKey("deleteGroupFailure", undefined, chat.level, true),
                     );
-                    page(routeForChatIdentifier($chatListScopeStore.kind, chat.id));
+                    navigate(routeForChatIdentifier($chatListScopeStore.kind, chat.id));
                 }
             })
             .finally(() => (deleting = false));

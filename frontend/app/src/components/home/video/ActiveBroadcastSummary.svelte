@@ -7,7 +7,7 @@
         selectedChatSummaryStore,
         type OpenChat,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { activeVideoCall } from "../../../stores/video";
@@ -28,7 +28,7 @@
 
     function goto() {
         if ($selectedChatSummaryStore?.videoCallInProgress !== undefined) {
-            page(
+            navigate(
                 routeForMessage(
                     $chatListScopeStore.kind,
                     { chatId: $selectedChatSummaryStore.id },

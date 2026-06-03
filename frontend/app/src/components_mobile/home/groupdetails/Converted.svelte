@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Body, Button, ColourVars, Container, H2 } from "component-lib";
     import { publish, routeForChatIdentifier, type ChannelIdentifier } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import PartyPopper from "svelte-material-icons/PartyPopper.svelte";
@@ -19,7 +19,7 @@
 
     function go() {
         if (channelId !== undefined) {
-            page(routeForChatIdentifier("community", channelId));
+            navigate(routeForChatIdentifier("community", channelId));
             publish("closeModalStack");
         }
     }

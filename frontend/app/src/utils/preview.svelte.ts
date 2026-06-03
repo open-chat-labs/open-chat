@@ -11,18 +11,8 @@ import type {
     MultiUserChat,
     OpenChat,
 } from "openchat-client";
-import {
-    anonUserStore,
-    chatListScopeStore,
-    chatSummariesStore,
-    pageReplace,
-    type PaymentGateApprovals,
-    publish,
-    ROLE_NONE,
-    routeForScope,
-    selectedChatSummaryStore,
-    selectedCommunitySummaryStore,
-} from "openchat-client";
+import { anonUserStore, chatListScopeStore, chatSummariesStore, type PaymentGateApprovals, publish, ROLE_NONE, routeForScope, selectedChatSummaryStore, selectedCommunitySummaryStore } from "openchat-client";
+import { navigate } from "@utils/navigation";
 
 class ApprovalsAndCredentials {
     #credentials = $state<string[]>([]);
@@ -124,14 +114,14 @@ class GroupPreview {
 
     cancelPreview(client: OpenChat) {
         if (this.#previewingCommunity && this.#community) {
-            pageReplace(`/community/${this.#community.id.communityId}`);
+            navigate(`/community/${this.#community.id.communityId}`);
         } else {
             if (this.#chat) {
                 if (!this.#chat.public) {
                     client.declineInvitation(this.#chat.id);
                 }
                 client.removePreviewedChat(this.#chat.id);
-                pageReplace(routeForScope(chatListScopeStore.value));
+                navigate(routeForScope(chatListScopeStore.value));
             }
         }
     }

@@ -26,7 +26,7 @@
         unreadFavouriteCountsStore,
         type UnreadCounts,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import BellOutline from "svelte-material-icons/BellOutline.svelte";
@@ -86,25 +86,25 @@
     function itemSelected(s: Selection) {
         switch (s) {
             case "chats":
-                page("/chats");
+                navigate("/chats");
                 break;
             case "communities":
                 const selected = client.selectDefaultCommunity();
                 if (!selected) {
-                    page("/welcome");
+                    navigate("/welcome");
                 }
                 break;
             case "favourites":
-                page("/favourite");
+                navigate("/favourite");
                 break;
             case "notification":
-                page("/notifications");
+                navigate("/notifications");
                 break;
             case "profile":
-                page("/profile_summary");
+                navigate("/profile_summary");
                 break;
             case "wallet":
-                page("/wallet");
+                navigate("/wallet");
                 break;
         }
     }
