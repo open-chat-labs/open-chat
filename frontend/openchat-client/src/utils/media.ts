@@ -425,35 +425,36 @@ export async function messageContentFromFile(
     const dataSizeInBytes = file.size;
     const mediaType = mimeToMediaType(file.type);
     const maxSizes = isDiamond ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
-    let f: File = file instanceof LazyFile ? await file.load() : file;
-    // For the real-File path (system file picker / drag-drop) the File is
-    // backed by the underlying file on disk and its bytes are read lazily.
-    // Force the bytes into the JS heap up-front by re-wrapping the File
-    // around an ArrayBuffer. The LazyFile path already does this inside
-    // load(), so we only need to materialise non-LazyFile sources.
-    if (!(file instanceof LazyFile)) {
-        const bytes = await f.arrayBuffer();
-        f = new File([bytes], f.name, { type: f.type });
-    }
 
     switch (mediaType) {
         case "image":
         case "gif":
-        case "svg":
+        case "svg": {
+            // Force the bytes into the JS heap up-front. A real File (system
+            // picker / drag-drop) is backed lazily by the underlying file on
+            // disk; re-wrapping it around an ArrayBuffer pays the read once,
+            // eagerly, so the later createImageBitmap/canvas draw doesn't
+            // stall for seconds realising pixels. The LazyFile path already
+            // materialises inside load(), so it needs no extra read.
+            const f =
+                file instanceof LazyFile
+                    ? await file.load()
+                    : new File([await file.arrayBuffer()], file.name, { type: file.type });
             return await handleImageFile(f, maxSizes, mediaType);
+        }
 
         case "video":
             if (dataSizeInBytes > maxSizes.video) throw "maxVideoSize";
-            return await handleVideoFile(f);
+            return await handleVideoFile(file instanceof LazyFile ? await file.load() : file);
 
         case "audio":
             if (dataSizeInBytes > maxSizes.audio) throw "maxAudioSize";
-            return await handleAudioFiles(f);
+            return await handleAudioFiles(file instanceof LazyFile ? await file.load() : file);
 
         // File is default!
         default:
             if (dataSizeInBytes > maxSizes.file) throw "maxFileSize";
-            return await handleRegularFiles(f);
+            return await handleRegularFiles(file instanceof LazyFile ? await file.load() : file);
     }
 }
 
