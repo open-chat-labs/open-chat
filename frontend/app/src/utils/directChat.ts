@@ -9,11 +9,12 @@ export function canDeleteDirectChat(chat: ChatSummary): boolean {
 // Ask Home to confirm and delete the given direct chat. No-op for any other
 // chat kind, so callers can pass whatever chat is currently in scope.
 export function publishDeleteDirectChat(chat: ChatSummary): void {
-    if (chat.kind === "direct_chat") {
+    if (canDeleteDirectChat(chat)) {
         publish("deleteDirectChat", {
             kind: "delete_direct_chat",
             chatId: chat.id,
             blockUser: false,
         });
     }
+}
 }

@@ -442,12 +442,18 @@
             case "leave_community":
                 return leaveCommunity(confirmActionEvent.communityId);
             case "delete_direct_chat":
+            case "delete_direct_chat": {
+                const viewingThisChat = chatIdentifiersEqual(
+                    $selectedChatIdStore,
+                    confirmActionEvent.chatId,
+                );
                 return deleteDirectChat(
                     confirmActionEvent.chatId,
                     confirmActionEvent.blockUser,
-                ).then((_) => {
-                    setRightPanelHistory([]);
+                ).then(() => {
+                    if (viewingThisChat) setRightPanelHistory([]);
                 });
+            }
             case "delete_community":
                 return deleteCommunity(confirmActionEvent.communityId).then((_) => {
                     setRightPanelHistory([]);
