@@ -93,7 +93,7 @@ class MainActivity : TauriActivity() {
     private fun extractDeepLinkUrl(intent: Intent): String? {
         if (intent.action != Intent.ACTION_VIEW) return null
         val host = intent.data?.host ?: return null
-        if (!host.endsWith("oc.app")) return null
+        if (host != "oc.app" && !host.endsWith(".oc.app")) return null
         return intent.dataString
     }
 
