@@ -160,9 +160,22 @@ export function parentRoute(from: RouteParams): string | null {
         case "admin_route":
         case "share_route":
         case "welcome_route":
+        case "favourites_route":
+        case "explore_groups_route":
             return "/chats";
         case "chat_list_route":
         case "not_found_route":
+        case "home_route":
+        case "home_landing_route":
+        case "features_route":
+        case "architecture_route":
+        case "whitepaper_route":
+        case "roadmap_route":
+        case "faq_route":
+        case "diamond_route":
+        case "guidelines_route":
+        case "terms_route":
+        case "blog_route":
             return null;
     }
 }

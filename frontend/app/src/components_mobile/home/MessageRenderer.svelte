@@ -49,9 +49,9 @@
     let mode = $derived<RendererMode>(reply || isPreview ? "reply" : draft ? "draft" : "render");
 
     let textContent = $derived<TextContentType | undefined>(
-        !!caption ? { kind: "text_content", text: caption ?? "" } : undefined,
+        caption ? { kind: "text_content", text: caption ?? "" } : undefined,
     );
-    let textContentArg = $derived(!!textContent?.text ? captionRenderer : undefined);
+    let textContentArg = $derived(textContent?.text ? captionRenderer : undefined);
 </script>
 
 {#snippet captionRenderer()}

@@ -336,7 +336,7 @@
                         pop();
                         portalState.close();
                     }
-                } catch {}
+                } catch { /* ignore */ }
             }).catch(console.error);
         }
 

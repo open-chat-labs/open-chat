@@ -62,7 +62,7 @@
 
     // TODO this pattern seems to repeat itself for various components, we should find a better way to handle this.
     let textContent = $derived<TextContentType | undefined>(
-        !!content.caption ? { kind: "text_content", text: content.caption ?? "" } : undefined,
+        content.caption ? { kind: "text_content", text: content.caption ?? "" } : undefined,
     );
     let hasContent = $derived(!!textContent?.text);
     let textHighlightColour = $derived<ColourVarKeys>(me ? "secondaryLight" : "primaryLight");

@@ -29,8 +29,6 @@
         identityStateStore,
         localUpdates,
         offlineStore,
-        pageRedirect,
-        pageReplace,
         pinNumberResolverStore,
         publish,
         querystringStore,
@@ -310,7 +308,7 @@
         // chat, in which case we must leave the current route untouched.
         const viewingThisChat = chatIdentifiersEqual($selectedChatIdStore, chatId);
         if (viewingThisChat) {
-            page(routeForScope($chatListScopeStore));
+            navigate(routeForScope($chatListScopeStore));
         }
         return client.deleteDirectChat(chatId, blockUser).then((success) => {
             if (!success) {

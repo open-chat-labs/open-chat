@@ -1,6 +1,5 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
-    ;
     import { navigate } from "@utils/navigation";
     import { getContext, onMount, tick } from "svelte";
     import { i18nKey } from "../i18n/i18n";
