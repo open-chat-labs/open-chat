@@ -170,6 +170,7 @@ export function handleLinkClick(
                   : null;
         const anchor = target?.closest("a");
         if (!anchor || !anchor.href) return;
+        if (anchor.getAttribute("role") === "button") return;
 
         // Don't navigate when clicking links inside a contenteditable editor
         if (anchor.closest("[contenteditable]")) {
