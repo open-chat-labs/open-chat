@@ -1,11 +1,7 @@
-import type { ApiBatchMultiResponse } from "./candid/idl";
-import { buildSwapPlan } from "./optimizer";
+import type { ApiOptimalSwapPlan } from "./candid/idl";
 
-// Run the same split-route optimizer the user_canister backend uses at
-// execution time, so the displayed quote matches the actual deliverable.
-export function batchMultiQuoteResponse(
-    candid: ApiBatchMultiResponse,
-    bps: bigint[],
-): bigint {
-    return buildSwapPlan(candid, bps).expectedOut;
+// TACO returns the chosen plan with the optimizer already applied. For OC's
+// quote display we only need the headline expected output.
+export function optimalQuoteResponse(candid: ApiOptimalSwapPlan): bigint {
+    return candid.expectedBuyAmount;
 }

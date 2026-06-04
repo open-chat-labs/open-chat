@@ -20,6 +20,21 @@ pub async fn get_expected_receive_amount_batch_multi(
     .await
 }
 
+pub async fn get_expected_receive_amount_batch_multi_optimal(
+    canister_id: CanisterId,
+    args: get_expected_receive_amount_batch_multi_optimal::Args,
+) -> Result<get_expected_receive_amount_batch_multi_optimal::Response, C2CError> {
+    canister_client::make_c2c_call(
+        canister_id,
+        "getExpectedReceiveAmountBatchMultiOptimal",
+        args,
+        ::candid::encode_args,
+        |r| ::candid::decode_one(r),
+        None,
+    )
+    .await
+}
+
 pub async fn swap_multi_hop(
     canister_id: CanisterId,
     args: swap_multi_hop::Args,

@@ -1,42 +1,29 @@
 import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 
-export interface HopDetail {
+export interface SwapHop {
   'tokenIn' : string,
   'tokenOut' : string,
-  'amountIn' : bigint,
-  'amountOut' : bigint,
-  'fee' : bigint,
-  'priceImpact' : number,
 }
-export interface PotentialOrderDetails {
-  'amount_init' : bigint,
-  'amount_sell' : bigint,
+export interface OptimalSwapLeg {
+  'bp' : bigint,
+  'expectedBuyAmount' : bigint,
+  'route' : Array<SwapHop>,
+  'routeDescription' : string,
 }
-export interface QuoteRoute {
+export interface OptimalSwapPlan {
   'expectedBuyAmount' : bigint,
   'fee' : bigint,
   'priceImpact' : number,
-  'routeDescription' : string,
   'canFulfillFully' : boolean,
-  'potentialOrderDetails' : [] | [PotentialOrderDetails],
-  'hopDetails' : Array<HopDetail>,
-  'routeTokens' : Array<string>,
   'tradingFeeBps' : bigint,
+  'routeDescription' : string,
+  'legs' : Array<OptimalSwapLeg>,
 }
-export interface RequestResponse {
-  'routes' : Array<QuoteRoute>,
-}
-export interface Request {
-  'tokenSell' : string,
-  'tokenBuy' : string,
-  'amountSell' : bigint,
-}
-export type BatchMultiResponse = Array<RequestResponse>;
 export interface _SERVICE {
-  'getExpectedReceiveAmountBatchMulti' : ActorMethod<
-    [Array<Request>, bigint],
-    BatchMultiResponse
+  'getExpectedReceiveAmountBatchMultiOptimal' : ActorMethod<
+    [string, string, bigint],
+    OptimalSwapPlan
   >,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
