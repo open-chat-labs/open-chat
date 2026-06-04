@@ -57,7 +57,6 @@ export type PubSubEvents = {
         kind: "delete_direct_chat";
         chatId: DirectChatIdentifier;
         blockUser: boolean;
-        doubleCheck: { challenge: ResourceKey; response: ResourceKey };
     };
     deleteGroup: {
         kind: "delete";
