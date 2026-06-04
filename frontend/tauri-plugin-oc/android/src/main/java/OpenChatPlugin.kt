@@ -118,7 +118,6 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
     @Command
     fun getPendingDeepLink(invoke: Invoke) {
         val url = OCPluginCompanion.pendingDeepLinkUrl
-        Log.d(LOG_TAG, "getPendingDeepLink called, pendingDeepLinkUrl=$url")
         OCPluginCompanion.pendingDeepLinkUrl = null
         if (url != null) {
             invoke.resolve(JSObject().put("url", url))

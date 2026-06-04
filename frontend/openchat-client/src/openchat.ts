@@ -9946,8 +9946,10 @@ export class OpenChat {
                         );
                     }
                 };
-                publish("navigateTo", { url: event.data.path });
-                acknowledgeNotificationClick();
+                publish("navigateTo", { url: event.data.path, intent: "notification" });
+                void acknowledgeNotificationClick().catch((err) => {
+                    console.error("PUSH: failed to acknowledge notification click", err);
+                });
             }
         });
 
