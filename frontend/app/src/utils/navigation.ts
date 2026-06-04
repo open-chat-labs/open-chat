@@ -77,7 +77,7 @@ const ROUTE_MATCHERS: Array<{ regexp: RegExp; kind: RouteParams["kind"] }> = (
 }));
 
 function pathToRouteKind(path: string): RouteParams["kind"] {
-    const pathname = path.split("?")[0];
+    const pathname = path.split(/[?#]/)[0];
     for (const { regexp, kind } of ROUTE_MATCHERS) {
         if (regexp.test(pathname)) return kind;
     }
