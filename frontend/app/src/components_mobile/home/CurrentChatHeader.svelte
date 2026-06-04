@@ -66,10 +66,7 @@
     let isPublic = $derived(!client.isChatPrivate(selectedChatSummary));
 
     function clearSelection() {
-        // publish("clearSelection");
-        // This *might* be problematic sometimes, but it's close to right than what we had
-        // TODO - come back and look at this later. It might be wrong.
-        history.back();
+        publish("clearSelection");
     }
 
     function showGroupDetails() {
