@@ -14,6 +14,7 @@
     import { broadcastLoggedInUser } from "@stores/xframe";
     import "@utils/markdown";
     import {
+        expectDeepLinks,
         expectNewFcmToken,
         expectNotificationTap,
         expectPushNotifications,
@@ -200,6 +201,10 @@
             // (or via a Direct Share chat shortcut). Cold-start shares are queued
             // by the native side and delivered once svelteReady fires below.
             expectShareTarget((share) => handleShareTarget(client, share)).catch(console.error);
+
+            // Listen for deep links (e.g. https://oc.app/group/xyz tapped from another app).
+            // Cold-start deep links are queued by MainActivity and delivered once svelteReady fires.
+            expectDeepLinks().catch(console.error);
 
             // Expect FCM token refreshes
             expectNewFcmToken(addFcmToken);

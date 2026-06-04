@@ -1,6 +1,7 @@
 
 <script lang="ts">
     import { initNavigationHistoryTracking, navigate } from "@src/utils/navigation";
+    import { consumePendingDeepLink } from "@utils/native/notification_channels";
     import { handleLinkClick, removeQueryStringParam } from "@src/utils/urls";
     import type { TransitionType } from "component-lib";
     import { type ChatIdentifier, OpenChat, type RouteParams, adminRoute, chatIdentifiersEqual, chatListRoute, chatListScopeStore, chatsInitialisedStore, communitesRoute, communitiesStore, communityIdentifiersEqual, exploringStore, globalDirectChatSelectedRoute, globalGroupChatSelectedRoute, isMessageIndexRoute, messageIndexStore, notFoundStore, notificationsRoute, profileSummaryRoute, publish, routeKindStore, routeStore, routerReadyStore, selectedChannelRoute, selectedChatIdStore, selectedCommunityIdStore, selectedCommunityRoute, selectedServerChatStore, shareRoute, threadMessageIndexStore, threadOpenStore, walletRoute, welcomeRoute } from "openchat-client";
@@ -311,7 +312,20 @@
             $chatListScopeStore.kind !== "none" &&
             !$exploringStore
         ) {
-            client.selectDefaultChat();
+            const deepLink = consumePendingDeepLink();
+            if (deepLink) {
+                untrack(() => {
+                    try {
+                        const { pathname, search } = new URL(deepLink);
+                        navigate(pathname + search, "notification");
+                    } catch {
+                        console.error("Deep link: failed to parse cold-start URL", deepLink);
+                        client.selectDefaultChat();
+                    }
+                });
+            } else {
+                client.selectDefaultChat();
+            }
         }
     });
 

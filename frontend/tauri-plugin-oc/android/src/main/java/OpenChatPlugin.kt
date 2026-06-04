@@ -114,6 +114,18 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
     fun updateChatShortcuts(invoke: Invoke) {
         UpdateChatShortcuts(activity).handler(invoke)
     }
+
+    @Command
+    fun getPendingDeepLink(invoke: Invoke) {
+        val url = OCPluginCompanion.pendingDeepLinkUrl
+        Log.d(LOG_TAG, "getPendingDeepLink called, pendingDeepLinkUrl=$url")
+        OCPluginCompanion.pendingDeepLinkUrl = null
+        if (url != null) {
+            invoke.resolve(JSObject().put("url", url))
+        } else {
+            invoke.resolve(JSObject())
+        }
+    }
 }
 
 object OCPluginCompanion {
@@ -128,6 +140,10 @@ object OCPluginCompanion {
     //
     // Creates cache for the FCM token.
     var fcmToken: String? = null
+
+    // Deep link URL received during cold start (before the WebView was ready).
+    // JS pulls this via getPendingDeepLink() once mounted.
+    var pendingDeepLinkUrl: String? = null
 
     fun initFcmTokenCache() {
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
