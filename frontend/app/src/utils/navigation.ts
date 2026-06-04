@@ -178,6 +178,8 @@ export function parentRoute(from: RouteParams): string | null {
         case "blog_route":
             return null;
     }
+
+    return null;
 }
 
 /**
