@@ -50,8 +50,10 @@ import {
     defaultChatRules,
     deletedUser,
     emptyEventsResponse,
+    extractEnabledLinks,
     extractUserIdsFromMentions,
     featureRestricted,
+    fetchOgPreviews,
     getContentAsFormattedText,
     getDisplayDate,
     getEmailSignInSession,
@@ -78,11 +80,13 @@ import {
     publish,
     random64,
     removeEmailSignInSession,
+    removeOpenGraphPreviews,
     routeForChatIdentifier,
     routeForMessage,
     setMinLogLevel,
     shouldPreprocessGate,
     storeEmailSignInSession,
+    stripLinkDisabledMarker,
     toDer,
     toTitleCase,
     updateCreatedUser,
@@ -557,12 +561,6 @@ import { getErc20TokenBalances } from "./utils/evm";
 import formatFileSize from "./utils/fileSize";
 import { gaTrack } from "./utils/ga";
 import { calculateMediaDimensions } from "./utils/layout";
-import {
-    extractEnabledLinks,
-    fetchOgPreviews,
-    removeOpenGraphPreviews,
-    stripLinkDisabledMarker,
-} from "openchat-shared";
 import { groupBy, groupWhile, keepMax, partition, toRecord, toRecord2 } from "./utils/list";
 import { getUserCountryCode } from "./utils/location";
 import {
@@ -4541,7 +4539,10 @@ export class OpenChat {
             const newAchievement = !achievementsStore.value.has("edited_message");
 
             // Fetch og previews in the background; content change is already visible in the UI.
-            const ogPreviews = await fetchOgPreviews(extractEnabledLinks(textContent), import.meta.env.OC_PREVIEW_PROXY_URL);
+            const ogPreviews = await fetchOgPreviews(
+                extractEnabledLinks(textContent),
+                import.meta.env.OC_PREVIEW_PROXY_URL,
+            );
             msg.ogPreviews = ogPreviews;
             const undoOgPreviews = localUpdates.setEditedOgPreviews(msg.messageId, ogPreviews);
 
@@ -8484,7 +8485,10 @@ export class OpenChat {
             ? chatSummariesStore.value.get(mostRecentId)
             : undefined;
         if (mostRecentChat !== undefined) {
-            publish("navigateTo", { url: routeForChatIdentifier(scope.kind, mostRecentChat.id), intent: "auto" });
+            publish("navigateTo", {
+                url: routeForChatIdentifier(scope.kind, mostRecentChat.id),
+                intent: "auto",
+            });
             return true;
         }
         return false;
@@ -8512,7 +8516,6 @@ export class OpenChat {
         if (mostRecentCommunity !== undefined) {
             publish("navigateTo", {
                 url: `/community/${mostRecentCommunity.id.communityId}`,
-                intent: "auto",
             });
             return true;
         }
@@ -8522,7 +8525,7 @@ export class OpenChat {
     #selectFirstCommunity(): boolean {
         const first = sortedCommunitiesStore.value?.find((c) => !c.membership.archived);
         if (first !== undefined) {
-            publish("navigateTo", { url: `/community/${first.id.communityId}`, intent: "auto" });
+            publish("navigateTo", { url: `/community/${first.id.communityId}` });
             return true;
         }
         return false;

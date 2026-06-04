@@ -135,8 +135,7 @@ function isSameChat(from: RouteParams, toPath: string): boolean {
         return !pathname.match(/\/channel\/[^/]+\/\d/);
     }
 
-    const id =
-        from.chatId.kind === "group_chat" ? from.chatId.groupId : from.chatId.userId;
+    const id = from.chatId.kind === "group_chat" ? from.chatId.groupId : from.chatId.userId;
     const segs = pathname.split("/").filter(Boolean);
     if (!segs.includes(id)) return false;
     const idIdx = segs.lastIndexOf(id);
@@ -287,7 +286,9 @@ export function hasPendingNavigation(): boolean {
 export function initNavigationHistoryTracking() {
     syncCurrentHistoryState(history.state);
     window.addEventListener("popstate", handlePopstate);
-    const unsubNavigateTo = subscribe("navigateTo", ({ url, intent }) => navigate(url, intent ?? "in-app"));
+    const unsubNavigateTo = subscribe("navigateTo", ({ url, intent }) =>
+        navigate(url, intent ?? "in-app"),
+    );
 
     return () => {
         window.removeEventListener("popstate", handlePopstate);
