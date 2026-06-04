@@ -142,7 +142,7 @@ export async function openExternalUrl(client: OpenChat, url: string): Promise<vo
     const href = parsed.toString();
 
     if (client.isNativeApp()) {
-        openUrl({ url: href });
+        await openUrl({ url: href });
         return;
     }
 
