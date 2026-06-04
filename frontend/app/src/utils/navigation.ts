@@ -143,7 +143,31 @@ function isSameChat(from: RouteParams, toPath: string): boolean {
 }
 
 /**
- * current one, or pop back to the previous one.
+ * Returns the logical "parent" URL of the given route, used to navigate up
+ * when the user presses back on a deep-linked page with no history behind it.
+ * Returns null if the route is already the root (caller should minimize/exit).
+ */
+export function parentRoute(from: RouteParams): string | null {
+    switch (from.kind) {
+        case "selected_channel_route":
+            return `/community/${from.communityId.communityId}`;
+        case "selected_community_route":
+        case "global_chat_selected_route":
+        case "notifications_route":
+        case "profile_summary_route":
+        case "wallet_route":
+        case "communities_route":
+        case "admin_route":
+        case "share_route":
+        case "welcome_route":
+            return "/chats";
+        case "chat_list_route":
+        case "not_found_route":
+            return null;
+    }
+}
+
+/**
  *
  * Rules (chats is the root tab — back always returns there):
  *   notification intent                    → replace

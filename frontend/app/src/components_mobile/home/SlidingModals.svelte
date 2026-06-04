@@ -4,12 +4,13 @@
     import { communityPreviewState, groupPreviewState } from "@src/utils/preview.svelte";
     import { removeQueryStringParam, stripThreadFromUrl } from "@src/utils/urls";
     import { pendingShareStore } from "@stores/pendingShare";
-    import { navigate } from "@utils/navigation";
+    import { navigate, parentRoute } from "@utils/navigation";
     import { portalState } from "component-lib";
     import {
         chatListScopeStore,
         OpenChat,
         routeForChatIdentifier,
+        routeStore,
         selectedChatMembersStore,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
@@ -322,9 +323,15 @@
             // the app.
             expectBackPress(() => {
                 try {
-                    // if we're back where we started, minimise
                     if (historyDepth <= 0) {
-                        minimizeApp().catch(console.error);
+                        // If we arrived via deep link there's no in-app history behind us.
+                        // Navigate up to the logical parent rather than exiting immediately.
+                        const parent = parentRoute(routeStore.value);
+                        if (parent !== null) {
+                            navigate(parent, "auto");
+                        } else {
+                            minimizeApp().catch(console.error);
+                        }
                     } else {
                         pop();
                         portalState.close();
