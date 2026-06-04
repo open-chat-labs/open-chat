@@ -57,6 +57,7 @@ export default defineConfig([
     {
         files: [
             "app/src/utils/navigation.ts",
+            "openchat-client/src/state/path/stores.ts",
         ],
         rules: {
             "local/no-pagejs-direct": "off",
