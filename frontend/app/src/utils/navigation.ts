@@ -89,7 +89,8 @@ function pathToRouteKind(path: string): RouteParams["kind"] {
  * meaning a thread panel will be open at the destination.
  */
 function pathHasThread(path: string): boolean {
-    const [pathname, qs] = path.split("?");
+    const [pathNoHash] = path.split("#");
+    const [pathname, qs] = pathNoHash.split("?");
     if (qs && new URLSearchParams(qs).get("open") === "true") return true;
     const segs = pathname.split("/").filter(Boolean);
     if (segs[0] === "group" || segs[0] === "user") return segs.length >= 4;
