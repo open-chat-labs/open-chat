@@ -256,7 +256,7 @@ function doNavigate(to: string, intent: NavigationIntent, retries = 0) {
         return;
     }
     const mode = navigationMode(to, routeStore.value, intent);
-    console.log("Navigating: (from, to, mode)", routeStore.value, to, mode);
+    console.debug("ROUTER: navigating", { from: routeStore.value, to, mode, intent });
     switch (mode) {
         case "push":
             pushDepth++;
