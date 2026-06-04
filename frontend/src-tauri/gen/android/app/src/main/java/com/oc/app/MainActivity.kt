@@ -92,9 +92,11 @@ class MainActivity : TauriActivity() {
 
     private fun extractDeepLinkUrl(intent: Intent): String? {
         if (intent.action != Intent.ACTION_VIEW) return null
-        val host = intent.data?.host ?: return null
+        val data = intent.data ?: return null
+        if (data.scheme != "https") return null
+        val host = data.host ?: return null
         if (host != "oc.app" && !host.endsWith(".oc.app")) return null
-        return intent.dataString
+        return data.toString()
     }
 
     override fun onWebViewCreate(webView: WebView) {
