@@ -1,8 +1,8 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { Body, ColourVars, Container, transition } from "component-lib";
-    import { pageReplace, publish, routeStore } from "openchat-client";
-    import page from "page";
+    import { publish, routeStore } from "openchat-client";
+    import { navigate } from "@utils/navigation";
     import { type Snippet } from "svelte";
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
     import MulticolourText, { type TextPart } from "../MulticolourText.svelte";
@@ -55,9 +55,9 @@
         transition(["fade"], () => {
             publish("closeModalStack");
             if ($routeStore.kind === "communities_route") {
-                page("/");
+                navigate("/");
             } else {
-                pageReplace("/communities");
+                navigate("/communities");
             }
         });
     }

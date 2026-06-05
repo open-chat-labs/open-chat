@@ -8,7 +8,7 @@
         routeForScope,
         type CommunitySummary,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
@@ -29,13 +29,13 @@
 
     function deleteCommunity() {
         deleting = true;
-        page(routeForScope(client.getDefaultScope()));
+        navigate(routeForScope(client.getDefaultScope()));
         client
             .deleteCommunity(community.id)
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("communities.errors.deleteFailed"));
-                    page(`/community/${community.id.communityId}`);
+                    navigate(`/community/${community.id.communityId}`);
                 } else {
                     publish("closeModalStack");
                 }

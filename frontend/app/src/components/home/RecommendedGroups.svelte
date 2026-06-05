@@ -10,7 +10,7 @@
         mobileWidth,
         routeForScope,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext, onMount } from "svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
@@ -38,7 +38,7 @@
     onMount(loadData);
 
     function cancelRecommendations() {
-        page(routeForScope($chatListScopeStore));
+        navigate(routeForScope($chatListScopeStore));
     }
 
     function onDismissRecommendation(id: GroupChatIdentifier) {

@@ -1,4 +1,6 @@
+
 <script lang="ts">
+    import { navigate } from "@utils/navigation";
     import type {
         ChatEvent,
         ChatIdentifier,
@@ -12,35 +14,7 @@
         OpenChat,
         UserSummary,
     } from "openchat-client";
-    import {
-        allUsersStore,
-        compareRoles,
-        currentUserIdStore,
-        eventsStore,
-        fullWidth,
-        lastRightPanelState,
-        pageReplace,
-        publish,
-        rightPanelHistory,
-        roleAsText,
-        routeStore,
-        selectedChatBlockedUsersStore,
-        selectedChatBotsStore,
-        selectedChatIdStore,
-        selectedChatInvitedUsersStore,
-        selectedChatLapsedMembersStore,
-        selectedChatMembersStore,
-        selectedChatPinnedMessagesStore,
-        selectedChatSummaryStore,
-        selectedChatWebhooksStore,
-        selectedCommunityBlockedUsersStore,
-        selectedCommunityBotsStore,
-        selectedCommunityInvitedUsersStore,
-        selectedCommunityLapsedMembersStore,
-        selectedCommunityMembersStore,
-        selectedCommunitySummaryStore,
-        setRightPanelHistory,
-    } from "openchat-client";
+    import { allUsersStore, compareRoles, currentUserIdStore, eventsStore, fullWidth, lastRightPanelState, publish, rightPanelHistory, roleAsText, routeStore, selectedChatBlockedUsersStore, selectedChatBotsStore, selectedChatIdStore, selectedChatInvitedUsersStore, selectedChatLapsedMembersStore, selectedChatMembersStore, selectedChatPinnedMessagesStore, selectedChatSummaryStore, selectedChatWebhooksStore, selectedCommunityBlockedUsersStore, selectedCommunityBotsStore, selectedCommunityInvitedUsersStore, selectedCommunityLapsedMembersStore, selectedCommunityMembersStore, selectedCommunitySummaryStore, setRightPanelHistory } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
@@ -202,7 +176,7 @@
 
     function closeThread(_id: ChatIdentifier) {
         client.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
-        pageReplace(stripThreadFromUrl(removeQueryStringParam("open")));
+        navigate(stripThreadFromUrl(removeQueryStringParam("open")));
         activeVideoCall.threadOpen(false);
     }
 

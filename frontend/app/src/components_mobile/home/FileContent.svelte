@@ -45,7 +45,7 @@
     }: Props = $props();
 
     let normalisedContent = $derived<TextContentType | undefined>(
-        !!content.caption ? { kind: "text_content", text: content.caption ?? "" } : undefined,
+        content.caption ? { kind: "text_content", text: content.caption ?? "" } : undefined,
     );
 </script>
 

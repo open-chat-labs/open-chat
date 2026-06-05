@@ -86,6 +86,7 @@
         width: 100%;
         border-radius: var(--rad-lg) var(--rad-lg) var(--rad-md) var(--rad-md);
         overflow: hidden;
+        margin-bottom: $sp3;
 
         &.me .card {
             background-color: var(--primary-surface);

@@ -3,18 +3,20 @@
     import { onPopstate, pushDummyHistoryState } from "@src/utils/history";
     import { communityPreviewState, groupPreviewState } from "@src/utils/preview.svelte";
     import { removeQueryStringParam, stripThreadFromUrl } from "@src/utils/urls";
+    import { pendingShareStore } from "@stores/pendingShare";
+    import { navigate, parentRoute } from "@utils/navigation";
     import { portalState } from "component-lib";
     import {
         chatListScopeStore,
-        type ChatIdentifier,
         OpenChat,
-        pageReplace,
         routeForChatIdentifier,
+        routeStore,
         selectedChatMembersStore,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
         subscribe,
         type ChannelIdentifier,
+        type ChatIdentifier,
         type ChatSummary,
         type ChitEarnedGate,
         type CommandDefinition,
@@ -32,16 +34,17 @@
         type NamedAccount,
         type NeuronGate,
         type PaymentGate,
+        type PollContent,
         type PublicProfile,
         type ReadonlySet,
         type TokenBalanceGate,
         type UserGroupDetails,
-        type PollContent,
     } from "openchat-client";
+    import page from "page";
     import { getContext, onMount } from "svelte";
     import { minimizeApp } from "tauri-plugin-oc-api";
     import { expectBackPress } from "../../utils/native/notification_channels";
-    import { pendingShareStore } from "@stores/pendingShare";
+    import { flushPendingNavigation, hasPendingNavigation } from "../../utils/navigation";
     import type { Share as ShareType } from "../../utils/share";
     import BotBuilderModal from "../bots/BotBuilderModal.svelte";
     import BotDetailsPage from "../bots/BotDetailsPage.svelte";
@@ -244,20 +247,31 @@
     }
 
     function popstate(ev: PopStateEvent) {
-        const { previousState } = onPopstate(ev);
-        if (previousState?.action === "sliding_modal" && modalStack.length > 0) {
+        const { previousAction } = onPopstate(ev);
+        if (previousAction === "sliding_modal" && modalStack.length > 0) {
             if (top?.kind === "open_thread") {
-                pageReplace(stripThreadFromUrl(removeQueryStringParam("open")));
+                // Direct page.replace here is intentional: we are already inside a popstate
+                // handler (the user pressed back) so the history is already unwinding.
+                // Calling navigate() would re-trigger the modal-close cycle and cause a
+                // recursive history.back(). This is URL synchronisation, not navigation.
+                // TODO - this is also very fishy - we shouldn't have to do special hacks for closing threads.
+                page.replace(stripThreadFromUrl(removeQueryStringParam("open")));
                 activeVideoCall.threadOpen(false);
             }
             modalStack.pop();
         }
+
         historyDepth = historyDepth - 1;
         if (recursivePop) {
             if (modalStack.length > 0) {
                 pop();
             } else {
                 recursivePop = false;
+                // Prevent page.js (registered after us) from also processing this popstate
+                // event. If we let it run, it would call page.replace() with the pre-modal
+                // path from e.state, overwriting the history entry we're about to push.
+                if (hasPendingNavigation()) ev.stopImmediatePropagation();
+                flushPendingNavigation();
             }
         }
     }
@@ -272,18 +286,20 @@
     // Going via pop() (history.back) races page.js's popstate handler, which
     // re-dispatches the previous URL's route — that fights our subsequent
     // navigation on some WebViews (Samsung release builds especially). Doing
-    // the modalStack pop directly + a pageReplace gives us a single
+    // the modalStack pop directly + a navigate gives us a single
     // history.replaceState write with no popstate event in the middle.
     function shareToChosenChat(chatId: ChatIdentifier) {
         modalStack.pop();
         historyDepth = historyDepth - 1;
-        pageReplace(routeForChatIdentifier($chatListScopeStore.kind, chatId));
+        navigate(routeForChatIdentifier($chatListScopeStore.kind, chatId));
     }
 
     function popStack() {
         if (!recursivePop && modalStack.length > 0) {
             recursivePop = true;
             pop();
+        } else if (modalStack.length === 0) {
+            flushPendingNavigation();
         }
     }
 
@@ -307,14 +323,20 @@
             // the app.
             expectBackPress(() => {
                 try {
-                    // if we're back where we started, minimise
                     if (historyDepth <= 0) {
-                        minimizeApp().catch(console.error);
+                        // If we arrived via deep link there's no in-app history behind us.
+                        // Navigate up to the logical parent rather than exiting immediately.
+                        const parent = parentRoute(routeStore.value);
+                        if (parent !== null) {
+                            navigate(parent, "auto");
+                        } else {
+                            minimizeApp().catch(console.error);
+                        }
                     } else {
                         pop();
                         portalState.close();
                     }
-                } catch {}
+                } catch { /* ignore */ }
             }).catch(console.error);
         }
 
@@ -564,10 +586,7 @@
         {:else if page.kind === "forward_message"}
             <ForwardMessageModal onClose={pop} msg={page.msg} />
         {:else if page.kind === "share_message"}
-            <ShareMessageModal
-                onClose={pop}
-                onShare={shareToChosenChat}
-                share={page.share} />
+            <ShareMessageModal onClose={pop} onShare={shareToChosenChat} share={page.share} />
         {:else if page.kind === "register_bot"}
             <BotBuilderModal onClose={pop} mode={"register"} />
         {:else if page.kind === "update_bot"}

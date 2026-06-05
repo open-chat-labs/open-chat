@@ -10,7 +10,7 @@
         routeStore,
         type DirectChatIdentifier,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import BotInstaller from "./install/BotInstaller.svelte";
 
@@ -33,7 +33,7 @@
                 $routeStore.kind === "global_chat_selected_route" &&
                 chatIdentifiersEqual(chatId, $routeStore.chatId)
             ) {
-                page(routeForScope($chatListScopeStore));
+                navigate(routeForScope($chatListScopeStore));
             }
         }
         onClose();

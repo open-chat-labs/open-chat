@@ -33,7 +33,7 @@
         threadOpenStore,
         unconfirmedStore,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext, untrack } from "svelte";
     import Witch from "@shared_components/Witch.svelte";
     import ChatEvent from "./ChatEvent.svelte";
@@ -94,7 +94,7 @@
     }
 
     function doGoToMessageIndex(index: number): void {
-        page(routeForChatIdentifier($chatListScopeStore.kind, chat.id));
+        navigate(routeForChatIdentifier($chatListScopeStore.kind, chat.id));
         chatEventList?.scrollToMessageIndex(messageContext, index, false);
     }
 

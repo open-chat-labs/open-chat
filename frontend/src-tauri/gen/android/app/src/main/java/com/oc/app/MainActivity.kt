@@ -28,8 +28,25 @@ class MainActivity : TauriActivity() {
         // Has to be called before super, and only for Android versions <= 14
         enableEdgeToEdgeForAndroid14AndLess()
 
+        // Intercept https://oc.app VIEW intents before super.onCreate() to work around
+        // a tao 0.35.2 JNI crash: tao calls get_string() on getType() without a null
+        // check, but VIEW intents for URL navigation have no MIME type (null getType()).
+        // We neutralize the intent so tao ignores it, then deliver the URL via
+        // OCPluginCompanion (which queues it until the WebView is ready).
+        val deepLinkUrl = extractDeepLinkUrl(intent)
+        if (deepLinkUrl != null) {
+            setIntent(Intent(intent).apply { action = Intent.ACTION_MAIN; data = null })
+        }
+
         super.onCreate(savedInstanceState)
         WebView.setWebContentsDebuggingEnabled(true)
+
+        Log.d(LOG_TAG, "onCreate: action=${intent.action} data=${intent.data}")
+
+        if (deepLinkUrl != null) {
+            Log.d(LOG_TAG, "onCreate: storing cold-start deep link $deepLinkUrl")
+            OCPluginCompanion.pendingDeepLinkUrl = deepLinkUrl
+        }
 
         try {
             handleWindowInsets()
@@ -50,13 +67,36 @@ class MainActivity : TauriActivity() {
     }
 
     override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
+        // Same tao null getType() crash applies to warm starts; pass a neutralized
+        // copy to super but deliver the URL via OCPluginCompanion.
+        val deepLinkUrl = extractDeepLinkUrl(intent)
+        val safeIntent = if (deepLinkUrl != null) {
+            Intent(intent).apply { action = Intent.ACTION_MAIN; data = null }
+        } else intent
+
+        super.onNewIntent(safeIntent)
+        Log.d(LOG_TAG, "onNewIntent: action=${intent.action} data=${intent.data}")
+
+        if (deepLinkUrl != null) {
+            Log.d(LOG_TAG, "onNewIntent: delivering deep link $deepLinkUrl")
+            OCPluginCompanion.triggerRef("deep-link", JSObject().put("url", deepLinkUrl))
+        }
+
         try {
             handleNotificationIntent(intent)
             ShareIntentManager.handle(this, intent)
         } catch (e: Exception) {
             Log.e(LOG_TAG, "Error occurred $e")
         }
+    }
+
+    private fun extractDeepLinkUrl(intent: Intent): String? {
+        if (intent.action != Intent.ACTION_VIEW) return null
+        val data = intent.data ?: return null
+        if (data.scheme != "https") return null
+        val host = data.host ?: return null
+        if (host != "oc.app" && !host.endsWith(".oc.app")) return null
+        return data.toString()
     }
 
     override fun onWebViewCreate(webView: WebView) {

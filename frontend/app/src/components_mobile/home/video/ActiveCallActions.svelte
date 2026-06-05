@@ -1,13 +1,7 @@
 <script lang="ts">
     import { MenuItem } from "component-lib";
-    import {
-        chatListScopeStore,
-        OpenChat,
-        pageReplace,
-        publish,
-        routeForMessage,
-    } from "openchat-client";
-    import page from "page";
+    import { chatListScopeStore, OpenChat, publish, routeForMessage } from "openchat-client";
+    import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
@@ -39,9 +33,9 @@
         if (chat.chatId !== undefined && chat.videoCallInProgress?.messageIndex !== undefined) {
             if (threadOpen) {
                 client.popRightPanelHistory();
-                pageReplace(removeQueryStringParam("open"));
+                navigate(removeQueryStringParam("open"));
             } else {
-                page(
+                navigate(
                     `${routeForMessage(
                         $chatListScopeStore.kind,
                         { chatId: chat.chatId },

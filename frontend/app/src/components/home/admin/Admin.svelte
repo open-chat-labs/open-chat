@@ -1,6 +1,6 @@
 <script lang="ts">
     import { iconSize, platformOperatorStore } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import CogOutline from "svelte-material-icons/CogOutline.svelte";
     import Button from "../../Button.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
@@ -19,7 +19,7 @@
         <img class="img" src={"/assets/evil-robot.svg"} alt="Unauthorised" />
         <h2>Unauthorised</h2>
         <p>Only platform operators can access the admin area</p>
-        <Button onClick={() => page("/")}>Back to safety</Button>
+        <Button onClick={() => navigate("/")}>Back to safety</Button>
     </div>
 {:else}
     <div class="admin">

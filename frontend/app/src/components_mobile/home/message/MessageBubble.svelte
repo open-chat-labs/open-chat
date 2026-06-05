@@ -22,7 +22,7 @@
         type SenderContext,
         type UserSummary,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext, type Snippet } from "svelte";
     import Typing from "@shared_components/Typing.svelte";
     import Badges from "../profile/Badges.svelte";
@@ -179,7 +179,7 @@
                 index: repliesTo.messageIndex,
             });
         } else {
-            page(getUrl(repliesTo));
+            navigate(getUrl(repliesTo));
         }
     }
 </script>

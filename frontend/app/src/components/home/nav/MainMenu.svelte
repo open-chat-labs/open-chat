@@ -7,7 +7,7 @@
         platformOperatorStore,
         publish,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import AccountSettings from "svelte-material-icons/AccountSettingsOutline.svelte";
     import ChartLine from "svelte-material-icons/ChartLine.svelte";
@@ -62,7 +62,7 @@
         </MenuItem>
         <MenuItem separator />
     {/if}
-    <MenuItem onclick={() => page("/home")}>
+    <MenuItem onclick={() => navigate("/home")}>
         {#snippet icon()}
             <Home size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
@@ -70,7 +70,7 @@
             Home page
         {/snippet}
     </MenuItem>
-    <MenuItem onclick={() => page("/features")}>
+    <MenuItem onclick={() => navigate("/features")}>
         {#snippet icon()}
             <InformationOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
@@ -78,7 +78,7 @@
             Features
         {/snippet}
     </MenuItem>
-    <MenuItem onclick={() => page("/roadmap")}>
+    <MenuItem onclick={() => navigate("/roadmap")}>
         {#snippet icon()}
             <Road size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
@@ -86,7 +86,7 @@
             Roadmap
         {/snippet}
     </MenuItem>
-    <MenuItem onclick={() => page("/whitepaper")}>
+    <MenuItem onclick={() => navigate("/whitepaper")}>
         {#snippet icon()}
             <Note size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
@@ -94,7 +94,7 @@
             Whitepaper
         {/snippet}
     </MenuItem>
-    <MenuItem onclick={() => page("/architecture")}>
+    <MenuItem onclick={() => navigate("/architecture")}>
         {#snippet icon()}
             <Graph size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
@@ -102,7 +102,7 @@
             Architecture
         {/snippet}
     </MenuItem>
-    <MenuItem onclick={() => page("/blog")}>
+    <MenuItem onclick={() => navigate("/blog")}>
         {#snippet icon()}
             <Blog size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
@@ -110,7 +110,7 @@
             Blog
         {/snippet}
     </MenuItem>
-    <MenuItem onclick={() => page("/faq")}>
+    <MenuItem onclick={() => navigate("/faq")}>
         {#snippet icon()}
             <Help size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
@@ -118,7 +118,7 @@
             FAQs
         {/snippet}
     </MenuItem>
-    <MenuItem onclick={() => page("/guidelines")}>
+    <MenuItem onclick={() => navigate("/guidelines")}>
         {#snippet icon()}
             <Security size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
@@ -136,7 +136,7 @@
     </MenuItem>
     {#if $platformOperatorStore}
         <MenuItem separator />
-        <MenuItem onclick={() => page("/admin")}>
+        <MenuItem onclick={() => navigate("/admin")}>
             {#snippet icon()}
                 <CogOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
             {/snippet}

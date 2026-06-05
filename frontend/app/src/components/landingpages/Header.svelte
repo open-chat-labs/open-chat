@@ -1,6 +1,6 @@
 <script lang="ts">
     import { iconSize, mobileWidth } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import Menu from "svelte-material-icons/Menu.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import MenuIcon from "../MenuIcon.svelte";
@@ -11,7 +11,7 @@
     let showBlog = $derived(Object.values(postsBySlug).length > 0);
 
     function home() {
-        page("/home");
+        navigate("/home");
     }
 </script>
 

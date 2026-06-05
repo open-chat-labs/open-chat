@@ -1,16 +1,9 @@
 import { addPluginListener, convertFileSrc, type PluginListener } from "@tauri-apps/api/core";
 import { pendingShareStore } from "@stores/pendingShare";
-import {
-    type ChatIdentifier,
-    LazyFile,
-    chatListScopeStore,
-    localUpdates,
-    OpenChat,
-    pageNavigate,
-    routeForChatIdentifier,
-} from "openchat-client";
+import { type ChatIdentifier, LazyFile, chatListScopeStore, localUpdates, OpenChat, routeForChatIdentifier } from "openchat-client";
 import { get } from "svelte/store";
 import type { Share } from "../share";
+import { navigate } from "@utils/navigation";
 
 const TAURI_PLUGIN_NAME = "oc";
 const SHARE_TARGET_EVENT = "share-target";
@@ -124,12 +117,10 @@ export function shareToChat(
             .then((content) => localUpdates.draftMessages.setAttachment({ chatId }, content))
             .catch((err) => console.error("Failed to attach shared file", err));
     }
-    // pageNavigate (rather than raw page()) polls routerReadyStore until the
-    // router has finished its initial setup. Cold-start shares arrive while
-    // Home.svelte is still pageReplacing the home_route to the default scope,
-    // so we'd otherwise lose the race; this gates us until the route resolver
-    // is settled.
-    pageNavigate(routeForChatIdentifier(get(chatListScopeStore).kind, chatId));
+    // navigate() routes through the centralized navigation system which handles
+    // router readiness (retrying if the router isn't ready yet). Cold-start shares
+    // arrive while Home.svelte is still loading, so we need this readiness check.
+    navigate(routeForChatIdentifier(get(chatListScopeStore).kind, chatId));
 }
 
 /**

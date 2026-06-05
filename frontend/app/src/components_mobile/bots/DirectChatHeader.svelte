@@ -12,7 +12,7 @@
         publish,
         routeForScope,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import HeartMinus from "svelte-material-icons/HeartMinus.svelte";
@@ -49,7 +49,7 @@
     }
 
     function removeBot() {
-        page(routeForScope($chatListScopeStore));
+        navigate(routeForScope($chatListScopeStore));
         client
             .uninstallBot({ kind: "direct_chat", userId: $currentUserIdStore }, bot.id)
             .then((success) => {

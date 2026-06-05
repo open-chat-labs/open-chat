@@ -18,6 +18,7 @@
         ResourceKey,
         RouteParams,
     } from "openchat-client";
+    import { navigate } from "@utils/navigation";
     import {
         allUsersStore,
         anonUserStore,
@@ -28,8 +29,6 @@
         identityStateStore,
         localUpdates,
         offlineStore,
-        pageRedirect,
-        pageReplace,
         pinNumberResolverStore,
         publish,
         querystringStore,
@@ -42,7 +41,6 @@
         subscribe,
         suspendedUserStore,
     } from "openchat-client";
-    import page from "page";
     import { getContext, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
@@ -136,7 +134,7 @@
             subscribe("unarchiveChat", unarchiveChat),
             subscribe("toggleMuteNotifications", toggleMuteNotifications),
             subscribe("successfulImport", successfulImport),
-            subscribe("clearSelection", () => pageReplace(routeForScope($chatListScopeStore))),
+            subscribe("clearSelection", () => navigate(routeForScope($chatListScopeStore))),
             subscribe("userSuspensionChanged", reload),
             subscribe("selectedChatInvalid", selectedChatInvalid),
             subscribe("sendMessageFailed", sendMessageFailed),
@@ -178,7 +176,7 @@
     }
 
     function selectedChatInvalid() {
-        pageReplace(routeForScope(client.getDefaultScope()));
+        navigate(routeForScope(client.getDefaultScope()));
     }
 
     function sendMessageFailed(alert: boolean) {
@@ -217,7 +215,7 @@
                     route.scope.kind === "favourite"
                 ) {
                     client.updateIdentityState({ kind: "logging_in" });
-                    pageRedirect("/chats");
+                    navigate("/chats");
                     return;
                 }
 
@@ -237,7 +235,7 @@
                         url: route.url,
                         files: [],
                     });
-                    pageReplace(routeForScope(client.getDefaultScope()));
+                    navigate(routeForScope(client.getDefaultScope()));
                 }
             }
         });
@@ -249,7 +247,7 @@
 
     function closeNoAccess() {
         closeModal();
-        page(routeForScope(client.getDefaultScope()));
+        navigate(routeForScope(client.getDefaultScope()));
     }
 
     function unarchiveChat(chatId: ChatIdentifier) {
@@ -310,25 +308,25 @@
         // chat, in which case we must leave the current route untouched.
         const viewingThisChat = chatIdentifiersEqual($selectedChatIdStore, chatId);
         if (viewingThisChat) {
-            page(routeForScope($chatListScopeStore));
+            navigate(routeForScope($chatListScopeStore));
         }
         return client.deleteDirectChat(chatId, blockUser).then((success) => {
             if (!success) {
                 toastStore.showFailureToast(i18nKey("deleteDirectChatFailure"));
                 if (viewingThisChat) {
-                    page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
+                    navigate(routeForChatIdentifier($chatListScopeStore.kind, chatId));
                 }
             }
         });
     }
 
     function deleteCommunity(id: CommunityIdentifier): Promise<void> {
-        page(routeForScope(client.getDefaultScope()));
+        navigate(routeForScope(client.getDefaultScope()));
 
         client.deleteCommunity(id).then((success) => {
             if (!success) {
                 toastStore.showFailureToast(i18nKey("communities.errors.deleteFailed"));
-                page(`/community/${id.communityId}`);
+                navigate(`/community/${id.communityId}`);
             }
         });
 
@@ -336,12 +334,12 @@
     }
 
     function leaveCommunity(id: CommunityIdentifier): Promise<void> {
-        page(routeForScope(client.getDefaultScope()));
+        navigate(routeForScope(client.getDefaultScope()));
 
         client.leaveCommunity(id).then((success) => {
             if (!success) {
                 toastStore.showFailureToast(i18nKey("communities.errors.leaveFailed"));
-                page(`/community/${id.communityId}`);
+                navigate(`/community/${id.communityId}`);
             }
         });
 
@@ -349,7 +347,7 @@
     }
 
     function leaveGroup(chatId: MultiUserChatIdentifier, level: Level): Promise<void> {
-        page(routeForScope($chatListScopeStore));
+        navigate(routeForScope($chatListScopeStore));
 
         client.leaveGroup(chatId).then((resp) => {
             if (resp !== "success") {
@@ -360,7 +358,7 @@
                         i18nKey("failedToLeaveGroup", undefined, level, true),
                     );
                 }
-                page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
+                navigate(routeForChatIdentifier($chatListScopeStore.kind, chatId));
             } else {
                 publish("closeModalStack");
             }
@@ -375,7 +373,7 @@
             return c.kind === "direct_chat" && c.them === chatId;
         });
 
-        page(routeForChatIdentifier(chat ? $chatListScopeStore.kind : "chats", chatId));
+        navigate(routeForChatIdentifier(chat ? $chatListScopeStore.kind : "chats", chatId));
     }
 
     function replyPrivatelyTo(context: EnhancedReplyContext) {
@@ -395,7 +393,7 @@
         localUpdates.draftMessages.setTextContent({ chatId }, "");
         localUpdates.draftMessages.setReplyingTo({ chatId }, context);
         if (chat) {
-            page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
+            navigate(routeForChatIdentifier($chatListScopeStore.kind, chatId));
         } else {
             createDirectChat(chatId as DirectChatIdentifier);
         }
@@ -446,12 +444,12 @@
             return false;
         }
 
-        page(routeForChatIdentifier("chats", chatId));
+        navigate(routeForChatIdentifier("chats", chatId));
         return true;
     }
 
     function successfulImport(id: ChannelIdentifier) {
-        page(`/community/${id.communityId}`);
+        navigate(`/community/${id.communityId}`);
     }
 
     function profileLinkClicked(ev: CustomEvent<ProfileLinkClickedEvent>) {
@@ -526,11 +524,11 @@
         if ($chatsInitialisedStore) {
             const faq = $querystringStore.get("faq");
             if (faq !== null) {
-                pageReplace(`/faq?q=${faq}`);
+                navigate(`/faq?q=${faq}`);
             }
             if ($querystringStore.get("hof") !== null) {
                 modal = { kind: "hall_of_fame" };
-                pageReplace(removeQueryStringParam("hof"));
+                navigate(removeQueryStringParam("hof"));
             }
         }
     });

@@ -10,7 +10,7 @@
         routeForMessageContext,
         type MessageContext,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
@@ -152,7 +152,7 @@
 
     function goToEventContext() {
         activityFeedShowing.set(false);
-        page(routeForMessageContext("none", event.messageContext, true));
+        navigate(routeForMessageContext("none", event.messageContext, true));
     }
     let sender = $derived(event.userId ? $allUsersStore.get(event.userId) : undefined);
     let eventUsername = $derived(

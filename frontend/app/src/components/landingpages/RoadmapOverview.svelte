@@ -2,11 +2,11 @@
     import Section from "./Section.svelte";
     import Link from "./Link.svelte";
     import ArrowLink from "../ArrowLink.svelte";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
 </script>
 
 <Section id={"roadmap"}>
-    <div class="roadmap" on:click={() => page("/roadmap")}>
+    <div class="roadmap" on:click={() => navigate("/roadmap")}>
         <div class="header">
             <h2 class="title">Roadmap</h2>
             <div class="features">

@@ -39,7 +39,7 @@
         translationsStore,
         byContext as typersByContext,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import ArchiveIcon from "svelte-material-icons/Archive.svelte";
@@ -323,7 +323,7 @@
             }
         });
         if (chatSummary.id === $selectedChatIdStore) {
-            page(routeForScope($chatListScopeStore));
+            navigate(routeForScope($chatListScopeStore));
         }
     }
 

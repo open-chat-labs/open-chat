@@ -1,16 +1,6 @@
 <script lang="ts">
     import { toastStore } from "@src/stores/toast";
-    import {
-        chatListScopeStore,
-        chatSummariesListStore,
-        currentUserIdStore,
-        mobileWidth,
-        pageRedirect,
-        routeForScope,
-        type ChatSummary,
-        type CommunitySummary,
-        type OpenChat,
-    } from "openchat-client";
+    import { chatListScopeStore, chatSummariesListStore, currentUserIdStore, mobileWidth, routeForScope, type ChatSummary, type CommunitySummary, type OpenChat } from "openchat-client";
     import {
         chatIdentifiersEqual,
         definitionToPermissions,
@@ -22,7 +12,7 @@
         type GrantedBotPermissions,
         type Level,
     } from "openchat-shared";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext, type Snippet } from "svelte";
     import BotSummary from "./BotSummary.svelte";
 
@@ -67,15 +57,15 @@
 
         if (commandContextId.kind === "direct_chat") {
             if ($mobileWidth) {
-                page(routeForScope($chatListScopeStore));
+                navigate(routeForScope($chatListScopeStore));
             } else {
                 const first = $chatSummariesListStore.find(
                     (c) => !chatIdentifiersEqual(c.id, { kind: "direct_chat", userId: bot.id }),
                 );
                 if (first) {
-                    pageRedirect(routeForChatIdentifier($chatListScopeStore.kind, first.id));
+                    navigate(routeForChatIdentifier($chatListScopeStore.kind, first.id));
                 } else {
-                    page(routeForScope(client.getDefaultScope()));
+                    navigate(routeForScope(client.getDefaultScope()));
                 }
             }
         }
