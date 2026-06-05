@@ -1,7 +1,6 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
-    import { pageReplace } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext, onMount, tick } from "svelte";
     import { i18nKey } from "../i18n/i18n";
     import FancyLoader from "./icons/FancyLoader.svelte";
@@ -23,7 +22,7 @@
     let codeRef: HTMLInputElement | undefined = $state();
 
     onMount(() => {
-        pageReplace("/home");
+        navigate("/home");
 
         tick().then(() => {
             codeRef?.focus();
@@ -44,7 +43,7 @@
             .handleMagicLink(qs)
             .then((resp) => {
                 if (resp.kind === "success") {
-                    page("/communities");
+                    navigate("/communities");
                     onClose();
                 } else if (resp.kind === "session_not_found") {
                     message = "magicLink.continueMessage";

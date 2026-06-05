@@ -7,7 +7,7 @@
     import Translatable from "./Translatable.svelte";
     import { i18nKey } from "../i18n/i18n";
     import Link from "./Link.svelte";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
 
     let show = $state(true);
 
@@ -17,7 +17,7 @@
 
     function showMessage() {
         close();
-        page(
+        navigate(
             "/community/dgegb-daaaa-aaaar-arlhq-cai/channel/12148470416168947889486180374669069959/136",
         );
     }

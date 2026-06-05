@@ -9,7 +9,7 @@
         type Rules,
         type UserSummary,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../../i18n/i18n";
@@ -179,7 +179,7 @@
                     if (response.kind === "success") {
                         toastStore.showSuccessToast(i18nKey("communities.created"));
                         onClose();
-                        page(`/community/${response.id}`);
+                        navigate(`/community/${response.id}`);
                         optionallyInviteUsers(response.id).catch((_err) => {
                             toastStore.showFailureToast(i18nKey("inviteUsersFailed"));
                         });

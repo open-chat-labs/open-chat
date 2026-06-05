@@ -2,7 +2,7 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { BodySmall, Container, MenuItem } from "component-lib";
     import { publish } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import Cog from "svelte-material-icons/Cog.svelte";
     import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
@@ -16,7 +16,7 @@
 
     function help() {
         publish("closeModalStack");
-        page("/community/dgegb-daaaa-aaaar-arlhq-cai/channel/3798400021");
+        navigate("/community/dgegb-daaaa-aaaar-arlhq-cai/channel/3798400021");
     }
 </script>
 

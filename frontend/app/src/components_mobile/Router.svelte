@@ -1,44 +1,12 @@
+
 <script lang="ts">
-    import { removeQueryStringParam } from "@src/utils/urls";
+    import { initNavigationHistoryTracking, navigate } from "@src/utils/navigation";
+    import { consumePendingDeepLink } from "@utils/native/notification_channels";
+    import { handleLinkClick, removeQueryStringParam } from "@src/utils/urls";
     import type { TransitionType } from "component-lib";
-    import {
-        type ChatIdentifier,
-        OpenChat,
-        type RouteParams,
-        adminRoute,
-        chatIdentifiersEqual,
-        chatListRoute,
-        chatListScopeStore,
-        chatsInitialisedStore,
-        communitesRoute,
-        communitiesStore,
-        communityIdentifiersEqual,
-        exploringStore,
-        globalDirectChatSelectedRoute,
-        globalGroupChatSelectedRoute,
-        isMessageIndexRoute,
-        messageIndexStore,
-        notFoundStore,
-        notificationsRoute,
-        pageReplace,
-        profileSummaryRoute,
-        publish,
-        routeKindStore,
-        routeStore,
-        routerReadyStore,
-        selectedChannelRoute,
-        selectedChatIdStore,
-        selectedCommunityIdStore,
-        selectedCommunityRoute,
-        selectedServerChatStore,
-        shareRoute,
-        threadMessageIndexStore,
-        threadOpenStore,
-        walletRoute,
-        welcomeRoute,
-    } from "openchat-client";
+    import { type ChatIdentifier, OpenChat, type RouteParams, adminRoute, chatIdentifiersEqual, chatListRoute, chatListScopeStore, chatsInitialisedStore, communitesRoute, communitiesStore, communityIdentifiersEqual, exploringStore, globalDirectChatSelectedRoute, globalGroupChatSelectedRoute, isMessageIndexRoute, messageIndexStore, notFoundStore, notificationsRoute, profileSummaryRoute, publish, routeKindStore, routeStore, routerReadyStore, selectedChannelRoute, selectedChatIdStore, selectedCommunityIdStore, selectedCommunityRoute, selectedServerChatStore, shareRoute, threadMessageIndexStore, threadOpenStore, walletRoute, welcomeRoute } from "openchat-client";
     import page from "page";
-    import { type Component, getContext, onDestroy, onMount, tick, untrack } from "svelte";
+    import { type Component, getContext, onMount, tick, untrack } from "svelte";
     import Home from "./home/HomeRoute.svelte";
     import NotFound from "./NotFound.svelte";
 
@@ -146,6 +114,9 @@
     }
 
     onMount(() => {
+        const onLinkClick = handleLinkClick(client, navigate);
+        document.addEventListener("click", onLinkClick, { capture: true });
+
         // this is for explore mode
         page("/communities", parsePathParams(communitesRoute), track, () => (route = Home));
         // global direct chat selected
@@ -251,12 +222,17 @@
             },
         );
 
-        page.start();
+        page.start({ click: false });
+        const cleanupNavigationHistoryTracking = initNavigationHistoryTracking();
 
         routerReadyStore.set(true);
-    });
 
-    onDestroy(() => page.stop());
+        return () => {
+            cleanupNavigationHistoryTracking();
+            document.removeEventListener("click", onLinkClick, { capture: true });
+            page.stop();
+        };
+    });
 
     function scrollToTop() {
         window.scrollTo({
@@ -296,7 +272,7 @@
 
     $effect(() => {
         if (client.captureReferralCode()) {
-            pageReplace(removeQueryStringParam("ref"));
+            navigate(removeQueryStringParam("ref"));
         }
     });
 
@@ -336,7 +312,20 @@
             $chatListScopeStore.kind !== "none" &&
             !$exploringStore
         ) {
-            client.selectDefaultChat();
+            const deepLink = consumePendingDeepLink();
+            if (deepLink) {
+                untrack(() => {
+                    try {
+                        const { pathname, search } = new URL(deepLink);
+                        navigate(pathname + search, "notification");
+                    } catch {
+                        console.error("Deep link: failed to parse cold-start URL", deepLink);
+                        client.selectDefaultChat();
+                    }
+                });
+            } else {
+                client.selectDefaultChat();
+            }
         }
     });
 

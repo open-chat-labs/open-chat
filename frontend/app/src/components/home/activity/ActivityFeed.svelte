@@ -11,7 +11,7 @@
         routeForMessage,
         type MessageActivityEvent,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import BellRingOutline from "svelte-material-icons/BellRingOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
@@ -40,7 +40,7 @@
 
     function selectEvent(ev: MessageActivityEvent, idx: number) {
         selectedEventIndex = idx;
-        page(
+        navigate(
             routeForMessage(
                 messageContextToChatListScope(ev.messageContext).kind,
                 ev.messageContext,

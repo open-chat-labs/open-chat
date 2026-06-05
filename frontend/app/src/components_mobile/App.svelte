@@ -14,6 +14,7 @@
     import { broadcastLoggedInUser } from "@stores/xframe";
     import "@utils/markdown";
     import {
+        expectDeepLinks,
         expectNewFcmToken,
         expectNotificationTap,
         expectPushNotifications,
@@ -35,7 +36,7 @@
         routeForScope,
         subscribe,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import { _, isLoading } from "svelte-i18n";
@@ -201,6 +202,10 @@
             // by the native side and delivered once svelteReady fires below.
             expectShareTarget((share) => handleShareTarget(client, share)).catch(console.error);
 
+            // Listen for deep links (e.g. https://oc.app/group/xyz tapped from another app).
+            // Cold-start deep links are queued by MainActivity and delivered once svelteReady fires.
+            expectDeepLinks().catch(console.error);
+
             // Expect FCM token refreshes
             expectNewFcmToken(addFcmToken);
 
@@ -302,7 +307,7 @@
 
     function joinVideoCall(chatId: ChatIdentifier, callType: VideoCallType) {
         incomingVideoCall.set(undefined);
-        page(routeForChatIdentifier("none", chatId));
+        navigate(routeForChatIdentifier("none", chatId));
         videoCallElement?.startOrJoinVideoCall(chatId, callType, true);
     }
 
@@ -313,7 +318,7 @@
 <Head />
 
 <ActiveCall
-    onClearSelection={() => page(routeForScope($chatListScopeStore))}
+    onClearSelection={() => navigate(routeForScope($chatListScopeStore))}
     bind:this={videoCallElement} />
 
 <VideoCallAccessRequests />

@@ -50,8 +50,10 @@ import {
     defaultChatRules,
     deletedUser,
     emptyEventsResponse,
+    extractEnabledLinks,
     extractUserIdsFromMentions,
     featureRestricted,
+    fetchOgPreviews,
     getContentAsFormattedText,
     getDisplayDate,
     getEmailSignInSession,
@@ -78,11 +80,13 @@ import {
     publish,
     random64,
     removeEmailSignInSession,
+    removeOpenGraphPreviews,
     routeForChatIdentifier,
     routeForMessage,
     setMinLogLevel,
     shouldPreprocessGate,
     storeEmailSignInSession,
+    stripLinkDisabledMarker,
     toDer,
     toTitleCase,
     updateCreatedUser,
@@ -315,7 +319,6 @@ import {
     type WithdrawBtcResponse,
     type WithdrawCryptocurrencyResponse,
 } from "openchat-shared";
-import page from "page";
 import { tick } from "svelte";
 import { locale } from "svelte-i18n";
 import { get } from "svelte/store";
@@ -558,12 +561,6 @@ import { getErc20TokenBalances } from "./utils/evm";
 import formatFileSize from "./utils/fileSize";
 import { gaTrack } from "./utils/ga";
 import { calculateMediaDimensions } from "./utils/layout";
-import {
-    extractEnabledLinks,
-    fetchOgPreviews,
-    removeOpenGraphPreviews,
-    stripLinkDisabledMarker,
-} from "openchat-shared";
 import { groupBy, groupWhile, keepMax, partition, toRecord, toRecord2 } from "./utils/list";
 import { getUserCountryCode } from "./utils/location";
 import {
@@ -582,7 +579,7 @@ import { Poller } from "./utils/poller";
 import { showTrace } from "./utils/profiling";
 import { indexIsInRanges } from "./utils/range";
 import { RecentlyActiveUsersTracker } from "./utils/recentlyActiveUsersTracker";
-import { pageNavigate, pageRedirect, pageReplace, routeForScope } from "./utils/routes";
+import { routeForScope } from "./utils/routes";
 import {
     createRemoteVideoStartedEvent,
     filterWebRtcMessage,
@@ -2900,19 +2897,19 @@ export class OpenChat {
             // if the scope is favourite let's redirect to the non-favourite counterpart and try again
             // this is necessary if the link is no longer in our favourites or came from another user and was *never* in our favourites.
             if (scope.kind === "favourite") {
-                pageRedirect(
-                    routeForChatIdentifier(
+                publish("navigateTo", {
+                    url: routeForChatIdentifier(
                         selectedCommunityIdStore.value === undefined ? "chats" : "community",
                         chatId,
                     ),
-                );
+                });
                 return;
             }
             if (chatId.kind === "direct_chat") {
                 if (!(await this.createDirectChat(chatId))) {
                     publish("notFound");
                 } else {
-                    page(routeForChatIdentifier("chats", chatId));
+                    publish("navigateTo", { url: routeForChatIdentifier("chats", chatId) });
                 }
             } else if (chatId.kind === "group_chat" || chatId.kind === "channel") {
                 autojoin = querystringStore.value.has("autojoin");
@@ -2930,8 +2927,8 @@ export class OpenChat {
                 if (preview.kind === "group_moved") {
                     if (messageIndex !== undefined) {
                         if (threadMessageIndex !== undefined) {
-                            pageReplace(
-                                routeForMessage(
+                            publish("navigateTo", {
+                                url: routeForMessage(
                                     "community",
                                     {
                                         chatId: preview.location,
@@ -2939,18 +2936,20 @@ export class OpenChat {
                                     },
                                     threadMessageIndex,
                                 ),
-                            );
+                            });
                         } else {
-                            pageReplace(
-                                routeForMessage(
+                            publish("navigateTo", {
+                                url: routeForMessage(
                                     "community",
                                     { chatId: preview.location },
                                     messageIndex,
                                 ),
-                            );
+                            });
                         }
                     } else {
-                        pageReplace(routeForChatIdentifier(scope.kind, preview.location));
+                        publish("navigateTo", {
+                            url: routeForChatIdentifier(scope.kind, preview.location),
+                        });
                     }
                 } else if (preview.kind === "failure") {
                     publish("notFound");
@@ -4540,7 +4539,10 @@ export class OpenChat {
             const newAchievement = !achievementsStore.value.has("edited_message");
 
             // Fetch og previews in the background; content change is already visible in the UI.
-            const ogPreviews = await fetchOgPreviews(extractEnabledLinks(textContent), import.meta.env.OC_PREVIEW_PROXY_URL);
+            const ogPreviews = await fetchOgPreviews(
+                extractEnabledLinks(textContent),
+                import.meta.env.OC_PREVIEW_PROXY_URL,
+            );
             msg.ogPreviews = ogPreviews;
             const undoOgPreviews = localUpdates.setEditedOgPreviews(msg.messageId, ogPreviews);
 
@@ -8483,7 +8485,10 @@ export class OpenChat {
             ? chatSummariesStore.value.get(mostRecentId)
             : undefined;
         if (mostRecentChat !== undefined) {
-            pageRedirect(routeForChatIdentifier(scope.kind, mostRecentChat.id));
+            publish("navigateTo", {
+                url: routeForChatIdentifier(scope.kind, mostRecentChat.id),
+                intent: "auto",
+            });
             return true;
         }
         return false;
@@ -8494,7 +8499,10 @@ export class OpenChat {
             (c) => !c.membership.archived,
         );
         if (first !== undefined) {
-            pageRedirect(routeForChatIdentifier(chatListScopeStore.value.kind, first.id));
+            publish("navigateTo", {
+                url: routeForChatIdentifier(chatListScopeStore.value.kind, first.id),
+                intent: "auto",
+            });
             return true;
         }
         return false;
@@ -8506,7 +8514,9 @@ export class OpenChat {
             ? communitiesStore.value.get(mostRecentId)
             : undefined;
         if (mostRecentCommunity !== undefined) {
-            page(`/community/${mostRecentCommunity.id.communityId}`);
+            publish("navigateTo", {
+                url: `/community/${mostRecentCommunity.id.communityId}`,
+            });
             return true;
         }
         return false;
@@ -8515,7 +8525,7 @@ export class OpenChat {
     #selectFirstCommunity(): boolean {
         const first = sortedCommunitiesStore.value?.find((c) => !c.membership.archived);
         if (first !== undefined) {
-            page(`/community/${first.id.communityId}`);
+            publish("navigateTo", { url: `/community/${first.id.communityId}` });
             return true;
         }
         return false;
@@ -8879,7 +8889,7 @@ export class OpenChat {
 
     setChatListScopeAndRedirect(route: RouteParams): boolean {
         if (route.kind === "home_route") {
-            pageReplace(routeForScope(this.getDefaultScope()));
+            publish("navigateTo", { url: routeForScope(this.getDefaultScope()), intent: "auto" });
             return true;
         }
         return false;
@@ -9936,15 +9946,10 @@ export class OpenChat {
                         );
                     }
                 };
-                void pageNavigate(event.data.path)
-                    .then(() => acknowledgeNotificationClick())
-                    .catch((error) => {
-                        console.error(
-                            "PUSH: failed to route existing client after notification click",
-                            event.data.path,
-                            error,
-                        );
-                    });
+                publish("navigateTo", { url: event.data.path, intent: "notification" });
+                void acknowledgeNotificationClick().catch((err) => {
+                    console.error("PUSH: failed to acknowledge notification click", err);
+                });
             }
         });
 

@@ -18,7 +18,7 @@ import {
     type ResourceKey,
     type UpdateGroupResponse,
 } from "openchat-client";
-import page from "page";
+import { navigate } from "@utils/navigation";
 import { tick } from "svelte";
 import { UpdateGroupOrCommunityState } from "../groupOrCommunity.svelte";
 
@@ -337,7 +337,7 @@ export class UpdateGroupState extends UpdateGroupOrCommunityState {
     #onGroupCreated(canisterId: MultiUserChatIdentifier) {
         const url = routeForChatIdentifier(chatListScopeStore.value.kind, canisterId);
         publish("closeModalStack");
-        tick().then(() => page(url)); // trigger the selection of the chat
+        tick().then(() => navigate(url)); // trigger the selection of the chat
     }
 
     #optionallyInviteUsers(client: OpenChat, chatId: MultiUserChatIdentifier): Promise<void> {

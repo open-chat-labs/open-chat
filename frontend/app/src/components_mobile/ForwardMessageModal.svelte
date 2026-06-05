@@ -2,7 +2,7 @@
     import { messageToForwardStore } from "@src/stores/messageToForward";
     import type { ChatIdentifier, Message } from "openchat-client";
     import { chatListScopeStore, routeForChatIdentifier } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import SelectChatModal from "./SelectChatModal.svelte";
 
     interface Props {
@@ -13,7 +13,7 @@
     let { onClose, msg }: Props = $props();
 
     function forwardMessage(chatId: ChatIdentifier) {
-        page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
+        navigate(routeForChatIdentifier($chatListScopeStore.kind, chatId));
         messageToForwardStore.set(msg);
         onClose();
     }

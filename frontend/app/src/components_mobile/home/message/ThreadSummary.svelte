@@ -17,7 +17,7 @@
         type ChatIdentifier,
         type ThreadSummary,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
@@ -85,7 +85,7 @@
 </script>
 
 <Container
-    onClick={() => page(url)}
+    onClick={() => navigate(url)}
     overflow={"visible"}
     {borderColour}
     borderWidth={"thick"}

@@ -28,7 +28,7 @@
         type CommunityMatch,
         type OpenChat,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Account from "svelte-material-icons/AccountGroupOutline.svelte";
@@ -206,7 +206,7 @@
     let loading = $derived(searching && searchState.results.length === 0);
 
     function goToCommunity(community: CommunityMatch) {
-        page(`/community/${community.id.communityId}`);
+        navigate(`/community/${community.id.communityId}`);
     }
 
     function showCommunity(community: CommunityMatch) {

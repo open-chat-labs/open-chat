@@ -2,7 +2,7 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { Body, BodySmall, ColourVars, Container, Logo, Overview } from "component-lib";
     import { publish, type OpenChat } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import { openUrl } from "tauri-plugin-oc-api";
@@ -19,7 +19,7 @@
         if (client.isNativeApp()) {
             openUrl({ url: new URL(url, local ? client.canonicalOrigin() : undefined).toString() });
         } else {
-            page(url);
+            navigate(url);
         }
     }
 </script>

@@ -15,7 +15,7 @@
         selectedCommunitySummaryStore,
         suspendedUserStore,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -47,7 +47,7 @@
     }
 
     function gotoGroup({ id }: GroupChatSummary) {
-        page(routeForChatIdentifier($chatListScopeStore.kind, id));
+        navigate(routeForChatIdentifier($chatListScopeStore.kind, id));
     }
 
     function joinGroup(group: GroupChatSummary) {

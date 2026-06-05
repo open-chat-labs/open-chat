@@ -15,7 +15,7 @@
         routeForChatIdentifier,
         selectedCommunitySummaryStore,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
@@ -41,7 +41,7 @@
         if ($mobileWidth) {
             client.popRightPanelHistory();
         }
-        page(routeForChatIdentifier($chatListScopeStore.kind, match.id));
+        navigate(routeForChatIdentifier($chatListScopeStore.kind, match.id));
     }
 </script>
 

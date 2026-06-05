@@ -16,7 +16,7 @@
         type MessageReminderCreatedContent,
         type OpenChat,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import { _, locale } from "svelte-i18n";
     import CollapseIcon from "svelte-material-icons/ArrowCollapseUp.svelte";
@@ -324,7 +324,7 @@
     }
 
     function initiateThread() {
-        page(
+        navigate(
             `${routeForMessage($chatListScopeStore.kind, { chatId }, msg.messageIndex)}?open=true`,
         );
     }

@@ -3,10 +3,12 @@
 </script>
 
 <script lang="ts">
-    import { routeStore, runningInIframe, type OpenChat } from "openchat-client";
-    import { getContext, type Component } from "svelte";
-    import { showMenuForLandingRoute } from "../../utils/urls";
     import Loading from "@shared_components/Loading.svelte";
+    import { flushPendingNavigation } from "@src/utils/navigation";
+    import { portalState } from "component-lib";
+    import { routeStore, runningInIframe, subscribe, type OpenChat } from "openchat-client";
+    import { getContext, onMount, type Component } from "svelte";
+    import { showMenuForLandingRoute } from "../../utils/urls";
     import BlogPage from "./BlogPage.svelte";
     import Content from "./Content.svelte";
     import FeaturesPage from "./FeaturesPage.svelte";
@@ -17,6 +19,15 @@
     const client = getContext<OpenChat>("client");
 
     let showMenu = $derived(showMenuForLandingRoute($routeStore));
+
+    onMount(() => {
+        const unsub = subscribe("closeModalStack", () => {
+            // TODO - not 100% sure that this is all we need to do here
+            portalState.close();
+            flushPendingNavigation();
+        });
+        return unsub;
+    });
 </script>
 
 {#if $runningInIframe}

@@ -22,6 +22,7 @@ Default permissions for the plugin
 - `allow-disable-viewport-resize`
 - `allow-save-media`
 - `allow-update-chat-shortcuts`
+- `allow-get-pending-deep-link`
 
 ## Permission Table
 
@@ -132,6 +133,32 @@ Enables the get_fcm_token command without any pre-configured scope.
 <td>
 
 Denies the get_fcm_token command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-get-pending-deep-link`
+
+</td>
+<td>
+
+Enables the get_pending_deep_link command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-get-pending-deep-link`
+
+</td>
+<td>
+
+Denies the get_pending_deep_link command without any pre-configured scope.
 
 </td>
 </tr>

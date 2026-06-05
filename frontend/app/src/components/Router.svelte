@@ -1,36 +1,10 @@
+
 <script lang="ts">
-    import { removeQueryStringParam } from "@src/utils/urls";
-    import {
-        type ChatIdentifier,
-        OpenChat,
-        type RouteParams,
-        adminRoute,
-        blogRoute,
-        chatIdentifiersEqual,
-        chatListRoute,
-        chatListScopeStore,
-        chatsInitialisedStore,
-        communitesRoute,
-        exploringStore,
-        globalDirectChatSelectedRoute,
-        globalGroupChatSelectedRoute,
-        messageIndexStore,
-        notFoundStore,
-        pageReplace,
-        routeKindStore,
-        routeStore,
-        routerReadyStore,
-        selectedChannelRoute,
-        selectedChatIdStore,
-        selectedCommunityIdStore,
-        selectedCommunityRoute,
-        selectedServerChatStore,
-        shareRoute,
-        threadMessageIndexStore,
-        threadOpenStore,
-    } from "openchat-client";
+    import { initNavigationHistoryTracking, navigate } from "@src/utils/navigation";
+    import { handleLinkClick, removeQueryStringParam } from "@src/utils/urls";
+    import { type ChatIdentifier, OpenChat, type RouteParams, adminRoute, blogRoute, chatIdentifiersEqual, chatListRoute, chatListScopeStore, chatsInitialisedStore, communitesRoute, exploringStore, globalDirectChatSelectedRoute, globalGroupChatSelectedRoute, messageIndexStore, notFoundStore, routeKindStore, routeStore, routerReadyStore, selectedChannelRoute, selectedChatIdStore, selectedCommunityIdStore, selectedCommunityRoute, selectedServerChatStore, shareRoute, threadMessageIndexStore, threadOpenStore } from "openchat-client";
     import page from "page";
-    import { getContext, onDestroy, onMount, untrack } from "svelte";
+    import { getContext, onMount, untrack } from "svelte";
     import Home, { type HomeType } from "./home/HomeRoute.svelte";
     import LandingPage, { type LandingPageType } from "./landingpages/LandingPage.svelte";
     import NotFound, { type NotFoundType } from "./NotFound.svelte";
@@ -54,6 +28,9 @@
     }
 
     onMount(() => {
+        const onLinkClick = handleLinkClick(client, navigate);
+        document.addEventListener("click", onLinkClick, { capture: true });
+
         page(
             "/home",
             parsePathParams(() => ({ kind: "home_landing_route", scope: { kind: "none" } })),
@@ -209,12 +186,17 @@
                 route = NotFound;
             },
         );
-        page.start();
+        page.start({ click: false });
+        const cleanupNavigationHistoryTracking = initNavigationHistoryTracking();
 
         routerReadyStore.set(true);
-    });
 
-    onDestroy(() => page.stop());
+        return () => {
+            cleanupNavigationHistoryTracking();
+            document.removeEventListener("click", onLinkClick, { capture: true });
+            page.stop();
+        };
+    });
 
     function scrollToTop() {
         window.scrollTo({
@@ -254,7 +236,7 @@
 
     $effect(() => {
         if (client.captureReferralCode()) {
-            pageReplace(removeQueryStringParam("ref"));
+            navigate(removeQueryStringParam("ref"));
         }
     });
 

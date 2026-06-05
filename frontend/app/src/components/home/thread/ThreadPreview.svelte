@@ -17,7 +17,7 @@
         selectedCommunitySummaryStore,
         type ThreadPreview,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import EyeOffIcon from "svelte-material-icons/EyeOffOutline.svelte";
@@ -101,7 +101,7 @@
     }
 
     function selectThread() {
-        page(
+        navigate(
             `${routeForChatIdentifier($chatListScopeStore.kind, thread.chatId)}/${
                 thread.rootMessage.event.messageIndex
             }?open=true`,

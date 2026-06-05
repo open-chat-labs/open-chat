@@ -17,7 +17,7 @@
     } from "component-lib";
     import { OpenChat, type CreatedUser } from "openchat-client";
     import { ErrorCode } from "openchat-shared";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
@@ -104,11 +104,11 @@
 
     function onCreatedUser(user: CreatedUser) {
         client.onRegisteredUser(user);
-        page("/welcome");
+        navigate("/welcome");
     }
 
     function explore() {
-        page("/communities");
+        navigate("/communities");
     }
 </script>
 

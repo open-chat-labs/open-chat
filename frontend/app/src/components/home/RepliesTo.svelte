@@ -10,7 +10,7 @@
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
@@ -63,7 +63,7 @@
                 index: repliesTo.messageIndex,
             });
         } else {
-            page(getUrl());
+            navigate(getUrl());
         }
     }
 </script>
