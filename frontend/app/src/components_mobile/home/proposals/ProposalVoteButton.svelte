@@ -1,5 +1,13 @@
 <script lang="ts">
-    import { Body, Column } from "component-lib";
+    import {
+        Body,
+        BodySmall,
+        Column,
+        ColourVars,
+        Row,
+        Spinner,
+        type ColourVarKeys,
+    } from "component-lib";
     import { iconSize } from "openchat-client";
     import ThumbDown from "svelte-material-icons/ThumbDown.svelte";
     import ThumbUp from "svelte-material-icons/ThumbUp.svelte";
@@ -17,29 +25,70 @@
 
     let { mode, percentage, disabled, voting, voted, onClick }: Props = $props();
 
-    let label = $derived(mode === "yes" ? i18nKey("proposal.adopt") : i18nKey("proposal.reject"));
-    let iconColor = $derived(disabled && !voted ? "var(--vote-maybe-color)" : "var(--txt)");
+    let labelKey = $derived(
+        mode === "yes"
+            ? `proposal.adopt${voted ? "ed" : ""}`
+            : `proposal.reject${voted ? "ed" : ""}`,
+    );
+
+    let voteActive = $derived(!disabled && !voted);
+
+    let textColour = $derived<ColourVarKeys>(
+        voteActive
+            ? mode === "yes"
+                ? "success"
+                : "error"
+            : voted
+              ? "textPrimary"
+              : "textSecondary",
+    );
+
+    let buttonBg = $derived(
+        voted ? (mode === "yes" ? ColourVars.success : ColourVars.error) : undefined,
+    );
 </script>
 
-<Column crossAxisAlignment={"center"} mainAxisAlignment={"center"} gap={"sm"}>
-    <Body fontWeight={"bold"} width={"hug"}>
-        <Translatable resourceKey={label} />
-    </Body>
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div onclick={onClick} class:voting class:voted class:disabled class={`icon ${mode}`}>
-        {#if !voting}
-            {#if mode === "yes"}
-                <ThumbUp size={$iconSize} color={iconColor} />
-            {:else}
-                <ThumbDown size={$iconSize} color={iconColor} />
-            {/if}
+<Row
+    onClick={() => {
+        if (!disabled && !voting && !voted) {
+            onClick();
+        }
+    }}
+    gap="xs"
+    padding={["sm", "md"]}
+    width="fill"
+    borderRadius="md"
+    mainAxisAlignment="spaceBetween"
+    crossAxisAlignment="center"
+    backgroundColor={buttonBg}
+    borderStyle="solid"
+    borderWidth="thick"
+    borderColour={disabled && !voted
+        ? ColourVars.disabledButton
+        : mode === "yes"
+          ? ColourVars.success
+          : ColourVars.error}>
+    <!-- Label & Pct -->
+    <Column width="hug" gap="zero">
+        <Body fontWeight="bold" width="hug" colour={textColour}>
+            <Translatable resourceKey={i18nKey(labelKey)} />
+        </Body>
+        <BodySmall width="hug" colour={textColour}>
+            {percentage}%
+        </BodySmall>
+    </Column>
+
+    <!-- Icon -->
+    <div class={`icon ${mode}`} class:voted>
+        {#if voting}
+            <Spinner size="1.25rem" />
+        {:else if mode === "yes"}
+            <ThumbUp size={$iconSize} />
+        {:else}
+            <ThumbDown size={$iconSize} />
         {/if}
     </div>
-    <Body fontWeight={"bold"} colour={mode === "yes" ? "success" : "error"} width={"hug"}>
-        {percentage}%
-    </Body>
-</Column>
+</Row>
 
 <style lang="scss">
     .icon {
@@ -47,38 +96,22 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        width: 45px;
-        height: 45px;
+        width: 2.25rem;
+        height: 2.25rem;
         cursor: pointer;
-        border: solid 1px transparent;
-        background-color: var(--vote-maybe-color);
+        padding: var(--sp-sm);
+        background-color: var(--background-0);
 
         &.voted.yes,
-        &.voting.yes {
-            background-color: var(--vote-yes-color);
-        }
-
+        &.voting.yes,
         &.voted.no,
         &.voting.no {
-            background-color: var(--vote-no-color);
+            background-color: var(--background-2);
         }
 
         &.disabled {
             background-color: transparent;
             cursor: not-allowed;
-
-            &:not(.voted):not(.voting) {
-                border: 1px solid var(--vote-maybe-color);
-            }
-        }
-
-        &.voting {
-            @include loading-spinner(
-                1.2em,
-                0.6em,
-                var(--button-spinner),
-                "/assets/plain-spinner.svg"
-            );
         }
     }
 </style>

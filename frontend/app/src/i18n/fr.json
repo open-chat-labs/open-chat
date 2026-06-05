@@ -1495,15 +1495,18 @@
         "action": "action",
         "additionalContent": "contenu additionnel",
         "adopt": "Adopter",
+        "adopted": "Adopté",
         "alreadyVoted": "Vous avez déjà voté - essayez de recharger la page",
         "builtInAction": "Actions intégrées",
         "collapse": "Réduire le message",
+        "criticalProposal": "Il s'agit d'une proposition cruciale",
         "cyclesDispenserAction": "Actions du distributeur de cycles",
         "details": "Détails",
         "disableAll": "Désactiver tous les",
         "enableAll": "Tout activer",
         "filter": "Filtrer les propositions",
         "groupIndexAction": "Actions d'index de groupe",
+        "link": "lien",
         "makeProposal": "Faire une proposition",
         "maker": {
             "achievementChatCost": "Un paiement de {cost} {chat} jetons est requis pour provisionner le CHIT demandé. Tout CHAT non dépensé sera remboursé à l'expiration de la réussite.",
@@ -1555,6 +1558,18 @@
         "noEligibleNeuronsMessage": "Aucun neurone éligible ou lié trouvé. Afin de voter sur les propositions depuis OpenChat, vous devez d&#39;abord ajouter votre identifiant d&#39;utilisateur OpenChat comme raccourci clavier pour tous les neurones avec lesquels vous souhaitez voter.<br/><br/> Votre identifiant OpenChat est : {userId}.<br/><br/> Pour plus d&#39;informations sur le vote et la gouvernance, lisez <a target=\"_blank\" href=\"https://oc.app/blog/governance\">cet article de blog</a> .",
         "notificationsAction": "Notifications Index Actions",
         "openchatInstallerAction": "Actions de l'installateur OpenChat",
+        "passing": {
+            "fst": {
+                "line1": "Participation : au moins {pct} du pouvoir de vote total a voté oui.",
+                "line2": "Cette condition est remplie lorsque la barre de confirmation atteint la première icône - chevron vers le bas."
+            },
+            "snd": {
+                "line1": "Supermajorité : plus de {pct} des voix des participants ont voté oui avant la date d'expiration.",
+                "line2": "Cette condition est remplie lorsqu'il y a plus de deux fois plus de votes pour que de votes contre à la date d'expiration.",
+                "line3": "Cela peut se produire à la date d'expiration ou si la barre de confirmation atteint la deuxième icône (flèche vers le bas), auquel cas la condition ne peut plus être modifiée et la proposition est adoptée de façon anticipée."
+            },
+            "title": "Pour qu'une proposition soit adoptée, les deux conditions suivantes doivent être remplies :"
+        },
         "proposalNotAceptingVotes": "Cette proposition n'accepte pas les votes - essayez de recharger la page",
         "proposalsBotAction": "Actions du robot de propositions",
         "proposedBy": "Proposé par",
@@ -1562,10 +1577,13 @@
         "readmore": "Lire la suite",
         "registryAction": "Actions de registre",
         "reject": "Rejeter",
+        "rejected": "Rejeté",
         "storageIndexAction": "Actions d'index de stockage",
+        "tapToExpand": "Appuyez pour agrandir...",
         "topic": "sujet",
         "unknownActionCategory": "D'autres actions",
         "userIndexAction": "Actions d'index utilisateur",
+        "viewDetails": "Détails de la proposition",
         "voteFailed": "Échec du vote - veuillez réessayer plus tard",
         "votingPeriodEnded": "Période de vote terminée",
         "votingPeriodRemaining": "Période de vote restante",

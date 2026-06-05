@@ -1495,15 +1495,18 @@
         "action": "działanie",
         "additionalContent": "dodatkowa treść",
         "adopt": "Przyjąć",
+        "adopted": "Przyjęty",
         "alreadyVoted": "Już oddałeś głos - spróbuj ponownie załadować stronę",
         "builtInAction": "Wbudowane działania",
         "collapse": "Zwiń wiadomość",
+        "criticalProposal": "To jest ważna propozycja",
         "cyclesDispenserAction": "Cykle działań dozownika",
         "details": "Detale",
         "disableAll": "Wyłącz wszystkie",
         "enableAll": "Włącz wszystkie",
         "filter": "Filtruj propozycje",
         "groupIndexAction": "Akcje indeksu grupowego",
+        "link": "połączyć",
         "makeProposal": "Złóż propozycję",
         "maker": {
             "achievementChatCost": "Wymagana jest płatność {cost} {chat} tokenów, aby zapewnić żądany CHIT. Wszelkie niewydane CHAT zostaną zwrócone po wygaśnięciu osiągnięcia.",
@@ -1555,6 +1558,18 @@
         "noEligibleNeuronsMessage": "Nie znaleziono odpowiednich lub połączonych neuronów. Aby głosować na propozycje z poziomu OpenChat, musisz najpierw dodać swój identyfikator użytkownika OpenChat jako klawisz skrótu do dowolnych neuronów, za pomocą których chcesz głosować. <br/><br/>Twój identyfikator użytkownika OpenChat to: {userId}. <br/><br/>Więcej informacji na temat głosowania i zarządzania znajdziesz w <a target=\"_blank\" href=\"https://oc.app/blog/governance\">tym poście na blogu</a>.",
         "notificationsAction": "Powiadomienia Akcje indeksu",
         "openchatInstallerAction": "Akcje instalatora OpenChat",
+        "passing": {
+            "fst": {
+                "line1": "Udział: co najmniej {pct} ogólnej liczby głosów oddało głos „tak”.",
+                "line2": "Warunek ten jest spełniony, gdy pasek „tak” osiągnie pierwszą ikonę skierowaną w dół."
+            },
+            "snd": {
+                "line1": "Kwalifikująca większość: ponad {pct} uczestniczących osób głosujących zagłosowało „tak” do upływu terminu.",
+                "line2": "Warunek ten uznaje się za spełniony, jeżeli do upływu terminu liczba głosów „tak” jest dwukrotnie większa niż liczba głosów „nie”.",
+                "line3": "Może to nastąpić w momencie upływu terminu ważności lub gdy pasek „tak” dojdzie do drugiej ikony – strzałki w dół. W takim przypadku warunku nie można już zmienić, a propozycja zostaje przyjęta wcześniej."
+            },
+            "title": "Aby wniosek mógł zostać przyjęty, muszą być spełnione następujące dwa warunki:"
+        },
         "proposalNotAceptingVotes": "Na tę propozycję nie można głosować — spróbuj ponownie załadować stronę",
         "proposalsBotAction": "Propozycje działań botów",
         "proposedBy": "zaproponowany przez",
@@ -1562,10 +1577,13 @@
         "readmore": "Czytaj więcej",
         "registryAction": "Działania rejestru",
         "reject": "Odrzucić",
+        "rejected": "Odrzucony",
         "storageIndexAction": "Akcje indeksu magazynu",
+        "tapToExpand": "Kliknij, aby rozwinąć...",
         "topic": "temat",
         "unknownActionCategory": "Inne akcje",
         "userIndexAction": "Działania indeksu użytkownika",
+        "viewDetails": "Szczegóły propozycji",
         "voteFailed": "Nie udało się oddać głosu. Spróbuj później",
         "votingPeriodEnded": "Okres głosowania dobiegł końca",
         "votingPeriodRemaining": "Pozostał okres głosowania",

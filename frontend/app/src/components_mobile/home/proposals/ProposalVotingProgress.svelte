@@ -6,6 +6,7 @@
     import { rtlStore } from "../../../stores/rtl";
     import { now500 } from "../../../stores/time";
     import Translatable from "../../Translatable.svelte";
+    import { Body, ColourVars, Column, Row } from "component-lib";
 
     interface Props {
         adoptPercent: number;
@@ -29,38 +30,57 @@
 
     let deadlineDate = $derived(new Date(Number(deadline)));
     let rtl = $derived($rtlStore ? "right" : "left");
+    let rtlOpposite = $derived($rtlStore ? "left" : "right");
 </script>
 
-<div class="wrapper">
-    <div class="icon" style="{rtl}: calc({minYesPercentageOfTotal}% - 0.5em)">
-        <ChevronDown viewBox="-1 0 24 24" />
-    </div>
-    <div class="icon solid" style="{rtl}: calc({minYesPercentageOfExercised}% - 0.5em)">
-        <svg viewBox="-1 0 24 24">
-            <path d="M6,10 L12,16 L18,10 H7Z" fill="currentColor" />
-        </svg>
-    </div>
-    <div class="progress">
-        <div class="adopt" style="transform: scaleX({adoptPercent}%)"></div>
-        <div class="reject" style="transform: scaleX({rejectPercent}%)"></div>
-        <div class="vertical-line" style="{rtl}: {minYesPercentageOfTotal}%"></div>
-        <div class="vertical-line" style="{rtl}: {minYesPercentageOfExercised}%"></div>
-    </div>
+<Column>
+    <!-- Progress -->
+    <Column overflow="visible">
+        <div class="chevrons">
+            <div class="icon" style="{rtl}: calc({minYesPercentageOfTotal}% - 0.5em)">
+                <ChevronDown viewBox="-1 0 24 24" color={ColourVars.textPrimary} />
+            </div>
+            <div class="icon solid" style="{rtl}: calc({minYesPercentageOfExercised}% - 0.5em)">
+                <svg viewBox="-1 0 24 24">
+                    <path d="M6,10 L12,16 L18,10 H7Z" fill={ColourVars.textPrimary} />
+                </svg>
+            </div>
+        </div>
+        <div class="progress">
+            <div class="adopt" style="width: {adoptPercent}%; {rtl}: 0;"></div>
+            <div class="reject" style="width: {rejectPercent}%; {rtlOpposite}: 0;"></div>
+            <div class="vertical-line" style="{rtl}: {minYesPercentageOfTotal}%"></div>
+            <div class="vertical-line" style="{rtl}: {minYesPercentageOfExercised}%"></div>
+        </div>
+    </Column>
 
-    <div class="remaining">
-        {#if !votingEnded}
-            <span class="label"
-                ><Translatable resourceKey={i18nKey("proposal.votingPeriodRemaining")} /></span>
-            <span class="value">{client.formatTimeRemaining($now500, deadline)}</span>
-        {:else}
-            <span class="label"
-                ><Translatable resourceKey={i18nKey("proposal.votingPeriodEnded")} /></span>
-            <span class="value"
-                >{client.toDateString(deadlineDate)}
-                {client.toShortTimeString(deadlineDate)}</span>
-        {/if}
-    </div>
-</div>
+    <!-- Percentages -->
+    <Row width="fill" mainAxisAlignment="spaceBetween">
+        <Column width="hug" padding="sm">
+            <Body width="hug" fontWeight="semi-bold" colour="success">{adoptPercent}%</Body>
+        </Column>
+        <Column width="hug" padding="sm">
+            <Body width="hug" fontWeight="semi-bold" colour="error">{rejectPercent}%</Body>
+        </Column>
+    </Row>
+
+    <!-- Remaining -->
+    <Column padding={["sm", "zero", "zero"]} crossAxisAlignment="center">
+        <Body colour="textSecondary" width="hug">
+            <Translatable
+                resourceKey={i18nKey(
+                    votingEnded ? "proposal.votingPeriodEnded" : "proposal.votingPeriodRemaining",
+                )} />
+        </Body>
+        <Body fontWeight="semi-bold" width="hug">
+            {#if votingEnded}
+                {client.toDateString(deadlineDate)} {client.toShortTimeString(deadlineDate)}
+            {:else}
+                {client.formatTimeRemaining($now500, deadline)}
+            {/if}
+        </Body>
+    </Column>
+</Column>
 
 <style lang="scss">
     .wrapper {
@@ -68,53 +88,56 @@
         position: relative;
     }
 
-    .icon {
-        position: absolute;
-        top: toRem(-16);
-        color: var(--txt);
+    .chevrons {
+        width: 100%;
+        height: 1rem;
+        position: relative;
+        overflow: hidden;
 
-        &.solid {
-            width: 1em;
-            height: 1em;
+        .icon {
+            position: absolute;
+            top: 0;
+            width: 1rem;
+            color: var(--txt);
+            margin-left: 0px;
+
+            &.solid {
+                transform: scale(1.25);
+            }
         }
     }
 
     .progress {
-        height: toRem(16);
+        width: 100%;
+        height: 0.3rem;
         position: relative;
-        background: var(--chatSummary-bg-selected);
-        border-radius: $sp3;
-        margin-top: 0;
-        overflow: hidden;
+        border-radius: var(--rad-md);
+        background: var(--background-2);
 
         .adopt,
         .reject {
-            position: absolute;
             top: 0;
             bottom: 0;
-            left: 0;
-            right: 0;
+            position: absolute;
             transition-duration: 1s;
+            border-radius: var(--rad-md);
         }
 
         .adopt {
             background: var(--vote-yes-color);
-            border-radius: $sp3 0 0 $sp3;
-            transform-origin: left;
         }
 
         .reject {
             background: var(--vote-no-color);
-            border-radius: 0 $sp3 $sp3 0;
-            transform-origin: right;
         }
 
         .vertical-line {
             position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 1px;
+            top: -0.15rem;
+            bottom: -0.25rem;
+            width: 2px;
             background-color: var(--txt);
+            border-radius: 2px;
         }
     }
     .remaining {

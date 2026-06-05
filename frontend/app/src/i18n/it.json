@@ -1495,15 +1495,18 @@
         "action": "azione",
         "additionalContent": "contenuto aggiuntivo",
         "adopt": "Adottare",
+        "adopted": "Adottato",
         "alreadyVoted": "Hai già votato: prova a ricaricare la pagina",
         "builtInAction": "Azioni incorporate",
         "collapse": "Comprimi messaggio",
+        "criticalProposal": "Questa è una proposta fondamentale",
         "cyclesDispenserAction": "Cicli Azioni Dispenser",
         "details": "Dettagli",
         "disableAll": "Disabilitare tutto",
         "enableAll": "Attiva tutto",
         "filter": "Filtra le proposte",
         "groupIndexAction": "Azioni indice di gruppo",
+        "link": "collegamento",
         "makeProposal": "Fai una proposta",
         "maker": {
             "achievementChatCost": "È richiesto un pagamento di {cost} {chat} token per fornire il CHIT richiesto. Qualsiasi CHAT non speso verrà rimborsato alla scadenza dell'obiettivo.",
@@ -1555,6 +1558,18 @@
         "noEligibleNeuronsMessage": "Nessun neurone idoneo o collegato trovato. Per votare proposte da OpenChat devi prima aggiungere il tuo ID utente OpenChat come tasto di scelta rapida a qualsiasi neurone con cui desideri votare.<br/><br/> Il tuo ID utente OpenChat è: {userId}.<br/><br/> Per ulteriori informazioni sul voto e sulla governance leggere <a target=\"_blank\" href=\"https://oc.app/blog/governance\">questo post del blog</a> .",
         "notificationsAction": "Notifiche Indice Azioni",
         "openchatInstallerAction": "Azioni di installazione di OpenChat",
+        "passing": {
+            "fst": {
+                "line1": "Partecipazione: almeno {pct} dei voti totali sono stati espressi a favore.",
+                "line2": "Questa condizione è soddisfatta quando la barra del sì raggiunge la prima icona a forma di freccia rivolta verso il basso."
+            },
+            "snd": {
+                "line1": "Supermaggioranza: più di {pct} dei partecipanti al voto hanno votato sì entro la data di scadenza.",
+                "line2": "Questa condizione si verifica quando, alla data di scadenza, il numero dei voti favorevoli è più del doppio di quello dei voti contrari.",
+                "line3": "Ciò può verificarsi alla data di scadenza o se la barra del \"sì\" raggiunge la seconda icona (freccia verso il basso), nel qual caso la condizione non può più essere modificata e la proposta viene adottata anticipatamente."
+            },
+            "title": "Perché una proposta venga adottata, devono essere soddisfatte le due seguenti condizioni:"
+        },
         "proposalNotAceptingVotes": "Questa proposta non accetta voti: prova a ricaricare la pagina",
         "proposalsBotAction": "Proposte Bot Azioni",
         "proposedBy": "proposto da",
@@ -1562,10 +1577,13 @@
         "readmore": "Leggi di più",
         "registryAction": "Azioni di registro",
         "reject": "Rifiutare",
+        "rejected": "Respinto",
         "storageIndexAction": "Azioni dell'indice di archiviazione",
+        "tapToExpand": "Tocca per espandere...",
         "topic": "argomento",
         "unknownActionCategory": "Altre azioni",
         "userIndexAction": "Azioni indice utenti",
+        "viewDetails": "Dettagli della proposta",
         "voteFailed": "Impossibile esprimere il voto. Riprova più tardi",
         "votingPeriodEnded": "Il periodo di votazione è terminato",
         "votingPeriodRemaining": "Periodo di votazione rimanente",
