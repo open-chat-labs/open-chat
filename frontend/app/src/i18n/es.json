@@ -1559,16 +1559,25 @@
         "notificationsAction": "Índice de notificaciones Acciones",
         "openchatInstallerAction": "Acciones del instalador de OpenChat",
         "passing": {
-            "fst": {
-                "line1": "Participación: al menos {pct} del poder de voto total votó sí.",
-                "line2": "Esta condición se cumple cuando la barra de confirmación llega al primer icono (flecha hacia abajo)."
+            "majority": {
+                "critical": {
+                    "fst": "Supermayoría: más de {pct} del poder de voto participante votó sí antes de la fecha de vencimiento.",
+                    "snd": "Esta condición se cumple cuando, en la fecha de vencimiento, hay más del doble de votos a favor que de votos en contra."
+                },
+                "regular": {
+                    "fst": "Mayoría: más de {pct} del poder de voto participante votó sí antes de la fecha de vencimiento.",
+                    "snd": "Esta condición se cumple cuando hay más votos a favor que en contra antes de la fecha de vencimiento."
+                },
+                "thrd": "Esto puede ocurrir en la fecha de vencimiento o si la barra de confirmación llega al segundo icono (flecha hacia abajo), en cuyo caso la condición ya no se puede cambiar y la propuesta se adopta anticipadamente."
             },
-            "snd": {
-                "line1": "Supermayoría: más de {pct} del poder de voto participante votó sí antes de la fecha de vencimiento.",
-                "line2": "Esta condición se cumple cuando, en la fecha de vencimiento, hay más del doble de votos a favor que de votos en contra.",
-                "line3": "Esto puede ocurrir en la fecha de vencimiento o si la barra de confirmación llega al segundo icono (flecha hacia abajo), en cuyo caso la condición ya no se puede cambiar y la propuesta se adopta anticipadamente."
+            "participation": {
+                "fst": "Participación: al menos {pct} del poder de voto total votó sí.",
+                "snd": "Esta condición se cumple cuando la barra de confirmación llega al primer icono (flecha hacia abajo)."
             },
-            "title": "Para que una propuesta sea adoptada, deben cumplirse las dos condiciones siguientes:"
+            "title": {
+                "critical": "Para que una propuesta crítica sea adoptada, deben cumplirse las dos condiciones siguientes:",
+                "regular": "Para que una propuesta sea adoptada, deben cumplirse las dos condiciones siguientes:"
+            }
         },
         "proposalNotAceptingVotes": "Esta propuesta no acepta votos. Intente recargar la página.",
         "proposalsBotAction": "Acciones del bot de propuestas",

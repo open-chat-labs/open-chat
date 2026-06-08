@@ -1559,16 +1559,25 @@
         "notificationsAction": "Notifications Index Actions",
         "openchatInstallerAction": "Actions de l'installateur OpenChat",
         "passing": {
-            "fst": {
-                "line1": "Participation : au moins {pct} du pouvoir de vote total a voté oui.",
-                "line2": "Cette condition est remplie lorsque la barre de confirmation atteint la première icône - chevron vers le bas."
+            "majority": {
+                "critical": {
+                    "fst": "Supermajorité : plus de {pct} des voix des participants ont voté oui avant la date d'expiration.",
+                    "snd": "Cette condition est remplie lorsqu'il y a plus de deux fois plus de votes pour que de votes contre à la date d'expiration."
+                },
+                "regular": {
+                    "fst": "Majorité : plus de {pct} des voix exprimées ont voté oui avant la date d'expiration",
+                    "snd": "Cette condition est remplie lorsqu'il y a plus de votes « oui » que de votes « non » à la date d'expiration."
+                },
+                "thrd": "Cela peut se produire à la date d'expiration ou si la barre de confirmation atteint la deuxième icône (flèche vers le bas), auquel cas la condition ne peut plus être modifiée et la proposition est adoptée de façon anticipée."
             },
-            "snd": {
-                "line1": "Supermajorité : plus de {pct} des voix des participants ont voté oui avant la date d'expiration.",
-                "line2": "Cette condition est remplie lorsqu'il y a plus de deux fois plus de votes pour que de votes contre à la date d'expiration.",
-                "line3": "Cela peut se produire à la date d'expiration ou si la barre de confirmation atteint la deuxième icône (flèche vers le bas), auquel cas la condition ne peut plus être modifiée et la proposition est adoptée de façon anticipée."
+            "participation": {
+                "fst": "Participation : au moins {pct} du pouvoir de vote total a voté oui.",
+                "snd": "Cette condition est remplie lorsque la barre de confirmation atteint la première icône - chevron vers le bas."
             },
-            "title": "Pour qu'une proposition soit adoptée, les deux conditions suivantes doivent être remplies :"
+            "title": {
+                "critical": "Pour qu'une proposition critique soit adoptée, les deux conditions suivantes doivent être remplies :",
+                "regular": "Pour qu'une proposition soit adoptée, les deux conditions suivantes doivent être remplies :"
+            }
         },
         "proposalNotAceptingVotes": "Cette proposition n'accepte pas les votes - essayez de recharger la page",
         "proposalsBotAction": "Actions du robot de propositions",

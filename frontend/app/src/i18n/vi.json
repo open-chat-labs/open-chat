@@ -1559,16 +1559,25 @@
         "notificationsAction": "Thông báo Chỉ mục Hành động",
         "openchatInstallerAction": "Hành động cài đặt OpenChat",
         "passing": {
-            "fst": {
-                "line1": "Sự tham gia: ít nhất {pct} trong tổng số phiếu bầu đã bỏ phiếu đồng ý.",
-                "line2": "Điều kiện này được đáp ứng khi thanh \"có\" đạt đến biểu tượng mũi tên xuống đầu tiên."
+            "majority": {
+                "critical": {
+                    "fst": "Đa số tuyệt đối: hơn {pct} số người tham gia bỏ phiếu tán thành trước ngày hết hạn.",
+                    "snd": "Điều kiện này được đáp ứng khi số phiếu \"có\" nhiều hơn gấp đôi số phiếu \"không\" vào ngày hết hạn."
+                },
+                "regular": {
+                    "fst": "Đa số: hơn {pct} số người tham gia bỏ phiếu tán thành trước ngày hết hạn",
+                    "snd": "Điều kiện này được đáp ứng khi số phiếu \"có\" nhiều hơn số phiếu \"không\" vào ngày hết hạn."
+                },
+                "thrd": "Điều này có thể trở thành sự thật vào ngày hết hạn hoặc nếu thanh \"có\" đạt đến biểu tượng mũi tên xuống thứ hai, trong trường hợp đó điều kiện không thể thay đổi nữa và đề xuất được thông qua sớm."
             },
-            "snd": {
-                "line1": "Đa số tuyệt đối: hơn {pct} số người tham gia bỏ phiếu tán thành trước ngày hết hạn.",
-                "line2": "Điều kiện này được đáp ứng khi số phiếu \"có\" nhiều hơn gấp đôi số phiếu \"không\" vào ngày hết hạn.",
-                "line3": "Điều này có thể trở thành sự thật vào ngày hết hạn hoặc nếu thanh \"có\" đạt đến biểu tượng mũi tên xuống thứ hai, trong trường hợp đó điều kiện không thể thay đổi nữa và đề xuất được thông qua sớm."
+            "participation": {
+                "fst": "Sự tham gia: ít nhất {pct} trong tổng số phiếu bầu đã bỏ phiếu đồng ý.",
+                "snd": "Điều kiện này được đáp ứng khi thanh \"có\" đạt đến biểu tượng mũi tên xuống đầu tiên."
             },
-            "title": "Để một đề xuất được thông qua, cần phải đáp ứng hai điều kiện sau:"
+            "title": {
+                "critical": "Để một đề xuất quan trọng được thông qua, cần phải đáp ứng hai điều kiện sau:",
+                "regular": "Để một đề xuất được thông qua, cần phải đáp ứng hai điều kiện sau:"
+            }
         },
         "proposalNotAceptingVotes": "Đề xuất này không chấp nhận phiếu bầu - hãy thử tải lại trang",
         "proposalsBotAction": "Hành động bot đề xuất",

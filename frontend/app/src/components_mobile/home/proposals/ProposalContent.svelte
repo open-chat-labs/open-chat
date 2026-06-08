@@ -2,7 +2,6 @@
     import {
         Body,
         BodySmall,
-        Chip,
         ChatLabel,
         Caption,
         ChatText,
@@ -30,7 +29,6 @@
     import Alert from "svelte-material-icons/ShieldAlert.svelte";
     import InfoSlabBoxOut from "svelte-material-icons/InformationOutline.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultipleOutline.svelte";
-    import OpenInNew from "svelte-material-icons/OpenInNew.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { NamedNeurons } from "../../../stores/namedNeurons";
     import { proposalVotes } from "../../../stores/proposalVotes";
@@ -108,9 +106,14 @@
         payload === undefined || payload === EMPTY_MOTION_PAYLOAD || payload.length === 0,
     );
 
-    // TODO we probably need to add a few more here
+    // Based on Claude's findings, these are the three critical proposals!
+    // Critical proposals will also have 20% / 67% for voting limits with the
+    // upper one being supermajority; and normal proposals will have 3% / 50%
+    // voting limits with the upper one being simple majority.
     const criticalSnsProposals = [
         9, // transfer treasury funds
+        11, // deregister dapp canisters
+        12, // mint sns tokens
     ];
     let isCritical = $derived(
         content.proposal.kind === "sns"
@@ -222,14 +225,6 @@
             <ProposalStatusLabel
                 content={{ kind: "value", value: ProposalDecisionStatus[proposal.status] }}
                 bgColor={statusColour[proposal.status]} />
-            <a href={proposalUrl} rel="noreferrer" target="_blank">
-                <Chip>
-                    <Body colour={"textSecondary"} width={"hug"}>ID {proposal.id}</Body>
-                    {#snippet icon(color)}
-                        <OpenInNew size="1rem" {color} />
-                    {/snippet}
-                </Chip>
-            </a>
         </Row>
     </Column>
 {/snippet}
@@ -237,7 +232,7 @@
 {#snippet metadata()}
     <Column gap="sm" width="fill">
         <!-- Proposal type -->
-        <Row gap="sm" crossAxisAlignment={isCritical ? "start" : "center"}>
+        <Row gap="sm">
             {#if isCritical}
                 <Alert color={ColourVars.error} size="1.25rem" />
             {:else}
@@ -256,14 +251,12 @@
         </Row>
 
         <!-- Who proposed the proposal -->
-        <Row gap="sm" crossAxisAlignment="center">
+        <Row gap="sm">
             <AccountMultiple color={ColourVars.textSecondary} size="1.25rem" />
             <Row gap="xs">
-                <ChatText width="hug" colour="textSecondary">
+                <ChatText width="fill" colour="textSecondary">
                     <Translatable resourceKey={i18nKey("proposal.proposedBy")} />
-                </ChatText>
-                <ChatText fontWeight="semi-bold" colour="primary">
-                    <a target="_blank" rel="noreferrer" href={proposerUrl}>
+                    <a class="sender_link" target="_blank" rel="noreferrer" href={proposerUrl}>
                         {renderNeuronId(proposal.proposer)}
                     </a>
                 </ChatText>
@@ -374,7 +367,8 @@
                             style:color={ColourVars.textPrimary}>
                             {proposal.title}
                             <BodySmall colour="primary" fontWeight="semi-bold"
-                                >[<Translatable resourceKey={i18nKey("proposal.link")} />]</BodySmall>
+                                >[<Translatable
+                                    resourceKey={i18nKey("proposal.link")} />]</BodySmall>
                         </a>
                     {:else}
                         {proposal.title}
@@ -441,7 +435,10 @@
             </Row>
             <Column gap="lg">
                 <Body fontWeight="semi-bold" colour="textPrimary">
-                    <Translatable resourceKey={i18nKey("proposal.passing.title")} />
+                    <Translatable
+                        resourceKey={i18nKey(
+                            `proposal.passing.title.${isCritical ? "critical" : "regular"}`,
+                        )} />
                 </Body>
                 <Row gap="lg">
                     <Row width={{ size: "0.75rem" }}>
@@ -450,12 +447,13 @@
                     <Column gap="sm">
                         <Body colour="textPrimary">
                             <Translatable
-                                resourceKey={i18nKey("proposal.passing.fst.line1", {
+                                resourceKey={i18nKey("proposal.passing.participation.fst", {
                                     pct: `${proposal.minYesPercentageOfTotal}%`,
                                 })} />
                         </Body>
                         <Body colour="textSecondary">
-                            <Translatable resourceKey={i18nKey("proposal.passing.fst.line2")} />
+                            <Translatable
+                                resourceKey={i18nKey("proposal.passing.participation.snd")} />
                         </Body>
                     </Column>
                 </Row>
@@ -466,15 +464,21 @@
                     <Column gap="sm">
                         <Body colour="textPrimary">
                             <Translatable
-                                resourceKey={i18nKey("proposal.passing.snd.line1", {
-                                    pct: `${proposal.minYesPercentageOfExercised}%`,
-                                })} />
+                                resourceKey={i18nKey(
+                                    `proposal.passing.majority.${isCritical ? "critical" : "regular"}.fst`,
+                                    {
+                                        pct: `${proposal.minYesPercentageOfExercised}%`,
+                                    },
+                                )} />
                         </Body>
                         <Body colour="textSecondary">
-                            <Translatable resourceKey={i18nKey("proposal.passing.snd.line2")} />
+                            <Translatable
+                                resourceKey={i18nKey(
+                                    `proposal.passing.majority.${isCritical ? "critical" : "regular"}.snd`,
+                                )} />
                         </Body>
                         <Body colour="textSecondary">
-                            <Translatable resourceKey={i18nKey("proposal.passing.snd.line3")} />
+                            <Translatable resourceKey={i18nKey(`proposal.passing.majority.thrd`)} />
                         </Body>
                     </Column>
                 </Row>
@@ -490,9 +494,11 @@
                 <Translatable resourceKey={i18nKey("proposal.noEligibleNeurons")} />
             </Title>
             <Body colour="textSecondary">
-                {@html $_("proposal.noEligibleNeuronsMessage", {
-                    values: { userId: $currentUserIdStore },
-                })}
+                <Markdown
+                    inline={false}
+                    text={$_("proposal.noEligibleNeuronsMessage", {
+                        values: { userId: $currentUserIdStore },
+                    })} />
             </Body>
         </Column>
     </Sheet>
@@ -501,6 +507,10 @@
 <style lang="scss">
     .title_link {
         width: 100%;
+    }
+    .sender_link {
+        color: var(--primary) !important;
+        font-weight: var(--font-weight-semi-bold);
     }
     .separator {
         width: 100%;

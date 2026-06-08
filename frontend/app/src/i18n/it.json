@@ -1559,16 +1559,25 @@
         "notificationsAction": "Notifiche Indice Azioni",
         "openchatInstallerAction": "Azioni di installazione di OpenChat",
         "passing": {
-            "fst": {
-                "line1": "Partecipazione: almeno {pct} dei voti totali sono stati espressi a favore.",
-                "line2": "Questa condizione è soddisfatta quando la barra del sì raggiunge la prima icona a forma di freccia rivolta verso il basso."
+            "majority": {
+                "critical": {
+                    "fst": "Supermaggioranza: più di {pct} dei partecipanti al voto hanno votato sì entro la data di scadenza.",
+                    "snd": "Questa condizione si verifica quando, alla data di scadenza, il numero dei voti favorevoli è più del doppio di quello dei voti contrari."
+                },
+                "regular": {
+                    "fst": "Maggioranza: più di {pct} dei partecipanti al voto hanno votato sì entro la data di scadenza",
+                    "snd": "Questa condizione si verifica quando, alla data di scadenza, i voti favorevoli superano quelli contrari."
+                },
+                "thrd": "Ciò può verificarsi alla data di scadenza o se la barra del \"sì\" raggiunge la seconda icona (freccia verso il basso), nel qual caso la condizione non può più essere modificata e la proposta viene adottata anticipatamente."
             },
-            "snd": {
-                "line1": "Supermaggioranza: più di {pct} dei partecipanti al voto hanno votato sì entro la data di scadenza.",
-                "line2": "Questa condizione si verifica quando, alla data di scadenza, il numero dei voti favorevoli è più del doppio di quello dei voti contrari.",
-                "line3": "Ciò può verificarsi alla data di scadenza o se la barra del \"sì\" raggiunge la seconda icona (freccia verso il basso), nel qual caso la condizione non può più essere modificata e la proposta viene adottata anticipatamente."
+            "participation": {
+                "fst": "Partecipazione: almeno {pct} dei voti totali sono stati espressi a favore.",
+                "snd": "Questa condizione è soddisfatta quando la barra del sì raggiunge la prima icona a forma di freccia rivolta verso il basso."
             },
-            "title": "Perché una proposta venga adottata, devono essere soddisfatte le due seguenti condizioni:"
+            "title": {
+                "critical": "Perché una proposta critica venga adottata, devono essere soddisfatte le due condizioni seguenti:",
+                "regular": "Perché una proposta venga adottata, devono essere soddisfatte le due seguenti condizioni:"
+            }
         },
         "proposalNotAceptingVotes": "Questa proposta non accetta voti: prova a ricaricare la pagina",
         "proposalsBotAction": "Proposte Bot Azioni",

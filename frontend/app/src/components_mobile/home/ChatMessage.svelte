@@ -1,4 +1,3 @@
-
 <script lang="ts">
     import { navigate } from "@utils/navigation";
     import { confirmMessageDeletion } from "@src/stores/settings";
@@ -14,7 +13,29 @@
         type PanDirection,
         Sheet,
     } from "component-lib";
-    import { type ChatIdentifier, chatListScopeStore, type ChatType, currentUserIdStore, currentUserStore, type EnhancedReplyContext, localUpdates, type Message, type MessageReminderCreatedContent, OpenChat, publish, routeForMessage, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, type SelectedEmoji, type SenderContext, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "openchat-client";
+    import {
+        type ChatIdentifier,
+        chatListScopeStore,
+        type ChatType,
+        currentUserIdStore,
+        currentUserStore,
+        type EnhancedReplyContext,
+        localUpdates,
+        type Message,
+        type MessageReminderCreatedContent,
+        OpenChat,
+        publish,
+        routeForMessage,
+        screenWidth,
+        ScreenWidth,
+        selectedChatBlockedUsersStore,
+        type SelectedEmoji,
+        type SenderContext,
+        translationsStore,
+        unconfirmedReadByThem,
+        undeletingMessagesStore,
+        type UserSummary,
+    } from "openchat-client";
     import { getContext, onDestroy, onMount, tick } from "svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
     import ShareOutline from "svelte-material-icons/ShareOutline.svelte";
@@ -612,7 +633,7 @@
                 gap={"sm"}
                 overflow={"visible"}
                 mainAxisAlignment={me ? "end" : "start"}
-                pan={msg.deleted || disablePan
+                pan={msg.deleted || disablePan || msg.content.kind === "proposal_content"
                     ? undefined
                     : {
                           oncommit: onPanCommit,

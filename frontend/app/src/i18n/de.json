@@ -1559,16 +1559,25 @@
         "notificationsAction": "Indexaktionen für Benachrichtigungen",
         "openchatInstallerAction": "OpenChat-Installationsaktionen",
         "passing": {
-            "fst": {
-                "line1": "Beteiligung: Mindestens {pct} der gesamten Stimmkraft stimmten mit Ja.",
-                "line2": "Diese Bedingung ist erfüllt, wenn die Ja-Leiste das erste nach unten zeigende Pfeilsymbol erreicht."
+            "majority": {
+                "critical": {
+                    "fst": "Qualifizierte Mehrheit: Mehr als {pct} der teilnehmenden Stimmberechtigten haben bis zum Ablaufdatum mit Ja gestimmt.",
+                    "snd": "Diese Bedingung ist erfüllt, wenn bis zum Ablaufdatum mehr als doppelt so viele Ja-Stimmen wie Nein-Stimmen vorliegen."
+                },
+                "regular": {
+                    "fst": "Mehrheit: Mehr als {pct} der teilnehmenden Stimmberechtigten stimmten bis zum Ablaufdatum mit Ja.",
+                    "snd": "Diese Bedingung ist erfüllt, wenn bis zum Ablaufdatum mehr Ja-Stimmen als Nein-Stimmen vorliegen."
+                },
+                "thrd": "Dies kann zum Ablaufdatum der Fall sein oder wenn die Ja-Leiste das zweite Symbol (Pfeil nach unten) erreicht; in diesem Fall kann die Bedingung nicht mehr geändert werden und der Vorschlag wird vorzeitig angenommen."
             },
-            "snd": {
-                "line1": "Qualifizierte Mehrheit: Mehr als {pct} der teilnehmenden Stimmberechtigten haben bis zum Ablaufdatum mit Ja gestimmt.",
-                "line2": "Diese Bedingung ist erfüllt, wenn bis zum Ablaufdatum mehr als doppelt so viele Ja-Stimmen wie Nein-Stimmen vorliegen.",
-                "line3": "Dies kann zum Ablaufdatum der Fall sein oder wenn die Ja-Leiste das zweite Symbol (Pfeil nach unten) erreicht; in diesem Fall kann die Bedingung nicht mehr geändert werden und der Vorschlag wird vorzeitig angenommen."
+            "participation": {
+                "fst": "Beteiligung: Mindestens {pct} der gesamten Stimmkraft stimmten mit Ja.",
+                "snd": "Diese Bedingung ist erfüllt, wenn die Ja-Leiste das erste nach unten zeigende Pfeilsymbol erreicht."
             },
-            "title": "Damit ein Vorschlag angenommen werden kann, müssen folgende zwei Bedingungen erfüllt sein:"
+            "title": {
+                "critical": "Damit ein kritischer Vorschlag angenommen werden kann, müssen folgende zwei Bedingungen erfüllt sein:",
+                "regular": "Damit ein Vorschlag angenommen werden kann, müssen folgende zwei Bedingungen erfüllt sein:"
+            }
         },
         "proposalNotAceptingVotes": "Für diesen Vorschlag werden keine Stimmen akzeptiert. Versuchen Sie, die Seite neu zu laden",
         "proposalsBotAction": "Vorschläge für Bot-Aktionen",

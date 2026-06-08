@@ -1559,16 +1559,25 @@
         "notificationsAction": "Powiadomienia Akcje indeksu",
         "openchatInstallerAction": "Akcje instalatora OpenChat",
         "passing": {
-            "fst": {
-                "line1": "Udział: co najmniej {pct} ogólnej liczby głosów oddało głos „tak”.",
-                "line2": "Warunek ten jest spełniony, gdy pasek „tak” osiągnie pierwszą ikonę skierowaną w dół."
+            "majority": {
+                "critical": {
+                    "fst": "Kwalifikująca większość: ponad {pct} uczestniczących osób głosujących zagłosowało „tak” do upływu terminu.",
+                    "snd": "Warunek ten uznaje się za spełniony, jeżeli do upływu terminu liczba głosów „tak” jest dwukrotnie większa niż liczba głosów „nie”."
+                },
+                "regular": {
+                    "fst": "Większość: ponad {pct} uczestniczących osób głosujących zagłosowało „tak” do daty wygaśnięcia",
+                    "snd": "Warunek ten uznaje się za spełniony, jeżeli do daty wygaśnięcia głosowania jest więcej głosów „tak” niż „nie”."
+                },
+                "thrd": "Może to nastąpić w momencie upływu terminu ważności lub gdy pasek „tak” dojdzie do drugiej ikony – strzałki w dół. W takim przypadku warunku nie można już zmienić, a propozycja zostaje przyjęta wcześniej."
             },
-            "snd": {
-                "line1": "Kwalifikująca większość: ponad {pct} uczestniczących osób głosujących zagłosowało „tak” do upływu terminu.",
-                "line2": "Warunek ten uznaje się za spełniony, jeżeli do upływu terminu liczba głosów „tak” jest dwukrotnie większa niż liczba głosów „nie”.",
-                "line3": "Może to nastąpić w momencie upływu terminu ważności lub gdy pasek „tak” dojdzie do drugiej ikony – strzałki w dół. W takim przypadku warunku nie można już zmienić, a propozycja zostaje przyjęta wcześniej."
+            "participation": {
+                "fst": "Udział: co najmniej {pct} ogólnej liczby głosów oddało głos „tak”.",
+                "snd": "Warunek ten jest spełniony, gdy pasek „tak” osiągnie pierwszą ikonę skierowaną w dół."
             },
-            "title": "Aby wniosek mógł zostać przyjęty, muszą być spełnione następujące dwa warunki:"
+            "title": {
+                "critical": "Aby propozycja krytyczna mogła zostać przyjęta, muszą być spełnione następujące dwa warunki:",
+                "regular": "Aby wniosek mógł zostać przyjęty, muszą być spełnione następujące dwa warunki:"
+            }
         },
         "proposalNotAceptingVotes": "Na tę propozycję nie można głosować — spróbuj ponownie załadować stronę",
         "proposalsBotAction": "Propozycje działań botów",
