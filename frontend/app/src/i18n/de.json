@@ -1495,15 +1495,18 @@
         "action": "Aktion",
         "additionalContent": "zusätzlicher Inhalt",
         "adopt": "Annehmen",
+        "adopted": "Angenommen",
         "alreadyVoted": "Sie haben bereits abgestimmt - versuchen Sie, die Seite neu zu laden",
         "builtInAction": "Eingebaute Aktionen",
         "collapse": "Meldung minimieren",
+        "criticalProposal": "Dies ist ein entscheidender Vorschlag.",
         "cyclesDispenserAction": "Zyklen Spenderaktionen",
         "details": "Einzelheiten",
         "disableAll": "Alle deaktivieren",
         "enableAll": "Alle aktivieren",
         "filter": "Vorschläge filtern",
         "groupIndexAction": "Gruppenindexaktionen",
+        "link": "Link",
         "makeProposal": "Machen Sie einen Vorschlag",
         "maker": {
             "achievementChatCost": "Zur Bereitstellung des angeforderten CHIT ist eine Zahlung von {cost} {chat}-Tokens erforderlich. Nicht ausgegebene CHATs werden nach Ablauf der Errungenschaft zurückerstattet.",
@@ -1555,6 +1558,27 @@
         "noEligibleNeuronsMessage": "Keine geeigneten oder verknüpften Neuronen gefunden. Um über Vorschläge in OpenChat abzustimmen, müssen Sie zunächst Ihre OpenChat-Benutzer-ID als Hotkey zu allen Neuronen hinzufügen, mit denen Sie abstimmen möchten.<br/><br/> Ihre OpenChat-Benutzer-ID lautet: {userId}.<br/><br/> Weitere Informationen zu Abstimmungen und Governance finden Sie <a target=\"_blank\" href=\"https://oc.app/blog/governance\">in diesem Blogbeitrag</a> .",
         "notificationsAction": "Indexaktionen für Benachrichtigungen",
         "openchatInstallerAction": "OpenChat-Installationsaktionen",
+        "passing": {
+            "majority": {
+                "critical": {
+                    "fst": "Qualifizierte Mehrheit: Mehr als {pct} der teilnehmenden Stimmberechtigten haben bis zum Ablaufdatum mit Ja gestimmt.",
+                    "snd": "Diese Bedingung ist erfüllt, wenn bis zum Ablaufdatum mehr als doppelt so viele Ja-Stimmen wie Nein-Stimmen vorliegen."
+                },
+                "regular": {
+                    "fst": "Mehrheit: Mehr als {pct} der teilnehmenden Stimmberechtigten stimmten bis zum Ablaufdatum mit Ja.",
+                    "snd": "Diese Bedingung ist erfüllt, wenn bis zum Ablaufdatum mehr Ja-Stimmen als Nein-Stimmen vorliegen."
+                },
+                "thrd": "Dies kann zum Ablaufdatum der Fall sein oder wenn die Ja-Leiste das zweite Symbol (Pfeil nach unten) erreicht; in diesem Fall kann die Bedingung nicht mehr geändert werden und der Vorschlag wird vorzeitig angenommen."
+            },
+            "participation": {
+                "fst": "Beteiligung: Mindestens {pct} der gesamten Stimmkraft stimmten mit Ja.",
+                "snd": "Diese Bedingung ist erfüllt, wenn die Ja-Leiste das erste nach unten zeigende Pfeilsymbol erreicht."
+            },
+            "title": {
+                "critical": "Damit ein kritischer Vorschlag angenommen werden kann, müssen folgende zwei Bedingungen erfüllt sein:",
+                "regular": "Damit ein Vorschlag angenommen werden kann, müssen folgende zwei Bedingungen erfüllt sein:"
+            }
+        },
         "proposalNotAceptingVotes": "Für diesen Vorschlag werden keine Stimmen akzeptiert. Versuchen Sie, die Seite neu zu laden",
         "proposalsBotAction": "Vorschläge für Bot-Aktionen",
         "proposedBy": "vorgeschlagen von",
@@ -1562,10 +1586,13 @@
         "readmore": "Weiterlesen",
         "registryAction": "Registrierungsaktionen",
         "reject": "Ablehnen",
+        "rejected": "Abgelehnt",
         "storageIndexAction": "Speicherindexaktionen",
+        "tapToExpand": "Zum Vergrößern tippen...",
         "topic": "Thema",
         "unknownActionCategory": "Andere Aktionen",
         "userIndexAction": "Benutzerindexaktionen",
+        "viewDetails": "Angebotsdetails",
         "voteFailed": "Stimmabgabe fehlgeschlagen - bitte versuchen Sie es später erneut",
         "votingPeriodEnded": "Abstimmungszeitraum beendet",
         "votingPeriodRemaining": "Verbleibende Abstimmungsperiode",

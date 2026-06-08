@@ -37,11 +37,20 @@ class OpenUrl(private val activity: Activity) {
             val successResponse = JSObject().put("value", "ok")
 
             try {
-                val intent = Intent(Intent.ACTION_VIEW, uri)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-
-                // Start activity...
-                activity.startActivity(intent)
+                val scheme = uri.scheme?.lowercase()
+                if (scheme == "http" || scheme == "https") {
+                    // Open web URLs in a Custom Tab, which explicitly targets a
+                    // browser package. A plain ACTION_VIEW intent would resolve
+                    // back to this app for verified app-link domains (e.g.
+                    // oc.app), re-firing the deep-link event and causing a loop.
+                    openWithCustomTabIntent(uri)
+                } else {
+                    // Non-web schemes (mailto:, tel:, other app deep links) -
+                    // let the system resolve the appropriate handler.
+                    val intent = Intent(Intent.ACTION_VIEW, uri)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    activity.startActivity(intent)
+                }
                 invoke.resolve(successResponse)
 
             } catch (e: ActivityNotFoundException) {

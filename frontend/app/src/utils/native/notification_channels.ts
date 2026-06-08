@@ -1,7 +1,8 @@
 import { addPluginListener, invoke, PluginListener } from "@tauri-apps/api/core";
 import { isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notification";
-import { showNotification } from "tauri-plugin-oc-api";
+import { openUrl, showNotification } from "tauri-plugin-oc-api";
 import { navigate } from "@utils/navigation";
+import { isLandingPagePath } from "@utils/urls";
 
 const TAURI_PLUGIN_NAME = "oc";
 const PUSH_NOTIFICATION_EVENT = "push-notification";
@@ -249,6 +250,16 @@ export async function expectDeepLinks(): Promise<PluginListener> {
         console.log("Deep link: received warm-start event", payload.url);
         try {
             const { pathname, search } = new URL(payload.url);
+            // Landing / marketing pages (blog, whitepaper, etc.) are not real
+            // in-app destinations. The OS delivers these oc.app links to us as
+            // deep links because oc.app is a verified associated domain - open
+            // them in an external browser tab instead of navigating in-app.
+            if (isLandingPagePath(pathname)) {
+                openUrl({ url: payload.url }).catch((e) =>
+                    console.error("Deep link: failed to open external URL", e),
+                );
+                return;
+            }
             navigate(pathname + search, "notification");
         } catch {
             console.error("Deep link: failed to parse URL", payload.url);

@@ -11,9 +11,9 @@
 </script>
 
 <Column crossAxisAlignment={"center"} mainAxisAlignment={"center"} gap={"lg"}>
+    {@render progress()}
     <Row mainAxisAlignment={"spaceAround"}>
         {@render adopt()}
         {@render reject()}
     </Row>
-    {@render progress()}
 </Column>

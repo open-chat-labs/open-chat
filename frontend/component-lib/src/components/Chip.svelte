@@ -92,7 +92,7 @@
         borderColour={borderColours[mode]}
         borderRadius={isRounded ? "circle" : "md"}
         borderWidth={borderWidth[mode]}
-        padding={["xs", onRemove ? "md" : "xs", "xs", icon ? "md" : "xs"]}>
+        padding={["xs", onRemove ? "xs" : "sm", "xs", icon ? "xs" : "sm"]}>
         {#if icon}
             <span class="icon">{@render icon(iconColours[mode])}</span>
         {/if}
