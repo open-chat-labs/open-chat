@@ -5,4 +5,5 @@ use notifications_index_canister::*;
 generate_query_call!(notification_canisters);
 
 // Updates
+generate_update_call!(remove_fcm_tokens);
 generate_update_call!(remove_subscriptions);

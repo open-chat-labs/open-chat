@@ -1,5 +1,6 @@
 use crate::ic_agent::IcAgent;
 use crate::metrics::register_metric;
+use crate::user_notifications::fcm_token_remover::FcmTokenRemover;
 use crate::user_notifications::processor::Processor;
 use crate::user_notifications::pusher::Pusher;
 use crate::user_notifications::subscription_remover::SubscriptionRemover;
@@ -8,8 +9,9 @@ use async_channel::Sender;
 use fcm_service::FcmService;
 use prometheus::PullingGauge;
 use std::sync::{Arc, RwLock};
-use types::{CanisterId, UserId};
+use types::{CanisterId, FcmToken, UserId};
 
+mod fcm_token_remover;
 mod processor;
 mod pusher;
 mod subscription_remover;
@@ -24,6 +26,7 @@ pub fn start_user_notifications_processor(
     let (to_process_sender, to_process_receiver) = async_channel::bounded::<PushNotification>(200_000);
     let (to_push_sender, to_push_receiver) = async_channel::bounded::<NotificationToPush>(200_000);
     let (subscriptions_to_remove_sender, subscriptions_to_remove_receiver) = async_channel::bounded(20_000);
+    let (fcm_tokens_to_remove_sender, fcm_tokens_to_remove_receiver) = async_channel::bounded(20_000);
 
     let invalid_subscriptions = Arc::new(RwLock::default());
     let throttled_subscriptions = Arc::new(RwLock::default());
@@ -41,6 +44,7 @@ pub fn start_user_notifications_processor(
         let pusher = Pusher::new(
             to_push_receiver.clone(),
             subscriptions_to_remove_sender.clone(),
+            fcm_tokens_to_remove_sender.clone(),
             invalid_subscriptions.clone(),
             throttled_subscriptions.clone(),
             fcm_service.clone(),
@@ -48,11 +52,21 @@ pub fn start_user_notifications_processor(
         tokio::spawn(pusher.run());
     }
 
-    let subscription_remover = SubscriptionRemover::new(ic_agent, index_canister_id, subscriptions_to_remove_receiver);
+    let subscription_remover =
+        SubscriptionRemover::new(ic_agent.clone(), index_canister_id, subscriptions_to_remove_receiver);
 
     tokio::spawn(subscription_remover.run());
 
-    register_metrics(to_process_sender.clone(), to_push_sender, subscriptions_to_remove_sender);
+    let fcm_token_remover = FcmTokenRemover::new(ic_agent, index_canister_id, fcm_tokens_to_remove_receiver);
+
+    tokio::spawn(fcm_token_remover.run());
+
+    register_metrics(
+        to_process_sender.clone(),
+        to_push_sender,
+        subscriptions_to_remove_sender,
+        fcm_tokens_to_remove_sender,
+    );
 
     to_process_sender
 }
@@ -61,6 +75,7 @@ fn register_metrics(
     to_process_sender: Sender<PushNotification>,
     to_push_sender: Sender<NotificationToPush>,
     subscriptions_to_remove_sender: Sender<(UserId, String)>,
+    fcm_tokens_to_remove_sender: Sender<(UserId, FcmToken)>,
 ) {
     let notifications_to_process_queue = PullingGauge::new(
         "notifications_to_process_queue",
@@ -83,7 +98,15 @@ fn register_metrics(
     )
     .unwrap();
 
+    let fcm_tokens_to_remove_queue = PullingGauge::new(
+        "fcm_tokens_to_remove_queue",
+        "Number of FCM tokens queued to be removed",
+        Box::new(move || fcm_tokens_to_remove_sender.len() as f64),
+    )
+    .unwrap();
+
     register_metric(notifications_to_process_queue);
     register_metric(notifications_to_push_queue);
     register_metric(subscriptions_to_remove_queue);
+    register_metric(fcm_tokens_to_remove_queue);
 }
