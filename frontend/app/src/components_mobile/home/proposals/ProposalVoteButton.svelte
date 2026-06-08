@@ -81,7 +81,10 @@
     <!-- Icon -->
     <div class={`icon ${mode}`} class:voted>
         {#if voting}
-            <Spinner size="1.25rem" />
+            <Spinner
+                size="1.25rem"
+                backgroundColour={ColourVars.textPrimary}
+                foregroundColour={ColourVars.background2} />
         {:else if mode === "yes"}
             <ThumbUp size={$iconSize} />
         {:else}
@@ -103,15 +106,8 @@
         background-color: var(--background-0);
 
         &.voted.yes,
-        &.voting.yes,
-        &.voted.no,
-        &.voting.no {
+        &.voted.no {
             background-color: var(--background-2);
-        }
-
-        &.disabled {
-            background-color: transparent;
-            cursor: not-allowed;
         }
     }
 </style>

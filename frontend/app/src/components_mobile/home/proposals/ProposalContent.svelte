@@ -106,10 +106,10 @@
         payload === undefined || payload === EMPTY_MOTION_PAYLOAD || payload.length === 0,
     );
 
-    // Based on Claude's findings, these are the three critical proposals!
-    // Critical proposals will also have 20% / 67% for voting limits with the
-    // upper one being supermajority; and normal proposals will have 3% / 50%
-    // voting limits with the upper one being simple majority.
+    // Certain SNS proposal actions are considered "critical" and use higher
+    // voting thresholds. Keep this list in sync with the SNS governance
+    // specification / action-id mapping used by the client. (If the upstream
+    // action ids change, this classification must be updated accordingly.)
     const criticalSnsProposals = [
         9, // transfer treasury funds
         11, // deregister dapp canisters
@@ -494,11 +494,9 @@
                 <Translatable resourceKey={i18nKey("proposal.noEligibleNeurons")} />
             </Title>
             <Body colour="textSecondary">
-                <Markdown
-                    inline={false}
-                    text={$_("proposal.noEligibleNeuronsMessage", {
-                        values: { userId: $currentUserIdStore },
-                    })} />
+                {@html $_("proposal.noEligibleNeuronsMessage", {
+                    values: { userId: $currentUserIdStore },
+                })}
             </Body>
         </Column>
     </Sheet>

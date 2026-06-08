@@ -1555,7 +1555,7 @@
         },
         "neuronControllerAction": "Neuron Controller Actions",
         "noEligibleNeurons": "No eligible neurons found",
-        "noEligibleNeuronsMessage": "No eligible or linked neurons found. In order to vote on proposals from within OpenChat you must first add your OpenChat user id as a hotkey to any neurons you wish to vote with. \n\nYour OpenChat user id is: {userId}. \n\nFor more information on voting and governance read [this blog post](https://oc.app/blog/governance).",
+        "noEligibleNeuronsMessage": "No eligible or linked neurons found. In order to vote on proposals from within OpenChat you must first add your OpenChat user id as a hotkey to any neurons you wish to vote with. <br /><br />Your OpenChat user id is: {userId}. <br /><br />For more information on voting and governance read <a target=\"_blank\" href=\"https://oc.app/blog/governance\">this blog post</a>.",
         "notificationsAction": "Notifications Index Actions",
         "openchatInstallerAction": "OpenChat Installer Actions",
         "passing": {

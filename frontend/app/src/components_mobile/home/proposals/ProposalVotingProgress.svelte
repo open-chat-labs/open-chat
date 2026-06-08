@@ -140,14 +140,4 @@
             border-radius: 2px;
         }
     }
-    .remaining {
-        margin: 0 auto;
-        margin-top: $sp4;
-        text-align: center;
-        @include font(book, normal, fs-80);
-        color: var(--txt-light);
-        .label {
-            font-weight: 700;
-        }
-    }
 </style>
