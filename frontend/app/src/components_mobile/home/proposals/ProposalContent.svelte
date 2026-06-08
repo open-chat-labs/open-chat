@@ -494,9 +494,11 @@
                 <Translatable resourceKey={i18nKey("proposal.noEligibleNeurons")} />
             </Title>
             <Body colour="textSecondary">
-                {@html $_("proposal.noEligibleNeuronsMessage", {
-                    values: { userId: $currentUserIdStore },
-                })}
+                <Markdown
+                    inline={true}
+                    text={$_("proposal.noEligibleNeuronsMessage", {
+                        values: { userId: $currentUserIdStore },
+                    })} />
             </Body>
         </Column>
     </Sheet>

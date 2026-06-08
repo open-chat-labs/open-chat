@@ -127,6 +127,30 @@ export function scrollToSection(section: string): number | undefined {
     return Number(one);
 }
 
+// oc.app paths that are public marketing / landing pages rather than in-app
+// content. The markdown renderer rewrites oc.app links to relative urls (see
+// utils/markdown.ts) so that links to chats/groups/users deep-link into the
+// app. In the native app these landing-page links should instead open in an
+// external browser tab. Keep in sync with the landing routes registered in
+// components/Router.svelte.
+const landingPagePaths = new Set([
+    "home",
+    "features",
+    "roadmap",
+    "blog",
+    "whitepaper",
+    "guidelines",
+    "terms",
+    "faq",
+    "diamond",
+    "architecture",
+]);
+
+export function isLandingPagePath(pathname: string): boolean {
+    const first = pathname.split("/").filter((s) => s.length > 0)[0];
+    return first !== undefined && landingPagePaths.has(first.toLowerCase());
+}
+
 const SUPPORTED_EXTERNAL_PROTOCOLS = new Set(["http:", "https:", "mailto:", "tel:"]);
 
 export function isSupportedExternalUrl(url: URL): boolean {
@@ -196,6 +220,20 @@ export function handleLinkClick(
         }
 
         if (anchor.target || anchor.hasAttribute("download")) return;
+
+        // oc.app links to marketing / landing pages were rewritten to relative
+        // urls by the markdown renderer. In the native app open these in an
+        // external browser tab rather than navigating inside the app.
+        if (client.isNativeApp() && isLandingPagePath(url.pathname)) {
+            e.preventDefault();
+            void openExternalUrl(
+                client,
+                openChatFriendlyUrl + url.pathname + url.search + url.hash,
+            ).catch((error) => {
+                console.error("Failed to open external link", error);
+            });
+            return;
+        }
 
         e.preventDefault();
         onInternal(url.pathname + url.search + url.hash);
