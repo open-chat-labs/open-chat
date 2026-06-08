@@ -52,8 +52,7 @@ pub fn start_user_notifications_processor(
         tokio::spawn(pusher.run());
     }
 
-    let subscription_remover =
-        SubscriptionRemover::new(ic_agent.clone(), index_canister_id, subscriptions_to_remove_receiver);
+    let subscription_remover = SubscriptionRemover::new(ic_agent.clone(), index_canister_id, subscriptions_to_remove_receiver);
 
     tokio::spawn(subscription_remover.run());
 
