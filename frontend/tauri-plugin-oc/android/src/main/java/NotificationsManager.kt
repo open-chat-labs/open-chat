@@ -11,6 +11,9 @@ import app.tauri.plugin.JSObject
 import com.ocplugin.app.data.*
 import com.ocplugin.app.decoders.NotificationDecoder
 import com.ocplugin.app.models.Conversation
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 // TODO Fix video call notification
 // TODO Notification management improvements
@@ -98,9 +101,23 @@ object NotificationsManager {
         val you = Person.Builder().setName("You").build()
         val messagingStyle = NotificationCompat.MessagingStyle(you)
 
+        // Resolve attachment images up front, in parallel, so the per-message loop
+        // below stays synchronous. Each message can carry at most one inline image
+        // (MessagingStyle limitation); messages without one render as plain text.
+        // Any failed/absent download maps to null and falls back to text.
+        val imageUris = coroutineScope {
+            notifications.map { n ->
+                async {
+                    n.image?.takeIf { it.isNotBlank() }?.let {
+                        NotificationImageHelper.loadAttachmentUri(context, it)
+                    }
+                }
+            }.awaitAll()
+        }
+
         // Build personas list
         val persons = mutableListOf<Person>()
-        notifications.forEach { n ->
+        notifications.forEachIndexed { index, n ->
             val personBuilder = Person.Builder()
                 .setName(n.senderName)
                 .setImportant(true)
@@ -110,12 +127,19 @@ object NotificationsManager {
             }
 
             persons.add(personBuilder.build())
-            messagingStyle.addMessage(
+
+            val message = NotificationCompat.MessagingStyle.Message(
                 NotificationCompanion.toMessage(n),
                 n.receivedAt,
                 persons.last()
             )
+            imageUris[index]?.let { uri ->
+                message.setData("image/jpeg", uri)
+            }
+            messagingStyle.addMessage(message)
         }
+
+        NotificationImageHelper.pruneOldImages(context)
 
         // Get the conversation context type for the new notification
         val title = NotificationCompanion.toTitle(notification)
