@@ -6,7 +6,7 @@ use std::collections::{BinaryHeap, HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
 use tracing::{error, info};
-use types::{Milliseconds, TimestampMillis, UserId};
+use types::{FcmToken, Milliseconds, TimestampMillis, UserId};
 use web_push::{HyperWebPushClient, WebPushClient, WebPushError};
 
 const ONE_MINUTE: Milliseconds = 60 * 1000;
@@ -15,6 +15,7 @@ pub struct Pusher {
     receiver: Receiver<NotificationToPush>,
     web_push_client: HyperWebPushClient,
     subscriptions_to_remove_sender: Sender<(UserId, String)>,
+    fcm_tokens_to_remove_sender: Sender<(UserId, FcmToken)>,
     invalid_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
     throttled_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
     fcm_service: Arc<FcmService>,
@@ -24,6 +25,7 @@ impl Pusher {
     pub fn new(
         receiver: Receiver<NotificationToPush>,
         subscriptions_to_remove_sender: Sender<(UserId, String)>,
+        fcm_tokens_to_remove_sender: Sender<(UserId, FcmToken)>,
         invalid_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
         throttled_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
         fcm_service: Arc<FcmService>,
@@ -32,6 +34,7 @@ impl Pusher {
             receiver,
             web_push_client: HyperWebPushClient::new(),
             subscriptions_to_remove_sender,
+            fcm_tokens_to_remove_sender,
             invalid_subscriptions,
             throttled_subscriptions,
             fcm_service,
@@ -59,9 +62,6 @@ impl Pusher {
                 NotificationToPush::FcmNotificationToPush(fcm_notification_to_push) => {
                     let metadata = fcm_notification_to_push.metadata.clone();
                     let success = self.process_fcm_notification_to_push(fcm_notification_to_push).await;
-
-                    // TODO check result here, and raise event to remove token
-                    // if send notification failed!
 
                     (metadata, None, success)
                 }
@@ -129,7 +129,12 @@ impl Pusher {
     }
 
     async fn process_fcm_notification_to_push(&self, fcm_notification_to_push: Box<FcmNotification>) -> bool {
-        let fcm_data = fcm_notification_to_push.fcm_data;
+        let FcmNotification {
+            fcm_data,
+            fcm_token,
+            metadata,
+        } = *fcm_notification_to_push;
+
         let mut message = FcmMessage::new();
 
         // Should affect only android devices...
@@ -137,16 +142,33 @@ impl Pusher {
         android_config.set_priority(Some(fcm_service::Priority::High));
 
         message.set_data(fcm_data.map(|d| d.as_data()));
-        message.set_target(Target::Token(fcm_notification_to_push.fcm_token.0));
+        message.set_target(Target::Token(fcm_token.0.clone()));
         message.set_android(Some(android_config));
 
         let res = self.fcm_service.send_notification(message).await;
-        if res.is_err() {
+        if let Err(error) = &res {
             error!("Failed to push FCM notification: {:#?}", res);
+
+            // FCM returns `UNREGISTERED` (HTTP 404) when the token no longer maps to an
+            // app instance - the app was uninstalled, its data cleared, or the token was
+            // rotated. Such tokens never become valid again, so queue them for removal to
+            // stop wasting pushes on them (and to keep the store from filling with junk).
+            if is_unregistered_token_error(&error.to_string())
+                && let Err(send_error) = self.fcm_tokens_to_remove_sender.try_send((metadata.recipient, fcm_token))
+            {
+                error!(?send_error, "Failed to queue FCM token for removal");
+            }
         }
 
         res.is_ok()
     }
+}
+
+// FCM surfaces a stale-token failure with the stable error code `UNREGISTERED`. The
+// fcm-service crate currently returns errors as a stringified JSON body, so we match on
+// that code. If that crate ever exposes a typed error, switch to matching the variant.
+fn is_unregistered_token_error(error_message: &str) -> bool {
+    error_message.contains("UNREGISTERED")
 }
 
 // Prunes the oldest 1000 subscriptions
