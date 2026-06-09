@@ -5188,6 +5188,7 @@ export const DirectMessageNotification = Type.Object({
     ty: Type.String(),
     tx: Type.Optional(Type.String()),
     i: Type.Optional(Type.String()),
+    fn: Type.Optional(Type.String()),
     a: Type.Optional(Type.BigInt()),
     ct: Type.Optional(CryptoTransferDetails),
 });
@@ -5698,6 +5699,7 @@ export const ChannelMessageNotification = Type.Object({
     ty: Type.String(),
     tx: Type.Optional(Type.String()),
     i: Type.Optional(Type.String()),
+    fn: Type.Optional(Type.String()),
     ca: Type.Optional(Type.BigInt()),
     cha: Type.Optional(Type.BigInt()),
     ct: Type.Optional(CryptoTransferDetails),
@@ -5841,6 +5843,7 @@ export const GroupMessageNotification = Type.Object({
     ty: Type.String(),
     tx: Type.Optional(Type.String()),
     i: Type.Optional(Type.String()),
+    fn: Type.Optional(Type.String()),
     a: Type.Optional(Type.BigInt()),
     ct: Type.Optional(CryptoTransferDetails),
 });
