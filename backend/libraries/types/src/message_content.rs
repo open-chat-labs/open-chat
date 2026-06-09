@@ -243,6 +243,30 @@ impl MessageContent {
         }
     }
 
+    pub fn notification_file_name(&self) -> Option<String> {
+        match self {
+            MessageContent::File(f) => Some(f.name.clone()),
+            MessageContent::Image(_)
+            | MessageContent::Video(_)
+            | MessageContent::Text(_)
+            | MessageContent::Audio(_)
+            | MessageContent::Poll(_)
+            | MessageContent::Crypto(_)
+            | MessageContent::Deleted(_)
+            | MessageContent::Giphy(_)
+            | MessageContent::GovernanceProposal(_)
+            | MessageContent::Prize(_)
+            | MessageContent::PrizeWinner(_)
+            | MessageContent::MessageReminderCreated(_)
+            | MessageContent::MessageReminder(_)
+            | MessageContent::ReportedMessage(_)
+            | MessageContent::P2PSwap(_)
+            | MessageContent::VideoCall(_)
+            | MessageContent::Encrypted(_)
+            | MessageContent::Custom(_) => None,
+        }
+    }
+
     pub fn content_type(&self) -> MessageContentType {
         self.into()
     }

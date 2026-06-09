@@ -289,6 +289,8 @@ pub struct DirectMessageNotification {
     pub message_text: Option<String>,
     #[serde(rename = "i")]
     pub image_url: Option<String>,
+    #[serde(rename = "fn", default)]
+    pub file_name: Option<String>,
     #[serde(rename = "a")]
     pub sender_avatar_id: Option<u128>,
     #[serde(rename = "ct")]
@@ -320,6 +322,8 @@ pub struct GroupMessageNotification {
     pub message_text: Option<String>,
     #[serde(rename = "i")]
     pub image_url: Option<String>,
+    #[serde(rename = "fn", default)]
+    pub file_name: Option<String>,
     #[serde(rename = "a")]
     pub group_avatar_id: Option<u128>,
     #[serde(rename = "ct")]
@@ -355,6 +359,8 @@ pub struct ChannelMessageNotification {
     pub message_text: Option<String>,
     #[serde(rename = "i")]
     pub image_url: Option<String>,
+    #[serde(rename = "fn", default)]
+    pub file_name: Option<String>,
     #[serde(rename = "ca")]
     pub community_avatar_id: Option<u128>,
     #[serde(rename = "cha")]

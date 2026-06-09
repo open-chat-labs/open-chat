@@ -104,13 +104,16 @@ object NotificationsManager {
         // Resolve attachment images up front, in parallel, so the per-message loop
         // below stays synchronous. Each message can carry at most one inline image
         // (MessagingStyle limitation); messages without one render as plain text.
-        // Any failed/absent download maps to null and falls back to text.
+        // Only still images are rendered inline — videos send a thumbnail URL too, but
+        // we present those (and gifs/files/etc.) as a typed text label instead, so we
+        // skip the download for them. Any failed/absent download maps to null and falls
+        // back to text.
         val imageUris = coroutineScope {
             notifications.map { n ->
                 async {
-                    n.image?.takeIf { it.isNotBlank() }?.let {
-                        NotificationImageHelper.loadAttachmentUri(context, it)
-                    }
+                    n.image
+                        ?.takeIf { it.isNotBlank() && NotificationCompanion.isRenderableImage(n) }
+                        ?.let { NotificationImageHelper.loadAttachmentUri(context, it) }
                 }
             }.awaitAll()
         }

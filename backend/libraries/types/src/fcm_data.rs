@@ -35,6 +35,14 @@ pub struct FcmData {
     pub body: Option<String>,
     #[serde(rename = "mt", default)]
     pub body_type: BodyType,
+    // The message content type (e.g. "Image", "Video", "Giphy", "File", "Audio"). Lets
+    // the client decide how to present the attachment (render an image inline vs. show a
+    // typed "shared a …" label). None for notifications without message content.
+    #[serde(rename = "ct", default)]
+    pub message_type: Option<String>,
+    // The attached file's name, for File messages. Shown by the client in the notification.
+    #[serde(rename = "fn", default)]
+    pub file_name: Option<String>,
     #[serde(rename = "i")]
     pub image: Option<String>,
     #[serde(rename = "s")]
@@ -58,6 +66,8 @@ impl FcmData {
             thread_root_message_index: None,
             body: None,
             body_type: BodyType::Message,
+            message_type: None,
+            file_name: None,
             image: None,
             sender_id: None,
             sender_name: None,
@@ -157,6 +167,17 @@ impl FcmData {
         Self { image, ..self }
     }
 
+    pub fn set_message_type(self, message_type: String) -> Self {
+        Self {
+            message_type: Some(message_type),
+            ..self
+        }
+    }
+
+    pub fn set_file_name(self, file_name: Option<String>) -> Self {
+        Self { file_name, ..self }
+    }
+
     pub fn set_sender_id(self, sender_id: UserId) -> Self {
         Self {
             sender_id: Some(sender_id),
@@ -216,6 +237,8 @@ impl FcmData {
 
         add_to_map("threadIndex", self.thread_root_message_index.map(|t| t.to_string()));
         add_to_map("image", self.image);
+        add_to_map("messageType", self.message_type);
+        add_to_map("fileName", self.file_name);
         add_to_map("body", self.body);
         add_to_map(
             "bodyType",
@@ -243,6 +266,8 @@ impl From<UserNotificationPayload> for FcmData {
                 .set_sender_avatar_id(n.sender_avatar_id)
                 .set_thread(n.thread_root_message_index)
                 .set_message(n.message_text)
+                .set_message_type(n.message_type)
+                .set_file_name(n.file_name)
                 .set_image(n.image_url),
             UserNotificationPayload::DirectReactionAdded(n) => FcmData::for_direct_chat(n.them)
                 .set_sender_name(n.display_name, n.username)
@@ -264,6 +289,8 @@ impl From<UserNotificationPayload> for FcmData {
                 .set_sender_avatar_id(n.group_avatar_id)
                 .set_thread(n.thread_root_message_index)
                 .set_message(n.message_text)
+                .set_message_type(n.message_type)
+                .set_file_name(n.file_name)
                 .set_image(n.image_url),
             UserNotificationPayload::GroupReactionAdded(n) => FcmData::for_group(n.chat_id)
                 .set_group_name(n.group_name)
@@ -290,6 +317,8 @@ impl From<UserNotificationPayload> for FcmData {
                 .set_sender_name(n.sender_display_name, n.sender_name)
                 .set_thread(n.thread_root_message_index)
                 .set_message(n.message_text)
+                .set_message_type(n.message_type)
+                .set_file_name(n.file_name)
                 .set_image(n.image_url),
             UserNotificationPayload::AddedToChannel(n) => FcmData::for_channel(n.community_id, n.channel_id)
                 .set_community_name(n.community_name)
