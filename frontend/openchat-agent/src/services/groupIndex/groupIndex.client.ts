@@ -12,6 +12,7 @@ import type {
     GroupSearchResponse,
     RemoveHotGroupExclusionResponse,
     SetCommunityModerationFlagsResponse,
+    SetGroupModerationFlagsResponse,
     SetGroupUpgradeConcurrencyResponse,
     UnfreezeCommunityResponse,
     UnfreezeGroupResponse,
@@ -41,6 +42,8 @@ import {
     GroupIndexSetCommunityModerationFlagsResponse,
     GroupIndexSetCommunityUpgradeConcurrencyArgs,
     GroupIndexSetCommunityUpgradeConcurrencyResponse,
+    GroupIndexSetGroupModerationFlagsArgs,
+    GroupIndexSetGroupModerationFlagsResponse,
     GroupIndexSetGroupUpgradeConcurrencyArgs,
     GroupIndexSetGroupUpgradeConcurrencyResponse,
     GroupIndexUnfreezeCommunityArgs,
@@ -61,6 +64,7 @@ import {
     recommendedGroupsResponse,
     removeHotGroupExclusionResponse,
     setCommunityModerationFlagsResponse,
+    setGroupModerationFlagsResponse,
     setUpgradeConcurrencyResponse,
     unfreezeCommunityResponse,
     unfreezeGroupResponse,
@@ -229,6 +233,22 @@ export class GroupIndexClient extends SingleCanisterMsgpackAgent {
             setCommunityModerationFlagsResponse,
             GroupIndexSetCommunityModerationFlagsArgs,
             GroupIndexSetCommunityModerationFlagsResponse,
+        );
+    }
+
+    setGroupModerationFlags(
+        groupId: string,
+        flags: number,
+    ): Promise<SetGroupModerationFlagsResponse> {
+        return this.update(
+            "set_group_moderation_flags",
+            {
+                group_id: principalStringToBytes(groupId),
+                flags,
+            },
+            setGroupModerationFlagsResponse,
+            GroupIndexSetGroupModerationFlagsArgs,
+            GroupIndexSetGroupModerationFlagsResponse,
         );
     }
 

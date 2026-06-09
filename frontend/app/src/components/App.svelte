@@ -178,6 +178,7 @@
             addMessageFilter,
             removeMessageFilter,
             reportedMessages,
+            setGroupModerationFlags,
         };
 
         //@ts-ignore
@@ -323,6 +324,16 @@
                 console.log("Community moderation flags updated", communityId);
             } else {
                 console.log("Failed to set community moderation flags", communityId);
+            }
+        });
+    }
+
+    function setGroupModerationFlags(groupId: string, flags: number): void {
+        client.setGroupModerationFlags(groupId, flags).then((success) => {
+            if (success) {
+                console.log("Group moderation flags updated", groupId);
+            } else {
+                console.log("Failed to set group moderation flags", groupId);
             }
         });
     }

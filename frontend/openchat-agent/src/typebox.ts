@@ -1615,6 +1615,20 @@ export const GroupIndexMarkLocalIndexFullArgs = Type.Object({
     full: Type.Boolean(),
 });
 
+export type GroupIndexSetGroupModerationFlagsResponse = Static<
+    typeof GroupIndexSetGroupModerationFlagsResponse
+>;
+export const GroupIndexSetGroupModerationFlagsResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("Unchanged"),
+    Type.Literal("GroupNotFound"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("InvalidFlags"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
 export type GroupIndexRemoveHotGroupExclusionResponse = Static<
     typeof GroupIndexRemoveHotGroupExclusionResponse
 >;
@@ -5924,6 +5938,14 @@ export const GroupIndexFreezeCommunityArgs = Type.Object({
 export type GroupIndexDeleteFrozenGroupArgs = Static<typeof GroupIndexDeleteFrozenGroupArgs>;
 export const GroupIndexDeleteFrozenGroupArgs = Type.Object({
     chat_id: ChatId,
+});
+
+export type GroupIndexSetGroupModerationFlagsArgs = Static<
+    typeof GroupIndexSetGroupModerationFlagsArgs
+>;
+export const GroupIndexSetGroupModerationFlagsArgs = Type.Object({
+    group_id: ChatId,
+    flags: Type.Number(),
 });
 
 export type GroupIndexRemoveHotGroupExclusionArgs = Static<
