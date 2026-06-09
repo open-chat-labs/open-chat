@@ -94,6 +94,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         message_type: result.message_event.event.content.content_type().to_string(),
         message_text: None,
         image_url: None,
+        file_name: None,
         crypto_transfer: None,
         community_name: state.data.name.value.clone(),
         channel_name: channel.chat.name.value.clone(),

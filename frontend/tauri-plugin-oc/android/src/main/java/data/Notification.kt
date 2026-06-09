@@ -68,6 +68,11 @@ data class Notification(
     val body: String,
     val bodyType: BodyType,
     val image: String? = null,
+    // Message content type as sent by the backend ("Image", "Video", "Giphy", "File",
+    // "Audio", "Text", ...). Drives how an attachment is presented in the notification.
+    val messageType: String? = null,
+    // Attached file's name, for "File" messages.
+    val fileName: String? = null,
 
     // Metadata for the notification.
     val isReleased: Boolean = false,
@@ -75,6 +80,23 @@ data class Notification(
 )
 
 object NotificationCompanion {
+    // Message content types, matching the backend's MessageContentType Display strings.
+    const val TYPE_IMAGE = "Image"
+    const val TYPE_VIDEO = "Video"
+    const val TYPE_GIPHY = "Giphy"
+    const val TYPE_AUDIO = "Audio"
+    const val TYPE_FILE = "File"
+
+    // True when the attachment is a still image we render inline in the notification.
+    // Videos, gifs, files, etc. are presented as a typed text label instead (see
+    // attachmentLabel), so they should not be downloaded/rendered as a thumbnail.
+    //
+    // Pre-v2 rows predate messageType, so a null messageType with a populated image URL
+    // is treated as a renderable image to preserve the original behavior.
+    fun isRenderableImage(notification: Notification): Boolean =
+        notification.messageType == TYPE_IMAGE ||
+            (notification.messageType == null && !notification.image.isNullOrBlank())
+
     // TODO i18n
     // TODO would be cool if we could have a part of the parent message when dealing with threads
     fun toTitle(notification: Notification): String {
@@ -96,7 +118,28 @@ object NotificationCompanion {
             BodyType.REACTION -> "${notification.senderName} reacted with ${notification.body}"
             BodyType.TIP -> "${notification.senderName} sent a tip of ${notification.body}"
             BodyType.INVITE -> "${notification.senderName} invited you to ${notification.body}"
-            else -> notification.body
+            else -> attachmentLabel(notification)
+        }
+    }
+
+    // Builds the text shown for a message, accounting for non-text attachments.
+    //
+    // Images are rendered inline (see NotificationsManager), so we show the caption if any
+    // and otherwise a "📷 Photo" placeholder. Videos, gifs, audio and files are NOT rendered,
+    // so we tag them with an emoji + a "shared a …" label (or the caption / file name when
+    // available) to make the content type obvious at a glance.
+    // TODO i18n
+    private fun attachmentLabel(notification: Notification): String {
+        val caption = notification.body.takeIf { it.isNotBlank() }
+        return when (notification.messageType) {
+            TYPE_IMAGE -> caption ?: "📷 Photo"
+            TYPE_VIDEO -> "🎥 " + (caption ?: "Shared a video")
+            TYPE_GIPHY -> "🎞️ " + (caption ?: "Shared a GIF")
+            TYPE_AUDIO -> "🎙️ " + (caption ?: "Shared audio")
+            TYPE_FILE -> "📎 " + (notification.fileName?.takeIf { it.isNotBlank() } ?: caption ?: "Shared a file")
+            // Pre-v2 rows have no messageType; an image-only row would otherwise render as
+            // empty text, so fall back to the image placeholder when an image URL is present.
+            else -> caption ?: if (!notification.image.isNullOrBlank()) "📷 Photo" else notification.body
         }
     }
 
@@ -121,6 +164,8 @@ object NotificationCompanion {
             .put("body", notification.body)
             .put("bodyType", notification.bodyType.name)
             .put("image", notification.image)
+            .put("messageType", notification.messageType)
+            .put("fileName", notification.fileName)
             .put("receivedAt", notification.receivedAt)
     }
 }

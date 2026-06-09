@@ -204,6 +204,7 @@ fn process_send_message_result(
             message_type: content.content_type().to_string(),
             message_text: content.notification_text(&mentioned, &[]),
             image_url: content.notification_image_url(),
+            file_name: content.notification_file_name(),
             group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
             crypto_transfer: content.notification_crypto_transfer_details(&mentioned),
         });

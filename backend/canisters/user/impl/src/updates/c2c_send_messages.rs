@@ -214,6 +214,7 @@ pub(crate) fn handle_message_impl(
             message_type,
             message_text,
             image_url,
+            file_name: content.notification_file_name(),
             sender_avatar_id: args.sender_avatar_id,
             crypto_transfer: content.notification_crypto_transfer_details(&[]),
         });

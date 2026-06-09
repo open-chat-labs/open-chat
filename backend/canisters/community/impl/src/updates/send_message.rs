@@ -264,6 +264,7 @@ fn process_send_message_result(
             message_type: content.content_type().to_string(),
             message_text,
             image_url: content.notification_image_url(),
+            file_name: content.notification_file_name(),
             community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
             channel_avatar_id,
             crypto_transfer: content.notification_crypto_transfer_details(&users_mentioned.mentioned_directly),
