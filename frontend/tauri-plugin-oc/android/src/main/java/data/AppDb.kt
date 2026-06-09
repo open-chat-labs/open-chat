@@ -27,6 +27,8 @@ abstract class AppDb: RoomDatabase() {
             override fun migrate(connection: SQLiteConnection) {
                 connection.execSQL("ALTER TABLE notifications ADD COLUMN messageType TEXT")
                 connection.execSQL("ALTER TABLE notifications ADD COLUMN fileName TEXT")
+                // Backfill messageType for pre-v2 rows to preserve thumbnail rendering.
+                connection.execSQL("UPDATE notifications SET messageType = 'Image' WHERE image IS NOT NULL AND TRIM(image) <> ''")
             }
         }
 
