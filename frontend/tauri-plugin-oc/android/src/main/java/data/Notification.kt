@@ -90,7 +90,12 @@ object NotificationCompanion {
     // True when the attachment is a still image we render inline in the notification.
     // Videos, gifs, files, etc. are presented as a typed text label instead (see
     // attachmentLabel), so they should not be downloaded/rendered as a thumbnail.
-    fun isRenderableImage(notification: Notification): Boolean = notification.messageType == TYPE_IMAGE
+    //
+    // Pre-v2 rows predate messageType, so a null messageType with a populated image URL
+    // is treated as a renderable image to preserve the original behavior.
+    fun isRenderableImage(notification: Notification): Boolean =
+        notification.messageType == TYPE_IMAGE ||
+            (notification.messageType == null && !notification.image.isNullOrBlank())
 
     // TODO i18n
     // TODO would be cool if we could have a part of the parent message when dealing with threads
@@ -132,7 +137,9 @@ object NotificationCompanion {
             TYPE_GIPHY -> "🎞️ " + (caption ?: "Shared a GIF")
             TYPE_AUDIO -> "🎙️ " + (caption ?: "Shared audio")
             TYPE_FILE -> "📎 " + (notification.fileName?.takeIf { it.isNotBlank() } ?: caption ?: "Shared a file")
-            else -> notification.body
+            // Pre-v2 rows have no messageType; an image-only row would otherwise render as
+            // empty text, so fall back to the image placeholder when an image URL is present.
+            else -> caption ?: if (!notification.image.isNullOrBlank()) "📷 Photo" else notification.body
         }
     }
 
