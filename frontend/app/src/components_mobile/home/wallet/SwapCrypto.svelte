@@ -198,6 +198,7 @@
             case "taco":
                 return "TACO";
         }
+        return dex;
     }
 
     function loadSwaps(ledger: string) {
