@@ -9,6 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add `delete_history` endpoint + fix event iterator ([#8855](https://github.com/open-chat-labs/open-chat/pull/8855))
+- Add `og_previews` field to messages for handling OpenGraph previews ([#9002](https://github.com/open-chat-labs/open-chat/pull/9002))
+
+### Changed
+
+- Allow specifying which inner composite gate to check ([#8987](https://github.com/open-chat-labs/open-chat/pull/8987))
 
 ### Fixed
 

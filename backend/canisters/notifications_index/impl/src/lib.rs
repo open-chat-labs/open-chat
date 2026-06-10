@@ -97,8 +97,8 @@ impl RuntimeState {
         })
     }
 
-    // TODO remove tokens when push to firebase fails
-    #[allow(dead_code)]
+    // Called when a push to Firebase fails because the token is no longer valid
+    // (FCM `UNREGISTERED`), so we stop pushing to dead tokens.
     pub fn remove_fcm_token(&mut self, user_id: UserId, fcm_token: FcmToken) -> Result<(), String> {
         self.data.fcm_token_store.remove(&user_id, &fcm_token).map(|_| {
             self.push_event_to_local_indexes(NotificationsIndexEvent::FcmTokenRemoved(user_id, fcm_token), self.env.now());

@@ -81,7 +81,7 @@
     };
 </script>
 
-<Container supplementalClass={"chip"} {padding} {onClick} width={fill ? "fill" : width ?? "hug"}>
+<Container supplementalClass={"chip"} {padding} {onClick} width={fill ? "fill" : (width ?? "hug")}>
     <Container
         {height}
         gap={"sm"}
@@ -92,7 +92,7 @@
         borderColour={borderColours[mode]}
         borderRadius={isRounded ? "circle" : "md"}
         borderWidth={borderWidth[mode]}
-        padding={["xs", onRemove ? "md" : "lg", "xs", icon ? "md" : "lg"]}>
+        padding={["xs", onRemove ? "xs" : "sm", "xs", icon ? "xs" : "sm"]}>
         {#if icon}
             <span class="icon">{@render icon(iconColours[mode])}</span>
         {/if}

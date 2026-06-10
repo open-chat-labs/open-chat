@@ -172,8 +172,8 @@ import {
     Empty as TEmpty,
     UnitResult,
 } from "../../typebox";
-import { type ChatsDb } from "../../utils/chatsDb";
 import { mergeCommunityDetails, mergeGroupChatDetails } from "../../utils/chat";
+import { type ChatsDb } from "../../utils/chatsDb";
 import {
     apiOptionUpdateV2,
     identity,
@@ -190,6 +190,7 @@ import {
     apiGroupPermissions,
     apiMaybeAccessGateConfig,
     apiMessageContent,
+    apiOgPreview,
     apiUser as apiUserV2,
     apiVideoCallPresence,
     changeRoleResult,
@@ -478,6 +479,7 @@ export class CommunityClient
                         message_id: message.messageId,
                         block_level_markdown: blockLevelMarkdown,
                         new_achievement: newAchievement,
+                        og_previews: message.ogPreviews.map(apiOgPreview),
                     },
                     unitResult,
                     CommunityEditMessageArgs,
@@ -592,10 +594,7 @@ export class CommunityClient
             chatId.communityId,
             "messages_by_message_index",
             args,
-            (resp) =>
-                mapResult(resp, (value) =>
-                    getMessagesSuccess(value, chatId, this.chatsDb),
-                ),
+            (resp) => mapResult(resp, (value) => getMessagesSuccess(value, chatId, this.chatsDb)),
             CommunityMessagesByMessageIndexArgs,
             CommunityMessagesByMessageIndexResponse,
         );
@@ -954,6 +953,7 @@ export class CommunityClient
                 message_filter_failed: messageFilterFailed,
                 block_level_markdown: newEvent.event.blockLevelMarkdown,
                 new_achievement: newAchievement,
+                og_previews: newEvent.event.ogPreviews.map(apiOgPreview),
             };
             return this.update(
                 chatId.communityId,

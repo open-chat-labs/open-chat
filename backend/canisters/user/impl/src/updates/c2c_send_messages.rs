@@ -7,8 +7,8 @@ use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use types::{
     BotCaller, BotMessageContext, CanisterId, Chat, ContentValidationError, DirectChatUserNotificationPayload,
-    DirectMessageNotification, EventWrapper, Message, MessageContent, MessageId, MessageIndex, SenderContext, TimestampMillis,
-    User, UserId, UserType,
+    DirectMessageNotification, EventWrapper, Message, MessageContent, MessageId, MessageIndex, OgPreview, SenderContext,
+    TimestampMillis, User, UserId, UserType,
 };
 use user_canister::{C2CReplyContext, MessageActivity, MessageActivityEvent};
 
@@ -78,6 +78,7 @@ async fn c2c_handle_bot_messages_impl(
                     mentioned: Vec::new(),
                     mute_notification: false,
                     block_level_markdown: message.block_level_markdown.unwrap_or_default(),
+                    og_previews: message.og_previews.unwrap_or_default(),
                     now,
                 },
                 None,
@@ -105,6 +106,7 @@ pub(crate) struct HandleMessageArgs {
     pub mute_notification: bool,
     pub mentioned: Vec<User>,
     pub block_level_markdown: bool,
+    pub og_previews: Vec<OgPreview>,
     pub now: TimestampMillis,
 }
 
@@ -176,6 +178,7 @@ pub(crate) fn handle_message_impl(
         forwarded: args.forwarding,
         sender_is_bot: args.sender_user_type.is_bot(),
         block_level_markdown: args.block_level_markdown,
+        og_previews: args.og_previews,
         now: args.now,
         sender_context: bot_caller.map(|bot| SenderContext::Bot(BotMessageContext::from(&bot, finalised))),
     };
@@ -211,6 +214,7 @@ pub(crate) fn handle_message_impl(
             message_type,
             message_text,
             image_url,
+            file_name: content.notification_file_name(),
             sender_avatar_id: args.sender_avatar_id,
             crypto_transfer: content.notification_crypto_transfer_details(&[]),
         });

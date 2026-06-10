@@ -18,7 +18,8 @@ use std::ops::Not;
 use types::{
     BlobReference, BotCaller, BotPermissions, CanisterId, Chat, ChatId, CompletedCryptoTransaction, CryptoTransaction,
     DirectChatUserNotificationPayload, DirectMessageNotification, EventIndex, EventWrapper, Message, MessageContent,
-    MessageContentInitial, MessageId, MessageIndex, OCResult, P2PSwapLocation, ReplyContext, TimestampMillis, UserId, UserType,
+    MessageContentInitial, MessageId, MessageIndex, OCResult, OgPreview, P2PSwapLocation, ReplyContext, TimestampMillis,
+    UserId, UserType,
 };
 use user_canister::send_message_v2::{Response::*, *};
 use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent, c2c_bot_send_message};
@@ -150,6 +151,7 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
             args.message_filter_failed,
             recipient_type,
             completed_transfer,
+            args.og_previews,
             state,
         )
     })
@@ -222,6 +224,7 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
                 message_id: args.message_id,
                 content,
                 block_level_markdown: Some(args.block_level_markdown),
+                og_previews: args.og_previews,
                 finalise_bot_message: finalised,
                 now,
             };
@@ -249,6 +252,7 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
                     message_type,
                     message_text,
                     image_url,
+                    file_name: message_content.notification_file_name(),
                     sender_avatar_id: None,
                     crypto_transfer: message_content.notification_crypto_transfer_details(&[]),
                 });
@@ -293,6 +297,7 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
                 forwarded: false,
                 sender_is_bot: false,
                 block_level_markdown: args.block_level_markdown,
+                og_previews: Vec::new(),
                 now,
                 sender_context: None,
             },
@@ -320,6 +325,7 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
             mentioned: Vec::new(),
             mute_notification: !finalised,
             block_level_markdown: args.block_level_markdown,
+            og_previews: args.og_previews,
             now,
         },
         user_message.not().then_some(bot_caller),
@@ -417,6 +423,7 @@ fn send_message_impl(
     message_filter_failed: Option<u64>,
     recipient_type: RecipientType,
     completed_transfer: Option<CompletedCryptoTransaction>,
+    og_previews: Vec<OgPreview>,
     state: &mut RuntimeState,
 ) -> Response {
     let now = state.env.now();
@@ -438,6 +445,7 @@ fn send_message_impl(
         forwarded: forwarding,
         sender_is_bot: false,
         block_level_markdown,
+        og_previews: og_previews.clone(),
         now,
         sender_context: None,
     };
@@ -477,6 +485,7 @@ fn send_message_impl(
             forwarding,
             block_level_markdown,
             message_filter_failed,
+            og_previews,
         };
 
         let sender_name = state.data.username.value.clone();
@@ -561,6 +570,7 @@ async fn send_to_bot_canister(
                             forwarded: false,
                             sender_is_bot: false,
                             block_level_markdown: args.block_level_markdown,
+                            og_previews: message.og_previews.unwrap_or_default(),
                             now,
                             sender_context: None,
                         };

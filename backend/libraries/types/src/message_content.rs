@@ -243,6 +243,30 @@ impl MessageContent {
         }
     }
 
+    pub fn notification_file_name(&self) -> Option<String> {
+        match self {
+            MessageContent::File(f) => Some(f.name.clone()),
+            MessageContent::Image(_)
+            | MessageContent::Video(_)
+            | MessageContent::Text(_)
+            | MessageContent::Audio(_)
+            | MessageContent::Poll(_)
+            | MessageContent::Crypto(_)
+            | MessageContent::Deleted(_)
+            | MessageContent::Giphy(_)
+            | MessageContent::GovernanceProposal(_)
+            | MessageContent::Prize(_)
+            | MessageContent::PrizeWinner(_)
+            | MessageContent::MessageReminderCreated(_)
+            | MessageContent::MessageReminder(_)
+            | MessageContent::ReportedMessage(_)
+            | MessageContent::P2PSwap(_)
+            | MessageContent::VideoCall(_)
+            | MessageContent::Encrypted(_)
+            | MessageContent::Custom(_) => None,
+        }
+    }
+
     pub fn content_type(&self) -> MessageContentType {
         self.into()
     }
@@ -775,4 +799,21 @@ impl Debug for ThumbnailData {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ThumbnailData").field("byte_length", &self.0.len()).finish()
     }
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct OgPreviewImage {
+    pub url: String,
+    pub width: u32,
+    pub height: u32,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct OgPreview {
+    pub url: String,
+    pub title: String,
+    pub description: String,
+    pub image: Option<OgPreviewImage>,
 }

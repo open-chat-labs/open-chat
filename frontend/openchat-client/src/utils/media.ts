@@ -116,11 +116,15 @@ export async function stripMetaDataAndResize(
     bitmap: ImageBitmap,
 ): Promise<MediaExtract> {
     // Directly create bitmap from the File (works on web + Tauri, no tainting)
+    // skipDataUrl: the caller (handleImageFile) only reads .data from the
+    // result — the data URL would be a full second JPEG encode of the same
+    // 1500x1500 canvas, used by no one.
     const result = await changeDimensions(
         bitmap,
         file.type,
         dimensions(bitmap.width, bitmap.height),
         MAX_DIMENSIONS,
+        true,
     );
 
     // Free memory as soon as we're done with the bitmap
@@ -133,6 +137,7 @@ export async function changeDimensions(
     mimeType: string,
     originalDimensions: Dimensions,
     newDimensions: Dimensions = THUMBNAIL_DIMS,
+    skipDataUrl: boolean = false,
 ): Promise<MediaExtract> {
     const { width, height } = scaleToFit(originalDimensions, newDimensions);
     const canvas = document.createElement("canvas");
@@ -144,25 +149,40 @@ export async function changeDimensions(
 
     const resultMimeType = mimeType === "image/jpeg" ? "image/jpeg" : "image/png";
 
-    const blob = await new Promise<Blob | null>((resolve) => {
-        canvas.toBlob(resolve, resultMimeType, DEFAULT_JPEG_QUALITY);
-    });
-
-    if (!blob) {
-        throw new Error("Failed to create blob from canvas");
-    }
-
-    const arrayBuffer = await blob.arrayBuffer();
+    // We deliberately avoid canvas.toBlob: on Samsung's release WebView its
+    // async callback pipeline takes ~4s per call regardless of canvas size,
+    // while synchronous canvas.toDataURL on the same canvas returns in
+    // milliseconds. We encode once via toDataURL and recover the raw bytes
+    // by base64-decoding the data: URL with atob — fetch(dataUrl) would be
+    // simpler but Tauri's default CSP blocks data: URLs in connect-src.
+    const url = canvas.toDataURL(resultMimeType, DEFAULT_JPEG_QUALITY);
+    const arrayBuffer = dataUrlToArrayBuffer(url);
 
     return {
         dimensions: originalDimensions,
-        url: canvas.toDataURL(resultMimeType, DEFAULT_JPEG_QUALITY),
+        // skipDataUrl avoids retaining the (potentially MB-sized) base64
+        // string on the resize path, where the caller only reads .data.
+        url: skipDataUrl ? "" : url,
         data: arrayBuffer,
     };
 }
 
+function dataUrlToArrayBuffer(dataUrl: string): ArrayBuffer {
+    const commaIdx = dataUrl.indexOf(",");
+    if (commaIdx < 0) throw new Error("Malformed data URL");
+    const binaryString = atob(dataUrl.slice(commaIdx + 1));
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
+
 type MediaExtract = {
     dimensions: Dimensions;
+    /** Data URL of the encoded canvas. Empty string when the caller passed
+     *  skipDataUrl=true on changeDimensions — that opt-out path doesn't
+     *  read it and skipping the retention saves the base64 string memory. */
     url: string;
     data: ArrayBuffer;
 };
@@ -277,7 +297,6 @@ async function handleImageFile(
     maxSizes: MaxMediaSizes,
     mediaType: MediaType,
 ): Promise<AttachmentContent> {
-    const isGif = mediaType === "gif";
     const isSvg = mediaType === "svg";
 
     let thumbnailData: string; // data URL for the thumbnail
@@ -305,13 +324,22 @@ async function handleImageFile(
         thumbWidth = thumbnail.dimensions.width;
         thumbHeight = thumbnail.dimensions.height;
 
-        // Reuse the same bitmap for resizing
-        originalData =
-            !isGif || file.size > maxSizes.image
-                ? (await stripMetaDataAndResize(file, bitmap)).data
-                : await file.arrayBuffer();
+        // Only re-encode when the image truly needs it. Re-encoding an
+        // already-small image just to strip EXIF would force every share
+        // through canvas, which is a few hundred ms even on the fast path.
+        // Gate on file size (the actual upload ceiling) with a high
+        // pixel-dimension safety net for pathological "tiny file, enormous
+        // bitmap" cases that would blow up receiver memory on decode.
+        const needsResize =
+            file.size > maxSizes.image || bitmap.width > 5000 || bitmap.height > 5000;
 
-        bitmap.close();
+        if (needsResize) {
+            // stripMetaDataAndResize() takes ownership and closes the bitmap.
+            originalData = (await stripMetaDataAndResize(file, bitmap)).data;
+        } else {
+            originalData = await file.arrayBuffer();
+            bitmap.close();
+        }
     }
 
     const blobUrl = dataToBlobUrl(originalData, file.type);
@@ -398,46 +426,38 @@ export async function messageContentFromFile(
     const dataSizeInBytes = file.size;
     const mediaType = mimeToMediaType(file.type);
     const maxSizes = isDiamond ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
-    const f: File = file instanceof LazyFile ? await file.load() : file;
 
     switch (mediaType) {
         case "image":
         case "gif":
-        case "svg":
+        case "svg": {
+            // Force the bytes into the JS heap up-front. A real File (system
+            // picker / drag-drop) is backed lazily by the underlying file on
+            // disk; re-wrapping it around an ArrayBuffer pays the read once,
+            // eagerly, so the later createImageBitmap/canvas draw doesn't
+            // stall for seconds realising pixels. The LazyFile path already
+            // materialises inside load(), so it needs no extra read.
+            const f =
+                file instanceof LazyFile
+                    ? await file.load()
+                    : new File([await file.arrayBuffer()], file.name, { type: file.type });
             return await handleImageFile(f, maxSizes, mediaType);
+        }
 
         case "video":
             if (dataSizeInBytes > maxSizes.video) throw "maxVideoSize";
-            return await handleVideoFile(f);
+            return await handleVideoFile(file instanceof LazyFile ? await file.load() : file);
 
         case "audio":
             if (dataSizeInBytes > maxSizes.audio) throw "maxAudioSize";
-            return await handleAudioFiles(f);
+            return await handleAudioFiles(file instanceof LazyFile ? await file.load() : file);
 
         // File is default!
         default:
             if (dataSizeInBytes > maxSizes.file) throw "maxFileSize";
-            return await handleRegularFiles(f);
+            return await handleRegularFiles(file instanceof LazyFile ? await file.load() : file);
     }
 }
-
-/** twitter link */
-export const twitterLinkRegex = (): RegExp =>
-    /https?:\/\/(twitter|x)\.com\/[^/]+\/status(es)?\/(\d+)[?^ ]*/i;
-
-/** Youtube link handling - various formats
- * https://youtu.be/SWgxgpGZerc
- * https://www.youtube.com/watch?v=SWgxgpGZerc
- * https://youtube.com/shorts/u1I0Z8ePtKM?feature=share
- * https://www.youtube.com/shorts/u1I0Z8ePtKM
- */
-export const youtubeRegex = (): RegExp =>
-    /https:\/\/(?:www.youtube.com\/watch\?v=([^/\s]*)|youtu.be\/([^/\s]*)|(?:www\.)?youtube.com\/shorts\/([^/\s]*))/i;
-
-export const instagramRegex = (): RegExp =>
-    /(?:https?:\/\/)?(?:www\.|m\.)?(?:instagram\.com|instagr\.am)\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/;
-
-export const spotifyRegex = (): RegExp => /\/(album|artist|show|episode|track|playlist)\/(\w+)/i;
 
 // https://oc.app/community/yf5kc-uaaaa-aaaar-a7qfq-cai/channel/2656124989/1863
 // or https://oc.app/community/yf5kc-uaaaa-aaaar-a7qfq-cai/channel/2656124989/1863/2
@@ -447,45 +467,6 @@ export const communityMessageRegex = (): RegExp =>
 // https://oc.app/group/s5ihe-dqaaa-aaaac-a3elq-cai/172
 // or https://oc.app/group/s5ihe-dqaaa-aaaac-a3elq-cai/172/3
 export const groupMessageRegex = (): RegExp => /\/group\/([a-z0-9_-]+)\/(\d+)(?:\/(\d+))?/i;
-
-export function isYoutubeLink(text: string): boolean {
-    return matchesLink(text, text.match(youtubeRegex()));
-}
-
-export function containsYoutubeLink(text: string): boolean {
-    return containsLink(text, text.match(youtubeRegex()));
-}
-
-/** DSocial link handling - not currently used */
-export const dsocialRegex = (): RegExp =>
-    /https:\/\/(?:dsocial.app|dwqte-viaaa-aaaai-qaufq-cai.ic0.app)\/([^\s/]*)(?:[^ ]*)/i;
-
-export function isDsocialLink(text: string): boolean {
-    return matchesLink(text, text.match(dsocialRegex()));
-}
-
-export function containsDsocialLink(text: string): boolean {
-    return containsLink(text, text.match(dsocialRegex()));
-}
-
-/** indicates that the message is a video link and nothing else */
-export function isSocialVideoLink(text: string): boolean {
-    return isYoutubeLink(text);
-}
-
-/** indicates that the message contains a video link but also has other content */
-export function containsSocialVideoLink(text: string): boolean {
-    return containsYoutubeLink(text);
-    // return containsDsocialLink(text) || containsYoutubeLink(text);
-}
-
-function containsLink(text: string, match: RegExpMatchArray | null): boolean {
-    return match ? match[0] !== text : false;
-}
-
-function matchesLink(text: string, match: RegExpMatchArray | null): boolean {
-    return match ? match[0] === text : false;
-}
 
 async function createSvgThumbnail(
     svgFile: File,

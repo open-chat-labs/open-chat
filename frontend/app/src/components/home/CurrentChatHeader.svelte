@@ -17,7 +17,7 @@
         type OpenChat,
         type TypersByKey,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
@@ -147,13 +147,13 @@
 
     function navigateToCommunity() {
         if ($selectedCommunitySummaryStore !== undefined) {
-            page(`/community/${$selectedCommunitySummaryStore.id.communityId}`);
+            navigate(`/community/${$selectedCommunitySummaryStore.id.communityId}`);
         }
     }
 
     function navigateToChannel() {
         if ($selectedCommunitySummaryStore !== undefined) {
-            page(routeForChatIdentifier("community", selectedChatSummary.id));
+            navigate(routeForChatIdentifier("community", selectedChatSummary.id));
         }
     }
 

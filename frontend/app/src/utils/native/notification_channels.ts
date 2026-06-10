@@ -1,7 +1,8 @@
-import { addPluginListener, PluginListener } from "@tauri-apps/api/core";
+import { addPluginListener, invoke, PluginListener } from "@tauri-apps/api/core";
 import { isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notification";
-import { pageNavigate } from "openchat-client";
-import { showNotification } from "tauri-plugin-oc-api";
+import { openUrl, showNotification } from "tauri-plugin-oc-api";
+import { navigate } from "@utils/navigation";
+import { isLandingPagePath } from "@utils/urls";
 
 const TAURI_PLUGIN_NAME = "oc";
 const PUSH_NOTIFICATION_EVENT = "push-notification";
@@ -123,19 +124,19 @@ export async function expectNotificationTap(): Promise<PluginListener> {
             switch (notification.type) {
                 case "DM": {
                     if (notification.senderId) {
-                        pageNavigate(`/user/${notification.senderId}`);
+                        navigate(`/user/${notification.senderId}`);
                     }
                     break;
                 }
                 case "GROUP": {
                     if (notification.groupId) {
-                        pageNavigate(`/group/${notification.groupId}${threadIndexPath}`);
+                        navigate(`/group/${notification.groupId}${threadIndexPath}`);
                     }
                     break;
                 }
                 case "CHANNEL": {
                     if (notification.communityId && notification.channelId) {
-                        pageNavigate(
+                        navigate(
                             `/community/${notification.communityId}/channel/${notification.channelId}${threadIndexPath}`,
                         );
                     }
@@ -220,4 +221,62 @@ export async function expectWindowInsetChange(
     handler: (data: WindowInsetChange) => void,
 ): Promise<PluginListener> {
     return addPluginListener(TAURI_PLUGIN_NAME, WINDOW_INSET_CHANGE_EVENT, handler);
+}
+
+const DEEP_LINK_EVENT = "deep-link";
+
+/**
+ * Call once on native app startup (inside isNativeApp() guard).
+ *
+ * The Tauri deep-link plugin cannot be used directly because tao 0.35.2
+ * crashes on Android when a https:// VIEW intent arrives (null getType()
+ * causes a JNI NullPtr panic). Instead, MainActivity intercepts the intent
+ * before handing it to tao and fires a "deep-link" event via OCPluginCompanion,
+ * which we listen for here.
+ */
+// Holds a deep link URL received during cold start. Set early in the app lifecycle
+// (before chats load); consumed by Router.svelte's auto-selection effect so it
+// navigates to the deep link instead of the default chat.
+let pendingColdStartUrl: string | null = null;
+
+export function consumePendingDeepLink(): string | null {
+    const url = pendingColdStartUrl;
+    pendingColdStartUrl = null;
+    return url;
+}
+
+export async function expectDeepLinks(): Promise<PluginListener> {
+    const listener = await addPluginListener(TAURI_PLUGIN_NAME, DEEP_LINK_EVENT, (payload: { url: string }) => {
+        console.log("Deep link: received warm-start event", payload.url);
+        try {
+            const { pathname, search } = new URL(payload.url);
+            // Landing / marketing pages (blog, whitepaper, etc.) are not real
+            // in-app destinations. The OS delivers these oc.app links to us as
+            // deep links because oc.app is a verified associated domain - open
+            // them in an external browser tab instead of navigating in-app.
+            if (isLandingPagePath(pathname)) {
+                openUrl({ url: payload.url }).catch((e) =>
+                    console.error("Deep link: failed to open external URL", e),
+                );
+                return;
+            }
+            navigate(pathname + search, "notification");
+        } catch {
+            console.error("Deep link: failed to parse URL", payload.url);
+        }
+    });
+
+    // Pull any URL stored during cold start (before WebView was ready).
+    // Store it for Router.svelte to consume instead of auto-selecting the default chat.
+    try {
+        const pending = await invoke<{ url?: string }>("plugin:oc|get_pending_deep_link");
+        if (pending?.url) {
+            console.log("Deep link: cold-start pending URL stored", pending.url);
+            pendingColdStartUrl = pending.url;
+        }
+    } catch (e) {
+        console.error("Deep link: get_pending_deep_link invoke failed", e);
+    }
+
+    return listener;
 }

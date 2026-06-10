@@ -13,7 +13,7 @@
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import { rtlStore } from "../../../stores/rtl";
     import Avatar from "../../Avatar.svelte";
@@ -71,7 +71,7 @@
             if (modal) {
                 client.popRightPanelHistory();
             }
-            page(
+            navigate(
                 routeForMessage(
                     $chatListScopeStore.kind,
                     { chatId: $selectedChatIdStore },
@@ -114,7 +114,6 @@
                 {/if}
 
                 <ChatMessageContent
-                    showPreviews={false}
                     readonly
                     pinned
                     {senderId}
@@ -128,7 +127,8 @@
                     {me}
                     {intersecting}
                     content={msg.content}
-                    blockLevelMarkdown={msg.blockLevelMarkdown} />
+                    blockLevelMarkdown={msg.blockLevelMarkdown}
+                    ogPreviews={msg.ogPreviews} />
             </div>
         {/snippet}
     </IntersectionObserver>

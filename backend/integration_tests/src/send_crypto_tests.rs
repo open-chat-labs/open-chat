@@ -83,6 +83,7 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool, icrc2: bool)
             block_level_markdown: false,
             message_filter_failed: None,
             pin: None,
+            og_previews: Vec::new(),
         },
     );
 
@@ -195,6 +196,7 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool, icrc2: boo
             rules_accepted: None,
             message_filter_failed: None,
             pin: None,
+            og_previews: Vec::new(),
         },
     );
 

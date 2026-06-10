@@ -50,6 +50,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             message_type: message_event.event.content.content_type().to_string(),
             message_text: None,
             image_url: None,
+            file_name: None,
             sender_avatar_id: args.initiator_avatar_id,
             crypto_transfer: None,
         });
@@ -102,6 +103,7 @@ pub fn handle_start_video_call(
         forwarded: false,
         sender_is_bot: true,
         block_level_markdown: false,
+        og_previews: Vec::new(),
         now,
         sender_context: None,
     };

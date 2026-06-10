@@ -40,6 +40,7 @@ fn handle_webhook_impl(args: Args, state: &mut RuntimeState) -> OCResult<Success
         channel_id: args.channel_id,
         community_rules_accepted: None,
         channel_rules_accepted: None,
+        og_previews: Vec::new(),
     };
 
     send_message_impl(send_message_args, Some(Caller::Webhook(args.id)), true, state)

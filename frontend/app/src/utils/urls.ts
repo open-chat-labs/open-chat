@@ -1,6 +1,7 @@
 // https://stackoverflow.com/questions/10687099/how-to-test-if-a-url-string-is-absolute-or-relative
 
-import { routeStore, type RouteParams, type RouteType } from "openchat-client";
+import { OpenChat, routeStore, type RouteParams, type RouteType } from "openchat-client";
+import { openUrl } from "tauri-plugin-oc-api";
 
 const regex = new RegExp("^(?:[a-z]+:)?//", "i");
 
@@ -124,4 +125,117 @@ export function scrollToSection(section: string): number | undefined {
     }, 200); // this 200 is the duration of the collapsible card transition :puke:
 
     return Number(one);
+}
+
+// oc.app paths that are public marketing / landing pages rather than in-app
+// content. The markdown renderer rewrites oc.app links to relative urls (see
+// utils/markdown.ts) so that links to chats/groups/users deep-link into the
+// app. In the native app these landing-page links should instead open in an
+// external browser tab. Keep in sync with the landing routes registered in
+// components/Router.svelte.
+const landingPagePaths = new Set([
+    "home",
+    "features",
+    "roadmap",
+    "blog",
+    "whitepaper",
+    "guidelines",
+    "terms",
+    "faq",
+    "diamond",
+    "architecture",
+]);
+
+export function isLandingPagePath(pathname: string): boolean {
+    const first = pathname.split("/").filter((s) => s.length > 0)[0];
+    return first !== undefined && landingPagePaths.has(first.toLowerCase());
+}
+
+const SUPPORTED_EXTERNAL_PROTOCOLS = new Set(["http:", "https:", "mailto:", "tel:"]);
+
+export function isSupportedExternalUrl(url: URL): boolean {
+    return SUPPORTED_EXTERNAL_PROTOCOLS.has(url.protocol);
+}
+
+export async function openExternalUrl(client: OpenChat, url: string): Promise<void> {
+    const parsed = new URL(url);
+    if (!isSupportedExternalUrl(parsed)) {
+        throw new Error(`Unsupported external URL: ${parsed.protocol}`);
+    }
+
+    const href = parsed.toString();
+
+    if (client.isNativeApp()) {
+        await openUrl({ url: href });
+        return;
+    }
+
+    if (parsed.protocol === "mailto:" || parsed.protocol === "tel:") {
+        window.location.href = href;
+        return;
+    }
+
+    window.open(href, "_blank", "noopener,noreferrer");
+}
+
+export function handleLinkClick(
+    client: OpenChat,
+    onInternal: (url: string) => void,
+): (e: MouseEvent) => void {
+    return (e: MouseEvent) => {
+        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        if (e.defaultPrevented) return;
+
+        const target =
+            e.target instanceof Element
+                ? e.target
+                : e.target instanceof Node
+                  ? e.target.parentElement
+                  : null;
+        const anchor = target?.closest("a");
+        if (!anchor || !anchor.href) return;
+        if (anchor.getAttribute("role") === "button") return;
+
+        // Don't navigate when clicking links inside a contenteditable editor
+        if (anchor.closest("[contenteditable]")) {
+            e.preventDefault();
+            return;
+        }
+
+        let url: URL;
+        try {
+            url = new URL(anchor.href);
+        } catch {
+            return;
+        }
+
+        if (url.origin !== window.location.origin) {
+            if (anchor.hasAttribute("download") || !isSupportedExternalUrl(url)) return;
+
+            e.preventDefault();
+            void openExternalUrl(client, url.toString()).catch((error) => {
+                console.error("Failed to open external link", error);
+            });
+            return;
+        }
+
+        if (anchor.target || anchor.hasAttribute("download")) return;
+
+        // oc.app links to marketing / landing pages were rewritten to relative
+        // urls by the markdown renderer. In the native app open these in an
+        // external browser tab rather than navigating inside the app.
+        if (client.isNativeApp() && isLandingPagePath(url.pathname)) {
+            e.preventDefault();
+            void openExternalUrl(
+                client,
+                openChatFriendlyUrl + url.pathname + url.search + url.hash,
+            ).catch((error) => {
+                console.error("Failed to open external link", error);
+            });
+            return;
+        }
+
+        e.preventDefault();
+        onInternal(url.pathname + url.search + url.hash);
+    };
 }

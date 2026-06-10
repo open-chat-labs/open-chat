@@ -11,22 +11,13 @@ import type {
     MultiUserChat,
     OpenChat,
 } from "openchat-client";
-import {
-    anonUserStore,
-    chatListScopeStore,
-    chatSummariesStore,
-    pageReplace,
-    type PaymentGateApprovals,
-    publish,
-    ROLE_NONE,
-    routeForScope,
-    selectedChatSummaryStore,
-    selectedCommunitySummaryStore,
-} from "openchat-client";
+import { anonUserStore, chatListScopeStore, chatSummariesStore, type PaymentGateApprovals, publish, ROLE_NONE, routeForScope, selectedChatSummaryStore, selectedCommunitySummaryStore } from "openchat-client";
+import { navigate } from "@utils/navigation";
 
 class ApprovalsAndCredentials {
     #credentials = $state<string[]>([]);
     #paymentApprovals = $state<PaymentGateApprovals>(new Map());
+    #compositeGateIndex = $state<number | undefined>(undefined);
 
     get credentials() {
         return this.#credentials;
@@ -36,9 +27,18 @@ class ApprovalsAndCredentials {
         return this.#paymentApprovals;
     }
 
+    get compositeGateIndex() {
+        return this.#compositeGateIndex;
+    }
+
+    setCompositeGateIndex(index: number) {
+        this.#compositeGateIndex = index;
+    }
+
     reset() {
         this.#credentials = [];
         this.#paymentApprovals = new Map();
+        this.#compositeGateIndex = undefined;
     }
 
     addCredential(cred: string) {
@@ -114,14 +114,14 @@ class GroupPreview {
 
     cancelPreview(client: OpenChat) {
         if (this.#previewingCommunity && this.#community) {
-            pageReplace(`/community/${this.#community.id.communityId}`);
+            navigate(`/community/${this.#community.id.communityId}`);
         } else {
             if (this.#chat) {
                 if (!this.#chat.public) {
                     client.declineInvitation(this.#chat.id);
                 }
                 client.removePreviewedChat(this.#chat.id);
-                pageReplace(routeForScope(chatListScopeStore.value));
+                navigate(routeForScope(chatListScopeStore.value));
             }
         }
     }
@@ -157,6 +157,7 @@ class GroupPreview {
         this.#joining = this.#chat;
         const credentials = gateCheck?.credentials ?? [];
         const paymentApprovals = gateCheck?.paymentApprovals ?? new Map();
+        const compositeGateIndex = gateCheck?.compositeGateIndex;
 
         if (gateCheck === undefined) {
             const gates = client.accessGatesForChat(group, true);
@@ -177,7 +178,7 @@ class GroupPreview {
         }
 
         return client
-            .joinGroup(group, credentials, paymentApprovals)
+            .joinGroup(group, credentials, paymentApprovals, compositeGateIndex)
             .then((resp) => {
                 if (resp.kind === "blocked") {
                     toastStore.showFailureToast(i18nKey("youreBlocked"));
@@ -250,6 +251,7 @@ class CommunityPreview {
         if (this.#previewing && this.#community) {
             const credentials = gateCheck?.credentials ?? [];
             const paymentApprovals = gateCheck?.paymentApprovals ?? new Map();
+            const compositeGateIndex = gateCheck?.compositeGateIndex;
             const gateConfigWithLevel: EnhancedAccessGate = {
                 ...this.#community.gateConfig.gate,
                 level: "community",
@@ -281,7 +283,7 @@ class CommunityPreview {
             this.#joining = true;
 
             return client
-                .joinCommunity(this.#community, credentials, paymentApprovals)
+                .joinCommunity(this.#community, credentials, paymentApprovals, compositeGateIndex)
                 .then((resp) => {
                     if (resp.kind === "gate_check_failed") {
                         this.#gateCheckFailed = gateConfigWithLevel;

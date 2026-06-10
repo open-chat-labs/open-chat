@@ -146,6 +146,7 @@ fn e2e_command_bot_test() {
             content: BotMessageContent::Text(TextContent { text: text.clone() }),
             block_level_markdown: false,
             finalised: false,
+            og_previews: None,
         },
     );
 
@@ -183,6 +184,7 @@ fn e2e_command_bot_test() {
             content: BotMessageContent::Text(TextContent { text: text.clone() }),
             block_level_markdown: false,
             finalised: true,
+            og_previews: None,
         },
     );
 
@@ -335,6 +337,7 @@ fn e2e_autonomous_bot_test() {
             content: BotMessageContent::Text(TextContent { text: text.clone() }),
             block_level_markdown: false,
             finalised: true,
+            og_previews: None,
         },
     );
 
@@ -444,6 +447,7 @@ fn create_channel_autonomously() {
             }),
             block_level_markdown: false,
             finalised: true,
+            og_previews: None,
         },
     );
 
@@ -755,6 +759,7 @@ fn send_direct_message() {
             }),
             block_level_markdown: false,
             finalised: true,
+            og_previews: None,
         },
     );
 
@@ -883,6 +888,7 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
             content: BotMessageContent::Text(TextContent { text: text.clone() }),
             block_level_markdown: false,
             finalised: false,
+            og_previews: None,
         },
     );
 
@@ -904,6 +910,7 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
             content: BotMessageContent::Text(TextContent { text: text.clone() }),
             block_level_markdown: false,
             finalised: false,
+            og_previews: None,
         },
     );
 
@@ -925,6 +932,7 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
             content: BotMessageContent::Text(TextContent { text: text.clone() }),
             block_level_markdown: false,
             finalised: true,
+            og_previews: None,
         },
     );
 
@@ -968,6 +976,7 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
             content: BotMessageContent::Text(TextContent { text: text.clone() }),
             block_level_markdown: false,
             finalised: true,
+            og_previews: None,
         },
     );
 

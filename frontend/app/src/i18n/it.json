@@ -678,6 +678,7 @@
     "dark": "buio",
     "days": "Giorni",
     "deleteChat": "Elimina chat",
+    "deleteDirectChatFailure": "Impossibile eliminare la chat",
     "deleteFailed": "Impossibile eliminare il messaggio",
     "deleteGroup": "Elimina {level}",
     "deleteGroupFailure": "Impossibile eliminare {level}",
@@ -1437,6 +1438,7 @@
         "claimFailed": "Ci dispiace che il tuo reclamo non abbia avuto successo! La prossima volta sarai più fortunato.",
         "claimIneligible": "Ci dispiace che tu non soddisfi i requisiti per richiedere questo premio.",
         "click": "Fai clic sul pulsante in basso per avere la possibilità di vincere un premio.",
+        "creatingPrizeMessageFailed": "Impossibile creare il messaggio del premio",
         "creatingYourPrizeMessage": "Ti preghiamo di attendere mentre creiamo il messaggio del tuo premio",
         "diamondMembership": "Iscrizione Diamond",
         "distribution": "Come dovrebbero essere distribuiti i premi?",
@@ -1493,15 +1495,18 @@
         "action": "azione",
         "additionalContent": "contenuto aggiuntivo",
         "adopt": "Adottare",
+        "adopted": "Adottato",
         "alreadyVoted": "Hai già votato: prova a ricaricare la pagina",
         "builtInAction": "Azioni incorporate",
         "collapse": "Comprimi messaggio",
+        "criticalProposal": "Questa è una proposta fondamentale",
         "cyclesDispenserAction": "Cicli Azioni Dispenser",
         "details": "Dettagli",
         "disableAll": "Disabilitare tutto",
         "enableAll": "Attiva tutto",
         "filter": "Filtra le proposte",
         "groupIndexAction": "Azioni indice di gruppo",
+        "link": "collegamento",
         "makeProposal": "Fai una proposta",
         "maker": {
             "achievementChatCost": "È richiesto un pagamento di {cost} {chat} token per fornire il CHIT richiesto. Qualsiasi CHAT non speso verrà rimborsato alla scadenza dell'obiettivo.",
@@ -1553,6 +1558,27 @@
         "noEligibleNeuronsMessage": "Nessun neurone idoneo o collegato trovato. Per votare proposte da OpenChat devi prima aggiungere il tuo ID utente OpenChat come tasto di scelta rapida a qualsiasi neurone con cui desideri votare.<br/><br/> Il tuo ID utente OpenChat è: {userId}.<br/><br/> Per ulteriori informazioni sul voto e sulla governance leggere <a target=\"_blank\" href=\"https://oc.app/blog/governance\">questo post del blog</a> .",
         "notificationsAction": "Notifiche Indice Azioni",
         "openchatInstallerAction": "Azioni di installazione di OpenChat",
+        "passing": {
+            "majority": {
+                "critical": {
+                    "fst": "Supermaggioranza: più di {pct} dei partecipanti al voto hanno votato sì entro la data di scadenza.",
+                    "snd": "Questa condizione si verifica quando, alla data di scadenza, il numero dei voti favorevoli è più del doppio di quello dei voti contrari."
+                },
+                "regular": {
+                    "fst": "Maggioranza: più di {pct} dei partecipanti al voto hanno votato sì entro la data di scadenza",
+                    "snd": "Questa condizione si verifica quando, alla data di scadenza, i voti favorevoli superano quelli contrari."
+                },
+                "thrd": "Ciò può verificarsi alla data di scadenza o se la barra del \"sì\" raggiunge la seconda icona (freccia verso il basso), nel qual caso la condizione non può più essere modificata e la proposta viene adottata anticipatamente."
+            },
+            "participation": {
+                "fst": "Partecipazione: almeno {pct} dei voti totali sono stati espressi a favore.",
+                "snd": "Questa condizione è soddisfatta quando la barra del sì raggiunge la prima icona a forma di freccia rivolta verso il basso."
+            },
+            "title": {
+                "critical": "Perché una proposta critica venga adottata, devono essere soddisfatte le due condizioni seguenti:",
+                "regular": "Perché una proposta venga adottata, devono essere soddisfatte le due seguenti condizioni:"
+            }
+        },
         "proposalNotAceptingVotes": "Questa proposta non accetta voti: prova a ricaricare la pagina",
         "proposalsBotAction": "Proposte Bot Azioni",
         "proposedBy": "proposto da",
@@ -1560,10 +1586,13 @@
         "readmore": "Leggi di più",
         "registryAction": "Azioni di registro",
         "reject": "Rifiutare",
+        "rejected": "Respinto",
         "storageIndexAction": "Azioni dell'indice di archiviazione",
+        "tapToExpand": "Tocca per espandere...",
         "topic": "argomento",
         "unknownActionCategory": "Altre azioni",
         "userIndexAction": "Azioni indice utenti",
+        "viewDetails": "Dettagli della proposta",
         "voteFailed": "Impossibile esprimere il voto. Riprova più tardi",
         "votingPeriodEnded": "Il periodo di votazione è terminato",
         "votingPeriodRemaining": "Periodo di votazione rimanente",

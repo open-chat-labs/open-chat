@@ -64,6 +64,7 @@ import type {
     MultiUserChatIdentifier,
     NumberArray32,
     OCError,
+    OgPreview,
     P2PSwapContent,
     P2PSwapContentInitial,
     P2PSwapStatus,
@@ -101,6 +102,7 @@ import type {
     UpdatedEvent,
     User,
     UserGroupSummary,
+    VersionedRules,
     VideoCallContent,
     VideoCallInProgress,
     VideoCallParticipant,
@@ -109,7 +111,6 @@ import type {
     VideoCallType,
     VideoContent,
     WebhookDetails,
-    VersionedRules,
 } from "openchat-shared";
 import {
     CommonResponses,
@@ -221,6 +222,7 @@ import type {
     MessagesResponse as TMessagesResponse,
     MultiUserChat as TMultiUserChat,
     OCError as TOCError,
+    OgPreview as TOgPreview,
     P2PSwapContent as TP2PSwapContent,
     P2PSwapContentInitial as TP2PSwapContentInitial,
     P2PSwapStatus as TP2PSwapStatus,
@@ -258,6 +260,7 @@ import type {
     VideoCall,
     VideoCallParticipants,
 } from "../../typebox";
+import type { ChatsDb } from "../../utils/chatsDb";
 import { toRecord2 } from "../../utils/list";
 import {
     bigintToBytes,
@@ -270,7 +273,6 @@ import {
     principalBytesToString,
     principalStringToBytes,
 } from "../../utils/mapping";
-import type { ChatsDb } from "../../utils/chatsDb";
 import type { ApiPrincipal } from "../index";
 import { ensureReplicaIsUpToDate } from "./replicaUpToDateChecker";
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -554,6 +556,8 @@ export function message(value: TMessage): Message {
         thread: mapOptional(value.thread_summary, threadSummary),
         blockLevelMarkdown: value.block_level_markdown ?? false,
         senderContext: mapOptional(value.sender_context, senderContext),
+        ogPreviews: (value.og_previews ?? []).map(ogPreview),
+        messagePreviews: [], // this will be rehydrated later
     };
 }
 
@@ -1228,6 +1232,18 @@ function textContent(value: TTextContent): TextContent {
     return {
         kind: "text_content",
         text: value.text,
+    };
+}
+
+function ogPreview(value: TOgPreview): OgPreview {
+    return {
+        kind: "opengraph",
+        url: value.url,
+        title: value.title,
+        description: value.description,
+        image: value.image
+            ? { url: value.image.url, width: value.image.width, height: value.image.height }
+            : undefined,
     };
 }
 
@@ -2063,6 +2079,17 @@ export function apiProposalVote(vote: boolean): number {
 function apiTextContent(domain: TextContent): TTextContent {
     return {
         text: domain.text,
+    };
+}
+
+export function apiOgPreview(domain: OgPreview): TOgPreview {
+    return {
+        url: domain.url,
+        title: domain.title,
+        description: domain.description,
+        image: domain.image
+            ? { url: domain.image.url, width: domain.image.width, height: domain.image.height }
+            : undefined,
     };
 }
 

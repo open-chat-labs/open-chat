@@ -678,6 +678,7 @@
     "dark": "Tối",
     "days": "Ngày",
     "deleteChat": "Xóa cuộc trò chuyện",
+    "deleteDirectChatFailure": "Không thể xóa cuộc trò chuyện",
     "deleteFailed": "Không thể xóa tin nhắn này",
     "deleteGroup": "Xóa {level}",
     "deleteGroupFailure": "Không thể xóa {level}",
@@ -1437,6 +1438,7 @@
         "claimFailed": "Rất tiếc, khiếu nại của bạn không thành công! Chúc may mắn lần sau.",
         "claimIneligible": "Rất tiếc, bạn không đáp ứng đủ yêu cầu để nhận giải thưởng này.",
         "click": "Nhấp vào nút bên dưới để có cơ hội giành giải thưởng.",
+        "creatingPrizeMessageFailed": "Không thể tạo tin nhắn trúng thưởng của bạn.",
         "creatingYourPrizeMessage": "Vui lòng đợi trong khi chúng tôi tạo tin nhắn giải thưởng của bạn",
         "diamondMembership": "Thành viên kim cương",
         "distribution": "Giải thưởng nên được phân phối như thế nào?",
@@ -1493,15 +1495,18 @@
         "action": "hoạt động",
         "additionalContent": "nội dung bổ sung",
         "adopt": "Nhận nuôi",
+        "adopted": "Được nhận nuôi",
         "alreadyVoted": "Bạn đã bình chọn - hãy thử tải lại trang",
         "builtInAction": "Hành động tích hợp",
         "collapse": "Thu gọn tin nhắn",
+        "criticalProposal": "Đây là một đề xuất quan trọng",
         "cyclesDispenserAction": "Hành động của bộ phân phối chu kỳ",
         "details": "Chi tiết",
         "disableAll": "Vô hiệu hóa tất cả",
         "enableAll": "Cho phép tất cả",
         "filter": "Lọc đề xuất",
         "groupIndexAction": "Hành động chỉ mục nhóm",
+        "link": "liên kết",
         "makeProposal": "Đưa ra đề xuất",
         "maker": {
             "achievementChatCost": "Cần phải thanh toán {cost} {chat} token để cung cấp CHIT theo yêu cầu. Bất kỳ CHAT nào chưa sử dụng sẽ được hoàn lại khi thành tích hết hạn.",
@@ -1553,6 +1558,27 @@
         "noEligibleNeuronsMessage": "Không tìm thấy tế bào thần kinh đủ điều kiện hoặc liên kết. Để bỏ phiếu cho các đề xuất từ bên trong OpenChat, trước tiên bạn phải thêm id người dùng OpenChat của mình làm phím nóng cho bất kỳ nơ-ron nào mà bạn muốn bỏ phiếu.<br/><br/> Id người dùng OpenChat của bạn là: {userId}.<br/><br/> Để biết thêm thông tin về bỏ phiếu và quản trị, hãy đọc <a target=\"_blank\" href=\"https://oc.app/blog/governance\">bài đăng trên blog này</a> .",
         "notificationsAction": "Thông báo Chỉ mục Hành động",
         "openchatInstallerAction": "Hành động cài đặt OpenChat",
+        "passing": {
+            "majority": {
+                "critical": {
+                    "fst": "Đa số tuyệt đối: hơn {pct} số người tham gia bỏ phiếu tán thành trước ngày hết hạn.",
+                    "snd": "Điều kiện này được đáp ứng khi số phiếu \"có\" nhiều hơn gấp đôi số phiếu \"không\" vào ngày hết hạn."
+                },
+                "regular": {
+                    "fst": "Đa số: hơn {pct} số người tham gia bỏ phiếu tán thành trước ngày hết hạn",
+                    "snd": "Điều kiện này được đáp ứng khi số phiếu \"có\" nhiều hơn số phiếu \"không\" vào ngày hết hạn."
+                },
+                "thrd": "Điều này có thể trở thành sự thật vào ngày hết hạn hoặc nếu thanh \"có\" đạt đến biểu tượng mũi tên xuống thứ hai, trong trường hợp đó điều kiện không thể thay đổi nữa và đề xuất được thông qua sớm."
+            },
+            "participation": {
+                "fst": "Sự tham gia: ít nhất {pct} trong tổng số phiếu bầu đã bỏ phiếu đồng ý.",
+                "snd": "Điều kiện này được đáp ứng khi thanh \"có\" đạt đến biểu tượng mũi tên xuống đầu tiên."
+            },
+            "title": {
+                "critical": "Để một đề xuất quan trọng được thông qua, cần phải đáp ứng hai điều kiện sau:",
+                "regular": "Để một đề xuất được thông qua, cần phải đáp ứng hai điều kiện sau:"
+            }
+        },
         "proposalNotAceptingVotes": "Đề xuất này không chấp nhận phiếu bầu - hãy thử tải lại trang",
         "proposalsBotAction": "Hành động bot đề xuất",
         "proposedBy": "đề nghị bởi",
@@ -1560,10 +1586,13 @@
         "readmore": "Đọc thêm",
         "registryAction": "Hành động đăng ký",
         "reject": "Từ chối",
+        "rejected": "Vật bị loại bỏ",
         "storageIndexAction": "Hành động chỉ mục lưu trữ",
+        "tapToExpand": "Chạm để mở rộng...",
         "topic": "chủ đề",
         "unknownActionCategory": "Hành động khác",
         "userIndexAction": "Hành động chỉ mục người dùng",
+        "viewDetails": "Chi tiết đề xuất",
         "voteFailed": "Không thể bỏ phiếu - vui lòng thử lại sau",
         "votingPeriodEnded": "Thời gian bỏ phiếu đã kết thúc",
         "votingPeriodRemaining": "Thời gian bỏ phiếu còn lại",

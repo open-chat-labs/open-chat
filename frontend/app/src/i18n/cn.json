@@ -678,6 +678,7 @@
     "dark": "深色模式",
     "days": "天",
     "deleteChat": "删除聊天记录",
+    "deleteDirectChatFailure": "无法删除聊天记录",
     "deleteFailed": "无法删除您的消息",
     "deleteGroup": "删除{level}",
     "deleteGroupFailure": "无法删除{level}",
@@ -1437,6 +1438,7 @@
         "claimFailed": "抱歉，您未领取成功！祝你下次好运。",
         "claimIneligible": "抱歉，您不符合领取此奖品的条件。",
         "click": "点击下方按钮即有机会赢取礼品。",
+        "creatingPrizeMessageFailed": "创建奖品信息失败",
         "creatingYourPrizeMessage": "我们正在创建您的奖品消息，请稍候",
         "diamondMembership": "钻石会员",
         "distribution": "奖品应该如何分配？",
@@ -1493,15 +1495,18 @@
         "action": "行动",
         "additionalContent": "附加内容",
         "adopt": "赞成",
+        "adopted": "已采纳",
         "alreadyVoted": "您已经投票 - 尝试重新加载页面",
         "builtInAction": "内置动作",
         "collapse": "收起消息",
+        "criticalProposal": "这是一项至关重要的提议。",
         "cyclesDispenserAction": "循环分配器操作",
         "details": "细节",
         "disableAll": "禁用所有",
         "enableAll": "全部启用",
         "filter": "过滤提案",
         "groupIndexAction": "集团指数行动",
+        "link": "关联",
         "makeProposal": "提案",
         "maker": {
             "achievementChatCost": "需要支付 {cost} {chat} 代币才能提供所请求的 CHIT。成就到期后，所有未使用的 CHAT 都将退还。",
@@ -1553,6 +1558,27 @@
         "noEligibleNeuronsMessage": "未找到合格或链接的神经元。为了在 OpenChat 内对提案进行投票，您必须首先将您的 OpenChat 用户 ID 作为热键添加到您想要投票的任何神经元。<br/><br/>您的 OpenChat 用户 ID 是：{userId}。<br/><br/>有关投票和治理的更多信息，请阅读<a target=\"_blank\" href=\"https://oc.app/blog/governance\">这篇博文</a>。",
         "notificationsAction": "通知索引操作",
         "openchatInstallerAction": "OpenChat 安装程序操作",
+        "passing": {
+            "majority": {
+                "critical": {
+                    "fst": "绝对多数：在截止日期前，超过 {pct} 个参与投票权的人投了赞成票。",
+                    "snd": "当截止日期前赞成票数是反对票数的两倍以上时，即满足此条件。"
+                },
+                "regular": {
+                    "fst": "多数：在截止日期前，超过{pct}个参与投票权的投票者投了赞成票",
+                    "snd": "当截止日期前赞成票多于反对票时，即满足此条件。"
+                },
+                "thrd": "到期日或“是”栏到达第二个向下箭头图标时，这种情况可能会发生，在这种情况下，条件无法再更改，提案将被提前通过。"
+            },
+            "participation": {
+                "fst": "参与度：至少有{pct}名投票者投了赞成票。",
+                "snd": "当“是”条到达第一个向下箭头图标时，此条件即满足。"
+            },
+            "title": {
+                "critical": "一项重要提案要获得通过，必须满足以下两个条件：",
+                "regular": "提案要获得通过，必须满足以下两个条件："
+            }
+        },
         "proposalNotAceptingVotes": "此提案不接受投票 - 尝试重新加载页面",
         "proposalsBotAction": "提案机器人操作",
         "proposedBy": "提议者",
@@ -1560,10 +1586,13 @@
         "readmore": "阅读更多",
         "registryAction": "注册表操作",
         "reject": "反对",
+        "rejected": "已拒绝",
         "storageIndexAction": "存储索引操作",
+        "tapToExpand": "点击展开...",
         "topic": "话题",
         "unknownActionCategory": "其他行为",
         "userIndexAction": "用户索引操作",
+        "viewDetails": "提案详情",
         "voteFailed": "投票失败 - 请稍后再试",
         "votingPeriodEnded": "投票期结束",
         "votingPeriodRemaining": "剩余投票期",

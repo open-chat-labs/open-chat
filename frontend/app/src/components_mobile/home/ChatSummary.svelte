@@ -39,7 +39,7 @@
         translationsStore,
         byContext as typersByContext,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import ArchiveIcon from "svelte-material-icons/Archive.svelte";
@@ -58,7 +58,9 @@
     import Swap from "svelte-material-icons/SwapHorizontal.svelte";
     import Video from "svelte-material-icons/VideoOutline.svelte";
     import Waveform from "svelte-material-icons/Waveform.svelte";
+    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
+    import { canDeleteDirectChat, publishDeleteDirectChat } from "../../utils/directChat";
     import { rtlStore } from "../../stores/rtl";
     import { now } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
@@ -321,7 +323,7 @@
             }
         });
         if (chatSummary.id === $selectedChatIdStore) {
-            page(routeForScope($chatListScopeStore));
+            navigate(routeForScope($chatListScopeStore));
         }
     }
 
@@ -349,6 +351,8 @@
             level: chatSummary.level,
         });
     }
+
+    let showDeleteDirectChat = $derived(canDeleteDirectChat(chatSummary));
 </script>
 
 {#snippet menuItems()}
@@ -445,6 +449,14 @@
                 <LocationExit {color} {size} />
             {/snippet}
             {interpolate($_, i18nKey("leaveGroup", undefined, chatSummary.level, true))}
+        </MenuItem>
+    {/if}
+    {#if showDeleteDirectChat}
+        <MenuItem danger onclick={() => publishDeleteDirectChat(chatSummary)}>
+            {#snippet icon(color, size)}
+                <DeleteOutline {color} {size} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("deleteChat")} />
         </MenuItem>
     {/if}
 {/snippet}

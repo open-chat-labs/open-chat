@@ -18,7 +18,6 @@ export const hideChitIcon = new LocalStorageBoolStore(configKeys.hideChitIcon, f
 export const disableChit = new LocalStorageBoolStore(configKeys.disableChit, false);
 export const enterSend = new LocalStorageBoolStore(configKeys.enterSend, !isTouchDevice);
 export const lowBandwidth = new LocalStorageBoolStore(configKeys.lowBandwidth, false);
-export const renderPreviews = new LocalStorageBoolStore(configKeys.renderPreviews, true);
 export const utcMode = new LocalStorageBoolStore(configKeys.utcMode, false);
 export const videoCameraOn = new LocalStorageBoolStore(configKeys.videoCameraOn, true);
 export const videoMicOn = new LocalStorageBoolStore(configKeys.videoMicOn, true);

@@ -1,11 +1,10 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
-    import { rtlStore } from "../../stores/rtl";
-    import { type Snippet } from "svelte";
     import { ColourVars, IconButton } from "component-lib";
     import type { TextContent as TextContentType } from "openchat-client";
-    import TextContent from "./TextContent.svelte";
+    import { type Snippet } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
+    import { rtlStore } from "../../stores/rtl";
+    import TextContent from "./TextContent.svelte";
 
     interface Props {
         replyView: Snippet<[Snippet?]>;
@@ -16,7 +15,6 @@
         reply?: boolean;
         me?: boolean;
         edited?: boolean;
-        fill?: boolean;
         blockLevelMarkdown?: boolean;
         showPreviews?: boolean;
         maxCaptionWidth?: number;
@@ -33,7 +31,6 @@
         draft = false,
         me = false,
         edited = false,
-        fill = false,
         blockLevelMarkdown = false,
         showPreviews = false,
         maxCaptionWidth,
@@ -52,9 +49,9 @@
     let mode = $derived<RendererMode>(reply || isPreview ? "reply" : draft ? "draft" : "render");
 
     let textContent = $derived<TextContentType | undefined>(
-        !!caption ? { kind: "text_content", text: caption ?? "" } : undefined,
+        caption ? { kind: "text_content", text: caption ?? "" } : undefined,
     );
-    let textContentArg = $derived(!!textContent?.text ? captionRenderer : undefined);
+    let textContentArg = $derived(textContent?.text ? captionRenderer : undefined);
 </script>
 
 {#snippet captionRenderer()}
@@ -63,7 +60,6 @@
             content={textContent}
             {me}
             {reply}
-            {fill}
             {blockLevelMarkdown}
             {edited}
             {showPreviews}

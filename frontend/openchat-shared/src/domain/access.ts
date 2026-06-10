@@ -221,4 +221,8 @@ If you break the rules you might be blocked and/or have your message(s) deleted.
     };
 }
 
-export type GateCheckSucceeded = { credentials: string[]; paymentApprovals: PaymentGateApprovals };
+export type GateCheckSucceeded = {
+    credentials: string[];
+    paymentApprovals: PaymentGateApprovals;
+    compositeGateIndex?: number;
+};

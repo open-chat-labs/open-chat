@@ -8,7 +8,7 @@
         type ChatListScope,
         type OpenChat,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";
@@ -21,7 +21,7 @@
     function cancelPreview() {
         if ($selectedCommunitySummaryStore) {
             client.removeCommunity($selectedCommunitySummaryStore.id);
-            page(routeForScope(client.getDefaultScope()));
+            navigate(routeForScope(client.getDefaultScope()));
         }
     }
 

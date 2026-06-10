@@ -128,6 +128,7 @@ import type {
     PublicGroupSummaryResponse,
     PublicProfile,
     Referral,
+    RehydratedMessagePreview,
     RegisterPollVoteResponse,
     RegisterProposalVoteResponse,
     RegisterUserResponse,
@@ -215,15 +216,14 @@ import {
     isError,
     isSuccessfulEventsResponse,
     mergeEventStreamResponses,
-    messageContextsEqual,
     messageContextToString,
+    messageContextsEqual,
     offline,
     textToCode,
     waitAll,
 } from "openchat-shared";
 import type { AgentConfig } from "../config";
 import { CachePrimer } from "../utils/cachePrimer";
-import { ChatsDb } from "../utils/chatsDb";
 import {
     buildBlobUrl,
     buildUserAvatarUrl,
@@ -232,6 +232,7 @@ import {
     mergeGroupChatUpdates,
     mergeGroupChats,
 } from "../utils/chat";
+import { ChatsDb } from "../utils/chatsDb";
 import {
     isSuccessfulCommunitySummaryResponse,
     mergeCommunities,
@@ -241,6 +242,7 @@ import { createHttpAgentSync } from "../utils/httpAgent";
 import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
 import { bytesToHexString, mapOptional } from "../utils/mapping";
 import { mean } from "../utils/maths";
+import { extractMessagePreviews } from "openchat-shared";
 import { AsyncMessageContextMap } from "../utils/messageContext";
 // import { isMainnet } from "../utils/network";
 import {
@@ -265,6 +267,7 @@ import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import { IcpLedgerIndexClient } from "./icpLedgerIndex/icpLedgerIndex.client";
 import { IcpSwapClient } from "./icpSwap/icpSwapClient";
 import { IcpCoinsClient } from "./icpcoins/icpCoinsClient";
+import { IdentityClient } from "./identity/identity.client";
 import { LedgerClient } from "./ledger/ledger.client";
 import { LedgerIndexClient } from "./ledgerIndex/ledgerIndex.client";
 import { LocalUserIndexClient } from "./localUserIndex/localUserIndex.client";
@@ -276,7 +279,6 @@ import { OneSecMinterClient } from "./oneSecMinter/oneSecMinter.client";
 import { OnlineClient } from "./online/online.client";
 import { ProposalsBotClient } from "./proposalsBot/proposalsBot.client";
 import { RegistryClient } from "./registry/registry.client";
-import { IdentityClient } from "./identity/identity.client";
 import { SignInWithEmailClient } from "./signInWithEmail/signInWithEmail.client";
 import { SignInWithEthereumClient } from "./signInWithEthereum/signInWithEthereum.client";
 import { SignInWithSolanaClient } from "./signInWithSolana/signInWithSolana.client";
@@ -876,6 +878,7 @@ export class OpenChatAgent extends EventTarget {
                 threadRootMessageIndex,
                 latestKnownUpdate,
             )
+            .aggregate(mergeEventStreamResponses, emptyEventsResponse())
             .mapAsync((resp) =>
                 this.rehydrateEventResponse(
                     chatId,
@@ -903,6 +906,7 @@ export class OpenChatAgent extends EventTarget {
                 threadRootMessageIndex,
                 latestKnownUpdate,
             )
+            .aggregate(mergeEventStreamResponses, emptyEventsResponse())
             .mapAsync((resp) =>
                 this.rehydrateEventResponse(
                     chatId,
@@ -921,6 +925,7 @@ export class OpenChatAgent extends EventTarget {
     ): Stream<EventsResponse<ChatEvent>> {
         return this._chatEventsReader
             .chatEventsByIndex(chatId, eventIndexes, threadRootMessageIndex, latestKnownUpdate)
+            .aggregate(mergeEventStreamResponses, emptyEventsResponse())
             .mapAsync((resp) =>
                 this.rehydrateEventResponse(
                     chatId,
@@ -1070,13 +1075,50 @@ export class OpenChatAgent extends EventTarget {
         return mapped;
     }
 
+    private findMissingMessagePreviewsByChat<T extends ChatEvent>(
+        events: EventWrapper<T>[],
+    ): AsyncMessageContextMap<number> {
+        return events.reduce<AsyncMessageContextMap<number>>((result, ev) => {
+            if (ev.event.kind === "message" && ev.event.content.kind === "text_content") {
+                for (const preview of extractMessagePreviews(ev.event.content.text)) {
+                    result.insert(
+                        { chatId: preview.chatId, threadRootMessageIndex: preview.threadRootMessageIndex },
+                        preview.messageIndex,
+                    );
+                }
+            }
+            return result;
+        }, new AsyncMessageContextMap());
+    }
+
+    private async resolveMissingMessagePreviews<T extends ChatEvent>(
+        events: EventWrapper<T>[],
+    ): Promise<AsyncMessageContextMap<EventWrapper<Message>>> {
+        const contextMap = this.findMissingMessagePreviewsByChat(events);
+
+        if (contextMap.length === 0) return Promise.resolve(new AsyncMessageContextMap());
+
+        const mapped = await contextMap.asyncMap((ctx, idxs) => {
+            const uniqueIdxs = [...new Set(idxs)];
+            return this._chatEventsReader
+                .messagesByMessageIndex(ctx.chatId, ctx.threadRootMessageIndex, uniqueIdxs, undefined)
+                .aggregate(mergeEventStreamResponses, emptyEventsResponse())
+                .toPromise()
+                .then((resp) => this.messagesFromEventsResponse(ctx, resp));
+        });
+
+        return mapped;
+    }
+
     private rehydrateEvent<T extends ChatEvent>(
         ev: EventWrapper<T>,
         defaultChatId: ChatIdentifier,
         missingReplies: AsyncMessageContextMap<EventWrapper<Message>>,
+        missingMessagePreviews: AsyncMessageContextMap<EventWrapper<Message>>,
         threadRootMessageIndex: number | undefined,
     ): EventWrapper<T> {
         if (ev.event.kind === "message") {
+            const messagePreviews: RehydratedMessagePreview[] = [];
             const originalContent = ev.event.content;
             const rehydratedContent = this.rehydrateMessageContent(originalContent);
 
@@ -1115,13 +1157,42 @@ export class OpenChatAgent extends EventTarget {
                 }
             }
 
-            if (originalContent !== rehydratedContent || rehydratedReplyContext !== undefined) {
+            if (ev.event.content.kind === "text_content") {
+                for (const preview of extractMessagePreviews(ev.event.content.text)) {
+                    const context = {
+                        chatId: preview.chatId,
+                        threadRootMessageIndex: preview.threadRootMessageIndex,
+                    };
+                    const messages = missingMessagePreviews.lookup(context);
+                    const msg = messages.find(
+                        (me) => me.event.messageIndex === preview.messageIndex,
+                    )?.event;
+                    if(msg) {
+                        messagePreviews.push({
+                            url: preview.url,
+                            chatId: preview.chatId,
+                            threadRootMessageIndex: preview.threadRootMessageIndex,
+                            message: {
+                                ...msg,
+                                content: structuredClone(this.rehydrateMessageContent(msg.content)),
+                            },
+                        });
+                    }
+                }
+            }
+
+            if (
+                originalContent !== rehydratedContent ||
+                rehydratedReplyContext !== undefined ||
+                messagePreviews.length > 0
+            ) {
                 return {
                     ...ev,
                     event: {
                         ...ev.event,
                         content: rehydratedContent,
                         repliesTo: rehydratedReplyContext ?? originalReplyContext,
+                        messagePreviews,
                     },
                 };
             }
@@ -1139,15 +1210,18 @@ export class OpenChatAgent extends EventTarget {
             return resp;
         }
 
-        const missing = await this.resolveMissingIndexes(
-            currentChatId,
-            resp.events,
-            threadRootMessageIndex,
-            latestKnownUpdate,
-        );
+        const [missing, missingPreviews] = await Promise.all([
+            this.resolveMissingIndexes(
+                currentChatId,
+                resp.events,
+                threadRootMessageIndex,
+                latestKnownUpdate,
+            ),
+            this.resolveMissingMessagePreviews(resp.events),
+        ]);
 
         resp.events = resp.events.map((e) =>
-            this.rehydrateEvent(e, currentChatId, missing, threadRootMessageIndex),
+            this.rehydrateEvent(e, currentChatId, missing, missingPreviews, threadRootMessageIndex),
         );
         return resp;
     }
@@ -1223,13 +1297,16 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventWrapper<Message>> {
-        const missing = await this.resolveMissingIndexes(
-            chatId,
-            [message],
-            threadRootMessageIndex,
-            latestKnownUpdate,
-        );
-        return this.rehydrateEvent(message, chatId, missing, threadRootMessageIndex);
+        const [missing, missingPreviews] = await Promise.all([
+            this.resolveMissingIndexes(
+                chatId,
+                [message],
+                threadRootMessageIndex,
+                latestKnownUpdate,
+            ),
+            this.resolveMissingMessagePreviews([message]),
+        ]);
+        return this.rehydrateEvent(message, chatId, missing, missingPreviews, threadRootMessageIndex);
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
@@ -2193,6 +2270,7 @@ export class OpenChatAgent extends EventTarget {
     async joinGroup(
         chatId: MultiUserChatIdentifier,
         credentialArgs: VerifiedCredentialArgs | undefined,
+        compositeGateIndex?: number,
     ): Promise<JoinGroupResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
@@ -2201,7 +2279,13 @@ export class OpenChatAgent extends EventTarget {
                 const localUserIndex = await this._groupClient.localUserIndex(chatId.groupId);
                 const groupInviteCode = this._groupClient.inviteCode(chatId.groupId);
                 return this._localUserIndexClient
-                    .joinGroup(localUserIndex, chatId.groupId, groupInviteCode, credentialArgs)
+                    .joinGroup(
+                        localUserIndex,
+                        chatId.groupId,
+                        groupInviteCode,
+                        credentialArgs,
+                        compositeGateIndex,
+                    )
                     .then((resp) => {
                         if (resp.kind === "success") {
                             return {
@@ -2225,6 +2309,7 @@ export class OpenChatAgent extends EventTarget {
                         communityInviteCode,
                         credentialArgs,
                         referredBy,
+                        compositeGateIndex,
                     )
                     .then((resp) => {
                         if (resp.kind === "success" || resp.kind === "success_joined_community") {
@@ -2252,6 +2337,7 @@ export class OpenChatAgent extends EventTarget {
     async joinCommunity(
         id: CommunityIdentifier,
         credentialArgs: VerifiedCredentialArgs | undefined,
+        compositeGateIndex?: number,
     ): Promise<JoinCommunityResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
@@ -2259,7 +2345,14 @@ export class OpenChatAgent extends EventTarget {
         const localUserIndex = await this._communityClient.localUserIndex(id.communityId);
         const referredBy = await this.getCommunityReferral(id.communityId);
         return this._localUserIndexClient
-            .joinCommunity(localUserIndex, id.communityId, inviteCode, credentialArgs, referredBy)
+            .joinCommunity(
+                localUserIndex,
+                id.communityId,
+                inviteCode,
+                credentialArgs,
+                referredBy,
+                compositeGateIndex,
+            )
             .then((resp) => {
                 if (resp.kind === "success") {
                     deleteCommunityReferral(id.communityId);
@@ -2976,6 +3069,7 @@ export class OpenChatAgent extends EventTarget {
                 r,
                 thread.chatId,
                 threadMissing,
+                new AsyncMessageContextMap(),
                 thread.rootMessage.event.messageIndex,
             ),
         );
@@ -2983,6 +3077,7 @@ export class OpenChatAgent extends EventTarget {
             thread.rootMessage,
             thread.chatId,
             rootMissing,
+            new AsyncMessageContextMap(),
             undefined,
         );
 

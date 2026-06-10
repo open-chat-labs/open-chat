@@ -80,7 +80,6 @@
     <TextContent
         content={textContent}
         {me}
-        {fill}
         {blockLevelMarkdown}
         {edited}
         maxWidth={videoWidth}

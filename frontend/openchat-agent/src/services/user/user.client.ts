@@ -206,6 +206,7 @@ import {
     mapResult,
     undeleteMessageSuccess,
     unitResult,
+    apiOgPreview,
 } from "../common/chatMappersV2";
 import { DataClient } from "../data/data.client";
 import {
@@ -541,6 +542,7 @@ export class UserClient
                     thread_root_message_index: threadRootMessageIndex,
                     message_id: message.messageId,
                     block_level_markdown: blockLevelMarkdown,
+                    og_previews: message.ogPreviews.map(apiOgPreview),
                 };
                 return this.update(
                     "edit_message_v2",
@@ -582,6 +584,7 @@ export class UserClient
                 message_filter_failed: messageFilterFailed,
                 pin,
                 block_level_markdown: newEvent.event.blockLevelMarkdown,
+                og_previews: newEvent.event.ogPreviews.map(apiOgPreview),
             };
             return this.update(
                 "send_message_v2",
@@ -591,15 +594,13 @@ export class UserClient
                 UserSendMessageResponse,
                 onRequestAccepted,
             )
-                .then((resp) => {
-                    const retVal: [SendMessageResponse, Message] = [resp, newEvent.event];
+                .then((resp) =>
                     this.chatsDb.setCachedMessageFromSendResponse(
                         chatId,
                         newEvent,
                         threadRootMessageIndex,
-                    )(retVal);
-                    return retVal;
-                })
+                    )([resp, newEvent.event]),
+                )
                 .catch((err) => {
                     this.chatsDb.recordFailedMessage(chatId, newEvent, threadRootMessageIndex);
                     throw err;
@@ -668,6 +669,7 @@ export class UserClient
             block_level_markdown: true,
             message_filter_failed: messageFilterFailed,
             pin,
+            og_previews: event.event.ogPreviews.map(apiOgPreview),
         };
         return this.update(
             "send_message_with_transfer_to_group",
@@ -771,6 +773,7 @@ export class UserClient
             channel_rules_accepted: channelRulesAccepted,
             message_filter_failed: messageFilterFailed,
             pin,
+            og_previews: event.event.ogPreviews.map(apiOgPreview),
         };
         return this.update(
             "send_message_with_transfer_to_channel",

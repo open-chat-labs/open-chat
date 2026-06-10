@@ -678,6 +678,7 @@
     "dark": "ダーク",
     "days": "日々",
     "deleteChat": "チャットを削除",
+    "deleteDirectChatFailure": "チャットを削除できません",
     "deleteFailed": "メッセージを削除することができません",
     "deleteGroup": "{level}を削除",
     "deleteGroupFailure": "{level} を削除できません",
@@ -1437,6 +1438,7 @@
         "claimFailed": "申し訳ありませんが、あなたの請求は失敗しました!次回は頑張ってください。",
         "claimIneligible": "申し訳ありませんが、この賞品を受け取るための要件を満たしていません。",
         "click": "下のボタンをクリックして、賞品を獲得するチャンスを手に入れましょう。",
+        "creatingPrizeMessageFailed": "賞品メッセージの作成に失敗しました",
         "creatingYourPrizeMessage": "賞品メッセージを作成するまでお待ちください",
         "diamondMembership": "ダイヤモンド会員",
         "distribution": "賞の配分の仕方",
@@ -1493,15 +1495,18 @@
         "action": "アクション",
         "additionalContent": "追加コンテンツ",
         "adopt": "採用",
+        "adopted": "採用",
         "alreadyVoted": "すでに投票しています-ページをリロードしてみてください",
         "builtInAction": "組み込みアクション",
         "collapse": "メッセージを折りたたむ",
+        "criticalProposal": "これは重要な提案です",
         "cyclesDispenserAction": "サイクル ディスペンサー アクション",
         "details": "詳細",
         "disableAll": "すべて無効にします",
         "enableAll": "全て可能にする",
         "filter": "提案をフィルタリングする",
         "groupIndexAction": "グループ インデックス アクション",
+        "link": "リンク",
         "makeProposal": "提案する",
         "maker": {
             "achievementChatCost": "要求された CHIT をプロビジョニングするには、{cost} {chat} トークンの支払いが必要です。未使用の CHAT は、実績の有効期限が切れると返金されます。",
@@ -1553,6 +1558,27 @@
         "noEligibleNeuronsMessage": "適格なニューロンまたはリンクされたニューロンが見つかりません。 OpenChat 内から提案に投票するには、まず OpenChat ユーザー ID をホットキーとして投票したいニューロンに追加する必要があります。<br/><br/>あなたの OpenChat ユーザー ID は: {userId} です。<br/><br/>投票とガバナンスの詳細については、<a target=\"_blank\" href=\"https://oc.app/blog/governance\">このブログ投稿を</a>参照してください。",
         "notificationsAction": "通知インデックス アクション",
         "openchatInstallerAction": "OpenChatインストーラーアクション",
+        "passing": {
+            "majority": {
+                "critical": {
+                    "fst": "超多数決：投票期限までに、参加投票者の{pct}人以上が賛成票を投じた。",
+                    "snd": "この条件は、有効期限までに賛成票数が反対票数の2倍以上になった場合に満たされます。"
+                },
+                "regular": {
+                    "fst": "過半数：投票期限までに投票権者の{pct}人以上が賛成票を投じた。",
+                    "snd": "この条件は、有効期限までに賛成票が反対票を上回った場合に満たされます。"
+                },
+                "thrd": "これは有効期限が切れた時、または「はい」バーが2番目の下向き矢印アイコンに達した時に現実となり、その場合、条件は変更できなくなり、提案は早期に採択されます。"
+            },
+            "participation": {
+                "fst": "参加率：全体の投票権のうち、少なくとも{pct}人が賛成票を投じた。",
+                "snd": "この条件は、はいバーが最初の下向きのシェブロンアイコンに到達したときに満たされます。"
+            },
+            "title": {
+                "critical": "重要な提案が採択されるためには、以下の2つの条件を満たす必要があります。",
+                "regular": "提案が採択されるためには、以下の2つの条件を満たす必要があります。"
+            }
+        },
         "proposalNotAceptingVotes": "この提案は投票を受け付けていません-ページをリロードしてみてください",
         "proposalsBotAction": "提案ボット アクション",
         "proposedBy": "によって提案されました",
@@ -1560,10 +1586,13 @@
         "readmore": "続きを読む",
         "registryAction": "レジストリアクション",
         "reject": "拒否",
+        "rejected": "拒否されました",
         "storageIndexAction": "ストレージ インデックス アクション",
+        "tapToExpand": "タップして展開...",
         "topic": "トピック",
         "unknownActionCategory": "その他のアクション",
         "userIndexAction": "ユーザー インデックス アクション",
+        "viewDetails": "提案の詳細",
         "voteFailed": "投票に失敗しました-後で試してください",
         "votingPeriodEnded": "投票期間が終了しました",
         "votingPeriodRemaining": "残りの投票期間",

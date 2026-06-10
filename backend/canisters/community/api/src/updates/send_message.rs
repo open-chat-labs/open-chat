@@ -2,7 +2,8 @@ use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
-    ChannelId, EventIndex, GroupReplyContext, MessageContentInitial, MessageId, MessageIndex, TimestampMillis, User, Version,
+    ChannelId, EventIndex, GroupReplyContext, MessageContentInitial, MessageId, MessageIndex, OgPreview, TimestampMillis, User,
+    Version,
 };
 
 #[ts_export(community, send_message)]
@@ -22,6 +23,8 @@ pub struct Args {
     pub channel_rules_accepted: Option<Version>,
     pub message_filter_failed: Option<u64>,
     pub new_achievement: bool,
+    #[serde(default)]
+    pub og_previews: Vec<OgPreview>,
 }
 
 #[ts_export(community, send_message)]

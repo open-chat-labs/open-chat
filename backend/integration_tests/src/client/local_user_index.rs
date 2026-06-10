@@ -102,6 +102,7 @@ pub mod happy_path {
                 chat_id,
                 invite_code: None,
                 verified_credential_args: None,
+                composite_gate_index: None,
             },
         );
 
@@ -194,6 +195,7 @@ pub mod happy_path {
                 invite_code: None,
                 referred_by,
                 verified_credential_args: None,
+                composite_gate_index: None,
             },
         );
 
@@ -220,6 +222,7 @@ pub mod happy_path {
                 invite_code: None,
                 referred_by: None,
                 verified_credential_args: None,
+                composite_gate_index: None,
             },
         );
 

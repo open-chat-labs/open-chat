@@ -8,14 +8,14 @@ use constants::ONE_MB;
 use event_store_producer::EventBuilder;
 use group_index_canister::UserIndexEvent as GroupIndexEvent;
 use local_user_index_canister::{
-    ChitBalance, OpenChatBotMessage, OpenChatBotMessageV2, UserIndexEvent, UserJoinedCommunityOrChannel, UserJoinedGroup,
-    UserRegistered, UsernameChanged,
+    ChitBalance, OpenChatBotMessageV2, UserIndexEvent, UserJoinedCommunityOrChannel, UserJoinedGroup, UserRegistered,
+    UsernameChanged,
 };
 use rand::RngCore;
 use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
 use storage_index_canister::add_or_update_users::UserConfig;
-use types::{CanisterId, IdempotentEnvelope, MessageContent, TextContent, TimestampMillis, UserId, UserType};
+use types::{CanisterId, IdempotentEnvelope, MessageContentInitial, TextContent, TimestampMillis, UserId, UserType};
 use user_index_canister::LocalUserIndexEvent;
 use user_index_canister::c2c_local_user_index::*;
 
@@ -74,15 +74,6 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                     channels: ev.channels,
                     community_canister_timestamp: ev.community_canister_timestamp,
                 }),
-            );
-        }
-        LocalUserIndexEvent::OpenChatBotMessage(ev) => {
-            state.push_event_to_local_user_index(
-                ev.user_id,
-                UserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
-                    user_id: ev.user_id,
-                    message: ev.message,
-                })),
             );
         }
         LocalUserIndexEvent::OpenChatBotMessageV2(ev) => {
@@ -259,13 +250,15 @@ fn process_new_user(
         );
         state.push_event_to_local_user_index(
             user_id,
-            UserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
+            UserIndexEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
                 user_id,
-                message: MessageContent::Text(TextContent {
+                thread_root_message_id: None,
+                content: MessageContentInitial::Text(TextContent {
                     text: format!("Unfortunately the username \"{original_username}\" was taken so your username has been changed to \"{username}\".
 
 You can change your username at any time by clicking \"Profile settings\" from the main menu.")
                 }),
+                mentioned: Vec::new(),
             })),
         );
     }

@@ -14,11 +14,13 @@
     import { broadcastLoggedInUser } from "@stores/xframe";
     import "@utils/markdown";
     import {
+        expectDeepLinks,
         expectNewFcmToken,
         expectNotificationTap,
         expectPushNotifications,
         expectWindowInsetChange,
     } from "@utils/native/notification_channels";
+    import { expectShareTarget, handleShareTarget } from "@utils/native/share_target";
     import "@utils/scream";
     import { portalState } from "component-lib";
     import {
@@ -34,11 +36,12 @@
         routeForScope,
         subscribe,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import { _, isLoading } from "svelte-i18n";
     import { getFcmToken, svelteReady } from "tauri-plugin-oc-api";
+    import { clearChatShortcuts, startChatShortcutPusher } from "@stores/chatShortcuts";
     import Head from "./Head.svelte";
     import NotificationsBar from "./home/NotificationsBar.svelte";
     import ActiveCall from "./home/video/ActiveCall.svelte";
@@ -194,6 +197,15 @@
             // Listen for notifications user has tapped on
             expectNotificationTap().catch(console.error);
 
+            // Listen for content shared into OpenChat from the system share sheet
+            // (or via a Direct Share chat shortcut). Cold-start shares are queued
+            // by the native side and delivered once svelteReady fires below.
+            expectShareTarget((share) => handleShareTarget(client, share)).catch(console.error);
+
+            // Listen for deep links (e.g. https://oc.app/group/xyz tapped from another app).
+            // Cold-start deep links are queued by MainActivity and delivered once svelteReady fires.
+            expectDeepLinks().catch(console.error);
+
             // Expect FCM token refreshes
             expectNewFcmToken(addFcmToken);
 
@@ -214,6 +226,11 @@
                     }
                 });
             });
+
+            // Push the top recent chats to the Android Sharing Shortcuts API
+            // so they appear directly in the system share sheet (like
+            // WhatsApp's per-chat tiles).
+            startChatShortcutPusher(client);
 
             // Inform the native android app that svelte code is ready! SetTimeout
             // delays the fn execution until the call stack is empty, just to
@@ -261,6 +278,7 @@
             (ev.reason?.name === "SessionExpiryError" ||
                 ev.reason?.name === "InvalidDelegationError")
         ) {
+            if (client.isNativeApp()) clearChatShortcuts();
             client.logout();
             ev.preventDefault();
         }
@@ -289,7 +307,7 @@
 
     function joinVideoCall(chatId: ChatIdentifier, callType: VideoCallType) {
         incomingVideoCall.set(undefined);
-        page(routeForChatIdentifier("none", chatId));
+        navigate(routeForChatIdentifier("none", chatId));
         videoCallElement?.startOrJoinVideoCall(chatId, callType, true);
     }
 
@@ -300,7 +318,7 @@
 <Head />
 
 <ActiveCall
-    onClearSelection={() => page(routeForScope($chatListScopeStore))}
+    onClearSelection={() => navigate(routeForScope($chatListScopeStore))}
     bind:this={videoCallElement} />
 
 <VideoCallAccessRequests />

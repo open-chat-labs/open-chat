@@ -43,6 +43,7 @@ pub(crate) async fn join_community(args: Args) -> Response {
                     args.diamond_membership_expires_at,
                     args.unique_person_proof.clone(),
                     args.total_chit_earned,
+                    args.composite_gate_index,
                     false,
                 );
             }
@@ -107,6 +108,7 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> OCResult<IsPermitt
                     .referred_by
                     .is_some_and(|user_id| state.data.members.get_by_user_id(&user_id).is_some()),
                 total_chit_earned: args.total_chit_earned,
+                composite_gate_index: args.composite_gate_index,
                 now: state.env.now(),
             }),
         )

@@ -128,6 +128,8 @@ describe("thread utils", () => {
                     forwarded: false,
                     deleted: false,
                     blockLevelMarkdown: false,
+                    ogPreviews: [],
+                    messagePreviews: [],
                 },
             },
         );

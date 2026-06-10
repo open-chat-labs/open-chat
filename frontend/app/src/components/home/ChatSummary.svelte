@@ -33,7 +33,7 @@
         translationsStore,
         byContext as typersByContext,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import ArchiveIcon from "svelte-material-icons/Archive.svelte";
@@ -47,7 +47,9 @@
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
     import PinIcon from "svelte-material-icons/Pin.svelte";
     import PinOffIcon from "svelte-material-icons/PinOff.svelte";
+    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
+    import { canDeleteDirectChat, publishDeleteDirectChat } from "../../utils/directChat";
     import { rtlStore } from "../../stores/rtl";
     import { now } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
@@ -276,7 +278,7 @@
         } else {
             client.removePreviewedChat(chatSummary.id);
         }
-        page(routeForScope($chatListScopeStore));
+        navigate(routeForScope($chatListScopeStore));
         delOffset = -60;
     }
 
@@ -343,7 +345,7 @@
             }
         });
         if (chatSummary.id === $selectedChatIdStore) {
-            page(routeForScope($chatListScopeStore));
+            navigate(routeForScope($chatListScopeStore));
         }
     }
 
@@ -386,6 +388,8 @@
                 );
         }
     }
+
+    let showDeleteDirectChat = $derived(canDeleteDirectChat(chatSummary));
 </script>
 
 {#if visible}
@@ -688,6 +692,20 @@
                                                         true,
                                                     ),
                                                 )}
+                                            {/snippet}
+                                        </MenuItem>
+                                    {/if}
+                                    {#if showDeleteDirectChat}
+                                        <MenuItem
+                                            warning
+                                            onclick={() => publishDeleteDirectChat(chatSummary)}>
+                                            {#snippet icon()}
+                                                <DeleteOutline
+                                                    size={$iconSize}
+                                                    color={"var(--menu-warn)"} />
+                                            {/snippet}
+                                            {#snippet text()}
+                                                <Translatable resourceKey={i18nKey("deleteChat")} />
                                             {/snippet}
                                         </MenuItem>
                                     {/if}

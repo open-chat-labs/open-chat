@@ -11,9 +11,10 @@
         size?: BadgeSize;
         show?: "blue" | "gold" | undefined;
         status?: DiamondMembershipStatus["kind"] | undefined;
+        borderColor?: string;
     }
 
-    let { size = "default", show = undefined, status = undefined }: Props = $props();
+    let { size = "default", show = undefined, status = undefined, borderColor }: Props = $props();
 
     function getStatusName(
         status: DiamondMembershipStatus["kind"] | undefined,
@@ -35,7 +36,7 @@
 
 {#if status !== "inactive" || show}
     <Tooltip uppercase position="top" align="middle">
-        <BadgeContainer {size}>
+        <BadgeContainer {size} {borderColor}>
             {#if status == "lifetime"}
                 <Diamond size={iconSize} />
             {:else}

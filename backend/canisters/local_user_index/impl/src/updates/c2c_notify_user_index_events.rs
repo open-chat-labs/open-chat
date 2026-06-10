@@ -200,9 +200,6 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 );
             }
         }
-        UserIndexEvent::OpenChatBotMessage(ev) => {
-            state.push_event_to_user(ev.user_id, UserEvent::OpenChatBotMessage(Box::new(ev.message)), **now);
-        }
         UserIndexEvent::OpenChatBotMessageV2(ev) => {
             state.push_event_to_user(
                 ev.user_id,
@@ -332,6 +329,9 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             } else {
                 state.data.blocked_username_patterns.retain(|p| *p != ev.pattern);
             }
+        }
+        UserIndexEvent::SetOpenAIApiKey(ev) => {
+            state.data.openai_api_key = ev.api_key;
         }
     }
 }

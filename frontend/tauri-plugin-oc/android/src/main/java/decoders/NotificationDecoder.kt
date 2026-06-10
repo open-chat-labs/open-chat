@@ -50,6 +50,8 @@ object NotificationDecoder {
                     body = data["body"] ?: "",
                     bodyType = decodeBodyType(data),
                     image = data["image"],
+                    messageType = data["messageType"],
+                    fileName = data["fileName"],
                 )
             } else {
                 Log.e(LOG_TAG, "Unknown notification type: $data")

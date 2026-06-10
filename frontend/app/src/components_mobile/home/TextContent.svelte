@@ -1,95 +1,64 @@
 <script lang="ts">
-    import { ChatText, ChatCaption, Column } from "component-lib";
-    import type { OpenChat, TextContent } from "openchat-client";
-    import { getContext, type Snippet } from "svelte";
-    import { _ } from "svelte-i18n";
-    import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
-    import { lowBandwidth, renderPreviews } from "../../stores/settings";
+    import Markdown from "@shared_components/Markdown.svelte";
+    import { ChatCaption, ChatText, Column } from "component-lib";
+    import type { OgPreview, RehydratedMessagePreview, TextContent } from "openchat-client";
+    import { type Snippet } from "svelte";
+    import { lowBandwidth } from "../../stores/settings";
     import IntersectionObserver from "./IntersectionObserver.svelte";
     import LinkPreviews from "./LinkPreviews.svelte";
-    import Markdown from "@shared_components/Markdown.svelte";
-
-    const client = getContext<OpenChat>("client");
 
     interface Props {
         content: TextContent | Snippet;
         me: boolean;
-        fill: boolean;
         reply?: boolean;
-        blockLevelMarkdown: boolean;
-        showPreviews: boolean;
-        edited: boolean;
+        blockLevelMarkdown?: boolean;
+        showPreviews?: boolean;
+        edited?: boolean;
         truncate?: boolean;
-        pinned?: boolean;
         maxWidth?: number;
         // Indicates if the text content is rendered in context of a preview
         isPreview?: boolean;
         suppressLinks?: boolean;
         onRemovePreview?: (url: string) => void;
+        ogPreviews?: OgPreview[];
+        messagePreviews?: RehydratedMessagePreview[];
     }
 
     let {
         content,
         me,
-        fill,
         reply = false,
-        blockLevelMarkdown,
-        showPreviews,
-        edited,
+        blockLevelMarkdown = false,
+        edited = false,
         truncate = false,
-        pinned = false,
         maxWidth,
         isPreview = false,
         suppressLinks = false,
         onRemovePreview,
+        ogPreviews = [],
+        messagePreviews = [],
     }: Props = $props();
-
-    function extractPreviewUrls(text: string): string[] {
-        const urls = client.extractEnabledLinks(text);
-        return urls.length <= 5 ? urls : [];
-    }
-
-    function expand() {
-        expanded = true;
-    }
 
     let textContent = $derived<TextContent | undefined>("kind" in content ? content : undefined);
     let snippetContent = $derived<Snippet | undefined>("kind" in content ? undefined : content);
 
-    let expanded = $derived(!$lowBandwidth && $renderPreviews);
     let text = $derived(textContent?.text);
-    let previewUrls = $derived(showPreviews && text ? extractPreviewUrls(text) : []);
-    let iconColour = $derived(me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)");
 </script>
 
-{#if previewUrls.length > 0}
-    {#if !expanded}
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <span onclick={expand} class="expand" title={$_("showPreview")}>
-            <ArrowExpand viewBox="0 -3 24 24" size={"1em"} color={iconColour} />
-        </span>
-    {:else}
-        <!-- TODO refine the top observer margin of 1000px -->
-        <!-- on low bandwith, observer will trigger once the element is in veiw
-             otherwise it will detect intersection at set margin -->
-        <IntersectionObserver
-            unobserveOnIntersect={false}
-            rootMarginTop={$lowBandwidth ? 0 : 1000}
-            rootMarginBottom={$lowBandwidth ? 0 : 1000}
-            contextId="scrollable-messages-div">
-            {#snippet children(intersecting)}
-                <LinkPreviews
-                    {me}
-                    {pinned}
-                    {fill}
-                    links={previewUrls}
-                    {intersecting}
-                    onRemove={onRemovePreview} />
-            {/snippet}
-        </IntersectionObserver>
-    {/if}
-{/if}
+<IntersectionObserver
+    unobserveOnIntersect={false}
+    rootMarginTop={$lowBandwidth ? 0 : 1000}
+    rootMarginBottom={$lowBandwidth ? 0 : 1000}
+    contextId="scrollable-messages-div">
+    {#snippet children(intersecting)}
+        <LinkPreviews
+            {me}
+            {ogPreviews}
+            {messagePreviews}
+            {intersecting}
+            onRemove={onRemovePreview} />
+    {/snippet}
+</IntersectionObserver>
 
 <Column
     supplementalClass={`text_content ${truncate ? "truncated" : ""}`}

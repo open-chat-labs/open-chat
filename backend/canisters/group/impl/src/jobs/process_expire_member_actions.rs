@@ -98,6 +98,7 @@ fn prepare_gate_check(details: ExpiringMemberActionDetails, state: &RuntimeState
         verified_credential_args: None,
         referred_by_member: false,
         total_chit_earned,
+        composite_gate_index: None,
         now: state.env.now(),
     };
 

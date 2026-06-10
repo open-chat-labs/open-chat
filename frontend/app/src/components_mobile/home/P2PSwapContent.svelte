@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type Snippet, getContext } from "svelte";
+    import Markdown from "@shared_components/Markdown.svelte";
     import {
         Avatar,
         Body,
@@ -24,24 +24,24 @@
         isDiamondStore,
         publish,
     } from "openchat-client";
+    import { type Snippet, getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
-    import { i18nKey } from "../../i18n/i18n";
-    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
-    import { now500 } from "../../stores/time";
-    import { toastStore } from "../../stores/toast";
-    import { TokenState } from "./wallet/walletState.svelte";
-    import { getProxyAdjustedBlobUrl } from "../../utils/media";
-    import Markdown from "@shared_components/Markdown.svelte";
-    import MessageRenderer from "./MessageRenderer.svelte";
-    import Translatable from "../Translatable.svelte";
-    import AreYouSure from "../AreYouSure.svelte";
-    import AcceptP2PSwapModal from "./AcceptP2PSwapModal.svelte";
-    import P2PSwapProgress from "./P2PSwapProgress.svelte";
     import Cached from "svelte-material-icons/Cached.svelte";
     import Check from "svelte-material-icons/Check.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import CloseCircleOutline from "svelte-material-icons/CloseCircleOutline.svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
+    import { now500 } from "../../stores/time";
+    import { toastStore } from "../../stores/toast";
+    import { getProxyAdjustedBlobUrl } from "../../utils/media";
+    import AreYouSure from "../AreYouSure.svelte";
+    import Translatable from "../Translatable.svelte";
+    import AcceptP2PSwapModal from "./AcceptP2PSwapModal.svelte";
+    import MessageRenderer from "./MessageRenderer.svelte";
+    import P2PSwapProgress from "./P2PSwapProgress.svelte";
+    import { TokenState } from "./wallet/walletState.svelte";
 
     const client = getContext<OpenChat>("client");
 

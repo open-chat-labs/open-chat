@@ -103,6 +103,7 @@ pub(crate) fn send_message_impl(
             queue: &mut state.data.local_user_index_event_sync_queue,
         },
         finalised,
+        args.og_previews,
         now,
     )?;
 
@@ -150,6 +151,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> OCResult<Su
             queue: &mut state.data.local_user_index_event_sync_queue,
         },
         true,
+        args.og_previews,
         now,
     )?;
 
@@ -202,6 +204,7 @@ fn process_send_message_result(
             message_type: content.content_type().to_string(),
             message_text: content.notification_text(&mentioned, &[]),
             image_url: content.notification_image_url(),
+            file_name: content.notification_file_name(),
             group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
             crypto_transfer: content.notification_crypto_transfer_details(&mentioned),
         });

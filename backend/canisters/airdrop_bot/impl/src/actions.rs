@@ -90,6 +90,7 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) -> Resul
             invite_code: None,
             referred_by: None,
             verified_credential_args: None,
+            composite_gate_index: None,
         },
     )
     .await
@@ -223,6 +224,7 @@ async fn handle_main_message_action(action: AirdropMessage) -> Result<(), Option
             }),
             message_id: None,
             block_level_markdown: None,
+            og_previews: None,
         }],
     };
 
@@ -288,6 +290,7 @@ async fn handle_lottery_message_action(action: AirdropMessage) -> Result<(), Opt
         channel_rules_accepted: None,
         message_filter_failed: None,
         new_achievement: false,
+        og_previews: Vec::new(),
     };
 
     match community_canister_c2c_client::send_message(community_id.into(), &args).await {

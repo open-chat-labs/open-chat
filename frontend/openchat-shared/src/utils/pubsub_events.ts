@@ -57,7 +57,6 @@ export type PubSubEvents = {
         kind: "delete_direct_chat";
         chatId: DirectChatIdentifier;
         blockUser: boolean;
-        doubleCheck: { challenge: ResourceKey; response: ResourceKey };
     };
     deleteGroup: {
         kind: "delete";
@@ -185,6 +184,7 @@ export type PubSubEvents = {
     closeModalPage: undefined;
     closeThread: undefined;
     closeModalStack: undefined;
+    navigateTo: { url: string; intent?: "in-app" | "notification" | "auto" };
     updateGroupDetails: undefined;
     updateRules: unknown;
     updateAccessGates: unknown;

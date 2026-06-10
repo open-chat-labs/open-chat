@@ -94,6 +94,7 @@ fn file_deleted_after_direct_message_deleted() {
             block_level_markdown: false,
             message_filter_failed: None,
             pin: None,
+            og_previews: Vec::new(),
         },
     );
 

@@ -10,6 +10,7 @@ pub struct Args {
     pub invite_code: Option<u64>,
     pub referred_by: Option<UserId>,
     pub verified_credential_args: Option<VerifiedCredentialGateArgs>,
+    pub composite_gate_index: Option<u8>,
 }
 
 #[ts_export(local_user_index, join_community)]

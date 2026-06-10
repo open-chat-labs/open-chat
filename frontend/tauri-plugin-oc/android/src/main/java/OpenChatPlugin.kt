@@ -34,6 +34,10 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
 
         // Init FCM token cache, have it populated with a token!
         OCPluginCompanion.initFcmTokenCache()
+
+        // Sweep shared files older than 24h out of the app cache. Runs on a
+        // background thread, so this doesn't block the activity launch.
+        ShareIntentManager.cleanupStaleShares(activity)
     }
 
     @Command
@@ -105,6 +109,22 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
     fun disableViewportResize(invoke: Invoke) {
         ViewportResize(activity).disable(invoke)
     }
+
+    @Command
+    fun updateChatShortcuts(invoke: Invoke) {
+        UpdateChatShortcuts(activity).handler(invoke)
+    }
+
+    @Command
+    fun getPendingDeepLink(invoke: Invoke) {
+        val url = OCPluginCompanion.pendingDeepLinkUrl
+        OCPluginCompanion.pendingDeepLinkUrl = null
+        if (url != null) {
+            invoke.resolve(JSObject().put("url", url))
+        } else {
+            invoke.resolve(JSObject())
+        }
+    }
 }
 
 object OCPluginCompanion {
@@ -119,6 +139,10 @@ object OCPluginCompanion {
     //
     // Creates cache for the FCM token.
     var fcmToken: String? = null
+
+    // Deep link URL received during cold start (before the WebView was ready).
+    // JS pulls this via getPendingDeepLink() once mounted.
+    var pendingDeepLinkUrl: String? = null
 
     fun initFcmTokenCache() {
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->

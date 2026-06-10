@@ -1,36 +1,10 @@
+
 <script lang="ts">
+    import { navigate } from "@utils/navigation";
+    import Typing from "@shared_components/Typing.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
-    import {
-        AvatarSize,
-        type ChatIdentifier,
-        chatListScopeStore,
-        type ChatType,
-        currentUserIdStore,
-        currentUserStore,
-        type EnhancedReplyContext,
-        iconSize,
-        localUpdates,
-        type Message,
-        type MessageReminderCreatedContent,
-        mobileWidth,
-        OpenChat,
-        pageReplace,
-        publish,
-        routeForMessage,
-        routeStore,
-        screenWidth,
-        ScreenWidth,
-        selectedChatBlockedUsersStore,
-        selectedChatWebhooksStore,
-        selectedCommunityMembersStore,
-        type SelectedEmoji,
-        type SenderContext,
-        translationsStore,
-        unconfirmedReadByThem,
-        undeletingMessagesStore,
-        type UserSummary,
-    } from "openchat-client";
+    import { AvatarSize, type ChatIdentifier, chatListScopeStore, type ChatType, currentUserIdStore, currentUserStore, type EnhancedReplyContext, iconSize, localUpdates, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, type SenderContext, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "openchat-client";
     import { getContext, onDestroy, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -55,7 +29,6 @@
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
     import Translatable from "../Translatable.svelte";
-    import Typing from "@shared_components/Typing.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import ChatMessageMenu from "./ChatMessageMenu.svelte";
     import EmojiPicker from "./EmojiPickerWrapper.svelte";
@@ -221,7 +194,7 @@
                     client.filterRightPanelHistory(
                         (panel) => panel.kind !== "message_thread_panel",
                     );
-                    pageReplace(removeQueryStringParam("open"));
+                    navigate(removeQueryStringParam("open"));
                 }
             });
         }
@@ -663,7 +636,6 @@
 
                             <ChatMessageContent
                                 senderId={msg.sender}
-                                showPreviews
                                 {readonly}
                                 {fill}
                                 {me}
@@ -681,7 +653,9 @@
                                 blockLevelMarkdown={msg.blockLevelMarkdown}
                                 {onRemovePreview}
                                 {onRegisterVote}
-                                {onExpandMessage} />
+                                {onExpandMessage}
+                                ogPreviews={msg.ogPreviews}
+                                messagePreviews={msg.messagePreviews} />
 
                             {#if !inert}
                                 <TimeAndTicks

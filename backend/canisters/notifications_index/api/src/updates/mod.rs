@@ -4,6 +4,7 @@ pub mod c2c_user_index;
 pub mod mark_subscription_active;
 pub mod notify_local_index_added;
 pub mod push_subscription;
+pub mod remove_fcm_tokens;
 pub mod remove_subscription;
 pub mod remove_subscriptions;
 pub mod remove_subscriptions_for_user;

@@ -11,7 +11,7 @@
         selectedCommunitySummaryStore,
         type ChatIdentifier,
     } from "openchat-client";
-    import page from "page";
+    import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import HandFrontLeft from "svelte-material-icons/HandFrontLeft.svelte";
     import Microphone from "svelte-material-icons/Microphone.svelte";
@@ -47,7 +47,7 @@
     function goToCall() {
         if ($activeVideoCall) {
             if (!chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatIdStore)) {
-                page(routeForChatIdentifier("none", $activeVideoCall.chatId));
+                navigate(routeForChatIdentifier("none", $activeVideoCall.chatId));
             }
             activeVideoCall.setView("default");
         }

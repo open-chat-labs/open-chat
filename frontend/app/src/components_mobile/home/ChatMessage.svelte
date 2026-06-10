@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { navigate } from "@utils/navigation";
     import { confirmMessageDeletion } from "@src/stores/settings";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { keyboard } from "@stores/keyboard.svelte";
@@ -23,7 +24,6 @@
         type Message,
         type MessageReminderCreatedContent,
         OpenChat,
-        pageReplace,
         publish,
         routeForMessage,
         screenWidth,
@@ -202,7 +202,7 @@
                     client.filterRightPanelHistory(
                         (panel) => panel.kind !== "message_thread_panel",
                     );
-                    pageReplace(removeQueryStringParam("open"));
+                    navigate(removeQueryStringParam("open"));
                 }
             });
         }
@@ -633,7 +633,7 @@
                 gap={"sm"}
                 overflow={"visible"}
                 mainAxisAlignment={me ? "end" : "start"}
-                pan={msg.deleted || disablePan
+                pan={msg.deleted || disablePan || msg.content.kind === "proposal_content"
                     ? undefined
                     : {
                           oncommit: onPanCommit,
@@ -772,7 +772,6 @@
                                 <ChatMessageContent
                                     bind:contentWidth
                                     senderId={msg.sender}
-                                    showPreviews
                                     {readonly}
                                     {fill}
                                     {me}
@@ -790,7 +789,9 @@
                                     blockLevelMarkdown={msg.blockLevelMarkdown}
                                     {onRemovePreview}
                                     {onRegisterVote}
-                                    {onExpandMessage} />
+                                    {onExpandMessage}
+                                    ogPreviews={msg.ogPreviews}
+                                    messagePreviews={msg.messagePreviews} />
                             {/snippet}
                         </MessageBubble>
                     </MenuTrigger>

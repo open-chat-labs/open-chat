@@ -200,6 +200,7 @@
                 <img
                     bind:this={imgElement}
                     bind:clientWidth={imageWidth}
+                    draggable="false"
                     onerror={onError}
                     class="image"
                     class:me
@@ -232,7 +233,6 @@
     {regularView}
     caption={textContent?.text}
     maxCaptionWidth={!reply && !draft ? maxTextContentWidth : undefined}
-    {fill}
     {me}
     {reply}
     {draft}

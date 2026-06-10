@@ -678,6 +678,7 @@
     "dark": "dark",
     "days": "Days",
     "deleteChat": "Delete chat",
+    "deleteDirectChatFailure": "Unable to delete chat",
     "deleteFailed": "Unable to delete your message",
     "deleteGroup": "Delete {level}",
     "deleteGroupFailure": "Unable to delete {level}",
@@ -1437,6 +1438,7 @@
         "claimFailed": "Sorry your claim was unsuccessfull! Better luck next time. ",
         "claimIneligible": "Sorry you don't meet the requirements to claim this prize.",
         "click": "Click the button below for a chance to win a prize.",
+        "creatingPrizeMessageFailed": "Failed to create your prize message",
         "creatingYourPrizeMessage": "Please wait while we create your prize message",
         "diamondMembership": "Diamond membership",
         "distribution": "How should prizes be distributed?",
@@ -1493,15 +1495,18 @@
         "action": "action",
         "additionalContent": "addtional content",
         "adopt": "Adopt",
+        "adopted": "Adopted",
         "alreadyVoted": "You have already voted - try reloading the page",
         "builtInAction": "Built In Actions",
         "collapse": "Collapse message",
+        "criticalProposal": "This is a critical proposal",
         "cyclesDispenserAction": "Cycles Dispenser Actions",
         "details": "Details",
         "disableAll": "Disable all",
         "enableAll": "Enable all",
         "filter": "Filter proposals",
         "groupIndexAction": "Group Index Actions",
+        "link": "link",
         "makeProposal": "Make proposal",
         "maker": {
             "achievementChatCost": "A payment of {cost} {chat} tokens is required to provision the requested CHIT. Any unspent CHAT will be refunded when the achievement expires.",
@@ -1550,9 +1555,30 @@
         },
         "neuronControllerAction": "Neuron Controller Actions",
         "noEligibleNeurons": "No eligible neurons found",
-        "noEligibleNeuronsMessage": "No eligible or linked neurons found. In order to vote on proposals from within OpenChat you must first add your OpenChat user id as a hotkey to any neurons you wish to vote with. <br/><br/>Your OpenChat user id is: {userId}. <br/><br/>For more information on voting and governance read <a target=\"_blank\" href=\"https://oc.app/blog/governance\">this blog post</a>.",
+        "noEligibleNeuronsMessage": "No eligible or linked neurons found. In order to vote on proposals from within OpenChat you must first add your OpenChat user id as a hotkey to any neurons you wish to vote with. \n\nYour OpenChat user id is: {userId}. \n\nFor more information on voting and governance read [this blog post](https://oc.app/blog/governance).",
         "notificationsAction": "Notifications Index Actions",
         "openchatInstallerAction": "OpenChat Installer Actions",
+        "passing": {
+            "majority": {
+                "critical": {
+                    "fst": "Supermajority: more than {pct} of the participating voting power voted yes by the expiration date.",
+                    "snd": "This condition is met when there are more than twice as many yes-votes as no-votes by the expiration date."
+                },
+                "regular": {
+                    "fst": "Majority: more than {pct} of the participating voting power voted yes by the expiration date",
+                    "snd": "This condition is met when there are more yes-votes than no-votes by the expiration date."
+                },
+                "thrd": "This can become true at the expiration date or if the yes-bar reaches the second - arrow down - icon in which case the condition cannot be changed anymore and the proposal is adopted early."
+            },
+            "participation": {
+                "fst": "Participation: at least {pct} of the overall voting power voted yes.",
+                "snd": "This condition is met when the yes-bar reaches the first - chevron down - icon."
+            },
+            "title": {
+                "critical": "The two following conditions have to be met for a critical proposal to be adopted:",
+                "regular": "The two following conditions have to be met for a proposal to be adopted:"
+            }
+        },
         "proposalNotAceptingVotes": "This proposal is not accepting votes - try reloading the page",
         "proposalsBotAction": "Proposals Bot Actions",
         "proposedBy": "proposed by",
@@ -1560,10 +1586,13 @@
         "readmore": "Read more",
         "registryAction": "Registry Actions",
         "reject": "Reject",
+        "rejected": "Rejected",
         "storageIndexAction": "Storage Index Actions",
+        "tapToExpand": "Tap to expand...",
         "topic": "topic",
         "unknownActionCategory": "Other Actions",
         "userIndexAction": "User Index Actions",
+        "viewDetails": "Proposal details",
         "voteFailed": "Failed to cast vote - please try later",
         "votingPeriodEnded": "Voting period ended",
         "votingPeriodRemaining": "Voting period remaining",

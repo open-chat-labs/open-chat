@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ColourVars, Column, IconButton, Row, ChatCaption } from "component-lib";
+    import { ChatCaption, ColourVars, Column, IconButton, Row } from "component-lib";
     import type { CreatedUser, EnhancedReplyContext, OpenChat } from "openchat-client";
     import { selectedChatWebhooksStore, selectedCommunityMembersStore } from "openchat-client";
     import { getContext } from "svelte";
@@ -47,6 +47,9 @@
             "video_content",
             "p2p_swap_content",
             "poll_content",
+            "video_call_content",
+            "prize_content",
+            "prize_content_initial",
         ].indexOf(replyingTo.content.kind) > -1,
     );
 </script>
@@ -95,7 +98,6 @@
             </Row>
             <div class="replying_content no_padding" class:me>
                 <ChatMessageContent
-                    showPreviews={false}
                     {readonly}
                     {timestamp}
                     messageContext={replyingTo.sourceContext}
@@ -110,6 +112,7 @@
                     truncate
                     edited={replyingTo.edited}
                     content={replyingTo.content}
+                    ogPreviews={[]}
                     reply />
             </div>
         {/if}

@@ -1,16 +1,15 @@
 <script lang="ts">
-    import { ChatCaption, Column, ColourVars, ChatFootnote, Row } from "component-lib";
-    import { type Snippet } from "svelte";
-    import { rtlStore } from "../../stores/rtl";
-    import { publish } from "openchat-client";
-    import type { VideoContent } from "openchat-client";
-    import { getProxyAdjustedBlobUrl, getVideoDuration } from "../../utils/media";
     import { i18nKey } from "@src/i18n/i18n";
-    import Translatable from "../Translatable.svelte";
-    import MessageRenderer from "./MessageRenderer.svelte";
-    import { setPlayingMedia } from "../../utils/media";
+    import { ChatCaption, ChatFootnote, ColourVars, Column, Row } from "component-lib";
+    import type { VideoContent } from "openchat-client";
+    import { publish } from "openchat-client";
+    import { type Snippet } from "svelte";
     import PlayCircleOutline from "svelte-material-icons/PlayCircleOutline.svelte";
     import VideoOutline from "svelte-material-icons/VideoOutline.svelte";
+    import { rtlStore } from "../../stores/rtl";
+    import { getProxyAdjustedBlobUrl, getVideoDuration, setPlayingMedia } from "../../utils/media";
+    import Translatable from "../Translatable.svelte";
+    import MessageRenderer from "./MessageRenderer.svelte";
 
     const MIN_VIDEO_WIDTH = 180;
 
@@ -170,7 +169,6 @@
     {regularView}
     caption={content.caption}
     maxCaptionWidth={!reply && !draft ? posterWidth : undefined}
-    {fill}
     {me}
     {reply}
     {draft}

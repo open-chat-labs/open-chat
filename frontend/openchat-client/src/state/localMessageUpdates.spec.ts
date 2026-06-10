@@ -50,7 +50,7 @@ describe("merging local tips", () => {
         const existing: Message = { tips: {} };
         const local = createLocalTips("ledger1", "user1", 123n);
         const merged = mergeLocalTips(existing.tips, local);
-        expect(merged).toMatchObject(local);
+        expect(merged["ledger1"]).toMatchObject(Object.fromEntries(local.get("ledger1")!));
     });
     test("adding nothing leaves things unchanged", () => {
         const existing: Message = { tips: { ledger1: { user1: 123n } } };

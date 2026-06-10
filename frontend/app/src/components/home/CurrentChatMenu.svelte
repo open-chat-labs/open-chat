@@ -15,7 +15,6 @@
         mobileWidth,
         notificationsSupported,
         type OpenChat,
-        OPENCHAT_BOT_USER_ID,
         platformModeratorStore,
         publish,
         setRightPanelHistory,
@@ -41,6 +40,7 @@
     import Tune from "svelte-material-icons/Tune.svelte";
     import Webhook from "svelte-material-icons/Webhook.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
+    import { canDeleteDirectChat, publishDeleteDirectChat } from "../../utils/directChat";
     import { rtlStore } from "../../stores/rtl";
     import { toastStore } from "../../stores/toast";
     import { activeVideoCall } from "../../stores/video";
@@ -129,7 +129,7 @@
 
     let canStartOrJoinVideoCall = $derived(!inCall && (videoCallInProgress || canStartVideoCalls));
 
-    let canDeleteDirectChat = $derived(selectedChatSummary.kind === "direct_chat" && selectedChatSummary.id.userId !== OPENCHAT_BOT_USER_ID);
+    let showDeleteDirectChat = $derived(canDeleteDirectChat(selectedChatSummary));
 
     let hasUnreadPinned = $state(false);
 
@@ -310,19 +310,6 @@
             });
     }
 
-    function deleteDirectChat() {
-        if (selectedChatSummary.kind === "direct_chat" && themIfDirectChat !== undefined) {
-            publish("deleteDirectChat", {
-                kind: "delete_direct_chat",
-                chatId: selectedChatSummary.id,
-                blockUser: false,
-                doubleCheck: {
-                    challenge: i18nKey("typeGroupName", { name: themIfDirectChat.username }),
-                    response: i18nKey(themIfDirectChat.username),
-                },
-            });
-        }
-    }
 </script>
 
 {#if desktop}
@@ -728,8 +715,8 @@
                         {/snippet}
                     </MenuItem>
                 {/if}
-                {#if canDeleteDirectChat}
-                    <MenuItem warning onclick={() => deleteDirectChat()}>
+                {#if showDeleteDirectChat}
+                    <MenuItem warning onclick={() => publishDeleteDirectChat(selectedChatSummary)}>
                         {#snippet icon()}
                             <DeleteOutline size={$iconSize} color={"var(--menu-warn)"} />
                         {/snippet}

@@ -658,12 +658,4 @@
         height: 100%;
         gap: $sp4;
     }
-
-    .prefix {
-        position: absolute;
-        top: 0;
-        right: 0;
-        z-index: 1000;
-        @include font(bold, normal, fs-200);
-    }
 </style>

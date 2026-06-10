@@ -181,6 +181,17 @@
             publish("closeModalPage");
         }
     }
+
+    function handleComplete() {
+        if (compositeOr) {
+            // Find the index of the first satisfied gate in the original (unsorted) flattenedGates
+            const satisfiedIdx = flattenedGates.findIndex((g) => g.satisfied);
+            if (satisfiedIdx !== -1) {
+                accessApprovalState.setCompositeGateIndex(satisfiedIdx);
+            }
+        }
+        onComplete();
+    }
 </script>
 
 <SlidingPageContent
@@ -304,7 +315,7 @@
                 </BodySmall>
             {/if}
             <Column crossAxisAlignment={"center"} gap={"md"}>
-                <Button disabled={!complete} onClick={onComplete}>
+                <Button disabled={!complete} onClick={handleComplete}>
                     <Translatable resourceKey={i18nKey("Join")} />
                 </Button>
                 <CommonButton onClick={onClose} width={"hug"} mode={"active"} size={"small_text"}>

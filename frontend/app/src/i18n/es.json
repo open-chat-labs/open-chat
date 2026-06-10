@@ -678,6 +678,7 @@
     "dark": "dark",
     "days": "Días",
     "deleteChat": "Eliminar chat",
+    "deleteDirectChatFailure": "No se puede eliminar el chat",
     "deleteFailed": "No se puede eliminar tu mensaje",
     "deleteGroup": "Eliminar {level}",
     "deleteGroupFailure": "No se puede eliminar {level}",
@@ -1437,6 +1438,7 @@
         "claimFailed": "¡Lo sentimos, su reclamo no tuvo éxito! Mejor suerte la próxima vez.",
         "claimIneligible": "Lamentamos que no cumplas con los requisitos para reclamar este premio.",
         "click": "Haga clic en el botón de abajo para tener la oportunidad de ganar un premio.",
+        "creatingPrizeMessageFailed": "No se pudo crear tu mensaje de premio.",
         "creatingYourPrizeMessage": "Espere mientras creamos su mensaje de premio.",
         "diamondMembership": "Membresía Diamante",
         "distribution": "¿Cómo deben distribuirse los premios?",
@@ -1493,15 +1495,18 @@
         "action": "acción",
         "additionalContent": "contenido adicional",
         "adopt": "Adoptar",
+        "adopted": "Adoptado",
         "alreadyVoted": "Ya has votado - intenta recargar la página",
         "builtInAction": "Acciones integradas",
         "collapse": "Ocultar mensaje",
+        "criticalProposal": "Esta es una propuesta crítica.",
         "cyclesDispenserAction": "Acciones del dispensador de ciclos",
         "details": "Detalles",
         "disableAll": "Desactivar todo",
         "enableAll": "Permitirlos todos",
         "filter": "Filtrar propuestas",
         "groupIndexAction": "Acciones de índice de grupo",
+        "link": "enlace",
         "makeProposal": "hacer propuesta",
         "maker": {
             "achievementChatCost": "Se requiere un pago de tokens {cost} {chat} para obtener el CHIT solicitado. Cualquier CHAT no utilizado se reembolsará cuando caduque el logro.",
@@ -1553,6 +1558,27 @@
         "noEligibleNeuronsMessage": "No se encontraron neuronas elegibles o vinculadas. Para votar propuestas desde OpenChat, primero debe agregar su identificación de usuario de OpenChat como tecla de acceso rápido a cualquier neurona con la que desee votar.<br/><br/> Su ID de usuario de OpenChat es: {userId}.<br/><br/> Para obtener más información sobre votación y gobernanza, lea <a target=\"_blank\" href=\"https://oc.app/blog/governance\">esta publicación de blog</a> .",
         "notificationsAction": "Índice de notificaciones Acciones",
         "openchatInstallerAction": "Acciones del instalador de OpenChat",
+        "passing": {
+            "majority": {
+                "critical": {
+                    "fst": "Supermayoría: más de {pct} del poder de voto participante votó sí antes de la fecha de vencimiento.",
+                    "snd": "Esta condición se cumple cuando, en la fecha de vencimiento, hay más del doble de votos a favor que de votos en contra."
+                },
+                "regular": {
+                    "fst": "Mayoría: más de {pct} del poder de voto participante votó sí antes de la fecha de vencimiento.",
+                    "snd": "Esta condición se cumple cuando hay más votos a favor que en contra antes de la fecha de vencimiento."
+                },
+                "thrd": "Esto puede ocurrir en la fecha de vencimiento o si la barra de confirmación llega al segundo icono (flecha hacia abajo), en cuyo caso la condición ya no se puede cambiar y la propuesta se adopta anticipadamente."
+            },
+            "participation": {
+                "fst": "Participación: al menos {pct} del poder de voto total votó sí.",
+                "snd": "Esta condición se cumple cuando la barra de confirmación llega al primer icono (flecha hacia abajo)."
+            },
+            "title": {
+                "critical": "Para que una propuesta crítica sea adoptada, deben cumplirse las dos condiciones siguientes:",
+                "regular": "Para que una propuesta sea adoptada, deben cumplirse las dos condiciones siguientes:"
+            }
+        },
         "proposalNotAceptingVotes": "Esta propuesta no acepta votos. Intente recargar la página.",
         "proposalsBotAction": "Acciones del bot de propuestas",
         "proposedBy": "propuesto por",
@@ -1560,10 +1586,13 @@
         "readmore": "Lee mas",
         "registryAction": "Acciones de registro",
         "reject": "Rechazar",
+        "rejected": "Rechazado",
         "storageIndexAction": "Acciones de índice de almacenamiento",
+        "tapToExpand": "Toca para ampliar...",
         "topic": "tema",
         "unknownActionCategory": "Otras acciones",
         "userIndexAction": "Acciones de índice de usuario",
+        "viewDetails": "Detalles de la propuesta",
         "voteFailed": "No se pudo emitir el voto; inténtelo más tarde",
         "votingPeriodEnded": "Terminó el período de votación",
         "votingPeriodRemaining": "Período de votación restante",

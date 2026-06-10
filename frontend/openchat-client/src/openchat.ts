@@ -50,8 +50,10 @@ import {
     defaultChatRules,
     deletedUser,
     emptyEventsResponse,
+    extractEnabledLinks,
     extractUserIdsFromMentions,
     featureRestricted,
+    fetchOgPreviews,
     getContentAsFormattedText,
     getDisplayDate,
     getEmailSignInSession,
@@ -78,11 +80,13 @@ import {
     publish,
     random64,
     removeEmailSignInSession,
+    removeOpenGraphPreviews,
     routeForChatIdentifier,
     routeForMessage,
     setMinLogLevel,
     shouldPreprocessGate,
     storeEmailSignInSession,
+    stripLinkDisabledMarker,
     toDer,
     toTitleCase,
     updateCreatedUser,
@@ -224,6 +228,7 @@ import {
     type NervousSystemDetails,
     type NewUnconfirmedMessage,
     type Notification,
+    type OgPreview,
     type OneSecForwardingStatus,
     type OneSecTransferFees,
     type OptionUpdate,
@@ -314,7 +319,6 @@ import {
     type WithdrawBtcResponse,
     type WithdrawCryptocurrencyResponse,
 } from "openchat-shared";
-import page from "page";
 import { tick } from "svelte";
 import { locale } from "svelte-i18n";
 import { get } from "svelte/store";
@@ -557,12 +561,6 @@ import { getErc20TokenBalances } from "./utils/evm";
 import formatFileSize from "./utils/fileSize";
 import { gaTrack } from "./utils/ga";
 import { calculateMediaDimensions } from "./utils/layout";
-import {
-    disableLinksInText,
-    extractDisabledLinks,
-    extractEnabledLinks,
-    stripLinkDisabledMarker,
-} from "./utils/linkPreviews";
 import { groupBy, groupWhile, keepMax, partition, toRecord, toRecord2 } from "./utils/list";
 import { getUserCountryCode } from "./utils/location";
 import {
@@ -570,15 +568,9 @@ import {
     FREE_MAX_SIZES,
     audioRecordingMimeType,
     communityMessageRegex,
-    containsSocialVideoLink,
     fillMessage,
     groupMessageRegex,
-    instagramRegex,
-    isSocialVideoLink,
     messageContentFromFile,
-    spotifyRegex,
-    twitterLinkRegex,
-    youtubeRegex,
     type MaxMediaSizes,
 } from "./utils/media";
 import { mergeKeepingOnlyChanged } from "./utils/object";
@@ -587,7 +579,7 @@ import { Poller } from "./utils/poller";
 import { showTrace } from "./utils/profiling";
 import { indexIsInRanges } from "./utils/range";
 import { RecentlyActiveUsersTracker } from "./utils/recentlyActiveUsersTracker";
-import { pageNavigate, pageRedirect, pageReplace, routeForScope } from "./utils/routes";
+import { routeForScope } from "./utils/routes";
 import {
     createRemoteVideoStartedEvent,
     filterWebRtcMessage,
@@ -607,8 +599,8 @@ import { initialiseTracking, startTrackingSession, trackEvent } from "./utils/tr
 import { startSwCheckPoller } from "./utils/updateSw";
 import { addQueryStringParam } from "./utils/url";
 import {
-    buildUsernameList,
     buildReducedProfileDataList,
+    buildUsernameList,
     compareIsNotYouThenUsername,
     compareUsername,
     formatLastOnlineDate,
@@ -1715,6 +1707,7 @@ export class OpenChat {
         chat: MultiUserChat,
         credentials: string[],
         paymentApprovals: PaymentGateApprovals,
+        compositeGateIndex?: number,
     ): Promise<ClientJoinGroupResponse> {
         const approveResponse = await this.approveAccessGatePayments(chat, paymentApprovals);
         if (approveResponse.kind !== "success") {
@@ -1726,6 +1719,7 @@ export class OpenChat {
                 kind: "joinGroup",
                 chatId: chat.id,
                 credentialArgs: this.#buildVerifiedCredentialArgs(credentials),
+                compositeGateIndex,
             })
             .then((resp) => {
                 return withPausedStores(() => {
@@ -1972,7 +1966,6 @@ export class OpenChat {
     contentTypeToPermission = contentTypeToPermission;
     stripLinkDisabledMarker = stripLinkDisabledMarker;
     extractEnabledLinks = extractEnabledLinks;
-    disableLinksInText = disableLinksInText;
 
     communityAvatarUrl(id: string, avatar: DataContent): string {
         return avatar?.blobUrl ?? buildIdenticonUrl(id);
@@ -2734,12 +2727,8 @@ export class OpenChat {
 
     isTyping = isTyping;
     trackEvent = trackEvent;
-    twitterLinkRegex = twitterLinkRegex;
-    youtubeRegex = youtubeRegex;
     communityMessageRegex = communityMessageRegex;
     groupMessageRegex = groupMessageRegex;
-    instagramRegex = instagramRegex;
-    spotifyRegex = spotifyRegex;
     metricsEqual = metricsEqual;
     getMembersString = getMembersString;
     compareIsNotYouThenUsername = compareIsNotYouThenUsername;
@@ -2908,19 +2897,19 @@ export class OpenChat {
             // if the scope is favourite let's redirect to the non-favourite counterpart and try again
             // this is necessary if the link is no longer in our favourites or came from another user and was *never* in our favourites.
             if (scope.kind === "favourite") {
-                pageRedirect(
-                    routeForChatIdentifier(
+                publish("navigateTo", {
+                    url: routeForChatIdentifier(
                         selectedCommunityIdStore.value === undefined ? "chats" : "community",
                         chatId,
                     ),
-                );
+                });
                 return;
             }
             if (chatId.kind === "direct_chat") {
                 if (!(await this.createDirectChat(chatId))) {
                     publish("notFound");
                 } else {
-                    page(routeForChatIdentifier("chats", chatId));
+                    publish("navigateTo", { url: routeForChatIdentifier("chats", chatId) });
                 }
             } else if (chatId.kind === "group_chat" || chatId.kind === "channel") {
                 autojoin = querystringStore.value.has("autojoin");
@@ -2938,8 +2927,8 @@ export class OpenChat {
                 if (preview.kind === "group_moved") {
                     if (messageIndex !== undefined) {
                         if (threadMessageIndex !== undefined) {
-                            pageReplace(
-                                routeForMessage(
+                            publish("navigateTo", {
+                                url: routeForMessage(
                                     "community",
                                     {
                                         chatId: preview.location,
@@ -2947,18 +2936,20 @@ export class OpenChat {
                                     },
                                     threadMessageIndex,
                                 ),
-                            );
+                            });
                         } else {
-                            pageReplace(
-                                routeForMessage(
+                            publish("navigateTo", {
+                                url: routeForMessage(
                                     "community",
                                     { chatId: preview.location },
                                     messageIndex,
                                 ),
-                            );
+                            });
                         }
                     } else {
-                        pageReplace(routeForChatIdentifier(scope.kind, preview.location));
+                        publish("navigateTo", {
+                            url: routeForChatIdentifier(scope.kind, preview.location),
+                        });
                     }
                 } else if (preview.kind === "failure") {
                     publish("notFound");
@@ -3801,6 +3792,8 @@ export class OpenChat {
             msg.blockLevelMarkdown,
             [],
             true,
+            undefined,
+            msg.ogPreviews.length > 0 ? Promise.resolve(msg.ogPreviews) : undefined,
         );
     }
 
@@ -4005,6 +3998,7 @@ export class OpenChat {
         message: NewUnconfirmedMessage,
         mentioned: User[] = [],
         retrying: boolean,
+        ogPreviewsPromise?: Promise<OgPreview[]>,
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
 
@@ -4036,6 +4030,21 @@ export class OpenChat {
 
             // add the *new* event to unconfirmed
             localUpdates.addUnconfirmed(messageContext, messageEvent);
+        }
+
+        // Fetch og previews lazily so the message appears in the UI immediately.
+        // We await here (after pushing to localUpdates) so the worker call still
+        // sends og_previews to the backend in the same request.
+        if (ogPreviewsPromise !== undefined) {
+            const ogPreviews = await ogPreviewsPromise;
+            if (ogPreviews.length > 0) {
+                messageEvent.event.ogPreviews = ogPreviews;
+                localUpdates.setUnconfirmedOgPreviews(
+                    messageContext,
+                    messageEvent.event.messageId,
+                    ogPreviews,
+                );
+            }
         }
 
         const canRetry = canRetryMessage(message.content);
@@ -4319,6 +4328,7 @@ export class OpenChat {
         mentioned: User[] = [],
         forwarded: boolean = false,
         messageIdIfRetrying?: bigint,
+        ogPreviewsPromise?: Promise<OgPreview[]>,
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
         const chat = allChatsStore.value.get(chatId);
@@ -4337,6 +4347,7 @@ export class OpenChat {
             repliesTo: draftMessage?.replyingTo,
             forwarded,
             blockLevelMarkdown,
+            ogPreviews: [], // This will get filled in later
         };
 
         return this.#sendMessageCommon(
@@ -4345,6 +4356,7 @@ export class OpenChat {
             msg,
             mentioned,
             messageIdIfRetrying !== undefined,
+            ogPreviewsPromise,
         );
     }
 
@@ -4358,13 +4370,15 @@ export class OpenChat {
         blockLevelMarkdown: boolean,
         attachment: AttachmentContent | undefined,
         mentioned: User[] = [],
-    ): void {
-        this.sendMessageWithContent(
+    ) {
+        return this.sendMessageWithContent(
             messageContext,
             this.#getMessageContent(textContent, attachment),
             blockLevelMarkdown,
             mentioned,
             false,
+            undefined,
+            fetchOgPreviews(extractEnabledLinks(textContent), import.meta.env.OC_PREVIEW_PROXY_URL),
         );
     }
 
@@ -4483,15 +4497,13 @@ export class OpenChat {
     }
 
     getDisplayDate = getDisplayDate;
-    isSocialVideoLink = isSocialVideoLink;
-    containsSocialVideoLink = containsSocialVideoLink;
     calculateMediaDimensions = calculateMediaDimensions;
     dataToBlobUrl = dataToBlobUrl;
     askForNotificationPermission = askForNotificationPermission;
     setSoftDisabled = setSoftDisabled;
     gaTrack = gaTrack;
 
-    editMessageWithAttachment(
+    async editMessageWithAttachment(
         messageContext: MessageContext,
         textContent: string | undefined,
         blockLevelMarkdown: boolean,
@@ -4505,29 +4517,34 @@ export class OpenChat {
         }
 
         if (textContent || attachment) {
-            if (textContent && editingEvent.event.content.kind === "text_content") {
-                const disabledLinks = extractDisabledLinks(editingEvent.event.content.text);
-                textContent = disableLinksInText(textContent, disabledLinks);
-            }
-
             const captioned =
                 attachment ??
                 (isCaptionedContent(editingEvent.event.content)
                     ? editingEvent.event.content
                     : undefined);
 
-            const msg = {
+            const msg: Message = {
                 ...editingEvent.event,
                 edited: true,
                 content: this.#getMessageContent(textContent ?? undefined, captioned),
+                ogPreviews: [], // This will get filled in asynchronously after local updates are set
             };
             const updatedBlockLevelMarkdown =
                 msg.blockLevelMarkdown === blockLevelMarkdown ? undefined : blockLevelMarkdown;
 
+            // Apply content update to local state immediately — don't block on og preview fetch.
             const undo = localUpdates.markMessageContentEdited(msg, updatedBlockLevelMarkdown);
             localUpdates.draftMessages.delete(messageContext);
 
             const newAchievement = !achievementsStore.value.has("edited_message");
+
+            // Fetch og previews in the background; content change is already visible in the UI.
+            const ogPreviews = await fetchOgPreviews(
+                extractEnabledLinks(textContent),
+                import.meta.env.OC_PREVIEW_PROXY_URL,
+            );
+            msg.ogPreviews = ogPreviews;
+            const undoOgPreviews = localUpdates.setEditedOgPreviews(msg.messageId, ogPreviews);
 
             return this.#worker
                 .send({
@@ -4541,12 +4558,14 @@ export class OpenChat {
                 .then((resp) => {
                     if (resp.kind !== "success") {
                         undo();
+                        undoOgPreviews();
                         return false;
                     }
                     return true;
                 })
                 .catch(() => {
                     undo();
+                    undoOgPreviews();
                     return false;
                 });
         }
@@ -4565,13 +4584,10 @@ export class OpenChat {
             return Promise.resolve(false);
         }
 
-        const text = disableLinksInText(event.event.content.text, [link]);
-
         const msg = {
-            ...event.event,
-            content: this.#getMessageContent(text, undefined),
+            ...removeOpenGraphPreviews(event.event, [link]),
         };
-        const undo = localUpdates.markLinkRemoved(msg.messageId, msg.content);
+        const undo = localUpdates.markLinkRemoved(msg.messageId, msg.ogPreviews);
 
         return this.#worker
             .send({
@@ -8469,7 +8485,10 @@ export class OpenChat {
             ? chatSummariesStore.value.get(mostRecentId)
             : undefined;
         if (mostRecentChat !== undefined) {
-            pageRedirect(routeForChatIdentifier(scope.kind, mostRecentChat.id));
+            publish("navigateTo", {
+                url: routeForChatIdentifier(scope.kind, mostRecentChat.id),
+                intent: "auto",
+            });
             return true;
         }
         return false;
@@ -8480,7 +8499,10 @@ export class OpenChat {
             (c) => !c.membership.archived,
         );
         if (first !== undefined) {
-            pageRedirect(routeForChatIdentifier(chatListScopeStore.value.kind, first.id));
+            publish("navigateTo", {
+                url: routeForChatIdentifier(chatListScopeStore.value.kind, first.id),
+                intent: "auto",
+            });
             return true;
         }
         return false;
@@ -8492,7 +8514,9 @@ export class OpenChat {
             ? communitiesStore.value.get(mostRecentId)
             : undefined;
         if (mostRecentCommunity !== undefined) {
-            page(`/community/${mostRecentCommunity.id.communityId}`);
+            publish("navigateTo", {
+                url: `/community/${mostRecentCommunity.id.communityId}`,
+            });
             return true;
         }
         return false;
@@ -8501,7 +8525,7 @@ export class OpenChat {
     #selectFirstCommunity(): boolean {
         const first = sortedCommunitiesStore.value?.find((c) => !c.membership.archived);
         if (first !== undefined) {
-            page(`/community/${first.id.communityId}`);
+            publish("navigateTo", { url: `/community/${first.id.communityId}` });
             return true;
         }
         return false;
@@ -8583,6 +8607,7 @@ export class OpenChat {
         community: CommunitySummary,
         credentials: string[],
         paymentApprovals: PaymentGateApprovals,
+        compositeGateIndex?: number,
     ): Promise<ClientJoinCommunityResponse> {
         const approveResponse = await this.approveAccessGatePayments(community, paymentApprovals);
         if (approveResponse.kind !== "success") {
@@ -8594,6 +8619,7 @@ export class OpenChat {
                 kind: "joinCommunity",
                 id: community.id,
                 credentialArgs: this.#buildVerifiedCredentialArgs(credentials),
+                compositeGateIndex,
             })
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -8863,7 +8889,7 @@ export class OpenChat {
 
     setChatListScopeAndRedirect(route: RouteParams): boolean {
         if (route.kind === "home_route") {
-            pageReplace(routeForScope(this.getDefaultScope()));
+            publish("navigateTo", { url: routeForScope(this.getDefaultScope()), intent: "auto" });
             return true;
         }
         return false;
@@ -9380,6 +9406,7 @@ export class OpenChat {
                 forwarded: false,
                 blockLevelMarkdown,
                 senderContext: botContext,
+                ogPreviews: [],
             });
             localUpdates.addUnconfirmed(context, event);
             publish("sentMessage", { context, event });
@@ -9919,15 +9946,10 @@ export class OpenChat {
                         );
                     }
                 };
-                void pageNavigate(event.data.path)
-                    .then(() => acknowledgeNotificationClick())
-                    .catch((error) => {
-                        console.error(
-                            "PUSH: failed to route existing client after notification click",
-                            event.data.path,
-                            error,
-                        );
-                    });
+                publish("navigateTo", { url: event.data.path, intent: "notification" });
+                void acknowledgeNotificationClick().catch((err) => {
+                    console.error("PUSH: failed to acknowledge notification click", err);
+                });
             }
         });
 
@@ -10412,11 +10434,6 @@ export class OpenChat {
             return mobileWidth.value
                 ? { width: content.mobile.width, height: content.mobile.height }
                 : { width: content.desktop.width, height: content.desktop.height };
-        } else if (
-            content.kind === "text_content" &&
-            (this.isSocialVideoLink(content.text) || this.containsSocialVideoLink(content.text))
-        ) {
-            return { width: 560, height: 315 };
         }
 
         return undefined;

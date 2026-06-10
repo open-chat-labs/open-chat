@@ -161,6 +161,7 @@ import {
     updateGroupSuccess,
     videoCallParticipantsSuccess,
     webhookDetails,
+    apiOgPreview,
 } from "../common/chatMappersV2";
 import { publicSummarySuccess } from "../common/publicSummaryMapperV2";
 import { DataClient } from "../data/data.client";
@@ -328,6 +329,7 @@ export class GroupClient
                     message_id: message.messageId,
                     block_level_markdown: blockLevelMarkdown,
                     new_achievement: newAchievement,
+                    og_previews: message.ogPreviews.map(apiOgPreview),
                 };
                 return this.update(
                     groupId,
@@ -380,6 +382,7 @@ export class GroupClient
                 message_filter_failed: messageFilterFailed,
                 block_level_markdown: newEvent.event.blockLevelMarkdown,
                 new_achievement: newAchievement,
+                og_previews: newEvent.event.ogPreviews.map(apiOgPreview),
             };
 
             return this.update(

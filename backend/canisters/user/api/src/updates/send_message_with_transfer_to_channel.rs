@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
     ChannelId, CommunityId, CompletedCryptoTransaction, EventIndex, GroupReplyContext, MessageContentInitial, MessageId,
-    MessageIndex, PinNumberWrapper, TimestampMillis, User, Version,
+    MessageIndex, OgPreview, PinNumberWrapper, TimestampMillis, User, Version,
 };
 
 #[ts_export(user, send_message_with_transfer_to_channel)]
@@ -23,6 +23,8 @@ pub struct Args {
     pub channel_rules_accepted: Option<Version>,
     pub message_filter_failed: Option<u64>,
     pub pin: Option<PinNumberWrapper>,
+    #[serde(default)]
+    pub og_previews: Vec<OgPreview>,
 }
 
 #[ts_export(user, send_message_with_transfer_to_channel)]

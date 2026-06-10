@@ -60,7 +60,8 @@
         "url": "^0.11.1",
         "util": "0.12.5",
         "vite": "^6.4.2",
-        "vite-plugin-html": "^3.2.2"
+        "vite-plugin-html": "^3.2.2",
+        "vitest": "^4.1.8"
     },
     "dependencies": {
         "@daily-co/daily-js": "^0.72.0",
@@ -71,6 +72,7 @@
         "@panzoom/panzoom": "^4.6.1",
         "@solana/wallet-adapter-wallets": "^0.19.32",
         "@solana/web3.js": "^1.91.8",
+        "@tauri-apps/plugin-deep-link": "^2.4.6",
         "@tauri-apps/plugin-notification": "^2.3.1",
         "@tiptap/core": "^3.22.5",
         "@tiptap/extension-code-block-lowlight": "^3.23.5",
