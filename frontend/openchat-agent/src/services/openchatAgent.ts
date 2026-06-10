@@ -3595,11 +3595,25 @@ export class OpenChatAgent extends EventTarget {
                     return Promise.reject("Cannot find a matching pool");
                 }
 
-                const exchangeArgs: ExchangeTokenSwapArgs = {
-                    dex,
-                    swapCanisterId: pool.canisterId,
-                    zeroForOne: pool.token0 === inputTokenDetails.ledger,
-                };
+                // TACO's checkReceive validates incoming ICRC1 deposits
+                // against this treasury canister, not the exchange canister
+                // itself. Hardcoded because every TacoIndexClient pool shares
+                // the same fixed treasury principal — the frontend doesn't
+                // derive it from the pool listing.
+                const TACO_TREASURY_CANISTER_ID = "qbnpl-laaaa-aaaan-q52aq-cai";
+
+                const exchangeArgs: ExchangeTokenSwapArgs =
+                    dex === "taco"
+                        ? {
+                              dex: "taco",
+                              swapCanisterId: pool.canisterId,
+                              treasuryCanisterId: TACO_TREASURY_CANISTER_ID,
+                          }
+                        : {
+                              dex,
+                              swapCanisterId: pool.canisterId,
+                              zeroForOne: pool.token0 === inputTokenDetails.ledger,
+                          };
 
                 return this.userClient.swapTokens(
                     swapId,

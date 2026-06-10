@@ -68,7 +68,12 @@ impl SwapClient for ICPSwapClient {
         }
     }
 
-    async fn swap(&self, amount: u128, min_amount_out: u128) -> Result<Result<SwapSuccess, String>, C2CError> {
+    async fn swap(
+        &self,
+        amount: u128,
+        min_amount_out: u128,
+        _deposit_block_index: Option<u64>,
+    ) -> Result<Result<SwapSuccess, String>, C2CError> {
         let args = icpswap_swap_pool_canister::swap::Args {
             operator: self.this_canister_id,
             amount_in: amount.to_string(),

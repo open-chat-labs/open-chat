@@ -184,6 +184,8 @@
         switch (dex) {
             case "icpswap":
                 return "ICPSwap";
+            case "taco":
+                return "TACO";
         }
     }
 

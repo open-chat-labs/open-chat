@@ -5,6 +5,7 @@ use types::{C2CError, CanisterId};
 
 pub mod icpswap;
 pub mod swap_client;
+pub mod taco;
 
 fn nat_to_u128(value: Nat) -> u128 {
     value.0.try_into().unwrap()
