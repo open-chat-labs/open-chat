@@ -50,6 +50,7 @@ const FRAME_ANCESTORS = [
     "https://tacodao.com", // TacoDAO Production Website URL
     "https://wxunf-maaaa-aaaab-qbzga-cai.icp0.io", // TacoDAO Staging ID URL
     "https://staging.tacodao.com", // TacoDAO Staging Website URL
+    "https://opentrades-qwt.caffeine.xyz", // OpenTrades
 ];
 
 type InboundXFrameMessage = UpdateTheme | ChangeRoute | OverrideSettings | Logout;
