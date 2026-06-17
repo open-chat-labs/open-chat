@@ -127,10 +127,7 @@ impl SwapClient for TacoExchangeClient {
         .await?;
 
         if plan.legs.is_empty() {
-            return Ok(Err(format!(
-                "TACO swap: no viable route ({})",
-                plan.route_description
-            )));
+            return Ok(Err(format!("TACO swap: no viable route ({})", plan.route_description)));
         }
 
         // Defensive clamp on tradingFeeBps in case the canister returns a value
@@ -181,11 +178,7 @@ impl SwapClient for TacoExchangeClient {
 // exactly (TACO's checkReceive validates this sum against the deposit block).
 // Per-leg min_leg_out is pro-rated by bp; sum ≤ min_out_total within
 // integer-division floor (TACO's canonical check is the global min anyway).
-fn make_split_legs_from_optimal(
-    legs: &[optimal::OptimalSwapLeg],
-    total: u128,
-    min_out_total: u128,
-) -> Vec<SplitLeg> {
+fn make_split_legs_from_optimal(legs: &[optimal::OptimalSwapLeg], total: u128, min_out_total: u128) -> Vec<SplitLeg> {
     let n = legs.len();
     let mut allocated_in: u128 = 0;
     let mut allocated_min: u128 = 0;
@@ -248,13 +241,7 @@ async fn execute_swap_split_routes(
 ) -> Result<Result<SwapSuccess, String>, C2CError> {
     let response = taco_exchange_canister_c2c_client::swap_split_routes(
         canister_id,
-        (
-            token_in,
-            token_out,
-            legs,
-            min_amount_out.into(),
-            block_index.into(),
-        ),
+        (token_in, token_out, legs, min_amount_out.into(), block_index.into()),
     )
     .await?;
 

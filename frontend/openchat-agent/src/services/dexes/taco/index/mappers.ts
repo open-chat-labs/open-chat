@@ -5,6 +5,9 @@ import type { TokenSwapPool } from "openchat-shared";
 // Every TokenSwapPool we emit shares the same canisterId (the exchange) — OC's
 // pool registry keys by (dex, canisterId, token0, token1) so this is fine.
 export const TACO_EXCHANGE_CANISTER_ID = "qioex-5iaaa-aaaan-q52ba-cai";
+// TACO's checkReceive validates incoming ICRC1 deposits against this treasury
+// canister, not the exchange canister itself.
+export const TACO_TREASURY_CANISTER_ID = "qbnpl-laaaa-aaaan-q52aq-cai";
 
 export function getAllAMMPoolsResponse(candid: ApiGetAllAMMPoolsResponse): TokenSwapPool[] {
     return candid.map((p) => ({

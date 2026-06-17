@@ -1039,7 +1039,7 @@ export function apiExchangeArgs(args: ExchangeTokenSwapArgs): UserSwapTokensExch
             },
         };
     }
-    throw new UnsupportedValueError("Unexpected dex", args);
+    throw new UnsupportedValueError("Unexpected dex", (args as { dex: string }).dex as never);
 }
 
 export function claimDailyChitResponse(value: UserClaimDailyChitResponse): ClaimDailyChitResponse {

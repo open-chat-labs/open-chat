@@ -261,6 +261,7 @@ import { measure } from "./common/profiling";
 import { CommunityClient } from "./community/community.client";
 import { DataClient } from "./data/data.client";
 import { DexesAgent } from "./dexes";
+import { TACO_TREASURY_CANISTER_ID } from "./dexes/taco/index/mappers";
 import { callBotCommandEndpoint } from "./externalBot/externalBot";
 import { GroupClient } from "./group/group.client";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
@@ -3594,13 +3595,6 @@ export class OpenChatAgent extends EventTarget {
                 if (pool === undefined) {
                     return Promise.reject("Cannot find a matching pool");
                 }
-
-                // TACO's checkReceive validates incoming ICRC1 deposits
-                // against this treasury canister, not the exchange canister
-                // itself. Hardcoded because every TacoIndexClient pool shares
-                // the same fixed treasury principal — the frontend doesn't
-                // derive it from the pool listing.
-                const TACO_TREASURY_CANISTER_ID = "qbnpl-laaaa-aaaan-q52aq-cai";
 
                 const exchangeArgs: ExchangeTokenSwapArgs =
                     dex === "taco"

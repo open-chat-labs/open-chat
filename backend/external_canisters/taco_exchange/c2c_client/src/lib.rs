@@ -35,10 +35,7 @@ pub async fn get_expected_receive_amount_batch_multi_optimal(
     .await
 }
 
-pub async fn swap_multi_hop(
-    canister_id: CanisterId,
-    args: swap_multi_hop::Args,
-) -> Result<swap_multi_hop::Response, C2CError> {
+pub async fn swap_multi_hop(canister_id: CanisterId, args: swap_multi_hop::Args) -> Result<swap_multi_hop::Response, C2CError> {
     canister_client::make_c2c_call(
         canister_id,
         "swapMultiHop",
