@@ -184,7 +184,10 @@
         switch (dex) {
             case "icpswap":
                 return "ICPSwap";
+            case "taco":
+                return "TACO";
         }
+        return dex;
     }
 
     function loadSwaps(ledger: string) {

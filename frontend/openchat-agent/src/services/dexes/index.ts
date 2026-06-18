@@ -1,6 +1,7 @@
 import { AnonymousIdentity, type HttpAgent, type Identity } from "@icp-sdk/core/agent";
 import type { DexId, TokenSwapPool } from "openchat-shared";
 import { IcpSwapIndexClient } from "./icpSwap/index/icpSwap.index.client";
+import { TacoIndexClient } from "./taco/index/taco.index.client";
 
 const TEN_MINUTES = 10 * 60 * 1000;
 
@@ -13,6 +14,7 @@ export class DexesAgent {
         this._identity = new AnonymousIdentity();
         this._swapIndexClients = {
             icpswap: new IcpSwapIndexClient(this._identity, this.agent),
+            taco: new TacoIndexClient(this._identity, this.agent),
         };
     }
 

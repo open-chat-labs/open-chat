@@ -261,6 +261,7 @@ import { measure } from "./common/profiling";
 import { CommunityClient } from "./community/community.client";
 import { DataClient } from "./data/data.client";
 import { DexesAgent } from "./dexes";
+import { TACO_TREASURY_CANISTER_ID } from "./dexes/taco/index/mappers";
 import { callBotCommandEndpoint } from "./externalBot/externalBot";
 import { GroupClient } from "./group/group.client";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
@@ -3595,11 +3596,18 @@ export class OpenChatAgent extends EventTarget {
                     return Promise.reject("Cannot find a matching pool");
                 }
 
-                const exchangeArgs: ExchangeTokenSwapArgs = {
-                    dex,
-                    swapCanisterId: pool.canisterId,
-                    zeroForOne: pool.token0 === inputTokenDetails.ledger,
-                };
+                const exchangeArgs: ExchangeTokenSwapArgs =
+                    dex === "taco"
+                        ? {
+                              dex: "taco",
+                              swapCanisterId: pool.canisterId,
+                              treasuryCanisterId: TACO_TREASURY_CANISTER_ID,
+                          }
+                        : {
+                              dex,
+                              swapCanisterId: pool.canisterId,
+                              zeroForOne: pool.token0 === inputTokenDetails.ledger,
+                          };
 
                 return this.userClient.swapTokens(
                     swapId,
