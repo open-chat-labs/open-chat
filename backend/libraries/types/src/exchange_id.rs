@@ -8,6 +8,8 @@ use ts_export::ts_export;
 pub enum ExchangeId {
     ICPSwap,
     Taco,
+    Sonic,
+    KongSwap,
 }
 
 impl Display for ExchangeId {
@@ -15,6 +17,8 @@ impl Display for ExchangeId {
         match self {
             ExchangeId::ICPSwap => f.write_str("ICPSwap"),
             ExchangeId::Taco => f.write_str("Taco"),
+            ExchangeId::Sonic => f.write_str("Sonic"),
+            ExchangeId::KongSwap => f.write_str("KongSwap"),
         }
     }
 }

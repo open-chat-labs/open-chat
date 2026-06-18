@@ -268,6 +268,7 @@ fn build_swap_client(args: &Args, state: &RuntimeState) -> Box<dyn SwapClient> {
             input_token,
             output_token,
         )),
+        _ => unimplemented!(),
     }
 }
 
