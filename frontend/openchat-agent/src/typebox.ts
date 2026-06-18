@@ -517,7 +517,7 @@ export const OgPreviewImage = Type.Object({
 });
 
 export type ExchangeId = Static<typeof ExchangeId>;
-export const ExchangeId = Type.Literal("ICPSwap");
+export const ExchangeId = Type.Union([Type.Literal("ICPSwap"), Type.Literal("Taco")]);
 
 export type ProposalDecisionStatus = Static<typeof ProposalDecisionStatus>;
 export const ProposalDecisionStatus = Type.Union([
@@ -6662,10 +6662,21 @@ export const UserSetProfileBackgroundArgs = Type.Object({
     profile_background: Type.Optional(Document),
 });
 
-export type UserSwapTokensExchangeArgs = Static<typeof UserSwapTokensExchangeArgs>;
-export const UserSwapTokensExchangeArgs = Type.Object({
-    ICPSwap: UserSwapTokensExchangeSwapArgs,
+export type UserSwapTokensTacoArgs = Static<typeof UserSwapTokensTacoArgs>;
+export const UserSwapTokensTacoArgs = Type.Object({
+    swap_canister_id: TSPrincipal,
+    treasury_canister_id: TSPrincipal,
 });
+
+export type UserSwapTokensExchangeArgs = Static<typeof UserSwapTokensExchangeArgs>;
+export const UserSwapTokensExchangeArgs = Type.Union([
+    Type.Object({
+        ICPSwap: UserSwapTokensExchangeSwapArgs,
+    }),
+    Type.Object({
+        Taco: UserSwapTokensTacoArgs,
+    }),
+]);
 
 export type UserSwapTokensArgs = Static<typeof UserSwapTokensArgs>;
 export const UserSwapTokensArgs = Type.Object({

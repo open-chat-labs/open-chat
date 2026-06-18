@@ -1023,16 +1023,23 @@ function resultOfResult<T>(
 }
 
 export function apiExchangeArgs(args: ExchangeTokenSwapArgs): UserSwapTokensExchangeArgs {
-    const value = {
-        swap_canister_id: principalStringToBytes(args.swapCanisterId),
-        zero_for_one: args.zeroForOne,
-    };
     if (args.dex === "icpswap") {
         return {
-            ICPSwap: value,
+            ICPSwap: {
+                swap_canister_id: principalStringToBytes(args.swapCanisterId),
+                zero_for_one: args.zeroForOne,
+            },
         };
     }
-    throw new UnsupportedValueError("Unexpected dex", args.dex);
+    if (args.dex === "taco") {
+        return {
+            Taco: {
+                swap_canister_id: principalStringToBytes(args.swapCanisterId),
+                treasury_canister_id: principalStringToBytes(args.treasuryCanisterId),
+            },
+        };
+    }
+    throw new UnsupportedValueError("Unexpected dex", (args as { dex: string }).dex as never);
 }
 
 export function claimDailyChitResponse(value: UserClaimDailyChitResponse): ClaimDailyChitResponse {

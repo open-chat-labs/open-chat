@@ -1,0 +1,9 @@
+[package]
+name = "taco_exchange_canister"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+candid = { workspace = true }
+serde = { workspace = true }
+types = { path = "../../../libraries/types" }

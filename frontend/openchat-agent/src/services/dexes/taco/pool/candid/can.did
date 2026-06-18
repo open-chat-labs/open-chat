@@ -1,0 +1,30 @@
+// Trimmed candid for the TACO exchange — only the slice OpenChat queries for
+// per-pool quotes. Full canister exposed at:
+// https://dashboard.internetcomputer.org/canister/qioex-5iaaa-aaaan-q52ba-cai
+//
+// OC uses getExpectedReceiveAmountBatchMultiOptimal — TACO runs the 10-fraction
+// probe grid AND the 2/3-leg split-route optimizer internally and returns the
+// chosen plan. One source of truth on the canister side.
+
+type SwapHop = record { tokenIn : text; tokenOut : text };
+
+type OptimalSwapLeg = record {
+  bp : nat;
+  expectedBuyAmount : nat;
+  route : vec SwapHop;
+  routeDescription : text;
+};
+
+type OptimalSwapPlan = record {
+  expectedBuyAmount : nat;
+  fee : nat;
+  priceImpact : float64;
+  canFulfillFully : bool;
+  tradingFeeBps : nat;
+  routeDescription : text;
+  legs : vec OptimalSwapLeg;
+};
+
+service : {
+  getExpectedReceiveAmountBatchMultiOptimal: (text, text, nat) -> (OptimalSwapPlan) query;
+}
