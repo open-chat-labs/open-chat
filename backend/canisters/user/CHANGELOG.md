@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Added TACO as a swap provider ([#8979](https://github.com/open-chat-labs/open-chat/pull/8979))
+- Add TACO as a swap provider ([#8979](https://github.com/open-chat-labs/open-chat/pull/8979))
 
 ### Changed
 
