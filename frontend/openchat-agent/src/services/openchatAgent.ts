@@ -143,6 +143,7 @@ import type {
     SetBioResponse,
     SetCommunityModerationFlagsResponse,
     SetDisplayNameResponse,
+    SetGroupModerationFlagsResponse,
     SetGroupUpgradeConcurrencyResponse,
     SetMemberDisplayNameResponse,
     SetMessageReminderResponse,
@@ -3228,6 +3229,15 @@ export class OpenChatAgent extends EventTarget {
         if (offline()) return Promise.resolve("offline");
 
         return this._groupIndexClient.setCommunityModerationFlags(communityId, flags);
+    }
+
+    setGroupModerationFlags(
+        groupId: string,
+        flags: number,
+    ): Promise<SetGroupModerationFlagsResponse> {
+        if (offline()) return Promise.resolve("offline");
+
+        return this._groupIndexClient.setGroupModerationFlags(groupId, flags);
     }
 
     setGroupUpgradeConcurrency(value: number): Promise<SetGroupUpgradeConcurrencyResponse> {
