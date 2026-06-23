@@ -12,8 +12,10 @@ export type ModelModality = "text" | "image";
 
 // Which native backend can load/run a given model. Pluggable — new backends can be added without
 // changing the catalog or inference contract. A catalog entry declares its runtime so the client can
-// match it against the backends the current build supports.
-export type ModelRuntime = "mediapipe-litert" | "llama-cpp";
+// match it against the backends the current build supports. (Runtime selection: llama.cpp via the
+// `llama-cpp-2` crate is the primary target — Gemma 3 text+image via GGUF + mmproj, cross-platform GPU
+// incl. Vulkan; mistral.rs is the pure-Rust fallback.)
+export type ModelRuntime = "llama-cpp" | "mistral-rs";
 
 export interface ModelFile {
     // Publicly reachable download URL (the catalog is BYO-model — files are not hosted by OpenChat).
