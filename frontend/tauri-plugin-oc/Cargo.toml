@@ -10,6 +10,8 @@ futures-util = "0.3"
 mime_guess = "2.0"
 reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls"] }
 semver = "1.0"
+sha2 = "0.10"
+hex = "0.4"
 serde = { workspace = true }
 serde_json = { workspace = true }
 tauri = { workspace = true }

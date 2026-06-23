@@ -187,3 +187,38 @@ pub(crate) async fn save_media<R: Runtime>(
 
     Ok(())
 }
+
+#[command]
+pub(crate) async fn download_model<R: Runtime>(
+    app: AppHandle<R>,
+    payload: DownloadModelRequest,
+) -> std::result::Result<(), String> {
+    crate::model_manager::ModelManager::new(app)
+        .download_model(payload)
+        .await
+}
+
+#[command]
+pub(crate) async fn list_local_models<R: Runtime>(
+    app: AppHandle<R>,
+) -> std::result::Result<Vec<LocalModel>, String> {
+    crate::model_manager::ModelManager::new(app).list_local_models()
+}
+
+#[command]
+pub(crate) async fn delete_model<R: Runtime>(
+    app: AppHandle<R>,
+    payload: DeleteModelRequest,
+) -> std::result::Result<(), String> {
+    crate::model_manager::ModelManager::new(app).delete_model(&payload.model_id)
+}
+
+#[command]
+pub(crate) async fn infer<R: Runtime>(
+    app: AppHandle<R>,
+    payload: InferRequest,
+) -> std::result::Result<InferResponse, String> {
+    crate::model_manager::ModelManager::new(app)
+        .infer(payload)
+        .await
+}

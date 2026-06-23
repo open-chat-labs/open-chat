@@ -16,6 +16,7 @@ mod mobile;
 
 mod commands;
 mod error;
+mod model_manager;
 mod models;
 mod update_manager;
 
@@ -56,6 +57,10 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
         commands::disable_viewport_resize,
         commands::save_media,
         commands::update_chat_shortcuts,
+        commands::download_model,
+        commands::list_local_models,
+        commands::delete_model,
+        commands::infer,
     ]);
 
     // Only register the custom protocol handler when not in debug mode

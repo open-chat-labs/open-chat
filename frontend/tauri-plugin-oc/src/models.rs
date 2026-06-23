@@ -115,3 +115,54 @@ pub struct UpdateChatShortcutsRequest {
 pub struct UpdateChatShortcutsResponse {
     pub count: usize,
 }
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ModelFileSpec {
+    pub url: String,
+    pub sha256: String,
+    pub bytes: u64,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DownloadModelRequest {
+    pub model_id: String,
+    pub runtime: String,
+    pub files: Vec<ModelFileSpec>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LocalModel {
+    pub model_id: String,
+    pub runtime: String,
+    pub size_bytes: u64,
+    pub path: String,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeleteModelRequest {
+    pub model_id: String,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InferRequest {
+    pub model_id: String,
+    pub runtime: String,
+    pub prompt: String,
+    #[serde(default)]
+    pub image: Option<Vec<u8>>,
+    #[serde(default)]
+    pub text: Option<String>,
+    #[serde(default)]
+    pub max_tokens: Option<u32>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InferResponse {
+    pub text: String,
+}
