@@ -26,6 +26,7 @@ export * from "./logging";
 export * from "./marketMaker";
 export * from "./newGroup";
 export * from "./notifications";
+export * from "./onDeviceModel";
 export * from "./oneSec";
 export * from "./online";
 export * from "./optionUpdate";
