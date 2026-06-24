@@ -248,3 +248,97 @@ fn find_mmproj(dir: &Path) -> Option<PathBuf> {
     }
     None
 }
+
+#[cfg(all(test, feature = "inference"))]
+mod cycle_tests {
+    use super::*;
+    use crate::models::LocalModel;
+
+    const MODEL_ID: &str = "gemma-4-e2b-it-q4";
+    const LM_URL: &str =
+        "https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/main/gemma-4-E2B-it-Q4_K_M.gguf";
+    const LM_SHA: &str = "9378bc471710229ef165709b62e34bfb62231420ddaf6d729e727305b5b8672d";
+    const MMPROJ_URL: &str =
+        "https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/main/mmproj-F16.gguf";
+    const MMPROJ_SHA: &str = "140be8d7849741f88c50757d529b84373ee8e27052cc2236855b537f4a8215fa";
+
+    // Hardlink (instant, no copy) the real file into the model dir, falling back to a copy across volumes.
+    fn seed(src: &str, dst: &Path) {
+        if fs::hard_link(src, dst).is_err() {
+            fs::copy(src, dst).expect("seed file");
+        }
+    }
+
+    // Drives the WHOLE on-device cycle on the PC, against a temp model dir, using the SAME standalone
+    // functions the ModelManager methods call:
+    //   verify (download_model's SHA-256 step, against the catalog's own hashes) -> write/read the
+    //   model.json manifest (download_model / list_local_models) -> find_gguf + infer (text + structured
+    //   JSON) -> delete.
+    // The thin ModelManager wrappers add only Tauri app_data_dir resolution + progress events on top;
+    // those need a bundled Tauri app context that a bare `cargo test` can't load on Windows (webview DLL),
+    // so they run in the real app, not here. Skipped unless the two model env vars point at real files.
+    #[test]
+    fn full_model_cycle() {
+        let (Ok(lm), Ok(mmproj)) = (
+            std::env::var("OC_TEST_MODEL_GGUF"),
+            std::env::var("OC_TEST_MMPROJ_GGUF"),
+        ) else {
+            eprintln!("OC_TEST_MODEL_GGUF / OC_TEST_MMPROJ_GGUF not set — skipping full cycle test");
+            return;
+        };
+
+        let dir = std::env::temp_dir().join("oc_cycle_test").join(sanitize(MODEL_ID));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).expect("create model dir");
+        let lm_path = dir.join(file_name_from_url(LM_URL));
+        let mmproj_path = dir.join(file_name_from_url(MMPROJ_URL));
+        seed(&lm, &lm_path);
+        seed(&mmproj, &mmproj_path);
+
+        // 1. Verify the seeded files against the CATALOG's SHA-256s (proves the catalog hashes are correct
+        //    and is exactly download_model's verify step).
+        assert!(verify_sha256(&lm_path, LM_SHA).expect("hash lm"), "LM sha256 must match catalog");
+        assert!(
+            verify_sha256(&mmproj_path, MMPROJ_SHA).expect("hash mmproj"),
+            "mmproj sha256 must match catalog"
+        );
+
+        // 2. Manifest round-trip (download_model writes model.json; list_local_models reads it).
+        let total = 3_106_736_256u64 + 985_654_080u64;
+        let manifest = LocalModel {
+            model_id: MODEL_ID.to_string(),
+            runtime: "llama-cpp".to_string(),
+            size_bytes: total,
+            path: dir.to_string_lossy().to_string(),
+        };
+        fs::write(dir.join("model.json"), serde_json::to_vec(&manifest).unwrap()).unwrap();
+        let listed: LocalModel =
+            serde_json::from_slice(&fs::read(dir.join("model.json")).unwrap()).unwrap();
+        assert_eq!(listed.model_id, MODEL_ID);
+        assert_eq!(listed.size_bytes, total);
+
+        // 3. find_gguf picks the LM (not the mmproj), then infer — plain text.
+        let gguf = find_gguf(&dir).expect("find_gguf should locate the LM");
+        assert_eq!(gguf, lm_path);
+        let text = crate::inference::run_text_inference(
+            &gguf,
+            "In one short sentence, what is a bicycle?",
+            48,
+            None,
+        )
+        .expect("text infer");
+        eprintln!("[cycle] text => {text}");
+        assert!(!text.trim().is_empty(), "text inference should produce output");
+
+        // 4. infer — structured (JSON schema).
+        let schema = r#"{"type":"object","properties":{"animal":{"type":"string"}},"required":["animal"]}"#;
+        let structured = crate::inference::run_text_inference(&gguf, "Name one animal.", 64, Some(schema))
+            .expect("structured infer");
+        eprintln!("[cycle] structured => {structured}");
+        assert!(structured.contains('{'), "structured output should contain JSON");
+
+        // 5. delete — and confirm it's gone.
+        fs::remove_dir_all(&dir).expect("delete model dir");
+        assert!(!dir.exists(), "model dir should be gone after delete");
+    }
+}
