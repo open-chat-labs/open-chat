@@ -32,6 +32,8 @@ export type InferRequest = {
     image?: number[];
     text?: string;
     maxTokens?: number;
+    // A JSON Schema (already serialised to a string) the output should conform to.
+    responseSchema?: string;
 };
 
 export type InferResponse = {

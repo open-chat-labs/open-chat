@@ -82,6 +82,22 @@ fn tokenize_prompt(model: &LlamaModel, user_text: &str) -> Result<Vec<LlamaToken
     Ok(tokens)
 }
 
+/// Augment the user message to request a schema-conforming JSON response. This is deliberately
+/// prompt-based rather than grammar-constrained: llama.cpp's low-level grammar sampler hard-aborts
+/// (`GGML_ASSERT(!stacks.empty())`, a spot llama.cpp itself flags `// REVIEW`) when driven token by
+/// token through this crate, which would crash the whole client. So `responseSchema` is best-effort —
+/// the model is asked for JSON and the caller validates the result (the contract documents this).
+/// Returns the prompt unchanged when no schema is supplied.
+fn augment_prompt_for_schema(user_text: &str, response_schema: Option<&str>) -> String {
+    match response_schema {
+        Some(schema) if !schema.trim().is_empty() => format!(
+            "{user_text}\n\nReply with ONLY a single JSON object that conforms to this JSON Schema. \
+             Output nothing before or after the JSON.\n\nJSON Schema:\n{schema}"
+        ),
+        _ => user_text.to_string(),
+    }
+}
+
 /// Greedy-decode up to `max_tokens` continuation tokens. The context must already be prefilled (prompt,
 /// or image + prompt) with logits computed for the last position; `n_start` is the next sequence
 /// position to write. Stops at the model's end-of-generation token.
@@ -119,9 +135,15 @@ fn generate(
     Ok(output)
 }
 
-/// Load a GGUF model and generate up to `max_tokens` tokens for `prompt`. Synchronous + compute-heavy —
-/// callers run it on a blocking thread.
-pub fn run_text_inference(model_path: &Path, prompt: &str, max_tokens: u32) -> Result<String, String> {
+/// Load a GGUF model and generate up to `max_tokens` tokens for `prompt`. When `response_schema` (a JSON
+/// Schema string) is supplied the model is asked (best-effort) to return JSON conforming to it.
+/// Synchronous + compute-heavy — callers run it on a blocking thread.
+pub fn run_text_inference(
+    model_path: &Path,
+    prompt: &str,
+    max_tokens: u32,
+    response_schema: Option<&str>,
+) -> Result<String, String> {
     let backend = LlamaBackend::init().map_err(|e| format!("init backend: {e}"))?;
     let model = LlamaModel::load_from_file(&backend, model_path, &LlamaModelParams::default())
         .map_err(|e| format!("load model: {e}"))?;
@@ -131,7 +153,8 @@ pub fn run_text_inference(model_path: &Path, prompt: &str, max_tokens: u32) -> R
         .new_context(&backend, ctx_params)
         .map_err(|e| format!("create context: {e}"))?;
 
-    let tokens = tokenize_prompt(&model, prompt)?;
+    let prompt = augment_prompt_for_schema(prompt, response_schema);
+    let tokens = tokenize_prompt(&model, &prompt)?;
 
     // Prefill the prompt, computing logits only for the last token.
     let mut batch = LlamaBatch::new(tokens.len().max(1), 1);
@@ -155,6 +178,7 @@ pub fn run_multimodal_inference(
     prompt: &str,
     image_bytes: &[u8],
     max_tokens: u32,
+    response_schema: Option<&str>,
 ) -> Result<String, String> {
     let backend = LlamaBackend::init().map_err(|e| format!("init backend: {e}"))?;
     let model = LlamaModel::load_from_file(&backend, model_path, &LlamaModelParams::default())
@@ -181,7 +205,11 @@ pub fn run_multimodal_inference(
 
     // Put mtmd's media marker where the image belongs, then wrap in the model's chat template. mtmd
     // replaces the marker with the projected image tokens during tokenize().
-    let user_content = format!("{}\n{}", mtmd_default_marker(), prompt);
+    let user_content = format!(
+        "{}\n{}",
+        mtmd_default_marker(),
+        augment_prompt_for_schema(prompt, response_schema)
+    );
     let formatted = render_chat_prompt(&model, &user_content).unwrap_or(user_content);
     let input = MtmdInputText {
         text: formatted,
@@ -214,13 +242,57 @@ mod tests {
             eprintln!("OC_TEST_MODEL_GGUF not set — skipping text inference smoke test");
             return;
         };
-        let output =
-            run_text_inference(Path::new(&path), "In one short sentence, what is a bicycle?", 64)
-                .expect("text inference failed");
+        let output = run_text_inference(
+            Path::new(&path),
+            "In one short sentence, what is a bicycle?",
+            64,
+            None,
+        )
+        .expect("text inference failed");
         // Also write to a file — stderr gets mangled under PowerShell's native-command capture.
         std::fs::write(std::env::temp_dir().join("oc_inference_smoke.txt"), &output).ok();
         eprintln!("=== text output ===\n{output}\n===================");
         assert!(!output.trim().is_empty(), "expected non-empty generated text");
+    }
+
+    // Extract the first balanced-ish JSON object from possibly prose/fence-wrapped text.
+    fn extract_json_object(s: &str) -> Option<String> {
+        let start = s.find('{')?;
+        let end = s.rfind('}')?;
+        (end > start).then(|| s[start..=end].to_string())
+    }
+
+    // Structured-output smoke test (best-effort): with a JSON Schema the model is asked to return matching
+    // JSON. Skipped unless OC_TEST_MODEL_GGUF is set.
+    #[test]
+    fn structured_output_smoke() {
+        let Ok(path) = std::env::var("OC_TEST_MODEL_GGUF") else {
+            eprintln!("OC_TEST_MODEL_GGUF not set — skipping structured output smoke test");
+            return;
+        };
+        let schema = r#"{
+            "type": "object",
+            "properties": {
+                "animal": { "type": "string" },
+                "legs": { "type": "integer" }
+            },
+            "required": ["animal", "legs"]
+        }"#;
+        let output = run_text_inference(
+            Path::new(&path),
+            "Describe a dog with its number of legs.",
+            128,
+            Some(schema),
+        )
+        .expect("structured inference failed");
+        std::fs::write(std::env::temp_dir().join("oc_structured_smoke.txt"), &output).ok();
+        eprintln!("=== structured output ===\n{output}\n=========================");
+        // Best-effort: pull the JSON object out of the (possibly prose-wrapped) output and parse it.
+        let json = extract_json_object(&output).expect("expected a JSON object in the output");
+        let value: serde_json::Value =
+            serde_json::from_str(&json).expect("extracted JSON should parse");
+        assert!(value.get("animal").is_some(), "missing 'animal' key");
+        assert!(value.get("legs").is_some(), "missing 'legs' key");
     }
 
     // Vision smoke test. Skipped unless OC_TEST_MODEL_GGUF, OC_TEST_MMPROJ_GGUF and OC_TEST_IMAGE are
@@ -243,6 +315,7 @@ mod tests {
             "What is in this image? Answer in one short sentence.",
             &bytes,
             64,
+            None,
         )
         .expect("multimodal inference failed");
         std::fs::write(std::env::temp_dir().join("oc_vision_smoke.txt"), &output).ok();

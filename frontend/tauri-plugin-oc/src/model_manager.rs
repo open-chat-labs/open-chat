@@ -153,6 +153,7 @@ impl<R: Runtime> ModelManager<R> {
             let gguf = find_gguf(&dir).ok_or("no GGUF model file found for this model")?;
             let prompt = req.prompt.clone();
             let max_tokens = req.max_tokens.unwrap_or(512);
+            let schema = req.response_schema.clone();
             // llama.cpp inference is synchronous and compute-heavy — keep it off the async runtime.
             // With an image, route through the multimodal path (mtmd + the model's mmproj projector);
             // otherwise text-only.
@@ -162,13 +163,20 @@ impl<R: Runtime> ModelManager<R> {
                         "this model has no vision projector (mmproj) file; it cannot process images",
                     )?;
                     tokio::task::spawn_blocking(move || {
-                        crate::inference::run_multimodal_inference(&gguf, &mmproj, &prompt, &image, max_tokens)
+                        crate::inference::run_multimodal_inference(
+                            &gguf,
+                            &mmproj,
+                            &prompt,
+                            &image,
+                            max_tokens,
+                            schema.as_deref(),
+                        )
                     })
                     .await
                     .map_err(|e| e.to_string())??
                 }
                 _ => tokio::task::spawn_blocking(move || {
-                    crate::inference::run_text_inference(&gguf, &prompt, max_tokens)
+                    crate::inference::run_text_inference(&gguf, &prompt, max_tokens, schema.as_deref())
                 })
                 .await
                 .map_err(|e| e.to_string())??,

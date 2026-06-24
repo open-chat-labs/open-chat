@@ -45,6 +45,10 @@ export async function inferOnDevice(request: InferenceRequest): Promise<Inferenc
             image: request.image !== undefined ? Array.from(request.image) : undefined,
             text: request.text,
             maxTokens: request.maxTokens,
+            responseSchema:
+                request.responseSchema !== undefined
+                    ? JSON.stringify(request.responseSchema)
+                    : undefined,
         });
         return { kind: "ok", text: res.text };
     } catch (err) {

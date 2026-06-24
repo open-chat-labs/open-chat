@@ -159,6 +159,10 @@ pub struct InferRequest {
     pub text: Option<String>,
     #[serde(default)]
     pub max_tokens: Option<u32>,
+    // A JSON Schema (serialised) the output must conform to. Best-effort: constrains generation via a
+    // grammar when the runtime supports it.
+    #[serde(default)]
+    pub response_schema: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
