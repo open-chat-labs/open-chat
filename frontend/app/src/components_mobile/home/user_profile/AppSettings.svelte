@@ -70,6 +70,14 @@
                     "You can earn rewards in the form of CHIT while using the app, and then exchange your hard earned CHIT for exclusive features.",
                 )} />
 
+            <LinkedCard
+                onClick={() => publish("userProfileModels")}
+                Icon={RobotOutline}
+                title={i18nKey("On-device models")}
+                info={i18nKey(
+                    "Download and manage AI models that run privately on your device.",
+                )} />
+
             <Container padding={["zero", "xl"]}>
                 <BodySmall fontWeight={"bold"} colour={"textSecondary"}>
                     <Translatable resourceKey={i18nKey("Advanced options")}></Translatable>
