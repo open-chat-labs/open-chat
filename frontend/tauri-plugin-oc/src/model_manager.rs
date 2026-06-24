@@ -144,11 +144,28 @@ impl<R: Runtime> ModelManager<R> {
         Ok(())
     }
 
-    pub async fn infer(&self, _req: InferRequest) -> Result<InferResponse, String> {
-        // No on-device inference runtime is integrated in this build yet. A backend (MediaPipe/LiteRT or
-        // llama.cpp) plugs in here behind a trait once selected (deliverable A6); until then the JS facade
-        // reports the capability as unavailable and never calls this.
-        Err("no on-device inference runtime is integrated in this build".to_string())
+    pub async fn infer(&self, req: InferRequest) -> Result<InferResponse, String> {
+        #[cfg(feature = "inference")]
+        {
+            let dir = self
+                .model_dir(&req.model_id)
+                .ok_or("could not resolve model dir")?;
+            let gguf = find_gguf(&dir).ok_or("no GGUF model file found for this model")?;
+            let prompt = req.prompt.clone();
+            let max_tokens = req.max_tokens.unwrap_or(512);
+            // llama.cpp inference is synchronous and compute-heavy — keep it off the async runtime.
+            let text = tokio::task::spawn_blocking(move || crate::inference::run_text_inference(&gguf, &prompt, max_tokens))
+                .await
+                .map_err(|e| e.to_string())??;
+            // NOTE: image input (req.image, via llama.cpp `mtmd` + the model's mmproj projector) is the
+            // next step; this path is text-only for now.
+            Ok(InferResponse { text })
+        }
+        #[cfg(not(feature = "inference"))]
+        {
+            let _ = req;
+            Err("this build was compiled without the on-device inference runtime (enable the `inference` cargo feature)".to_string())
+        }
     }
 }
 
@@ -181,4 +198,17 @@ fn verify_sha256(path: &Path, expected: &str) -> Result<bool, String> {
     let mut hasher = Sha256::new();
     std::io::copy(&mut file, &mut hasher).map_err(|e| e.to_string())?;
     Ok(hex::encode(hasher.finalize()).eq_ignore_ascii_case(expected))
+}
+
+// The main LM GGUF for a downloaded model (the vision projector mmproj is a separate file we skip here).
+#[cfg(feature = "inference")]
+fn find_gguf(dir: &Path) -> Option<PathBuf> {
+    for entry in fs::read_dir(dir).ok()?.flatten() {
+        let path = entry.path();
+        let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+        if path.extension().and_then(|e| e.to_str()) == Some("gguf") && !name.contains("mmproj") {
+            return Some(path);
+        }
+    }
+    None
 }

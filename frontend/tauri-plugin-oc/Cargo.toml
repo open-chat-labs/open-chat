@@ -12,6 +12,7 @@ reqwest = { version = "0.12", default-features = false, features = ["json", "str
 semver = "1.0"
 sha2 = "0.10"
 hex = "0.4"
+llama-cpp-2 = { version = "0.1.150", optional = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tauri = { workspace = true }
@@ -25,3 +26,6 @@ tauri-plugin = { version = "2.4.0", features = ["build"] }
 
 [features]
 store = []
+# Enables the on-device inference runtime (llama.cpp via llama-cpp-2). Off by default so normal/dev builds
+# stay fast and don't require the C++/cmake/libclang toolchain; the shipping app build turns it on.
+inference = ["dep:llama-cpp-2"]

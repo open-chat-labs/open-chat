@@ -16,6 +16,8 @@ mod mobile;
 
 mod commands;
 mod error;
+#[cfg(feature = "inference")]
+mod inference;
 mod model_manager;
 mod models;
 mod update_manager;
