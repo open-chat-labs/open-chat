@@ -10,13 +10,13 @@
 
 export type ModelModality = "text" | "image";
 
-// Which native backend can load/run a given model. Pluggable — new backends can be added without
-// changing the catalog or inference contract. A catalog entry declares its runtime so the client can
-// match it against the backends the current build supports. (Runtime selection for the main model
-// Gemma 4: mistral.rs is primary — native day-0 multimodal (text+image) in pure Rust, single bundle, no
-// separate mmproj; llama.cpp via `llama-cpp-2` is the secondary/fallback — proven, broad GPU incl. Vulkan,
-// GGUF + mmproj, best on the small E2B/E4B variants.)
-export type ModelRuntime = "mistral-rs" | "llama-cpp";
+// Which native backend can load/run a given model. Pluggable — this is a named, extensible union so more
+// backends can be added without changing the catalog or inference contract; a catalog entry declares its
+// runtime so the client can match it against the backends the current build supports. Chosen runtime:
+// llama.cpp via the `llama-cpp-2` crate, on BOTH desktop and mobile — Gemma 4 text+image via a GGUF model +
+// an mmproj vision projector; it compiles uniformly into the Rust plugin (desktop MSVC, Android NDK, iOS
+// XCFramework), so one runtime + one model format serves every platform.
+export type ModelRuntime = "llama-cpp";
 
 export interface ModelFile {
     // Publicly reachable download URL (the catalog is BYO-model — files are not hosted by OpenChat).
