@@ -154,11 +154,25 @@ impl<R: Runtime> ModelManager<R> {
             let prompt = req.prompt.clone();
             let max_tokens = req.max_tokens.unwrap_or(512);
             // llama.cpp inference is synchronous and compute-heavy — keep it off the async runtime.
-            let text = tokio::task::spawn_blocking(move || crate::inference::run_text_inference(&gguf, &prompt, max_tokens))
+            // With an image, route through the multimodal path (mtmd + the model's mmproj projector);
+            // otherwise text-only.
+            let text = match req.image {
+                Some(image) if !image.is_empty() => {
+                    let mmproj = find_mmproj(&dir).ok_or(
+                        "this model has no vision projector (mmproj) file; it cannot process images",
+                    )?;
+                    tokio::task::spawn_blocking(move || {
+                        crate::inference::run_multimodal_inference(&gguf, &mmproj, &prompt, &image, max_tokens)
+                    })
+                    .await
+                    .map_err(|e| e.to_string())??
+                }
+                _ => tokio::task::spawn_blocking(move || {
+                    crate::inference::run_text_inference(&gguf, &prompt, max_tokens)
+                })
                 .await
-                .map_err(|e| e.to_string())??;
-            // NOTE: image input (req.image, via llama.cpp `mtmd` + the model's mmproj projector) is the
-            // next step; this path is text-only for now.
+                .map_err(|e| e.to_string())??,
+            };
             Ok(InferResponse { text })
         }
         #[cfg(not(feature = "inference"))]
@@ -207,6 +221,20 @@ fn find_gguf(dir: &Path) -> Option<PathBuf> {
         let path = entry.path();
         let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
         if path.extension().and_then(|e| e.to_str()) == Some("gguf") && !name.contains("mmproj") {
+            return Some(path);
+        }
+    }
+    None
+}
+
+// The vision projector (mmproj) GGUF, present only for multimodal models that shipped one alongside
+// the language model. Identified by the conventional "mmproj" marker in the filename.
+#[cfg(feature = "inference")]
+fn find_mmproj(dir: &Path) -> Option<PathBuf> {
+    for entry in fs::read_dir(dir).ok()?.flatten() {
+        let path = entry.path();
+        let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+        if path.extension().and_then(|e| e.to_str()) == Some("gguf") && name.contains("mmproj") {
             return Some(path);
         }
     }

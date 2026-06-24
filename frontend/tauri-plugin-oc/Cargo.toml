@@ -12,7 +12,9 @@ reqwest = { version = "0.12", default-features = false, features = ["json", "str
 semver = "1.0"
 sha2 = "0.10"
 hex = "0.4"
-llama-cpp-2 = { version = "0.1.150", optional = true }
+llama-cpp-2 = { version = "0.1.150", optional = true, features = ["mtmd"] }
+minijinja = { version = "2", optional = true, features = ["macros"] }
+minijinja-contrib = { version = "2", optional = true, features = ["pycompat"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tauri = { workspace = true }
@@ -32,4 +34,7 @@ store = []
 # than the `cmake` crate understands is the latest installed (it auto-picks the newest and can panic with
 # "doesn't know how to generate cmake files for it"), pin an installed, supported toolset via the env var
 # CMAKE_GENERATOR="Visual Studio 17 2022".
-inference = ["dep:llama-cpp-2"]
+# Build the image (mtmd/CLIP) path with an optimised profile (`--release`): unoptimised debug builds of
+# llama.cpp's vision C++ are not only very slow but can abort with a stack-check failure on Windows. The
+# text path runs fine in debug; the shipping app build is release, so this is naturally satisfied.
+inference = ["dep:llama-cpp-2", "dep:minijinja", "dep:minijinja-contrib"]
