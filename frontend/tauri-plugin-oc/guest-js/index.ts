@@ -22,11 +22,13 @@ export {
     listLocalModels,
     deleteModel,
     infer,
+    onModelDownloadProgress,
     type ModelFileSpec,
     type DownloadModelRequest,
     type LocalModel,
     type InferRequest,
     type InferResponse,
+    type ModelDownloadProgress,
 } from "./commands/onDeviceModels";
 export {
     updateChatShortcuts,
