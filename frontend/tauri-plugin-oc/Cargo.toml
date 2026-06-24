@@ -28,4 +28,8 @@ tauri-plugin = { version = "2.4.0", features = ["build"] }
 store = []
 # Enables the on-device inference runtime (llama.cpp via llama-cpp-2). Off by default so normal/dev builds
 # stay fast and don't require the C++/cmake/libclang toolchain; the shipping app build turns it on.
+# Build note: requires cmake + a C/C++ compiler + libclang. On Windows, if a Visual Studio version newer
+# than the `cmake` crate understands is the latest installed (it auto-picks the newest and can panic with
+# "doesn't know how to generate cmake files for it"), pin an installed, supported toolset via the env var
+# CMAKE_GENERATOR="Visual Studio 17 2022".
 inference = ["dep:llama-cpp-2"]
