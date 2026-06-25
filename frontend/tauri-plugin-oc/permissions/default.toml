@@ -23,4 +23,8 @@ permissions = [
     "allow-get-pending-notification-tap",
     "allow-clear-all-notifications",
     "allow-delete-fcm-token",
+    "allow-download-model",
+    "allow-list-local-models",
+    "allow-delete-model",
+    "allow-infer",
 ]
