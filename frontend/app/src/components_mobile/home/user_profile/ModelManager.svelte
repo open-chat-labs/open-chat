@@ -2,10 +2,10 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { selectedModelId } from "@src/stores/onDeviceModels";
     import { defaultModelCatalog } from "@utils/modelCatalog";
+    import { isNativeClient } from "@utils/onDeviceInference";
     import { BodySmall, Button, Caption, Chip, Container, H2, Switch } from "component-lib";
-    import { OpenChat } from "openchat-client";
     import type { ModelCatalogEntry } from "openchat-shared";
-    import { getContext, onDestroy, onMount } from "svelte";
+    import { onDestroy, onMount } from "svelte";
     import { get } from "svelte/store";
     import {
         deleteModel,
@@ -17,10 +17,9 @@
     import Translatable from "../../Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
 
-    const client = getContext<OpenChat>("client");
-
-    // On-device inference runs only in the native client; degrade gracefully in the web/PWA build.
-    const native = client.isNativeApp();
+    // On-device inference runs wherever the Tauri native bridge is present (desktop + mobile); degrade
+    // gracefully in the plain web/PWA build.
+    const native = isNativeClient();
 
     // The catalog is data (currently the built-in default; could be fetched). Nothing is bundled.
     const catalog = defaultModelCatalog.models;

@@ -18,7 +18,10 @@ import { defaultModelCatalog } from "./modelCatalog";
 // matching model is downloaded and selected.
 const SUPPORTED_RUNTIMES: ModelRuntime[] = ["llama-cpp"];
 
-function isNativeClient(): boolean {
+// On-device inference runs wherever the Tauri native bridge is present (Android, iOS and desktop) — not
+// just the mobile OS targets that `OpenChat.isNativeApp()` reports. Detect the bridge directly so the UI
+// and this facade agree, and the plain web/PWA build (no bridge) degrades to "unavailable".
+export function isNativeClient(): boolean {
     return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
 
