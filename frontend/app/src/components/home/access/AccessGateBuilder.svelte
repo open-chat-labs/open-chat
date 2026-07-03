@@ -4,6 +4,7 @@
         iconSize,
         isCompositeGate,
         isLeafGate,
+        isUniquePersonGate,
         nervousSystemLookup,
         type AccessGate,
         type AccessGateConfig,
@@ -66,8 +67,13 @@
     let title = $derived(!editable ? i18nKey("access.readonlyTitle") : i18nKey("access.title"));
 
     $effect(() => {
+        // Suspended (unique person) gate rows are hidden so never report validity - treat them as
+        // valid, otherwise their unset entry would make the whole gate invalid.
+        const gates = isCompositeGate(gateConfig.gate)
+            ? gateConfig.gate.gates
+            : [gateConfig.gate];
         const isValid =
-            gateValidity.every((v) => v) &&
+            gates.every((g, i) => isUniquePersonGate(g) || gateValidity[i]) &&
             (gateConfig.expiry !== undefined ? !editable || evaluationIntervalValid : true);
 
         if (isValid !== valid) {
@@ -139,6 +145,9 @@
                         bind:valid={gateValidity[0]} />
                 {:else if isCompositeGate(gateConfig.gate)}
                     {#each gateConfig.gate.gates as subgate, i (`${subgate.kind} + ${i}`)}
+                        <!-- Unique person (DecideAI) verification is suspended - hide the row but keep
+                             it in the bound gateConfig (index i stays aligned for edit/delete). -->
+                        {#if !isUniquePersonGate(subgate)}
                         <CollapsibleCard
                             transition={false}
                             open={selectedGateIndex === i}
@@ -173,6 +182,7 @@
                                 {level}
                                 bind:valid={gateValidity[i]} />
                         </CollapsibleCard>
+                        {/if}
                     {/each}
                 {/if}
                 {#if editable}

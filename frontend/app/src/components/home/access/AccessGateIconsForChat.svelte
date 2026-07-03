@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { EnhancedAccessGate } from "openchat-client";
+    import { type EnhancedAccessGate, stripSuspendedGate } from "openchat-client";
     import AccessGateIcon from "./AccessGateIcon.svelte";
     import { mergeAccessGates } from "../../../utils/access";
 
@@ -9,10 +9,14 @@
 
     let { gates }: Props = $props();
 
-    let merged = $derived(mergeAccessGates(...gates));
+    // Drop gates that reduce to no gate once suspended (unique person) gates are stripped, so we
+    // don't render empty icons or dangling separators.
+    let merged = $derived(
+        mergeAccessGates(...gates).filter((g) => stripSuspendedGate(g).kind !== "no_gate"),
+    );
 </script>
 
-{#if gates.length > 0}
+{#if merged.length > 0}
     <div class="icons">
         {#each merged as gate, i}
             <AccessGateIcon

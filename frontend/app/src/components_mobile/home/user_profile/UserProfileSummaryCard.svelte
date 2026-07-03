@@ -32,7 +32,6 @@
     import ChitSummary from "./ChitSummary.svelte";
     import Translatable from "../../Translatable.svelte";
     import Progress from "../../Progress.svelte";
-    import Check from "svelte-material-icons/Check.svelte";
     import DiamondOutline from "svelte-material-icons/DiamondOutline.svelte";
     import Lifetime from "svelte-material-icons/DiamondStone.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
@@ -193,7 +192,7 @@
                     <Subtitle width={"hug"} colour={"textSecondary"}>@{user.username}</Subtitle>
                 </Row>
             </Column>
-            {#if user.isUniquePerson || user.diamondStatus !== "inactive"}
+            {#if user.diamondStatus !== "inactive"}
                 <Container padding={["zero", "zero"]} gap={"sm"}>
                     {#if user.diamondStatus === "active"}
                         {@render accountPill(
@@ -205,9 +204,7 @@
                     {:else if user.diamondStatus === "lifetime"}
                         {@render accountPill(Lifetime, "Lifetime member", ColourVars.gradient)}
                     {/if}
-                    {#if user.isUniquePerson}
-                        {@render accountPill(Check, "Verified account", ColourVars.secondary)}
-                    {/if}
+                    <!-- Verified account (DecideAI unique personhood) pill is suspended. -->
                 </Container>
             {/if}
         </Container>

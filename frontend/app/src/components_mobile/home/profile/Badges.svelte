@@ -3,7 +3,6 @@
     import { ColourVars, Container } from "component-lib";
     import type { DiamondMembershipStatus } from "openchat-client";
     import Diamond from "../../icons/Diamond.svelte";
-    import Verified from "../../icons/Verified.svelte";
     import ChitEarnedBadge from "./ChitEarnedBadge.svelte";
     import Streak from "./Streak.svelte";
     import BadgeContainer, { type BadgeSize } from "./BadgeContainer.svelte";
@@ -20,10 +19,10 @@
         forceStreakBadge?: boolean;
     }
 
+    // uniquePerson prop retained on Props for callers, but unused - the verified badge is suspended.
     let {
         diamondStatus = undefined,
         streak = 0,
-        uniquePerson = false,
         chitEarned = 0,
         withFingerprint = false,
         size = "default",
@@ -48,7 +47,7 @@
         {@render fingerprint()}
     {/if}
     <Diamond {size} {borderColor} status={diamondStatus} />
-    <Verified {size} {borderColor} verified={uniquePerson} />
+    <!-- Verified user (DecideAI) badge is suspended - not rendered. -->
     {#if !$disableChit || forceStreakBadge}
         <Streak {size} {borderColor} days={streak} />
         <ChitEarnedBadge {size} {borderColor} earned={chitEarned} />
