@@ -227,11 +227,16 @@ async fn check_composite_gate(gate: CompositeGate, args: CheckGateArgs) -> Check
     if !gate.and
         && let Some(gate_index) = args.composite_gate_index
     {
-        return if let Some(inner) = gate.inner.get(gate_index as usize) {
-            check_non_composite_gate(inner.clone(), args).await
-        } else {
-            CheckIfPassesGateResult::Error(OCErrorCode::InvalidRequest.with_message("Gate index out of range"))
-        };
+        match gate.inner.get(gate_index as usize) {
+            // A suspended (unique-person) gate is treated as absent, so a request that selects it
+            // must not short-circuit to Success - fall through to the filtered evaluation, which
+            // still requires a real branch. The backend is the trust boundary here.
+            Some(AccessGateNonComposite::UniquePerson) => {}
+            Some(inner) => return check_non_composite_gate(inner.clone(), args).await,
+            None => {
+                return CheckIfPassesGateResult::Error(OCErrorCode::InvalidRequest.with_message("Gate index out of range"));
+            }
+        }
     }
 
     let gate = CompositeGate {
@@ -242,7 +247,7 @@ async fn check_composite_gate(gate: CompositeGate, args: CheckGateArgs) -> Check
         return CheckIfPassesGateResult::Success(Vec::new());
     }
 
-    if let Some(result) = check_composite_gate_synchronously(gate.clone(), args.clone()) {
+    if let Some(result) = check_composite_gate_synchronously_inner(gate.clone(), args.clone()) {
         return result;
     }
 
@@ -276,6 +281,11 @@ fn check_composite_gate_synchronously(gate: CompositeGate, args: CheckGateArgs) 
     if gate.inner.is_empty() {
         return Some(CheckIfPassesGateResult::Success(Vec::new()));
     }
+    check_composite_gate_synchronously_inner(gate, args)
+}
+
+// Assumes suspended (unique-person) gates have already been filtered out of `gate.inner`.
+fn check_composite_gate_synchronously_inner(gate: CompositeGate, args: CheckGateArgs) -> Option<CheckIfPassesGateResult> {
     let count = gate.inner.len();
     let mut any_require_async = false;
     for (index, inner) in gate.inner.into_iter().enumerate() {
