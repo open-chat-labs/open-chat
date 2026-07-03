@@ -4763,9 +4763,14 @@ export class OpenChat {
 
     doesUserMeetAccessGate(gate: AccessGate): boolean {
         if (isCompositeGate(gate)) {
+            // Unique person gates are suspended and filtered out of composites: an OR then requires
+            // another branch (no one is a unique person), an AND is unaffected (everyone is). If
+            // nothing remains the gate collapses to no gate.
+            const gates = gate.gates.filter((g) => g.kind !== "unique_person_gate");
+            if (gates.length === 0) return true;
             return gate.operator === "and"
-                ? gate.gates.every((g) => this.doesUserMeetAccessGate(g))
-                : gate.gates.some((g) => this.doesUserMeetAccessGate(g));
+                ? gates.every((g) => this.doesUserMeetAccessGate(g))
+                : gates.some((g) => this.doesUserMeetAccessGate(g));
         } else {
             if (gate.kind === "diamond_gate") {
                 return currentUserStore.value.diamondStatus.kind !== "inactive";

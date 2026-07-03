@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Suspend "verified user" (unique person) gating - the gate now always passes ([#9061](https://github.com/open-chat-labs/open-chat/pull/9061))
+- Suspend "verified user" (unique person) gating - the gate is ignored, filtered out of composite gates so an OR gate requires another branch ([#9061](https://github.com/open-chat-labs/open-chat/pull/9061))
 - Allow specifying which inner composite gate to check ([#8987](https://github.com/open-chat-labs/open-chat/pull/8987))
 
 ### Fixed

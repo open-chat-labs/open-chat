@@ -145,6 +145,18 @@ fn check_unique_person_gate(_is_unique_person: bool) -> CheckIfPassesGateResult 
     CheckIfPassesGateResult::Success(Vec::new())
 }
 
+// Unique person verification (DecideAI) is suspended, so a unique-person gate is treated as absent
+// within a composite gate: filtered out before the gate is evaluated. An OR gate therefore requires
+// one of its other branches (no one is a unique person), while an AND gate is unaffected (everyone
+// is a unique person). This runs after the explicit composite_gate_index path, which still indexes
+// into the original inner gates.
+fn filter_out_suspended_gates(inner: Vec<AccessGateNonComposite>) -> Vec<AccessGateNonComposite> {
+    inner
+        .into_iter()
+        .filter(|g| !matches!(g, AccessGateNonComposite::UniquePerson))
+        .collect()
+}
+
 fn check_chit_earned_gate(gate: &ChitEarnedGate, total_chit_earned: i32) -> CheckIfPassesGateResult {
     if total_chit_earned.max(0) as u32 >= gate.min_chit_earned {
         CheckIfPassesGateResult::Success(Vec::new())
@@ -222,6 +234,14 @@ async fn check_composite_gate(gate: CompositeGate, args: CheckGateArgs) -> Check
         };
     }
 
+    let gate = CompositeGate {
+        inner: filter_out_suspended_gates(gate.inner),
+        and: gate.and,
+    };
+    if gate.inner.is_empty() {
+        return CheckIfPassesGateResult::Success(Vec::new());
+    }
+
     if let Some(result) = check_composite_gate_synchronously(gate.clone(), args.clone()) {
         return result;
     }
@@ -249,6 +269,13 @@ async fn check_composite_gate(gate: CompositeGate, args: CheckGateArgs) -> Check
 }
 
 fn check_composite_gate_synchronously(gate: CompositeGate, args: CheckGateArgs) -> Option<CheckIfPassesGateResult> {
+    let gate = CompositeGate {
+        inner: filter_out_suspended_gates(gate.inner),
+        and: gate.and,
+    };
+    if gate.inner.is_empty() {
+        return Some(CheckIfPassesGateResult::Success(Vec::new()));
+    }
     let count = gate.inner.len();
     let mut any_require_async = false;
     for (index, inner) in gate.inner.into_iter().enumerate() {
