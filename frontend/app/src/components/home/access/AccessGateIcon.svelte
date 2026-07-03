@@ -108,7 +108,7 @@
         valid={true}
         {level}
         onClose={() => (showDetail = false)}
-        {gateConfig}
+        gateConfig={{ ...gateConfig, gate }}
         editable={false} />
 {/if}
 
