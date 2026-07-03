@@ -90,7 +90,9 @@
     let distribution: "equal" | "random" = $state($prizeConfig.distribution);
     let selectedDuration = $state($prizeConfig.duration);
     let diamondType: "none" | "standard" | "lifetime" = $state($prizeConfig.diamond);
-    let uniquePersonOnly = $state($prizeConfig.uniquePersonOnly);
+    // Unique-person ("verified user") gating is suspended - force off so a value persisted from a
+    // previous session can't be silently reapplied (there is no UI to clear it).
+    const uniquePersonOnly = false;
     let minStreak = $state<number>($prizeConfig.minStreak);
     let minChitEarned = $state<number>($prizeConfig.minChitEarned);
     let tokenInputState: "ok" | "zero" | "too_low" | "too_high" = $state("ok");

@@ -6,6 +6,7 @@
         isLeafGate,
         isUniquePersonGate,
         nervousSystemLookup,
+        stripSuspendedGate,
         type AccessGate,
         type AccessGateConfig,
         type Level,
@@ -132,7 +133,9 @@
         {/snippet}
         {#snippet body()}
             <div class="body access-gate-builder">
-                {#if isLeafGate(gateConfig.gate)}
+                <!-- A lone unique-person gate is suspended: render neither branch so it shows as no
+                     gate and can't be edited/overwritten - the gate stays dormant in gateConfig. -->
+                {#if isLeafGate(gateConfig.gate) && !isUniquePersonGate(gateConfig.gate)}
                     <LeafGateBuilder
                         {gateBindings}
                         {neuronGateBindings}
@@ -201,7 +204,7 @@
                     </div>
                 {/if}
 
-                {#if gateConfig.gate.kind !== "no_gate"}
+                {#if stripSuspendedGate(gateConfig.gate).kind !== "no_gate"}
                     {#if editable}
                         <div class="section expiry">
                             <Checkbox

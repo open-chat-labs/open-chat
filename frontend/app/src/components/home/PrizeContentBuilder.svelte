@@ -96,7 +96,9 @@
     let selectedDuration: Duration = $state($prizeConfig.duration);
     let diamondType: "none" | "standard" | "lifetime" = $state($prizeConfig.diamond);
     let diamondOnly = $derived(diamondType !== "none");
-    let uniquePersonOnly = $state($prizeConfig.uniquePersonOnly);
+    // Unique-person ("verified user") gating is suspended - force off so a value persisted from a
+    // previous session can't be silently reapplied (the restriction control is removed).
+    const uniquePersonOnly = false;
     let minStreak = $state<number>($prizeConfig.minStreak);
     let minChitEarned = $state<number>($prizeConfig.minChitEarned);
     let streakOnly = $derived(minStreak > 0);
@@ -327,7 +329,6 @@
     function onAnyUserChecked() {
         anyUser = true;
         diamondType = "none";
-        uniquePersonOnly = false;
         streakOnly = false;
         chitOnly = false;
     }
