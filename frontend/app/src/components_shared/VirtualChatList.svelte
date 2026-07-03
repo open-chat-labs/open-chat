@@ -1,0 +1,866 @@
+<script lang="ts" module>
+    import type { Snippet } from "svelte";
+
+    // Minimal contract for virtualised items. `key` must be a stable identity
+    // that survives index shifts (e.g. messageId), NOT an array index.
+    export type VirtualItem = { key: string };
+
+    export interface Props<T extends VirtualItem> {
+        // items[0] = newest (visual bottom), items[N-1] = oldest (visual top)
+        items: T[];
+        // while true, scrolling is suppressed (overflow-y: hidden) — used by the
+        // owner to protect programmatic scrollTop writes from iOS momentum
+        interrupt: boolean;
+        // scroll distance (px) from the visual bottom; -scrollTop
+        fromBottom?: number;
+        // renders a single item; receives (item, absoluteIndex)
+        row: Snippet<[T, number]>;
+        // called on every genuine scroll event (after internal bookkeeping)
+        onUserScroll?: () => void;
+        // identifies items that act as date separators for the sticky date
+        isDateMarker?: (item: T) => boolean;
+        // timestamp for the sticky date; must return a value for date markers
+        // and (as the oldest-rendered-row fallback) ideally for all items
+        timestampFor?: (item: T) => bigint | undefined;
+        // y-position (px) of the floating date element; enables sticky date tracking
+        stickyDateElTop?: number;
+        stickyDateTimestamp?: bigint;
+        id?: string;
+        viewportClass?: string;
+        viewport?: HTMLDivElement;
+        viewportHeight?: number;
+    }
+</script>
+
+<script lang="ts" generics="T extends VirtualItem">
+    /**
+     * VirtualChatList — a bi-directional infinite-scroll virtual list for chat
+     * messages, using CSS `column-reverse` layout.
+     *
+     * ## Column-reverse scroll semantics
+     *
+     *   - scrollTop = 0 means the viewport is at the very bottom (newest messages).
+     *   - scrollTop is negative when scrolled up toward older messages.
+     *   - fromBottom = -scrollTop (always >= 0).
+     *   - items[0] = newest message (visual bottom), items[N-1] = oldest (visual top).
+     *   - DOM order: bottomSpacer (first child, visual bottom) → rendered items →
+     *     topSpacer (last child, visual top).
+     *   - `overflow-anchor: none` is set — the browser will NOT adjust scrollTop
+     *     when content changes size.
+     *
+     * ## Critical asymmetry
+     *
+     *   Bottom spacer sits at the scroll origin. Changes to it shift ALL visible
+     *   content (jank-prone). Top spacer sits at the far end of the scroll range —
+     *   changes to it do NOT shift visible content.
+     *
+     *   This means:
+     *   - Forward scroll (toward newer / decreasing fromBottom): items enter from
+     *     the bottom spacer → bottom spacer shrinks → content shifts → needs
+     *     scrollTop compensation to prevent jank.
+     *   - Backward scroll (toward older / increasing fromBottom): items enter from
+     *     the top spacer → top spacer shrinks → no visible shift → smooth.
+     *
+     * ## Height estimation and measurement
+     *
+     *   Items outside the rendered window have unknown heights. We estimate them
+     *   using `spacerAvgHeight` — a snapshot of the running average, frozen at
+     *   navigation/init/items-change events. Using a frozen snapshot (rather than
+     *   the live average) prevents N×δ drift: if the average changed every time an
+     *   item was measured, all unmeasured items' estimates would shift by δ,
+     *   causing cumulative spacer drift of N×δ.
+     *
+     *   When an item enters the rendered window, it's measured synchronously
+     *   (via offsetHeight in the Svelte action) before the browser paints.
+     *   If the actual height differs from the estimate, we compensate via
+     *   `viewport.scrollTop` (not by adjusting the spacer). This prevents
+     *   accumulated spacer drift while keeping the viewport visually stable.
+     *
+     * ## Two update modes
+     *
+     *   - `updateWindowFull()`: Recomputes everything from scratch. Used on init,
+     *     navigation, items change, and viewport resize. Resets spacerAvgHeight
+     *     and clears pending corrections.
+     *   - `updateWindowIncremental()`: Adjusts spacers incrementally based on which
+     *     items entered/left the window. Used during normal scrolling for efficiency
+     *     and to keep the bottom spacer consistent with the frozen snapshot.
+     *
+     * ## Corrective scroll for scrollToIndex
+     *
+     *   `scrollToIndex` first positions using estimated heights, then waits for
+     *   measurements. As each item near the target is measured by ResizeObserver,
+     *   a 100ms debounce timer resets. When measurements settle, a corrective
+     *   re-scroll fires with accurate measured heights.
+     *
+     * ## Prepend handling
+     *
+     *   When newer messages are loaded (prepended at index 0), all existing item
+     *   indices shift. The items-change $effect detects this by comparing the
+     *   first item's key, adjusts `fromBottom` by the estimated height of the
+     *   new items, and calls `updateWindowFull()`. The `keyToHeight` map ensures
+     *   measured heights survive the index shift (rebuilt into `heightMap`).
+     */
+    import { mobileOperatingSystem } from "@utils/devices";
+    import { onMount, tick, untrack } from "svelte";
+    import {
+        computeSpacers as _computeSpacers,
+        computeWindow as _computeWindow,
+        buildPrefixSums,
+        OVERSCAN_PX,
+    } from "./virtualListUtils";
+
+    let {
+        items,
+        interrupt,
+        fromBottom = $bindable(0),
+        row,
+        onUserScroll,
+        isDateMarker,
+        timestampFor,
+        stickyDateElTop,
+        stickyDateTimestamp = $bindable(undefined),
+        id,
+        viewportClass,
+        viewport = $bindable(undefined),
+        viewportHeight = $bindable(0),
+    }: Props<T> = $props();
+
+    // CSS flex gap between items (px). Read from computed style in onMount.
+    // Spacer calculations must include inter-item gaps so that content height
+    // stays consistent as items enter/leave the rendered window.
+    let gapPx = 0;
+
+    // ── Virtual window state ──────────────────────────────────────────────
+    // start/end define the slice of `items` currently rendered in the DOM.
+    // Items [0, start) are represented by bottomSpacer; [end, items.length)
+    // by topSpacer.
+    let start = $state(0);
+    let end = $state(0);
+    let bottomSpacerHeight = $state(0);
+    let topSpacerHeight = $state(0);
+
+    // ── Height tracking ────────────────────────────────────────────────────
+    // Two parallel stores:
+    //   heightMap[i] — index-based array for fast O(1) lookup.
+    //   keyToHeight — keyed by item.key (stable identity). Source of truth for
+    //     measured heights. Survives index shifts when messages are prepended.
+    //   prefixSums — cumulative height array for O(log N) window computation.
+    //     prefix[i] = sum(height[0..i-1]). Rebuilt lazily when dirty.
+    let heightMap: number[] = [];
+    let prefixSums: number[] = [0];
+    let prefixDirty = true;
+    let keyToHeight = new Map<string, number>();
+    let totalMeasuredHeight = 0;
+    let measuredCount = 0;
+    let averageHeight = 95;
+
+    // Full rebuild of heightMap and prune keyToHeight to only keys present in
+    // the current items (prevents unbounded growth when items are replaced,
+    // e.g. navigating to a different event window).
+    function rebuildHeightMap() {
+        heightMap = new Array(items.length).fill(0);
+        totalMeasuredHeight = 0;
+        measuredCount = 0;
+        const prunedHeights = new Map<string, number>();
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            const h = keyToHeight.get(item.key);
+            if (h !== undefined && h > 0) {
+                heightMap[i] = h;
+                prunedHeights.set(item.key, h);
+                totalMeasuredHeight += h;
+                measuredCount++;
+            }
+        }
+        keyToHeight = prunedHeights;
+        if (measuredCount > 0) averageHeight = totalMeasuredHeight / measuredCount;
+        prefixDirty = true;
+    }
+
+    // Incremental extension for append-only changes (older messages loaded at
+    // the end). O(numNew) instead of O(N) — reuses existing heightMap entries
+    // for indices 0..fromIdx-1 without recomputing.
+    function extendHeightMap(fromIdx: number) {
+        heightMap.length = items.length;
+        for (let i = fromIdx; i < items.length; i++) {
+            const item = items[i];
+            const h = keyToHeight.get(item.key);
+            if (h !== undefined && h > 0) {
+                heightMap[i] = h;
+                totalMeasuredHeight += h;
+                measuredCount++;
+            } else {
+                heightMap[i] = 0;
+            }
+        }
+        if (measuredCount > 0) averageHeight = totalMeasuredHeight / measuredCount;
+        prefixDirty = true;
+    }
+
+    // Rebuild prefix sums from heightMap + spacerAvgHeight.
+    // Called lazily before computeWindow/computeSpacers when prefixDirty is set.
+    // O(N), but batches ALL height changes since the last rebuild into one pass.
+    // This is strictly better than incremental O(N-i)-per-change updates during
+    // burst scenarios (initial render, resize) where many items measure at once:
+    // one O(N) rebuild vs O(windowSize × N) total for per-item updates.
+    function ensurePrefixSums() {
+        if (!prefixDirty) return;
+        prefixSums = buildPrefixSums(items.length, heightMap, spacerAvgHeight);
+        prefixDirty = false;
+    }
+
+    // ── spacerAvgHeight (frozen estimate snapshot) ───────────────────────
+    // Snapshot of averageHeight, frozen at navigation/init/items-change.
+    // All spacer calculations use this instead of the live averageHeight so
+    // that unmeasured items contribute a stable estimate between resets.
+    // Without this, each measurement updates averageHeight, shifting every
+    // unmeasured item's estimate, causing cumulative spacer drift of N×δ.
+    let spacerAvgHeight = 95;
+
+    // ── Pending bottom corrections ─────────────────────────────────────────
+    // When an unmeasured item enters the rendered window from the bottom spacer,
+    // the spacer shrinks by the estimated height (spacerAvgHeight). If the item's
+    // actual DOM height differs, we compensate viewport.scrollTop (not the spacer)
+    // in measureRow to prevent visible shifts. This map tracks which items entered
+    // at which estimate, so we know the delta when measuring.
+    let pendingBottomCorrections = new Map<number, number>();
+
+    // Use spacerAvgHeight (snapshot) for ALL unmeasured item estimates.
+    // This keeps computeWindow and spacer calculations consistent — prevents
+    // oscillation when averageHeight drifts from spacerAvgHeight during measurements.
+    function getHeight(i: number): number {
+        return heightMap[i] > 0 ? heightMap[i] : spacerAvgHeight;
+    }
+
+    function computeWindow(): [number, number] {
+        ensurePrefixSums();
+        return _computeWindow(
+            items.length,
+            prefixSums,
+            fromBottom,
+            viewportHeight,
+            OVERSCAN_PX,
+            gapPx,
+        );
+    }
+
+    function computeSpacers(s: number, e: number): [number, number] {
+        ensurePrefixSums();
+        return _computeSpacers(items.length, prefixSums, s, e, gapPx);
+    }
+
+    // Clamp a scrollTop-derived fromBottom so it can never point past the oldest
+    // item. A stale/in-flight scroll value (common on iOS — e.g. when a window
+    // replacement shrinks the content under an old scroll position) can otherwise
+    // put fromBottom beyond the content extent, making computeWindow return an
+    // empty window → the whole list renders blank. The OVERSCAN_PX margin keeps
+    // this a pure safety net: legitimate top-of-list positions are never clamped.
+    function clampFromBottom(raw: number): number {
+        const n = items.length;
+        if (n === 0) return 0;
+        ensurePrefixSums();
+        const contentExtent = prefixSums[n] + Math.max(0, n - 1) * gapPx;
+        const maxFromBottom = Math.max(0, contentExtent - viewportHeight + OVERSCAN_PX);
+        return Math.min(Math.max(0, raw), maxFromBottom);
+    }
+
+    // Full recompute: used on init, navigation, items change, resize.
+    function updateWindowFull() {
+        // Only mark prefix sums dirty if spacerAvgHeight actually changed,
+        // to avoid redundant O(N) rebuilds when callers (e.g. _doScrollToIndex)
+        // have already set spacerAvgHeight and rebuilt prefix sums.
+        if (spacerAvgHeight !== averageHeight) {
+            spacerAvgHeight = averageHeight;
+            prefixDirty = true;
+        }
+        const [s, e] = computeWindow();
+        const [bh, th] = computeSpacers(s, e);
+        start = s;
+        end = e;
+        bottomSpacerHeight = bh;
+        topSpacerHeight = th;
+        pendingBottomCorrections.clear();
+        tick().then(rebuildDateMarkerCache);
+    }
+
+    // ── Incremental update (scroll handler) ───────────────────────────────
+    // During normal scrolling, we adjust spacers incrementally rather than
+    // recomputing from scratch. This keeps the bottom spacer consistent with
+    // the frozen spacerAvgHeight snapshot.
+    //
+    // Bottom spacer: tracked incrementally. When items enter from the spacer,
+    // we subtract their estimated height. When items leave back to the spacer,
+    // we add their (now-measured) height. The pendingBottomCorrections mechanism
+    // handles the estimate→actual mismatch via scrollTop compensation.
+    //
+    // Top spacer: fully recomputed each time (safe — changes to the top spacer
+    // don't shift visible content in column-reverse).
+    function updateWindowIncremental() {
+        const [s, e] = computeWindow();
+
+        if (s === start && e === end) return;
+
+        // For large window shifts (drag-scroll, PageUp, programmatic jumps),
+        // the incremental bottom spacer loop becomes O(|s-start|) which can
+        // be large. Fall back to a full recompute — the visual position is
+        // being reset anyway so pendingBottomCorrections don't matter.
+        const INCREMENTAL_THRESHOLD = 50;
+        if (Math.abs(s - start) > INCREMENTAL_THRESHOLD) {
+            const [bh, th] = computeSpacers(s, e);
+            start = s;
+            end = e;
+            bottomSpacerHeight = bh;
+            topSpacerHeight = th;
+            pendingBottomCorrections.clear();
+            return;
+        }
+
+        // Bottom spacer: adjust incrementally for items entering/leaving.
+        // In addition to item heights, we must adjust for inter-item gaps that
+        // the spacer absorbs. A spacer representing K items has max(0, K-1) gaps.
+        if (s > start) {
+            // Scrolling backward: items at bottom of window leave → bottom spacer.
+            // Add back their height (measured or estimated).
+            for (let i = start; i < s; i++) {
+                bottomSpacerHeight += getHeight(i);
+                pendingBottomCorrections.delete(i);
+            }
+            // More items in spacer → more inter-item gaps
+            const gapDelta = Math.max(0, s - 1) - Math.max(0, start - 1);
+            bottomSpacerHeight += gapDelta * gapPx;
+        } else if (s < start) {
+            // Scrolling forward: items enter rendered window from bottom spacer.
+            // Subtract their estimated height. Track unmeasured ones for scrollTop
+            // compensation when their actual height is measured.
+            for (let i = s; i < start; i++) {
+                const est = getHeight(i);
+                bottomSpacerHeight -= est;
+                if (!(heightMap[i] > 0)) {
+                    pendingBottomCorrections.set(i, est);
+                }
+            }
+            // Fewer items in spacer → fewer inter-item gaps
+            const gapDelta = Math.max(0, s - 1) - Math.max(0, start - 1);
+            bottomSpacerHeight += gapDelta * gapPx;
+        }
+
+        // Top spacer: O(1) via prefix sums (safe — changes don't shift visible content).
+        const topCount = items.length - e;
+        let th = prefixSums[items.length] - prefixSums[e];
+        if (topCount > 1) th += (topCount - 1) * gapPx;
+        topSpacerHeight = th;
+
+        bottomSpacerHeight = Math.max(0, bottomSpacerHeight);
+
+        start = s;
+        end = e;
+        tick().then(rebuildDateMarkerCache);
+    }
+
+    // Track previous items to detect prepend vs append vs replacement.
+    let prevFirstKey: string | undefined;
+    let prevLastKey: string | undefined;
+    let prevItemsLength = 0;
+
+    // Recompute the virtual window whenever items change.
+    $effect(() => {
+        // Register reactive dependency on items contents
+        void items.length;
+        void items[0]?.key;
+
+        untrack(() => {
+            const oldLen = prevItemsLength;
+            const oldFirstKey = prevFirstKey;
+            const oldLastKey = prevLastKey;
+            prevFirstKey = items[0]?.key;
+            prevLastKey = items.length > 0 ? items[items.length - 1].key : undefined;
+            prevItemsLength = items.length;
+
+            const numNew = items.length - oldLen;
+
+            // Detect prepend: items grew, first key changed, and the old first
+            // item is now at index (newLen - oldLen) — i.e. it was shifted right.
+            const isPrepend =
+                numNew > 0 &&
+                oldLen > 0 &&
+                oldFirstKey !== undefined &&
+                items[numNew]?.key === oldFirstKey;
+
+            // Detect pure append: items grew, first key unchanged, AND the
+            // previously-last item is still at its old index. This guards against
+            // date marker shifts when older messages share a day with the current
+            // oldest — in that case the flattening may insert/move items within
+            // the existing range, so a full rebuild is needed.
+            const isAppend =
+                numNew > 0 &&
+                oldLen > 0 &&
+                items[0]?.key === oldFirstKey &&
+                items[oldLen - 1]?.key === oldLastKey;
+
+            if (isAppend) {
+                extendHeightMap(oldLen);
+            } else {
+                rebuildHeightMap();
+            }
+
+            if (isPrepend) {
+                // New items were prepended at the visual bottom (scroll origin
+                // in column-reverse). Adjust fromBottom so updateWindowFull
+                // targets the same visual position in the new index space.
+                let offset = 0;
+                for (let i = 0; i < numNew; i++) {
+                    offset += getHeight(i);
+                }
+                // Include gaps: numNew new items add numNew gaps (one per item
+                // plus the gap between last new item and old first item).
+                offset += numNew * gapPx;
+                fromBottom += offset;
+            }
+
+            updateWindowFull();
+        });
+    });
+
+    // After interrupt ends (scroll restored), sync fromBottom and do a full recompute
+    // so spacer state is consistent with the restored scroll position.
+    $effect(() => {
+        if (!interrupt && viewport) {
+            untrack(() => {
+                fromBottom = clampFromBottom(-viewport!.scrollTop);
+                updateWindowFull();
+            });
+        }
+    });
+
+    $effect(() => {
+        void stickyDateElTop;
+        untrack(updateStickyDate);
+    });
+
+    // ── Corrective scroll state ────────────────────────────────────────────
+    // scrollToIndex first positions using estimated heights. As measureRow
+    // fires for items near the target, it resets a 100ms debounce timer.
+    // When measurements settle, the timer fires and re-scrolls with accurate
+    // measured heights. This repeats up to MAX_SCROLL_CORRECTIONS times so
+    // that each round of newly-measured items can further refine the position.
+    let pendingScrollFlatIdx: number | undefined;
+    let scrollCorrectTimer: number | undefined;
+    let scrollCorrectCount = 0;
+    const MAX_SCROLL_CORRECTIONS = 3;
+
+    // Timestamp of last programmatic scrollTop change. Used to distinguish
+    // programmatic scrolls (corrections, scrollToIndex, measureRow compensation)
+    // from genuine user scrolls. Prevents the corrective scroll from being
+    // cancelled by scroll events we ourselves triggered.
+    let lastProgrammaticScrollTime = 0;
+
+    // ── iOS momentum scroll tracking ──────────────────────────────────────
+    // On iOS, setting scrollTop during a momentum scroll cancels native
+    // physics. We accumulate adjustments while a touch or momentum scroll is
+    // active and flush once the scroll settles.
+    //
+    // Detection strategy:
+    //   - touchstart/touchend track finger contact.
+    //   - scrollend (iOS 16+) fires exactly when momentum stops → flush immediately.
+    //   - Fallback for older browsers: onScroll resets a 100ms idle timer on
+    //     every scroll event. When no scroll event arrives for 100ms the scroll
+    //     has stopped and we flush. On touchend with no subsequent scroll events
+    //     (no momentum) a shorter 50ms timer fires first.
+    let isTouching = false;
+    let isMomentumScrolling = false;
+    let pendingScrollAdjustment = 0;
+    let pendingSnapToBottom = false;
+    let momentumEndTimer: ReturnType<typeof setTimeout> | undefined;
+
+    function flushScrollAdjustment() {
+        clearTimeout(momentumEndTimer);
+        momentumEndTimer = undefined;
+        isMomentumScrolling = false;
+        if (!viewport) return;
+        if (pendingSnapToBottom) {
+            pendingSnapToBottom = false;
+            viewport.scrollTo({ top: 0 });
+            lastProgrammaticScrollTime = Date.now();
+        } else if (pendingScrollAdjustment !== 0) {
+            viewport.scrollTop -= pendingScrollAdjustment;
+            lastProgrammaticScrollTime = Date.now();
+        }
+        pendingScrollAdjustment = 0;
+    }
+
+    function adjustScrollTop(delta: number) {
+        if (isTouching || isMomentumScrolling) {
+            pendingScrollAdjustment += delta;
+        } else if (viewport) {
+            viewport.scrollTop -= delta;
+            lastProgrammaticScrollTime = Date.now();
+        }
+    }
+
+    // ── _doScrollToIndex ───────────────────────────────────────────────────
+    // Positions the viewport to center the item at `flatIndex`. Snapshots
+    // spacerAvgHeight first so that getHeight, computeWindow, and
+    // computeSpacers all use the same estimate for this navigation.
+    // Uses prefix sums for O(1) distance calculation.
+    function _doScrollToIndex(
+        flatIndex: number,
+        behavior: "auto" | "instant" | "smooth" = "instant",
+    ) {
+        if (!viewport) return;
+        // Snapshot averageHeight BEFORE computing distance so getHeight,
+        // computeWindow, and computeSpacers all use the same estimate.
+        spacerAvgHeight = averageHeight;
+        prefixDirty = true; // spacerAvgHeight changed
+        ensurePrefixSums();
+        // startPos(flatIndex) = prefix[flatIndex] + flatIndex * gap
+        const distFromBottom = prefixSums[flatIndex] + flatIndex * gapPx;
+        const itemH = getHeight(flatIndex);
+        const offset = Math.max(0, distFromBottom + itemH / 2 - viewportHeight / 2);
+        fromBottom = offset;
+        updateWindowFull();
+        lastProgrammaticScrollTime = Date.now();
+        viewport.scrollTo({ top: -offset, behavior });
+    }
+
+    // ── measureRow (Svelte action) ─────────────────────────────────────────
+    // Attached to each rendered row via `use:measureRow={absIdx}`. Measures
+    // the element's height both synchronously on creation and asynchronously
+    // via ResizeObserver for subsequent resizes (e.g. image loads).
+    //
+    // Key responsibilities:
+    //   1. Update heightMap, keyToHeight, averageHeight when height changes.
+    //   2. Compensate scrollTop when a newly-entered item's actual height
+    //      differs from the estimate used to shrink the bottom spacer.
+    //   3. Compensate scrollTop when an already-measured item in the bottom
+    //      half of the window resizes (e.g. image load).
+    //   4. Schedule corrective re-scrolls for scrollToIndex after measurements
+    //      settle (debounced 100ms).
+    //
+    // The `update(newIdx)` return allows Svelte to keep currentIdx in sync
+    // when items are prepended and all indices shift.
+    function measureRow(node: HTMLElement, absIdx: number) {
+        let currentIdx = absIdx;
+        function measure() {
+            // Guard: items may have shrunk (chat switch, teardown) while
+            // this ResizeObserver callback was pending.
+            if (currentIdx >= items.length || !items[currentIdx]) return;
+
+            const h = node.offsetHeight;
+            if (h > 0) {
+                const prev = heightMap[currentIdx] ?? 0;
+                if (prev !== h) {
+                    // Update height tracking
+                    if (prev > 0) {
+                        totalMeasuredHeight -= prev;
+                        measuredCount--;
+                    }
+                    heightMap[currentIdx] = h;
+                    keyToHeight.set(items[currentIdx].key, h);
+                    totalMeasuredHeight += h;
+                    measuredCount++;
+                    if (measuredCount > 0) averageHeight = totalMeasuredHeight / measuredCount;
+
+                    // Mark prefix sums for lazy rebuild rather than updating
+                    // incrementally. During initial render or resize bursts,
+                    // many items measure in the same frame — one O(N) rebuild
+                    // in ensurePrefixSums() is much cheaper than O(N-i) per
+                    // measurement (which totals O(windowSize × N) for the burst).
+                    // The rebuild runs lazily: it only fires when the next
+                    // computeWindow/computeSpacers call actually needs prefix sums.
+                    prefixDirty = true;
+
+                    // ── scrollTop compensation ─────────────────────────────
+                    // In column-reverse, the bottom spacer is at the scroll
+                    // origin. When an item enters from it, the spacer shrank
+                    // by `est` but the rendered element occupies `h` pixels.
+                    // If h ≠ est, total content height changed by (h - est),
+                    // shifting visible content. We adjust scrollTop by the
+                    // same amount to neutralize the shift.
+                    //
+                    // IMPORTANT: we do NOT adjust the spacer itself — that
+                    // would cause accumulated drift over many items. The spacer
+                    // at `sum(getHeight(0..start-1))` is always correct.
+                    //
+                    // Skip compensation when at the bottom (fromBottom ≈ 0) —
+                    // there's no scroll position to preserve and compensating
+                    // would fight with scrollToBottom(). However, some browsers
+                    // (e.g. Safari) shift scrollTop when column-reverse content
+                    // grows despite overflow-anchor: none, so we snap back to
+                    // the bottom in that case.
+                    const atBottom = fromBottom < 10;
+                    const est = pendingBottomCorrections.get(currentIdx);
+                    if (est !== undefined) {
+                        if (h !== est) {
+                            if (atBottom) {
+                                // Defer snap-to-bottom: flushScrollAdjustment will
+                                // perform it once momentum ends.
+                                pendingScrollAdjustment = 0;
+                                if (isTouching || isMomentumScrolling) {
+                                    pendingSnapToBottom = true;
+                                } else if (viewport) {
+                                    viewport.scrollTo({ top: 0 });
+                                    lastProgrammaticScrollTime = Date.now();
+                                }
+                            } else {
+                                adjustScrollTop(h - est);
+                            }
+                        }
+                        pendingBottomCorrections.delete(currentIdx);
+                    } else if (prev > 0 && viewport) {
+                        const mid = start + Math.floor((end - start) / 2);
+                        if (currentIdx < mid) {
+                            if (atBottom) {
+                                pendingScrollAdjustment = 0;
+                                if (isTouching || isMomentumScrolling) {
+                                    pendingSnapToBottom = true;
+                                } else {
+                                    viewport.scrollTo({ top: 0 });
+                                    lastProgrammaticScrollTime = Date.now();
+                                }
+                            } else {
+                                adjustScrollTop(h - prev);
+                            }
+                        }
+                    }
+
+                    // If this item is at or below the scroll target, the cumulative height
+                    // used to position the target has changed. Schedule a corrective re-scroll
+                    // once measurements settle (debounced).
+                    if (pendingScrollFlatIdx !== undefined && currentIdx <= pendingScrollFlatIdx) {
+                        clearTimeout(scrollCorrectTimer);
+                        scrollCorrectTimer = window.setTimeout(() => {
+                            if (
+                                pendingScrollFlatIdx !== undefined &&
+                                scrollCorrectCount < MAX_SCROLL_CORRECTIONS
+                            ) {
+                                scrollCorrectCount++;
+                                _doScrollToIndex(pendingScrollFlatIdx, "instant");
+                            } else {
+                                pendingScrollFlatIdx = undefined;
+                                scrollCorrectCount = 0;
+                            }
+                        }, 100);
+                    }
+                }
+            }
+        }
+
+        // Synchronous initial measurement: forces layout to get the actual height
+        // immediately, so the scrollTop compensation happens in the same frame as
+        // the item entry — preventing a visible shift during forward scroll.
+        measure();
+        const ro = new ResizeObserver(measure);
+        ro.observe(node);
+
+        return {
+            update(newIdx: number) {
+                currentIdx = newIdx;
+            },
+            destroy() {
+                ro.disconnect();
+            },
+        };
+    }
+
+    // ── Sticky date ───────────────────────────────────────────────────────
+    // dateMarkerCache holds each date row's bounding rectangle top at
+    // cache-build time, plus the oldest rendered item as a fallback.
+    // Sorted oldest→newest (ascending top). Rebuilt after each full window
+    // update via tick(). onScroll applies a scrollTop delta and scans the
+    // tiny array — no DOM queries on the hot path.
+    type DateMarker = { top: number; ts: bigint };
+    let dateMarkerCache: DateMarker[] = [];
+    let dateMarkerCacheScrollTop = 0;
+
+    function rebuildDateMarkerCache() {
+        if (!viewport || isDateMarker === undefined || timestampFor === undefined) return;
+        const rows = viewport.querySelectorAll<HTMLElement>(".vcl-row");
+        const markers: DateMarker[] = [];
+        // DOM order: rows[0] = newest (bottom), rows[last] = oldest (top).
+        // Iterate last→first so markers are pushed in ascending top order (oldest first).
+        for (let i = rows.length - 1; i >= 0; i--) {
+            const item = items[start + i];
+            if (item === undefined) continue;
+            const isOldest = i === rows.length - 1;
+            if (isOldest || isDateMarker(item)) {
+                const ts = timestampFor(item);
+                if (ts !== undefined) {
+                    markers.push({ top: rows[i].getBoundingClientRect().top, ts });
+                }
+            }
+        }
+        dateMarkerCache = markers;
+        dateMarkerCacheScrollTop = viewport.scrollTop;
+        updateStickyDate();
+    }
+
+    function updateStickyDate() {
+        if (!viewport || stickyDateElTop === undefined) return;
+        // Rows have moved by (currentScrollTop - cacheScrollTop) since the cache
+        // was built. Apply the delta so we don't need to rebuild on every scroll.
+        const scrollDelta = viewport.scrollTop - dateMarkerCacheScrollTop;
+        let result: bigint | undefined = undefined;
+        for (const marker of dateMarkerCache) {
+            if (marker.top - scrollDelta <= stickyDateElTop) result = marker.ts;
+            else break;
+        }
+        stickyDateTimestamp = result;
+    }
+
+    // Fired on every scroll event. Updates fromBottom, runs incremental
+    // window update, notifies the owner (for message loading), and
+    // cancels any pending corrective scroll if this was a genuine user scroll.
+    function onScroll() {
+        if (!viewport || interrupt) return;
+        fromBottom = clampFromBottom(-viewport.scrollTop);
+
+        // Each scroll event proves momentum is still active; push the idle
+        // timer forward so flushScrollAdjustment only fires once truly idle.
+        if (isMomentumScrolling) {
+            clearTimeout(momentumEndTimer);
+            momentumEndTimer = setTimeout(flushScrollAdjustment, 100);
+        }
+
+        updateWindowIncremental();
+        updateStickyDate();
+        onUserScroll?.();
+
+        // Cancel corrective scroll on genuine user scrolls.
+        if (pendingScrollFlatIdx !== undefined && Date.now() - lastProgrammaticScrollTime > 50) {
+            clearTimeout(scrollCorrectTimer);
+            pendingScrollFlatIdx = undefined;
+        }
+    }
+
+    export function scrollToIndex(
+        flatIndex: number,
+        behavior: "auto" | "instant" | "smooth" = "instant",
+    ) {
+        clearTimeout(scrollCorrectTimer);
+        pendingScrollFlatIdx = flatIndex;
+        scrollCorrectCount = 0;
+        _doScrollToIndex(flatIndex, behavior);
+    }
+
+    export function scrollToBottom(behavior: "auto" | "instant" | "smooth" = "instant") {
+        clearTimeout(scrollCorrectTimer);
+        scrollCorrectTimer = undefined;
+        pendingScrollFlatIdx = undefined;
+        scrollCorrectCount = 0;
+        lastProgrammaticScrollTime = Date.now();
+        // Deterministically render the bottom window instead of waiting for the
+        // scrollTo below to emit a scroll event. On iOS that event may never fire
+        // (e.g. scrollTop is already 0 in a stale/empty-window state), so the
+        // onScroll resync never runs and the list would stay blank.
+        fromBottom = 0;
+        updateWindowFull();
+        viewport?.scrollTo({ top: 0, behavior });
+    }
+
+    onMount(() => {
+        const el = viewport!;
+        gapPx = parseFloat(getComputedStyle(el).rowGap) || 0;
+        el.addEventListener("scroll", onScroll);
+
+        const onTouchStart = () => {
+            isTouching = true;
+            isMomentumScrolling = false;
+            clearTimeout(momentumEndTimer);
+            momentumEndTimer = undefined;
+        };
+        const onTouchEnd = () => {
+            isTouching = false;
+            isMomentumScrolling = true;
+            // Fallback for browsers without scrollend: if no scroll events arrive
+            // within 50 ms the flick had no momentum, so flush immediately.
+            // If scroll events do arrive, onScroll resets this timer on each one
+            // so the flush only fires once the scroll truly goes idle.
+            momentumEndTimer = setTimeout(flushScrollAdjustment, 50);
+        };
+        const onTouchCancel = () => {
+            isTouching = false;
+            isMomentumScrolling = true;
+            momentumEndTimer = setTimeout(flushScrollAdjustment, 50);
+        };
+        const onScrollEnd = () => flushScrollAdjustment();
+
+        if (mobileOperatingSystem === "iOS") {
+            el.addEventListener("touchstart", onTouchStart, { passive: true });
+            el.addEventListener("touchend", onTouchEnd, { passive: true });
+            el.addEventListener("touchcancel", onTouchCancel, { passive: true });
+        }
+        el.addEventListener("scrollend", onScrollEnd, { passive: true });
+
+        const ro = new ResizeObserver(() => {
+            viewportHeight = el.clientHeight;
+            updateWindowFull();
+        });
+        ro.observe(el);
+        viewportHeight = el.clientHeight;
+
+        updateWindowFull();
+
+        return () => {
+            el.removeEventListener("scroll", onScroll);
+            if (mobileOperatingSystem === "iOS") {
+                el.removeEventListener("touchstart", onTouchStart);
+                el.removeEventListener("touchend", onTouchEnd);
+                el.removeEventListener("touchcancel", onTouchCancel);
+            }
+            el.removeEventListener("scrollend", onScrollEnd);
+            clearTimeout(momentumEndTimer);
+            ro.disconnect();
+            clearTimeout(scrollCorrectTimer);
+            scrollCorrectTimer = undefined;
+            pendingScrollFlatIdx = undefined;
+        };
+    });
+
+    let visibleItems = $derived(items.slice(start, end));
+</script>
+
+<div
+    class={`vcl-viewport ${viewportClass ?? ""}`}
+    class:interrupt
+    {id}
+    bind:this={viewport}>
+    {#if bottomSpacerHeight > 0}
+        <div class="vcl-spacer" style:height="{bottomSpacerHeight}px"></div>
+    {/if}
+    {#each visibleItems as item, relIdx (item.key)}
+        {@const absIdx = start + relIdx}
+        <div class="vcl-row" use:measureRow={absIdx}>
+            {@render row(item, absIdx)}
+        </div>
+    {/each}
+    {#if topSpacerHeight > 0}
+        <div class="vcl-spacer" style:height="{topSpacerHeight}px"></div>
+    {/if}
+</div>
+
+<style lang="scss">
+    .vcl-viewport {
+        display: flex;
+        flex-direction: column-reverse;
+        overflow-y: auto;
+        overflow-x: hidden;
+        overflow-anchor: none;
+        overscroll-behavior: contain;
+        height: 100%;
+        box-sizing: border-box;
+
+        &.interrupt {
+            overflow-y: hidden;
+        }
+    }
+
+    .vcl-spacer {
+        flex-shrink: 0;
+        width: 100%;
+    }
+
+    .vcl-row {
+        width: 100%;
+        flex-shrink: 0;
+    }
+</style>
