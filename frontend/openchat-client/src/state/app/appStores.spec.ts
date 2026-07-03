@@ -49,7 +49,6 @@ import {
     selectedChatExpandedDeletedMessageStore,
     selectedChatIdStore,
     selectedChatMembersStore,
-    selectedChatUserGroupKeysStore,
     selectedChatUserIdsStore,
     selectedCommunityBlockedUsersStore,
     selectedCommunityMembersStore,
@@ -81,7 +80,6 @@ function setSelectedChat() {
     serverEventsStore.set([]);
     expiredServerEventRanges.set(new DRange());
     selectedChatUserIdsStore.set(new Set());
-    selectedChatUserGroupKeysStore.set(new Set());
     selectedChatExpandedDeletedMessageStore.set(new Set());
 }
 

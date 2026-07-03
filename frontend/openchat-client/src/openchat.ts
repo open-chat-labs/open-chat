@@ -396,7 +396,6 @@ import {
     selectedChatMembersStore,
     selectedChatRulesStore,
     selectedChatSummaryStore,
-    selectedChatUserGroupKeysStore,
     selectedChatUserIdsStore,
     selectedChatWebhooksStore,
     selectedCommunityBlockedUsersStore,
@@ -10255,10 +10254,6 @@ export class OpenChat {
             pathContextStore.set(ctx);
             notFoundStore.set(false);
         });
-    }
-
-    addUserGroupKey(key: string) {
-        selectedChatUserGroupKeysStore.update((set) => set.add(key));
     }
 
     #modifyFilteredProposals(fn: (fp: FilteredProposals) => void) {
