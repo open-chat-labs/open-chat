@@ -846,7 +846,9 @@
         overflow-x: hidden;
         overflow-anchor: none;
         overscroll-behavior: contain;
-        height: 100%;
+        // sizing (flex/height) is deliberately left to the caller via
+        // viewportClass — the viewport must be constrained by its parent for
+        // virtualisation to work at all
         box-sizing: border-box;
 
         &.interrupt {
@@ -862,5 +864,9 @@
     .vcl-row {
         width: 100%;
         flex-shrink: 0;
+        // A flex formatting context stops child margins collapsing out of the
+        // row, so offsetHeight (which drives all spacer math) includes them.
+        display: flex;
+        flex-direction: column;
     }
 </style>
