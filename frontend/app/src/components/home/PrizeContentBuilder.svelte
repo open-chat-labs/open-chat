@@ -492,10 +492,7 @@
                                             group={"diamond"} />
                                     </div>
                                 {/if}
-                                <Checkbox
-                                    id="unique_person_only"
-                                    label={i18nKey(`prizes.onlyUniquePerson`)}
-                                    bind:checked={uniquePersonOnly} />
+                                <!-- Unique person ("verified user") gating is suspended -->
                                 <Checkbox
                                     id="streak_only"
                                     label={i18nKey(`prizes.onlyStreak`)}

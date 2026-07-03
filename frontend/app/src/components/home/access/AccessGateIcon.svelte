@@ -10,10 +10,10 @@
         isPaymentGate,
         type Level,
         OpenChat,
+        stripSuspendedGate,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import Alarm from "svelte-material-icons/Alarm.svelte";
     import ShieldLockOpenOutline from "svelte-material-icons/ShieldLockOpenOutline.svelte";
@@ -95,8 +95,11 @@
             ev.preventDefault();
         }
     }
-    let tokenDetails = $derived(client.getTokenDetailsForAccessGate(gateConfig.gate));
-    let params = $derived(formatParams(gateConfig.gate, tokenDetails));
+    // The unique person ("verified user") concept is suspended, so strip it for display: a
+    // standalone unique person gate renders as no gate, a composite gate drops it and collapses.
+    let gate = $derived(stripSuspendedGate(gateConfig.gate));
+    let tokenDetails = $derived(client.getTokenDetailsForAccessGate(gate));
+    let params = $derived(formatParams(gate, tokenDetails));
     let defaultColor = $derived(button ? "var(--button-txt)" : "var(--icon-txt)");
 </script>
 
@@ -112,7 +115,7 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div onclick={onClick} class="wrapper">
-    {#if gateConfig.gate.kind === "no_gate" && showNoGate}
+    {#if gate.kind === "no_gate" && showNoGate}
         <Tooltip {position} {align}>
             <div class="open">
                 <ShieldLockOpenOutline size={$iconSize} color={defaultColor} />
@@ -121,7 +124,7 @@
                 <Translatable resourceKey={i18nKey("access.openAccessInfo")} />
             {/snippet}
         </Tooltip>
-    {:else if gateConfig.gate.kind === "locked_gate"}
+    {:else if gate.kind === "locked_gate"}
         <Tooltip {position} {align}>
             <div class="locked"></div>
             {#snippet popupTemplate()}
@@ -129,7 +132,7 @@
                     resourceKey={i18nKey("access.lockedGateInfo", undefined, level, true)} />
             {/snippet}
         </Tooltip>
-    {:else if gateConfig.gate.kind === "chit_earned_gate"}
+    {:else if gate.kind === "chit_earned_gate"}
         <Tooltip {position} {align}>
             <div class="chit"></div>
             {#snippet popupTemplate()}
@@ -137,7 +140,7 @@
                     resourceKey={i18nKey("access.chitEarnedGateInfo", undefined, level, true)} />
             {/snippet}
         </Tooltip>
-    {:else if gateConfig.gate.kind === "composite_gate"}
+    {:else if gate.kind === "composite_gate"}
         <Tooltip {position} {align}>
             <div class="composite">
                 <VectorCombine size={$iconSize} color={defaultColor} />
@@ -146,7 +149,7 @@
                 <Translatable resourceKey={i18nKey("access.compositeGate")} />
             {/snippet}
         </Tooltip>
-    {:else if gateConfig.gate.kind === "diamond_gate"}
+    {:else if gate.kind === "diamond_gate"}
         <Tooltip {position} {align}>
             <div class="diamond">
                 <BlueDiamond />
@@ -155,7 +158,7 @@
                 <Translatable resourceKey={i18nKey("access.diamondGateInfo")} />
             {/snippet}
         </Tooltip>
-    {:else if gateConfig.gate.kind === "lifetime_diamond_gate"}
+    {:else if gate.kind === "lifetime_diamond_gate"}
         <Tooltip {position} {align}>
             <div class="diamond">
                 <GoldDiamond />
@@ -164,24 +167,14 @@
                 <Translatable resourceKey={i18nKey("access.lifetimeDiamondGateInfo")} />
             {/snippet}
         </Tooltip>
-    {:else if gateConfig.gate.kind === "unique_person_gate"}
-        <Tooltip {position} {align}>
-            <div class="unique">
-                <AccountCheck size={$iconSize} color={defaultColor} />
-            </div>
-            {#snippet popupTemplate()}
-                <Translatable resourceKey={i18nKey("access.uniquePersonInfo")} />
-            {/snippet}
-        </Tooltip>
-    {:else if gateConfig.gate.kind === "credential_gate"}
-        {@const gate = gateConfig.gate}
+    {:else if gate.kind === "credential_gate"}
         <Tooltip {position} {align}>
             <div class="credential">🔒️</div>
             {#snippet popupTemplate()}
                 <CredentialGatePopup {gate} />
             {/snippet}
         </Tooltip>
-    {:else if gateConfig.gate.kind === "referred_by_member_gate"}
+    {:else if gate.kind === "referred_by_member_gate"}
         <Tooltip {position} {align}>
             <div class="referred_by_member">
                 <AccountPlusOutline size={$iconSize} color={defaultColor} />
@@ -190,7 +183,7 @@
                 <Translatable resourceKey={i18nKey("access.referredByMemberInfo")} />
             {/snippet}
         </Tooltip>
-    {:else if isNeuronGate(gateConfig.gate)}
+    {:else if isNeuronGate(gate)}
         <Tooltip {position} {align}>
             <img class="icon" class:small src={tokenDetails?.logo} />
             {#snippet popupTemplate()}
@@ -204,7 +197,7 @@
                 <p class="params">{params}</p>
             {/snippet}
         </Tooltip>
-    {:else if isPaymentGate(gateConfig.gate)}
+    {:else if isPaymentGate(gate)}
         <Tooltip {position} {align}>
             <img class="icon" class:small src={tokenDetails?.logo} />
             {#snippet popupTemplate()}
@@ -218,8 +211,7 @@
                 <p class="params">{params}</p>
             {/snippet}
         </Tooltip>
-    {:else if isBalanceGate(gateConfig.gate)}
-        {@const gate = gateConfig.gate}
+    {:else if isBalanceGate(gate)}
         <Tooltip {position} {align}>
             <img class="icon" class:small src={tokenDetails?.logo} />
             {#snippet popupTemplate()}

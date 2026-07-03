@@ -4772,7 +4772,8 @@ export class OpenChat {
             } else if (gate.kind === "lifetime_diamond_gate") {
                 return currentUserStore.value.diamondStatus.kind === "lifetime";
             } else if (gate.kind === "unique_person_gate") {
-                return currentUserStore.value.isUniquePerson;
+                // Unique person verification (DecideAI) is suspended - always pass.
+                return true;
             } else if (gate.kind === "chit_earned_gate") {
                 return currentUserStore.value.totalChitEarned >= gate.minEarned;
             } else if (gate.kind === "token_balance_gate") {

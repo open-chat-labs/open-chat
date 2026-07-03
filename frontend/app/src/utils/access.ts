@@ -1,6 +1,7 @@
 import {
     isCompositeGate,
     isLeafGate,
+    isUniquePersonGate,
     type AccessGate,
     type AccessGateConfig,
     type Credential,
@@ -50,7 +51,7 @@ export function getGateBindings(level: Level): GateBinding[] {
         paymentGateFolder,
         balanceGateFolder,
         credentialGate,
-        uniquePersonGate,
+        // uniquePersonGate omitted - DecideAI verification is suspended
         lockedGate,
         chitEarnedGate,
     ];
@@ -152,11 +153,13 @@ const lifetimeDiamondGate: GateBinding = {
     enabled: true,
 };
 
+// Unique person ("verified user", DecideAI) verification is suspended, so this gate is disabled
+// and is no longer offered in getGateBindings. Kept dormant so the concept can be revived.
 export const uniquePersonGate: GateBinding = {
     label: "access.uniquePerson",
     key: "unique_person_gate",
     gate: { kind: "unique_person_gate" },
-    enabled: true,
+    enabled: false,
 };
 
 export const lockedGate: GateBinding = {
@@ -295,12 +298,15 @@ export function mergeAccessGates(
 }
 
 export function flattenGateConfig({ gate }: AccessGateConfig): LeafGate[] {
+    // The unique person ("verified user", DecideAI) concept is suspended, so drop it from the
+    // flattened list - a standalone unique person gate looks like no gate, and inside a composite
+    // gate it is simply omitted.
     if (isLeafGate(gate)) {
-        if (gate.kind === "no_gate") return [];
+        if (gate.kind === "no_gate" || isUniquePersonGate(gate)) return [];
         return [gate];
     }
     if (isCompositeGate(gate)) {
-        return gate.gates;
+        return gate.gates.filter((g) => !isUniquePersonGate(g));
     }
     return [];
 }

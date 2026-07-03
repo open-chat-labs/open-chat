@@ -43,7 +43,6 @@
         ONE_DAY,
     } from "openchat-client";
     import { onMount } from "svelte";
-    import Account from "svelte-material-icons/AccountOutline.svelte";
     import Diamond from "svelte-material-icons/DiamondOutline.svelte";
     import Lifetime from "svelte-material-icons/DiamondStone.svelte";
     import Fingerprint from "svelte-material-icons/Fingerprint.svelte";
@@ -435,15 +434,7 @@
                     {/snippet}
                     <Translatable resourceKey={i18nKey("Lifetime diamond membership")} />
                 </Chip>
-                <Chip
-                    onClick={() => (uniquePersonOnly = !uniquePersonOnly)}
-                    onRemove={uniquePersonOnly ? () => (uniquePersonOnly = false) : undefined}
-                    mode={uniquePersonOnly ? "filter" : "default"}>
-                    {#snippet icon(color)}
-                        <Account {color} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("Unique person")} />
-                </Chip>
+                <!-- Unique person ("verified user") gating is suspended -->
                 <Chip
                     onClick={() => (selectMinChitEarned = true)}
                     onRemove={minChitEarned > 0 ? () => (minChitEarned = 0) : undefined}

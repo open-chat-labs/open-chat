@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Suspend "verified user" (unique person) prize gating - every user is now eligible ([#9061](https://github.com/open-chat-labs/open-chat/pull/9061))
 - Remove option to verify using delegation when updating PIN ([#8811](https://github.com/open-chat-labs/open-chat/pull/8811))
 
 ### Removed

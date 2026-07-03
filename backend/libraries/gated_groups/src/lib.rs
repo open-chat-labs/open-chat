@@ -140,12 +140,9 @@ fn check_lifetime_diamond_member_gate(
     }
 }
 
-fn check_unique_person_gate(is_unique_person: bool) -> CheckIfPassesGateResult {
-    if is_unique_person {
-        CheckIfPassesGateResult::Success(Vec::new())
-    } else {
-        CheckIfPassesGateResult::Failed(GateCheckFailedReason::NoUniquePersonProof)
-    }
+fn check_unique_person_gate(_is_unique_person: bool) -> CheckIfPassesGateResult {
+    // Unique person verification (DecideAI) is suspended - always pass.
+    CheckIfPassesGateResult::Success(Vec::new())
 }
 
 fn check_chit_earned_gate(gate: &ChitEarnedGate, total_chit_earned: i32) -> CheckIfPassesGateResult {
