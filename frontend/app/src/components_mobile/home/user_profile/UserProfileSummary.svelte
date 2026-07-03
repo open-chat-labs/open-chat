@@ -1,5 +1,4 @@
 <script lang="ts">
-    import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
     import { i18nKey } from "@src/i18n/i18n";
     import { clearChatShortcuts } from "@stores/chatShortcuts";
     import { Body, Container, IconButton, MenuItem, MenuTrigger } from "component-lib";
@@ -13,10 +12,8 @@
         type PublicProfile,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import AccountStar from "svelte-material-icons/AccountStarOutline.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import Share from "svelte-material-icons/ShareVariantOutline.svelte";
-    import SparkleBox from "../../SparkleBox.svelte";
     import Translatable from "../../Translatable.svelte";
     import Stats from "../Stats.svelte";
     import UserProfileSummaryCard from "./UserProfileSummaryCard.svelte";
@@ -24,7 +21,6 @@
     const client = getContext<OpenChat>("client");
 
     let user = $derived($allUsersStore.get($currentUserIdStore) ?? client.nullUser("unknown"));
-    let verified = $derived(user?.isUniquePerson ?? false);
     let profile: PublicProfile | undefined = $state();
 
     onMount(() => {
@@ -95,43 +91,7 @@
             </UserProfileSummaryCard>
         {/if}
 
-        {#if !verified}
-            <SparkleBox
-                buttonText={i18nKey("Start verification")}
-                onClick={() => publish("userProfileVerify")}>
-                {#snippet title()}
-                    <MulticolourText
-                        parts={[
-                            {
-                                text: i18nKey("Verify you are a "),
-                                colour: "primaryLight",
-                            },
-                            {
-                                text: i18nKey("real person"),
-                                colour: "primary",
-                            },
-                        ]} />
-                {/snippet}
-                {#snippet body()}
-                    <MulticolourText
-                        parts={[
-                            {
-                                text: i18nKey(
-                                    "Verify your unique personhood as a signal of your trustworthiness to other users! ",
-                                ),
-                                colour: "primaryLight",
-                            },
-                            {
-                                text: i18nKey("It only takes a minute."),
-                                colour: "textPrimary",
-                            },
-                        ]} />
-                {/snippet}
-                {#snippet buttonIcon(color)}
-                    <AccountStar {color} />
-                {/snippet}
-            </SparkleBox>
-        {/if}
+        <!-- Unique person ("verified user") verification is suspended -->
 
         <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
             <Body colour={"textSecondary"} fontWeight={"bold"}>

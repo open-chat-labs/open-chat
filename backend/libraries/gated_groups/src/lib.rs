@@ -140,12 +140,21 @@ fn check_lifetime_diamond_member_gate(
     }
 }
 
-fn check_unique_person_gate(is_unique_person: bool) -> CheckIfPassesGateResult {
-    if is_unique_person {
-        CheckIfPassesGateResult::Success(Vec::new())
-    } else {
-        CheckIfPassesGateResult::Failed(GateCheckFailedReason::NoUniquePersonProof)
-    }
+fn check_unique_person_gate(_is_unique_person: bool) -> CheckIfPassesGateResult {
+    // Unique person verification (DecideAI) is suspended - always pass.
+    CheckIfPassesGateResult::Success(Vec::new())
+}
+
+// Unique person verification (DecideAI) is suspended, so a unique-person gate is treated as absent
+// within a composite gate: filtered out before the gate is evaluated. An OR gate therefore requires
+// one of its other branches (no one is a unique person), while an AND gate is unaffected (everyone
+// is a unique person). This runs after the explicit composite_gate_index path, which still indexes
+// into the original inner gates.
+fn filter_out_suspended_gates(inner: Vec<AccessGateNonComposite>) -> Vec<AccessGateNonComposite> {
+    inner
+        .into_iter()
+        .filter(|g| !matches!(g, AccessGateNonComposite::UniquePerson))
+        .collect()
 }
 
 fn check_chit_earned_gate(gate: &ChitEarnedGate, total_chit_earned: i32) -> CheckIfPassesGateResult {
@@ -218,14 +227,27 @@ async fn check_composite_gate(gate: CompositeGate, args: CheckGateArgs) -> Check
     if !gate.and
         && let Some(gate_index) = args.composite_gate_index
     {
-        return if let Some(inner) = gate.inner.get(gate_index as usize) {
-            check_non_composite_gate(inner.clone(), args).await
-        } else {
-            CheckIfPassesGateResult::Error(OCErrorCode::InvalidRequest.with_message("Gate index out of range"))
-        };
+        match gate.inner.get(gate_index as usize) {
+            // A suspended (unique-person) gate is treated as absent, so a request that selects it
+            // must not short-circuit to Success - fall through to the filtered evaluation, which
+            // still requires a real branch. The backend is the trust boundary here.
+            Some(AccessGateNonComposite::UniquePerson) => {}
+            Some(inner) => return check_non_composite_gate(inner.clone(), args).await,
+            None => {
+                return CheckIfPassesGateResult::Error(OCErrorCode::InvalidRequest.with_message("Gate index out of range"));
+            }
+        }
     }
 
-    if let Some(result) = check_composite_gate_synchronously(gate.clone(), args.clone()) {
+    let gate = CompositeGate {
+        inner: filter_out_suspended_gates(gate.inner),
+        and: gate.and,
+    };
+    if gate.inner.is_empty() {
+        return CheckIfPassesGateResult::Success(Vec::new());
+    }
+
+    if let Some(result) = check_composite_gate_synchronously_inner(gate.clone(), args.clone()) {
         return result;
     }
 
@@ -252,6 +274,18 @@ async fn check_composite_gate(gate: CompositeGate, args: CheckGateArgs) -> Check
 }
 
 fn check_composite_gate_synchronously(gate: CompositeGate, args: CheckGateArgs) -> Option<CheckIfPassesGateResult> {
+    let gate = CompositeGate {
+        inner: filter_out_suspended_gates(gate.inner),
+        and: gate.and,
+    };
+    if gate.inner.is_empty() {
+        return Some(CheckIfPassesGateResult::Success(Vec::new()));
+    }
+    check_composite_gate_synchronously_inner(gate, args)
+}
+
+// Assumes suspended (unique-person) gates have already been filtered out of `gate.inner`.
+fn check_composite_gate_synchronously_inner(gate: CompositeGate, args: CheckGateArgs) -> Option<CheckIfPassesGateResult> {
     let count = gate.inner.len();
     let mut any_require_async = false;
     for (index, inner) in gate.inner.into_iter().enumerate() {

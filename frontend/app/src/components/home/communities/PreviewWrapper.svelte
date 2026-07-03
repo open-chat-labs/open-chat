@@ -5,6 +5,7 @@
         identityStateStore,
         ROLE_NONE,
         selectedCommunitySummaryStore,
+        stripSuspendedGate,
     } from "openchat-client";
     import { getContext, tick, type Snippet } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -53,7 +54,8 @@
 
             if (gateCheck === undefined) {
                 if (
-                    $selectedCommunitySummaryStore.gateConfig.gate.kind !== "no_gate" &&
+                    stripSuspendedGate($selectedCommunitySummaryStore.gateConfig.gate).kind !==
+                        "no_gate" &&
                     !$selectedCommunitySummaryStore.isInvited
                 ) {
                     const gateConfigs = [$selectedCommunitySummaryStore.gateConfig];

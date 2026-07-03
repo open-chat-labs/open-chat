@@ -115,7 +115,7 @@ export function isLeafGate(gate: AccessGate): gate is LeafGate {
 
 export function shouldPreprocessGate(gate: AccessGate): gate is PreprocessedGate {
     return [
-        "unique_person_gate",
+        // "unique_person_gate" omitted - DecideAI verification is suspended
         "credential_gate",
         "payment_gate",
         "lifetime_diamond_gate",
@@ -167,6 +167,26 @@ export function isCredentialGate(gate: AccessGate): gate is CredentialGate {
 
 export function isUniquePersonGate(gate: AccessGate): gate is UniquePersonGate {
     return gate.kind === "unique_person_gate";
+}
+
+// The unique person ("verified user", DecideAI) concept is suspended. For display purposes we
+// strip any unique person gate so that a standalone unique person gate looks like no gate, and a
+// composite gate drops it (collapsing to the single remaining gate, or no gate if none remain).
+export function stripSuspendedGate(gate: AccessGate): AccessGate {
+    if (isUniquePersonGate(gate)) {
+        return { kind: "no_gate" };
+    }
+    if (isCompositeGate(gate)) {
+        const remaining = gate.gates.filter((g) => !isUniquePersonGate(g));
+        if (remaining.length === 0) {
+            return { kind: "no_gate" };
+        }
+        if (remaining.length === 1) {
+            return remaining[0];
+        }
+        return { ...gate, gates: remaining };
+    }
+    return gate;
 }
 
 export function isLifetimeDiamondGate(gate: AccessGate): gate is LifetimeDiamondGate {

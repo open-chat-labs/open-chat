@@ -12,7 +12,10 @@
         borderColor?: string;
     }
 
-    let { verified, size = "default", tooltip, borderColor }: Props = $props();
+    let { size = "default", tooltip, borderColor }: Props = $props();
+
+    // Verified user (DecideAI) concept is suspended - never render the badge.
+    const verified = false;
 </script>
 
 {#snippet renderCheck()}

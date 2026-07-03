@@ -4,7 +4,9 @@
         iconSize,
         isCompositeGate,
         isLeafGate,
+        isUniquePersonGate,
         nervousSystemLookup,
+        stripSuspendedGate,
         type AccessGate,
         type AccessGateConfig,
         type Level,
@@ -66,8 +68,13 @@
     let title = $derived(!editable ? i18nKey("access.readonlyTitle") : i18nKey("access.title"));
 
     $effect(() => {
+        // Suspended (unique person) gate rows are hidden so never report validity - treat them as
+        // valid, otherwise their unset entry would make the whole gate invalid.
+        const gates = isCompositeGate(gateConfig.gate)
+            ? gateConfig.gate.gates
+            : [gateConfig.gate];
         const isValid =
-            gateValidity.every((v) => v) &&
+            gates.every((g, i) => isUniquePersonGate(g) || gateValidity[i]) &&
             (gateConfig.expiry !== undefined ? !editable || evaluationIntervalValid : true);
 
         if (isValid !== valid) {
@@ -126,7 +133,9 @@
         {/snippet}
         {#snippet body()}
             <div class="body access-gate-builder">
-                {#if isLeafGate(gateConfig.gate)}
+                <!-- A lone unique-person gate is suspended: render neither branch so it shows as no
+                     gate and can't be edited/overwritten - the gate stays dormant in gateConfig. -->
+                {#if isLeafGate(gateConfig.gate) && !isUniquePersonGate(gateConfig.gate)}
                     <LeafGateBuilder
                         {gateBindings}
                         {neuronGateBindings}
@@ -139,6 +148,9 @@
                         bind:valid={gateValidity[0]} />
                 {:else if isCompositeGate(gateConfig.gate)}
                     {#each gateConfig.gate.gates as subgate, i (`${subgate.kind} + ${i}`)}
+                        <!-- Unique person (DecideAI) verification is suspended - hide the row but keep
+                             it in the bound gateConfig (index i stays aligned for edit/delete). -->
+                        {#if !isUniquePersonGate(subgate)}
                         <CollapsibleCard
                             transition={false}
                             open={selectedGateIndex === i}
@@ -173,6 +185,7 @@
                                 {level}
                                 bind:valid={gateValidity[i]} />
                         </CollapsibleCard>
+                        {/if}
                     {/each}
                 {/if}
                 {#if editable}
@@ -191,7 +204,7 @@
                     </div>
                 {/if}
 
-                {#if gateConfig.gate.kind !== "no_gate"}
+                {#if stripSuspendedGate(gateConfig.gate).kind !== "no_gate"}
                     {#if editable}
                         <div class="section expiry">
                             <Checkbox
