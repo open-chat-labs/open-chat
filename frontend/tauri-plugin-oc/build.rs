@@ -19,6 +19,8 @@ const COMMANDS: &[&str] = &[
     "update_chat_shortcuts",
     "get_pending_deep_link",
     "get_pending_notification_tap",
+    "clear_all_notifications",
+    "delete_fcm_token",
 ];
 
 fn main() {

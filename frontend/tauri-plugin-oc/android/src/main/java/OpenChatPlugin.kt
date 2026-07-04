@@ -77,6 +77,16 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
     }
 
     @Command
+    fun clearAllNotifications(invoke: Invoke) {
+        ClearAllNotifications(activity).handler(invoke)
+    }
+
+    @Command
+    fun deleteFcmToken(invoke: Invoke) {
+        DeleteFcmToken().handler(invoke)
+    }
+
+    @Command
     fun minimizeApp(invoke: Invoke) {
         MinimizeApp(activity).handler(invoke)
     }

@@ -47,7 +47,12 @@
     import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import { _, isLoading } from "svelte-i18n";
-    import { getFcmToken, svelteReady } from "tauri-plugin-oc-api";
+    import {
+        clearAllNotifications,
+        deleteFcmToken,
+        getFcmToken,
+        svelteReady,
+    } from "tauri-plugin-oc-api";
     import Head from "./Head.svelte";
     import Profiler from "./Profiler.svelte";
     import Router from "./Router.svelte";
@@ -260,6 +265,20 @@
                 }
 
                 addFcmToken(token);
+            });
+
+            // Best-effort push hygiene on sign-out, while the identity is
+            // still valid: unbind this device's token from the account,
+            // delete the device token (pushes to it then dead-end at FCM,
+            // and the next login mints + registers a fresh one), and empty
+            // the tray so nothing from this account lingers.
+            client.onLogout(async () => {
+                const token = await getFcmToken().catch(() => null);
+                if (token) {
+                    await client.removeFcmToken(token).catch(console.error);
+                }
+                await deleteFcmToken().catch(console.error);
+                await clearAllNotifications().catch(console.error);
             });
         }
     }

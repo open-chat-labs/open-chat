@@ -227,6 +227,11 @@ export const GroupRegisterWebhookArgs = Type.Object({
     avatar: Type.Optional(Type.String()),
 });
 
+export type GroupDeleteHistoryArgs = Static<typeof GroupDeleteHistoryArgs>;
+export const GroupDeleteHistoryArgs = Type.Object({
+    before: Type.BigInt(),
+});
+
 export type GroupSelectedUpdatesArgs = Static<typeof GroupSelectedUpdatesArgs>;
 export const GroupSelectedUpdatesArgs = Type.Object({
     updates_since: Type.BigInt(),
@@ -913,6 +918,7 @@ export const ChatEventType = Type.Union([
     Type.Literal("Frozen"),
     Type.Literal("Unfrozen"),
     Type.Literal("DisappearingMessagesUpdated"),
+    Type.Literal("HistoryDeleted"),
     Type.Literal("MessagePinned"),
     Type.Literal("MessageUnpinned"),
     Type.Literal("MembersJoined"),
@@ -2923,6 +2929,12 @@ export const CommunityDeleteMessagesArgs = Type.Object({
     new_achievement: Type.Boolean(),
 });
 
+export type CommunityDeleteChannelHistoryArgs = Static<typeof CommunityDeleteChannelHistoryArgs>;
+export const CommunityDeleteChannelHistoryArgs = Type.Object({
+    channel_id: ChannelId,
+    before: Type.BigInt(),
+});
+
 export type CommunityRemoveMemberFromChannelArgs = Static<
     typeof CommunityRemoveMemberFromChannelArgs
 >;
@@ -3366,6 +3378,13 @@ export type NotificationsIndexRemoveSubscriptionArgs = Static<
 >;
 export const NotificationsIndexRemoveSubscriptionArgs = Type.Object({
     endpoint: Type.String(),
+});
+
+export type NotificationsIndexRemoveFcmTokenArgs = Static<
+    typeof NotificationsIndexRemoveFcmTokenArgs
+>;
+export const NotificationsIndexRemoveFcmTokenArgs = Type.Object({
+    fcm_token: FcmToken,
 });
 
 export type NotificationsIndexAddFcmTokenArgs = Static<typeof NotificationsIndexAddFcmTokenArgs>;
@@ -5549,6 +5568,12 @@ export const MembersResponse = Type.Union([
         Error: OCError,
     }),
 ]);
+
+export type HistoryDeleted = Static<typeof HistoryDeleted>;
+export const HistoryDeleted = Type.Object({
+    before: Type.BigInt(),
+    deleted_by: UserId,
+});
 
 export type RoleChanged = Static<typeof RoleChanged>;
 export const RoleChanged = Type.Object({
@@ -8846,6 +8871,9 @@ export const ChatEvent = Type.Union([
     }),
     Type.Object({
         BotUpdated: BotUpdated,
+    }),
+    Type.Object({
+        HistoryDeleted: HistoryDeleted,
     }),
     Type.Literal("FailedToDeserialize"),
 ]);

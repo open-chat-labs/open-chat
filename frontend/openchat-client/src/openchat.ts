@@ -1173,7 +1173,24 @@ export class OpenChat {
         );
     }
 
+    #preLogoutTasks: (() => Promise<unknown>)[] = [];
+
+    /**
+     * Registers a task to run at the start of logout, while the caller's
+     * identity is still valid — e.g. removing this device's push token from
+     * the notifications canister. Tasks are best-effort: failures are
+     * swallowed and a timeout stops them from blocking sign-out.
+     */
+    onLogout(task: () => Promise<unknown>): void {
+        this.#preLogoutTasks.push(task);
+    }
+
     async logout(): Promise<void> {
+        await Promise.race([
+            Promise.allSettled(this.#preLogoutTasks.map((task) => task())),
+            new Promise((resolve) => window.setTimeout(resolve, 5000)),
+        ]).catch(() => undefined);
+
         await Promise.all([
             this.#worker.send({ kind: "logout" }),
             this.#authClient.then((c) => c.logout()),
@@ -5331,6 +5348,10 @@ export class OpenChat {
 
     addFcmToken(fcmToken: string, onResponseError?: (error: string | null) => void): Promise<void> {
         return this.#worker.send({ kind: "addFcmToken", fcmToken, onResponseError });
+    }
+
+    removeFcmToken(fcmToken: string): Promise<void> {
+        return this.#worker.send({ kind: "removeFcmToken", fcmToken });
     }
 
     inviteUsers(
