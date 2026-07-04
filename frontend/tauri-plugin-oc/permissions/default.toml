@@ -20,4 +20,5 @@ permissions = [
     "allow-save-media",
     "allow-update-chat-shortcuts",
     "allow-get-pending-deep-link",
+    "allow-get-pending-notification-tap",
 ]

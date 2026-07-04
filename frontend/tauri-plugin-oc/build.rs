@@ -17,6 +17,8 @@ const COMMANDS: &[&str] = &[
     "disable_viewport_resize",
     "save_media",
     "update_chat_shortcuts",
+    "get_pending_deep_link",
+    "get_pending_notification_tap",
 ];
 
 fn main() {

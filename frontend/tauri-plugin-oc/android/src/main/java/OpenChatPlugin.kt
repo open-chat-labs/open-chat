@@ -125,6 +125,17 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
             invoke.resolve(JSObject())
         }
     }
+
+    @Command
+    fun getPendingNotificationTap(invoke: Invoke) {
+        val payload = OCPluginCompanion.pendingNotificationTap
+        OCPluginCompanion.pendingNotificationTap = null
+        if (payload != null) {
+            invoke.resolve(JSObject().put("payload", payload))
+        } else {
+            invoke.resolve(JSObject())
+        }
+    }
 }
 
 object OCPluginCompanion {
@@ -143,6 +154,13 @@ object OCPluginCompanion {
     // Deep link URL received during cold start (before the WebView was ready).
     // JS pulls this via getPendingDeepLink() once mounted.
     var pendingDeepLinkUrl: String? = null
+
+    // Notification tap payload received before the WebView was ready. Taps are
+    // NOT sent through the event queue in that case: the queue flushes the
+    // moment svelteReady fires, which can beat the async listener registration
+    // and silently drop the event. JS pulls this via getPendingNotificationTap()
+    // once its listener is in place.
+    var pendingNotificationTap: String? = null
 
     fun initFcmTokenCache() {
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->

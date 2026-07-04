@@ -190,24 +190,35 @@
         };
 
         if (client.isNativeApp()) {
-            // Listen for incoming push notifications from Firebase; also asks
-            // for permission to show notifications if not already granted.
-            expectPushNotifications().catch(console.error);
+            // Register every native event listener BEFORE signalling svelteReady:
+            // the native side flushes its queued events the moment svelteReady
+            // fires, and a flush that beats an in-flight listener registration
+            // silently drops the event (e.g. a cold-start notification tap).
+            const listenersRegistered = Promise.allSettled([
+                // Listen for incoming push notifications from Firebase; also asks
+                // for permission to show notifications if not already granted.
+                expectPushNotifications(),
 
-            // Listen for notifications user has tapped on
-            expectNotificationTap().catch(console.error);
+                // Listen for notifications user has tapped on
+                expectNotificationTap(),
 
-            // Listen for content shared into OpenChat from the system share sheet
-            // (or via a Direct Share chat shortcut). Cold-start shares are queued
-            // by the native side and delivered once svelteReady fires below.
-            expectShareTarget((share) => handleShareTarget(client, share)).catch(console.error);
+                // Listen for content shared into OpenChat from the system share sheet
+                // (or via a Direct Share chat shortcut). Cold-start shares are queued
+                // by the native side and delivered once svelteReady fires below.
+                expectShareTarget((share) => handleShareTarget(client, share)),
 
-            // Listen for deep links (e.g. https://oc.app/group/xyz tapped from another app).
-            // Cold-start deep links are queued by MainActivity and delivered once svelteReady fires.
-            expectDeepLinks().catch(console.error);
+                // Listen for deep links (e.g. https://oc.app/group/xyz tapped from another app).
+                // Cold-start deep links are queued by MainActivity and delivered once svelteReady fires.
+                expectDeepLinks(),
 
-            // Expect FCM token refreshes
-            expectNewFcmToken(addFcmToken);
+                // Expect FCM token refreshes
+                expectNewFcmToken(addFcmToken),
+            ]);
+            listenersRegistered.then((results) => {
+                results
+                    .filter((r): r is PromiseRejectedResult => r.status === "rejected")
+                    .forEach((r) => console.error("Native listener setup failed", r.reason));
+            });
 
             // Ask for the current FCM token
             getFcmToken().then((token) => {
@@ -232,12 +243,10 @@
             // WhatsApp's per-chat tiles).
             startChatShortcutPusher(client);
 
-            // Inform the native android app that svelte code is ready! SetTimeout
-            // delays the fn execution until the call stack is empty, just to
-            // make sure anything else non-async that needs to run is done.
-            //
-            // Once Svelte app is ready, native code can start pushing events.
-            setTimeout(svelteReady);
+            // Inform the native android app that svelte code is ready — but only
+            // once all the listeners above are registered, so the native event
+            // queue flushes into handlers that actually exist.
+            listenersRegistered.then(() => svelteReady());
         }
     }
 

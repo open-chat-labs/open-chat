@@ -23,6 +23,7 @@ Default permissions for the plugin
 - `allow-save-media`
 - `allow-update-chat-shortcuts`
 - `allow-get-pending-deep-link`
+- `allow-get-pending-notification-tap`
 
 ## Permission Table
 
@@ -159,6 +160,32 @@ Enables the get_pending_deep_link command without any pre-configured scope.
 <td>
 
 Denies the get_pending_deep_link command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-get-pending-notification-tap`
+
+</td>
+<td>
+
+Enables the get_pending_notification_tap command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-get-pending-notification-tap`
+
+</td>
+<td>
+
+Denies the get_pending_notification_tap command without any pre-configured scope.
 
 </td>
 </tr>
