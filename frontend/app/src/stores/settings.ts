@@ -40,6 +40,7 @@ export const accountsSectionOpen = new LocalStorageBoolStore(
 );
 export const statsSectionOpen = new LocalStorageBoolStore(configKeys.userStatsSection, false);
 export const advancedSectionOpen = new LocalStorageBoolStore(configKeys.userAdvancedSection, false);
+export const modelsSectionOpen = new LocalStorageBoolStore(configKeys.modelsSection, false);
 export const deleteAccountSectionOpen = new LocalStorageBoolStore(
     configKeys.userDeleteAccountSection,
     false,

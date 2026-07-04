@@ -57,4 +57,5 @@ export const configKeys = {
     hideTokenBalances: "openchat_hide_token_balances",
     linkDeviceSection: "link_account_with_native_app",
     chatListFilter: "openchat_chat_list_filter",
+    modelsSection: "openchat_models_section",
 };

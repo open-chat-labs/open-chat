@@ -49,6 +49,7 @@
         enterSend,
         linkDeviceSectionOpen,
         lowBandwidth,
+        modelsSectionOpen,
         referralOpen,
         restrictedSectionOpen,
         statsSectionOpen,
@@ -61,6 +62,7 @@
     import { uniquePersonGate } from "../../../utils/access";
     import { isTouchDevice } from "../../../utils/devices";
     import { clearCrashLog, formatCrashLog } from "../../../utils/errorPostmortem";
+    import { isNativeClient } from "../../../utils/onDeviceInference";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
@@ -85,6 +87,7 @@
     import ConfirmDeleteAccount from "./ConfirmDeleteAccount.svelte";
     import FontSize from "./FontSize.svelte";
     import LinkedAuthAccounts from "./LinkedAuthAccounts.svelte";
+    import ModelManager from "./ModelManager.svelte";
     import ReferredUsersList from "./ReferredUsersList.svelte";
     import ReferUsers from "./ReferUsers.svelte";
     import ThemeSelector from "./ThemeSelector.svelte";
@@ -93,6 +96,8 @@
 
     const client = getContext<OpenChat>("client");
     const MAX_BIO_LENGTH = 2000;
+    // On-device model management is only meaningful where the native inference bridge is present.
+    const nativeModels = isNativeClient();
 
     interface Props {
         user: UserSummary;
@@ -568,6 +573,16 @@
                     <VideoCallSettings />
                 </CollapsibleCard>
             </div>
+            {#if nativeModels}
+                <div class="models">
+                    <CollapsibleCard
+                        onToggle={modelsSectionOpen.toggle}
+                        open={$modelsSectionOpen}
+                        headerText={i18nKey("On-device models")}>
+                        <ModelManager />
+                    </CollapsibleCard>
+                </div>
+            {/if}
             <div class="restricted">
                 <CollapsibleCard
                     onToggle={restrictedSectionOpen.toggle}
