@@ -124,13 +124,13 @@ export async function expectNotificationTap(): Promise<PluginListener> {
             switch (notification.type) {
                 case "DM": {
                     if (notification.senderId) {
-                        navigate(`/user/${notification.senderId}`);
+                        navigate(`/user/${notification.senderId}`, "notification");
                     }
                     break;
                 }
                 case "GROUP": {
                     if (notification.groupId) {
-                        navigate(`/group/${notification.groupId}${threadIndexPath}`);
+                        navigate(`/group/${notification.groupId}${threadIndexPath}`, "notification");
                     }
                     break;
                 }
@@ -138,6 +138,7 @@ export async function expectNotificationTap(): Promise<PluginListener> {
                     if (notification.communityId && notification.channelId) {
                         navigate(
                             `/community/${notification.communityId}/channel/${notification.channelId}${threadIndexPath}`,
+                            "notification",
                         );
                     }
                     break;
