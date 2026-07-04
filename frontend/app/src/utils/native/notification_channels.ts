@@ -6,7 +6,8 @@ import { isLandingPagePath } from "@utils/urls";
 
 const TAURI_PLUGIN_NAME = "oc";
 const PUSH_NOTIFICATION_EVENT = "push-notification";
-const NEW_FCM_TOKEN_EVENT = "fcm-token";
+// Must match the event name Kotlin fires in OCPluginCompanion.cacheNewFcmToken.
+const NEW_FCM_TOKEN_EVENT = "fcm-token-refresh";
 const NOTIFICATION_TAP_EVENT = "notification-tap";
 const BACK_PRESS_EVENT = "back-pressed";
 const WINDOW_INSET_CHANGE_EVENT = "window-inset-change";
@@ -210,9 +211,22 @@ async function askForPermission(): Promise<boolean> {
  * @param handler the function to call when a new FCM token is received.
  * @returns
  */
-export async function expectNewFcmToken<T>(handler: (data: T) => void): Promise<PluginListener> {
-    // Set up the listener for new FCM tokens!
-    return addPluginListener(TAURI_PLUGIN_NAME, NEW_FCM_TOKEN_EVENT, handler);
+export async function expectNewFcmToken(
+    handler: (token: string) => void,
+): Promise<PluginListener> {
+    // Set up the listener for new FCM tokens! The native side sends
+    // { fcmToken: "..." }, the handler wants the bare token.
+    return addPluginListener(
+        TAURI_PLUGIN_NAME,
+        NEW_FCM_TOKEN_EVENT,
+        (data: { fcmToken?: string }) => {
+            if (data?.fcmToken) {
+                handler(data.fcmToken);
+            } else {
+                console.error("FCM token refresh event carried no token", data);
+            }
+        },
+    );
 }
 
 /**
