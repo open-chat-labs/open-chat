@@ -8,23 +8,50 @@ pub struct FcmTokenStore {
     fcm_user_tokens: BTreeSet<(UserId, FcmToken)>,
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub enum FcmTokenAddResult {
+    /// The token was not in the store and is now assigned to the user.
+    Added,
+    /// The user already owns this token; nothing changed.
+    AlreadyOwned,
+    /// The token was assigned to another user (e.g. a previous account on the
+    /// same device) and has been re-assigned to the caller. Holds the previous
+    /// owner so callers can propagate the removal.
+    Reassigned(UserId),
+}
+
 impl FcmTokenStore {
     /// Checks if a given FCM token is contained within the store!
     pub fn contains(&self, token: &FcmToken) -> bool {
         self.fcm_user_tokens.iter().any(|(_, t)| t == token)
     }
 
-    /// Add a new FCM token, and assign it to a user.
+    /// Add an FCM token, and assign it to a user.
     ///
-    /// If the token already exists, it will not be added again - this also
-    /// ensures that the user does not have duplicate tokens, or that the same
-    /// token is not assigned to multiple users.
-    pub fn add(&mut self, user_id: UserId, token: FcmToken) -> Result<(), String> {
-        if !self.contains(&token) {
-            self.fcm_user_tokens.insert((user_id, token.clone()));
-            Ok(())
+    /// A device token identifies an app install, not an account, so the last
+    /// user to register it wins: if the token is currently assigned to a
+    /// different user (a previous account on the same device that didn't
+    /// cleanly sign out), the old mapping is replaced. This keeps a token from
+    /// pushing one account's notifications to a device now used by another,
+    /// and ensures the new account actually receives pushes.
+    pub fn add(&mut self, user_id: UserId, token: FcmToken) -> FcmTokenAddResult {
+        if self.fcm_user_tokens.contains(&(user_id, token.clone())) {
+            return FcmTokenAddResult::AlreadyOwned;
+        }
+
+        let previous_owner = self
+            .fcm_user_tokens
+            .iter()
+            .find(|(_, t)| t == &token)
+            .map(|(user, _)| *user);
+
+        if let Some(previous_owner) = previous_owner {
+            self.fcm_user_tokens.remove(&(previous_owner, token.clone()));
+            self.fcm_user_tokens.insert((user_id, token));
+            FcmTokenAddResult::Reassigned(previous_owner)
         } else {
-            Err("Token already exists".to_string())
+            self.fcm_user_tokens.insert((user_id, token));
+            FcmTokenAddResult::Added
         }
     }
 
@@ -81,12 +108,21 @@ mod test {
         let token4 = FcmToken::from("token4".to_string());
 
         // Assert tokens can be added
-        assert_eq!(store.add(user_id1, token1.clone()), Ok(()));
-        assert_eq!(store.add(user_id3, token4.clone()), Ok(()));
-        assert_eq!(store.add(user_id1, token2.clone()), Ok(()));
+        assert_eq!(store.add(user_id1, token1.clone()), FcmTokenAddResult::Added);
+        assert_eq!(store.add(user_id3, token4.clone()), FcmTokenAddResult::Added);
+        assert_eq!(store.add(user_id1, token2.clone()), FcmTokenAddResult::Added);
 
-        // Assert that adding the same token for a different user fails
-        assert_eq!(store.add(user_id2, token1.clone()), Err("Token already exists".to_string()));
+        // Re-adding a token the user already owns is a no-op
+        assert_eq!(store.add(user_id1, token1.clone()), FcmTokenAddResult::AlreadyOwned);
+
+        // Adding a token owned by a different user re-assigns it (last login wins)
+        assert_eq!(store.add(user_id2, token4.clone()), FcmTokenAddResult::Reassigned(user_id3));
+        assert!(store.get_for_user(&user_id3).is_empty());
+        assert_eq!(store.get_for_user(&user_id2), vec![&token4]);
+        assert_eq!(store.len(), 3);
+
+        // ...and re-assigning it back works the same way
+        assert_eq!(store.add(user_id3, token4.clone()), FcmTokenAddResult::Reassigned(user_id2));
 
         // Assert that we can check if the store contains a token
         assert!(store.contains(&token1));

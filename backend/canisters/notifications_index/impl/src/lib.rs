@@ -13,7 +13,7 @@ use types::{
     BuildVersion, CanisterId, Cycles, FcmToken, IdempotentEnvelope, SubscriptionInfo, TimestampMillis, Timestamped, UserId,
 };
 use utils::env::Environment;
-use utils::fcm_token_store::FcmTokenStore;
+use utils::fcm_token_store::{FcmTokenAddResult, FcmTokenStore};
 use utils::idempotency_checker::IdempotencyChecker;
 
 mod guards;
@@ -90,11 +90,23 @@ impl RuntimeState {
         self.push_event_to_local_indexes(event, now);
     }
 
-    pub fn add_fcm_token(&mut self, user_id: UserId, fcm_token: FcmToken) -> Result<(), String> {
-        // Add token locally
-        self.data.fcm_token_store.add(user_id, fcm_token.clone()).map(|_| {
-            self.push_event_to_local_indexes(NotificationsIndexEvent::FcmTokenAdded(user_id, fcm_token), self.env.now());
-        })
+    pub fn add_fcm_token(&mut self, user_id: UserId, fcm_token: FcmToken) {
+        let now = self.env.now();
+        match self.data.fcm_token_store.add(user_id, fcm_token.clone()) {
+            FcmTokenAddResult::Added => {
+                self.push_event_to_local_indexes(NotificationsIndexEvent::FcmTokenAdded(user_id, fcm_token), now);
+            }
+            FcmTokenAddResult::Reassigned(previous_owner) => {
+                // Keep the local index replicas consistent: drop the old owner's
+                // mapping before adding the new one.
+                self.push_event_to_local_indexes(
+                    NotificationsIndexEvent::FcmTokenRemoved(previous_owner, fcm_token.clone()),
+                    now,
+                );
+                self.push_event_to_local_indexes(NotificationsIndexEvent::FcmTokenAdded(user_id, fcm_token), now);
+            }
+            FcmTokenAddResult::AlreadyOwned => {}
+        }
     }
 
     // Called when a push to Firebase fails because the token is no longer valid

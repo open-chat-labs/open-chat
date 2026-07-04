@@ -220,7 +220,10 @@
                     .forEach((r) => console.error("Native listener setup failed", r.reason));
             });
 
-            // Ask for the current FCM token
+            // Ask for the current FCM token and register it unconditionally.
+            // Registration is last-login-wins on the backend, so this also
+            // reclaims a token still bound to a previous account on this
+            // device (a fcm_token_exists pre-check would wrongly skip that).
             getFcmToken().then((token) => {
                 if (!token) {
                     // TODO do we handle this somehow? Debounce, try again?
@@ -228,14 +231,7 @@
                     return;
                 }
 
-                client.checkFcmTokenExists(token).then((exists) => {
-                    if (!exists) {
-                        console.log("Adding FCM token for the first time!");
-                        addFcmToken(token);
-                    } else {
-                        console.log("FCM token already registered");
-                    }
-                });
+                addFcmToken(token);
             });
 
             // Push the top recent chats to the Android Sharing Shortcuts API
