@@ -41,6 +41,7 @@
     } from "openchat-client";
     import { getContext, onMount, tick, untrack, type Snippet } from "svelte";
     import type { FlatChatItem } from "./flatChatItems";
+    import { vclDebug } from "./vclDebug";
     import VirtualChatList from "./VirtualChatList.svelte";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
@@ -175,6 +176,7 @@
             untrack(() => {
                 const fb = $eventListScrollTop;
                 if (fb !== undefined) {
+                    vclDebug.log("restore", { fb: Math.round(fb) });
                     initialised = true;
                     destroyed = false;
                     fromBottom = fb;
@@ -390,6 +392,12 @@
         if (el && preLoadScrollHeight !== undefined) {
             await tick();
             const delta = el.scrollHeight - preLoadScrollHeight;
+            vclDebug.log("load-new", {
+                preH: Math.round(preLoadScrollHeight),
+                postH: Math.round(el.scrollHeight),
+                delta: Math.round(delta),
+                st: Math.round(el.scrollTop),
+            });
             if (delta > 0) {
                 await interruptScroll(el.scrollTop - delta);
             }
@@ -406,6 +414,11 @@
 
         await client.loadPreviousMessages(chat.id, threadRootEvent, initialLoad);
 
+        vclDebug.log("load-prev", {
+            preTop: preLoadScrollTop !== undefined ? Math.round(preLoadScrollTop) : undefined,
+            postTop: el ? Math.round(el.scrollTop) : undefined,
+            initialLoad,
+        });
         await interruptScroll(preLoadScrollTop);
     }
 
@@ -438,6 +451,14 @@
         loadingNewMessages = shouldLoadNew;
         loadingFromUserScroll = fromScroll;
         if (fromScroll) requireScrollStop = true;
+
+        vclDebug.log("load-check", {
+            prev: shouldLoadPrev,
+            new: shouldLoadNew,
+            fromScroll,
+            fb: Math.round(fromBottom),
+            ft: Math.round(fromTop()),
+        });
 
         const loadPromises = [];
         if (shouldLoadNew) {
@@ -549,6 +570,12 @@
         scrollingToMessage = true;
 
         const flatIndex = messageIndexToFlat.get(index);
+        vclDebug.log("scroll-to-msg", {
+            index,
+            flatIndex,
+            filling,
+            hasLookedUpEvent,
+        });
         if (flatIndex !== undefined) {
             focusIndex = index;
             // Delegate positioning to the virtual list: it positions on estimated
@@ -655,6 +682,10 @@
             window.requestAnimationFrame(() => {
                 const el = messagesDiv;
                 if (el && restoreScrollTop !== undefined && el.scrollTop !== restoreScrollTop) {
+                    vclDebug.log("interrupt-restore", {
+                        from: Math.round(el.scrollTop),
+                        to: Math.round(restoreScrollTop),
+                    });
                     el.scrollTop = restoreScrollTop;
                 }
                 interrupt = false;

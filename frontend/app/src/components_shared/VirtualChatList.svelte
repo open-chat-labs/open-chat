@@ -102,6 +102,7 @@
      */
     import { mobileOperatingSystem } from "@utils/devices";
     import { onMount, tick, untrack } from "svelte";
+    import { vclDebug } from "./vclDebug";
     import {
         computeSpacers as _computeSpacers,
         computeWindow as _computeWindow,
@@ -261,11 +262,14 @@
         ensurePrefixSums();
         const contentExtent = prefixSums[n] + Math.max(0, n - 1) * gapPx;
         const maxFromBottom = Math.max(0, contentExtent - viewportHeight + OVERSCAN_PX);
+        if (raw > maxFromBottom + 1) {
+            vclDebug.log("!clamp", { raw: Math.round(raw), max: Math.round(maxFromBottom), n });
+        }
         return Math.min(Math.max(0, raw), maxFromBottom);
     }
 
     // Full recompute: used on init, navigation, items change, resize.
-    function updateWindowFull() {
+    function updateWindowFull(reason: string = "unknown") {
         // Only mark prefix sums dirty if spacerAvgHeight actually changed,
         // to avoid redundant O(N) rebuilds when callers (e.g. _doScrollToIndex)
         // have already set spacerAvgHeight and rebuilt prefix sums.
@@ -275,6 +279,15 @@
         }
         const [s, e] = computeWindow();
         const [bh, th] = computeSpacers(s, e);
+        vclDebug.log("full", {
+            reason,
+            fb: Math.round(fromBottom),
+            s,
+            e,
+            bh: Math.round(bh),
+            th: Math.round(th),
+            avg: Math.round(spacerAvgHeight),
+        });
         start = s;
         end = e;
         bottomSpacerHeight = bh;
@@ -307,6 +320,7 @@
         const INCREMENTAL_THRESHOLD = 50;
         if (Math.abs(s - start) > INCREMENTAL_THRESHOLD) {
             const [bh, th] = computeSpacers(s, e);
+            vclDebug.log("incr-jumped", { s, e, bh: Math.round(bh), th: Math.round(th) });
             start = s;
             end = e;
             bottomSpacerHeight = bh;
@@ -350,7 +364,18 @@
         if (topCount > 1) th += (topCount - 1) * gapPx;
         topSpacerHeight = th;
 
+        if (bottomSpacerHeight < 0) {
+            vclDebug.log("!negative-spacer", { bh: Math.round(bottomSpacerHeight), s, e });
+        }
         bottomSpacerHeight = Math.max(0, bottomSpacerHeight);
+
+        vclDebug.log("incr", {
+            s,
+            e,
+            bh: Math.round(bottomSpacerHeight),
+            th: Math.round(topSpacerHeight),
+            pend: pendingBottomCorrections.size,
+        });
 
         start = s;
         end = e;
@@ -403,6 +428,7 @@
                 rebuildHeightMap();
             }
 
+            let prependOffset = 0;
             if (isPrepend) {
                 // New items were prepended at the visual bottom (scroll origin
                 // in column-reverse). Adjust fromBottom so updateWindowFull
@@ -415,9 +441,19 @@
                 // plus the gap between last new item and old first item).
                 offset += numNew * gapPx;
                 fromBottom += offset;
+                prependOffset = offset;
             }
 
-            updateWindowFull();
+            vclDebug.log("items", {
+                len: items.length,
+                numNew,
+                prepend: isPrepend,
+                append: isAppend,
+                offset: Math.round(prependOffset),
+                fb: Math.round(fromBottom),
+            });
+
+            updateWindowFull("items");
         });
     });
 
@@ -426,8 +462,9 @@
     $effect(() => {
         if (!interrupt && viewport) {
             untrack(() => {
+                vclDebug.log("interrupt-end", { st: Math.round(viewport!.scrollTop) });
                 fromBottom = clampFromBottom(-viewport!.scrollTop);
-                updateWindowFull();
+                updateWindowFull("interrupt-end");
             });
         }
     });
@@ -477,6 +514,12 @@
         momentumEndTimer = undefined;
         isMomentumScrolling = false;
         if (!viewport) return;
+        if (pendingScrollAdjustment !== 0 || pendingSnapToBottom) {
+            vclDebug.log("flush", {
+                adj: Math.round(pendingScrollAdjustment),
+                snap: pendingSnapToBottom,
+            });
+        }
         if (pendingSnapToBottom) {
             pendingSnapToBottom = false;
             viewport.scrollTo({ top: 0 });
@@ -516,8 +559,13 @@
         const distFromBottom = prefixSums[flatIndex] + flatIndex * gapPx;
         const itemH = getHeight(flatIndex);
         const offset = Math.max(0, distFromBottom + itemH / 2 - viewportHeight / 2);
+        vclDebug.log("scroll-idx", {
+            i: flatIndex,
+            offset: Math.round(offset),
+            corrections: scrollCorrectCount,
+        });
         fromBottom = offset;
-        updateWindowFull();
+        updateWindowFull("scroll-to-index");
         lastProgrammaticScrollTime = Date.now();
         viewport.scrollTo({ top: -offset, behavior });
     }
@@ -589,6 +637,17 @@
                     // the bottom in that case.
                     const atBottom = fromBottom < 10;
                     const est = pendingBottomCorrections.get(currentIdx);
+                    if (est !== undefined ? h !== est : prev > 0) {
+                        vclDebug.log("measure", {
+                            i: currentIdx,
+                            key: items[currentIdx].key,
+                            prev: Math.round(prev),
+                            est: est !== undefined ? Math.round(est) : undefined,
+                            h,
+                            atBottom,
+                            mode: est !== undefined ? "entered" : "resized",
+                        });
+                    }
                     if (est !== undefined) {
                         if (h !== est) {
                             if (atBottom) {
@@ -710,8 +769,27 @@
     // Fired on every scroll event. Updates fromBottom, runs incremental
     // window update, notifies the owner (for message loading), and
     // cancels any pending corrective scroll if this was a genuine user scroll.
+    let prevScrollEventTop = 0;
     function onScroll() {
         if (!viewport || interrupt) return;
+        if (vclDebug.enabled) {
+            const st = viewport.scrollTop;
+            const delta = st - prevScrollEventTop;
+            // A large scrollTop discontinuity not caused by our own writes is
+            // exactly the "jumping around" symptom — flag it with full context.
+            if (Math.abs(delta) > 200 && Date.now() - lastProgrammaticScrollTime > 150) {
+                vclDebug.log("!jump", {
+                    from: Math.round(prevScrollEventTop),
+                    to: Math.round(st),
+                    delta: Math.round(delta),
+                    s: start,
+                    e: end,
+                    bh: Math.round(bottomSpacerHeight),
+                    th: Math.round(topSpacerHeight),
+                });
+            }
+            prevScrollEventTop = st;
+        }
         fromBottom = clampFromBottom(-viewport.scrollTop);
 
         // Each scroll event proves momentum is still active; push the idle
@@ -753,7 +831,7 @@
         // (e.g. scrollTop is already 0 in a stale/empty-window state), so the
         // onScroll resync never runs and the list would stay blank.
         fromBottom = 0;
-        updateWindowFull();
+        updateWindowFull("scroll-to-bottom");
         viewport?.scrollTo({ top: 0, behavior });
     }
 
@@ -793,12 +871,14 @@
 
         const ro = new ResizeObserver(() => {
             viewportHeight = el.clientHeight;
-            updateWindowFull();
+            updateWindowFull("viewport-resize");
         });
         ro.observe(el);
         viewportHeight = el.clientHeight;
 
-        updateWindowFull();
+        updateWindowFull("mount");
+
+        const stopFrameWatcher = vclDebug.enabled ? startFrameWatcher(el) : undefined;
 
         return () => {
             el.removeEventListener("scroll", onScroll);
@@ -813,8 +893,75 @@
             clearTimeout(scrollCorrectTimer);
             scrollCorrectTimer = undefined;
             pendingScrollFlatIdx = undefined;
+            stopFrameWatcher?.();
         };
     });
+
+    // ── Frame watcher (diagnostics only) ──────────────────────────────────
+    // Samples every rendered row's viewport-relative position each frame.
+    // For a row present in consecutive frames, its position change must equal
+    // -(scrollTop change); any residual means content shifted under the user's
+    // scroll position — the visible "glitch" this exists to catch. Shifts
+    // during an interrupt frame are expected (window replacement under
+    // overflow: hidden) and tagged accordingly.
+    function startFrameWatcher(el: HTMLDivElement): () => void {
+        let rafId: number;
+        let prevSt = el.scrollTop;
+        let prevTops = new Map<string, number>();
+        let lastSnap = 0;
+        const frame = () => {
+            const st = el.scrollTop;
+            const vpTop = el.getBoundingClientRect().top;
+            const rows = el.querySelectorAll<HTMLElement>(".vcl-row");
+            const tops = new Map<string, number>();
+            rows.forEach((r) => {
+                const k = r.dataset.key;
+                if (k !== undefined) tops.set(k, r.getBoundingClientRect().top - vpTop);
+            });
+            const dSt = st - prevSt;
+            for (const [k, top] of tops) {
+                const pt = prevTops.get(k);
+                if (pt === undefined) continue;
+                const residual = top - pt + dSt;
+                if (Math.abs(residual) > 2) {
+                    vclDebug.log("!content-shift", {
+                        key: k,
+                        dTop: Math.round(top - pt),
+                        dSt: Math.round(dSt),
+                        residual: Math.round(residual),
+                        st: Math.round(st),
+                        fb: Math.round(fromBottom),
+                        interrupt,
+                        s: start,
+                        e: end,
+                        bh: Math.round(bottomSpacerHeight),
+                        th: Math.round(topSpacerHeight),
+                    });
+                    break; // one row per frame is enough to flag the shift
+                }
+            }
+            const now = performance.now();
+            if (now - lastSnap > 1000) {
+                lastSnap = now;
+                vclDebug.log("snap", {
+                    st: Math.round(st),
+                    fb: Math.round(fromBottom),
+                    s: start,
+                    e: end,
+                    bh: Math.round(bottomSpacerHeight),
+                    th: Math.round(topSpacerHeight),
+                    n: items.length,
+                    avg: Math.round(spacerAvgHeight),
+                    measured: measuredCount,
+                });
+            }
+            prevSt = st;
+            prevTops = tops;
+            rafId = requestAnimationFrame(frame);
+        };
+        rafId = requestAnimationFrame(frame);
+        return () => cancelAnimationFrame(rafId);
+    }
 
     let visibleItems = $derived(items.slice(start, end));
 </script>
@@ -829,7 +976,7 @@
     {/if}
     {#each visibleItems as item, relIdx (item.key)}
         {@const absIdx = start + relIdx}
-        <div class="vcl-row" use:measureRow={absIdx}>
+        <div class="vcl-row" data-key={item.key} use:measureRow={absIdx}>
             {@render row(item, absIdx)}
         </div>
     {/each}
