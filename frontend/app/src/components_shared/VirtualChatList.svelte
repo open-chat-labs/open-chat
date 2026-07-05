@@ -800,14 +800,20 @@
     // window update, notifies the owner (for message loading), and
     // cancels any pending corrective scroll if this was a genuine user scroll.
     let prevScrollEventTop = 0;
+    let prevScrollEventTime = 0;
     function onScroll() {
         if (!viewport || interrupt) return;
         if (vclDebug.enabled) {
             const st = viewport.scrollTop;
             const delta = st - prevScrollEventTop;
+            const now = Date.now();
+            const staleSample = now - prevScrollEventTime > 500;
+            prevScrollEventTime = now;
             // A large scrollTop discontinuity not caused by our own writes is
             // exactly the "jumping around" symptom — flag it with full context.
-            if (Math.abs(delta) > 200 && Date.now() - lastProgrammaticScrollTime > 150) {
+            // Ignore stale samples (first event after a pause/chat switch — the
+            // previous position is from another world, not a jump).
+            if (!staleSample && Math.abs(delta) > 400 && now - lastProgrammaticScrollTime > 150) {
                 vclDebug.log("!jump", {
                     from: Math.round(prevScrollEventTop),
                     to: Math.round(st),
@@ -954,8 +960,12 @@
                 const pt = prevTops.get(k);
                 if (pt === undefined) continue;
                 const residual = top - pt + dSt;
-                if (Math.abs(residual) > 2) {
-                    vclDebug.log("!content-shift", {
+                // tolerance scales with scroll speed: sub-pixel row positions
+                // accumulate real rounding error on fast multi-thousand-px frames.
+                // Shifts during interrupt frames are expected window replacements —
+                // log them without the anomaly tag.
+                if (Math.abs(residual) > Math.max(4, 0.01 * Math.abs(dSt))) {
+                    vclDebug.log(interrupt ? "shift-interrupt" : "!content-shift", {
                         key: k,
                         dTop: Math.round(top - pt),
                         dSt: Math.round(dSt),
