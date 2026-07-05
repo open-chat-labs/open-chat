@@ -483,7 +483,13 @@
     let pendingScrollFlatIdx: number | undefined;
     let scrollCorrectTimer: number | undefined;
     let scrollCorrectCount = 0;
+    let pendingScrollStartedAt = 0;
     const MAX_SCROLL_CORRECTIONS = 3;
+    // A pending corrective scroll must not stay armed indefinitely: row
+    // measurements near the target can arrive long after the navigation (image
+    // loads, reflows, edits) and would otherwise yank the viewport back to a
+    // target the user has finished with.
+    const SCROLL_CORRECTION_TTL_MS = 2000;
 
     // Timestamp of last programmatic scrollTop change. Used to distinguish
     // programmatic scrolls (corrections, scrollToIndex, measureRow compensation)
@@ -532,6 +538,10 @@
     }
 
     function adjustScrollTop(delta: number) {
+        vclDebug.log("comp", {
+            delta: Math.round(delta),
+            deferred: isTouching || isMomentumScrolling,
+        });
         if (isTouching || isMomentumScrolling) {
             pendingScrollAdjustment += delta;
         } else if (viewport) {
@@ -666,8 +676,20 @@
                         }
                         pendingBottomCorrections.delete(currentIdx);
                     } else if (prev > 0 && viewport) {
-                        const mid = start + Math.floor((end - start) / 2);
-                        if (currentIdx < mid) {
+                        // Compensate only when the resized row sits below the user's
+                        // reading point (the viewport centre). The window midpoint is
+                        // the wrong split: overscan puts most of the window below the
+                        // viewport, so rows the user is actually reading would get
+                        // fully compensated (over-shifting the view) while genuine
+                        // below-viewport growth might not be compensated at all.
+                        // heightMap[currentIdx] was updated above, so prefix sums
+                        // reflect the new height.
+                        ensurePrefixSums();
+                        const centerOffset = fromBottom + viewportHeight / 2;
+                        // endPos(i) = prefix[i+1] + i * gap — the row's top edge,
+                        // measured from the visual bottom
+                        const rowEnd = prefixSums[currentIdx + 1] + currentIdx * gapPx;
+                        if (rowEnd <= centerOffset) {
                             if (atBottom) {
                                 pendingScrollAdjustment = 0;
                                 if (isTouching || isMomentumScrolling) {
@@ -685,6 +707,14 @@
                     // If this item is at or below the scroll target, the cumulative height
                     // used to position the target has changed. Schedule a corrective re-scroll
                     // once measurements settle (debounced).
+                    if (
+                        pendingScrollFlatIdx !== undefined &&
+                        Date.now() - pendingScrollStartedAt > SCROLL_CORRECTION_TTL_MS
+                    ) {
+                        clearTimeout(scrollCorrectTimer);
+                        pendingScrollFlatIdx = undefined;
+                        scrollCorrectCount = 0;
+                    }
                     if (pendingScrollFlatIdx !== undefined && currentIdx <= pendingScrollFlatIdx) {
                         clearTimeout(scrollCorrectTimer);
                         scrollCorrectTimer = window.setTimeout(() => {
@@ -817,6 +847,7 @@
         clearTimeout(scrollCorrectTimer);
         pendingScrollFlatIdx = flatIndex;
         scrollCorrectCount = 0;
+        pendingScrollStartedAt = Date.now();
         _doScrollToIndex(flatIndex, behavior);
     }
 
