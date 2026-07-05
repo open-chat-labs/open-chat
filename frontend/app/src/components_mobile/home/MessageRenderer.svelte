@@ -1,6 +1,6 @@
 <script lang="ts">
     import { ColourVars, IconButton } from "component-lib";
-    import type { TextContent as TextContentType } from "openchat-client";
+    import type { TextContent as TextContentType } from "@client";
     import { type Snippet } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { rtlStore } from "../../stores/rtl";

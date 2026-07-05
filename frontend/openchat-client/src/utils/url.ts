@@ -1,4 +1,4 @@
-import type { EventWrapper, Message } from "openchat-shared";
+import type { EventWrapper, Message } from "@shared";
 
 const MAX_LINK_PREVIEWS = 3;
 

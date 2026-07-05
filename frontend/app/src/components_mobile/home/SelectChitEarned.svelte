@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { Body, ColourVars, Column, H2, Row, Sheet } from "component-lib";
-    import { chitBands } from "openchat-client";
+    import { chitBands } from "@client";
     import Right from "svelte-material-icons/ChevronRight.svelte";
     import Lightning from "svelte-material-icons/FlashOutline.svelte";
     import Translatable from "../Translatable.svelte";

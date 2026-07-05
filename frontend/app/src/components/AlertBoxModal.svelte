@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { i18nKey, mobileWidth, type ResourceKey } from "openchat-client";
+    import { i18nKey, mobileWidth, type ResourceKey } from "@client";
     import { _ } from "svelte-i18n";
     import { interpolate } from "../i18n/i18n";
     import AlertBox from "./AlertBox.svelte";

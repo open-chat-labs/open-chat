@@ -10,7 +10,7 @@
         Subtitle,
         Switch,
     } from "component-lib";
-    import { iconSize, type ChatIdentifier, type OpenChat } from "openchat-client";
+    import { iconSize, type ChatIdentifier, type OpenChat } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Flag from "svelte-material-icons/Flag.svelte";

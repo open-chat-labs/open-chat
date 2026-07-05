@@ -5,7 +5,7 @@
         i18nKey,
         publish,
         type OpenChat,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Translatable from "../../Translatable.svelte";

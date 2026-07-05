@@ -1,6 +1,6 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import type { CommunitySummary, Level, MultiUserChat, UserSummary } from "openchat-client";
+    import type { CommunitySummary, Level, MultiUserChat, UserSummary } from "@client";
     import InviteUsersHeader from "./InviteUsersHeader.svelte";
     import InviteUsersBody from "./InviteUsersBody.svelte";
 

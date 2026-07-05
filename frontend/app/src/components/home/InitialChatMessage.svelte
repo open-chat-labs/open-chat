@@ -12,7 +12,7 @@
         type OpenChat,
         type ResourceKey,
         selectedCommunitySummaryStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Avatar from "../Avatar.svelte";

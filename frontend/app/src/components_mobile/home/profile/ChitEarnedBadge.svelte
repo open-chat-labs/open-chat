@@ -2,7 +2,7 @@
     import { Body, Caption, ColourVars, Tooltip } from "component-lib";
     import Translatable from "@src/components/Translatable.svelte";
     import { i18nKey } from "@src/i18n/i18n";
-    import { chitBands, findClosestChitBand } from "openchat-client";
+    import { chitBands, findClosestChitBand } from "@client";
     import BadgeContainer, { type BadgeSize } from "./BadgeContainer.svelte";
 
     interface Props {

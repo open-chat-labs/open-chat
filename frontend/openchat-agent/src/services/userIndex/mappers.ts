@@ -33,8 +33,8 @@ import type {
     UsersApiResponse,
     UserSummary,
     UserSummaryUpdate,
-} from "openchat-shared";
-import { CommonResponses, UnsupportedValueError } from "openchat-shared";
+} from "@shared";
+import { CommonResponses, UnsupportedValueError } from "@shared";
 import type {
     BotDefinition as ApiBotDefinition,
     BotInstallationLocation as ApiBotInstallationLocation,

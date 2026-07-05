@@ -7,7 +7,7 @@ import {
     type SelectedEmoji,
     customEmojis as allCustomEmojis,
     premiumItemsStore,
-} from "openchat-client";
+} from "@client";
 
 const emojiSet = new Set<string>();
 const emojiRegex = /^\p{Extended_Pictographic}$/u;

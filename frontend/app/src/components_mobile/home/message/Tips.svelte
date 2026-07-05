@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Container, type Alignment } from "component-lib";
-    import { type TipsReceived } from "openchat-client";
+    import { type TipsReceived } from "@client";
     import Tip from "./Tip.svelte";
     interface Props {
         me: boolean;

@@ -17,7 +17,7 @@
     import Translatable from "../../Translatable.svelte";
 
     import { canShare } from "@src/utils/share";
-    import { OpenChat, type Level } from "openchat-client";
+    import { OpenChat, type Level } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import type { MemberManagement } from "./membersState.svelte";

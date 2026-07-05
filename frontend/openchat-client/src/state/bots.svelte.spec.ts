@@ -1,4 +1,4 @@
-import type { MessageContext } from "openchat-shared";
+import type { MessageContext } from "@shared";
 import { botState } from "./bots.svelte";
 
 const messageContext: MessageContext = { chatId: { kind: "group_chat", groupId: "123456" } };

@@ -10,7 +10,7 @@
         DirectChatSummary,
         MultiUserChat,
         OpenChat,
-    } from "openchat-client";
+    } from "@client";
     import {
         allUsersStore,
         AvatarSize,
@@ -21,7 +21,7 @@
         selectedChatIdStore,
         serverDirectChatsStore,
         serverGroupChatsStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";

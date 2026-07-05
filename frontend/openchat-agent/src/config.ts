@@ -1,8 +1,7 @@
-import type { Logger } from "openchat-shared";
-import { type GroupInvite } from "openchat-shared";
+import type { Logger } from "@shared";
+import { type GroupInvite } from "@shared";
 
 export type AgentConfig = {
-    appType?: "android" | "ios" | "web";
     icUrl: string;
     iiDerivationOrigin?: string;
     openStorageIndexCanister: string;

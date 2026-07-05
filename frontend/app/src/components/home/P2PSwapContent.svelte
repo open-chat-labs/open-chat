@@ -6,14 +6,14 @@
         OpenChat,
         P2PSwapContent,
         ResourceKey,
-    } from "openchat-client";
+    } from "@client";
     import {
         cryptoLookup,
         currentUserIdStore,
         exchangeRatesLookupStore as exchangeRatesLookup,
         isDiamondStore,
         publish,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Clock from "svelte-material-icons/Clock.svelte";

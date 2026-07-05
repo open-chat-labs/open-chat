@@ -1,5 +1,5 @@
-import type { AttachmentContent, Message } from "openchat-shared";
-import { LazyFile } from "openchat-shared";
+import type { AttachmentContent, Message } from "@shared";
+import { LazyFile } from "@shared";
 import { dataToBlobUrl } from "./blob";
 
 const THUMBNAIL_DIMS = dimensions(30, 30);

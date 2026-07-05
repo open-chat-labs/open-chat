@@ -1,5 +1,5 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
-import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "openchat-shared";
+import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "@shared";
 import { idlFactory, type MarketMakerService } from "./candid/idl";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { updateConfigResponse } from "./mappers";

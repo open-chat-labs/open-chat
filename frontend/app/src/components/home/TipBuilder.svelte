@@ -4,7 +4,7 @@
         MessageContext,
         OpenChat,
         PendingCryptocurrencyTransfer,
-    } from "openchat-client";
+    } from "@client";
     import {
         cryptoBalanceStore,
         cryptoLookup,
@@ -12,7 +12,7 @@
         exchangeRatesLookupStore as exchangeRatesLookup,
         lastCryptoSent,
         mobileWidth,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { quadOut } from "svelte/easing";

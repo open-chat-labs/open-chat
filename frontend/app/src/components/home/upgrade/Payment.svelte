@@ -7,7 +7,7 @@
         cryptoLookup,
         E8S_PER_TOKEN,
         mobileWidth,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";

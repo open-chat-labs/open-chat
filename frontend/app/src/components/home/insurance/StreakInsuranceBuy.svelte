@@ -8,7 +8,7 @@
         cryptoBalanceStore,
         cryptoLookup,
         streakInsuranceStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import Equal from "svelte-material-icons/Equal.svelte";
     import Minus from "svelte-material-icons/Minus.svelte";

@@ -16,7 +16,7 @@
         type GroupMatch,
         type GroupSearchResponse,
         type UserSummary,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import AccountMultiplePlusOutline from "svelte-material-icons/AccountMultiplePlusOutline.svelte";

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type OgPreview } from "openchat-client";
+    import { type OgPreview } from "@client";
 
     interface Props {
         ogPreview: OgPreview;

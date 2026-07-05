@@ -1,5 +1,5 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
-import type { CryptocurrencyDetails, TokenExchangeRates } from "openchat-shared";
+import type { CryptocurrencyDetails, TokenExchangeRates } from "@shared";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
 import type { ExchangeRateClient } from "../openchatAgent";
 import { idlFactory, type ICPCoinsService } from "./candid/idl";

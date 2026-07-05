@@ -1,6 +1,6 @@
 <script lang="ts">
     import { rtlStore } from "../../stores/rtl";
-    import type { VideoContent } from "openchat-client";
+    import type { VideoContent } from "@client";
     import ContentCaption from "./ContentCaption.svelte";
     import { reservedMediaStyle, setPlayingMedia } from "../../utils/media";
 

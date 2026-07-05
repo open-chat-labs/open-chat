@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { mobileWidth } from "openchat-client";
+    import { mobileWidth } from "@client";
     import Cellphone from "svelte-material-icons/Cellphone.svelte";
     import Monitor from "svelte-material-icons/Monitor.svelte";
 

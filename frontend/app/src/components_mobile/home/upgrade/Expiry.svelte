@@ -4,7 +4,7 @@
         type DiamondMembershipDuration,
         type DiamondMembershipStatus,
         type OpenChat,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, untrack } from "svelte";
     import { _, locale } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";

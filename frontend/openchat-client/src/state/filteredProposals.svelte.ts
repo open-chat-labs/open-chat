@@ -1,4 +1,4 @@
-import type { Proposal } from "openchat-shared";
+import type { Proposal } from "@shared";
 import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
 const storageKeyPrefix = "proposal_filters_";

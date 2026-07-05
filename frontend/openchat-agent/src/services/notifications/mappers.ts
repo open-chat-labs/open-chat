@@ -1,6 +1,6 @@
 import type {
     SubscriptionExistsResponse,
-} from "openchat-shared";
+} from "@shared";
 import type {
     NotificationsIndexSubscriptionExistsResponse,
 } from "../../typebox";

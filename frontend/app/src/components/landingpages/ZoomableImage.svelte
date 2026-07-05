@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { mobileWidth } from "openchat-client";
+    import { mobileWidth } from "@client";
     import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
 
     let zoom = $state(false);

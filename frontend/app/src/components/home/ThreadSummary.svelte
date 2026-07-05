@@ -1,12 +1,12 @@
 <script lang="ts">
-    import type { ChatIdentifier, OpenChat, ThreadSummary } from "openchat-client";
+    import type { ChatIdentifier, OpenChat, ThreadSummary } from "@client";
     import {
         allUsersStore,
         AvatarSize,
         messagesRead,
         mobileWidth,
         threadsFollowedByMeStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";

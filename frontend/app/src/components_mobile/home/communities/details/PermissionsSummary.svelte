@@ -9,7 +9,7 @@
         type CommunityPermissionRole,
         type CommunityPermissions,
         type ResourceKey,
-    } from "openchat-client";
+    } from "@client";
     import Translatable from "../../../Translatable.svelte";
     import Separator from "../../Separator.svelte";
 

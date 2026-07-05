@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { Metrics, OpenChat } from "openchat-client";
-    import { iconSize, minutesOnlineStore } from "openchat-client";
+    import type { Metrics, OpenChat } from "@client";
+    import { iconSize, minutesOnlineStore } from "@client";
     import { getContext, onMount } from "svelte";
     import Flag from "svelte-material-icons/Flag.svelte";
     import { cubicOut } from "svelte/easing";

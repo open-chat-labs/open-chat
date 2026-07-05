@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Avatar, BodySmall, ColourVars, Container } from "component-lib";
-    import type { BotMatch, DiamondMembershipStatus, OpenChat, UserSummary } from "openchat-client";
-    import { currentUserIdStore } from "openchat-client";
+    import type { BotMatch, DiamondMembershipStatus, OpenChat, UserSummary } from "@client";
+    import { currentUserIdStore } from "@client";
     import { getContext } from "svelte";
     import Check from "svelte-material-icons/Check.svelte";
     import FilteredUsername from "@shared_components/FilteredUsername.svelte";

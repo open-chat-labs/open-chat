@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Body, ColourVars, Container, Switch } from "component-lib";
-    import { i18nKey, type ExternalBotPermissions, type Level } from "openchat-client";
+    import { i18nKey, type ExternalBotPermissions, type Level } from "@client";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import ChatOutline from "svelte-material-icons/ChatOutline.svelte";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";

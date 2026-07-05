@@ -2,7 +2,7 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { gateLabel } from "@src/utils/access";
     import { Body, type SizeMode } from "component-lib";
-    import type { LeafGate, OpenChat } from "openchat-client";
+    import type { LeafGate, OpenChat } from "@client";
     import { getContext } from "svelte";
     import Translatable from "../../Translatable.svelte";
 

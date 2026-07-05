@@ -1,8 +1,8 @@
 <script lang="ts">
     import { communityPreviewState } from "@src/utils/preview.svelte";
     import { Sheet } from "component-lib";
-    import type { OpenChat } from "openchat-client";
-    import { identityStateStore } from "openchat-client";
+    import type { OpenChat } from "@client";
+    import { identityStateStore } from "@client";
     import { getContext, tick, type Snippet } from "svelte";
     import GateCheckFailed from "../access/AccessGateCheckFailed.svelte";
 

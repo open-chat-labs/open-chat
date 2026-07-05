@@ -1,12 +1,12 @@
 <script lang="ts">
-    import type { OpenChat } from "openchat-client";
+    import type { OpenChat } from "@client";
     import {
         anonUserStore,
         canExtendDiamondStore,
         iconSize,
         platformOperatorStore,
         publish,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import AccountSettings from "svelte-material-icons/AccountSettingsOutline.svelte";

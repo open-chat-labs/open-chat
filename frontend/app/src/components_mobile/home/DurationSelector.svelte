@@ -1,7 +1,7 @@
 <script lang="ts">
     import { msToDays, msToHours, msToMinutes } from "@src/utils/time";
     import { Chip, Column, Container } from "component-lib";
-    import type { OpenChat } from "openchat-client";
+    import type { OpenChat } from "@client";
     import { getContext, onMount, untrack, type Snippet } from "svelte";
 
     const ONE_MINUTE = 1000 * 60;

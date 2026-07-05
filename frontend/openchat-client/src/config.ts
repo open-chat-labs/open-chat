@@ -1,7 +1,6 @@
-import type { CommunityInvite, GroupInvite, Logger, MessageFormatter } from "openchat-shared";
+import type { CommunityInvite, GroupInvite, Logger, MessageFormatter } from "@shared";
 
 export type OpenChatConfig = {
-    appType?: "android" | "ios" | "web";
     mobileLayout: "v1" | "v2";
     icUrl?: string;
     webAuthnOrigin: string | undefined;

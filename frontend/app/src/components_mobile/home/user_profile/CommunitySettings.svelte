@@ -17,7 +17,7 @@
         OpenChat,
         ROLE_NONE,
         sortedCommunitiesStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import Plus from "svelte-material-icons/Plus.svelte";
     import DisplayNameInput from "../../DisplayNameInput.svelte";

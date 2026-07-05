@@ -26,8 +26,8 @@
         suspendedUserStore,
         underReviewEnabledStore,
         userMetricsStore,
-    } from "openchat-client";
-    import { ErrorCode, type PublicProfile } from "openchat-shared";
+    } from "@client";
+    import { ErrorCode, type PublicProfile } from "@shared";
     import { getContext, onMount } from "svelte";
     import { _, locale } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";

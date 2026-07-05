@@ -14,7 +14,7 @@
         StatusCard,
         Switch,
     } from "component-lib";
-    import { type CryptocurrencyDetails, type NeuronGate, type OpenChat } from "openchat-client";
+    import { type CryptocurrencyDetails, type NeuronGate, type OpenChat } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Wallet from "svelte-material-icons/WalletOutline.svelte";

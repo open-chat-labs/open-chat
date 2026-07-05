@@ -11,7 +11,7 @@
     import { Connection, clusterApiUrl } from "@solana/web3.js";
     import base58 from "bs58";
     import { Button } from "component-lib";
-    import type { OpenChat, SiwsMessage } from "openchat-client";
+    import type { OpenChat, SiwsMessage } from "@client";
     import { getContext, onMount } from "svelte";
     import { initialize, walletStore } from "../../stores/solana/walletStore";
 

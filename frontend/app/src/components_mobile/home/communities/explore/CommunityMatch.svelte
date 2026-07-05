@@ -6,7 +6,7 @@
         type CommunityMatch,
         type CommunitySummary,
         type OpenChat,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import WithVerifiedBadge from "../../../icons/WithVerifiedBadge.svelte";
     import Translatable from "../../../Translatable.svelte";

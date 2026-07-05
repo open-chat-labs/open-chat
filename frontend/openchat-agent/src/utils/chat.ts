@@ -20,7 +20,7 @@ import type {
     UserCanisterGroupChatSummary,
     UserCanisterGroupChatSummaryUpdates,
     UserGroupDetails,
-} from "openchat-shared";
+} from "@shared";
 import {
     applyOptionUpdate,
     bigIntMax,
@@ -30,7 +30,7 @@ import {
     OPENCHAT_BOT_USER_ID,
     OPENCHAT_VIDEO_CALL_AVATAR_URL,
     OPENCHAT_VIDEO_CALL_USER_ID,
-} from "openchat-shared";
+} from "@shared";
 import { toRecord } from "./list";
 import { identity } from "./mapping";
 

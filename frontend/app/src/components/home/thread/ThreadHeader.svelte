@@ -6,7 +6,7 @@
         Message,
         OpenChat,
         TypersByKey,
-    } from "openchat-client";
+    } from "@client";
     import {
         allUsersStore,
         AvatarSize,
@@ -15,7 +15,7 @@
         mobileWidth,
         selectedCommunitySummaryStore,
         UserStatus,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";

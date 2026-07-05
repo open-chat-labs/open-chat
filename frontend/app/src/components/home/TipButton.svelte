@@ -1,6 +1,6 @@
 <script lang="ts">
     import { spring } from "svelte/motion";
-    import type { ResourceKey } from "openchat-client";
+    import type { ResourceKey } from "@client";
     import Translatable from "../Translatable.svelte";
 
     interface Props {

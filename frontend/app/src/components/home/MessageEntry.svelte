@@ -15,7 +15,7 @@
         OpenChat,
         SelectedEmoji,
         User,
-    } from "openchat-client";
+    } from "@client";
     import {
         allUsersStore,
         anonUserStore,
@@ -35,7 +35,7 @@
         throttleDeadline,
         userGroupMentionRegex,
         userIdMentionRegex,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Alert from "svelte-material-icons/Alert.svelte";

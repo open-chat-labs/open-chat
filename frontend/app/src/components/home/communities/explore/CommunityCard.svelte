@@ -1,12 +1,12 @@
 <script lang="ts">
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import Pound from "svelte-material-icons/Pound.svelte";
-    import type { AccessGateConfig, DataContent, OpenChat } from "openchat-client";
+    import type { AccessGateConfig, DataContent, OpenChat } from "@client";
     import Avatar from "../../../Avatar.svelte";
     import IntersectionObserver from "../../IntersectionObserver.svelte";
     import { _ } from "svelte-i18n";
     import Markdown from "@shared_components/Markdown.svelte";
-    import { AvatarSize, ModerationFlags } from "openchat-client";
+    import { AvatarSize, ModerationFlags } from "@client";
     import { getContext } from "svelte";
     import CommunityBanner from "./CommunityBanner.svelte";
     import AccessGateIcon from "../../access/AccessGateIcon.svelte";

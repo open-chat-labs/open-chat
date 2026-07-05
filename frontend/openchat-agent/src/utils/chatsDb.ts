@@ -41,7 +41,7 @@ import type {
     Tally,
     TransferSuccess,
     UpdatedEvent,
-} from "openchat-shared";
+} from "@shared";
 import {
     ChatMap,
     MAX_EVENTS,
@@ -54,7 +54,7 @@ import {
     emptyEventsResponse,
     isSuccessfulEventsResponse,
     updateCreatedUser,
-} from "openchat-shared";
+} from "@shared";
 import { IndexedDbConnectionManager } from "./indexedDb";
 
 const CACHE_VERSION = 148;

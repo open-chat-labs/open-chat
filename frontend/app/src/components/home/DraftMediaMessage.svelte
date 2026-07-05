@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { AttachmentContent } from "openchat-client";
+    import type { AttachmentContent } from "@client";
     import VideoContent from "./VideoContent.svelte";
     import ImageContent from "./ImageContent.svelte";
     import AudioContent from "./AudioContent.svelte";

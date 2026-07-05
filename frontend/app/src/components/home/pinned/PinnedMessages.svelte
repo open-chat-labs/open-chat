@@ -5,7 +5,7 @@
         MultiUserChatIdentifier,
         OpenChat,
         ReadonlySet,
-    } from "openchat-client";
+    } from "@client";
     import {
         currentUserStore,
         iconSize,
@@ -13,8 +13,8 @@
         selectedChatPinnedMessagesStore,
         selectedServerChatStore,
         subscribe,
-    } from "openchat-client";
-    import { isSuccessfulEventsResponse } from "openchat-shared";
+    } from "@client";
+    import { isSuccessfulEventsResponse } from "@shared";
     import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";

@@ -8,7 +8,7 @@
         type ChatIdentifier,
         type OpenChat,
         type VideoCallType,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import Phone from "svelte-material-icons/Phone.svelte";
     import PhoneHangup from "svelte-material-icons/PhoneHangup.svelte";

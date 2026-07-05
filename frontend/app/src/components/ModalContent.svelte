@@ -1,6 +1,6 @@
 <script lang="ts">
     import { portalState, reposition, type NanoPopPosition } from "component-lib";
-    import { mobileWidth } from "openchat-client";
+    import { mobileWidth } from "@client";
     import { onMount, tick, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";

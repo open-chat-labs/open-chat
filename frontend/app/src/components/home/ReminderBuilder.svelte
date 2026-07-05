@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { mobileWidth, type ChatIdentifier, type OpenChat } from "openchat-client";
+    import { mobileWidth, type ChatIdentifier, type OpenChat } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { now } from "../../stores/time";

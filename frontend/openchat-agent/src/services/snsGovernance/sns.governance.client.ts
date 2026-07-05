@@ -3,7 +3,7 @@ import type {
     ListNervousSystemFunctionsResponse,
     ManageNeuronResponse,
     ProposalVoteDetails,
-} from "openchat-shared";
+} from "@shared";
 import { idlFactory, type SnsGovernanceService } from "./candid/idl";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { getProposalVoteDetails, manageNeuronResponse, nervousSystemFunctions } from "./mappers";

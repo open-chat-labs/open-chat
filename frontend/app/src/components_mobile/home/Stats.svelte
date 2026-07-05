@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Body, BodySmall, ColourVars, Container, Subtitle } from "component-lib";
-    import type { Metrics, OpenChat } from "openchat-client";
-    import { minutesOnlineStore } from "openchat-client";
+    import type { Metrics, OpenChat } from "@client";
+    import { minutesOnlineStore } from "@client";
     import { getContext, onMount } from "svelte";
     import Flag from "svelte-material-icons/Flag.svelte";
     import { cubicOut } from "svelte/easing";

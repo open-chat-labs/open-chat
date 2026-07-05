@@ -7,7 +7,7 @@
         publish,
         type CommunitySummary,
         type MultiUserChat,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import Robot from "svelte-material-icons/RobotOutline.svelte";
     import Webhook from "svelte-material-icons/Webhook.svelte";

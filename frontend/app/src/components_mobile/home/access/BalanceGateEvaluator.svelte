@@ -13,7 +13,7 @@
         Sheet,
         StatusCard,
     } from "component-lib";
-    import { enhancedCryptoLookup, publish, type TokenBalanceGate } from "openchat-client";
+    import { enhancedCryptoLookup, publish, type TokenBalanceGate } from "@client";
     import { _ } from "svelte-i18n";
     import Chart from "svelte-material-icons/ChartBoxOutline.svelte";
     import QrCode from "svelte-material-icons/Qrcode.svelte";

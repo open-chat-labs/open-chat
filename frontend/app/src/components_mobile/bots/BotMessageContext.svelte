@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Avatar, Caption, ColourVars, Container, Tooltip } from "component-lib";
-    import { allUsersStore, OpenChat, type CommandArg } from "openchat-client";
-    import type { BotContextCommand } from "openchat-shared";
+    import { allUsersStore, OpenChat, type CommandArg } from "@client";
+    import type { BotContextCommand } from "@shared";
     import { getContext } from "svelte";
     import CogOutline from "svelte-material-icons/CogOutline.svelte";
     import Typing from "@shared_components/Typing.svelte";

@@ -18,8 +18,8 @@
         type InterpolationValues,
         type OpenChat,
         type ResourceKey,
-    } from "openchat-client";
-    import { random128 } from "openchat-shared";
+    } from "@client";
+    import { random128 } from "@shared";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Alert from "svelte-material-icons/AlertOutline.svelte";

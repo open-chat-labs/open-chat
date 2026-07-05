@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { BodySmall, CommonButton, Container, H2 } from "component-lib";
-    import { publish } from "openchat-client";
+    import { publish } from "@client";
     import AccountStar from "svelte-material-icons/AccountStarOutline.svelte";
     import Translatable from "../../Translatable.svelte";
     import HumanityConfirmation from "../HumanityConfirmation.svelte";

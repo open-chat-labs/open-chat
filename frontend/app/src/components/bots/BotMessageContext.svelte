@@ -5,8 +5,8 @@
         mobileWidth,
         OpenChat,
         type CommandArg,
-    } from "openchat-client";
-    import type { BotContextCommand } from "openchat-shared";
+    } from "@client";
+    import type { BotContextCommand } from "@shared";
     import { getContext } from "svelte";
     import CogOutline from "svelte-material-icons/CogOutline.svelte";
     import Avatar from "../Avatar.svelte";

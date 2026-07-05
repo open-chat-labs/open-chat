@@ -4,7 +4,7 @@
         exchangeRatesLookupStore as exchangeRatesLookup,
         iconSize,
         type OpenChat,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount, untrack } from "svelte";
     import Alert from "svelte-material-icons/Alert.svelte";
     import { i18nKey } from "../../i18n/i18n";

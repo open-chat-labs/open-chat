@@ -1,4 +1,4 @@
-import { type DiamondMembershipDuration, UnsupportedValueError } from "openchat-shared";
+import { type DiamondMembershipDuration, UnsupportedValueError } from "@shared";
 
 const MONTH_IN_MS: number = ((4 * 365 + 1) * 24 * 60 * 60 * 1000) / (4 * 12);
 const THREE_MONTH_IN_MS: number = 3 * MONTH_IN_MS;

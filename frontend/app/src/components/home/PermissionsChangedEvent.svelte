@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { Level, PermissionsChanged, UserSummary } from "openchat-client";
-    import { allUsersStore } from "openchat-client";
+    import type { Level, PermissionsChanged, UserSummary } from "@client";
+    import { allUsersStore } from "@client";
     import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import { buildDisplayName } from "../../utils/user";

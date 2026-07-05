@@ -1,6 +1,6 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
-    import type { ResourceKey } from "openchat-client";
+    import type { ResourceKey } from "@client";
     import type { Snippet } from "svelte";
     import NumberInput from "./NumberInput.svelte";
 

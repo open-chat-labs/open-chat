@@ -1,9 +1,9 @@
 import { enableViewportResize, disableViewportResize } from "tauri-plugin-oc-api";
+import { isAndroidTauriApp, isIosTauriApp } from "@shared";
 
 const STORAGE_KEY = "openchat_soft_keyboard_height";
 const SCROLL_INTO_VIEW_DELAY = 400;
-const IS_NATIVE_APP =
-    import.meta.env.OC_APP_TYPE === "android" || import.meta.env.OC_APP_TYPE === "ios";
+const IS_NATIVE_APP = isAndroidTauriApp() || isIosTauriApp();
 
 let visible = $state(false);
 // Is zero while the kb is hidden

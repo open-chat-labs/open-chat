@@ -10,8 +10,8 @@ import type {
     GateCheckSucceeded,
     MultiUserChat,
     OpenChat,
-} from "openchat-client";
-import { anonUserStore, chatListScopeStore, chatSummariesStore, type PaymentGateApprovals, publish, ROLE_NONE, routeForScope, selectedChatSummaryStore, selectedCommunitySummaryStore, stripSuspendedGate } from "openchat-client";
+} from "@client";
+import { anonUserStore, chatListScopeStore, chatSummariesStore, type PaymentGateApprovals, publish, ROLE_NONE, routeForScope, selectedChatSummaryStore, selectedCommunitySummaryStore, stripSuspendedGate } from "@client";
 import { navigate } from "@utils/navigation";
 
 class ApprovalsAndCredentials {

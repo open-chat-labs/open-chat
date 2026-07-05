@@ -26,7 +26,7 @@
         RouteParams,
         Rules,
         UpdatedRules,
-    } from "openchat-client";
+    } from "@client";
     import {
         allUsersStore,
         anonUserStore,
@@ -56,7 +56,7 @@
         setRightPanelHistory,
         subscribe,
         suspendedUserStore,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";

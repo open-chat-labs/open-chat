@@ -3,8 +3,8 @@
 </script>
 
 <script lang="ts">
-    import type { OpenChat } from "openchat-client";
-    import { Poller } from "openchat-client";
+    import type { OpenChat } from "@client";
+    import { Poller } from "@client";
     import { getContext, onMount } from "svelte";
     import ProgressSteps, { type Result, type Step } from "../../ProgressSteps.svelte";
 

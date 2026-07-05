@@ -17,7 +17,7 @@
         publish,
         selectedChatSummaryStore,
         type VideoCallContent,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, type Snippet } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { activeVideoCall } from "../../stores/video";

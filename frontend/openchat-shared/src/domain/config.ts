@@ -1,7 +1,6 @@
 import type { GroupInvite } from "./inviteCodes";
 
 export type AgentConfig = {
-    appType?: "android" | "ios" | "web";
     icUrl: string;
     iiDerivationOrigin?: string;
     openStorageIndexCanister: string;

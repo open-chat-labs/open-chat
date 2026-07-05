@@ -1,4 +1,4 @@
-import { type MessageContext, MessageContextMap, waitAll } from "openchat-shared";
+import { type MessageContext, MessageContextMap, waitAll } from "@shared";
 
 export class AsyncMessageContextMap<T> extends MessageContextMap<T[]> {
     insert(context: MessageContext, val: T): void {

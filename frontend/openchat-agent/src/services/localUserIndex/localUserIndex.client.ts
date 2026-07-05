@@ -23,14 +23,14 @@ import type {
     RegisterUserResponse,
     Tally,
     VerifiedCredentialArgs,
-} from "openchat-shared";
+} from "@shared";
 import {
     max,
     MAX_MISSING,
     premiumPrices,
     toBigInt32,
     UnsupportedValueError,
-} from "openchat-shared";
+} from "@shared";
 import {
     BotInstallationLocation as ApiBotInstallationLocation,
     LocalUserIndexAccessTokenV2Args,

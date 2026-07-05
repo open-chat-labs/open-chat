@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { mobileWidth } from "openchat-client";
+    import { mobileWidth } from "@client";
     import type { Snippet } from "svelte";
     interface Props {
         adopt: Snippet;

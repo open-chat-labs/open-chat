@@ -1,6 +1,6 @@
 <script lang="ts">
     import EmailIcon from "svelte-material-icons/EmailOutline.svelte";
-    import { AuthProvider } from "openchat-client";
+    import { AuthProvider } from "@client";
     import InternetIdentityLogo from "../../landingpages/InternetIdentityLogo.svelte";
     import OnBoardOptionLogo from "./OnBoardOptionLogo.svelte";
 

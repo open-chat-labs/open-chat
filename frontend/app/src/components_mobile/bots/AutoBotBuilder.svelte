@@ -12,7 +12,7 @@
         type CommandDefinition,
         type ExternalBot,
         type ValidationErrorMessages,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import Reload from "svelte-material-icons/Reload.svelte";

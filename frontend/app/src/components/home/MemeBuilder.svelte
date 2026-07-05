@@ -3,7 +3,7 @@
         iconSize,
         mobileWidth,
         type MemeFighterContent as MemeFighterContentType,
-    } from "openchat-client";
+    } from "@client";
     import { tick } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { currentTheme } from "../../theme/themes";

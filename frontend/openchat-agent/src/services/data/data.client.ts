@@ -10,8 +10,8 @@ import type {
     StorageUserNotFound,
     StoredMediaContent,
     UploadFileResponse,
-} from "openchat-shared";
-import { random128, StorageUpdated } from "openchat-shared";
+} from "@shared";
+import { random128, StorageUpdated } from "@shared";
 import type { AgentConfig } from "../../config";
 import { buildBlobUrl } from "../../utils/chat";
 import { StorageBucketClient } from "../storageBucket/storageBucket.client";

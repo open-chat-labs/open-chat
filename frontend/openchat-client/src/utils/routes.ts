@@ -7,7 +7,7 @@ import {
     type GroupChatIdentifier,
     type NullScope,
     type RouteParams,
-} from "openchat-shared";
+} from "@shared";
 
 const noScope: NullScope = { kind: "none" };
 

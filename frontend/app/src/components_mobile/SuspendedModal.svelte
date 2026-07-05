@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Body, ColourVars, Column, H2, Row, Sheet } from "component-lib";
-    import { currentUserStore } from "openchat-client";
+    import { currentUserStore } from "@client";
     import RobotDead from "svelte-material-icons/RobotDeadOutline.svelte";
     import { i18nKey } from "../i18n/i18n";
     import Translatable from "./Translatable.svelte";

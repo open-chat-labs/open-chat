@@ -6,7 +6,7 @@
         type ResourceKey,
         ROLE_NONE,
         roleAsText,
-    } from "openchat-client";
+    } from "@client";
     import { _ } from "svelte-i18n";
     import Check from "svelte-material-icons/Check.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";

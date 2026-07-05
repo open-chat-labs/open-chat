@@ -8,7 +8,7 @@
         ROLE_MODERATOR,
         ROLE_OWNER,
         roleAsText,
-    } from "openchat-client";
+    } from "@client";
     import { _ } from "svelte-i18n";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import AccountRemoveOutline from "svelte-material-icons/AccountRemoveOutline.svelte";

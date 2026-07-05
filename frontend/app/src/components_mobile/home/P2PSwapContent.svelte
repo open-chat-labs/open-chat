@@ -17,13 +17,13 @@
         OpenChat,
         P2PSwapContent,
         P2PSwapContentInitial,
-    } from "openchat-client";
+    } from "@client";
     import {
         enhancedCryptoLookup as cryptoLookup,
         currentUserIdStore,
         isDiamondStore,
         publish,
-    } from "openchat-client";
+    } from "@client";
     import { type Snippet, getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";

@@ -26,7 +26,7 @@
     import { onMount, tick, type Snippet } from "svelte";
     import { translatable } from "../actions/translatable";
     import { interpolate } from "../i18n/i18n";
-    import { type ResourceKey, parseBigInt } from "openchat-client";
+    import { type ResourceKey, parseBigInt } from "@client";
 
     let {
         disabled = false,

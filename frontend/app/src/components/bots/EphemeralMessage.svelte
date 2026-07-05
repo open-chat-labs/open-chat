@@ -1,6 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { AvatarSize, botState, type EphemeralMessageEvent } from "openchat-client";
+    import { AvatarSize, botState, type EphemeralMessageEvent } from "@client";
     import { onMount } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { Tween } from "svelte/motion";

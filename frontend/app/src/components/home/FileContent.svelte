@@ -1,7 +1,7 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import type { FileContent, OpenChat } from "openchat-client";
+    import type { FileContent, OpenChat } from "@client";
     import ContentCaption from "./ContentCaption.svelte";
     import FileDownload from "svelte-material-icons/FileDownload.svelte";
     import { getContext } from "svelte";

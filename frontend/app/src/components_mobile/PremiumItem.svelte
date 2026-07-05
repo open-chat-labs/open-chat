@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { ColourVars, Tooltip } from "component-lib";
-    import { PremiumItem, premiumItemsStore, premiumPrices } from "openchat-client";
+    import { PremiumItem, premiumItemsStore, premiumPrices } from "@client";
     import { type Snippet } from "svelte";
     import Lock from "svelte-material-icons/Lock.svelte";
     import PremiumItemPayment from "./PremiumItemPayment.svelte";

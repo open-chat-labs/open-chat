@@ -1,5 +1,5 @@
 import { AuthClient } from "@icp-sdk/auth/client";
-import { routerReadyStore, xframeOverrides, type XFrameOverrides } from "openchat-client";
+import { routerReadyStore, xframeOverrides, type XFrameOverrides } from "@client";
 import { navigate } from "@utils/navigation";
 import { get } from "svelte/store";
 import { setModifiedTheme } from "../theme/themes";

@@ -28,7 +28,7 @@ mod mobile_features {
 
     pub const MAIN_WINDOW_LABEL: &str = "main";
     // TODO perhaps this could be read from env alternativelly, with hard coded fallback?
-    pub const DEFAULT_DEV_URL: &str = "http://localhost:5003";
+    pub const DEFAULT_DEV_URL: &str = "http://localhost:5001";
 
     // Handles app window setup and navigation interception!
     pub fn setup_app(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {

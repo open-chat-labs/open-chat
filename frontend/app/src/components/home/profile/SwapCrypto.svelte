@@ -1,13 +1,13 @@
 <script lang="ts">
-    import type { DexId, InterpolationValues, OpenChat, ResourceKey } from "openchat-client";
+    import type { DexId, InterpolationValues, OpenChat, ResourceKey } from "@client";
     import {
         cryptoBalanceStore,
         enhancedCryptoLookup as cryptoLookup,
         exchangeRatesLookupStore as exchangeRatesLookup,
         mobileWidth,
         swappableTokensStore,
-    } from "openchat-client";
-    import { random128 } from "openchat-shared";
+    } from "@client";
+    import { random128 } from "@shared";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";

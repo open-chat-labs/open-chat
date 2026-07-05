@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { OpenChat, UserLookup } from "openchat-client";
-    import { allUsersStore, currentUserIdStore } from "openchat-client";
+    import type { OpenChat, UserLookup } from "@client";
+    import { allUsersStore, currentUserIdStore } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";

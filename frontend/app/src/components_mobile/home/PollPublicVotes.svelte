@@ -8,7 +8,7 @@
         type OpenChat,
         type PollContent,
         type ReducedPublicProfile,
-    } from "openchat-client";
+    } from "@client";
     import SlidingPageContent from "./SlidingPageContent.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { _ } from "svelte-i18n";

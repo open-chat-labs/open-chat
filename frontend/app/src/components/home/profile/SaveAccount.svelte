@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { NamedAccount, OpenChat } from "openchat-client";
+    import type { NamedAccount, OpenChat } from "@client";
     import Input from "../../Input.svelte";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";

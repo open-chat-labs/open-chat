@@ -18,7 +18,7 @@ import {
     type MessageContext,
     type MessageFormatter,
     type ReadonlyMap,
-} from "openchat-shared";
+} from "@shared";
 import { builtinBot } from "../utils/builtinBotCommands";
 import { communitiesStore, currentUserIdStore } from "./app/stores";
 

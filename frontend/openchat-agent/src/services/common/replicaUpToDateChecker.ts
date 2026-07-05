@@ -5,7 +5,7 @@ import {
     type ChatIdentifier,
     type ChatSummary,
     type ReplicaNotUpToDate,
-} from "openchat-shared";
+} from "@shared";
 
 export async function ensureReplicaIsUpToDate(
     chatsDb: ChatsDb,

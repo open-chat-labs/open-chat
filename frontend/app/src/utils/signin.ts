@@ -4,7 +4,7 @@ import {
     type GenerateMagicLinkResponse,
     type OpenChat,
     type TrackingCategory,
-} from "openchat-client";
+} from "@client";
 import { toastStore } from "../stores/toast";
 import { i18nKey } from "../i18n/i18n";
 import type { Subscriber, Unsubscriber } from "svelte/store";

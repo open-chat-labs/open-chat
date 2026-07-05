@@ -1,5 +1,5 @@
 import type { DBSchema } from "idb";
-import type { RegistryValue } from "openchat-shared";
+import type { RegistryValue } from "@shared";
 import { IndexedDbConnectionManager } from "./indexedDb";
 
 const CACHE_VERSION = 18;

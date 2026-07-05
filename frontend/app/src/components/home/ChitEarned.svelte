@@ -1,6 +1,6 @@
 <script lang="ts">
     import { shakeElements } from "@src/utils/shake";
-    import { subscribe, type ChitEvent, type OpenChat } from "openchat-client";
+    import { subscribe, type ChitEvent, type OpenChat } from "@client";
     import { getContext, onMount } from "svelte";
     import { Confetti } from "svelte-confetti";
     import { _ } from "svelte-i18n";

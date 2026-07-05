@@ -2,13 +2,13 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { createLocalStorageStore } from "@src/utils/store";
     import EmailValidator from "email-validator";
-    import type { CreatedUser, OpenChat, UserOrUserGroup, UserSummary } from "openchat-client";
+    import type { CreatedUser, OpenChat, UserOrUserGroup, UserSummary } from "@client";
     import {
         AuthProvider,
         identityStateStore,
         mobileWidth,
         selectedAuthProviderStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import AlertBox from "../AlertBox.svelte";
     import Button from "../Button.svelte";

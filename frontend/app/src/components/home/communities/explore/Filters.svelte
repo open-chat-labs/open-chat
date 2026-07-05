@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { communityFiltersStore, iconSize, mobileWidth, OpenChat } from "openchat-client";
+    import { communityFiltersStore, iconSize, mobileWidth, OpenChat } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";

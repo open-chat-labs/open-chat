@@ -1,12 +1,12 @@
 <script lang="ts">
-    import type { EnhancedAccessGate, GateCheckSucceeded, OpenChat } from "openchat-client";
+    import type { EnhancedAccessGate, GateCheckSucceeded, OpenChat } from "@client";
     import {
         anonUserStore,
         identityStateStore,
         ROLE_NONE,
         selectedCommunitySummaryStore,
         stripSuspendedGate,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, tick, type Snippet } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";

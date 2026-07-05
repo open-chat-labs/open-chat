@@ -1,4 +1,4 @@
-import type { ExternalBotPermissions } from "openchat-client";
+import type { ExternalBotPermissions } from "@client";
 
 export function togglePermission<P extends keyof ExternalBotPermissions>(
     permissions: ExternalBotPermissions,

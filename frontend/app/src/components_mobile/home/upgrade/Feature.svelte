@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { ResourceKey } from "openchat-client";
+    import type { ResourceKey } from "@client";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 

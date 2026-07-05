@@ -1,7 +1,7 @@
 <script lang="ts">
     import Markdown from "@shared_components/Markdown.svelte";
     import { ChatCaption, ChatText, Column } from "component-lib";
-    import type { OgPreview, RehydratedMessagePreview, TextContent } from "openchat-client";
+    import type { OgPreview, RehydratedMessagePreview, TextContent } from "@client";
     import { type Snippet } from "svelte";
     import { lowBandwidth } from "../../stores/settings";
     import IntersectionObserver from "./IntersectionObserver.svelte";

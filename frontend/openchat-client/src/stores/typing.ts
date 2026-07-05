@@ -1,4 +1,4 @@
-import { type MessageContext, MessageContextMap, chatIdentifiersEqual } from "openchat-shared";
+import { type MessageContext, MessageContextMap, chatIdentifiersEqual } from "@shared";
 import { writable, derived } from "svelte/store";
 
 export type TypersByKey = MessageContextMap<Set<string>>;

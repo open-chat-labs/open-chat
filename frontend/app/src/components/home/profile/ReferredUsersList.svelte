@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { OpenChat, ReadonlySet } from "openchat-client";
-    import { AvatarSize, allUsersStore } from "openchat-client";
+    import type { OpenChat, ReadonlySet } from "@client";
+    import { AvatarSize, allUsersStore } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { referredUsersOpen } from "../../../stores/settings";

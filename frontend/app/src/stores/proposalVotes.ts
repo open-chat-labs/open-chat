@@ -1,4 +1,4 @@
-import { createMapStore } from "openchat-client";
+import { createMapStore } from "@client";
 import { writable } from "svelte/store";
 
 export type ProposalVoteStatus = "adopting" | "rejecting" | "adopted" | "rejected";

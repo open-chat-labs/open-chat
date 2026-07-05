@@ -7,7 +7,7 @@
         selectedChatMembersStore,
         selectedCommunityMembersStore,
         type UserSummary,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import ShareIcon from "svelte-material-icons/ShareOutline.svelte";
     import SelectUsers from "../SelectUsers.svelte";

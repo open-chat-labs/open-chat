@@ -1,4 +1,4 @@
-import { type CommunitySummary, type MemberRole, ROLE_OWNER } from "openchat-shared";
+import { type CommunitySummary, type MemberRole, ROLE_OWNER } from "@shared";
 import { hasOwnerRights, isPermitted } from "./permissions";
 
 export function canChangeRoles(

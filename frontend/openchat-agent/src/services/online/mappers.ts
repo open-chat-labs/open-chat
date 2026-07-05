@@ -1,6 +1,6 @@
 import type { OnlineUsersLastOnlineResponse, OnlineUsersMarkAsOnlineResponse } from "../../typebox";
 import { principalBytesToString } from "../../utils/mapping";
-import type { MinutesOnline } from "openchat-shared";
+import type { MinutesOnline } from "@shared";
 
 export function lastOnlineResponse(value: OnlineUsersLastOnlineResponse): Record<string, number> {
     const now = Date.now();

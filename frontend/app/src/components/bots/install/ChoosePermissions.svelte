@@ -4,7 +4,7 @@
         type ExternalBotPermissions,
         type Level,
         type ResourceKey,
-    } from "openchat-client";
+    } from "@client";
     import Tabs from "../../Tabs.svelte";
     import Translatable from "../../Translatable.svelte";
     import Checkbox from "../../Checkbox.svelte";

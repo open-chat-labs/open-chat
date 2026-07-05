@@ -1,4 +1,4 @@
-import { type EventWrapper, type GroupChatIdentifier, type Message } from "openchat-shared";
+import { type EventWrapper, type GroupChatIdentifier, type Message } from "@shared";
 import { SvelteMap } from "svelte/reactivity";
 import { vi } from "vitest";
 import { localUpdates } from "../localUpdates";

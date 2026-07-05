@@ -1,5 +1,5 @@
-import { publish, routeStore, routerReadyStore, subscribe } from "openchat-client";
-import type { RouteParams } from "openchat-shared";
+import { publish, routeStore, routerReadyStore, subscribe } from "@client";
+import type { RouteParams } from "@shared";
 import page from "page";
 import { get } from "svelte/store";
 import { getHistoryStateAction, onPopstate, syncCurrentHistoryState } from "./history";

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { hideTokenBalances } from "@src/stores/settings";
     import { Avatar, Body, Subtitle, Container } from "component-lib";
-    import { OpenChat, type EnhancedTokenDetails } from "openchat-client";
+    import { OpenChat, type EnhancedTokenDetails } from "@client";
     import { getContext } from "svelte";
 
     import { TokenState, type ConversionToken } from "./walletState.svelte";

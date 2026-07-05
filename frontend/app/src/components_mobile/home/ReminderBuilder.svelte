@@ -1,6 +1,6 @@
 <script lang="ts">
     import { BodySmall, Button, Column, Sheet, TextArea, Title } from "component-lib";
-    import { ONE_DAY, type ChatIdentifier, type OpenChat } from "openchat-client";
+    import { ONE_DAY, type ChatIdentifier, type OpenChat } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Alarm from "svelte-material-icons/Alarm.svelte";

@@ -17,7 +17,7 @@ import {
     retain,
     type UpdatedEvent,
     userIdsFromEvents,
-} from "openchat-shared";
+} from "@shared";
 import { chunk } from "./list";
 import { mapOptional } from "./mapping";
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { ImageContent, MemeFighterContent } from "openchat-client";
+    import type { ImageContent, MemeFighterContent } from "@client";
     import ArrowCollapse from "svelte-material-icons/ArrowCollapse.svelte";
     import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
     import { i18nKey } from "../../i18n/i18n";

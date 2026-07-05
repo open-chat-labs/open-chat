@@ -8,7 +8,7 @@ import type {
     GroupChatIdentifier,
     IndexRange,
     Message,
-} from "openchat-shared";
+} from "@shared";
 import {
     emptyEventsResponse,
     isSuccessfulEventsResponse,
@@ -17,7 +17,7 @@ import {
     offline,
     ResponseTooLargeError,
     Stream,
-} from "openchat-shared";
+} from "@shared";
 import type { ChatsDb } from "../../utils/chatsDb";
 
 export interface IChatEventsReader<C extends ChatIdentifier = ChatIdentifier> {

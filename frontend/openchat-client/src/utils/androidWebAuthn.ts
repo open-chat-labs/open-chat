@@ -1,5 +1,5 @@
 import { WebAuthnIdentity } from "@icp-sdk/core/identity";
-import type { WebAuthnKeyFull } from "openchat-shared";
+import type { WebAuthnKeyFull } from "@shared";
 import borc from "borc";
 import {
     DER_COSE_OID,

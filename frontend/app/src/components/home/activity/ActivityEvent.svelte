@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Message, MessageActivityEvent, ResourceKey } from "openchat-client";
+    import type { Message, MessageActivityEvent, ResourceKey } from "@client";
     import {
         activityFeedShowing,
         allUsersStore,
@@ -9,7 +9,7 @@
         OpenChat,
         routeForMessageContext,
         type MessageContext,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { disableChit } from "@src/stores/settings";
     import { ColourVars, Container } from "component-lib";
-    import type { DiamondMembershipStatus } from "openchat-client";
+    import type { DiamondMembershipStatus } from "@client";
     import Diamond from "../../icons/Diamond.svelte";
     import ChitEarnedBadge from "./ChitEarnedBadge.svelte";
     import Streak from "./Streak.svelte";

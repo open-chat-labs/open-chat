@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { mobileWidth } from "openchat-client";
+    import { mobileWidth } from "@client";
     import Check from "svelte-material-icons/Check.svelte";
     import Minus from "svelte-material-icons/Minus.svelte";
     import { i18nKey } from "../../../i18n/i18n";

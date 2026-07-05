@@ -6,7 +6,7 @@
         type BotInstallationLocation,
         type ExternalBotLike,
         type OpenChat,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { botSearchState } from "../../stores/search.svelte";

@@ -1,5 +1,5 @@
 import type { ApiGetAllAMMPoolsResponse } from "./candid/idl";
-import type { TokenSwapPool } from "openchat-shared";
+import type { TokenSwapPool } from "@shared";
 
 // TACO is a single exchange canister that internally holds many AMM pools.
 // Every TokenSwapPool we emit shares the same canisterId (the exchange) — OC's

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Row } from "component-lib";
-    import type { AttachmentContent } from "openchat-client";
-    import { currentUserIdStore } from "openchat-client";
+    import type { AttachmentContent } from "@client";
+    import { currentUserIdStore } from "@client";
     import AudioContent from "./AudioContent.svelte";
     import CryptoContent from "./CryptoContent.svelte";
     import FileContent from "./FileContent.svelte";

@@ -4,7 +4,7 @@
     import Search from "../../Search.svelte";
     import { communitySearchState } from "../../../stores/search.svelte";
     import { getContext } from "svelte";
-    import { AvatarSize, OpenChat, type CommunityMatch } from "openchat-client";
+    import { AvatarSize, OpenChat, type CommunityMatch } from "@client";
     import SelectedMatch from "./SelectedMatch.svelte";
     import Avatar from "../../Avatar.svelte";
     import Menu from "../../Menu.svelte";

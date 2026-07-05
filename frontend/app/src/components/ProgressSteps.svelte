@@ -20,7 +20,7 @@
     import { flip } from "svelte/animate";
     import Progress from "./Progress.svelte";
     import ProgressStep from "./ProgressStep.svelte";
-    import type { InterpolationValues } from "openchat-client";
+    import type { InterpolationValues } from "@client";
     import { i18nKey } from "../i18n/i18n";
 
     interface Props {

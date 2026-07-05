@@ -5,7 +5,7 @@
         type MessageMatch,
         type OpenChat,
         type UserOrUserGroup,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";

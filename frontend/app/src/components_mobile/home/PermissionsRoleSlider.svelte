@@ -7,7 +7,7 @@
         type ChatPermissionRole,
         type MemberRole,
         type ResourceKey,
-    } from "openchat-client";
+    } from "@client";
     import { _ } from "svelte-i18n";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
     import Translatable from "../Translatable.svelte";

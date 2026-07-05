@@ -16,7 +16,7 @@
         PremiumItem,
         premiumPrices,
         type ResourceKey,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Translatable from "./Translatable.svelte";

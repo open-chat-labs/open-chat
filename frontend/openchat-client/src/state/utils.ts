@@ -1,4 +1,4 @@
-import { NOOP, type SafeMap } from "openchat-shared";
+import { NOOP, type SafeMap } from "@shared";
 import type { Writable } from "svelte/store";
 import type { LocalMap } from "./map";
 import type { LocalSet } from "./set";

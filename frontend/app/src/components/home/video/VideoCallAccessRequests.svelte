@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { allUsersStore, AvatarSize, iconSize, type OpenChat } from "openchat-client";
+    import { allUsersStore, AvatarSize, iconSize, type OpenChat } from "@client";
     import { getContext } from "svelte";
     import ThumbDown from "svelte-material-icons/ThumbDown.svelte";
     import ThumbUp from "svelte-material-icons/ThumbUp.svelte";

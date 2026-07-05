@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Body, BodySmall, ColourVars, Column, Row } from "component-lib";
-    import { OpenChat, Poller, Version } from "openchat-client";
+    import { OpenChat, Poller, Version } from "@client";
     import { getContext, onDestroy } from "svelte";
     import { i18nKey } from "../i18n/i18n";
     import { activeVideoCall } from "../stores/video";

@@ -6,7 +6,7 @@
     import Loading from "@shared_components/Loading.svelte";
     import { flushPendingNavigation } from "@src/utils/navigation";
     import { portalState } from "component-lib";
-    import { routeStore, runningInIframe, subscribe, type OpenChat } from "openchat-client";
+    import { routeStore, runningInIframe, subscribe, type OpenChat } from "@client";
     import { getContext, onMount, type Component } from "svelte";
     import { showMenuForLandingRoute } from "../../utils/urls";
     import BlogPage from "./BlogPage.svelte";

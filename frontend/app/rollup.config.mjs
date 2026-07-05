@@ -98,6 +98,20 @@ export default {
 
         alias({
             entries: [
+                // Resolve the former sub-packages from TypeScript source (bare
+                // import -> source entry point, subpath -> package src/).
+                ...[
+                    ["@shared", "openchat-shared", "src/index.ts"],
+                    ["@client", "openchat-client", "src/index.ts"],
+                    ["@agent", "openchat-agent", "src/index.ts"],
+                    ["@worker", "openchat-worker", "src/worker.ts"],
+                ].flatMap(([alias, dir, entry]) => {
+                    const root = path.resolve(__dirname, "..", dir);
+                    return [
+                        { find: new RegExp(`^${alias}/(.*)$`), replacement: `${root}/src/$1` },
+                        { find: new RegExp(`^${alias}$`), replacement: path.resolve(root, entry) },
+                    ];
+                }),
                 { find: "@dfinity/agent", replacement: "@icp-sdk/core/agent" },
                 { find: "@dfinity/auth-client", replacement: "@icp-sdk/auth/client" },
                 { find: "@src", replacement: path.resolve(__dirname, "src") },
@@ -127,6 +141,11 @@ export default {
                 "./src/**/*",
                 "../vite-env.d.ts",
                 "../node_modules/component-lib/src/**/*.ts",
+                // The former sub-packages are now compiled from source.
+                "../openchat-shared/src/**/*",
+                "../openchat-client/src/**/*",
+                "../openchat-agent/src/**/*",
+                "../openchat-worker/src/**/*",
             ],
         }),
         inject({
@@ -359,6 +378,9 @@ export default {
         execute({
             commands: [
                 `../../scripts/get-public-key.sh ${process.env.OC_DFX_NETWORK} > ./public/public-key`,
+                // Build the worker + service worker from source into their lib/
+                // dirs before the copy step above pulls them into build/.
+                `node ./build-workers.mjs`,
             ],
             hook: "buildStart",
         }),

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Body } from "component-lib";
-    import type { ResourceKey } from "openchat-client";
+    import type { ResourceKey } from "@client";
     import type { Snippet } from "svelte";
     import { rtlStore } from "../stores/rtl";
     import Translatable from "./Translatable.svelte";

@@ -25,7 +25,7 @@
         unreadDirectAndGroupCountsStore,
         unreadFavouriteCountsStore,
         type UnreadCounts,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";

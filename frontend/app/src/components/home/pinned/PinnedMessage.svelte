@@ -1,7 +1,7 @@
 <script lang="ts">
     import { findUser } from "@src/utils/user";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
-    import type { CreatedUser, Message, MultiUserChatIdentifier, OpenChat } from "openchat-client";
+    import type { CreatedUser, Message, MultiUserChatIdentifier, OpenChat } from "@client";
     import {
         allUsersStore,
         AvatarSize,
@@ -12,7 +12,7 @@
         selectedChatIdStore,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import { rtlStore } from "../../../stores/rtl";

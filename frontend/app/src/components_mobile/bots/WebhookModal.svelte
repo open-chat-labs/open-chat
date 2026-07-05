@@ -17,7 +17,7 @@
         validBotComponentName,
         type FullWebhookDetails,
         type MultiUserChat,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";

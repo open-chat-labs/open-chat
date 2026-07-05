@@ -1,7 +1,7 @@
 <script lang="ts">
     import { CommonButton, Container, Switch } from "component-lib";
-    import type { ChatSummary, OpenChat } from "openchat-client";
-    import { filteredProposalsStore, proposalTopicsStore } from "openchat-client";
+    import type { ChatSummary, OpenChat } from "@client";
+    import { filteredProposalsStore, proposalTopicsStore } from "@client";
     import { getContext } from "svelte";
     import Check from "svelte-material-icons/CheckCircleOutline.svelte";
     import Minus from "svelte-material-icons/MinusCircleOutline.svelte";

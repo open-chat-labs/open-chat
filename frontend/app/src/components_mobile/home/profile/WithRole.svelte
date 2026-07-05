@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { ReadonlyMap, Member, MemberRole } from "openchat-client";
-    import { ROLE_NONE } from "openchat-client";
+    import type { ReadonlyMap, Member, MemberRole } from "@client";
+    import { ROLE_NONE } from "@client";
     import type { Snippet } from "svelte";
 
     interface Props {

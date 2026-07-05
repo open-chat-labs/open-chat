@@ -319,7 +319,9 @@ import {
     type WhitepaperRoute,
     type WithdrawBtcResponse,
     type WithdrawCryptocurrencyResponse,
-} from "openchat-shared";
+    isAndroidTauriApp,
+    isIosTauriApp,
+} from "@shared";
 import { tick } from "svelte";
 import { locale } from "svelte-i18n";
 import { get } from "svelte/store";
@@ -654,7 +656,6 @@ export class OpenChat {
     > = new Map();
     #refreshBalanceSemaphore: Semaphore = new Semaphore(10);
     #inflightBalanceRefreshPromises: Map<string, Promise<bigint>> = new Map();
-    #appType?: "android" | "ios" | "web" = undefined;
     #videoCallsInProgress: Set<bigint> = new Set();
     #serverVideoCallsInProgress: ChatMap<bigint> = new ChatMap();
     #locale!: string;
@@ -669,7 +670,6 @@ export class OpenChat {
         this.#worker = new WorkerAgent(config);
         this.#logger = config.logger;
 
-        this.#appType = config.appType;
         this.#mobileLayout = config.mobileLayout;
         this.#vapidPublicKey = config.vapidPublicKey;
         locale.subscribe((v) => (this.#locale = v ?? "en"));
@@ -708,7 +708,11 @@ export class OpenChat {
     }
 
     isNativeAndroid() {
-        return this.#appType === "android";
+        return isAndroidTauriApp();
+    }
+
+    isNativeIos() {
+        return isIosTauriApp();
     }
 
     canonicalOrigin() {
@@ -720,8 +724,7 @@ export class OpenChat {
     }
 
     isNativeApp() {
-        // TODO this will be updated to include iOS
-        return this.isNativeAndroid();
+        return this.isNativeAndroid() || this.isNativeIos();
     }
 
     get mobileLayout() {

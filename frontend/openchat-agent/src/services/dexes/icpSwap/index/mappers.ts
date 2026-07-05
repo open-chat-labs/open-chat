@@ -1,5 +1,5 @@
 import type { ApiGetPoolsResponse } from "./candid/idl";
-import type { TokenSwapPool } from "openchat-shared";
+import type { TokenSwapPool } from "@shared";
 
 export function getPoolsResponse(candid: ApiGetPoolsResponse): TokenSwapPool[] {
     if ("ok" in candid) {

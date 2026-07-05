@@ -1,5 +1,5 @@
 // Not really sure whether to make this separate or not yet. Feels like a thing.
-import { type ReadonlyMap, type ReadonlySet, type UserSummary } from "openchat-shared";
+import { type ReadonlyMap, type ReadonlySet, type UserSummary } from "@shared";
 import {
     allUsersStore,
     blockedUsersStore,

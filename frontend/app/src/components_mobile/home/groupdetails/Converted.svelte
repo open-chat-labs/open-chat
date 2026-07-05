@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Body, Button, ColourVars, Container, H2 } from "component-lib";
-    import { publish, routeForChatIdentifier, type ChannelIdentifier } from "openchat-client";
+    import { publish, routeForChatIdentifier, type ChannelIdentifier } from "@client";
     import { navigate } from "@utils/navigation";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";

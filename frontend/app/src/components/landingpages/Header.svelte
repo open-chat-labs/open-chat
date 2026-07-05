@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { iconSize, mobileWidth } from "openchat-client";
+    import { iconSize, mobileWidth } from "@client";
     import { navigate } from "@utils/navigation";
     import Menu from "svelte-material-icons/Menu.svelte";
     import HoverIcon from "../HoverIcon.svelte";

@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { OpenChat, UserSummary } from "openchat-client";
-    import { AvatarSize, currentUserIdStore } from "openchat-client";
+    import type { OpenChat, UserSummary } from "@client";
+    import { AvatarSize, currentUserIdStore } from "@client";
     import { getContext } from "svelte";
     import Avatar from "./Avatar.svelte";
     import FilteredUsername from "@shared_components/FilteredUsername.svelte";

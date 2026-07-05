@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { ChatType, OpenChat } from "openchat-client";
+    import type { ChatType, OpenChat } from "@client";
     import { getContext } from "svelte";
     import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";
     import CheckCircle from "svelte-material-icons/CheckCircle.svelte";

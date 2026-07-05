@@ -17,7 +17,7 @@
 
 <script lang="ts">
     import { Column } from "component-lib";
-    import type { InterpolationValues } from "openchat-client";
+    import type { InterpolationValues } from "@client";
     import { flip } from "svelte/animate";
     import { fade } from "svelte/transition";
     import { i18nKey } from "../i18n/i18n";

@@ -14,9 +14,22 @@
             "@utils/*": ["./src/utils/*"],
             "@styles/*": ["./src/styles/*"],
             "@webcomponents/*": ["./src/web-components/*"],
-            "@component-lib/*": ["../component-lib/src/*"]
+            "@component-lib/*": ["../component-lib/src/*"],
+            "@shared": ["../openchat-shared/src/index.ts"],
+            "@shared/*": ["../openchat-shared/src/*"],
+            "@client": ["../openchat-client/src/index.ts"],
+            "@client/*": ["../openchat-client/src/*"],
+            "@agent": ["../openchat-agent/src/index.ts"],
+            "@agent/*": ["../openchat-agent/src/*"],
+            "@worker": ["../openchat-worker/src/worker.ts"],
+            "@worker/*": ["../openchat-worker/src/*"]
         }
     },
-    "include": ["./src/**/*", "../vite-env.d.ts", "../node_modules/component-lib/src/**/*.ts"],
+    "include": [
+        "./src/**/*",
+        "../vite-env.d.ts",
+        "../global.d.ts",
+        "../node_modules/component-lib/src/**/*.ts"
+    ],
     "exclude": ["build/**/*", "node_modules"]
 }

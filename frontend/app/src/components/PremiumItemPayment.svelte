@@ -7,7 +7,7 @@
         PremiumItem,
         premiumPrices,
         type ResourceKey,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import AlertBox from "./AlertBox.svelte";
     import Button from "./Button.svelte";

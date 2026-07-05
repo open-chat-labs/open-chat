@@ -35,7 +35,7 @@
         routeForChatIdentifier,
         routeForScope,
         subscribe,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
@@ -67,7 +67,6 @@
 
     function createOpenChatClient(): OpenChat {
         const client = new OpenChat({
-            appType: import.meta.env.OC_APP_TYPE,
             mobileLayout: import.meta.env.OC_MOBILE_LAYOUT,
             icUrl: import.meta.env.OC_IC_URL,
             webAuthnOrigin: import.meta.env.OC_WEBAUTHN_ORIGIN,

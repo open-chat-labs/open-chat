@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { MessageReminderCreatedContent, OpenChat } from "openchat-client";
+    import type { MessageReminderCreatedContent, OpenChat } from "@client";
     import { getContext } from "svelte";
     import ReminderNotes from "./ReminderNotes.svelte";
     import Translatable from "../Translatable.svelte";

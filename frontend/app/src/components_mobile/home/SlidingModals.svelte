@@ -39,7 +39,7 @@
         type ReadonlySet,
         type TokenBalanceGate,
         type UserGroupDetails,
-    } from "openchat-client";
+    } from "@client";
     import page from "page";
     import { getContext, onMount } from "svelte";
     import { minimizeApp } from "tauri-plugin-oc-api";

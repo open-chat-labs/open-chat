@@ -6,7 +6,7 @@
         type NanoPopPosition,
         type Position,
     } from "component-lib";
-    import { mobileWidth } from "openchat-client";
+    import { mobileWidth } from "@client";
     import { onMount, type Snippet } from "svelte";
 
     interface Props {

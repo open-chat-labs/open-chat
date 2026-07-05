@@ -1,6 +1,6 @@
 <script lang="ts">
     import SelectPermissionRole from "../../SelectPermissionRole.svelte";
-    import { type CommunityPermissions, communityRoles } from "openchat-client";
+    import { type CommunityPermissions, communityRoles } from "@client";
     import { i18nKey } from "../../../../i18n/i18n";
 
     interface Props {

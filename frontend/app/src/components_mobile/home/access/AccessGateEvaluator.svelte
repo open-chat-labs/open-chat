@@ -15,7 +15,7 @@
         type EnhancedLeafGate,
         type LeafGate,
         type TokenBalanceGate,
-    } from "openchat-client";
+    } from "@client";
     import { i18nKey } from "../../../i18n/i18n";
 
     import MulticolourText from "@src/components_mobile/MulticolourText.svelte";

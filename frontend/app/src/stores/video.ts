@@ -9,7 +9,7 @@ import {
     type DailyParticipantUpdateOptions,
     type DailyThemeConfig,
 } from "@daily-co/daily-js";
-import { type ChatIdentifier, type VideoCallType } from "openchat-client";
+import { type ChatIdentifier, type VideoCallType } from "@client";
 import { get, type Subscriber, writable } from "svelte/store";
 import { createLocalStorageStore } from "../utils/store";
 

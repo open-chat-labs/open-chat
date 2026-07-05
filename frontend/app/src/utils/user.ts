@@ -1,4 +1,4 @@
-import type { ReadonlyMap, UserLookup, UserSummary, WebhookDetails } from "openchat-client";
+import type { ReadonlyMap, UserLookup, UserSummary, WebhookDetails } from "@client";
 import { _ } from "svelte-i18n";
 import { get } from "svelte/store";
 

@@ -6,7 +6,7 @@
         type PaymentGateApprovals,
         type ResourceKey,
         cryptoBalanceStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../../../i18n/i18n";

@@ -8,7 +8,7 @@
         Spinner,
         type ColourVarKeys,
     } from "component-lib";
-    import { iconSize } from "openchat-client";
+    import { iconSize } from "@client";
     import ThumbDown from "svelte-material-icons/ThumbDown.svelte";
     import ThumbUp from "svelte-material-icons/ThumbUp.svelte";
     import { i18nKey } from "../../../i18n/i18n";

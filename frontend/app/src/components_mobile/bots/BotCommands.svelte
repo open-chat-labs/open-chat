@@ -6,7 +6,7 @@
         ROLE_ADMIN,
         type CommandDefinition,
         type GrantedBotPermissions,
-    } from "openchat-client";
+    } from "@client";
     import ShieldAccount from "svelte-material-icons/ShieldAccount.svelte";
     import SwapHorizontal from "svelte-material-icons/SwapHorizontal.svelte";
 

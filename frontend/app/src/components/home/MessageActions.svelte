@@ -5,7 +5,7 @@
         type AttachmentContent,
         type MessageAction,
         type MessagePermission,
-    } from "openchat-client";
+    } from "@client";
     import { _ } from "svelte-i18n";
     import TrayRemove from "svelte-material-icons/Close.svelte";
     import TrayPlus from "svelte-material-icons/DotsVertical.svelte";

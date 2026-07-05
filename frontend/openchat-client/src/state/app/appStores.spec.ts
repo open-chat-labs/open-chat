@@ -19,7 +19,7 @@ import {
     type Member,
     type Message,
     type RouteParams,
-} from "openchat-shared";
+} from "@shared";
 import { get } from "svelte/store";
 import { vi } from "vitest";
 import { OpenChat } from "../../openchat";

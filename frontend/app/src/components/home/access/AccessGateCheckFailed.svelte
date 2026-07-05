@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { mobileWidth, type EnhancedAccessGate } from "openchat-client";
+    import { mobileWidth, type EnhancedAccessGate } from "@client";
     import { i18nKey } from "../../../i18n/i18n";
     import ModalContent from "../../ModalContent.svelte";
     import Translatable from "../../Translatable.svelte";

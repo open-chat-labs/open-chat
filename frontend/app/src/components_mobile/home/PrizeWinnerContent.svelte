@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { OpenChat, PrizeWinnerContent } from "openchat-client";
-    import { allUsersStore, cryptoLookup, currentUserIdStore } from "openchat-client";
+    import type { OpenChat, PrizeWinnerContent } from "@client";
+    import { allUsersStore, cryptoLookup, currentUserIdStore } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import SpinningToken from "../icons/SpinningToken.svelte";

@@ -1,7 +1,7 @@
 <script lang="ts">
     import Panzoom from "@panzoom/panzoom";
     import { IconButton, doubleTap } from "component-lib";
-    import type { ImageContent, MemeFighterContent } from "openchat-client";
+    import type { ImageContent, MemeFighterContent } from "@client";
     import { onMount } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { popHistoryStateWithAction, pushDummyHistoryState } from "../../utils/history";

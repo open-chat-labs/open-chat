@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { Container, H1 } from "component-lib";
-    import { chitStateStore } from "openchat-client";
+    import { chitStateStore } from "@client";
     import Translatable from "../../Translatable.svelte";
 </script>
 

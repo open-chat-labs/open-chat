@@ -17,7 +17,7 @@
         type OpenChat,
         type SelectedEmoji,
         type User,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";

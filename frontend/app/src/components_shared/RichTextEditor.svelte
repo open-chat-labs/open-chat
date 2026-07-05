@@ -17,7 +17,7 @@
         type SelectedEmoji,
         type User,
         type UserOrUserGroup,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onDestroy, onMount, type Snippet } from "svelte";
     import { CustomEmojiExtension } from "./customEmojiExtension";
     import { markdownToDoc, nodeToMarkdown } from "./markdownConversion";

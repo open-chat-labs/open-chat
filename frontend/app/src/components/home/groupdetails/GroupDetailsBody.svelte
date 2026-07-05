@@ -1,12 +1,12 @@
 <script lang="ts">
-    import type { MultiUserChat, OpenChat } from "openchat-client";
+    import type { MultiUserChat, OpenChat } from "@client";
     import {
         AvatarSize,
         currentUserIdStore,
         selectedChatRulesStore,
         selectedCommunityRulesStore,
         selectedCommunitySummaryStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import {

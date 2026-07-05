@@ -1,7 +1,7 @@
 <script lang="ts">
     import { UserChip } from "component-lib";
-    import type { OpenChat, UserOrUserGroup } from "openchat-client";
-    import { selectedChatWebhooksStore, selectedCommunityMembersStore } from "openchat-client";
+    import type { OpenChat, UserOrUserGroup } from "@client";
+    import { selectedChatWebhooksStore, selectedCommunityMembersStore } from "@client";
     import { getContext } from "svelte";
 
     const client = getContext<OpenChat>("client");

@@ -19,7 +19,7 @@
         type AccessGate,
         type CryptocurrencyDetails,
         type PaymentGate,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";

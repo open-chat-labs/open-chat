@@ -13,7 +13,7 @@
         type DiamondMembershipStatus,
         type OpenChat,
         type PrizeContent,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { Confetti } from "svelte-confetti";
     import { _ } from "svelte-i18n";

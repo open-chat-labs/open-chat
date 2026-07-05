@@ -6,7 +6,7 @@ import {
     ROLE_NONE,
     type CommunitySummary,
     type UserGroupDetails,
-} from "openchat-client";
+} from "@client";
 
 export class CommunityState {
     #confirmingUserGroupDelete = $state(false);

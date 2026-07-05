@@ -5,7 +5,7 @@
     import { toastStore } from "@src/stores/toast";
     import { activeVideoCall } from "@src/stores/video";
     import { Body, Button, ColourVars, Container, IconButton, Switch } from "component-lib";
-    import type { DirectChatSummary, OptionUpdate, PublicProfile } from "openchat-client";
+    import type { DirectChatSummary, OptionUpdate, PublicProfile } from "@client";
     import {
         allUsersStore,
         blockedUsersStore,
@@ -13,7 +13,7 @@
         favouritesStore,
         OpenChat,
         publish,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onDestroy, onMount } from "svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import CancelIcon from "svelte-material-icons/Cancel.svelte";

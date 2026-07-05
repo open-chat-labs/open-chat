@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { iconSize, mobileWidth, pinNumberRequiredStore } from "openchat-client";
+    import { iconSize, mobileWidth, pinNumberRequiredStore } from "@client";
     import { _ } from "svelte-i18n";
     import EyeOff from "svelte-material-icons/EyeOffOutline.svelte";
     import Eye from "svelte-material-icons/EyeOutline.svelte";

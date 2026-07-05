@@ -1,6 +1,6 @@
 <script lang="ts">
     import { BodySmall, ColourVars, Container, Subtitle } from "component-lib";
-    import { allUsersStore, botState, type ExternalBotLike } from "openchat-client";
+    import { allUsersStore, botState, type ExternalBotLike } from "@client";
     import RobotSolid from "svelte-material-icons/Robot.svelte";
     import BotAvatar from "../../../bots/BotAvatar.svelte";
     import Markdown from "@shared_components/Markdown.svelte";

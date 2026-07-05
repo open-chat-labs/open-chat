@@ -1,13 +1,13 @@
 <script lang="ts">
     import { Body, Subtitle, Column, CommonButton2, Row, ColourVars } from "component-lib";
-    import type { MessageContext, OpenChat, P2PSwapContentInitial } from "openchat-client";
+    import type { MessageContext, OpenChat, P2PSwapContentInitial } from "@client";
     import {
         enhancedCryptoLookup as cryptoLookup,
         isDiamondStore,
         localUpdates,
         ONE_DAY,
         publish,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Paperclip from "svelte-material-icons/Paperclip.svelte";

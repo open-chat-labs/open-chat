@@ -6,7 +6,7 @@ import {
     ROLE_NONE,
     type GroupChatSummary,
     type PublicGroupSummaryResponse,
-} from "openchat-shared";
+} from "@shared";
 import type {
     GroupPublicSummarySuccessResult,
     PublicGroupSummary as TPublicGroupSummary,

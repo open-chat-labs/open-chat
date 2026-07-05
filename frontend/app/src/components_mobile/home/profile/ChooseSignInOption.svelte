@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Body, Container, Form, Input } from "component-lib";
-    import { AuthProvider, selectedAuthProviderStore, type OpenChat } from "openchat-client";
+    import { AuthProvider, selectedAuthProviderStore, type OpenChat } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import SendIcon from "svelte-material-icons/Send.svelte";

@@ -12,7 +12,7 @@
         selectedChatSummaryStore,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
-    } from "openchat-client";
+    } from "@client";
 
     import EditableAvatar from "@src/components/EditableAvatar.svelte";
     import EditableImageWrapper from "@src/components/EditableImageWrapper.svelte";

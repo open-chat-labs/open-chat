@@ -1,11 +1,11 @@
 <script lang="ts">
-    import type { MessageContext, OpenChat, P2PSwapContentInitial } from "openchat-client";
+    import type { MessageContext, OpenChat, P2PSwapContentInitial } from "@client";
     import {
         enhancedCryptoLookup as cryptoLookup,
         isDiamondStore,
         mobileWidth,
         publish,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";

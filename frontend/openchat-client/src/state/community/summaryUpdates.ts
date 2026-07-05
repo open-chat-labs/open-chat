@@ -1,4 +1,4 @@
-import { CommunityMap, type OptionUpdate } from "openchat-shared";
+import { CommunityMap, type OptionUpdate } from "@shared";
 import { writable } from "../../utils/stores";
 import { notEq } from "../utils";
 

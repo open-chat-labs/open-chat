@@ -1,4 +1,4 @@
-import { ScreenWidth } from "openchat-shared";
+import { ScreenWidth } from "@shared";
 import { routeStore } from "../path/stores";
 import { dimensions, fullWidth, layout, mobileWidth, screenWidth } from "./stores";
 

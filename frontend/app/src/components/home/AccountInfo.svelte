@@ -9,7 +9,7 @@
         Lazy,
         type OneSecTransferFees,
         OpenChat,
-    } from "openchat-client";
+    } from "@client";
     import { i18nKey } from "../../i18n/i18n";
     import { _ } from "svelte-i18n";
     import { getContext } from "svelte";

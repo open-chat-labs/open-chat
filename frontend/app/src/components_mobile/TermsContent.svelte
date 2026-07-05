@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { locationStore, OpenChat } from "openchat-client";
+    import { locationStore, OpenChat } from "@client";
     import { getContext } from "svelte";
     import { copyToClipboard } from "../utils/urls";
     import HashLinkTarget from "./HashLinkTarget.svelte";

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { mobileWidth, type GiphyContent } from "openchat-client";
+    import { mobileWidth, type GiphyContent } from "@client";
     import { i18nKey } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
     import { lowBandwidth } from "../../stores/settings";

@@ -1,5 +1,5 @@
 import { type DBSchema } from "idb";
-import { Lazy, type WebAuthnKeyFull } from "openchat-shared";
+import { Lazy, type WebAuthnKeyFull } from "@shared";
 import { bytesToHexString } from "./mapping";
 import { IndexedDbConnectionManager } from "./indexedDb";
 

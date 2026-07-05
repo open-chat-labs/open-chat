@@ -5,7 +5,7 @@
         mobileWidth,
         querystringStore,
         type Questions,
-    } from "openchat-client";
+    } from "@client";
     import { _ } from "svelte-i18n";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import { i18nKey } from "../../i18n/i18n";

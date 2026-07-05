@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey, interpolate } from "@src/i18n/i18n";
     import { Body, Container } from "component-lib";
-    import { currentUserIdStore, type Level, type UserSummary } from "openchat-client";
+    import { currentUserIdStore, type Level, type UserSummary } from "@client";
     import { _ } from "svelte-i18n";
     import AccountAlert from "svelte-material-icons/AccountAlertOutline.svelte";
     import Account from "svelte-material-icons/AccountGroupOutline.svelte";

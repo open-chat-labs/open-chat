@@ -1,4 +1,4 @@
-import type { EnhancedAccessGate, MergeableAccessGate } from "openchat-client";
+import type { EnhancedAccessGate, MergeableAccessGate } from "@client";
 import { mergeAccessGates } from "./access";
 
 function testGates(

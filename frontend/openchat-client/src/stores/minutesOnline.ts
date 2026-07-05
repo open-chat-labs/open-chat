@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import type { MinutesOnline } from "openchat-shared";
+import type { MinutesOnline } from "@shared";
 
 export const minutesOnlineStore = writable<MinutesOnline>({
     minutesOnlineThisMonth: 0,

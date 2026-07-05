@@ -1,6 +1,6 @@
 import { addPluginListener, convertFileSrc, type PluginListener } from "@tauri-apps/api/core";
 import { pendingShareStore } from "@stores/pendingShare";
-import { type ChatIdentifier, LazyFile, chatListScopeStore, localUpdates, OpenChat, routeForChatIdentifier } from "openchat-client";
+import { type ChatIdentifier, LazyFile, chatListScopeStore, localUpdates, OpenChat, routeForChatIdentifier } from "@client";
 import { get } from "svelte/store";
 import type { Share } from "../share";
 import { navigate } from "@utils/navigation";

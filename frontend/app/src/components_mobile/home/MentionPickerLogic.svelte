@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { OpenChat, UserOrUserGroup } from "openchat-client";
-    import { currentUserIdStore } from "openchat-client";
+    import type { OpenChat, UserOrUserGroup } from "@client";
+    import { currentUserIdStore } from "@client";
     import { getContext, onMount, type Snippet } from "svelte";
 
     const MAX_USERS = 200;

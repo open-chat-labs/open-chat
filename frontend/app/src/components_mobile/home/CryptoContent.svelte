@@ -1,8 +1,8 @@
 <script lang="ts">
     import { Avatar, Body, BodySmall, ColourVars, Column, Row, Subtitle } from "component-lib";
     import { getContext, type Snippet } from "svelte";
-    import type { CryptocurrencyContent, OpenChat } from "openchat-client";
-    import { currentUserIdStore, enhancedCryptoLookup } from "openchat-client";
+    import type { CryptocurrencyContent, OpenChat } from "@client";
+    import { currentUserIdStore, enhancedCryptoLookup } from "@client";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";

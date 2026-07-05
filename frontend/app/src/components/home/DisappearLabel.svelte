@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { OpenChat } from "openchat-client";
+    import type { OpenChat } from "@client";
     import { getContext } from "svelte";
     import CameraTimer from "svelte-material-icons/CameraTimer.svelte";
     import Tooltip from "../tooltip/Tooltip.svelte";

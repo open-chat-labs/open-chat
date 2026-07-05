@@ -1,5 +1,5 @@
 import type { ApiPrepareLoginResponse } from "./candid/idl";
-import { type SiwsPrepareLoginResponse, UnsupportedValueError } from "openchat-shared";
+import { type SiwsPrepareLoginResponse, UnsupportedValueError } from "@shared";
 
 export function prepareLoginResponse(candid: ApiPrepareLoginResponse): SiwsPrepareLoginResponse {
     if ("Ok" in candid) {

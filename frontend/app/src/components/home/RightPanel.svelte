@@ -13,8 +13,8 @@
         MultiUserChatIdentifier,
         OpenChat,
         UserSummary,
-    } from "openchat-client";
-    import { allUsersStore, compareRoles, currentUserIdStore, eventsStore, fullWidth, lastRightPanelState, publish, rightPanelHistory, roleAsText, routeStore, selectedChatBlockedUsersStore, selectedChatBotsStore, selectedChatIdStore, selectedChatInvitedUsersStore, selectedChatLapsedMembersStore, selectedChatMembersStore, selectedChatPinnedMessagesStore, selectedChatSummaryStore, selectedChatWebhooksStore, selectedCommunityBlockedUsersStore, selectedCommunityBotsStore, selectedCommunityInvitedUsersStore, selectedCommunityLapsedMembersStore, selectedCommunityMembersStore, selectedCommunitySummaryStore, setRightPanelHistory } from "openchat-client";
+    } from "@client";
+    import { allUsersStore, compareRoles, currentUserIdStore, eventsStore, fullWidth, lastRightPanelState, publish, rightPanelHistory, roleAsText, routeStore, selectedChatBlockedUsersStore, selectedChatBotsStore, selectedChatIdStore, selectedChatInvitedUsersStore, selectedChatLapsedMembersStore, selectedChatMembersStore, selectedChatPinnedMessagesStore, selectedChatSummaryStore, selectedChatWebhooksStore, selectedCommunityBlockedUsersStore, selectedCommunityBotsStore, selectedCommunityInvitedUsersStore, selectedCommunityLapsedMembersStore, selectedCommunityMembersStore, selectedCommunitySummaryStore, setRightPanelHistory } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";

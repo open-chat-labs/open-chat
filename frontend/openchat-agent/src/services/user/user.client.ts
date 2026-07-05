@@ -78,7 +78,7 @@ import {
     type WithdrawBtcResponse,
     type WithdrawCryptocurrencyResponse,
     type WithdrawViaOneSecResponse,
-} from "openchat-shared";
+} from "@shared";
 import type { AgentConfig } from "../../config";
 import {
     SuccessOnly,

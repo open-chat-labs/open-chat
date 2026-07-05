@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { profileStore } from "openchat-client";
+    import { profileStore } from "@client";
     import Select from "./Select.svelte";
 
     let selectedMethod: string = $state("");

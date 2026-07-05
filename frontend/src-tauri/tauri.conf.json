@@ -4,10 +4,10 @@
     "version": "0.1.0",
     "identifier": "com.oc.app",
     "build": {
-        "frontendDist": "../app/build",
-        "devUrl": "http://localhost:5003",
-        "beforeDevCommand": "echo 'run dev server'",
-        "beforeBuildCommand": "echo 'BUILDING ANDROID APK' && npm run android:release"
+        "beforeDevCommand": "npm run dev:mobile",
+        "devUrl": "http://localhost:5001",
+        "beforeBuildCommand": "echo 'BUILDING ANDROID APK' && npm run android:release",
+        "frontendDist": "../app/build"
     },
     "app": {
         "windows": [],

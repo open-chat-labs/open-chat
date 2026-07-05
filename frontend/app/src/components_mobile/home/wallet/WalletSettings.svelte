@@ -25,7 +25,7 @@
         type EnhancedTokenDetails,
         type ReadonlyMap,
         type WalletConfig,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { i18nKey, setLocale, supportedLanguages } from "@src/i18n/i18n";
-    import { anonUserStore, identityStateStore, OpenChat, type CreatedUser } from "openchat-client";
+    import { anonUserStore, identityStateStore, OpenChat, type CreatedUser } from "@client";
     import { getContext } from "svelte";
     import { locale } from "svelte-i18n";
     import FancyLoader from "../icons/FancyLoader.svelte";

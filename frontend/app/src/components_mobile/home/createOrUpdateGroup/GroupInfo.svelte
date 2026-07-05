@@ -14,7 +14,7 @@
         TextArea,
         UserChip,
     } from "component-lib";
-    import { isDiamondStore, publish, type OpenChat } from "openchat-client";
+    import { isDiamondStore, publish, type OpenChat } from "@client";
     import { getContext, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";

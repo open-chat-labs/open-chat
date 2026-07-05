@@ -2,7 +2,7 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import { fileFromDataTransferItems } from "@src/utils/datatransfer";
-    import type { AttachmentContent, ChatSummary, OpenChat } from "openchat-client";
+    import type { AttachmentContent, ChatSummary, OpenChat } from "@client";
     import { getContext, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import PlusCircle from "svelte-material-icons/PlusCircle.svelte";

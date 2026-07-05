@@ -3,7 +3,7 @@
     import { slide } from "svelte/transition";
     import { rtlStore } from "../stores/rtl";
 
-    import type { ResourceKey } from "openchat-client";
+    import type { ResourceKey } from "@client";
     import { type Snippet } from "svelte";
     import Arrow from "@shared_components/Arrow.svelte";
     import Translatable from "./Translatable.svelte";

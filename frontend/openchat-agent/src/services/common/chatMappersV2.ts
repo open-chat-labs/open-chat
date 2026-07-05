@@ -111,7 +111,7 @@ import type {
     VideoCallType,
     VideoContent,
     WebhookDetails,
-} from "openchat-shared";
+} from "@shared";
 import {
     CommonResponses,
     ICP_SYMBOL,
@@ -133,7 +133,7 @@ import {
     nullMembership,
     toBigInt32,
     toBigInt64,
-} from "openchat-shared";
+} from "@shared";
 import type {
     AcceptSwapSuccess,
     AccountICRC1,

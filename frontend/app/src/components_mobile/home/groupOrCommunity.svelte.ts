@@ -18,7 +18,7 @@ import {
     type UpdatedRules,
     type UserOrUserGroup,
     type UserSummary,
-} from "openchat-client";
+} from "@client";
 
 export const MAX_RULES_LENGTH = 1024;
 

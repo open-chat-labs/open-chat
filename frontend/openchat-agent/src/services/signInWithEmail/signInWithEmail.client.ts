@@ -1,7 +1,7 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import { idlFactory, type SignInWithEmailService } from "./candid/idl";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
-import type { GenerateMagicLinkResponse, GetDelegationResponse } from "openchat-shared";
+import type { GenerateMagicLinkResponse, GetDelegationResponse } from "@shared";
 import { generateMagicLinkResponse } from "./mappers";
 import { getDelegationResponse } from "../identity/mappers";
 

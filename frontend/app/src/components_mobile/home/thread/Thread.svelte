@@ -12,7 +12,7 @@
         OpenChat,
         TimelineItem,
         User,
-    } from "openchat-client";
+    } from "@client";
     import {
         allUsersStore,
         currentUserIdStore,
@@ -31,7 +31,7 @@
         threadEventsStore,
         threadsFollowedByMeStore,
         unconfirmedStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";

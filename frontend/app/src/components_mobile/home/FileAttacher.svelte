@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { AttachmentContent, OpenChat } from "openchat-client";
+    import type { AttachmentContent, OpenChat } from "@client";
     import { getContext, type Snippet } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";

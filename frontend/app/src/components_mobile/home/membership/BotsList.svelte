@@ -17,7 +17,7 @@
         type MultiUserChat,
         type ReadonlyMap,
         type WebhookDetails,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import Webhook from "svelte-material-icons/Webhook.svelte";
     import BotMatch from "../../bots/BotMatch.svelte";

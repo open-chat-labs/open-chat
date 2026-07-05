@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { iconSize } from "openchat-client";
-    import type { UserSummary, VideoCallPresence, VideoCallType } from "openchat-shared";
+    import { iconSize } from "@client";
+    import type { UserSummary, VideoCallPresence, VideoCallType } from "@shared";
     import { _ } from "svelte-i18n";
     import AccountCancel from "svelte-material-icons/AccountCancel.svelte";
     import User from "../../home/groupdetails/User.svelte";

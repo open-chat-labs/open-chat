@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { mobileWidth } from "openchat-client";
+    import { mobileWidth } from "@client";
     import { onMount } from "svelte";
 
     let number = $mobileWidth ? 5 : 7;

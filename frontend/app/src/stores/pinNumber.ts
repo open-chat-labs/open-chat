@@ -1,6 +1,6 @@
-import { pinNumberFailureStore } from "openchat-client";
-import { formatTimeRemaining } from "openchat-client/lib/utils/time";
-import type { PinNumberFailures, ResourceKey } from "openchat-shared";
+import { pinNumberFailureStore } from "@client";
+import { formatTimeRemaining } from "@client/utils/time";
+import type { PinNumberFailures, ResourceKey } from "@shared";
 import { derived } from "svelte/store";
 import { now500 } from "./time";
 

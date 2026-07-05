@@ -1,6 +1,6 @@
 import {
     type Utxo,
-} from "openchat-shared";
+} from "@shared";
 import type { ApiGetUtxosResponse, ApiUtxo } from "./candid/idl";
 import { consolidateBytes } from "../../utils/mapping";
 

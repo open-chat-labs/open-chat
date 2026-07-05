@@ -15,7 +15,7 @@
         type Message,
         type MessageReminderCreatedContent,
         type OpenChat,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import { _, locale } from "svelte-i18n";

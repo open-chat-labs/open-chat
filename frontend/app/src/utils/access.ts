@@ -15,7 +15,7 @@ import {
     type PaymentGate,
     type ReadonlyMap,
     type TokenBalanceGate,
-} from "openchat-client";
+} from "@client";
 import { _ } from "svelte-i18n";
 import { get } from "svelte/store";
 

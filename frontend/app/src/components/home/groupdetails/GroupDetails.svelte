@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { MultiUserChat, OpenChat } from "openchat-client";
-    import { defaultChatRules, publish, selectedChatRulesStore } from "openchat-client";
+    import type { MultiUserChat, OpenChat } from "@client";
+    import { defaultChatRules, publish, selectedChatRulesStore } from "@client";
     import { getContext } from "svelte";
     import GroupDetailsBody from "./GroupDetailsBody.svelte";
     import GroupDetailsHeader from "./GroupDetailsHeader.svelte";

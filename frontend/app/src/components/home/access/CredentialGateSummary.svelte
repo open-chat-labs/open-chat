@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type CredentialGate } from "openchat-client";
+    import { type CredentialGate } from "@client";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
 

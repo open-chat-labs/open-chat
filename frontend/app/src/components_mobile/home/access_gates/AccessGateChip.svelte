@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Chip, Row } from "component-lib";
-    import { type LeafGate } from "openchat-client";
+    import { type LeafGate } from "@client";
     import Check from "svelte-material-icons/Check.svelte";
     import AccessGateText from "./AccessGateText.svelte";
 

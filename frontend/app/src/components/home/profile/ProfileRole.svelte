@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type CommunitySummary, type Member, type MultiUserChat, ROLE_NONE } from "openchat-client";
+    import { type CommunitySummary, type Member, type MultiUserChat, ROLE_NONE } from "@client";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import RoleIcon from "./RoleIcon.svelte";

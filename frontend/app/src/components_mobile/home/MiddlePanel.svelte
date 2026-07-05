@@ -13,7 +13,7 @@
         selectedChatSummaryStore,
         showMiddle,
         type ChatIdentifier,
-    } from "openchat-client";
+    } from "@client";
     import { tick } from "svelte";
     import { activeVideoCall, type ActiveVideoCall } from "../../stores/video";
     import { currentTheme } from "../../theme/themes";

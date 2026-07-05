@@ -10,7 +10,7 @@
         currentUserStore,
         namedAccountsStore,
         toRecord,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import Chat from "svelte-material-icons/ChatOutline.svelte";
     import LoadMore from "svelte-material-icons/CloudDownloadOutline.svelte";

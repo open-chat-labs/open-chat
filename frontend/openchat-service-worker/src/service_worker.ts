@@ -3,7 +3,7 @@ import {
     Notification as TNotification,
     notification as toNotification,
     typeboxValidate,
-} from "openchat-agent";
+} from "@agent";
 import type {
     AddedToChannelNotification,
     ChannelIdentifier,
@@ -18,7 +18,7 @@ import type {
     GroupNotification,
     GroupReaction,
     Notification,
-} from "openchat-shared";
+} from "@shared";
 import {
     isMessageNotification,
     routeForChatIdentifier,
@@ -26,7 +26,7 @@ import {
     routeForMessageContext,
     toTitleCase,
     UnsupportedValueError,
-} from "openchat-shared";
+} from "@shared";
 import { ExpirationPlugin } from "workbox-expiration";
 import { staticResourceCache } from "workbox-recipes";
 import { registerRoute } from "workbox-routing";

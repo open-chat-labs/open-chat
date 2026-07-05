@@ -1,6 +1,6 @@
 <script lang="ts">
     import { ChatCaption, type ColourVarKeys } from "component-lib";
-    import type { TextContent } from "openchat-client";
+    import type { TextContent } from "@client";
     import { type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import Markdown from "@shared_components/Markdown.svelte";

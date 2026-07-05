@@ -14,7 +14,7 @@
         OpenChat,
         publish,
         type UserGroupDetails,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import AccountGroup from "svelte-material-icons/AccountGroupOutline.svelte";
     import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
