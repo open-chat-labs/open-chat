@@ -45,6 +45,12 @@
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import { enterSend } from "../../stores/settings";
     import { snowing } from "../../stores/snow";
+    import { toastStore } from "../../stores/toast";
+    import {
+        isLocalAiCommandPrefix,
+        parseLocalAiCommand,
+        runLocalAiCommand,
+    } from "../../utils/localAiCommand";
     import AlertBoxModal from "../AlertBoxModal.svelte";
     import CommandBuilder from "../bots/CommandInstanceBuilder.svelte";
     import CommandSelector from "../bots/CommandSelector.svelte";
@@ -158,6 +164,13 @@
     }
 
     function triggerCommandSelector(inputContent: string | null): void {
+        // "/ai" is a LOCAL on-device-model command, not a bot command — keep the bot command
+        // selector hidden so Enter routes it through the normal send path (sendMessage handles it).
+        if (inputContent !== null && isLocalAiCommandPrefix(inputContent)) {
+            showCommandSelector = false;
+            botState.cancel();
+            return;
+        }
         const commandMatch = inputContent?.match(/^\/.*/);
         if (commandMatch) {
             showCommandSelector = true;
@@ -297,9 +310,24 @@
     }
 
     function sendMessage() {
-        if (showCommandSelector || messageIsEmpty) return;
+        if (messageIsEmpty) return;
 
         const txt = editor?.getMarkdown() ?? "";
+
+        // "/ai <prompt>" runs the on-device model locally instead of sending a message. Only outside
+        // edit mode — editing a message to start with /ai must still just edit it.
+        if (editingEvent === undefined && isLocalAiCommandPrefix(txt)) {
+            const prompt = parseLocalAiCommand(txt);
+            if (prompt === undefined) {
+                toastStore.showFailureToast(i18nKey("Type a prompt after /ai"));
+                return;
+            }
+            void handleLocalAiCommand(prompt);
+            afterSendMessage();
+            return;
+        }
+
+        if (showCommandSelector) return;
 
         if (!parseCommands(txt)) {
             const [text, mentioned, blockLevelMarkdown] = expandMentions(txt);
@@ -316,6 +344,30 @@
         }
 
         afterSendMessage();
+    }
+
+    // Post the prompt as the user's message (so the question is visible in-chat), run the on-device
+    // model, then post its reply as a real message marked with a robot glyph. The reply is sent by
+    // the current user because the local model has no on-chain identity of its own.
+    async function handleLocalAiCommand(prompt: string) {
+        onSendMessage([prompt, [], containsMarkdown]);
+        const outcome = await runLocalAiCommand(prompt);
+        if (outcome.kind === "ok") {
+            const reply = outcome.reply.length > 0 ? outcome.reply : "(no output)";
+            client.sendMessageWithContent(
+                messageContext,
+                { kind: "text_content", text: `🤖 ${reply}` },
+                true,
+                [],
+                false,
+            );
+        } else if (outcome.kind === "unavailable") {
+            toastStore.showFailureToast(
+                i18nKey("On-device model unavailable — download and select a model in Settings."),
+            );
+        } else {
+            toastStore.showFailureToast(i18nKey(`On-device model error: ${outcome.error}`));
+        }
     }
 
     function afterSendMessage() {
