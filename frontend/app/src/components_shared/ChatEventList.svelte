@@ -40,6 +40,7 @@
         type OpenChat,
     } from "openchat-client";
     import { getContext, onMount, tick, untrack, type Snippet } from "svelte";
+    import { mobileOperatingSystem } from "@utils/devices";
     import type { FlatChatItem } from "./flatChatItems";
     import { vclDebug } from "./vclDebug";
     import VirtualChatList from "./VirtualChatList.svelte";
@@ -48,6 +49,10 @@
     const MESSAGE_READ_THRESHOLD = 500;
     const FROM_END_THRESHOLD = 600;
     const LOADING_THRESHOLD = 400;
+    // Loading newer messages gets a bigger head start: scrolling forwards runs
+    // into the hard scrollTop=0 wall when the load hasn't landed yet, which
+    // feels far worse than the equivalent at the top of the list.
+    const LOAD_NEW_THRESHOLD = 800;
     const SCROLL_THRESHOLD = 500;
     const client = getContext<OpenChat>("client");
 
@@ -371,7 +376,7 @@
         if (!chat) return false;
         return (
             visible &&
-            insideBottomThreshold() &&
+            fromBottom < LOAD_NEW_THRESHOLD &&
             client.moreNewMessagesAvailable(chat.id, threadRootEvent)
         );
     }
@@ -399,7 +404,15 @@
                 st: Math.round(el.scrollTop),
             });
             if (delta > 0) {
-                await interruptScroll(el.scrollTop - delta);
+                if (mobileOperatingSystem === "iOS") {
+                    // the one-frame overflow-y:hidden halts iOS momentum so the
+                    // programmatic write cannot be swallowed by native physics
+                    await interruptScroll(el.scrollTop - delta);
+                } else {
+                    // on desktop the freeze itself is a visible hitch mid-glide;
+                    // a plain write is safe and onScroll resyncs the window
+                    el.scrollTop = el.scrollTop - delta;
+                }
             }
         }
     }
@@ -438,11 +451,15 @@
     async function loadMoreIfRequired(fromScroll = false, initialLoad = false): Promise<boolean> {
         if (loadingPrevMessages || loadingNewMessages) return true;
 
-        // After a scroll-triggered load, block further loads until the gesture fully
-        // stops. trackScrollStop clears this flag when scrolling settles.
-        if (fromScroll && requireScrollStop) return false;
-
-        const shouldLoadPrev = shouldLoadPreviousMessages();
+        // After a scroll-triggered load of OLDER messages, block further such
+        // loads until the gesture fully stops (trackScrollStop clears the flag)
+        // — this is what prevents runaway loading during momentum overshoot.
+        // Loads of NEWER messages are exempt: the user is heading for the
+        // bottom, consecutive loads are exactly what they want, and gating them
+        // turns a fast forward scroll into a stop-start crawl against the
+        // scrollTop=0 wall. A forward cascade terminates naturally at the
+        // latest message.
+        const shouldLoadPrev = shouldLoadPreviousMessages() && !(fromScroll && requireScrollStop);
         const shouldLoadNew = shouldLoadNewMessages();
 
         if (!shouldLoadPrev && !shouldLoadNew) return false;
@@ -450,7 +467,7 @@
         loadingPrevMessages = shouldLoadPrev;
         loadingNewMessages = shouldLoadNew;
         loadingFromUserScroll = fromScroll;
-        if (fromScroll) requireScrollStop = true;
+        if (fromScroll && shouldLoadPrev) requireScrollStop = true;
 
         vclDebug.log("load-check", {
             prev: shouldLoadPrev,

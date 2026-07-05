@@ -101,7 +101,7 @@
      *   measured heights survive the index shift (rebuilt into `heightMap`).
      */
     import { mobileOperatingSystem } from "@utils/devices";
-    import { onMount, tick, untrack } from "svelte";
+    import { flushSync, onMount, tick, untrack } from "svelte";
     import { vclDebug } from "./vclDebug";
     import {
         computeSpacers as _computeSpacers,
@@ -555,19 +555,35 @@
         spacerDebt += delta;
         vclDebug.log("debt", { delta: Math.round(delta), total: Math.round(spacerDebt) });
         clearTimeout(debtIdleTimer);
-        debtIdleTimer = setTimeout(settleSpacerDebt, 150);
+        debtIdleTimer = setTimeout(settleSpacerDebt, 300);
     }
 
     // Repay outstanding debt: restore the canonical spacer height and move
-    // scrollTop by the same amount in the same task (atomic before paint), so
-    // the visible content does not move.
+    // scrollTop by the same amount, atomically before the next paint, so the
+    // visible content does not move. Deferred while the user is still
+    // scrolling — chrome fires scrollend between individual wheel notches, so
+    // "scroll ended" alone is not a safe signal that the glide is over.
     function settleSpacerDebt() {
         clearTimeout(debtIdleTimer);
         debtIdleTimer = undefined;
         if (spacerDebt === 0 || !viewport) return;
+        if (Date.now() - lastUserScrollTime < 250) {
+            debtIdleTimer = setTimeout(settleSpacerDebt, 300);
+            return;
+        }
         const debt = spacerDebt;
         spacerDebt = 0;
-        bottomSpacerHeight += debt;
+        // flushSync commits the spacer height to the DOM in this task, so the
+        // spacer change and the scrollTop write land in the same layout.
+        // Falls back to a plain (still pre-paint) write when called from
+        // within an effect, where flushSync is not permitted.
+        try {
+            flushSync(() => {
+                bottomSpacerHeight += debt;
+            });
+        } catch {
+            bottomSpacerHeight += debt;
+        }
         viewport.scrollTop -= debt;
         lastProgrammaticScrollTime = Date.now();
         fromBottom = clampFromBottom(-viewport.scrollTop);
@@ -760,9 +776,16 @@
                                     viewport.scrollTo({ top: 0 });
                                     lastProgrammaticScrollTime = Date.now();
                                 }
-                            } else if (canAbsorbIntoSpacer(h - prev)) {
-                                absorbIntoSpacer(h - prev);
                             } else {
+                                // NOTE: unlike the entry path above, do NOT absorb
+                                // this into the spacer. A ResizeObserver-driven
+                                // resize has already been laid out (and possibly
+                                // painted) by the time we hear about it, so a
+                                // spacer adjustment lands a frame late and shows
+                                // as a visible bounce. The immediate scrollTop
+                                // write is the lesser evil here — these resizes
+                                // (images/settling content) are far rarer than
+                                // entries during a scroll.
                                 adjustScrollTop(h - prev);
                             }
                         }
