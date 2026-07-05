@@ -541,13 +541,22 @@
     const MAX_SPACER_DEBT = 400;
 
     function canAbsorbIntoSpacer(delta: number): boolean {
-        return (
-            !isTouching &&
-            !isMomentumScrolling &&
-            Date.now() - lastUserScrollTime < 200 &&
-            Math.abs(spacerDebt + delta) < MAX_SPACER_DEBT &&
-            bottomSpacerHeight - delta >= 0
-        );
+        if (
+            isTouching ||
+            isMomentumScrolling ||
+            Date.now() - lastUserScrollTime >= 200 ||
+            bottomSpacerHeight - delta < 0
+        ) {
+            return false;
+        }
+        // On a long sustained scroll the debt never gets an idle moment to be
+        // repaid; once the cap would be exceeded, force a single repayment
+        // write (one animation abort per MAX_SPACER_DEBT px of accumulated
+        // bias) rather than degrading to a write per entering item.
+        if (Math.abs(spacerDebt + delta) >= MAX_SPACER_DEBT) {
+            settleSpacerDebt(true);
+        }
+        return bottomSpacerHeight - delta >= 0;
     }
 
     function absorbIntoSpacer(delta: number) {
@@ -563,12 +572,12 @@
     // visible content does not move. Deferred while the user is still
     // scrolling — chrome fires scrollend between individual wheel notches, so
     // "scroll ended" alone is not a safe signal that the glide is over.
-    function settleSpacerDebt() {
+    function settleSpacerDebt(force = false) {
         clearTimeout(debtIdleTimer);
         debtIdleTimer = undefined;
         if (spacerDebt === 0 || !viewport) return;
-        if (Date.now() - lastUserScrollTime < 250) {
-            debtIdleTimer = setTimeout(settleSpacerDebt, 300);
+        if (!force && Date.now() - lastUserScrollTime < 250) {
+            debtIdleTimer = setTimeout(() => settleSpacerDebt(), 300);
             return;
         }
         const debt = spacerDebt;
