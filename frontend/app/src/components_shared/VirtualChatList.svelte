@@ -292,6 +292,8 @@
         end = e;
         bottomSpacerHeight = bh;
         topSpacerHeight = th;
+        // the canonical spacer assignment above wipes out any DOM-side debt
+        spacerDebt = 0;
         pendingBottomCorrections.clear();
         tick().then(rebuildDateMarkerCache);
     }
@@ -325,6 +327,7 @@
             end = e;
             bottomSpacerHeight = bh;
             topSpacerHeight = th;
+            spacerDebt = 0;
             pendingBottomCorrections.clear();
             return;
         }
@@ -394,6 +397,9 @@
         void items[0]?.key;
 
         untrack(() => {
+            // repay any spacer debt before deriving positions from scrollTop —
+            // the full recompute below reinstates the canonical spacer height
+            settleSpacerDebt();
             const oldLen = prevItemsLength;
             const oldFirstKey = prevFirstKey;
             const oldLastKey = prevLastKey;
@@ -463,6 +469,7 @@
         if (!interrupt && viewport) {
             untrack(() => {
                 vclDebug.log("interrupt-end", { st: Math.round(viewport!.scrollTop) });
+                settleSpacerDebt();
                 fromBottom = clampFromBottom(-viewport!.scrollTop);
                 updateWindowFull("interrupt-end");
             });
@@ -515,11 +522,64 @@
     let pendingSnapToBottom = false;
     let momentumEndTimer: ReturnType<typeof setTimeout> | undefined;
 
+    // ── Spacer debt (desktop smooth-scroll preservation) ──────────────────
+    // A programmatic scrollTop write aborts the browser's in-flight smooth
+    // wheel animation (CSSOM), so applying a measurement compensation on every
+    // item entering from the bottom spacer makes wheel scrolling feel bumpy.
+    // While the user is actively scrolling we instead absorb the correction
+    // into the bottom spacer itself: shrinking/growing the spacer by the same
+    // delta keeps the total content height — and therefore the visible content
+    // — stable without touching scrollTop at all. The accumulated deviation of
+    // the DOM spacer from its canonical (bookkeeping) height is tracked here
+    // as debt, bounded well inside the overscan margin, and repaid with a
+    // single scrollTop write once the scroll goes idle (when an abort no
+    // longer matters) or at the next full window recompute.
+    // debt = canonicalSpacerHeight - domSpacerHeight
+    let spacerDebt = 0;
+    let lastUserScrollTime = 0;
+    let debtIdleTimer: ReturnType<typeof setTimeout> | undefined;
+    const MAX_SPACER_DEBT = 400;
+
+    function canAbsorbIntoSpacer(delta: number): boolean {
+        return (
+            !isTouching &&
+            !isMomentumScrolling &&
+            Date.now() - lastUserScrollTime < 200 &&
+            Math.abs(spacerDebt + delta) < MAX_SPACER_DEBT &&
+            bottomSpacerHeight - delta >= 0
+        );
+    }
+
+    function absorbIntoSpacer(delta: number) {
+        bottomSpacerHeight -= delta;
+        spacerDebt += delta;
+        vclDebug.log("debt", { delta: Math.round(delta), total: Math.round(spacerDebt) });
+        clearTimeout(debtIdleTimer);
+        debtIdleTimer = setTimeout(settleSpacerDebt, 150);
+    }
+
+    // Repay outstanding debt: restore the canonical spacer height and move
+    // scrollTop by the same amount in the same task (atomic before paint), so
+    // the visible content does not move.
+    function settleSpacerDebt() {
+        clearTimeout(debtIdleTimer);
+        debtIdleTimer = undefined;
+        if (spacerDebt === 0 || !viewport) return;
+        const debt = spacerDebt;
+        spacerDebt = 0;
+        bottomSpacerHeight += debt;
+        viewport.scrollTop -= debt;
+        lastProgrammaticScrollTime = Date.now();
+        fromBottom = clampFromBottom(-viewport.scrollTop);
+        vclDebug.log("repay", { debt: Math.round(debt) });
+    }
+
     function flushScrollAdjustment() {
         clearTimeout(momentumEndTimer);
         momentumEndTimer = undefined;
         isMomentumScrolling = false;
         if (!viewport) return;
+        settleSpacerDebt();
         if (pendingScrollAdjustment !== 0 || pendingSnapToBottom) {
             vclDebug.log("flush", {
                 adj: Math.round(pendingScrollAdjustment),
@@ -670,6 +730,8 @@
                                     viewport.scrollTo({ top: 0 });
                                     lastProgrammaticScrollTime = Date.now();
                                 }
+                            } else if (canAbsorbIntoSpacer(h - est)) {
+                                absorbIntoSpacer(h - est);
                             } else {
                                 adjustScrollTop(h - est);
                             }
@@ -698,6 +760,8 @@
                                     viewport.scrollTo({ top: 0 });
                                     lastProgrammaticScrollTime = Date.now();
                                 }
+                            } else if (canAbsorbIntoSpacer(h - prev)) {
+                                absorbIntoSpacer(h - prev);
                             } else {
                                 adjustScrollTop(h - prev);
                             }
@@ -835,6 +899,16 @@
             momentumEndTimer = setTimeout(flushScrollAdjustment, 100);
         }
 
+        // Track genuine user scrolling — the window in which measurement
+        // compensations are absorbed into the spacer instead of scrollTop.
+        if (Date.now() - lastProgrammaticScrollTime > 100) {
+            lastUserScrollTime = Date.now();
+        }
+        if (spacerDebt !== 0) {
+            clearTimeout(debtIdleTimer);
+            debtIdleTimer = setTimeout(settleSpacerDebt, 150);
+        }
+
         updateWindowIncremental();
         updateStickyDate();
         onUserScroll?.();
@@ -908,6 +982,7 @@
 
         const ro = new ResizeObserver(() => {
             viewportHeight = el.clientHeight;
+            settleSpacerDebt();
             updateWindowFull("viewport-resize");
         });
         ro.observe(el);
@@ -926,6 +1001,7 @@
             }
             el.removeEventListener("scrollend", onScrollEnd);
             clearTimeout(momentumEndTimer);
+            clearTimeout(debtIdleTimer);
             ro.disconnect();
             clearTimeout(scrollCorrectTimer);
             scrollCorrectTimer = undefined;
