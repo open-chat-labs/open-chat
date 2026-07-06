@@ -764,28 +764,35 @@
         // the window update though, so refine against its actual rect: one
         // exact write that makes the estimate error invisible.
         if (behavior !== "smooth") {
-            const key = items[flatIndex]?.key;
-            tick().then(() => {
-                if (!viewport || key === undefined || items[flatIndex]?.key !== key) return;
-                const row = rowByKey(viewport, key);
-                if (!row) return;
-                const rowRect = row.getBoundingClientRect();
-                const vpRect = viewport.getBoundingClientRect();
-                const delta =
-                    rowRect.top + rowRect.height / 2 - (vpRect.top + vpRect.height / 2);
-                if (Math.abs(delta) > 4) {
-                    vclDebug.log("scroll-idx-refine", { i: flatIndex, delta: Math.round(delta) });
-                    lastProgrammaticScrollTime = Date.now();
-                    viewport.scrollTop += delta;
-                    fromBottom = clampFromBottom(-viewport.scrollTop);
-                    // Don't rely on the resulting scroll event to resync the
-                    // window (iOS can swallow it after a programmatic write) —
-                    // a large refinement would otherwise leave the rendered
-                    // window at the pre-refine offset.
-                    updateWindowIncremental();
-                }
-            });
+            refineToIndex(flatIndex);
         }
+    }
+
+    // Centre the target row's actual rect (DOM truth, no estimates). Used
+    // after every estimate-based positioning AND once more when the
+    // corrective-scroll rounds run out — measures arriving after the last
+    // correction would otherwise leave the landing off by their delta.
+    function refineToIndex(flatIndex: number) {
+        const key = items[flatIndex]?.key;
+        tick().then(() => {
+            if (!viewport || key === undefined || items[flatIndex]?.key !== key) return;
+            const row = rowByKey(viewport, key);
+            if (!row) return;
+            const rowRect = row.getBoundingClientRect();
+            const vpRect = viewport.getBoundingClientRect();
+            const delta = rowRect.top + rowRect.height / 2 - (vpRect.top + vpRect.height / 2);
+            if (Math.abs(delta) > 4) {
+                vclDebug.log("scroll-idx-refine", { i: flatIndex, delta: Math.round(delta) });
+                lastProgrammaticScrollTime = Date.now();
+                viewport.scrollTop += delta;
+                fromBottom = clampFromBottom(-viewport.scrollTop);
+                // Don't rely on the resulting scroll event to resync the
+                // window (iOS can swallow it after a programmatic write) —
+                // a large refinement would otherwise leave the rendered
+                // window at the pre-refine offset.
+                updateWindowIncremental();
+            }
+        });
     }
 
     // ── measureRow (Svelte action) ─────────────────────────────────────────
@@ -944,6 +951,13 @@
                                 scrollCorrectCount++;
                                 _doScrollToIndex(pendingScrollFlatIdx, "instant");
                             } else {
+                                // Out of correction rounds: nudge onto the
+                                // target's actual rect one final time, so
+                                // measures that arrived after the last round
+                                // can't leave the landing off-screen.
+                                if (pendingScrollFlatIdx !== undefined) {
+                                    refineToIndex(pendingScrollFlatIdx);
+                                }
                                 pendingScrollFlatIdx = undefined;
                                 scrollCorrectCount = 0;
                             }
