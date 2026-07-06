@@ -253,6 +253,10 @@ export function navigationMode(
 const backStack: string[] = [];
 let pendingNavigation: PendingNavigation | null = null;
 
+// Set just before a deliberate multi-entry history.go(-depth) unwind so the
+// single popstate it fires trims the matching number of backStack entries.
+let pendingPopDepth = 0;
+
 function handlePopstate(event: PopStateEvent) {
     const { previousAction } = onPopstate(event);
 
@@ -260,7 +264,45 @@ function handlePopstate(event: PopStateEvent) {
         return;
     }
 
-    backStack.pop();
+    if (pendingPopDepth > 0) {
+        backStack.length = Math.max(0, backStack.length - pendingPopDepth);
+        pendingPopDepth = 0;
+        return;
+    }
+
+    // popstate also fires for FORWARD navigation; only unwind the stack when
+    // we actually landed on the entry it predicts (a genuine back). After an
+    // external back+forward the stack can lose an entry — the pop guard then
+    // simply degrades to a safe replace.
+    if (backStack[backStack.length - 1] === location.pathname) {
+        backStack.pop();
+    }
+}
+
+/**
+ * For chat-like kinds, "same destination" means the same chat — a message
+ * index / thread suffix is fine, a different chat of the same kind is not
+ * (e.g. closing chat B's thread must not pop back to chat A). Returns the
+ * path prefix that identifies the chat, or undefined for non-chat kinds
+ * (where matching on kind alone is sufficient).
+ */
+function chatBasePath(path: string, kind: RouteParams["kind"]): string | undefined {
+    const segs = path.split(/[?#]/)[0].split("/").filter(Boolean);
+    if (kind === "selected_channel_route") {
+        const i = segs.indexOf("channel");
+        return i >= 0 ? segs.slice(0, i + 2).join("/") : undefined;
+    }
+    if (kind === "global_chat_selected_route") {
+        const i = segs.findIndex((s) => s === "user" || s === "group");
+        return i >= 0 ? segs.slice(0, i + 2).join("/") : undefined;
+    }
+    return undefined;
+}
+
+function popTargetMatches(behind: string, to: string, toKind: RouteParams["kind"]): boolean {
+    if (pathToRouteKind(behind) !== toKind) return false;
+    const toBase = chatBasePath(to, toKind);
+    return toBase === undefined || chatBasePath(behind, toKind) === toBase;
 }
 
 function doNavigate(to: string, intent: NavigationIntent, retries = 0) {
@@ -286,32 +328,30 @@ function doNavigate(to: string, intent: NavigationIntent, retries = 0) {
             syncCurrentHistoryState(history.state);
             break;
         case "pop": {
-            // Only actually go back if the entry behind us is the destination
-            // (same route kind). Otherwise the stack has diverged from the tab
-            // discipline and going back would land somewhere unexpected —
-            // replace instead. backStack is popped by the popstate handler.
+            // Unwind to the nearest history entry that actually IS the
+            // destination (same route kind, and for chat routes the same
+            // chat), however deep it sits — a single history.go(-depth)
+            // fires one popstate and discards the abandoned trail, so the
+            // hardware Back button doesn't walk back through entries the
+            // user has already left (e.g. chats → chatA → chatB →
+            // community: tapping Chats lands on the original /chats entry
+            // with nothing stranded above it).
             //
-            // Two accepted tradeoffs:
-            //
-            // 1. The replace fallback strands the intermediate entry: after
-            //    /chats → /community → tap Chats, history is
-            //    [/chats, /community, /chats], so the browser Back button
-            //    revisits the community before leaving. Collapsing it would
-            //    need an async back()-then-replace dance across a popstate
-            //    (racy with page.js); a forward tap landing in the wrong
-            //    place was the worse bug, a redundant Back stop is benign.
-            //
-            // 2. The kind match is deliberately coarse. It can approve a pop
-            //    to a *different* instance of the same route kind, e.g. open a
-            //    thread in chat B, switch to a thread in chat C (replace),
-            //    close the thread: the entry behind is chat B, same kind as
-            //    the chat C destination, so back() lands on chat B. That
-            //    behaviour predates this fix, and matching full paths instead
-            //    would break the common close-thread pop (the path legitimately
-            //    differs by its thread segment).
-            const behind = backStack[backStack.length - 1];
-            if (behind !== undefined && pathToRouteKind(behind) === pathToRouteKind(to)) {
-                history.back();
+            // If no matching entry exists (deep link, external
+            // back/forward desynced the stack), fall back to replace: the
+            // tap still lands correctly and the stack stays safe, at the
+            // cost of leaving the old trail beneath the new entry.
+            const toKind = pathToRouteKind(to);
+            let depth = 0;
+            for (let i = backStack.length - 1; i >= 0; i--) {
+                if (popTargetMatches(backStack[i], to, toKind)) {
+                    depth = backStack.length - i;
+                    break;
+                }
+            }
+            if (depth > 0) {
+                pendingPopDepth = depth;
+                history.go(-depth);
             } else {
                 page.replace(to);
                 syncCurrentHistoryState(history.state);
