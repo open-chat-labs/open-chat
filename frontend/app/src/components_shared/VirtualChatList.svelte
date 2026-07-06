@@ -345,6 +345,10 @@
             topSpacerHeight = th;
             spacerDebt = 0;
             pendingBottomCorrections.clear();
+            // the date-marker cache belongs to the rows that just left the
+            // window — without a rebuild the sticky date shows a stale day
+            // until the next small scroll or full recompute
+            tick().then(rebuildDateMarkerCache);
             return;
         }
 
@@ -933,9 +937,13 @@
     // Sorted oldest→newest (ascending top). Rebuilt after each full window
     // update via tick(). onScroll applies a scrollTop delta and scans the
     // tiny array — no DOM queries on the hot path.
-    type DateMarker = { top: number; ts: bigint };
+    type DateMarker = { top: number; ts: bigint; isDateRow: boolean };
     let dateMarkerCache: DateMarker[] = [];
     let dateMarkerCacheScrollTop = 0;
+    // While an inline date row is passing directly under the floating date's
+    // position, the same date would briefly render twice — suppress the
+    // floating copy for the height of the hand-off band.
+    const STICKY_DATE_HANDOFF_PX = 32;
 
     function rebuildDateMarkerCache() {
         if (!viewport || isDateMarker === undefined || timestampFor === undefined) return;
@@ -946,11 +954,12 @@
         for (let i = rows.length - 1; i >= 0; i--) {
             const item = items[start + i];
             if (item === undefined) continue;
+            const isDateRow = isDateMarker(item);
             const isOldest = i === rows.length - 1;
-            if (isOldest || isDateMarker(item)) {
+            if (isOldest || isDateRow) {
                 const ts = timestampFor(item);
                 if (ts !== undefined) {
-                    markers.push({ top: rows[i].getBoundingClientRect().top, ts });
+                    markers.push({ top: rows[i].getBoundingClientRect().top, ts, isDateRow });
                 }
             }
         }
@@ -964,12 +973,23 @@
         // Rows have moved by (currentScrollTop - cacheScrollTop) since the cache
         // was built. Apply the delta so we don't need to rebuild on every scroll.
         const scrollDelta = viewport.scrollTop - dateMarkerCacheScrollTop;
-        let result: bigint | undefined = undefined;
+        let result: DateMarker | undefined = undefined;
         for (const marker of dateMarkerCache) {
-            if (marker.top - scrollDelta <= stickyDateElTop) result = marker.ts;
+            if (marker.top - scrollDelta <= stickyDateElTop) result = marker;
             else break;
         }
-        stickyDateTimestamp = result;
+        // Hand-off: if the winning marker is an actual inline date row still
+        // sitting at the floating date's position, let the inline row be the
+        // label rather than showing the same date twice.
+        if (
+            result !== undefined &&
+            result.isDateRow &&
+            result.top - scrollDelta > stickyDateElTop - STICKY_DATE_HANDOFF_PX
+        ) {
+            stickyDateTimestamp = undefined;
+            return;
+        }
+        stickyDateTimestamp = result?.ts;
     }
 
     // Fired on every scroll event. Updates fromBottom, runs incremental

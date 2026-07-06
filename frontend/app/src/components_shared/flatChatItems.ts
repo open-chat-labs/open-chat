@@ -34,7 +34,13 @@ export type FlatChatItem<T extends ChatEvent = ChatEvent> =
     | FlatChatStart
     | FlatChatEvent<T>;
 
-export const CHAT_START_ITEM: FlatChatStart = { kind: "chat_start", key: "chat_start" };
+// The key must be per-chat: the virtual list's key→height cache survives item
+// replacement, and the chat-start row's height varies per chat (avatar, name,
+// description) — a shared key would seed the new chat's estimate with the
+// previous chat's height.
+export function chatStartItem(chatKey: string): FlatChatStart {
+    return { kind: "chat_start", key: `chat_start_${chatKey}` };
+}
 
 export function eventKey(e: EventWrapper<ChatEvent>): string {
     return e.event.kind === "message" ? `${e.index}_${e.event.messageId}` : e.index.toString();

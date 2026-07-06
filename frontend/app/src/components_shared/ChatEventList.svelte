@@ -28,7 +28,6 @@
         eventListLastScrolled,
         eventListScrollTop,
         eventListScrolling,
-        isMessageIndexRoute,
         localUpdates,
         messageContextsEqual,
         routeStore,
@@ -123,8 +122,10 @@
     // thresholds remain satisfied and the load loop would spin forever —
     // load → scrollTop restore → scroll event → threshold check → load…
     // burning CPU and memory until the tab dies. Cool the loader down when a
-    // load makes no progress.
-    let loadCooldownUntil = 0;
+    // load makes no progress — per direction, so a fruitless backward load
+    // doesn't also suppress new-message loading (or vice versa).
+    let loadPrevCooldownUntil = 0;
+    let loadNewCooldownUntil = 0;
     let messageReadTimers: Record<number, number> = {};
 
     let threadSummary = $derived(threadRootEvent?.event.thread);
@@ -264,7 +265,15 @@
                     if (isIntersecting && messageReadTimers[idx] === undefined) {
                         const context = messageContext;
                         const timer = window.setTimeout(() => {
-                            if (messageContextsEqual(context, messageContext)) {
+                            // With virtualization a fast fling can destroy the row
+                            // before the observer reports it leaving — the cancel
+                            // branch below never runs, and a message that was only
+                            // glimpsed would be marked read. A destroyed row is
+                            // detached from the document; skip it.
+                            if (
+                                entry.target.isConnected &&
+                                messageContextsEqual(context, messageContext)
+                            ) {
                                 client.markMessageRead(messageContext, idx, id);
                                 messageObserver?.unobserve(entry.target);
                             }
@@ -381,8 +390,7 @@
     }
 
     async function scrollBottom(behavior: ScrollBehavior = "auto"): Promise<void> {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        vclDebug.log("scroll-bottom", { behavior, from: new Error().stack?.split("\n")[2]?.trim().slice(0, 80) as any });
+        vclDebug.log("scroll-bottom", { behavior });
         virtualList?.scrollToBottom(behavior);
         // Protect the jump-to-bottom from iOS momentum: a frame of overflow-y:hidden
         // halts native momentum scrolling and gates onScroll, so stale in-flight
@@ -395,7 +403,7 @@
     }
 
     function shouldLoadPreviousMessages() {
-        if (!chat || Date.now() < loadCooldownUntil) return false;
+        if (!chat || Date.now() < loadPrevCooldownUntil) return false;
         return (
             visible &&
             insideTopThreshold() &&
@@ -404,7 +412,7 @@
     }
 
     function shouldLoadNewMessages() {
-        if (!chat || Date.now() < loadCooldownUntil) return false;
+        if (!chat || Date.now() < loadNewCooldownUntil) return false;
         return (
             visible &&
             fromBottom < LOAD_NEW_THRESHOLD &&
@@ -563,8 +571,10 @@
             items[0]?.key === preFirst &&
             items[items.length - 1]?.key === preLast
         ) {
-            vclDebug.log("!load-noprogress", { len: preLen });
-            loadCooldownUntil = Date.now() + 5000;
+            vclDebug.log("!load-noprogress", { len: preLen, prev: shouldLoadPrev, new: shouldLoadNew });
+            const until = Date.now() + 5000;
+            if (shouldLoadPrev) loadPrevCooldownUntil = until;
+            if (shouldLoadNew) loadNewCooldownUntil = until;
         }
         return true;
     }
@@ -654,7 +664,10 @@
         if (msgEvent && threadRootEvent === undefined) {
             if (
                 msgEvent.event.thread !== undefined &&
-                isMessageIndexRoute($routeStore) &&
+                // deliberately excludes favourites_route — matches the
+                // pre-virtualisation behaviour
+                ($routeStore.kind === "global_chat_selected_route" ||
+                    $routeStore.kind === "selected_channel_route") &&
                 ($routeStore.open || $routeStore.threadMessageIndex !== undefined)
             ) {
                 client.openThread(chat.id, msgEvent, false, $routeStore.threadMessageIndex);

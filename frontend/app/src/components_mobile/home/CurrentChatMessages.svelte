@@ -35,12 +35,13 @@
         type ImageContent,
         type MemeFighterContent,
         type VideoContent,
+        chatIdentifierToString,
     } from "openchat-client";
     import { navigate } from "@utils/navigation";
     import { getContext, untrack, setContext, onMount } from "svelte";
     import Witch from "@shared_components/Witch.svelte";
     import {
-        CHAT_START_ITEM,
+        chatStartItem,
         flattenTimeline,
         type FlatChatItem,
     } from "@shared_components/flatChatItems";
@@ -283,7 +284,7 @@
         const flat: FlatChatItem[] = flattenTimeline(timeline);
         if (showAvatar) {
             // rendered at the oldest end of the list (the visual top)
-            flat.push(CHAT_START_ITEM);
+            flat.push(chatStartItem(chatIdentifierToString(chat.id)));
         }
         return flat;
     });
