@@ -31,6 +31,56 @@ class VclDebug {
         } catch {
             this.#enabled = false;
         }
+        if (this.#enabled) {
+            this.#startPostmortem();
+        }
+    }
+
+    // While enabled, persist the log tail every 500ms so that when the
+    // renderer locks up and the tab has to be killed, the next session can
+    // print what the list was doing at the moment of death.
+    #startPostmortem() {
+        try {
+            const prev = localStorage.getItem("vcl_postmortem");
+            if (prev !== null) {
+                const parsed = JSON.parse(prev);
+                console.warn(
+                    `VCL POSTMORTEM — previous session's last heartbeat ${parsed.t}, tail:\n` +
+                        parsed.tail.join("\n"),
+                );
+                localStorage.removeItem("vcl_postmortem");
+            }
+        } catch {
+            // ignore
+        }
+        setInterval(() => {
+            try {
+                localStorage.setItem(
+                    "vcl_postmortem",
+                    JSON.stringify({
+                        t: new Date().toISOString(),
+                        tail: this.entries()
+                            .slice(-40)
+                            .map((e) => {
+                                const { t, tag, ...rest } = e;
+                                return `${t} ${tag} ${Object.entries(rest)
+                                    .map(([k, v]) => `${k}=${v}`)
+                                    .join(" ")}`;
+                            }),
+                    }),
+                );
+            } catch {
+                // ignore
+            }
+        }, 500);
+        // a clean unload should not masquerade as a lockup
+        window.addEventListener("beforeunload", () => {
+            try {
+                localStorage.removeItem("vcl_postmortem");
+            } catch {
+                // ignore
+            }
+        });
     }
 
     get enabled(): boolean {
