@@ -290,6 +290,25 @@ function doNavigate(to: string, intent: NavigationIntent, retries = 0) {
             // (same route kind). Otherwise the stack has diverged from the tab
             // discipline and going back would land somewhere unexpected —
             // replace instead. backStack is popped by the popstate handler.
+            //
+            // Two accepted tradeoffs:
+            //
+            // 1. The replace fallback strands the intermediate entry: after
+            //    /chats → /community → tap Chats, history is
+            //    [/chats, /community, /chats], so the browser Back button
+            //    revisits the community before leaving. Collapsing it would
+            //    need an async back()-then-replace dance across a popstate
+            //    (racy with page.js); a forward tap landing in the wrong
+            //    place was the worse bug, a redundant Back stop is benign.
+            //
+            // 2. The kind match is deliberately coarse. It can approve a pop
+            //    to a *different* instance of the same route kind, e.g. open a
+            //    thread in chat B, switch to a thread in chat C (replace),
+            //    close the thread: the entry behind is chat B, same kind as
+            //    the chat C destination, so back() lands on chat B. That
+            //    behaviour predates this fix, and matching full paths instead
+            //    would break the common close-thread pop (the path legitimately
+            //    differs by its thread segment).
             const behind = backStack[backStack.length - 1];
             if (behind !== undefined && pathToRouteKind(behind) === pathToRouteKind(to)) {
                 history.back();
