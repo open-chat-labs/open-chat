@@ -299,18 +299,6 @@ export class CachedChatEventsReader {
                 const emptyButComplete =
                     cachedEvents.events.length === 0 && missing.size + dirty.size === 0;
 
-                // TODO: temporary diagnostics for the blank-list bug - remove
-                console.warn(
-                    "WINDOWDBG2 cache",
-                    JSON.stringify({
-                        cached: cachedEvents.events.length,
-                        missing: missing.size,
-                        dirty: dirty.size,
-                        totalMiss,
-                        emptyButComplete,
-                    }),
-                );
-
                 if (totalMiss || emptyButComplete || missing.size + dirty.size > MAX_MISSING) {
                     // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
                     console.debug(
