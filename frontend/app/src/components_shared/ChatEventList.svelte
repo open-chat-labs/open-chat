@@ -42,6 +42,7 @@
     import { mobileOperatingSystem } from "@utils/devices";
     import type { FlatChatItem } from "./flatChatItems";
     import { vclDebug } from "./vclDebug";
+    import { rowByKey } from "./virtualListUtils";
     import VirtualChatList from "./VirtualChatList.svelte";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
@@ -447,6 +448,13 @@
             // instead of preserving the reading position
             await tick();
             await scrollBottom();
+            // The pin has served its purpose once we're caught up — without
+            // this release a user later reading just under the bottom
+            // (fromBottom below the genuine-scroll release threshold) would
+            // be yanked to the latest by the next new-message load.
+            if (!client.moreNewMessagesAvailable(chat.id, threadRootEvent)) {
+                pinToBottom = false;
+            }
             return;
         }
 
@@ -459,9 +467,7 @@
             let target = -fromBottom;
             let anchored = false;
             if (anchorKey !== undefined && anchorTop !== undefined) {
-                const again = el.querySelector<HTMLElement>(
-                    `.vcl-row[data-key="${CSS.escape(anchorKey)}"]`,
-                );
+                const again = rowByKey(el, anchorKey);
                 if (again) {
                     target = el.scrollTop + (again.getBoundingClientRect().top - anchorTop);
                     anchored = true;
@@ -688,14 +694,24 @@
         filling: boolean = false,
         hasLookedUpEvent: boolean = false,
     ): Promise<void> {
+        const token = ++navToken;
         return scrollToMessageIndexInternal(
-            ++navToken,
+            token,
             context,
             index,
             preserveFocus,
             filling,
             hasLookedUpEvent,
-        );
+        ).finally(() => {
+            // The recursion clears the flag on its normal exit paths, but a
+            // rejection anywhere (e.g. loadEventWindow failing on a network
+            // blip) would otherwise leave it stuck true — permanently gating
+            // scroll-triggered and background loading. Only the navigation
+            // that currently owns the flag may clear it.
+            if (token === navToken) {
+                scrollingToMessage = false;
+            }
+        });
     }
 
     async function scrollToMessageIndexInternal(
@@ -928,6 +944,11 @@
         await scrollToMessageIndex(context, messageIndex, false);
         if (messageContextsEqual(context, messageContext)) {
             await scrollBottom();
+            // Release the go-to-latest pin once it has completed with nothing
+            // left to catch up on; it must not linger and snap a later load.
+            if (!client.moreNewMessagesAvailable(chat.id, threadRootEvent)) {
+                pinToBottom = false;
+            }
         }
     }
 

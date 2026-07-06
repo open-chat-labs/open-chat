@@ -17,6 +17,14 @@ export type VclLogEntry = { t: number; tag: string } & Record<string, unknown>;
 
 const MAX_ENTRIES = 8000;
 
+function formatEntry(e: VclLogEntry): string {
+    const { t, tag, ...rest } = e;
+    const fields = Object.entries(rest)
+        .map(([k, v]) => `${k}=${v}`)
+        .join(" ");
+    return `${t} ${tag} ${fields}`;
+}
+
 class VclDebug {
     #buffer: VclLogEntry[] = [];
     #head = 0;
@@ -59,14 +67,7 @@ class VclDebug {
                     "vcl_postmortem",
                     JSON.stringify({
                         t: new Date().toISOString(),
-                        tail: this.entries()
-                            .slice(-40)
-                            .map((e) => {
-                                const { t, tag, ...rest } = e;
-                                return `${t} ${tag} ${Object.entries(rest)
-                                    .map(([k, v]) => `${k}=${v}`)
-                                    .join(" ")}`;
-                            }),
+                        tail: this.#tail(40).map(formatEntry),
                     }),
                 );
             } catch {
@@ -124,6 +125,19 @@ class VclDebug {
         return [...this.#buffer.slice(this.#head), ...this.#buffer.slice(0, this.#head)];
     }
 
+    // Last n entries without cloning/reordering the whole ring buffer — the
+    // postmortem beacon calls this every 500ms, during exactly the load
+    // spikes it exists to capture.
+    #tail(n: number): VclLogEntry[] {
+        const len = this.#buffer.length;
+        if (len < MAX_ENTRIES) return this.#buffer.slice(-n);
+        const out: VclLogEntry[] = [];
+        for (let i = Math.max(0, len - n); i < len; i++) {
+            out.push(this.#buffer[(this.#head + i) % len]);
+        }
+        return out;
+    }
+
     anomalies(): VclLogEntry[] {
         return this.entries().filter((e) => e.tag.startsWith("!"));
     }
@@ -137,16 +151,7 @@ class VclDebug {
     }
 
     dump(last = 500): string {
-        return this.entries()
-            .slice(-last)
-            .map((e) => {
-                const { t, tag, ...rest } = e;
-                const fields = Object.entries(rest)
-                    .map(([k, v]) => `${k}=${v}`)
-                    .join(" ");
-                return `${t} ${tag} ${fields}`;
-            })
-            .join("\n");
+        return this.#tail(last).map(formatEntry).join("\n");
     }
 
     clear() {

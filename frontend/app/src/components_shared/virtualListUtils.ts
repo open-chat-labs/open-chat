@@ -96,3 +96,10 @@ export function computeSpacers(
     if (topCount > 1) th += (topCount - 1) * gap;
     return [bh, th];
 }
+
+/**
+ * Look up a rendered virtual-list row by its stable item key.
+ */
+export function rowByKey(root: HTMLElement, key: string): HTMLElement | null {
+    return root.querySelector<HTMLElement>(`.vcl-row[data-key="${CSS.escape(key)}"]`);
+}

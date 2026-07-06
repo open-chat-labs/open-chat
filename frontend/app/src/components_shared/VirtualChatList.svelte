@@ -109,6 +109,7 @@
         computeWindow as _computeWindow,
         buildPrefixSums,
         OVERSCAN_PX,
+        rowByKey,
     } from "./virtualListUtils";
 
     let {
@@ -283,8 +284,36 @@
         return Math.min(Math.max(0, raw), maxFromBottom);
     }
 
+    // Repay outstanding spacer debt inline, adjusting fromBottom additively
+    // (NOT from scrollTop — callers like the prepend path set fromBottom to a
+    // value the browser's scrollTop hasn't caught up with yet). Used by the
+    // position-preserving full/jump recomputes: assigning the canonical
+    // spacer height over a debt-offset DOM spacer without the matching
+    // scrollTop write would shift content by the outstanding debt.
+    function repayDebtInline(reason: string) {
+        if (spacerDebt === 0 || !viewport) return;
+        const debt = spacerDebt;
+        spacerDebt = 0;
+        viewport.scrollTop -= debt;
+        fromBottom += debt;
+        lastProgrammaticScrollTime = Date.now();
+        vclDebug.log("repay", { debt: Math.round(debt), during: reason });
+    }
+
     // Full recompute: used on init, navigation, items change, resize.
     function updateWindowFull(reason: string = "unknown") {
+        // Navigation resets (scroll-to-index/bottom) reposition the viewport
+        // absolutely right after this call, so outstanding debt is moot and
+        // must be discarded WITHOUT a scrollTop write (the write would fight
+        // the navigation's own positioning). Every other reason preserves the
+        // reading position and must repay the debt before the canonical
+        // spacer assignment below overwrites the DOM offset.
+        const navReset = reason === "scroll-to-index" || reason === "scroll-to-bottom";
+        if (navReset) {
+            spacerDebt = 0;
+        } else {
+            repayDebtInline(reason);
+        }
         // Only mark prefix sums dirty if spacerAvgHeight actually changed,
         // to avoid redundant O(N) rebuilds when callers (e.g. _doScrollToIndex)
         // have already set spacerAvgHeight and rebuilt prefix sums.
@@ -308,8 +337,6 @@
         end = e;
         bottomSpacerHeight = bh;
         topSpacerHeight = th;
-        // the canonical spacer assignment above wipes out any DOM-side debt
-        spacerDebt = 0;
         pendingBottomCorrections.clear();
         tick().then(rebuildDateMarkerCache);
     }
@@ -327,7 +354,7 @@
     // Top spacer: fully recomputed each time (safe — changes to the top spacer
     // don't shift visible content in column-reverse).
     function updateWindowIncremental() {
-        const [s, e] = computeWindow();
+        let [s, e] = computeWindow();
 
         if (s === start && e === end) return;
 
@@ -337,13 +364,20 @@
         // being reset anyway so pendingBottomCorrections don't matter.
         const INCREMENTAL_THRESHOLD = 50;
         if (Math.abs(s - start) > INCREMENTAL_THRESHOLD) {
+            // The canonical spacer assignment below would silently overwrite
+            // any debt-offset DOM spacer, shifting content under the reading
+            // position — repay first (the repayment moves fromBottom, so the
+            // window must be recomputed).
+            if (spacerDebt !== 0) {
+                repayDebtInline("incr-jumped");
+                [s, e] = computeWindow();
+            }
             const [bh, th] = computeSpacers(s, e);
             vclDebug.log("incr-jumped", { s, e, bh: Math.round(bh), th: Math.round(th) });
             start = s;
             end = e;
             bottomSpacerHeight = bh;
             topSpacerHeight = th;
-            spacerDebt = 0;
             pendingBottomCorrections.clear();
             // the date-marker cache belongs to the rows that just left the
             // window — without a rebuild the sticky date shows a stale day
@@ -413,7 +447,6 @@
         if (!interrupt && viewport) {
             untrack(() => {
                 vclDebug.log("interrupt-end", { st: Math.round(viewport!.scrollTop) });
-                settleSpacerDebt();
                 fromBottom = clampFromBottom(-viewport!.scrollTop);
                 updateWindowFull("interrupt-end");
             });
@@ -541,15 +574,21 @@
         const debt = spacerDebt;
         spacerDebt = 0;
         // flushSync commits the spacer height to the DOM in this task, so the
-        // spacer change and the scrollTop write land in the same layout.
-        // Falls back to a plain (still pre-paint) write when called from
-        // within an effect, where flushSync is not permitted.
+        // spacer change and the scrollTop write land in the same layout. It is
+        // not permitted inside an effect flush — in that (rare: every direct
+        // caller is a timer or event handler) case, put the debt back and
+        // retry in a microtask, which runs after the flush completes, rather
+        // than splitting the spacer change and the scrollTop write across a
+        // layout (the write can clamp against the still-smaller content and
+        // leave a residual jump).
         try {
             flushSync(() => {
                 bottomSpacerHeight += debt;
             });
         } catch {
-            bottomSpacerHeight += debt;
+            spacerDebt = debt;
+            queueMicrotask(() => settleSpacerDebt(force));
+            return;
         }
         viewport.scrollTop -= debt;
         lastProgrammaticScrollTime = Date.now();
@@ -579,9 +618,6 @@
         void items[0]?.key;
 
         untrack(() => {
-            // repay any spacer debt before deriving positions from scrollTop —
-            // the full recompute below reinstates the canonical spacer height
-            settleSpacerDebt();
             const oldLen = prevItemsLength;
             const oldFirstKey = prevFirstKey;
             const oldLastKey = prevLastKey;
@@ -731,9 +767,7 @@
             const key = items[flatIndex]?.key;
             tick().then(() => {
                 if (!viewport || key === undefined || items[flatIndex]?.key !== key) return;
-                const row = viewport.querySelector<HTMLElement>(
-                    `.vcl-row[data-key="${CSS.escape(key)}"]`,
-                );
+                const row = rowByKey(viewport, key);
                 if (!row) return;
                 const rowRect = row.getBoundingClientRect();
                 const vpRect = viewport.getBoundingClientRect();
@@ -744,6 +778,11 @@
                     lastProgrammaticScrollTime = Date.now();
                     viewport.scrollTop += delta;
                     fromBottom = clampFromBottom(-viewport.scrollTop);
+                    // Don't rely on the resulting scroll event to resync the
+                    // window (iOS can swallow it after a programmatic write) —
+                    // a large refinement would otherwise leave the rendered
+                    // window at the pre-refine offset.
+                    updateWindowIncremental();
                 }
             });
         }
@@ -1114,7 +1153,6 @@
 
         const ro = new ResizeObserver(() => {
             viewportHeight = el.clientHeight;
-            settleSpacerDebt();
             updateWindowFull("viewport-resize");
         });
         ro.observe(el);
