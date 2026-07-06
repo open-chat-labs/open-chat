@@ -549,6 +549,13 @@
         ) {
             return false;
         }
+        // A single correction bigger than the cap (a very tall item measured
+        // against the average estimate) must go straight to scrollTop — if we
+        // absorbed it we would immediately be forced to repay it mid-scroll,
+        // a worse write than the one we avoided.
+        if (Math.abs(delta) >= MAX_SPACER_DEBT) {
+            return false;
+        }
         // On a long sustained scroll the debt never gets an idle moment to be
         // repaid; once the cap would be exceeded, force a single repayment
         // write (one animation abort per MAX_SPACER_DEBT px of accumulated

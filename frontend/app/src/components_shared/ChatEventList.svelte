@@ -384,6 +384,12 @@
     async function loadNew(): Promise<void> {
         const el = messagesDiv;
         const preLoadScrollHeight = el?.scrollHeight;
+        // Capture the bottom-most rendered row as a position anchor. After the
+        // load we restore its exact on-screen position from the DOM — the only
+        // coordinate system that mixes no estimates.
+        const anchorEl = el?.querySelector<HTMLElement>(".vcl-row");
+        const anchorKey = anchorEl?.dataset.key;
+        const anchorTop = anchorEl?.getBoundingClientRect().top;
 
         await client.loadNewMessages(chat.id, threadRootEvent);
 
@@ -400,22 +406,38 @@
         if (el && preLoadScrollHeight !== undefined) {
             await tick();
             const delta = el.scrollHeight - preLoadScrollHeight;
+            // Preferred restore: the anchor row's actual pixel shift. Fallback:
+            // -fromBottom, which at least shares its coordinate system (height
+            // estimates) with the virtual window, unlike the scrollHeight delta.
+            let target = -fromBottom;
+            let anchored = false;
+            if (anchorKey !== undefined && anchorTop !== undefined) {
+                const again = el.querySelector<HTMLElement>(
+                    `.vcl-row[data-key="${CSS.escape(anchorKey)}"]`,
+                );
+                if (again) {
+                    target = el.scrollTop + (again.getBoundingClientRect().top - anchorTop);
+                    anchored = true;
+                }
+            }
             vclDebug.log("load-new", {
                 preH: Math.round(preLoadScrollHeight),
                 postH: Math.round(el.scrollHeight),
                 delta: Math.round(delta),
                 st: Math.round(el.scrollTop),
                 fb: Math.round(fromBottom),
+                target: Math.round(target),
+                anchored,
             });
             if (delta > 0) {
                 if (mobileOperatingSystem === "iOS") {
                     // the one-frame overflow-y:hidden halts iOS momentum so the
                     // programmatic write cannot be swallowed by native physics
-                    await interruptScroll(-fromBottom);
+                    await interruptScroll(target);
                 } else {
                     // on desktop the freeze itself is a visible hitch mid-glide;
                     // a plain write is safe and onScroll resyncs the window
-                    el.scrollTop = -fromBottom;
+                    el.scrollTop = target;
                 }
             }
         }
