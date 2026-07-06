@@ -760,9 +760,20 @@
                     : findMessageEvent(index);
             if (loaded === undefined) {
                 if (!hasLookedUpEvent) {
-                    // we must only recurse if we have not already loaded the event, otherwise we will enter an infinite loop
-                    await client.loadEventWindow(context.chatId, index, threadRootEvent);
-                    await tick();
+                    // we must only recurse if we have not already loaded the event, otherwise we will enter an infinite loop.
+                    // Suppress scroll handling across the store swap: the content
+                    // momentarily shrinks while the old events are cleared, and the
+                    // browser clamps scrollTop towards zero — without the interrupt
+                    // that stray scroll event slides the virtual window to the
+                    // bottom and queues a pile of bogus corrections before the
+                    // navigation has even positioned itself.
+                    interrupt = true;
+                    try {
+                        await client.loadEventWindow(context.chatId, index, threadRootEvent);
+                        await tick();
+                    } finally {
+                        await interruptScroll();
+                    }
                     return scrollToMessageIndexInternal(
                         token,
                         context,

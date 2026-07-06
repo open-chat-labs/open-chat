@@ -251,6 +251,20 @@
         return _computeSpacers(items.length, prefixSums, s, e, gapPx);
     }
 
+    // A corrupted estimate or bookkeeping bug can produce a non-finite or
+    // absurd spacer height; feeding that to the DOM makes every layout pass
+    // catastrophically slow (which diagnostics sampling then amplifies into a
+    // dead tab). Clamp and shout instead.
+    const MAX_SANE_SPACER = 5_000_000;
+    function sanitizeSpacers(bh: number, th: number): [number, number] {
+        if (!Number.isFinite(bh) || !Number.isFinite(th) || bh > MAX_SANE_SPACER || th > MAX_SANE_SPACER) {
+            vclDebug.log("!spacer-insane", { bh: Math.round(bh), th: Math.round(th) });
+            bh = Number.isFinite(bh) ? Math.min(Math.max(bh, 0), MAX_SANE_SPACER) : 0;
+            th = Number.isFinite(th) ? Math.min(Math.max(th, 0), MAX_SANE_SPACER) : 0;
+        }
+        return [bh, th];
+    }
+
     // Clamp a scrollTop-derived fromBottom so it can never point past the oldest
     // item. A stale/in-flight scroll value (common on iOS — e.g. when a window
     // replacement shrinks the content under an old scroll position) can otherwise
@@ -279,7 +293,8 @@
             prefixDirty = true;
         }
         const [s, e] = computeWindow();
-        const [bh, th] = computeSpacers(s, e);
+        let [bh, th] = computeSpacers(s, e);
+        [bh, th] = sanitizeSpacers(bh, th);
         vclDebug.log("full", {
             reason,
             fb: Math.round(fromBottom),
@@ -372,6 +387,7 @@
             vclDebug.log("!negative-spacer", { bh: Math.round(bottomSpacerHeight), s, e });
         }
         bottomSpacerHeight = Math.max(0, bottomSpacerHeight);
+        [bottomSpacerHeight, topSpacerHeight] = sanitizeSpacers(bottomSpacerHeight, topSpacerHeight);
 
         vclDebug.log("incr", {
             s,
@@ -1079,7 +1095,18 @@
 
         updateWindowFull("mount");
 
-        const stopFrameWatcher = vclDebug.enabled ? startFrameWatcher(el) : undefined;
+        // The frame watcher forces a layout per frame (getBoundingClientRect
+        // per row) — invaluable for catching shifts, but it turns any
+        // pathologically slow layout into a per-frame death spiral. Opt-in
+        // separately from vcl_debug, and it disarms itself if sampling gets
+        // expensive.
+        let watch = false;
+        try {
+            watch = vclDebug.enabled && localStorage.getItem("vcl_watch") === "1";
+        } catch {
+            // ignore
+        }
+        const stopFrameWatcher = watch ? startFrameWatcher(el) : undefined;
 
         return () => {
             el.removeEventListener("scroll", onScroll);
@@ -1112,6 +1139,7 @@
         let prevTops = new Map<string, number>();
         let lastSnap = 0;
         const frame = () => {
+            const t0 = performance.now();
             const st = el.scrollTop;
             const vpTop = el.getBoundingClientRect().top;
             const rows = el.querySelectorAll<HTMLElement>(".vcl-row");
@@ -1163,6 +1191,12 @@
             }
             prevSt = st;
             prevTops = tops;
+            // self-limiting: if forcing layout takes this long, sampling per
+            // frame would grind the tab to death — stop watching.
+            if (performance.now() - t0 > 40) {
+                vclDebug.log("!watcher-disarmed", { ms: Math.round(performance.now() - t0) });
+                return;
+            }
             rafId = requestAnimationFrame(frame);
         };
         rafId = requestAnimationFrame(frame);
