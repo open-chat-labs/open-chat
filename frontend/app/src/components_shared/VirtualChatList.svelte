@@ -693,6 +693,33 @@
         updateWindowFull("scroll-to-index");
         lastProgrammaticScrollTime = Date.now();
         viewport.scrollTo({ top: -offset, behavior });
+
+        // The offset above is estimate-based; in chats with high height
+        // variance it can be way off (2x observed), producing a visible
+        // multi-jump as the debounced corrections converge — or an off-target
+        // landing when they run out. The target row is usually rendered after
+        // the window update though, so refine against its actual rect: one
+        // exact write that makes the estimate error invisible.
+        if (behavior !== "smooth") {
+            const key = items[flatIndex]?.key;
+            tick().then(() => {
+                if (!viewport || key === undefined || items[flatIndex]?.key !== key) return;
+                const row = viewport.querySelector<HTMLElement>(
+                    `.vcl-row[data-key="${CSS.escape(key)}"]`,
+                );
+                if (!row) return;
+                const rowRect = row.getBoundingClientRect();
+                const vpRect = viewport.getBoundingClientRect();
+                const delta =
+                    rowRect.top + rowRect.height / 2 - (vpRect.top + vpRect.height / 2);
+                if (Math.abs(delta) > 4) {
+                    vclDebug.log("scroll-idx-refine", { i: flatIndex, delta: Math.round(delta) });
+                    lastProgrammaticScrollTime = Date.now();
+                    viewport.scrollTop += delta;
+                    fromBottom = clampFromBottom(-viewport.scrollTop);
+                }
+            });
+        }
     }
 
     // ── measureRow (Svelte action) ─────────────────────────────────────────

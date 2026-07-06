@@ -610,7 +610,31 @@
         }
     }
 
-    export async function scrollToMessageIndex(
+    // Incremented for every externally-initiated navigation; the recursive
+    // load-and-refine loop checks it so that a newer navigation (or a rapid
+    // second click) cancels an older in-flight one instead of the two loops
+    // fighting each other with loads and scrolls.
+    let navToken = 0;
+
+    export function scrollToMessageIndex(
+        context: MessageContext,
+        index: number,
+        preserveFocus: boolean,
+        filling: boolean = false,
+        hasLookedUpEvent: boolean = false,
+    ): Promise<void> {
+        return scrollToMessageIndexInternal(
+            ++navToken,
+            context,
+            index,
+            preserveFocus,
+            filling,
+            hasLookedUpEvent,
+        );
+    }
+
+    async function scrollToMessageIndexInternal(
+        token: number,
         context: MessageContext,
         index: number,
         preserveFocus: boolean,
@@ -618,6 +642,7 @@
         hasLookedUpEvent: boolean = false,
     ): Promise<void> {
         // it is possible for the chat to change while this function is recursing so double check
+        if (token !== navToken) return Promise.resolve();
         if (!messageContextsEqual(context, messageContext)) return Promise.resolve();
 
         if (index < 0) {
@@ -647,7 +672,14 @@
                 checkIfTargetMessageHasAThread(index);
             }
             if (await loadMoreIfRequired(false, true)) {
-                return scrollToMessageIndex(context, index, preserveFocus, true, hasLookedUpEvent);
+                return scrollToMessageIndexInternal(
+                    token,
+                    context,
+                    index,
+                    preserveFocus,
+                    true,
+                    hasLookedUpEvent,
+                );
             } else {
                 if (!preserveFocus) {
                     window.setTimeout(() => {
@@ -667,7 +699,14 @@
                     // we must only recurse if we have not already loaded the event, otherwise we will enter an infinite loop
                     await client.loadEventWindow(context.chatId, index, threadRootEvent);
                     await tick();
-                    return scrollToMessageIndex(context, index, preserveFocus, filling, true);
+                    return scrollToMessageIndexInternal(
+                        token,
+                        context,
+                        index,
+                        preserveFocus,
+                        filling,
+                        true,
+                    );
                 }
                 scrollingToMessage = false;
                 // A failed event-window load clears the event store before it
@@ -684,7 +723,13 @@
                 // message, or failing that, the bottom.
                 const next = messageIndexToFlat.get(index + 1);
                 if (next !== undefined) {
-                    return scrollToMessageIndex(context, index + 1, preserveFocus, filling);
+                    return scrollToMessageIndexInternal(
+                        token,
+                        context,
+                        index + 1,
+                        preserveFocus,
+                        filling,
+                    );
                 }
                 scrollingToMessage = false;
                 return scrollBottom();
