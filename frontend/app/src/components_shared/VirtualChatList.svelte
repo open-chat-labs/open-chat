@@ -386,101 +386,6 @@
         tick().then(rebuildDateMarkerCache);
     }
 
-    // Track previous items to detect prepend vs append vs replacement.
-    let prevFirstKey: string | undefined;
-    let prevLastKey: string | undefined;
-    let prevItemsLength = 0;
-
-    // Recompute the virtual window whenever items change.
-    // $effect.pre is load-bearing: visibleItems ($derived) re-renders rows with
-    // the NEW items array immediately, so start/end/spacers must be updated in
-    // the same flush BEFORE the DOM is touched. With a plain $effect there is
-    // one frame where the stale window slices the new array — wrong rows
-    // render, and their synchronous measurements compare fresh DOM heights
-    // against the not-yet-rebuilt heightMap, producing garbage resize deltas
-    // and spurious scroll compensations.
-    $effect.pre(() => {
-        // Register reactive dependency on items contents
-        void items.length;
-        void items[0]?.key;
-
-        untrack(() => {
-            // repay any spacer debt before deriving positions from scrollTop —
-            // the full recompute below reinstates the canonical spacer height
-            settleSpacerDebt();
-            const oldLen = prevItemsLength;
-            const oldFirstKey = prevFirstKey;
-            const oldLastKey = prevLastKey;
-            prevFirstKey = items[0]?.key;
-            prevLastKey = items.length > 0 ? items[items.length - 1].key : undefined;
-            prevItemsLength = items.length;
-
-            const numNew = items.length - oldLen;
-
-            // Detect prepend: items grew, first key changed, and the old first
-            // item is now at index (newLen - oldLen) — i.e. it was shifted right.
-            const isPrepend =
-                numNew > 0 &&
-                oldLen > 0 &&
-                oldFirstKey !== undefined &&
-                items[numNew]?.key === oldFirstKey;
-
-            // Detect pure append: items grew, first key unchanged, AND the
-            // previously-last item is still at its old index. This guards against
-            // date marker shifts when older messages share a day with the current
-            // oldest — in that case the flattening may insert/move items within
-            // the existing range, so a full rebuild is needed.
-            const isAppend =
-                numNew > 0 &&
-                oldLen > 0 &&
-                items[0]?.key === oldFirstKey &&
-                items[oldLen - 1]?.key === oldLastKey;
-
-            if (isAppend) {
-                extendHeightMap(oldLen);
-            } else {
-                rebuildHeightMap();
-            }
-
-            // Refresh the estimate snapshot BEFORE computing the prepend offset:
-            // updateWindowFull below will refresh it anyway, and if the offset
-            // were computed with the old snapshot the adjusted fromBottom would
-            // point at a different item in the new estimate space — the window
-            // lands away from the previously-visible content and the caller's
-            // post-load anchor row is not even rendered.
-            if (spacerAvgHeight !== averageHeight) {
-                spacerAvgHeight = averageHeight;
-                prefixDirty = true;
-            }
-
-            let prependOffset = 0;
-            if (isPrepend) {
-                // New items were prepended at the visual bottom (scroll origin
-                // in column-reverse). Adjust fromBottom so updateWindowFull
-                // targets the same visual position in the new index space.
-                let offset = 0;
-                for (let i = 0; i < numNew; i++) {
-                    offset += getHeight(i);
-                }
-                // Include gaps: numNew new items add numNew gaps (one per item
-                // plus the gap between last new item and old first item).
-                offset += numNew * gapPx;
-                fromBottom += offset;
-                prependOffset = offset;
-            }
-
-            vclDebug.log("items", {
-                len: items.length,
-                numNew,
-                prepend: isPrepend,
-                append: isAppend,
-                offset: Math.round(prependOffset),
-                fb: Math.round(fromBottom),
-            });
-
-            updateWindowFull("items");
-        });
-    });
 
     // After interrupt ends (scroll restored), sync fromBottom and do a full recompute
     // so spacer state is consistent with the restored scroll position.
@@ -624,6 +529,105 @@
         fromBottom = clampFromBottom(-viewport.scrollTop);
         vclDebug.log("repay", { debt: Math.round(debt) });
     }
+
+    // Track previous items to detect prepend vs append vs replacement.
+    // NOTE: this $effect.pre must be declared AFTER the spacer-debt state
+    // above — pre-effects can run during the init flush, before later
+    // declarations are initialised (TDZ).
+    let prevFirstKey: string | undefined;
+    let prevLastKey: string | undefined;
+    let prevItemsLength = 0;
+
+    // Recompute the virtual window whenever items change.
+    // $effect.pre is load-bearing: visibleItems ($derived) re-renders rows with
+    // the NEW items array immediately, so start/end/spacers must be updated in
+    // the same flush BEFORE the DOM is touched. With a plain $effect there is
+    // one frame where the stale window slices the new array — wrong rows
+    // render, and their synchronous measurements compare fresh DOM heights
+    // against the not-yet-rebuilt heightMap, producing garbage resize deltas
+    // and spurious scroll compensations.
+    $effect.pre(() => {
+        // Register reactive dependency on items contents
+        void items.length;
+        void items[0]?.key;
+
+        untrack(() => {
+            // repay any spacer debt before deriving positions from scrollTop —
+            // the full recompute below reinstates the canonical spacer height
+            settleSpacerDebt();
+            const oldLen = prevItemsLength;
+            const oldFirstKey = prevFirstKey;
+            const oldLastKey = prevLastKey;
+            prevFirstKey = items[0]?.key;
+            prevLastKey = items.length > 0 ? items[items.length - 1].key : undefined;
+            prevItemsLength = items.length;
+
+            const numNew = items.length - oldLen;
+
+            // Detect prepend: items grew, first key changed, and the old first
+            // item is now at index (newLen - oldLen) — i.e. it was shifted right.
+            const isPrepend =
+                numNew > 0 &&
+                oldLen > 0 &&
+                oldFirstKey !== undefined &&
+                items[numNew]?.key === oldFirstKey;
+
+            // Detect pure append: items grew, first key unchanged, AND the
+            // previously-last item is still at its old index. This guards against
+            // date marker shifts when older messages share a day with the current
+            // oldest — in that case the flattening may insert/move items within
+            // the existing range, so a full rebuild is needed.
+            const isAppend =
+                numNew > 0 &&
+                oldLen > 0 &&
+                items[0]?.key === oldFirstKey &&
+                items[oldLen - 1]?.key === oldLastKey;
+
+            if (isAppend) {
+                extendHeightMap(oldLen);
+            } else {
+                rebuildHeightMap();
+            }
+
+            // Refresh the estimate snapshot BEFORE computing the prepend offset:
+            // updateWindowFull below will refresh it anyway, and if the offset
+            // were computed with the old snapshot the adjusted fromBottom would
+            // point at a different item in the new estimate space — the window
+            // lands away from the previously-visible content and the caller's
+            // post-load anchor row is not even rendered.
+            if (spacerAvgHeight !== averageHeight) {
+                spacerAvgHeight = averageHeight;
+                prefixDirty = true;
+            }
+
+            let prependOffset = 0;
+            if (isPrepend) {
+                // New items were prepended at the visual bottom (scroll origin
+                // in column-reverse). Adjust fromBottom so updateWindowFull
+                // targets the same visual position in the new index space.
+                let offset = 0;
+                for (let i = 0; i < numNew; i++) {
+                    offset += getHeight(i);
+                }
+                // Include gaps: numNew new items add numNew gaps (one per item
+                // plus the gap between last new item and old first item).
+                offset += numNew * gapPx;
+                fromBottom += offset;
+                prependOffset = offset;
+            }
+
+            vclDebug.log("items", {
+                len: items.length,
+                numNew,
+                prepend: isPrepend,
+                append: isAppend,
+                offset: Math.round(prependOffset),
+                fb: Math.round(fromBottom),
+            });
+
+            updateWindowFull("items");
+        });
+    });
 
     function flushScrollAdjustment() {
         clearTimeout(momentumEndTimer);
