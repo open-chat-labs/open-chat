@@ -118,6 +118,13 @@
     // the gesture fully stops (see trackScrollStop) — prevents runaway loading
     // while momentum keeps the viewport inside a loading threshold.
     let requireScrollStop = false;
+    // Circuit breaker: if a load completes without changing the items at all
+    // (e.g. every returned event is filtered out of the timeline), the loading
+    // thresholds remain satisfied and the load loop would spin forever —
+    // load → scrollTop restore → scroll event → threshold check → load…
+    // burning CPU and memory until the tab dies. Cool the loader down when a
+    // load makes no progress.
+    let loadCooldownUntil = 0;
     let messageReadTimers: Record<number, number> = {};
 
     let threadSummary = $derived(threadRootEvent?.event.thread);
@@ -386,7 +393,7 @@
     }
 
     function shouldLoadPreviousMessages() {
-        if (!chat) return false;
+        if (!chat || Date.now() < loadCooldownUntil) return false;
         return (
             visible &&
             insideTopThreshold() &&
@@ -395,7 +402,7 @@
     }
 
     function shouldLoadNewMessages() {
-        if (!chat) return false;
+        if (!chat || Date.now() < loadCooldownUntil) return false;
         return (
             visible &&
             fromBottom < LOAD_NEW_THRESHOLD &&
@@ -533,6 +540,10 @@
             ft: Math.round(fromTop()),
         });
 
+        const preLen = items.length;
+        const preFirst = items[0]?.key;
+        const preLast = items[items.length - 1]?.key;
+
         const loadPromises = [];
         if (shouldLoadNew) {
             loadPromises.push(loadNew());
@@ -544,6 +555,15 @@
         loadingPrevMessages = false;
         loadingNewMessages = false;
         loadingFromUserScroll = false;
+
+        if (
+            items.length === preLen &&
+            items[0]?.key === preFirst &&
+            items[items.length - 1]?.key === preLast
+        ) {
+            vclDebug.log("!load-noprogress", { len: preLen });
+            loadCooldownUntil = Date.now() + 5000;
+        }
         return true;
     }
 
