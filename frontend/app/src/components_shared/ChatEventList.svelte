@@ -293,7 +293,13 @@
     });
 
     function chatsUpdated(ctx: MessageContext) {
-        if (messageContextsEqual(ctx, messageContext)) {
+        // Never start a background new-message load while a message navigation
+        // is in flight: loadEventWindow clears the event store before its
+        // window arrives, and a concurrent load merging the latest messages
+        // into the empty store makes the window fail the contiguity check and
+        // get dropped — the navigation then lands nowhere (observed as pinned
+        // message navigation failing on busy channels most of the time).
+        if (messageContextsEqual(ctx, messageContext) && !scrollingToMessage) {
             // I *think* chatsUpdated is only going to be because there are new messages to load
             // so there is no need to load more previous messages. It's better that we don't even check
             // here because in certain race conditions we might ending up loading the previous messages twice.
@@ -851,7 +857,14 @@
         portalState.close();
         eventListLastScrolled.set(Date.now());
 
-        if (!initialised || interrupt || loadingFromUserScroll || !visible) return;
+        if (
+            !initialised ||
+            interrupt ||
+            loadingFromUserScroll ||
+            scrollingToMessage ||
+            !visible
+        )
+            return;
 
         loadMoreIfRequired(true);
     }
