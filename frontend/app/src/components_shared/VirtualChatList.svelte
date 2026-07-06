@@ -310,12 +310,17 @@
         // absolutely right after this call, so outstanding debt is moot and
         // must be discarded WITHOUT a scrollTop write (the write would fight
         // the navigation's own positioning). Every other reason preserves the
-        // reading position and must repay the debt before the canonical
-        // spacer assignment below overwrites the DOM offset.
+        // reading position: when the user is not actively scrolling, repay
+        // the debt before the canonical spacer assignment below overwrites
+        // the DOM offset. MID-GESTURE the repayment write itself is the
+        // hazard — it kills iOS native momentum (observed as heavy glitching
+        // when a forward scroll crosses a load boundary) — so instead the
+        // debt is carried through the recompute (the assignment subtracts it,
+        // preserving the DOM offset) and the gesture-end settle repays it.
         const navReset = reason === "scroll-to-index" || reason === "scroll-to-bottom";
         if (navReset) {
             spacerDebt = 0;
-        } else {
+        } else if (!scrollingActive()) {
             repayDebtInline(reason);
         }
         // Only mark prefix sums dirty if spacerAvgHeight actually changed,
@@ -328,6 +333,13 @@
         const [s, e] = computeWindow();
         let [bh, th] = computeSpacers(s, e);
         [bh, th] = sanitizeSpacers(bh, th);
+        // Carry outstanding (mid-gesture) debt across the canonical
+        // assignment: the DOM spacer keeps its offset, so nothing shifts and
+        // no scrollTop write is needed. Clamp so the DOM spacer stays >= 0.
+        if (spacerDebt !== 0) {
+            if (spacerDebt > bh) spacerDebt = bh;
+            bh -= spacerDebt;
+        }
         vclDebug.log("full", {
             reason,
             fb: Math.round(fromBottom),
@@ -371,12 +383,17 @@
             // The canonical spacer assignment below would silently overwrite
             // any debt-offset DOM spacer, shifting content under the reading
             // position — repay first (the repayment moves fromBottom, so the
-            // window must be recomputed).
-            if (spacerDebt !== 0) {
+            // window must be recomputed). Mid-gesture, carry the debt across
+            // the assignment instead: the write would kill native momentum.
+            if (spacerDebt !== 0 && !scrollingActive()) {
                 repayDebtInline("incr-jumped");
                 [s, e] = computeWindow();
             }
-            const [bh, th] = computeSpacers(s, e);
+            let [bh, th] = computeSpacers(s, e);
+            if (spacerDebt !== 0) {
+                if (spacerDebt > bh) spacerDebt = bh;
+                bh -= spacerDebt;
+            }
             vclDebug.log("incr-jumped", { s, e, bh: Math.round(bh), th: Math.round(th) });
             start = s;
             end = e;
@@ -521,6 +538,12 @@
     let debtIdleTimer: ReturnType<typeof setTimeout> | undefined;
     const MAX_SPACER_DEBT = 400;
 
+    // The window in which a scrollTop write would disturb the user: an active
+    // touch, native momentum, or the tail of a wheel glide.
+    function scrollingActive(): boolean {
+        return isTouching || isMomentumScrolling || Date.now() - lastUserScrollTime < 200;
+    }
+
     function canAbsorbIntoSpacer(delta: number): boolean {
         // Absorption is a pure layout change (spacer and entering row commit in
         // the same flush, net zero height) with no scrollTop write, so it is
@@ -528,9 +551,7 @@
         // it every entering item's estimate error shifts the content
         // mid-gesture (observed on iOS as per-message 'vibration' when
         // scrolling forward through unmeasured history).
-        const scrolling =
-            isTouching || isMomentumScrolling || Date.now() - lastUserScrollTime < 200;
-        if (!scrolling || bottomSpacerHeight - delta < 0) {
+        if (!scrollingActive() || bottomSpacerHeight - delta < 0) {
             return false;
         }
         // A single correction bigger than the cap (a very tall item measured
