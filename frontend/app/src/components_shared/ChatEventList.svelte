@@ -710,6 +710,17 @@
             // that currently owns the flag may clear it.
             if (token === navToken) {
                 scrollingToMessage = false;
+                // Schedule the focus-highlight clear here, not on the happy
+                // path: an early exit (context switch, superseded navigation,
+                // rejection) used to skip the timer and leave the target
+                // highlighted forever.
+                if (!preserveFocus) {
+                    window.setTimeout(() => {
+                        if (token === navToken && messageContextsEqual(context, messageContext)) {
+                            focusIndex = undefined;
+                        }
+                    }, 500);
+                }
             }
         });
     }
@@ -771,13 +782,6 @@
                     hasLookedUpEvent,
                 );
             } else {
-                if (!preserveFocus) {
-                    window.setTimeout(() => {
-                        if (messageContextsEqual(context, messageContext)) {
-                            focusIndex = undefined;
-                        }
-                    }, 500);
-                }
                 scrollingToMessage = false;
                 return Promise.resolve();
             }
@@ -940,6 +944,15 @@
         loadMoreIfRequired(true);
     }
 
+    // A touchstart is an unambiguous user gesture (scroll events may be our
+    // own writes) — release the go-to-latest pin immediately. Without this,
+    // on iOS in a busy chat the pin's catch-up loads keep snapping the
+    // viewport to the bottom faster than the genuine-scroll release (200px of
+    // drag) can trigger, trapping the user at the latest message.
+    function onUserTouch() {
+        pinToBottom = false;
+    }
+
     async function loadIndexThenScrollToBottom(context: MessageContext, messageIndex: number) {
         await scrollToMessageIndex(context, messageIndex, false);
         if (messageContextsEqual(context, messageContext)) {
@@ -993,6 +1006,7 @@
     id={`scrollable-list-${rootSelector}`}
     viewportClass={`scrollable-list ${rootSelector} ${viewportClass ?? ""}`}
     {onUserScroll}
+    {onUserTouch}
     {isDateMarker}
     {timestampFor}
     {stickyDateElTop}

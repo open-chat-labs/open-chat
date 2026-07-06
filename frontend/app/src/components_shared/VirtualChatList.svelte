@@ -18,6 +18,9 @@
         // called on every scroll event (after internal bookkeeping); genuine is
         // false when the event was caused by one of our own scrollTop writes
         onUserScroll?: (genuine: boolean) => void;
+        // fired on touchstart (iOS only — where touch listeners are attached);
+        // an unambiguous user gesture, unlike scroll events which may be ours
+        onUserTouch?: () => void;
         // identifies items that act as date separators for the sticky date
         isDateMarker?: (item: T) => boolean;
         // timestamp for the sticky date; must return a value for date markers
@@ -118,6 +121,7 @@
         fromBottom = $bindable(0),
         row,
         onUserScroll,
+        onUserTouch,
         isDateMarker,
         timestampFor,
         stickyDateElTop,
@@ -1141,6 +1145,7 @@
             isMomentumScrolling = false;
             clearTimeout(momentumEndTimer);
             momentumEndTimer = undefined;
+            onUserTouch?.();
         };
         const onTouchEnd = () => {
             isTouching = false;
