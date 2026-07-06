@@ -2,7 +2,7 @@ import { publish, routeStore, routerReadyStore, subscribe } from "openchat-clien
 import type { RouteParams } from "openchat-shared";
 import page from "page";
 import { get } from "svelte/store";
-import { onPopstate, syncCurrentHistoryState } from "./history";
+import { getHistoryStateAction, onPopstate, syncCurrentHistoryState } from "./history";
 
 export type NavigationIntent = "in-app" | "notification" | "auto";
 export type NavigationMode = "push" | "pop" | "replace";
@@ -253,20 +253,41 @@ export function navigationMode(
 const backStack: string[] = [];
 let pendingNavigation: PendingNavigation | null = null;
 
-// Set just before a deliberate multi-entry history.go(-depth) unwind so the
-// single popstate it fires trims the matching number of backStack entries.
-let pendingPopDepth = 0;
+// Set just before a deliberate multi-entry history.go() unwind so the single
+// popstate it fires trims the route entries from backStack and verifies the
+// landing. `trim` counts route entries; the actual go() distance may be one
+// more when a dummy history state sat on top of the current entry.
+let pendingPop: { trim: number; to: string; at: number } | null = null;
 
 function handlePopstate(event: PopStateEvent) {
     const { previousAction } = onPopstate(event);
 
-    if (previousAction !== undefined) {
-        return;
+    // A deliberate unwind must be handled before the previousAction
+    // early-return: when a dummy state (emoji picker, zoom, input tray) was
+    // live at unwind time we necessarily left FROM it, so previousAction is
+    // defined even though this popstate is our own route navigation.
+    if (pendingPop !== null) {
+        const { trim, to, at } = pendingPop;
+        pendingPop = null;
+        if (Date.now() - at < 3000) {
+            backStack.length = Math.max(0, backStack.length - trim);
+            // Self-heal: the browser stack can hold untracked entries the
+            // route-only count cannot see (e.g. nested dummy states — only
+            // the top one is visible synchronously), and a pre-thread entry
+            // may have been recorded without the destination's message index.
+            // If the unwind landed anywhere other than the intended target,
+            // rewrite the landed entry with it.
+            if (location.pathname !== to.split(/[?#]/)[0]) {
+                page.replace(to);
+                syncCurrentHistoryState(history.state);
+            }
+            return;
+        }
+        // The marker outlived any plausible unwind (its popstate never
+        // arrived) — ignore it and treat this as an ordinary popstate.
     }
 
-    if (pendingPopDepth > 0) {
-        backStack.length = Math.max(0, backStack.length - pendingPopDepth);
-        pendingPopDepth = 0;
+    if (previousAction !== undefined) {
         return;
     }
 
@@ -342,16 +363,23 @@ function doNavigate(to: string, intent: NavigationIntent, retries = 0) {
             // tap still lands correctly and the stack stays safe, at the
             // cost of leaving the old trail beneath the new entry.
             const toKind = pathToRouteKind(to);
-            let depth = 0;
+            let trim = 0;
             for (let i = backStack.length - 1; i >= 0; i--) {
                 if (popTargetMatches(backStack[i], to, toKind)) {
-                    depth = backStack.length - i;
+                    trim = backStack.length - i;
                     break;
                 }
             }
-            if (depth > 0) {
-                pendingPopDepth = depth;
-                history.go(-depth);
+            if (trim > 0) {
+                // Dummy history states (zoom, emoji picker, input tray) are
+                // pushed on top of the current entry and never recorded in
+                // backStack; if one is live it adds a real entry the unwind
+                // must also traverse. Only the top state is visible
+                // synchronously — any deeper miscount is corrected by the
+                // landing check in handlePopstate.
+                const dummies = getHistoryStateAction(history.state) !== undefined ? 1 : 0;
+                pendingPop = { trim, to, at: Date.now() };
+                history.go(-(trim + dummies));
             } else {
                 page.replace(to);
                 syncCurrentHistoryState(history.state);
