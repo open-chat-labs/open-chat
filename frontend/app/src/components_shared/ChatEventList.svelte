@@ -381,6 +381,8 @@
     }
 
     async function scrollBottom(behavior: ScrollBehavior = "auto"): Promise<void> {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        vclDebug.log("scroll-bottom", { behavior, from: new Error().stack?.split("\n")[2]?.trim().slice(0, 80) as any });
         virtualList?.scrollToBottom(behavior);
         // Protect the jump-to-bottom from iOS momentum: a frame of overflow-y:hidden
         // halts native momentum scrolling and gates onScroll, so stale in-flight
