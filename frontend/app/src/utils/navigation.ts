@@ -242,11 +242,15 @@ export function navigationMode(
 }
 
 /**
- * Tracks how many entries this session has pushed onto the history stack.
- * Used to detect whether a pop has a real entry to go back to, or whether
- * we should fall back to a replace (e.g. user arrived via deep link).
+ * The paths this session has pushed beneath the current history entry — i.e.
+ * backStack[backStack.length - 1] is what history.back() would land on.
+ * A "pop" navigation may only use history.back() when that entry really is
+ * the destination; the history stack does not follow the strict tab
+ * discipline the navigation rules assume (e.g. chats → chatA → chatB →
+ * community → channel), so popping blindly can land the user on a previous
+ * community/chat entry instead of the tab they tapped.
  */
-let pushDepth = 0;
+let backStack: string[] = [];
 let pendingNavigation: PendingNavigation | null = null;
 
 function handlePopstate(event: PopStateEvent) {
@@ -256,9 +260,7 @@ function handlePopstate(event: PopStateEvent) {
         return;
     }
 
-    if (pushDepth > 0) {
-        pushDepth--;
-    }
+    backStack.pop();
 }
 
 function doNavigate(to: string, intent: NavigationIntent, retries = 0) {
@@ -275,7 +277,7 @@ function doNavigate(to: string, intent: NavigationIntent, retries = 0) {
     console.debug("ROUTER: navigating", { from: routeStore.value, to, mode, intent });
     switch (mode) {
         case "push":
-            pushDepth++;
+            backStack.push(location.pathname);
             page(to);
             syncCurrentHistoryState(history.state);
             break;
@@ -283,14 +285,20 @@ function doNavigate(to: string, intent: NavigationIntent, retries = 0) {
             page.replace(to);
             syncCurrentHistoryState(history.state);
             break;
-        case "pop":
-            if (pushDepth > 0) {
+        case "pop": {
+            // Only actually go back if the entry behind us is the destination
+            // (same route kind). Otherwise the stack has diverged from the tab
+            // discipline and going back would land somewhere unexpected —
+            // replace instead. backStack is popped by the popstate handler.
+            const behind = backStack[backStack.length - 1];
+            if (behind !== undefined && pathToRouteKind(behind) === pathToRouteKind(to)) {
                 history.back();
             } else {
                 page.replace(to);
                 syncCurrentHistoryState(history.state);
             }
             break;
+        }
     }
 }
 
