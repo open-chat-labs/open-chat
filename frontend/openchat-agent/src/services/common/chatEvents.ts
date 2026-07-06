@@ -166,8 +166,18 @@ export class CachedChatEventsReader {
                     }
                 }
 
+                // An empty cache result with nothing missing and no expired
+                // ranges is not a trustworthy complete answer — without this,
+                // handleMissingEvents would resolve an empty response as final
+                // (same class as the window-path guard below). A result that
+                // is empty because everything in range expired IS complete.
+                const emptyButComplete =
+                    cachedEvents.events.length === 0 &&
+                    cachedEvents.expiredEventRanges.length === 0 &&
+                    missing.size + dirty.size === 0;
+
                 // we may or may not have all the requested events
-                if (missing.size + dirty.size > MAX_MISSING) {
+                if (emptyButComplete || missing.size + dirty.size > MAX_MISSING) {
                     // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
                     console.debug("We didn't get enough back from the cache, going to the api");
                     reader
@@ -250,10 +260,21 @@ export class CachedChatEventsReader {
                         }
                     }
 
+                    // An empty cache result with nothing missing and no expired
+                    // ranges is not a trustworthy complete answer (same class as
+                    // the window-path guard) — refetch the requested indexes
+                    // rather than resolving an empty response as final.
+                    const emptyButComplete =
+                        cachedEvents.events.length === 0 &&
+                        cachedEvents.expiredEventRanges.length === 0 &&
+                        missing.size + dirty.size === 0;
+
                     return this.handleMissingEvents(
                         reader,
                         chatId,
-                        [cachedEvents, missing, dirty],
+                        emptyButComplete
+                            ? [cachedEvents, new Set(eventIndexes), dirty]
+                            : [cachedEvents, missing, dirty],
                         threadRootMessageIndex,
                         latestKnownUpdate,
                         resolve,
@@ -296,8 +317,12 @@ export class CachedChatEventsReader {
                 // the message→event mapping resolved to an event index outside
                 // the cached range). Without this, handleMissingEvents would
                 // resolve an empty response as final, wiping the event store.
+                // A result that is empty because the whole window expired IS
+                // complete.
                 const emptyButComplete =
-                    cachedEvents.events.length === 0 && missing.size + dirty.size === 0;
+                    cachedEvents.events.length === 0 &&
+                    cachedEvents.expiredEventRanges.length === 0 &&
+                    missing.size + dirty.size === 0;
 
                 if (totalMiss || emptyButComplete || missing.size + dirty.size > MAX_MISSING) {
                     // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
