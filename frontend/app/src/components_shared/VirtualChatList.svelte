@@ -588,7 +588,7 @@
     // visible content does not move. Deferred while the user is still
     // scrolling — chrome fires scrollend between individual wheel notches, so
     // "scroll ended" alone is not a safe signal that the glide is over.
-    function settleSpacerDebt(force = false) {
+    function settleSpacerDebt(force = false, retried = false) {
         clearTimeout(debtIdleTimer);
         debtIdleTimer = undefined;
         if (spacerDebt === 0 || !viewport) return;
@@ -602,18 +602,24 @@
         // spacer change and the scrollTop write land in the same layout. It is
         // not permitted inside an effect flush — in that (rare: every direct
         // caller is a timer or event handler) case, put the debt back and
-        // retry in a microtask, which runs after the flush completes, rather
-        // than splitting the spacer change and the scrollTop write across a
-        // layout (the write can clamp against the still-smaller content and
-        // leave a residual jump).
+        // retry ONCE in a microtask, which runs after the flush completes.
+        // The retry must be bounded: flushSync also rethrows anything the
+        // synchronous re-render throws, and retrying that forever is an
+        // infinite microtask spin — a complete hang. On the second failure
+        // fall back to the split (non-atomic) write; a one-frame residual
+        // beats a dead tab.
         try {
             flushSync(() => {
                 bottomSpacerHeight += debt;
             });
         } catch {
-            spacerDebt = debt;
-            queueMicrotask(() => settleSpacerDebt(force));
-            return;
+            if (!retried) {
+                spacerDebt = debt;
+                queueMicrotask(() => settleSpacerDebt(force, true));
+                return;
+            }
+            vclDebug.log("!settle-fallback", { debt: Math.round(debt) });
+            bottomSpacerHeight += debt;
         }
         viewport.scrollTop -= debt;
         lastProgrammaticScrollTime = Date.now();
