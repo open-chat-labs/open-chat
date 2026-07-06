@@ -1224,7 +1224,20 @@
     {#each visibleItems as item, relIdx (item.key)}
         {@const absIdx = start + relIdx}
         <div class="vcl-row" data-key={item.key} use:measureRow={absIdx}>
-            {@render row(item, absIdx)}
+            <!-- a row that throws during render must not take the whole list down
+                 with it — an aborted flush leaves the DOM permanently out of sync
+                 with the window state -->
+            <svelte:boundary
+                onerror={(e) =>
+                    vclDebug.log("!row-render-error", {
+                        key: item.key,
+                        err: String(e).slice(0, 200),
+                    })}>
+                {@render row(item, absIdx)}
+                {#snippet failed()}
+                    <div class="vcl-row-error"></div>
+                {/snippet}
+            </svelte:boundary>
         </div>
     {/each}
     {#if topSpacerHeight > 0}
@@ -1253,6 +1266,10 @@
     .vcl-spacer {
         flex-shrink: 0;
         width: 100%;
+    }
+
+    .vcl-row-error {
+        height: 8px;
     }
 
     .vcl-row {

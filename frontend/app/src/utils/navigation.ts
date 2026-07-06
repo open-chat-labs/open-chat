@@ -250,7 +250,7 @@ export function navigationMode(
  * community → channel), so popping blindly can land the user on a previous
  * community/chat entry instead of the tab they tapped.
  */
-let backStack: string[] = [];
+const backStack: string[] = [];
 let pendingNavigation: PendingNavigation | null = null;
 
 function handlePopstate(event: PopStateEvent) {
