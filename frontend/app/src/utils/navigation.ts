@@ -2,7 +2,7 @@ import { publish, routeStore, routerReadyStore, subscribe } from "openchat-clien
 import type { RouteParams } from "openchat-shared";
 import page from "page";
 import { get } from "svelte/store";
-import { onPopstate, syncCurrentHistoryState } from "./history";
+import { getHistoryStateAction, onPopstate, syncCurrentHistoryState } from "./history";
 
 export type NavigationIntent = "in-app" | "notification" | "auto";
 export type NavigationMode = "push" | "pop" | "replace";
@@ -253,14 +253,77 @@ export function navigationMode(
 const backStack: string[] = [];
 let pendingNavigation: PendingNavigation | null = null;
 
+// Set just before a deliberate multi-entry history.go() unwind so the single
+// popstate it fires trims the route entries from backStack and verifies the
+// landing. `trim` counts route entries; the actual go() distance may be one
+// more when a dummy history state sat on top of the current entry.
+let pendingPop: { trim: number; to: string; at: number } | null = null;
+
 function handlePopstate(event: PopStateEvent) {
     const { previousAction } = onPopstate(event);
+
+    // A deliberate unwind must be handled before the previousAction
+    // early-return: when a dummy state (emoji picker, zoom, input tray) was
+    // live at unwind time we necessarily left FROM it, so previousAction is
+    // defined even though this popstate is our own route navigation.
+    if (pendingPop !== null) {
+        const { trim, to, at } = pendingPop;
+        pendingPop = null;
+        if (Date.now() - at < 3000) {
+            backStack.length = Math.max(0, backStack.length - trim);
+            // Self-heal: the browser stack can hold untracked entries the
+            // route-only count cannot see (e.g. nested dummy states — only
+            // the top one is visible synchronously), and a pre-thread entry
+            // may have been recorded without the destination's message index.
+            // If the unwind landed anywhere other than the intended target,
+            // rewrite the landed entry with it.
+            if (location.pathname !== to.split(/[?#]/)[0]) {
+                page.replace(to);
+                syncCurrentHistoryState(history.state);
+            }
+            return;
+        }
+        // The marker outlived any plausible unwind (its popstate never
+        // arrived) — ignore it and treat this as an ordinary popstate.
+    }
 
     if (previousAction !== undefined) {
         return;
     }
 
-    backStack.pop();
+    // popstate also fires for FORWARD navigation; only unwind the stack when
+    // we actually landed on the entry it predicts (a genuine back). After an
+    // external back+forward the stack can lose an entry — the pop guard then
+    // simply degrades to a safe replace.
+    if (backStack[backStack.length - 1] === location.pathname) {
+        backStack.pop();
+    }
+}
+
+/**
+ * For chat-like kinds, "same destination" means the same chat — a message
+ * index / thread suffix is fine, a different chat of the same kind is not
+ * (e.g. closing chat B's thread must not pop back to chat A). Returns the
+ * path prefix that identifies the chat, or undefined for non-chat kinds
+ * (where matching on kind alone is sufficient).
+ */
+function chatBasePath(path: string, kind: RouteParams["kind"]): string | undefined {
+    const segs = path.split(/[?#]/)[0].split("/").filter(Boolean);
+    if (kind === "selected_channel_route") {
+        const i = segs.indexOf("channel");
+        return i >= 0 ? segs.slice(0, i + 2).join("/") : undefined;
+    }
+    if (kind === "global_chat_selected_route") {
+        const i = segs.findIndex((s) => s === "user" || s === "group");
+        return i >= 0 ? segs.slice(0, i + 2).join("/") : undefined;
+    }
+    return undefined;
+}
+
+function popTargetMatches(behind: string, to: string, toKind: RouteParams["kind"]): boolean {
+    if (pathToRouteKind(behind) !== toKind) return false;
+    const toBase = chatBasePath(to, toKind);
+    return toBase === undefined || chatBasePath(behind, toKind) === toBase;
 }
 
 function doNavigate(to: string, intent: NavigationIntent, retries = 0) {
@@ -286,13 +349,37 @@ function doNavigate(to: string, intent: NavigationIntent, retries = 0) {
             syncCurrentHistoryState(history.state);
             break;
         case "pop": {
-            // Only actually go back if the entry behind us is the destination
-            // (same route kind). Otherwise the stack has diverged from the tab
-            // discipline and going back would land somewhere unexpected —
-            // replace instead. backStack is popped by the popstate handler.
-            const behind = backStack[backStack.length - 1];
-            if (behind !== undefined && pathToRouteKind(behind) === pathToRouteKind(to)) {
-                history.back();
+            // Unwind to the nearest history entry that actually IS the
+            // destination (same route kind, and for chat routes the same
+            // chat), however deep it sits — a single history.go(-depth)
+            // fires one popstate and discards the abandoned trail, so the
+            // hardware Back button doesn't walk back through entries the
+            // user has already left (e.g. chats → chatA → chatB →
+            // community: tapping Chats lands on the original /chats entry
+            // with nothing stranded above it).
+            //
+            // If no matching entry exists (deep link, external
+            // back/forward desynced the stack), fall back to replace: the
+            // tap still lands correctly and the stack stays safe, at the
+            // cost of leaving the old trail beneath the new entry.
+            const toKind = pathToRouteKind(to);
+            let trim = 0;
+            for (let i = backStack.length - 1; i >= 0; i--) {
+                if (popTargetMatches(backStack[i], to, toKind)) {
+                    trim = backStack.length - i;
+                    break;
+                }
+            }
+            if (trim > 0) {
+                // Dummy history states (zoom, emoji picker, input tray) are
+                // pushed on top of the current entry and never recorded in
+                // backStack; if one is live it adds a real entry the unwind
+                // must also traverse. Only the top state is visible
+                // synchronously — any deeper miscount is corrected by the
+                // landing check in handlePopstate.
+                const dummies = getHistoryStateAction(history.state) !== undefined ? 1 : 0;
+                pendingPop = { trim, to, at: Date.now() };
+                history.go(-(trim + dummies));
             } else {
                 page.replace(to);
                 syncCurrentHistoryState(history.state);
