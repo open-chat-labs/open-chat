@@ -388,12 +388,15 @@
         await client.loadNewMessages(chat.id, threadRootEvent);
 
         // In column-reverse, new messages are inserted at the visual bottom (scroll
-        // origin), shifting existing content upward. Adjust scrollTop to maintain
-        // the visual position. Note: VirtualChatList's items $effect also adjusts
-        // fromBottom for the same prepend — complementary, not redundant. The
-        // $effect keeps the virtual window/spacers right; this moves the browser's
-        // actual scroll position to match. We read el.scrollTop *after* tick() so
-        // any scroll the user performed while the load was in flight is preserved.
+        // origin), shifting existing content upward. Move the browser scroll
+        // position to match. VirtualChatList's prepend handling has already
+        // moved fromBottom to the equivalent position in the new coordinate
+        // space using its height estimates, and its window/spacers are computed
+        // from those same estimates — so restore scrollTop to -fromBottom. Do
+        // NOT use the scrollHeight delta: it mixes real heights (rendered rows)
+        // with estimates (spacer), and on a large prepend the two coordinate
+        // systems disagree by more than the overscan — observed as a visible
+        // jump plus a flash of the wrong window at the first forward load.
         if (el && preLoadScrollHeight !== undefined) {
             await tick();
             const delta = el.scrollHeight - preLoadScrollHeight;
@@ -402,16 +405,17 @@
                 postH: Math.round(el.scrollHeight),
                 delta: Math.round(delta),
                 st: Math.round(el.scrollTop),
+                fb: Math.round(fromBottom),
             });
             if (delta > 0) {
                 if (mobileOperatingSystem === "iOS") {
                     // the one-frame overflow-y:hidden halts iOS momentum so the
                     // programmatic write cannot be swallowed by native physics
-                    await interruptScroll(el.scrollTop - delta);
+                    await interruptScroll(-fromBottom);
                 } else {
                     // on desktop the freeze itself is a visible hitch mid-glide;
                     // a plain write is safe and onScroll resyncs the window
-                    el.scrollTop = el.scrollTop - delta;
+                    el.scrollTop = -fromBottom;
                 }
             }
         }
@@ -629,6 +633,14 @@
                     return scrollToMessageIndex(context, index, preserveFocus, filling, true);
                 }
                 scrollingToMessage = false;
+                // A failed event-window load clears the event store before it
+                // fails, which would otherwise leave the user staring at an
+                // empty list. Fall back to an initial load of the latest
+                // messages so there is always something on screen.
+                if (items.length === 0 && messageContextsEqual(context, messageContext)) {
+                    vclDebug.log("!blank-recovery", { index });
+                    await client.loadPreviousMessages(chat.id, threadRootEvent, true);
+                }
             } else {
                 // the event is loaded but does not appear in the flat items (e.g. it
                 // is hidden or filtered out) so we cannot scroll to it. Try the next

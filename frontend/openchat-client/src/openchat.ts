@@ -2612,6 +2612,8 @@ export class OpenChat {
             }
 
             const range = indexRangeForChat(clientChat);
+            // TODO: temporary diagnostics for the blank-list-on-window-load bug - remove
+            console.debug("WINDOWDBG start", messageIndex, JSON.stringify(range));
             const eventsResponse: EventsResponse<ChatEvent> = await this.#worker
                 .stream({
                     kind: "chatEventsWindow",
@@ -2622,12 +2624,25 @@ export class OpenChat {
                     latestKnownUpdate: serverChat?.lastUpdated,
                 })
                 .aggregate(mergeEventStreamResponses, emptyEventsResponse())
-                .mapAsync((resp, index) =>
-                    this.#handleEventsResponse(clientChat, undefined, resp, index > 0),
-                )
+                .mapAsync((resp, index) => {
+                    console.debug(
+                        "WINDOWDBG chunk",
+                        index,
+                        isSuccessfulEventsResponse(resp) ? resp.events.length : JSON.stringify(resp),
+                    );
+                    return this.#handleEventsResponse(clientChat, undefined, resp, index > 0);
+                })
                 .toPromise()
-                .catch(CommonResponses.failure);
+                .catch((err) => {
+                    console.debug("WINDOWDBG error", err);
+                    return CommonResponses.failure();
+                });
 
+            console.debug(
+                "WINDOWDBG done",
+                messageIndex,
+                isSuccessfulEventsResponse(eventsResponse) ? eventsResponse.events.length : "fail",
+            );
             if (!isSuccessfulEventsResponse(eventsResponse)) {
                 return undefined;
             }
