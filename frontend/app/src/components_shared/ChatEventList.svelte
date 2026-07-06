@@ -547,6 +547,21 @@
         }
     }
 
+    // True when the item at flatIndex sits at the newer edge of a gap in the
+    // loaded events — i.e. the next older event is more than a handful of
+    // event indexes away, so the content between them has not been loaded.
+    function isIsolated(flatIndex: number): boolean {
+        const item = items[flatIndex];
+        if (item?.kind !== "event") return false;
+        for (let i = flatIndex + 1; i < items.length && i <= flatIndex + 4; i++) {
+            const older = items[i];
+            if (older.kind === "event") {
+                return item.event.index - older.event.index > 25;
+            }
+        }
+        return false;
+    }
+
     function findMessageEvent(index: number): EventWrapper<Message> | undefined {
         for (const item of items) {
             if (
@@ -652,7 +667,16 @@
 
         scrollingToMessage = true;
 
-        const flatIndex = messageIndexToFlat.get(index);
+        let flatIndex = messageIndexToFlat.get(index);
+        // The event store can contain a disjoint island of the very latest
+        // messages (merged from chat summary updates) far from the loaded
+        // window. A target found inside such an island is not really
+        // navigable — the estimates spanning the gap are fiction — so treat
+        // it as not-loaded and load a proper event window around it instead.
+        if (flatIndex !== undefined && !hasLookedUpEvent && isIsolated(flatIndex)) {
+            vclDebug.log("scroll-to-msg-island", { index, flatIndex });
+            flatIndex = undefined;
+        }
         vclDebug.log("scroll-to-msg", {
             index,
             flatIndex,
@@ -693,7 +717,12 @@
             }
         } else if (!destroyed) {
             // check whether we have already loaded the event we are looking for
-            const loaded = findMessageEvent(index);
+            // (an isolated island hit does not count — we want the window load)
+            const flatAgain = messageIndexToFlat.get(index);
+            const loaded =
+                flatAgain !== undefined && !hasLookedUpEvent && isIsolated(flatAgain)
+                    ? undefined
+                    : findMessageEvent(index);
             if (loaded === undefined) {
                 if (!hasLookedUpEvent) {
                     // we must only recurse if we have not already loaded the event, otherwise we will enter an infinite loop
