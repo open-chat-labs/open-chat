@@ -392,7 +392,14 @@
     let prevItemsLength = 0;
 
     // Recompute the virtual window whenever items change.
-    $effect(() => {
+    // $effect.pre is load-bearing: visibleItems ($derived) re-renders rows with
+    // the NEW items array immediately, so start/end/spacers must be updated in
+    // the same flush BEFORE the DOM is touched. With a plain $effect there is
+    // one frame where the stale window slices the new array — wrong rows
+    // render, and their synchronous measurements compare fresh DOM heights
+    // against the not-yet-rebuilt heightMap, producing garbage resize deltas
+    // and spurious scroll compensations.
+    $effect.pre(() => {
         // Register reactive dependency on items contents
         void items.length;
         void items[0]?.key;
