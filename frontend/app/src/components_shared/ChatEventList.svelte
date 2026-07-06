@@ -761,7 +761,11 @@
     }
 
     function onUserScroll(genuine: boolean) {
-        if (genuine) {
+        // Only release the bottom pin when the user genuinely scrolls away from
+        // the bottom — scroll events from our own smooth scrollBottom animation
+        // arrive later than the programmatic-write detection window and must
+        // not cancel the user's go-to-latest intent.
+        if (genuine && pinToBottom && fromBottom > 200) {
             pinToBottom = false;
         }
         trackScrollStop(SCROLL_THRESHOLD);
