@@ -105,6 +105,12 @@
     let messageObserver: IntersectionObserver | undefined = $state();
     let scrollingToMessage = false;
     let scrollToBottomOnSend = false;
+    // Set when the user asks for the latest messages (go-to-bottom FAB). While
+    // set, incoming loads of newer messages snap to the bottom instead of
+    // preserving the reading position — otherwise the catch-up cascade drifts
+    // the viewport away from the bottom the user just asked for. Cleared by a
+    // genuine user scroll or a context change.
+    let pinToBottom = false;
     let destroyed = false;
     let loadingNewMessages = false;
     let loadingPrevMessages = false;
@@ -170,6 +176,7 @@
             loadingNewMessages = false;
             loadingPrevMessages = false;
             requireScrollStop = false;
+            pinToBottom = false;
         }
     });
 
@@ -403,6 +410,14 @@
         // with estimates (spacer), and on a large prepend the two coordinate
         // systems disagree by more than the overscan — observed as a visible
         // jump plus a flash of the wrong window at the first forward load.
+        if (pinToBottom) {
+            // the user asked for the latest messages; follow the new content
+            // instead of preserving the reading position
+            await tick();
+            await scrollBottom();
+            return;
+        }
+
         if (el && preLoadScrollHeight !== undefined) {
             await tick();
             const delta = el.scrollHeight - preLoadScrollHeight;
@@ -745,7 +760,10 @@
         });
     }
 
-    function onUserScroll() {
+    function onUserScroll(genuine: boolean) {
+        if (genuine) {
+            pinToBottom = false;
+        }
         trackScrollStop(SCROLL_THRESHOLD);
         if (maintainScroll) {
             eventListScrollTop.set(fromBottom);
@@ -772,6 +790,7 @@
     }
 
     function scrollToLast() {
+        pinToBottom = true;
         if (threadSummary !== undefined) {
             loadIndexThenScrollToBottom(messageContext, threadSummary.numberOfReplies - 1);
         } else {

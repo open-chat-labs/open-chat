@@ -15,8 +15,9 @@
         fromBottom?: number;
         // renders a single item; receives (item, absoluteIndex)
         row: Snippet<[T, number]>;
-        // called on every genuine scroll event (after internal bookkeeping)
-        onUserScroll?: () => void;
+        // called on every scroll event (after internal bookkeeping); genuine is
+        // false when the event was caused by one of our own scrollTop writes
+        onUserScroll?: (genuine: boolean) => void;
         // identifies items that act as date separators for the sticky date
         isDateMarker?: (item: T) => boolean;
         // timestamp for the sticky date; must return a value for date markers
@@ -432,6 +433,17 @@
                 extendHeightMap(oldLen);
             } else {
                 rebuildHeightMap();
+            }
+
+            // Refresh the estimate snapshot BEFORE computing the prepend offset:
+            // updateWindowFull below will refresh it anyway, and if the offset
+            // were computed with the old snapshot the adjusted fromBottom would
+            // point at a different item in the new estimate space — the window
+            // lands away from the previously-visible content and the caller's
+            // post-load anchor row is not even rendered.
+            if (spacerAvgHeight !== averageHeight) {
+                spacerAvgHeight = averageHeight;
+                prefixDirty = true;
             }
 
             let prependOffset = 0;
@@ -950,7 +962,7 @@
 
         updateWindowIncremental();
         updateStickyDate();
-        onUserScroll?.();
+        onUserScroll?.(Date.now() - lastProgrammaticScrollTime > 100);
 
         // Cancel corrective scroll on genuine user scrolls.
         if (pendingScrollFlatIdx !== undefined && Date.now() - lastProgrammaticScrollTime > 50) {
