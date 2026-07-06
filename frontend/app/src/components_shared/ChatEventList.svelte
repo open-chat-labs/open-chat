@@ -156,6 +156,15 @@
     };
 
     const insideBottomThreshold = () => fromBottom < LOADING_THRESHOLD;
+
+    // A navigation abandoned by a chat switch exits through the context
+    // mismatch guard without clearing scrollingToMessage — which would leave
+    // background loading gated off in the newly selected chat.
+    $effect(() => {
+        void messageContext;
+        scrollingToMessage = false;
+        navToken++;
+    });
     const insideTopThreshold = () => fromTop() < LOADING_THRESHOLD;
 
     $effect(() => {
