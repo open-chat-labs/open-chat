@@ -481,26 +481,33 @@
     const MAX_SPACER_DEBT = 400;
 
     function canAbsorbIntoSpacer(delta: number): boolean {
-        if (
-            isTouching ||
-            isMomentumScrolling ||
-            Date.now() - lastUserScrollTime >= 200 ||
-            bottomSpacerHeight - delta < 0
-        ) {
+        // Absorption is a pure layout change (spacer and entering row commit in
+        // the same flush, net zero height) with no scrollTop write, so it is
+        // safe — and essential — during touch/momentum scrolling too: without
+        // it every entering item's estimate error shifts the content
+        // mid-gesture (observed on iOS as per-message 'vibration' when
+        // scrolling forward through unmeasured history).
+        const scrolling =
+            isTouching || isMomentumScrolling || Date.now() - lastUserScrollTime < 200;
+        if (!scrolling || bottomSpacerHeight - delta < 0) {
             return false;
         }
         // A single correction bigger than the cap (a very tall item measured
-        // against the average estimate) must go straight to scrollTop — if we
-        // absorbed it we would immediately be forced to repay it mid-scroll,
-        // a worse write than the one we avoided.
+        // against the average estimate) must go straight to the scroll
+        // adjustment path — if we absorbed it we would immediately be forced
+        // to repay it mid-scroll.
         if (Math.abs(delta) >= MAX_SPACER_DEBT) {
             return false;
         }
         // On a long sustained scroll the debt never gets an idle moment to be
         // repaid; once the cap would be exceeded, force a single repayment
-        // write (one animation abort per MAX_SPACER_DEBT px of accumulated
-        // bias) rather than degrading to a write per entering item.
+        // write rather than degrading to a write per entering item. Except
+        // during touch/momentum, where a settle write would kill the native
+        // physics — fall through to the deferred-adjustment path instead.
         if (Math.abs(spacerDebt + delta) >= MAX_SPACER_DEBT) {
+            if (isTouching || isMomentumScrolling) {
+                return false;
+            }
             settleSpacerDebt(true);
         }
         return bottomSpacerHeight - delta >= 0;
@@ -523,7 +530,7 @@
         clearTimeout(debtIdleTimer);
         debtIdleTimer = undefined;
         if (spacerDebt === 0 || !viewport) return;
-        if (!force && Date.now() - lastUserScrollTime < 250) {
+        if (!force && (isTouching || isMomentumScrolling || Date.now() - lastUserScrollTime < 250)) {
             debtIdleTimer = setTimeout(() => settleSpacerDebt(), 300);
             return;
         }
