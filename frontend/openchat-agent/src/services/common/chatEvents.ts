@@ -206,7 +206,10 @@ export class CachedChatEventsReader {
                                     resolve(resp, true);
                                 });
                             } else {
-                                throw err;
+                                // rethrowing inside a promise .catch produces an
+                                // unhandled rejection and a stream that never
+                                // settles — reject so callers see the failure
+                                reject(err);
                             }
                         });
                 } else {
@@ -287,7 +290,16 @@ export class CachedChatEventsReader {
                     }
                 }
 
-                if (totalMiss || missing.size + dirty.size > MAX_MISSING) {
+                // An empty cache result with nothing missing is not a valid
+                // complete answer for a window request (the target message
+                // exists — we just don't have anything cached around it, e.g.
+                // the message→event mapping resolved to an event index outside
+                // the cached range). Without this, handleMissingEvents would
+                // resolve an empty response as final, wiping the event store.
+                const emptyButComplete =
+                    cachedEvents.events.length === 0 && missing.size + dirty.size === 0;
+
+                if (totalMiss || emptyButComplete || missing.size + dirty.size > MAX_MISSING) {
                     // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
                     console.debug(
                         "We didn't get enough back from the cache, going to the api",
@@ -336,7 +348,10 @@ export class CachedChatEventsReader {
                                     resolve(resp, true);
                                 });
                             } else {
-                                throw err;
+                                // rethrowing inside a promise .catch produces an
+                                // unhandled rejection and a stream that never
+                                // settles — reject so callers see the failure
+                                reject(err);
                             }
                         });
                 } else {
