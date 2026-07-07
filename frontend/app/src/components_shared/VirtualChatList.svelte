@@ -755,6 +755,14 @@
     function flushScrollAdjustment() {
         clearTimeout(momentumEndTimer);
         momentumEndTimer = undefined;
+        // iOS fires scrollend on momentary pauses while the finger is still
+        // down — flushing then writes the deferred adjustment straight into
+        // the live gesture (observed as a jolt mid-drag). Re-defer until the
+        // touch actually ends.
+        if (isTouching) {
+            momentumEndTimer = setTimeout(flushScrollAdjustment, 100);
+            return;
+        }
         isMomentumScrolling = false;
         if (!viewport) return;
         settleSpacerDebt();
@@ -975,16 +983,27 @@
                                     viewport.scrollTo({ top: 0 });
                                     lastProgrammaticScrollTime = Date.now();
                                 }
+                            } else if (
+                                (isTouching || isMomentumScrolling) &&
+                                canAbsorbIntoSpacer(h - prev)
+                            ) {
+                                // Mid-touch/momentum a scrollTop write is not an
+                                // option (it kills native physics) and the
+                                // deferred adjustment is flushed later as a
+                                // visible double-jolt (grow-shift, then the
+                                // correction jerking it back). A one-frame-late
+                                // spacer absorb is the least bad option here.
+                                absorbIntoSpacer(h - prev);
                             } else {
-                                // NOTE: unlike the entry path above, do NOT absorb
+                                // NOTE: outside a touch gesture, do NOT absorb
                                 // this into the spacer. A ResizeObserver-driven
                                 // resize has already been laid out (and possibly
                                 // painted) by the time we hear about it, so a
                                 // spacer adjustment lands a frame late and shows
-                                // as a visible bounce. The immediate scrollTop
-                                // write is the lesser evil here — these resizes
-                                // (images/settling content) are far rarer than
-                                // entries during a scroll.
+                                // as a visible bounce on a wheel glide. The
+                                // immediate scrollTop write is the lesser evil —
+                                // these resizes (images/settling content) are far
+                                // rarer than entries during a scroll.
                                 adjustScrollTop(h - prev);
                             }
                         }

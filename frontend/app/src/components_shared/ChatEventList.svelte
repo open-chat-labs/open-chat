@@ -493,10 +493,16 @@
             // estimates) with the virtual window, unlike the scrollHeight delta.
             let target = -fromBottom;
             let anchored = false;
-            // preAtBottom must be re-checked against the CURRENT position: the
-            // user may have scrolled away while the load was in flight, and
-            // forcing them back to the bottom then is a visible yank.
-            if (preAtBottom && -el.scrollTop < 200) {
+            // Follow-to-bottom applies ONLY at the live bottom of the chat:
+            // preAtBottom re-checked against the current position (the user
+            // may have scrolled away mid-load), AND the load must have caught
+            // us up. At the catch-up WALL (scrollTop=0 mid-history because
+            // the newer content is not loaded yet) preAtBottom is also true,
+            // but forcing the bottom there teleports the user ~a batch of
+            // messages forward on every load — position preservation is what
+            // riding the wall needs.
+            const caughtUp = !client.moreNewMessagesAvailable(chat.id, threadRootEvent);
+            if (preAtBottom && caughtUp && -el.scrollTop < 200) {
                 target = 0;
             } else if (anchorKey !== undefined && anchorTop !== undefined) {
                 const again = rowByKey(el, anchorKey);
