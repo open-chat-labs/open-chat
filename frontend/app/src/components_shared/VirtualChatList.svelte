@@ -480,6 +480,17 @@
                     .map(([i, est]) => `${i}:${Math.round(est)}`)
                     .join(" "),
             });
+            // A negative DOM spacer near the bottom is outstanding debt with
+            // no spacer room left to live in (canonical → 0 as s → 0): the
+            // clamp below materialises the deficit as a content shift, so the
+            // matching ledger debt must be forgiven. Keeping it recorded makes
+            // the next carry/repay re-apply the offset against a DOM that no
+            // longer holds it — a second, opposite jolt.
+            if (spacerDebt > 0) {
+                const forgiven = Math.min(spacerDebt, -bottomSpacerHeight);
+                spacerDebt -= forgiven;
+                vclDebug.log("debt-forgiven", { forgiven: Math.round(forgiven) });
+            }
         }
         bottomSpacerHeight = Math.max(0, bottomSpacerHeight);
         [bottomSpacerHeight, topSpacerHeight] = sanitizeSpacers(bottomSpacerHeight, topSpacerHeight);
