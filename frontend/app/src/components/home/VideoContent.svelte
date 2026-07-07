@@ -2,7 +2,7 @@
     import { rtlStore } from "../../stores/rtl";
     import type { VideoContent } from "openchat-client";
     import ContentCaption from "./ContentCaption.svelte";
-    import { setPlayingMedia } from "../../utils/media";
+    import { reservedMediaStyle, setPlayingMedia } from "../../utils/media";
 
     interface Props {
         content: VideoContent;
@@ -44,7 +44,11 @@
         class:withCaption
         class:draft
         class:reply
-        style={height === undefined ? undefined : `height: ${height}px`}
+        style={height !== undefined
+            ? `height: ${height}px`
+            : draft || reply
+              ? undefined
+              : reservedMediaStyle(content.width, content.height)}
         controls
         onplay={onPlay}
         bind:this={videoPlayer}>

@@ -14,7 +14,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
     import { lowBandwidth } from "../../stores/settings";
-    import { getProxyAdjustedBlobUrl } from "../../utils/media";
+    import { getProxyAdjustedBlobUrl, reservedMediaStyle } from "../../utils/media";
     import Translatable from "../Translatable.svelte";
     import MessageRenderer from "./MessageRenderer.svelte";
 
@@ -210,7 +210,11 @@
                     class:reply
                     class:zoomable={zoomable && !hidden}
                     class:rtl={$rtlStore}
-                    style={height === undefined ? undefined : `height: ${height}px`}
+                    style={height !== undefined
+                        ? `height: ${height}px`
+                        : draft || reply || pinned
+                          ? undefined
+                          : reservedMediaStyle(content.width, content.height)}
                     src={intersecting && !hidden ? normalised.url : normalised.fallback}
                     alt={normalised.caption} />
             {:else}

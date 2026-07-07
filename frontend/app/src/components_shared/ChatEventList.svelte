@@ -25,6 +25,7 @@
     import { portalState } from "component-lib";
     import {
         currentUserIdStore,
+        eventIndexesLoadedStore,
         eventListLastScrolled,
         eventListScrollTop,
         eventListScrolling,
@@ -42,7 +43,6 @@
     import { isSafari, mobileOperatingSystem } from "@utils/devices";
     import type { FlatChatItem } from "./flatChatItems";
     import { vclDebug } from "./vclDebug";
-    import { rowByKey } from "./virtualListUtils";
     import VirtualChatList from "./VirtualChatList.svelte";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
@@ -81,7 +81,7 @@
         rootSelector,
         chat,
         threadRootEvent,
-        items,
+        items: allItems,
         readonly,
         maintainScroll,
         visible,
@@ -140,6 +140,74 @@
         ),
     );
 
+    // The event store can hold disjoint ranges: the window loaded around a
+    // navigation target, an island of the very latest messages (merged from
+    // chat summary updates), and scattered strays in between. The timeline
+    // flattens everything into one list, so the estimates spanning the gaps
+    // are fiction — scrolling forward from an old message crosses the gap in
+    // a screenful, hits a false bottom at the island tip, then grinds
+    // backfill loads whose progress lands invisibly above the viewport.
+    // Render only the contiguous segment containing the anchor: the last
+    // navigation target, or the newest segment when reading the live edge.
+    // Threads are always contiguous — no filtering.
+    let anchorMessageIndex = $state<number | undefined>(undefined);
+
+    let items = $derived.by<FlatChatItem[]>(() => {
+        if (threadRootEvent !== undefined || allItems.length === 0) return allItems;
+        const loaded = $eventIndexesLoadedStore;
+        // Segment boundaries: a split between adjacent event items whose gap
+        // is not fully covered by the loaded ranges (expired/disappeared
+        // events count as loaded). allItems is newest-first, so event
+        // indexes descend as the flat index ascends.
+        const bounds = [0];
+        let prev: number | undefined;
+        for (let i = 0; i < allItems.length; i++) {
+            const item = allItems[i];
+            if (item.kind !== "event") continue;
+            const idx = item.event.index;
+            if (prev !== undefined && prev - idx > 1) {
+                const gap = prev - idx - 1;
+                if (loaded.clone().intersect(idx + 1, prev - 1).length !== gap) {
+                    bounds.push(i);
+                }
+            }
+            prev = idx;
+        }
+        if (bounds.length === 1) return allItems;
+        bounds.push(allItems.length);
+        let chosen = 0;
+        if (anchorMessageIndex !== undefined) {
+            for (let s = 0; s < bounds.length - 1; s++) {
+                let newest: number | undefined;
+                let oldest: number | undefined;
+                for (let i = bounds[s]; i < bounds[s + 1]; i++) {
+                    const item = allItems[i];
+                    if (item.kind === "event" && item.event.event.kind === "message") {
+                        newest ??= item.event.event.messageIndex;
+                        oldest = item.event.event.messageIndex;
+                    }
+                }
+                if (
+                    newest !== undefined &&
+                    anchorMessageIndex <= newest &&
+                    anchorMessageIndex >= (oldest ?? newest)
+                ) {
+                    chosen = s;
+                    break;
+                }
+            }
+        }
+        const seg = allItems.slice(bounds[chosen], bounds[chosen + 1]);
+        vclDebug.log("segment", {
+            segs: bounds.length - 1,
+            chosen,
+            anchor: anchorMessageIndex,
+            len: seg.length,
+            of: allItems.length,
+        });
+        return seg;
+    });
+
     // messageIndex -> flat item index, for programmatic scrolling.
     // Failed messages are excluded (mirrors findMessageEvent).
     let messageIndexToFlat = $derived.by(() => {
@@ -175,6 +243,7 @@
         navToken++;
         // a hidden-time navigation belongs to the chat it was issued in
         pendingHiddenNav = undefined;
+        anchorMessageIndex = undefined;
     });
     const insideTopThreshold = () => fromTop() < LOADING_THRESHOLD;
 
@@ -251,6 +320,36 @@
 
     function isDateMarker(item: FlatChatItem): boolean {
         return item.kind === "timeline_date";
+    }
+
+    // Height classes for the virtual list's unmeasured-item estimates. Date
+    // markers are effectively constant-height and media is several times
+    // taller than text — a single global average is systematically wrong for
+    // everything (trace: 39px markers against a 261px average). Bucket by
+    // content kind, with link-preview texts split out: a text message with an
+    // OG preview measures ~400px against ~80px for plain text, and lumping
+    // them together poisons the shared average from both ends (device trace:
+    // debt railing +892 through a preview cluster and -1183 through plain
+    // text estimated at the inflated shared average).
+    function estimateClass(item: FlatChatItem): string {
+        switch (item.kind) {
+            case "timeline_date":
+                return "date";
+            case "chat_start":
+                return "chat_start";
+            case "event": {
+                const evt = item.event.event;
+                if (evt.kind !== "message") return "event";
+                if (
+                    evt.content.kind === "text_content" &&
+                    ((evt.ogPreviews?.length ?? 0) > 0 ||
+                        (evt.messagePreviews?.length ?? 0) > 0)
+                ) {
+                    return "text_preview";
+                }
+                return evt.content.kind;
+            }
+        }
     }
 
     function timestampFor(item: FlatChatItem): bigint | undefined {
@@ -415,6 +514,9 @@
 
     async function scrollBottom(behavior: ScrollBehavior = "auto"): Promise<void> {
         vclDebug.log("scroll-bottom", { behavior });
+        // going to the bottom means reading the live edge — re-anchor the
+        // rendered segment to the newest range
+        anchorMessageIndex = undefined;
         virtualList?.scrollToBottom(behavior);
         // Protect the jump-to-bottom from iOS momentum: a frame of overflow-y:hidden
         // halts native momentum scrolling and gates onScroll, so stale in-flight
@@ -454,12 +556,6 @@
         // arriving batch — in a busy channel that reads as the list
         // repeatedly jumping ~a viewport up from the bottom.
         const preAtBottom = fromBottom < 10;
-        // Capture the bottom-most rendered row as a position anchor. After the
-        // load we restore its exact on-screen position from the DOM — the only
-        // coordinate system that mixes no estimates.
-        const anchorEl = el?.querySelector<HTMLElement>(".vcl-row");
-        const anchorKey = anchorEl?.dataset.key;
-        const anchorTop = anchorEl?.getBoundingClientRect().top;
 
         await client.loadNewMessages(chat.id, threadRootEvent);
 
@@ -491,11 +587,16 @@
         if (el && preLoadScrollHeight !== undefined) {
             await tick();
             const delta = el.scrollHeight - preLoadScrollHeight;
-            // Preferred restore: the anchor row's actual pixel shift. Fallback:
-            // -fromBottom, which at least shares its coordinate system (height
-            // estimates) with the virtual window, unlike the scrollHeight delta.
-            let target = -fromBottom;
-            let anchored = false;
+            // The virtual list pinned the prepend to the user's live position
+            // in the same flush that rendered it (anchor-exact, paint-atomic).
+            // That pin is the restore target. Do NOT recompute from an anchor
+            // rect captured before the load await: the user keeps scrolling
+            // while the load is in flight, and restoring a pre-load position
+            // rewinds them by exactly the distance scrolled during the load —
+            // ~the full load latency's worth of scroll on a cold cache, which
+            // is why boundary feel varied so wildly between sessions.
+            const pinned = virtualList?.lastPrependPin();
+            let target = pinned ?? -fromBottom;
             // Follow-to-bottom applies ONLY at the live bottom of the chat:
             // preAtBottom re-checked against the current position (the user
             // may have scrolled away mid-load), AND the load must have caught
@@ -507,12 +608,6 @@
             const caughtUp = !client.moreNewMessagesAvailable(chat.id, threadRootEvent);
             if (preAtBottom && caughtUp && -el.scrollTop < 200) {
                 target = 0;
-            } else if (anchorKey !== undefined && anchorTop !== undefined) {
-                const again = rowByKey(el, anchorKey);
-                if (again) {
-                    target = el.scrollTop + (again.getBoundingClientRect().top - anchorTop);
-                    anchored = true;
-                }
             }
             vclDebug.log("load-new", {
                 preH: Math.round(preLoadScrollHeight),
@@ -521,24 +616,27 @@
                 st: Math.round(el.scrollTop),
                 fb: Math.round(fromBottom),
                 target: Math.round(target),
-                anchored,
+                pinned: pinned !== undefined ? Math.round(pinned) : undefined,
                 atBottom: preAtBottom,
             });
             if (delta > 0) {
                 if (mobileOperatingSystem === "iOS" || isSafari) {
-                    // the one-frame overflow-y:hidden halts iOS momentum / macOS
-                    // Safari trackpad inertia, so the programmatic write cannot
-                    // be swallowed by native physics. Safari desktop needs this
-                    // too: unlike Chrome (whose wheel animation a write cancels),
-                    // Safari's inertia keeps running and clobbers the restore a
-                    // frame later — the viewport teleports by the prepend height
-                    // and the suddenly-near-bottom position triggers a cascade of
-                    // further loads (observed as forward scroll "skipping").
+                    // ALWAYS interrupt here, even when scrollTop already sits
+                    // at the target (the virtual list's same-flush pin usually
+                    // puts it there): the interrupt's overflow-y:hidden frame
+                    // is what holds the position across WebKit's own
+                    // post-growth scroll anchoring — without it the browser
+                    // snaps scrollTop back toward the pre-load value a moment
+                    // later, teleporting the user into the new batch and
+                    // re-triggering the load threshold (observed as a huge
+                    // forward leap at the boundary even at slow speeds). It
+                    // also stops native physics from swallowing the write.
                     await interruptScroll(target);
-                } else {
+                } else if (Math.abs(el.scrollTop - target) > 1) {
                     // on Chrome desktop the freeze itself is a visible hitch
                     // mid-glide; a plain write is safe (it cancels the wheel
-                    // animation) and onScroll resyncs the window
+                    // animation) and onScroll resyncs the window. Skip it when
+                    // the pin already landed us on target.
                     virtualList?.markProgrammaticScroll();
                     el.scrollTop = target;
                 }
@@ -654,21 +752,6 @@
         if (mention !== undefined) {
             scrollToMessageIndex(messageContext, mention.messageIndex, false);
         }
-    }
-
-    // True when the item at flatIndex sits at the newer edge of a gap in the
-    // loaded events — i.e. the next older event is more than a handful of
-    // event indexes away, so the content between them has not been loaded.
-    function isIsolated(flatIndex: number): boolean {
-        const item = items[flatIndex];
-        if (item?.kind !== "event") return false;
-        for (let i = flatIndex + 1; i < items.length && i <= flatIndex + 4; i++) {
-            const older = items[i];
-            if (older.kind === "event") {
-                return item.event.index - older.event.index > 25;
-            }
-        }
-        return false;
     }
 
     function findMessageEvent(index: number): EventWrapper<Message> | undefined {
@@ -807,17 +890,26 @@
         }
 
         scrollingToMessage = true;
+        // Anchor the rendered segment to the navigation target: if the store
+        // holds the target in a range disjoint from the current one, the
+        // filtered timeline must switch segments for the lookup below to see
+        // it. Only anchor once the target is actually loaded — re-anchoring
+        // to an unloaded index would flip the timeline to the newest segment
+        // and flash unrelated content for the duration of the window load.
+        // (After the window load, the recursive call lands here again with
+        // the target present.)
+        if (
+            allItems.some(
+                (it) =>
+                    it.kind === "event" &&
+                    it.event.event.kind === "message" &&
+                    it.event.event.messageIndex === index,
+            )
+        ) {
+            anchorMessageIndex = index;
+        }
 
         let flatIndex = messageIndexToFlat.get(index);
-        // The event store can contain a disjoint island of the very latest
-        // messages (merged from chat summary updates) far from the loaded
-        // window. A target found inside such an island is not really
-        // navigable — the estimates spanning the gap are fiction — so treat
-        // it as not-loaded and load a proper event window around it instead.
-        if (flatIndex !== undefined && !hasLookedUpEvent && isIsolated(flatIndex)) {
-            vclDebug.log("scroll-to-msg-island", { index, flatIndex });
-            flatIndex = undefined;
-        }
         vclDebug.log("scroll-to-msg", {
             index,
             flatIndex,
@@ -866,13 +958,10 @@
             vclDebug.log("scroll-to-msg-deferred", { index });
             pendingHiddenNav = { context, index, preserveFocus };
         } else if (!destroyed) {
-            // check whether we have already loaded the event we are looking for
-            // (an isolated island hit does not count — we want the window load)
-            const flatAgain = messageIndexToFlat.get(index);
-            const loaded =
-                flatAgain !== undefined && !hasLookedUpEvent && isIsolated(flatAgain)
-                    ? undefined
-                    : findMessageEvent(index);
+            // check whether we have already loaded the event we are looking
+            // for (only the anchored segment counts — a hit in a disjoint
+            // island is filtered out above, so we want the window load)
+            const loaded = findMessageEvent(index);
             if (loaded === undefined) {
                 if (!hasLookedUpEvent) {
                     // we must only recurse if we have not already loaded the event, otherwise we will enter an infinite loop.
@@ -1094,6 +1183,8 @@
     viewportClass={`scrollable-list ${rootSelector} ${viewportClass ?? ""}`}
     {onUserScroll}
     {onUserTouch}
+    {estimateClass}
+    caughtUp={() => !client.moreNewMessagesAvailable(chat.id, threadRootEvent)}
     {isDateMarker}
     {timestampFor}
     {stickyDateElTop}

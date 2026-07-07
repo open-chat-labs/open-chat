@@ -7,7 +7,12 @@
     import PlayCircleOutline from "svelte-material-icons/PlayCircleOutline.svelte";
     import VideoOutline from "svelte-material-icons/VideoOutline.svelte";
     import { rtlStore } from "../../stores/rtl";
-    import { getProxyAdjustedBlobUrl, getVideoDuration, setPlayingMedia } from "../../utils/media";
+    import {
+        getProxyAdjustedBlobUrl,
+        getVideoDuration,
+        reservedMediaStyle,
+        setPlayingMedia,
+    } from "../../utils/media";
     import Translatable from "../Translatable.svelte";
     import MessageRenderer from "./MessageRenderer.svelte";
 
@@ -43,14 +48,20 @@
         onRemove,
     }: Props = $props();
 
-    let poster: HTMLImageElement | undefined = $state();
     let videoPlayer: HTMLVideoElement | undefined = $state();
     let landscape = $derived(content.height < content.width);
     let imageUrl = $derived(getProxyAdjustedBlobUrl(content.imageData.blobUrl));
     let videoUrl = $derived(getProxyAdjustedBlobUrl(content.videoData.blobUrl));
     let videoDuration = $state<string>();
+    let ratio = $derived(content.width / content.height);
     let posterHeight = $derived(draft || reply ? 70 : (height ?? 400));
-    let posterWidth = $derived((posterHeight * content.width) / content.height);
+    // mirrors reservedMediaStyle's width formula (used for the caption cap;
+    // the container clamp is applied by CSS)
+    let posterWidth = $derived(
+        draft || reply
+            ? posterHeight * ratio
+            : Math.min(Math.max(200, content.width), 400 * ratio),
+    );
 
     $effect(() => {
         contentWidth = posterWidth;
@@ -141,15 +152,16 @@
     <!-- svelte-ignore a11y_interactive_supports_focus -->
     <div role="button" class="video_regular" class:reply class:rtl={$rtlStore} onclick={playVideo}>
         <img
-            bind:this={poster}
             alt="..."
             class="preview_img"
             class:landscape
             class:fill
             class:me
             src={imageUrl}
-            style:height={`${posterHeight}px`}
-            style:width={poster && poster.complete ? undefined : `${MIN_VIDEO_WIDTH}px`} />
+            style={height !== undefined
+                ? `height: ${height}px`
+                : (reservedMediaStyle(content.width, content.height) ??
+                  `height: ${posterHeight}px; width: ${MIN_VIDEO_WIDTH}px`)} />
 
         <div class="play_icon">
             <PlayCircleOutline class="play" size="3rem" color={ColourVars.textPrimary} />

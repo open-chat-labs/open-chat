@@ -21,6 +21,17 @@
         // fired on touchstart (iOS only — where touch listeners are attached);
         // an unambiguous user gesture, unlike scroll events which may be ours
         onUserTouch?: () => void;
+        // buckets items into height classes ("date", "text", "media", …) so
+        // unmeasured items estimate from their class average instead of the
+        // global one — a global average is systematically wrong for every
+        // class (date markers are ~40px against a media-inflated ~260px
+        // average), and that bias per entering row is what drives scroll
+        // compensation pressure during long rides
+        estimateClass?: (item: T) => string;
+        // true when the newest loaded message is the newest that exists —
+        // distinguishes the genuine live bottom (where prepends are followed)
+        // from the catch-up wall mid-history (where position is preserved)
+        caughtUp?: () => boolean;
         // identifies items that act as date separators for the sticky date
         isDateMarker?: (item: T) => boolean;
         // timestamp for the sticky date; must return a value for date markers
@@ -122,6 +133,8 @@
         row,
         onUserScroll,
         onUserTouch,
+        estimateClass,
+        caughtUp,
         isDateMarker,
         timestampFor,
         stickyDateElTop,
@@ -161,6 +174,41 @@
     let measuredCount = 0;
     let averageHeight = 95;
 
+    // ── Per-class height tracking (active when estimateClass is provided) ──
+    // itemClass[i] caches the class of items[i]; classSum/classCount track
+    // measured heights per class; classSnapshot holds the frozen per-class
+    // estimates (same freeze discipline as spacerAvgHeight); estimateMap[i]
+    // is the frozen estimate for items[i], realigned on items changes.
+    let itemClass: string[] = [];
+    let classSum = new Map<string, number>();
+    let classCount = new Map<string, number>();
+    let classSnapshot = new Map<string, number>();
+    let estimateMap: number[] = [];
+    // a class with too few samples estimates from the global average
+    const MIN_CLASS_SAMPLES = 4;
+
+    function trackClassMeasure(i: number, prev: number, h: number) {
+        if (estimateClass === undefined) return;
+        const cls = itemClass[i];
+        if (cls === undefined) return;
+        if (prev > 0) {
+            classSum.set(cls, (classSum.get(cls) ?? 0) - prev);
+            classCount.set(cls, (classCount.get(cls) ?? 0) - 1);
+        }
+        classSum.set(cls, (classSum.get(cls) ?? 0) + h);
+        classCount.set(cls, (classCount.get(cls) ?? 0) + 1);
+    }
+
+    // Project the frozen class snapshot onto per-index estimates after the
+    // items array changes shape. Does NOT re-freeze the snapshot.
+    function realignEstimates(fromIdx: number = 0) {
+        if (estimateClass === undefined) return;
+        estimateMap.length = items.length;
+        for (let i = fromIdx; i < items.length; i++) {
+            estimateMap[i] = classSnapshot.get(itemClass[i]) ?? spacerAvgHeight;
+        }
+    }
+
     // Full rebuild of heightMap and prune keyToHeight to only keys present in
     // the current items (prevents unbounded growth when items are replaced,
     // e.g. navigating to a different event window).
@@ -168,6 +216,9 @@
         heightMap = new Array(items.length).fill(0);
         totalMeasuredHeight = 0;
         measuredCount = 0;
+        classSum = new Map();
+        classCount = new Map();
+        if (estimateClass !== undefined) itemClass = items.map(estimateClass);
         const prunedHeights = new Map<string, number>();
         for (let i = 0; i < items.length; i++) {
             const item = items[i];
@@ -177,10 +228,12 @@
                 prunedHeights.set(item.key, h);
                 totalMeasuredHeight += h;
                 measuredCount++;
+                trackClassMeasure(i, 0, h);
             }
         }
         keyToHeight = prunedHeights;
         if (measuredCount > 0) averageHeight = totalMeasuredHeight / measuredCount;
+        realignEstimates();
         prefixDirty = true;
     }
 
@@ -189,6 +242,12 @@
     // for indices 0..fromIdx-1 without recomputing.
     function extendHeightMap(fromIdx: number) {
         heightMap.length = items.length;
+        if (estimateClass !== undefined) {
+            itemClass.length = items.length;
+            for (let i = fromIdx; i < items.length; i++) {
+                itemClass[i] = estimateClass(items[i]);
+            }
+        }
         for (let i = fromIdx; i < items.length; i++) {
             const item = items[i];
             const h = keyToHeight.get(item.key);
@@ -196,11 +255,13 @@
                 heightMap[i] = h;
                 totalMeasuredHeight += h;
                 measuredCount++;
+                trackClassMeasure(i, 0, h);
             } else {
                 heightMap[i] = 0;
             }
         }
         if (measuredCount > 0) averageHeight = totalMeasuredHeight / measuredCount;
+        realignEstimates(fromIdx);
         prefixDirty = true;
     }
 
@@ -212,8 +273,32 @@
     // one O(N) rebuild vs O(windowSize × N) total for per-item updates.
     function ensurePrefixSums() {
         if (!prefixDirty) return;
-        prefixSums = buildPrefixSums(items.length, heightMap, spacerAvgHeight);
+        prefixSums = buildPrefixSums(
+            items.length,
+            heightMap,
+            spacerAvgHeight,
+            estimateClass !== undefined ? estimateMap : undefined,
+        );
         prefixDirty = false;
+    }
+
+    // Re-freeze the estimate space: the global average plus each class's
+    // average (classes with too few samples inherit the global), projected
+    // onto per-index estimates. Same freeze points as spacerAvgHeight alone
+    // used to have — estimates must stay stable between these points or every
+    // unmeasured item's contribution drifts under the user (N×δ).
+    function refreshEstimateSnapshot() {
+        spacerAvgHeight = averageHeight;
+        if (estimateClass !== undefined) {
+            classSnapshot = new Map();
+            for (const [cls, count] of classCount) {
+                if (count >= MIN_CLASS_SAMPLES) {
+                    classSnapshot.set(cls, (classSum.get(cls) ?? 0) / count);
+                }
+            }
+            realignEstimates();
+        }
+        prefixDirty = true;
     }
 
     // ── spacerAvgHeight (frozen estimate snapshot) ───────────────────────
@@ -232,11 +317,12 @@
     // at which estimate, so we know the delta when measuring.
     let pendingBottomCorrections = new Map<number, number>();
 
-    // Use spacerAvgHeight (snapshot) for ALL unmeasured item estimates.
+    // Use the frozen estimate space for ALL unmeasured item estimates.
     // This keeps computeWindow and spacer calculations consistent — prevents
     // oscillation when averageHeight drifts from spacerAvgHeight during measurements.
     function getHeight(i: number): number {
-        return heightMap[i] > 0 ? heightMap[i] : spacerAvgHeight;
+        if (heightMap[i] > 0) return heightMap[i];
+        return estimateMap[i] ?? spacerAvgHeight;
     }
 
     function computeWindow(): [number, number] {
@@ -323,12 +409,21 @@
         } else if (!scrollingActive()) {
             repayDebtInline(reason);
         }
-        // Only mark prefix sums dirty if spacerAvgHeight actually changed,
+        // Only re-freeze the estimate space if the average actually changed,
         // to avoid redundant O(N) rebuilds when callers (e.g. _doScrollToIndex)
-        // have already set spacerAvgHeight and rebuilt prefix sums.
-        if (spacerAvgHeight !== averageHeight) {
-            spacerAvgHeight = averageHeight;
-            prefixDirty = true;
+        // have already refreshed it and rebuilt prefix sums.
+        //
+        // NEVER re-freeze at interrupt-end: the owner's restore just pinned an
+        // anchor row's exact screen position, but the rows rendered for the
+        // new window measure between that restore and this recompute, moving
+        // the live average. Re-freezing here re-estimates every unmeasured row
+        // below the viewport, changing the bottom spacer under the anchor —
+        // a visible position jump at every load boundary, at any speed. The
+        // recompute must run in the same estimate space the restore was
+        // computed against; the next natural refresh point (items change,
+        // navigation, resize — which all compensate) picks up the new average.
+        if (reason !== "interrupt-end" && spacerAvgHeight !== averageHeight) {
+            refreshEstimateSnapshot();
         }
         const [s, e] = computeWindow();
         let [bh, th] = computeSpacers(s, e);
@@ -337,7 +432,17 @@
         // assignment: the DOM spacer keeps its offset, so nothing shifts and
         // no scrollTop write is needed. Clamp so the DOM spacer stays >= 0.
         if (spacerDebt !== 0) {
-            if (spacerDebt > bh) spacerDebt = bh;
+            if (spacerDebt > bh) {
+                // Forgiving debt here leaves the DOM offset unmatched by the
+                // ledger — the repay that eventually fires moves scrollTop by
+                // less than the offset applied earlier.
+                vclDebug.log("!debt-clamped", {
+                    debt: Math.round(spacerDebt),
+                    bh: Math.round(bh),
+                    reason,
+                });
+                spacerDebt = bh;
+            }
             bh -= spacerDebt;
         }
         vclDebug.log("full", {
@@ -391,7 +496,14 @@
             }
             let [bh, th] = computeSpacers(s, e);
             if (spacerDebt !== 0) {
-                if (spacerDebt > bh) spacerDebt = bh;
+                if (spacerDebt > bh) {
+                    vclDebug.log("!debt-clamped", {
+                        debt: Math.round(spacerDebt),
+                        bh: Math.round(bh),
+                        reason: "incr-jumped",
+                    });
+                    spacerDebt = bh;
+                }
                 bh -= spacerDebt;
             }
             vclDebug.log("incr-jumped", { s, e, bh: Math.round(bh), th: Math.round(th) });
@@ -443,7 +555,37 @@
         topSpacerHeight = th;
 
         if (bottomSpacerHeight < 0) {
-            vclDebug.log("!negative-spacer", { bh: Math.round(bottomSpacerHeight), s, e });
+            // The clamp below silently adds |bh| px of content height with no
+            // matching scrollTop or debt adjustment — the visible shift. Full
+            // ledger context to pin down where the sign drift comes from:
+            // canon = what the spacer would be with outstanding debt repaid.
+            vclDebug.log("!negative-spacer", {
+                bh: Math.round(bottomSpacerHeight),
+                s,
+                e,
+                oldS: start,
+                oldE: end,
+                debt: Math.round(spacerDebt),
+                canon: Math.round(bottomSpacerHeight + spacerDebt),
+                fb: Math.round(fromBottom),
+                touch: isTouching,
+                mom: isMomentumScrolling,
+                pend: [...pendingBottomCorrections.entries()]
+                    .slice(0, 12)
+                    .map(([i, est]) => `${i}:${Math.round(est)}`)
+                    .join(" "),
+            });
+            // A negative DOM spacer near the bottom is outstanding debt with
+            // no spacer room left to live in (canonical → 0 as s → 0): the
+            // clamp below materialises the deficit as a content shift, so the
+            // matching ledger debt must be forgiven. Keeping it recorded makes
+            // the next carry/repay re-apply the offset against a DOM that no
+            // longer holds it — a second, opposite jolt.
+            if (spacerDebt > 0) {
+                const forgiven = Math.min(spacerDebt, -bottomSpacerHeight);
+                spacerDebt -= forgiven;
+                vclDebug.log("debt-forgiven", { forgiven: Math.round(forgiven) });
+            }
         }
         bottomSpacerHeight = Math.max(0, bottomSpacerHeight);
         [bottomSpacerHeight, topSpacerHeight] = sanitizeSpacers(bottomSpacerHeight, topSpacerHeight);
@@ -454,6 +596,7 @@
             bh: Math.round(bottomSpacerHeight),
             th: Math.round(topSpacerHeight),
             pend: pendingBottomCorrections.size,
+            debt: Math.round(spacerDebt),
         });
 
         start = s;
@@ -462,10 +605,82 @@
     }
 
 
+    // ── Synthetic momentum continuation (iOS) ─────────────────────────────
+    // Crossing a load boundary needs the scroll interrupt (the restore write
+    // must not be clobbered by native physics), but the interrupt also kills
+    // the user's fling dead — every forward boundary was a hard stop. Native
+    // momentum cannot be restarted, so we continue it ourselves: sample the
+    // fling velocity from genuine scroll events, and when the interrupt ends
+    // JS-animate the remaining glide with iOS's own deceleration curve.
+    // Programmatic writes are safe at that point — there is no native
+    // momentum left to fight — and the glide's scroll events drive loads and
+    // window updates exactly like the native fling did, so the velocity
+    // carries across subsequent boundaries too.
+    let glideRaf: number | undefined;
+    let glideVelocity = 0; // px/ms, positive = towards the bottom
+    let sampleTime = 0; // performance.now() of the last genuine scroll sample
+    let sampleTop = 0;
+    let sampledVelocity = 0;
+    let capturedGlideVelocity = 0;
+    const GLIDE_MIN_START = 0.15; // px/ms — slower flings aren't worth faking
+    const GLIDE_MIN_KEEP = 0.02;
+    const GLIDE_DECAY_PER_MS = 0.998; // UIScrollView's normal deceleration rate
+
+    function cancelGlide() {
+        if (glideRaf !== undefined) cancelAnimationFrame(glideRaf);
+        glideRaf = undefined;
+        glideVelocity = 0;
+    }
+
+    function startGlide(v: number) {
+        cancelGlide();
+        glideVelocity = v;
+        let last = performance.now();
+        vclDebug.log("glide-start", { v: Math.round(v * 1000) });
+        const step = (t: number) => {
+            glideRaf = undefined;
+            if (!viewport || interrupt || isTouching) {
+                glideVelocity = 0;
+                return;
+            }
+            const dt = Math.min(t - last, 64);
+            last = t;
+            const before = viewport.scrollTop;
+            viewport.scrollTop = before + glideVelocity * dt;
+            lastProgrammaticScrollTime = Date.now();
+            glideVelocity *= Math.pow(GLIDE_DECAY_PER_MS, dt);
+            // an unchanged scrollTop means the browser clamped us at an edge
+            if (Math.abs(glideVelocity) < GLIDE_MIN_KEEP || viewport.scrollTop === before) {
+                vclDebug.log("glide-end", { st: Math.round(viewport.scrollTop) });
+                glideVelocity = 0;
+                return;
+            }
+            glideRaf = requestAnimationFrame(step);
+        };
+        glideRaf = requestAnimationFrame(step);
+    }
+
     // After interrupt ends (scroll restored), sync fromBottom and do a full recompute
     // so spacer state is consistent with the restored scroll position.
     $effect(() => {
-        if (!interrupt && viewport) {
+        if (interrupt) {
+            untrack(() => {
+                // Capture the fling for continuation: an active synthetic
+                // glide's velocity, or the freshly sampled native one when
+                // momentum was live as the interrupt began.
+                capturedGlideVelocity = 0;
+                const v =
+                    glideRaf !== undefined
+                        ? glideVelocity
+                        : isMomentumScrolling && performance.now() - sampleTime < 250
+                          ? sampledVelocity
+                          : 0;
+                cancelGlide();
+                if (mobileOperatingSystem === "iOS" && !isTouching && Math.abs(v) > GLIDE_MIN_START) {
+                    capturedGlideVelocity = v;
+                }
+            });
+        } else if (viewport) {
             untrack(() => {
                 vclDebug.log("interrupt-end", { st: Math.round(viewport!.scrollTop) });
                 // Deferred adjustments were computed against the pre-interrupt
@@ -473,8 +688,20 @@
                 // flushing them now would be a stale jolt on landing.
                 pendingScrollAdjustment = 0;
                 pendingSnapToBottom = false;
+                // The interrupt has already killed any native momentum, so a
+                // repay write here is free — and outstanding debt carried into
+                // a wall approach otherwise materialises as a clamp shift per
+                // entering item (device trace: +1070px of debt bled out as ten
+                // successive jolts). Only an active finger forbids the write.
+                if (!isTouching) {
+                    repayDebtInline("interrupt-end");
+                }
                 fromBottom = clampFromBottom(-viewport!.scrollTop);
                 updateWindowFull("interrupt-end");
+                if (capturedGlideVelocity !== 0) {
+                    startGlide(capturedGlideVelocity);
+                    capturedGlideVelocity = 0;
+                }
             });
         }
     });
@@ -577,7 +804,21 @@
         // it every entering item's estimate error shifts the content
         // mid-gesture (observed on iOS as per-message 'vibration' when
         // scrolling forward through unmeasured history).
-        if (!scrollingActive() || bottomSpacerHeight - delta < 0) {
+        if (!scrollingActive()) {
+            return false;
+        }
+        // Declines during an active gesture push the correction onto a write
+        // (or deferred-write) path — exactly the mid-gesture jolt hazard — so
+        // each decline reason is worth a trace line. A spacer too small to
+        // absorb is the normal state near the bottom of the list.
+        if (bottomSpacerHeight - delta < 0) {
+            vclDebug.log("!absorb-declined", {
+                why: "spacer-too-small",
+                bh: Math.round(bottomSpacerHeight),
+                delta: Math.round(delta),
+                debt: Math.round(spacerDebt),
+                fb: Math.round(fromBottom),
+            });
             return false;
         }
         // During touch/momentum a settle write would kill the native physics,
@@ -590,6 +831,11 @@
         // adjustment path — if we absorbed it we would immediately be forced
         // to repay it mid-scroll.
         if (Math.abs(delta) >= cap) {
+            vclDebug.log("!absorb-declined", {
+                why: "single-delta-cap",
+                delta: Math.round(delta),
+                cap,
+            });
             return false;
         }
         // On a long sustained scroll the debt never gets an idle moment to be
@@ -598,9 +844,21 @@
         // mid-gesture, where only the deferred path remains beyond the cap.
         if (Math.abs(spacerDebt + delta) >= cap) {
             if (isTouching || isMomentumScrolling) {
+                vclDebug.log("!absorb-declined", {
+                    why: "cap-mid-gesture",
+                    delta: Math.round(delta),
+                    debt: Math.round(spacerDebt),
+                    cap,
+                });
                 return false;
             }
-            settleSpacerDebt(true);
+            // This call site is usually inside a render flush (measureRow
+            // during row creation), where settle's flushSync throws and falls
+            // back to a revert-and-retry that is non-atomic for one frame —
+            // observed as a one-frame glitch when the cap trips mid-glide.
+            // Deferring to a microtask keeps the settle atomic; the absorb
+            // below proceeds and the settle repays the new total.
+            queueMicrotask(() => settleSpacerDebt(true));
         }
         return bottomSpacerHeight - delta >= 0;
     }
@@ -734,8 +992,7 @@
             // lands away from the previously-visible content and the caller's
             // post-load anchor row is not even rendered.
             if (spacerAvgHeight !== averageHeight) {
-                spacerAvgHeight = averageHeight;
-                prefixDirty = true;
+                refreshEstimateSnapshot();
             }
 
             let prependOffset = 0;
@@ -743,6 +1000,16 @@
                 // New items were prepended at the visual bottom (scroll origin
                 // in column-reverse). Adjust fromBottom so updateWindowFull
                 // targets the same visual position in the new index space.
+                // Reset the pin FIRST: if this prepend takes the follow path
+                // (no pin), the owner must not read a previous boundary's pin.
+                lastPrependPinTarget = undefined;
+                const preFromBottom = fromBottom;
+                // Anchor on the bottom-most rendered row's CURRENT position —
+                // this pre-effect runs before the DOM updates, so the rect is
+                // the position the user is looking at right now.
+                const anchorRow = viewport?.querySelector<HTMLElement>(".vcl-row");
+                const anchorKey = anchorRow?.dataset.key;
+                const anchorTop = anchorRow?.getBoundingClientRect().top;
                 let offset = 0;
                 for (let i = 0; i < prependCount; i++) {
                     offset += getHeight(i);
@@ -753,6 +1020,40 @@
                 offset += prependCount * gapPx;
                 fromBottom += offset;
                 prependOffset = offset;
+                // Neutralise the prepend's shift in the SAME flush that
+                // renders it: the owner's anchored restore runs a task later,
+                // and the browser paints the shifted content in between — a
+                // one-frame flash of a different position at every load
+                // boundary, at any scroll speed. tick() resolves after this
+                // flush's DOM update but before the browser paints, so an
+                // anchor-exact write here is invisible; the owner's later
+                // restore then has nothing left to correct. At the genuine
+                // live bottom the view must FOLLOW new content instead — but
+                // the catch-up wall mid-history also sits at fromBottom 0,
+                // and only the owner can tell the two apart (caughtUp).
+                if (!(preFromBottom < 10 && (caughtUp?.() ?? true))) {
+                    tick().then(() => {
+                        if (!viewport || interrupt) return;
+                        const again =
+                            anchorKey !== undefined
+                                ? rowByKey(viewport, anchorKey)
+                                : undefined;
+                        const before = viewport.scrollTop;
+                        if (again && anchorTop !== undefined) {
+                            viewport.scrollTop +=
+                                again.getBoundingClientRect().top - anchorTop;
+                        } else {
+                            viewport.scrollTop = -fromBottom;
+                        }
+                        lastPrependPinTarget = viewport.scrollTop;
+                        vclDebug.log("prepend-pin", {
+                            anchored: !!again,
+                            from: Math.round(before),
+                            to: Math.round(viewport.scrollTop),
+                        });
+                        lastProgrammaticScrollTime = Date.now();
+                    });
+                }
             }
 
             vclDebug.log("items", {
@@ -822,10 +1123,10 @@
         behavior: "auto" | "instant" | "smooth" = "instant",
     ) {
         if (!viewport) return;
-        // Snapshot averageHeight BEFORE computing distance so getHeight,
-        // computeWindow, and computeSpacers all use the same estimate.
-        spacerAvgHeight = averageHeight;
-        prefixDirty = true; // spacerAvgHeight changed
+        cancelGlide();
+        // Re-freeze the estimate space BEFORE computing distance so getHeight,
+        // computeWindow, and computeSpacers all use the same estimates.
+        refreshEstimateSnapshot();
         ensurePrefixSums();
         // startPos(flatIndex) = prefix[flatIndex] + flatIndex * gap
         const distFromBottom = prefixSums[flatIndex] + flatIndex * gapPx;
@@ -897,6 +1198,22 @@
     // when items are prepended and all indices shift.
     function measureRow(node: HTMLElement, absIdx: number) {
         let currentIdx = absIdx;
+        // Rows whose content renders in two passes (media height styles are
+        // applied in onMount, after the first layout) briefly collapse on
+        // every remount, churning a correction pair per window re-entry. The
+        // settled height from the row's previous life is known — pin it as
+        // min-height across the mount so the transient never reaches layout,
+        // then release. Content that genuinely changed while unmounted
+        // corrects normally after the release.
+        const known = keyToHeight.get(items[absIdx]?.key ?? "");
+        if (known !== undefined && known > 0) {
+            node.style.minHeight = `${known}px`;
+            requestAnimationFrame(() =>
+                requestAnimationFrame(() => {
+                    node.style.minHeight = "";
+                }),
+            );
+        }
         function measure() {
             // Guard: items may have shrunk (chat switch, teardown) while
             // this ResizeObserver callback was pending.
@@ -916,6 +1233,7 @@
                     totalMeasuredHeight += h;
                     measuredCount++;
                     if (measuredCount > 0) averageHeight = totalMeasuredHeight / measuredCount;
+                    trackClassMeasure(currentIdx, prev, h);
 
                     // Mark prefix sums for lazy rebuild rather than updating
                     // incrementally. During initial render or resize bursts,
@@ -1184,6 +1502,14 @@
         // compensations are absorbed into the spacer instead of scrollTop.
         if (Date.now() - lastProgrammaticScrollTime > 100) {
             lastUserScrollTime = Date.now();
+            // velocity sample for synthetic momentum continuation
+            const nowP = performance.now();
+            const top = viewport.scrollTop;
+            if (nowP - sampleTime < 200 && nowP > sampleTime) {
+                sampledVelocity = (top - sampleTop) / (nowP - sampleTime);
+            }
+            sampleTime = nowP;
+            sampleTop = top;
         }
         if (spacerDebt !== 0) {
             clearTimeout(debtIdleTimer);
@@ -1221,7 +1547,19 @@
         lastProgrammaticScrollTime = Date.now();
     }
 
+    // The scrollTop the last prepend was pinned to by the same-flush anchor
+    // write. The owner's post-load restore must target THIS — its own anchor
+    // rect was captured before the load await, so restoring to it rewinds the
+    // user by however far they scrolled while the load was in flight (~700px
+    // per boundary on a cold cache; imperceptible on a warm one — which is
+    // why the boundary feel varied so wildly between sessions).
+    let lastPrependPinTarget: number | undefined;
+    export function lastPrependPin(): number | undefined {
+        return lastPrependPinTarget;
+    }
+
     export function scrollToBottom(behavior: "auto" | "instant" | "smooth" = "instant") {
+        cancelGlide();
         clearTimeout(scrollCorrectTimer);
         scrollCorrectTimer = undefined;
         pendingScrollFlatIdx = undefined;
@@ -1244,6 +1582,8 @@
         const onTouchStart = () => {
             isTouching = true;
             isMomentumScrolling = false;
+            // the finger takes over from any synthetic glide
+            cancelGlide();
             clearTimeout(momentumEndTimer);
             momentumEndTimer = undefined;
             onUserTouch?.();
@@ -1301,6 +1641,7 @@
                 el.removeEventListener("touchcancel", onTouchCancel);
             }
             el.removeEventListener("scrollend", onScrollEnd);
+            cancelGlide();
             clearTimeout(momentumEndTimer);
             clearTimeout(debtIdleTimer);
             ro.disconnect();
