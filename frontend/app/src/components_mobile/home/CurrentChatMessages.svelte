@@ -29,6 +29,7 @@
         selectedChatPinnedMessagesStore,
         selectedCommunitySummaryStore,
         showMiddle,
+        stripSuspendedGate,
         subscribe,
         threadOpenStore,
         unconfirmedStore,
@@ -253,7 +254,8 @@
             ($selectedCommunitySummaryStore.membership.role === ROLE_NONE ||
                 $selectedCommunitySummaryStore.membership.lapsed) &&
             (!$selectedCommunitySummaryStore.public ||
-                $selectedCommunitySummaryStore.gateConfig.gate.kind !== "no_gate"),
+                stripSuspendedGate($selectedCommunitySummaryStore.gateConfig.gate).kind !==
+                    "no_gate"),
     );
     let privatePreview = $derived(privateCommunityPreview || privateChatPreview);
     let isEmptyChat = $derived(chat.latestEventIndex <= 0 || privatePreview);

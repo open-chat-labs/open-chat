@@ -9,7 +9,10 @@
         tooltip?: ResourceKey;
     }
 
-    let { verified, size, tooltip }: Props = $props();
+    let { size, tooltip }: Props = $props();
+
+    // Verified user (DecideAI) concept is suspended - never render the badge.
+    const verified = false;
 </script>
 
 {#if verified}

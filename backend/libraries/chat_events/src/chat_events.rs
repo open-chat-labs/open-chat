@@ -1052,7 +1052,7 @@ impl ChatEvents {
         message: &mut MessageInternal,
         user_id: UserId,
         now: TimestampMillis,
-        is_unique_person: bool,
+        _is_unique_person: bool,
         diamond_status: DiamondMembershipStatus,
         total_chit_earned: u32,
         streak: u16,
@@ -1075,9 +1075,7 @@ impl ChatEvents {
             return Err(UpdateEventError::NoChange(OCErrorCode::PrizeUserNotElligible));
         }
 
-        if content.unique_person_only && !is_unique_person {
-            return Err(UpdateEventError::NoChange(OCErrorCode::PrizeUserNotElligible));
-        }
+        // Unique person verification (DecideAI) is suspended - every user is eligible.
 
         if content.min_chit_earned > total_chit_earned {
             return Err(UpdateEventError::NoChange(OCErrorCode::PrizeUserNotElligible));

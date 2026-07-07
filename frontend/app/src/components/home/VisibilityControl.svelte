@@ -5,6 +5,7 @@
         isDiamondStore,
         type OpenChat,
         publish,
+        stripSuspendedGate,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -48,7 +49,7 @@
         if (
             gateDirty &&
             candidate.kind === "candidate_group_chat" &&
-            candidate.gateConfig.gate.kind !== "no_gate"
+            stripSuspendedGate(candidate.gateConfig.gate).kind !== "no_gate"
         ) {
             candidate.messagesVisibleToNonMembers = false;
         }
@@ -61,7 +62,7 @@
         }
         if (candidate.kind === "candidate_group_chat") {
             candidate.messagesVisibleToNonMembers =
-                candidate.public && candidate.gateConfig.gate.kind === "no_gate";
+                candidate.public && stripSuspendedGate(candidate.gateConfig.gate).kind === "no_gate";
         }
     }
 

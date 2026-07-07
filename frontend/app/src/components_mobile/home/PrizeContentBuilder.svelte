@@ -43,7 +43,6 @@
         ONE_DAY,
     } from "openchat-client";
     import { onMount } from "svelte";
-    import Account from "svelte-material-icons/AccountOutline.svelte";
     import Diamond from "svelte-material-icons/DiamondOutline.svelte";
     import Lifetime from "svelte-material-icons/DiamondStone.svelte";
     import Fingerprint from "svelte-material-icons/Fingerprint.svelte";
@@ -91,7 +90,9 @@
     let distribution: "equal" | "random" = $state($prizeConfig.distribution);
     let selectedDuration = $state($prizeConfig.duration);
     let diamondType: "none" | "standard" | "lifetime" = $state($prizeConfig.diamond);
-    let uniquePersonOnly = $state($prizeConfig.uniquePersonOnly);
+    // Unique-person ("verified user") gating is suspended - force off so a value persisted from a
+    // previous session can't be silently reapplied (there is no UI to clear it).
+    const uniquePersonOnly = false;
     let minStreak = $state<number>($prizeConfig.minStreak);
     let minChitEarned = $state<number>($prizeConfig.minChitEarned);
     let tokenInputState: "ok" | "zero" | "too_low" | "too_high" = $state("ok");
@@ -435,15 +436,7 @@
                     {/snippet}
                     <Translatable resourceKey={i18nKey("Lifetime diamond membership")} />
                 </Chip>
-                <Chip
-                    onClick={() => (uniquePersonOnly = !uniquePersonOnly)}
-                    onRemove={uniquePersonOnly ? () => (uniquePersonOnly = false) : undefined}
-                    mode={uniquePersonOnly ? "filter" : "default"}>
-                    {#snippet icon(color)}
-                        <Account {color} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("Unique person")} />
-                </Chip>
+                <!-- Unique person ("verified user") gating is suspended -->
                 <Chip
                     onClick={() => (selectMinChitEarned = true)}
                     onRemove={minChitEarned > 0 ? () => (minChitEarned = 0) : undefined}

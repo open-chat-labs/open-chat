@@ -43,7 +43,11 @@
     import PaymentGateEvaluator from "./PaymentGateEvaluator.svelte";
     import UniqueHumanGateEvaluator from "./UniqueHumanGateEvaluator.svelte";
 
-    type SatisfiedLeafGate = EnhancedLeafGate & { satisfied: boolean; satisfiable: boolean };
+    type SatisfiedLeafGate = EnhancedLeafGate & {
+        satisfied: boolean;
+        satisfiable: boolean;
+        originalIndex: number;
+    };
 
     interface Props {
         gate: EnhancedAccessGate;
@@ -78,17 +82,30 @@
 
     function normaliseGates(gate: EnhancedAccessGate): SatisfiedLeafGate[] {
         if (isCompositeGate(gate)) {
-            return gate.gates.map((l) => ({
-                ...l,
-                level: gate.level,
-                collectionName: gate.collectionName,
-                expiry: gate.expiry,
-                satisfied: doesUserMeetLeafGate(l),
-                satisfiable: false,
-            }));
+            // Keep originalIndex before filtering so compositeGateIndex still maps to the real gate.
+            // Unique person (DecideAI) verification is suspended - hide it from the join flow.
+            return gate.gates
+                .map((l, i) => ({
+                    ...l,
+                    level: gate.level,
+                    collectionName: gate.collectionName,
+                    expiry: gate.expiry,
+                    satisfied: doesUserMeetLeafGate(l),
+                    satisfiable: false,
+                    originalIndex: i,
+                }))
+                .filter((g) => !isUniquePersonGate(g));
         }
         if (isLeafGate(gate)) {
-            return [{ ...gate, satisfied: doesUserMeetLeafGate(gate), satisfiable: false }];
+            if (isUniquePersonGate(gate)) return [];
+            return [
+                {
+                    ...gate,
+                    satisfied: doesUserMeetLeafGate(gate),
+                    satisfiable: false,
+                    originalIndex: 0,
+                },
+            ];
         }
         return [];
     }
@@ -184,10 +201,10 @@
 
     function handleComplete() {
         if (compositeOr) {
-            // Find the index of the first satisfied gate in the original (unsorted) flattenedGates
-            const satisfiedIdx = flattenedGates.findIndex((g) => g.satisfied);
-            if (satisfiedIdx !== -1) {
-                accessApprovalState.setCompositeGateIndex(satisfiedIdx);
+            // Use originalIndex so the backend still maps to the real gate after filtering.
+            const satisfied = flattenedGates.find((g) => g.satisfied);
+            if (satisfied !== undefined) {
+                accessApprovalState.setCompositeGateIndex(satisfied.originalIndex);
             }
         }
         onComplete();
