@@ -601,6 +601,14 @@
                 // flushing them now would be a stale jolt on landing.
                 pendingScrollAdjustment = 0;
                 pendingSnapToBottom = false;
+                // The interrupt has already killed any native momentum, so a
+                // repay write here is free — and outstanding debt carried into
+                // a wall approach otherwise materialises as a clamp shift per
+                // entering item (device trace: +1070px of debt bled out as ten
+                // successive jolts). Only an active finger forbids the write.
+                if (!isTouching) {
+                    repayDebtInline("interrupt-end");
+                }
                 fromBottom = clampFromBottom(-viewport!.scrollTop);
                 updateWindowFull("interrupt-end");
             });
