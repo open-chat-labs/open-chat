@@ -21,48 +21,53 @@
     let { onClick, tip, alignTooltip }: Props = $props();
     let [ledger, userTips] = $derived(tip);
     let userTipsList = $derived(Object.entries(userTips));
-    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
+    let tokenDetails = $derived($cryptoLookup.get(ledger));
     let totalAmount = $derived(userTipsList.reduce((n, [_, amount]) => n + amount, BigInt(0)));
 </script>
 
-<Tooltip autoWidth position={"bottom"} align={alignTooltip}>
-    <Container
-        onClick={() => onClick?.(ledger)}
-        borderRadius={"lg"}
-        width={"hug"}
-        padding={["zero", "xs"]}
-        background={ColourVars.background2}
-        crossAxisAlignment={"center"}
-        gap={"xs"}
-        borderWidth={"thin"}
-        borderColour={ColourVars.background0}>
-        <img alt={tokenDetails.symbol} class="tip-icon" src={tokenDetails.logo} />
-        <ChatFootnote>
-            {userTipsList.length > 999 ? "999+" : userTipsList.length}
-        </ChatFootnote>
-    </Container>
+{#if tokenDetails}
+    {@const details = tokenDetails}
+    <Tooltip autoWidth position={"bottom"} align={alignTooltip}>
+        <Container
+            onClick={() => onClick?.(ledger)}
+            borderRadius={"lg"}
+            width={"hug"}
+            padding={["zero", "xs"]}
+            background={ColourVars.background2}
+            crossAxisAlignment={"center"}
+            gap={"xs"}
+            borderWidth={"thin"}
+            borderColour={ColourVars.background0}>
+            <img alt={details.symbol} class="tip-icon" src={details.logo} />
+            <ChatFootnote>
+                {userTipsList.length > 999 ? "999+" : userTipsList.length}
+            </ChatFootnote>
+        </Container>
 
-    {#snippet popup()}
-        <div class="user-tips">
-            {#each userTipsList as [userId, amount]}
-                <div class="avatar">
-                    <Avatar url={client.userAvatarUrl($allUsersStore.get(userId))} size={"xs"} />
-                </div>
-                <div class="username">
-                    @{$allUsersStore.get(userId)?.username}
-                </div>
-                <div class="amount">
-                    {client.formatTokens(amount, tokenDetails.decimals)}
-                </div>
-            {/each}
-            {#if userTipsList.length > 1}
-                <div class="total">
-                    {client.formatTokens(totalAmount, tokenDetails.decimals)}
-                </div>
-            {/if}
-        </div>
-    {/snippet}
-</Tooltip>
+        {#snippet popup()}
+            <div class="user-tips">
+                {#each userTipsList as [userId, amount]}
+                    <div class="avatar">
+                        <Avatar
+                            url={client.userAvatarUrl($allUsersStore.get(userId))}
+                            size={"xs"} />
+                    </div>
+                    <div class="username">
+                        @{$allUsersStore.get(userId)?.username}
+                    </div>
+                    <div class="amount">
+                        {client.formatTokens(amount, details.decimals)}
+                    </div>
+                {/each}
+                {#if userTipsList.length > 1}
+                    <div class="total">
+                        {client.formatTokens(totalAmount, details.decimals)}
+                    </div>
+                {/if}
+            </div>
+        {/snippet}
+    </Tooltip>
+{/if}
 
 <style lang="scss">
     .tip-icon {

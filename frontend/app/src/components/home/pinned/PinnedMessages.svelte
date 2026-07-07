@@ -36,7 +36,10 @@
 
     const client = getContext<OpenChat>("client");
     let unread = $state<boolean>(false);
-    let pinnedMessages = $selectedChatPinnedMessagesStore;
+    // $derived is load-bearing: a plain `let` captures a one-time snapshot,
+    // and if the panel mounts before the chat details (pinned set) arrive
+    // the panel stays empty forever.
+    let pinnedMessages = $derived($selectedChatPinnedMessagesStore);
 
     onMount(() => {
         const unsubs = [
