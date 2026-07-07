@@ -2656,6 +2656,12 @@ export class OpenChat {
 
         if (!keepCurrentEvents) {
             serverEventsStore.set([]);
+            // The expired ranges are part of the contiguity baseline
+            // (eventIndexesLoadedStore); if they survive a window replacement
+            // the freshly loaded window can be judged non-contiguous against
+            // the OLD region's ranges and silently dropped, leaving the event
+            // store empty.
+            expiredServerEventRanges.set(new DRange());
         }
 
         await this.#updateUserStoreFromEvents(resp.events);

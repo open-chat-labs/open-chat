@@ -166,8 +166,18 @@ export class CachedChatEventsReader {
                     }
                 }
 
+                // Tradeoff: a genuinely empty region (e.g. paginating past the
+                // latest index) now costs a redundant api round-trip per load
+                // instead of resolving empty from the cache — rare, and safer
+                // than resolving a suspicious empty result as final. When
+                // offline, fall through to handleMissingEvents, which resolves
+                // the empty result gracefully instead of firing a doomed
+                // network call.
+                const suspiciousEmpty =
+                    isEmptyButComplete(cachedEvents, missing, dirty) && !offline();
+
                 // we may or may not have all the requested events
-                if (missing.size + dirty.size > MAX_MISSING) {
+                if (suspiciousEmpty || missing.size + dirty.size > MAX_MISSING) {
                     // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
                     console.debug("We didn't get enough back from the cache, going to the api");
                     reader
@@ -206,7 +216,10 @@ export class CachedChatEventsReader {
                                     resolve(resp, true);
                                 });
                             } else {
-                                throw err;
+                                // rethrowing inside a promise .catch produces an
+                                // unhandled rejection and a stream that never
+                                // settles — reject so callers see the failure
+                                reject(err);
                             }
                         });
                 } else {
@@ -247,10 +260,15 @@ export class CachedChatEventsReader {
                         }
                     }
 
+                    // Refetch the requested indexes rather than resolving an
+                    // empty response as final. handleMissingEvents drops the
+                    // fetch when offline, resolving the empty result gracefully.
                     return this.handleMissingEvents(
                         reader,
                         chatId,
-                        [cachedEvents, missing, dirty],
+                        isEmptyButComplete(cachedEvents, missing, dirty)
+                            ? [cachedEvents, new Set(eventIndexes), dirty]
+                            : [cachedEvents, missing, dirty],
                         threadRootMessageIndex,
                         latestKnownUpdate,
                         resolve,
@@ -287,7 +305,16 @@ export class CachedChatEventsReader {
                     }
                 }
 
-                if (totalMiss || missing.size + dirty.size > MAX_MISSING) {
+                // The target message exists — an empty result just means we
+                // have nothing cached around it (e.g. the message→event
+                // mapping resolved to an event index outside the cached
+                // range), so go to the api for the window. When offline, fall
+                // through to handleMissingEvents, which resolves the empty
+                // result gracefully instead of firing a doomed network call.
+                const suspiciousEmpty =
+                    isEmptyButComplete(cachedEvents, missing, dirty) && !offline();
+
+                if (totalMiss || suspiciousEmpty || missing.size + dirty.size > MAX_MISSING) {
                     // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
                     console.debug(
                         "We didn't get enough back from the cache, going to the api",
@@ -336,7 +363,10 @@ export class CachedChatEventsReader {
                                     resolve(resp, true);
                                 });
                             } else {
-                                throw err;
+                                // rethrowing inside a promise .catch produces an
+                                // unhandled rejection and a stream that never
+                                // settles — reject so callers see the failure
+                                reject(err);
                             }
                         });
                 } else {
@@ -445,6 +475,24 @@ export class CachedChatEventsReader {
                 return this.communityClient;
         }
     }
+}
+
+// An empty cache result with nothing missing and no expired ranges is not a
+// trustworthy complete answer: "empty because everything in range expired" is
+// a valid final response (the expired ranges say so), but "empty because
+// nothing was cached" must not be resolved as final — doing so wipes the
+// event store (the original blank-window bug). All three read paths share
+// this predicate so the completeness rule cannot drift between them.
+function isEmptyButComplete<T extends ChatEvent>(
+    cachedEvents: EventsSuccessResult<T>,
+    missing: Set<number>,
+    dirty: Set<number>,
+): boolean {
+    return (
+        cachedEvents.events.length === 0 &&
+        cachedEvents.expiredEventRanges.length === 0 &&
+        missing.size + dirty.size === 0
+    );
 }
 
 function mergeEventsResponse<T extends ChatEvent>(
