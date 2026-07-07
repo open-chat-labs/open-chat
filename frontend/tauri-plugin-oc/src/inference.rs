@@ -7,9 +7,10 @@
 //! model's own chat template — rendered generically from the GGUF's Jinja with minijinja — so any
 //! bring-your-own instruction model responds conversationally instead of stopping immediately.
 
+use std::collections::HashMap;
 use std::num::NonZeroU32;
-use std::path::Path;
-use std::sync::{Mutex, OnceLock};
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex, OnceLock};
 
 use llama_cpp_2::context::params::LlamaContextParams;
 use llama_cpp_2::context::LlamaContext;
@@ -47,6 +48,56 @@ fn shared_backend() -> Result<&'static LlamaBackend, String> {
     let backend = LlamaBackend::init().map_err(|e| format!("init backend: {e}"))?;
     let _ = BACKEND.set(backend);
     Ok(BACKEND.get().expect("backend was just set"))
+}
+
+/// A model loaded once and kept for the process lifetime, so repeated inferences skip the multi-GB
+/// reload from disk. Keyed by the GGUF path. `LlamaModel` is Send + Sync.
+struct CachedModel {
+    model: Arc<LlamaModel>,
+    /// The mtmd/vision projector, loaded lazily on the first image request. It holds a raw pointer
+    /// into `model`'s C data, so `model` MUST outlive it — guaranteed here because both are cached
+    /// for the whole process and the `Arc<LlamaModel>` keeps the C model at a stable address.
+    mtmd: Mutex<Option<Arc<MtmdContext>>>,
+}
+
+/// Return the cached model for `gguf`, loading (and caching) it on first use.
+fn cached_model(gguf: &Path) -> Result<Arc<CachedModel>, String> {
+    static CACHE: OnceLock<Mutex<HashMap<PathBuf, Arc<CachedModel>>>> = OnceLock::new();
+    let cache = CACHE.get_or_init(|| Mutex::new(HashMap::new()));
+    let mut guard = cache.lock().map_err(|_| "model cache lock poisoned".to_string())?;
+    if let Some(entry) = guard.get(gguf) {
+        return Ok(entry.clone());
+    }
+    let backend = shared_backend()?;
+    let model = LlamaModel::load_from_file(backend, gguf, &LlamaModelParams::default())
+        .map_err(|e| format!("load model: {e}"))?;
+    let entry = Arc::new(CachedModel {
+        model: Arc::new(model),
+        mtmd: Mutex::new(None),
+    });
+    guard.insert(gguf.to_owned(), entry.clone());
+    Ok(entry)
+}
+
+/// Return the cached vision projector for this model, loading it on first use. Errors if the model's
+/// mmproj does not support image input.
+fn cached_mtmd(entry: &CachedModel, mmproj: &Path) -> Result<Arc<MtmdContext>, String> {
+    let mut guard = entry.mtmd.lock().map_err(|_| "mtmd cache lock poisoned".to_string())?;
+    if let Some(ctx) = guard.as_ref() {
+        return Ok(ctx.clone());
+    }
+    let mmproj_str = mmproj.to_str().ok_or("mmproj path not utf-8")?;
+    // media_marker stays the default `<__media__>`, which we embed in the prompt.
+    let mut params = MtmdContextParams::default();
+    params.use_gpu = false;
+    let ctx = MtmdContext::init_from_file(mmproj_str, &entry.model, &params)
+        .map_err(|e| format!("init mtmd projector: {e}"))?;
+    if !ctx.support_vision() {
+        return Err("projector does not support image input".to_string());
+    }
+    let arc = Arc::new(ctx);
+    *guard = Some(arc.clone());
+    Ok(arc)
 }
 
 /// Render a single user turn into a prompt string using the model's own Jinja chat template (read from
@@ -169,8 +220,8 @@ pub fn run_text_inference(
     response_schema: Option<&str>,
 ) -> Result<String, String> {
     let backend = shared_backend()?;
-    let model = LlamaModel::load_from_file(backend, model_path, &LlamaModelParams::default())
-        .map_err(|e| format!("load model: {e}"))?;
+    let entry = cached_model(model_path)?;
+    let model = entry.model.as_ref();
 
     let ctx_params = LlamaContextParams::default().with_n_ctx(NonZeroU32::new(DEFAULT_N_CTX));
     let mut ctx = model
@@ -178,7 +229,7 @@ pub fn run_text_inference(
         .map_err(|e| format!("create context: {e}"))?;
 
     let prompt = augment_prompt_for_schema(prompt, response_schema);
-    let tokens = tokenize_prompt(&model, &prompt)?;
+    let tokens = tokenize_prompt(model, &prompt)?;
 
     // Prefill the prompt, computing logits only for the last token.
     let mut batch = LlamaBatch::new(tokens.len().max(1), 1);
@@ -190,7 +241,7 @@ pub fn run_text_inference(
     }
     ctx.decode(&mut batch).map_err(|e| format!("decode prompt: {e}"))?;
 
-    generate(&model, &mut ctx, tokens.len() as i32, max_tokens)
+    generate(model, &mut ctx, tokens.len() as i32, max_tokens)
 }
 
 /// Load a GGUF model plus its mmproj projector and generate a response for `prompt` grounded in a single
@@ -205,26 +256,20 @@ pub fn run_multimodal_inference(
     response_schema: Option<&str>,
 ) -> Result<String, String> {
     let backend = shared_backend()?;
-    let model = LlamaModel::load_from_file(backend, model_path, &LlamaModelParams::default())
-        .map_err(|e| format!("load model: {e}"))?;
+    let entry = cached_model(model_path)?;
+    let model = entry.model.as_ref();
 
     let ctx_params = LlamaContextParams::default().with_n_ctx(NonZeroU32::new(DEFAULT_N_CTX));
     let mut ctx = model
         .new_context(backend, ctx_params)
         .map_err(|e| format!("create context: {e}"))?;
 
-    // Multimodal projector. media_marker stays the default `<__media__>`, which we embed in the prompt.
-    let mmproj = mmproj_path.to_str().ok_or("mmproj path not utf-8")?;
-    let mut mtmd_params = MtmdContextParams::default();
-    mtmd_params.use_gpu = false;
-    let mtmd_ctx = MtmdContext::init_from_file(mmproj, &model, &mtmd_params)
-        .map_err(|e| format!("init mtmd projector: {e}"))?;
-    if !mtmd_ctx.support_vision() {
-        return Err("projector does not support image input".to_string());
-    }
+    // The vision projector (like the model) is loaded once and reused across calls.
+    let mtmd = cached_mtmd(entry.as_ref(), mmproj_path)?;
+    let mtmd_ctx = mtmd.as_ref();
 
     // Decode the encoded image (png/jpg/…) into an mtmd bitmap.
-    let bitmap = MtmdBitmap::from_buffer(&mtmd_ctx, image_bytes, false)
+    let bitmap = MtmdBitmap::from_buffer(mtmd_ctx, image_bytes, false)
         .map_err(|e| format!("decode image: {e}"))?;
 
     // Put mtmd's media marker where the image belongs, then wrap in the model's chat template. mtmd
@@ -234,7 +279,7 @@ pub fn run_multimodal_inference(
         mtmd_default_marker(),
         augment_prompt_for_schema(prompt, response_schema)
     );
-    let formatted = render_chat_prompt(&model, &user_content).unwrap_or(user_content);
+    let formatted = render_chat_prompt(model, &user_content).unwrap_or(user_content);
     let input = MtmdInputText {
         text: formatted,
         add_special: true,
@@ -246,10 +291,10 @@ pub fn run_multimodal_inference(
 
     // Prefill image + text (logits on the last position), then generate from there.
     let n_past = chunks
-        .eval_chunks(&mtmd_ctx, &ctx, 0, 0, N_BATCH, true)
+        .eval_chunks(mtmd_ctx, &ctx, 0, 0, N_BATCH, true)
         .map_err(|e| format!("eval chunks: {e}"))?;
 
-    generate(&model, &mut ctx, n_past, max_tokens)
+    generate(model, &mut ctx, n_past, max_tokens)
 }
 
 #[cfg(test)]
