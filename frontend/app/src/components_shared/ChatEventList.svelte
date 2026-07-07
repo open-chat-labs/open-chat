@@ -323,6 +323,31 @@
         return item.kind === "timeline_date";
     }
 
+    // Height classes for the virtual list's unmeasured-item estimates. Date
+    // markers are effectively constant-height; media messages are several
+    // times taller than text ones — a single global average is systematically
+    // wrong for all of them (trace: 39px markers against a 261px average).
+    function estimateClass(item: FlatChatItem): string {
+        switch (item.kind) {
+            case "timeline_date":
+                return "date";
+            case "chat_start":
+                return "chat_start";
+            case "event": {
+                const evt = item.event.event;
+                if (evt.kind !== "message") return "event";
+                switch (evt.content.kind) {
+                    case "image_content":
+                    case "video_content":
+                    case "giphy_content":
+                        return "media";
+                    default:
+                        return "text";
+                }
+            }
+        }
+    }
+
     function timestampFor(item: FlatChatItem): bigint | undefined {
         switch (item.kind) {
             case "timeline_date":
@@ -1158,6 +1183,7 @@
     viewportClass={`scrollable-list ${rootSelector} ${viewportClass ?? ""}`}
     {onUserScroll}
     {onUserTouch}
+    {estimateClass}
     {isDateMarker}
     {timestampFor}
     {stickyDateElTop}

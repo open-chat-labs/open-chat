@@ -14,11 +14,15 @@ export function buildPrefixSums(
     itemCount: number,
     heightMap: number[],
     averageHeight: number,
+    // optional frozen per-index estimates (per-class averages); falls back to
+    // averageHeight where absent
+    estimates?: number[],
 ): number[] {
     const prefix = new Array<number>(itemCount + 1);
     prefix[0] = 0;
     for (let i = 0; i < itemCount; i++) {
-        prefix[i + 1] = prefix[i] + getHeight(heightMap, averageHeight, i);
+        const h = heightMap[i];
+        prefix[i + 1] = prefix[i] + (h > 0 ? h : (estimates?.[i] ?? averageHeight));
     }
     return prefix;
 }

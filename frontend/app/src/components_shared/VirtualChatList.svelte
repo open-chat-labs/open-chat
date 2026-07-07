@@ -21,6 +21,13 @@
         // fired on touchstart (iOS only — where touch listeners are attached);
         // an unambiguous user gesture, unlike scroll events which may be ours
         onUserTouch?: () => void;
+        // buckets items into height classes ("date", "text", "media", …) so
+        // unmeasured items estimate from their class average instead of the
+        // global one — a global average is systematically wrong for every
+        // class (date markers are ~40px against a media-inflated ~260px
+        // average), and that bias per entering row is what drives scroll
+        // compensation pressure during long rides
+        estimateClass?: (item: T) => string;
         // identifies items that act as date separators for the sticky date
         isDateMarker?: (item: T) => boolean;
         // timestamp for the sticky date; must return a value for date markers
@@ -122,6 +129,7 @@
         row,
         onUserScroll,
         onUserTouch,
+        estimateClass,
         isDateMarker,
         timestampFor,
         stickyDateElTop,
@@ -161,6 +169,41 @@
     let measuredCount = 0;
     let averageHeight = 95;
 
+    // ── Per-class height tracking (active when estimateClass is provided) ──
+    // itemClass[i] caches the class of items[i]; classSum/classCount track
+    // measured heights per class; classSnapshot holds the frozen per-class
+    // estimates (same freeze discipline as spacerAvgHeight); estimateMap[i]
+    // is the frozen estimate for items[i], realigned on items changes.
+    let itemClass: string[] = [];
+    let classSum = new Map<string, number>();
+    let classCount = new Map<string, number>();
+    let classSnapshot = new Map<string, number>();
+    let estimateMap: number[] = [];
+    // a class with too few samples estimates from the global average
+    const MIN_CLASS_SAMPLES = 4;
+
+    function trackClassMeasure(i: number, prev: number, h: number) {
+        if (estimateClass === undefined) return;
+        const cls = itemClass[i];
+        if (cls === undefined) return;
+        if (prev > 0) {
+            classSum.set(cls, (classSum.get(cls) ?? 0) - prev);
+            classCount.set(cls, (classCount.get(cls) ?? 0) - 1);
+        }
+        classSum.set(cls, (classSum.get(cls) ?? 0) + h);
+        classCount.set(cls, (classCount.get(cls) ?? 0) + 1);
+    }
+
+    // Project the frozen class snapshot onto per-index estimates after the
+    // items array changes shape. Does NOT re-freeze the snapshot.
+    function realignEstimates(fromIdx: number = 0) {
+        if (estimateClass === undefined) return;
+        estimateMap.length = items.length;
+        for (let i = fromIdx; i < items.length; i++) {
+            estimateMap[i] = classSnapshot.get(itemClass[i]) ?? spacerAvgHeight;
+        }
+    }
+
     // Full rebuild of heightMap and prune keyToHeight to only keys present in
     // the current items (prevents unbounded growth when items are replaced,
     // e.g. navigating to a different event window).
@@ -168,6 +211,9 @@
         heightMap = new Array(items.length).fill(0);
         totalMeasuredHeight = 0;
         measuredCount = 0;
+        classSum = new Map();
+        classCount = new Map();
+        if (estimateClass !== undefined) itemClass = items.map(estimateClass);
         const prunedHeights = new Map<string, number>();
         for (let i = 0; i < items.length; i++) {
             const item = items[i];
@@ -177,10 +223,12 @@
                 prunedHeights.set(item.key, h);
                 totalMeasuredHeight += h;
                 measuredCount++;
+                trackClassMeasure(i, 0, h);
             }
         }
         keyToHeight = prunedHeights;
         if (measuredCount > 0) averageHeight = totalMeasuredHeight / measuredCount;
+        realignEstimates();
         prefixDirty = true;
     }
 
@@ -189,6 +237,12 @@
     // for indices 0..fromIdx-1 without recomputing.
     function extendHeightMap(fromIdx: number) {
         heightMap.length = items.length;
+        if (estimateClass !== undefined) {
+            itemClass.length = items.length;
+            for (let i = fromIdx; i < items.length; i++) {
+                itemClass[i] = estimateClass(items[i]);
+            }
+        }
         for (let i = fromIdx; i < items.length; i++) {
             const item = items[i];
             const h = keyToHeight.get(item.key);
@@ -196,11 +250,13 @@
                 heightMap[i] = h;
                 totalMeasuredHeight += h;
                 measuredCount++;
+                trackClassMeasure(i, 0, h);
             } else {
                 heightMap[i] = 0;
             }
         }
         if (measuredCount > 0) averageHeight = totalMeasuredHeight / measuredCount;
+        realignEstimates(fromIdx);
         prefixDirty = true;
     }
 
@@ -212,8 +268,32 @@
     // one O(N) rebuild vs O(windowSize × N) total for per-item updates.
     function ensurePrefixSums() {
         if (!prefixDirty) return;
-        prefixSums = buildPrefixSums(items.length, heightMap, spacerAvgHeight);
+        prefixSums = buildPrefixSums(
+            items.length,
+            heightMap,
+            spacerAvgHeight,
+            estimateClass !== undefined ? estimateMap : undefined,
+        );
         prefixDirty = false;
+    }
+
+    // Re-freeze the estimate space: the global average plus each class's
+    // average (classes with too few samples inherit the global), projected
+    // onto per-index estimates. Same freeze points as spacerAvgHeight alone
+    // used to have — estimates must stay stable between these points or every
+    // unmeasured item's contribution drifts under the user (N×δ).
+    function refreshEstimateSnapshot() {
+        spacerAvgHeight = averageHeight;
+        if (estimateClass !== undefined) {
+            classSnapshot = new Map();
+            for (const [cls, count] of classCount) {
+                if (count >= MIN_CLASS_SAMPLES) {
+                    classSnapshot.set(cls, (classSum.get(cls) ?? 0) / count);
+                }
+            }
+            realignEstimates();
+        }
+        prefixDirty = true;
     }
 
     // ── spacerAvgHeight (frozen estimate snapshot) ───────────────────────
@@ -232,11 +312,12 @@
     // at which estimate, so we know the delta when measuring.
     let pendingBottomCorrections = new Map<number, number>();
 
-    // Use spacerAvgHeight (snapshot) for ALL unmeasured item estimates.
+    // Use the frozen estimate space for ALL unmeasured item estimates.
     // This keeps computeWindow and spacer calculations consistent — prevents
     // oscillation when averageHeight drifts from spacerAvgHeight during measurements.
     function getHeight(i: number): number {
-        return heightMap[i] > 0 ? heightMap[i] : spacerAvgHeight;
+        if (heightMap[i] > 0) return heightMap[i];
+        return estimateMap[i] ?? spacerAvgHeight;
     }
 
     function computeWindow(): [number, number] {
@@ -323,12 +404,11 @@
         } else if (!scrollingActive()) {
             repayDebtInline(reason);
         }
-        // Only mark prefix sums dirty if spacerAvgHeight actually changed,
+        // Only re-freeze the estimate space if the average actually changed,
         // to avoid redundant O(N) rebuilds when callers (e.g. _doScrollToIndex)
-        // have already set spacerAvgHeight and rebuilt prefix sums.
+        // have already refreshed it and rebuilt prefix sums.
         if (spacerAvgHeight !== averageHeight) {
-            spacerAvgHeight = averageHeight;
-            prefixDirty = true;
+            refreshEstimateSnapshot();
         }
         const [s, e] = computeWindow();
         let [bh, th] = computeSpacers(s, e);
@@ -807,8 +887,7 @@
             // lands away from the previously-visible content and the caller's
             // post-load anchor row is not even rendered.
             if (spacerAvgHeight !== averageHeight) {
-                spacerAvgHeight = averageHeight;
-                prefixDirty = true;
+                refreshEstimateSnapshot();
             }
 
             let prependOffset = 0;
@@ -895,10 +974,9 @@
         behavior: "auto" | "instant" | "smooth" = "instant",
     ) {
         if (!viewport) return;
-        // Snapshot averageHeight BEFORE computing distance so getHeight,
-        // computeWindow, and computeSpacers all use the same estimate.
-        spacerAvgHeight = averageHeight;
-        prefixDirty = true; // spacerAvgHeight changed
+        // Re-freeze the estimate space BEFORE computing distance so getHeight,
+        // computeWindow, and computeSpacers all use the same estimates.
+        refreshEstimateSnapshot();
         ensurePrefixSums();
         // startPos(flatIndex) = prefix[flatIndex] + flatIndex * gap
         const distFromBottom = prefixSums[flatIndex] + flatIndex * gapPx;
@@ -989,6 +1067,7 @@
                     totalMeasuredHeight += h;
                     measuredCount++;
                     if (measuredCount > 0) averageHeight = totalMeasuredHeight / measuredCount;
+                    trackClassMeasure(currentIdx, prev, h);
 
                     // Mark prefix sums for lazy rebuild rather than updating
                     // incrementally. During initial render or resize bursts,
