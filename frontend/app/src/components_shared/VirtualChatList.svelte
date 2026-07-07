@@ -337,7 +337,17 @@
         // assignment: the DOM spacer keeps its offset, so nothing shifts and
         // no scrollTop write is needed. Clamp so the DOM spacer stays >= 0.
         if (spacerDebt !== 0) {
-            if (spacerDebt > bh) spacerDebt = bh;
+            if (spacerDebt > bh) {
+                // Forgiving debt here leaves the DOM offset unmatched by the
+                // ledger — the repay that eventually fires moves scrollTop by
+                // less than the offset applied earlier.
+                vclDebug.log("!debt-clamped", {
+                    debt: Math.round(spacerDebt),
+                    bh: Math.round(bh),
+                    reason,
+                });
+                spacerDebt = bh;
+            }
             bh -= spacerDebt;
         }
         vclDebug.log("full", {
@@ -391,7 +401,14 @@
             }
             let [bh, th] = computeSpacers(s, e);
             if (spacerDebt !== 0) {
-                if (spacerDebt > bh) spacerDebt = bh;
+                if (spacerDebt > bh) {
+                    vclDebug.log("!debt-clamped", {
+                        debt: Math.round(spacerDebt),
+                        bh: Math.round(bh),
+                        reason: "incr-jumped",
+                    });
+                    spacerDebt = bh;
+                }
                 bh -= spacerDebt;
             }
             vclDebug.log("incr-jumped", { s, e, bh: Math.round(bh), th: Math.round(th) });
@@ -443,7 +460,26 @@
         topSpacerHeight = th;
 
         if (bottomSpacerHeight < 0) {
-            vclDebug.log("!negative-spacer", { bh: Math.round(bottomSpacerHeight), s, e });
+            // The clamp below silently adds |bh| px of content height with no
+            // matching scrollTop or debt adjustment — the visible shift. Full
+            // ledger context to pin down where the sign drift comes from:
+            // canon = what the spacer would be with outstanding debt repaid.
+            vclDebug.log("!negative-spacer", {
+                bh: Math.round(bottomSpacerHeight),
+                s,
+                e,
+                oldS: start,
+                oldE: end,
+                debt: Math.round(spacerDebt),
+                canon: Math.round(bottomSpacerHeight + spacerDebt),
+                fb: Math.round(fromBottom),
+                touch: isTouching,
+                mom: isMomentumScrolling,
+                pend: [...pendingBottomCorrections.entries()]
+                    .slice(0, 12)
+                    .map(([i, est]) => `${i}:${Math.round(est)}`)
+                    .join(" "),
+            });
         }
         bottomSpacerHeight = Math.max(0, bottomSpacerHeight);
         [bottomSpacerHeight, topSpacerHeight] = sanitizeSpacers(bottomSpacerHeight, topSpacerHeight);
@@ -454,6 +490,7 @@
             bh: Math.round(bottomSpacerHeight),
             th: Math.round(topSpacerHeight),
             pend: pendingBottomCorrections.size,
+            debt: Math.round(spacerDebt),
         });
 
         start = s;
@@ -577,7 +614,21 @@
         // it every entering item's estimate error shifts the content
         // mid-gesture (observed on iOS as per-message 'vibration' when
         // scrolling forward through unmeasured history).
-        if (!scrollingActive() || bottomSpacerHeight - delta < 0) {
+        if (!scrollingActive()) {
+            return false;
+        }
+        // Declines during an active gesture push the correction onto a write
+        // (or deferred-write) path — exactly the mid-gesture jolt hazard — so
+        // each decline reason is worth a trace line. A spacer too small to
+        // absorb is the normal state near the bottom of the list.
+        if (bottomSpacerHeight - delta < 0) {
+            vclDebug.log("!absorb-declined", {
+                why: "spacer-too-small",
+                bh: Math.round(bottomSpacerHeight),
+                delta: Math.round(delta),
+                debt: Math.round(spacerDebt),
+                fb: Math.round(fromBottom),
+            });
             return false;
         }
         // During touch/momentum a settle write would kill the native physics,
@@ -590,6 +641,11 @@
         // adjustment path — if we absorbed it we would immediately be forced
         // to repay it mid-scroll.
         if (Math.abs(delta) >= cap) {
+            vclDebug.log("!absorb-declined", {
+                why: "single-delta-cap",
+                delta: Math.round(delta),
+                cap,
+            });
             return false;
         }
         // On a long sustained scroll the debt never gets an idle moment to be
@@ -598,6 +654,12 @@
         // mid-gesture, where only the deferred path remains beyond the cap.
         if (Math.abs(spacerDebt + delta) >= cap) {
             if (isTouching || isMomentumScrolling) {
+                vclDebug.log("!absorb-declined", {
+                    why: "cap-mid-gesture",
+                    delta: Math.round(delta),
+                    debt: Math.round(spacerDebt),
+                    cap,
+                });
                 return false;
             }
             settleSpacerDebt(true);
