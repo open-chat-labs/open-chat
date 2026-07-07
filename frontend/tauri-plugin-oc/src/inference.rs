@@ -9,6 +9,7 @@
 
 use std::num::NonZeroU32;
 use std::path::Path;
+use std::sync::{Mutex, OnceLock};
 
 use llama_cpp_2::context::params::LlamaContextParams;
 use llama_cpp_2::context::LlamaContext;
@@ -24,6 +25,29 @@ use llama_cpp_2::token::LlamaToken;
 
 const DEFAULT_N_CTX: u32 = 4096;
 const N_BATCH: i32 = 512;
+
+/// The llama.cpp backend is a process-global: `LlamaBackend::init()` flips a global atomic and is
+/// NOT re-entrant — a second overlapping `init()` returns `BackendAlreadyInitialized`, and each
+/// per-call init/free pays to re-initialise ggml. Initialise it exactly once and keep it for the
+/// process lifetime. `LlamaBackend` is a zero-sized RAII guard, so never dropping it costs nothing
+/// and simply leaves the backend live (freed by the OS at exit). This removes the re-init hazard
+/// that made concurrent inferences collide; the app additionally serialises inference callers.
+fn shared_backend() -> Result<&'static LlamaBackend, String> {
+    static BACKEND: OnceLock<LlamaBackend> = OnceLock::new();
+    if let Some(backend) = BACKEND.get() {
+        return Ok(backend);
+    }
+    // Guard the one-time init so two threads can't both call LlamaBackend::init() (the loser would
+    // get BackendAlreadyInitialized). Double-check inside the lock.
+    static INIT_LOCK: Mutex<()> = Mutex::new(());
+    let _guard = INIT_LOCK.lock().map_err(|_| "backend init lock poisoned".to_string())?;
+    if let Some(backend) = BACKEND.get() {
+        return Ok(backend);
+    }
+    let backend = LlamaBackend::init().map_err(|e| format!("init backend: {e}"))?;
+    let _ = BACKEND.set(backend);
+    Ok(BACKEND.get().expect("backend was just set"))
+}
 
 /// Render a single user turn into a prompt string using the model's own Jinja chat template (read from
 /// the GGUF metadata). Deliberately generic: every chat GGUF ships its own template, so rendering it
@@ -144,13 +168,13 @@ pub fn run_text_inference(
     max_tokens: u32,
     response_schema: Option<&str>,
 ) -> Result<String, String> {
-    let backend = LlamaBackend::init().map_err(|e| format!("init backend: {e}"))?;
-    let model = LlamaModel::load_from_file(&backend, model_path, &LlamaModelParams::default())
+    let backend = shared_backend()?;
+    let model = LlamaModel::load_from_file(backend, model_path, &LlamaModelParams::default())
         .map_err(|e| format!("load model: {e}"))?;
 
     let ctx_params = LlamaContextParams::default().with_n_ctx(NonZeroU32::new(DEFAULT_N_CTX));
     let mut ctx = model
-        .new_context(&backend, ctx_params)
+        .new_context(backend, ctx_params)
         .map_err(|e| format!("create context: {e}"))?;
 
     let prompt = augment_prompt_for_schema(prompt, response_schema);
@@ -180,13 +204,13 @@ pub fn run_multimodal_inference(
     max_tokens: u32,
     response_schema: Option<&str>,
 ) -> Result<String, String> {
-    let backend = LlamaBackend::init().map_err(|e| format!("init backend: {e}"))?;
-    let model = LlamaModel::load_from_file(&backend, model_path, &LlamaModelParams::default())
+    let backend = shared_backend()?;
+    let model = LlamaModel::load_from_file(backend, model_path, &LlamaModelParams::default())
         .map_err(|e| format!("load model: {e}"))?;
 
     let ctx_params = LlamaContextParams::default().with_n_ctx(NonZeroU32::new(DEFAULT_N_CTX));
     let mut ctx = model
-        .new_context(&backend, ctx_params)
+        .new_context(backend, ctx_params)
         .map_err(|e| format!("create context: {e}"))?;
 
     // Multimodal projector. media_marker stays the default `<__media__>`, which we embed in the prompt.
