@@ -202,9 +202,12 @@
 
     // A navigation that arrived while the list was hidden (covering panel);
     // executed as soon as the list is visible again, with a real viewport to
-    // position against.
-    let pendingHiddenNav: { context: MessageContext; index: number; preserveFocus: boolean }
-        | undefined;
+    // position against. $state is load-bearing: the revive effect must fire
+    // when the navigation is stashed, not only when `visible` next changes —
+    // depending on layout the visibility flip can precede the stash.
+    let pendingHiddenNav = $state<
+        { context: MessageContext; index: number; preserveFocus: boolean } | undefined
+    >(undefined);
 
     $effect(() => {
         if (visible && pendingHiddenNav !== undefined) {
