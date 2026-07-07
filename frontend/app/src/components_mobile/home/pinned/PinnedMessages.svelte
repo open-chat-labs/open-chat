@@ -11,6 +11,7 @@
         currentUserStore,
         messagesRead,
         selectedChatPinnedMessagesStore,
+        selectedServerChatStore,
         subscribe,
     } from "openchat-client";
     import { isSuccessfulEventsResponse, publish } from "openchat-shared";
@@ -99,6 +100,13 @@
     }
 
     $effect(() => {
+        // Until the chat details arrive the pinned set is UNKNOWN, not empty —
+        // rendering the empty state here made the panel show "no pins" for the
+        // first second on a first open (cold cache / slow connection).
+        if ($selectedServerChatStore === undefined) {
+            messages = { kind: "loading" };
+            return;
+        }
         reloadPinned(pinnedMessages);
         unread = client.unreadPinned(chat.id, chat.dateLastPinned);
     });

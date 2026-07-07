@@ -39,7 +39,7 @@
         type OpenChat,
     } from "openchat-client";
     import { getContext, onMount, tick, untrack, type Snippet } from "svelte";
-    import { mobileOperatingSystem } from "@utils/devices";
+    import { isSafari, mobileOperatingSystem } from "@utils/devices";
     import type { FlatChatItem } from "./flatChatItems";
     import { vclDebug } from "./vclDebug";
     import { rowByKey } from "./virtualListUtils";
@@ -173,6 +173,8 @@
         void messageContext;
         scrollingToMessage = false;
         navToken++;
+        // a hidden-time navigation belongs to the chat it was issued in
+        pendingHiddenNav = undefined;
     });
     const insideTopThreshold = () => fromTop() < LOADING_THRESHOLD;
 
@@ -195,6 +197,27 @@
             loadingPrevMessages = false;
             requireScrollStop = false;
             pinToBottom = false;
+        }
+    });
+
+    // A navigation that arrived while the list was hidden (covering panel);
+    // executed as soon as the list is visible again, with a real viewport to
+    // position against. $state is load-bearing: the revive effect must fire
+    // when the navigation is stashed, not only when `visible` next changes —
+    // depending on layout the visibility flip can precede the stash.
+    let pendingHiddenNav = $state<
+        { context: MessageContext; index: number; preserveFocus: boolean } | undefined
+    >(undefined);
+
+    $effect(() => {
+        if (visible && pendingHiddenNav !== undefined) {
+            const nav = pendingHiddenNav;
+            untrack(() => {
+                pendingHiddenNav = undefined;
+                destroyed = false;
+                vclDebug.log("scroll-to-msg-revive", { index: nav.index });
+                scrollToMessageIndex(nav.context, nav.index, nav.preserveFocus);
+            });
         }
     });
 
@@ -424,6 +447,13 @@
     async function loadNew(): Promise<void> {
         const el = messagesDiv;
         const preLoadScrollHeight = el?.scrollHeight;
+        // At the bottom the view must FOLLOW new content, not preserve the
+        // reading position: scrollTop=0 is the column-reverse scroll origin
+        // (the old list stayed pinned there for free), so an anchor restore
+        // would push the view away from the bottom by the height of every
+        // arriving batch — in a busy channel that reads as the list
+        // repeatedly jumping ~a viewport up from the bottom.
+        const preAtBottom = fromBottom < 10;
         // Capture the bottom-most rendered row as a position anchor. After the
         // load we restore its exact on-screen position from the DOM — the only
         // coordinate system that mixes no estimates.
@@ -466,7 +496,18 @@
             // estimates) with the virtual window, unlike the scrollHeight delta.
             let target = -fromBottom;
             let anchored = false;
-            if (anchorKey !== undefined && anchorTop !== undefined) {
+            // Follow-to-bottom applies ONLY at the live bottom of the chat:
+            // preAtBottom re-checked against the current position (the user
+            // may have scrolled away mid-load), AND the load must have caught
+            // us up. At the catch-up WALL (scrollTop=0 mid-history because
+            // the newer content is not loaded yet) preAtBottom is also true,
+            // but forcing the bottom there teleports the user ~a batch of
+            // messages forward on every load — position preservation is what
+            // riding the wall needs.
+            const caughtUp = !client.moreNewMessagesAvailable(chat.id, threadRootEvent);
+            if (preAtBottom && caughtUp && -el.scrollTop < 200) {
+                target = 0;
+            } else if (anchorKey !== undefined && anchorTop !== undefined) {
                 const again = rowByKey(el, anchorKey);
                 if (again) {
                     target = el.scrollTop + (again.getBoundingClientRect().top - anchorTop);
@@ -481,15 +522,24 @@
                 fb: Math.round(fromBottom),
                 target: Math.round(target),
                 anchored,
+                atBottom: preAtBottom,
             });
             if (delta > 0) {
-                if (mobileOperatingSystem === "iOS") {
-                    // the one-frame overflow-y:hidden halts iOS momentum so the
-                    // programmatic write cannot be swallowed by native physics
+                if (mobileOperatingSystem === "iOS" || isSafari) {
+                    // the one-frame overflow-y:hidden halts iOS momentum / macOS
+                    // Safari trackpad inertia, so the programmatic write cannot
+                    // be swallowed by native physics. Safari desktop needs this
+                    // too: unlike Chrome (whose wheel animation a write cancels),
+                    // Safari's inertia keeps running and clobbers the restore a
+                    // frame later — the viewport teleports by the prepend height
+                    // and the suddenly-near-bottom position triggers a cascade of
+                    // further loads (observed as forward scroll "skipping").
                     await interruptScroll(target);
                 } else {
-                    // on desktop the freeze itself is a visible hitch mid-glide;
-                    // a plain write is safe and onScroll resyncs the window
+                    // on Chrome desktop the freeze itself is a visible hitch
+                    // mid-glide; a plain write is safe (it cancels the wheel
+                    // animation) and onScroll resyncs the window
+                    virtualList?.markProgrammaticScroll();
                     el.scrollTop = target;
                 }
             }
@@ -498,10 +548,6 @@
 
     async function loadPrev(initialLoad: boolean): Promise<void> {
         const el = messagesDiv;
-        // Capture scrollTop before the load. The browser may fire an async scroll
-        // adjustment after the topSpacer grows (column-reverse layout quirk), even
-        // with overflow-anchor: none. interruptScroll restores in the rAF, after
-        // the browser adjustment has happened.
         const preLoadScrollTop = el?.scrollTop;
 
         await client.loadPreviousMessages(chat.id, threadRootEvent, initialLoad);
@@ -509,9 +555,19 @@
         vclDebug.log("load-prev", {
             preTop: preLoadScrollTop !== undefined ? Math.round(preLoadScrollTop) : undefined,
             postTop: el ? Math.round(el.scrollTop) : undefined,
+            fb: Math.round(fromBottom),
             initialLoad,
         });
-        await interruptScroll(preLoadScrollTop);
+        // Restore against the browser's async post-growth scroll adjustment
+        // (column-reverse quirk after the topSpacer grows), but to where the
+        // user actually IS — not to the position captured at load start. On
+        // iOS the user keeps scrolling while the load is in flight, and
+        // restoring the stale scrollTop yanked the view forward by exactly
+        // the distance scrolled during the load (the top message ducked off
+        // the top of the screen). fromBottom tracks the last scroll event and
+        // is frozen while the interrupt gates the handler, so it is the
+        // pre-quirk, post-user-scroll position.
+        await interruptScroll(-fromBottom);
     }
 
     async function loadNewMessagesIfRequired(fromScroll = false): Promise<boolean> {
@@ -733,9 +789,17 @@
         filling: boolean = false,
         hasLookedUpEvent: boolean = false,
     ): Promise<void> {
-        // it is possible for the chat to change while this function is recursing so double check
-        if (token !== navToken) return Promise.resolve();
-        if (!messageContextsEqual(context, messageContext)) return Promise.resolve();
+        // it is possible for the chat to change while this function is recursing so double check.
+        // Every early exit logs: three separate debugging sessions were burned
+        // on navigations that died silently between two log lines.
+        if (token !== navToken) {
+            vclDebug.log("scroll-to-msg-exit", { index, why: "superseded", token, navToken });
+            return Promise.resolve();
+        }
+        if (!messageContextsEqual(context, messageContext)) {
+            vclDebug.log("scroll-to-msg-exit", { index, why: "context-changed" });
+            return Promise.resolve();
+        }
 
         if (index < 0) {
             focusIndex = undefined;
@@ -765,9 +829,15 @@
             // Delegate positioning to the virtual list: it positions on estimated
             // heights immediately and fires debounced corrective re-scrolls as
             // real measurements arrive.
+            if (virtualList === undefined) {
+                vclDebug.log("scroll-to-msg-exit", { index, why: "no-virtual-list" });
+            }
             virtualList?.scrollToIndex(flatIndex, "instant");
             await tick();
-            if (!messageContextsEqual(context, messageContext)) return Promise.resolve();
+            if (!messageContextsEqual(context, messageContext)) {
+                vclDebug.log("scroll-to-msg-exit", { index, why: "context-changed-post-tick" });
+                return Promise.resolve();
+            }
             if (!filling) {
                 // if we are not filling in extra events around the target then check if we need to open a thread
                 checkIfTargetMessageHasAThread(index);
@@ -785,6 +855,16 @@
                 scrollingToMessage = false;
                 return Promise.resolve();
             }
+        } else if (destroyed) {
+            // The chat is hidden behind a covering panel (which marks the
+            // list destroyed to emulate the old unmount semantics). A
+            // navigation arriving in this state is usually the very act of
+            // returning to the chat — on single-column layouts the pinned
+            // panel's tap updates the route several ms before the panel
+            // finishes closing — so defer it until the list is visible again
+            // instead of swallowing it.
+            vclDebug.log("scroll-to-msg-deferred", { index });
+            pendingHiddenNav = { context, index, preserveFocus };
         } else if (!destroyed) {
             // check whether we have already loaded the event we are looking for
             // (an isolated island hit does not count — we want the window load)
@@ -804,7 +884,12 @@
                     // navigation has even positioned itself.
                     interrupt = true;
                     try {
-                        await client.loadEventWindow(context.chatId, index, threadRootEvent);
+                        const loadedIdx = await client.loadEventWindow(
+                            context.chatId,
+                            index,
+                            threadRootEvent,
+                        );
+                        vclDebug.log("scroll-to-msg-window", { index, loadedIdx });
                         await tick();
                     } finally {
                         await interruptScroll();
@@ -818,6 +903,7 @@
                         true,
                     );
                 }
+                vclDebug.log("scroll-to-msg-exit", { index, why: "not-found-after-window-load" });
                 scrollingToMessage = false;
                 // A failed event-window load clears the event store before it
                 // fails, which would otherwise leave the user staring at an
@@ -907,6 +993,7 @@
                         from: Math.round(el.scrollTop),
                         to: Math.round(restoreScrollTop),
                     });
+                    virtualList?.markProgrammaticScroll();
                     el.scrollTop = restoreScrollTop;
                 }
                 interrupt = false;

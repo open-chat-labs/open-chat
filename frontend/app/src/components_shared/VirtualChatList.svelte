@@ -468,6 +468,11 @@
         if (!interrupt && viewport) {
             untrack(() => {
                 vclDebug.log("interrupt-end", { st: Math.round(viewport!.scrollTop) });
+                // Deferred adjustments were computed against the pre-interrupt
+                // positions; the restore has just resynced everything, so
+                // flushing them now would be a stale jolt on landing.
+                pendingScrollAdjustment = 0;
+                pendingSnapToBottom = false;
                 fromBottom = clampFromBottom(-viewport!.scrollTop);
                 updateWindowFull("interrupt-end");
             });
@@ -534,14 +539,35 @@
     // longer matters) or at the next full window recompute.
     // debt = canonicalSpacerHeight - domSpacerHeight
     let spacerDebt = 0;
+    // While a touch/momentum gesture is active the settle cannot run anyway
+    // (a write would kill native physics), so the only hard constraint on the
+    // debt is the overscan margin — beyond it the rendered window and the
+    // scroll position disagree visibly. The tight cap forced mid-gesture
+    // corrections onto the deferred-write path (an uncompensated shift per
+    // entering item — observed on iOS as choppiness once the estimate bias
+    // accumulated ~400px over ~10 items).
+    const MAX_SPACER_DEBT_GESTURE = OVERSCAN_PX;
     let lastUserScrollTime = 0;
+    // Time of the last scroll event of ANY origin. lastUserScrollTime alone is
+    // not a safe activity signal: each of our own scrollTop writes suppresses
+    // the genuine-scroll detection for 100ms, so during a busy stretch (repay,
+    // then per-entering-item compensations) the user clock goes stale while
+    // the user is still mid-gesture — absorption switches off and every
+    // correction becomes a write, each of which re-poisons the next window (a
+    // self-sustaining write storm, observed on iOS as per-item jolts).
+    let lastScrollEventTime = 0;
     let debtIdleTimer: ReturnType<typeof setTimeout> | undefined;
     const MAX_SPACER_DEBT = 400;
 
     // The window in which a scrollTop write would disturb the user: an active
     // touch, native momentum, or the tail of a wheel glide.
     function scrollingActive(): boolean {
-        return isTouching || isMomentumScrolling || Date.now() - lastUserScrollTime < 200;
+        return (
+            isTouching ||
+            isMomentumScrolling ||
+            Date.now() - lastUserScrollTime < 200 ||
+            Date.now() - lastScrollEventTime < 150
+        );
     }
 
     function canAbsorbIntoSpacer(delta: number): boolean {
@@ -554,19 +580,23 @@
         if (!scrollingActive() || bottomSpacerHeight - delta < 0) {
             return false;
         }
+        // During touch/momentum a settle write would kill the native physics,
+        // so the gesture cap is the overscan margin; outside a gesture the
+        // tight cap keeps the repayment write small.
+        const cap =
+            isTouching || isMomentumScrolling ? MAX_SPACER_DEBT_GESTURE : MAX_SPACER_DEBT;
         // A single correction bigger than the cap (a very tall item measured
         // against the average estimate) must go straight to the scroll
         // adjustment path — if we absorbed it we would immediately be forced
         // to repay it mid-scroll.
-        if (Math.abs(delta) >= MAX_SPACER_DEBT) {
+        if (Math.abs(delta) >= cap) {
             return false;
         }
         // On a long sustained scroll the debt never gets an idle moment to be
         // repaid; once the cap would be exceeded, force a single repayment
-        // write rather than degrading to a write per entering item. Except
-        // during touch/momentum, where a settle write would kill the native
-        // physics — fall through to the deferred-adjustment path instead.
-        if (Math.abs(spacerDebt + delta) >= MAX_SPACER_DEBT) {
+        // write rather than degrading to a write per entering item — except
+        // mid-gesture, where only the deferred path remains beyond the cap.
+        if (Math.abs(spacerDebt + delta) >= cap) {
             if (isTouching || isMomentumScrolling) {
                 return false;
             }
@@ -592,7 +622,11 @@
         clearTimeout(debtIdleTimer);
         debtIdleTimer = undefined;
         if (spacerDebt === 0 || !viewport) return;
-        if (!force && (isTouching || isMomentumScrolling || Date.now() - lastUserScrollTime < 250)) {
+        // scrollingActive() covers touch, momentum, AND the any-origin scroll
+        // event stream — the user-scroll clock alone goes stale when our own
+        // writes suppress genuine detection, and repays were observed firing
+        // milliseconds apart in the middle of a live iOS scroll stream.
+        if (!force && (scrollingActive() || Date.now() - lastUserScrollTime < 250)) {
             debtIdleTimer = setTimeout(() => settleSpacerDebt(), 300);
             return;
         }
@@ -658,13 +692,23 @@
 
             const numNew = items.length - oldLen;
 
-            // Detect prepend: items grew, first key changed, and the old first
-            // item is now at index (newLen - oldLen) — i.e. it was shifted right.
-            const isPrepend =
-                numNew > 0 &&
-                oldLen > 0 &&
-                oldFirstKey !== undefined &&
-                items[numNew]?.key === oldFirstKey;
+            // Detect prepend: items grew and the old first item was shifted
+            // right. Its new index is USUALLY numNew, but a date marker can be
+            // inserted or moved at the join (the new batch starts a new day),
+            // so search a small neighbourhood for the old first key instead of
+            // requiring exact equality — a strict check silently misses the
+            // prepend and the position teleports by the batch height.
+            let prependCount = 0;
+            if (numNew > 0 && oldLen > 0 && oldFirstKey !== undefined) {
+                const scanMax = Math.min(items.length - 1, numNew + 8);
+                for (let i = 1; i <= scanMax; i++) {
+                    if (items[i]?.key === oldFirstKey) {
+                        prependCount = i;
+                        break;
+                    }
+                }
+            }
+            const isPrepend = prependCount > 0;
 
             // Detect pure append: items grew, first key unchanged, AND the
             // previously-last item is still at its old index. This guards against
@@ -700,12 +744,13 @@
                 // in column-reverse). Adjust fromBottom so updateWindowFull
                 // targets the same visual position in the new index space.
                 let offset = 0;
-                for (let i = 0; i < numNew; i++) {
+                for (let i = 0; i < prependCount; i++) {
                     offset += getHeight(i);
                 }
-                // Include gaps: numNew new items add numNew gaps (one per item
-                // plus the gap between last new item and old first item).
-                offset += numNew * gapPx;
+                // Include gaps: prependCount new items add prependCount gaps
+                // (one per item plus the gap between last new item and old
+                // first item).
+                offset += prependCount * gapPx;
                 fromBottom += offset;
                 prependOffset = offset;
             }
@@ -726,6 +771,14 @@
     function flushScrollAdjustment() {
         clearTimeout(momentumEndTimer);
         momentumEndTimer = undefined;
+        // iOS fires scrollend on momentary pauses while the finger is still
+        // down — flushing then writes the deferred adjustment straight into
+        // the live gesture (observed as a jolt mid-drag). Re-defer until the
+        // touch actually ends.
+        if (isTouching) {
+            momentumEndTimer = setTimeout(flushScrollAdjustment, 100);
+            return;
+        }
         isMomentumScrolling = false;
         if (!viewport) return;
         settleSpacerDebt();
@@ -946,16 +999,27 @@
                                     viewport.scrollTo({ top: 0 });
                                     lastProgrammaticScrollTime = Date.now();
                                 }
+                            } else if (
+                                (isTouching || isMomentumScrolling) &&
+                                canAbsorbIntoSpacer(h - prev)
+                            ) {
+                                // Mid-touch/momentum a scrollTop write is not an
+                                // option (it kills native physics) and the
+                                // deferred adjustment is flushed later as a
+                                // visible double-jolt (grow-shift, then the
+                                // correction jerking it back). A one-frame-late
+                                // spacer absorb is the least bad option here.
+                                absorbIntoSpacer(h - prev);
                             } else {
-                                // NOTE: unlike the entry path above, do NOT absorb
+                                // NOTE: outside a touch gesture, do NOT absorb
                                 // this into the spacer. A ResizeObserver-driven
                                 // resize has already been laid out (and possibly
                                 // painted) by the time we hear about it, so a
                                 // spacer adjustment lands a frame late and shows
-                                // as a visible bounce. The immediate scrollTop
-                                // write is the lesser evil here — these resizes
-                                // (images/settling content) are far rarer than
-                                // entries during a scroll.
+                                // as a visible bounce on a wheel glide. The
+                                // immediate scrollTop write is the lesser evil —
+                                // these resizes (images/settling content) are far
+                                // rarer than entries during a scroll.
                                 adjustScrollTop(h - prev);
                             }
                         }
@@ -1083,6 +1147,7 @@
     let prevScrollEventTime = 0;
     function onScroll() {
         if (!viewport || interrupt) return;
+        lastScrollEventTime = Date.now();
         if (vclDebug.enabled) {
             const st = viewport.scrollTop;
             const delta = st - prevScrollEventTop;
@@ -1145,6 +1210,15 @@
         scrollCorrectCount = 0;
         pendingScrollStartedAt = Date.now();
         _doScrollToIndex(flatIndex, behavior);
+    }
+
+    // The owner performs some scrollTop writes of its own (the loadNew
+    // restore, the interrupt restore). They must be marked as programmatic or
+    // their scroll events read as genuine user scrolls: logged as !jump,
+    // releasing the bottom pin, and updating the user-scroll clock that debt
+    // absorption keys off.
+    export function markProgrammaticScroll() {
+        lastProgrammaticScrollTime = Date.now();
     }
 
     export function scrollToBottom(behavior: "auto" | "instant" | "smooth" = "instant") {
