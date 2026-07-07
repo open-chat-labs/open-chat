@@ -39,7 +39,7 @@
         type OpenChat,
     } from "openchat-client";
     import { getContext, onMount, tick, untrack, type Snippet } from "svelte";
-    import { mobileOperatingSystem } from "@utils/devices";
+    import { isSafari, mobileOperatingSystem } from "@utils/devices";
     import type { FlatChatItem } from "./flatChatItems";
     import { vclDebug } from "./vclDebug";
     import { rowByKey } from "./virtualListUtils";
@@ -473,7 +473,10 @@
             // estimates) with the virtual window, unlike the scrollHeight delta.
             let target = -fromBottom;
             let anchored = false;
-            if (preAtBottom) {
+            // preAtBottom must be re-checked against the CURRENT position: the
+            // user may have scrolled away while the load was in flight, and
+            // forcing them back to the bottom then is a visible yank.
+            if (preAtBottom && -el.scrollTop < 200) {
                 target = 0;
             } else if (anchorKey !== undefined && anchorTop !== undefined) {
                 const again = rowByKey(el, anchorKey);
@@ -493,13 +496,21 @@
                 atBottom: preAtBottom,
             });
             if (delta > 0) {
-                if (mobileOperatingSystem === "iOS") {
-                    // the one-frame overflow-y:hidden halts iOS momentum so the
-                    // programmatic write cannot be swallowed by native physics
+                if (mobileOperatingSystem === "iOS" || isSafari) {
+                    // the one-frame overflow-y:hidden halts iOS momentum / macOS
+                    // Safari trackpad inertia, so the programmatic write cannot
+                    // be swallowed by native physics. Safari desktop needs this
+                    // too: unlike Chrome (whose wheel animation a write cancels),
+                    // Safari's inertia keeps running and clobbers the restore a
+                    // frame later — the viewport teleports by the prepend height
+                    // and the suddenly-near-bottom position triggers a cascade of
+                    // further loads (observed as forward scroll "skipping").
                     await interruptScroll(target);
                 } else {
-                    // on desktop the freeze itself is a visible hitch mid-glide;
-                    // a plain write is safe and onScroll resyncs the window
+                    // on Chrome desktop the freeze itself is a visible hitch
+                    // mid-glide; a plain write is safe (it cancels the wheel
+                    // animation) and onScroll resyncs the window
+                    virtualList?.markProgrammaticScroll();
                     el.scrollTop = target;
                 }
             }
@@ -917,6 +928,7 @@
                         from: Math.round(el.scrollTop),
                         to: Math.round(restoreScrollTop),
                     });
+                    virtualList?.markProgrammaticScroll();
                     el.scrollTop = restoreScrollTop;
                 }
                 interrupt = false;

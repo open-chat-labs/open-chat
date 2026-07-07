@@ -658,13 +658,23 @@
 
             const numNew = items.length - oldLen;
 
-            // Detect prepend: items grew, first key changed, and the old first
-            // item is now at index (newLen - oldLen) — i.e. it was shifted right.
-            const isPrepend =
-                numNew > 0 &&
-                oldLen > 0 &&
-                oldFirstKey !== undefined &&
-                items[numNew]?.key === oldFirstKey;
+            // Detect prepend: items grew and the old first item was shifted
+            // right. Its new index is USUALLY numNew, but a date marker can be
+            // inserted or moved at the join (the new batch starts a new day),
+            // so search a small neighbourhood for the old first key instead of
+            // requiring exact equality — a strict check silently misses the
+            // prepend and the position teleports by the batch height.
+            let prependCount = 0;
+            if (numNew > 0 && oldLen > 0 && oldFirstKey !== undefined) {
+                const scanMax = Math.min(items.length - 1, numNew + 8);
+                for (let i = 1; i <= scanMax; i++) {
+                    if (items[i]?.key === oldFirstKey) {
+                        prependCount = i;
+                        break;
+                    }
+                }
+            }
+            const isPrepend = prependCount > 0;
 
             // Detect pure append: items grew, first key unchanged, AND the
             // previously-last item is still at its old index. This guards against
@@ -700,12 +710,13 @@
                 // in column-reverse). Adjust fromBottom so updateWindowFull
                 // targets the same visual position in the new index space.
                 let offset = 0;
-                for (let i = 0; i < numNew; i++) {
+                for (let i = 0; i < prependCount; i++) {
                     offset += getHeight(i);
                 }
-                // Include gaps: numNew new items add numNew gaps (one per item
-                // plus the gap between last new item and old first item).
-                offset += numNew * gapPx;
+                // Include gaps: prependCount new items add prependCount gaps
+                // (one per item plus the gap between last new item and old
+                // first item).
+                offset += prependCount * gapPx;
                 fromBottom += offset;
                 prependOffset = offset;
             }
@@ -1145,6 +1156,15 @@
         scrollCorrectCount = 0;
         pendingScrollStartedAt = Date.now();
         _doScrollToIndex(flatIndex, behavior);
+    }
+
+    // The owner performs some scrollTop writes of its own (the loadNew
+    // restore, the interrupt restore). They must be marked as programmatic or
+    // their scroll events read as genuine user scrolls: logged as !jump,
+    // releasing the bottom pin, and updating the user-scroll clock that debt
+    // absorption keys off.
+    export function markProgrammaticScroll() {
+        lastProgrammaticScrollTime = Date.now();
     }
 
     export function scrollToBottom(behavior: "auto" | "instant" | "smooth" = "instant") {
