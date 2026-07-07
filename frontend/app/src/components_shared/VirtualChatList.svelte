@@ -468,6 +468,11 @@
         if (!interrupt && viewport) {
             untrack(() => {
                 vclDebug.log("interrupt-end", { st: Math.round(viewport!.scrollTop) });
+                // Deferred adjustments were computed against the pre-interrupt
+                // positions; the restore has just resynced everything, so
+                // flushing them now would be a stale jolt on landing.
+                pendingScrollAdjustment = 0;
+                pendingSnapToBottom = false;
                 fromBottom = clampFromBottom(-viewport!.scrollTop);
                 updateWindowFull("interrupt-end");
             });
@@ -535,13 +540,26 @@
     // debt = canonicalSpacerHeight - domSpacerHeight
     let spacerDebt = 0;
     let lastUserScrollTime = 0;
+    // Time of the last scroll event of ANY origin. lastUserScrollTime alone is
+    // not a safe activity signal: each of our own scrollTop writes suppresses
+    // the genuine-scroll detection for 100ms, so during a busy stretch (repay,
+    // then per-entering-item compensations) the user clock goes stale while
+    // the user is still mid-gesture — absorption switches off and every
+    // correction becomes a write, each of which re-poisons the next window (a
+    // self-sustaining write storm, observed on iOS as per-item jolts).
+    let lastScrollEventTime = 0;
     let debtIdleTimer: ReturnType<typeof setTimeout> | undefined;
     const MAX_SPACER_DEBT = 400;
 
     // The window in which a scrollTop write would disturb the user: an active
     // touch, native momentum, or the tail of a wheel glide.
     function scrollingActive(): boolean {
-        return isTouching || isMomentumScrolling || Date.now() - lastUserScrollTime < 200;
+        return (
+            isTouching ||
+            isMomentumScrolling ||
+            Date.now() - lastUserScrollTime < 200 ||
+            Date.now() - lastScrollEventTime < 150
+        );
     }
 
     function canAbsorbIntoSpacer(delta: number): boolean {
@@ -1094,6 +1112,7 @@
     let prevScrollEventTime = 0;
     function onScroll() {
         if (!viewport || interrupt) return;
+        lastScrollEventTime = Date.now();
         if (vclDebug.enabled) {
             const st = viewport.scrollTop;
             const delta = st - prevScrollEventTop;
