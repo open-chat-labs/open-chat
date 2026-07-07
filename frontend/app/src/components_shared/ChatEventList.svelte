@@ -173,6 +173,8 @@
         void messageContext;
         scrollingToMessage = false;
         navToken++;
+        // a hidden-time navigation belongs to the chat it was issued in
+        pendingHiddenNav = undefined;
     });
     const insideTopThreshold = () => fromTop() < LOADING_THRESHOLD;
 
@@ -195,6 +197,24 @@
             loadingPrevMessages = false;
             requireScrollStop = false;
             pinToBottom = false;
+        }
+    });
+
+    // A navigation that arrived while the list was hidden (covering panel);
+    // executed as soon as the list is visible again, with a real viewport to
+    // position against.
+    let pendingHiddenNav: { context: MessageContext; index: number; preserveFocus: boolean }
+        | undefined;
+
+    $effect(() => {
+        if (visible && pendingHiddenNav !== undefined) {
+            const nav = pendingHiddenNav;
+            untrack(() => {
+                pendingHiddenNav = undefined;
+                destroyed = false;
+                vclDebug.log("scroll-to-msg-revive", { index: nav.index });
+                scrollToMessageIndex(nav.context, nav.index, nav.preserveFocus);
+            });
         }
     });
 
@@ -821,7 +841,15 @@
                 return Promise.resolve();
             }
         } else if (destroyed) {
-            vclDebug.log("scroll-to-msg-exit", { index, why: "destroyed" });
+            // The chat is hidden behind a covering panel (which marks the
+            // list destroyed to emulate the old unmount semantics). A
+            // navigation arriving in this state is usually the very act of
+            // returning to the chat — on single-column layouts the pinned
+            // panel's tap updates the route several ms before the panel
+            // finishes closing — so defer it until the list is visible again
+            // instead of swallowing it.
+            vclDebug.log("scroll-to-msg-deferred", { index });
+            pendingHiddenNav = { context, index, preserveFocus };
         } else if (!destroyed) {
             // check whether we have already loaded the event we are looking for
             // (an isolated island hit does not count — we want the window load)
