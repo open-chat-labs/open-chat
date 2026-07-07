@@ -852,7 +852,13 @@
                 });
                 return false;
             }
-            settleSpacerDebt(true);
+            // This call site is usually inside a render flush (measureRow
+            // during row creation), where settle's flushSync throws and falls
+            // back to a revert-and-retry that is non-atomic for one frame —
+            // observed as a one-frame glitch when the cap trips mid-glide.
+            // Deferring to a microtask keeps the settle atomic; the absorb
+            // below proceeds and the settle repays the new total.
+            queueMicrotask(() => settleSpacerDebt(true));
         }
         return bottomSpacerHeight - delta >= 0;
     }
