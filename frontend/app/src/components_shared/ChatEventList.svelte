@@ -619,21 +619,24 @@
                 pinned: pinned !== undefined ? Math.round(pinned) : undefined,
                 atBottom: preAtBottom,
             });
-            if (delta > 0 && Math.abs(el.scrollTop - target) > 1) {
+            if (delta > 0) {
                 if (mobileOperatingSystem === "iOS" || isSafari) {
-                    // the one-frame overflow-y:hidden halts iOS momentum / macOS
-                    // Safari trackpad inertia, so the programmatic write cannot
-                    // be swallowed by native physics. Safari desktop needs this
-                    // too: unlike Chrome (whose wheel animation a write cancels),
-                    // Safari's inertia keeps running and clobbers the restore a
-                    // frame later — the viewport teleports by the prepend height
-                    // and the suddenly-near-bottom position triggers a cascade of
-                    // further loads (observed as forward scroll "skipping").
+                    // ALWAYS interrupt here, even when scrollTop already sits
+                    // at the target (the virtual list's same-flush pin usually
+                    // puts it there): the interrupt's overflow-y:hidden frame
+                    // is what holds the position across WebKit's own
+                    // post-growth scroll anchoring — without it the browser
+                    // snaps scrollTop back toward the pre-load value a moment
+                    // later, teleporting the user into the new batch and
+                    // re-triggering the load threshold (observed as a huge
+                    // forward leap at the boundary even at slow speeds). It
+                    // also stops native physics from swallowing the write.
                     await interruptScroll(target);
-                } else {
+                } else if (Math.abs(el.scrollTop - target) > 1) {
                     // on Chrome desktop the freeze itself is a visible hitch
                     // mid-glide; a plain write is safe (it cancels the wheel
-                    // animation) and onScroll resyncs the window
+                    // animation) and onScroll resyncs the window. Skip it when
+                    // the pin already landed us on target.
                     virtualList?.markProgrammaticScroll();
                     el.scrollTop = target;
                 }
