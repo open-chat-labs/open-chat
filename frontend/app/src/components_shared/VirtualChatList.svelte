@@ -1056,6 +1056,22 @@
     // when items are prepended and all indices shift.
     function measureRow(node: HTMLElement, absIdx: number) {
         let currentIdx = absIdx;
+        // Rows whose content renders in two passes (media height styles are
+        // applied in onMount, after the first layout) briefly collapse on
+        // every remount, churning a correction pair per window re-entry. The
+        // settled height from the row's previous life is known — pin it as
+        // min-height across the mount so the transient never reaches layout,
+        // then release. Content that genuinely changed while unmounted
+        // corrects normally after the release.
+        const known = keyToHeight.get(items[absIdx]?.key ?? "");
+        if (known !== undefined && known > 0) {
+            node.style.minHeight = `${known}px`;
+            requestAnimationFrame(() =>
+                requestAnimationFrame(() => {
+                    node.style.minHeight = "";
+                }),
+            );
+        }
         function measure() {
             // Guard: items may have shrunk (chat switch, teardown) while
             // this ResizeObserver callback was pending.
