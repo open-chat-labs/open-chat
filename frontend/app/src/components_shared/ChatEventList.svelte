@@ -548,10 +548,6 @@
 
     async function loadPrev(initialLoad: boolean): Promise<void> {
         const el = messagesDiv;
-        // Capture scrollTop before the load. The browser may fire an async scroll
-        // adjustment after the topSpacer grows (column-reverse layout quirk), even
-        // with overflow-anchor: none. interruptScroll restores in the rAF, after
-        // the browser adjustment has happened.
         const preLoadScrollTop = el?.scrollTop;
 
         await client.loadPreviousMessages(chat.id, threadRootEvent, initialLoad);
@@ -559,9 +555,19 @@
         vclDebug.log("load-prev", {
             preTop: preLoadScrollTop !== undefined ? Math.round(preLoadScrollTop) : undefined,
             postTop: el ? Math.round(el.scrollTop) : undefined,
+            fb: Math.round(fromBottom),
             initialLoad,
         });
-        await interruptScroll(preLoadScrollTop);
+        // Restore against the browser's async post-growth scroll adjustment
+        // (column-reverse quirk after the topSpacer grows), but to where the
+        // user actually IS — not to the position captured at load start. On
+        // iOS the user keeps scrolling while the load is in flight, and
+        // restoring the stale scrollTop yanked the view forward by exactly
+        // the distance scrolled during the load (the top message ducked off
+        // the top of the screen). fromBottom tracks the last scroll event and
+        // is frozen while the interrupt gates the handler, so it is the
+        // pre-quirk, post-user-scroll position.
+        await interruptScroll(-fromBottom);
     }
 
     async function loadNewMessagesIfRequired(fromScroll = false): Promise<boolean> {
