@@ -424,6 +424,13 @@
     async function loadNew(): Promise<void> {
         const el = messagesDiv;
         const preLoadScrollHeight = el?.scrollHeight;
+        // At the bottom the view must FOLLOW new content, not preserve the
+        // reading position: scrollTop=0 is the column-reverse scroll origin
+        // (the old list stayed pinned there for free), so an anchor restore
+        // would push the view away from the bottom by the height of every
+        // arriving batch — in a busy channel that reads as the list
+        // repeatedly jumping ~a viewport up from the bottom.
+        const preAtBottom = fromBottom < 10;
         // Capture the bottom-most rendered row as a position anchor. After the
         // load we restore its exact on-screen position from the DOM — the only
         // coordinate system that mixes no estimates.
@@ -466,7 +473,9 @@
             // estimates) with the virtual window, unlike the scrollHeight delta.
             let target = -fromBottom;
             let anchored = false;
-            if (anchorKey !== undefined && anchorTop !== undefined) {
+            if (preAtBottom) {
+                target = 0;
+            } else if (anchorKey !== undefined && anchorTop !== undefined) {
                 const again = rowByKey(el, anchorKey);
                 if (again) {
                     target = el.scrollTop + (again.getBoundingClientRect().top - anchorTop);
@@ -481,6 +490,7 @@
                 fb: Math.round(fromBottom),
                 target: Math.round(target),
                 anchored,
+                atBottom: preAtBottom,
             });
             if (delta > 0) {
                 if (mobileOperatingSystem === "iOS") {
