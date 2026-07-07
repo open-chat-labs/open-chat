@@ -43,7 +43,6 @@
     import { isSafari, mobileOperatingSystem } from "@utils/devices";
     import type { FlatChatItem } from "./flatChatItems";
     import { vclDebug } from "./vclDebug";
-    import { rowByKey } from "./virtualListUtils";
     import VirtualChatList from "./VirtualChatList.svelte";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
@@ -324,9 +323,14 @@
     }
 
     // Height classes for the virtual list's unmeasured-item estimates. Date
-    // markers are effectively constant-height; media messages are several
-    // times taller than text ones — a single global average is systematically
-    // wrong for all of them (trace: 39px markers against a 261px average).
+    // markers are effectively constant-height and media is several times
+    // taller than text — a single global average is systematically wrong for
+    // everything (trace: 39px markers against a 261px average). Bucket by
+    // content kind, with link-preview texts split out: a text message with an
+    // OG preview measures ~400px against ~80px for plain text, and lumping
+    // them together poisons the shared average from both ends (device trace:
+    // debt railing +892 through a preview cluster and -1183 through plain
+    // text estimated at the inflated shared average).
     function estimateClass(item: FlatChatItem): string {
         switch (item.kind) {
             case "timeline_date":
@@ -336,14 +340,14 @@
             case "event": {
                 const evt = item.event.event;
                 if (evt.kind !== "message") return "event";
-                switch (evt.content.kind) {
-                    case "image_content":
-                    case "video_content":
-                    case "giphy_content":
-                        return "media";
-                    default:
-                        return "text";
+                if (
+                    evt.content.kind === "text_content" &&
+                    ((evt.ogPreviews?.length ?? 0) > 0 ||
+                        (evt.messagePreviews?.length ?? 0) > 0)
+                ) {
+                    return "text_preview";
                 }
+                return evt.content.kind;
             }
         }
     }
@@ -552,12 +556,6 @@
         // arriving batch — in a busy channel that reads as the list
         // repeatedly jumping ~a viewport up from the bottom.
         const preAtBottom = fromBottom < 10;
-        // Capture the bottom-most rendered row as a position anchor. After the
-        // load we restore its exact on-screen position from the DOM — the only
-        // coordinate system that mixes no estimates.
-        const anchorEl = el?.querySelector<HTMLElement>(".vcl-row");
-        const anchorKey = anchorEl?.dataset.key;
-        const anchorTop = anchorEl?.getBoundingClientRect().top;
 
         await client.loadNewMessages(chat.id, threadRootEvent);
 
@@ -589,11 +587,16 @@
         if (el && preLoadScrollHeight !== undefined) {
             await tick();
             const delta = el.scrollHeight - preLoadScrollHeight;
-            // Preferred restore: the anchor row's actual pixel shift. Fallback:
-            // -fromBottom, which at least shares its coordinate system (height
-            // estimates) with the virtual window, unlike the scrollHeight delta.
-            let target = -fromBottom;
-            let anchored = false;
+            // The virtual list pinned the prepend to the user's live position
+            // in the same flush that rendered it (anchor-exact, paint-atomic).
+            // That pin is the restore target. Do NOT recompute from an anchor
+            // rect captured before the load await: the user keeps scrolling
+            // while the load is in flight, and restoring a pre-load position
+            // rewinds them by exactly the distance scrolled during the load —
+            // ~the full load latency's worth of scroll on a cold cache, which
+            // is why boundary feel varied so wildly between sessions.
+            const pinned = virtualList?.lastPrependPin();
+            let target = pinned ?? -fromBottom;
             // Follow-to-bottom applies ONLY at the live bottom of the chat:
             // preAtBottom re-checked against the current position (the user
             // may have scrolled away mid-load), AND the load must have caught
@@ -605,12 +608,6 @@
             const caughtUp = !client.moreNewMessagesAvailable(chat.id, threadRootEvent);
             if (preAtBottom && caughtUp && -el.scrollTop < 200) {
                 target = 0;
-            } else if (anchorKey !== undefined && anchorTop !== undefined) {
-                const again = rowByKey(el, anchorKey);
-                if (again) {
-                    target = el.scrollTop + (again.getBoundingClientRect().top - anchorTop);
-                    anchored = true;
-                }
             }
             vclDebug.log("load-new", {
                 preH: Math.round(preLoadScrollHeight),
@@ -619,10 +616,10 @@
                 st: Math.round(el.scrollTop),
                 fb: Math.round(fromBottom),
                 target: Math.round(target),
-                anchored,
+                pinned: pinned !== undefined ? Math.round(pinned) : undefined,
                 atBottom: preAtBottom,
             });
-            if (delta > 0) {
+            if (delta > 0 && Math.abs(el.scrollTop - target) > 1) {
                 if (mobileOperatingSystem === "iOS" || isSafari) {
                     // the one-frame overflow-y:hidden halts iOS momentum / macOS
                     // Safari trackpad inertia, so the programmatic write cannot
@@ -1184,6 +1181,7 @@
     {onUserScroll}
     {onUserTouch}
     {estimateClass}
+    caughtUp={() => !client.moreNewMessagesAvailable(chat.id, threadRootEvent)}
     {isDateMarker}
     {timestampFor}
     {stickyDateElTop}

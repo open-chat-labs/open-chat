@@ -28,6 +28,10 @@
         // average), and that bias per entering row is what drives scroll
         // compensation pressure during long rides
         estimateClass?: (item: T) => string;
+        // true when the newest loaded message is the newest that exists —
+        // distinguishes the genuine live bottom (where prepends are followed)
+        // from the catch-up wall mid-history (where position is preserved)
+        caughtUp?: () => boolean;
         // identifies items that act as date separators for the sticky date
         isDateMarker?: (item: T) => boolean;
         // timestamp for the sticky date; must return a value for date markers
@@ -130,6 +134,7 @@
         onUserScroll,
         onUserTouch,
         estimateClass,
+        caughtUp,
         isDateMarker,
         timestampFor,
         stickyDateElTop,
@@ -407,7 +412,17 @@
         // Only re-freeze the estimate space if the average actually changed,
         // to avoid redundant O(N) rebuilds when callers (e.g. _doScrollToIndex)
         // have already refreshed it and rebuilt prefix sums.
-        if (spacerAvgHeight !== averageHeight) {
+        //
+        // NEVER re-freeze at interrupt-end: the owner's restore just pinned an
+        // anchor row's exact screen position, but the rows rendered for the
+        // new window measure between that restore and this recompute, moving
+        // the live average. Re-freezing here re-estimates every unmeasured row
+        // below the viewport, changing the bottom spacer under the anchor —
+        // a visible position jump at every load boundary, at any speed. The
+        // recompute must run in the same estimate space the restore was
+        // computed against; the next natural refresh point (items change,
+        // navigation, resize — which all compensate) picks up the new average.
+        if (reason !== "interrupt-end" && spacerAvgHeight !== averageHeight) {
             refreshEstimateSnapshot();
         }
         const [s, e] = computeWindow();
@@ -590,10 +605,82 @@
     }
 
 
+    // ── Synthetic momentum continuation (iOS) ─────────────────────────────
+    // Crossing a load boundary needs the scroll interrupt (the restore write
+    // must not be clobbered by native physics), but the interrupt also kills
+    // the user's fling dead — every forward boundary was a hard stop. Native
+    // momentum cannot be restarted, so we continue it ourselves: sample the
+    // fling velocity from genuine scroll events, and when the interrupt ends
+    // JS-animate the remaining glide with iOS's own deceleration curve.
+    // Programmatic writes are safe at that point — there is no native
+    // momentum left to fight — and the glide's scroll events drive loads and
+    // window updates exactly like the native fling did, so the velocity
+    // carries across subsequent boundaries too.
+    let glideRaf: number | undefined;
+    let glideVelocity = 0; // px/ms, positive = towards the bottom
+    let sampleTime = 0; // performance.now() of the last genuine scroll sample
+    let sampleTop = 0;
+    let sampledVelocity = 0;
+    let capturedGlideVelocity = 0;
+    const GLIDE_MIN_START = 0.15; // px/ms — slower flings aren't worth faking
+    const GLIDE_MIN_KEEP = 0.02;
+    const GLIDE_DECAY_PER_MS = 0.998; // UIScrollView's normal deceleration rate
+
+    function cancelGlide() {
+        if (glideRaf !== undefined) cancelAnimationFrame(glideRaf);
+        glideRaf = undefined;
+        glideVelocity = 0;
+    }
+
+    function startGlide(v: number) {
+        cancelGlide();
+        glideVelocity = v;
+        let last = performance.now();
+        vclDebug.log("glide-start", { v: Math.round(v * 1000) });
+        const step = (t: number) => {
+            glideRaf = undefined;
+            if (!viewport || interrupt || isTouching) {
+                glideVelocity = 0;
+                return;
+            }
+            const dt = Math.min(t - last, 64);
+            last = t;
+            const before = viewport.scrollTop;
+            viewport.scrollTop = before + glideVelocity * dt;
+            lastProgrammaticScrollTime = Date.now();
+            glideVelocity *= Math.pow(GLIDE_DECAY_PER_MS, dt);
+            // an unchanged scrollTop means the browser clamped us at an edge
+            if (Math.abs(glideVelocity) < GLIDE_MIN_KEEP || viewport.scrollTop === before) {
+                vclDebug.log("glide-end", { st: Math.round(viewport.scrollTop) });
+                glideVelocity = 0;
+                return;
+            }
+            glideRaf = requestAnimationFrame(step);
+        };
+        glideRaf = requestAnimationFrame(step);
+    }
+
     // After interrupt ends (scroll restored), sync fromBottom and do a full recompute
     // so spacer state is consistent with the restored scroll position.
     $effect(() => {
-        if (!interrupt && viewport) {
+        if (interrupt) {
+            untrack(() => {
+                // Capture the fling for continuation: an active synthetic
+                // glide's velocity, or the freshly sampled native one when
+                // momentum was live as the interrupt began.
+                capturedGlideVelocity = 0;
+                const v =
+                    glideRaf !== undefined
+                        ? glideVelocity
+                        : isMomentumScrolling && performance.now() - sampleTime < 250
+                          ? sampledVelocity
+                          : 0;
+                cancelGlide();
+                if (mobileOperatingSystem === "iOS" && !isTouching && Math.abs(v) > GLIDE_MIN_START) {
+                    capturedGlideVelocity = v;
+                }
+            });
+        } else if (viewport) {
             untrack(() => {
                 vclDebug.log("interrupt-end", { st: Math.round(viewport!.scrollTop) });
                 // Deferred adjustments were computed against the pre-interrupt
@@ -611,6 +698,10 @@
                 }
                 fromBottom = clampFromBottom(-viewport!.scrollTop);
                 updateWindowFull("interrupt-end");
+                if (capturedGlideVelocity !== 0) {
+                    startGlide(capturedGlideVelocity);
+                    capturedGlideVelocity = 0;
+                }
             });
         }
     });
@@ -903,6 +994,16 @@
                 // New items were prepended at the visual bottom (scroll origin
                 // in column-reverse). Adjust fromBottom so updateWindowFull
                 // targets the same visual position in the new index space.
+                // Reset the pin FIRST: if this prepend takes the follow path
+                // (no pin), the owner must not read a previous boundary's pin.
+                lastPrependPinTarget = undefined;
+                const preFromBottom = fromBottom;
+                // Anchor on the bottom-most rendered row's CURRENT position —
+                // this pre-effect runs before the DOM updates, so the rect is
+                // the position the user is looking at right now.
+                const anchorRow = viewport?.querySelector<HTMLElement>(".vcl-row");
+                const anchorKey = anchorRow?.dataset.key;
+                const anchorTop = anchorRow?.getBoundingClientRect().top;
                 let offset = 0;
                 for (let i = 0; i < prependCount; i++) {
                     offset += getHeight(i);
@@ -913,6 +1014,40 @@
                 offset += prependCount * gapPx;
                 fromBottom += offset;
                 prependOffset = offset;
+                // Neutralise the prepend's shift in the SAME flush that
+                // renders it: the owner's anchored restore runs a task later,
+                // and the browser paints the shifted content in between — a
+                // one-frame flash of a different position at every load
+                // boundary, at any scroll speed. tick() resolves after this
+                // flush's DOM update but before the browser paints, so an
+                // anchor-exact write here is invisible; the owner's later
+                // restore then has nothing left to correct. At the genuine
+                // live bottom the view must FOLLOW new content instead — but
+                // the catch-up wall mid-history also sits at fromBottom 0,
+                // and only the owner can tell the two apart (caughtUp).
+                if (!(preFromBottom < 10 && (caughtUp?.() ?? true))) {
+                    tick().then(() => {
+                        if (!viewport || interrupt) return;
+                        const again =
+                            anchorKey !== undefined
+                                ? rowByKey(viewport, anchorKey)
+                                : undefined;
+                        const before = viewport.scrollTop;
+                        if (again && anchorTop !== undefined) {
+                            viewport.scrollTop +=
+                                again.getBoundingClientRect().top - anchorTop;
+                        } else {
+                            viewport.scrollTop = -fromBottom;
+                        }
+                        lastPrependPinTarget = viewport.scrollTop;
+                        vclDebug.log("prepend-pin", {
+                            anchored: !!again,
+                            from: Math.round(before),
+                            to: Math.round(viewport.scrollTop),
+                        });
+                        lastProgrammaticScrollTime = Date.now();
+                    });
+                }
             }
 
             vclDebug.log("items", {
@@ -982,6 +1117,7 @@
         behavior: "auto" | "instant" | "smooth" = "instant",
     ) {
         if (!viewport) return;
+        cancelGlide();
         // Re-freeze the estimate space BEFORE computing distance so getHeight,
         // computeWindow, and computeSpacers all use the same estimates.
         refreshEstimateSnapshot();
@@ -1360,6 +1496,14 @@
         // compensations are absorbed into the spacer instead of scrollTop.
         if (Date.now() - lastProgrammaticScrollTime > 100) {
             lastUserScrollTime = Date.now();
+            // velocity sample for synthetic momentum continuation
+            const nowP = performance.now();
+            const top = viewport.scrollTop;
+            if (nowP - sampleTime < 200 && nowP > sampleTime) {
+                sampledVelocity = (top - sampleTop) / (nowP - sampleTime);
+            }
+            sampleTime = nowP;
+            sampleTop = top;
         }
         if (spacerDebt !== 0) {
             clearTimeout(debtIdleTimer);
@@ -1397,7 +1541,19 @@
         lastProgrammaticScrollTime = Date.now();
     }
 
+    // The scrollTop the last prepend was pinned to by the same-flush anchor
+    // write. The owner's post-load restore must target THIS — its own anchor
+    // rect was captured before the load await, so restoring to it rewinds the
+    // user by however far they scrolled while the load was in flight (~700px
+    // per boundary on a cold cache; imperceptible on a warm one — which is
+    // why the boundary feel varied so wildly between sessions).
+    let lastPrependPinTarget: number | undefined;
+    export function lastPrependPin(): number | undefined {
+        return lastPrependPinTarget;
+    }
+
     export function scrollToBottom(behavior: "auto" | "instant" | "smooth" = "instant") {
+        cancelGlide();
         clearTimeout(scrollCorrectTimer);
         scrollCorrectTimer = undefined;
         pendingScrollFlatIdx = undefined;
@@ -1420,6 +1576,8 @@
         const onTouchStart = () => {
             isTouching = true;
             isMomentumScrolling = false;
+            // the finger takes over from any synthetic glide
+            cancelGlide();
             clearTimeout(momentumEndTimer);
             momentumEndTimer = undefined;
             onUserTouch?.();
@@ -1477,6 +1635,7 @@
                 el.removeEventListener("touchcancel", onTouchCancel);
             }
             el.removeEventListener("scrollend", onScrollEnd);
+            cancelGlide();
             clearTimeout(momentumEndTimer);
             clearTimeout(debtIdleTimer);
             ro.disconnect();
