@@ -3,6 +3,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
     import { lowBandwidth } from "../../stores/settings";
+    import { reservedMediaStyle } from "../../utils/media";
     import Button from "../Button.svelte";
     import Translatable from "../Translatable.svelte";
     import ContentCaption from "./ContentCaption.svelte";
@@ -33,7 +34,12 @@
     let image = $derived($mobileWidth ? content.mobile : content.desktop);
     let landscape = $derived(image.height < image.width);
     let style = $derived(
-        `${height === undefined ? "" : `height: ${height}px;`} max-width: ${image.width}px;`,
+        height !== undefined
+            ? `height: ${height}px; max-width: ${image.width}px;`
+            : draft || reply
+              ? `max-width: ${image.width}px;`
+              : (reservedMediaStyle(image.width, image.height) ??
+                `max-width: ${image.width}px;`),
     );
 
     let hidden = $derived($lowBandwidth);

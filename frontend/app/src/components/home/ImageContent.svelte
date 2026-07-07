@@ -6,6 +6,7 @@
     import { rtlStore } from "../../stores/rtl";
     import { lowBandwidth } from "../../stores/settings";
     import { isTouchDevice } from "../../utils/devices";
+    import { reservedMediaStyle } from "../../utils/media";
     import Button from "../Button.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
@@ -149,7 +150,11 @@
             class:reply
             class:zoomable={zoomable && !hidden}
             class:rtl={$rtlStore}
-            style={height === undefined ? undefined : `height: ${height}px`}
+            style={height !== undefined
+                ? `height: ${height}px`
+                : draft || reply || pinned
+                  ? undefined
+                  : reservedMediaStyle(content.width, content.height)}
             src={intersecting && !hidden ? normalised.url : normalised.fallback}
             alt={normalised.caption} />
 

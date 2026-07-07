@@ -166,7 +166,6 @@
     let showReport = $state(false);
     let tipping: string | undefined = $state(undefined);
     let percentageExpired = $state(100);
-    let mediaCalculatedHeight = $state(undefined as number | undefined);
     let botProfile: BotProfileProps | undefined = $state(undefined);
     let confirmedReadByThem = $derived(client.messageIsReadByThem(chatId, msg.messageIndex));
     let readByThem = $derived(confirmedReadByThem || $unconfirmedReadByThem.has(msg.messageId));
@@ -188,8 +187,6 @@
                 }
             });
         }
-
-        recalculateMediaDimensions();
 
         if (expiresAt !== undefined) {
             return now.subscribe((t) => {
@@ -309,32 +306,6 @@
         popHistoryStateWithAction("emoji_picker_action");
     }
 
-    function recalculateMediaDimensions() {
-        if (mediaDimensions === undefined || !msgBubbleElement) {
-            return;
-        }
-
-        let msgBubblePaddingWidth = 0;
-        if (!fill) {
-            let msgBubbleStyle = getComputedStyle(msgBubbleElement);
-            msgBubblePaddingWidth =
-                parseFloat(msgBubbleStyle.paddingLeft) +
-                parseFloat(msgBubbleStyle.paddingRight) +
-                parseFloat(msgBubbleStyle.borderRightWidth) +
-                parseFloat(msgBubbleStyle.borderLeftWidth);
-        }
-
-        const messageWrapperWidth = msgElement?.offsetWidth ?? 0;
-
-        let targetMediaDimensions = client.calculateMediaDimensions(
-            mediaDimensions,
-            messageWrapperWidth,
-            msgBubblePaddingWidth,
-            window.innerHeight,
-            maxWidthFraction,
-        );
-        mediaCalculatedHeight = targetMediaDimensions.height;
-    }
 
     function openUserProfile(ev?: Event) {
         if (sender?.kind === "bot") {
@@ -384,7 +355,6 @@
         showRemindMe = true;
     }
 
-    const maxWidthFraction = 0.85;
     let inert = $derived(
         msg.content.kind === "deleted_content" ||
             msg.content.kind === "blocked_content" ||
@@ -400,7 +370,6 @@
             ? undefined
             : threadRootMessage?.messageIndex,
     );
-    let mediaDimensions = $derived(client.extractDimensionsFromMessageContent(msg.content));
     let fill = $derived(client.fillMessage(msg));
     let showAvatar = $derived(
         chatType !== "direct_chat" && !me && $screenWidth !== ScreenWidth.ExtraExtraSmall,
@@ -489,8 +458,6 @@
         panFactor = factor;
     }
 </script>
-
-<svelte:window onresize={recalculateMediaDimensions} />
 
 {#if botProfile !== undefined}
     <BotProfile {...botProfile} />
@@ -785,7 +752,6 @@
                                     messageId={msg.messageId}
                                     content={msg.content}
                                     {edited}
-                                    height={mediaCalculatedHeight}
                                     blockLevelMarkdown={msg.blockLevelMarkdown}
                                     {onRemovePreview}
                                     {onRegisterVote}

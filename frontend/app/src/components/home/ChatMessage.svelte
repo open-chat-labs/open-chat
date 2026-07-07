@@ -140,8 +140,6 @@
     }: Props = $props();
 
     let msgElement: HTMLElement | undefined;
-    let msgBubbleWrapperElement: HTMLElement | undefined;
-    let msgBubbleElement: HTMLElement | undefined;
     let messageMenu: ChatMessageMenu | undefined;
 
     let multiUserChat = chatType === "group_chat" || chatType === "channel";
@@ -155,8 +153,6 @@
     let showReport = $state(false);
     let tipping: string | undefined = $state(undefined);
     let percentageExpired = $state(100);
-    let mediaCalculatedHeight = $state(undefined as number | undefined);
-    let msgBubbleCalculatedWidth = $state(undefined as number | undefined);
     let botProfile: BotProfileProps | undefined = $state(undefined);
     let confirmedReadByThem = $derived(client.messageIsReadByThem(chatId, msg.messageIndex));
     let readByThem = $derived(confirmedReadByThem || $unconfirmedReadByThem.has(msg.messageId));
@@ -180,8 +176,6 @@
                 }
             });
         }
-
-        recalculateMediaDimensions();
 
         if (expiresAt !== undefined) {
             return now.subscribe((t) => {
@@ -310,34 +304,6 @@
         showEmojiPicker = false;
     }
 
-    function recalculateMediaDimensions() {
-        if (mediaDimensions === undefined || !msgBubbleElement) {
-            return;
-        }
-
-        let msgBubblePaddingWidth = 0;
-        if (!fill) {
-            let msgBubbleStyle = getComputedStyle(msgBubbleElement);
-            msgBubblePaddingWidth =
-                parseFloat(msgBubbleStyle.paddingLeft) +
-                parseFloat(msgBubbleStyle.paddingRight) +
-                parseFloat(msgBubbleStyle.borderRightWidth) +
-                parseFloat(msgBubbleStyle.borderLeftWidth);
-        }
-
-        const messageWrapperWidth = msgBubbleWrapperElement?.parentElement?.offsetWidth ?? 0;
-
-        let targetMediaDimensions = client.calculateMediaDimensions(
-            mediaDimensions,
-            messageWrapperWidth,
-            msgBubblePaddingWidth,
-            window.innerHeight,
-            maxWidthFraction,
-        );
-        mediaCalculatedHeight = targetMediaDimensions.height;
-        msgBubbleCalculatedWidth = targetMediaDimensions.width + msgBubblePaddingWidth;
-    }
-
     function openUserProfile(ev: Event) {
         if (sender?.kind === "bot") {
             botProfile = {
@@ -398,7 +364,6 @@
             ? undefined
             : threadRootMessage?.messageIndex,
     );
-    let mediaDimensions = $derived(client.extractDimensionsFromMessageContent(msg.content));
     let fill = $derived(client.fillMessage(msg));
     let showAvatar = $derived($screenWidth !== ScreenWidth.ExtraExtraSmall);
     let translated = $derived($translationsStore.has(msg.messageId));
@@ -447,7 +412,6 @@
     let canTranslate = $derived((client.getMessageText(msg.content) ?? "").length > 0);
 </script>
 
-<svelte:window onresize={recalculateMediaDimensions} />
 
 {#if botProfile !== undefined}
     <BotProfile {...botProfile} />
@@ -537,18 +501,12 @@
                     {/if}
 
                     <div
-                        bind:this={msgBubbleWrapperElement}
                         class="bubble-wrapper"
-                        style={`--max-width: ${maxWidthFraction * 100}%; ${
-                            msgBubbleCalculatedWidth !== undefined
-                                ? `flex: 0 0 ${msgBubbleCalculatedWidth}px`
-                                : undefined
-                        }`}
+                        style={`--max-width: ${maxWidthFraction * 100}%;`}
                         class:p2pSwap={isP2PSwap}
                         class:proposal={isProposal && !inert}>
                         <!-- svelte-ignore a11y_no_static_element_interactions -->
                         <div
-                            bind:this={msgBubbleElement}
                             ondblclick={doubleClickMessage}
                             use:longpress={() => messageMenu?.showMenu()}
                             class="message-bubble"
@@ -649,7 +607,6 @@
                                 messageId={msg.messageId}
                                 content={msg.content}
                                 {edited}
-                                height={mediaCalculatedHeight}
                                 blockLevelMarkdown={msg.blockLevelMarkdown}
                                 {onRemovePreview}
                                 {onRegisterVote}

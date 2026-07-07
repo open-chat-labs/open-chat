@@ -1,6 +1,7 @@
 <script lang="ts">
     import { type GiphyContent, type TextContent as TextContentType } from "openchat-client";
     import { rtlStore } from "../../stores/rtl";
+    import { reservedMediaStyle } from "../../utils/media";
     import TextContent from "./TextContent.svelte";
 
     interface Props {
@@ -37,7 +38,11 @@
         withCaption ? { kind: "text_content", text: content.caption ?? "" } : undefined,
     );
     let style = $derived(
-        `${height === undefined ? "" : `height: ${height}px;`} max-width: ${videoWidth}px;`,
+        height !== undefined
+            ? `height: ${height}px; max-width: ${videoWidth}px;`
+            : reply || isPreview
+              ? `max-width: ${videoWidth}px;`
+              : (reservedMediaStyle(image.width, image.height) ?? `max-width: ${videoWidth}px;`),
     );
 </script>
 
