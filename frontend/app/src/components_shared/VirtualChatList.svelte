@@ -622,7 +622,11 @@
         clearTimeout(debtIdleTimer);
         debtIdleTimer = undefined;
         if (spacerDebt === 0 || !viewport) return;
-        if (!force && (isTouching || isMomentumScrolling || Date.now() - lastUserScrollTime < 250)) {
+        // scrollingActive() covers touch, momentum, AND the any-origin scroll
+        // event stream — the user-scroll clock alone goes stale when our own
+        // writes suppress genuine detection, and repays were observed firing
+        // milliseconds apart in the middle of a live iOS scroll stream.
+        if (!force && (scrollingActive() || Date.now() - lastUserScrollTime < 250)) {
             debtIdleTimer = setTimeout(() => settleSpacerDebt(), 300);
             return;
         }
