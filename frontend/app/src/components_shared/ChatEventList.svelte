@@ -754,9 +754,17 @@
         filling: boolean = false,
         hasLookedUpEvent: boolean = false,
     ): Promise<void> {
-        // it is possible for the chat to change while this function is recursing so double check
-        if (token !== navToken) return Promise.resolve();
-        if (!messageContextsEqual(context, messageContext)) return Promise.resolve();
+        // it is possible for the chat to change while this function is recursing so double check.
+        // Every early exit logs: three separate debugging sessions were burned
+        // on navigations that died silently between two log lines.
+        if (token !== navToken) {
+            vclDebug.log("scroll-to-msg-exit", { index, why: "superseded", token, navToken });
+            return Promise.resolve();
+        }
+        if (!messageContextsEqual(context, messageContext)) {
+            vclDebug.log("scroll-to-msg-exit", { index, why: "context-changed" });
+            return Promise.resolve();
+        }
 
         if (index < 0) {
             focusIndex = undefined;
@@ -786,9 +794,15 @@
             // Delegate positioning to the virtual list: it positions on estimated
             // heights immediately and fires debounced corrective re-scrolls as
             // real measurements arrive.
+            if (virtualList === undefined) {
+                vclDebug.log("scroll-to-msg-exit", { index, why: "no-virtual-list" });
+            }
             virtualList?.scrollToIndex(flatIndex, "instant");
             await tick();
-            if (!messageContextsEqual(context, messageContext)) return Promise.resolve();
+            if (!messageContextsEqual(context, messageContext)) {
+                vclDebug.log("scroll-to-msg-exit", { index, why: "context-changed-post-tick" });
+                return Promise.resolve();
+            }
             if (!filling) {
                 // if we are not filling in extra events around the target then check if we need to open a thread
                 checkIfTargetMessageHasAThread(index);
@@ -806,6 +820,8 @@
                 scrollingToMessage = false;
                 return Promise.resolve();
             }
+        } else if (destroyed) {
+            vclDebug.log("scroll-to-msg-exit", { index, why: "destroyed" });
         } else if (!destroyed) {
             // check whether we have already loaded the event we are looking for
             // (an isolated island hit does not count — we want the window load)
@@ -825,7 +841,12 @@
                     // navigation has even positioned itself.
                     interrupt = true;
                     try {
-                        await client.loadEventWindow(context.chatId, index, threadRootEvent);
+                        const loadedIdx = await client.loadEventWindow(
+                            context.chatId,
+                            index,
+                            threadRootEvent,
+                        );
+                        vclDebug.log("scroll-to-msg-window", { index, loadedIdx });
                         await tick();
                     } finally {
                         await interruptScroll();
@@ -839,6 +860,7 @@
                         true,
                     );
                 }
+                vclDebug.log("scroll-to-msg-exit", { index, why: "not-found-after-window-load" });
                 scrollingToMessage = false;
                 // A failed event-window load clears the event store before it
                 // fails, which would otherwise leave the user staring at an
