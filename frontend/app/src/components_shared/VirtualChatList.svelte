@@ -539,6 +539,14 @@
     // longer matters) or at the next full window recompute.
     // debt = canonicalSpacerHeight - domSpacerHeight
     let spacerDebt = 0;
+    // While a touch/momentum gesture is active the settle cannot run anyway
+    // (a write would kill native physics), so the only hard constraint on the
+    // debt is the overscan margin — beyond it the rendered window and the
+    // scroll position disagree visibly. The tight cap forced mid-gesture
+    // corrections onto the deferred-write path (an uncompensated shift per
+    // entering item — observed on iOS as choppiness once the estimate bias
+    // accumulated ~400px over ~10 items).
+    const MAX_SPACER_DEBT_GESTURE = OVERSCAN_PX;
     let lastUserScrollTime = 0;
     // Time of the last scroll event of ANY origin. lastUserScrollTime alone is
     // not a safe activity signal: each of our own scrollTop writes suppresses
@@ -572,19 +580,23 @@
         if (!scrollingActive() || bottomSpacerHeight - delta < 0) {
             return false;
         }
+        // During touch/momentum a settle write would kill the native physics,
+        // so the gesture cap is the overscan margin; outside a gesture the
+        // tight cap keeps the repayment write small.
+        const cap =
+            isTouching || isMomentumScrolling ? MAX_SPACER_DEBT_GESTURE : MAX_SPACER_DEBT;
         // A single correction bigger than the cap (a very tall item measured
         // against the average estimate) must go straight to the scroll
         // adjustment path — if we absorbed it we would immediately be forced
         // to repay it mid-scroll.
-        if (Math.abs(delta) >= MAX_SPACER_DEBT) {
+        if (Math.abs(delta) >= cap) {
             return false;
         }
         // On a long sustained scroll the debt never gets an idle moment to be
         // repaid; once the cap would be exceeded, force a single repayment
-        // write rather than degrading to a write per entering item. Except
-        // during touch/momentum, where a settle write would kill the native
-        // physics — fall through to the deferred-adjustment path instead.
-        if (Math.abs(spacerDebt + delta) >= MAX_SPACER_DEBT) {
+        // write rather than degrading to a write per entering item — except
+        // mid-gesture, where only the deferred path remains beyond the cap.
+        if (Math.abs(spacerDebt + delta) >= cap) {
             if (isTouching || isMomentumScrolling) {
                 return false;
             }
