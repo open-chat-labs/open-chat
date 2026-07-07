@@ -291,23 +291,28 @@
         return flat;
     });
 
-    // if the messageIndex has changed but the chatId has not, scroll to the specified message
-    // We should *only* do this if the thread is not open
+    // Scroll to the route's message index when it changes — and also on the
+    // effect's FIRST run: panels/modal pages can unmount the chat view, so a
+    // pinned-message tap navigates while the old instance is being destroyed
+    // (where it is silently swallowed) and the remounted instance must pick
+    // the navigation up from the route. Only when the thread is not open.
     let previousChatId: ChatIdentifier | undefined = undefined;
+    let previousMessageIndex: number | undefined = undefined;
     $effect(() => {
-        // void $threadOpenStore;
+        const idx = $messageIndexStore;
+        const sameChat = chatIdentifiersEqual($selectedChatIdStore, previousChatId);
         if (
             !$threadOpenStore &&
             $chatsInitialisedStore &&
-            $messageIndexStore !== undefined &&
-            chatIdentifiersEqual($selectedChatIdStore, previousChatId)
+            idx !== undefined &&
+            (!sameChat || idx !== previousMessageIndex)
         ) {
-            const idx = $messageIndexStore;
             untrack(() => {
                 scrollToMessageIndex(idx, false);
             });
         }
         previousChatId = $selectedChatIdStore;
+        previousMessageIndex = idx;
     });
 </script>
 
