@@ -836,13 +836,6 @@
 <style lang="scss">
     $avatar-width-mob: 2.5rem;
 
-    :global(#scrollable-list-chat-messages),
-    :global(#scrollable-list-thread-messages) {
-        overflow-x: hidden !important;
-        overflow-y: auto !important;
-        overflow-anchor: auto;
-    }
-
     :global(.container.message_bubble_wrapper .menu-trigger) {
         width: 100%;
     }

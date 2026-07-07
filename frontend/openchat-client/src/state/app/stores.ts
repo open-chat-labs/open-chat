@@ -595,7 +595,6 @@ export const serverEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefin
 export const serverThreadEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefined, notEq);
 export const expiredServerEventRanges = writable<DRange>(new DRange(), undefined, notEq);
 export const selectedChatUserIdsStore = writable<Set<string>>(new Set(), undefined, notEq);
-export const selectedChatUserGroupKeysStore = writable<Set<string>>(new Set(), undefined, notEq);
 export const selectedChatExpandedDeletedMessageStore = writable<Set<number>>(
     new Set(),
     undefined,
@@ -633,7 +632,6 @@ selectedChatIdStore.subscribe((_) => {
     expiredServerEventRanges.set(new DRange());
     selectedThreadIdStore.set(undefined);
     selectedChatUserIdsStore.set(new Set());
-    selectedChatUserGroupKeysStore.set(new Set());
     selectedChatExpandedDeletedMessageStore.set(new Set());
     filteredProposalsStore.set(undefined);
 });

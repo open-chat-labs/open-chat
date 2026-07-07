@@ -1,36 +1,19 @@
 <script lang="ts">
     import { BodySmall } from "component-lib";
     import type { OpenChat } from "openchat-client";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
         timestamp: bigint;
-        observer?: IntersectionObserver;
-        floating?: boolean;
     }
 
-    let { timestamp, observer, floating = false }: Props = $props();
-
-    let element: HTMLElement | undefined = $state();
-
-    onMount(() => {
-        if (floating) return;
-
-        if (observer !== undefined && element) {
-            observer.observe(element);
-        }
-        return () => {
-            if (observer && element) {
-                observer.unobserve(element);
-            }
-        };
-    });
+    let { timestamp }: Props = $props();
 </script>
 
-<div data-timestamp={timestamp} bind:this={element} class="date-label" class:floating>
+<div class="date-label">
     <BodySmall align={"center"} colour={"textSecondary"}>
         {client.formatMessageDate(timestamp, $_("today"), $_("yesterday"))}
     </BodySmall>
@@ -48,13 +31,5 @@
         margin: 0 auto;
         border-radius: var(--rad-circle);
         margin-bottom: var(--sp-lg);
-
-        &.floating {
-            position: absolute;
-            top: 0.375rem;
-            left: 50%;
-            transform: translateX(-50%);
-            @include z-index("date-label");
-        }
     }
 </style>
