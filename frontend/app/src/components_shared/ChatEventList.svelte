@@ -25,6 +25,7 @@
     import { portalState } from "component-lib";
     import {
         currentUserIdStore,
+        eventIndexesLoadedStore,
         eventListLastScrolled,
         eventListScrollTop,
         eventListScrolling,
@@ -81,7 +82,7 @@
         rootSelector,
         chat,
         threadRootEvent,
-        items,
+        items: allItems,
         readonly,
         maintainScroll,
         visible,
@@ -140,6 +141,74 @@
         ),
     );
 
+    // The event store can hold disjoint ranges: the window loaded around a
+    // navigation target, an island of the very latest messages (merged from
+    // chat summary updates), and scattered strays in between. The timeline
+    // flattens everything into one list, so the estimates spanning the gaps
+    // are fiction — scrolling forward from an old message crosses the gap in
+    // a screenful, hits a false bottom at the island tip, then grinds
+    // backfill loads whose progress lands invisibly above the viewport.
+    // Render only the contiguous segment containing the anchor: the last
+    // navigation target, or the newest segment when reading the live edge.
+    // Threads are always contiguous — no filtering.
+    let anchorMessageIndex = $state<number | undefined>(undefined);
+
+    let items = $derived.by<FlatChatItem[]>(() => {
+        if (threadRootEvent !== undefined || allItems.length === 0) return allItems;
+        const loaded = $eventIndexesLoadedStore;
+        // Segment boundaries: a split between adjacent event items whose gap
+        // is not fully covered by the loaded ranges (expired/disappeared
+        // events count as loaded). allItems is newest-first, so event
+        // indexes descend as the flat index ascends.
+        const bounds = [0];
+        let prev: number | undefined;
+        for (let i = 0; i < allItems.length; i++) {
+            const item = allItems[i];
+            if (item.kind !== "event") continue;
+            const idx = item.event.index;
+            if (prev !== undefined && prev - idx > 1) {
+                const gap = prev - idx - 1;
+                if (loaded.clone().intersect(idx + 1, prev - 1).length !== gap) {
+                    bounds.push(i);
+                }
+            }
+            prev = idx;
+        }
+        if (bounds.length === 1) return allItems;
+        bounds.push(allItems.length);
+        let chosen = 0;
+        if (anchorMessageIndex !== undefined) {
+            for (let s = 0; s < bounds.length - 1; s++) {
+                let newest: number | undefined;
+                let oldest: number | undefined;
+                for (let i = bounds[s]; i < bounds[s + 1]; i++) {
+                    const item = allItems[i];
+                    if (item.kind === "event" && item.event.event.kind === "message") {
+                        newest ??= item.event.event.messageIndex;
+                        oldest = item.event.event.messageIndex;
+                    }
+                }
+                if (
+                    newest !== undefined &&
+                    anchorMessageIndex <= newest &&
+                    anchorMessageIndex >= (oldest ?? newest)
+                ) {
+                    chosen = s;
+                    break;
+                }
+            }
+        }
+        const seg = allItems.slice(bounds[chosen], bounds[chosen + 1]);
+        vclDebug.log("segment", {
+            segs: bounds.length - 1,
+            chosen,
+            anchor: anchorMessageIndex,
+            len: seg.length,
+            of: allItems.length,
+        });
+        return seg;
+    });
+
     // messageIndex -> flat item index, for programmatic scrolling.
     // Failed messages are excluded (mirrors findMessageEvent).
     let messageIndexToFlat = $derived.by(() => {
@@ -175,6 +244,7 @@
         navToken++;
         // a hidden-time navigation belongs to the chat it was issued in
         pendingHiddenNav = undefined;
+        anchorMessageIndex = undefined;
     });
     const insideTopThreshold = () => fromTop() < LOADING_THRESHOLD;
 
@@ -415,6 +485,9 @@
 
     async function scrollBottom(behavior: ScrollBehavior = "auto"): Promise<void> {
         vclDebug.log("scroll-bottom", { behavior });
+        // going to the bottom means reading the live edge — re-anchor the
+        // rendered segment to the newest range
+        anchorMessageIndex = undefined;
         virtualList?.scrollToBottom(behavior);
         // Protect the jump-to-bottom from iOS momentum: a frame of overflow-y:hidden
         // halts native momentum scrolling and gates onScroll, so stale in-flight
@@ -656,21 +729,6 @@
         }
     }
 
-    // True when the item at flatIndex sits at the newer edge of a gap in the
-    // loaded events — i.e. the next older event is more than a handful of
-    // event indexes away, so the content between them has not been loaded.
-    function isIsolated(flatIndex: number): boolean {
-        const item = items[flatIndex];
-        if (item?.kind !== "event") return false;
-        for (let i = flatIndex + 1; i < items.length && i <= flatIndex + 4; i++) {
-            const older = items[i];
-            if (older.kind === "event") {
-                return item.event.index - older.event.index > 25;
-            }
-        }
-        return false;
-    }
-
     function findMessageEvent(index: number): EventWrapper<Message> | undefined {
         for (const item of items) {
             if (
@@ -807,17 +865,26 @@
         }
 
         scrollingToMessage = true;
+        // Anchor the rendered segment to the navigation target: if the store
+        // holds the target in a range disjoint from the current one, the
+        // filtered timeline must switch segments for the lookup below to see
+        // it. Only anchor once the target is actually loaded — re-anchoring
+        // to an unloaded index would flip the timeline to the newest segment
+        // and flash unrelated content for the duration of the window load.
+        // (After the window load, the recursive call lands here again with
+        // the target present.)
+        if (
+            allItems.some(
+                (it) =>
+                    it.kind === "event" &&
+                    it.event.event.kind === "message" &&
+                    it.event.event.messageIndex === index,
+            )
+        ) {
+            anchorMessageIndex = index;
+        }
 
         let flatIndex = messageIndexToFlat.get(index);
-        // The event store can contain a disjoint island of the very latest
-        // messages (merged from chat summary updates) far from the loaded
-        // window. A target found inside such an island is not really
-        // navigable — the estimates spanning the gap are fiction — so treat
-        // it as not-loaded and load a proper event window around it instead.
-        if (flatIndex !== undefined && !hasLookedUpEvent && isIsolated(flatIndex)) {
-            vclDebug.log("scroll-to-msg-island", { index, flatIndex });
-            flatIndex = undefined;
-        }
         vclDebug.log("scroll-to-msg", {
             index,
             flatIndex,
@@ -866,13 +933,10 @@
             vclDebug.log("scroll-to-msg-deferred", { index });
             pendingHiddenNav = { context, index, preserveFocus };
         } else if (!destroyed) {
-            // check whether we have already loaded the event we are looking for
-            // (an isolated island hit does not count — we want the window load)
-            const flatAgain = messageIndexToFlat.get(index);
-            const loaded =
-                flatAgain !== undefined && !hasLookedUpEvent && isIsolated(flatAgain)
-                    ? undefined
-                    : findMessageEvent(index);
+            // check whether we have already loaded the event we are looking
+            // for (only the anchored segment counts — a hit in a disjoint
+            // island is filtered out above, so we want the window load)
+            const loaded = findMessageEvent(index);
             if (loaded === undefined) {
                 if (!hasLookedUpEvent) {
                     // we must only recurse if we have not already loaded the event, otherwise we will enter an infinite loop.
