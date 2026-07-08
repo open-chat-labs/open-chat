@@ -5,7 +5,7 @@
 
 export type PoseEstimate = {
     faceCount: number;
-    // Degrees; yaw > 0 = subject looking to their left (screen right, unmirrored)
+    // Degrees; yaw < 0 = subject turning to their left, pitch > 0 = tilting up
     yaw: number;
     pitch: number;
     // Face bounding box as a fraction of frame width, and normalized centre
@@ -79,11 +79,13 @@ export async function loadPoseDetector(): Promise<PoseDetector | undefined> {
 }
 
 // The transformation matrix is column-major; its rotation block gives us
-// head yaw/pitch. Thresholds are tuned with the debug overlay, so approximate
-// Euler extraction is fine here.
+// head yaw/pitch. Signs are chosen so that the machine's thresholds match
+// the on-screen instructions (device-tested): the subject turning their head
+// to THEIR left gives yaw < 0, tilting up gives pitch > 0. The on-chain
+// challenge verification must adopt the same convention.
 function eulerFromMatrix(m: Float32Array | number[] | undefined): { yaw: number; pitch: number } {
     if (m === undefined || m.length < 16) return { yaw: 0, pitch: 0 };
-    const yaw = Math.atan2(m[8], m[10]) * (180 / Math.PI);
-    const pitch = Math.asin(Math.max(-1, Math.min(1, -m[9]))) * (180 / Math.PI);
+    const yaw = -Math.atan2(m[8], m[10]) * (180 / Math.PI);
+    const pitch = Math.asin(Math.max(-1, Math.min(1, m[9]))) * (180 / Math.PI);
     return { yaw, pitch };
 }
