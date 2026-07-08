@@ -1,0 +1,79 @@
+benches:
+  build_detector_rfb320:
+    total:
+      calls: 1
+      instructions: 993077146
+      heap_increase: 103
+      stable_memory_increase: 0
+    scopes: {}
+  build_detector_scrfd500m:
+    total:
+      calls: 1
+      instructions: 783071044
+      heap_increase: 130
+      stable_memory_increase: 0
+    scopes: {}
+  build_embedder_w600k_mbf:
+    total:
+      calls: 1
+      instructions: 916828015
+      heap_increase: 427
+      stable_memory_increase: 0
+    scopes: {}
+  build_landmarks_2d106:
+    total:
+      calls: 1
+      instructions: 766872350
+      heap_increase: 238
+      stable_memory_increase: 0
+    scopes: {}
+  detect_rfb320:
+    total:
+      calls: 1
+      instructions: 949399683
+      heap_increase: 34
+      stable_memory_increase: 0
+    scopes: {}
+  detect_scrfd500m:
+    total:
+      calls: 1
+      instructions: 5467180800
+      heap_increase: 278
+      stable_memory_increase: 0
+    scopes: {}
+  embed_w600k_mbf:
+    total:
+      calls: 1
+      instructions: 2605123724
+      heap_increase: 88
+      stable_memory_increase: 0
+    scopes: {}
+  full_verification_8_frames:
+    total:
+      calls: 1
+      instructions: 24838406887
+      heap_increase: 101
+      stable_memory_increase: 0
+    scopes: {}
+  jpeg_decode_960x720:
+    total:
+      calls: 1
+      instructions: 192536011
+      heap_increase: 0
+      stable_memory_increase: 0
+    scopes: {}
+  landmarks_2d106:
+    total:
+      calls: 1
+      instructions: 852764791
+      heap_increase: 0
+      stable_memory_increase: 0
+    scopes: {}
+  uniqueness_scan_100k:
+    total:
+      calls: 1
+      instructions: 247100256
+      heap_increase: 0
+      stable_memory_increase: 0
+    scopes: {}
+version: 0.4.1

@@ -17,6 +17,15 @@ mod scan;
 
 fn main() {}
 
+// tract pulls in `rand` which requires a getrandom backend on wasm32; benches
+// never need real entropy
+getrandom::register_custom_getrandom!(deterministic_rand);
+
+fn deterministic_rand(buf: &mut [u8]) -> Result<(), getrandom::Error> {
+    buf.fill(42);
+    Ok(())
+}
+
 pub(crate) fn pseudo_random_bytes(seed: u64, len: usize) -> Vec<u8> {
     let mut state = seed | 1;
     let mut out = Vec::with_capacity(len + 8);
