@@ -55,7 +55,10 @@ impl RuntimeState {
 
     pub fn is_caller_governance_principal(&self) -> bool {
         let caller = self.env.caller();
-        self.data.governance_principals.contains(&caller)
+        // Controllers are implicitly trusted: they can already reinstall the
+        // canister outright, so model management grants them nothing extra.
+        // In production the only controller is SNS root.
+        self.data.governance_principals.contains(&caller) || ic_cdk::api::is_controller(&caller)
     }
 
     pub fn metrics(&self) -> Metrics {
