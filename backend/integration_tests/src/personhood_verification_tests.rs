@@ -8,11 +8,16 @@ use types::{Achievement, ChitEventType};
 
 // Markers drive the deterministic test-mode engine: same group (marker / 4)
 // produces correlated embeddings, variant (marker % 4) picks the similarity
-// band. See personhood_verifier engine/stub.rs.
-const FACE_A: u8 = 40; // group 10, variant 0
-const FACE_A_DUPLICATE: u8 = 41; // group 10, variant 1 - clear duplicate of FACE_A
-const FACE_A_LOOKALIKE: u8 = 42; // group 10, variant 2 - gray zone vs FACE_A
-const FACE_B: u8 = 80; // group 20, variant 0 - unrelated
+// band. See personhood_verifier engine/stub.rs. The test env (and so the
+// verifier's embedding store) is shared across tests, so every test must use
+// its own marker group.
+const HAPPY_PATH_FACE: u8 = 40; // group 10
+const DUP_FACE: u8 = 60; // group 15, variant 0
+const DUP_FACE_DUPLICATE: u8 = 61; // group 15, variant 1 - clear duplicate
+const GRAY_FACE: u8 = 100; // group 25, variant 0
+const GRAY_FACE_LOOKALIKE: u8 = 102; // group 25, variant 2 - gray zone
+const PAIR_FACE_1: u8 = 80; // group 20
+const PAIR_FACE_2: u8 = 120; // group 30
 
 fn drive_to_terminal_status(
     env: &mut pocket_ic::PocketIc,
@@ -50,7 +55,7 @@ fn verification_happy_path_propagates_proof_and_achievement() {
         user.principal,
         canister_ids.personhood_verifier,
         &challenge,
-        FACE_A,
+        HAPPY_PATH_FACE,
     );
     client::personhood_verifier::happy_path::submit_verification(
         env,
@@ -101,7 +106,7 @@ fn duplicate_face_fails_with_not_unique() {
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
 
-    // user1 enrolls FACE_A
+    // user1 enrolls DUP_FACE
     let challenge =
         client::personhood_verifier::happy_path::start_verification(env, user1.principal, canister_ids.personhood_verifier);
     client::personhood_verifier::happy_path::upload_all_frames(
@@ -109,7 +114,7 @@ fn duplicate_face_fails_with_not_unique() {
         user1.principal,
         canister_ids.personhood_verifier,
         &challenge,
-        FACE_A,
+        DUP_FACE,
     );
     client::personhood_verifier::happy_path::submit_verification(
         env,
@@ -120,7 +125,7 @@ fn duplicate_face_fails_with_not_unique() {
     let status = drive_to_terminal_status(env, user1.principal, canister_ids.personhood_verifier, challenge.session_id);
     assert!(matches!(status, StatusResponse::Verified { .. }), "{status:?}");
 
-    // user2 presents a clear duplicate of FACE_A and must be rejected
+    // user2 presents a clear duplicate of DUP_FACE and must be rejected
     let challenge =
         client::personhood_verifier::happy_path::start_verification(env, user2.principal, canister_ids.personhood_verifier);
     client::personhood_verifier::happy_path::upload_all_frames(
@@ -128,7 +133,7 @@ fn duplicate_face_fails_with_not_unique() {
         user2.principal,
         canister_ids.personhood_verifier,
         &challenge,
-        FACE_A_DUPLICATE,
+        DUP_FACE_DUPLICATE,
     );
     client::personhood_verifier::happy_path::submit_verification(
         env,
@@ -160,7 +165,7 @@ fn gray_zone_offers_retry_then_hard_fails() {
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
 
-    // user1 enrolls FACE_A
+    // user1 enrolls GRAY_FACE
     let challenge =
         client::personhood_verifier::happy_path::start_verification(env, user1.principal, canister_ids.personhood_verifier);
     client::personhood_verifier::happy_path::upload_all_frames(
@@ -168,7 +173,7 @@ fn gray_zone_offers_retry_then_hard_fails() {
         user1.principal,
         canister_ids.personhood_verifier,
         &challenge,
-        FACE_A,
+        GRAY_FACE,
     );
     client::personhood_verifier::happy_path::submit_verification(
         env,
@@ -186,7 +191,7 @@ fn gray_zone_offers_retry_then_hard_fails() {
         user2.principal,
         canister_ids.personhood_verifier,
         &challenge,
-        FACE_A_LOOKALIKE,
+        GRAY_FACE_LOOKALIKE,
     );
     client::personhood_verifier::happy_path::submit_verification(
         env,
@@ -208,7 +213,7 @@ fn gray_zone_offers_retry_then_hard_fails() {
         user2.principal,
         canister_ids.personhood_verifier,
         &retry_challenge,
-        FACE_A_LOOKALIKE,
+        GRAY_FACE_LOOKALIKE,
     );
     client::personhood_verifier::happy_path::submit_verification(
         env,
@@ -241,7 +246,7 @@ fn two_different_faces_both_verify() {
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
 
-    for (user, marker) in [(&user1, FACE_A), (&user2, FACE_B)] {
+    for (user, marker) in [(&user1, PAIR_FACE_1), (&user2, PAIR_FACE_2)] {
         let challenge =
             client::personhood_verifier::happy_path::start_verification(env, user.principal, canister_ids.personhood_verifier);
         client::personhood_verifier::happy_path::upload_all_frames(

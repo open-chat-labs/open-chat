@@ -5875,6 +5875,7 @@ dependencies = [
  "registry_canister",
  "reqwest 0.12.28",
  "serde",
+ "serde_bytes",
  "serde_json",
  "sha256",
  "sign_in_with_email_canister",

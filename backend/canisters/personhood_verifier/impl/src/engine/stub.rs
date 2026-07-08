@@ -49,13 +49,16 @@ fn mix(a: &[f32], b: &[f32], weight_a: f32) -> Vec<f32> {
 }
 
 fn pseudo_random_unit(seed: u64) -> Vec<f32> {
-    let mut state = seed | 1;
+    // splitmix64 per element: plain xorshift from nearby seeds produces
+    // correlated sequences, which made unrelated markers falsely similar
     let mut out = Vec::with_capacity(EMBEDDING_DIM);
-    for _ in 0..EMBEDDING_DIM {
-        state ^= state << 13;
-        state ^= state >> 7;
-        state ^= state << 17;
-        out.push(((state & 0xFFFF) as f32 / 32_768.0) - 1.0);
+    for i in 0..EMBEDDING_DIM {
+        let mut x = seed.wrapping_mul(0x100000001B3).wrapping_add(i as u64);
+        x = x.wrapping_add(0x9E3779B97F4A7C15);
+        x = (x ^ (x >> 30)).wrapping_mul(0xBF58476D1CE4E5B9);
+        x = (x ^ (x >> 27)).wrapping_mul(0x94D049BB133111EB);
+        x ^= x >> 31;
+        out.push(((x & 0xFFFF) as f32 / 32_768.0) - 1.0);
     }
     let norm = out.iter().map(|x| x * x).sum::<f32>().sqrt();
     out.iter().map(|x| x / norm).collect()
@@ -67,4 +70,26 @@ fn quantize(vector: &[f32]) -> Vec<i8> {
         return vec![0; vector.len()];
     }
     vector.iter().map(|x| ((x / max) * 127.0) as i8).collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::engine::{CLEAR_THRESHOLD, DUPLICATE_THRESHOLD};
+    use crate::model::embeddings::cosine_similarity;
+
+    fn embed(marker: u8) -> Vec<i8> {
+        compute_embedding(&[ByteBuf::from(vec![marker, 1, 2])]).unwrap()
+    }
+
+    #[test]
+    fn similarity_bands() {
+        let base = embed(40);
+        assert!(cosine_similarity(&base, &embed(41)) >= DUPLICATE_THRESHOLD);
+        let gray = cosine_similarity(&base, &embed(42));
+        assert!(gray >= CLEAR_THRESHOLD && gray < DUPLICATE_THRESHOLD, "{gray}");
+        assert!(cosine_similarity(&base, &embed(43)).abs() < CLEAR_THRESHOLD);
+        assert!(cosine_similarity(&base, &embed(80)).abs() < CLEAR_THRESHOLD);
+        assert!(cosine_similarity(&base, &embed(44)).abs() < CLEAR_THRESHOLD);
+    }
 }

@@ -40,6 +40,7 @@ rand = { workspace = true }
 registry_canister = { path = "../canisters/registry/api" }
 reqwest = { workspace = true }
 serde = { workspace = true }
+serde_bytes = { workspace = true }
 serde_json = { workspace = true }
 sha256 = { path = "../libraries/sha256" }
 sign_in_with_email_canister = { path = "../canisters/sign_in_with_email/api" }
