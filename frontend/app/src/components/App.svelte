@@ -97,6 +97,7 @@
             signInWithSolanaCanister: import.meta.env.OC_SIGN_IN_WITH_SOLANA_CANISTER!,
             oneSecForwarderCanister: import.meta.env.OC_ONESEC_FORWARDER_CANISTER!,
             oneSecMinterCanister: import.meta.env.OC_ONESEC_MINTER_CANISTER!,
+            verifierCanister: import.meta.env.OC_VERIFIER_CANISTER,
             i18nFormatter: $_,
             logger,
             websiteVersion: import.meta.env.OC_WEBSITE_VERSION!,

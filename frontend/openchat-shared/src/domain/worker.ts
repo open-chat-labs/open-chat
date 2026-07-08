@@ -227,6 +227,12 @@ import type {
     UsersResponse,
     UserSummary,
 } from "./user";
+import type {
+    StartVerificationResponse,
+    SubmitVerificationResponse,
+    UploadVerificationFrameResponse,
+    VerificationStatus,
+} from "./verification";
 import type { Verification } from "./wallet";
 
 /**
@@ -435,6 +441,10 @@ export type WorkerRequest =
     | ChitEventsRequest
     | MarkAchievementsSeen
     | SubmitProofOfUniquePersonhood
+    | StartVerification
+    | UploadVerificationFrame
+    | SubmitVerification
+    | GetVerificationStatus
     | LinkIdentities
     | RemoveIdentityLink
     | GetAuthenticationPrincipals
@@ -669,6 +679,27 @@ type SubmitProofOfUniquePersonhood = {
     kind: "submitProofOfUniquePersonhood";
     iiPrincipal: string;
     credential: string;
+};
+
+type StartVerification = {
+    kind: "startVerification";
+};
+
+type UploadVerificationFrame = {
+    kind: "uploadVerificationFrame";
+    sessionId: bigint;
+    challengeIndex: number;
+    image: Uint8Array;
+};
+
+type SubmitVerification = {
+    kind: "submitVerification";
+    sessionId: bigint;
+};
+
+type GetVerificationStatus = {
+    kind: "verificationStatus";
+    sessionId: bigint;
 };
 
 type MarkAchievementsSeen = {
@@ -1871,6 +1902,10 @@ export type WorkerResponseInner =
     | ChitLeaderboardResponse
     | ChitEventsResponse
     | SubmitProofOfUniquePersonhoodResponse
+    | StartVerificationResponse
+    | UploadVerificationFrameResponse
+    | SubmitVerificationResponse
+    | VerificationStatus
     | AuthenticationPrincipalsResponse
     | ExternalAchievement[]
     | MessageActivityFeedResponse
@@ -2550,6 +2585,14 @@ export type WorkerResult<T> = T extends Init
     ? void
     : T extends SubmitProofOfUniquePersonhood
     ? SubmitProofOfUniquePersonhoodResponse
+    : T extends StartVerification
+    ? StartVerificationResponse
+    : T extends UploadVerificationFrame
+    ? UploadVerificationFrameResponse
+    : T extends SubmitVerification
+    ? SubmitVerificationResponse
+    : T extends GetVerificationStatus
+    ? VerificationStatus
     : T extends LinkIdentities
     ? LinkIdentitiesResponse
     : T extends RemoveIdentityLink

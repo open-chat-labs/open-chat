@@ -153,9 +153,11 @@ import type {
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
     StakeNeuronForSubmittingProposalsResponse,
+    StartVerificationResponse,
     StorageStatus,
     StreakInsurance,
     SubmitProofOfUniquePersonhoodResponse,
+    SubmitVerificationResponse,
     SubmitProposalResponse,
     SuspendUserResponse,
     SwapTokensResponse,
@@ -182,6 +184,7 @@ import type {
     UpdatedRules,
     UpdatesResult,
     UpdatesSuccessResponse,
+    UploadVerificationFrameResponse,
     User,
     UserCanisterCommunitySummary,
     UserCanisterCommunitySummaryUpdates,
@@ -191,6 +194,7 @@ import type {
     UsersArgs,
     UsersResponse,
     Verification,
+    VerificationStatus,
     VerifiedCredentialArgs,
     VideoCallParticipantsResponse,
     VideoCallPresence,
@@ -288,11 +292,14 @@ import { TranslationsClient } from "./translations/translations.client";
 import { AnonUserClient } from "./user/anonUser.client";
 import { UserClient } from "./user/user.client";
 import { UserIndexClient } from "./userIndex/userIndex.client";
+import { MockVerifierClient } from "./verifier/mockVerifier.client";
+import type { VerifierClient } from "./verifier/verifier.client";
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
     private _userIndexClient: UserIndexClient;
     private _onlineClient: OnlineClient;
+    private _verifierClient: VerifierClient;
     private _groupIndexClient: GroupIndexClient;
     private _userClient: UserClient | AnonUserClient;
     private _notificationClient: NotificationsClient;
@@ -340,6 +347,8 @@ export class OpenChatAgent extends EventTarget {
         this._userDb = new UserDb();
         this._registryDb = new RegistryDb();
         this._onlineClient = new OnlineClient(identity, this._agent, config.onlineCanister);
+        // Real client lands with the personhood_verifier canister (#9072 Phase 2)
+        this._verifierClient = new MockVerifierClient();
         this._userClient = AnonUserClient.create();
         this._userIndexClient = new UserIndexClient(
             identity,
@@ -4044,6 +4053,26 @@ export class OpenChatAgent extends EventTarget {
         credential: string,
     ): Promise<SubmitProofOfUniquePersonhoodResponse> {
         return this._userIndexClient.submitProofOfUniquePersonhood(iiPrincipal, credential);
+    }
+
+    startVerification(): Promise<StartVerificationResponse> {
+        return this._verifierClient.startVerification();
+    }
+
+    uploadVerificationFrame(
+        sessionId: bigint,
+        challengeIndex: number,
+        image: Uint8Array,
+    ): Promise<UploadVerificationFrameResponse> {
+        return this._verifierClient.uploadVerificationFrame(sessionId, challengeIndex, image);
+    }
+
+    submitVerification(sessionId: bigint): Promise<SubmitVerificationResponse> {
+        return this._verifierClient.submitVerification(sessionId);
+    }
+
+    verificationStatus(sessionId: bigint): Promise<VerificationStatus> {
+        return this._verifierClient.verificationStatus(sessionId);
     }
 
     configureWallet(config: WalletConfig): Promise<void> {

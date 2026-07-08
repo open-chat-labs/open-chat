@@ -276,8 +276,10 @@ import {
     type ShareRoute,
     type SiwePrepareLoginResponse,
     type SiwsPrepareLoginResponse,
+    type StartVerificationResponse,
     type StreakInsurance,
     type SubmitProofOfUniquePersonhoodResponse,
+    type SubmitVerificationResponse,
     type Success,
     type SwapTokensResponse,
     type TermsRoute,
@@ -296,6 +298,7 @@ import {
     type UpdatedEvent,
     type UpdatedRules,
     type UpdatesResult,
+    type UploadVerificationFrameResponse,
     type User,
     type UserGroupDetails,
     type UserOrUserGroup,
@@ -304,6 +307,7 @@ import {
     type UsersArgs,
     type UsersResponse,
     type Verification,
+    type VerificationStatus,
     type VerifiedCredentialArgs,
     type VerifyAccountLinkingCodeResponse,
     type VersionedRules,
@@ -8612,6 +8616,65 @@ export class OpenChat {
                 console.error("Failed to submit proof of unique personhood to the user index", err);
                 return { kind: "invalid" };
             });
+    }
+
+    startHumanVerification(): Promise<StartVerificationResponse> {
+        return this.#worker.send({ kind: "startVerification" });
+    }
+
+    uploadVerificationFrame(
+        sessionId: bigint,
+        challengeIndex: number,
+        image: Uint8Array,
+    ): Promise<UploadVerificationFrameResponse> {
+        return this.#worker.send({
+            kind: "uploadVerificationFrame",
+            sessionId,
+            challengeIndex,
+            image,
+        });
+    }
+
+    submitHumanVerification(sessionId: bigint): Promise<SubmitVerificationResponse> {
+        return this.#worker.send({ kind: "submitVerification", sessionId });
+    }
+
+    // Polls until a terminal status is reached, calling onUpdate with every
+    // status seen. Backs off 2s -> 5s, gives up 60s after the session deadline.
+    async pollHumanVerification(
+        sessionId: bigint,
+        deadline: bigint,
+        onUpdate: (status: VerificationStatus) => void,
+    ): Promise<VerificationStatus> {
+        let interval = 2000;
+        const timeout = Number(deadline) + 60_000;
+        for (;;) {
+            const status: VerificationStatus = await this.#worker
+                .send({ kind: "verificationStatus", sessionId })
+                .catch(() => ({ kind: "processing" }) as VerificationStatus);
+            onUpdate(status);
+            switch (status.kind) {
+                case "verified":
+                    currentUserStore.set({
+                        ...currentUserStore.value,
+                        isUniquePerson: true,
+                    });
+                    userStore.updateUser(currentUserIdStore.value, (u) => ({
+                        ...u,
+                        isUniquePerson: true,
+                    }));
+                    return status;
+                case "retry_required":
+                case "verification_failed":
+                case "session_not_found":
+                    return status;
+            }
+            if (Date.now() > timeout) {
+                return { kind: "session_not_found" };
+            }
+            await new Promise((resolve) => setTimeout(resolve, interval));
+            interval = Math.min(5000, interval + 1000);
+        }
     }
 
     async joinCommunity(
