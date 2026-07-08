@@ -62,7 +62,7 @@
     import MiddlePanel from "./MiddlePanel.svelte";
     import NoAccess from "./NoAccess.svelte";
     import PinNumberModal from "./PinNumberModal.svelte";
-    import VerifyHumanity from "./profile/VerifyHumanity.svelte";
+    import VerificationModal from "./verification/VerificationModal.svelte";
     import ViewUserProfile from "./profile/ViewUserProfileModal.svelte";
     import MakeProposalModal from "./proposal/MakeProposalModal.svelte";
     import SuspendModal from "./SuspendModal.svelte";
@@ -593,7 +593,7 @@
     {:else if modal.kind === "suspending"}
         <SuspendModal userId={modal.userId} onClose={closeModal} />
     {:else if modal.kind === "verify_humanity"}
-        <VerifyHumanity onClose={closeModal} onSuccess={closeModal} />
+        <VerificationModal onClose={closeModal} onSuccess={closeModal} />
     {:else if modal.kind === "no_access"}
         <NoAccess onClose={closeNoAccess} />
     {:else if modal.kind === "make_proposal"}

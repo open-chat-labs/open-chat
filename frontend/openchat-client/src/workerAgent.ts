@@ -92,6 +92,7 @@ export class WorkerAgent {
             signInWithSolanaCanister: config.signInWithSolanaCanister,
             oneSecForwarderCanister: config.oneSecForwarderCanister,
             oneSecMinterCanister: config.oneSecMinterCanister,
+            verifierCanister: config.verifierCanister,
             websiteVersion: config.websiteVersion,
             rollbarApiKey: config.rollbarApiKey,
             env: config.env,

@@ -29,6 +29,8 @@ export type OpenChatConfig = {
     signInWithSolanaCanister: string;
     oneSecForwarderCanister: string;
     oneSecMinterCanister: string;
+    // When undefined the mock verifier client is used (Phase 0 of #9072)
+    verifierCanister?: string;
     i18nFormatter: MessageFormatter;
     logger: Logger;
     websiteVersion: string;
