@@ -167,19 +167,22 @@ export async function expectNotificationTap(): Promise<PluginListener> {
 
     // Pull any tap stored during cold start (before the listener was ready).
     // Stored for Router.svelte to consume instead of auto-selecting the default chat.
+    let pending: { payload?: string } | undefined;
     try {
-        const pending = await invoke<{ payload?: string }>(
-            "plugin:oc|get_pending_notification_tap",
-        );
-        if (pending?.payload) {
+        pending = await invoke<{ payload?: string }>("plugin:oc|get_pending_notification_tap");
+    } catch (e) {
+        console.error("Notification tap: get_pending_notification_tap invoke failed", e);
+    }
+    if (pending?.payload) {
+        try {
             const path = notificationPath(JSON.parse(pending.payload) as PushNotification);
             if (path) {
                 console.log("Notification tap: cold-start pending path stored", path);
                 pendingColdStartTapPath = path;
             }
+        } catch (e) {
+            console.error("Notification tap: failed to parse pending payload", pending.payload, e);
         }
-    } catch (e) {
-        console.error("Notification tap: get_pending_notification_tap invoke failed", e);
     }
 
     return listener;

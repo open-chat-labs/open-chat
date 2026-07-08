@@ -1185,11 +1185,31 @@ export class OpenChat {
         this.#preLogoutTasks.push(task);
     }
 
+    // Resolves when `promise` settles or after `ms`, whichever comes first,
+    // always clearing the timer afterwards so it never dangles.
+    #withTimeout(promise: Promise<unknown>, ms: number): Promise<void> {
+        let timer: number | undefined;
+        const timeout = new Promise<void>((resolve) => {
+            timer = window.setTimeout(resolve, ms);
+        });
+        return Promise.race([promise.then(() => undefined), timeout]).finally(() =>
+            window.clearTimeout(timer),
+        );
+    }
+
     async logout(): Promise<void> {
-        await Promise.race([
-            Promise.allSettled(this.#preLogoutTasks.map((task) => task())),
-            new Promise((resolve) => window.setTimeout(resolve, 5000)),
-        ]).catch(() => undefined);
+        // Run any registered pre-logout tasks (e.g. push-token cleanup) while
+        // the identity is still valid. Best-effort: Promise.resolve().then wraps
+        // each task so a synchronous throw becomes a rejection that allSettled
+        // can absorb, and a 5s cap stops a slow task from blocking sign-out.
+        // Take + clear the list so tasks don't accumulate across
+        // login → logout → login within a single page session.
+        const tasks = this.#preLogoutTasks;
+        this.#preLogoutTasks = [];
+        await this.#withTimeout(
+            Promise.allSettled(tasks.map((task) => Promise.resolve().then(task))),
+            5000,
+        );
 
         await Promise.all([
             this.#worker.send({ kind: "logout" }),

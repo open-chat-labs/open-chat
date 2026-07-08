@@ -185,6 +185,13 @@
         setStatusAndNavBarSizesForNativeApp();
     }
 
+    // Guards the one-time native setup (listeners, logout hook, svelteReady)
+    // so it runs once per page session. setupNativeApp() itself runs again on
+    // every userLoggedIn (account switch), but only the FCM token registration
+    // should repeat — re-registering listeners or the logout hook would stack
+    // duplicate handlers (e.g. a single warm tap firing multiple times).
+    let nativeSetupDone = false;
+
     // Sets up push notifications and FCM token management for native apps
     function setupNativeApp() {
         const addFcmToken = (token: string) => {
@@ -194,75 +201,83 @@
                 .catch(console.error);
         };
 
-        if (client.isNativeApp()) {
-            // Register every native event listener BEFORE signalling svelteReady:
-            // the native side flushes its queued events the moment svelteReady
-            // fires, and a flush that beats an in-flight listener registration
-            // silently drops the event (e.g. a cold-start notification tap).
-            const listenersRegistered = Promise.allSettled([
-                // Listen for incoming push notifications from Firebase; also asks
-                // for permission to show notifications if not already granted.
-                expectPushNotifications(),
-
-                // Listen for notifications user has tapped on
-                expectNotificationTap(),
-
-                // Listen for content shared into OpenChat from the system share sheet
-                // (or via a Direct Share chat shortcut). Cold-start shares are queued
-                // by the native side and delivered once svelteReady fires below.
-                expectShareTarget((share) => handleShareTarget(client, share)),
-
-                // Listen for deep links (e.g. https://oc.app/group/xyz tapped from another app).
-                // Cold-start deep links are queued by MainActivity and delivered once svelteReady fires.
-                expectDeepLinks(),
-
-                // Expect FCM token refreshes
-                expectNewFcmToken(addFcmToken),
-            ]);
-            listenersRegistered.then((results) => {
-                results
-                    .filter((r): r is PromiseRejectedResult => r.status === "rejected")
-                    .forEach((r) => console.error("Native listener setup failed", r.reason));
-            });
-
-            // Ask for the current FCM token and register it unconditionally.
-            // Registration is last-login-wins on the backend, so this also
-            // reclaims a token still bound to a previous account on this
-            // device (a fcm_token_exists pre-check would wrongly skip that).
-            getFcmToken().then((token) => {
-                if (!token) {
-                    // TODO do we handle this somehow? Debounce, try again?
-                    console.error("No FCM token received");
-                    return;
-                }
-
-                addFcmToken(token);
-            });
-
-            // Best-effort push hygiene on sign-out, while the identity is
-            // still valid: unbind this device's token from the account,
-            // delete the device token (pushes to it then dead-end at FCM,
-            // and the next login mints + registers a fresh one), and empty
-            // the tray so nothing from this account lingers.
-            client.onLogout(async () => {
-                const token = await getFcmToken().catch(() => null);
-                if (token) {
-                    await client.removeFcmToken(token).catch(console.error);
-                }
-                await deleteFcmToken().catch(console.error);
-                await clearAllNotifications().catch(console.error);
-            });
-
-            // Push the top recent chats to the Android Sharing Shortcuts API
-            // so they appear directly in the system share sheet (like
-            // WhatsApp's per-chat tiles).
-            startChatShortcutPusher(client);
-
-            // Inform the native android app that svelte code is ready — but only
-            // once all the listeners above are registered, so the native event
-            // queue flushes into handlers that actually exist.
-            listenersRegistered.then(() => svelteReady());
+        if (!client.isNativeApp()) {
+            return;
         }
+
+        // Ask for the current FCM token and register it unconditionally on every
+        // login. Registration is last-login-wins on the backend, so this also
+        // reclaims a token still bound to a previous account on this device (a
+        // fcm_token_exists pre-check would wrongly skip that).
+        getFcmToken().then((token) => {
+            if (!token) {
+                // TODO do we handle this somehow? Debounce, try again?
+                console.error("No FCM token received");
+                return;
+            }
+
+            addFcmToken(token);
+        });
+
+        // Everything below registers session-scoped handlers and must run once.
+        if (nativeSetupDone) {
+            return;
+        }
+        nativeSetupDone = true;
+
+        // Register every native event listener BEFORE signalling svelteReady:
+        // the native side flushes its queued events the moment svelteReady
+        // fires, and a flush that beats an in-flight listener registration
+        // silently drops the event (e.g. a cold-start notification tap).
+        const listenersRegistered = Promise.allSettled([
+            // Listen for incoming push notifications from Firebase; also asks
+            // for permission to show notifications if not already granted.
+            expectPushNotifications(),
+
+            // Listen for notifications user has tapped on
+            expectNotificationTap(),
+
+            // Listen for content shared into OpenChat from the system share sheet
+            // (or via a Direct Share chat shortcut). Cold-start shares are queued
+            // by the native side and delivered once svelteReady fires below.
+            expectShareTarget((share) => handleShareTarget(client, share)),
+
+            // Listen for deep links (e.g. https://oc.app/group/xyz tapped from another app).
+            // Cold-start deep links are queued by MainActivity and delivered once svelteReady fires.
+            expectDeepLinks(),
+
+            // Expect FCM token refreshes
+            expectNewFcmToken(addFcmToken),
+        ]);
+        listenersRegistered.then((results) => {
+            results
+                .filter((r): r is PromiseRejectedResult => r.status === "rejected")
+                .forEach((r) => console.error("Native listener setup failed", r.reason));
+        });
+
+        // Best-effort push hygiene on sign-out, while the identity is
+        // still valid: unbind this device's token from the account,
+        // delete the device token (pushes to it then dead-end at FCM,
+        // and the next login mints + registers a fresh one), and empty
+        // the tray so nothing from this account lingers.
+        client.onLogout(async () => {
+            const token = await getFcmToken().catch(() => null);
+            if (token) {
+                await client.removeFcmToken(token).catch(console.error);
+            }
+            await deleteFcmToken().catch(console.error);
+            await clearAllNotifications().catch(console.error);
+        });
+
+        // Push the top recent chats to the Android Sharing Shortcuts API
+        // so they appear directly in the system share sheet (like
+        // WhatsApp's per-chat tiles).
+        startChatShortcutPusher(client);
+
+        // Inform the native android app that svelte code is ready — but only
+        // once all the listeners above are registered, so the native event
+        // queue flushes into handlers that actually exist.
+        listenersRegistered.then(() => svelteReady());
     }
 
     if ($identityStateStore.kind === "logged_in") {

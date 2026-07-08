@@ -1,9 +1,7 @@
 package com.ocplugin.app.commands
 
 import android.app.Activity
-import android.util.Log
 import app.tauri.plugin.Invoke
-import com.ocplugin.app.LOG_TAG
 import com.ocplugin.app.NotificationsManager
 
 import kotlinx.coroutines.SupervisorJob
@@ -23,15 +21,14 @@ class ClearAllNotifications(private val activity: Activity) {
 
     fun handler(invoke: Invoke) {
         scope.launch {
-            val success = withContext(Dispatchers.IO) {
-                runCatching {
-                    NotificationsManager.releaseAllNotificationsAfterSummaryDismissed(activity)
-                }.onFailure {
-                    Log.e(LOG_TAG, "Error clearing all notifications", it)
-                }.isSuccess
+            // Best-effort: releaseAllNotificationsAfterSummaryDismissed logs and
+            // swallows its own failures, so there is no meaningful success/failure
+            // to report back — clearing the tray must never block or fail sign-out.
+            // Resolve once it has run.
+            withContext(Dispatchers.IO) {
+                NotificationsManager.releaseAllNotificationsAfterSummaryDismissed(activity)
             }
-
-            if (success) invoke.resolve(null) else invoke.reject("EXCEPTION")
+            invoke.resolve(null)
         }
     }
 }
