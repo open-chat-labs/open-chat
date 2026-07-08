@@ -39,11 +39,7 @@ impl FcmTokenStore {
             return FcmTokenAddResult::AlreadyOwned;
         }
 
-        let previous_owner = self
-            .fcm_user_tokens
-            .iter()
-            .find(|(_, t)| t == &token)
-            .map(|(user, _)| *user);
+        let previous_owner = self.fcm_user_tokens.iter().find(|(_, t)| t == &token).map(|(user, _)| *user);
 
         if let Some(previous_owner) = previous_owner {
             self.fcm_user_tokens.remove(&(previous_owner, token.clone()));
