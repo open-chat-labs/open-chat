@@ -315,6 +315,7 @@ export class HumanVerificationMachine {
         this.#capturing = true;
         try {
             const bytes = await captureJpegFrame(video, challenge.maxFrameBytes);
+            if (this.#destroyed) return;
             if (bytes !== undefined) {
                 // Eager upload while the user moves on to the next pose
                 this.#uploads.push(this.#uploadWithRetries(challenge.sessionId, index, bytes));
