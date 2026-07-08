@@ -587,6 +587,21 @@
                 vclDebug.log("debt-forgiven", { forgiven: Math.round(forgiven) });
             }
         }
+        // Settle any remaining debt as soon as the window reaches the newest
+        // edge, while there is still scroll room for the atomic repay write.
+        // At the physical wall the write clamps against the boundary and the
+        // spacer half of the repay lands alone — negative debt in particular
+        // shows as a phantom gap at the very bottom that later snaps shut
+        // (observed as a twitch while parked at the catch-up wall).
+        if (
+            s === 0 &&
+            spacerDebt !== 0 &&
+            viewport &&
+            -viewport.scrollTop > Math.abs(spacerDebt) + 50 &&
+            !isTouching
+        ) {
+            queueMicrotask(() => settleSpacerDebt(true));
+        }
         bottomSpacerHeight = Math.max(0, bottomSpacerHeight);
         [bottomSpacerHeight, topSpacerHeight] = sanitizeSpacers(bottomSpacerHeight, topSpacerHeight);
 
@@ -688,6 +703,14 @@
                 // flushing them now would be a stale jolt on landing.
                 pendingScrollAdjustment = 0;
                 pendingSnapToBottom = false;
+                // Anchor across the recompute below: it can shift the window
+                // (the repay moves fromBottom) and rows newly pulled into the
+                // window render at their real height against an estimate-sized
+                // spacer with no pending-correction entry — the estimate error
+                // lands as a raw shift. Same-flush re-anchoring absorbs it.
+                const pinRow = viewport!.querySelector<HTMLElement>(".vcl-row");
+                const pinKey = pinRow?.dataset.key;
+                const pinTop = pinRow?.getBoundingClientRect().top;
                 // The interrupt has already killed any native momentum, so a
                 // repay write here is free — and outstanding debt carried into
                 // a wall approach otherwise materialises as a clamp shift per
@@ -698,6 +721,18 @@
                 }
                 fromBottom = clampFromBottom(-viewport!.scrollTop);
                 updateWindowFull("interrupt-end");
+                if (pinKey !== undefined && fromBottom > 10) {
+                    tick().then(() => {
+                        if (!viewport || interrupt) return;
+                        const again = rowByKey(viewport, pinKey);
+                        if (!again || pinTop === undefined) return;
+                        const delta = again.getBoundingClientRect().top - pinTop;
+                        if (Math.abs(delta) < 1) return;
+                        viewport.scrollTop += delta;
+                        vclDebug.log("interrupt-pin", { delta: Math.round(delta) });
+                        lastProgrammaticScrollTime = Date.now();
+                    });
+                }
                 if (capturedGlideVelocity !== 0) {
                     startGlide(capturedGlideVelocity);
                     capturedGlideVelocity = 0;
@@ -950,6 +985,20 @@
 
             const numNew = items.length - oldLen;
 
+            // Anchor the user's position across this items pass: the rebuild
+            // below can move the live average (freshly measured rows), and
+            // updateWindowFull then re-freezes the estimate space — changing
+            // every unmeasured row's contribution to the bottom spacer with
+            // no compensation. On a same-length store re-emit (read receipts,
+            // reactions) mid-scroll that surfaced as a one-frame ~300-900px
+            // position jump, always in high-estimate-drift zones. The rect is
+            // captured pre-DOM-update; the re-anchor write lands post-update,
+            // pre-paint (same discipline as the prepend pin).
+            const pinRow = viewport?.querySelector<HTMLElement>(".vcl-row");
+            const pinKey = pinRow?.dataset.key;
+            const pinTop = pinRow?.getBoundingClientRect().top;
+            const preFromBottom = fromBottom;
+
             // Detect prepend: items grew and the old first item was shifted
             // right. Its new index is USUALLY numNew, but a date marker can be
             // inserted or moved at the join (the new batch starts a new day),
@@ -1000,16 +1049,9 @@
                 // New items were prepended at the visual bottom (scroll origin
                 // in column-reverse). Adjust fromBottom so updateWindowFull
                 // targets the same visual position in the new index space.
-                // Reset the pin FIRST: if this prepend takes the follow path
+                // Reset the pin FIRST: if this pass takes the follow path
                 // (no pin), the owner must not read a previous boundary's pin.
                 lastPrependPinTarget = undefined;
-                const preFromBottom = fromBottom;
-                // Anchor on the bottom-most rendered row's CURRENT position —
-                // this pre-effect runs before the DOM updates, so the rect is
-                // the position the user is looking at right now.
-                const anchorRow = viewport?.querySelector<HTMLElement>(".vcl-row");
-                const anchorKey = anchorRow?.dataset.key;
-                const anchorTop = anchorRow?.getBoundingClientRect().top;
                 let offset = 0;
                 for (let i = 0; i < prependCount; i++) {
                     offset += getHeight(i);
@@ -1020,40 +1062,6 @@
                 offset += prependCount * gapPx;
                 fromBottom += offset;
                 prependOffset = offset;
-                // Neutralise the prepend's shift in the SAME flush that
-                // renders it: the owner's anchored restore runs a task later,
-                // and the browser paints the shifted content in between — a
-                // one-frame flash of a different position at every load
-                // boundary, at any scroll speed. tick() resolves after this
-                // flush's DOM update but before the browser paints, so an
-                // anchor-exact write here is invisible; the owner's later
-                // restore then has nothing left to correct. At the genuine
-                // live bottom the view must FOLLOW new content instead — but
-                // the catch-up wall mid-history also sits at fromBottom 0,
-                // and only the owner can tell the two apart (caughtUp).
-                if (!(preFromBottom < 10 && (caughtUp?.() ?? true))) {
-                    tick().then(() => {
-                        if (!viewport || interrupt) return;
-                        const again =
-                            anchorKey !== undefined
-                                ? rowByKey(viewport, anchorKey)
-                                : undefined;
-                        const before = viewport.scrollTop;
-                        if (again && anchorTop !== undefined) {
-                            viewport.scrollTop +=
-                                again.getBoundingClientRect().top - anchorTop;
-                        } else {
-                            viewport.scrollTop = -fromBottom;
-                        }
-                        lastPrependPinTarget = viewport.scrollTop;
-                        vclDebug.log("prepend-pin", {
-                            anchored: !!again,
-                            from: Math.round(before),
-                            to: Math.round(viewport.scrollTop),
-                        });
-                        lastProgrammaticScrollTime = Date.now();
-                    });
-                }
             }
 
             vclDebug.log("items", {
@@ -1066,6 +1074,43 @@
             });
 
             updateWindowFull("items");
+
+            // Re-anchor in the SAME flush that renders this pass: the owner's
+            // restore (if any) runs a task later and the browser paints the
+            // shifted content in between. tick() resolves after this flush's
+            // DOM update but before the paint, so the anchor-exact write is
+            // invisible. Applies to prepends (whose estimate offset above is
+            // approximate) AND to same-length re-emits (whose estimate-space
+            // re-freeze moves the spacers with no compensation at all). At
+            // the genuine live bottom the view must FOLLOW new content
+            // instead — but the catch-up wall mid-history also sits at
+            // fromBottom 0, and only the owner can tell the two apart.
+            const follow = preFromBottom < 10 && (caughtUp?.() ?? true);
+            if (!follow && pinKey !== undefined && oldLen > 0) {
+                tick().then(() => {
+                    if (!viewport || interrupt) return;
+                    const again = rowByKey(viewport, pinKey);
+                    const before = viewport.scrollTop;
+                    if (again && pinTop !== undefined) {
+                        const delta = again.getBoundingClientRect().top - pinTop;
+                        if (Math.abs(delta) < 1 && !isPrepend) return;
+                        viewport.scrollTop += delta;
+                    } else if (isPrepend) {
+                        // anchor left the window — estimate-space fallback
+                        viewport.scrollTop = -fromBottom;
+                    } else {
+                        // replacement/navigation: nothing sensible to pin to
+                        return;
+                    }
+                    if (isPrepend) lastPrependPinTarget = viewport.scrollTop;
+                    vclDebug.log(isPrepend ? "prepend-pin" : "items-pin", {
+                        anchored: !!again,
+                        from: Math.round(before),
+                        to: Math.round(viewport.scrollTop),
+                    });
+                    lastProgrammaticScrollTime = Date.now();
+                });
+            }
         });
     });
 

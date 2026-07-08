@@ -7,7 +7,6 @@
         allUsersStore,
         chatListScopeStore,
         fullWidth,
-        publish,
         routeForMessage,
         selectedChatIdStore,
         selectedChatWebhooksStore,
@@ -64,7 +63,6 @@
                     msg.messageIndex,
                 ),
             );
-            publish("closeModalPage");
         }
     }
 </script>

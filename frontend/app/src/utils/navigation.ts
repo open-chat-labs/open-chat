@@ -259,6 +259,12 @@ let pendingNavigation: PendingNavigation | null = null;
 // more when a dummy history state sat on top of the current entry.
 let pendingPop: { trim: number; to: string; at: number } | null = null;
 
+// How long to wait for the popstate from a deliberate history.go() unwind
+// before assuming the WebView no-oped it (see the fallback in doNavigate).
+// Comfortably longer than a real popstate round-trip, short enough that a
+// genuinely dead tap recovers quickly.
+const POP_FALLBACK_MS = 400;
+
 function handlePopstate(event: PopStateEvent) {
     const { previousAction } = onPopstate(event);
 
@@ -378,8 +384,23 @@ function doNavigate(to: string, intent: NavigationIntent, retries = 0) {
                 // synchronously — any deeper miscount is corrected by the
                 // landing check in handlePopstate.
                 const dummies = getHistoryStateAction(history.state) !== undefined ? 1 : 0;
-                pendingPop = { trim, to, at: Date.now() };
+                const marker: NonNullable<typeof pendingPop> = { trim, to, at: Date.now() };
+                pendingPop = marker;
                 history.go(-(trim + dummies));
+                // WebView fallback: some Android WebViews (Tauri) silently
+                // no-op history.go() when the unwind would step past the start
+                // of the WebView's session history — no popstate fires, so the
+                // self-heal in handlePopstate never runs and the tap looks
+                // dead. If our marker is still live a beat later the unwind
+                // didn't happen; land via replace instead. A successful pop
+                // clears pendingPop before this fires, so it's a no-op there.
+                window.setTimeout(() => {
+                    if (pendingPop === marker) {
+                        pendingPop = null;
+                        page.replace(to);
+                        syncCurrentHistoryState(history.state);
+                    }
+                }, POP_FALLBACK_MS);
             } else {
                 page.replace(to);
                 syncCurrentHistoryState(history.state);
