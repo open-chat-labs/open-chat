@@ -295,6 +295,30 @@
       "type": "string",
       "oneOf": [
         {
+          "description": "Enables the clear_all_notifications command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-clear-all-notifications",
+          "markdownDescription": "Enables the clear_all_notifications command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the clear_all_notifications command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-clear-all-notifications",
+          "markdownDescription": "Denies the clear_all_notifications command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the delete_fcm_token command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-delete-fcm-token",
+          "markdownDescription": "Enables the delete_fcm_token command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the delete_fcm_token command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-delete-fcm-token",
+          "markdownDescription": "Denies the delete_fcm_token command without any pre-configured scope."
+        },
+        {
           "description": "Enables the disable_viewport_resize command without any pre-configured scope.",
           "type": "string",
           "const": "allow-disable-viewport-resize",
@@ -353,6 +377,18 @@
           "type": "string",
           "const": "deny-get-pending-deep-link",
           "markdownDescription": "Denies the get_pending_deep_link command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the get_pending_notification_tap command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-get-pending-notification-tap",
+          "markdownDescription": "Enables the get_pending_notification_tap command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_pending_notification_tap command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-get-pending-notification-tap",
+          "markdownDescription": "Denies the get_pending_notification_tap command without any pre-configured scope."
         },
         {
           "description": "Enables the get_server_version command without any pre-configured scope.",
@@ -523,10 +559,10 @@
           "markdownDescription": "Denies the update_chat_shortcuts command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`\n- `allow-release-notifications`\n- `allow-minimize-app`\n- `allow-get-server-version`\n- `allow-download-update`\n- `allow-restart-app`\n- `allow-load-recent-media`\n- `allow-enable-viewport-resize`\n- `allow-disable-viewport-resize`\n- `allow-save-media`\n- `allow-update-chat-shortcuts`\n- `allow-get-pending-deep-link`",
+          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`\n- `allow-release-notifications`\n- `allow-minimize-app`\n- `allow-get-server-version`\n- `allow-download-update`\n- `allow-restart-app`\n- `allow-load-recent-media`\n- `allow-enable-viewport-resize`\n- `allow-disable-viewport-resize`\n- `allow-save-media`\n- `allow-update-chat-shortcuts`\n- `allow-get-pending-deep-link`\n- `allow-get-pending-notification-tap`\n- `allow-clear-all-notifications`\n- `allow-delete-fcm-token`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`\n- `allow-release-notifications`\n- `allow-minimize-app`\n- `allow-get-server-version`\n- `allow-download-update`\n- `allow-restart-app`\n- `allow-load-recent-media`\n- `allow-enable-viewport-resize`\n- `allow-disable-viewport-resize`\n- `allow-save-media`\n- `allow-update-chat-shortcuts`\n- `allow-get-pending-deep-link`"
+          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`\n- `allow-release-notifications`\n- `allow-minimize-app`\n- `allow-get-server-version`\n- `allow-download-update`\n- `allow-restart-app`\n- `allow-load-recent-media`\n- `allow-enable-viewport-resize`\n- `allow-disable-viewport-resize`\n- `allow-save-media`\n- `allow-update-chat-shortcuts`\n- `allow-get-pending-deep-link`\n- `allow-get-pending-notification-tap`\n- `allow-clear-all-notifications`\n- `allow-delete-fcm-token`"
         }
       ]
     }

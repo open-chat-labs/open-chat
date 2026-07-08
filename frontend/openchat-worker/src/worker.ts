@@ -594,6 +594,9 @@ function getAction(
         case "addFcmToken":
             return agent.addFcmToken(payload.fcmToken, payload.onResponseError);
 
+        case "removeFcmToken":
+            return agent.removeFcmToken(payload.fcmToken);
+
         case "markNotificationSubscriptionActive":
             return agent.markNotificationSubscriptionActive(payload.endpoint);
 

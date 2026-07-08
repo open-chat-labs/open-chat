@@ -2589,6 +2589,10 @@ export class OpenChatAgent extends EventTarget {
         return this._notificationClient.addFcmToken(fcmToken, onResponseError);
     }
 
+    removeFcmToken(fcmToken: string): Promise<void> {
+        return this._notificationClient.removeFcmToken(fcmToken);
+    }
+
     toggleMuteNotifications(
         id: ChatIdentifier | CommunityIdentifier,
         mute: boolean | undefined,

@@ -47,7 +47,12 @@
     import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import { _, isLoading } from "svelte-i18n";
-    import { getFcmToken, svelteReady } from "tauri-plugin-oc-api";
+    import {
+        clearAllNotifications,
+        deleteFcmToken,
+        getFcmToken,
+        svelteReady,
+    } from "tauri-plugin-oc-api";
     import Head from "./Head.svelte";
     import Profiler from "./Profiler.svelte";
     import Router from "./Router.svelte";
@@ -228,6 +233,12 @@
         };
     });
 
+    // Guards the one-time native setup (listeners + logout hook) so it runs once
+    // per page session. setupNativeApp() itself runs again on every userLoggedIn
+    // (account switch), but only the FCM token registration should repeat —
+    // re-registering listeners or the logout hook would stack duplicate handlers.
+    let nativeSetupDone = false;
+
     // Sets up push notifications and FCM token management for native apps
     function setupNativeApp() {
         const addFcmToken = (token: string) => {
@@ -237,35 +248,53 @@
                 .catch(console.error);
         };
 
-        if (client.isNativeApp()) {
-            // Listen for incoming push notifications from Firebase; also asks
-            // for permission to show notifications if not already granted.
-            expectPushNotifications().catch(console.error);
-
-            // Listen for notifications user has tapped on
-            expectNotificationTap().catch(console.error);
-
-            // Expect FCM token refreshes
-            expectNewFcmToken(addFcmToken);
-
-            // Ask for the current FCM token
-            getFcmToken().then((token) => {
-                if (!token) {
-                    // TODO do we handle this somehow? Debounce, try again?
-                    console.error("No FCM token received");
-                    return;
-                }
-
-                client.checkFcmTokenExists(token).then((exists) => {
-                    if (!exists) {
-                        console.log("Adding FCM token for the first time!");
-                        addFcmToken(token);
-                    } else {
-                        console.log("FCM token already registered");
-                    }
-                });
-            });
+        if (!client.isNativeApp()) {
+            return;
         }
+
+        // Ask for the current FCM token and register it unconditionally on every
+        // login. Registration is last-login-wins on the backend, so this also
+        // reclaims a token still bound to a previous account on this device (a
+        // fcm_token_exists pre-check would wrongly skip that).
+        getFcmToken().then((token) => {
+            if (!token) {
+                // TODO do we handle this somehow? Debounce, try again?
+                console.error("No FCM token received");
+                return;
+            }
+
+            addFcmToken(token);
+        });
+
+        // Everything below registers session-scoped handlers and must run once.
+        if (nativeSetupDone) {
+            return;
+        }
+        nativeSetupDone = true;
+
+        // Listen for incoming push notifications from Firebase; also asks
+        // for permission to show notifications if not already granted.
+        expectPushNotifications().catch(console.error);
+
+        // Listen for notifications user has tapped on
+        expectNotificationTap().catch(console.error);
+
+        // Expect FCM token refreshes
+        expectNewFcmToken(addFcmToken);
+
+        // Best-effort push hygiene on sign-out, while the identity is
+        // still valid: unbind this device's token from the account,
+        // delete the device token (pushes to it then dead-end at FCM,
+        // and the next login mints + registers a fresh one), and empty
+        // the tray so nothing from this account lingers.
+        client.onLogout(async () => {
+            const token = await getFcmToken().catch(() => null);
+            if (token) {
+                await client.removeFcmToken(token).catch(console.error);
+            }
+            await deleteFcmToken().catch(console.error);
+            await clearAllNotifications().catch(console.error);
+        });
     }
 
     if ($identityStateStore.kind === "logged_in") {

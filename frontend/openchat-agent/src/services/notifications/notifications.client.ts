@@ -6,6 +6,7 @@ import {
     NotificationsIndexMarkSubscriptionActiveArgs,
     NotificationsIndexPushSubscriptionArgs,
     NotificationsIndexPushSubscriptionResponse,
+    NotificationsIndexRemoveFcmTokenArgs,
     NotificationsIndexRemoveSubscriptionArgs,
     NotificationsIndexSubscriptionExistsArgs,
     NotificationsIndexSubscriptionExistsResponse,
@@ -83,6 +84,16 @@ export class NotificationsClient extends SingleCanisterMsgpackAgent {
                 }
             },
             NotificationsIndexAddFcmTokenArgs,
+            UnitResult,
+        );
+    }
+
+    removeFcmToken(fcmToken: string): Promise<void> {
+        return this.update(
+            "remove_fcm_token",
+            { fcm_token: fcmToken },
+            toVoid,
+            NotificationsIndexRemoveFcmTokenArgs,
             UnitResult,
         );
     }

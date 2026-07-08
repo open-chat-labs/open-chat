@@ -1,3 +1,5 @@
+export { clearAllNotifications } from "./commands/clearAllNotifications";
+export { deleteFcmToken } from "./commands/deleteFcmToken";
 export { getFcmToken } from "./commands/getFcmToken";
 export { minimizeApp } from "./commands/minimizeApp";
 export { openUrl } from "./commands/openUrl";

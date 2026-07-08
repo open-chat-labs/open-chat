@@ -3368,6 +3368,13 @@ export const NotificationsIndexRemoveSubscriptionArgs = Type.Object({
     endpoint: Type.String(),
 });
 
+export type NotificationsIndexRemoveFcmTokenArgs = Static<
+    typeof NotificationsIndexRemoveFcmTokenArgs
+>;
+export const NotificationsIndexRemoveFcmTokenArgs = Type.Object({
+    fcm_token: FcmToken,
+});
+
 export type NotificationsIndexAddFcmTokenArgs = Static<typeof NotificationsIndexAddFcmTokenArgs>;
 export const NotificationsIndexAddFcmTokenArgs = Type.Object({
     fcm_token: FcmToken,

@@ -34,8 +34,8 @@ class MainActivity : TauriActivity() {
         // We neutralize the intent so tao ignores it, then deliver the URL via
         // OCPluginCompanion (which queues it until the WebView is ready).
         val deepLinkUrl = extractDeepLinkUrl(intent)
-        if (deepLinkUrl != null) {
-            setIntent(Intent(intent).apply { action = Intent.ACTION_MAIN; data = null })
+        if (deepLinkUrl != null || isViewWithoutData(intent)) {
+            setIntent(neutralized(intent))
         }
 
         super.onCreate(savedInstanceState)
@@ -70,8 +70,8 @@ class MainActivity : TauriActivity() {
         // Same tao null getType() crash applies to warm starts; pass a neutralized
         // copy to super but deliver the URL via OCPluginCompanion.
         val deepLinkUrl = extractDeepLinkUrl(intent)
-        val safeIntent = if (deepLinkUrl != null) {
-            Intent(intent).apply { action = Intent.ACTION_MAIN; data = null }
+        val safeIntent = if (deepLinkUrl != null || isViewWithoutData(intent)) {
+            neutralized(intent)
         } else intent
 
         super.onNewIntent(safeIntent)
@@ -89,6 +89,20 @@ class MainActivity : TauriActivity() {
             Log.e(LOG_TAG, "Error occurred $e")
         }
     }
+
+    // A VIEW intent with no data URI can't be a real deep link but still hits
+    // the tao null getType() crash. Notification conversation shortcuts are the
+    // known source: a shortcut intent must carry an action, so they use VIEW
+    // with only a notificationPayload extra, which handleNotificationIntent
+    // reads regardless of the action.
+    private fun isViewWithoutData(intent: Intent): Boolean =
+        intent.action == Intent.ACTION_VIEW && intent.data == null
+
+    private fun neutralized(intent: Intent): Intent =
+        Intent(intent).apply {
+            action = Intent.ACTION_MAIN
+            data = null
+        }
 
     private fun extractDeepLinkUrl(intent: Intent): String? {
         if (intent.action != Intent.ACTION_VIEW) return null

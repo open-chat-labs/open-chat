@@ -20,4 +20,7 @@ permissions = [
     "allow-save-media",
     "allow-update-chat-shortcuts",
     "allow-get-pending-deep-link",
+    "allow-get-pending-notification-tap",
+    "allow-clear-all-notifications",
+    "allow-delete-fcm-token",
 ]
