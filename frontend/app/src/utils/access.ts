@@ -153,13 +153,14 @@ const lifetimeDiamondGate: GateBinding = {
     enabled: true,
 };
 
-// Unique person ("verified user", DecideAI) verification is suspended, so this gate is disabled
-// and is no longer offered in getGateBindings. Kept dormant so the concept can be revived.
+// Re-enabled for the in-house verification revival (#9072). This restores the
+// profile "Verification" section; the gate itself stays out of getGateBindings
+// until gate checks are un-stubbed in the cutover phase.
 export const uniquePersonGate: GateBinding = {
     label: "access.uniquePerson",
     key: "unique_person_gate",
     gate: { kind: "unique_person_gate" },
-    enabled: false,
+    enabled: true,
 };
 
 export const lockedGate: GateBinding = {
