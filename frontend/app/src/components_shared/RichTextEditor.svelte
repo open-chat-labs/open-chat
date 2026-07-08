@@ -200,6 +200,11 @@
                     inclusive() {
                         return false;
                     },
+                    // Never auto-linkify pasted URL text - it breaks hand-written
+                    // markdown link syntax when the url portion is pasted
+                    addPasteRules() {
+                        return [];
+                    },
                 }).configure({ openOnClick: false }),
                 UserMentionExtension,
                 GroupMentionExtension,
