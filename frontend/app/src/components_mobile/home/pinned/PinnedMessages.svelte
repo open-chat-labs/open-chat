@@ -118,7 +118,7 @@
 </script>
 
 <SlidingPageContent title={i18nKey("pinnedMessages")}>
-    <Container gap={"sm"} padding={"lg"} direction={"vertical"} bind:ref={messagesDiv}>
+    <Container gap={"sm"} padding={"lg"} height={"fill"} direction={"vertical"} bind:ref={messagesDiv}>
         {#if messages.kind !== "success"}
             <Loading />
         {:else}
