@@ -6,9 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1990-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1990-user)] - 2026-07-07
+
 ### Added
 
-- Add TACO as a swap provider ([#8979](https://github.com/open-chat-labs/open-chat/pull/8979))
+- Add `og_previews` field to messages for handling OpenGraph previews ([#9002](https://github.com/open-chat-labs/open-chat/pull/9002))
 
 ### Changed
 
