@@ -110,6 +110,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let registry_canister_id = create_canister(env, controller);
     let escrow_canister_id = create_canister(env, controller);
     let translations_canister_id = create_canister(env, controller);
+    let personhood_verifier_canister_id = create_canister(env, controller);
     let event_relay_canister_id = create_canister(env, controller);
     let event_store_canister_id = create_canister(env, controller);
     let sign_in_with_email_canister_id = create_canister(env, controller);
@@ -135,6 +136,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let sns_wasm_canister_wasm = wasms::SNS_WASM.clone();
     let storage_bucket_canister_wasm = wasms::STORAGE_BUCKET.clone();
     let storage_index_canister_wasm = wasms::STORAGE_INDEX.clone();
+    let personhood_verifier_canister_wasm = wasms::PERSONHOOD_VERIFIER.clone();
     let translations_canister_wasm = wasms::TRANSLATIONS.clone();
     let user_canister_wasm = wasms::USER.clone();
     let user_index_canister_wasm = wasms::USER_INDEX.clone();
@@ -159,6 +161,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         registry_canister_id,
         translations_canister_id,
         website_canister_id,
+        personhood_verifier_canister_id,
         sign_in_with_email_canister_id,
         nns_governance_canister_id,
         internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
@@ -236,6 +239,20 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         translations_canister_id,
         translations_canister_wasm,
         translations_init_args,
+    );
+
+    let personhood_verifier_init_args = personhood_verifier_canister::init::Args {
+        user_index_canister_id,
+        cycles_dispenser_canister_id,
+        wasm_version,
+        test_mode,
+    };
+    install_canister(
+        env,
+        controller,
+        personhood_verifier_canister_id,
+        personhood_verifier_canister_wasm,
+        personhood_verifier_init_args,
     );
 
     let online_users_init_args = online_users_canister::init::Args {
@@ -504,6 +521,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         registry: registry_canister_id,
         escrow: escrow_canister_id,
         translations: translations_canister_id,
+        personhood_verifier: personhood_verifier_canister_id,
         event_relay: event_relay_canister_id,
         event_store: event_store_canister_id,
         sign_in_with_email: sign_in_with_email_canister_id,

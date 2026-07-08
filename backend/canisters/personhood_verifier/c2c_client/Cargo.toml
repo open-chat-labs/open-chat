@@ -1,0 +1,13 @@
+[package]
+name = "personhood_verifier_canister_c2c_client"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+candid = { workspace = true }
+canister_client = { path = "../../../libraries/canister_client" }
+ic-cdk = { workspace = true }
+msgpack = { path = "../../../libraries/msgpack" }
+personhood_verifier_canister = { path = "../api" }
+tracing = { workspace = true }
+types = { path = "../../../libraries/types" }

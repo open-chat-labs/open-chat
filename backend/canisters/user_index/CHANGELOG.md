@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- `c2c_notify_personhood_verified` endpoint called by the new personhood_verifier canister to record OpenChat-provider unique person proofs ([#9072](https://github.com/open-chat-labs/open-chat/issues/9072))
+
 ### Removed
 
 - Remove deprecated `OpenChatBotMessage` event type ([#9032](https://github.com/open-chat-labs/open-chat/pull/9032))

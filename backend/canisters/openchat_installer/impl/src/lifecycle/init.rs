@@ -30,6 +30,7 @@ fn init(args: Args) {
         args.registry_canister_id,
         args.translations_canister_id,
         args.website_canister_id,
+        args.personhood_verifier_canister_id,
         args.sign_in_with_email_canister_id,
         args.nns_governance_canister_id,
         args.internet_identity_canister_id,

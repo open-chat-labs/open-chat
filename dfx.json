@@ -121,6 +121,12 @@
       "wasm": "wasms/translations.wasm.gz",
       "build": "./scripts/generate-wasm.sh translations"
     },
+    "personhood_verifier": {
+      "type": "custom",
+      "candid": "backend/canisters/personhood_verifier/api/can.did",
+      "wasm": "wasms/personhood_verifier.wasm.gz",
+      "build": "./scripts/generate-wasm.sh personhood_verifier"
+    },
     "event_relay": {
       "type": "custom",
       "candid": "backend/canisters/event_relay/api/can.did",

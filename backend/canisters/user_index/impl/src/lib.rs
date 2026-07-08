@@ -95,6 +95,10 @@ impl RuntimeState {
         self.env.caller() == self.data.registry_canister_id
     }
 
+    pub fn is_caller_personhood_verifier_canister(&self) -> bool {
+        self.env.caller() == self.data.personhood_verifier_canister_id
+    }
+
     pub fn is_caller_local_user_index_canister(&self) -> bool {
         let caller = self.env.caller();
         self.data.local_index_map.get(&caller).is_some()
@@ -370,6 +374,8 @@ struct Data {
     pub escrow_canister_id: CanisterId,
     pub translations_canister_id: CanisterId,
     pub registry_canister_id: CanisterId,
+    #[serde(default = "anonymous_principal")]
+    pub personhood_verifier_canister_id: CanisterId,
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub storage_index_user_sync_queue: BatchedTimerJobQueue<StorageIndexUserConfigBatch>,
     pub storage_index_users_to_remove_queue: BatchedTimerJobQueue<StorageIndexUsersToRemoveBatch>,
@@ -433,6 +439,7 @@ impl Data {
         internet_identity_canister_id: CanisterId,
         translations_canister_id: CanisterId,
         website_canister_id: CanisterId,
+        personhood_verifier_canister_id: CanisterId,
         video_call_operators: Vec<Principal>,
         oc_secret_key_der: Vec<u8>,
         test_mode: bool,
@@ -455,6 +462,7 @@ impl Data {
             escrow_canister_id,
             translations_canister_id,
             registry_canister_id,
+            personhood_verifier_canister_id,
             event_store_client: EventStoreClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_secs(60))
                 .build(),
@@ -552,6 +560,10 @@ impl Data {
     }
 }
 
+fn anonymous_principal() -> CanisterId {
+    Principal::anonymous()
+}
+
 #[cfg(test)]
 impl Default for Data {
     fn default() -> Data {
@@ -572,6 +584,7 @@ impl Default for Data {
             escrow_canister_id: Principal::anonymous(),
             translations_canister_id: Principal::anonymous(),
             registry_canister_id: Principal::anonymous(),
+            personhood_verifier_canister_id: Principal::anonymous(),
             event_store_client: EventStoreClientBuilder::new(Principal::anonymous(), CdkRuntime::default()).build(),
             storage_index_user_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),

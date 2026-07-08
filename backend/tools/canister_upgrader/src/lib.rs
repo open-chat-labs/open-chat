@@ -112,6 +112,25 @@ pub async fn upgrade_translations_canister(
     println!("Translations canister upgraded");
 }
 
+pub async fn upgrade_personhood_verifier_canister(
+    identity: Box<dyn Identity>,
+    url: String,
+    personhood_verifier_canister_id: CanisterId,
+    version: BuildVersion,
+) {
+    upgrade_top_level_canister(
+        identity,
+        url,
+        personhood_verifier_canister_id,
+        version,
+        personhood_verifier_canister::post_upgrade::Args { wasm_version: version },
+        CanisterName::PersonhoodVerifier,
+    )
+    .await;
+
+    println!("Personhood verifier canister upgraded");
+}
+
 pub async fn upgrade_online_users_canister(
     identity: Box<dyn Identity>,
     url: String,

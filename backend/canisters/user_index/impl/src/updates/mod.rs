@@ -6,6 +6,7 @@ pub mod award_external_achievement;
 pub mod c2c_delete_user;
 pub mod c2c_local_user_index;
 pub mod c2c_notify_low_balance;
+pub mod c2c_notify_personhood_verified;
 pub mod c2c_report_message;
 pub mod c2c_send_openchat_bot_messages;
 pub mod c2c_set_avatar;

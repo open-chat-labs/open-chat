@@ -28,6 +28,7 @@ notifications_index_canister_client = { path = "../../canisters/notifications_in
 online_users_canister = { path = "../../canisters/online_users/api" }
 openchat_installer_canister = { path = "../../canisters/openchat_installer/api" }
 openchat_installer_canister_client = { path = "../../canisters/openchat_installer/client" }
+personhood_verifier_canister = { path = "../../canisters/personhood_verifier/api" }
 proposals_bot_canister = { path = "../../canisters/proposals_bot/api" }
 registry_canister = { path = "../../canisters/registry/api" }
 registry_canister_client = { path = "../../canisters/registry/client" }

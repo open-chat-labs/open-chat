@@ -35,6 +35,7 @@ CANISTERS=(
   sign_in_with_email
   storage_bucket
   storage_index
+  personhood_verifier
   translations
   user
   user_index

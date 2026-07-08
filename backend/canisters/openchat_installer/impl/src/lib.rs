@@ -73,6 +73,7 @@ impl State {
                 registry: self.data.registry_canister_id,
                 translations: self.data.translations_canister_id,
                 website: self.data.website_canister_id,
+                personhood_verifier: self.data.personhood_verifier_canister_id,
                 nns_governance: self.data.nns_governance_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
             },
@@ -98,6 +99,8 @@ struct Data {
     registry_canister_id: CanisterId,
     translations_canister_id: CanisterId,
     website_canister_id: CanisterId,
+    #[serde(default = "anonymous_principal")]
+    personhood_verifier_canister_id: CanisterId,
     sign_in_with_email_canister_id: CanisterId,
     nns_governance_canister_id: CanisterId,
     internet_identity_canister_id: CanisterId,
@@ -125,6 +128,7 @@ impl Data {
         registry_canister_id: CanisterId,
         translations_canister_id: CanisterId,
         website_canister_id: CanisterId,
+        personhood_verifier_canister_id: CanisterId,
         sign_in_with_email_canister_id: CanisterId,
         nns_governance_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
@@ -147,6 +151,7 @@ impl Data {
             registry_canister_id,
             translations_canister_id,
             website_canister_id,
+            personhood_verifier_canister_id,
             sign_in_with_email_canister_id,
             nns_governance_canister_id,
             internet_identity_canister_id,
@@ -189,6 +194,11 @@ pub struct CanisterIds {
     pub registry: CanisterId,
     pub translations: CanisterId,
     pub website: CanisterId,
+    pub personhood_verifier: CanisterId,
     pub nns_governance: CanisterId,
     pub internet_identity: CanisterId,
+}
+
+fn anonymous_principal() -> CanisterId {
+    Principal::anonymous()
 }

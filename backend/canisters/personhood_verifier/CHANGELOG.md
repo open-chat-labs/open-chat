@@ -1,0 +1,11 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
+## [unreleased]
+
+### Added
+
+- Initial skeleton: verification sessions, pose challenges, chunked frame upload, deterministic test-mode engine, embedding store + uniqueness scan, proof notification to user_index ([#9072](https://github.com/open-chat-labs/open-chat/issues/9072))

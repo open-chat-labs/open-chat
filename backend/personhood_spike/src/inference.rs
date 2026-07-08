@@ -21,7 +21,9 @@ fn build(model_bytes: &[u8], shape: [usize; 4]) -> TypedRunnableModel<TypedModel
 
 fn input(shape: [usize; 4]) -> TValue {
     let len = shape.iter().product();
-    Tensor::from_shape(&shape, &pseudo_random_floats(42, len)).unwrap().into_tvalue()
+    Tensor::from_shape(&shape, &pseudo_random_floats(42, len))
+        .unwrap()
+        .into_tvalue()
 }
 
 fn bench_build(model_bytes: &[u8], shape: [usize; 4]) -> BenchResult {

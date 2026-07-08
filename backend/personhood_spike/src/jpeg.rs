@@ -8,9 +8,7 @@ fn synth_jpeg(width: u16, height: u16) -> Vec<u8> {
     let noise = pseudo_random_bytes(7, width as usize * height as usize * 3);
     let mut out = Vec::new();
     let encoder = jpeg_encoder::Encoder::new(&mut out, 85);
-    encoder
-        .encode(&noise, width, height, jpeg_encoder::ColorType::Rgb)
-        .unwrap();
+    encoder.encode(&noise, width, height, jpeg_encoder::ColorType::Rgb).unwrap();
     out
 }
 

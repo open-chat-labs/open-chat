@@ -1,0 +1,12 @@
+[package]
+name = "personhood_verifier_canister"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+candid = { workspace = true }
+serde = { workspace = true }
+serde_bytes = { workspace = true }
+ts_export = { path = "../../../libraries/ts_export" }
+ts-rs = { workspace = true }
+types = { path = "../../../libraries/types" }

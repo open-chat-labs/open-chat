@@ -37,6 +37,7 @@ mod message_activity_tests;
 mod notification_tests;
 mod online_users_tests;
 mod p2p_swap_tests;
+mod personhood_verification_tests;
 mod pin_number_tests;
 mod poll_tests;
 mod prize_message_tests;
@@ -127,6 +128,7 @@ pub struct CanisterIds {
     pub registry: CanisterId,
     pub escrow: CanisterId,
     pub translations: CanisterId,
+    pub personhood_verifier: CanisterId,
     pub event_relay: CanisterId,
     pub event_store: CanisterId,
     pub sign_in_with_email: CanisterId,
@@ -162,6 +164,7 @@ impl Debug for CanisterIds {
         w.field("registry", &self.registry.to_string());
         w.field("escrow", &self.escrow.to_string());
         w.field("translations", &self.translations.to_string());
+        w.field("personhood_verifier", &self.personhood_verifier.to_string());
         w.field("event_relay", &self.event_relay.to_string());
         w.field("event_store", &self.event_store.to_string());
         w.field("sign_in_with_email", &self.sign_in_with_email.to_string());

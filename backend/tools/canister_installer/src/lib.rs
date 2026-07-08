@@ -78,6 +78,7 @@ async fn install_service_canisters_impl(
         registry_canister_id: canister_ids.registry,
         translations_canister_id: canister_ids.translations,
         website_canister_id: canister_ids.website,
+        personhood_verifier_canister_id: canister_ids.personhood_verifier,
         sign_in_with_email_canister_id: canister_ids.sign_in_with_email,
         nns_governance_canister_id: canister_ids.nns_governance,
         internet_identity_canister_id: canister_ids.nns_internet_identity,
@@ -151,6 +152,14 @@ async fn install_service_canisters_impl(
     let translations_canister_wasm = get_canister_wasm(CanisterName::Translations, version);
     let translations_init_args = translations_canister::init::Args {
         deployment_operators: vec![principal],
+        user_index_canister_id: canister_ids.user_index,
+        cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        wasm_version: version,
+        test_mode,
+    };
+
+    let personhood_verifier_canister_wasm = get_canister_wasm(CanisterName::PersonhoodVerifier, version);
+    let personhood_verifier_init_args = personhood_verifier_canister::init::Args {
         user_index_canister_id: canister_ids.user_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,
@@ -386,6 +395,12 @@ async fn install_service_canisters_impl(
             &canister_ids.translations,
             &translations_canister_wasm.module,
             Encode!(&translations_init_args).unwrap(),
+        ),
+        install_wasm(
+            management_canister,
+            &canister_ids.personhood_verifier,
+            &personhood_verifier_canister_wasm.module,
+            Encode!(&personhood_verifier_init_args).unwrap(),
         ),
         install_wasm(
             management_canister,

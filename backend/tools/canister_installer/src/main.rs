@@ -23,6 +23,7 @@ async fn main() {
         market_maker: opts.market_maker,
         neuron_controller: opts.neuron_controller,
         escrow: opts.escrow,
+        personhood_verifier: opts.personhood_verifier,
         translations: opts.translations,
         event_relay: opts.event_relay,
         event_store: opts.event_store,
@@ -99,6 +100,9 @@ struct Opts {
 
     #[arg(long)]
     escrow: CanisterId,
+
+    #[arg(long)]
+    personhood_verifier: CanisterId,
 
     #[arg(long)]
     translations: CanisterId,

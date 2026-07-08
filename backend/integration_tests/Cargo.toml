@@ -33,6 +33,7 @@ notifications_index_canister = { path = "../canisters/notifications_index/api" }
 oc_error_codes = { path = "../libraries/error_codes" }
 online_users_canister = { path = "../canisters/online_users/api" }
 openchat_installer_canister = { path = "../canisters/openchat_installer/api" }
+personhood_verifier_canister = { path = "../canisters/personhood_verifier/api" }
 pocket-ic = { workspace = true }
 proposals_bot_canister = { path = "../canisters/proposals_bot/api" }
 rand = { workspace = true }

@@ -37,6 +37,7 @@ pub fn verify_proof_of_unique_personhood(
         Ok(_) => Ok(UniquePersonProof {
             timestamp: now,
             provider: UniquePersonProofProvider::DecideAI,
+            model_version: None,
         }),
         Err(error) => Err(format!("{error:?}")),
     }
