@@ -6,7 +6,6 @@ import type {
     VerificationChallenge,
     VerificationStatus,
 } from "openchat-shared";
-import type { VerifierClient } from "./verifier.client";
 
 const POSES: HeadPose[] = ["center", "left", "right", "up", "down"];
 const SESSION_TTL = 120_000;
@@ -24,7 +23,7 @@ type MockSession = {
 // handle: attempt 1 ends in retry_required, the retry round ends verified,
 // subsequent attempts alternate failed / verified, and attempts beyond the
 // rate limit return attempt_limit_reached.
-export class MockVerifierClient implements VerifierClient {
+export class MockVerifierClient {
     private session: MockSession | undefined = undefined;
     private attempts = 0;
     private verified = false;
@@ -86,8 +85,8 @@ export class MockVerifierClient implements VerifierClient {
         if (image.length > session.challenge.maxFrameBytes) {
             return Promise.resolve({ kind: "frame_too_large" });
         }
-        if (session.framesUploaded.size >= session.challenge.maxFrames) {
-            return Promise.resolve({ kind: "too_many_frames" });
+        if (challengeIndex >= session.challenge.steps.length) {
+            return Promise.resolve({ kind: "invalid_challenge_index" });
         }
         session.framesUploaded.add(challengeIndex);
         return this.delayed({ kind: "success" }, 300);

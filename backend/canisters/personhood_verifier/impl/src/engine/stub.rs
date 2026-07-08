@@ -16,10 +16,20 @@ use serde_bytes::ByteBuf;
 //     variant 2               ~0.71 similarity (gray zone -> retry)
 //     variant 3               independent (clear unique)
 //   Markers from different groups are effectively orthogonal.
+//
+// Real JPEGs (from the actual capture flow running against a test-mode
+// canister) all start 0xFF, so instead of the marker protocol they get an
+// embedding seeded by a hash of the first frame: every capture session
+// becomes a distinct "face" that verifies as unique, which is what a local
+// demo needs. The same-face check is skipped since each frame hashes
+// differently.
 pub fn compute_embedding(frames: &[ByteBuf]) -> Result<Vec<i8>, VerificationFailureReason> {
     let Some(first) = frames.first().filter(|f| !f.is_empty()) else {
         return Err(VerificationFailureReason::NoFaceDetected);
     };
+    if first.starts_with(&[0xFF, 0xD8]) {
+        return Ok(quantize(&pseudo_random_unit(fnv1a(first))));
+    }
     let marker = first[0];
     if marker == 0xFE {
         return Err(VerificationFailureReason::NoFaceDetected);
@@ -46,6 +56,15 @@ pub fn compute_embedding(frames: &[ByteBuf]) -> Result<Vec<i8>, VerificationFail
 
 fn mix(a: &[f32], b: &[f32], weight_a: f32) -> Vec<f32> {
     a.iter().zip(b).map(|(x, y)| weight_a * x + (1.0 - weight_a) * y).collect()
+}
+
+fn fnv1a(bytes: &[u8]) -> u64 {
+    let mut hash = 0xCBF29CE484222325u64;
+    for b in bytes {
+        hash ^= *b as u64;
+        hash = hash.wrapping_mul(0x100000001B3);
+    }
+    hash
 }
 
 fn pseudo_random_unit(seed: u64) -> Vec<f32> {

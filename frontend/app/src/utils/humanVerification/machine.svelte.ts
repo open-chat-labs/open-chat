@@ -148,6 +148,10 @@ export class HumanVerificationMachine {
                 case "busy":
                     this.#state = { kind: "busy" };
                     break;
+                case "user_not_found":
+                case "internal_error":
+                    this.#state = { kind: "error" };
+                    break;
             }
         } catch {
             this.#state = { kind: "error" };

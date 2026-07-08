@@ -19,14 +19,18 @@ export type StartVerificationResponse =
     | { kind: "already_verified" }
     | { kind: "attempt_limit_reached"; nextAttemptAt: bigint }
     | { kind: "session_already_active"; challenge: VerificationChallenge }
-    | { kind: "busy" };
+    | { kind: "busy" }
+    | { kind: "user_not_found" }
+    | { kind: "internal_error"; error: string };
 
 export type UploadVerificationFrameResponse =
     | { kind: "success" }
     | { kind: "session_not_found" }
     | { kind: "session_expired" }
+    | { kind: "invalid_challenge_index" }
     | { kind: "frame_too_large" }
-    | { kind: "too_many_frames" };
+    | { kind: "total_bytes_exceeded" }
+    | { kind: "invalid_image" };
 
 export type SubmitVerificationResponse =
     | { kind: "accepted" }
@@ -43,6 +47,7 @@ export type VerificationFailureReason =
     | "session_expired";
 
 export type VerificationStatus =
+    | { kind: "not_submitted" }
     | { kind: "queued"; position: number }
     | { kind: "processing" }
     | { kind: "verified"; modelVersion: number }

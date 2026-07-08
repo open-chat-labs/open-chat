@@ -73,6 +73,8 @@ export function initEnv() {
             process.env.OC_SIGN_IN_WITH_SOLANA_CANISTER = canisters.sign_in_with_solana[dfxNetwork];
             process.env.OC_ONESEC_FORWARDER_CANISTER = "lsoct-pyaaa-aaaar-boahq-cai";
             process.env.OC_ONESEC_MINTER_CANISTER = "5okwm-giaaa-aaaar-qbn6a-cai";
+            // Optional - when absent the mock verifier client is used
+            process.env.OC_VERIFIER_CANISTER = canisters.personhood_verifier?.[dfxNetwork];
 
             console.log("TranslationsCanisterId: ", process.env.OC_TRANSLATIONS_CANISTER);
             console.log("UserIndexCanisterId: ", process.env.OC_USER_INDEX_CANISTER);
@@ -90,6 +92,7 @@ export function initEnv() {
             console.log("SignInWithSolana: ", process.env.OC_SIGN_IN_WITH_SOLANA_CANISTER);
             console.log("OneSecForwarder: ", process.env.OC_ONESEC_FORWARDER_CANISTER);
             console.log("OneSecMinter: ", process.env.OC_ONESEC_MINTER_CANISTER);
+            console.log("Verifier: ", process.env.OC_VERIFIER_CANISTER);
         } else {
             console.log(
                 "Couldn't find canisters JSON at: ",

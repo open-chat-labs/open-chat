@@ -293,13 +293,13 @@ import { AnonUserClient } from "./user/anonUser.client";
 import { UserClient } from "./user/user.client";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { MockVerifierClient } from "./verifier/mockVerifier.client";
-import type { VerifierClient } from "./verifier/verifier.client";
+import { VerifierClient } from "./verifier/verifier.client";
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
     private _userIndexClient: UserIndexClient;
     private _onlineClient: OnlineClient;
-    private _verifierClient: VerifierClient;
+    private _verifierClient: VerifierClient | MockVerifierClient;
     private _groupIndexClient: GroupIndexClient;
     private _userClient: UserClient | AnonUserClient;
     private _notificationClient: NotificationsClient;
@@ -347,8 +347,9 @@ export class OpenChatAgent extends EventTarget {
         this._userDb = new UserDb();
         this._registryDb = new RegistryDb();
         this._onlineClient = new OnlineClient(identity, this._agent, config.onlineCanister);
-        // Real client lands with the personhood_verifier canister (#9072 Phase 2)
-        this._verifierClient = new MockVerifierClient();
+        this._verifierClient = config.verifierCanister
+            ? new VerifierClient(identity, this._agent, config.verifierCanister)
+            : new MockVerifierClient();
         this._userClient = AnonUserClient.create();
         this._userIndexClient = new UserIndexClient(
             identity,

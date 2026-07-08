@@ -9765,3 +9765,171 @@ export const BotEventWrapper = Type.Object({
     event: BotEvent,
     timestamp: Type.BigInt(),
 });
+
+export type PersonhoodVerifierHeadPose = Static<typeof PersonhoodVerifierHeadPose>;
+
+export const PersonhoodVerifierHeadPose = Type.Union([
+    Type.Literal("Center"),
+    Type.Literal("Left"),
+    Type.Literal("Right"),
+    Type.Literal("Up"),
+    Type.Literal("Down"),
+]);
+
+export type PersonhoodVerifierSubmitVerificationArgs = Static<
+    typeof PersonhoodVerifierSubmitVerificationArgs
+>;
+
+export const PersonhoodVerifierSubmitVerificationArgs = Type.Object({
+    session_id: Type.BigInt(),
+});
+
+export type PersonhoodVerifierSubmitVerificationResponse = Static<
+    typeof PersonhoodVerifierSubmitVerificationResponse
+>;
+
+export const PersonhoodVerifierSubmitVerificationResponse = Type.Union([
+    Type.Literal("Accepted"),
+    Type.Literal("SessionNotFound"),
+    Type.Literal("SessionExpired"),
+    Type.Object({
+        IncompleteChallenge: Type.Object({
+            missing_steps: Type.Array(Type.Number()),
+        }),
+    }),
+]);
+
+export type PersonhoodVerifierUploadFrameResponse = Static<
+    typeof PersonhoodVerifierUploadFrameResponse
+>;
+
+export const PersonhoodVerifierUploadFrameResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("SessionNotFound"),
+    Type.Literal("SessionExpired"),
+    Type.Literal("InvalidChallengeIndex"),
+    Type.Literal("FrameTooLarge"),
+    Type.Literal("TotalBytesExceeded"),
+    Type.Literal("InvalidImage"),
+]);
+
+export type PersonhoodVerifierUploadFrameArgs = Static<typeof PersonhoodVerifierUploadFrameArgs>;
+
+export const PersonhoodVerifierUploadFrameArgs = Type.Object({
+    session_id: Type.BigInt(),
+    challenge_index: Type.Number(),
+    image: TSBytes,
+});
+
+export type PersonhoodVerifierVerificationStatusArgs = Static<
+    typeof PersonhoodVerifierVerificationStatusArgs
+>;
+
+export const PersonhoodVerifierVerificationStatusArgs = Type.Object({
+    session_id: Type.BigInt(),
+});
+
+export type PersonhoodVerifierVerificationFailureReason = Static<
+    typeof PersonhoodVerifierVerificationFailureReason
+>;
+
+export const PersonhoodVerifierVerificationFailureReason = Type.Union([
+    Type.Literal("ChallengeFailed"),
+    Type.Literal("NoFaceDetected"),
+    Type.Literal("NotUnique"),
+    Type.Literal("SessionExpired"),
+]);
+
+export type PersonhoodVerifierModelInfoModelInfo = Static<
+    typeof PersonhoodVerifierModelInfoModelInfo
+>;
+
+export const PersonhoodVerifierModelInfoModelInfo = Type.Object({
+    current_model_version: Type.Number(),
+    enrolled_embeddings: Type.BigInt(),
+});
+
+export type PersonhoodVerifierModelInfoResponse = Static<
+    typeof PersonhoodVerifierModelInfoResponse
+>;
+
+export const PersonhoodVerifierModelInfoResponse = Type.Object({
+    Success: PersonhoodVerifierModelInfoModelInfo,
+});
+
+export type PersonhoodVerifierVerificationChallenge = Static<
+    typeof PersonhoodVerifierVerificationChallenge
+>;
+
+export const PersonhoodVerifierVerificationChallenge = Type.Object({
+    session_id: Type.BigInt(),
+    challenge: Type.Array(PersonhoodVerifierHeadPose),
+    max_frames: Type.Number(),
+    max_frame_bytes: Type.Number(),
+    max_total_bytes: Type.Number(),
+    deadline: Type.BigInt(),
+    is_retry_round: Type.Boolean(),
+});
+
+export type PersonhoodVerifierVerificationRetryReason = Static<
+    typeof PersonhoodVerifierVerificationRetryReason
+>;
+
+export const PersonhoodVerifierVerificationRetryReason = Type.Union([
+    Type.Literal("InconclusiveMatch"),
+    Type.Literal("PoorQuality"),
+]);
+
+export type PersonhoodVerifierStartVerificationResponse = Static<
+    typeof PersonhoodVerifierStartVerificationResponse
+>;
+
+export const PersonhoodVerifierStartVerificationResponse = Type.Union([
+    Type.Object({
+        Success: PersonhoodVerifierVerificationChallenge,
+    }),
+    Type.Object({
+        SessionAlreadyActive: PersonhoodVerifierVerificationChallenge,
+    }),
+    Type.Literal("AlreadyVerified"),
+    Type.Object({
+        AttemptLimitReached: Type.Object({
+            next_attempt_at: Type.BigInt(),
+        }),
+    }),
+    Type.Literal("Busy"),
+    Type.Literal("UserNotFound"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
+export type PersonhoodVerifierVerificationStatusResponse = Static<
+    typeof PersonhoodVerifierVerificationStatusResponse
+>;
+
+export const PersonhoodVerifierVerificationStatusResponse = Type.Union([
+    Type.Literal("NotSubmitted"),
+    Type.Object({
+        Queued: Type.Object({
+            position: Type.Number(),
+        }),
+    }),
+    Type.Literal("Processing"),
+    Type.Object({
+        Verified: Type.Object({
+            model_version: Type.Number(),
+        }),
+    }),
+    Type.Object({
+        RetryRequired: Type.Object({
+            reason: PersonhoodVerifierVerificationRetryReason,
+        }),
+    }),
+    Type.Object({
+        Failed: Type.Object({
+            reason: PersonhoodVerifierVerificationFailureReason,
+        }),
+    }),
+    Type.Literal("SessionNotFound"),
+]);
