@@ -157,6 +157,7 @@ members = [
     "backend/notification_pusher/aws",
     "backend/notification_pusher/cli",
     "backend/notification_pusher/core",
+    "backend/personhood_spike",
     "backend/tools/account_id",
     "backend/tools/canister_installer",
     "backend/tools/canister_upgrade_proposal_builder",
@@ -294,6 +295,18 @@ lto = true
 opt-level = "z"
 codegen-units = 1
 debug = false
+
+# ML inference is compute-bound; "z" costs ~2-4x instructions vs 3 for these crates
+[profile.release.package.tract-core]
+opt-level = 3
+[profile.release.package.tract-linalg]
+opt-level = 3
+[profile.release.package.tract-data]
+opt-level = 3
+[profile.release.package.zune-jpeg]
+opt-level = 3
+[profile.release.package.personhood_spike]
+opt-level = 3
 
 [patch.crates-io]
 aws-sign-v4 = { git = "https://github.com/hpeebles/aws-sign-v4", rev = "33b65dfde0676544a23c41608da77bd0a117d9ce" }
