@@ -21,7 +21,7 @@ export function nodeToMarkdown(node: any): string {
                     t = `<u>${t}</u>`;
                     break;
                 case "link":
-                    t = `[${t}](${mark.attrs?.href ?? ""})`;
+                    t = t === mark.attrs?.href ? t : `[${t}](${mark.attrs?.href ?? ""})`;
                     break;
             }
         }
