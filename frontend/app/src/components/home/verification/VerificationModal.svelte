@@ -28,12 +28,10 @@
     const debug = localStorage.getItem("openchat_verification_debug") === "true";
 
     let consented = $state(false);
-    let videoEl: HTMLVideoElement | undefined = $state(undefined);
+    let videoEl: HTMLVideoElement | undefined | null = $state(undefined);
 
     $effect(() => {
-        if (videoEl !== undefined) {
-            machine.attachVideo(videoEl);
-        }
+        machine.attachVideo(videoEl);
     });
 
     onDestroy(() => machine.destroy());

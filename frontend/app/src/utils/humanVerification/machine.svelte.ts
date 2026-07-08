@@ -86,7 +86,14 @@ export class HumanVerificationMachine {
         return this.#challenge;
     }
 
-    attachVideo(video: HTMLVideoElement) {
+    // Svelte's bind:this passes null when the video element unmounts
+    // (e.g. on the transition to the processing view)
+    attachVideo(video: HTMLVideoElement | null | undefined) {
+        if (video == null) {
+            this.#stopLoop();
+            this.#video = undefined;
+            return;
+        }
         this.#video = video;
         if (this.#stream !== undefined) {
             video.srcObject = this.#stream;
