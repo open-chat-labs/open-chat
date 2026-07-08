@@ -151,6 +151,11 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
 object OCPluginCompanion {
 
     // Indicates that the UI is ready!
+    //
+    // @Volatile: written by the SvelteReady command and read from the
+    // notification-tap handler (see NotificationsManager) on a different thread;
+    // without it the store-vs-trigger decision could read a stale value.
+    @Volatile
     var svelteReady: Boolean = false
 
     // Allows the viewport to resize when keyboard pops up
@@ -162,14 +167,18 @@ object OCPluginCompanion {
     var fcmToken: String? = null
 
     // Deep link URL received during cold start (before the WebView was ready).
-    // JS pulls this via getPendingDeepLink() once mounted.
+    // JS pulls this via getPendingDeepLink() once mounted. @Volatile: written on
+    // the intent-handling thread, read on the command-invoke thread.
+    @Volatile
     var pendingDeepLinkUrl: String? = null
 
     // Notification tap payload received before the WebView was ready. Taps are
     // NOT sent through the event queue in that case: the queue flushes the
     // moment svelteReady fires, which can beat the async listener registration
     // and silently drop the event. JS pulls this via getPendingNotificationTap()
-    // once its listener is in place.
+    // once its listener is in place. @Volatile: written on the tap-handling
+    // thread, read on the command-invoke thread.
+    @Volatile
     var pendingNotificationTap: String? = null
 
     fun initFcmTokenCache() {
