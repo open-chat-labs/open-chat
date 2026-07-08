@@ -8141,6 +8141,7 @@ dependencies = [
  "canister_state_macros",
  "canister_tracing_macros",
  "constants",
+ "getrandom 0.2.16",
  "http_request",
  "ic-cdk",
  "ic-cdk-timers",
@@ -8150,12 +8151,15 @@ dependencies = [
  "rand 0.8.5",
  "serde",
  "serde_bytes",
+ "sha256",
  "stable_memory",
  "tracing",
+ "tract-onnx",
  "types",
  "user_index_canister",
  "user_index_canister_c2c_client",
  "utils",
+ "zune-jpeg",
 ]
 
 [[package]]
@@ -13133,6 +13137,20 @@ name = "vec_map"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f1bddf1187be692e79c5ffeab891132dfb0f236ed36a43c7ed39f1165ee20191"
+
+[[package]]
+name = "verification_model_uploader"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_agent_utils",
+ "clap 4.5.45",
+ "personhood_verifier_canister",
+ "serde_bytes",
+ "sha256",
+ "tokio",
+ "types",
+]
 
 [[package]]
 name = "version-compare"

@@ -3,10 +3,10 @@ use crate::model::embeddings::ScanOutcome;
 use crate::model::sessions::SessionStatus;
 use crate::{RuntimeState, mutate_state, read_state};
 use ic_cdk_timers::TimerId;
-use personhood_verifier_canister::{VerificationFailureReason, VerificationRetryReason};
+use personhood_verifier_canister::{HeadPose, VerificationFailureReason, VerificationRetryReason};
 use std::cell::Cell;
 use std::time::Duration;
-use tracing::{error, trace};
+use tracing::{error, info, trace};
 use types::{CanisterId, UserId};
 
 thread_local! {
@@ -26,10 +26,20 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 
 fn run() {
     TIMER_ID.set(None);
-    // One verification per timer execution. The real pipeline splits further:
-    // one model inference per execution (DTS budgeting) - Phase 2.
-    if let Some(verified) = mutate_state(process_next) {
-        ic_cdk::futures::spawn(notify_user_index(verified));
+    // One heavy step per timer execution (DTS budgeting): with the real
+    // pipeline that is one frame (decode + detect + maybe embed, ~10B
+    // instructions with SIMD) or the finalize scan; the stub does the whole
+    // verification in one step.
+    match mutate_state(process_one_step) {
+        StepOutcome::Done(Some(verified)) => ic_cdk::futures::spawn(notify_user_index(verified)),
+        StepOutcome::Done(None) => {}
+        // Fail closed: models are committed but the engines can't be built.
+        // Never degrade to the stub - keep the queue parked and retry.
+        StepOutcome::EnginesUnavailable => {
+            let timer_id = ic_cdk_timers::set_timer(Duration::from_secs(10), run);
+            TIMER_ID.set(Some(timer_id));
+            return;
+        }
     }
     read_state(start_job_if_required);
 }
@@ -40,21 +50,132 @@ struct Verified {
     user_index_canister_id: CanisterId,
 }
 
-fn process_next(state: &mut RuntimeState) -> Option<Verified> {
-    let now = state.env.now();
-    let session_id = state.data.processing_queue.pop_front()?;
-    let model_version = state.data.current_model_version;
+enum StepOutcome {
+    Done(Option<Verified>),
+    EnginesUnavailable,
+}
 
-    let Some(session) = state.data.sessions.get_mut(session_id) else {
-        return None;
+fn process_one_step(state: &mut RuntimeState) -> StepOutcome {
+    let Some(session_id) = state.data.processing_queue.front().copied() else {
+        return StepOutcome::Done(None);
     };
-    if session.deadline <= now {
+
+    let use_real_engine = state.data.models.all_committed();
+    if use_real_engine && !engine::real::engines_ready() {
+        // Engines are rebuilt lazily after an upgrade (~2B instructions)
+        if let Err(error) = engine::real::build_engines(&state.data.models) {
+            error!(%error, "Failed to build inference engines");
+            return StepOutcome::EnginesUnavailable;
+        }
+    }
+
+    let now = state.env.now();
+    let Some(session) = state.data.sessions.get_mut(session_id) else {
+        state.data.processing_queue.pop_front();
+        return StepOutcome::Done(None);
+    };
+    if session.status.is_terminal() {
+        state.data.processing_queue.pop_front();
+        return StepOutcome::Done(None);
+    }
+    if session.deadline <= now && !matches!(session.status, SessionStatus::Processing) {
         session.status = SessionStatus::Failed {
             reason: VerificationFailureReason::SessionExpired,
         };
-        return None;
+        state.data.processing_queue.pop_front();
+        return StepOutcome::Done(None);
     }
     session.status = SessionStatus::Processing;
+
+    if !use_real_engine {
+        let result = process_with_stub(state, session_id);
+        state.data.processing_queue.pop_front();
+        return StepOutcome::Done(result);
+    }
+
+    let session = state.data.sessions.get_mut(session_id).expect("session exists");
+    let frame_index = session.next_frame as usize;
+    if frame_index < session.challenge.len() {
+        // Process exactly one frame, dropping it immediately afterwards
+        let step = session.challenge[frame_index];
+        let frame = session.frames[frame_index].take();
+        session.next_frame += 1;
+        match process_frame(frame.as_ref().map(|b| b.as_ref()), step) {
+            Ok(Some(embedding)) => session.frame_embeddings.push(embedding),
+            Ok(None) => {}
+            Err(reason) => {
+                session.status = SessionStatus::Failed { reason };
+                session.drop_frames();
+                session.frame_embeddings.clear();
+                state.data.processing_queue.pop_front();
+            }
+        }
+        StepOutcome::Done(None)
+    } else {
+        let result = finalize(state, session_id);
+        state.data.processing_queue.pop_front();
+        StepOutcome::Done(result)
+    }
+}
+
+fn process_frame(frame: Option<&[u8]>, step: HeadPose) -> Result<Option<Vec<f32>>, VerificationFailureReason> {
+    let bytes = frame.ok_or(VerificationFailureReason::ChallengeFailed)?;
+    let image = engine::real::decode_jpeg(bytes)?;
+    let face = engine::real::detect_face(&image)?;
+    let (yaw, pitch) = engine::real::estimate_pose(&face);
+    if !engine::real::pose_matches(step, yaw, pitch) {
+        return Err(VerificationFailureReason::ChallengeFailed);
+    }
+    if matches!(step, HeadPose::Center) {
+        let embedding = engine::real::embed_face(&image, &face)?;
+        Ok(Some(embedding))
+    } else {
+        Ok(None)
+    }
+}
+
+fn finalize(state: &mut RuntimeState, session_id: u128) -> Option<Verified> {
+    let now = state.env.now();
+    let model_version = state.data.current_model_version;
+    let session = state.data.sessions.get_mut(session_id).expect("session exists");
+
+    let embeddings = std::mem::take(&mut session.frame_embeddings);
+    if embeddings.len() < 2 {
+        session.status = SessionStatus::Failed {
+            reason: VerificationFailureReason::ChallengeFailed,
+        };
+        return None;
+    }
+    // All of the session's own faces must agree with each other
+    for i in 0..embeddings.len() {
+        for j in (i + 1)..embeddings.len() {
+            if engine::real::cosine_f32(&embeddings[i], &embeddings[j]) < engine::SAME_FACE_THRESHOLD {
+                session.status = SessionStatus::Failed {
+                    reason: VerificationFailureReason::ChallengeFailed,
+                };
+                return None;
+            }
+        }
+    }
+    let dim = embeddings[0].len();
+    let mut mean = vec![0f32; dim];
+    for e in &embeddings {
+        for (m, x) in mean.iter_mut().zip(e) {
+            *m += x;
+        }
+    }
+    let mean = engine::real::l2_normalize(mean);
+    let probe = engine::real::quantize_i8(&mean);
+
+    let user_id = session.user_id;
+    let is_retry_round = session.is_retry_round;
+    apply_scan_outcome(state, session_id, user_id, is_retry_round, probe, model_version, now)
+}
+
+fn process_with_stub(state: &mut RuntimeState, session_id: u128) -> Option<Verified> {
+    let now = state.env.now();
+    let model_version = state.data.current_model_version;
+    let session = state.data.sessions.get_mut(session_id).expect("session exists");
 
     let frames: Vec<_> = session.frames.iter().flatten().cloned().collect();
     let result = engine::compute_embedding(&frames);
@@ -65,33 +186,42 @@ fn process_next(state: &mut RuntimeState) -> Option<Verified> {
     let user_id = session.user_id;
     let is_retry_round = session.is_retry_round;
 
-    let embedding = match result {
+    let probe = match result {
         Ok(embedding) => embedding,
         Err(reason) => {
             session.status = SessionStatus::Failed { reason };
             return None;
         }
     };
+    apply_scan_outcome(state, session_id, user_id, is_retry_round, probe, model_version, now)
+}
 
+#[expect(clippy::too_many_arguments)]
+fn apply_scan_outcome(
+    state: &mut RuntimeState,
+    session_id: u128,
+    user_id: UserId,
+    is_retry_round: bool,
+    probe: Vec<i8>,
+    model_version: u16,
+    now: types::TimestampMillis,
+) -> Option<Verified> {
     let duplicate_threshold = if is_retry_round { engine::DUPLICATE_THRESHOLD_RETRY } else { engine::DUPLICATE_THRESHOLD };
-    let outcome = state.data.embeddings.scan(
-        model_version,
-        &embedding,
-        &user_id,
-        duplicate_threshold,
-        engine::CLEAR_THRESHOLD,
-    );
+    let outcome = state
+        .data
+        .embeddings
+        .scan(model_version, &probe, &user_id, duplicate_threshold, engine::CLEAR_THRESHOLD);
 
     let session = state.data.sessions.get_mut(session_id).expect("session exists");
     match outcome {
         ScanOutcome::Unique => {
-            state.data.embeddings.insert(model_version, user_id, embedding);
+            state.data.embeddings.insert(model_version, user_id, probe);
             session.status = SessionStatus::Verified { model_version };
-            let user_index_canister_id = state.data.user_index_canister_id;
+            info!(%user_id, "Personhood verified");
             Some(Verified {
                 user_id,
                 model_version,
-                user_index_canister_id,
+                user_index_canister_id: state.data.user_index_canister_id,
             })
         }
         ScanOutcome::Inconclusive if !is_retry_round => {

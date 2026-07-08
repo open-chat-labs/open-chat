@@ -173,6 +173,7 @@ members = [
     "backend/tools/principal_generator",
     "backend/tools/translation_tool",
     "backend/tools/ts_exporter",
+    "backend/tools/verification_model_uploader",
     "frontend/src-tauri",
     "frontend/tauri-plugin-oc",
 ]

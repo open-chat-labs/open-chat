@@ -33,6 +33,12 @@ pub struct VerificationChallenge {
     pub is_retry_round: bool,
 }
 
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum ModelKind {
+    Detection,
+    Embedding,
+}
+
 #[ts_export(personhood_verifier)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]
 pub enum VerificationRetryReason {

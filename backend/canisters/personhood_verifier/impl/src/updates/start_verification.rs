@@ -80,6 +80,8 @@ fn start_verification_impl(user_id: UserId, state: &mut RuntimeState) -> Respons
         deadline: now + SESSION_TTL,
         is_retry_round,
         status: SessionStatus::Open,
+        next_frame: 0,
+        frame_embeddings: Vec::new(),
     };
     let details = challenge_details(session_id, &session);
     state.data.sessions.insert(session_id, session);

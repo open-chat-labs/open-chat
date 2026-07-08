@@ -1,0 +1,14 @@
+[package]
+name = "verification_model_uploader"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+candid = { workspace = true }
+canister_agent_utils = { path = "../../libraries/canister_agent_utils" }
+clap = { workspace = true, features = ["derive"] }
+personhood_verifier_canister = { path = "../../canisters/personhood_verifier/api" }
+serde_bytes = { workspace = true }
+sha256 = { path = "../../libraries/sha256" }
+tokio = { workspace = true, features = ["full"] }
+types = { path = "../../libraries/types" }

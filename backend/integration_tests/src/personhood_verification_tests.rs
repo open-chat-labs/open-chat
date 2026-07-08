@@ -65,7 +65,8 @@ fn verification_happy_path_propagates_proof_and_achievement() {
     );
 
     let status = drive_to_terminal_status(env, user.principal, canister_ids.personhood_verifier, challenge.session_id);
-    assert!(matches!(status, StatusResponse::Verified { model_version: 1 }), "{status:?}");
+    // Version 0 = the stub era, before any real model has been committed
+    assert!(matches!(status, StatusResponse::Verified { model_version: 0 }), "{status:?}");
 
     // Proof recorded in user_index and surfaced on the current user
     tick_many(env, 5);

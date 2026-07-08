@@ -18,6 +18,11 @@ pub struct VerificationSession {
     pub deadline: TimestampMillis,
     pub is_retry_round: bool,
     pub status: SessionStatus,
+    // Real-pipeline progress: one frame is fully processed per timer
+    // execution (DTS budgeting), then a finalize step
+    pub next_frame: u32,
+    // f32 embeddings of the Center-pose frames, kept until finalize
+    pub frame_embeddings: Vec<Vec<f32>>,
 }
 
 #[derive(Clone, Copy, Debug)]
