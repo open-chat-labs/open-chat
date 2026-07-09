@@ -20,7 +20,11 @@ pub use face_pipeline::{DetectedFace, Rgb, cosine_f32, estimate_pose, l2_normali
 const NEUTRAL_MAX_YAW: f32 = 25.0;
 const NEUTRAL_MIN_PITCH: f32 = -25.0;
 const NEUTRAL_MAX_PITCH: f32 = 35.0;
-const DELTA_CENTER_MAX: f32 = 12.0;
+// Return-to-neutral tolerance: looser than the turn/tilt trigger because
+// natural head drift plus the webcam-below-eye pitch bias put a genuine
+// closing Center up to ~12-13 degrees off the anchor (a real run missed by
+// 0.26 at 12.0). The 4 direction steps still demand a real >=12 excursion.
+const DELTA_CENTER_MAX: f32 = 15.0;
 const DELTA_TURN_MIN: f32 = 12.0;
 const DELTA_TILT_MIN: f32 = 12.0;
 
