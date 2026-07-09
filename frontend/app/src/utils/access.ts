@@ -1,11 +1,9 @@
 import {
     isCompositeGate,
     isLeafGate,
-    isUniquePersonGate,
     type AccessGate,
     type AccessGateConfig,
     type Credential,
-    type CredentialGate,
     type CryptocurrencyDetails,
     type EnhancedAccessGate,
     type LeafGate,
@@ -51,7 +49,7 @@ export function getGateBindings(level: Level): GateBinding[] {
         paymentGateFolder,
         balanceGateFolder,
         credentialGate,
-        // uniquePersonGate omitted - DecideAI verification is suspended
+        uniquePersonGate,
         lockedGate,
         chitEarnedGate,
     ];
@@ -217,16 +215,6 @@ const nftGate: GateBinding = {
     enabled: false,
 };
 
-export const uniquePersonCredentialGate: CredentialGate = {
-    kind: "credential_gate",
-    credential: {
-        credentialName: "Is human",
-        issuerCanisterId: "qgxyr-pyaaa-aaaah-qdcwq-cai",
-        issuerOrigin: "https://id.decideai.xyz",
-        credentialType: "ProofOfUniqueness",
-    },
-};
-
 const credentialGate: GateBinding = {
     label: "access.credential.label",
     key: "credential_gate",
@@ -299,15 +287,12 @@ export function mergeAccessGates(
 }
 
 export function flattenGateConfig({ gate }: AccessGateConfig): LeafGate[] {
-    // The unique person ("verified user", DecideAI) concept is suspended, so drop it from the
-    // flattened list - a standalone unique person gate looks like no gate, and inside a composite
-    // gate it is simply omitted.
     if (isLeafGate(gate)) {
-        if (gate.kind === "no_gate" || isUniquePersonGate(gate)) return [];
+        if (gate.kind === "no_gate") return [];
         return [gate];
     }
     if (isCompositeGate(gate)) {
-        return gate.gates.filter((g) => !isUniquePersonGate(g));
+        return gate.gates;
     }
     return [];
 }

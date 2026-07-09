@@ -16,7 +16,6 @@ import type {
     SetDisplayNameResponse,
     SetUsernameResponse,
     SetUserUpgradeConcurrencyResponse,
-    SubmitProofOfUniquePersonhoodResponse,
     SuspendUserResponse,
     UnsuspendUserResponse,
     UsersApiResponse,
@@ -67,8 +66,6 @@ import {
     UserIndexSetUsernameArgs,
     UserIndexSetUsernameResponse,
     UserIndexSetUserUpgradeConcurrencyArgs,
-    UserIndexSubmitProofOfUniquePersonhoodArgs,
-    UserIndexSubmitProofOfUniquePersonhoodResponse,
     UserIndexSuspendUserArgs,
     UserIndexSuspendUserResponse,
     UserIndexUnsuspendUserArgs,
@@ -105,7 +102,6 @@ import {
     payForDiamondMembershipResponse,
     setDisplayNameResponse,
     setUsernameResponse,
-    submitProofOfUniquePersonhoodResponse,
     suspendUserResponse,
     unsuspendUserResponse,
     userRegistrationCanisterResponse,
@@ -602,23 +598,6 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             chitLeaderboardResponse,
             Empty,
             UserIndexChitLeaderboardResponse,
-        );
-    }
-
-    submitProofOfUniquePersonhood(
-        iiPrincipal: string,
-        credential: string,
-    ): Promise<SubmitProofOfUniquePersonhoodResponse> {
-        const args = {
-            user_ii_principal: principalStringToBytes(iiPrincipal),
-            credential_jwt: credential,
-        };
-        return this.update(
-            "submit_proof_of_unique_personhood",
-            args,
-            submitProofOfUniquePersonhoodResponse,
-            UserIndexSubmitProofOfUniquePersonhoodArgs,
-            UserIndexSubmitProofOfUniquePersonhoodResponse,
         );
     }
 

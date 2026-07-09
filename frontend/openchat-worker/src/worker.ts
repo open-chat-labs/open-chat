@@ -1252,8 +1252,6 @@ function getAction(
         case "markAchievementsSeen":
             return agent.markAchievementsSeen();
 
-        case "submitProofOfUniquePersonhood":
-            return agent.submitProofOfUniquePersonhood(payload.iiPrincipal, payload.credential);
 
         case "startVerification":
             return agent.startVerification();

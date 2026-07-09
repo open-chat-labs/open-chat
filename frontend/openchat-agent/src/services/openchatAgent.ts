@@ -156,7 +156,6 @@ import type {
     StartVerificationResponse,
     StorageStatus,
     StreakInsurance,
-    SubmitProofOfUniquePersonhoodResponse,
     SubmitVerificationResponse,
     SubmitProposalResponse,
     SuspendUserResponse,
@@ -4047,13 +4046,6 @@ export class OpenChatAgent extends EventTarget {
         if (cachedState !== undefined) {
             return this.userClient.markAchievementsSeen(cachedState.latestUserCanisterUpdates);
         }
-    }
-
-    submitProofOfUniquePersonhood(
-        iiPrincipal: string,
-        credential: string,
-    ): Promise<SubmitProofOfUniquePersonhoodResponse> {
-        return this._userIndexClient.submitProofOfUniquePersonhood(iiPrincipal, credential);
     }
 
     startVerification(): Promise<StartVerificationResponse> {

@@ -5,7 +5,6 @@ import type { OCError } from "../error";
 import type {
     Failure,
     InternalError,
-    Invalid,
     Offline,
     Retrying,
     Success,
@@ -533,8 +532,6 @@ export type DiamondMembershipFees = {
     oneYear: bigint;
     lifetime: bigint;
 };
-
-export type SubmitProofOfUniquePersonhoodResponse = Success | Invalid | UserNotFound | OCError;
 
 export type ReferralStatus = "registered" | "diamond" | "unique_person" | "lifetime_diamond";
 

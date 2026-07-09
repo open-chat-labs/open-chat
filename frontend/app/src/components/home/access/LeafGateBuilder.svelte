@@ -360,6 +360,10 @@
         <div class="info">
             <Translatable resourceKey={i18nKey("access.lifetimeDiamondGateInfo")} />
         </div>
+    {:else if gate.kind === "unique_person_gate"}
+        <div class="info">
+            <Translatable resourceKey={i18nKey("access.uniquePersonInfo")} />
+        </div>
     {:else if isNeuronGate(gate)}
         <div class="info">
             <Translatable resourceKey={i18nKey("access.neuronHolderInfo", tokenParams(gate))} />

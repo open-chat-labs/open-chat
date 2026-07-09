@@ -225,18 +225,18 @@
         <Container padding={"lg"} direction={"vertical"} gap={"md"}>
             {@const community = selectedCommunity}
             <CommunityCard
-                id={community.id.communityId}
-                name={community.name}
-                description={community.description}
-                avatar={community.avatar}
-                banner={community.banner}
-                memberCount={community.memberCount}
-                channelCount={community.channelCount}
+                id={selectedCommunity.id.communityId}
+                name={selectedCommunity.name}
+                description={selectedCommunity.description}
+                avatar={selectedCommunity.avatar}
+                banner={selectedCommunity.banner}
+                memberCount={selectedCommunity.memberCount}
+                channelCount={selectedCommunity.channelCount}
                 header={false}
-                gateConfig={community.gateConfig}
-                language={community.primaryLanguage}
-                flags={community.flags}
-                verified={community.verified} />
+                gateConfig={selectedCommunity.gateConfig}
+                language={selectedCommunity.primaryLanguage}
+                flags={selectedCommunity.flags}
+                verified={selectedCommunity.verified} />
             <Button onClick={() => goToCommunity(community)}>
                 {#snippet icon(color)}
                     <EyeOutline {color} />

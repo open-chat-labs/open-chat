@@ -278,7 +278,6 @@ import {
     type SiwsPrepareLoginResponse,
     type StartVerificationResponse,
     type StreakInsurance,
-    type SubmitProofOfUniquePersonhoodResponse,
     type SubmitVerificationResponse,
     type Success,
     type SwapTokensResponse,
@@ -4772,22 +4771,16 @@ export class OpenChat {
 
     doesUserMeetAccessGate(gate: AccessGate): boolean {
         if (isCompositeGate(gate)) {
-            // Unique person gates are suspended and filtered out of composites: an OR then requires
-            // another branch (no one is a unique person), an AND is unaffected (everyone is). If
-            // nothing remains the gate collapses to no gate.
-            const gates = gate.gates.filter((g) => g.kind !== "unique_person_gate");
-            if (gates.length === 0) return true;
             return gate.operator === "and"
-                ? gates.every((g) => this.doesUserMeetAccessGate(g))
-                : gates.some((g) => this.doesUserMeetAccessGate(g));
+                ? gate.gates.every((g) => this.doesUserMeetAccessGate(g))
+                : gate.gates.some((g) => this.doesUserMeetAccessGate(g));
         } else {
             if (gate.kind === "diamond_gate") {
                 return currentUserStore.value.diamondStatus.kind !== "inactive";
             } else if (gate.kind === "lifetime_diamond_gate") {
                 return currentUserStore.value.diamondStatus.kind === "lifetime";
             } else if (gate.kind === "unique_person_gate") {
-                // Unique person verification (DecideAI) is suspended - always pass.
-                return true;
+                return currentUserStore.value.isUniquePerson;
             } else if (gate.kind === "chit_earned_gate") {
                 return currentUserStore.value.totalChitEarned >= gate.minEarned;
             } else if (gate.kind === "token_balance_gate") {
@@ -8587,35 +8580,6 @@ export class OpenChat {
                 return undefined;
             })
             .catch(() => undefined);
-    }
-
-    submitProofOfUniquePersonhood(
-        credential: string,
-        iiPrincipal: string,
-    ): Promise<SubmitProofOfUniquePersonhoodResponse> {
-        return this.#worker
-            .send({
-                kind: "submitProofOfUniquePersonhood",
-                iiPrincipal,
-                credential,
-            })
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    currentUserStore.set({
-                        ...currentUserStore.value,
-                        isUniquePerson: true,
-                    });
-                    userStore.updateUser(currentUserIdStore.value, (u) => ({
-                        ...u,
-                        isUniquePerson: true,
-                    }));
-                }
-                return resp;
-            })
-            .catch((err) => {
-                console.error("Failed to submit proof of unique personhood to the user index", err);
-                return { kind: "invalid" };
-            });
     }
 
     startHumanVerification(): Promise<StartVerificationResponse> {

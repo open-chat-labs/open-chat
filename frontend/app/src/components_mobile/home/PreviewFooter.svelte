@@ -6,7 +6,6 @@
         isCompositeGate,
         isLeafGate,
         isLocked,
-        isUniquePersonGate,
         type MultiUserChat,
         type OpenChat,
     } from "openchat-client";
@@ -30,18 +29,15 @@
     let flattenedGates = $derived.by<EnhancedAccessGate[]>(() => {
         return gates.flatMap((g) => {
             if (isCompositeGate(g)) {
-                // Unique person (DecideAI) verification is suspended - drop it from the join flow.
-                return g.gates
-                    .filter((l) => !isUniquePersonGate(l))
-                    .map((l) => ({
-                        ...l,
-                        level: g.level,
-                        expiry: g.expiry,
-                        collectionName: g.collectionName,
-                    }));
+                return g.gates.map((l) => ({
+                    ...l,
+                    level: g.level,
+                    expiry: g.expiry,
+                    collectionName: g.collectionName,
+                }));
             }
             if (isLeafGate(g)) {
-                return isUniquePersonGate(g) ? [] : [g];
+                return [g];
             }
             return [];
         });

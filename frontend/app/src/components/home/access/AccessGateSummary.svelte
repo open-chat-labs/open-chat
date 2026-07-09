@@ -1,10 +1,5 @@
 <script lang="ts">
-    import {
-        type AccessGate,
-        type AccessGateConfig,
-        type Level,
-        stripSuspendedGate,
-    } from "openchat-client";
+    import { type AccessGate, type AccessGateConfig, type Level } from "openchat-client";
     import AccessGateIcon from "./AccessGateIcon.svelte";
     import { gateLabel } from "../../../utils/access";
     import { i18nKey } from "../../../i18n/i18n";
@@ -55,26 +50,19 @@
         showDetail = false;
         onUpdated?.();
     }
-    // Display the gate with any suspended (unique person) gates stripped out. The underlying
-    // gateConfig is left untouched so editing preserves the dormant gate.
-    let displayGateConfig = $derived({ ...gateConfig, gate: stripSuspendedGate(gateConfig.gate) });
-    let gateText = $derived(getGateText(displayGateConfig.gate));
+    let gateText = $derived(getGateText(gateConfig.gate));
 </script>
 
 {#if showDetail}
-    {#if editable}
-        <AccessGateBuilder bind:valid {level} onClose={close} bind:gateConfig {editable} />
-    {:else}
-        <AccessGateBuilder bind:valid {level} onClose={close} gateConfig={displayGateConfig} {editable} />
-    {/if}
+    <AccessGateBuilder bind:valid {level} onClose={close} bind:gateConfig {editable} />
 {/if}
 
-{#if displayGateConfig.gate.kind !== "no_gate" || showNoGate}
+{#if gateConfig.gate.kind !== "no_gate" || showNoGate}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class:invalid={!valid} onclick={open} class:editable class="summary">
         <div class="icon">
-            <AccessGateIcon button {level} showNoGate gateConfig={displayGateConfig} />
+            <AccessGateIcon button {level} showNoGate {gateConfig} />
         </div>
         <div class="name">
             {#if gateText !== undefined}

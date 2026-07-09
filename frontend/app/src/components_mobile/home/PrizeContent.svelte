@@ -19,6 +19,7 @@
         chitBands,
         chitStateStore,
         cryptoLookup,
+        currentUserStore,
         enhancedCryptoLookup,
         isDiamondStore,
         isLifetimeDiamondStore,
@@ -41,6 +42,7 @@
     import { toastStore } from "../../stores/toast";
     import Diamond from "../icons/Diamond.svelte";
     import SpinningToken from "../icons/SpinningToken.svelte";
+    import Verified from "../icons/Verified.svelte";
     import SecureButton from "../SecureButton.svelte";
     import Translatable from "../Translatable.svelte";
     import Badges from "./profile/Badges.svelte";
@@ -151,7 +153,7 @@
     let userEligible = $derived(
         (!content.diamondOnly || $isDiamondStore) &&
             (!content.lifetimeDiamondOnly || $isLifetimeDiamondStore) &&
-            // Unique person ("verified user") gating is suspended - always eligible
+            (!content.uniquePersonOnly || $currentUserStore.isUniquePerson) &&
             content.streakOnly <= $chitStateStore.streak &&
             content.minChitEarned <= $chitStateStore.totalChitEarned,
     );
@@ -171,6 +173,7 @@
     let restrictedPrize = $derived(
         content.diamondOnly ||
             content.lifetimeDiamondOnly ||
+            content.uniquePersonOnly ||
             content.streakOnly > 0 ||
             content.requiresCaptcha ||
             content.minChitEarned > 0,
@@ -314,7 +317,7 @@
                                 forceStreakBadge
                                 withFingerprint={content.requiresCaptcha}
                                 {diamondStatus}
-                                uniquePerson={false}
+                                uniquePerson={content.uniquePersonOnly}
                                 chitEarned={content.minChitEarned}
                                 streak={content.streakOnly}
                                 borderColor={me
@@ -468,7 +471,18 @@
                             </Body>
                         </Row>
                     {/if}
-                    <!-- Unique person ("verified user") gating is suspended -->
+                    {#if content.uniquePersonOnly}
+                        <Row gap="md">
+                            <Verified
+                                borderColor={ColourVars.background1}
+                                verified={content.uniquePersonOnly}
+                                tooltip={i18nKey("prizes.uniquePerson")} />
+
+                            <Body>
+                                <Translatable resourceKey={i18nKey("prizes.uniquePerson")} />
+                            </Body>
+                        </Row>
+                    {/if}
                     {#if content.streakOnly > 0}
                         <Row gap="md">
                             <Streak

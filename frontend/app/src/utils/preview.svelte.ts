@@ -11,7 +11,7 @@ import type {
     MultiUserChat,
     OpenChat,
 } from "openchat-client";
-import { anonUserStore, chatListScopeStore, chatSummariesStore, type PaymentGateApprovals, publish, ROLE_NONE, routeForScope, selectedChatSummaryStore, selectedCommunitySummaryStore, stripSuspendedGate } from "openchat-client";
+import { anonUserStore, chatListScopeStore, chatSummariesStore, type PaymentGateApprovals, publish, ROLE_NONE, routeForScope, selectedChatSummaryStore, selectedCommunitySummaryStore } from "openchat-client";
 import { navigate } from "@utils/navigation";
 
 class ApprovalsAndCredentials {
@@ -202,8 +202,7 @@ class CommunityPreview {
     #community = $state<CommunitySummary>();
     #gatesInEffect = $derived(
         this.#community !== undefined &&
-            // Suspended (unique person) gates are stripped, so a lone unique person gate is no gate.
-            stripSuspendedGate(this.#community.gateConfig.gate).kind !== "no_gate" &&
+            this.#community.gateConfig.gate.kind !== "no_gate" &&
             !this.#community.isInvited,
     );
     #previewing = $derived(

@@ -215,7 +215,6 @@ import type {
     SetMessageReminderResponse,
     SetUsernameResponse,
     SetUserUpgradeConcurrencyResponse,
-    SubmitProofOfUniquePersonhoodResponse,
     SubmitProposalResponse,
     SuspendUserResponse,
     SwapTokensResponse,
@@ -440,7 +439,6 @@ export type WorkerRequest =
     | ChitLeaderboard
     | ChitEventsRequest
     | MarkAchievementsSeen
-    | SubmitProofOfUniquePersonhood
     | StartVerification
     | UploadVerificationFrame
     | SubmitVerification
@@ -673,12 +671,6 @@ type ConfigureWallet = {
 
 type GetAuthenticationPrincipals = {
     kind: "getAuthenticationPrincipals";
-};
-
-type SubmitProofOfUniquePersonhood = {
-    kind: "submitProofOfUniquePersonhood";
-    iiPrincipal: string;
-    credential: string;
 };
 
 type StartVerification = {
@@ -1901,7 +1893,6 @@ export type WorkerResponseInner =
     | ClaimDailyChitResponse
     | ChitLeaderboardResponse
     | ChitEventsResponse
-    | SubmitProofOfUniquePersonhoodResponse
     | StartVerificationResponse
     | UploadVerificationFrameResponse
     | SubmitVerificationResponse
@@ -2583,8 +2574,6 @@ export type WorkerResult<T> = T extends Init
     ? ChitEventsResponse
     : T extends MarkAchievementsSeen
     ? void
-    : T extends SubmitProofOfUniquePersonhood
-    ? SubmitProofOfUniquePersonhoodResponse
     : T extends StartVerification
     ? StartVerificationResponse
     : T extends UploadVerificationFrame
