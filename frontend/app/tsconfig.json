@@ -22,7 +22,9 @@
             "@agent": ["../openchat-agent/src/index.ts"],
             "@agent/*": ["../openchat-agent/src/*"],
             "@worker": ["../openchat-worker/src/worker.ts"],
-            "@worker/*": ["../openchat-worker/src/*"]
+            "@worker/*": ["../openchat-worker/src/*"],
+            "tauri-plugin-oc-api": ["../tauri-plugin-oc/guest-js/index.ts"],
+            "tauri-plugin-oc-api/*": ["../tauri-plugin-oc/guest-js/*"]
         }
     },
     "include": [

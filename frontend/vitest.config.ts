@@ -23,6 +23,10 @@ export default defineConfig({
             { find: "@dfinity/agent", replacement: "@icp-sdk/core/agent" },
             { find: "@dfinity/auth-client", replacement: "@icp-sdk/auth/client" },
             ...pkgAliases,
+            // The Tauri plugin's guest JS is resolved from source (guest-js/)
+            // rather than its built dist-js output, like the sub-packages above.
+            { find: /^tauri-plugin-oc-api\/(.*)$/, replacement: src("./tauri-plugin-oc/guest-js/$1") },
+            { find: /^tauri-plugin-oc-api$/, replacement: src("./tauri-plugin-oc/guest-js/index.ts") },
             { find: "usergeek-ic-js", replacement: src("./app/test-stubs/usergeek-ic-js.ts") },
         ],
         conditions: process.env.VITEST ? ["browser"] : undefined,

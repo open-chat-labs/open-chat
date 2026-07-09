@@ -112,6 +112,16 @@ export default {
                         { find: new RegExp(`^${alias}$`), replacement: path.resolve(root, entry) },
                     ];
                 }),
+                // The Tauri plugin's guest JS is likewise resolved from source
+                // (guest-js/) rather than its built dist-js output.
+                {
+                    find: /^tauri-plugin-oc-api\/(.*)$/,
+                    replacement: `${path.resolve(__dirname, "../tauri-plugin-oc/guest-js")}/$1`,
+                },
+                {
+                    find: /^tauri-plugin-oc-api$/,
+                    replacement: path.resolve(__dirname, "../tauri-plugin-oc/guest-js/index.ts"),
+                },
                 { find: "@dfinity/agent", replacement: "@icp-sdk/core/agent" },
                 { find: "@dfinity/auth-client", replacement: "@icp-sdk/auth/client" },
                 { find: "@src", replacement: path.resolve(__dirname, "src") },
@@ -146,6 +156,7 @@ export default {
                 "../openchat-client/src/**/*",
                 "../openchat-agent/src/**/*",
                 "../openchat-worker/src/**/*",
+                "../tauri-plugin-oc/guest-js/**/*",
             ],
         }),
         inject({

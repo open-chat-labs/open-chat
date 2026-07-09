@@ -205,6 +205,16 @@ export default defineConfig({
     resolve: {
         alias: [
             ...ocPackageAliases,
+            // The Tauri plugin's guest JS is resolved from source (guest-js/)
+            // rather than its built dist-js output, like the sub-packages above.
+            {
+                find: /^tauri-plugin-oc-api\/(.*)$/,
+                replacement: path.join(path.resolve(__dirname, "../tauri-plugin-oc/guest-js"), "$1"),
+            },
+            {
+                find: /^tauri-plugin-oc-api$/,
+                replacement: path.resolve(__dirname, "../tauri-plugin-oc/guest-js/index.ts"),
+            },
             { find: "@dfinity/agent", replacement: "@icp-sdk/core/agent" },
             { find: "@dfinity/auth-client", replacement: "@icp-sdk/auth/client" },
             { find: "@src", replacement: path.resolve(__dirname, "./src") },

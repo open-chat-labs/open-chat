@@ -10,9 +10,9 @@ export { signUp } from "./commands/signUp";
 export { svelteReady } from "./commands/svelteReady";
 export {
     loadRecentMedia,
-    MediaPermissionStatus,
-    RecentMedia,
-    RecentMediaResponse,
+    type MediaPermissionStatus,
+    type RecentMedia,
+    type RecentMediaResponse,
 } from "./commands/loadRecentMedia";
 export { saveMediaToDevice, type SaveMediaRequest } from "./commands/saveMedia";
 export { enableViewportResize } from "./commands/enableViewportResize";
