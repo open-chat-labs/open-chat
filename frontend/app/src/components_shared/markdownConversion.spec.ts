@@ -44,6 +44,21 @@ describe("markdown roundtrip", () => {
         expect(roundtrip("Hey @UserId(42) how are you")).toBe("Hey @UserId(42) how are you");
     });
 
+    it("mention with principal user id", () => {
+        expect(roundtrip("Hey @UserId(2lcnt-ryaaa-aaaaf-aaula-cai) how are you")).toBe(
+            "Hey @UserId(2lcnt-ryaaa-aaaaf-aaula-cai) how are you",
+        );
+        const doc = markdownToDoc("Hey @UserId(2lcnt-ryaaa-aaaaf-aaula-cai) how are you");
+        expect(doc.content[0].content[1].type).toBe("user_mention");
+        expect(doc.content[0].content[1].attrs.userId).toBe("2lcnt-ryaaa-aaaaf-aaula-cai");
+    });
+
+    it("group mention", () => {
+        const doc = markdownToDoc("Hey @UserGroup(42)");
+        expect(doc.content[0].content[1].type).toBe("group_mention");
+        expect(doc.content[0].content[1].attrs.groupId).toBe("42");
+    });
+
     it("mixed inline", () => {
         expect(roundtrip("Hello **world** and *everyone* at @UserId(1)")).toBe(
             "Hello **world** and *everyone* at @UserId(1)",

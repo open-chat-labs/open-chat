@@ -2,7 +2,12 @@
     import "highlight.js/styles/base16/helios.css";
     import { marked } from "marked";
     import type { OpenChat, ReadonlyMap, UserGroupSummary } from "openchat-client";
-    import { allUsersStore, userGroupSummariesStore } from "openchat-client";
+    import {
+        allUsersStore,
+        userGroupMentionRegex,
+        userGroupSummariesStore,
+        userIdMentionRegex,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import { DOMPurifyDefault, DOMPurifyOneLine } from "../utils/domPurify";
     import { isSingleEmoji } from "../utils/emojis";
@@ -75,7 +80,7 @@
     }
 
     function replaceUserIds(text: string): string {
-        return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
+        return text.replace(userIdMentionRegex, (match, p1) => {
             const u = $allUsersStore.get(p1);
             if (u !== undefined) {
                 return `<profile-link text="${escapeHtml(u.username)}" user-id="${
@@ -96,7 +101,7 @@
         text: string,
         userGroups: ReadonlyMap<number, UserGroupSummary>,
     ): string {
-        return text.replace(/@UserGroup\(([\d]+)\)/g, (match, p1) => {
+        return text.replace(userGroupMentionRegex, (match, p1) => {
             const u = userGroups.get(Number(p1));
             if (u !== undefined) {
                 return `**[@${escapeHtml(u.name)}](?usergroup=${u.id})**`;
