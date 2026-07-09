@@ -5,8 +5,8 @@
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { detectNeedsSafeInset, setupKeyboardTracking } from "@src/utils/safe_area";
     import {
-        androidInterfaceSizes,
         setStatusAndNavBarSizesForNativeApp,
+        updateAndroidInterfaceSizes,
     } from "@stores/androidInterfaceSizes";
     import { rtlStore } from "@stores/rtl";
     import { snowing } from "@stores/snow";
@@ -163,10 +163,9 @@
     if (client.isNativeApp()) {
         expectWindowInsetChange((data) => {
             // Setting these values in store should also set the CSS vars!
-            androidInterfaceSizes.set({
-                statusBarHeight: data.statusBarHeightDp,
-                navBarHeight: data.navHeightDp,
-            });
+            // Gated so identical status/nav sizes don't re-write localStorage and
+            // CSS vars on every keyboard-animation frame.
+            updateAndroidInterfaceSizes(data.statusBarHeightDp, data.navHeightDp);
 
             keyboard.visible = data.isKeyboardOpen;
             keyboard.currentHeight = data.keyboardHeightDp;

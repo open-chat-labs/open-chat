@@ -142,8 +142,13 @@ export const keyboard = {
 
         // Update height if current height of the keyboard changes. Might happen
         // if user modified/changed the soft keyboard in any way, or a different
-        // type of keyboard was opened, i.e. numbers only
-        if (value > 0) {
+        // type of keyboard was opened, i.e. numbers only.
+        //
+        // Guard on an actual change: the native inset listener can re-report the
+        // same height many times, and localStorage.setItem crosses into the
+        // WebView's native layer on every call — no point paying that when the
+        // value hasn't moved.
+        if (value > 0 && value !== height) {
             height = value;
             localStorage.setItem(STORAGE_KEY, height.toString());
         }
