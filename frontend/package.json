@@ -15,6 +15,7 @@
         "typecheck": "svelte-check --tsconfig ./app/tsconfig.json --threshold error",
         "lint": "eslint . --fix",
         "test": "vitest --run",
+        "build:ci": "npm run typecheck && npm run lint && npm run test && npm run build:prod",
         "changelog": "auto-changelog --tag-pattern '-website' --file-pattern '^frontend'",
         "tauri": "tauri",
         "mobile": "cargo tauri android dev --no-watch"

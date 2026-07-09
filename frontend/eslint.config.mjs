@@ -86,5 +86,35 @@ export default defineConfig([
             "@typescript-eslint/no-explicit-any": "off",
         },
     },
-    globalIgnores(["**/candid/*.ts", "**/candid/*.js"]),
+    globalIgnores([
+        "**/candid/*.ts",
+        "**/candid/*.js",
+        // Compiled/bundled output — never lint build artifacts.
+        "**/lib/**",
+        "**/build/**",
+        "**/dist/**",
+        "**/dist-js/**",
+        // Standalone sub-packages with their own tooling and tsconfig. These were
+        // not covered by the pre-consolidation per-package lint, so keep them out
+        // of the single root lint too.
+        "component-lib/**",
+        "component-test/**",
+        "tauri-plugin-oc/**",
+        // Node-side build & tooling scripts (rollup/vite/vitest/svelte configs,
+        // codegen, dependency-cruiser, the eslint config itself). These live
+        // outside the app source and use Node globals; the old per-package
+        // `eslint ./src` never linted them.
+        "**/*.config.js",
+        "**/*.config.cjs",
+        "**/*.config.mjs",
+        "**/*.config.ts",
+        "**/*.cjs",
+        "**/rollup.extras.mjs",
+        "**/rollup-plugin-*.mjs",
+        "**/build-workers.mjs",
+        "**/svelte.config.js",
+        "**/.dependency-cruiser.js",
+        "eslint.config.mjs",
+        "eslint-rules/**",
+    ]),
 ]);
