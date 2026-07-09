@@ -23,12 +23,19 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) {
         return;
     }
     let now = state.env.now();
+    // Only arm the timer if there is actually work: a deliberate legacy wipe,
+    // or a model-version lapse. Otherwise every upgrade would rescan for
+    // nothing.
     let delay = match state.data.personhood_model_lapse {
-        Some(lapse) if lapse.lapses_at > now => Duration::from_millis(lapse.lapses_at - now),
-        _ => Duration::ZERO,
+        Some(lapse) if lapse.lapses_at > now => Some(Duration::from_millis(lapse.lapses_at - now)),
+        Some(_) => Some(Duration::ZERO),
+        None if state.data.wipe_legacy_unique_person_proofs => Some(Duration::ZERO),
+        None => None,
     };
-    let timer_id = ic_cdk_timers::set_timer(delay, run);
-    TIMER_ID.set(Some(timer_id));
+    if let Some(delay) = delay {
+        let timer_id = ic_cdk_timers::set_timer(delay, run);
+        TIMER_ID.set(Some(timer_id));
+    }
 }
 
 // Re-arms the timer after a new lapse announcement (cancelling any pending)
@@ -50,6 +57,7 @@ fn run() {
 
 fn run_batch(state: &mut RuntimeState) -> bool {
     let now = state.env.now();
+    let wipe_legacy = state.data.wipe_legacy_unique_person_proofs;
     let lapse = state.data.personhood_model_lapse.filter(|lapse| lapse.lapses_at <= now);
 
     let to_remove: Vec<UserId> = state
@@ -58,7 +66,7 @@ fn run_batch(state: &mut RuntimeState) -> bool {
         .iter()
         .filter(|user| {
             user.unique_person_proof.as_ref().is_some_and(|proof| match proof.provider {
-                UniquePersonProofProvider::DecideAI => true,
+                UniquePersonProofProvider::DecideAI => wipe_legacy,
                 UniquePersonProofProvider::OpenChat => {
                     lapse.is_some_and(|lapse| proof.model_version.unwrap_or(0) < lapse.new_version)
                 }
@@ -73,16 +81,18 @@ fn run_batch(state: &mut RuntimeState) -> bool {
         state.remove_unique_person_proof(user_id);
     }
     if count > 0 {
-        info!(count, "Removed lapsed unique person proofs");
+        info!(count, "Removed unique person proofs");
     }
 
     if count == BATCH_SIZE {
         true
     } else {
-        // Sweep complete: retire the lapse marker so future scans are cheap
+        // Sweep complete: retire both one-shot markers so future upgrades
+        // don't rescan
         if lapse.is_some() {
             state.data.personhood_model_lapse = None;
         }
+        state.data.wipe_legacy_unique_person_proofs = false;
         false
     }
 }
@@ -127,36 +137,20 @@ mod tests {
         let now = env.now;
         let mut state = RuntimeState::new(Box::new(env), data);
 
-        // No lapse announced: only the DecideAI proof is wiped
+        // Nothing triggered: DecideAI proofs are NOT wiped on their own
         let more = run_batch(&mut state);
         assert!(!more);
-        assert!(
-            state
-                .data
-                .users
-                .get_by_user_id(&legacy)
-                .unwrap()
-                .unique_person_proof
-                .is_none()
-        );
-        assert!(
-            state
-                .data
-                .users
-                .get_by_user_id(&lapsed)
-                .unwrap()
-                .unique_person_proof
-                .is_some()
-        );
-        assert!(
-            state
-                .data
-                .users
-                .get_by_user_id(&current)
-                .unwrap()
-                .unique_person_proof
-                .is_some()
-        );
+        assert!(get_proof(&state, &legacy).is_some());
+
+        // Wipe deliberately requested: the DecideAI proof is removed and the
+        // OpenChat proofs are untouched; the flag clears when the sweep ends
+        state.data.wipe_legacy_unique_person_proofs = true;
+        let more = run_batch(&mut state);
+        assert!(!more);
+        assert!(!state.data.wipe_legacy_unique_person_proofs);
+        assert!(get_proof(&state, &legacy).is_none());
+        assert!(get_proof(&state, &lapsed).is_some());
+        assert!(get_proof(&state, &current).is_some());
 
         // Lapse deadline passed: version-1 proofs are removed, version-2 kept
         state.data.personhood_model_lapse = Some(PersonhoodModelLapse {
@@ -165,34 +159,14 @@ mod tests {
         });
         let more = run_batch(&mut state);
         assert!(!more);
-        assert!(
-            state
-                .data
-                .users
-                .get_by_user_id(&lapsed)
-                .unwrap()
-                .unique_person_proof
-                .is_none()
-        );
-        assert!(
-            state
-                .data
-                .users
-                .get_by_user_id(&current)
-                .unwrap()
-                .unique_person_proof
-                .is_some()
-        );
-        assert!(
-            state
-                .data
-                .users
-                .get_by_user_id(&unverified)
-                .unwrap()
-                .unique_person_proof
-                .is_none()
-        );
+        assert!(get_proof(&state, &lapsed).is_none());
+        assert!(get_proof(&state, &current).is_some());
+        assert!(get_proof(&state, &unverified).is_none());
         // Sweep complete: the lapse marker is retired
         assert!(state.data.personhood_model_lapse.is_none());
+    }
+
+    fn get_proof(state: &RuntimeState, user_id: &UserId) -> Option<types::UniquePersonProof> {
+        state.data.users.get_by_user_id(user_id).unwrap().unique_person_proof.clone()
     }
 }
