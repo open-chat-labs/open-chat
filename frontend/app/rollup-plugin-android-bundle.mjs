@@ -101,7 +101,7 @@ async function writeBundleZip(
     const zipFile = store
         ? path.join(downloadDir, `store-${version}.zip`)
         : path.join(downloadDir, `full-${version}.zip`);
-    const injection = `<script>window.OC_CONFIG={OC_APP_TYPE:"android",OC_MOBILE_LAYOUT:"v2", OC_APP_STORE: "${store}", OC_OTA_UPDATES: "${ota}"}</script>`;
+    const injection = `<script>window.OC_CONFIG={OC_MOBILE_LAYOUT:"v2", OC_APP_STORE: "${store}", OC_OTA_UPDATES: "${ota}"}</script>`;
     const updatedIndexHtml = indexHtml.replace("<head>", `<head>${injection}`);
     await fs.writeFile(indexHtmlPath, updatedIndexHtml);
     await execPromise(`cd ${distBundleDir} && zip -r ../${zipFile} .`);

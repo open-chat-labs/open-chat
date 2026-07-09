@@ -31,11 +31,10 @@ export function isAndroidTauriApp(): boolean {
 }
 
 export function isIosTauriApp(): boolean {
-    return isTauriApp() && /iphone|ipad|ipod/i.test(navigator.userAgent);
-}
-
-export function runtimeAppType(): "android" | "ios" | "web" {
-    if (isAndroidTauriApp()) return "android";
-    if (isIosTauriApp()) return "ios";
-    return "web";
+    if (!isTauriApp()) return false;
+    const ua = navigator.userAgent;
+    // iPadOS 13+ WKWebView defaults to a desktop-class UA ("Macintosh; Intel Mac
+    // OS X") with none of the iphone/ipad/ipod tokens, so also treat a Mac UA
+    // that reports touch points as iOS. iPhone still matches the token list.
+    return /iphone|ipad|ipod/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
 }

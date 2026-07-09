@@ -6,21 +6,9 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "vite";
+import { ocPackageAliases } from "./oc-package-aliases.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-const pkgAliases = [
-    ["@shared", "openchat-shared", "src/index.ts"],
-    ["@client", "openchat-client", "src/index.ts"],
-    ["@agent", "openchat-agent", "src/index.ts"],
-    ["@worker", "openchat-worker", "src/worker.ts"],
-].flatMap(([alias, dir, entry]) => {
-    const root = path.resolve(__dirname, "..", dir);
-    return [
-        { find: new RegExp(`^${alias}/(.*)$`), replacement: path.join(root, "src", "$1") },
-        { find: new RegExp(`^${alias}$`), replacement: path.join(root, entry) },
-    ];
-});
 
 const targets = [
     {
@@ -39,7 +27,7 @@ for (const target of targets) {
     await build({
         configFile: false,
         logLevel: "warn",
-        resolve: { alias: pkgAliases },
+        resolve: { alias: ocPackageAliases },
         define: { "process.env.NODE_ENV": JSON.stringify("production") },
         build: {
             outDir: path.resolve(__dirname, target.outDir),

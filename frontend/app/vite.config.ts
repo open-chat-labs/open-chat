@@ -13,6 +13,7 @@ import {
     initEnv,
     sassModulesAndMixins,
 } from "./rollup.extras.mjs";
+import { ocPackageAliases } from "./oc-package-aliases.mjs";
 
 const version = `1000.0.${Date.now()}`;
 const inlineScripts = [`window.OC_WEBSITE_VERSION = "${version}";`];
@@ -26,25 +27,9 @@ const isNativeApp = isNativeIos || isNativeAndroid;
 // Dev server port — shared by web and native (Android/iOS) dev.
 const port = 5001;
 
-// Resolve the former workspace sub-packages directly from their TypeScript
-// source instead of their compiled lib/ output. A subpath import
-// (e.g. @client/utils/time) maps to the package's src/ directory so the
-// remainder of the path is preserved; a bare import maps to the package's
-// source entry point.
-const ocPackages: Array<{ alias: string; dir: string; entry: string }> = [
-    { alias: "@shared", dir: "openchat-shared", entry: "src/index.ts" },
-    { alias: "@client", dir: "openchat-client", entry: "src/index.ts" },
-    { alias: "@agent", dir: "openchat-agent", entry: "src/index.ts" },
-    { alias: "@worker", dir: "openchat-worker", entry: "src/worker.ts" },
-];
-
-const ocPackageAliases = ocPackages.flatMap(({ alias, dir, entry }) => {
-    const root = path.resolve(__dirname, `../${dir}`);
-    return [
-        { find: new RegExp(`^${alias}/(.*)$`), replacement: path.join(root, "src", "$1") },
-        { find: new RegExp(`^${alias}$`), replacement: path.join(root, entry) },
-    ];
-});
+// The former workspace sub-packages (@shared/@client/@agent/@worker) resolve
+// directly from their TypeScript source via `ocPackageAliases` — see
+// ./oc-package-aliases.mjs, the single source shared with build-workers.mjs.
 
 // Directory (gitignored, under node_modules) where the dev web worker bundle is
 // emitted before being served at /worker.js.
