@@ -56,6 +56,14 @@ struct Opts {
     /// N unique images from the pairs file)
     #[arg(long)]
     diagnose: Option<usize>,
+
+    /// Worker threads for embedding (default: available parallelism)
+    #[arg(long)]
+    threads: Option<usize>,
+
+    /// Use RGB channel order for the embedder (experiment; production is BGR)
+    #[arg(long)]
+    rgb_embed: bool,
 }
 
 struct Embedding {
@@ -82,16 +90,22 @@ fn main() {
         return;
     }
 
-    // Embed every referenced image once, caching by path
-    let mut cache: HashMap<String, Option<Embedding>> = HashMap::new();
+    // Embed every referenced image once, in parallel across worker threads
+    // (each thread builds its own engines, so no shared state)
+    let mut unique: Vec<String> = Vec::new();
+    let mut seen = std::collections::HashSet::new();
     for (_, a, b) in &pairs {
         for rel in [a, b] {
-            if !cache.contains_key(rel) {
-                let e = embed_image(&engines, &opts.images_dir.join(rel));
-                cache.insert(rel.clone(), e);
+            if seen.insert(rel.clone()) {
+                unique.push(rel.clone());
             }
         }
     }
+    let n_threads = opts
+        .threads
+        .unwrap_or_else(|| std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4));
+    println!("Embedding {} unique images across {n_threads} threads...", unique.len());
+    let cache = embed_all(&opts.models_dir, &opts.images_dir, unique, n_threads, !opts.rgb_embed);
 
     let mut genuine: Vec<f32> = Vec::new();
     let mut impostor: Vec<f32> = Vec::new();
@@ -269,11 +283,50 @@ fn diagnose(engines: &Engines, images_dir: &Path, pairs: &[(bool, String, String
     }
 }
 
-fn embed_image(engines: &Engines, path: &Path) -> Option<Embedding> {
+fn embed_all(
+    models_dir: &Path,
+    images_dir: &Path,
+    unique: Vec<String>,
+    n_threads: usize,
+    bgr: bool,
+) -> HashMap<String, Option<Embedding>> {
+    let det = read(&models_dir.join("version-RFB-320.onnx"));
+    let lmk = read(&models_dir.join("2d106det.onnx"));
+    let emb = read(&models_dir.join("w600k_mbf.onnx"));
+
+    let chunks: Vec<Vec<String>> = {
+        let mut cs: Vec<Vec<String>> = (0..n_threads).map(|_| Vec::new()).collect();
+        for (i, rel) in unique.into_iter().enumerate() {
+            cs[i % n_threads].push(rel);
+        }
+        cs
+    };
+
+    std::thread::scope(|scope| {
+        let handles: Vec<_> = chunks
+            .into_iter()
+            .map(|chunk| {
+                let (det, lmk, emb) = (&det, &lmk, &emb);
+                scope.spawn(move || {
+                    let engines = Engines::build(det, lmk, emb).expect("engines");
+                    let mut out = HashMap::new();
+                    for rel in chunk {
+                        let e = embed_image(&engines, &images_dir.join(&rel), bgr);
+                        out.insert(rel, e);
+                    }
+                    out
+                })
+            })
+            .collect();
+        handles.into_iter().flat_map(|h| h.join().unwrap()).collect()
+    })
+}
+
+fn embed_image(engines: &Engines, path: &Path, bgr: bool) -> Option<Embedding> {
     let bytes = std::fs::read(path).ok()?;
     let image = decode_jpeg(&bytes).ok()?;
     let face = engines.detect_face(&image).ok()?;
-    let f32 = engines.embed_face(&image, &face).ok()?;
+    let f32 = engines.embed_face_variant(&image, &face, bgr).ok()?;
     Some(Embedding {
         i8: quantize_i8(&f32),
         f32,

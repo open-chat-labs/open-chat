@@ -221,15 +221,22 @@ impl Engines {
     }
 
     // Aligns via 5-point similarity transform to the ArcFace template and
-    // returns the L2-normalized 512-dim embedding
+    // returns the L2-normalized 512-dim embedding. This w600k_mbf ONNX export
+    // takes RGB - calibration measured BGR as consistently worse (genuine
+    // median 0.580 vs 0.607).
     pub fn embed_face(&self, image: &Rgb, face: &DetectedFace) -> Result<Vec<f32>, PipelineError> {
+        self.embed_face_variant(image, face, false)
+    }
+
+    pub fn embed_face_variant(&self, image: &Rgb, face: &DetectedFace, bgr: bool) -> Result<Vec<f32>, PipelineError> {
         let transform = similarity_transform(&face.keypoints, &ARCFACE_TEMPLATE);
         let aligned = warp_bilinear(image, &transform, EMBED_INPUT, EMBED_INPUT);
 
         let mut input = vec![0f32; 3 * EMBED_INPUT * EMBED_INPUT];
         for i in 0..(EMBED_INPUT * EMBED_INPUT) {
             for c in 0..3 {
-                input[c * EMBED_INPUT * EMBED_INPUT + i] = (aligned[i * 3 + c] as f32 - 127.5) / 127.5;
+                let src_c = if bgr { 2 - c } else { c };
+                input[c * EMBED_INPUT * EMBED_INPUT + i] = (aligned[i * 3 + src_c] as f32 - 127.5) / 127.5;
             }
         }
         let tensor =
