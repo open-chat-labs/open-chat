@@ -138,8 +138,11 @@ fn process_frame(
     test_mode: bool,
 ) -> Result<FrameOutcome, VerificationFailureReason> {
     let bytes = frame.ok_or(VerificationFailureReason::ChallengeFailed)?;
+    let t0 = ic_cdk::api::instruction_counter();
     let image = engine::real::decode_jpeg(bytes)?;
+    let t_decode = ic_cdk::api::instruction_counter();
     let face = engine::real::detect_face(&image)?;
+    let t_detect = ic_cdk::api::instruction_counter();
     let (yaw, pitch) = engine::real::estimate_pose(&face);
     // The first frame (always Center) anchors the session's neutral pose;
     // later steps are classified by their delta from it
@@ -155,7 +158,25 @@ fn process_frame(
     if !matched {
         return Err(VerificationFailureReason::ChallengeFailed);
     }
-    let embedding = if matches!(step, HeadPose::Center) { Some(engine::real::embed_face(&image, &face)?) } else { None };
+    let (embedding, t_embed) = if matches!(step, HeadPose::Center) {
+        let emb = engine::real::embed_face(&image, &face)?;
+        (Some(emb), ic_cdk::api::instruction_counter())
+    } else {
+        (None, t_detect)
+    };
+    if test_mode {
+        // Per-stage instruction cost for the r50 embed measurement (issue
+        // #9072): the Center frame (decode + detect + embed) is the heaviest
+        // timer step and must stay under the 40B DTS ceiling.
+        info!(
+            ?step,
+            decode = t_decode - t0,
+            detect = t_detect - t_decode,
+            embed = t_embed.saturating_sub(t_detect),
+            total = ic_cdk::api::instruction_counter() - t0,
+            "Frame instruction cost"
+        );
+    }
     Ok(FrameOutcome {
         pose: (yaw, pitch),
         embedding,
