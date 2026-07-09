@@ -1,0 +1,8 @@
+[package]
+name = "face_pipeline"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+tract-onnx = { version = "=0.21.1", default-features = false }
+zune-jpeg = "0.4"

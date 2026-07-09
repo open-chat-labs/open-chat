@@ -3314,6 +3314,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "face_pipeline"
+version = "0.1.0"
+dependencies = [
+ "tract-onnx",
+ "zune-jpeg",
+]
+
+[[package]]
 name = "fastrand"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7656,6 +7664,7 @@ dependencies = [
  "canister_state_macros",
  "canister_tracing_macros",
  "constants",
+ "face_pipeline",
  "getrandom 0.2.16",
  "http_request",
  "ic-cdk",
@@ -11257,6 +11266,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f60246a4944f24f6e018aa17cdeffb7818b76356965d03b07d6a9886e8962185"
 dependencies = [
  "cfg-if",
+]
+
+[[package]]
+name = "threshold_calibration"
+version = "0.1.0"
+dependencies = [
+ "clap 4.5.45",
+ "face_pipeline",
 ]
 
 [[package]]
