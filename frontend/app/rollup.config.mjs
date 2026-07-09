@@ -63,7 +63,7 @@ function clean() {
     };
 }
 
-const { version } = initEnv();
+const { version, production } = initEnv();
 
 const override = (key, val) => `(window.OC_CONFIG?.${key} ?? ${val})`;
 
@@ -175,10 +175,6 @@ export default {
                 "OC_MOBILE_LAYOUT",
                 JSON.stringify(process.env.OC_MOBILE_LAYOUT),
             ),
-            "import.meta.env.OC_APP_TYPE": override(
-                "OC_APP_TYPE",
-                JSON.stringify(process.env.OC_APP_TYPE),
-            ),
             "import.meta.env.OC_OTA_UPDATES": override(
                 "OC_OTA_UPDATES",
                 JSON.stringify(process.env.OC_OTA_UPDATES),
@@ -289,27 +285,41 @@ export default {
                 ];
                 const csp = generateCspForScripts(inlineScripts);
 
+                // Google Tag Manager + gtag is production-only: gated on the build
+                // env, never included otherwise. gtag stays defined as a no-op
+                // dataLayer push in non-production builds so page-view calls
+                // elsewhere in the app don't throw.
+                const analytics = production
+                    ? `<script>
+                                    window.dataLayer = window.dataLayer || [];
+                                    function gtag(){dataLayer.push(arguments);}
+                                    gtag('js', new Date());
+                                    gtag('config', 'G-7P9R6CJLNR');
+                                    var gtagScript = document.createElement('script');
+                                    gtagScript.async = true;
+                                    gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-7P9R6CJLNR';
+                                    document.head.appendChild(gtagScript);
+                                    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+                                    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+                                    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+                                    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+                                    })(window,document,'script','dataLayer','GTM-WQD48GK2');
+                                </script>`
+                    : `<script>
+                                    window.dataLayer = window.dataLayer || [];
+                                    function gtag(){dataLayer.push(arguments);}
+                                </script>`;
+                const analyticsNoscript = production
+                    ? `<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WQD48GK2" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>`
+                    : "";
+
                 // TODO this is a duplicate of the index.html file, we should
                 // have only one source for our index html.
                 return `
                         <!DOCTYPE html>
                         <html lang="en">
                             <head>
-                            <!-- Google tag (gtag.js) -->
-                                <script async src="https://www.googletagmanager.com/gtag/js?id=G-7P9R6CJLNR"></script>
-                                <script>
-                                    window.dataLayer = window.dataLayer || [];
-                                    function gtag(){dataLayer.push(arguments);}
-                                    gtag('js', new Date());
-                                    gtag('config', 'G-7P9R6CJLNR');
-                                </script>
-                                <!-- CLS Tracking Code -->
-                                <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-                                new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-                                j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-                                'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-                                })(window,document,'script','dataLayer','GTM-WQD48GK2');</script>
-                                <!-- End CLS Tracking Code -->
+                                ${analytics}
                                 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#22A7F2" />
                                 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1B1C21" />
                                 <meta name="description" content="OpenChat is a fully featured chat application running end-to-end on the Internet Computer blockchain." />
@@ -347,9 +357,7 @@ export default {
                             </head>
                             <template id="profile-link-template" style="cursor: pointer; font-weight: 700; text-decoration: underline;"></template>
                             <body>
-                                <!-- CLS Tracking (noscript) -->
-                                <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WQD48GK2" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-                                <!-- End CLS Tracking (noscript) -->
+                                ${analyticsNoscript}
                             </body>
                         </html>
                     `;
