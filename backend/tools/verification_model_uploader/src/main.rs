@@ -23,7 +23,7 @@ struct Opts {
     #[arg(long)]
     personhood_verifier: CanisterId,
 
-    // Directory containing version-RFB-320.onnx, 2d106det.onnx and w600k_mbf.onnx
+    // Directory containing version-RFB-320.onnx, 2d106det.onnx and w600k_r50.onnx
     #[arg(long)]
     models_dir: PathBuf,
 
@@ -40,7 +40,7 @@ async fn main() {
     for (kind, file, version) in [
         (ModelKind::Detection, "version-RFB-320.onnx", opts.embedding_version),
         (ModelKind::Landmarks, "2d106det.onnx", opts.embedding_version),
-        (ModelKind::Embedding, "w600k_mbf.onnx", opts.embedding_version),
+        (ModelKind::Embedding, "w600k_r50.onnx", opts.embedding_version),
     ] {
         let path = opts.models_dir.join(file);
         let bytes = std::fs::read(&path).unwrap_or_else(|e| panic!("Failed to read {path:?}: {e}"));

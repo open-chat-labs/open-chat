@@ -2,8 +2,15 @@ use crate::pseudo_random_floats;
 use canbench_rs::{BenchResult, bench, bench_fn};
 use tract_onnx::prelude::*;
 
+// The production pipeline (issue #9072): UltraFace RFB-320 detection,
+// insightface 2d106det landmarks, w600k ArcFace embedding. Each single
+// inference must fit the 40B instruction DTS ceiling. Only w600k_mbf is
+// benched here - the stronger w600k_r50 (174 MB, selected by calibration)
+// exceeds the 100 MB canister wasm limit when include_bytes'd, so it lives in
+// stable memory and its cost is measured on the real personhood_verifier
+// canister instead.
+
 const RFB320: &[u8] = include_bytes!("../models/version-RFB-320.onnx");
-const SCRFD500M: &[u8] = include_bytes!("../models/det_500m.onnx");
 const LANDMARKS_2D106: &[u8] = include_bytes!("../models/2d106det.onnx");
 const W600K_MBF: &[u8] = include_bytes!("../models/w600k_mbf.onnx");
 
@@ -40,69 +47,69 @@ fn bench_run(model_bytes: &[u8], shape: [usize; 4]) -> BenchResult {
     })
 }
 
+const DETECT_SHAPE: [usize; 4] = [1, 3, 240, 320];
+const LANDMARK_SHAPE: [usize; 4] = [1, 3, 192, 192];
+const EMBED_SHAPE: [usize; 4] = [1, 3, 112, 112];
+
 // One-time cost (init/post_upgrade or lazy first-use): parse + optimize + plan
 
 #[bench(raw)]
 fn build_detector_rfb320() -> BenchResult {
-    bench_build(RFB320, [1, 3, 240, 320])
-}
-
-#[bench(raw)]
-fn build_detector_scrfd500m() -> BenchResult {
-    bench_build(SCRFD500M, [1, 3, 640, 640])
+    bench_build(RFB320, DETECT_SHAPE)
 }
 
 #[bench(raw)]
 fn build_landmarks_2d106() -> BenchResult {
-    bench_build(LANDMARKS_2D106, [1, 3, 192, 192])
+    bench_build(LANDMARKS_2D106, LANDMARK_SHAPE)
 }
 
 #[bench(raw)]
 fn build_embedder_w600k_mbf() -> BenchResult {
-    bench_build(W600K_MBF, [1, 3, 112, 112])
+    bench_build(W600K_MBF, EMBED_SHAPE)
 }
 
 // Per-frame inference costs - each MUST fit the 40B instruction DTS ceiling
 
 #[bench(raw)]
 fn detect_rfb320() -> BenchResult {
-    bench_run(RFB320, [1, 3, 240, 320])
-}
-
-#[bench(raw)]
-fn detect_scrfd500m() -> BenchResult {
-    bench_run(SCRFD500M, [1, 3, 640, 640])
+    bench_run(RFB320, DETECT_SHAPE)
 }
 
 #[bench(raw)]
 fn landmarks_2d106() -> BenchResult {
-    bench_run(LANDMARKS_2D106, [1, 3, 192, 192])
+    bench_run(LANDMARKS_2D106, LANDMARK_SHAPE)
 }
 
 #[bench(raw)]
 fn embed_w600k_mbf() -> BenchResult {
-    bench_run(W600K_MBF, [1, 3, 112, 112])
+    bench_run(W600K_MBF, EMBED_SHAPE)
 }
 
-// Full verification: 8 frames detected + posed, 4 embedded (models pre-built).
-// Not how production runs it (one inference per timer execution) - this measures
-// the total instruction budget for one verification.
+// Full verification with the production lineup: a 5-pose challenge means 5
+// frames detected + landmarked, and the 2 Center frames embedded. Models are
+// pre-built (production rebuilds them once, lazily). Not how production runs
+// it (one inference per timer execution) - this is the total instruction
+// budget for one verification.
 
-#[bench(raw)]
-fn full_verification_8_frames() -> BenchResult {
-    let detector = build(RFB320, [1, 3, 240, 320]);
-    let landmarks = build(LANDMARKS_2D106, [1, 3, 192, 192]);
-    let embedder = build(W600K_MBF, [1, 3, 112, 112]);
-    let detect_input = input([1, 3, 240, 320]);
-    let landmarks_input = input([1, 3, 192, 192]);
-    let embed_input = input([1, 3, 112, 112]);
+fn full_verification(embedder_bytes: &[u8]) -> BenchResult {
+    let detector = build(RFB320, DETECT_SHAPE);
+    let landmarks = build(LANDMARKS_2D106, LANDMARK_SHAPE);
+    let embedder = build(embedder_bytes, EMBED_SHAPE);
+    let detect_input = input(DETECT_SHAPE);
+    let landmark_input = input(LANDMARK_SHAPE);
+    let embed_input = input(EMBED_SHAPE);
     bench_fn(|| {
-        for _ in 0..8 {
+        for _ in 0..5 {
             std::hint::black_box(detector.run(tvec!(detect_input.clone())).unwrap());
-            std::hint::black_box(landmarks.run(tvec!(landmarks_input.clone())).unwrap());
+            std::hint::black_box(landmarks.run(tvec!(landmark_input.clone())).unwrap());
         }
-        for _ in 0..4 {
+        for _ in 0..2 {
             std::hint::black_box(embedder.run(tvec!(embed_input.clone())).unwrap());
         }
     })
+}
+
+#[bench(raw)]
+fn full_verification_w600k_mbf() -> BenchResult {
+    full_verification(W600K_MBF)
 }

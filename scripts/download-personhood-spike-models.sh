@@ -40,4 +40,8 @@ download w600k_mbf.onnx \
     9cc6e4a75f0e2bf0b1aed94578f144d15175f357bdc05e815e5c4a02b319eb4f \
     "https://huggingface.co/deepghs/insightface/resolve/main/buffalo_sc/w600k_mbf.onnx"
 
+download w600k_r50.onnx \
+    4c06341c33c2ca1f86781dab0e829f88ad5b64be9fba56e56bc9ebdefc619e43 \
+    "https://huggingface.co/deepghs/insightface/resolve/main/buffalo_l/w600k_r50.onnx"
+
 echo "All models present in $MODELS_DIR"
