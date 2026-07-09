@@ -143,6 +143,11 @@ fn process_event(event: LocalUserIndexEvent, state: &mut RuntimeState) {
                 )
             }
         }
+        LocalUserIndexEvent::NotifyUniquePersonProofRemoved => {
+            // Achievements/CHIT already earned are not clawed back
+            state.data.unique_person_proof = None;
+            state.data.unique_person_proof_removed_at = Some(now);
+        }
         LocalUserIndexEvent::ExternalAchievementAwarded(ev) => {
             state.award_external_achievement(ev.name, ev.chit_reward, now);
         }

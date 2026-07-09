@@ -23,7 +23,6 @@ use model::bots_map::BotsMap;
 use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
 use p256_key_pair::P256KeyPair;
-use proof_of_unique_personhood::verify_proof_of_unique_personhood;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
@@ -101,31 +100,9 @@ impl RuntimeState {
             let user_id = user_details.user_id;
 
             for jwt in credential_args.credential_jwts.iter() {
-                if let Ok(unique_person_proof) = verify_proof_of_unique_personhood(
-                    credential_args.user_ii_principal,
-                    self.data.internet_identity_canister_id,
-                    self.data.website_canister_id,
-                    jwt,
-                    &self.env.ic_root_key(),
-                    now,
-                ) {
-                    self.push_event_to_user_index(
-                        UserIndexEvent::NotifyUniquePersonProof(Box::new((user_id, unique_person_proof.clone()))),
-                        now,
-                    );
-                    if self.data.local_users.contains(&user_id) {
-                        self.push_event_to_user(
-                            user_id,
-                            UserEvent::NotifyUniquePersonProof(Box::new(unique_person_proof.clone())),
-                            now,
-                        );
-                    }
-                    user_details.unique_person_proof = Some(unique_person_proof.clone());
-                    self.data
-                        .global_users
-                        .insert_unique_person_proof(user_id, unique_person_proof);
-                } else if let Ok(claims) =
-                    verify_and_decode::<DiamondMembershipDetails>(jwt, self.data.oc_key_pair.public_key_pem())
+                // Note: DecideAI "unique person" JWTs are no longer accepted;
+                // unique personhood is established via the personhood_verifier
+                if let Ok(claims) = verify_and_decode::<DiamondMembershipDetails>(jwt, self.data.oc_key_pair.public_key_pem())
                     && claims.claim_type() == "diamond_membership"
                 {
                     let expires_at = claims.custom().expires_at;

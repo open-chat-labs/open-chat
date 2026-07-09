@@ -28,6 +28,11 @@ impl EmbeddingStore {
         self.by_version.get(&model_version).is_some_and(|m| m.contains_key(user_id))
     }
 
+    // Deletes every embedding of a lapsed model version
+    pub fn remove_version(&mut self, model_version: u16) -> usize {
+        self.by_version.remove(&model_version).map_or(0, |m| m.len())
+    }
+
     pub fn remove_user(&mut self, user_id: &UserId) {
         for map in self.by_version.values_mut() {
             map.remove(user_id);
@@ -47,11 +52,11 @@ impl EmbeddingStore {
         exclude: &UserId,
         duplicate_threshold: f32,
         clear_threshold: f32,
-    ) -> ScanOutcome {
+    ) -> (ScanOutcome, f32) {
         let Some(map) = self.by_version.get(&model_version) else {
-            return ScanOutcome::Unique;
+            return (ScanOutcome::Unique, 0.0);
         };
-        let mut max_similarity = f32::MIN;
+        let mut max_similarity = 0.0f32;
         for (user_id, stored) in map.iter() {
             if user_id == exclude {
                 continue;
@@ -61,13 +66,14 @@ impl EmbeddingStore {
                 max_similarity = similarity;
             }
         }
-        if max_similarity >= duplicate_threshold {
+        let outcome = if max_similarity >= duplicate_threshold {
             ScanOutcome::Duplicate
         } else if max_similarity >= clear_threshold {
             ScanOutcome::Inconclusive
         } else {
             ScanOutcome::Unique
-        }
+        };
+        (outcome, max_similarity)
     }
 }
 

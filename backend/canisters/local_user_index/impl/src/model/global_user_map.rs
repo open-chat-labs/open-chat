@@ -104,6 +104,10 @@ impl GlobalUserMap {
         self.unique_person_proofs.insert(user_id, proof);
     }
 
+    pub fn remove_unique_person_proof(&mut self, user_id: &UserId) {
+        self.unique_person_proofs.remove(user_id);
+    }
+
     pub fn insert_chit_record(&mut self, user_id: UserId, chit_record: ChitBalance) {
         self.chit.insert(user_id, chit_record);
     }

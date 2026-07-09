@@ -13,6 +13,7 @@ generate_c2c_call!(users_chit);
 generate_c2c_call!(add_local_user_index_canister);
 generate_c2c_call!(c2c_delete_user);
 generate_c2c_call!(c2c_local_user_index, 300);
+generate_c2c_call!(c2c_notify_model_upgraded);
 generate_c2c_call!(c2c_notify_personhood_verified);
 generate_c2c_call!(c2c_report_message);
 generate_c2c_call!(c2c_send_openchat_bot_messages);

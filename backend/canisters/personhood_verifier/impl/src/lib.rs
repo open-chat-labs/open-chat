@@ -96,6 +96,10 @@ struct Data {
     pub current_model_version: u16,
     #[serde(default)]
     pub models: ModelStore,
+    // Set when an embedding model upgrade starts a re-verification window:
+    // (old version, deadline) - old embeddings are purged at the deadline
+    #[serde(default)]
+    pub lapsed_embedding_purge: Option<(u16, TimestampMillis)>,
     // Heap for now; moves to stable structures before real scale (Phase 2)
     pub embeddings: EmbeddingStore,
     pub attempts: HashMap<UserId, AttemptHistory>,
@@ -125,6 +129,7 @@ impl Data {
             // becomes version 1 and stub-enrolled embeddings stop matching
             current_model_version: 0,
             models: ModelStore::default(),
+            lapsed_embedding_purge: None,
             embeddings: EmbeddingStore::default(),
             attempts: HashMap::new(),
             sessions: Sessions::default(),

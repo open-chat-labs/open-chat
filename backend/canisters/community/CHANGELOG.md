@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Enforce unique person gates for real (previously suspended, always passing) ([#9072](https://github.com/open-chat-labs/open-chat/issues/9072))
+
 - Suspend "verified user" (unique person) gating - the gate is ignored, filtered out of composite gates so an OR gate requires another branch ([#9061](https://github.com/open-chat-labs/open-chat/pull/9061))
 
 ## [[2.0.1988](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1988-community)] - 2026-06-18

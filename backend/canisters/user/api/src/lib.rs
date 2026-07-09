@@ -104,6 +104,7 @@ pub enum LocalUserIndexEvent {
     UserJoinedCommunityOrChannel(Box<UserJoinedCommunityOrChannel>),
     DiamondMembershipPaymentReceived(Box<DiamondMembershipPaymentReceived>),
     NotifyUniquePersonProof(Box<UniquePersonProof>),
+    NotifyUniquePersonProofRemoved,
     ExternalAchievementAwarded(Box<ExternalAchievementAwarded>),
     ReinstateMissedDailyClaims(Vec<u16>),
     BotUpdated(Box<BotDefinitionUpdate>),

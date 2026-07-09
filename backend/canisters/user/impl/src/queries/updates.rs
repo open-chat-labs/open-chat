@@ -40,7 +40,8 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         .data
         .unique_person_proof
         .as_ref()
-        .is_some_and(|p| p.timestamp > updates_since);
+        .is_some_and(|p| p.timestamp > updates_since)
+        || state.data.unique_person_proof_removed_at.is_some_and(|ts| ts > updates_since);
 
     let wallet_config = state.data.wallet_config.if_set_after(updates_since).cloned();
     let referrals = state.data.referrals.updated_since(updates_since);
@@ -232,7 +233,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         max_streak: state.data.streak.max_streak(),
         streak_insurance,
         next_daily_claim: state.data.streak.next_claim(),
-        is_unique_person: is_unique_person_updated.then_some(true),
+        is_unique_person: is_unique_person_updated.then_some(state.data.unique_person_proof.is_some()),
         wallet_config,
         referrals,
         message_activity_summary,
