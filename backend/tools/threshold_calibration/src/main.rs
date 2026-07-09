@@ -51,6 +51,11 @@ struct Opts {
     /// Enrolment scales to report the compounded false-match probability for
     #[arg(long, value_delimiter = ',', default_value = "100000,1000000")]
     scales: Vec<u64>,
+
+    /// Instead of ROC, diagnose why images fail detection (samples the first
+    /// N unique images from the pairs file)
+    #[arg(long)]
+    diagnose: Option<usize>,
 }
 
 struct Embedding {
@@ -71,6 +76,11 @@ fn main() {
 
     let pairs = read_pairs(&opts.pairs);
     println!("{} pairs", pairs.len());
+
+    if let Some(n) = opts.diagnose {
+        diagnose(&engines, &opts.images_dir, &pairs, n);
+        return;
+    }
 
     // Embed every referenced image once, caching by path
     let mut cache: HashMap<String, Option<Embedding>> = HashMap::new();
@@ -223,6 +233,40 @@ fn quantile(sorted_or_not: &[f32], q: f32) -> f32 {
     v.sort_by(f32::total_cmp);
     let idx = ((v.len() as f32 - 1.0) * q).round() as usize;
     v[idx]
+}
+
+fn diagnose(engines: &Engines, images_dir: &Path, pairs: &[(bool, String, String)], n: usize) {
+    let mut seen = std::collections::HashSet::new();
+    let mut order = Vec::new();
+    for (_, a, b) in pairs {
+        for rel in [a, b] {
+            if seen.insert(rel.clone()) {
+                order.push(rel.clone());
+            }
+        }
+    }
+    // Sample evenly across the whole set, not just the front
+    let stride = (order.len() / n).max(1);
+    let order: Vec<String> = order.iter().step_by(stride).take(n).cloned().collect();
+
+    let mut outcomes: HashMap<&str, u32> = HashMap::new();
+    let mut decode_failed = 0u32;
+    let mut examples = 0;
+    for rel in &order {
+        match std::fs::read(images_dir.join(rel)).ok().and_then(|b| decode_jpeg(&b).ok()) {
+            Some(image) => {
+                let outcome = engines.detect_debug(&image);
+                let _ = examples;
+                *outcomes.entry(outcome).or_default() += 1;
+            }
+            None => decode_failed += 1,
+        }
+    }
+    println!("\n=== Detection diagnosis over {} images ===", order.len());
+    println!("decode_failed: {decode_failed}");
+    for outcome in ["ok", "no_face", "multi_face", "inference_failed", "decode_failed"] {
+        println!("  {outcome:<18} {}", outcomes.get(outcome).copied().unwrap_or(0));
+    }
 }
 
 fn embed_image(engines: &Engines, path: &Path) -> Option<Embedding> {

@@ -17,7 +17,6 @@ const DET_W: usize = 320;
 const DET_H: usize = 240;
 const DET_SCORE_THRESHOLD: f32 = 0.7;
 const SECOND_FACE_THRESHOLD: f32 = 0.85;
-const NMS_IOU_THRESHOLD: f32 = 0.4;
 const LMK_INPUT: usize = 192;
 // Crop a region this many times the detection box's longest side for the
 // landmark model (insightface convention)
@@ -91,9 +90,9 @@ impl Engines {
         })
     }
 
-    // Detects the single face in the frame (UltraFace), then locates its
-    // landmarks (2d106det); errors if no face or more than one confident face
-    pub fn detect_face(&self, image: &Rgb) -> Result<DetectedFace, PipelineError> {
+    // Runs the detector and returns one representative box per distinct
+    // face scoring at least `min_score` (highest score first)
+    fn run_detector(&self, image: &Rgb, min_score: f32) -> Result<Vec<Candidate>, PipelineError> {
         // UltraFace stretches the frame to 320x240 without preserving aspect
         // ratio; boxes come back in normalized [0,1] coordinates
         let resized = resize_bilinear(image, DET_W, DET_H);
@@ -111,21 +110,25 @@ impl Engines {
 
         let scores = as_slice(&outputs[0])?;
         let boxes = as_slice(&outputs[1])?;
-        let candidates = ultraface_decode(scores, boxes, image.width as f32, image.height as f32);
-        let kept = drop_containing_duplicates(nms(candidates));
-        let bbox = match kept.len() {
-            0 => return Err(PipelineError::NoFace),
-            1 => kept[0].bbox,
-            _ => {
-                // More than one confident face
-                if kept.iter().filter(|c| c.score >= SECOND_FACE_THRESHOLD).count() > 1 {
-                    return Err(PipelineError::MultipleFaces);
-                }
-                kept[0].bbox
-            }
-        };
+        let candidates = ultraface_decode(scores, boxes, image.width as f32, image.height as f32, min_score);
+        Ok(cluster_faces(candidates, image.width as f32, image.height as f32))
+    }
 
-        let keypoints = self.locate_keypoints(image, &bbox)?;
+    // Detects the single face in the frame (UltraFace), then locates its
+    // landmarks (2d106det); errors if no face or more than one *separate* face
+    pub fn detect_face(&self, image: &Rgb) -> Result<DetectedFace, PipelineError> {
+        let faces = self.run_detector(image, DET_SCORE_THRESHOLD)?;
+        let Some(primary) = faces.first() else {
+            return Err(PipelineError::NoFace);
+        };
+        // cluster_faces already collapses one face's overlapping boxes to a
+        // single representative, so a second entry is a genuinely separate
+        // face - reject only if it too is confident
+        if faces[1..].iter().any(|f| f.score >= SECOND_FACE_THRESHOLD) {
+            return Err(PipelineError::MultipleFaces);
+        }
+
+        let keypoints = self.locate_keypoints(image, &primary.bbox)?;
         Ok(DetectedFace { keypoints })
     }
 
@@ -179,6 +182,42 @@ impl Engines {
             point(LMK_MOUTH_LEFT),
             point(LMK_MOUTH_RIGHT),
         ])
+    }
+
+    // Diagnostic: the clustered face boxes, highest score first
+    pub fn debug_candidates(&self, image: &Rgb) -> Vec<(f32, [f32; 4])> {
+        let resized = resize_bilinear(image, DET_W, DET_H);
+        let mut input = vec![0f32; 3 * DET_H * DET_W];
+        for i in 0..(DET_H * DET_W) {
+            for c in 0..3 {
+                input[c * DET_H * DET_W + i] = (resized.pixels[i * 3 + c] as f32 - 127.0) / 128.0;
+            }
+        }
+        let Ok(tensor) = Tensor::from_shape(&[1, 3, DET_H, DET_W], &input) else {
+            return vec![];
+        };
+        let Ok(outputs) = self.detector.run(tvec!(tensor.into_tvalue())) else {
+            return vec![];
+        };
+        let (Ok(scores), Ok(boxes)) = (as_slice(&outputs[0]), as_slice(&outputs[1])) else {
+            return vec![];
+        };
+        let cands = ultraface_decode(scores, boxes, image.width as f32, image.height as f32, DET_SCORE_THRESHOLD);
+        cluster_faces(cands, image.width as f32, image.height as f32)
+            .iter()
+            .map(|c| (c.score, c.bbox))
+            .collect()
+    }
+
+    // Diagnostic: the real detect_face outcome for this frame
+    pub fn detect_debug(&self, image: &Rgb) -> &'static str {
+        match self.detect_face(image) {
+            Ok(_) => "ok",
+            Err(PipelineError::NoFace) => "no_face",
+            Err(PipelineError::MultipleFaces) => "multi_face",
+            Err(PipelineError::InferenceFailed) => "inference_failed",
+            Err(PipelineError::DecodeFailed) => "decode_failed",
+        }
     }
 
     // Aligns via 5-point similarity transform to the ArcFace template and
@@ -270,6 +309,7 @@ pub fn estimate_pose(face: &DetectedFace) -> (f32, f32) {
     (yaw, pitch)
 }
 
+#[derive(Clone, Default)]
 struct Candidate {
     score: f32,
     bbox: [f32; 4],
@@ -278,7 +318,7 @@ struct Candidate {
 // UltraFace RFB-320 decode: 4420 SSD priors over feature maps
 // [40x30, 20x15, 10x8, 5x4], centre-form regression with variances 0.1/0.2;
 // scores are already softmaxed (column 1 = face)
-fn ultraface_decode(scores: &[f32], boxes: &[f32], src_w: f32, src_h: f32) -> Vec<Candidate> {
+fn ultraface_decode(scores: &[f32], boxes: &[f32], src_w: f32, src_h: f32, min_score: f32) -> Vec<Candidate> {
     const SHRINKAGES: [usize; 4] = [8, 16, 32, 64];
     const MIN_BOXES: [&[f32]; 4] = [&[10.0, 16.0, 24.0], &[32.0, 48.0], &[64.0, 96.0], &[128.0, 192.0, 256.0]];
     const CENTER_VARIANCE: f32 = 0.1;
@@ -293,7 +333,7 @@ fn ultraface_decode(scores: &[f32], boxes: &[f32], src_w: f32, src_h: f32) -> Ve
             for i in 0..fm_w {
                 for min_box in MIN_BOXES[level] {
                     let score = scores[index * 2 + 1];
-                    if score >= DET_SCORE_THRESHOLD {
+                    if score >= min_score {
                         let prior_cx = (i as f32 + 0.5) / fm_w as f32;
                         let prior_cy = (j as f32 + 0.5) / fm_h as f32;
                         let prior_w = min_box / DET_W as f32;
@@ -324,39 +364,45 @@ fn as_slice(value: &TValue) -> Result<&[f32], PipelineError> {
     value.as_slice::<f32>().map_err(|_| PipelineError::InferenceFailed)
 }
 
-fn nms(mut candidates: Vec<Candidate>) -> Vec<Candidate> {
+// Collapses UltraFace's many overlapping/nested boxes into one representative
+// per distinct face. UltraFace fires several confident boxes on a single face
+// (coarse + fine priors, partial and nested) whose mutual IoU is low, so plain
+// IoU-NMS leaves them all - which then trips the multi-face guard and also
+// picks arbitrary crops. Here boxes that overlap at all (IoU or containment)
+// are treated as the same face and the highest-scoring one is kept; only a
+// spatially disjoint box is a separate face. Boxes lying largely outside the
+// frame (UltraFace's coarse localization artifacts) are dropped first.
+fn cluster_faces(mut candidates: Vec<Candidate>, img_w: f32, img_h: f32) -> Vec<Candidate> {
+    candidates.retain(|c| inside_fraction(&c.bbox, img_w, img_h) >= 0.6);
     candidates.sort_by(|a, b| b.score.total_cmp(&a.score));
-    let mut kept: Vec<Candidate> = Vec::new();
+    let mut faces: Vec<Candidate> = Vec::new();
     for c in candidates {
-        if kept.iter().all(|k| iou(&k.bbox, &c.bbox) < NMS_IOU_THRESHOLD) {
-            kept.push(c);
+        // Same face as an already-kept (higher-scoring) box?
+        if faces.iter().any(|f| same_face(&f.bbox, &c.bbox)) {
+            continue;
         }
+        faces.push(c);
     }
-    kept
+    faces
 }
 
-// UltraFace's coarse prior level often fires a second, much larger box around
-// the same face which union-IoU NMS does not suppress. When one box
-// essentially contains another, keep the tighter one (the coarse duplicate
-// carries no extra information); genuinely separate faces remain untouched.
-fn drop_containing_duplicates(kept: Vec<Candidate>) -> Vec<Candidate> {
-    const CONTAINMENT_THRESHOLD: f32 = 0.7;
-    let mut result: Vec<Candidate> = Vec::new();
-    'outer: for c in kept.into_iter() {
-        let area_c = area(&c.bbox);
-        for r in result.iter_mut() {
-            let inter = intersection(&r.bbox, &c.bbox);
-            let containment = inter / area(&r.bbox).min(area_c).max(1.0);
-            if containment > CONTAINMENT_THRESHOLD {
-                if area_c < area(&r.bbox) {
-                    *r = c;
-                }
-                continue 'outer;
-            }
-        }
-        result.push(c);
+fn same_face(a: &[f32; 4], b: &[f32; 4]) -> bool {
+    if iou(a, b) > 0.1 {
+        return true;
     }
-    result
+    // Nested boxes have low IoU but high containment of the smaller in the larger
+    let inter = intersection(a, b);
+    inter / area(a).min(area(b)).max(1.0) > 0.5
+}
+
+// Fraction of the box's area that lies within the image
+fn inside_fraction(b: &[f32; 4], img_w: f32, img_h: f32) -> f32 {
+    let a = area(b);
+    if a <= 0.0 {
+        return 0.0;
+    }
+    let clipped = [b[0].max(0.0), b[1].max(0.0), b[2].min(img_w), b[3].min(img_h)];
+    area(&clipped) / a
 }
 
 fn area(b: &[f32; 4]) -> f32 {
