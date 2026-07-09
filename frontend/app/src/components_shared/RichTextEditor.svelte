@@ -21,6 +21,7 @@
     import { CustomEmojiExtension } from "./customEmojiExtension";
     import { markdownToDoc, nodeToMarkdown } from "./markdownConversion";
     import { GroupMentionExtension, UserMentionExtension } from "./mentionExtension";
+    import { transformPastedHTML } from "./pasteTransform";
 
     const lowlight = createLowlight(common);
 
@@ -232,6 +233,7 @@
                 CodeBlockLowlight.configure({ lowlight, enableTabIndentation: true }),
             ],
             editorProps: {
+                transformPastedHTML,
                 handleKeyDown: (_view, event) => {
                     if (emojiSuggestion !== undefined) {
                         switch (event.key) {
