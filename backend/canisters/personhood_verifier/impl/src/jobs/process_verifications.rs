@@ -100,7 +100,8 @@ fn process_one_step(state: &mut RuntimeState) -> StepOutcome {
         let step = session.challenge[frame_index];
         let frame = session.frames[frame_index].take();
         session.next_frame += 1;
-        match process_frame(frame.as_ref().map(|b| b.as_ref()), step) {
+        let test_mode = state.data.test_mode;
+        match process_frame(frame.as_ref().map(|b| b.as_ref()), step, test_mode) {
             Ok(Some(embedding)) => session.frame_embeddings.push(embedding),
             Ok(None) => {}
             Err(reason) => {
@@ -118,12 +119,17 @@ fn process_one_step(state: &mut RuntimeState) -> StepOutcome {
     }
 }
 
-fn process_frame(frame: Option<&[u8]>, step: HeadPose) -> Result<Option<Vec<f32>>, VerificationFailureReason> {
+fn process_frame(frame: Option<&[u8]>, step: HeadPose, test_mode: bool) -> Result<Option<Vec<f32>>, VerificationFailureReason> {
     let bytes = frame.ok_or(VerificationFailureReason::ChallengeFailed)?;
     let image = engine::real::decode_jpeg(bytes)?;
     let face = engine::real::detect_face(&image)?;
     let (yaw, pitch) = engine::real::estimate_pose(&face);
-    if !engine::real::pose_matches(step, yaw, pitch) {
+    let matched = engine::real::pose_matches(step, yaw, pitch);
+    if test_mode {
+        // Pose telemetry for threshold calibration - test environments only
+        info!(?step, yaw, pitch, matched, "Pose check");
+    }
+    if !matched {
         return Err(VerificationFailureReason::ChallengeFailed);
     }
     if matches!(step, HeadPose::Center) {

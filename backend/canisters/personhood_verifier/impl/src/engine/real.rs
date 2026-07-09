@@ -24,9 +24,11 @@ const TURN_MIN_DEGREES: f32 = 12.0;
 const TILT_MIN_DEGREES: f32 = 8.0;
 
 // Geometric pose calibration from 5 keypoints - crude but adequate for
-// classifying the challenge poses
-const YAW_GAIN: f32 = 55.0;
-const PITCH_GAIN: f32 = 90.0;
+// classifying the challenge poses. The nose tip projects roughly 0.5-0.7 of
+// the eye distance in front of the eye line, so the raw offset ratio
+// understates the true angle; the gains compensate.
+const YAW_GAIN: f32 = 90.0;
+const PITCH_GAIN: f32 = 120.0;
 const PITCH_NEUTRAL_RATIO: f32 = 0.55;
 
 // Standard ArcFace 112x112 alignment template (left eye, right eye, nose,

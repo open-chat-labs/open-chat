@@ -53,6 +53,10 @@ export class HumanVerificationMachine {
     #pose = $state<PoseEstimate | undefined>(undefined);
     #remainingMs = $state<number | undefined>(undefined);
     #degraded = $state(false);
+    // True while the live pose satisfies the current framing/challenge step
+    #poseMatched = $state(false);
+    // Bumps once per successful capture (and on framing success) - UI cue hook
+    #captureCount = $state(0);
     #challenge: VerificationChallenge | undefined = undefined;
     #stream: MediaStream | undefined = undefined;
     #video: HTMLVideoElement | undefined = undefined;
@@ -84,6 +88,14 @@ export class HumanVerificationMachine {
 
     get challenge(): VerificationChallenge | undefined {
         return this.#challenge;
+    }
+
+    get poseMatched(): boolean {
+        return this.#poseMatched;
+    }
+
+    get captureCount(): number {
+        return this.#captureCount;
     }
 
     // Svelte's bind:this passes null when the video element unmounts
@@ -262,15 +274,20 @@ export class HumanVerificationMachine {
         this.#pose = pose;
 
         if (this.#state.kind === "framing") {
-            if (this.#framingOk(pose)) {
+            const matched = this.#framingOk(pose);
+            this.#poseMatched = matched;
+            if (matched) {
                 if (this.#held()) {
+                    this.#captureCount += 1;
                     this.#beginStep(0);
                 }
             } else {
                 this.#holdStart = undefined;
             }
         } else if (this.#state.kind === "challenge") {
-            if (pose.faceCount === 1 && this.#poseMatches(this.#state.step, pose)) {
+            const matched = pose.faceCount === 1 && this.#poseMatches(this.#state.step, pose);
+            this.#poseMatched = matched;
+            if (matched) {
                 if (this.#held()) {
                     const index = this.#state.stepIndex;
                     this.#holdStart = undefined;
@@ -279,6 +296,8 @@ export class HumanVerificationMachine {
             } else {
                 this.#holdStart = undefined;
             }
+        } else {
+            this.#poseMatched = false;
         }
     }
 
@@ -328,6 +347,7 @@ export class HumanVerificationMachine {
             const bytes = await captureJpegFrame(video, challenge.maxFrameBytes);
             if (this.#destroyed) return;
             if (bytes !== undefined) {
+                this.#captureCount += 1;
                 // Eager upload while the user moves on to the next pose
                 this.#uploads.push(this.#uploadWithRetries(challenge.sessionId, index, bytes));
             }

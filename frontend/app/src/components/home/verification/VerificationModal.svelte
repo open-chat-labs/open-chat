@@ -4,6 +4,7 @@
     import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { HumanVerificationMachine } from "../../../utils/humanVerification/machine.svelte";
+    import { playCaptureTone } from "../../../utils/humanVerification/sound";
     import { msToHours } from "../../../utils/time";
     import AlertBox from "../../AlertBox.svelte";
     import Button from "../../Button.svelte";
@@ -29,9 +30,22 @@
 
     let consented = $state(false);
     let videoEl: HTMLVideoElement | undefined | null = $state(undefined);
+    let flash = $state(false);
+    let lastCaptureCount = 0;
 
     $effect(() => {
         machine.attachVideo(videoEl);
+    });
+
+    // Green flash + happy tone each time a pose is captured
+    $effect(() => {
+        const count = machine.captureCount;
+        if (count > lastCaptureCount) {
+            lastCaptureCount = count;
+            flash = true;
+            playCaptureTone();
+            setTimeout(() => (flash = false), 450);
+        }
     });
 
     onDestroy(() => machine.destroy());
@@ -99,7 +113,7 @@
                 <div class="camera">
                     <!-- svelte-ignore a11y_media_has_caption -->
                     <video class="preview" playsinline autoplay muted bind:this={videoEl}></video>
-                    <div class="oval"></div>
+                    <div class="oval" class:matched={machine.poseMatched} class:flash={flash}></div>
                     {#if debug}
                         <VerificationDebugOverlay pose={machine.pose} />
                     {/if}
@@ -293,6 +307,19 @@
         position: absolute;
         top: 50%;
         left: 50%;
+        transition:
+            border-color 200ms ease,
+            box-shadow 200ms ease;
+
+        &.matched {
+            border-color: #34c759;
+            border-style: solid;
+        }
+
+        &.flash {
+            animation: capture-flash 450ms ease-out;
+        }
+
         width: 55%;
         height: 80%;
         transform: translate(-50%, -50%);
@@ -342,5 +369,15 @@
     .loader {
         width: 100px;
         margin: $sp6 auto;
+    }
+
+    @keyframes capture-flash {
+        0% {
+            box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.9);
+            border-color: #34c759;
+        }
+        100% {
+            box-shadow: 0 0 0 18px rgba(52, 199, 89, 0);
+        }
     }
 </style>
