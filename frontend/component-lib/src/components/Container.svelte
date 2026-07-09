@@ -40,8 +40,6 @@
         closeMenuOnScroll?: boolean;
         wrap?: boolean;
         ref?: HTMLElement;
-        clientHeight?: number;
-        clientWidth?: number;
         reverse?: boolean;
         data_id?: string; //todo find a better way to do this
         data_index?: string; // tod fine a better way to do this
@@ -132,8 +130,6 @@
         closeMenuOnScroll = false,
         wrap = false,
         ref = $bindable(),
-        clientHeight = $bindable(),
-        clientWidth = $bindable(),
         reverse = false,
         data_id,
         data_index,
@@ -141,8 +137,6 @@
         pan,
     }: Props = $props();
 
-    void clientHeight;
-    void clientWidth;
     void ref;
 
     // you might expect this to be done inside onMount but
@@ -192,8 +186,6 @@
     this={tag}
     data-id={data_id}
     data-index={data_index}
-    bind:clientHeight
-    bind:clientWidth
     role={onClick ? "button" : "none"}
     bind:this={ref}
     use:menuCloser={closeMenuOnScroll}

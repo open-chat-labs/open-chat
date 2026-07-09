@@ -135,7 +135,18 @@
     let editor = $state<RichTextEditor>();
     let editorEmpty = $state(true);
 
+    let messageEntryElement = $state<HTMLElement>();
     let messageEntryHeight = $state<number>(0);
+
+    $effect(() => {
+        if (messageEntryElement === undefined) return;
+        const el = messageEntryElement;
+        const observer = new ResizeObserver(() => {
+            messageEntryHeight = el.clientHeight;
+        });
+        observer.observe(el);
+        return () => observer.disconnect();
+    });
     let activeStream: MediaStream | undefined = $state(undefined);
     let audioMimeType = client.audioRecordingMimeType();
     let previousEditingEvent: EventWrapper<Message> | undefined = $state();
@@ -682,7 +693,7 @@
                             </Row>
                         {/if}
                         <Container
-                            bind:clientHeight={messageEntryHeight}
+                            bind:ref={messageEntryElement}
                             gap="sm"
                             minHeight="3.5rem"
                             maxHeight="calc(var(--vh, 1vh) * 50)"
