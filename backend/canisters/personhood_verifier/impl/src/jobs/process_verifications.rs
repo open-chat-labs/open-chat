@@ -100,10 +100,17 @@ fn process_one_step(state: &mut RuntimeState) -> StepOutcome {
         let step = session.challenge[frame_index];
         let frame = session.frames[frame_index].take();
         session.next_frame += 1;
+        let baseline = session.pose_baseline;
         let test_mode = state.data.test_mode;
-        match process_frame(frame.as_ref().map(|b| b.as_ref()), step, test_mode) {
-            Ok(Some(embedding)) => session.frame_embeddings.push(embedding),
-            Ok(None) => {}
+        match process_frame(frame.as_ref().map(|b| b.as_ref()), step, baseline, test_mode) {
+            Ok(outcome) => {
+                if session.pose_baseline.is_none() {
+                    session.pose_baseline = Some(outcome.pose);
+                }
+                if let Some(embedding) = outcome.embedding {
+                    session.frame_embeddings.push(embedding);
+                }
+            }
             Err(reason) => {
                 session.status = SessionStatus::Failed { reason };
                 session.drop_frames();
@@ -119,25 +126,40 @@ fn process_one_step(state: &mut RuntimeState) -> StepOutcome {
     }
 }
 
-fn process_frame(frame: Option<&[u8]>, step: HeadPose, test_mode: bool) -> Result<Option<Vec<f32>>, VerificationFailureReason> {
+struct FrameOutcome {
+    pose: (f32, f32),
+    embedding: Option<Vec<f32>>,
+}
+
+fn process_frame(
+    frame: Option<&[u8]>,
+    step: HeadPose,
+    baseline: Option<(f32, f32)>,
+    test_mode: bool,
+) -> Result<FrameOutcome, VerificationFailureReason> {
     let bytes = frame.ok_or(VerificationFailureReason::ChallengeFailed)?;
     let image = engine::real::decode_jpeg(bytes)?;
     let face = engine::real::detect_face(&image)?;
     let (yaw, pitch) = engine::real::estimate_pose(&face);
-    let matched = engine::real::pose_matches(step, yaw, pitch);
+    // The first frame (always Center) anchors the session's neutral pose;
+    // later steps are classified by their delta from it
+    let matched = match baseline {
+        None => matches!(step, HeadPose::Center) && engine::real::neutral_plausible(yaw, pitch),
+        Some((base_yaw, base_pitch)) => engine::real::pose_delta_matches(step, yaw - base_yaw, pitch - base_pitch),
+    };
     if test_mode {
         // Pose telemetry for threshold calibration - test environments only
-        info!(?step, yaw, pitch, matched, "Pose check");
+        let (delta_yaw, delta_pitch) = baseline.map_or((0.0, 0.0), |(by, bp)| (yaw - by, pitch - bp));
+        info!(?step, yaw, pitch, delta_yaw, delta_pitch, matched, "Pose check");
     }
     if !matched {
         return Err(VerificationFailureReason::ChallengeFailed);
     }
-    if matches!(step, HeadPose::Center) {
-        let embedding = engine::real::embed_face(&image, &face)?;
-        Ok(Some(embedding))
-    } else {
-        Ok(None)
-    }
+    let embedding = if matches!(step, HeadPose::Center) { Some(engine::real::embed_face(&image, &face)?) } else { None };
+    Ok(FrameOutcome {
+        pose: (yaw, pitch),
+        embedding,
+    })
 }
 
 fn finalize(state: &mut RuntimeState, session_id: u128) -> Option<Verified> {

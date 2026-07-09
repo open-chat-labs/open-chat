@@ -81,6 +81,7 @@ fn start_verification_impl(user_id: UserId, state: &mut RuntimeState) -> Respons
         is_retry_round,
         status: SessionStatus::Open,
         next_frame: 0,
+        pose_baseline: None,
         frame_embeddings: Vec::new(),
     };
     let details = challenge_details(session_id, &session);

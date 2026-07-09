@@ -34,14 +34,20 @@ const LMK_NOSE: usize = 86;
 const LMK_MOUTH_LEFT: usize = 52;
 const LMK_MOUTH_RIGHT: usize = 61;
 
-// Canister-side pose thresholds are looser than the frontend's auto-capture
-// thresholds: the challenge check is an anti-replay measure over frames that
-// already passed the stricter client-side gate. Same sign convention as the
-// frontend (poseDetector.ts): yaw < 0 = subject turning their left,
-// pitch > 0 = tilting up.
-const CENTER_MAX_DEGREES: f32 = 14.0;
-const TURN_MIN_DEGREES: f32 = 12.0;
-const TILT_MIN_DEGREES: f32 = 8.0;
+// The challenge always starts with a Center step, whose measured pose
+// becomes the session's neutral baseline; every later step is classified by
+// its DELTA from that baseline. Device telemetry showed absolute pitch on
+// genuine frontal frames varying +4..+20 degrees with camera elevation, so
+// absolute thresholds cannot work; deltas cancel the bias (observed genuine
+// deltas: Up +45, Left -52, Right +71, closing Center -4). Same sign
+// convention as the frontend (poseDetector.ts): yaw < 0 = subject turning
+// their left, pitch > 0 = tilting up.
+const NEUTRAL_MAX_YAW: f32 = 25.0;
+const NEUTRAL_MIN_PITCH: f32 = -25.0;
+const NEUTRAL_MAX_PITCH: f32 = 35.0;
+const DELTA_CENTER_MAX: f32 = 12.0;
+const DELTA_TURN_MIN: f32 = 12.0;
+const DELTA_TILT_MIN: f32 = 12.0;
 
 // Geometric pose calibration from the 5 keypoints - crude but adequate for
 // classifying the challenge poses. The nose tip projects roughly 0.5-0.7 of
@@ -49,9 +55,6 @@ const TILT_MIN_DEGREES: f32 = 8.0;
 // understates the true angle; the gains compensate.
 const YAW_GAIN: f32 = 90.0;
 const PITCH_GAIN: f32 = 120.0;
-// Device telemetry showed a consistent +10-14 degree pitch bias on genuine
-// Center frames at 0.55 (webcams typically sit below eye level); 0.60
-// centres the distribution while leaving Up (~+50 observed) unaffected
 const PITCH_NEUTRAL_RATIO: f32 = 0.60;
 
 // Standard ArcFace 112x112 alignment template (left eye, right eye, nose,
@@ -393,13 +396,20 @@ pub fn estimate_pose(face: &DetectedFace) -> (f32, f32) {
     (yaw, pitch)
 }
 
-pub fn pose_matches(step: HeadPose, yaw: f32, pitch: f32) -> bool {
+// Is this measurement a believable neutral (Center) pose in absolute terms?
+// Applied to the first frame only, which then anchors the baseline.
+pub fn neutral_plausible(yaw: f32, pitch: f32) -> bool {
+    yaw.abs() < NEUTRAL_MAX_YAW && pitch > NEUTRAL_MIN_PITCH && pitch < NEUTRAL_MAX_PITCH
+}
+
+// Classifies a step by its delta from the session's neutral baseline
+pub fn pose_delta_matches(step: HeadPose, delta_yaw: f32, delta_pitch: f32) -> bool {
     match step {
-        HeadPose::Center => yaw.abs() < CENTER_MAX_DEGREES && pitch.abs() < CENTER_MAX_DEGREES,
-        HeadPose::Left => yaw < -TURN_MIN_DEGREES,
-        HeadPose::Right => yaw > TURN_MIN_DEGREES,
-        HeadPose::Up => pitch > TILT_MIN_DEGREES,
-        HeadPose::Down => pitch < -TILT_MIN_DEGREES,
+        HeadPose::Center => delta_yaw.abs() < DELTA_CENTER_MAX && delta_pitch.abs() < DELTA_CENTER_MAX,
+        HeadPose::Left => delta_yaw < -DELTA_TURN_MIN,
+        HeadPose::Right => delta_yaw > DELTA_TURN_MIN,
+        HeadPose::Up => delta_pitch > DELTA_TILT_MIN,
+        HeadPose::Down => delta_pitch < -DELTA_TILT_MIN,
     }
 }
 
@@ -584,26 +594,26 @@ mod tests {
         let frontal = DetectedFace {
             keypoints: [[40.0, 50.0], [72.0, 50.0], [56.0, 70.0], [44.0, 90.0], [68.0, 90.0]],
         };
-        let (yaw, pitch) = estimate_pose(&frontal);
-        assert!(
-            yaw.abs() < CENTER_MAX_DEGREES && pitch.abs() < CENTER_MAX_DEGREES,
-            "{yaw} {pitch}"
-        );
-        assert!(pose_matches(HeadPose::Center, yaw, pitch));
+        let (base_yaw, base_pitch) = estimate_pose(&frontal);
+        assert!(neutral_plausible(base_yaw, base_pitch), "{base_yaw} {base_pitch}");
 
+        // Subject turns their left: nose towards image-right => delta yaw < 0
         let turned_left = DetectedFace {
             keypoints: [[40.0, 50.0], [72.0, 50.0], [68.0, 70.0], [44.0, 90.0], [68.0, 90.0]],
         };
-        let (yaw, _) = estimate_pose(&turned_left);
-        assert!(yaw < -TURN_MIN_DEGREES, "{yaw}");
-        assert!(pose_matches(HeadPose::Left, yaw, 0.0));
+        let (yaw, pitch) = estimate_pose(&turned_left);
+        assert!(pose_delta_matches(HeadPose::Left, yaw - base_yaw, pitch - base_pitch));
 
+        // Tilting up raises the nose => delta pitch > 0
         let tilted_up = DetectedFace {
             keypoints: [[40.0, 50.0], [72.0, 50.0], [56.0, 62.0], [44.0, 90.0], [68.0, 90.0]],
         };
-        let (_, pitch) = estimate_pose(&tilted_up);
-        assert!(pitch > TILT_MIN_DEGREES, "{pitch}");
-        assert!(pose_matches(HeadPose::Up, 0.0, pitch));
+        let (yaw, pitch) = estimate_pose(&tilted_up);
+        assert!(pose_delta_matches(HeadPose::Up, yaw - base_yaw, pitch - base_pitch));
+
+        // Returning to centre is a small delta; a big tilt is not "centre"
+        assert!(pose_delta_matches(HeadPose::Center, 0.5, -1.0));
+        assert!(!pose_delta_matches(HeadPose::Center, 0.5, 20.0));
     }
 
     #[test]
@@ -693,8 +703,8 @@ mod pipeline_tests {
         let (yaw, pitch) = estimate_pose(&face);
         println!("yaw: {yaw} pitch: {pitch}");
         assert!(
-            pose_matches(HeadPose::Center, yaw, pitch),
-            "frontal portrait should classify as Center (yaw {yaw}, pitch {pitch})"
+            neutral_plausible(yaw, pitch),
+            "frontal portrait should be a plausible neutral pose (yaw {yaw}, pitch {pitch})"
         );
 
         let embedding = embed_face(&image, &face).expect("embed failed");

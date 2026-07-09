@@ -21,6 +21,9 @@ pub struct VerificationSession {
     // Real-pipeline progress: one frame is fully processed per timer
     // execution (DTS budgeting), then a finalize step
     pub next_frame: u32,
+    // Measured pose of the first (Center) frame; later steps are classified
+    // by their delta from this baseline
+    pub pose_baseline: Option<(f32, f32)>,
     // f32 embeddings of the Center-pose frames, kept until finalize
     pub frame_embeddings: Vec<Vec<f32>>,
 }
