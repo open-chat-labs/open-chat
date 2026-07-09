@@ -35,4 +35,19 @@ describe("transformPastedHTML", () => {
         const html = `<a href="https://eviloc.app?everyone">@everyone</a>`;
         expect(transformPastedHTML(html)).toBe(html);
     });
+
+    test("strips nested wrappers", () => {
+        const html = `<strong><u><a href="?everyone">@everyone</a></u></strong>`;
+        expect(transformPastedHTML(html)).toBe("@everyone");
+    });
+
+    test("strips wrappers containing stray whitespace", () => {
+        const html = `hi <strong> <a href="?everyone">@everyone</a></strong>`;
+        expect(transformPastedHTML(html)).toBe("hi @everyone");
+    });
+
+    test("skips profile-link missing user-id or text", () => {
+        const html = `hey <profile-link text="bob">@bob</profile-link>`;
+        expect(transformPastedHTML(html)).toBe(html);
+    });
 });

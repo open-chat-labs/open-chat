@@ -8,13 +8,17 @@ const INLINE_WRAPPERS = new Set(["SPAN", "STRONG", "B", "EM", "I", "U"]);
 export function transformPastedHTML(html: string): string {
     const doc = new DOMParser().parseFromString(html, "text/html");
 
+    // No origin gate here (unlike the anchors below): clipboard HTML carries no
+    // provenance and profile-link has no href to allowlist. Crafting one grants
+    // nothing beyond pasting the literal text @UserId(x), which was always
+    // possible - ids are validated against the user store when rendered.
     for (const el of [...doc.querySelectorAll("profile-link")]) {
         const userId = el.getAttribute("user-id");
         const username = el.getAttribute("text");
         if (!userId || !username) continue;
         const span = doc.createElement("span");
         span.setAttribute("data-type", "user_mention");
-        span.setAttribute("userId", userId);
+        span.setAttribute("userid", userId);
         span.setAttribute("username", username);
         span.textContent = `@${username}`;
         replaceUnwrapped(el, span);
@@ -42,7 +46,7 @@ export function transformPastedHTML(html: string): string {
             if (groupId && /^\d+$/.test(groupId) && text.startsWith("@")) {
                 const span = doc.createElement("span");
                 span.setAttribute("data-type", "group_mention");
-                span.setAttribute("groupId", groupId);
+                span.setAttribute("groupid", groupId);
                 span.setAttribute("groupname", text.slice(1));
                 span.textContent = text;
                 replaceUnwrapped(a, span);
@@ -57,11 +61,12 @@ export function transformPastedHTML(html: string): string {
 // underline, style spans) that contain nothing but `el`, so the mention
 // doesn't pick up formatting marks from the copied message's styling.
 function replaceUnwrapped(el: Element, replacement: Node) {
+    const text = el.textContent?.trim();
     let target: Element = el;
     while (
         target.parentElement &&
         INLINE_WRAPPERS.has(target.parentElement.tagName) &&
-        target.parentElement.textContent === el.textContent
+        target.parentElement.textContent?.trim() === text
     ) {
         target = target.parentElement;
     }
