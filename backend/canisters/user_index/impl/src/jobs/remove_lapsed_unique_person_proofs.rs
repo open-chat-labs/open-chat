@@ -86,3 +86,113 @@ fn run_batch(state: &mut RuntimeState) -> bool {
         false
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::user::User;
+    use crate::{Data, PersonhoodModelLapse, RuntimeState};
+    use candid::Principal;
+    use types::{UniquePersonProof, UniquePersonProofProvider};
+    use utils::env::test::TestEnv;
+
+    fn add_user(data: &mut Data, id: u8, proof: Option<UniquePersonProof>) -> UserId {
+        let user_id: UserId = Principal::from_slice(&[id]).into();
+        data.users.add_test_user(User {
+            principal: Principal::from_slice(&[id, id]),
+            user_id,
+            username: format!("user{id}"),
+            unique_person_proof: proof,
+            ..Default::default()
+        });
+        user_id
+    }
+
+    fn proof(provider: UniquePersonProofProvider, model_version: Option<u16>) -> Option<UniquePersonProof> {
+        Some(UniquePersonProof {
+            timestamp: 1,
+            provider,
+            model_version,
+        })
+    }
+
+    #[test]
+    fn wipes_decideai_proofs_and_lapses_superseded_versions() {
+        let env = TestEnv::default();
+        let mut data = Data::default();
+        let legacy = add_user(&mut data, 1, proof(UniquePersonProofProvider::DecideAI, None));
+        let lapsed = add_user(&mut data, 2, proof(UniquePersonProofProvider::OpenChat, Some(1)));
+        let current = add_user(&mut data, 3, proof(UniquePersonProofProvider::OpenChat, Some(2)));
+        let unverified = add_user(&mut data, 4, None);
+        let now = env.now;
+        let mut state = RuntimeState::new(Box::new(env), data);
+
+        // No lapse announced: only the DecideAI proof is wiped
+        let more = run_batch(&mut state);
+        assert!(!more);
+        assert!(
+            state
+                .data
+                .users
+                .get_by_user_id(&legacy)
+                .unwrap()
+                .unique_person_proof
+                .is_none()
+        );
+        assert!(
+            state
+                .data
+                .users
+                .get_by_user_id(&lapsed)
+                .unwrap()
+                .unique_person_proof
+                .is_some()
+        );
+        assert!(
+            state
+                .data
+                .users
+                .get_by_user_id(&current)
+                .unwrap()
+                .unique_person_proof
+                .is_some()
+        );
+
+        // Lapse deadline passed: version-1 proofs are removed, version-2 kept
+        state.data.personhood_model_lapse = Some(PersonhoodModelLapse {
+            new_version: 2,
+            lapses_at: now,
+        });
+        let more = run_batch(&mut state);
+        assert!(!more);
+        assert!(
+            state
+                .data
+                .users
+                .get_by_user_id(&lapsed)
+                .unwrap()
+                .unique_person_proof
+                .is_none()
+        );
+        assert!(
+            state
+                .data
+                .users
+                .get_by_user_id(&current)
+                .unwrap()
+                .unique_person_proof
+                .is_some()
+        );
+        assert!(
+            state
+                .data
+                .users
+                .get_by_user_id(&unverified)
+                .unwrap()
+                .unique_person_proof
+                .is_none()
+        );
+        // Sweep complete: the lapse marker is retired
+        assert!(state.data.personhood_model_lapse.is_none());
+    }
+}

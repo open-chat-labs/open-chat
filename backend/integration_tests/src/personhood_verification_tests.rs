@@ -315,3 +315,124 @@ fn attempt_limit_enforced() {
         personhood_verifier_canister::start_verification::Response::AttemptLimitReached { .. }
     ));
 }
+
+fn verify_user(
+    env: &mut pocket_ic::PocketIc,
+    canister_ids: &crate::CanisterIds,
+    principal: candid::Principal,
+    marker: u8,
+) -> StatusResponse {
+    let challenge =
+        client::personhood_verifier::happy_path::start_verification(env, principal, canister_ids.personhood_verifier);
+    client::personhood_verifier::happy_path::upload_all_frames(
+        env,
+        principal,
+        canister_ids.personhood_verifier,
+        &challenge,
+        marker,
+    );
+    client::personhood_verifier::happy_path::submit_verification(
+        env,
+        principal,
+        canister_ids.personhood_verifier,
+        challenge.session_id,
+    );
+    drive_to_terminal_status(env, principal, canister_ids.personhood_verifier, challenge.session_id)
+}
+
+#[test]
+fn unique_person_gate_blocks_until_verified() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let group_name = testing::rng::random_string();
+    let group_id = match client::user::create_group(
+        env,
+        owner.principal,
+        owner.user_id.into(),
+        &user_canister::create_group::Args {
+            is_public: true,
+            name: group_name.clone(),
+            description: format!("{group_name}_description"),
+            avatar: None,
+            history_visible_to_new_joiners: true,
+            permissions_v2: None,
+            rules: types::Rules::default(),
+            events_ttl: None,
+            gate_config: Some(types::AccessGate::UniquePerson.into()),
+            messages_visible_to_non_members: None,
+        },
+    ) {
+        user_canister::create_group::Response::Success(result) => result.chat_id,
+        response => panic!("'create_group' error: {response:?}"),
+    };
+
+    let user = client::register_user(env, canister_ids);
+
+    // Unverified: the gate must reject for real now
+    let join_response = client::local_user_index::join_group(
+        env,
+        user.principal,
+        canister_ids.local_user_index(env, group_id),
+        &local_user_index_canister::join_group::Args {
+            chat_id: group_id,
+            invite_code: None,
+            verified_credential_args: None,
+            composite_gate_index: None,
+        },
+    );
+    assert!(
+        matches!(
+            join_response,
+            local_user_index_canister::join_group::Response::GateCheckFailed(types::GateCheckFailedReason::NoUniquePersonProof)
+        ),
+        "{join_response:?}"
+    );
+
+    // Verify (group 60, variant 0 marker - unique to this test) and retry
+    let status = verify_user(env, canister_ids, user.principal, 240);
+    assert!(matches!(status, StatusResponse::Verified { .. }), "{status:?}");
+    tick_many(env, 5);
+
+    let join_response = client::local_user_index::join_group(
+        env,
+        user.principal,
+        canister_ids.local_user_index(env, group_id),
+        &local_user_index_canister::join_group::Args {
+            chat_id: group_id,
+            invite_code: None,
+            verified_credential_args: None,
+            composite_gate_index: None,
+        },
+    );
+    assert!(
+        matches!(join_response, local_user_index_canister::join_group::Response::Success(_)),
+        "{join_response:?}"
+    );
+}
+
+#[test]
+fn deleting_account_erases_embedding() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    // Markers: group 55 (220) - unique to this test
+    let (user1, user1_auth) = client::register_user_and_include_auth(env, canister_ids);
+    let status = verify_user(env, canister_ids, user1.principal, 220);
+    assert!(matches!(status, StatusResponse::Verified { .. }), "{status:?}");
+
+    client::identity::happy_path::delete_user(env, &user1_auth, canister_ids.identity);
+    tick_many(env, 20);
+
+    // The embedding must be gone: the same face enrolls again cleanly
+    // instead of failing as a duplicate
+    let user2 = client::register_user(env, canister_ids);
+    let status = verify_user(env, canister_ids, user2.principal, 220);
+    assert!(matches!(status, StatusResponse::Verified { .. }), "{status:?}");
+}
