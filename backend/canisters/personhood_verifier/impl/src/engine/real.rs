@@ -49,7 +49,10 @@ const TILT_MIN_DEGREES: f32 = 8.0;
 // understates the true angle; the gains compensate.
 const YAW_GAIN: f32 = 90.0;
 const PITCH_GAIN: f32 = 120.0;
-const PITCH_NEUTRAL_RATIO: f32 = 0.55;
+// Device telemetry showed a consistent +10-14 degree pitch bias on genuine
+// Center frames at 0.55 (webcams typically sit below eye level); 0.60
+// centres the distribution while leaving Up (~+50 observed) unaffected
+const PITCH_NEUTRAL_RATIO: f32 = 0.60;
 
 // Standard ArcFace 112x112 alignment template (left eye, right eye, nose,
 // left mouth corner, right mouth corner)
