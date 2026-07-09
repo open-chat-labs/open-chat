@@ -6,8 +6,9 @@
 # backend/tools/threshold_calibration/README.md for context (#9072).
 #
 # It fetches LFW via scikit-learn's loader, which mirrors the dataset on
-# figshare (the umass.edu host is frequently down). Requires scikit-learn:
-#   pip install scikit-learn
+# figshare (the umass.edu host is frequently down). scikit-learn is installed
+# into a self-contained venv under .calibration/ - nothing touches system
+# Python.
 #
 # Usage: ./scripts/prepare-lfw-calibration.sh
 
@@ -15,14 +16,23 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$SCRIPT_DIR/.."
+mkdir -p "$ROOT/.calibration"
 
-if ! python3 -c "import sklearn" 2>/dev/null; then
-    echo "scikit-learn is required. Install it with:"
-    echo "  pip install scikit-learn"
-    exit 1
+# Self-contained venv so we don't touch the (Homebrew, PEP-668-managed)
+# system Python. scikit-learn is only the dataset downloader.
+VENV="$ROOT/.calibration/venv"
+if [ ! -x "$VENV/bin/python3" ]; then
+    echo "Creating a virtual environment for scikit-learn..."
+    python3 -m venv "$VENV"
+fi
+PY_BIN="$VENV/bin/python3"
+if ! "$PY_BIN" -c "import sklearn" 2>/dev/null; then
+    echo "Installing scikit-learn into the venv..."
+    "$VENV/bin/pip" install --quiet --upgrade pip
+    "$VENV/bin/pip" install --quiet scikit-learn
 fi
 
-python3 - "$ROOT/.calibration/pairs.calib.txt" << 'PY'
+"$PY_BIN" - "$ROOT/.calibration/pairs.calib.txt" << 'PY'
 import os
 import sys
 from sklearn.datasets import fetch_lfw_people, fetch_lfw_pairs
