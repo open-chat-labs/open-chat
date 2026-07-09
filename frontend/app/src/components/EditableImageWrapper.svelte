@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
-    import type { CropData } from "svelte-easy-crop";
+    import type { OnCropCompleteEvent } from "svelte-easy-crop";
     import Cropper from "svelte-easy-crop";
     import { i18nKey } from "../i18n/i18n";
     import Button from "./Button.svelte";
@@ -35,7 +35,7 @@
     let selectedImage: string | null | undefined = $state();
     let originalImage = new Image();
     let showModal = $state(false);
-    let cropData: CropData | undefined = undefined;
+    let cropData: OnCropCompleteEvent | undefined = undefined;
 
     function getSaveDimensions(mode: Mode): Dimensions {
         switch (mode) {
@@ -107,8 +107,8 @@
         }, "image/jpg");
     }
 
-    function onCrop(ev: CustomEvent<CropData>): void {
-        cropData = ev.detail;
+    function onCrop(ev: OnCropCompleteEvent): void {
+        cropData = ev;
     }
     let SAVE_DIMS = $derived(getSaveDimensions(mode));
     let CROP_SHAPE = $derived(mode === "avatar" ? "round" : ("rect" as CropShape));
@@ -126,8 +126,8 @@
             {#snippet body()}
                 <div class="cropper">
                     <Cropper
-                        image={selectedImage}
-                        on:cropcomplete={onCrop}
+                        image={selectedImage ?? undefined}
+                        oncropcomplete={onCrop}
                         crop={{ x: 0, y: 0 }}
                         {aspect}
                         cropShape={CROP_SHAPE} />

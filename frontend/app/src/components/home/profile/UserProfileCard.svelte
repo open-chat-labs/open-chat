@@ -14,6 +14,7 @@
         selectedCommunityMembersStore,
     } from "openchat-client";
 
+    import Markdown from "@shared_components/Markdown.svelte";
     import EditableAvatar from "@src/components/EditableAvatar.svelte";
     import EditableImageWrapper from "@src/components/EditableImageWrapper.svelte";
     import HoverIcon from "@src/components/HoverIcon.svelte";
@@ -27,7 +28,6 @@
     import { toastStore } from "../../../stores/toast";
     import Avatar from "../../Avatar.svelte";
     import Translatable from "../../Translatable.svelte";
-    import Markdown from "@shared_components/Markdown.svelte";
     import Badges from "./Badges.svelte";
     import ChitBalance from "./ChitBalance.svelte";
     import CustomBackgroundOverlay from "./CustomBackgroundOverlay.svelte";
@@ -277,13 +277,12 @@
 
         .avatar {
             padding: 0 0 $sp4 0;
-            -webkit-box-reflect: below -24px linear-gradient(hsla(0, 0%, 100%, 0), hsla(
-                            0,
-                            0%,
-                            100%,
-                            0
-                        )
-                        45%, hsla(0, 0%, 100%, 0.2));
+            -webkit-box-reflect: below -24px
+                linear-gradient(
+                    hsla(0, 0%, 100%, 0),
+                    hsla(0, 0%, 100%, 0) 45%,
+                    hsla(0, 0%, 100%, 0.2)
+                );
         }
 
         .bio {

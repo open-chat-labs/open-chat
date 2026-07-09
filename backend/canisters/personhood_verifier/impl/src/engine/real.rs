@@ -3,16 +3,36 @@ use personhood_verifier_canister::{HeadPose, ModelKind, VerificationFailureReaso
 use std::cell::RefCell;
 use tract_onnx::prelude::*;
 
-// Real pipeline: JPEG decode -> SCRFD-500M face detection (with 5 facial
-// keypoints) -> pose-challenge verification from keypoint geometry ->
-// 5-point similarity alignment -> w600k_mbf (MobileFaceNet/ArcFace) 512-dim
-// embedding. Models are the insightface buffalo_sc pairing.
+// Real pipeline: JPEG decode -> UltraFace RFB-320 face detection ->
+// insightface 2d106det facial landmarks on the face crop -> pose-challenge
+// verification from landmark geometry -> 5-point similarity alignment ->
+// w600k_mbf (MobileFaceNet/ArcFace) 512-dim embedding.
+//
+// Note: SCRFD was tried for detection+keypoints in one model but tract
+// miscompiles its graph (nondeterministic outputs, shape-inference failures
+// on Add_109), so detection uses UltraFace - the model proven with tract in
+// DFINITY's face-recognition example - with 2d106det supplying landmarks.
 
-const DET_INPUT: usize = 320;
-const DET_SCORE_THRESHOLD: f32 = 0.5;
-const SECOND_FACE_THRESHOLD: f32 = 0.6;
+const DET_W: usize = 320;
+const DET_H: usize = 240;
+const DET_SCORE_THRESHOLD: f32 = 0.7;
+const SECOND_FACE_THRESHOLD: f32 = 0.85;
 const NMS_IOU_THRESHOLD: f32 = 0.4;
+const LMK_INPUT: usize = 192;
+// Crop a region this many times the detection box's longest side for the
+// landmark model (insightface convention)
+const LMK_CROP_EXPANSION: f32 = 1.5;
 const EMBED_INPUT: usize = 112;
+
+// 5-point extraction from the 106-landmark set: eye centres, nose, mouth
+// corners. Indices derived empirically from the model's output on a real
+// portrait (validated in the tests below): 33-42 form the left-eye ring with
+// 38 at its centre, 87-96 the right-eye ring with 88 at its centre.
+const LMK_LEFT_EYE: usize = 38;
+const LMK_RIGHT_EYE: usize = 88;
+const LMK_NOSE: usize = 86;
+const LMK_MOUTH_LEFT: usize = 52;
+const LMK_MOUTH_RIGHT: usize = 61;
 
 // Canister-side pose thresholds are looser than the frontend's auto-capture
 // thresholds: the challenge check is an anti-replay measure over frames that
@@ -23,7 +43,7 @@ const CENTER_MAX_DEGREES: f32 = 14.0;
 const TURN_MIN_DEGREES: f32 = 12.0;
 const TILT_MIN_DEGREES: f32 = 8.0;
 
-// Geometric pose calibration from 5 keypoints - crude but adequate for
+// Geometric pose calibration from the 5 keypoints - crude but adequate for
 // classifying the challenge poses. The nose tip projects roughly 0.5-0.7 of
 // the eye distance in front of the eye line, so the raw offset ratio
 // understates the true angle; the gains compensate.
@@ -45,6 +65,7 @@ type Model = TypedRunnableModel<TypedModel>;
 
 struct Engines {
     detector: Model,
+    landmarker: Model,
     embedder: Model,
 }
 
@@ -73,37 +94,50 @@ pub fn drop_engines() {
     ENGINES.with_borrow_mut(|e| *e = None);
 }
 
-// Parses + optimizes both models. ~2B instructions, called from commit_model
+// Parses + optimizes the models. ~3B instructions, called from commit_model
 // and lazily after upgrades.
 pub fn build_engines(models: &ModelStore) -> Result<(), String> {
-    let detector = build_model(&models.assemble(ModelKind::Detection), DET_INPUT, DET_INPUT)?;
-    if detector.model().outputs.len() != 9 {
-        return Err(format!(
-            "Detection model must have 9 outputs (SCRFD), found {}",
-            detector.model().outputs.len()
-        ));
-    }
+    let detector = build_detector(&models.assemble(ModelKind::Detection))?;
+    let landmarker = build_landmarker(&models.assemble(ModelKind::Landmarks))?;
     let embedder = build_model(&models.assemble(ModelKind::Embedding), EMBED_INPUT, EMBED_INPUT)?;
-    ENGINES.with_borrow_mut(|e| *e = Some(Engines { detector, embedder }));
+    ENGINES.with_borrow_mut(|e| {
+        *e = Some(Engines {
+            detector,
+            landmarker,
+            embedder,
+        })
+    });
     Ok(())
 }
 
 pub fn validate_model(bytes: &[u8], kind: ModelKind) -> Result<(), String> {
     match kind {
-        ModelKind::Detection => {
-            let model = build_model(bytes, DET_INPUT, DET_INPUT)?;
-            if model.model().outputs.len() != 9 {
-                return Err(format!(
-                    "Detection model must have 9 outputs (SCRFD), found {}",
-                    model.model().outputs.len()
-                ));
-            }
-        }
-        ModelKind::Embedding => {
-            build_model(bytes, EMBED_INPUT, EMBED_INPUT)?;
-        }
+        ModelKind::Detection => build_detector(bytes).map(|_| ()),
+        ModelKind::Landmarks => build_landmarker(bytes).map(|_| ()),
+        ModelKind::Embedding => build_model(bytes, EMBED_INPUT, EMBED_INPUT).map(|_| ()),
     }
-    Ok(())
+}
+
+fn build_detector(bytes: &[u8]) -> Result<Model, String> {
+    let model = build_model(bytes, DET_H, DET_W)?;
+    if model.model().outputs.len() != 2 {
+        return Err(format!(
+            "Detection model must have 2 outputs (UltraFace scores + boxes), found {}",
+            model.model().outputs.len()
+        ));
+    }
+    Ok(model)
+}
+
+fn build_landmarker(bytes: &[u8]) -> Result<Model, String> {
+    let model = build_model(bytes, LMK_INPUT, LMK_INPUT)?;
+    if model.model().outputs.len() != 1 {
+        return Err(format!(
+            "Landmark model must have 1 output (2d106det), found {}",
+            model.model().outputs.len()
+        ));
+    }
+    Ok(model)
 }
 
 fn build_model(bytes: &[u8], height: usize, width: usize) -> Result<Model, String> {
@@ -127,102 +161,151 @@ pub fn decode_jpeg(bytes: &[u8]) -> Result<Rgb, VerificationFailureReason> {
     Ok(Rgb { width, height, pixels })
 }
 
-// Detects the single face in the frame; errors if none or more than one
+// Detects the single face in the frame (UltraFace), then locates its
+// landmarks (2d106det); errors if no face or more than one confident face
 pub fn detect_face(image: &Rgb) -> Result<DetectedFace, VerificationFailureReason> {
-    with_engines(|engines| {
-        // Letterbox into the square detection input
-        let scale = (DET_INPUT as f32 / image.width as f32).min(DET_INPUT as f32 / image.height as f32);
-        let scaled_w = (image.width as f32 * scale) as usize;
-        let scaled_h = (image.height as f32 * scale) as usize;
-        let resized = resize_bilinear(image, scaled_w, scaled_h);
-
-        let mut input = vec![0f32; 3 * DET_INPUT * DET_INPUT];
-        for y in 0..scaled_h {
-            for x in 0..scaled_w {
-                for c in 0..3 {
-                    let value = resized.pixels[(y * scaled_w + x) * 3 + c] as f32;
-                    input[c * DET_INPUT * DET_INPUT + y * DET_INPUT + x] = (value - 127.5) / 128.0;
-                }
+    let bbox = with_engines(|engines| {
+        // UltraFace stretches the frame to 320x240 without preserving aspect
+        // ratio; boxes come back in normalized [0,1] coordinates
+        let resized = resize_bilinear(image, DET_W, DET_H);
+        let mut input = vec![0f32; 3 * DET_H * DET_W];
+        for i in 0..(DET_H * DET_W) {
+            for c in 0..3 {
+                input[c * DET_H * DET_W + i] = (resized.pixels[i * 3 + c] as f32 - 127.0) / 128.0;
             }
         }
-        let tensor = Tensor::from_shape(&[1, 3, DET_INPUT, DET_INPUT], &input)
-            .map_err(|_| VerificationFailureReason::ChallengeFailed)?;
+        let tensor =
+            Tensor::from_shape(&[1, 3, DET_H, DET_W], &input).map_err(|_| VerificationFailureReason::ChallengeFailed)?;
         let outputs = engines
             .detector
             .run(tvec!(tensor.into_tvalue()))
             .map_err(|_| VerificationFailureReason::ChallengeFailed)?;
 
-        let mut candidates = scrfd_decode(&outputs)?;
-        // Rescale from detection-input space back to source-image pixels
-        for c in candidates.iter_mut() {
-            for p in c.keypoints.iter_mut() {
-                p[0] /= scale;
-                p[1] /= scale;
-            }
-            c.bbox = [c.bbox[0] / scale, c.bbox[1] / scale, c.bbox[2] / scale, c.bbox[3] / scale];
-        }
-        let kept = nms(candidates);
+        let scores = as_slice(&outputs[0])?;
+        let boxes = as_slice(&outputs[1])?;
+        let candidates = ultraface_decode(scores, boxes, image.width as f32, image.height as f32);
+        let kept = drop_containing_duplicates(nms(candidates));
         match kept.len() {
             0 => Err(VerificationFailureReason::NoFaceDetected),
-            1 => Ok(DetectedFace {
-                keypoints: kept[0].keypoints,
-            }),
+            1 => Ok(kept[0].bbox),
             _ => {
                 // More than one confident face fails the challenge
                 if kept.iter().filter(|c| c.score >= SECOND_FACE_THRESHOLD).count() > 1 {
                     Err(VerificationFailureReason::ChallengeFailed)
                 } else {
-                    Ok(DetectedFace {
-                        keypoints: kept[0].keypoints,
-                    })
+                    Ok(kept[0].bbox)
                 }
             }
         }
-    })
+    })?;
+
+    let keypoints = locate_keypoints(image, &bbox)?;
+    Ok(DetectedFace { keypoints })
 }
 
 struct Candidate {
     score: f32,
     bbox: [f32; 4],
-    keypoints: [[f32; 2]; 5],
 }
 
-// SCRFD head decode: strides 8/16/32, two anchors per grid position, outputs
-// ordered [score x3, bbox x3, kps x3]; bbox/kps regressions are distances in
-// stride units
-fn scrfd_decode(outputs: &TVec<TValue>) -> Result<Vec<Candidate>, VerificationFailureReason> {
-    const STRIDES: [usize; 3] = [8, 16, 32];
-    const NUM_ANCHORS: usize = 2;
+// UltraFace RFB-320 decode: 4420 SSD priors over feature maps
+// [40x30, 20x15, 10x8, 5x4], centre-form regression with variances 0.1/0.2;
+// scores are already softmaxed (column 1 = face)
+fn ultraface_decode(scores: &[f32], boxes: &[f32], src_w: f32, src_h: f32) -> Vec<Candidate> {
+    const SHRINKAGES: [usize; 4] = [8, 16, 32, 64];
+    const MIN_BOXES: [&[f32]; 4] = [&[10.0, 16.0, 24.0], &[32.0, 48.0], &[64.0, 96.0], &[128.0, 192.0, 256.0]];
+    const CENTER_VARIANCE: f32 = 0.1;
+    const SIZE_VARIANCE: f32 = 0.2;
+
     let mut candidates = Vec::new();
-    for (idx, stride) in STRIDES.iter().enumerate() {
-        let scores = as_slice(&outputs[idx])?;
-        let bboxes = as_slice(&outputs[idx + 3])?;
-        let kps = as_slice(&outputs[idx + 6])?;
-        let grid = DET_INPUT / stride;
-        for pos in 0..(grid * grid * NUM_ANCHORS) {
-            let score = scores[pos];
-            if score < DET_SCORE_THRESHOLD {
-                continue;
+    let mut index = 0;
+    for (level, shrink) in SHRINKAGES.iter().enumerate() {
+        let fm_w = DET_W.div_ceil(*shrink);
+        let fm_h = DET_H.div_ceil(*shrink);
+        for j in 0..fm_h {
+            for i in 0..fm_w {
+                for min_box in MIN_BOXES[level] {
+                    let score = scores[index * 2 + 1];
+                    if score >= DET_SCORE_THRESHOLD {
+                        let prior_cx = (i as f32 + 0.5) / fm_w as f32;
+                        let prior_cy = (j as f32 + 0.5) / fm_h as f32;
+                        let prior_w = min_box / DET_W as f32;
+                        let prior_h = min_box / DET_H as f32;
+                        let cx = boxes[index * 4] * CENTER_VARIANCE * prior_w + prior_cx;
+                        let cy = boxes[index * 4 + 1] * CENTER_VARIANCE * prior_h + prior_cy;
+                        let w = (boxes[index * 4 + 2] * SIZE_VARIANCE).exp() * prior_w;
+                        let h = (boxes[index * 4 + 3] * SIZE_VARIANCE).exp() * prior_h;
+                        candidates.push(Candidate {
+                            score,
+                            bbox: [
+                                (cx - w / 2.0) * src_w,
+                                (cy - h / 2.0) * src_h,
+                                (cx + w / 2.0) * src_w,
+                                (cy + h / 2.0) * src_h,
+                            ],
+                        });
+                    }
+                    index += 1;
+                }
             }
-            let cell = pos / NUM_ANCHORS;
-            let cx = ((cell % grid) * stride) as f32;
-            let cy = ((cell / grid) * stride) as f32;
-            let s = *stride as f32;
-            let bbox = [
-                cx - bboxes[pos * 4] * s,
-                cy - bboxes[pos * 4 + 1] * s,
-                cx + bboxes[pos * 4 + 2] * s,
-                cy + bboxes[pos * 4 + 3] * s,
-            ];
-            let mut keypoints = [[0f32; 2]; 5];
-            for (k, kp) in keypoints.iter_mut().enumerate() {
-                kp[0] = cx + kps[pos * 10 + k * 2] * s;
-                kp[1] = cy + kps[pos * 10 + k * 2 + 1] * s;
-            }
-            candidates.push(Candidate { score, bbox, keypoints });
         }
     }
-    Ok(candidates)
+    candidates
+}
+
+// Runs 2d106det over an expanded crop of the detection box and extracts the
+// 5 alignment keypoints in source-image pixels
+fn locate_keypoints(image: &Rgb, bbox: &[f32; 4]) -> Result<[[f32; 2]; 5], VerificationFailureReason> {
+    with_engines(|engines| {
+        let center_x = (bbox[0] + bbox[2]) / 2.0;
+        let center_y = (bbox[1] + bbox[3]) / 2.0;
+        let size = (bbox[2] - bbox[0]).max(bbox[3] - bbox[1]) * LMK_CROP_EXPANSION;
+        if size <= 1.0 {
+            return Err(VerificationFailureReason::NoFaceDetected);
+        }
+        let scale = LMK_INPUT as f32 / size;
+        // Maps source -> crop: crop = scale * src + t
+        let transform = Similarity {
+            a: scale,
+            b: 0.0,
+            tx: LMK_INPUT as f32 / 2.0 - scale * center_x,
+            ty: LMK_INPUT as f32 / 2.0 - scale * center_y,
+        };
+        let crop = warp_bilinear(image, &transform, LMK_INPUT, LMK_INPUT);
+
+        // 2d106det takes raw 0-255 pixel values (input_mean 0, input_std 1)
+        let mut input = vec![0f32; 3 * LMK_INPUT * LMK_INPUT];
+        for i in 0..(LMK_INPUT * LMK_INPUT) {
+            for c in 0..3 {
+                input[c * LMK_INPUT * LMK_INPUT + i] = crop[i * 3 + c] as f32;
+            }
+        }
+        let tensor = Tensor::from_shape(&[1, 3, LMK_INPUT, LMK_INPUT], &input)
+            .map_err(|_| VerificationFailureReason::ChallengeFailed)?;
+        let outputs = engines
+            .landmarker
+            .run(tvec!(tensor.into_tvalue()))
+            .map_err(|_| VerificationFailureReason::ChallengeFailed)?;
+        let landmarks = as_slice(&outputs[0])?;
+        if landmarks.len() < 212 {
+            return Err(VerificationFailureReason::ChallengeFailed);
+        }
+
+        // Output is 106 (x, y) pairs in [-1, 1] crop space
+        let point = |idx: usize| -> [f32; 2] {
+            let cx = (landmarks[idx * 2] + 1.0) * (LMK_INPUT as f32 / 2.0);
+            let cy = (landmarks[idx * 2 + 1] + 1.0) * (LMK_INPUT as f32 / 2.0);
+            // crop -> source
+            [(cx - transform.tx) / scale, (cy - transform.ty) / scale]
+        };
+        Ok([
+            point(LMK_LEFT_EYE),
+            point(LMK_RIGHT_EYE),
+            point(LMK_NOSE),
+            point(LMK_MOUTH_LEFT),
+            point(LMK_MOUTH_RIGHT),
+        ])
+    })
 }
 
 fn as_slice(value: &TValue) -> Result<&[f32], VerificationFailureReason> {
@@ -240,6 +323,43 @@ fn nms(mut candidates: Vec<Candidate>) -> Vec<Candidate> {
         }
     }
     kept
+}
+
+// UltraFace's coarse prior level often fires a second, much larger box
+// around the same face which union-IoU NMS does not suppress. When one box
+// essentially contains another, keep the tighter one (the coarse duplicate
+// carries no extra information); genuinely separate faces remain untouched.
+fn drop_containing_duplicates(kept: Vec<Candidate>) -> Vec<Candidate> {
+    const CONTAINMENT_THRESHOLD: f32 = 0.7;
+    let mut result: Vec<Candidate> = Vec::new();
+    'outer: for c in kept.into_iter() {
+        let area_c = area(&c.bbox);
+        for r in result.iter_mut() {
+            let inter = intersection(&r.bbox, &c.bbox);
+            let containment = inter / area(&r.bbox).min(area_c).max(1.0);
+            if containment > CONTAINMENT_THRESHOLD {
+                // Same face: keep whichever box is tighter
+                if area_c < area(&r.bbox) {
+                    *r = c;
+                }
+                continue 'outer;
+            }
+        }
+        result.push(c);
+    }
+    result
+}
+
+fn area(b: &[f32; 4]) -> f32 {
+    (b[2] - b[0]).max(0.0) * (b[3] - b[1]).max(0.0)
+}
+
+fn intersection(a: &[f32; 4], b: &[f32; 4]) -> f32 {
+    let x1 = a[0].max(b[0]);
+    let y1 = a[1].max(b[1]);
+    let x2 = a[2].min(b[2]);
+    let y2 = a[3].min(b[3]);
+    (x2 - x1).max(0.0) * (y2 - y1).max(0.0)
 }
 
 fn iou(a: &[f32; 4], b: &[f32; 4]) -> f32 {
@@ -448,7 +568,6 @@ mod tests {
             p[1] = p[1] * 2.0 + 20.0;
         }
         let t = similarity_transform(&moved, &ARCFACE_TEMPLATE);
-        // maps moved -> template: scale 0.5, translation -5/-10
         for (s, d) in moved.iter().zip(ARCFACE_TEMPLATE.iter()) {
             let x = t.a * s[0] - t.b * s[1] + t.tx;
             let y = t.b * s[0] + t.a * s[1] + t.ty;
@@ -459,7 +578,6 @@ mod tests {
 
     #[test]
     fn pose_signs_match_frontend_convention() {
-        // Frontal reference face
         let frontal = DetectedFace {
             keypoints: [[40.0, 50.0], [72.0, 50.0], [56.0, 70.0], [44.0, 90.0], [68.0, 90.0]],
         };
@@ -470,7 +588,6 @@ mod tests {
         );
         assert!(pose_matches(HeadPose::Center, yaw, pitch));
 
-        // Subject turns their left: nose moves towards image-right
         let turned_left = DetectedFace {
             keypoints: [[40.0, 50.0], [72.0, 50.0], [68.0, 70.0], [44.0, 90.0], [68.0, 90.0]],
         };
@@ -478,13 +595,38 @@ mod tests {
         assert!(yaw < -TURN_MIN_DEGREES, "{yaw}");
         assert!(pose_matches(HeadPose::Left, yaw, 0.0));
 
-        // Tilting up raises the nose relative to eyes/mouth
         let tilted_up = DetectedFace {
             keypoints: [[40.0, 50.0], [72.0, 50.0], [56.0, 62.0], [44.0, 90.0], [68.0, 90.0]],
         };
         let (_, pitch) = estimate_pose(&tilted_up);
         assert!(pitch > TILT_MIN_DEGREES, "{pitch}");
         assert!(pose_matches(HeadPose::Up, 0.0, pitch));
+    }
+
+    #[test]
+    fn containing_duplicate_boxes_collapse_to_the_tighter_one() {
+        let giant = Candidate {
+            score: 1.0,
+            bbox: [70.0, -45.0, 384.0, 506.0],
+        };
+        let tight = Candidate {
+            score: 0.93,
+            bbox: [125.0, 128.0, 280.0, 403.0],
+        };
+        let kept = drop_containing_duplicates(vec![giant, tight]);
+        assert_eq!(kept.len(), 1);
+        assert_eq!(kept[0].bbox[0], 125.0);
+
+        // Genuinely separate faces stay separate
+        let a = Candidate {
+            score: 0.9,
+            bbox: [0.0, 0.0, 100.0, 100.0],
+        };
+        let b = Candidate {
+            score: 0.9,
+            bbox: [200.0, 0.0, 300.0, 100.0],
+        };
+        assert_eq!(drop_containing_duplicates(vec![a, b]).len(), 2);
     }
 
     #[test]
@@ -496,5 +638,111 @@ mod tests {
         let f32_cos = cosine_f32(&a, &b);
         let q_cos = crate::model::embeddings::cosine_similarity(&qa, &qb);
         assert!((f32_cos - q_cos).abs() < 0.02, "{f32_cos} vs {q_cos}");
+    }
+}
+
+#[cfg(test)]
+mod pipeline_tests {
+    use super::*;
+    use personhood_verifier_canister::HeadPose;
+    use std::path::PathBuf;
+
+    fn load_engines() -> Option<Vec<u8>> {
+        let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../personhood_spike/models");
+        let det = std::fs::read(dir.join("version-RFB-320.onnx")).ok()?;
+        let lmk = std::fs::read(dir.join("2d106det.onnx")).ok()?;
+        let emb = std::fs::read(dir.join("w600k_mbf.onnx")).ok()?;
+        let img = std::fs::read(dir.join("test_face.jpg")).ok()?;
+        let detector = build_detector(&det).unwrap();
+        let landmarker = build_landmarker(&lmk).unwrap();
+        let embedder = build_model(&emb, EMBED_INPUT, EMBED_INPUT).unwrap();
+        ENGINES.with_borrow_mut(|e| {
+            *e = Some(Engines {
+                detector,
+                landmarker,
+                embedder,
+            })
+        });
+        Some(img)
+    }
+
+    // End-to-end over a real frontal portrait. Skips when the model fixtures
+    // (gitignored, ~20MB) are absent - run
+    // scripts/download-personhood-spike-models.sh and place a frontal
+    // portrait at models/test_face.jpg to enable.
+    #[test]
+    fn real_pipeline_detects_and_embeds_test_photo() {
+        let Some(img) = load_engines() else {
+            eprintln!("skipping: model fixtures not present");
+            return;
+        };
+        let image = decode_jpeg(&img).expect("decode failed");
+
+        let face = detect_face(&image).expect("no face detected in a frontal portrait");
+        println!("keypoints: {:?}", face.keypoints);
+        let [le, re, nose, ml, mr] = face.keypoints;
+        // Sanity-check the 106-point index mapping via geometry
+        assert!(le[0] < re[0], "eyes swapped: {le:?} {re:?}");
+        assert!(ml[0] < mr[0], "mouth corners swapped: {ml:?} {mr:?}");
+        assert!(le[1] < nose[1] && re[1] < nose[1], "eyes should be above the nose");
+        assert!(ml[1] > nose[1] && mr[1] > nose[1], "mouth should be below the nose");
+
+        let (yaw, pitch) = estimate_pose(&face);
+        println!("yaw: {yaw} pitch: {pitch}");
+        assert!(
+            pose_matches(HeadPose::Center, yaw, pitch),
+            "frontal portrait should classify as Center (yaw {yaw}, pitch {pitch})"
+        );
+
+        let embedding = embed_face(&image, &face).expect("embed failed");
+        assert_eq!(embedding.len(), 512);
+        let norm: f32 = embedding.iter().map(|x| x * x).sum::<f32>().sqrt();
+        assert!((norm - 1.0).abs() < 0.01, "embedding should be L2-normalized, norm {norm}");
+
+        // Determinism across repeated runs (the SCRFD failure mode)
+        let embedding2 = embed_face(&image, &face).expect("embed rerun failed");
+        assert_eq!(embedding, embedding2, "pipeline must be deterministic");
+    }
+}
+
+#[cfg(test)]
+mod model_sanity_tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    fn check(file: &str, shape: [usize; 4]) {
+        let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../personhood_spike/models");
+        let Ok(bytes) = std::fs::read(dir.join(file)) else {
+            eprintln!("skipping {file}");
+            return;
+        };
+        let model = build_model(&bytes, shape[2], shape[3]).unwrap();
+        let len = shape.iter().product();
+        let input: Vec<f32> = (0..len).map(|i| ((i * 37) % 256) as f32 / 255.0 - 0.5).collect();
+        let t1 = Tensor::from_shape(&shape, &input).unwrap();
+        let t2 = Tensor::from_shape(&shape, &input).unwrap();
+        let o1 = model.run(tvec!(t1.into_tvalue())).unwrap();
+        let o2 = model.run(tvec!(t2.into_tvalue())).unwrap();
+        for (i, (a, b)) in o1.iter().zip(o2.iter()).enumerate() {
+            let a = a.as_slice::<f32>().unwrap();
+            let b = b.as_slice::<f32>().unwrap();
+            let diff = a.iter().zip(b).map(|(x, y)| (x - y).abs()).fold(0f32, f32::max);
+            assert_eq!(diff, 0.0, "{file} output {i} nondeterministic");
+        }
+    }
+
+    #[test]
+    fn ultraface_deterministic() {
+        check("version-RFB-320.onnx", [1, 3, 240, 320]);
+    }
+
+    #[test]
+    fn landmarks_2d106_deterministic() {
+        check("2d106det.onnx", [1, 3, 192, 192]);
+    }
+
+    #[test]
+    fn embedder_deterministic() {
+        check("w600k_mbf.onnx", [1, 3, 112, 112]);
     }
 }

@@ -23,7 +23,7 @@ struct Opts {
     #[arg(long)]
     personhood_verifier: CanisterId,
 
-    // Directory containing det_500m.onnx and w600k_mbf.onnx
+    // Directory containing version-RFB-320.onnx, 2d106det.onnx and w600k_mbf.onnx
     #[arg(long)]
     models_dir: PathBuf,
 
@@ -38,7 +38,8 @@ async fn main() {
     let agent = build_ic_agent(opts.url, identity).await;
 
     for (kind, file, version) in [
-        (ModelKind::Detection, "det_500m.onnx", opts.embedding_version),
+        (ModelKind::Detection, "version-RFB-320.onnx", opts.embedding_version),
+        (ModelKind::Landmarks, "2d106det.onnx", opts.embedding_version),
         (ModelKind::Embedding, "w600k_mbf.onnx", opts.embedding_version),
     ] {
         let path = opts.models_dir.join(file);

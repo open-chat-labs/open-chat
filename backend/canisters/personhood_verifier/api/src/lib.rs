@@ -36,6 +36,7 @@ pub struct VerificationChallenge {
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum ModelKind {
     Detection,
+    Landmarks,
     Embedding,
 }
 

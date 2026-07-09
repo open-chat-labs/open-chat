@@ -27,7 +27,7 @@ sha256 = { path = "../../../libraries/sha256" }
 serde_bytes = { workspace = true }
 stable_memory = { path = "../../../libraries/stable_memory" }
 tracing = { workspace = true }
-tract-onnx = { version = "0.21", default-features = false }
+tract-onnx = { version = "=0.21.1", default-features = false }
 types = { path = "../../../libraries/types" }
 user_index_canister = { path = "../../user_index/api" }
 user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }

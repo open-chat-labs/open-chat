@@ -48,6 +48,7 @@ fn kind_key(kind: ModelKind) -> u8 {
     match kind {
         ModelKind::Detection => 0,
         ModelKind::Embedding => 1,
+        ModelKind::Landmarks => 2,
     }
 }
 
@@ -94,7 +95,9 @@ impl ModelStore {
     }
 
     pub fn all_committed(&self) -> bool {
-        self.committed(ModelKind::Detection).is_some() && self.committed(ModelKind::Embedding).is_some()
+        self.committed(ModelKind::Detection).is_some()
+            && self.committed(ModelKind::Landmarks).is_some()
+            && self.committed(ModelKind::Embedding).is_some()
     }
 
     fn clear_chunks(&mut self, kind: ModelKind) {

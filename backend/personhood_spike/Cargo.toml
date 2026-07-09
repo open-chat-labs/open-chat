@@ -9,5 +9,5 @@ candid = { workspace = true }
 getrandom = { workspace = true }
 ic-cdk = { workspace = true }
 jpeg-encoder = "0.6"
-tract-onnx = { version = "0.21", default-features = false }
+tract-onnx = { version = "=0.21.1", default-features = false }
 zune-jpeg = "0.4"
