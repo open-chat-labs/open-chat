@@ -28,6 +28,10 @@ async fn c2c_join_channel(args: Args) -> Response {
 }
 
 async fn c2c_join_channel_impl(mut args: Args) -> Response {
+    let Some(_payment_lock) = mutate_state(|state| state.data.payment_locks.acquire(args.user_id)) else {
+        return Error(OCErrorCode::AlreadyInProgress.into());
+    };
+
     if read_state(|state| {
         state
             .data

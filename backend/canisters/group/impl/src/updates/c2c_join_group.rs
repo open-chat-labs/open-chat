@@ -20,6 +20,10 @@ async fn c2c_join_group(args: Args) -> Response {
 }
 
 async fn c2c_join_group_impl(args: Args) -> Response {
+    let Some(_payment_lock) = mutate_state(|state| state.data.payment_locks.acquire(args.user_id)) else {
+        return Error(OCErrorCode::AlreadyInProgress.into());
+    };
+
     let payments = match read_state(|state| is_permitted_to_join(&args, state)) {
         Ok(IsPermittedToJoinSuccess::NoGate) => Vec::new(),
         Ok(IsPermittedToJoinSuccess::RequiresGate(gate, check_gate_args)) => {

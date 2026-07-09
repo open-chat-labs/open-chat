@@ -17,7 +17,13 @@ use types::{AccessGate, ChannelId, CommunityCanisterCommunitySummary, OCResult, 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
 async fn c2c_join_community(args: Args) -> Response {
-    execute_update_async(|| join_community(args)).await
+    execute_update_async(|| async {
+        let Some(_payment_lock) = mutate_state(|state| state.data.payment_locks.acquire(args.user_id)) else {
+            return Error(OCErrorCode::AlreadyInProgress.into());
+        };
+        join_community(args).await
+    })
+    .await
 }
 
 pub(crate) async fn join_community(args: Args) -> Response {
