@@ -64,6 +64,11 @@ struct Opts {
     /// Use RGB channel order for the embedder (experiment; production is BGR)
     #[arg(long)]
     rgb_embed: bool,
+
+    /// Embedding model filename in --models-dir (default w600k_mbf.onnx; the
+    /// stronger w600k_r50.onnx is the same 112x112/512-d interface)
+    #[arg(long, default_value = "w600k_mbf.onnx")]
+    embedder: String,
 }
 
 struct Embedding {
@@ -78,7 +83,7 @@ fn main() {
     let engines = Engines::build(
         &read(&opts.models_dir.join("version-RFB-320.onnx")),
         &read(&opts.models_dir.join("2d106det.onnx")),
-        &read(&opts.models_dir.join("w600k_mbf.onnx")),
+        &read(&opts.models_dir.join(&opts.embedder)),
     )
     .expect("failed to build engines");
 
@@ -105,7 +110,14 @@ fn main() {
         .threads
         .unwrap_or_else(|| std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4));
     println!("Embedding {} unique images across {n_threads} threads...", unique.len());
-    let cache = embed_all(&opts.models_dir, &opts.images_dir, unique, n_threads, !opts.rgb_embed);
+    let cache = embed_all(
+        &opts.models_dir,
+        &opts.embedder,
+        &opts.images_dir,
+        unique,
+        n_threads,
+        !opts.rgb_embed,
+    );
 
     let mut genuine: Vec<f32> = Vec::new();
     let mut impostor: Vec<f32> = Vec::new();
@@ -285,6 +297,7 @@ fn diagnose(engines: &Engines, images_dir: &Path, pairs: &[(bool, String, String
 
 fn embed_all(
     models_dir: &Path,
+    embedder: &str,
     images_dir: &Path,
     unique: Vec<String>,
     n_threads: usize,
@@ -292,7 +305,7 @@ fn embed_all(
 ) -> HashMap<String, Option<Embedding>> {
     let det = read(&models_dir.join("version-RFB-320.onnx"));
     let lmk = read(&models_dir.join("2d106det.onnx"));
-    let emb = read(&models_dir.join("w600k_mbf.onnx"));
+    let emb = read(&models_dir.join(embedder));
 
     let chunks: Vec<Vec<String>> = {
         let mut cs: Vec<Vec<String>> = (0..n_threads).map(|_| Vec::new()).collect();
