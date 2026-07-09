@@ -33,6 +33,8 @@
         selectedCommunitySummaryStore,
         selectedCommunityUserGroupsStore,
         throttleDeadline,
+        userGroupMentionRegex,
+        userIdMentionRegex,
     } from "openchat-client";
     import { getContext, tick } from "svelte";
     import { _ } from "svelte-i18n";
@@ -240,7 +242,7 @@
     }
 
     function formatUserMentions(text: string): string {
-        return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
+        return text.replace(userIdMentionRegex, (match, p1) => {
             const u = $allUsersStore.get(p1);
             if (u?.username !== undefined) {
                 const username = u.username;
@@ -251,7 +253,7 @@
     }
 
     function formatUserGroupMentions(text: string): string {
-        return text.replace(/@UserGroup\(([\d\w-]+)\)/g, (match, p1) => {
+        return text.replace(userGroupMentionRegex, (match, p1) => {
             const u = $selectedCommunityUserGroupsStore.get(Number(p1));
             if (u !== undefined) {
                 return `@${u.name}`;
