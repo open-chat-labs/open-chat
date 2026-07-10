@@ -279,36 +279,38 @@ export default {
         html({
             template: ({ files }) => {
                 const jsEntryFile = files.js.find((f) => f.isEntry).fileName;
-                const inlineScripts = [
-                    `window.OC_WEBSITE_VERSION = "${version}";`,
-                    `var parcelRequire;`,
-                ];
-                const csp = generateCspForScripts(inlineScripts);
-
                 // Google Tag Manager + gtag is production-only: gated on the build
                 // env, never included otherwise. gtag stays defined as a no-op
                 // dataLayer push in non-production builds so page-view calls
-                // elsewhere in the app don't throw.
-                const analytics = production
-                    ? `<script>
-                                    window.dataLayer = window.dataLayer || [];
-                                    function gtag(){dataLayer.push(arguments);}
-                                    gtag('js', new Date());
-                                    gtag('config', 'G-7P9R6CJLNR');
-                                    var gtagScript = document.createElement('script');
-                                    gtagScript.async = true;
-                                    gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-7P9R6CJLNR';
-                                    document.head.appendChild(gtagScript);
-                                    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-                                    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-                                    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-                                    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-                                    })(window,document,'script','dataLayer','GTM-WQD48GK2');
-                                </script>`
-                    : `<script>
-                                    window.dataLayer = window.dataLayer || [];
-                                    function gtag(){dataLayer.push(arguments);}
-                                </script>`;
+                // elsewhere in the app don't throw. This goes through `inlineScripts`
+                // so its body is sha256-hashed into the CSP `script-src`: the prod
+                // page is governed by this meta CSP (the canister only sets a
+                // `frame-ancestors` header), which has no `'unsafe-inline'`, so an
+                // un-hashed inline script would be blocked.
+                const analyticsBody = production
+                    ? `window.dataLayer = window.dataLayer || [];
+                    function gtag(){dataLayer.push(arguments);}
+                    gtag('js', new Date());
+                    gtag('config', 'G-7P9R6CJLNR');
+                    var gtagScript = document.createElement('script');
+                    gtagScript.async = true;
+                    gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-7P9R6CJLNR';
+                    document.head.appendChild(gtagScript);
+                    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+                    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+                    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+                    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+                    })(window,document,'script','dataLayer','GTM-WQD48GK2');`
+                    : `window.dataLayer = window.dataLayer || [];
+                    function gtag(){dataLayer.push(arguments);}`;
+
+                const inlineScripts = [
+                    `window.OC_WEBSITE_VERSION = "${version}";`,
+                    `var parcelRequire;`,
+                    analyticsBody,
+                ];
+                const csp = generateCspForScripts(inlineScripts);
+
                 const analyticsNoscript = production
                     ? `<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WQD48GK2" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>`
                     : "";
@@ -319,7 +321,6 @@ export default {
                         <!DOCTYPE html>
                         <html lang="en">
                             <head>
-                                ${analytics}
                                 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#22A7F2" />
                                 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1B1C21" />
                                 <meta name="description" content="OpenChat is a fully featured chat application running end-to-end on the Internet Computer blockchain." />
