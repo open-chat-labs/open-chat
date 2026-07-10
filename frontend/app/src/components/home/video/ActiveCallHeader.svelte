@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AvatarSize, iconSize, mobileWidth } from "openchat-client";
+    import { AvatarSize, iconSize, mobileWidth } from "@client";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import { rtlStore } from "../../../stores/rtl";

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { ChatSummary, OpenChat, UserSummary } from "openchat-client";
+    import type { ChatSummary, OpenChat, UserSummary } from "@client";
     import {
         allUsersStore,
         cryptoBalanceStore,
@@ -7,8 +7,8 @@
         currentUserIdStore,
         iconSize,
         mobileWidth,
-    } from "openchat-client";
-    import { type CryptocurrencyContent, type MessageContext, nowNanos } from "openchat-shared";
+    } from "@client";
+    import { type CryptocurrencyContent, type MessageContext, nowNanos } from "@shared";
     import { getContext, onMount } from "svelte";
     import Alert from "svelte-material-icons/Alert.svelte";
     import { i18nKey } from "../../i18n/i18n";

@@ -21,7 +21,7 @@
     // TODO i18n localisation for the date picker!
 
     import { Tooltip } from "component-lib";
-    import type { ResourceKey } from "openchat-client";
+    import type { ResourceKey } from "@client";
     import { onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Information from "svelte-material-icons/Information.svelte";

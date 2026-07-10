@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { mobileWidth, rightPanelWidth } from "openchat-client";
+    import { mobileWidth, rightPanelWidth } from "@client";
 
     const MIN_COL_WIDTH = 400;
     const MAX_COL_WIDTH = 900;

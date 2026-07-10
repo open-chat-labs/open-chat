@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { Container, FloatingButton } from "component-lib";
-    import { OpenChat, publish, type UserSummary } from "openchat-client";
+    import { OpenChat, publish, type UserSummary } from "@client";
     import { getContext } from "svelte";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
     import SelectUsers from "../SelectUsers.svelte";

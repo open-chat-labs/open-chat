@@ -5,7 +5,7 @@
         selectedCommunityReferralsStore,
         selectedCommunityRulesStore,
         selectedCommunitySummaryStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import CommunityCard from "../explore/CommunityCard.svelte";
     import CommunityDetails from "./CommunityDetails.svelte";

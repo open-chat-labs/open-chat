@@ -2,7 +2,7 @@ import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import { SingleCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 import { principalStringToBytes } from "../../utils/mapping";
 import { lastOnlineResponse, markAsOnlineResponse } from "./mappers";
-import type { MinutesOnline } from "openchat-shared";
+import type { MinutesOnline } from "@shared";
 import {
     Empty,
     OnlineUsersLastOnlineArgs,

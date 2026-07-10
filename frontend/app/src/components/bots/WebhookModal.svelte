@@ -9,7 +9,7 @@
         validBotComponentName,
         type FullWebhookDetails,
         type MultiUserChatIdentifier,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";

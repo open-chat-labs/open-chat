@@ -4,7 +4,7 @@
     import Typing from "@shared_components/Typing.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
-    import { AvatarSize, type ChatIdentifier, chatListScopeStore, type ChatType, currentUserIdStore, currentUserStore, type EnhancedReplyContext, iconSize, localUpdates, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, type SenderContext, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "openchat-client";
+    import { AvatarSize, type ChatIdentifier, chatListScopeStore, type ChatType, currentUserIdStore, currentUserStore, type EnhancedReplyContext, iconSize, localUpdates, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, type SenderContext, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
     import { getContext, onDestroy, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";

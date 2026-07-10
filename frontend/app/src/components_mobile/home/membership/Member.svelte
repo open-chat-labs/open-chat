@@ -8,7 +8,7 @@
         roleAsText,
         type FullMember,
         type MemberRole,
-    } from "openchat-client";
+    } from "@client";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";

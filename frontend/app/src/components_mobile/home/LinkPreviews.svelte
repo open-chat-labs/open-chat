@@ -1,7 +1,7 @@
 <script lang="ts">
     import { rtlStore } from "@src/stores/rtl";
     import { ColourVars } from "component-lib";
-    import type { OgPreview, RehydratedMessagePreview } from "openchat-shared";
+    import type { OgPreview, RehydratedMessagePreview } from "@shared";
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import GenericPreviewComponent from "./GenericPreview.svelte";
     import MessagePreviewComponent from "./MessagePreview.svelte";

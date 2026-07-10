@@ -8,7 +8,7 @@ import {
     type RightPanelMode,
     type RouteParams,
     type XFrameOverrides,
-} from "openchat-shared";
+} from "@shared";
 import { type Readable } from "svelte/store";
 import { derived, writable } from "../../utils/stores";
 import { isCanisterUrl, removeQueryStringParam } from "../../utils/url";

@@ -12,7 +12,7 @@
     import { activeVideoCall } from "@src/stores/video";
     import { currentTheme } from "@src/theme/themes";
     import { darkenHexColour } from "@src/theme/utils";
-    import type { DirectChatSummary, OptionUpdate, PublicProfile } from "openchat-client";
+    import type { DirectChatSummary, OptionUpdate, PublicProfile } from "@client";
     import {
         allUsersStore,
         blockedUsersStore,
@@ -22,7 +22,7 @@
         mobileWidth,
         OpenChat,
         publish,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import CancelIcon from "svelte-material-icons/Cancel.svelte";

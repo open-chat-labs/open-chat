@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { currentUserStore } from "openchat-client";
+    import { currentUserStore } from "@client";
     import { onMount } from "svelte";
     import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";

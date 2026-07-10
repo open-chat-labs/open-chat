@@ -2,8 +2,8 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { hideTokenBalances } from "@src/stores/settings";
     import { Avatar, Body, BodySmall, ColourVars, Column, Row, type SizeMode } from "component-lib";
-    import type { EnhancedTokenDetails, OpenChat } from "openchat-client";
-    import { enhancedCryptoLookup } from "openchat-client";
+    import type { EnhancedTokenDetails, OpenChat } from "@client";
+    import { enhancedCryptoLookup } from "@client";
     import { getContext } from "svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Refresh from "svelte-material-icons/Refresh.svelte";

@@ -7,14 +7,14 @@
 </script>
 
 <script lang="ts">
-    import type { ChatIdentifier, CommunityIdentifier, GroupChatIdentifier } from "openchat-client";
+    import type { ChatIdentifier, CommunityIdentifier, GroupChatIdentifier } from "@client";
     import {
         botState,
         definitionToPermissions,
         emptyGrantedBotPermissions,
         selectedChatBotsStore,
         selectedCommunityBotsStore,
-    } from "openchat-client";
+    } from "@client";
     import BotSummary from "./BotSummary.svelte";
 
     let { botId, chatId, onClose }: BotProfileProps = $props();

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { toastStore } from "@src/stores/toast";
-    import { chatListScopeStore, chatSummariesListStore, currentUserIdStore, mobileWidth, routeForScope, type ChatSummary, type CommunitySummary, type OpenChat } from "openchat-client";
+    import { chatListScopeStore, chatSummariesListStore, currentUserIdStore, mobileWidth, routeForScope, type ChatSummary, type CommunitySummary, type OpenChat } from "@client";
     import {
         chatIdentifiersEqual,
         definitionToPermissions,
@@ -11,7 +11,7 @@
         type ExternalBot,
         type GrantedBotPermissions,
         type Level,
-    } from "openchat-shared";
+    } from "@shared";
     import { navigate } from "@utils/navigation";
     import { getContext, type Snippet } from "svelte";
     import BotSummary from "./BotSummary.svelte";

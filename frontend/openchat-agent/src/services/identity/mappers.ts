@@ -18,8 +18,8 @@ import type {
     PrepareDelegationWithProofResponse,
     RemoveIdentityLinkResponse,
     WebAuthnKeyFull,
-} from "openchat-shared";
-import { UnsupportedValueError } from "openchat-shared";
+} from "@shared";
+import { UnsupportedValueError } from "@shared";
 import { consolidateBytes, mapOptional, principalBytesToString } from "../../utils/mapping";
 import type { Signature } from "@icp-sdk/core/agent";
 import { Delegation } from "@icp-sdk/core/identity";

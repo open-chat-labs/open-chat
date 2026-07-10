@@ -3,7 +3,7 @@
 </script>
 
 <script lang="ts">
-    import { mobileWidth } from "openchat-client";
+    import { mobileWidth } from "@client";
     import type { Component } from "svelte";
     import { i18nKey } from "../i18n/i18n";
     import Button from "./Button.svelte";

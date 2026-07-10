@@ -6,7 +6,7 @@
         locationStore,
         OpenChat,
         routeForScope,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import Graph from "svelte-material-icons/GraphOutline.svelte";

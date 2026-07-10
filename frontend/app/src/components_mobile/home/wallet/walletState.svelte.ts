@@ -10,7 +10,7 @@ import {
     OpenChat,
     type ConvertedBalances,
     type EnhancedTokenDetails,
-} from "openchat-client";
+} from "@client";
 
 export type ConversionToken = "usd" | "icp" | "btc" | "eth";
 

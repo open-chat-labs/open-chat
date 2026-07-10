@@ -1,4 +1,4 @@
-import { dimensionsWidth } from "openchat-client";
+import { dimensionsWidth } from "@client";
 
 const MAX_HEIGHT = 1000;
 

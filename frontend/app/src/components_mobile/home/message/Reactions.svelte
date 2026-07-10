@@ -1,6 +1,6 @@
 <script module lang="ts">
     import { type Alignment, Container } from "component-lib";
-    import type { Reaction } from "openchat-client";
+    import type { Reaction } from "@client";
     import ReactionComponent from "./Reaction.svelte";
 </script>
 

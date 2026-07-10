@@ -6,7 +6,7 @@
         ValidationErrors,
         type CommandDefinition,
         type GrantedBotPermissions,
-    } from "openchat-client";
+    } from "@client";
     import ShieldAccount from "svelte-material-icons/ShieldAccount.svelte";
     import SwapHorizontal from "svelte-material-icons/SwapHorizontal.svelte";
     import Pill from "../Pill.svelte";

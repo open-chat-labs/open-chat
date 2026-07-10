@@ -3,7 +3,7 @@
     import Feature from "./Feature.svelte";
 
     import { portalState } from "component-lib";
-    import { availableHeight, mobileWidth, toPixel } from "openchat-client";
+    import { availableHeight, mobileWidth, toPixel } from "@client";
 
     let scrollTop = $state(0);
     let phoneBorder = 5;

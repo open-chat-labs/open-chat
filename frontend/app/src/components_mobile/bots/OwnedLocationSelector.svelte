@@ -26,7 +26,7 @@
         type DirectChatSummary,
         type ExternalBot,
         type GroupChatSummary,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Translatable from "../Translatable.svelte";

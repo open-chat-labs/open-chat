@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { Container, UserChip } from "component-lib";
-    import type { OpenChat, UserOrUserGroup, UserSummary } from "openchat-client";
+    import type { OpenChat, UserOrUserGroup, UserSummary } from "@client";
     import { getContext, type Snippet } from "svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import FindUser from "../FindUser.svelte";

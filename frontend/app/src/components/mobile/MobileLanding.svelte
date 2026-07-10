@@ -1,7 +1,7 @@
 <script lang="ts">
     import { getContext } from "svelte";
     import { openUrl } from "tauri-plugin-oc-api";
-    import { type OpenChat } from "openchat-client";
+    import { type OpenChat } from "@client";
     import FancyLoader from "../icons/FancyLoader.svelte";
     import Button from "../Button.svelte";
 

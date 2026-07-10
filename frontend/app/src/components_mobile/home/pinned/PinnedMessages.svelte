@@ -6,15 +6,15 @@
         MultiUserChat,
         OpenChat,
         ReadonlySet,
-    } from "openchat-client";
+    } from "@client";
     import {
         currentUserStore,
         messagesRead,
         selectedChatPinnedMessagesStore,
         selectedServerChatStore,
         subscribe,
-    } from "openchat-client";
-    import { isSuccessfulEventsResponse, publish } from "openchat-shared";
+    } from "@client";
+    import { isSuccessfulEventsResponse, publish } from "@shared";
     import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";

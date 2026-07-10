@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Logo, MenuItem, SectionHeader } from "component-lib";
-    import { OpenChat } from "openchat-client";
+    import { OpenChat } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";

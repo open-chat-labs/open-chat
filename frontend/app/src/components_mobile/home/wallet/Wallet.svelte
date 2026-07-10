@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Container, Logo, MenuItem, SectionHeader } from "component-lib";
-    import { namedAccountsStore, OpenChat, publish } from "openchat-client";
+    import { namedAccountsStore, OpenChat, publish } from "@client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";

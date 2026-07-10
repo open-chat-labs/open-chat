@@ -1,6 +1,6 @@
 <script lang="ts">
     import { BodySmall, Container, Subtitle, Switch, Title } from "component-lib";
-    import { showUnpublishedBots } from "openchat-client";
+    import { showUnpublishedBots } from "@client";
     import { i18nKey } from "../../../../i18n/i18n";
     import Translatable from "../../../Translatable.svelte";
 </script>

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { BodySmall, Button, Column, Form, Sheet, Subtitle } from "component-lib";
-    import { botState, OpenChat } from "openchat-client";
-    import { random64, type FlattenedCommand, type MessageContext } from "openchat-shared";
+    import { botState, OpenChat } from "@client";
+    import { random64, type FlattenedCommand, type MessageContext } from "@shared";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";

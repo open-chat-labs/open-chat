@@ -10,7 +10,7 @@
         Switch,
         TextArea,
     } from "component-lib";
-    import { publish } from "openchat-client";
+    import { publish } from "@client";
     import { _ } from "svelte-i18n";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";

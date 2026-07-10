@@ -10,7 +10,7 @@ import {
     type AccountTransactionResult,
     type AccountTransaction,
     UnsupportedValueError,
-} from "openchat-shared";
+} from "@shared";
 
 export function accountTransactions(candid: ApiGetTransactionsResult): AccountTransactionResult {
     if ("Err" in candid) {

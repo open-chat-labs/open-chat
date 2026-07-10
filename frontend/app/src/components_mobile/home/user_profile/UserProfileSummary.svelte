@@ -10,7 +10,7 @@
         publish,
         userMetricsStore,
         type PublicProfile,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import Share from "svelte-material-icons/ShareVariantOutline.svelte";

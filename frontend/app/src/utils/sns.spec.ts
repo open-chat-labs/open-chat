@@ -1,4 +1,4 @@
-import { type ExternalBot, ROLE_MEMBER } from "openchat-client";
+import { type ExternalBot, ROLE_MEMBER } from "@client";
 import { createPublishExternalBotPayload } from "./sns";
 
 function createTestBot(): ExternalBot {

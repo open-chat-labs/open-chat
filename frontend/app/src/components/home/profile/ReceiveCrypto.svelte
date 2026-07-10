@@ -4,7 +4,7 @@
         cryptoLookup,
         mobileWidth,
         Poller,
-    } from "openchat-client";
+    } from "@client";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";

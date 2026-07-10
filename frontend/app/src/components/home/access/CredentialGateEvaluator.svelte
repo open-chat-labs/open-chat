@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { CredentialGate, Level, OpenChat } from "openchat-client";
+    import type { CredentialGate, Level, OpenChat } from "@client";
     import { getContext, onMount } from "svelte";
     import Button from "../../Button.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";

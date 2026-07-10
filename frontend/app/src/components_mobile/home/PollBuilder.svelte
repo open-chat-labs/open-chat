@@ -18,7 +18,7 @@
         type MessageContext,
         type PollContent,
         type TotalPollVotes,
-    } from "openchat-client";
+    } from "@client";
     import { dragHandle, dragHandleZone, type DndEvent } from "svelte-dnd-action";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";

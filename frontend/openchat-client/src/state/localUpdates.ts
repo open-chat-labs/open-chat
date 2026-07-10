@@ -42,7 +42,7 @@ import {
     type VersionedRules,
     type WalletConfig,
     type WebhookDetails,
-} from "openchat-shared";
+} from "@shared";
 import { writable } from "../utils/stores";
 import { revokeObjectUrls } from "../utils/url";
 import { chatDetailsLocalUpdates } from "./chat/detailsUpdates";

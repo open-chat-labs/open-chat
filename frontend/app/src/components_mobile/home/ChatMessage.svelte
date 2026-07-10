@@ -35,7 +35,7 @@
         unconfirmedReadByThem,
         undeletingMessagesStore,
         type UserSummary,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onDestroy, onMount, tick } from "svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
     import ShareOutline from "svelte-material-icons/ShareOutline.svelte";

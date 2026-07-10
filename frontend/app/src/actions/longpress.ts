@@ -1,4 +1,4 @@
-import { eventListLastScrolled } from "openchat-client";
+import { eventListLastScrolled } from "@client";
 import { get } from "svelte/store";
 import { isTouchDevice, mobileOperatingSystem } from "../utils/devices";
 

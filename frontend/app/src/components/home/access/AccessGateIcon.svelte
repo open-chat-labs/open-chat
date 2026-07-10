@@ -11,7 +11,7 @@
         type Level,
         OpenChat,
         stripSuspendedGate,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";

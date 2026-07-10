@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { Body, CommonButton, Container, ListAction } from "component-lib";
-    import { publish, selectedCommunityUserGroupsStore } from "openchat-client";
+    import { publish, selectedCommunityUserGroupsStore } from "@client";
     import AccountGroup from "svelte-material-icons/AccountGroupOutline.svelte";
     import { SvelteSet } from "svelte/reactivity";
     import Translatable from "../../../Translatable.svelte";

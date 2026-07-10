@@ -5,7 +5,7 @@ import type {
     GetDelegationResponse,
     PrepareDelegationResponse,
     SiwePrepareLoginResponse,
-} from "openchat-shared";
+} from "@shared";
 import { getDelegationResponse, loginResponse, prepareLoginResponse } from "./mappers";
 
 export class SignInWithEthereumClient extends CandidCanisterAgent<SignInWithEthereumService> {

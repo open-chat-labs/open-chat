@@ -7,7 +7,7 @@
         type ExecuteGenericNervousSystemFunction,
         type GroupMatch,
         type Level,
-    } from "openchat-client";
+    } from "@client";
     import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { iconSize, quantiseWaveform, type AudioContent, type OpenChat } from "openchat-client";
+    import { iconSize, quantiseWaveform, type AudioContent, type OpenChat } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Microphone from "svelte-material-icons/Microphone.svelte";

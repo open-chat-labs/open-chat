@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { querystringStore } from "openchat-client";
+    import { querystringStore } from "@client";
     import { onMount } from "svelte";
     import ArrowLink from "../ArrowLink.svelte";
     import Overlay from "../Overlay.svelte";

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { iconSize } from "openchat-client";
+    import { iconSize } from "@client";
     import type { Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";

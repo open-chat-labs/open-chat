@@ -2,8 +2,8 @@
     import { toastStore } from "@src/stores/toast";
     import { copyToClipboard } from "@src/utils/urls";
     import { Container, IconButton, MenuItem, MenuTrigger } from "component-lib";
-    import { OpenChat, type MultiUserChat } from "openchat-client";
-    import { publish, type FullWebhookDetails, type WebhookDetails } from "openchat-shared";
+    import { OpenChat, type MultiUserChat } from "@client";
+    import { publish, type FullWebhookDetails, type WebhookDetails } from "@shared";
     import { getContext } from "svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import { i18nKey } from "../../i18n/i18n";

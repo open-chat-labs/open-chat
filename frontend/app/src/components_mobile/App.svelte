@@ -5,8 +5,8 @@
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { detectNeedsSafeInset, setupKeyboardTracking } from "@src/utils/safe_area";
     import {
-        androidInterfaceSizes,
         setStatusAndNavBarSizesForNativeApp,
+        updateAndroidInterfaceSizes,
     } from "@stores/androidInterfaceSizes";
     import { rtlStore } from "@stores/rtl";
     import { snowing } from "@stores/snow";
@@ -35,7 +35,7 @@
         routeForChatIdentifier,
         routeForScope,
         subscribe,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
@@ -67,7 +67,6 @@
 
     function createOpenChatClient(): OpenChat {
         const client = new OpenChat({
-            appType: import.meta.env.OC_APP_TYPE,
             mobileLayout: import.meta.env.OC_MOBILE_LAYOUT,
             icUrl: import.meta.env.OC_IC_URL,
             webAuthnOrigin: import.meta.env.OC_WEBAUTHN_ORIGIN,
@@ -164,10 +163,9 @@
     if (client.isNativeApp()) {
         expectWindowInsetChange((data) => {
             // Setting these values in store should also set the CSS vars!
-            androidInterfaceSizes.set({
-                statusBarHeight: data.statusBarHeightDp,
-                navBarHeight: data.navHeightDp,
-            });
+            // Gated so identical status/nav sizes don't re-write localStorage and
+            // CSS vars on every keyboard-animation frame.
+            updateAndroidInterfaceSizes(data.statusBarHeightDp, data.navHeightDp);
 
             keyboard.visible = data.isKeyboardOpen;
             keyboard.currentHeight = data.keyboardHeightDp;

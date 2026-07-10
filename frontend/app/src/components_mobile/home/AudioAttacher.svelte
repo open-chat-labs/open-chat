@@ -1,6 +1,6 @@
 <script lang="ts">
     import { IconButton } from "component-lib";
-    import { quantiseWaveform, type AudioContent, type OpenChat } from "openchat-client";
+    import { quantiseWaveform, type AudioContent, type OpenChat } from "@client";
     import { getContext, onDestroy, onMount } from "svelte";
     import Microphone from "svelte-material-icons/MicrophoneOutline.svelte";
     import RadioboxMarked from "svelte-material-icons/RadioboxMarked.svelte";

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { iconSize, mobileWidth } from "openchat-client";
+    import { iconSize, mobileWidth } from "@client";
     import { onMount } from "svelte";
 
     interface Props {

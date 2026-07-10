@@ -1,13 +1,13 @@
 <script lang="ts">
     import { MenuItem } from "component-lib";
-    import type { CommunitySummary, OpenChat } from "openchat-client";
+    import type { CommunitySummary, OpenChat } from "@client";
     import {
         chatSummariesListStore,
         notificationsSupported,
         platformModeratorStore,
         publish,
         ROLE_NONE,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";

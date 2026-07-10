@@ -3,7 +3,7 @@ import {
     type ApiOptionUpdateV2,
     type OptionUpdate,
     UnsupportedValueError,
-} from "openchat-shared";
+} from "@shared";
 import { Principal } from "@icp-sdk/core/principal";
 import type { ApiPrincipal } from "../services";
 

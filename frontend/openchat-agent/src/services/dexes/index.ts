@@ -1,5 +1,5 @@
 import { AnonymousIdentity, type HttpAgent, type Identity } from "@icp-sdk/core/agent";
-import type { DexId, TokenSwapPool } from "openchat-shared";
+import type { DexId, TokenSwapPool } from "@shared";
 import { IcpSwapIndexClient } from "./icpSwap/index/icpSwap.index.client";
 import { TacoIndexClient } from "./taco/index/taco.index.client";
 

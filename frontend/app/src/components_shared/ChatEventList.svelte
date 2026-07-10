@@ -1,5 +1,5 @@
 <script lang="ts" module>
-    import type { ChatEvent as ChatEventType, EventWrapper, Mention } from "openchat-client";
+    import type { ChatEvent as ChatEventType, EventWrapper, Mention } from "@client";
 
     export type ChatEventListArgs = {
         isAccepted: (_unconf: unknown, evt: EventWrapper<ChatEventType>) => boolean;
@@ -38,7 +38,7 @@
         type Message,
         type MessageContext,
         type OpenChat,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount, tick, untrack, type Snippet } from "svelte";
     import { isSafari, mobileOperatingSystem } from "@utils/devices";
     import type { FlatChatItem } from "./flatChatItems";

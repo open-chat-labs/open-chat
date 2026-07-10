@@ -14,13 +14,13 @@
         MessageContext,
         OpenChat,
         PendingCryptocurrencyTransfer,
-    } from "openchat-client";
+    } from "@client";
     import {
         enhancedCryptoLookup as cryptoLookup,
         currentUserIdStore,
         exchangeRatesLookupStore as exchangeRatesLookup,
         lastCryptoSent,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { quadOut } from "svelte/easing";

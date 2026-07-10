@@ -29,7 +29,7 @@
         type Level,
         type OpenChat,
         type ResourceKey,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import { _, locale } from "svelte-i18n";
     import Warning from "svelte-material-icons/AlertRhombusOutline.svelte";

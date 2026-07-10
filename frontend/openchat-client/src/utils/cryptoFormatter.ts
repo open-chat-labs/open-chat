@@ -1,7 +1,7 @@
 import { locale } from "svelte-i18n";
 import { get } from "svelte/store";
 import { getDecimalSeparator } from "./i18n";
-import { parseBigInt } from "openchat-shared";
+import { parseBigInt } from "@shared";
 
 export function validateTokenInput(value: string, powTenPerWhole: number): ValidatedTokenInput {
     const [replacementText, amount] = validateInput(value, powTenPerWhole);

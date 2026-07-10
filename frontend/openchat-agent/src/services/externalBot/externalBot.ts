@@ -1,4 +1,4 @@
-import { type BotCommandResponse, type BotDefinitionResponse, toBigInt64 } from "openchat-shared";
+import { type BotCommandResponse, type BotDefinitionResponse, toBigInt64 } from "@shared";
 import { AssertError } from "@sinclair/typebox/value";
 import { Type, type Static } from "@sinclair/typebox";
 import { BotDefinition, BotMessageContent as MessageContent } from "../../typebox";

@@ -6,7 +6,7 @@
     import {
         type ExecuteGenericNervousSystemFunction,
         type ExternalBotLike,
-    } from "openchat-client";
+    } from "@client";
     import { Principal } from "@icp-sdk/core/principal";
     import BotExplorer from "../../bots/BotExplorer.svelte";
     import SelectedMatch from "./SelectedMatch.svelte";

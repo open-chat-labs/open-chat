@@ -6,7 +6,7 @@
         publish,
         roleAsText,
         type CommunityPermissions,
-    } from "openchat-client";
+    } from "@client";
     import { _ } from "svelte-i18n";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import Translatable from "../../../Translatable.svelte";

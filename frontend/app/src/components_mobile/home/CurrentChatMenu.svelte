@@ -14,7 +14,7 @@
         platformModeratorStore,
         publish,
         selectedChatPinnedMessagesStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { canDeleteDirectChat, publishDeleteDirectChat } from "../../utils/directChat";

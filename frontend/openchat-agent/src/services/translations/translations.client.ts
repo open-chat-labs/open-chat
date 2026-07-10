@@ -9,7 +9,7 @@ import type {
     ProposeResponse,
     RejectReason,
     RejectResponse,
-} from "openchat-shared";
+} from "@shared";
 import {
     apiRejectReason,
     approveResponse,

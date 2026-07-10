@@ -8,7 +8,7 @@
         OpenChat,
         PremiumItem,
         type PublicProfile,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import ImageEditOutline from "svelte-material-icons/ImageEditOutline.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";

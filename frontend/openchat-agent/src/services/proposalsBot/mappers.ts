@@ -5,8 +5,8 @@ import {
     type SubmitProposalResponse,
     type TopUpNeuronResponse,
     UnsupportedValueError,
-} from "openchat-shared";
-import { CommonResponses } from "openchat-shared";
+} from "@shared";
+import { CommonResponses } from "@shared";
 import type {
     ProposalsBotProposalToSubmit,
     ProposalsBotProposalToSubmitAction,

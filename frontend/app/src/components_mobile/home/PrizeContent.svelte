@@ -2,7 +2,7 @@
     import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
     import { disableClaimPrizeFeature } from "@src/utils/features";
 
-    import type { TextContent as TextContentType } from "openchat-client";
+    import type { TextContent as TextContentType } from "@client";
     import {
         Body,
         BodySmall,
@@ -27,7 +27,7 @@
         type OpenChat,
         type PrizeContent,
         type PrizeContentInitial,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, type Snippet } from "svelte";
     import { Confetti } from "svelte-confetti";
     import { _ } from "svelte-i18n";

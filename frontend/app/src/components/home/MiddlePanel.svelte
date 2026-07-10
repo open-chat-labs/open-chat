@@ -15,7 +15,7 @@
         showNav,
         type ChatIdentifier,
         type MultiUserChat,
-    } from "openchat-client";
+    } from "@client";
     import { tick } from "svelte";
     import { fade } from "svelte/transition";
     import { activeVideoCall, type ActiveVideoCall } from "../../stores/video";

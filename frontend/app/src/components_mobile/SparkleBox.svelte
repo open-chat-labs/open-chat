@@ -1,6 +1,6 @@
 <script lang="ts">
     import { BodySmall, Button, Column, Subtitle } from "component-lib";
-    import type { ResourceKey } from "openchat-client";
+    import type { ResourceKey } from "@client";
     import type { Snippet } from "svelte";
     import SparkleBoxOutline from "./SparkleBoxOutline.svelte";
     import Translatable from "./Translatable.svelte";

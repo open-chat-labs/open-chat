@@ -2,7 +2,7 @@
     import { rtlStore } from "../../../stores/rtl";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { getContext } from "svelte";
-    import type { OpenChat } from "openchat-client";
+    import type { OpenChat } from "@client";
     import { now500 } from "../../../stores/time";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";

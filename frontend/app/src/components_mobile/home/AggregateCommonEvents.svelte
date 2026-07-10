@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Caption, Container } from "component-lib";
-    import type { Level, MemberRole, OpenChat, UserLookup, UserSummary } from "openchat-client";
-    import { allUsersStore, roleAsText } from "openchat-client";
+    import type { Level, MemberRole, OpenChat, UserLookup, UserSummary } from "@client";
+    import { allUsersStore, roleAsText } from "@client";
     import { getContext, onDestroy, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../../i18n/i18n";

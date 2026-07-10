@@ -21,7 +21,7 @@
         enhancedCryptoLookup,
         publish,
         streakInsuranceStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import Plus from "svelte-material-icons/Plus.svelte";
     import QrCode from "svelte-material-icons/Qrcode.svelte";

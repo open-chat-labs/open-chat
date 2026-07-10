@@ -4,7 +4,7 @@ import {
     type InternalBot,
     ROLE_MEMBER,
     ROLE_OWNER,
-} from "openchat-shared";
+} from "@shared";
 
 export const emptyGrantedPermissions: GrantedBotPermissions = {
     command: {

@@ -1,7 +1,7 @@
 import {
     LocalStorageBoolStore,
     LocalStorageStore,
-} from "openchat-client/lib/state/localStorageStore";
+} from "@client/state/localStorageStore";
 import { configKeys } from "../utils/config";
 import { isTouchDevice, mobileOperatingSystem } from "../utils/devices";
 

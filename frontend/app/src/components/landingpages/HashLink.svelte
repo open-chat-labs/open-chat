@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { locationStore } from "openchat-client";
+    import { locationStore } from "@client";
     import type { Snippet } from "svelte";
     interface Props {
         id: string;

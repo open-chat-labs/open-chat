@@ -1,7 +1,7 @@
 <script lang="ts">
     import { toastStore } from "@src/stores/toast";
     import { Avatar, MenuItem, SectionHeader } from "component-lib";
-    import type { DirectChatSummary, ExternalBot, OpenChat } from "openchat-client";
+    import type { DirectChatSummary, ExternalBot, OpenChat } from "@client";
     import {
         allUsersStore,
         chatListScopeStore,
@@ -11,7 +11,7 @@
         favouritesStore,
         publish,
         routeForScope,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";

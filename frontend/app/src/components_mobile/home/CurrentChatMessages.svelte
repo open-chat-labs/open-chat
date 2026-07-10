@@ -37,7 +37,7 @@
         type MemeFighterContent,
         type VideoContent,
         chatIdentifierToString,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext, untrack, setContext, onMount } from "svelte";
     import Witch from "@shared_components/Witch.svelte";

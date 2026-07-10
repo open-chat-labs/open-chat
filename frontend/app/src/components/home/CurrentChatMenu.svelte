@@ -18,7 +18,7 @@
         platformModeratorStore,
         publish,
         setRightPanelHistory,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { MessageActivity } from "openchat-client";
+    import type { MessageActivity } from "@client";
     import Bitcoin from "../../icons/Bitcoin.svelte";
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";

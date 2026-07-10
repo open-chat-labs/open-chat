@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { userGroupMentionRegex, userIdMentionRegex } from "openchat-shared";
+import { userGroupMentionRegex, userIdMentionRegex } from "@shared";
 
 const anchoredUserMention = new RegExp(`^${userIdMentionRegex.source}`);
 const anchoredGroupMention = new RegExp(`^${userGroupMentionRegex.source}`);

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Body, BodySmall, Chip, ColourVars, Container } from "component-lib";
-    import type { ResourceKey } from "openchat-client";
+    import type { ResourceKey } from "@client";
     import type { Snippet } from "svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import Info from "svelte-material-icons/InformationOutline.svelte";

@@ -4,7 +4,7 @@ import {
     emptyChatMetrics,
     ROLE_ADMIN,
     ROLE_OWNER,
-} from "openchat-client";
+} from "@client";
 
 const defaultPermissions: CommunityPermissions = {
     changeRoles: ROLE_ADMIN,

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { ColourVars, Column, MenuItem } from "component-lib";
-    import { type EmojiSummary, type SelectedEmoji } from "openchat-client";
+    import { type EmojiSummary, type SelectedEmoji } from "@client";
     import { untrack } from "svelte";
     import { searchAllEmojis, summaryToSelectedEmoji } from "../../utils/emojis";
 

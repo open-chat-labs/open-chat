@@ -24,8 +24,8 @@
         type OneSecTransferFees,
         type OpenChat,
         type ResourceKey,
-    } from "openchat-client";
-    import { isAccountIdentifierValid, isICRCAddressValid, publish } from "openchat-shared";
+    } from "@client";
+    import { isAccountIdentifierValid, isICRCAddressValid, publish } from "@shared";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Account from "svelte-material-icons/AccountBoxOutline.svelte";

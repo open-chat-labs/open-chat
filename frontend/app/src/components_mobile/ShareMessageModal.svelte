@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { ChatIdentifier, OpenChat } from "openchat-client";
-    import { localUpdates } from "openchat-client";
+    import type { ChatIdentifier, OpenChat } from "@client";
+    import { localUpdates } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../i18n/i18n";
     import type { Share } from "../utils/share";

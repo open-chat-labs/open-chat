@@ -20,7 +20,7 @@ export OC_ACHIEVEMENT_URL_PATH=http://{canisterId}.localhost:8080
 export OC_BLOB_URL_PATTERN=http://{canisterId}.raw.localhost:8080/{blobType}
 export OC_BUILD_ENV=$NODE_ENV
 export OC_WEBAUTHN_ORIGIN=localhost
-export OC_DEV_PORT=5003
+export OC_DEV_PORT=5001
 # Note: changed the port to 8081, we do expect there to be a reverse proxy
 # for the local dfx setup, since from dfx v0.28.0-beta1 we get a CORS issue
 # when querying the local deployment. Once that's fixed we'll revert to port

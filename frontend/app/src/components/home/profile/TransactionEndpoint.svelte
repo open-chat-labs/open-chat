@@ -5,7 +5,7 @@
         OpenChat,
         type CreatedUser,
         type NamedAccount,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import Avatar from "../../Avatar.svelte";
 

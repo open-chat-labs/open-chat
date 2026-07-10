@@ -1,5 +1,5 @@
 import type { ApiListProposalInfoResponse } from "./candid/idl";
-import type { ManageNeuronResponse, ProposalVoteDetails } from "openchat-shared";
+import type { ManageNeuronResponse, ProposalVoteDetails } from "@shared";
 import { proposalVote } from "../common/chatMappers";
 import type { ApiManageNeuronResponse } from "./candid/idl";
 

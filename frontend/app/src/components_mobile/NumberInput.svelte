@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Caption, ColourVars, Container } from "component-lib";
-    import type { ResourceKey } from "openchat-client";
+    import type { ResourceKey } from "@client";
     import { onMount, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import { interpolate } from "../i18n/i18n";

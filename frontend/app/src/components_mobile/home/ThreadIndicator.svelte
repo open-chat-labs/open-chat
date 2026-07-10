@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { Body, ColourVars, Container, CountBadge } from "component-lib";
-    import { numberOfThreadsStore, type UnreadCounts } from "openchat-client";
+    import { numberOfThreadsStore, type UnreadCounts } from "@client";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import MessageText from "svelte-material-icons/MessageTextOutline.svelte";
     import Translatable from "../Translatable.svelte";

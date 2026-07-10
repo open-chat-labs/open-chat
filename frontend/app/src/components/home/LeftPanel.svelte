@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activityFeedShowing, showLeft, showNav } from "openchat-client";
+    import { activityFeedShowing, showLeft, showNav } from "@client";
     import { rtlStore } from "../../stores/rtl";
     import { currentTheme } from "../../theme/themes";
     import ActivityFeed from "./activity/ActivityFeed.svelte";

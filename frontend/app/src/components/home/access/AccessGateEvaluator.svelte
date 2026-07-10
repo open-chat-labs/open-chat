@@ -14,7 +14,7 @@
         type GateCheckSucceeded,
         type LeafGate,
         type PaymentGateApprovals,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import VectorCombine from "svelte-material-icons/VectorCombine.svelte";
     import { i18nKey } from "../../../i18n/i18n";

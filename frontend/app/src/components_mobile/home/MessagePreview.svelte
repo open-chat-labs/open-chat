@@ -7,7 +7,7 @@
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
         type RehydratedMessagePreview,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ChatMessageContent from "./ChatMessageContent.svelte";

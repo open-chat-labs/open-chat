@@ -21,7 +21,7 @@
         type RehydratedReplyContext,
         type SenderContext,
         type UserSummary,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext, type Snippet } from "svelte";
     import Typing from "@shared_components/Typing.svelte";

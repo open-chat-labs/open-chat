@@ -19,6 +19,7 @@ COPY . .
 
 # Build UI
 WORKDIR /oc/frontend
+RUN npm ci
 RUN npm run build:docker
 
 # SECOND PART

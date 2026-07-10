@@ -1,6 +1,6 @@
 <script lang="ts">
     import { ColourVars, Column, IconButton, Row } from "component-lib";
-    import { type GiphyContent } from "openchat-client";
+    import { type GiphyContent } from "@client";
     import Close from "svelte-material-icons/Close.svelte";
     import { rtlStore } from "../../stores/rtl";
     // import { lowBandwidth } from "../../stores/settings";

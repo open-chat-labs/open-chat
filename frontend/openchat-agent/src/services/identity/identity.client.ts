@@ -38,7 +38,7 @@ import type {
     WebAuthnKeyFull,
     AccountLinkingCode,
     VerifyAccountLinkingCodeResponse,
-} from "openchat-shared";
+} from "@shared";
 import {
     apiWebAuthnKey,
     authPrincipalsResponse,

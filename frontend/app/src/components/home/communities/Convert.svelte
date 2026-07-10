@@ -7,7 +7,7 @@
         type ChatListScope,
         type GroupChatSummary,
         type OpenChat,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";

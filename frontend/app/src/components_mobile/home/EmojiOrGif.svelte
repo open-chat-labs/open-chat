@@ -6,7 +6,7 @@
         type GiphyContent,
         type MessageContext,
         type SelectedEmoji,
-    } from "openchat-client";
+    } from "@client";
     // import Backspace from "svelte-material-icons/BackspaceOutline.svelte";
     import Sticker from "svelte-material-icons/StickerEmoji.svelte";
     import Gif from "../icons/Gif.svelte";

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Body, Container } from "component-lib";
-    import { i18nKey } from "openchat-client";
+    import { i18nKey } from "@client";
     import type { Snippet } from "svelte";
     import Translatable from "./Translatable.svelte";
 

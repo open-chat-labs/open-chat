@@ -9,7 +9,7 @@
         iconSize,
         mobileWidth,
         routeForScope,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext, onMount } from "svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";

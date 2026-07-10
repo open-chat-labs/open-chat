@@ -28,7 +28,7 @@
         unreadCommunityChannelCountsStore,
         unreadDirectAndGroupCountsStore,
         unreadFavouriteCountsStore,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext, onMount, tick } from "svelte";
     import { type DndEvent, dndzone } from "svelte-dnd-action";

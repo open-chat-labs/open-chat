@@ -16,8 +16,8 @@
         type OneSecTransferFees,
         type OpenChat,
         type ResourceKey,
-    } from "openchat-client";
-    import { ErrorCode, isAccountIdentifierValid, isICRCAddressValid } from "openchat-shared";
+    } from "@client";
+    import { ErrorCode, isAccountIdentifierValid, isICRCAddressValid } from "@shared";
     import { getContext, onMount } from "svelte";
     import QrcodeScan from "svelte-material-icons/QrcodeScan.svelte";
     import { i18nKey } from "../../../i18n/i18n";

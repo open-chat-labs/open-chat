@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Avatar, Column, Option, Row, Search, Select, Subtitle } from "component-lib";
-    import { chatIdentifiersEqual, OpenChat, type GroupMatch } from "openchat-client";
+    import { chatIdentifiersEqual, OpenChat, type GroupMatch } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../../../i18n/i18n";

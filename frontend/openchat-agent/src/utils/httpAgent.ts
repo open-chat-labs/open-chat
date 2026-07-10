@@ -1,6 +1,6 @@
 import { HttpAgent, type Identity } from "@icp-sdk/core/agent";
 import { isMainnet } from "./network";
-import { offline } from "openchat-shared";
+import { offline } from "@shared";
 
 export function createHttpAgentSync(identity: Identity, icUrl: string): HttpAgent {
     const [agent] = createHttpAgentInternal(identity, icUrl);

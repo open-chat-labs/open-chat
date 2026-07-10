@@ -18,7 +18,7 @@
         sortedCommunitiesStore,
         type CommunitySummary,
         type UnreadCounts,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { dragHandle, dragHandleZone, type DndEvent } from "svelte-dnd-action";
     import AccountGroupOutline from "svelte-material-icons/AccountGroupOutline.svelte";

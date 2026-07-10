@@ -7,7 +7,7 @@ import {
 } from "@icp-sdk/core/agent";
 import { WebAuthnIdentity } from "@icp-sdk/core/identity";
 import borc from "borc";
-import type { WebAuthnKeyFull } from "openchat-shared";
+import type { WebAuthnKeyFull } from "@shared";
 
 export async function createWebAuthnIdentity(
     origin: string,

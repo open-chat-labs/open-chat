@@ -5,8 +5,8 @@
         Mention,
         Message,
         MessageContext,
-    } from "openchat-client";
-    import { iconSize } from "openchat-client";
+    } from "@client";
+    import { iconSize } from "@client";
     import { type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";

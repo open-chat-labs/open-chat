@@ -1,10 +1,10 @@
 import replace from "@rollup/plugin-replace";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
-import chokidar, { FSWatcher } from "chokidar";
+import chokidar from "chokidar";
 import fs from "fs";
 import path from "path";
 import execute from "rollup-plugin-shell";
-import { defineConfig, type PluginOption } from "vite";
+import { build, defineConfig, type Plugin, type PluginOption } from "vite";
 import { createHtmlPlugin } from "vite-plugin-html";
 import dfxJson from "../../dfx.json";
 import {
@@ -13,6 +13,7 @@ import {
     initEnv,
     sassModulesAndMixins,
 } from "./rollup.extras.mjs";
+import { ocPackageAliases } from "./oc-package-aliases.mjs";
 
 const version = `1000.0.${Date.now()}`;
 const inlineScripts = [`window.OC_WEBSITE_VERSION = "${version}";`];
@@ -23,10 +24,98 @@ initEnv();
 const isNativeIos = process.env.OC_APP_TYPE === "ios";
 const isNativeAndroid = process.env.OC_APP_TYPE === "android";
 const isNativeApp = isNativeIos || isNativeAndroid;
-// Setup to run mobile dev server is slightly different. Setting different ports
-// for web and mobile apps allows us to for example run web app in Docker, while
-// developing a mobile app.
-const port = isNativeApp ? 5003 : 5001;
+// Dev server port — shared by web and native (Android/iOS) dev.
+const port = 5001;
+
+// The former workspace sub-packages (@shared/@client/@agent/@worker) resolve
+// directly from their TypeScript source via `ocPackageAliases` — see
+// ./oc-package-aliases.mjs, the single source shared with build-workers.mjs.
+
+// Directory (gitignored, under node_modules) where the dev web worker bundle is
+// emitted before being served at /worker.js.
+const workerBuildDir = path.resolve(__dirname, "node_modules/.oc-worker");
+const workerEntry = path.resolve(__dirname, "../openchat-worker/src/worker.ts");
+
+// Builds the web worker from TypeScript source — reusing the sub-package
+// aliases so it pulls agent/shared from source too — and serves it at
+// /worker.js, rebuilding and triggering a full reload when worker/agent/shared
+// source changes. Replaces serving the Turbo-compiled
+// openchat-worker/lib/worker.js together with the chokidar poll that waited for
+// those lib files to appear.
+function ocWorkerPlugin(): Plugin {
+    async function buildWorker() {
+        await build({
+            configFile: false,
+            logLevel: "warn",
+            resolve: { alias: ocPackageAliases },
+            define: { "process.env.NODE_ENV": JSON.stringify("development") },
+            build: {
+                outDir: workerBuildDir,
+                emptyOutDir: false,
+                target: "es2020",
+                minify: false,
+                sourcemap: true,
+                lib: {
+                    entry: workerEntry,
+                    formats: ["es"],
+                    fileName: () => "worker.js",
+                },
+            },
+        });
+    }
+
+    return {
+        name: "oc-worker",
+        async configureServer(server) {
+            await buildWorker();
+
+            // Serve the built worker (and its sourcemap) regardless of the ?v=
+            // cache-busting query string the client appends.
+            server.middlewares.use((req, res, next) => {
+                const fileName = path.basename((req.url ?? "").split("?")[0]);
+                const filePath = path.join(workerBuildDir, fileName);
+                if (
+                    (fileName === "worker.js" || fileName === "worker.js.map") &&
+                    fs.existsSync(filePath)
+                ) {
+                    res.setHeader(
+                        "Content-Type",
+                        fileName.endsWith(".map") ? "application/json" : "text/javascript",
+                    );
+                    fs.createReadStream(filePath).pipe(res);
+                    return;
+                }
+                next();
+            });
+
+            // Rebuild the worker when its source (or the agent/shared code it
+            // bundles) changes, then full-reload the page.
+            const watchDirs = [
+                "../openchat-worker/src",
+                "../openchat-agent/src",
+                "../openchat-shared/src",
+            ].map((d) => path.resolve(__dirname, d));
+
+            let timer: ReturnType<typeof setTimeout> | undefined;
+            const watcher = chokidar.watch(watchDirs, {
+                ignoreInitial: true,
+                awaitWriteFinish: true,
+            });
+            const rebuild = () => {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    buildWorker()
+                        .then(() => server.ws.send({ type: "full-reload" }))
+                        .catch((err) =>
+                            server.config.logger.error(`[oc-worker] rebuild failed: ${err}`),
+                        );
+                }, 150);
+            };
+            watcher.on("change", rebuild).on("add", rebuild).on("unlink", rebuild);
+            server.httpServer?.on("close", () => void watcher.close());
+        },
+    };
+}
 
 // TODO use vite for prod build!
 // https://vite.dev/config/
@@ -77,44 +166,7 @@ export default defineConfig({
             "process.env": "import.meta.env",
             preventAssignment: true,
         }) as PluginOption,
-        {
-            name: "worker-file-server",
-            configureServer(server) {
-                server.middlewares.use((req, res, next) => {
-                    const serveFile = (fileName: string, relativePath: string) => {
-                        const fullPath = path.resolve(__dirname, relativePath, fileName);
-
-                        if (fs.existsSync(fullPath)) {
-                            res.setHeader("Content-Type", "text/javascript");
-                            fs.createReadStream(fullPath).pipe(res);
-                            return true;
-                        } else {
-                            console.warn(`'${fileName}' is not available!`);
-                            return false;
-                        }
-                    };
-
-                    if (req.url?.startsWith("/worker.js")) {
-                        if (
-                            serveFile(
-                                "worker.js",
-                                path.resolve(__dirname, "../openchat-worker/lib/"),
-                            )
-                        ) {
-                            return;
-                        }
-                    }
-
-                    next();
-                });
-            },
-        },
-        {
-            name: "watch-oc-deps-and-reload",
-            configureServer(server) {
-                new ReloadFileWatcher(() => server.ws.send({ type: "full-reload" }));
-            },
-        },
+        ocWorkerPlugin(),
         createHtmlPlugin({
             minify: true,
             entry: "./src/main.ts",
@@ -136,18 +188,32 @@ export default defineConfig({
         }),
     ],
     resolve: {
-        alias: {
-            "@dfinity/agent": "@icp-sdk/core/agent",
-            "@dfinity/auth-client": "@icp-sdk/auth/client",
-            "@src": path.resolve(__dirname, "./src"),
-            "@actions": path.resolve(__dirname, "./src/actions"),
-            "@i18n": path.resolve(__dirname, "./src/i18n"),
-            "@shared_components": path.resolve(__dirname, "./src/components_shared"),
-            "@stores": path.resolve(__dirname, "./src/stores"),
-            "@theme": path.resolve(__dirname, "./src/theme"),
-            "@utils": path.resolve(__dirname, "./src/utils"),
-            "@styles": path.resolve(__dirname, "./src/styles"),
-        },
+        alias: [
+            ...ocPackageAliases,
+            // The Tauri plugin's guest JS is resolved from source (guest-js/)
+            // rather than its built dist-js output, like the sub-packages above.
+            {
+                find: /^tauri-plugin-oc-api\/(.*)$/,
+                replacement: path.join(path.resolve(__dirname, "../tauri-plugin-oc/guest-js"), "$1"),
+            },
+            {
+                find: /^tauri-plugin-oc-api$/,
+                replacement: path.resolve(__dirname, "../tauri-plugin-oc/guest-js/index.ts"),
+            },
+            { find: "@dfinity/agent", replacement: "@icp-sdk/core/agent" },
+            { find: "@dfinity/auth-client", replacement: "@icp-sdk/auth/client" },
+            { find: "@src", replacement: path.resolve(__dirname, "./src") },
+            { find: "@actions", replacement: path.resolve(__dirname, "./src/actions") },
+            { find: "@i18n", replacement: path.resolve(__dirname, "./src/i18n") },
+            {
+                find: "@shared_components",
+                replacement: path.resolve(__dirname, "./src/components_shared"),
+            },
+            { find: "@stores", replacement: path.resolve(__dirname, "./src/stores") },
+            { find: "@theme", replacement: path.resolve(__dirname, "./src/theme") },
+            { find: "@utils", replacement: path.resolve(__dirname, "./src/utils") },
+            { find: "@styles", replacement: path.resolve(__dirname, "./src/styles") },
+        ],
     },
     css: {
         preprocessorOptions: {
@@ -157,81 +223,3 @@ export default defineConfig({
         },
     },
 });
-
-const INTERVAL = 1000;
-const MAX_ITERATIONS = 100;
-
-export class ReloadFileWatcher {
-    // There is no need to monitor agent as it always causes worker to change
-    // There is no need to monitor shared as it always causes worker & client to change
-    #dirs = ["../openchat-client/lib/", "../openchat-worker/lib/"];
-    #files = [
-        "../openchat-agent/lib/index.js",
-        "../openchat-client/lib/index.js",
-        "../openchat-shared/lib/index.js",
-        "../openchat-worker/lib/worker.js",
-    ];
-    #watcher: FSWatcher;
-    #timer?: ReturnType<typeof setTimeout>;
-    #iterations = 0;
-    #reload: () => void;
-
-    constructor(reload: () => void) {
-        this.#reload = reload;
-        this.#watcher = chokidar.watch(this.#dirs, {
-            persistent: true,
-            awaitWriteFinish: true,
-        });
-
-        //@ts-ignore
-        this.#watcher.on("change", (path) => this.#fileChanged(path));
-        //@ts-ignore
-        this.#watcher.on("add", (path) => this.#fileAdded(path));
-    }
-
-    #fileAdded(path: string) {
-        console.log("File added: ", path);
-        this.#initiateFileCheck();
-    }
-
-    #fileChanged(path: string) {
-        console.log("File changed: ", path);
-        this.#initiateFileCheck();
-    }
-
-    #stopChecking() {
-        clearInterval(this.#timer);
-        this.#iterations = 0;
-    }
-
-    #initiateFileCheck() {
-        this.#stopChecking();
-        this.#timer = setInterval(() => this.#checkFilesExist(), INTERVAL);
-    }
-
-    #checkFilesExist() {
-        const [present, missing] = this.#files.reduce(
-            ([p, m], f) => {
-                if (fs.existsSync(f)) {
-                    p.push(f);
-                } else {
-                    m.push(f);
-                }
-                return [p, m];
-            },
-            [[], []] as [string[], string[]],
-        );
-        if (present.length === this.#files.length) {
-            console.log("All files present - reloading: ", this.#iterations);
-            this.#reload();
-            clearInterval(this.#timer);
-        } else {
-            console.log("Not all files are there", missing);
-            this.#iterations += 1;
-            if (this.#iterations > MAX_ITERATIONS) {
-                console.error("We have waited too long. Giving up.");
-                this.#stopChecking();
-            }
-        }
-    }
-}

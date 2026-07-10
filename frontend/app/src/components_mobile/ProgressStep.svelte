@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Body, BodySmall, ColourVars, Container, Row } from "component-lib";
-    import type { ResourceKey } from "openchat-client";
+    import type { ResourceKey } from "@client";
     import { _ } from "svelte-i18n";
     import DoneIcon from "svelte-material-icons/CheckCircle.svelte";
     import FailedIcon from "svelte-material-icons/CloseCircle.svelte";

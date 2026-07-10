@@ -1,4 +1,4 @@
-//import type { Level } from "openchat-shared";
+//import type { Level } from "@shared";
 
 export function getDecimalSeparator(locale: string | null | undefined): string {
     if (!locale) {

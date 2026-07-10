@@ -1,7 +1,7 @@
 
 <script lang="ts">
     import { navigate } from "@utils/navigation";
-    import { chatListScopeStore, isLocked, mobileWidth, type MultiUserChat, type OpenChat, platformModeratorStore, publish, ROLE_NONE, routeForScope, selectedCommunitySummaryStore } from "openchat-client";
+    import { chatListScopeStore, isLocked, mobileWidth, type MultiUserChat, type OpenChat, platformModeratorStore, publish, ROLE_NONE, routeForScope, selectedCommunitySummaryStore } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";

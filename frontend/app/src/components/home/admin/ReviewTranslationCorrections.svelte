@@ -5,8 +5,8 @@
         OpenChat,
         RejectReason,
         TranslationCorrection,
-    } from "openchat-client";
-    import { allUsersStore, iconSize } from "openchat-client";
+    } from "@client";
+    import { allUsersStore, iconSize } from "@client";
     import { getContext, onDestroy, onMount } from "svelte";
     import { _, locale } from "svelte-i18n";
     import Check from "svelte-material-icons/Check.svelte";

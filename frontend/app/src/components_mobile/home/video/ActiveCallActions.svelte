@@ -1,6 +1,6 @@
 <script lang="ts">
     import { MenuItem } from "component-lib";
-    import { chatListScopeStore, OpenChat, publish, routeForMessage } from "openchat-client";
+    import { chatListScopeStore, OpenChat, publish, routeForMessage } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";

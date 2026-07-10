@@ -17,7 +17,7 @@ import type {
     Tally,
     VerifiedCredentialArgs,
     VideoCallType,
-} from "openchat-shared";
+} from "@shared";
 import {
     CommonResponses,
     MAX_EVENTS,
@@ -25,7 +25,7 @@ import {
     UnsupportedValueError,
     isSuccessfulEventsResponse,
     toBigInt32,
-} from "openchat-shared";
+} from "@shared";
 import type {
     BotActionScope as ApiBotActionScope,
     BotCommandArg,

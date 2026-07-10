@@ -1,7 +1,7 @@
 <script lang="ts">
     import { BodySmall, CommonButton, Container, Sheet, Title } from "component-lib";
-    import type { OpenChat } from "openchat-client";
-    import { anonUserStore, notificationStatus } from "openchat-client";
+    import type { OpenChat } from "@client";
+    import { anonUserStore, notificationStatus } from "@client";
     import { getContext } from "svelte";
     import Bell from "svelte-material-icons/BellOutline.svelte";
     import { i18nKey } from "../../i18n/i18n";

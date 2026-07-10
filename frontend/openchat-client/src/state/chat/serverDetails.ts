@@ -7,7 +7,7 @@ import {
     type ReadonlySet,
     type VersionedRules,
     type WebhookDetails,
-} from "openchat-shared";
+} from "@shared";
 
 export class ChatDetailsState {
     constructor(

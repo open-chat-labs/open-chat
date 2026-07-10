@@ -16,7 +16,7 @@
         ReadMore,
         Row,
     } from "component-lib";
-    import type { CommunityMap, CommunitySummary, MultiUserChat, OpenChat } from "openchat-client";
+    import type { CommunityMap, CommunitySummary, MultiUserChat, OpenChat } from "@client";
     import {
         allUsersStore,
         anonUserStore,
@@ -32,7 +32,7 @@
         selectedChatSummaryStore,
         selectedCommunityRulesStore,
         selectedCommunitySummaryStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";

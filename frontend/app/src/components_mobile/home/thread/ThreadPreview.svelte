@@ -23,7 +23,7 @@
         OpenChat,
         selectedCommunitySummaryStore,
         type ThreadPreview,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { chatsInitialisedStore, identityStateStore } from "openchat-client";
+    import { chatsInitialisedStore, identityStateStore } from "@client";
     import FancyLoader from "../icons/FancyLoader.svelte";
     import Home from "./Home.svelte";
 

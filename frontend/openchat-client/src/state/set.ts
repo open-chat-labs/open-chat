@@ -1,4 +1,4 @@
-import { SafeSet, type ChatIdentifier, type Primitive, type ReadonlySet } from "openchat-shared";
+import { SafeSet, type ChatIdentifier, type Primitive, type ReadonlySet } from "@shared";
 import { type UndoLocalUpdate } from "./undo";
 
 type Add<V> = { kind: "add"; value: V };

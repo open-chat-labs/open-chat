@@ -4,7 +4,7 @@ import type {
     UserLookup,
     UserSummary,
     ReducedPublicProfile,
-} from "openchat-shared";
+} from "@shared";
 
 export function formatLastOnlineDate(
     formatter: MessageFormatter,

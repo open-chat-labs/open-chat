@@ -1,6 +1,6 @@
 <script lang="ts">
     import { BodySmall, ColourVars, Container } from "component-lib";
-    import { i18nKey, OpenChat } from "openchat-client";
+    import { i18nKey, OpenChat } from "@client";
     import { getContext } from "svelte";
     import Info from "svelte-material-icons/InformationOutline.svelte";
     import Translatable from "../Translatable.svelte";

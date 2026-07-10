@@ -12,7 +12,7 @@
         type OpenChat,
         type PaymentGate,
         type TokenBalanceGate,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../../../i18n/i18n";

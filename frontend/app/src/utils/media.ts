@@ -1,4 +1,5 @@
-import type { MessageContent, StoredMediaContent } from "openchat-client";
+import type { MessageContent, StoredMediaContent } from "@client";
+import { isAndroidTauriApp, isIosTauriApp } from "@shared";
 
 let current: HTMLMediaElement | undefined;
 
@@ -87,8 +88,7 @@ export async function getVideoDuration(url: string): Promise<number> {
 //
 // Rewrite url for dev purposes only! If env is not dev, url is left intact!
 export function getProxyAdjustedBlobUrl(blobUrl: string | undefined): string | undefined {
-    const isNative =
-        import.meta.env.OC_APP_TYPE === "android" || import.meta.env.OC_APP_TYPE === "ios";
+    const isNative = isAndroidTauriApp() || isIosTauriApp();
     if (blobUrl && import.meta.env.OC_BUILD_ENV === "development" && isNative) {
         try {
             const url = new URL(blobUrl);

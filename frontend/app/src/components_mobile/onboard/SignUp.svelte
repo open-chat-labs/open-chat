@@ -14,8 +14,8 @@
         Switch,
     } from "component-lib";
     import EmailValidator from "email-validator";
-    import type { CreatedUser, OpenChat, UserOrUserGroup, UserSummary } from "openchat-client";
-    import { AuthProvider, identityStateStore, selectedAuthProviderStore } from "openchat-client";
+    import type { CreatedUser, OpenChat, UserOrUserGroup, UserSummary } from "@client";
+    import { AuthProvider, identityStateStore, selectedAuthProviderStore } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import ErrorMessage from "../ErrorMessage.svelte";

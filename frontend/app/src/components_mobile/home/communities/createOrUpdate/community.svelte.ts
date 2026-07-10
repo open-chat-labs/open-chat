@@ -12,7 +12,7 @@ import {
     type CommunitySummary,
     type UpdatedRules,
     type VersionedRules,
-} from "openchat-client";
+} from "@client";
 import { navigate } from "@utils/navigation";
 import { UpdateGroupOrCommunityState } from "../../groupOrCommunity.svelte";
 

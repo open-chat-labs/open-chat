@@ -9,7 +9,7 @@
     import Legend from "./Legend.svelte";
     import TextArea from "./TextArea.svelte";
     import { getContext } from "svelte";
-    import { OpenChat } from "openchat-client";
+    import { OpenChat } from "@client";
     import ErrorMessage from "./ErrorMessage.svelte";
     import { toastStore } from "../stores/toast";
 

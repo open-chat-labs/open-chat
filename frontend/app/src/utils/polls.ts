@@ -1,4 +1,4 @@
-import { type PollContent } from "openchat-client";
+import { type PollContent } from "@client";
 
 export function totalVotes(content: PollContent): number {
     if (content.votes.total.kind === "anonymous_poll_votes") {

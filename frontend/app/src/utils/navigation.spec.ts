@@ -3,7 +3,7 @@ import type {
     ChatIdentifier,
     CommunityIdentifier,
     RouteParams,
-} from "openchat-shared";
+} from "@shared";
 import { describe, expect, it } from "vitest";
 import { navigationMode } from "./navigation";
 

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Container, Subtitle, Switch, Title } from "component-lib";
-    import { communityFiltersStore, OpenChat } from "openchat-client";
+    import { communityFiltersStore, OpenChat } from "@client";
     import { getContext } from "svelte";
     import { i18nKey, supportedLanguages } from "../../../../i18n/i18n";
     import Translatable from "../../../Translatable.svelte";

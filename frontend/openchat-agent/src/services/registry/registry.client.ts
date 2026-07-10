@@ -1,5 +1,5 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
-import type { DexId, RegistryUpdatesResponse } from "openchat-shared";
+import type { DexId, RegistryUpdatesResponse } from "@shared";
 import { SingleCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 import { updatesResponse } from "./mappers";
 import { mapOptional, principalStringToBytes } from "../../utils/mapping";

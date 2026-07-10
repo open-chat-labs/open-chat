@@ -53,7 +53,7 @@ import type {
     UnconfirmedState,
     UserLookup,
     UserSummary,
-} from "openchat-shared";
+} from "@shared";
 import {
     applyOptionUpdate,
     bigIntMax,
@@ -78,7 +78,7 @@ import {
     ROLE_OWNER,
     updateFromOptions,
     type ReadonlySet,
-} from "openchat-shared";
+} from "@shared";
 import {
     allServerChatsStore,
     confirmedEventIndexesLoadedStore,

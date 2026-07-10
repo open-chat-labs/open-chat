@@ -1,11 +1,11 @@
 <script lang="ts">
-    import type { OpenChat } from "openchat-client";
+    import type { OpenChat } from "@client";
     import {
         AvatarSize,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
-    } from "openchat-client";
-    import type { UserSummary } from "openchat-shared";
+    } from "@client";
+    import type { UserSummary } from "@shared";
     import { getContext, type Snippet } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Avatar from "../../Avatar.svelte";

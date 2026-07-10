@@ -1,5 +1,5 @@
 import { HttpErrorCode, type Identity, ProtocolError } from "@icp-sdk/core/agent";
-import { ResponseTooLargeError } from "openchat-shared";
+import { ResponseTooLargeError } from "@shared";
 import {
     getSessionExpiryMs,
     HttpError,
@@ -8,7 +8,7 @@ import {
     DestinationInvalidError,
     InvalidDelegationError,
     TypeboxValidationError,
-} from "openchat-shared";
+} from "@shared";
 
 export class ReplicaNotUpToDateError extends Error {
     public static byTimestamp(

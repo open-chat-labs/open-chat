@@ -4,7 +4,7 @@
         captureRulesAcceptanceStore as rulesAcceptanceStore,
         selectedChatRulesStore,
         selectedCommunityRulesStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import AreYouSure from "../AreYouSure.svelte";

@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { iconSize } from "openchat-client";
-    import type { OgPreview, RehydratedMessagePreview } from "openchat-shared";
+    import { iconSize } from "@client";
+    import type { OgPreview, RehydratedMessagePreview } from "@shared";
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import { rtlStore } from "../../stores/rtl";
     import GenericPreviewComponent from "./GenericPreview.svelte";

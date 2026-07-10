@@ -20,7 +20,7 @@
         type LeafGate,
         type NeuronGate,
         OpenChat,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import AccountCheck from "svelte-material-icons/AccountCheckOutline.svelte";
     import Diamond from "svelte-material-icons/DiamondOutline.svelte";

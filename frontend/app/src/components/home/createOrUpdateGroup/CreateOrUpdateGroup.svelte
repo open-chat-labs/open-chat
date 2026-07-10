@@ -16,7 +16,7 @@
         UnsupportedValueError,
         type UpdateGroupResponse,
         type UserSummary,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext, tick } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";

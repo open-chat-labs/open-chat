@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { availableHeight, mobileWidth } from "openchat-client";
+    import { availableHeight, mobileWidth } from "@client";
     import { currentTheme } from "../../theme/themes";
     import FancyLoader from "../icons/FancyLoader.svelte";
     import Launch from "./Launch.svelte";

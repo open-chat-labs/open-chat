@@ -1,4 +1,4 @@
-import { MIN_DOWNLINK } from "openchat-shared";
+import { MIN_DOWNLINK } from "@shared";
 import { derived, writable } from "svelte/store";
 
 const networkInformation = writable<NetworkInformation | undefined>(undefined, (set) => {

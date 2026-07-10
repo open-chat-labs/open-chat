@@ -7,13 +7,13 @@
         UserGroupDetails,
         UserLookup,
         UserSummary,
-    } from "openchat-client";
+    } from "@client";
     import {
         allUsersStore,
         iconSize,
         selectedCommunityMembersStore,
         selectedCommunityUserGroupsStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";

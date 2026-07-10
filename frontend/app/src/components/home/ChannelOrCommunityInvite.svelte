@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type ChannelSummary, type CommunitySummary, type UserSummary } from "openchat-client";
+    import { type ChannelSummary, type CommunitySummary, type UserSummary } from "@client";
     import ScopeToggle from "./communities/ScopeToggle.svelte";
     import InviteUsersHeader from "./groupdetails/InviteUsersHeader.svelte";
     import InviteUsersBody from "./groupdetails/InviteUsersBody.svelte";

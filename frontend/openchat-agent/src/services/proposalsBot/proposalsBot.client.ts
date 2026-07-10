@@ -6,7 +6,7 @@ import {
     type StakeNeuronForSubmittingProposalsResponse,
     type SubmitProposalResponse,
     type TopUpNeuronResponse,
-} from "openchat-shared";
+} from "@shared";
 import {
     proposalToSubmit,
     stakeNeuronForSubmittingProposalsResponse,

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Row, ChatCaption } from "component-lib";
-    import type { MessageContent, MessageContext } from "openchat-client";
+    import type { MessageContent, MessageContext } from "@client";
     import { i18nKey } from "../../i18n/i18n";
     import AudioContent from "./AudioContent.svelte";
     import BlockedContent from "./BlockedContent.svelte";

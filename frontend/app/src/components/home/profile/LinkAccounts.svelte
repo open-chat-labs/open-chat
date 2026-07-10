@@ -11,8 +11,8 @@
         type OpenChat,
         type ResourceKey,
         type WebAuthnKey,
-    } from "openchat-client";
-    import { ErrorCode } from "openchat-shared";
+    } from "@client";
+    import { ErrorCode } from "@shared";
     import { getContext, onMount } from "svelte";
     import ArrowRightBoldOutline from "svelte-material-icons/ArrowRightBoldOutline.svelte";
     import LinkVariantPlus from "svelte-material-icons/LinkVariantPlus.svelte";

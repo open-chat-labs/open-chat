@@ -8,7 +8,7 @@
         Column,
         Row,
     } from "component-lib";
-    import { currentUserIdStore, publish, type OpenChat, type PollContent } from "openchat-client";
+    import { currentUserIdStore, publish, type OpenChat, type PollContent } from "@client";
     import { getContext, type Snippet } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";

@@ -6,7 +6,7 @@
     import { currentTheme } from "../theme/themes";
     import { interpolate } from "../i18n/i18n";
     import Markdown from "@shared_components/Markdown.svelte";
-    import type { ResourceKey } from "openchat-client";
+    import type { ResourceKey } from "@client";
 
     interface Props {
         label: ResourceKey;

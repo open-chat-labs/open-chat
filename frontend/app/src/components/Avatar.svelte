@@ -1,6 +1,6 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
-    import { AvatarSize, OpenChat, UserStatus } from "openchat-client";
+    import { AvatarSize, OpenChat, UserStatus } from "@client";
     import { getContext } from "svelte";
     import { rtlStore } from "../stores/rtl";
     import { now } from "../stores/time";

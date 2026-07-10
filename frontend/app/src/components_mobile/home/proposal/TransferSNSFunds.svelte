@@ -6,7 +6,7 @@
         type NervousSystemDetails,
         type TransferSnsFunds,
         type Treasury,
-    } from "openchat-client";
+    } from "@client";
     import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import Legend from "../../Legend.svelte";

@@ -8,7 +8,7 @@
         type OpenChat,
         type UserGroupDetails,
         type UserSummary,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Edit from "svelte-material-icons/SquareEditOutline.svelte";

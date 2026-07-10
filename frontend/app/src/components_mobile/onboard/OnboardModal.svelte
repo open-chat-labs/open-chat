@@ -15,8 +15,8 @@
         Subtitle,
         Title,
     } from "component-lib";
-    import { OpenChat, type CreatedUser } from "openchat-client";
-    import { ErrorCode } from "openchat-shared";
+    import { OpenChat, type CreatedUser } from "@client";
+    import { ErrorCode } from "@shared";
     import { navigate } from "@utils/navigation";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { fontScaleStore } from "openchat-client";
+    import { fontScaleStore } from "@client";
     import Range from "../../Range.svelte";
     // onChange={() => (ui.fontScale = $fontScaleStore)} />
 </script>

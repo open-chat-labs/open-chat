@@ -72,8 +72,8 @@ import type {
     WithdrawBtcResponse,
     WithdrawCryptocurrencyResponse,
     WithdrawViaOneSecResponse,
-} from "openchat-shared";
-import { ANON_USER_ID, AnonymousOperationError, CommonResponses } from "openchat-shared";
+} from "@shared";
+import { ANON_USER_ID, AnonymousOperationError, CommonResponses } from "@shared";
 import type { IChatEventsReader } from "../common/chatEvents";
 
 export class AnonUserClient implements IChatEventsReader<DirectChatIdentifier> {

@@ -7,7 +7,7 @@ import {
     type Member,
     type VersionedRules,
     type WebhookDetails,
-} from "openchat-shared";
+} from "@shared";
 import { writable, type Writable } from "../../utils/stores";
 import { LocalMap } from "../map";
 import { LocalSet } from "../set";

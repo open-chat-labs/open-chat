@@ -19,7 +19,7 @@
         type CryptocurrencyContent,
         type MessageContext,
         type UserSummary,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import SendOutline from "svelte-material-icons/SendOutline.svelte";

@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Alignment } from "component-lib";
-    import type { ResourceKey } from "openchat-client";
-    import { allUsersStore, AvatarSize, iconSize, OpenChat } from "openchat-client";
+    import type { ResourceKey } from "@client";
+    import { allUsersStore, AvatarSize, iconSize, OpenChat } from "@client";
     import { getContext } from "svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import type { Theme } from "../../../theme/types";

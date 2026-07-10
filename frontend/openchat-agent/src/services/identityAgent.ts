@@ -13,8 +13,8 @@ import type {
     WebAuthnKeyFull,
     AccountLinkingCode,
     VerifyAccountLinkingCodeResponse,
-} from "openchat-shared";
-import { buildDelegationIdentity, toDer, ErrorCode } from "openchat-shared";
+} from "@shared";
+import { buildDelegationIdentity, toDer, ErrorCode } from "@shared";
 import { createHttpAgent } from "../utils/httpAgent";
 import { getCachedWebAuthnKey } from "../utils/webAuthnKeyCache";
 import { consolidateBytes } from "../utils/mapping";

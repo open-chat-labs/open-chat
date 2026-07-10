@@ -15,7 +15,7 @@ import type {
     SetGroupUpgradeConcurrencyResponse,
     UnfreezeCommunityResponse,
     UnfreezeGroupResponse,
-} from "openchat-shared";
+} from "@shared";
 import {
     GroupIndexAddHotGroupExclusionArgs,
     GroupIndexAddHotGroupExclusionResponse,

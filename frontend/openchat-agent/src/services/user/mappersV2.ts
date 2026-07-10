@@ -53,7 +53,7 @@ import type {
     Verification,
     WalletConfig,
     WithdrawCryptocurrencyResponse,
-} from "openchat-shared";
+} from "@shared";
 import {
     CommonResponses,
     encodeIcrcAccount,
@@ -62,7 +62,7 @@ import {
     toBigInt32,
     toBigInt64,
     UnsupportedValueError,
-} from "openchat-shared";
+} from "@shared";
 import type {
     AccountICRC1,
     StreakInsurance as ApiStreakInsurance,

@@ -12,7 +12,7 @@ import {
     OPENCHAT_VIDEO_CALL_AVATAR_URL,
     OPENCHAT_VIDEO_CALL_USER_ID,
     OPENCHAT_VIDEO_CALL_USERNAME,
-} from "openchat-shared";
+} from "@shared";
 import { AIRDROP_BOT_USER_ID } from "../constants";
 
 export const airdropBotUser: UserSummary = {

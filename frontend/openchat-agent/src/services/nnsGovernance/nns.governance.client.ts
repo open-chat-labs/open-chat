@@ -1,5 +1,5 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
-import type { ManageNeuronResponse, ProposalVoteDetails } from "openchat-shared";
+import type { ManageNeuronResponse, ProposalVoteDetails } from "@shared";
 import { idlFactory, type NnsGovernanceService } from "./candid/idl";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { getProposalVoteDetails, manageNeuronResponse } from "./mappers";

@@ -1,6 +1,6 @@
 import type { ApiUpdateConfigResponse } from "./candid/idl";
-import type { UpdateMarketMakerConfigResponse } from "openchat-shared";
-import { UnsupportedValueError } from "openchat-shared";
+import type { UpdateMarketMakerConfigResponse } from "@shared";
+import { UnsupportedValueError } from "@shared";
 
 export function updateConfigResponse(
     candid: ApiUpdateConfigResponse

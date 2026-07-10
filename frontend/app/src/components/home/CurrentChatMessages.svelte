@@ -33,7 +33,7 @@
         threadOpenStore,
         unconfirmedStore,
         chatIdentifierToString,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext, untrack } from "svelte";
     import Witch from "@shared_components/Witch.svelte";

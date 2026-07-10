@@ -2,7 +2,7 @@
     import { findUser } from "@src/utils/user";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import { Avatar, Container } from "component-lib";
-    import type { CreatedUser, Message, MultiUserChatIdentifier, OpenChat } from "openchat-client";
+    import type { CreatedUser, Message, MultiUserChatIdentifier, OpenChat } from "@client";
     import {
         allUsersStore,
         chatListScopeStore,
@@ -10,7 +10,7 @@
         routeForMessage,
         selectedChatIdStore,
         selectedChatWebhooksStore,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import ChatMessageContent from "../ChatMessageContent.svelte";

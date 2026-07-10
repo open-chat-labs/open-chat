@@ -1,6 +1,6 @@
 <script lang="ts">
     import { ChatCaption, Column, ColourVars, Row, Spinner } from "component-lib";
-    import { type ResourceKey } from "openchat-client";
+    import { type ResourceKey } from "@client";
     import Translatable from "../Translatable.svelte";
     import TextContent from "./TextContent.svelte";
 

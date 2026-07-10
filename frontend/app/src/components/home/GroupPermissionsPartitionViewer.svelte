@@ -9,7 +9,7 @@
         ROLE_MODERATOR,
         ROLE_NONE,
         ROLE_OWNER,
-    } from "openchat-client";
+    } from "@client";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
 

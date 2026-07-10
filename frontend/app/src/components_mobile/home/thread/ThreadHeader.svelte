@@ -7,13 +7,13 @@
         Message,
         OpenChat,
         TypersByKey,
-    } from "openchat-client";
+    } from "@client";
     import {
         allUsersStore,
         byContext,
         selectedCommunitySummaryStore,
         UserStatus,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { now } from "../../../stores/time";

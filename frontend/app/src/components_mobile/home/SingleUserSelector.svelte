@@ -1,7 +1,7 @@
 <script lang="ts">
     import { interpolate } from "@src/i18n/i18n";
     import { Container, Option, Search, Select, Subtitle } from "component-lib";
-    import { i18nKey, type UserOrUserGroup, type UserSummary } from "openchat-client";
+    import { i18nKey, type UserOrUserGroup, type UserSummary } from "@client";
     import { type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import Translatable from "../Translatable.svelte";

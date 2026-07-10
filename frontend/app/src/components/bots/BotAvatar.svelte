@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AvatarSize } from "openchat-client";
+    import { AvatarSize } from "@client";
     import Avatar from "../Avatar.svelte";
 
     interface Props {

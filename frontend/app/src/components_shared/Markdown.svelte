@@ -1,13 +1,13 @@
 <script lang="ts">
     import "highlight.js/styles/base16/helios.css";
     import { marked } from "marked";
-    import type { OpenChat, ReadonlyMap, UserGroupSummary } from "openchat-client";
+    import type { OpenChat, ReadonlyMap, UserGroupSummary } from "@client";
     import {
         allUsersStore,
         userGroupMentionRegex,
         userGroupSummariesStore,
         userIdMentionRegex,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { DOMPurifyDefault, DOMPurifyOneLine } from "../utils/domPurify";
     import { isSingleEmoji } from "../utils/emojis";

@@ -23,7 +23,7 @@
         unreadCommunityChannelCountsStore,
         unreadDirectAndGroupCountsStore,
         unreadFavouriteCountsStore,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext, tick } from "svelte";
     import Pencil from "svelte-material-icons/LeadPencil.svelte";

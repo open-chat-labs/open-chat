@@ -12,8 +12,8 @@
         type Padding,
         type Radius,
     } from "component-lib";
-    import type { FileContent, OpenChat, TextContent as TextContentType } from "openchat-client";
-    import { mimeTypeToHumanReadable } from "openchat-client";
+    import type { FileContent, OpenChat, TextContent as TextContentType } from "@client";
+    import { mimeTypeToHumanReadable } from "@client";
     import { getProxyAdjustedBlobUrl } from "../../utils/media";
     import MessageRenderer from "./MessageRenderer.svelte";
     import Close from "svelte-material-icons/Close.svelte";

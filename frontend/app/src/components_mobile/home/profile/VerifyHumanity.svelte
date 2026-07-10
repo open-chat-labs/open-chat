@@ -9,7 +9,7 @@
         Sheet,
         Subtitle,
     } from "component-lib";
-    import { type OpenChat } from "openchat-client";
+    import { type OpenChat } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountCheck from "svelte-material-icons/AccountCheck.svelte";

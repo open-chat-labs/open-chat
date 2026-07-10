@@ -4,7 +4,7 @@
     import { navigate } from "@utils/navigation";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import { Avatar, Container, SectionHeader } from "component-lib";
-    import type { ChatSummary, DiamondMembershipStatus } from "openchat-client";
+    import type { ChatSummary, DiamondMembershipStatus } from "@client";
     import {
         allUsersStore,
         anonUserStore,
@@ -18,7 +18,7 @@
         byContext as typersByContext,
         type OpenChat,
         type TypersByKey,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Video from "svelte-material-icons/VideoOutline.svelte";

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { ColourVars, Column, Container, Row, Search } from "component-lib";
-    import { type GiphyContent, type KlipyObject, type KlipySearchResponse } from "openchat-client";
+    import { type GiphyContent, type KlipyObject, type KlipySearchResponse } from "@client";
     import { onMount } from "svelte";
 
     type KeyedKlipyObject = KlipyObject & { key: string };

@@ -10,7 +10,7 @@
         type AccessGate,
         type AccessGateConfig,
         type Level,
-    } from "openchat-client";
+    } from "@client";
     import Delete from "svelte-material-icons/Delete.svelte";
     import InformationOutline from "svelte-material-icons/InformationOutline.svelte";
     import Tooltip from "../../../components/tooltip/Tooltip.svelte";

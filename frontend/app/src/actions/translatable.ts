@@ -5,7 +5,7 @@ import { editmode, editingLabel } from "../i18n/i18n";
 import { derived, get } from "svelte/store";
 import { currentTheme } from "../theme/themes";
 import type { Theme } from "../theme/types";
-import type { ResourceKey } from "openchat-client";
+import type { ResourceKey } from "@client";
 
 interface LocaleDictionary {
     [key: string]: LocaleDictionary | string | Array<string | LocaleDictionary> | null;

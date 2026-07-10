@@ -17,7 +17,7 @@
         type MultiUserChat,
         type ReadonlyMap,
         type WebhookDetails,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import Search from "../Search.svelte";
     import Tabs, { type Tab } from "../Tabs.svelte";

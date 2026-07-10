@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Column, Input, Option, Select, TextArea } from "component-lib";
-    import type { CommandArg, CommandParam } from "openchat-client";
+    import type { CommandArg, CommandParam } from "@client";
     import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import DateInput from "../DateInput.svelte";

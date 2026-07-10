@@ -5,7 +5,7 @@
         type PollContent,
         type ResourceKey,
         type TotalPollVotes,
-    } from "openchat-client";
+    } from "@client";
     import { _ } from "svelte-i18n";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import PlusCircleOutline from "svelte-material-icons/PlusCircleOutline.svelte";

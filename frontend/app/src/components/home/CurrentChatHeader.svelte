@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { ChatSummary, DiamondMembershipStatus, GroupChatSummary } from "openchat-client";
+    import type { ChatSummary, DiamondMembershipStatus, GroupChatSummary } from "@client";
     import {
         allUsersStore,
         anonUserStore,
@@ -16,7 +16,7 @@
         byContext as typersByContext,
         type OpenChat,
         type TypersByKey,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";

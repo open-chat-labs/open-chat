@@ -6,7 +6,7 @@
         pinNumberFailureStore,
         type OpenChat,
         type Verification,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import Lock from "svelte-material-icons/Lock.svelte";
     import { i18nKey } from "../../../i18n/i18n";

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { messageToForwardStore } from "@src/stores/messageToForward";
-    import type { ChatIdentifier, Message } from "openchat-client";
-    import { chatListScopeStore, routeForChatIdentifier } from "openchat-client";
+    import type { ChatIdentifier, Message } from "@client";
+    import { chatListScopeStore, routeForChatIdentifier } from "@client";
     import { navigate } from "@utils/navigation";
     import SelectChatModal from "./SelectChatModal.svelte";
 

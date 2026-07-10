@@ -15,7 +15,7 @@
         TextArea,
         UserChip,
     } from "component-lib";
-    import { publish, type OpenChat } from "openchat-client";
+    import { publish, type OpenChat } from "@client";
     import { getContext, tick } from "svelte";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";

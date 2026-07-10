@@ -8,7 +8,7 @@ import {
     type MessageContent,
     type RemoteVideoCallStarted,
     type WebRtcMessage,
-} from "openchat-shared";
+} from "@shared";
 import { get } from "svelte/store";
 import {
     blockedUsersStore,

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { screenWidth, ScreenWidth } from "openchat-client";
+    import { screenWidth, ScreenWidth } from "@client";
 
     interface Props {
         width: string;

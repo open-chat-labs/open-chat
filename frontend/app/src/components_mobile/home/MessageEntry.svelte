@@ -20,7 +20,7 @@
         OpenChat,
         SelectedEmoji,
         User,
-    } from "openchat-client";
+    } from "@client";
     import {
         allUsersStore,
         anonUserStore,
@@ -39,7 +39,7 @@
         userGroupMentionRegex,
         userIdMentionRegex,
         type CreatedUser,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Alert from "svelte-material-icons/Alert.svelte";

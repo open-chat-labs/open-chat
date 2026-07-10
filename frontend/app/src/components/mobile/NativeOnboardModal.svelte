@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey, setLocale, supportedLanguages } from "@src/i18n/i18n";
-    import { anonUserStore, identityStateStore, OpenChat, type CreatedUser } from "openchat-client";
-    import { ErrorCode } from "openchat-shared";
+    import { anonUserStore, identityStateStore, OpenChat, type CreatedUser } from "@client";
+    import { ErrorCode } from "@shared";
     import { getContext } from "svelte";
     import { locale } from "svelte-i18n";
     import AccountPlus from "svelte-material-icons/AccountPlus.svelte";

@@ -8,7 +8,7 @@ import {
     type PrepareDelegationResponse,
     type SiwePrepareLoginResponse,
     UnsupportedValueError,
-} from "openchat-shared";
+} from "@shared";
 import { signedDelegation } from "../identity/mappers";
 import { consolidateBytes } from "../../utils/mapping";
 

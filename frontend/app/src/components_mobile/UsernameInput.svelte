@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Input, Spinner } from "component-lib";
-    import type { OpenChat } from "openchat-client";
+    import type { OpenChat } from "@client";
     import { onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../i18n/i18n";

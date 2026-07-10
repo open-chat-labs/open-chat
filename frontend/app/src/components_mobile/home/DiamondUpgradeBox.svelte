@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { disableDiamondPaymentFeature } from "@src/utils/features";
-    import { publish, type ResourceKey } from "openchat-client";
+    import { publish, type ResourceKey } from "@client";
     import DiamondOutline from "svelte-material-icons/DiamondOutline.svelte";
     import MulticolourText from "../MulticolourText.svelte";
     import SparkleBox from "../SparkleBox.svelte";

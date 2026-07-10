@@ -33,7 +33,7 @@
         type ExternalBotPermissions,
         type GrantedBotPermissions,
         type MessagePermission,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { locationStore, mobileWidth } from "openchat-client";
+    import { locationStore, mobileWidth } from "@client";
     import Copy from "svelte-material-icons/ContentCopy.svelte";
     import { copyToClipboard } from "../../utils/urls";
     import CollapsibleCard from "../CollapsibleCard.svelte";

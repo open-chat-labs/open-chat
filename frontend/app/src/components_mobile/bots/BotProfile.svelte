@@ -7,13 +7,13 @@
 </script>
 
 <script lang="ts">
-    import type { ChatIdentifier, CommunityIdentifier, GroupChatIdentifier } from "openchat-client";
+    import type { ChatIdentifier, CommunityIdentifier, GroupChatIdentifier } from "@client";
     import {
         botState,
         emptyGrantedBotPermissions,
         selectedChatBotsStore,
         selectedCommunityBotsStore,
-    } from "openchat-client";
+    } from "@client";
 
     let { botId, chatId }: BotProfileProps = $props();
 

@@ -16,7 +16,7 @@
         OpenChat,
         PermissionRole,
         ReadonlyMap,
-    } from "openchat-client";
+    } from "@client";
     import {
         botState,
         directChatBotsStore,
@@ -26,8 +26,8 @@
         selectedChatSummaryStore,
         selectedCommunityBotsStore,
         threadPermissionsForSelectedChatStore,
-    } from "openchat-client";
-    import { hasEveryRequiredPermission, random64, type FlattenedCommand } from "openchat-shared";
+    } from "@client";
+    import { hasEveryRequiredPermission, random64, type FlattenedCommand } from "@shared";
     import { getContext, onMount } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../i18n/i18n";

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey, interpolate } from "@src/i18n/i18n";
     import { Body, CommonButton2, Container, Form, Input } from "component-lib";
-    import { namedAccountsStore, type NamedAccount, type OpenChat } from "openchat-client";
+    import { namedAccountsStore, type NamedAccount, type OpenChat } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";

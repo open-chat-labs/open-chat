@@ -4,7 +4,7 @@
         type Metrics,
         type ReadonlySet,
         type Rules,
-    } from "openchat-client";
+    } from "@client";
     import { i18nKey } from "../../../../i18n/i18n";
     import {
         communityAdvancedOpen,

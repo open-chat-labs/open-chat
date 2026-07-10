@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Body, Column } from "component-lib";
-    import { i18nKey, type ExternalBot } from "openchat-client";
+    import { i18nKey, type ExternalBot } from "@client";
     import Translatable from "../Translatable.svelte";
     import ChooseBot from "./ChooseBot.svelte";
     import BotProperties from "./install/BotProperties.svelte";

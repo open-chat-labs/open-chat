@@ -33,7 +33,7 @@ import {
     type UserOrUserGroup,
     type UserSummary,
     type WebhookDetails,
-} from "openchat-client";
+} from "@client";
 
 export class MemberManagement {
     #usersToAddOrInvite = $state<UserSummary[]>([]);

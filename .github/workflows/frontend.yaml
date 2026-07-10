@@ -21,29 +21,19 @@ jobs:
         uses: actions/cache/restore@v3
         with:
           path: ~/.npm
-          key: npm-${{ hashFiles('package-lock.json') }}
+          key: npm-${{ hashFiles('frontend/package-lock.json') }}
           restore-keys: npm-
 
       - uses: actions/setup-node@v4
         with:
           node-version: "20.20.0"
-          # cache: "npm"
-          # cache-dependency-path: frontend/package-lock.json
 
-      # - name: Install dependencies
-      #   run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-        # This acts as a safety net if Mac-generated lockfile stripped the Linux binary
+        # This acts as a safety net if a Mac-generated lockfile stripped the Linux binary
       - name: Ensure Rollup Linux Binary
         run: npm install @rollup/rollup-linux-x64-gnu
-
-      - name: Restore Turborepo files from cache
-        uses: actions/cache/restore@v3
-        with:
-          path: frontend/.turbo
-          key: ${{ runner.os }}-turbo-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-turbo-
 
       - name: Build frontend
         run: npm run build:ci
@@ -60,11 +50,4 @@ jobs:
         uses: actions/cache/save@v3
         with:
           path: ~/.npm
-          key: npm-${{ hashFiles('package-lock.json') }}
-
-      - name: Save Turborepo files to cache
-        if: ${{ github.ref == 'refs/heads/master' }}
-        uses: actions/cache/save@v3
-        with:
-          path: frontend/.turbo
-          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          key: npm-${{ hashFiles('frontend/package-lock.json') }}

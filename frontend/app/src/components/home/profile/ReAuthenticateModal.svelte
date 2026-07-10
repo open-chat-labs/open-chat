@@ -2,7 +2,7 @@
     import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
     import Overlay from "@src/components/Overlay.svelte";
     import Translatable from "@src/components/Translatable.svelte";
-    import type { AuthProvider, ResourceKey } from "openchat-client";
+    import type { AuthProvider, ResourceKey } from "@client";
     import ModalContent from "../../ModalContent.svelte";
     import ReAuthenticate from "./ReAuthenticate.svelte";
     interface Props {

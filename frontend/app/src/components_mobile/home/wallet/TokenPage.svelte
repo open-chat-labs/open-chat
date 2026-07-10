@@ -6,7 +6,7 @@
         disableSwapFeature,
     } from "@src/utils/features";
     import { ColourVars, CommonButton, Container, MenuItem } from "component-lib";
-    import { publish, swappableTokensStore } from "openchat-client";
+    import { publish, swappableTokensStore } from "@client";
     import ArrowLeftBoldCircle from "svelte-material-icons/ArrowLeftBoldCircle.svelte";
     import ArrowRightBoldCircle from "svelte-material-icons/ArrowRightBoldCircle.svelte";
     import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";

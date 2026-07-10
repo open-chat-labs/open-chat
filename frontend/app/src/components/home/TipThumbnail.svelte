@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { allUsersStore, AvatarSize, cryptoLookup, type OpenChat } from "openchat-client";
+    import { allUsersStore, AvatarSize, cryptoLookup, type OpenChat } from "@client";
     import { getContext } from "svelte";
     import Avatar from "../Avatar.svelte";
     import Tooltip from "../tooltip/Tooltip.svelte";

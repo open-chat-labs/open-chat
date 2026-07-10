@@ -1,5 +1,5 @@
 import { deleteDB, type DBSchema } from "idb";
-import { deletedUser, type DiamondMembershipStatus, type UserSummary } from "openchat-shared";
+import { deletedUser, type DiamondMembershipStatus, type UserSummary } from "@shared";
 import { IndexedDbConnectionManager } from "./indexedDb";
 
 const CACHE_VERSION = 13;

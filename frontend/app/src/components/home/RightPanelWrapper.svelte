@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { rightPanelMode, setRightPanelHistory } from "openchat-client";
+    import { rightPanelMode, setRightPanelHistory } from "@client";
     import { rtlStore } from "../../stores/rtl";
     import Overlay from "../Overlay.svelte";
     import RightPanel from "./RightPanel.svelte";

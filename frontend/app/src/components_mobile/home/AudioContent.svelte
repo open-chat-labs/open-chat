@@ -28,7 +28,7 @@
         Row,
         type ColourVarKeys,
     } from "component-lib";
-    import type { AudioContent, TextContent as TextContentType } from "openchat-client";
+    import type { AudioContent, TextContent as TextContentType } from "@client";
     import { onMount, type Snippet } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import MicrophoneOutline from "svelte-material-icons/MicrophoneOutline.svelte";

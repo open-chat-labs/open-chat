@@ -35,7 +35,7 @@
         subscribe,
         suspendedUserStore,
         type User,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount, tick } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { messageToForwardStore } from "../../stores/messageToForward";

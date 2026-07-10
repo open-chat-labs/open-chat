@@ -10,7 +10,7 @@
         OpenChat,
         routeForMessage,
         type MessageActivityEvent,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import BellRingOutline from "svelte-material-icons/BellRingOutline.svelte";

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { OpenChat, P2PSwapContent } from "openchat-client";
+    import type { OpenChat, P2PSwapContent } from "@client";
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
     import ProgressSteps, { type Result, type Step } from "../ProgressSteps.svelte";

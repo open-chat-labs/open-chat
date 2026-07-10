@@ -1,5 +1,5 @@
 import type { ApiGenerateMagicLinkResponse } from "./candid/idl";
-import { type GenerateMagicLinkResponse, UnsupportedValueError } from "openchat-shared";
+import { type GenerateMagicLinkResponse, UnsupportedValueError } from "@shared";
 import { consolidateBytes } from "../../utils/mapping";
 
 export function generateMagicLinkResponse(

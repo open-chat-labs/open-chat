@@ -1,6 +1,6 @@
 <script lang="ts">
     import { ChatText, ColourVars, Column, Row } from "component-lib";
-    import type { MessageReminderCreatedContent, OpenChat } from "openchat-client";
+    import type { MessageReminderCreatedContent, OpenChat } from "@client";
     import { getContext } from "svelte";
     import Alarm from "svelte-material-icons/Alarm.svelte";
     import { i18nKey } from "../../i18n/i18n";

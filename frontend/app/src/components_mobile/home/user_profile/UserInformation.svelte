@@ -10,7 +10,7 @@
         OpenChat,
         suspendedUserStore,
         type PublicProfile,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
     import DisplayNameInput from "../../DisplayNameInput.svelte";

@@ -13,7 +13,7 @@
         routeForChatIdentifier,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import { mobileOperatingSystem } from "../utils/devices";
 

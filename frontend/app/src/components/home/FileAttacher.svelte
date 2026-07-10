@@ -4,7 +4,7 @@
     import { toastStore } from "../../stores/toast";
     import { getContext } from "svelte";
     import Paperclip from "./Paperclip.svelte";
-    import type { AttachmentContent, OpenChat } from "openchat-client";
+    import type { AttachmentContent, OpenChat } from "@client";
     import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");

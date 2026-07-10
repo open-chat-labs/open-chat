@@ -1,4 +1,4 @@
-import { SafeMap } from "openchat-shared";
+import { SafeMap } from "@shared";
 import { vi } from "vitest";
 import { LocalMap } from "./map";
 

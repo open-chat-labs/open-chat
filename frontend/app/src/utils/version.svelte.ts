@@ -6,7 +6,8 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import { Poller, Version, type OTAUpdateStrategy } from "openchat-client";
+import { Poller, Version, type OTAUpdateStrategy } from "@client";
+import { isAndroidTauriApp } from "@shared";
 
 const VERSION_INTERVAL = 60 * 1000;
 
@@ -18,7 +19,6 @@ type VersionState =
 
 export class VersionChecker {
     #clientVersion = Version.parse(import.meta.env.OC_WEBSITE_VERSION);
-    #appType = import.meta.env.OC_APP_TYPE;
     #versionState = $state<VersionState>({ kind: "unknown" });
     #strategy: OTAUpdateStrategy = import.meta.env.OC_OTA_UPDATES;
     #poller = this.#startPoller(true);
@@ -29,7 +29,7 @@ export class VersionChecker {
 
     #startPoller(immediate: boolean) {
         // this should only operate if we are in the android app and the ota strategy is not set to none
-        if (this.#appType !== "android" || this.#strategy === "none") {
+        if (!isAndroidTauriApp() || this.#strategy === "none") {
             this.#versionState = { kind: "up_to_date" };
             return;
         }

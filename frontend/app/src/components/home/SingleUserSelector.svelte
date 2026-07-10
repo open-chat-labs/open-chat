@@ -7,7 +7,7 @@
         type ResourceKey,
         type UserOrUserGroup,
         type UserSummary,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import UserPill from "../UserPill.svelte";
     import ValidatingInput from "../bots/ValidatingInput.svelte";

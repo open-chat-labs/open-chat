@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { GroupRulesChanged, UserSummary } from "openchat-client";
-    import { allUsersStore } from "openchat-client";
+    import type { GroupRulesChanged, UserSummary } from "@client";
+    import { allUsersStore } from "@client";
     import { _ } from "svelte-i18n";
     import { buildDisplayName } from "../../utils/user";
     import NonMessageEvent from "./NonMessageEvent.svelte";

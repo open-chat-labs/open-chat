@@ -24,6 +24,11 @@ import com.ocplugin.app.ShareIntentManager
 import kotlinx.coroutines.launch
 
 class MainActivity : TauriActivity() {
+    // Last inset values forwarded to the WebView. The inset listener fires on
+    // every layout/animation pass — very often with identical values — so we
+    // dedupe against this to avoid flooding the JS bridge (see handleWindowInsets).
+    private var lastInsetSignature: String? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // Has to be called before super, and only for Android versions <= 14
         enableEdgeToEdgeForAndroid14AndLess()
@@ -186,18 +191,33 @@ class MainActivity : TauriActivity() {
                 rootView.updatePadding(bottom = if (isGestureNavigation) 0 else navInsets.bottom)
             }
 
-            val insetData =
-                JSObject()
-                    .put("isKeyboardOpen", imeVisible)
-                    .put("isGestureNavigation", isGestureNavigation)
-                    .put("navHeightDp", navHeightDp)
-                    .put("statusBarHeightDp", statusBarInsets.top / density)
-                    .put("keyboardHeightDp", imeHeight / density)
-                    .put("apiLevel", Build.VERSION.SDK_INT)
-                    .put("osVersion", Build.VERSION.RELEASE)
+            // This listener fires on every window-insets application — during a
+            // keyboard animation, a scroll, or a plain relayout — and very often
+            // with values identical to the previous pass. Forwarding every one of
+            // those to the WebView floods the JS bridge: each emit serialises a
+            // payload and runs evaluateJavascript on the webview, and a
+            // stable-value storm churns native memory unbounded. Only forward when
+            // something the UI actually depends on has changed. Keyed off the raw
+            // pixel insets + booleans (the deterministic source values), not the
+            // derived dp floats.
+            val signature =
+                "$imeVisible|$isGestureNavigation|$imeHeight|${navInsets.bottom}|${statusBarInsets.top}"
+            if (signature != lastInsetSignature) {
+                lastInsetSignature = signature
 
-            // Report inset changes to Svelte...
-            OCPluginCompanion.triggerRef("window-inset-change", insetData)
+                val insetData =
+                    JSObject()
+                        .put("isKeyboardOpen", imeVisible)
+                        .put("isGestureNavigation", isGestureNavigation)
+                        .put("navHeightDp", navHeightDp)
+                        .put("statusBarHeightDp", statusBarInsets.top / density)
+                        .put("keyboardHeightDp", imeHeight / density)
+                        .put("apiLevel", Build.VERSION.SDK_INT)
+                        .put("osVersion", Build.VERSION.RELEASE)
+
+                // Report inset changes to Svelte...
+                OCPluginCompanion.triggerRef("window-inset-change", insetData)
+            }
 
             if (OCPluginCompanion.viewportResizeEnabled) {
                 insets

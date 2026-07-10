@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
     import { Column, CommonButton, Container, Sheet, Title } from "component-lib";
-    import { AuthProvider, i18nKey, OpenChat } from "openchat-client";
+    import { AuthProvider, i18nKey, OpenChat } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";

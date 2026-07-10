@@ -6,7 +6,7 @@
         type ImageContent,
         type MemeFighterContent,
         type TextContent as TextContentType,
-    } from "openchat-client";
+    } from "@client";
     import { type Snippet } from "svelte";
     import EyeOffOutline from "svelte-material-icons/EyeOffOutline.svelte";
     import EyeOutline from "svelte-material-icons/EyeOutline.svelte";

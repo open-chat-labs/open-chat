@@ -14,7 +14,7 @@
         type OpenChat,
         routeForChatIdentifier,
         selectedCommunitySummaryStore,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";

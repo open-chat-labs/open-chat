@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { mobileWidth } from "openchat-client";
+    import { mobileWidth } from "@client";
     import { i18nKey } from "../../i18n/i18n";
     import ModalContent from "../ModalContent.svelte";
     import Pincode from "../pincode/Pincode.svelte";

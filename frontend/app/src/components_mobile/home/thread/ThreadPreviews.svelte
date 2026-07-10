@@ -12,7 +12,7 @@
         unreadDirectAndGroupCountsStore,
         unreadFavouriteCountsStore,
         type OpenChat,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import VirtualList from "@shared_components/VirtualList.svelte";

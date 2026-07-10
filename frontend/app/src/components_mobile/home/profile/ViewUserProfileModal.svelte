@@ -15,7 +15,7 @@
         selectedChatSummaryStore,
         selectedCommunityBlockedUsersStore,
         selectedCommunitySummaryStore,
-    } from "openchat-client";
+    } from "@client";
 
     import { CommonButton, Container, Sheet } from "component-lib";
     import { navigate } from "@utils/navigation";

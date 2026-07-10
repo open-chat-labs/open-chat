@@ -1,7 +1,7 @@
 <script lang="ts">
     import EditableAvatar from "@src/components/EditableAvatar.svelte";
     import EditableBanner from "@src/components/EditableBanner.svelte";
-    import type { CommunitySummary } from "openchat-client";
+    import type { CommunitySummary } from "@client";
     import { i18nKey, supportedLanguages } from "../../../../i18n/i18n";
     import Input from "../../../Input.svelte";
     import Legend from "../../../Legend.svelte";

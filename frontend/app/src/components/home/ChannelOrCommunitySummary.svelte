@@ -8,7 +8,7 @@
         selectedCommunityRulesStore,
         type ChannelSummary,
         type CommunitySummary,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import CommunityDetails from "./communities/details/CommunityDetails.svelte";
     import CommunityDetailsHeader from "./communities/details/CommunityDetailsHeader.svelte";

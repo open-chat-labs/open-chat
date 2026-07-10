@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { chatListScopeStore, iconSize, mobileWidth, OpenChat, routeForMessage, setRightPanelHistory } from "openchat-client";
+    import { chatListScopeStore, iconSize, mobileWidth, OpenChat, routeForMessage, setRightPanelHistory } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";

@@ -20,7 +20,7 @@
         DirectChatSummary,
         MultiUserChat,
         OpenChat,
-    } from "openchat-client";
+    } from "@client";
     import {
         allUsersStore,
         chatIdentifiersEqual,
@@ -29,7 +29,7 @@
         selectedChatIdStore,
         serverDirectChatsStore,
         serverGroupChatsStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";

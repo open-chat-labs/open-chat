@@ -1,8 +1,8 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { ChatCaption, ChatFootnote, ColourVars, Column, Row } from "component-lib";
-    import type { VideoContent } from "openchat-client";
-    import { publish } from "openchat-client";
+    import type { VideoContent } from "@client";
+    import { publish } from "@client";
     import { type Snippet } from "svelte";
     import PlayCircleOutline from "svelte-material-icons/PlayCircleOutline.svelte";
     import VideoOutline from "svelte-material-icons/VideoOutline.svelte";

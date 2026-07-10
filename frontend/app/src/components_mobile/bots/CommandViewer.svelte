@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Body, BodySmall, Chip, Column, Row } from "component-lib";
-    import { type CommandDefinition, type CommandParam } from "openchat-client";
+    import { type CommandDefinition, type CommandParam } from "@client";
     import { i18nKey } from "../../i18n/i18n";
     import SlidingPageContent from "../home/SlidingPageContent.svelte";
     import Translatable from "../Translatable.svelte";

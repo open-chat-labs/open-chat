@@ -8,7 +8,7 @@ import "./web-components/customEmoji";
 import "./web-components/profileLink";
 import "./web-components/spoiler";
 
-import { mobileWidth } from "openchat-client";
+import { mobileWidth } from "@client";
 import "svelte";
 import { mount } from "svelte";
 import App from "./components/App.svelte";
