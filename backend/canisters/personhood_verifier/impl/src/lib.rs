@@ -107,6 +107,12 @@ struct Data {
     pub uniqueness_thresholds: engine::UniquenessThresholds,
     // Heap for now; moves to stable structures before real scale (Phase 2)
     pub embeddings: EmbeddingStore,
+    // Verified users whose proof has not yet been acknowledged by user_index.
+    // Recorded durably at enrolment and retried by prune_sessions so a
+    // transiently-unavailable user_index (e.g. mid-upgrade) can't strand a
+    // user as enrolled-but-proofless (AlreadyVerified forever).
+    #[serde(default)]
+    pub pending_verified_notifications: HashMap<UserId, u16>,
     pub attempts: HashMap<UserId, AttemptHistory>,
     // Privacy invariant: sessions hold raw frames so they are heap-only and
     // structurally excluded from upgrade serialization. Upgrades void
@@ -137,6 +143,7 @@ impl Data {
             lapsed_embedding_purge: None,
             uniqueness_thresholds: engine::UniquenessThresholds::default(),
             embeddings: EmbeddingStore::default(),
+            pending_verified_notifications: HashMap::new(),
             attempts: HashMap::new(),
             sessions: Sessions::default(),
             processing_queue: VecDeque::new(),

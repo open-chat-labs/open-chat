@@ -47,6 +47,12 @@ fn commit_model_impl(args: Args, state: &mut RuntimeState) -> Response {
     } else {
         None
     };
+
+    // Record the commit and rebuild the engines FIRST. Only once the new
+    // weights are confirmed loadable do we bump the version, start the lapse
+    // window and notify user_index - otherwise a build failure would leave the
+    // persisted state announcing an upgrade the verifier can't actually serve.
+    let previous_record = state.data.models.committed(args.kind).cloned();
     state.data.models.record_commit(
         args.kind,
         ModelRecord {
@@ -56,6 +62,18 @@ fn commit_model_impl(args: Args, state: &mut RuntimeState) -> Response {
             committed_at: now,
         },
     );
+    engine::real::drop_engines();
+    if state.data.models.all_committed() {
+        if let Err(error) = engine::real::build_engines(&state.data.models) {
+            // Roll the commit back so persisted state matches reality
+            match previous_record {
+                Some(prev) => state.data.models.record_commit(args.kind, prev),
+                None => state.data.models.remove_committed(args.kind),
+            }
+            return InvalidModel(error);
+        }
+    }
+
     if matches!(args.kind, ModelKind::Embedding) {
         state.data.current_model_version = args.version;
         // Upgrading the embedding model starts the re-verification window:
@@ -65,13 +83,6 @@ fn commit_model_impl(args: Args, state: &mut RuntimeState) -> Response {
             state.data.lapsed_embedding_purge = Some((previous_version, lapses_at));
             jobs::purge_lapsed_embeddings::restart_job(state);
             ic_cdk::futures::spawn(notify_user_index(state.data.user_index_canister_id, args.version, lapses_at));
-        }
-    }
-    // Force a rebuild so the new weights take effect immediately
-    engine::real::drop_engines();
-    if state.data.models.all_committed() {
-        if let Err(error) = engine::real::build_engines(&state.data.models) {
-            return InvalidModel(error);
         }
     }
     info!(kind = ?args.kind, version = args.version, size, "Model committed");

@@ -24,7 +24,8 @@
     let { onCancel, onSuccess }: Props = $props();
 
     const machine = new HumanVerificationMachine(client);
-    const debug = localStorage.getItem("openchat_verification_debug") === "true";
+    const debug =
+        import.meta.env.DEV && localStorage.getItem("openchat_verification_debug") === "true";
 
     let consented = $state(false);
     let videoEl: HTMLVideoElement | undefined | null = $state(undefined);

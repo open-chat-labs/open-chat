@@ -346,9 +346,15 @@ export class OpenChatAgent extends EventTarget {
         this._userDb = new UserDb();
         this._registryDb = new RegistryDb();
         this._onlineClient = new OnlineClient(identity, this._agent, config.onlineCanister);
-        this._verifierClient = config.verifierCanister
-            ? new VerifierClient(identity, this._agent, config.verifierCanister)
-            : new MockVerifierClient();
+        if (config.verifierCanister) {
+            this._verifierClient = new VerifierClient(identity, this._agent, config.verifierCanister);
+        } else if (import.meta.env.DEV) {
+            this._verifierClient = new MockVerifierClient();
+        } else {
+            // A production build with no verifier canister is a misconfiguration;
+            // fail loudly rather than silently mock personhood verification
+            throw new Error("verifierCanister is not configured");
+        }
         this._userClient = AnonUserClient.create();
         this._userIndexClient = new UserIndexClient(
             identity,

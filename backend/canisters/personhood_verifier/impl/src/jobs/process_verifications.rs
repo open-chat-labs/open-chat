@@ -31,7 +31,11 @@ fn run() {
     // instructions with SIMD) or the finalize scan; the stub does the whole
     // verification in one step.
     match mutate_state(process_one_step) {
-        StepOutcome::Done(Some(verified)) => ic_cdk::futures::spawn(notify_user_index(verified)),
+        StepOutcome::Done(Some(verified)) => ic_cdk::futures::spawn(notify_user_index(
+            verified.user_index_canister_id,
+            verified.user_id,
+            verified.model_version,
+        )),
         StepOutcome::Done(None) => {}
         // Fail closed: models are committed but the engines can't be built.
         // Never degrade to the stub - keep the queue parked and retry.
@@ -277,6 +281,9 @@ fn apply_scan_outcome(
     match outcome {
         ScanOutcome::Unique => {
             state.data.embeddings.insert(model_version, user_id, probe);
+            // Durably record the pending proof notification before the async
+            // c2c so a failed delivery is retried rather than lost
+            state.data.pending_verified_notifications.insert(user_id, model_version);
             session.status = SessionStatus::Verified { model_version };
             info!(%user_id, "Personhood verified");
             Some(Verified {
@@ -303,17 +310,16 @@ fn apply_scan_outcome(
     }
 }
 
-async fn notify_user_index(verified: Verified) {
-    let args = user_index_canister::c2c_notify_personhood_verified::Args {
-        user_id: verified.user_id,
-        model_version: verified.model_version,
-    };
-    for _ in 0..3 {
-        match user_index_canister_c2c_client::c2c_notify_personhood_verified(verified.user_index_canister_id, &args).await {
-            Ok(_) => return,
-            Err(err) => {
-                error!(?err, user_id = %verified.user_id, "Failed to notify user_index of verified personhood");
-            }
+pub(crate) async fn notify_user_index(user_index_canister_id: CanisterId, user_id: UserId, model_version: u16) {
+    let args = user_index_canister::c2c_notify_personhood_verified::Args { user_id, model_version };
+    match user_index_canister_c2c_client::c2c_notify_personhood_verified(user_index_canister_id, &args).await {
+        Ok(_) => {
+            // Acknowledged - drop it from the durable retry set
+            mutate_state(|state| state.data.pending_verified_notifications.remove(&user_id));
+        }
+        Err(err) => {
+            // Left in pending_verified_notifications; prune_sessions retries it
+            error!(?err, %user_id, "Failed to notify user_index of verified personhood");
         }
     }
 }

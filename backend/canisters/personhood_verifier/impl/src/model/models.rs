@@ -90,6 +90,11 @@ impl ModelStore {
         self.records.insert(kind, record);
     }
 
+    // Reverts a commit (used to roll back if the engines fail to build)
+    pub fn remove_committed(&mut self, kind: ModelKind) {
+        self.records.remove(&kind);
+    }
+
     pub fn committed(&self, kind: ModelKind) -> Option<&ModelRecord> {
         self.records.get(&kind)
     }
