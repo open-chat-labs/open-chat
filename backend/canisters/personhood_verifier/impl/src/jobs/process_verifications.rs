@@ -255,12 +255,13 @@ fn apply_scan_outcome(
     model_version: u16,
     now: types::TimestampMillis,
 ) -> Option<Verified> {
-    let duplicate_threshold = if is_retry_round { engine::DUPLICATE_THRESHOLD_RETRY } else { engine::DUPLICATE_THRESHOLD };
+    let thresholds = state.data.uniqueness_thresholds;
+    let duplicate_threshold = if is_retry_round { thresholds.duplicate_retry } else { thresholds.duplicate };
     let (outcome, max_similarity) =
         state
             .data
             .embeddings
-            .scan(model_version, &probe, &user_id, duplicate_threshold, engine::CLEAR_THRESHOLD);
+            .scan(model_version, &probe, &user_id, duplicate_threshold, thresholds.clear);
     if state.data.test_mode {
         // Similarity telemetry for threshold calibration - test envs only
         info!(max_similarity, is_retry_round, "Uniqueness scan");

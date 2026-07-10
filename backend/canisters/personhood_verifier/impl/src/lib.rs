@@ -71,6 +71,7 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             current_model_version: self.data.current_model_version,
+            uniqueness_thresholds: self.data.uniqueness_thresholds,
             enrolled_embeddings: self.data.embeddings.count(self.data.current_model_version) as u64,
             open_sessions: self.data.sessions.count(),
             processing_queue_depth: self.data.processing_queue.len() as u64,
@@ -100,6 +101,10 @@ struct Data {
     // (old version, deadline) - old embeddings are purged at the deadline
     #[serde(default)]
     pub lapsed_embedding_purge: Option<(u16, TimestampMillis)>,
+    // SNS-governable uniqueness bands (set_uniqueness_thresholds); defaults
+    // are the r50-calibrated launch values
+    #[serde(default)]
+    pub uniqueness_thresholds: engine::UniquenessThresholds,
     // Heap for now; moves to stable structures before real scale (Phase 2)
     pub embeddings: EmbeddingStore,
     pub attempts: HashMap<UserId, AttemptHistory>,
@@ -130,6 +135,7 @@ impl Data {
             current_model_version: 0,
             models: ModelStore::default(),
             lapsed_embedding_purge: None,
+            uniqueness_thresholds: engine::UniquenessThresholds::default(),
             embeddings: EmbeddingStore::default(),
             attempts: HashMap::new(),
             sessions: Sessions::default(),
@@ -150,6 +156,7 @@ pub struct Metrics {
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub current_model_version: u16,
+    pub uniqueness_thresholds: engine::UniquenessThresholds,
     pub enrolled_embeddings: u64,
     pub open_sessions: u64,
     pub processing_queue_depth: u64,

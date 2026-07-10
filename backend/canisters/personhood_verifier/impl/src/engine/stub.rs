@@ -13,7 +13,7 @@ use serde_bytes::ByteBuf;
 //   a chosen band relative to the group's variant-0 vector:
 //     variant 0 (m % 4 == 0)  base vector
 //     variant 1               ~0.999 similarity (clear duplicate)
-//     variant 2               ~0.71 similarity (gray zone -> retry)
+//     variant 2               ~0.51 similarity (gray zone -> retry)
 //     variant 3               independent (clear unique)
 //   Markers from different groups are effectively orthogonal.
 //
@@ -44,11 +44,15 @@ pub fn compute_embedding(frames: &[ByteBuf]) -> Result<Vec<i8>, VerificationFail
     let group = marker / 4;
     let variant = marker % 4;
     let base = pseudo_random_unit(group as u64 + 1_000);
-    let noise = pseudo_random_unit(marker as u64 + 2_000);
+    // Orthonormalize against base so mixed cosine is exactly
+    // w / sqrt(w^2 + (1-w)^2) for every group - the gray band is narrow, so
+    // the group-dependent drift of a merely-random noise vector is too coarse.
+    let noise = orthonormal_to(pseudo_random_unit(marker as u64 + 2_000), &base);
     let vector: Vec<f32> = match variant {
         0 => base,
         1 => mix(&base, &noise, 0.95),
-        2 => mix(&base, &noise, 0.5),
+        // ~0.506 cosine: lands in the [clear, duplicate) gray band
+        2 => mix(&base, &noise, 0.37),
         _ => noise,
     };
     Ok(quantize(&vector))
@@ -56,6 +60,19 @@ pub fn compute_embedding(frames: &[ByteBuf]) -> Result<Vec<i8>, VerificationFail
 
 fn mix(a: &[f32], b: &[f32], weight_a: f32) -> Vec<f32> {
     a.iter().zip(b).map(|(x, y)| weight_a * x + (1.0 - weight_a) * y).collect()
+}
+
+// Component of `v` orthogonal to unit vector `u`, re-normalized
+fn orthonormal_to(v: Vec<f32>, u: &[f32]) -> Vec<f32> {
+    let dot = v.iter().zip(u).map(|(x, y)| x * y).sum::<f32>();
+    let mut out: Vec<f32> = v.iter().zip(u).map(|(x, y)| x - dot * y).collect();
+    let norm = out.iter().map(|x| x * x).sum::<f32>().sqrt();
+    if norm > 0.0 {
+        for x in &mut out {
+            *x /= norm;
+        }
+    }
+    out
 }
 
 fn fnv1a(bytes: &[u8]) -> u64 {
@@ -94,7 +111,7 @@ fn quantize(vector: &[f32]) -> Vec<i8> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::engine::{CLEAR_THRESHOLD, DUPLICATE_THRESHOLD};
+    use crate::engine::{DEFAULT_CLEAR_THRESHOLD as CLEAR_THRESHOLD, DEFAULT_DUPLICATE_THRESHOLD as DUPLICATE_THRESHOLD};
     use crate::model::embeddings::cosine_similarity;
 
     fn embed(marker: u8) -> Vec<i8> {
@@ -103,12 +120,17 @@ mod tests {
 
     #[test]
     fn similarity_bands() {
-        let base = embed(40);
-        assert!(cosine_similarity(&base, &embed(41)) >= DUPLICATE_THRESHOLD);
-        let gray = cosine_similarity(&base, &embed(42));
-        assert!(gray >= CLEAR_THRESHOLD && gray < DUPLICATE_THRESHOLD, "{gray}");
-        assert!(cosine_similarity(&base, &embed(43)).abs() < CLEAR_THRESHOLD);
-        assert!(cosine_similarity(&base, &embed(80)).abs() < CLEAR_THRESHOLD);
-        assert!(cosine_similarity(&base, &embed(44)).abs() < CLEAR_THRESHOLD);
+        // Check every group - the gray band is narrow, so a group-dependent
+        // stub cosine would slip out of it (regression: integration group 25)
+        for group in [10u8, 15, 25, 30] {
+            let m = group * 4;
+            let base = embed(m);
+            assert!(cosine_similarity(&base, &embed(m + 1)) >= DUPLICATE_THRESHOLD, "group {group} variant 1");
+            let gray = cosine_similarity(&base, &embed(m + 2));
+            assert!(gray >= CLEAR_THRESHOLD && gray < DUPLICATE_THRESHOLD, "group {group} gray {gray}");
+            assert!(cosine_similarity(&base, &embed(m + 3)).abs() < CLEAR_THRESHOLD, "group {group} variant 3");
+        }
+        // Different groups are orthogonal
+        assert!(cosine_similarity(&embed(40), &embed(80)).abs() < CLEAR_THRESHOLD);
     }
 }
