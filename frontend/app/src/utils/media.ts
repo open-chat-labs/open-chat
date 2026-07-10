@@ -20,20 +20,28 @@ export function reservedMediaStyle(
     width: number | undefined,
     height: number | undefined,
 ): string | undefined {
-    if (!width || !height) return undefined;
-    const w = Math.round(width);
-    const ratio = width / height;
+    const w = reservedMediaWidth(width, height);
+    if (w === undefined) return undefined;
     // The width must stay fully definite: a percentage inside width's min()
     // is cyclic while the bubble shrink-to-fits and falls back to the
     // placeholder thumbnail's intrinsic size. max-width: 100% is the
     // standard non-cyclic way to hand the container cap to the image, and
     // since the final width can only shrink from the cap-derived term, the
     // height cap still holds through the aspect ratio.
-    return (
-        `aspect-ratio: ${width} / ${height}; ` +
-        `width: min(max(200px, ${w}px), calc(min(66.67dvh, 400px) * ${ratio.toFixed(4)})); ` +
-        `max-width: 100%; height: auto;`
-    );
+    return `aspect-ratio: ${width} / ${height}; width: ${w}; max-width: 100%; height: auto;`;
+}
+
+// The width term of reservedMediaStyle as a standalone CSS expression, so the
+// message bubble can clamp itself to the media width (keeping captions and
+// reply quotes from widening the bubble past the image).
+export function reservedMediaWidth(
+    width: number | undefined,
+    height: number | undefined,
+): string | undefined {
+    if (!width || !height) return undefined;
+    const w = Math.round(width);
+    const ratio = width / height;
+    return `min(max(200px, ${w}px), calc(min(66.67dvh, 400px) * ${ratio.toFixed(4)}))`;
 }
 
 export function isStoreMediaContent(content: MessageContent): content is StoredMediaContent {
