@@ -51,7 +51,16 @@
     </div>
 {/snippet}
 
-<div class="generic_preview" class:me>
+<!-- banner layout: cap the whole preview (image and card together) so the
+     banner never exceeds 20rem tall while keeping its aspect ratio — a
+     max-height on the image alone crops it (cover), and capping only the
+     image leaves it narrower than the card -->
+<div
+    class="generic_preview"
+    class:me
+    style={!sideBySide && img
+        ? `max-width: calc(20rem * ${(img.width / img.height).toFixed(4)});`
+        : ""}>
     <a href={safeUrl} target="_blank" rel="noopener noreferrer" class="preview_link">
         {#if sideBySide && img}
             <!-- Side-by-side: card drives height, thumbnail keeps the image's
@@ -142,7 +151,6 @@
 
         .banner {
             width: 100%;
-            max-height: 20rem;
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
