@@ -37,16 +37,26 @@ fn upload_frame_impl(args: Args, state: &mut RuntimeState) -> Response {
         return FrameTooLarge;
     }
     let existing_bytes = session.frames[index].as_ref().map_or(0, |f| f.len() as u32);
-    if session.total_bytes - existing_bytes + frame_bytes > max_total_bytes() {
+    if session.total_bytes.saturating_sub(existing_bytes) + frame_bytes > max_total_bytes() {
         return TotalBytesExceeded;
     }
     // The real pipeline fully decodes frames; in test mode the stub engine
     // reads a marker byte instead of JPEG data
-    if !test_mode && args.image.get(..2) != Some(&JPEG_MAGIC) {
-        return InvalidImage;
+    if !test_mode {
+        if args.image.get(..2) != Some(&JPEG_MAGIC) {
+            return InvalidImage;
+        }
+        // Reject oversized images before they enter the processing queue: a
+        // small, highly-compressible file can expand to hundreds of megapixels
+        // and blow the per-message instruction budget (decode also caps this,
+        // but rejecting here keeps the poison frame out of the queue entirely)
+        match face_pipeline::jpeg_dimensions(&args.image) {
+            Some((w, h)) if w as usize <= face_pipeline::MAX_DECODE_DIM && h as usize <= face_pipeline::MAX_DECODE_DIM => {}
+            _ => return InvalidImage,
+        }
     }
 
-    session.total_bytes = session.total_bytes - existing_bytes + frame_bytes;
+    session.total_bytes = session.total_bytes.saturating_sub(existing_bytes) + frame_bytes;
     session.frames[index] = Some(args.image);
     Success
 }

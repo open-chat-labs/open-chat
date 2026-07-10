@@ -78,10 +78,14 @@ impl EmbeddingStore {
 }
 
 pub fn cosine_similarity(a: &[i8], b: &[i8]) -> f32 {
+    // Equal length is an invariant (every embedding is EMBEDDING_DIM); a
+    // mismatch means a corrupt store, so trap rather than silently score the
+    // overlap and return a bogus similarity into the uniqueness decision
+    assert_eq!(a.len(), b.len(), "embedding length mismatch");
     let mut dot = 0i32;
     let mut norm_a = 0i32;
     let mut norm_b = 0i32;
-    for i in 0..a.len().min(b.len()) {
+    for i in 0..a.len() {
         let (x, y) = (a[i] as i32, b[i] as i32);
         dot += x * y;
         norm_a += x * x;

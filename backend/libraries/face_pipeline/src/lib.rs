@@ -288,13 +288,57 @@ fn build_model(bytes: &[u8], height: usize, width: usize) -> Result<Model, Strin
         .map_err(|e| format!("plan: {e}"))
 }
 
+// Hard ceiling on decoded dimensions. Selfie-capture frames are far smaller;
+// this bounds decode cost so a crafted, highly-compressible large image (which
+// can fit inside the frame byte cap yet expand to hundreds of megapixels)
+// cannot blow the per-message instruction budget. zune checks this against the
+// SOF header and bails before decoding, so the rejection is cheap.
+pub const MAX_DECODE_DIM: usize = 2048;
+
 pub fn decode_jpeg(bytes: &[u8]) -> Result<Rgb, PipelineError> {
     let options = zune_jpeg::zune_core::options::DecoderOptions::default()
-        .jpeg_set_out_colorspace(zune_jpeg::zune_core::colorspace::ColorSpace::RGB);
+        .jpeg_set_out_colorspace(zune_jpeg::zune_core::colorspace::ColorSpace::RGB)
+        .set_max_width(MAX_DECODE_DIM)
+        .set_max_height(MAX_DECODE_DIM);
     let mut decoder = zune_jpeg::JpegDecoder::new_with_options(bytes, options);
     let pixels = decoder.decode().map_err(|_| PipelineError::DecodeFailed)?;
     let (width, height) = decoder.dimensions().ok_or(PipelineError::DecodeFailed)?;
+    // Degenerate dimensions would underflow the width-1/height-1 bounds in
+    // sample_bilinear; reject rather than risk an out-of-bounds index
+    if width < 2 || height < 2 {
+        return Err(PipelineError::DecodeFailed);
+    }
     Ok(Rgb { width, height, pixels })
+}
+
+// Reads (width, height) from the first Start-Of-Frame marker without decoding
+// the image, so an oversized frame can be rejected at the untrusted boundary
+// before it ever reaches the decoder. Returns None if no SOF is found.
+pub fn jpeg_dimensions(bytes: &[u8]) -> Option<(u16, u16)> {
+    let mut i = 2; // skip SOI (FF D8)
+    while i + 9 < bytes.len() {
+        if bytes[i] != 0xFF {
+            i += 1;
+            continue;
+        }
+        let marker = bytes[i + 1];
+        // SOF0..SOF15 carry the frame dimensions, except the non-frame markers
+        // DHT (C4), JPG (C8) and DAC (CC)
+        if (0xC0..=0xCF).contains(&marker) && marker != 0xC4 && marker != 0xC8 && marker != 0xCC {
+            let height = u16::from_be_bytes([bytes[i + 5], bytes[i + 6]]);
+            let width = u16::from_be_bytes([bytes[i + 7], bytes[i + 8]]);
+            return Some((width, height));
+        }
+        // Standalone markers (RSTn, SOI, EOI, TEM) have no length field
+        if marker == 0xD8 || marker == 0xD9 || (0xD0..=0xD7).contains(&marker) || marker == 0x01 {
+            i += 2;
+            continue;
+        }
+        // Every other marker is followed by a big-endian segment length
+        let len = u16::from_be_bytes([bytes[i + 2], bytes[i + 3]]) as usize;
+        i += 2 + len;
+    }
+    None
 }
 
 // Estimated (yaw, pitch) in degrees. The HeadPose classification (thresholds,
@@ -569,6 +613,31 @@ pub fn cosine_i8(a: &[i8], b: &[i8]) -> f32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // Minimal JPEG: SOI, then a SOF0 segment declaring width x height
+    fn jpeg_with_dims(width: u16, height: u16) -> Vec<u8> {
+        let [wh, wl] = width.to_be_bytes();
+        let [hh, hl] = height.to_be_bytes();
+        vec![
+            0xFF, 0xD8, // SOI
+            0xFF, 0xC0, // SOF0
+            0x00, 0x11, // segment length (17)
+            0x08, // precision
+            hh, hl, // height
+            wh, wl, // width
+            0x03, // components... (rest unused by the parser)
+        ]
+    }
+
+    #[test]
+    fn jpeg_dimensions_reads_sof() {
+        assert_eq!(jpeg_dimensions(&jpeg_with_dims(640, 480)), Some((640, 480)));
+        // The DoS frame: tiny file declaring a huge canvas
+        assert_eq!(jpeg_dimensions(&jpeg_with_dims(16384, 16384)), Some((16384, 16384)));
+        // Rejected by the upload guard's MAX_DECODE_DIM comparison
+        assert!(16384 > MAX_DECODE_DIM);
+        assert_eq!(jpeg_dimensions(&[0xFF, 0xD8]), None);
+    }
 
     #[test]
     fn similarity_transform_maps_template_onto_itself() {

@@ -61,6 +61,12 @@ fn process_one_step(state: &mut RuntimeState) -> StepOutcome {
     };
 
     let use_real_engine = state.data.models.all_committed();
+    // Fail closed: the stub only ever runs in test_mode. In production without
+    // committed models, park the queue rather than mint a stub proof
+    // (start_verification also refuses to open sessions in this state).
+    if !use_real_engine && !state.data.test_mode {
+        return StepOutcome::EnginesUnavailable;
+    }
     if use_real_engine && !engine::real::engines_ready() {
         // Engines are rebuilt lazily after an upgrade (~2B instructions)
         if let Err(error) = engine::real::build_engines(&state.data.models) {

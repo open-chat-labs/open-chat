@@ -31,6 +31,13 @@ async fn start_verification(_args: Args) -> Response {
 }
 
 fn start_verification_impl(user_id: UserId, state: &mut RuntimeState) -> Response {
+    // Production must never run the deterministic stub engine (which grants a
+    // unique proof to any capture): if the real models are not committed, no
+    // verification can start. The stub path is reserved for test_mode.
+    if !state.data.test_mode && !state.data.models.all_committed() {
+        return NotReady;
+    }
+
     let now = state.env.now();
     state.data.sessions.prune_expired(now, MINUTE_IN_MS);
 

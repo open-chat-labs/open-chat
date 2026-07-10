@@ -14,6 +14,9 @@ pub enum Response {
     AlreadyVerified,
     AttemptLimitReached { next_attempt_at: TimestampMillis },
     Busy,
+    // The verifier is installed but its ML models have not yet been committed,
+    // so real verification cannot run (production never falls back to the stub)
+    NotReady,
     UserNotFound,
     InternalError(String),
 }
