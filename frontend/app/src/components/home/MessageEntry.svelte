@@ -302,7 +302,17 @@
         const txt = editor?.getMarkdown() ?? "";
 
         if (!parseCommands(txt)) {
-            onSendMessage(expandMentions(txt));
+            const [text, mentioned, blockLevelMarkdown] = expandMentions(txt);
+            // Mentions picked from the mention picker are stored as nodes within the editor and
+            // are already in the `@UserId(xyz)` form, so `expandMentions` misses them - collect
+            // them from the editor itself
+            const mentionedUserIds = new Set(mentioned.map((u) => u.userId));
+            for (const user of editor?.getMentionedUsers() ?? []) {
+                if (!mentionedUserIds.has(user.userId)) {
+                    mentioned.push(user);
+                }
+            }
+            onSendMessage([text, mentioned, blockLevelMarkdown]);
         }
 
         afterSendMessage();

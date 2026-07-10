@@ -15,6 +15,7 @@
         type OpenChat,
         type ReadonlyMap,
         type SelectedEmoji,
+        type User,
         type UserOrUserGroup,
     } from "openchat-client";
     import { getContext, onDestroy, onMount, type Snippet } from "svelte";
@@ -176,6 +177,37 @@
     export function getMarkdown(): string {
         if (!editor) return "";
         return nodeToMarkdown(editor.getJSON());
+    }
+
+    // The users mentioned within the message, taken from the `user_mention` nodes in the document
+    // (which are inserted when the user picks from the mention picker)
+    export function getMentionedUsers(): User[] {
+        if (!editor) return [];
+        const users = new Map<string, User>();
+        collectMentionedUsers(editor.getJSON(), users);
+        return [...users.values()];
+    }
+
+    function collectMentionedUsers(node: JSONContent, users: Map<string, User>) {
+        // The attrs both default to null and pasted/restored content can carry a missing or
+        // placeholder username, so hydrate each user from the user store where possible, only
+        // falling back to the username stored in the node's attrs
+        if (node.type === "user_mention") {
+            const { userId, username } = node.attrs ?? {};
+            if (typeof userId === "string" && userId.length > 0) {
+                const user = $allUsersStore.get(userId);
+                users.set(userId, {
+                    userId,
+                    username:
+                        user?.username ??
+                        (typeof username === "string" && username.length > 0
+                            ? username
+                            : "unknown"),
+                    displayName: user?.displayName,
+                });
+            }
+        }
+        node.content?.forEach((child) => collectMentionedUsers(child, users));
     }
 
     export function clear(): void {
