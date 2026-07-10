@@ -189,12 +189,17 @@
     }
 
     function collectMentionedUsers(node: JSONContent, users: Map<string, User>) {
-        if (node.type === "user_mention" && node.attrs?.userId) {
-            users.set(node.attrs.userId, {
-                userId: node.attrs.userId,
-                username: node.attrs.username,
-                displayName: undefined,
-            });
+        // The attrs both default to null and pasted HTML can omit them, so only accept nodes
+        // with a valid userId and fall back to a placeholder if the username is missing
+        if (node.type === "user_mention") {
+            const { userId, username } = node.attrs ?? {};
+            if (typeof userId === "string" && userId.length > 0) {
+                users.set(userId, {
+                    userId,
+                    username: typeof username === "string" && username.length > 0 ? username : "unknown",
+                    displayName: undefined,
+                });
+            }
         }
         node.content?.forEach((child) => collectMentionedUsers(child, users));
     }
