@@ -3333,7 +3333,7 @@ export class OpenChat {
             : undefined;
 
         if (criteria && isSuccessfulEventsResponse(eventsResponse)) {
-            this.#fillLoadedEventGaps(chatId, eventsResponse, criteria[0]);
+            this.#fillLoadedEventGaps(serverChat, eventsResponse, criteria[0], criteria[1]);
             publish("loadedPreviousMessages", {
                 context: { chatId, threadRootMessageIndex: threadRootEvent?.event.messageIndex },
                 initialLoad,
@@ -3351,21 +3351,46 @@ export class OpenChat {
     // index, scroll-back keeps loading below the split while the visible
     // segment never grows — a permanent "wall" mid-history.
     #fillLoadedEventGaps(
-        chatId: ChatIdentifier,
+        serverChat: ChatSummary,
         resp: EventsSuccessResult<ChatEvent>,
         requestStart: number,
+        ascending: boolean,
     ): void {
         const covered = new DRange();
         resp.events.forEach((e) => covered.add(e.index));
         resp.expiredEventRanges.forEach((r) => covered.add(r.start, r.end));
-        if (covered.length === 0) return;
 
-        const min = Math.min(covered.index(0), requestStart);
-        const max = Math.max(covered.index(covered.length - 1), requestStart);
+        let min: number;
+        let max: number;
+        if (covered.length === 0) {
+            // The page caps on events found, not indexes walked, so an empty
+            // response means the walk ran off the end of the log and the
+            // entire remaining span in the walked direction is holes.
+            if (ascending) {
+                if (resp.latestEventIndex === undefined) return;
+                min = requestStart;
+                max = resp.latestEventIndex;
+            } else {
+                min = this.earliestAvailableEventIndex(serverChat);
+                max = requestStart;
+            }
+        } else {
+            min = Math.min(covered.index(0), requestStart);
+            max = Math.max(covered.index(covered.length - 1), requestStart);
+        }
+
+        // never mark indexes above the responding replica's own latest event
+        // index — requestStart can come from a fresher summary, and those
+        // indexes are real events this replica just hasn't seen yet
+        if (resp.latestEventIndex !== undefined) {
+            max = Math.min(max, resp.latestEventIndex);
+        }
+        if (max < min) return;
+
         const holes = new DRange(min, max).subtract(covered);
         if (holes.length === 0) return;
 
-        this.#updateServerExpiredEventRanges(chatId, (ranges) => {
+        this.#updateServerExpiredEventRanges(serverChat.id, (ranges) => {
             const merged = new DRange();
             merged.add(ranges);
             merged.add(holes);
@@ -3450,7 +3475,7 @@ export class OpenChat {
         const eventsResponse = await this.#loadEvents(serverChat, criteria[0], criteria[1]);
 
         if (isSuccessfulEventsResponse(eventsResponse)) {
-            this.#fillLoadedEventGaps(chatId, eventsResponse, criteria[0]);
+            this.#fillLoadedEventGaps(serverChat, eventsResponse, criteria[0], criteria[1]);
             publish("loadedNewMessages", {
                 chatId,
                 threadRootMessageIndex: threadRootEvent?.event.messageIndex,

@@ -99,10 +99,18 @@ async function bufferValidDocumentResponse(
     }
     if (body.byteLength === 0) return undefined;
 
+    // the buffer holds decoded bytes, so drop the headers that describe the
+    // original encoded payload — a stale content-length can truncate the
+    // reconstructed body and a content-encoding can get it decoded twice
+    const headers = new Headers(response.headers);
+    headers.delete("content-encoding");
+    headers.delete("content-length");
+    headers.delete("transfer-encoding");
+
     return new Response(body, {
         status: response.status,
         statusText: response.statusText,
-        headers: response.headers,
+        headers,
     });
 }
 

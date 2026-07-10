@@ -14,24 +14,26 @@
 
     onMount(() => {
         if (typeof IntersectionObserver !== "undefined") {
+            // capture the element - bind:this nulls `container` on destroy,
+            // and the observer callback can fire after that
+            const el = container;
+            let destroyed = false;
             const observer = new IntersectionObserver((entries) => {
+                if (destroyed) return;
                 entries.sort((a, b) => b.time - a.time);
                 intersecting = entries[0].isIntersecting;
                 if (intersecting) {
                     onIntersecting?.();
-                    // container is nulled if the component was destroyed
-                    // before this (async) callback fired
-                    if (unobserveOnIntersect && container) {
-                        observer.unobserve(container);
+                    if (unobserveOnIntersect) {
+                        observer.unobserve(el);
                     }
                 }
             });
 
-            observer.observe(container);
+            observer.observe(el);
             return () => {
-                if (container) {
-                    observer.unobserve(container);
-                }
+                destroyed = true;
+                observer.disconnect();
             };
         }
     });

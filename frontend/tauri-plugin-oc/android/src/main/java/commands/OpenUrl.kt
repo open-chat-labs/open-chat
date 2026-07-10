@@ -83,7 +83,7 @@ class OpenUrl(private val activity: Activity) {
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REQUIRE_NON_BROWSER)
                 activity.startActivity(intent)
                 return
-            } catch (e: ActivityNotFoundException) {
+            } catch (_: ActivityNotFoundException) {
                 // no non-browser handler for this URL — use the Custom Tab
             }
         }
