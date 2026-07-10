@@ -27,7 +27,7 @@ pub fn run() {
     // pick up a shell env var at launch, so gate on the build environment and
     // rebuild with OC_DEVTOOLS=1 when you actually need the inspector.
     #[cfg(debug_assertions)]
-    if option_env!("OC_DEVTOOLS").is_some() {
+    if matches!(option_env!("OC_DEVTOOLS"), Some("1" | "true")) {
         builder = builder.plugin(tauri_plugin_devtools::init());
     }
 
