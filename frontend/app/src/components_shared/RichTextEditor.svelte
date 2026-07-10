@@ -189,15 +189,21 @@
     }
 
     function collectMentionedUsers(node: JSONContent, users: Map<string, User>) {
-        // The attrs both default to null and pasted HTML can omit them, so only accept nodes
-        // with a valid userId and fall back to a placeholder if the username is missing
+        // The attrs both default to null and pasted/restored content can carry a missing or
+        // placeholder username, so hydrate each user from the user store where possible, only
+        // falling back to the username stored in the node's attrs
         if (node.type === "user_mention") {
             const { userId, username } = node.attrs ?? {};
             if (typeof userId === "string" && userId.length > 0) {
+                const user = $allUsersStore.get(userId);
                 users.set(userId, {
                     userId,
-                    username: typeof username === "string" && username.length > 0 ? username : "unknown",
-                    displayName: undefined,
+                    username:
+                        user?.username ??
+                        (typeof username === "string" && username.length > 0
+                            ? username
+                            : "unknown"),
+                    displayName: user?.displayName,
                 });
             }
         }
