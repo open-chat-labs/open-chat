@@ -61,9 +61,10 @@ struct Opts {
     #[arg(long)]
     threads: Option<usize>,
 
-    /// Use RGB channel order for the embedder (experiment; production is BGR)
+    /// Use BGR channel order for the embedder (experiment; production is RGB,
+    /// which measured better - genuine median 0.607 vs 0.580)
     #[arg(long)]
-    rgb_embed: bool,
+    bgr_embed: bool,
 
     /// Embedding model filename in --models-dir (default w600k_mbf.onnx; the
     /// stronger w600k_r50.onnx is the same 112x112/512-d interface)
@@ -116,7 +117,7 @@ fn main() {
         &opts.images_dir,
         unique,
         n_threads,
-        !opts.rgb_embed,
+        opts.bgr_embed,
     );
 
     let mut genuine: Vec<f32> = Vec::new();
