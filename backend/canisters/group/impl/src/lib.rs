@@ -1,6 +1,5 @@
 use crate::memory::{get_instruction_counts_data_memory, get_instruction_counts_index_memory};
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
-use crate::model::payment_locks::PaymentLocks;
 use crate::timer_job_types::{DeleteFileReferencesJob, MakeTransferJob, RemoveExpiredEventsJob, RemoveOldEventsJob, TimerJob};
 use crate::updates::c2c_freeze_group::freeze_group_impl;
 use activity_notification_state::ActivityNotificationState;
@@ -563,8 +562,6 @@ struct Data {
     verified: Timestamped<bool>,
     pub bots: InstalledBots,
     idempotency_checker: IdempotencyChecker,
-    #[serde(skip)]
-    payment_locks: PaymentLocks,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -658,7 +655,6 @@ impl Data {
             verified: Timestamped::default(),
             bots: InstalledBots::default(),
             idempotency_checker: IdempotencyChecker::default(),
-            payment_locks: PaymentLocks::default(),
         }
     }
 

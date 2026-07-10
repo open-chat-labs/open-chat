@@ -13,7 +13,7 @@ use gated_groups::{
     check_if_passes_gate_synchronously,
 };
 use group_chat_core::{AddMemberSuccess, AddResult};
-use group_community_common::ExpiringMember;
+use group_community_common::{ExpiringMember, PaymentLockGuard};
 use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use types::{
@@ -145,7 +145,7 @@ async fn check_gate_then_join_channel(args: &Args) -> Response {
             // would otherwise result in them being charged more than once but only joining a single
             // time. This is safe from races because there is no await point between checking the
             // user is permitted to join and acquiring the lock.
-            let Some(_payment_lock) = mutate_state(|state| state.data.payment_locks.acquire(args.user_id)) else {
+            let Some(_payment_lock) = PaymentLockGuard::acquire(args.user_id) else {
                 return Error(OCErrorCode::AlreadyInProgress.into());
             };
             match check_if_passes_gate(gate_config.gate, check_gate_args).await {

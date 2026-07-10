@@ -10,7 +10,7 @@ use community_canister::c2c_join_community::{Response::*, *};
 use gated_groups::{
     CheckGateArgs, CheckIfPassesGateResult, CheckVerifiedCredentialGateArgs, GatePayment, check_if_passes_gate,
 };
-use group_community_common::ExpiringMember;
+use group_community_common::{ExpiringMember, PaymentLockGuard};
 use oc_error_codes::OCErrorCode;
 use types::{AccessGate, ChannelId, CommunityCanisterCommunitySummary, OCResult, UsersUnblocked};
 
@@ -28,7 +28,7 @@ pub(crate) async fn join_community(args: Args) -> Response {
             // would otherwise result in them being charged more than once but only joining a single
             // time. This is safe from races because there is no await point between checking the
             // user is permitted to join and acquiring the lock.
-            let Some(_payment_lock) = mutate_state(|state| state.data.payment_locks.acquire(args.user_id)) else {
+            let Some(_payment_lock) = PaymentLockGuard::acquire(args.user_id) else {
                 return Error(OCErrorCode::AlreadyInProgress.into());
             };
             match check_if_passes_gate(gate, *check_gate_args).await {

@@ -3,7 +3,6 @@ use crate::model::channels::Channels;
 use crate::model::groups_being_imported::{GroupBeingImportedSummary, GroupsBeingImported};
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::members::CommunityMembers;
-use crate::model::payment_locks::PaymentLocks;
 use crate::timer_job_types::{DeleteFileReferencesJob, MakeTransferJob, RemoveExpiredEventsJob, RemoveOldEventsJob, TimerJob};
 use activity_notification_state::ActivityNotificationState;
 use canister_state_macros::canister_state;
@@ -545,8 +544,6 @@ struct Data {
     verified: Timestamped<bool>,
     idempotency_checker: IdempotencyChecker,
     public_channel_list_updated: TimestampMillis,
-    #[serde(skip)]
-    payment_locks: PaymentLocks,
 }
 
 impl Data {
@@ -657,7 +654,6 @@ impl Data {
             verified: Timestamped::default(),
             idempotency_checker: IdempotencyChecker::default(),
             public_channel_list_updated: now,
-            payment_locks: PaymentLocks::default(),
         }
     }
 
