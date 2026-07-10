@@ -19,7 +19,9 @@
                 intersecting = entries[0].isIntersecting;
                 if (intersecting) {
                     onIntersecting?.();
-                    if (unobserveOnIntersect) {
+                    // container is nulled if the component was destroyed
+                    // before this (async) callback fired
+                    if (unobserveOnIntersect && container) {
                         observer.unobserve(container);
                     }
                 }

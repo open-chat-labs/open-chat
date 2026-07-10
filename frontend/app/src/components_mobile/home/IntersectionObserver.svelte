@@ -41,6 +41,12 @@
                         // called before the next render frame, then prevent the
                         // callback from being called again for the next 80ms.
                         requestAnimationFrame(() => {
+                            // the component may have been destroyed before
+                            // this frame runs (bind:this nulls container) —
+                            // common when the virtual list recycles rows
+                            // during a fast scroll
+                            if (!container) return;
+
                             onIntersecting?.();
 
                             if (unobserveOnIntersect) {
