@@ -174,6 +174,7 @@ import {
     type EnhancedAccessGate,
     type EventWrapper,
     type EventsResponse,
+    type EventsSuccessResult,
     type EvmChain,
     type EvmContractAddress,
     type ExpiredEventsRange,
@@ -3331,12 +3332,45 @@ export class OpenChat {
             ? await this.#loadEvents(serverChat, criteria[0], criteria[1])
             : undefined;
 
-        if (isSuccessfulEventsResponse(eventsResponse)) {
+        if (criteria && isSuccessfulEventsResponse(eventsResponse)) {
+            this.#fillLoadedEventGaps(chatId, eventsResponse, criteria[0]);
             publish("loadedPreviousMessages", {
                 context: { chatId, threadRootMessageIndex: threadRootEvent?.event.messageIndex },
                 initialLoad,
             });
         }
+    }
+
+    // A paged events request walks every index from its start index in the
+    // requested direction and returns everything it has, so any index inside
+    // the span it walked that came back with neither an event nor an expired
+    // range has nothing this user can ever fetch (e.g. pruned or not
+    // visible). Record those holes as covered. Without this the loaded event
+    // ranges become disjoint, the timeline splits into segments, and because
+    // previous-message loads always start below the GLOBAL earliest loaded
+    // index, scroll-back keeps loading below the split while the visible
+    // segment never grows — a permanent "wall" mid-history.
+    #fillLoadedEventGaps(
+        chatId: ChatIdentifier,
+        resp: EventsSuccessResult<ChatEvent>,
+        requestStart: number,
+    ): void {
+        const covered = new DRange();
+        resp.events.forEach((e) => covered.add(e.index));
+        resp.expiredEventRanges.forEach((r) => covered.add(r.start, r.end));
+        if (covered.length === 0) return;
+
+        const min = Math.min(covered.index(0), requestStart);
+        const max = Math.max(covered.index(covered.length - 1), requestStart);
+        const holes = new DRange(min, max).subtract(covered);
+        if (holes.length === 0) return;
+
+        this.#updateServerExpiredEventRanges(chatId, (ranges) => {
+            const merged = new DRange();
+            merged.add(ranges);
+            merged.add(holes);
+            return merged;
+        });
     }
 
     #loadEvents(
@@ -3416,6 +3450,7 @@ export class OpenChat {
         const eventsResponse = await this.#loadEvents(serverChat, criteria[0], criteria[1]);
 
         if (isSuccessfulEventsResponse(eventsResponse)) {
+            this.#fillLoadedEventGaps(chatId, eventsResponse, criteria[0]);
             publish("loadedNewMessages", {
                 chatId,
                 threadRootMessageIndex: threadRootEvent?.event.messageIndex,
