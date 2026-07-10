@@ -1,6 +1,6 @@
 <script lang="ts">
     import { rtlStore } from "@src/stores/rtl";
-    import { Editor, type Content } from "@tiptap/core";
+    import { Editor, type Content, type JSONContent } from "@tiptap/core";
     import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
     import Link from "@tiptap/extension-link";
     import { Placeholder } from "@tiptap/extensions";
@@ -9,6 +9,8 @@
     import "highlight.js/styles/base16/helios.css";
     import { common, createLowlight } from "lowlight";
     import {
+        allUsersStore,
+        userGroupSummariesStore,
         type Member,
         type OpenChat,
         type ReadonlyMap,
@@ -186,9 +188,27 @@
     }
 
     export function setContent(markdown: string): void {
-        editor?.commands.setContent(markdownToDoc(markdown));
+        editor?.commands.setContent(resolveMentionLabels(markdownToDoc(markdown)));
         editor?.commands.focus("end");
         empty = editor?.isEmpty ?? true;
+    }
+
+    // markdownToDoc has no access to the user/group stores, so mention nodes it
+    // creates carry placeholder labels - swap in the real names for display
+    function resolveMentionLabels(node: JSONContent): JSONContent {
+        if (node.type === "user_mention" && node.attrs) {
+            const username = $allUsersStore.get(node.attrs.userId)?.username;
+            if (username !== undefined) {
+                node.attrs.username = username;
+            }
+        } else if (node.type === "group_mention" && node.attrs) {
+            const name = $userGroupSummariesStore.get(Number(node.attrs.groupId))?.name;
+            if (name !== undefined) {
+                node.attrs.groupname = name;
+            }
+        }
+        node.content?.forEach(resolveMentionLabels);
+        return node;
     }
 
     onMount(() => {

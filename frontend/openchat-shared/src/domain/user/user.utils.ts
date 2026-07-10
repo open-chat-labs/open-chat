@@ -8,10 +8,14 @@ export function userStatus(lastOnline: number | undefined, now: number): UserSta
     return secondsSinceOnline < ONLINE_THRESHOLD ? UserStatus.Online : UserStatus.Offline;
 }
 
-const mentionRegex = /@UserId\(([\d\w-]+)\)/g;
+// The single source of truth for mention markup. User ids are principals,
+// user group ids are numeric. Global flags: only use these with
+// replace/matchAll (which reset lastIndex), never exec/test.
+export const userIdMentionRegex = /@UserId\(([\d\w-]+)\)/g;
+export const userGroupMentionRegex = /@UserGroup\((\d+)\)/g;
 
 export function extractUserIdsFromMentions(text: string): string[] {
-    return [...text.matchAll(mentionRegex)].map((m) => m[1]);
+    return [...text.matchAll(userIdMentionRegex)].map((m) => m[1]);
 }
 
 export function userOrUserGroupName(u: UserOrUserGroup): string {
