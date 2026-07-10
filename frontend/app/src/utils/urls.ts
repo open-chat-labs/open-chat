@@ -212,10 +212,25 @@ export function handleLinkClick(
         if (url.origin !== window.location.origin) {
             if (anchor.hasAttribute("download") || !isSupportedExternalUrl(url)) return;
 
-            e.preventDefault();
-            void openExternalUrl(client, url.toString()).catch((error) => {
-                console.error("Failed to open external link", error);
-            });
+            if (client.isNativeApp()) {
+                e.preventDefault();
+                void openExternalUrl(client, url.toString()).catch((error) => {
+                    console.error("Failed to open external link", error);
+                });
+                return;
+            }
+
+            // On the web, let the browser handle the anchor natively. A
+            // programmatic window.open from an iOS home-screen app always
+            // spawns an in-app browser sheet — even for a universal link that
+            // immediately hands off to another app, which leaves a blank
+            // sheet behind. A real anchor click opens the target app
+            // directly. Just make sure the link leaves the app in a new
+            // browsing context rather than navigating the standalone webview.
+            if (url.protocol === "http:" || url.protocol === "https:") {
+                anchor.target = "_blank";
+                anchor.rel = "noopener noreferrer";
+            }
             return;
         }
 
