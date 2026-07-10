@@ -1,4 +1,4 @@
-use crate::{can_borrow_state, mutate_state};
+use crate::mutate_state;
 use std::collections::HashSet;
 use types::UserId;
 
@@ -35,8 +35,9 @@ pub struct PaymentLockGuard {
 impl Drop for PaymentLockGuard {
     fn drop(&mut self) {
         let user_id = self.user_id;
-        if can_borrow_state() {
-            mutate_state(|state| state.data.payment_locks.release(&user_id));
-        }
+        // Silently failing to release the lock would leave the user permanently locked out, so
+        // release it unconditionally - if the state is already borrowed this will panic, failing
+        // loudly, but that would be a bug (guards must not be dropped within a state closure)
+        mutate_state(|state| state.data.payment_locks.release(&user_id));
     }
 }

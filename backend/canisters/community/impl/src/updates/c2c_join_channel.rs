@@ -28,10 +28,6 @@ async fn c2c_join_channel(args: Args) -> Response {
 }
 
 async fn c2c_join_channel_impl(mut args: Args) -> Response {
-    let Some(_payment_lock) = mutate_state(|state| state.data.payment_locks.acquire(args.user_id)) else {
-        return Error(OCErrorCode::AlreadyInProgress.into());
-    };
-
     if read_state(|state| {
         state
             .data
@@ -144,11 +140,20 @@ async fn check_gate_then_join_channel(args: &Args) -> Response {
             state,
         )
     }) {
-        Ok(Some((gate_config, check_gate_args))) => match check_if_passes_gate(gate_config.gate, check_gate_args).await {
-            CheckIfPassesGateResult::Success(payments) => payments,
-            CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
-            CheckIfPassesGateResult::Error(error) => return Error(error),
-        },
+        Ok(Some((gate_config, check_gate_args))) => {
+            // Prevent the same user having two gated-join payments in progress concurrently, which
+            // would otherwise result in them being charged more than once but only joining a single
+            // time. This is safe from races because there is no await point between checking the
+            // user is permitted to join and acquiring the lock.
+            let Some(_payment_lock) = mutate_state(|state| state.data.payment_locks.acquire(args.user_id)) else {
+                return Error(OCErrorCode::AlreadyInProgress.into());
+            };
+            match check_if_passes_gate(gate_config.gate, check_gate_args).await {
+                CheckIfPassesGateResult::Success(payments) => payments,
+                CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
+                CheckIfPassesGateResult::Error(error) => return Error(error),
+            }
+        }
         Ok(None) => Vec::new(),
         Err(response) => return response,
     };
