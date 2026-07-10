@@ -16,8 +16,10 @@
             : undefined,
     );
 
-    // Twitter-style: square-ish image that's not huge → side-by-side layout
-    let smallSquare = $derived(img !== undefined && img.width === img.height && img.height < 300);
+    // Twitter-style: square-ish or portrait image → side-by-side layout; the
+    // full-width banner only suits landscape images (anything taller gets
+    // badly cropped by the banner's max-height)
+    let sideBySide = $derived(img !== undefined && img.width <= img.height * 1.2);
 
     let hostname = $derived.by(() => {
         try {
@@ -51,12 +53,14 @@
 
 <div class="generic_preview" class:me>
     <a href={safeUrl} target="_blank" rel="noopener noreferrer" class="preview_link">
-        {#if smallSquare && img}
-            <!-- Side-by-side: card drives height, thumbnail is a square matching it -->
+        {#if sideBySide && img}
+            <!-- Side-by-side: card drives height, thumbnail keeps the image's
+                 aspect ratio at that height so the whole image is visible -->
             <div class="row_layout">
                 <div
                     class="thumbnail"
-                    style="background-image: url({img.url}); width: {cardHeight}px; height: {cardHeight}px;">
+                    style="background-image: url({img.url}); width: {cardHeight *
+                        (img.width / img.height)}px; height: {cardHeight}px;">
                 </div>
                 <div class="card" bind:clientHeight={cardHeight}>
                     <p class="title">{ogPreview.title}</p>
