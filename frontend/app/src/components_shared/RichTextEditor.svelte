@@ -15,6 +15,7 @@
         type OpenChat,
         type ReadonlyMap,
         type SelectedEmoji,
+        type User,
         type UserOrUserGroup,
     } from "openchat-client";
     import { getContext, onDestroy, onMount, type Snippet } from "svelte";
@@ -176,6 +177,26 @@
     export function getMarkdown(): string {
         if (!editor) return "";
         return nodeToMarkdown(editor.getJSON());
+    }
+
+    // The users mentioned within the message, taken from the `user_mention` nodes in the document
+    // (which are inserted when the user picks from the mention picker)
+    export function getMentionedUsers(): User[] {
+        if (!editor) return [];
+        const users = new Map<string, User>();
+        collectMentionedUsers(editor.getJSON(), users);
+        return [...users.values()];
+    }
+
+    function collectMentionedUsers(node: JSONContent, users: Map<string, User>) {
+        if (node.type === "user_mention" && node.attrs?.userId) {
+            users.set(node.attrs.userId, {
+                userId: node.attrs.userId,
+                username: node.attrs.username,
+                displayName: undefined,
+            });
+        }
+        node.content?.forEach((child) => collectMentionedUsers(child, users));
     }
 
     export function clear(): void {
