@@ -63,15 +63,15 @@ fn commit_model_impl(args: Args, state: &mut RuntimeState) -> Response {
         },
     );
     engine::real::drop_engines();
-    if state.data.models.all_committed() {
-        if let Err(error) = engine::real::build_engines(&state.data.models) {
-            // Roll the commit back so persisted state matches reality
-            match previous_record {
-                Some(prev) => state.data.models.record_commit(args.kind, prev),
-                None => state.data.models.remove_committed(args.kind),
-            }
-            return InvalidModel(error);
+    if state.data.models.all_committed()
+        && let Err(error) = engine::real::build_engines(&state.data.models)
+    {
+        // Roll the commit back so persisted state matches reality
+        match previous_record {
+            Some(prev) => state.data.models.record_commit(args.kind, prev),
+            None => state.data.models.remove_committed(args.kind),
         }
+        return InvalidModel(error);
     }
 
     if matches!(args.kind, ModelKind::Embedding) {

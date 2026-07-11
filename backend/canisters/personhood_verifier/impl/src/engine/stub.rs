@@ -125,10 +125,19 @@ mod tests {
         for group in [10u8, 15, 25, 30] {
             let m = group * 4;
             let base = embed(m);
-            assert!(cosine_similarity(&base, &embed(m + 1)) >= DUPLICATE_THRESHOLD, "group {group} variant 1");
+            assert!(
+                cosine_similarity(&base, &embed(m + 1)) >= DUPLICATE_THRESHOLD,
+                "group {group} variant 1"
+            );
             let gray = cosine_similarity(&base, &embed(m + 2));
-            assert!(gray >= CLEAR_THRESHOLD && gray < DUPLICATE_THRESHOLD, "group {group} gray {gray}");
-            assert!(cosine_similarity(&base, &embed(m + 3)).abs() < CLEAR_THRESHOLD, "group {group} variant 3");
+            assert!(
+                (CLEAR_THRESHOLD..DUPLICATE_THRESHOLD).contains(&gray),
+                "group {group} gray {gray}"
+            );
+            assert!(
+                cosine_similarity(&base, &embed(m + 3)).abs() < CLEAR_THRESHOLD,
+                "group {group} variant 3"
+            );
         }
         // Different groups are orthogonal
         assert!(cosine_similarity(&embed(40), &embed(80)).abs() < CLEAR_THRESHOLD);

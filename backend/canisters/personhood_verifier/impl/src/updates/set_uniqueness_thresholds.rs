@@ -16,7 +16,11 @@ fn set_uniqueness_thresholds(args: Args) -> Response {
 }
 
 fn set_uniqueness_thresholds_impl(args: Args, state: &mut RuntimeState) -> Response {
-    for (name, value) in [("duplicate", args.duplicate), ("clear", args.clear), ("duplicate_retry", args.duplicate_retry)] {
+    for (name, value) in [
+        ("duplicate", args.duplicate),
+        ("clear", args.clear),
+        ("duplicate_retry", args.duplicate_retry),
+    ] {
         if !(0.0..=1.0).contains(&value) {
             return Invalid(format!("{name} must be in [0, 1], got {value}"));
         }

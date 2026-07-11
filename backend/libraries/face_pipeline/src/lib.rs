@@ -540,13 +540,13 @@ fn sample_bilinear(image: &Rgb, x: f32, y: f32) -> [u8; 3] {
     let fx = x - x0 as f32;
     let fy = y - y0 as f32;
     let mut out = [0u8; 3];
-    for c in 0..3 {
+    for (c, channel) in out.iter_mut().enumerate() {
         let p00 = image.pixels[(y0 * image.width + x0) * 3 + c] as f32;
         let p10 = image.pixels[(y0 * image.width + x0 + 1) * 3 + c] as f32;
         let p01 = image.pixels[((y0 + 1) * image.width + x0) * 3 + c] as f32;
         let p11 = image.pixels[((y0 + 1) * image.width + x0 + 1) * 3 + c] as f32;
         let value = p00 * (1.0 - fx) * (1.0 - fy) + p10 * fx * (1.0 - fy) + p01 * (1.0 - fx) * fy + p11 * fx * fy;
-        out[c] = value.round().clamp(0.0, 255.0) as u8;
+        *channel = value.round().clamp(0.0, 255.0) as u8;
     }
     out
 }
@@ -624,7 +624,7 @@ mod tests {
             0x00, 0x11, // segment length (17)
             0x08, // precision
             hh, hl, // height
-            wh, wl, // width
+            wh, wl,   // width
             0x03, // components... (rest unused by the parser)
         ]
     }
@@ -633,9 +633,10 @@ mod tests {
     fn jpeg_dimensions_reads_sof() {
         assert_eq!(jpeg_dimensions(&jpeg_with_dims(640, 480)), Some((640, 480)));
         // The DoS frame: tiny file declaring a huge canvas
-        assert_eq!(jpeg_dimensions(&jpeg_with_dims(16384, 16384)), Some((16384, 16384)));
+        let dos_dim: u16 = 16384;
+        assert_eq!(jpeg_dimensions(&jpeg_with_dims(dos_dim, dos_dim)), Some((dos_dim, dos_dim)));
         // Rejected by the upload guard's MAX_DECODE_DIM comparison
-        assert!(16384 > MAX_DECODE_DIM);
+        assert!(dos_dim as usize > MAX_DECODE_DIM);
         assert_eq!(jpeg_dimensions(&[0xFF, 0xD8]), None);
     }
 

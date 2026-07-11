@@ -797,11 +797,11 @@ impl UserMap {
     }
 
     pub fn remove_proof_of_unique_personhood(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
-        if let Some(user) = self.users.get_mut(&user_id) {
-            if user.unique_person_proof.take().is_some() {
-                user.date_updated = now;
-                return true;
-            }
+        if let Some(user) = self.users.get_mut(&user_id)
+            && user.unique_person_proof.take().is_some()
+        {
+            user.date_updated = now;
+            return true;
         }
         false
     }

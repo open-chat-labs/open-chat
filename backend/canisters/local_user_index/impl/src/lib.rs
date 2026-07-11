@@ -96,7 +96,6 @@ impl RuntimeState {
         let mut user_details = self.calling_user();
 
         if let Some(credential_args) = credential_args {
-            let now = self.env.now();
             let user_id = user_details.user_id;
 
             for jwt in credential_args.credential_jwts.iter() {

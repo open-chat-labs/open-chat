@@ -278,12 +278,10 @@ fn diagnose(engines: &Engines, images_dir: &Path, pairs: &[(bool, String, String
 
     let mut outcomes: HashMap<&str, u32> = HashMap::new();
     let mut decode_failed = 0u32;
-    let mut examples = 0;
     for rel in &order {
         match std::fs::read(images_dir.join(rel)).ok().and_then(|b| decode_jpeg(&b).ok()) {
             Some(image) => {
                 let outcome = engines.detect_debug(&image);
-                let _ = examples;
                 *outcomes.entry(outcome).or_default() += 1;
             }
             None => decode_failed += 1,

@@ -255,7 +255,6 @@ fn process_with_stub(state: &mut RuntimeState, session_id: u128) -> Option<Verif
     apply_scan_outcome(state, session_id, user_id, is_retry_round, probe, model_version, now)
 }
 
-#[expect(clippy::too_many_arguments)]
 fn apply_scan_outcome(
     state: &mut RuntimeState,
     session_id: u128,
