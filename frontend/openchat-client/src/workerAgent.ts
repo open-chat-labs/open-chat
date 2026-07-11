@@ -6,8 +6,8 @@ import type {
     WorkerRequest,
     WorkerResponse,
     WorkerResult,
-} from "openchat-shared";
-import { ONE_MINUTE_MILLIS, Stream } from "openchat-shared";
+} from "@shared";
+import { ONE_MINUTE_MILLIS, Stream } from "@shared";
 import type { OpenChatConfig } from "./config";
 import { snapshot } from "./snapshot.svelte";
 import { messagesRead, storageStore } from "./state";

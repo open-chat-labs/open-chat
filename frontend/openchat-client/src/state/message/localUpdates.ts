@@ -8,7 +8,7 @@ import {
     type P2PSwapStatus,
     type Tally,
     type ThreadSummary,
-} from "openchat-shared";
+} from "@shared";
 import { writable } from "../../utils/stores";
 import { notEq } from "../utils";
 

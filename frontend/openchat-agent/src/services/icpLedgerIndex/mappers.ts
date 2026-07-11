@@ -10,7 +10,7 @@ import {
     type AccountTransactionResult,
     CommonResponses,
     UnsupportedValueError,
-} from "openchat-shared";
+} from "@shared";
 import { memoBytesToString } from "../ledgerIndex/mappers";
 
 export function accountTransactions(candid: ApiGetTransactionsResult): AccountTransactionResult {

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { BodySmall, Row, type Padding } from "component-lib";
-    import type { ResourceKey } from "openchat-client";
+    import type { ResourceKey } from "@client";
     import Translatable from "./Translatable.svelte";
 
     interface Props {

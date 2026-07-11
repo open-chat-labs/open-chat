@@ -23,7 +23,7 @@
         storageInGBStore,
         type PublicProfile,
         type UserSummary,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import { toastStore } from "@src/stores/toast";

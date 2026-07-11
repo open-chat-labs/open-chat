@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type Level } from "openchat-client";
+    import { type Level } from "@client";
     import Translatable from "../../Translatable.svelte";
     import Legend from "../../Legend.svelte";
     import { i18nKey } from "../../../i18n/i18n";

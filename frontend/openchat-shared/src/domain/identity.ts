@@ -5,7 +5,7 @@ import {
     type JsonnableDelegationChain,
 } from "@icp-sdk/core/identity";
 import type { Signature, SignIdentity } from "@icp-sdk/core/agent";
-import type { Address } from "openchat-agent/src/services/signInWithSolana/candid/types";
+import type { Address } from "@agent/services/signInWithSolana/candid/types";
 import type { OCError } from "./error";
 import type { Success } from "./response";
 import type { GetOpenChatIdentitySuccess } from "./worker";

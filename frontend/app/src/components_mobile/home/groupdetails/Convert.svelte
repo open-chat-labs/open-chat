@@ -5,7 +5,7 @@
         publish,
         type GroupChatSummary,
         type OpenChat,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import Check from "svelte-material-icons/Check.svelte";

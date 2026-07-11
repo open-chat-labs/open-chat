@@ -2,7 +2,7 @@
     import FindUser from "../FindUser.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import UserPill from "../UserPill.svelte";
-    import type { UserOrUserGroup, UserSummary } from "openchat-client";
+    import type { UserOrUserGroup, UserSummary } from "@client";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
 

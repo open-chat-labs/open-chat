@@ -1,5 +1,5 @@
  
-import { ChatSet, identity } from "openchat-shared";
+import { ChatSet, identity } from "@shared";
 import { vi } from "vitest";
 import { LocalSet } from "./set";
 

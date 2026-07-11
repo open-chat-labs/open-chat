@@ -13,7 +13,7 @@
         Subtitle,
         DefaultAvatar,
     } from "component-lib";
-    import { namedAccountsStore, OpenChat, publish, type NamedAccount } from "openchat-client";
+    import { namedAccountsStore, OpenChat, publish, type NamedAccount } from "@client";
     import { getContext } from "svelte";
     import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";

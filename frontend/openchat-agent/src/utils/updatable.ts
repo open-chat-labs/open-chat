@@ -1,4 +1,4 @@
-import type { OptionUpdate } from "openchat-shared";
+import type { OptionUpdate } from "@shared";
 
 export class Updatable<T> {
     #value: T;

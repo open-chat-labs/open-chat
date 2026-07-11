@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { iconSize } from "openchat-client";
-    import type { UserSummary } from "openchat-shared";
+    import { iconSize } from "@client";
+    import type { UserSummary } from "@shared";
     import Cancel from "svelte-material-icons/Cancel.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import MinusCircleOutline from "svelte-material-icons/MinusCircleOutline.svelte";

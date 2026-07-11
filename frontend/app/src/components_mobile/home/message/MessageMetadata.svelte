@@ -8,7 +8,7 @@
         type Padding,
         Row,
     } from "component-lib";
-    import type { ChatType, OpenChat } from "openchat-client";
+    import type { ChatType, OpenChat } from "@client";
     import { getContext } from "svelte";
     import Check from "svelte-material-icons/Check.svelte";
     import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";

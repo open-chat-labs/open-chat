@@ -8,7 +8,7 @@
         type OpenChat,
         swappableTokensStore,
         walletConfigStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import ArrowLeftBoldCircle from "svelte-material-icons/ArrowLeftBoldCircle.svelte";
     import ArrowRightBoldCircle from "svelte-material-icons/ArrowRightBoldCircle.svelte";

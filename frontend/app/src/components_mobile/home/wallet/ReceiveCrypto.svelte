@@ -1,7 +1,7 @@
 <script lang="ts">
     import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
     import { Avatar, Body, Column, Row } from "component-lib";
-    import { publish, type OpenChat } from "openchat-client";
+    import { publish, type OpenChat } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import ErrorMessage from "../../ErrorMessage.svelte";

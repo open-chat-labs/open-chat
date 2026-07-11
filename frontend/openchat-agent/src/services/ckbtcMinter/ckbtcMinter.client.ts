@@ -3,7 +3,7 @@ import { Principal } from "@icp-sdk/core/principal";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { idlFactory, type CkbtcMinterService } from "./candid/idl";
 import { utxo } from "../bitcoin/mappers";
-import type { CkbtcMinterDepositInfo, CkbtcMinterWithdrawalInfo, Utxo } from "openchat-shared";
+import type { CkbtcMinterDepositInfo, CkbtcMinterWithdrawalInfo, Utxo } from "@shared";
 import { identity } from "../../utils/mapping";
 
 const MAINNET_CKBTC_MINTER_CANISTER_ID = "mqygn-kiaaa-aaaar-qaadq-cai";

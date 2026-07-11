@@ -3,8 +3,8 @@
     import { emojiDatabase } from "@src/utils/emojis";
     import { Body, ChatFootnote, ColourVars, Row, Tooltip, type Alignment } from "component-lib";
     import type { NativeEmoji } from "emoji-picker-element/shared";
-    import type { CustomEmoji, Reaction, UserLookup } from "openchat-client";
-    import { allUsersStore, currentUserIdStore, customEmojis, OpenChat } from "openchat-client";
+    import type { CustomEmoji, Reaction, UserLookup } from "@client";
+    import { allUsersStore, currentUserIdStore, customEmojis, OpenChat } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Translatable from "../../Translatable.svelte";

@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { CommunitySummary, OpenChat } from "openchat-client";
-    import { ErrorCode } from "openchat-shared";
+    import type { CommunitySummary, OpenChat } from "@client";
+    import { ErrorCode } from "@shared";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";

@@ -7,7 +7,7 @@ import type {
     OptionalChatPermissions,
     OptionalMessagePermissions,
     UpdatedRules,
-} from "openchat-shared";
+} from "@shared";
 import {
     emptyChatMetrics,
     ROLE_ADMIN,
@@ -16,7 +16,7 @@ import {
     ROLE_NONE,
     ROLE_OWNER,
     toBigInt32,
-} from "openchat-shared";
+} from "@shared";
 import type {
     GroupConvertIntoCommunitySuccessResult,
     GroupRole,

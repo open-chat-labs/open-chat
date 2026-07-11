@@ -1,6 +1,6 @@
 import { deleteDB, type DBSchema } from "idb";
 import { IndexedDbConnectionManager } from "./indexedDb";
-import { Lazy } from "openchat-shared";
+import { Lazy } from "@shared";
 
 const CACHE_VERSION = 2;
 const STORE_NAME = "community_referrals" as const;

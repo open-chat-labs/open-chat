@@ -15,7 +15,7 @@
         iconSize,
         type OpenChat,
         selectedCommunitySummaryStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";

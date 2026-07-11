@@ -7,7 +7,7 @@
 </script>
 
 <script lang="ts">
-    import { chatsInitialisedStore, identityStateStore } from "openchat-client";
+    import { chatsInitialisedStore, identityStateStore } from "@client";
     import { type Component } from "svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
     import LandingPage from "../landingpages/LandingPage.svelte";

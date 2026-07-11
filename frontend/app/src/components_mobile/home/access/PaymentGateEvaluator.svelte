@@ -20,7 +20,7 @@
         type PaymentGate,
         enhancedCryptoLookup,
         publish,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import QrCode from "svelte-material-icons/Qrcode.svelte";

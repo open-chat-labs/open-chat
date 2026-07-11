@@ -1,6 +1,6 @@
 <script lang="ts">
     import { ChatText, Column } from "component-lib";
-    import type { MessageReminderContent } from "openchat-client";
+    import type { MessageReminderContent } from "@client";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import ReminderNotes from "./ReminderNotes.svelte";

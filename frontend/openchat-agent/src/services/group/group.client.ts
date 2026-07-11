@@ -50,8 +50,8 @@ import type {
     User,
     VideoCallParticipantsResponse,
     VideoCallPresence,
-} from "openchat-shared";
-import { MAX_EVENTS, MAX_MESSAGES, offline, random32 } from "openchat-shared";
+} from "@shared";
+import { MAX_EVENTS, MAX_MESSAGES, offline, random32 } from "@shared";
 import type { AgentConfig } from "../../config";
 import {
     ActiveProposalTalliesResponse,

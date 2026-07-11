@@ -8,7 +8,7 @@
         isCompositeGate,
         publish,
         type AccessGate,
-    } from "openchat-client";
+    } from "@client";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import Check from "svelte-material-icons/Check.svelte";
     import DiamondOutline from "svelte-material-icons/DiamondOutline.svelte";

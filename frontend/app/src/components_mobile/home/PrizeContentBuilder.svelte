@@ -30,7 +30,7 @@
         Row,
         Switch,
     } from "component-lib";
-    import type { MessageContext, PrizeContentInitial } from "openchat-client";
+    import type { MessageContext, PrizeContentInitial } from "@client";
     import {
         bigIntMax,
         chitBands,
@@ -41,7 +41,7 @@
         LocalStorageStore,
         localUpdates,
         ONE_DAY,
-    } from "openchat-client";
+    } from "@client";
     import { onMount } from "svelte";
     import Account from "svelte-material-icons/AccountOutline.svelte";
     import Diamond from "svelte-material-icons/DiamondOutline.svelte";

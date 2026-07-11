@@ -16,7 +16,19 @@
         "target": "ESNext",
         "types": ["jest", "node", "svelte"],
         "useDefineForClassFields": true,
-        "verbatimModuleSyntax": true
+        "verbatimModuleSyntax": true,
+        "paths": {
+            "@shared": ["./openchat-shared/src/index.ts"],
+            "@shared/*": ["./openchat-shared/src/*"],
+            "@client": ["./openchat-client/src/index.ts"],
+            "@client/*": ["./openchat-client/src/*"],
+            "@agent": ["./openchat-agent/src/index.ts"],
+            "@agent/*": ["./openchat-agent/src/*"],
+            "@worker": ["./openchat-worker/src/worker.ts"],
+            "@worker/*": ["./openchat-worker/src/*"],
+            "tauri-plugin-oc-api": ["./tauri-plugin-oc/guest-js/index.ts"],
+            "tauri-plugin-oc-api/*": ["./tauri-plugin-oc/guest-js/*"]
+        }
     },
     "exclude": ["build/**/*", "lib/**/*", "node_modules"]
 }

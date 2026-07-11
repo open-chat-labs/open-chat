@@ -5,7 +5,7 @@
         mobileWidth,
         OpenChat,
         type ExternalBot,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";

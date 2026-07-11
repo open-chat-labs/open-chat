@@ -10,7 +10,7 @@
         type ExecuteGenericNervousSystemFunction,
         type GroupMatch,
         type Level,
-    } from "openchat-client";
+    } from "@client";
     import CommunityFinder from "./CommunityFinder.svelte";
     import GroupFinder from "./GroupFinder.svelte";
     import { fade } from "svelte/transition";

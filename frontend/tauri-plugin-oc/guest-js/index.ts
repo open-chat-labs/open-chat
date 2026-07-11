@@ -1,3 +1,5 @@
+export { clearAllNotifications } from "./commands/clearAllNotifications";
+export { deleteFcmToken } from "./commands/deleteFcmToken";
 export { getFcmToken } from "./commands/getFcmToken";
 export { minimizeApp } from "./commands/minimizeApp";
 export { openUrl } from "./commands/openUrl";
@@ -8,9 +10,9 @@ export { signUp } from "./commands/signUp";
 export { svelteReady } from "./commands/svelteReady";
 export {
     loadRecentMedia,
-    MediaPermissionStatus,
-    RecentMedia,
-    RecentMediaResponse,
+    type MediaPermissionStatus,
+    type RecentMedia,
+    type RecentMediaResponse,
 } from "./commands/loadRecentMedia";
 export { saveMediaToDevice, type SaveMediaRequest } from "./commands/saveMedia";
 export { enableViewportResize } from "./commands/enableViewportResize";

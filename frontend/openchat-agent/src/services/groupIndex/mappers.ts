@@ -15,8 +15,8 @@ import type {
     ChannelIdentifier,
     FreezeCommunityResponse,
     UnfreezeCommunityResponse,
-} from "openchat-shared";
-import { toBigInt32, UnsupportedValueError } from "openchat-shared";
+} from "@shared";
+import { toBigInt32, UnsupportedValueError } from "@shared";
 import { publicGroupSummary } from "../common/publicSummaryMapperV2";
 import { accessGateConfig, groupSubtype, ocError } from "../common/chatMappersV2";
 import type {

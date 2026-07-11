@@ -5,7 +5,7 @@ import {
     type MessageIndexRoute,
     type NullScope,
     type RouteParams,
-} from "openchat-shared";
+} from "@shared";
 import "page";
 import { derived, writable } from "../../utils/stores";
 

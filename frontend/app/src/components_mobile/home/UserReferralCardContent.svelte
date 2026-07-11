@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { currentUserIdStore, OpenChat } from "openchat-client";
+    import { currentUserIdStore, OpenChat } from "@client";
     import { getContext } from "svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import { i18nKey } from "../../i18n/i18n";

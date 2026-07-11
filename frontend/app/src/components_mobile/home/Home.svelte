@@ -17,7 +17,7 @@
         PubSubEvents,
         ResourceKey,
         RouteParams,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import {
         allUsersStore,
@@ -40,7 +40,7 @@
         selectedChatSummaryStore,
         subscribe,
         suspendedUserStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";

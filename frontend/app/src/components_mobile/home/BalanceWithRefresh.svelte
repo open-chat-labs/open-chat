@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Body, Container } from "component-lib";
-    import type { OpenChat } from "openchat-client";
-    import { enhancedCryptoLookup as cryptoLookup } from "openchat-client";
+    import type { OpenChat } from "@client";
+    import { enhancedCryptoLookup as cryptoLookup } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Plus from "svelte-material-icons/Plus.svelte";

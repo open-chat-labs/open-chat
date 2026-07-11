@@ -1,6 +1,6 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import type { VideoCallCounts } from "openchat-client";
+    import type { VideoCallCounts } from "@client";
 
     interface Props {
         video: VideoCallCounts;

@@ -1,4 +1,4 @@
-import { type TipsReceived } from "openchat-shared";
+import { type TipsReceived } from "@shared";
 import { SvelteMap } from "svelte/reactivity";
 import { mergeLocalTips } from "../utils/chat";
 import { localUpdates } from "./localUpdates";

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type ChitUserBalance, mobileWidth, type OpenChat } from "openchat-client";
+    import { type ChitUserBalance, mobileWidth, type OpenChat } from "@client";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import { isTouchDevice } from "../../utils/devices";

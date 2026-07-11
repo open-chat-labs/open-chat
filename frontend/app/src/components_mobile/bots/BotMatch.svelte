@@ -1,6 +1,6 @@
 <script lang="ts">
     import { BodySmall, Container, IconButton } from "component-lib";
-    import { type ExternalBot } from "openchat-shared";
+    import { type ExternalBot } from "@shared";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import FilteredUsername from "@shared_components/FilteredUsername.svelte";
     import Markdown from "@shared_components/Markdown.svelte";

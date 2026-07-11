@@ -1,4 +1,4 @@
-import type { Message, MessageActivityEvent } from "openchat-client";
+import type { Message, MessageActivityEvent } from "@client";
 import { SvelteMap } from "svelte/reactivity";
 
 class ActivityFeedState {

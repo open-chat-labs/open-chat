@@ -23,7 +23,7 @@
         installationLocationFrom,
         OpenChat,
         publish,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, tick } from "svelte";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import Cloud from "svelte-material-icons/CloudDownloadOutline.svelte";

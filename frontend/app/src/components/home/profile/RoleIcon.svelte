@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type Level, type MemberRole, ROLE_MEMBER, roleAsText } from "openchat-client";
+    import { type Level, type MemberRole, ROLE_MEMBER, roleAsText } from "@client";
     import Tooltip from "../../../components/tooltip/Tooltip.svelte";
 
     interface Props {

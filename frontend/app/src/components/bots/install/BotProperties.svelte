@@ -1,8 +1,8 @@
 <script lang="ts">
     import Avatar from "@src/components/Avatar.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
-    import type { ExternalBotLike, GrantedBotPermissions, OpenChat } from "openchat-client";
-    import { AvatarSize, allUsersStore, currentUserIdStore, mobileWidth } from "openchat-client";
+    import type { ExternalBotLike, GrantedBotPermissions, OpenChat } from "@client";
+    import { AvatarSize, allUsersStore, currentUserIdStore, mobileWidth } from "@client";
     import { getContext, type Snippet } from "svelte";
     import BotAvatar from "../BotAvatar.svelte";
     import BotCommands from "../BotCommands.svelte";

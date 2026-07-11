@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { BodySmall, Container, MenuItem } from "component-lib";
-    import { publish } from "openchat-client";
+    import { publish } from "@client";
     import { navigate } from "@utils/navigation";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import Cog from "svelte-material-icons/Cog.svelte";

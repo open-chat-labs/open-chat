@@ -1,4 +1,4 @@
-import type { NervousSystemFunction } from "openchat-shared";
+import type { NervousSystemFunction } from "@shared";
 import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
 const storageKeyPrefix = "sns_functions_";

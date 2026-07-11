@@ -1,13 +1,13 @@
 <script lang="ts">
     import { toastStore } from "@src/stores/toast";
     import { BodySmall, Container, IconButton, MenuItem, MenuTrigger } from "component-lib";
-    import { installationLocationFrom, OpenChat, type CommunitySummary } from "openchat-client";
+    import { installationLocationFrom, OpenChat, type CommunitySummary } from "@client";
     import {
         publish,
         type ChatSummary,
         type ExternalBot,
         type GrantedBotPermissions,
-    } from "openchat-shared";
+    } from "@shared";
     import { getContext } from "svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";

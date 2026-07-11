@@ -1,5 +1,5 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
-import type { Utxo } from "openchat-shared";
+import type { Utxo } from "@shared";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { idlFactory, type BitcoinService } from "./candid/idl";
 import { getUtxosResponse } from "./mappers";

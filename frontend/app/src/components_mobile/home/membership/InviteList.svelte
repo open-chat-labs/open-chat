@@ -8,7 +8,7 @@
         publish,
         selectedCommunitySummaryStore,
         type UserSummary,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import Account from "svelte-material-icons/AccountGroupOutline.svelte";
     import AccountPlus from "svelte-material-icons/AccountPlusOutline.svelte";

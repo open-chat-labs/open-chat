@@ -9,8 +9,8 @@
         type OpenChat,
         type ResourceKey,
         routeForChatIdentifier,
-    } from "openchat-client";
-    import { ErrorCode } from "openchat-shared";
+    } from "@client";
+    import { ErrorCode } from "@shared";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";

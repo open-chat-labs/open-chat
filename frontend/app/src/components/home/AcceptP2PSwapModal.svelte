@@ -1,10 +1,10 @@
 <script lang="ts">
-    import type { OpenChat } from "openchat-client";
+    import type { OpenChat } from "@client";
     import {
         cryptoBalanceStore,
         enhancedCryptoLookup as cryptoLookup,
         mobileWidth,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";

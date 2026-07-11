@@ -1,4 +1,4 @@
-export * from "openchat-shared";
+export * from "@shared";
 export type { OpenChatConfig } from "./config";
 export { OpenChat } from "./openchat";
 export * from "./state";

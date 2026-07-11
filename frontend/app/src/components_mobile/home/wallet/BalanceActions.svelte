@@ -12,7 +12,7 @@
         type EnhancedTokenDetails,
         type PubSubEvents,
         type ResourceKey,
-    } from "openchat-client";
+    } from "@client";
     import type { Snippet } from "svelte";
     import SwapVertical from "svelte-material-icons/SwapVertical.svelte";
     import TrayArrowDown from "svelte-material-icons/TrayArrowDown.svelte";

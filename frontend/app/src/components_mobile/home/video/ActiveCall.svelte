@@ -15,7 +15,7 @@
         type AccessTokenType,
         type ChatIdentifier,
         type VideoCallType,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { videoCameraOn, videoMicOn, videoSpeakerView } from "../../../stores/settings";

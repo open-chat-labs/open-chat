@@ -17,7 +17,7 @@ import {
     type MultiUserChatIdentifier,
     type ResourceKey,
     type UpdateGroupResponse,
-} from "openchat-client";
+} from "@client";
 import { navigate } from "@utils/navigation";
 import { tick } from "svelte";
 import { UpdateGroupOrCommunityState } from "../groupOrCommunity.svelte";

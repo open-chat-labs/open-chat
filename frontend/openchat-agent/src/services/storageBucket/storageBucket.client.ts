@@ -13,7 +13,7 @@ import type {
     FileInfoResponse,
     ForwardFileResponse,
     UploadChunkResponse,
-} from "openchat-shared";
+} from "@shared";
 
 export class StorageBucketClient extends CandidCanisterAgent<StorageBucketService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {

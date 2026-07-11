@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AuthProvider, i18nKey, OpenChat } from "openchat-client";
+    import { AuthProvider, i18nKey, OpenChat } from "@client";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";

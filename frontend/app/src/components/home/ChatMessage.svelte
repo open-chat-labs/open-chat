@@ -4,7 +4,7 @@
     import Typing from "@shared_components/Typing.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
-    import { AvatarSize, type ChatIdentifier, chatListScopeStore, type ChatType, currentUserIdStore, currentUserStore, type EnhancedReplyContext, iconSize, localUpdates, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, type SenderContext, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "openchat-client";
+    import { AvatarSize, type ChatIdentifier, chatListScopeStore, type ChatType, currentUserIdStore, currentUserStore, type EnhancedReplyContext, iconSize, localUpdates, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, type SenderContext, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
     import { getContext, onDestroy, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -19,6 +19,7 @@
     import { now } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
     import { isTouchOnlyDevice } from "../../utils/devices";
+    import { reservedMediaWidth } from "../../utils/media";
     import { canShareMessage } from "../../utils/share";
     import { removeQueryStringParam } from "../../utils/urls";
     import Avatar from "../Avatar.svelte";
@@ -352,6 +353,12 @@
         showRemindMe = true;
     }
     let maxWidthFraction = $derived($screenWidth === ScreenWidth.ExtraLarge ? 0.7 : 0.8);
+    let mediaDimensions = $derived(client.extractDimensionsFromMessageContent(msg.content));
+    let mediaWidth = $derived(
+        mediaDimensions !== undefined
+            ? reservedMediaWidth(mediaDimensions.width, mediaDimensions.height)
+            : undefined,
+    );
     let inert = $derived(
         msg.content.kind === "deleted_content" ||
             msg.content.kind === "blocked_content" ||
@@ -502,7 +509,9 @@
 
                     <div
                         class="bubble-wrapper"
-                        style={`--max-width: ${maxWidthFraction * 100}%;`}
+                        style={`--max-width: ${maxWidthFraction * 100}%;` +
+                            (mediaWidth !== undefined ? ` --media-width: ${mediaWidth};` : "")}
+                        class:clamped={mediaWidth !== undefined}
                         class:p2pSwap={isP2PSwap}
                         class:proposal={isProposal && !inert}>
                         <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -937,6 +946,12 @@
         position: relative;
         max-width: var(--max-width);
         min-width: 90px;
+
+        // media messages: hug the image (media width + bubble padding) so
+        // captions and reply quotes cannot widen the bubble past it
+        &.clamped {
+            max-width: min(var(--max-width), calc(var(--media-width) + toRem(24)));
+        }
 
         &.p2pSwap {
             width: 350px;

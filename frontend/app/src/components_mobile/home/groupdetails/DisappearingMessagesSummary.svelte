@@ -2,7 +2,7 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { msToDays, msToHours, msToMinutes } from "@src/utils/time";
     import { Body, Container } from "component-lib";
-    import { OpenChat } from "openchat-client";
+    import { OpenChat } from "@client";
     import { getContext } from "svelte";
     import Translatable from "../../Translatable.svelte";
     import Separator from "../Separator.svelte";

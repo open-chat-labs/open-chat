@@ -2,7 +2,7 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import { BodySmall, Container, CopyCard, H2 } from "component-lib";
-    import { OpenChat, type BotClientConfigData } from "openchat-client";
+    import { OpenChat, type BotClientConfigData } from "@client";
     import { getContext, onMount } from "svelte";
     import Translatable from "../../Translatable.svelte";
     import Markdown from "@shared_components/Markdown.svelte";

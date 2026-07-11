@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { botState, mobileWidth, OpenChat } from "openchat-client";
-    import { random64, type FlattenedCommand, type MessageContext } from "openchat-shared";
+    import { botState, mobileWidth, OpenChat } from "@client";
+    import { random64, type FlattenedCommand, type MessageContext } from "@shared";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";

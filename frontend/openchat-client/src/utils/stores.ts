@@ -1,4 +1,4 @@
-import { NOOP } from "openchat-shared";
+import { NOOP } from "@shared";
 import { untrack } from "svelte";
 import type {
     StartStopNotifier,

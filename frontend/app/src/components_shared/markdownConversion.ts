@@ -1,5 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { userGroupMentionRegex, userIdMentionRegex } from "@shared";
+
+const anchoredUserMention = new RegExp(`^${userIdMentionRegex.source}`);
+const anchoredGroupMention = new RegExp(`^${userGroupMentionRegex.source}`);
+
 export function nodeToMarkdown(node: any): string {
     if (node.type === "text") {
         let t: string = node.text ?? "";
@@ -98,9 +103,9 @@ export function parseInline(text: string): any[] {
     }
 
     while (pos < text.length) {
-        // mention: @UserId(123)
+        // mention: @UserId(2lcnt-ryaaa-aaaaf-aaula-cai)
         if (text[pos] === "@") {
-            const m = /^@UserId\((\d+)\)/.exec(text.slice(pos));
+            const m = anchoredUserMention.exec(text.slice(pos));
             if (m) {
                 flush(pos);
                 nodes.push({
@@ -111,7 +116,7 @@ export function parseInline(text: string): any[] {
                 textStart = pos;
                 continue;
             }
-            const g = /^@UserGroup\((\d+)\)/.exec(text.slice(pos));
+            const g = anchoredGroupMention.exec(text.slice(pos));
             if (g) {
                 flush(pos);
                 nodes.push({

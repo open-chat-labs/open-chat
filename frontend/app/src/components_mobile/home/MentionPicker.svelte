@@ -1,8 +1,8 @@
 <script lang="ts">
     import VirtualList from "@shared_components/VirtualList.svelte";
     import { Avatar, Body, ColourVars, Column, MenuItem, Row } from "component-lib";
-    import type { OpenChat, UserOrUserGroup } from "openchat-client";
-    import { allUsersStore, iconSize, selectedCommunityMembersStore } from "openchat-client";
+    import type { OpenChat, UserOrUserGroup } from "@client";
+    import { allUsersStore, iconSize, selectedCommunityMembersStore } from "@client";
     import { getContext } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import MentionPickerLogic from "./MentionPickerLogic.svelte";

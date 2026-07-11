@@ -1,6 +1,6 @@
 <script lang="ts">
     import InfoIcon from "@src/components/InfoIcon.svelte";
-    import { chitStateStore, iconSize, type OpenChat } from "openchat-client";
+    import { chitStateStore, iconSize, type OpenChat } from "@client";
     import { getContext, tick } from "svelte";
     import { Confetti } from "svelte-confetti";
     import ShieldHalfFull from "svelte-material-icons/ShieldHalfFull.svelte";

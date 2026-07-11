@@ -1,6 +1,6 @@
 <script lang="ts">
     import { rtlStore } from "@src/stores/rtl";
-    import { Editor, type Content } from "@tiptap/core";
+    import { Editor, type Content, type JSONContent } from "@tiptap/core";
     import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
     import Link from "@tiptap/extension-link";
     import { Placeholder } from "@tiptap/extensions";
@@ -9,16 +9,20 @@
     import "highlight.js/styles/base16/helios.css";
     import { common, createLowlight } from "lowlight";
     import {
+        allUsersStore,
+        userGroupSummariesStore,
         type Member,
         type OpenChat,
         type ReadonlyMap,
         type SelectedEmoji,
+        type User,
         type UserOrUserGroup,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onDestroy, onMount, type Snippet } from "svelte";
     import { CustomEmojiExtension } from "./customEmojiExtension";
     import { markdownToDoc, nodeToMarkdown } from "./markdownConversion";
     import { GroupMentionExtension, UserMentionExtension } from "./mentionExtension";
+    import { transformPastedHTML } from "./pasteTransform";
 
     const lowlight = createLowlight(common);
 
@@ -175,6 +179,37 @@
         return nodeToMarkdown(editor.getJSON());
     }
 
+    // The users mentioned within the message, taken from the `user_mention` nodes in the document
+    // (which are inserted when the user picks from the mention picker)
+    export function getMentionedUsers(): User[] {
+        if (!editor) return [];
+        const users = new Map<string, User>();
+        collectMentionedUsers(editor.getJSON(), users);
+        return [...users.values()];
+    }
+
+    function collectMentionedUsers(node: JSONContent, users: Map<string, User>) {
+        // The attrs both default to null and pasted/restored content can carry a missing or
+        // placeholder username, so hydrate each user from the user store where possible, only
+        // falling back to the username stored in the node's attrs
+        if (node.type === "user_mention") {
+            const { userId, username } = node.attrs ?? {};
+            if (typeof userId === "string" && userId.length > 0) {
+                const user = $allUsersStore.get(userId);
+                users.set(userId, {
+                    userId,
+                    username:
+                        user?.username ??
+                        (typeof username === "string" && username.length > 0
+                            ? username
+                            : "unknown"),
+                    displayName: user?.displayName,
+                });
+            }
+        }
+        node.content?.forEach((child) => collectMentionedUsers(child, users));
+    }
+
     export function clear(): void {
         editor?.commands.clearContent(true);
         empty = editor?.isEmpty ?? true;
@@ -185,9 +220,27 @@
     }
 
     export function setContent(markdown: string): void {
-        editor?.commands.setContent(markdownToDoc(markdown));
+        editor?.commands.setContent(resolveMentionLabels(markdownToDoc(markdown)));
         editor?.commands.focus("end");
         empty = editor?.isEmpty ?? true;
+    }
+
+    // markdownToDoc has no access to the user/group stores, so mention nodes it
+    // creates carry placeholder labels - swap in the real names for display
+    function resolveMentionLabels(node: JSONContent): JSONContent {
+        if (node.type === "user_mention" && node.attrs) {
+            const username = $allUsersStore.get(node.attrs.userId)?.username;
+            if (username !== undefined) {
+                node.attrs.username = username;
+            }
+        } else if (node.type === "group_mention" && node.attrs) {
+            const name = $userGroupSummariesStore.get(Number(node.attrs.groupId))?.name;
+            if (name !== undefined) {
+                node.attrs.groupname = name;
+            }
+        }
+        node.content?.forEach(resolveMentionLabels);
+        return node;
     }
 
     onMount(() => {
@@ -212,6 +265,7 @@
                 CodeBlockLowlight.configure({ lowlight, enableTabIndentation: true }),
             ],
             editorProps: {
+                transformPastedHTML,
                 handleKeyDown: (_view, event) => {
                     if (emojiSuggestion !== undefined) {
                         switch (event.key) {

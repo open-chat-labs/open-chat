@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import type { EnhancedTokenDetails } from "openchat-client";
-    import { cryptoLookup, cryptoTokensSorted, iconSize } from "openchat-client";
+    import type { EnhancedTokenDetails } from "@client";
+    import { cryptoLookup, cryptoTokensSorted, iconSize } from "@client";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Menu from "../Menu.svelte";
     import MenuIcon from "../MenuIcon.svelte";

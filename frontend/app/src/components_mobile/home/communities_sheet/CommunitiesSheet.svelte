@@ -7,7 +7,7 @@
         unreadCommunityChannelCountsStore,
         type CommunitySummary,
         type UnreadCounts,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";

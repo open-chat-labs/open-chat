@@ -1,6 +1,6 @@
 <script lang="ts">
     import { ColourVars } from "component-lib";
-    import { OpenChat, publish, type PaymentGate } from "openchat-client";
+    import { OpenChat, publish, type PaymentGate } from "@client";
     import { getContext } from "svelte";
     import type { UpdateGroupOrCommunityState } from "../groupOrCommunity.svelte";
     import AboutPaymentGate from "./AboutPaymentGate.svelte";

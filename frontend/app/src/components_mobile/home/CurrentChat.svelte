@@ -31,7 +31,7 @@
         subscribe,
         suspendedUserStore,
         type User,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount, tick } from "svelte";
     import { releaseNotifications } from "tauri-plugin-oc-api";
     import { i18nKey } from "../../i18n/i18n";

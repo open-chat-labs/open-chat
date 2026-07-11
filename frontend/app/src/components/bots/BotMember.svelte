@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { iconSize, type CommunitySummary, type MultiUserChat } from "openchat-client";
-    import { type ExternalBot, type GrantedBotPermissions } from "openchat-shared";
+    import { iconSize, type CommunitySummary, type MultiUserChat } from "@client";
+    import { type ExternalBot, type GrantedBotPermissions } from "@shared";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";

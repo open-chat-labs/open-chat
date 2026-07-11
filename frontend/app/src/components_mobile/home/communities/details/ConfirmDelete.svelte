@@ -7,7 +7,7 @@
         publish,
         routeForScope,
         type CommunitySummary,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";

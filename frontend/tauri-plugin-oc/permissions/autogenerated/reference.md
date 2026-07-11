@@ -23,6 +23,9 @@ Default permissions for the plugin
 - `allow-save-media`
 - `allow-update-chat-shortcuts`
 - `allow-get-pending-deep-link`
+- `allow-get-pending-notification-tap`
+- `allow-clear-all-notifications`
+- `allow-delete-fcm-token`
 
 ## Permission Table
 
@@ -32,6 +35,58 @@ Default permissions for the plugin
 <th>Description</th>
 </tr>
 
+
+<tr>
+<td>
+
+`oc:allow-clear-all-notifications`
+
+</td>
+<td>
+
+Enables the clear_all_notifications command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-clear-all-notifications`
+
+</td>
+<td>
+
+Denies the clear_all_notifications command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-delete-fcm-token`
+
+</td>
+<td>
+
+Enables the delete_fcm_token command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-delete-fcm-token`
+
+</td>
+<td>
+
+Denies the delete_fcm_token command without any pre-configured scope.
+
+</td>
+</tr>
 
 <tr>
 <td>
@@ -159,6 +214,32 @@ Enables the get_pending_deep_link command without any pre-configured scope.
 <td>
 
 Denies the get_pending_deep_link command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-get-pending-notification-tap`
+
+</td>
+<td>
+
+Enables the get_pending_notification_tap command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-get-pending-notification-tap`
+
+</td>
+<td>
+
+Denies the get_pending_notification_tap command without any pre-configured scope.
 
 </td>
 </tr>

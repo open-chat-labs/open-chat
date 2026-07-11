@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { querystringStore } from "openchat-client";
+    import { querystringStore } from "@client";
     import { scrollToSection } from "../../utils/urls";
     import Headline from "./Headline.svelte";
     import TermsContent from "./TermsContent.svelte";

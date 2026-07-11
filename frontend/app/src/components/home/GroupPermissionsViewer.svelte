@@ -10,7 +10,7 @@
         ROLE_MEMBER,
         ROLE_MODERATOR,
         ROLE_NONE,
-    } from "openchat-client";
+    } from "@client";
     import GroupPermissionsPartitionViewer from "./GroupPermissionsPartitionViewer.svelte";
     import TabHeader from "../TabHeader.svelte";
     import { i18nKey } from "../../i18n/i18n";

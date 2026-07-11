@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { iconSize, mobileWidth, publish, type Level } from "openchat-client";
+    import { iconSize, mobileWidth, publish, type Level } from "@client";
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import Close from "svelte-material-icons/Close.svelte";

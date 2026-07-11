@@ -13,7 +13,7 @@
         MenuItem,
         MenuTrigger,
     } from "component-lib";
-    import type { LeafGate, OpenChat } from "openchat-client";
+    import type { LeafGate, OpenChat } from "@client";
     import { getContext, type Snippet } from "svelte";
     import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";

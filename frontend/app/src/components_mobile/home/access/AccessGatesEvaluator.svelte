@@ -1,6 +1,6 @@
 <script lang="ts">
     import { accessApprovalState } from "@src/utils/preview.svelte";
-    import { OpenChat, type EnhancedAccessGate, type GateCheckSucceeded } from "openchat-client";
+    import { OpenChat, type EnhancedAccessGate, type GateCheckSucceeded } from "@client";
     import { getContext } from "svelte";
     import AccessGateEvaluator from "./AccessGateEvaluator.svelte";
 

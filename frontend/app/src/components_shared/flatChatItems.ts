@@ -1,4 +1,4 @@
-import type { ChatEvent, EventWrapper, TimelineItem } from "openchat-client";
+import type { ChatEvent, EventWrapper, TimelineItem } from "@client";
 
 // Flat, individually-keyed representation of the chat timeline for
 // virtualisation. items[0] = newest (visual bottom in column-reverse).

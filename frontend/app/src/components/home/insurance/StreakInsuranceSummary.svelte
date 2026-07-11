@@ -4,7 +4,7 @@
     import Legend from "@src/components/Legend.svelte";
     import Translatable from "@src/components/Translatable.svelte";
     import { i18nKey } from "@src/i18n/i18n";
-    import { streakInsuranceStore } from "openchat-client";
+    import { streakInsuranceStore } from "@client";
     import StreakInsuranceBuy from "./StreakInsuranceBuy.svelte";
 
     const remaining = $derived(

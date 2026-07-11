@@ -22,7 +22,7 @@
         type UserGroupDetails,
         type UserLookup,
         type UserSummary,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Check from "svelte-material-icons/Check.svelte";

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Container } from "component-lib";
-    import { fontScaleStore } from "openchat-client";
+    import { fontScaleStore } from "@client";
     import Range from "../../Range.svelte";
 </script>
 

@@ -14,7 +14,7 @@ import {
     type MessageContext,
     type ThreadRead,
     type ThreadSyncDetails,
-} from "openchat-shared";
+} from "@shared";
 import { type Subscriber, type Unsubscriber } from "svelte/store";
 import type { OpenChat } from "../../openchat";
 import { offlineStore } from "../../stores";

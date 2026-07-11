@@ -1,6 +1,6 @@
 <script lang="ts">
     import { ColourVars, Column, Row, Subtitle } from "component-lib";
-    import { type Level } from "openchat-client";
+    import { type Level } from "@client";
     import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";

@@ -8,7 +8,7 @@ import {
     type ProposedResponse,
     type RejectReason,
     type RejectResponse,
-} from "openchat-shared";
+} from "@shared";
 import type {
     ApiApproveResponse,
     ApiCandidateTranslation,

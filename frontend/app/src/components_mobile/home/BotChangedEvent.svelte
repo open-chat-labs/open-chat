@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { allUsersStore, botState } from "openchat-client";
-    import type { BotAdded, BotRemoved, BotUpdated } from "openchat-shared";
+    import { allUsersStore, botState } from "@client";
+    import type { BotAdded, BotRemoved, BotUpdated } from "@shared";
     import { _ } from "svelte-i18n";
     import { buildDisplayName } from "../../utils/user";
     import NonMessageEvent from "./NonMessageEvent.svelte";

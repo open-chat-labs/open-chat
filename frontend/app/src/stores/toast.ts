@@ -1,4 +1,4 @@
-import { type ResourceKey, type Toast } from "openchat-client";
+import { type ResourceKey, type Toast } from "@client";
 import { readable, writable, type Readable } from "svelte/store";
 
 const { subscribe, update } = writable<Toast | undefined>(undefined);

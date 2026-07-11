@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { identityStateStore, locationStore, OpenChat } from "openchat-client";
+    import { identityStateStore, locationStore, OpenChat } from "@client";
     import { getContext } from "svelte";
     import Launch from "./Launch.svelte";
     import Link from "./Link.svelte";

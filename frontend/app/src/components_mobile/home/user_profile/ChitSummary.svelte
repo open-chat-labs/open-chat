@@ -12,7 +12,7 @@
         Subtitle,
         Column,
     } from "component-lib";
-    import { chitStateStore, i18nKey, OpenChat, publish } from "openchat-client";
+    import { chitStateStore, i18nKey, OpenChat, publish } from "@client";
     import { getContext } from "svelte";
     import PartyPopper from "svelte-material-icons/PartyPopper.svelte";
     import Rocket from "svelte-material-icons/RocketLaunchOutline.svelte";

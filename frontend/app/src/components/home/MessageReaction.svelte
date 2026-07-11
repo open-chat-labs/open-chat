@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { NativeEmoji } from "emoji-picker-element/shared";
-    import type { CustomEmoji, OpenChat, UserLookup } from "openchat-client";
-    import { allUsersStore, currentUserIdStore, customEmojis } from "openchat-client";
+    import type { CustomEmoji, OpenChat, UserLookup } from "@client";
+    import { allUsersStore, currentUserIdStore, customEmojis } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";

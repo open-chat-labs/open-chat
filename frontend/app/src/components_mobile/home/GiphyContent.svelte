@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type GiphyContent, type TextContent as TextContentType } from "openchat-client";
+    import { type GiphyContent, type TextContent as TextContentType } from "@client";
     import { rtlStore } from "../../stores/rtl";
     import { reservedMediaStyle } from "../../utils/media";
     import TextContent from "./TextContent.svelte";

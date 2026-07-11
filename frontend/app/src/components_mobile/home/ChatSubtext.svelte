@@ -1,7 +1,7 @@
 <script lang="ts">
     import { BodySmall, Container } from "component-lib";
-    import type { ChatSummary, OpenChat } from "openchat-client";
-    import { allUsersStore } from "openchat-client";
+    import type { ChatSummary, OpenChat } from "@client";
+    import { allUsersStore } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";

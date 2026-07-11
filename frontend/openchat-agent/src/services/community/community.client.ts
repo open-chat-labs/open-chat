@@ -68,7 +68,7 @@ import type {
     User,
     VideoCallParticipantsResponse,
     VideoCallPresence,
-} from "openchat-shared";
+} from "@shared";
 import {
     DestinationInvalidError,
     MAX_EVENTS,
@@ -76,7 +76,7 @@ import {
     offline,
     random32,
     toBigInt32,
-} from "openchat-shared";
+} from "@shared";
 import type { AgentConfig } from "../../config";
 import {
     ActiveProposalTalliesResponse,

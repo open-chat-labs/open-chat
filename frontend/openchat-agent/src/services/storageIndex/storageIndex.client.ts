@@ -6,7 +6,7 @@ import type {
     AllocatedBucketResponse,
     CanForwardResponse,
     StorageUserResponse,
-} from "openchat-shared";
+} from "@shared";
 
 export class StorageIndexClient extends CandidCanisterAgent<StorageIndexService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {

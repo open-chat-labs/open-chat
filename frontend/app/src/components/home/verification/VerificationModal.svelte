@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { iconSize } from "openchat-client";
+    import { iconSize } from "@client";
     import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import ModalContent from "../../ModalContent.svelte";

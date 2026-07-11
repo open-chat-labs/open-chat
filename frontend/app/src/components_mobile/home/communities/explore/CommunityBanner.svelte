@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { DataContent, OpenChat } from "openchat-client";
+    import type { DataContent, OpenChat } from "@client";
     import { getContext, type Snippet } from "svelte";
 
     interface Props {

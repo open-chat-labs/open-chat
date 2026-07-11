@@ -13,7 +13,7 @@
         IconButton,
         StatusCard,
     } from "component-lib";
-    import type { CommunitySummary, OpenChat } from "openchat-client";
+    import type { CommunitySummary, OpenChat } from "@client";
     import {
         allUsersStore,
         anonUserStore,
@@ -24,7 +24,7 @@
         ROLE_OWNER,
         selectedCommunityMembersStore,
         selectedCommunityRulesStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";

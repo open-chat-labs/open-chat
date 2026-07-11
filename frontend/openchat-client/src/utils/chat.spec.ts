@@ -9,7 +9,7 @@ import {
     type PollVotes,
     type UserLookup,
     type UserSummary,
-} from "openchat-shared";
+} from "@shared";
 import { localUpdates } from "../state";
 import {
     addVoteToPoll,

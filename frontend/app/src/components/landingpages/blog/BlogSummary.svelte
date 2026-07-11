@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { mobileWidth } from "openchat-client";
+    import { mobileWidth } from "@client";
     import Copy from "svelte-material-icons/ContentCopy.svelte";
     import { copyToClipboard } from "../../../utils/urls";
     import Link from "../Link.svelte";

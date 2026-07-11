@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { OpenChat } from "openchat-client";
-    import { anonUserStore, iconSize, identityStateStore, publish } from "openchat-client";
+    import type { OpenChat } from "@client";
+    import { anonUserStore, iconSize, identityStateStore, publish } from "@client";
     import { getContext, tick } from "svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";

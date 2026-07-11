@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { OpenChat } from "openchat-client";
+    import type { OpenChat } from "@client";
     import {
         anonUserStore,
         exploreCommunitiesFiltersStore,
@@ -12,7 +12,7 @@
         publish,
         ScreenWidth,
         screenWidth,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import ArrowUp from "svelte-material-icons/ArrowUp.svelte";

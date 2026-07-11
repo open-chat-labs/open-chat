@@ -6,7 +6,7 @@
         serverDirectChatsStore,
         type BotMatch,
         type UserSummary,
-    } from "openchat-client";
+    } from "@client";
     import type { Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../i18n/i18n";

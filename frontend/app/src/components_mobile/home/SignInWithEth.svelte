@@ -4,7 +4,7 @@
     import { coinbaseWallet, metaMask, walletConnect } from "@wagmi/connectors";
     import { createConfig, http, signMessage, type Connector } from "@wagmi/core";
     import { Button } from "component-lib";
-    import { OpenChat } from "openchat-client";
+    import { OpenChat } from "@client";
     import { getContext } from "svelte";
 
     const client = getContext<OpenChat>("client");

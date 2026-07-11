@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AuthProvider, selectedAuthProviderStore, type OpenChat } from "openchat-client";
+    import { AuthProvider, selectedAuthProviderStore, type OpenChat } from "@client";
     import { getContext } from "svelte";
     import EmailIcon from "svelte-material-icons/EmailOutline.svelte";
     import SendIcon from "svelte-material-icons/Send.svelte";

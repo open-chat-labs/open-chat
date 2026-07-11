@@ -1,6 +1,6 @@
 <script lang="ts">
     import { IconButton } from "component-lib";
-    import type { UserSummary, VideoCallPresence, VideoCallType } from "openchat-shared";
+    import type { UserSummary, VideoCallPresence, VideoCallType } from "@shared";
     import AccountCancel from "svelte-material-icons/AccountCancel.svelte";
     import User from "../User.svelte";
 

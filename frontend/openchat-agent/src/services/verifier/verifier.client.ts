@@ -4,7 +4,7 @@ import type {
     SubmitVerificationResponse,
     UploadVerificationFrameResponse,
     VerificationStatus,
-} from "openchat-shared";
+} from "@shared";
 import {
     Empty,
     PersonhoodVerifierStartVerificationResponse,

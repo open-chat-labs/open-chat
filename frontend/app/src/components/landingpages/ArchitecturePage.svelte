@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { locationStore, mobileWidth, querystringStore } from "openchat-client";
+    import { locationStore, mobileWidth, querystringStore } from "@client";
     import Copy from "svelte-material-icons/ContentCopy.svelte";
     import { copyToClipboard, scrollToSection } from "../../utils/urls";
     import ArrowLink from "../ArrowLink.svelte";

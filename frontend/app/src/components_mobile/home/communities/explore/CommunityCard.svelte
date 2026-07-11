@@ -10,8 +10,8 @@
         ReadMore,
         Title,
     } from "component-lib";
-    import type { AccessGateConfig, DataContent, OpenChat } from "openchat-client";
-    import { ModerationFlags } from "openchat-client";
+    import type { AccessGateConfig, DataContent, OpenChat } from "@client";
+    import { ModerationFlags } from "@client";
     import { getContext } from "svelte";
     import Translate from "svelte-material-icons/Translate.svelte";
     import { i18nKey, supportedLanguagesByCode } from "../../../../i18n/i18n";

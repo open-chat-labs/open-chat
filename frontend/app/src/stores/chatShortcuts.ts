@@ -7,7 +7,7 @@ import {
     communitiesStore,
     compareChats,
     OpenChat,
-} from "openchat-client";
+} from "@client";
 import { derived } from "svelte/store";
 import { updateChatShortcuts, type ChatShortcut } from "tauri-plugin-oc-api";
 

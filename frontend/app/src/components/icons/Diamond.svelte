@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { DiamondMembershipStatus, ResourceKey } from "openchat-client";
+    import type { DiamondMembershipStatus, ResourceKey } from "@client";
     import Tooltip from "../tooltip/Tooltip.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";

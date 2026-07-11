@@ -1,7 +1,7 @@
 <script lang="ts">
     import SelectUsers from "./SelectUsers.svelte";
-    import type { CandidateMember, UserOrUserGroup, UserSummary } from "openchat-client";
-    import { ROLE_MEMBER } from "openchat-client";
+    import type { CandidateMember, UserOrUserGroup, UserSummary } from "@client";
+    import { ROLE_MEMBER } from "@client";
 
     interface Props {
         members: CandidateMember[];

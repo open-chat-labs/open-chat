@@ -1,6 +1,6 @@
 <script lang="ts">
     import { disableChit } from "@src/stores/settings";
-    import type { DiamondMembershipStatus } from "openchat-client";
+    import type { DiamondMembershipStatus } from "@client";
     import Diamond from "../../icons/Diamond.svelte";
     import Verified from "../../icons/Verified.svelte";
     import ChitEarnedBadge from "./ChitEarnedBadge.svelte";

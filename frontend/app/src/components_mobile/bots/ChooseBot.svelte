@@ -1,6 +1,6 @@
 <script lang="ts">
     import { ColourVars, Column, StatusCard } from "component-lib";
-    import { botState, currentUserIdStore, type ExternalBot } from "openchat-client";
+    import { botState, currentUserIdStore, type ExternalBot } from "@client";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import BotMatch from "./BotMatch.svelte";

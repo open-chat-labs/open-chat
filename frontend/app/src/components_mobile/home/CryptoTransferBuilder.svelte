@@ -1,13 +1,13 @@
 <script lang="ts">
     import { Body, Column, CommonButton, Container, IconButton, Row, Sheet } from "component-lib";
-    import type { ChatSummary, UserSummary } from "openchat-client";
+    import type { ChatSummary, UserSummary } from "@client";
     import {
         allUsersStore,
         enhancedCryptoLookup as cryptoLookup,
         currentUserIdStore,
         localUpdates,
-    } from "openchat-client";
-    import { type CryptocurrencyContent, type MessageContext, nowNanos } from "openchat-shared";
+    } from "@client";
+    import { type CryptocurrencyContent, type MessageContext, nowNanos } from "@shared";
     import { onMount } from "svelte";
     import Chat from "svelte-material-icons/ChatPlusOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";

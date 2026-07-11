@@ -12,7 +12,7 @@
         Sheet,
         type SwipeDirection,
     } from "component-lib";
-    import { canExtendDiamondStore, isDiamondStore, publish } from "openchat-client";
+    import { canExtendDiamondStore, isDiamondStore, publish } from "@client";
     import { onMount } from "svelte";
     import Diamond from "svelte-material-icons/DiamondOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";

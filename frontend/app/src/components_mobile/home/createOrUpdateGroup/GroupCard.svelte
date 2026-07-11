@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { ColourVarKeys } from "component-lib";
     import { Avatar, BodySmall, ColourVars, Container, Rem, Subtitle } from "component-lib";
-    import type { CandidateGroupChat, OpenChat } from "openchat-client";
+    import type { CandidateGroupChat, OpenChat } from "@client";
     import { getContext } from "svelte";
 
     const client = getContext<OpenChat>("client");

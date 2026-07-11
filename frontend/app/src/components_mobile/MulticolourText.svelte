@@ -1,7 +1,7 @@
 <script module lang="ts">
     import type { ColourVarKeys } from "component-lib";
     import { ColourVars } from "component-lib";
-    import type { ResourceKey } from "openchat-client";
+    import type { ResourceKey } from "@client";
     import Translatable from "./Translatable.svelte";
 
     export type TextPart = {

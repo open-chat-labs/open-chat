@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AvatarSize, botState, currentUserIdStore, type ExternalBot } from "openchat-client";
+    import { AvatarSize, botState, currentUserIdStore, type ExternalBot } from "@client";
     import { i18nKey } from "../../i18n/i18n";
     import AlertBox from "../AlertBox.svelte";
     import Avatar from "../Avatar.svelte";

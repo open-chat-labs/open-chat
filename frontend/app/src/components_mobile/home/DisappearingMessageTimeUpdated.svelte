@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { OpenChat, UserSummary } from "openchat-client";
-    import { allUsersStore } from "openchat-client";
+    import type { OpenChat, UserSummary } from "@client";
+    import { allUsersStore } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { buildDisplayName } from "../../utils/user";

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
-    import { debouncedDerived, threadsByChatStore, type OpenChat } from "openchat-client";
+    import { debouncedDerived, threadsByChatStore, type OpenChat } from "@client";
     import { getContext } from "svelte";
     import Loading from "@shared_components/Loading.svelte";
     import { default as ThreadPreviewComponent } from "./ThreadPreview.svelte";

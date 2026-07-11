@@ -1,6 +1,6 @@
 <script lang="ts">
     import { ChatCaption, Column, Label } from "component-lib";
-    import { type OgPreview } from "openchat-client";
+    import { type OgPreview } from "@client";
     // import PreviewPlaceholder from "../PreviewPlaceholder.svelte";
 
     interface Props {

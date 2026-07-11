@@ -1,10 +1,10 @@
 <script lang="ts">
-    import type { CreatedUser, EnhancedReplyContext, OpenChat } from "openchat-client";
+    import type { CreatedUser, EnhancedReplyContext, OpenChat } from "@client";
     import {
         iconSize,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";

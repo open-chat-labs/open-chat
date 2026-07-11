@@ -10,7 +10,7 @@
         MenuTrigger,
         Subtitle,
     } from "component-lib";
-    import { OpenChat, walletConfigStore, type EnhancedTokenDetails } from "openchat-client";
+    import { OpenChat, walletConfigStore, type EnhancedTokenDetails } from "@client";
     import { getContext } from "svelte";
     import HeartRemoveOutline from "svelte-material-icons/HeartRemoveOutline.svelte";
     import MenuRight from "svelte-material-icons/MenuRight.svelte";

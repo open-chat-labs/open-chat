@@ -6,7 +6,7 @@
         OpenChat,
         serverGroupChatsStore,
         type BotInstallationLocation,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import Avatar from "../Avatar.svelte";
     import SelectedMatch from "../home/proposal/SelectedMatch.svelte";

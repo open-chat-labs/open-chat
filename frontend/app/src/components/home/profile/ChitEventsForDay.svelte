@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { mobileWidth, type ChitEvent } from "openchat-client";
+    import { mobileWidth, type ChitEvent } from "@client";
     import Tooltip from "../../../components/tooltip/Tooltip.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";

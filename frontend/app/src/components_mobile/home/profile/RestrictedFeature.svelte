@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Column, Sheet, Title } from "component-lib";
-    import type { Feature } from "openchat-client";
+    import type { Feature } from "@client";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 

@@ -1,4 +1,4 @@
-import { customEmojis } from "openchat-client";
+import { customEmojis } from "@client";
 
 class CustomEmoji extends HTMLElement {
     // Called when the element is connected to the DOM

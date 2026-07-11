@@ -18,7 +18,7 @@ import type {
     UpdateCommunityResponse,
     UserFailedError,
     UserGroupDetails,
-} from "openchat-shared";
+} from "@shared";
 import {
     CommonResponses,
     emptyRules,
@@ -28,7 +28,7 @@ import {
     ROLE_OWNER,
     toBigInt32,
     UnsupportedValueError,
-} from "openchat-shared";
+} from "@shared";
 import type {
     CommunityAddMembersToChannelFailedResult,
     CommunityAddMembersToChannelPartialSuccessResult,

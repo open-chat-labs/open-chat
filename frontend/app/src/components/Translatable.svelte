@@ -2,7 +2,7 @@
     import { _ } from "svelte-i18n";
     import { interpolate } from "../i18n/i18n";
     import { translatable } from "../actions/translatable";
-    import type { ResourceKey } from "openchat-client";
+    import type { ResourceKey } from "@client";
 
     interface Props {
         resourceKey: ResourceKey;

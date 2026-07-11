@@ -1,6 +1,6 @@
 <script lang="ts">
     import { SectionHeader } from "component-lib";
-    import { publish, type ResourceKey } from "openchat-client";
+    import { publish, type ResourceKey } from "@client";
     import type { Snippet } from "svelte";
     import Translatable from "../Translatable.svelte";
 

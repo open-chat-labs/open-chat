@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Suspend "verified user" (unique person) gating - the gate is ignored, filtered out of composite gates so an OR gate requires another branch ([#9061](https://github.com/open-chat-labs/open-chat/pull/9061))
 
+### Fixed
+
+- Lock against a user having two gate payments in progress concurrently ([#9080](https://github.com/open-chat-labs/open-chat/pull/9080))
+
 ## [[2.0.1989](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1989-group)] - 2026-06-18
 
 ### Added

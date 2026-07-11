@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { OpenChat } from "openchat-client";
+    import type { OpenChat } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { msToDays, msToHours, msToMinutes } from "../../utils/time";

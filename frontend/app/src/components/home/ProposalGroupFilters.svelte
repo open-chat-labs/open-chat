@@ -1,11 +1,11 @@
 <script lang="ts">
-    import type { ChatSummary, OpenChat } from "openchat-client";
+    import type { ChatSummary, OpenChat } from "@client";
     import {
         filteredProposalsStore,
         iconSize,
         mobileWidth,
         proposalTopicsStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";

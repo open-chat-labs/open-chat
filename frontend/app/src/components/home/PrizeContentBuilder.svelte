@@ -26,7 +26,7 @@
         MessageContext,
         OpenChat,
         PrizeContentInitial,
-    } from "openchat-client";
+    } from "@client";
     import {
         bigIntMax,
         chitBands,
@@ -34,7 +34,7 @@
         cryptoLookup,
         LocalStorageStore,
         mobileWidth,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";

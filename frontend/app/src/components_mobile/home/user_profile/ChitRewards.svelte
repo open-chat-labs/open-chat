@@ -3,7 +3,7 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { chitPopup, disableChit, utcMode } from "@src/stores/settings";
     import { Body, BodySmall, Button, Container, Subtitle, Switch } from "component-lib";
-    import { chitStateStore, OpenChat, publish, type ChitEvent } from "openchat-client";
+    import { chitStateStore, OpenChat, publish, type ChitEvent } from "@client";
     import { getContext } from "svelte";
     import FlashOutline from "svelte-material-icons/FlashOutline.svelte";
     import Calendar from "../../calendar/Calendar.svelte";

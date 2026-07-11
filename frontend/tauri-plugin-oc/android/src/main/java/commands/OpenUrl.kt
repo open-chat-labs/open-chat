@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.util.Log
 import androidx.browser.customtabs.CustomTabsClient
 import androidx.browser.customtabs.CustomTabsIntent
@@ -39,11 +40,17 @@ class OpenUrl(private val activity: Activity) {
             try {
                 val scheme = uri.scheme?.lowercase()
                 if (scheme == "http" || scheme == "https") {
-                    // Open web URLs in a Custom Tab, which explicitly targets a
-                    // browser package. A plain ACTION_VIEW intent would resolve
-                    // back to this app for verified app-link domains (e.g.
-                    // oc.app), re-firing the deep-link event and causing a loop.
-                    openWithCustomTabIntent(uri)
+                    if (isOwnAppLinkHost(uri)) {
+                        // Our own verified app-link domain: a plain ACTION_VIEW
+                        // would resolve straight back to this app, re-firing the
+                        // deep-link event in a loop, so force a browser Custom Tab.
+                        openWithCustomTabIntent(uri)
+                    } else {
+                        // Third-party domain: prefer a verified app-link handler
+                        // (e.g. the GitHub app for github.com), fall back to a
+                        // browser Custom Tab when no app claims the URL.
+                        openPreferringNativeApp(uri)
+                    }
                 } else {
                     // Non-web schemes (mailto:, tel:, other app deep links) -
                     // let the system resolve the appropriate handler.
@@ -62,6 +69,25 @@ class OpenUrl(private val activity: Activity) {
                 invoke.reject(e.toString())
             }
         }
+    }
+
+    private fun isOwnAppLinkHost(uri: Uri): Boolean {
+        val host = uri.host?.lowercase() ?: return false
+        return host == "oc.app" || host.endsWith(".oc.app")
+    }
+
+    private fun openPreferringNativeApp(uri: Uri) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            try {
+                val intent = Intent(Intent.ACTION_VIEW, uri)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REQUIRE_NON_BROWSER)
+                activity.startActivity(intent)
+                return
+            } catch (_: ActivityNotFoundException) {
+                // no non-browser handler for this URL — use the Custom Tab
+            }
+        }
+        openWithCustomTabIntent(uri)
     }
 
     fun openWithCustomTabIntent(uri: Uri) {

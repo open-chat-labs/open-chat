@@ -3,7 +3,7 @@ import {
     Notification as TNotification,
     notification as toNotification,
     typeboxValidate,
-} from "openchat-agent";
+} from "@agent";
 import type {
     AddedToChannelNotification,
     ChannelIdentifier,
@@ -18,7 +18,7 @@ import type {
     GroupNotification,
     GroupReaction,
     Notification,
-} from "openchat-shared";
+} from "@shared";
 import {
     isMessageNotification,
     routeForChatIdentifier,
@@ -26,7 +26,7 @@ import {
     routeForMessageContext,
     toTitleCase,
     UnsupportedValueError,
-} from "openchat-shared";
+} from "@shared";
 import { ExpirationPlugin } from "workbox-expiration";
 import { staticResourceCache } from "workbox-recipes";
 import { registerRoute } from "workbox-routing";
@@ -71,26 +71,47 @@ const DOCUMENT_CACHE_NAME = "openchat_network_first";
 const DOCUMENT_CACHE_KEY = "openchat_document";
 const NETWORK_TIMEOUT_MS = 8000;
 
-// A valid document response must be a 200 with a non-empty body.
+// A valid document response must be a 200 with a non-empty body. Returns a
+// fully-buffered reconstruction of the response, or undefined if invalid.
 // Note: iOS occasionally returns a synthetic empty 200 for navigation requests
 // (e.g. when the app is backgrounded/foregrounded or on a network blip).
-async function isValidDocumentResponse(response: Response | undefined): Promise<boolean> {
-    if (!response || response.status !== 200) return false;
+// content-length cannot be trusted – those synthetic responses can carry a
+// non-zero header with a zero-byte body.
+//
+// The body must be validated by buffering it COMPLETELY and serving the page a
+// response reconstructed from the buffer. Reading just the first chunk of a
+// clone and cancelling the reader stalls the original response's stream on an
+// iOS/WebKit cold service-worker start, so the navigation never finishes and
+// every relaunch of the installed PWA is a white screen. The document is only
+// index.html, so buffering is cheap.
+async function bufferValidDocumentResponse(
+    response: Response | undefined,
+): Promise<Response | undefined> {
+    if (!response || response.status !== 200) return undefined;
 
-    // Read only the first chunk rather than buffering the entire document.
-    // content-length cannot be trusted – iOS synthetic empty 200 responses
-    // can carry a non-zero header with a zero-byte body.
-    const body = response.clone().body;
-    if (!body) return false;
-    const reader = body.getReader();
+    let body: ArrayBuffer;
     try {
-        const { value } = await reader.read();
-        return value !== undefined && value.byteLength > 0;
+        // drain a clone in full (a fully-read clone is safe; a partially-read,
+        // cancelled one is not) leaving the original intact for logging
+        body = await response.clone().arrayBuffer();
     } catch {
-        return false;
-    } finally {
-        await reader.cancel();
+        return undefined;
     }
+    if (body.byteLength === 0) return undefined;
+
+    // the buffer holds decoded bytes, so drop the headers that describe the
+    // original encoded payload — a stale content-length can truncate the
+    // reconstructed body and a content-encoding can get it decoded twice
+    const headers = new Headers(response.headers);
+    headers.delete("content-encoding");
+    headers.delete("content-length");
+    headers.delete("transfer-encoding");
+
+    return new Response(body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers,
+    });
 }
 
 async function logInvalidDocumentResponse(
@@ -168,7 +189,8 @@ registerRoute(matchCallback, async ({ request }) => {
     async function getCachedDocument(): Promise<Response | null> {
         const cached = await cache.match(DOCUMENT_CACHE_KEY);
         if (!cached) return null;
-        if (await isValidDocumentResponse(cached)) return cached;
+        const buffered = await bufferValidDocumentResponse(cached);
+        if (buffered) return buffered;
         await logInvalidDocumentResponse("SW: cached document is invalid/empty – deleting", cached);
         await cache.delete(DOCUMENT_CACHE_KEY);
         return null;
@@ -177,12 +199,13 @@ registerRoute(matchCallback, async ({ request }) => {
     // Try the network. If iOS returns a synthetic empty 200, retry once.
     // If the network times out or fails outright there is no point retrying – fall through to the cache.
     const networkResponse = await fetchWithTimeout(request, NETWORK_TIMEOUT_MS);
+    const bufferedNetwork = await bufferValidDocumentResponse(networkResponse);
 
     if (!networkResponse) {
         console.warn("SW: network fetch timed out or failed – falling back to cache");
-    } else if (await isValidDocumentResponse(networkResponse)) {
-        await cache.put(DOCUMENT_CACHE_KEY, networkResponse.clone());
-        return networkResponse;
+    } else if (bufferedNetwork) {
+        await cache.put(DOCUMENT_CACHE_KEY, bufferedNetwork.clone());
+        return bufferedNetwork;
     } else {
         await logInvalidDocumentResponse(
             "SW: invalid/empty network response – retrying",
@@ -190,12 +213,13 @@ registerRoute(matchCallback, async ({ request }) => {
         );
 
         const retryResponse = await fetchWithTimeout(request, NETWORK_TIMEOUT_MS);
+        const bufferedRetry = await bufferValidDocumentResponse(retryResponse);
 
         if (!retryResponse) {
             console.warn("SW: retry timed out or failed – falling back to cache");
-        } else if (await isValidDocumentResponse(retryResponse)) {
-            await cache.put(DOCUMENT_CACHE_KEY, retryResponse.clone());
-            return retryResponse;
+        } else if (bufferedRetry) {
+            await cache.put(DOCUMENT_CACHE_KEY, bufferedRetry.clone());
+            return bufferedRetry;
         } else {
             await logInvalidDocumentResponse(
                 "SW: invalid/empty network response on retry – falling back to cache",

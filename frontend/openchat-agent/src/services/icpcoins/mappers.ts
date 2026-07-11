@@ -1,6 +1,6 @@
 import { Type, type Static } from "@sinclair/typebox";
 import { AssertError } from "@sinclair/typebox/value";
-import type { CryptocurrencyDetails, TokenExchangeRates } from "openchat-shared";
+import type { CryptocurrencyDetails, TokenExchangeRates } from "@shared";
 import { typeboxValidate } from "../../utils/typebox";
 import type { CoinWithDetails, GetCoinsByMarketcapResp } from "./candid/types";
 

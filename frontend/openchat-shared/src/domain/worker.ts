@@ -471,6 +471,7 @@ export type WorkerRequest =
     | UpdateProposalTallies
     | FcmTokenExists
     | AddFcmToken
+    | RemoveFcmToken
     | CreateAccountLinkingCode
     | ReinstateMissedDailyClaims
     | VerifyAccountLinkingCode
@@ -1108,6 +1109,11 @@ type AddFcmToken = {
     kind: "addFcmToken";
     fcmToken: string;
     onResponseError?: (error: string | null) => void;
+};
+
+type RemoveFcmToken = {
+    kind: "removeFcmToken";
+    fcmToken: string;
 };
 
 type RegisterUser = {

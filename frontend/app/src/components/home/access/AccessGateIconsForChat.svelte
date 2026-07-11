@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { EnhancedAccessGate } from "openchat-client";
+    import type { EnhancedAccessGate } from "@client";
     import AccessGateIcon from "./AccessGateIcon.svelte";
     import { mergeAccessGates } from "../../../utils/access";
 

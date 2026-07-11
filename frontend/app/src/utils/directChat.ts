@@ -1,4 +1,4 @@
-import { type ChatSummary, OPENCHAT_BOT_USER_ID, publish } from "openchat-client";
+import { type ChatSummary, OPENCHAT_BOT_USER_ID, publish } from "@client";
 
 // A direct chat can be deleted unless it's the conversation with the OpenChat
 // bot, which is always present and shouldn't be removable.

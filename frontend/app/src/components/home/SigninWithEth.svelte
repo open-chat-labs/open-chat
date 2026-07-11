@@ -2,7 +2,7 @@
     import { createConfig, http, signMessage, type Connector } from "@wagmi/core";
     import { coinbaseWallet, walletConnect, metaMask } from "@wagmi/connectors";
     import { mainnet } from "@wagmi/chains";
-    import { OpenChat } from "openchat-client";
+    import { OpenChat } from "@client";
     import { getContext } from "svelte";
     import Button from "../Button.svelte";
     import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";

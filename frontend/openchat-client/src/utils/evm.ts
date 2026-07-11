@@ -4,7 +4,7 @@ import {
     ETHEREUM_NETWORK,
     type EvmChain,
     type EvmContractAddress,
-} from "openchat-shared";
+} from "@shared";
 
 const ALCHEMY_API_KEY = import.meta.env.OC_ALCHEMY_API_KEY;
 const NETWORKS_MAP = new Map<string, EvmChain>([

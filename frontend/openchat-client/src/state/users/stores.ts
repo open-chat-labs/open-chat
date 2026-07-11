@@ -1,4 +1,4 @@
-import type { UserSummary } from "openchat-shared";
+import type { UserSummary } from "@shared";
 import { derived, writable } from "../../utils/stores";
 import { localUpdates } from "../localUpdates";
 import { notEq } from "../utils";

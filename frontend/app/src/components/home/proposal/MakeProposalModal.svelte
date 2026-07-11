@@ -12,8 +12,8 @@
         type NervousSystemDetails,
         type OpenChat,
         type ResourceKey,
-    } from "openchat-client";
-    import { isPrincipalValid, isUrl, random32, type ExternalBot } from "openchat-shared";
+    } from "@client";
+    import { isPrincipalValid, isUrl, random32, type ExternalBot } from "@shared";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import EyeIcon from "svelte-material-icons/EyeOutline.svelte";

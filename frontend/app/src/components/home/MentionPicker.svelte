@@ -1,6 +1,6 @@
 <script lang="ts">
     import VirtualList from "@shared_components/VirtualList.svelte";
-    import type { OpenChat, UserOrUserGroup } from "openchat-client";
+    import type { OpenChat, UserOrUserGroup } from "@client";
     import {
         allUsersStore,
         AvatarSize,
@@ -8,7 +8,7 @@
         iconSize,
         mobileWidth,
         selectedCommunityMembersStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import Avatar from "../Avatar.svelte";

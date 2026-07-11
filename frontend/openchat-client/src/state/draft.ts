@@ -8,7 +8,7 @@ import {
     type Message,
     type MessageContext,
     type UserLookup,
-} from "openchat-shared";
+} from "@shared";
 import { writable, type Subscriber } from "../utils/stores";
 import { notEq } from "./utils";
 

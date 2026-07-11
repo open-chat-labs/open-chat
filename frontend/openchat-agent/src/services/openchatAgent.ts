@@ -201,7 +201,7 @@ import type {
     WalletConfig,
     WithdrawBtcResponse,
     WithdrawCryptocurrencyResponse,
-} from "openchat-shared";
+} from "@shared";
 import {
     ANON_USER_ID,
     ChatMap,
@@ -224,7 +224,7 @@ import {
     offline,
     textToCode,
     waitAll,
-} from "openchat-shared";
+} from "@shared";
 import type { AgentConfig } from "../config";
 import { CachePrimer } from "../utils/cachePrimer";
 import {
@@ -245,7 +245,7 @@ import { createHttpAgentSync } from "../utils/httpAgent";
 import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
 import { bytesToHexString, mapOptional } from "../utils/mapping";
 import { mean } from "../utils/maths";
-import { extractMessagePreviews } from "openchat-shared";
+import { extractMessagePreviews } from "@shared";
 import { AsyncMessageContextMap } from "../utils/messageContext";
 // import { isMainnet } from "../utils/network";
 import {
@@ -2602,6 +2602,10 @@ export class OpenChatAgent extends EventTarget {
 
     addFcmToken(fcmToken: string, onResponseError?: (error: string | null) => void): Promise<void> {
         return this._notificationClient.addFcmToken(fcmToken, onResponseError);
+    }
+
+    removeFcmToken(fcmToken: string): Promise<void> {
+        return this._notificationClient.removeFcmToken(fcmToken);
     }
 
     toggleMuteNotifications(

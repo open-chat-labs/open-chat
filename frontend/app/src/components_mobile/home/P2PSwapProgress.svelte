@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Column, Sheet, Subtitle } from "component-lib";
-    import type { OpenChat, P2PSwapContent } from "openchat-client";
+    import type { OpenChat, P2PSwapContent } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import ProgressSteps, { type Result, type Step } from "../ProgressSteps.svelte";

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Principal } from "@icp-sdk/core/principal";
-    import { iconSize, type Credential, type CredentialGate } from "openchat-client";
+    import { iconSize, type Credential, type CredentialGate } from "@client";
     import { onMount } from "svelte";
     import Delete from "svelte-material-icons/Delete.svelte";
     import { i18nKey } from "../../../i18n/i18n";

@@ -1,4 +1,4 @@
-import type { ChatIdentifier, DirectChatIdentifier, VideoCallInProgress } from "openchat-client";
+import type { ChatIdentifier, DirectChatIdentifier, VideoCallInProgress } from "@client";
 
 export type VideoCallChat = {
     chatId: ChatIdentifier;

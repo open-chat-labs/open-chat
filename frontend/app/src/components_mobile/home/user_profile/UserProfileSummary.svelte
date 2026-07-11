@@ -11,7 +11,7 @@
         publish,
         userMetricsStore,
         type PublicProfile,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import AccountStar from "svelte-material-icons/AccountStarOutline.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";

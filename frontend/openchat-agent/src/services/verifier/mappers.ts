@@ -7,8 +7,8 @@ import type {
     VerificationFailureReason,
     VerificationRetryReason,
     VerificationStatus,
-} from "openchat-shared";
-import { UnsupportedValueError } from "openchat-shared";
+} from "@shared";
+import { UnsupportedValueError } from "@shared";
 import type {
     PersonhoodVerifierHeadPose,
     PersonhoodVerifierStartVerificationResponse,

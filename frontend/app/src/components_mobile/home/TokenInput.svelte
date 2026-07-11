@@ -1,6 +1,6 @@
 <script lang="ts">
     import { BodySmall, Chip, Container, NumberInput, Row } from "component-lib";
-    import { enhancedCryptoLookup as cryptoLookup, type OpenChat } from "openchat-client";
+    import { enhancedCryptoLookup as cryptoLookup, type OpenChat } from "@client";
     import { getContext, untrack, type Snippet } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";

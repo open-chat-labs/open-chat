@@ -8,8 +8,8 @@
         MultiUserChat,
         OpenChat,
         UserSummary,
-    } from "openchat-client";
-    import { allUsersStore } from "openchat-client";
+    } from "@client";
+    import { allUsersStore } from "@client";
     import { getContext } from "svelte";
     import AccountAlert from "svelte-material-icons/AccountAlertOutline.svelte";
     import AccountCancel from "svelte-material-icons/AccountCancelOutline.svelte";

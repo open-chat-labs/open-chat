@@ -23,5 +23,6 @@ export * from "./rng";
 export * from "./session";
 export * from "./set";
 export * from "./string";
+export * from "./tauri";
 export * from "./time";
 export * from "./validation";

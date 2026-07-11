@@ -45,6 +45,7 @@ RUN dfx start --clean > /dev/null 2>&1 & \
 # Build UI
 WORKDIR /oc/frontend
 
+RUN npm ci
 RUN npm run build:docker
 
 

@@ -13,8 +13,8 @@
         Subtitle,
         type SizeMode,
     } from "component-lib";
-    import type { OpenChat } from "openchat-client";
-    import { Poller, publish } from "openchat-client";
+    import type { OpenChat } from "@client";
+    import { Poller, publish } from "@client";
     import { getContext, onMount } from "svelte";
     import Check from "svelte-material-icons/Check.svelte";
     import Close from "svelte-material-icons/Close.svelte";

@@ -13,7 +13,7 @@
         type MessageContext,
         type OpenChat,
         type User,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";

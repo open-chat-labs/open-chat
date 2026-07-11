@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { ResourceKey, UnreadCounts, VideoCallCounts } from "openchat-client";
-    import { emptyUnreadCounts, navOpen } from "openchat-client";
+    import type { ResourceKey, UnreadCounts, VideoCallCounts } from "@client";
+    import { emptyUnreadCounts, navOpen } from "@client";
     import { _ } from "svelte-i18n";
     import WithVerifiedBadge from "../../icons/WithVerifiedBadge.svelte";
     import Translatable from "../../Translatable.svelte";

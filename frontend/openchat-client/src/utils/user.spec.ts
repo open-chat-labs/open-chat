@@ -1,4 +1,4 @@
-import type { UserLookup, UserSummary } from "openchat-shared";
+import type { UserLookup, UserSummary } from "@shared";
 import { _, addMessages, init } from "svelte-i18n";
 import { get } from "svelte/store";
 import { vi } from "vitest";

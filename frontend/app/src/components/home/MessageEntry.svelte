@@ -15,7 +15,7 @@
         OpenChat,
         SelectedEmoji,
         User,
-    } from "openchat-client";
+    } from "@client";
     import {
         allUsersStore,
         anonUserStore,
@@ -33,7 +33,9 @@
         selectedCommunitySummaryStore,
         selectedCommunityUserGroupsStore,
         throttleDeadline,
-    } from "openchat-client";
+        userGroupMentionRegex,
+        userIdMentionRegex,
+    } from "@client";
     import { getContext, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Alert from "svelte-material-icons/Alert.svelte";
@@ -240,7 +242,7 @@
     }
 
     function formatUserMentions(text: string): string {
-        return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
+        return text.replace(userIdMentionRegex, (match, p1) => {
             const u = $allUsersStore.get(p1);
             if (u?.username !== undefined) {
                 const username = u.username;
@@ -251,7 +253,7 @@
     }
 
     function formatUserGroupMentions(text: string): string {
-        return text.replace(/@UserGroup\(([\d\w-]+)\)/g, (match, p1) => {
+        return text.replace(userGroupMentionRegex, (match, p1) => {
             const u = $selectedCommunityUserGroupsStore.get(Number(p1));
             if (u !== undefined) {
                 return `@${u.name}`;
@@ -300,7 +302,17 @@
         const txt = editor?.getMarkdown() ?? "";
 
         if (!parseCommands(txt)) {
-            onSendMessage(expandMentions(txt));
+            const [text, mentioned, blockLevelMarkdown] = expandMentions(txt);
+            // Mentions picked from the mention picker are stored as nodes within the editor and
+            // are already in the `@UserId(xyz)` form, so `expandMentions` misses them - collect
+            // them from the editor itself
+            const mentionedUserIds = new Set(mentioned.map((u) => u.userId));
+            for (const user of editor?.getMentionedUsers() ?? []) {
+                if (!mentionedUserIds.has(user.userId)) {
+                    mentioned.push(user);
+                }
+            }
+            onSendMessage([text, mentioned, blockLevelMarkdown]);
         }
 
         afterSendMessage();

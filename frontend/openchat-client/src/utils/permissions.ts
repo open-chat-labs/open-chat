@@ -6,7 +6,7 @@ import {
     ROLE_MODERATOR,
     ROLE_NONE,
     ROLE_OWNER,
-} from "openchat-shared";
+} from "@shared";
 
 export function hasOwnerRights(role: MemberRole): boolean {
     return role === ROLE_OWNER;

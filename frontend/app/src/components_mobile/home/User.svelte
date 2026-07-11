@@ -9,7 +9,7 @@
         IconButton,
         MenuTrigger,
     } from "component-lib";
-    import type { OpenChat } from "openchat-client";
+    import type { OpenChat } from "@client";
     import {
         ROLE_ADMIN,
         ROLE_MEMBER,
@@ -19,8 +19,8 @@
         roleAsText,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
-    } from "openchat-client";
-    import type { MemberRole, UserSummary } from "openchat-shared";
+    } from "@client";
+    import type { MemberRole, UserSummary } from "@shared";
     import { getContext, type Snippet } from "svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import FilteredUsername from "@shared_components/FilteredUsername.svelte";

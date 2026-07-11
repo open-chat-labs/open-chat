@@ -6,7 +6,7 @@ import {
     ResponseTooLargeError,
     SessionExpiryError,
     TypeboxValidationError,
-} from "openchat-shared";
+} from "@shared";
 import { ReplicaNotUpToDateError, toCanisterResponseError } from "../error";
 
 const MAX_RETRIES = process.env.NODE_ENV === "production" ? 7 : 3;

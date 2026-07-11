@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { mobileWidth } from "openchat-client";
+    import { mobileWidth } from "@client";
     import { onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import { isTouchDevice } from "../../utils/devices";

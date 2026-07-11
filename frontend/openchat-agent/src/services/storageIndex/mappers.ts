@@ -6,8 +6,8 @@ import type {
     ProjectedAllowance,
     StorageUserNotFound,
     StorageUserResponse,
-} from "openchat-shared";
-import { UnsupportedValueError } from "openchat-shared";
+} from "@shared";
+import { UnsupportedValueError } from "@shared";
 
 export function allocatedBucketResponse(
     candid: CandidAllocatedBucketResponse

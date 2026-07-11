@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Body, BodySmall, Column, CommonButton, Container, Row, Switch } from "component-lib";
-    import { type OpenChat } from "openchat-client";
+    import { type OpenChat } from "@client";
     import { getContext, onDestroy } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { HumanVerificationMachine } from "../../../utils/humanVerification/machine.svelte";

@@ -1,7 +1,7 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import { idlFactory, type IcpSwapIndexService } from "./candid/idl";
 import { CandidCanisterAgent } from "../../../canisterAgent/candid";
-import type { TokenSwapPool } from "openchat-shared";
+import type { TokenSwapPool } from "@shared";
 import { getPoolsResponse } from "./mappers";
 import type { SwapIndexClient, SwapPoolClient } from "../../index";
 import { IcpSwapPoolClient } from "../pool/icpSwap.pool.client";

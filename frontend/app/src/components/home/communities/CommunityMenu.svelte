@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { CommunitySummary, OpenChat } from "openchat-client";
+    import type { CommunitySummary, OpenChat } from "@client";
     import {
         chatSummariesListStore,
         iconSize,
@@ -9,7 +9,7 @@
         publish,
         ROLE_NONE,
         setRightPanelHistory,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";

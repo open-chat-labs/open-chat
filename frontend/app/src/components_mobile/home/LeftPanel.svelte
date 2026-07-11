@@ -10,7 +10,7 @@
         selectedChatIdStore,
         selectedCommunitySummaryStore,
         showLeft,
-    } from "openchat-client";
+    } from "@client";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import Enter from "svelte-material-icons/LocationEnter.svelte";
     import { rtlStore } from "../../stores/rtl";

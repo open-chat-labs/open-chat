@@ -7,7 +7,7 @@
         OpenChat,
         serverGroupChatsStore,
         type BotInstallationLocation,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import NothingToSee from "../home/NothingToSee.svelte";

@@ -18,7 +18,7 @@
         MessageContent,
         TypersByKey,
         UserLookup,
-    } from "openchat-client";
+    } from "@client";
     import {
         allUsersStore,
         chatIdentifiersEqual,
@@ -38,7 +38,7 @@
         suspendedUserStore,
         translationsStore,
         byContext as typersByContext,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";

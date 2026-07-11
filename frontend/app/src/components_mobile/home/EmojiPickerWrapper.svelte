@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { SkinTone } from "emoji-picker-element/shared";
-    import { customEmojis, type SelectedEmoji } from "openchat-client";
+    import { customEmojis, type SelectedEmoji } from "@client";
     import EmojiPicker from "./EmojiPicker.svelte";
 
     interface Props {

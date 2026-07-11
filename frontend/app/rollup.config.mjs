@@ -63,7 +63,7 @@ function clean() {
     };
 }
 
-const { version } = initEnv();
+const { version, production } = initEnv();
 
 const override = (key, val) => `(window.OC_CONFIG?.${key} ?? ${val})`;
 
@@ -98,6 +98,30 @@ export default {
 
         alias({
             entries: [
+                // Resolve the former sub-packages from TypeScript source (bare
+                // import -> source entry point, subpath -> package src/).
+                ...[
+                    ["@shared", "openchat-shared", "src/index.ts"],
+                    ["@client", "openchat-client", "src/index.ts"],
+                    ["@agent", "openchat-agent", "src/index.ts"],
+                    ["@worker", "openchat-worker", "src/worker.ts"],
+                ].flatMap(([alias, dir, entry]) => {
+                    const root = path.resolve(__dirname, "..", dir);
+                    return [
+                        { find: new RegExp(`^${alias}/(.*)$`), replacement: `${root}/src/$1` },
+                        { find: new RegExp(`^${alias}$`), replacement: path.resolve(root, entry) },
+                    ];
+                }),
+                // The Tauri plugin's guest JS is likewise resolved from source
+                // (guest-js/) rather than its built dist-js output.
+                {
+                    find: /^tauri-plugin-oc-api\/(.*)$/,
+                    replacement: `${path.resolve(__dirname, "../tauri-plugin-oc/guest-js")}/$1`,
+                },
+                {
+                    find: /^tauri-plugin-oc-api$/,
+                    replacement: path.resolve(__dirname, "../tauri-plugin-oc/guest-js/index.ts"),
+                },
                 { find: "@dfinity/agent", replacement: "@icp-sdk/core/agent" },
                 { find: "@dfinity/auth-client", replacement: "@icp-sdk/auth/client" },
                 { find: "@src", replacement: path.resolve(__dirname, "src") },
@@ -127,6 +151,12 @@ export default {
                 "./src/**/*",
                 "../vite-env.d.ts",
                 "../node_modules/component-lib/src/**/*.ts",
+                // The former sub-packages are now compiled from source.
+                "../openchat-shared/src/**/*",
+                "../openchat-client/src/**/*",
+                "../openchat-agent/src/**/*",
+                "../openchat-worker/src/**/*",
+                "../tauri-plugin-oc/guest-js/**/*",
             ],
         }),
         inject({
@@ -144,10 +174,6 @@ export default {
             "import.meta.env.OC_MOBILE_LAYOUT": override(
                 "OC_MOBILE_LAYOUT",
                 JSON.stringify(process.env.OC_MOBILE_LAYOUT),
-            ),
-            "import.meta.env.OC_APP_TYPE": override(
-                "OC_APP_TYPE",
-                JSON.stringify(process.env.OC_APP_TYPE),
             ),
             "import.meta.env.OC_OTA_UPDATES": override(
                 "OC_OTA_UPDATES",
@@ -256,11 +282,41 @@ export default {
         html({
             template: ({ files }) => {
                 const jsEntryFile = files.js.find((f) => f.isEntry).fileName;
+                // Google Tag Manager + gtag is production-only: gated on the build
+                // env, never included otherwise. gtag stays defined as a no-op
+                // dataLayer push in non-production builds so page-view calls
+                // elsewhere in the app don't throw. This goes through `inlineScripts`
+                // so its body is sha256-hashed into the CSP `script-src`: the prod
+                // page is governed by this meta CSP (the canister only sets a
+                // `frame-ancestors` header), which has no `'unsafe-inline'`, so an
+                // un-hashed inline script would be blocked.
+                const analyticsBody = production
+                    ? `window.dataLayer = window.dataLayer || [];
+                    function gtag(){dataLayer.push(arguments);}
+                    gtag('js', new Date());
+                    gtag('config', 'G-7P9R6CJLNR');
+                    var gtagScript = document.createElement('script');
+                    gtagScript.async = true;
+                    gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-7P9R6CJLNR';
+                    document.head.appendChild(gtagScript);
+                    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+                    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+                    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+                    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+                    })(window,document,'script','dataLayer','GTM-WQD48GK2');`
+                    : `window.dataLayer = window.dataLayer || [];
+                    function gtag(){dataLayer.push(arguments);}`;
+
                 const inlineScripts = [
                     `window.OC_WEBSITE_VERSION = "${version}";`,
                     `var parcelRequire;`,
+                    analyticsBody,
                 ];
                 const csp = generateCspForScripts(inlineScripts);
+
+                const analyticsNoscript = production
+                    ? `<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WQD48GK2" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>`
+                    : "";
 
                 // TODO this is a duplicate of the index.html file, we should
                 // have only one source for our index html.
@@ -268,21 +324,6 @@ export default {
                         <!DOCTYPE html>
                         <html lang="en">
                             <head>
-                            <!-- Google tag (gtag.js) -->
-                                <script async src="https://www.googletagmanager.com/gtag/js?id=G-7P9R6CJLNR"></script>
-                                <script>
-                                    window.dataLayer = window.dataLayer || [];
-                                    function gtag(){dataLayer.push(arguments);}
-                                    gtag('js', new Date());
-                                    gtag('config', 'G-7P9R6CJLNR');
-                                </script>
-                                <!-- CLS Tracking Code -->
-                                <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-                                new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-                                j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-                                'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-                                })(window,document,'script','dataLayer','GTM-WQD48GK2');</script>
-                                <!-- End CLS Tracking Code -->
                                 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#22A7F2" />
                                 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1B1C21" />
                                 <meta name="description" content="OpenChat is a fully featured chat application running end-to-end on the Internet Computer blockchain." />
@@ -320,9 +361,7 @@ export default {
                             </head>
                             <template id="profile-link-template" style="cursor: pointer; font-weight: 700; text-decoration: underline;"></template>
                             <body>
-                                <!-- CLS Tracking (noscript) -->
-                                <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WQD48GK2" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-                                <!-- End CLS Tracking (noscript) -->
+                                ${analyticsNoscript}
                             </body>
                         </html>
                     `;
@@ -363,6 +402,9 @@ export default {
             commands: [
                 `../../scripts/get-public-key.sh ${process.env.OC_DFX_NETWORK} > ./public/public-key`,
                 `../../scripts/copy-verification-assets.sh`,
+                // Build the worker + service worker from source into their lib/
+                // dirs before the copy step above pulls them into build/.
+                `node ./build-workers.mjs`,
             ],
             hook: "buildStart",
         }),

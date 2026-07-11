@@ -7,7 +7,7 @@
         sortedCommunitiesStore,
         type CommunitySummary,
         type UnreadCounts,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import AccountGroupOutline from "svelte-material-icons/AccountGroupOutline.svelte";
     import Compass from "svelte-material-icons/CompassOutline.svelte";

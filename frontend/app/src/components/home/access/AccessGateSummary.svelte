@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type AccessGate, type AccessGateConfig, type Level } from "openchat-client";
+    import { type AccessGate, type AccessGateConfig, type Level } from "@client";
     import AccessGateIcon from "./AccessGateIcon.svelte";
     import { gateLabel } from "../../../utils/access";
     import { i18nKey } from "../../../i18n/i18n";

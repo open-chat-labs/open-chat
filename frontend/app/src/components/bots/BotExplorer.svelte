@@ -5,7 +5,7 @@
         type BotMatch as BotMatchType,
         type ExternalBotLike,
         type OpenChat,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import { botSearchState } from "../../stores/search.svelte";
     import Search from "../Search.svelte";

@@ -1,5 +1,5 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
-import type { EvmChain, OneSecForwardingStatus, OneSecTransferFees } from "openchat-shared";
+import type { EvmChain, OneSecForwardingStatus, OneSecTransferFees } from "@shared";
 import { idlFactory, type OneSecMinterService } from "./candid/idl";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { apiForwardEvmToIcpArgs, forwardingResponse, transferFeesResponse } from "./mappers";

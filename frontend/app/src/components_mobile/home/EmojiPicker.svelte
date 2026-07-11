@@ -12,7 +12,7 @@
         premiumPrices,
         type CustomEmoji,
         type SelectedEmoji,
-    } from "openchat-client";
+    } from "@client";
     import { onMount, tick } from "svelte";
     import { currentTheme } from "../../theme/themes";
     import PremiumItemPayment from "../PremiumItemPayment.svelte";

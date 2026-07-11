@@ -5,7 +5,7 @@ import {
     type Message,
     type OptionalChatPermissions,
     type OptionUpdate,
-} from "openchat-shared";
+} from "@shared";
 import { writable } from "../../utils/stores";
 import { notEq } from "../utils";
 

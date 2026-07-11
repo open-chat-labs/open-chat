@@ -11,7 +11,7 @@ import type {
     NervousSystemFunction,
     ProposalVoteDetails,
     SnsFunctionType
-} from "openchat-shared";
+} from "@shared";
 import { identity, optional } from "../../utils/mapping";
 import { proposalVote } from "../common/chatMappers";
 

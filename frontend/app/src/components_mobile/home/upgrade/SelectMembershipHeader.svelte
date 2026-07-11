@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { ColourVars, Column, H2 } from "component-lib";
-    import type { DiamondMembershipDuration, ResourceKey } from "openchat-client";
+    import type { DiamondMembershipDuration, ResourceKey } from "@client";
     import Diamond from "svelte-material-icons/DiamondOutline.svelte";
     import Lifetime from "svelte-material-icons/DiamondStone.svelte";
     import MulticolourText, { type TextPart } from "../..//MulticolourText.svelte";

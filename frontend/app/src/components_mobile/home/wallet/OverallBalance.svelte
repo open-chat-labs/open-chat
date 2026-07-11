@@ -6,7 +6,7 @@
     import {
         type EnhancedTokenDetails,
         walletTokensSorted as accountsSorted,
-    } from "openchat-client";
+    } from "@client";
     import EyeOff from "svelte-material-icons/EyeOffOutline.svelte";
     import Eye from "svelte-material-icons/EyeOutline.svelte";
     import Reload from "svelte-material-icons/Reload.svelte";

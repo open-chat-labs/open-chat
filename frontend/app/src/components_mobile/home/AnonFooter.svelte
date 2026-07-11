@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { Body, ColourVars, Container, transition } from "component-lib";
-    import { publish, routeStore } from "openchat-client";
+    import { publish, routeStore } from "@client";
     import { navigate } from "@utils/navigation";
     import { type Snippet } from "svelte";
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";

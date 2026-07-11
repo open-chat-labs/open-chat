@@ -4,7 +4,7 @@ import {
     type CommunityIdentifier,
     type Primitive,
     type ReadonlyMap,
-} from "openchat-shared";
+} from "@shared";
 import { type UndoLocalUpdate } from "./undo";
 
 type Add<K, V> = { kind: "add"; key: K; value: V };

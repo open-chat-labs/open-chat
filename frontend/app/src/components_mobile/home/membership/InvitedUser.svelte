@@ -1,6 +1,6 @@
 <script lang="ts">
     import { MenuItem } from "component-lib";
-    import type { UserSummary } from "openchat-shared";
+    import type { UserSummary } from "@shared";
     import Cancel from "svelte-material-icons/Cancel.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";

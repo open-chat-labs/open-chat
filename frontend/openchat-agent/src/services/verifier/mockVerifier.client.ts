@@ -5,7 +5,7 @@ import type {
     UploadVerificationFrameResponse,
     VerificationChallenge,
     VerificationStatus,
-} from "openchat-shared";
+} from "@shared";
 
 const POSES: HeadPose[] = ["center", "left", "right", "up", "down"];
 const SESSION_TTL = 120_000;

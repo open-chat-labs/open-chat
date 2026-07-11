@@ -6,7 +6,7 @@
         compareChats,
         serverDirectChatsStore,
         type UserSummary,
-    } from "openchat-client";
+    } from "@client";
     import { type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import Translatable from "./Translatable.svelte";

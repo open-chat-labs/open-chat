@@ -4,7 +4,7 @@
         percentageStorageUsedStore,
         storageInGBStore,
         storageStore,
-    } from "openchat-client";
+    } from "@client";
     import { i18nKey } from "../i18n/i18n";
     import Progress from "./Progress.svelte";
     import Translatable from "./Translatable.svelte";

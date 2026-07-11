@@ -10,7 +10,7 @@
     import { BodySmall, Container } from "component-lib";
 
     import { i18nKey } from "@src/i18n/i18n";
-    import type { ResourceKey } from "openchat-client";
+    import type { ResourceKey } from "@client";
     import Translatable from "../Translatable.svelte";
     import PincodeInput from "./PincodeInput.svelte";
 

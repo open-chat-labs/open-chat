@@ -5,8 +5,8 @@
         type OpenChat,
         type UserGroupDetails,
         type UserSummary,
-    } from "openchat-client";
-    import { ErrorCode } from "openchat-shared";
+    } from "@client";
+    import { ErrorCode } from "@shared";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";

@@ -7,8 +7,8 @@
         type RegisterProposalVoteResponse,
         currentUserIdStore,
         proposalTopicsStore,
-    } from "openchat-client";
-    import { ErrorCode, type ReadonlyMap } from "openchat-shared";
+    } from "@client";
+    import { ErrorCode, type ReadonlyMap } from "@shared";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ExpandIcon from "svelte-material-icons/ArrowExpandDown.svelte";

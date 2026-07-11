@@ -11,14 +11,14 @@ import type {
     UserCanisterCommunitySummary,
     UserCanisterCommunitySummaryUpdates,
     UserGroupSummary,
-} from "openchat-shared";
+} from "@shared";
 import {
     applyOptionUpdate,
     bigIntMax,
     ChatMap,
     CommunityMap,
     mapOptionUpdate,
-} from "openchat-shared";
+} from "@shared";
 import { toRecord } from "./list";
 
 export function mergeCommunities(

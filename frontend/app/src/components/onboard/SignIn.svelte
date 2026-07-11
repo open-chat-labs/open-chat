@@ -8,7 +8,7 @@
         OpenChat,
         querystringStore,
         selectedAuthProviderStore,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";

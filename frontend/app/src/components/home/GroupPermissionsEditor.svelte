@@ -1,6 +1,6 @@
 <script lang="ts">
     import SelectPermissionRole from "./SelectPermissionRole.svelte";
-    import { type ChatPermissions, chatRoles, ROLE_ADMIN, ROLE_MEMBER } from "openchat-client";
+    import { type ChatPermissions, chatRoles, ROLE_ADMIN, ROLE_MEMBER } from "@client";
     import Toggle from "../Toggle.svelte";
     import TabHeader from "../TabHeader.svelte";
     import { i18nKey } from "../../i18n/i18n";

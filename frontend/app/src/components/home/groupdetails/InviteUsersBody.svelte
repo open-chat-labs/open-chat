@@ -7,7 +7,7 @@
         type OpenChat,
         type UserOrUserGroup,
         type UserSummary,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";

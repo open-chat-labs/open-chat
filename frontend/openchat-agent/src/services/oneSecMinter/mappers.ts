@@ -18,7 +18,7 @@ import {
     UnsupportedValueError,
     USDC_SYMBOL,
     USDT_SYMBOL,
-} from "openchat-shared";
+} from "@shared";
 import { identity, optional } from "../../utils/mapping";
 import { Principal } from "@icp-sdk/core/principal";
 

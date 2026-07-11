@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Body, BodySmall, Container, FloatingButton, Search } from "component-lib";
-    import type { CommunitySummary, OpenChat, UserGroupDetails } from "openchat-client";
-    import { publish, selectedCommunityUserGroupsStore } from "openchat-client";
+    import type { CommunitySummary, OpenChat, UserGroupDetails } from "@client";
+    import { publish, selectedCommunityUserGroupsStore } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Plus from "svelte-material-icons/Plus.svelte";

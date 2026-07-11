@@ -5,7 +5,7 @@ import type {
     VerificationFailureReason,
     VerificationRetryReason,
     VerificationStatus,
-} from "openchat-client";
+} from "@client";
 import { captureJpegFrame } from "./capture";
 import { loadPoseDetector, type PoseDetector, type PoseEstimate } from "./poseDetector";
 

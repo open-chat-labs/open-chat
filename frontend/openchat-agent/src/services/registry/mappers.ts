@@ -3,7 +3,7 @@ import type {
     RegistryUpdatesResponse,
     CryptocurrencyDetails,
     DexId,
-} from "openchat-shared";
+} from "@shared";
 import { mapOptional, optionUpdateV2, principalBytesToString } from "../../utils/mapping";
 import {
     BTC_SYMBOL,
@@ -11,7 +11,7 @@ import {
     INDEX_CANISTER_ICP,
     LEDGER_CANISTER_ICP,
     UnsupportedValueError,
-} from "openchat-shared";
+} from "@shared";
 import { buildTokenLogoUrl } from "../../utils/chat";
 import type {
     ExchangeId as TExchangeId,

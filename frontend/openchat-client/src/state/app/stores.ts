@@ -61,7 +61,7 @@ import {
     type VideoCallCounts,
     type WalletConfig,
     type WebhookDetails,
-} from "openchat-shared";
+} from "@shared";
 import { createSetStore } from "../../stores/setStore";
 import {
     getMessagePermissionsForSelectedChat,

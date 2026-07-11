@@ -8,7 +8,7 @@
         isLocked,
         type MultiUserChat,
         type OpenChat,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import Enter from "svelte-material-icons/LocationEnter.svelte";

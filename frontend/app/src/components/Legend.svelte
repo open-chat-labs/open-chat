@@ -1,6 +1,6 @@
 <script lang="ts">
     import Translatable from "./Translatable.svelte";
-    import type { ResourceKey } from "openchat-client";
+    import type { ResourceKey } from "@client";
 
     interface Props {
         label: ResourceKey;

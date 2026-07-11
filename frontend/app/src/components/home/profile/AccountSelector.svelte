@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { iconSize, mobileWidth, type NamedAccount } from "openchat-client";
+    import { iconSize, mobileWidth, type NamedAccount } from "@client";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Menu from "../../Menu.svelte";

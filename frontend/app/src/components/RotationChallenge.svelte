@@ -1,6 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { mobileWidth } from "openchat-client";
+    import { mobileWidth } from "@client";
     import { onMount } from "svelte";
     import Button from "./Button.svelte";
     import ButtonGroup from "./ButtonGroup.svelte";

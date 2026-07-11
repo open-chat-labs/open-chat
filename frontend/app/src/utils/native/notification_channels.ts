@@ -6,7 +6,8 @@ import { isLandingPagePath } from "@utils/urls";
 
 const TAURI_PLUGIN_NAME = "oc";
 const PUSH_NOTIFICATION_EVENT = "push-notification";
-const NEW_FCM_TOKEN_EVENT = "fcm-token";
+// Must match the event name Kotlin fires in OCPluginCompanion.cacheNewFcmToken.
+const NEW_FCM_TOKEN_EVENT = "fcm-token-refresh";
 const NOTIFICATION_TAP_EVENT = "notification-tap";
 const BACK_PRESS_EVENT = "back-pressed";
 const WINDOW_INSET_CHANGE_EVENT = "window-inset-change";
@@ -106,49 +107,85 @@ export async function expectPushNotifications(): Promise<PluginListener> {
 }
 
 /**
+ * Maps a tapped notification to its in-app route, or null if the payload
+ * doesn't describe a navigable destination.
+ */
+function notificationPath(notification: PushNotification): string | null {
+    const threadIndexPath = notification.threadIndex ? `/${notification.threadIndex}` : "";
+    switch (notification.type) {
+        case "DM":
+            return notification.senderId ? `/user/${notification.senderId}` : null;
+        case "GROUP":
+            return notification.groupId
+                ? `/group/${notification.groupId}${threadIndexPath}`
+                : null;
+        case "CHANNEL":
+            return notification.communityId && notification.channelId
+                ? `/community/${notification.communityId}/channel/${notification.channelId}${threadIndexPath}`
+                : null;
+        default:
+            return null;
+    }
+}
+
+// Holds the route of a notification tapped during cold start (delivered before
+// the tap listener was registered). Consumed by Router.svelte's auto-selection
+// effect so it navigates to the tapped chat instead of the default chat —
+// same pattern as pendingColdStartUrl below.
+let pendingColdStartTapPath: string | null = null;
+
+export function consumePendingNotificationTap(): string | null {
+    const path = pendingColdStartTapPath;
+    pendingColdStartTapPath = null;
+    return path;
+}
+
+/**
  * Listens for any notifications tapped by the users.
  *
- * Once the notification is tapped, native Kotlin code will pick it up, and
- * then raise an event and send the notification data to the Svelte UI.
- *
- * Once the UI receives the notification, we can show the appropriate context.
+ * Warm taps arrive as a "notification-tap" event; taps that happened before
+ * the WebView was ready are persisted natively and pulled here once the
+ * listener is registered, so nothing is lost to the startup race.
  *
  * @returns
  */
 export async function expectNotificationTap(): Promise<PluginListener> {
-    return addPluginListener(
+    const listener = await addPluginListener(
         TAURI_PLUGIN_NAME,
         NOTIFICATION_TAP_EVENT,
         (notification: PushNotification) => {
-            const threadIndexPath = notification.threadIndex ? `/${notification.threadIndex}` : "";
-            switch (notification.type) {
-                case "DM": {
-                    if (notification.senderId) {
-                        navigate(`/user/${notification.senderId}`);
-                    }
-                    break;
-                }
-                case "GROUP": {
-                    if (notification.groupId) {
-                        navigate(`/group/${notification.groupId}${threadIndexPath}`);
-                    }
-                    break;
-                }
-                case "CHANNEL": {
-                    if (notification.communityId && notification.channelId) {
-                        navigate(
-                            `/community/${notification.communityId}/channel/${notification.channelId}${threadIndexPath}`,
-                        );
-                    }
-                    break;
-                }
-                default:
-                    console.error(
-                        "Not available or unknown notification type! I don't know how to handle it.",
-                    );
+            const path = notificationPath(notification);
+            if (path) {
+                navigate(path, "notification");
+            } else {
+                console.error(
+                    "Not available or unknown notification type! I don't know how to handle it.",
+                );
             }
         },
     );
+
+    // Pull any tap stored during cold start (before the listener was ready).
+    // Stored for Router.svelte to consume instead of auto-selecting the default chat.
+    let pending: { payload?: string } | undefined;
+    try {
+        pending = await invoke<{ payload?: string }>("plugin:oc|get_pending_notification_tap");
+    } catch (e) {
+        console.error("Notification tap: get_pending_notification_tap invoke failed", e);
+    }
+    if (pending?.payload) {
+        try {
+            const path = notificationPath(JSON.parse(pending.payload) as PushNotification);
+            if (path) {
+                console.log("Notification tap: cold-start pending path stored", path);
+                pendingColdStartTapPath = path;
+            }
+        } catch (e) {
+            console.error("Notification tap: failed to parse pending payload", pending.payload, e);
+        }
+    }
+
+    return listener;
 }
 
 async function askForPermission(): Promise<boolean> {
@@ -177,9 +214,22 @@ async function askForPermission(): Promise<boolean> {
  * @param handler the function to call when a new FCM token is received.
  * @returns
  */
-export async function expectNewFcmToken<T>(handler: (data: T) => void): Promise<PluginListener> {
-    // Set up the listener for new FCM tokens!
-    return addPluginListener(TAURI_PLUGIN_NAME, NEW_FCM_TOKEN_EVENT, handler);
+export async function expectNewFcmToken(
+    handler: (token: string) => void,
+): Promise<PluginListener> {
+    // Set up the listener for new FCM tokens! The native side sends
+    // { fcmToken: "..." }, the handler wants the bare token.
+    return addPluginListener(
+        TAURI_PLUGIN_NAME,
+        NEW_FCM_TOKEN_EVENT,
+        (data: { fcmToken?: string }) => {
+            if (data?.fcmToken) {
+                handler(data.fcmToken);
+            } else {
+                console.error("FCM token refresh event carried no token", data);
+            }
+        },
+    );
 }
 
 /**

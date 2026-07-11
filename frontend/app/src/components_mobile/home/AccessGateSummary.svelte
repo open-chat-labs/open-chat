@@ -2,7 +2,7 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { flattenGateConfig } from "@src/utils/access";
     import { Body, Container, type SizeMode } from "component-lib";
-    import { type AccessGateConfig } from "openchat-client";
+    import { type AccessGateConfig } from "@client";
     import Translatable from "../Translatable.svelte";
     import Separator from "./Separator.svelte";
     import AccessGateText from "./access_gates/AccessGateText.svelte";

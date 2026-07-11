@@ -239,7 +239,15 @@ object NotificationsManager {
             if (isTaped) {
 
                 Log.d(OC_TAG_NOT, "#### Notification tap: $notificationJson")
-                OCPluginCompanion.triggerRef("notification-tap", notificationJson)
+                if (OCPluginCompanion.svelteReady) {
+                    OCPluginCompanion.triggerRef("notification-tap", notificationJson)
+                } else {
+                    // WebView not ready (cold start): persist the payload for JS to
+                    // pull once its listener is registered. Queueing the event instead
+                    // races the svelteReady flush against listener registration, and a
+                    // lost race drops the tap — the app opens without the chat.
+                    OCPluginCompanion.pendingNotificationTap = notificationJson.toString()
+                }
             }
         } catch (e: Exception) {
             Log.e(OC_TAG_NOT, "Error processing notification tap", e)

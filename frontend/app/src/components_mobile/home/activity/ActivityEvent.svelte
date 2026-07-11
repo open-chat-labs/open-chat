@@ -1,13 +1,13 @@
 <script lang="ts">
     import { Avatar, Body, BodySmall, Container, CountBadge, Subtitle } from "component-lib";
-    import type { Message, MessageActivityEvent, ResourceKey } from "openchat-client";
+    import type { Message, MessageActivityEvent, ResourceKey } from "@client";
     import {
         allUsersStore,
         communitiesStore,
         currentUserIdStore,
         OpenChat,
         type MessageContext,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../../../i18n/i18n";

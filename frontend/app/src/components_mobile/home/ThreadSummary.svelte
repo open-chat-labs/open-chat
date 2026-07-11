@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Avatar } from "component-lib";
-    import type { ChatIdentifier, OpenChat, ThreadSummary } from "openchat-client";
-    import { allUsersStore, messagesRead, threadsFollowedByMeStore } from "openchat-client";
+    import type { ChatIdentifier, OpenChat, ThreadSummary } from "@client";
+    import { allUsersStore, messagesRead, threadsFollowedByMeStore } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";

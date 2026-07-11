@@ -10,7 +10,7 @@
         selectedChatIdStore,
         selectedCommunitySummaryStore,
         type ChatIdentifier,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
     import HandFrontLeft from "svelte-material-icons/HandFrontLeft.svelte";

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { toastStore } from "@src/stores/toast";
-    import { iconSize, type MultiUserChat, OpenChat } from "openchat-client";
-    import { publish, type WebhookDetails } from "openchat-shared";
+    import { iconSize, type MultiUserChat, OpenChat } from "@client";
+    import { publish, type WebhookDetails } from "@shared";
     import { getContext } from "svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";

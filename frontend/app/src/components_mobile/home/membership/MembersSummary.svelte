@@ -7,7 +7,7 @@
         type CommunitySummary,
         type FullMember,
         type MultiUserChat,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onDestroy } from "svelte";
     import AccountPlus from "svelte-material-icons/AccountPlusOutline.svelte";
     import Translatable from "../../Translatable.svelte";

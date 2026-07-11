@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { userCreatedStore } from "openchat-client";
+    import { userCreatedStore } from "@client";
     import AccountPlus from "svelte-material-icons/AccountPlus.svelte";
     import Login from "svelte-material-icons/Login.svelte";
     import { i18nKey } from "../../i18n/i18n";

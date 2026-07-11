@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { CommonButton } from "component-lib";
-    import type { UserSummary } from "openchat-shared";
+    import type { UserSummary } from "@shared";
     import AccountPlus from "svelte-material-icons/AccountPlusOutline.svelte";
     import Translatable from "../../Translatable.svelte";
     import User from "../User.svelte";

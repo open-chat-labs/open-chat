@@ -1,4 +1,4 @@
-import type { BotMatch, CommunityMatch, GroupMatch } from "openchat-client";
+import type { BotMatch, CommunityMatch, GroupMatch } from "@client";
 import { type Subscriber, writable } from "svelte/store";
 
 type Search<T> = {

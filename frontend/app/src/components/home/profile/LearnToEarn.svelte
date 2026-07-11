@@ -8,7 +8,7 @@
         iconSize,
         type Achievement,
         type ExternalAchievement,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";

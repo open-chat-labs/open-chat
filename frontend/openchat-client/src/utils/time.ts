@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
-import type { MessageFormatter } from "openchat-shared";
+import type { MessageFormatter } from "@shared";
 
 type DurationData = {
     total: number;

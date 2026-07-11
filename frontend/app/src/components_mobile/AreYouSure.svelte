@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Body, CommonButton, Container, Input, Sheet, Title } from "component-lib";
-    import type { ResourceKey } from "openchat-client";
+    import type { ResourceKey } from "@client";
     import { type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import Check from "svelte-material-icons/Check.svelte";

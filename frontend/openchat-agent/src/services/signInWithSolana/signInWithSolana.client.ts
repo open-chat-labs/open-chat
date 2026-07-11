@@ -5,7 +5,7 @@ import type {
     GetDelegationResponse,
     PrepareDelegationResponse,
     SiwsPrepareLoginResponse,
-} from "openchat-shared";
+} from "@shared";
 import { prepareLoginResponse } from "./mappers";
 import { getDelegationResponse, loginResponse } from "../signInWithEthereum/mappers";
 

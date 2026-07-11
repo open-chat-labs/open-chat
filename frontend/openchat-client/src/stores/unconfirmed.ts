@@ -1,4 +1,4 @@
-import { MessageContextMap, type UnconfirmedState } from "openchat-shared";
+import { MessageContextMap, type UnconfirmedState } from "@shared";
 import { createSetStore } from "./setStore";
 
 export type UnconfirmedMessages = MessageContextMap<UnconfirmedState>;

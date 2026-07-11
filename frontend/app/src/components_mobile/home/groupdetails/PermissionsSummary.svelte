@@ -11,7 +11,7 @@
         type ChatPermissions,
         type MessagePermissions,
         type PermissionsByRole,
-    } from "openchat-client";
+    } from "@client";
     import { _ } from "svelte-i18n";
     import Translatable from "../../Translatable.svelte";
     import GroupPermissionsPartitionViewer from "../GroupPermissionsPartitionViewer.svelte";

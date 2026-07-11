@@ -2,7 +2,7 @@
 <script lang="ts">
     import { initNavigationHistoryTracking, navigate } from "@src/utils/navigation";
     import { handleLinkClick, removeQueryStringParam } from "@src/utils/urls";
-    import { type ChatIdentifier, OpenChat, type RouteParams, adminRoute, blogRoute, chatIdentifiersEqual, chatListRoute, chatListScopeStore, chatsInitialisedStore, communitesRoute, exploringStore, globalDirectChatSelectedRoute, globalGroupChatSelectedRoute, messageIndexStore, notFoundStore, routeKindStore, routeStore, routerReadyStore, selectedChannelRoute, selectedChatIdStore, selectedCommunityIdStore, selectedCommunityRoute, selectedServerChatStore, shareRoute, threadMessageIndexStore, threadOpenStore } from "openchat-client";
+    import { type ChatIdentifier, OpenChat, type RouteParams, adminRoute, blogRoute, chatIdentifiersEqual, chatListRoute, chatListScopeStore, chatsInitialisedStore, communitesRoute, exploringStore, globalDirectChatSelectedRoute, globalGroupChatSelectedRoute, messageIndexStore, notFoundStore, routeKindStore, routeStore, routerReadyStore, selectedChannelRoute, selectedChatIdStore, selectedCommunityIdStore, selectedCommunityRoute, selectedServerChatStore, shareRoute, threadMessageIndexStore, threadOpenStore } from "@client";
     import page from "page";
     import { getContext, onMount, untrack } from "svelte";
     import Home, { type HomeType } from "./home/HomeRoute.svelte";

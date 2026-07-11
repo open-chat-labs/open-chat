@@ -15,7 +15,7 @@
         type MessageContext,
         type MessagePermission,
         type OpenChat,
-    } from "openchat-client";
+    } from "@client";
     import {
         loadRecentMedia,
         type MediaPermissionStatus,

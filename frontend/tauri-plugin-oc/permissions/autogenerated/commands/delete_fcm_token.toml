@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-delete-fcm-token"
+description = "Enables the delete_fcm_token command without any pre-configured scope."
+commands.allow = ["delete_fcm_token"]
+
+[[permission]]
+identifier = "deny-delete-fcm-token"
+description = "Denies the delete_fcm_token command without any pre-configured scope."
+commands.deny = ["delete_fcm_token"]

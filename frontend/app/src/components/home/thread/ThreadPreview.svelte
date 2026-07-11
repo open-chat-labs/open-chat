@@ -16,7 +16,7 @@
         routeForChatIdentifier,
         selectedCommunitySummaryStore,
         type ThreadPreview,
-    } from "openchat-client";
+    } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";

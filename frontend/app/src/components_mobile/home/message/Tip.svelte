@@ -7,7 +7,7 @@
         Tooltip,
         type Alignment,
     } from "component-lib";
-    import { allUsersStore, cryptoLookup, OpenChat } from "openchat-client";
+    import { allUsersStore, cryptoLookup, OpenChat } from "@client";
     import { getContext } from "svelte";
 
     const client = getContext<OpenChat>("client");

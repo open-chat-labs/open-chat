@@ -13,7 +13,7 @@ import {
     setCachedWebAuthnKey,
     setCommunityReferral,
     type AgentConfig,
-} from "openchat-agent";
+} from "@agent";
 import {
     buildIdentityFromJson,
     getSessionExpiryMs,
@@ -44,7 +44,7 @@ import {
     type WebAuthnKeyFull,
     type WorkerRequest,
     type WorkerResponseInner,
-} from "openchat-shared";
+} from "@shared";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
@@ -593,6 +593,9 @@ function getAction(
 
         case "addFcmToken":
             return agent.addFcmToken(payload.fcmToken, payload.onResponseError);
+
+        case "removeFcmToken":
+            return agent.removeFcmToken(payload.fcmToken);
 
         case "markNotificationSubscriptionActive":
             return agent.markNotificationSubscriptionActive(payload.endpoint);

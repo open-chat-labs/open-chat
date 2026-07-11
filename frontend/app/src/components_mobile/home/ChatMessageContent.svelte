@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { MessageContent, MessageContext, OgPreview, RehydratedMessagePreview } from "openchat-client";
+    import type { MessageContent, MessageContext, OgPreview, RehydratedMessagePreview } from "@client";
     import { i18nKey } from "../../i18n/i18n";
     import AudioContent from "./AudioContent.svelte";
     import BlockedContent from "./BlockedContent.svelte";

@@ -20,7 +20,7 @@
         OpenChat,
         SelectedEmoji,
         User,
-    } from "openchat-client";
+    } from "@client";
     import {
         allUsersStore,
         anonUserStore,
@@ -36,8 +36,10 @@
         selectedCommunitySummaryStore,
         selectedCommunityUserGroupsStore,
         throttleDeadline,
+        userGroupMentionRegex,
+        userIdMentionRegex,
         type CreatedUser,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Alert from "svelte-material-icons/Alert.svelte";
@@ -133,7 +135,18 @@
     let editor = $state<RichTextEditor>();
     let editorEmpty = $state(true);
 
+    let messageEntryElement = $state<HTMLElement>();
     let messageEntryHeight = $state<number>(0);
+
+    $effect(() => {
+        if (messageEntryElement === undefined) return;
+        const el = messageEntryElement;
+        const observer = new ResizeObserver(() => {
+            messageEntryHeight = el.clientHeight;
+        });
+        observer.observe(el);
+        return () => observer.disconnect();
+    });
     let activeStream: MediaStream | undefined = $state(undefined);
     let audioMimeType = client.audioRecordingMimeType();
     let previousEditingEvent: EventWrapper<Message> | undefined = $state();
@@ -416,7 +429,7 @@
     }
 
     function formatUserMentions(text: string): string {
-        return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
+        return text.replace(userIdMentionRegex, (match, p1) => {
             const u = $allUsersStore.get(p1);
             if (u?.username !== undefined) {
                 const username = u.username;
@@ -427,7 +440,7 @@
     }
 
     function formatUserGroupMentions(text: string): string {
-        return text.replace(/@UserGroup\(([\d\w-]+)\)/g, (match, p1) => {
+        return text.replace(userGroupMentionRegex, (match, p1) => {
             const u = $selectedCommunityUserGroupsStore.get(Number(p1));
             if (u !== undefined) {
                 return `@${u.name}`;
@@ -476,7 +489,17 @@
         const txt = editor?.getMarkdown() ?? "";
 
         if (!parseCommands(txt)) {
-            onSendMessage(expandMentions(txt));
+            const [text, mentioned, blockLevelMarkdown] = expandMentions(txt);
+            // Mentions picked from the mention picker are stored as nodes within the editor and
+            // are already in the `@UserId(xyz)` form, so `expandMentions` misses them - collect
+            // them from the editor itself
+            const mentionedUserIds = new Set(mentioned.map((u) => u.userId));
+            for (const user of editor?.getMentionedUsers() ?? []) {
+                if (!mentionedUserIds.has(user.userId)) {
+                    mentioned.push(user);
+                }
+            }
+            onSendMessage([text, mentioned, blockLevelMarkdown]);
         }
 
         afterSendMessage();
@@ -680,7 +703,7 @@
                             </Row>
                         {/if}
                         <Container
-                            bind:clientHeight={messageEntryHeight}
+                            bind:ref={messageEntryElement}
                             gap="sm"
                             minHeight="3.5rem"
                             maxHeight="calc(var(--vh, 1vh) * 50)"

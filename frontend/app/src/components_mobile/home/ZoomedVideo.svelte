@@ -1,6 +1,6 @@
 <script lang="ts">
     import { IconButton } from "component-lib";
-    import type { VideoContent } from "openchat-client";
+    import type { VideoContent } from "@client";
     import { onMount } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { popHistoryStateWithAction, pushDummyHistoryState } from "../../utils/history";

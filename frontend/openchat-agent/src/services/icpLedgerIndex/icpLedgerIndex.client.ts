@@ -3,7 +3,7 @@ import { idlFactory, type IcpLedgerIndexService } from "./candid/idl";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { Principal } from "@icp-sdk/core/principal";
 import { accountTransactions } from "./mappers";
-import type { AccountTransactionResult } from "openchat-shared";
+import type { AccountTransactionResult } from "@shared";
 import { apiOptional } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
 

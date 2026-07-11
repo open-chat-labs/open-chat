@@ -1,6 +1,6 @@
 <script lang="ts">
     import { ColourVars, Column, Sheet, StatusCard } from "component-lib";
-    import { type ResourceKey } from "openchat-client";
+    import { type ResourceKey } from "@client";
     import { _ } from "svelte-i18n";
     import { interpolate } from "../i18n/i18n";
     import Markdown from "@shared_components/Markdown.svelte";

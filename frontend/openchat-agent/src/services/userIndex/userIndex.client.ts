@@ -23,13 +23,13 @@ import type {
     UsersResponse,
     UserSummary,
     UserSummaryUpdate,
-} from "openchat-shared";
+} from "@shared";
 import {
     mergeUserSummaryWithUpdates,
     offline,
     Stream,
     userSummaryFromCurrentUserSummary,
-} from "openchat-shared";
+} from "@shared";
 import {
     Empty,
     SuccessOnly,

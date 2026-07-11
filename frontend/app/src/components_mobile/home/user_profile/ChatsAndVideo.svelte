@@ -17,7 +17,7 @@
         OpenChat,
         underReviewEnabledStore,
         type ModerationFlag,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onDestroy } from "svelte";
     import { Ringtone } from "../../../stores/video";
     import Setting from "../../Setting.svelte";

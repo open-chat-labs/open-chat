@@ -18,7 +18,7 @@
         currentUserStore,
         type Achievement,
         type ExternalAchievement,
-    } from "openchat-client";
+    } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import CheckCircle from "svelte-material-icons/CheckCircle.svelte";

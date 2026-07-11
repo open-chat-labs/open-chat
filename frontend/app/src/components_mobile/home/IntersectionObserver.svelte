@@ -27,8 +27,13 @@
         if (typeof IntersectionObserver !== "undefined") {
             const context: { node: HTMLElement | undefined } = getContext(contextId);
             const root = context?.node ?? null;
+            // capture the element - bind:this nulls `container` on destroy,
+            // and the observer callback can fire after that
+            const el = container;
+            let destroyed = false;
             const observer = new IntersectionObserver(
                 (entries) => {
+                    if (destroyed) return;
                     entries.sort((a, b) => b.time - a.time);
                     const entry = entries[0];
 
@@ -41,10 +46,15 @@
                         // called before the next render frame, then prevent the
                         // callback from being called again for the next 80ms.
                         requestAnimationFrame(() => {
+                            // destroy may have happened between the observer
+                            // callback and this frame — common when the
+                            // virtual list recycles rows during a fast scroll
+                            if (destroyed) return;
+
                             onIntersecting?.();
 
                             if (unobserveOnIntersect) {
-                                observer.unobserve(container);
+                                observer.unobserve(el);
                             }
 
                             setTimeout(() => {
@@ -62,11 +72,10 @@
                     threshold: 0,
                 },
             );
-            observer.observe(container);
+            observer.observe(el);
             return () => {
-                if (container) {
-                    observer.unobserve(container);
-                }
+                destroyed = true;
+                observer.disconnect();
             };
         }
     });

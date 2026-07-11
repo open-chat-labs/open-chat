@@ -25,7 +25,7 @@
         ROLE_MEMBER,
         ROLE_MODERATOR,
         ROLE_OWNER,
-    } from "openchat-client";
+    } from "@client";
     import { getContext } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";

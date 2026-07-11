@@ -11,8 +11,8 @@ import type {
     GroupNotification,
     GroupReaction,
     Notification,
-} from "openchat-shared";
-import { toBigInt32 } from "openchat-shared";
+} from "@shared";
+import { toBigInt32 } from "@shared";
 import {
     AddedToChannelNotification as TAddedToChannelNotification,
     ChannelMessageNotification as TChannelMessageNotification,

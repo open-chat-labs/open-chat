@@ -3,7 +3,7 @@ import {
     type Level,
     type MessageFormatter,
     type ResourceKey,
-} from "openchat-client";
+} from "@client";
 import { _, getLocaleFromNavigator, init, locale, register } from "svelte-i18n";
 import { get, writable } from "svelte/store";
 import { configKeys } from "../utils/config";

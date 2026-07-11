@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { toPixel } from "openchat-client";
+    import { toPixel } from "@client";
 
     interface Props {
         originalWidth: number;

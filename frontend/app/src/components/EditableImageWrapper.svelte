@@ -32,7 +32,7 @@
     type CropShape = "round" | "rect";
 
     let fileinput: HTMLInputElement;
-    let selectedImage: string | null | undefined = $state();
+    let selectedImage: string | undefined = $state();
     let originalImage = new Image();
     let showModal = $state(false);
     let cropData: OnCropCompleteEvent | undefined = undefined;
@@ -126,7 +126,7 @@
             {#snippet body()}
                 <div class="cropper">
                     <Cropper
-                        image={selectedImage ?? undefined}
+                        image={selectedImage}
                         oncropcomplete={onCrop}
                         crop={{ x: 0, y: 0 }}
                         {aspect}

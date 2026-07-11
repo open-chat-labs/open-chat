@@ -11,7 +11,7 @@
     import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
     import { WalletConnectWalletAdapter } from "@solana/wallet-adapter-walletconnect";
     import Button from "../Button.svelte";
-    import type { OpenChat, SiwsMessage } from "openchat-client";
+    import type { OpenChat, SiwsMessage } from "@client";
     import base58 from "bs58";
     import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
 
