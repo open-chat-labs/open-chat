@@ -155,3 +155,39 @@ describe("markdown roundtrip", () => {
         );
     });
 });
+
+// ProseMirror rejects empty text nodes ("Empty text nodes are not allowed"),
+// so zero-length delimiter matches must never produce them
+describe("no empty text nodes", () => {
+    type Node = { type: string; text?: string; content?: Node[] };
+    function hasEmptyText(node: Node): boolean {
+        if (node.type === "text" && !node.text) return true;
+        return (node.content ?? []).some(hasEmptyText);
+    }
+
+    it("triple backtick inline parses as code span", () => {
+        const doc = markdownToDoc("hello ```how are you``` test");
+        expect(hasEmptyText(doc)).toBe(false);
+        expect(doc.content[0].content).toEqual([
+            { type: "text", text: "hello " },
+            { type: "text", text: "how are you", marks: [{ type: "code" }] },
+            { type: "text", text: " test" },
+        ]);
+    });
+
+    it("empty link", () => {
+        expect(hasEmptyText(markdownToDoc("a [](http://x.com) b"))).toBe(false);
+    });
+
+    it("empty bold", () => {
+        expect(hasEmptyText(markdownToDoc("a **** b"))).toBe(false);
+    });
+
+    it("empty code block", () => {
+        const doc = markdownToDoc("```js\n\n```");
+        expect(hasEmptyText(doc)).toBe(false);
+        expect(doc.content[0].type).toBe("codeBlock");
+        // bare ``` fences with no language degrade to paragraphs but must not crash
+        expect(hasEmptyText(markdownToDoc("```\n\n```"))).toBe(false);
+    });
+});

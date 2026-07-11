@@ -102,6 +102,12 @@ export function parseInline(text: string): any[] {
         if (end > textStart) nodes.push({ type: "text", text: text.slice(textStart, end) });
     }
 
+    // ProseMirror rejects empty text nodes, so drop them (e.g. the zero-length
+    // matches produced by ``` or [](url))
+    function pushMarked(t: string, marks: any[]) {
+        if (t) nodes.push({ type: "text", text: t, marks });
+    }
+
     while (pos < text.length) {
         // mention: @UserId(2lcnt-ryaaa-aaaaf-aaula-cai)
         if (text[pos] === "@") {
@@ -133,11 +139,7 @@ export function parseInline(text: string): any[] {
             const end = text.indexOf("***", pos + 3);
             if (end !== -1) {
                 flush(pos);
-                nodes.push({
-                    type: "text",
-                    text: text.slice(pos + 3, end),
-                    marks: [{ type: "bold" }, { type: "italic" }],
-                });
+                pushMarked(text.slice(pos + 3, end), [{ type: "bold" }, { type: "italic" }]);
                 pos = end + 3;
                 textStart = pos;
                 continue;
@@ -148,11 +150,7 @@ export function parseInline(text: string): any[] {
             const end = text.indexOf("**", pos + 2);
             if (end !== -1) {
                 flush(pos);
-                nodes.push({
-                    type: "text",
-                    text: text.slice(pos + 2, end),
-                    marks: [{ type: "bold" }],
-                });
+                pushMarked(text.slice(pos + 2, end), [{ type: "bold" }]);
                 pos = end + 2;
                 textStart = pos;
                 continue;
@@ -163,11 +161,7 @@ export function parseInline(text: string): any[] {
             const end = text.indexOf("~~", pos + 2);
             if (end !== -1) {
                 flush(pos);
-                nodes.push({
-                    type: "text",
-                    text: text.slice(pos + 2, end),
-                    marks: [{ type: "strike" }],
-                });
+                pushMarked(text.slice(pos + 2, end), [{ type: "strike" }]);
                 pos = end + 2;
                 textStart = pos;
                 continue;
@@ -178,11 +172,7 @@ export function parseInline(text: string): any[] {
             const end = text.indexOf("*", pos + 1);
             if (end !== -1) {
                 flush(pos);
-                nodes.push({
-                    type: "text",
-                    text: text.slice(pos + 1, end),
-                    marks: [{ type: "italic" }],
-                });
+                pushMarked(text.slice(pos + 1, end), [{ type: "italic" }]);
                 pos = end + 1;
                 textStart = pos;
                 continue;
@@ -193,11 +183,7 @@ export function parseInline(text: string): any[] {
             const end = text.indexOf("`", pos + 1);
             if (end !== -1) {
                 flush(pos);
-                nodes.push({
-                    type: "text",
-                    text: text.slice(pos + 1, end),
-                    marks: [{ type: "code" }],
-                });
+                pushMarked(text.slice(pos + 1, end), [{ type: "code" }]);
                 pos = end + 1;
                 textStart = pos;
                 continue;
@@ -208,11 +194,7 @@ export function parseInline(text: string): any[] {
             const end = text.indexOf("</u>", pos + 3);
             if (end !== -1) {
                 flush(pos);
-                nodes.push({
-                    type: "text",
-                    text: text.slice(pos + 3, end),
-                    marks: [{ type: "underline" }],
-                });
+                pushMarked(text.slice(pos + 3, end), [{ type: "underline" }]);
                 pos = end + 4;
                 textStart = pos;
                 continue;
@@ -234,11 +216,7 @@ export function parseInline(text: string): any[] {
             const m = /^\[([^\]]*)\]\(([^()]*(?:\([^()]*\)[^()]*)*)\)/.exec(text.slice(pos));
             if (m) {
                 flush(pos);
-                nodes.push({
-                    type: "text",
-                    text: m[1],
-                    marks: [{ type: "link", attrs: { href: m[2] } }],
-                });
+                pushMarked(m[1], [{ type: "link", attrs: { href: m[2] } }]);
                 pos += m[0].length;
                 textStart = pos;
                 continue;
@@ -260,7 +238,7 @@ export function blockToNode(block: string): any | null {
         return {
             type: "codeBlock",
             attrs: { language: codeMatch[1] || null },
-            content: [{ type: "text", text: codeMatch[2] }],
+            content: codeMatch[2] ? [{ type: "text", text: codeMatch[2] }] : [],
         };
     }
     // Heading: # text
