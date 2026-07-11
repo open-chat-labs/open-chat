@@ -103,7 +103,7 @@ export function parseInline(text: string): any[] {
     }
 
     // ProseMirror rejects empty text nodes, so drop them (e.g. the zero-length
-    // matches produced by ``` or [](url))
+    // matches produced by **** or [](url))
     function pushMarked(t: string, marks: any[]) {
         if (t) nodes.push({ type: "text", text: t, marks });
     }
@@ -178,13 +178,17 @@ export function parseInline(text: string): any[] {
                 continue;
             }
         }
-        // inline code: `text`
+        // inline code: a run of N backticks closed by a matching run; an
+        // unclosed run stays literal
         if (text[pos] === "`") {
-            const end = text.indexOf("`", pos + 1);
+            let runEnd = pos;
+            while (text[runEnd] === "`") runEnd++;
+            const run = text.slice(pos, runEnd);
+            const end = text.indexOf(run, runEnd);
             if (end !== -1) {
                 flush(pos);
-                pushMarked(text.slice(pos + 1, end), [{ type: "code" }]);
-                pos = end + 1;
+                pushMarked(text.slice(runEnd, end), [{ type: "code" }]);
+                pos = end + run.length;
                 textStart = pos;
                 continue;
             }

@@ -159,8 +159,8 @@ describe("markdown roundtrip", () => {
 // ProseMirror rejects empty text nodes ("Empty text nodes are not allowed"),
 // so zero-length delimiter matches must never produce them
 describe("no empty text nodes", () => {
-    type Node = { type: string; text?: string; content?: Node[] };
-    function hasEmptyText(node: Node): boolean {
+    type DocNode = { type: string; text?: string; content?: DocNode[] };
+    function hasEmptyText(node: DocNode): boolean {
         if (node.type === "text" && !node.text) return true;
         return (node.content ?? []).some(hasEmptyText);
     }
@@ -175,12 +175,29 @@ describe("no empty text nodes", () => {
         ]);
     });
 
+    it("unclosed backtick run stays literal", () => {
+        const doc = markdownToDoc("hello ``` test");
+        expect(hasEmptyText(doc)).toBe(false);
+        expect(doc.content[0].content).toEqual([{ type: "text", text: "hello ``` test" }]);
+    });
+
+    // empty spans are dropped entirely, delimiters included
     it("empty link", () => {
-        expect(hasEmptyText(markdownToDoc("a [](http://x.com) b"))).toBe(false);
+        const doc = markdownToDoc("a [](http://x.com) b");
+        expect(hasEmptyText(doc)).toBe(false);
+        expect(doc.content[0].content).toEqual([
+            { type: "text", text: "a " },
+            { type: "text", text: " b" },
+        ]);
     });
 
     it("empty bold", () => {
-        expect(hasEmptyText(markdownToDoc("a **** b"))).toBe(false);
+        const doc = markdownToDoc("a **** b");
+        expect(hasEmptyText(doc)).toBe(false);
+        expect(doc.content[0].content).toEqual([
+            { type: "text", text: "a " },
+            { type: "text", text: " b" },
+        ]);
     });
 
     it("empty code block", () => {
