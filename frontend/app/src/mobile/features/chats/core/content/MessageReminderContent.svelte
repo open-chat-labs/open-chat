@@ -1,0 +1,20 @@
+<script lang="ts">
+    import { ChatText, Column } from "component-lib";
+    import type { MessageReminderContent } from "@client";
+    import { i18nKey } from "@src/i18n/i18n";
+    import Translatable from "@src/mobile/shared/Translatable.svelte";
+    import ReminderNotes from "@src/mobile/features/chats/core/ReminderNotes.svelte";
+
+    interface Props {
+        content: MessageReminderContent;
+    }
+
+    let { content }: Props = $props();
+</script>
+
+<Column gap={"lg"}>
+    <ChatText width={"hug"}>
+        <Translatable resourceKey={i18nKey("reminders.youAsked")} />
+    </ChatText>
+    <ReminderNotes notes={content.notes} />
+</Column>

@@ -1,0 +1,181 @@
+<script lang="ts">
+    import { iconSize, type OpenChat } from "@client";
+    import { getContext, onMount } from "svelte";
+    import { _ } from "svelte-i18n";
+    import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
+    import { i18nKey, interpolate } from "@src/i18n/i18n";
+    import { uniquePersonCredentialGate } from "@src/utils/access";
+    import Button from "@src/ui/Button.svelte";
+    import ButtonGroup from "@src/ui/ButtonGroup.svelte";
+    import ErrorMessage from "@src/desktop/shared/ErrorMessage.svelte";
+    import FancyLoader from "@src/desktop/ui/icons/FancyLoader.svelte";
+    import ModalContent from "@src/ui/ModalContent.svelte";
+    import Translatable from "@src/ui/Translatable.svelte";
+    import HumanityConfirmation from "@src/desktop/shared/HumanityConfirmation.svelte";
+    import Markdown from "@src/ui/Markdown.svelte";
+    import LinkAccounts from "./LinkAccounts.svelte";
+    import LinkAccountsModal from "./LinkAccountsModal.svelte";
+
+    const client = getContext<OpenChat>("client");
+
+    interface Props {
+        onClose: () => void;
+        onSuccess: () => void;
+    }
+
+    let { onClose, onSuccess }: Props = $props();
+
+    let failed = $state(false);
+    let verifying = $state(false);
+    let step: "linking" | "verification" = $state("linking");
+    let confirmed = $state(false);
+    let iiPrincipal: string | undefined = $state(undefined);
+    let checkingPrincipal = $state(true);
+
+    onMount(() => {
+        client
+            .getLinkedIIPrincipal()
+            .then((p) => {
+                iiPrincipal = p;
+                if (iiPrincipal !== undefined) {
+                    step = "verification";
+                }
+            })
+            .finally(() => (checkingPrincipal = false));
+    });
+
+    function verify() {
+        if (iiPrincipal === undefined) return;
+        const iiPrincipalCopy = iiPrincipal;
+
+        verifying = true;
+        failed = false;
+        client
+            .verifyAccessGate(uniquePersonCredentialGate, iiPrincipalCopy)
+            .then((credential) => {
+                if (credential === undefined) {
+                    failed = true;
+                } else {
+                    return client
+                        .submitProofOfUniquePersonhood(credential, iiPrincipalCopy)
+                        .then((resp) => {
+                            if (resp.kind !== "success") {
+                                failed = true;
+                            } else {
+                                onSuccess();
+                            }
+                        });
+                }
+            })
+            .catch(() => (failed = true))
+            .finally(() => (verifying = false));
+    }
+</script>
+
+{#if checkingPrincipal}
+    <ModalContent hideFooter hideHeader fadeDelay={0} fadeDuration={0}>
+        {#snippet body()}
+            <div>
+                <div class="loader">
+                    <FancyLoader />
+                </div>
+            </div>
+        {/snippet}
+    </ModalContent>
+{:else if step === "linking"}
+    <LinkAccountsModal>
+        <LinkAccounts
+            bind:iiPrincipal
+            {onClose}
+            onProceed={() => (step = "verification")}
+            explanations={[i18nKey("identity.humanityWarning")]} />
+    </LinkAccountsModal>
+{:else}
+    <ModalContent fadeDelay={0} fadeDuration={0}>
+        {#snippet header()}
+            <div class="header">
+                <AccountCheck size={$iconSize} color={"var(--txt)"} />
+                <div class="title">
+                    <Translatable resourceKey={i18nKey("access.uniquePerson")} />
+                </div>
+            </div>
+        {/snippet}
+        {#snippet body()}
+            <div>
+                {#if failed}
+                    <p class="info">
+                        <ErrorMessage>
+                            <Translatable resourceKey={i18nKey("human.failed")} />
+                        </ErrorMessage>
+                    </p>
+                    <p class="question">
+                        <Translatable resourceKey={i18nKey("access.uniquePersonInfo1")} />
+                    </p>
+
+                    <p class="answer">
+                        <Markdown text={interpolate($_, i18nKey("access.uniquePersonInfo2"))} />
+                    </p>
+
+                    <p class="answer">
+                        <Translatable resourceKey={i18nKey("access.uniquePersonInfo3")} />
+                    </p>
+                {:else}
+                    <p class="info">
+                        <Translatable resourceKey={i18nKey("human.instruction")} />
+                    </p>
+                    <HumanityConfirmation bind:confirmed />
+                {/if}
+            </div>
+        {/snippet}
+
+        {#snippet footer()}
+            <div>
+                <ButtonGroup>
+                    <Button secondary onClick={onClose}
+                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                    <!-- <Button secondary on:click={() => (step = "linking")}
+                        ><Translatable resourceKey={i18nKey("identity.back")} /></Button> -->
+                    <Button
+                        loading={verifying}
+                        disabled={verifying || !confirmed || iiPrincipal === undefined}
+                        onClick={verify}
+                        ><Translatable resourceKey={i18nKey("access.verify")} /></Button>
+                </ButtonGroup>
+            </div>
+        {/snippet}
+    </ModalContent>
+{/if}
+
+<style lang="scss">
+    :global(.link-ii-logo img) {
+        width: 24px;
+    }
+
+    .header {
+        @include font(bold, normal, fs-130, 29);
+        margin-bottom: $sp4;
+        display: flex;
+        align-items: center;
+        gap: $sp3;
+    }
+
+    .info,
+    .question,
+    .answer {
+        margin-bottom: $sp4;
+    }
+
+    .question {
+        @include font(book, normal, fs-90);
+    }
+
+    .answer {
+        color: var(--txt-light);
+        @include font(book, normal, fs-90);
+    }
+
+    .loader {
+        width: 100px;
+        margin: 100px auto;
+    }
+</style>
