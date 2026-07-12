@@ -1,0 +1,46 @@
+<script lang="ts">
+    import type { OpenChat } from "@client";
+    import { anonUserStore, identityStateStore, publish } from "@client";
+    import { getContext, tick } from "svelte";
+    import { i18nKey } from "@src/i18n/i18n";
+    import Translatable from "@src/mobile/shared/Translatable.svelte";
+
+    import { MenuItem } from "component-lib";
+    import { updateGroupState } from "@src/mobile/features/chats/group/edit/group.svelte";
+
+    const client = getContext<OpenChat>("client");
+
+    interface Props {
+        canMarkAllRead: boolean;
+    }
+
+    let { canMarkAllRead }: Props = $props();
+
+    function newGroup() {
+        if ($anonUserStore) {
+            client.updateIdentityState({
+                kind: "logging_in",
+                postLogin: { kind: "create_group" },
+            });
+        } else {
+            updateGroupState.initialise(client.createCandidateGroup("group", false));
+            publish("newGroup");
+        }
+    }
+    $effect(() => {
+        if (
+            $identityStateStore.kind === "logged_in" &&
+            $identityStateStore.postLogin?.kind === "create_group"
+        ) {
+            client.clearPostLoginState();
+            tick().then(() => newGroup());
+        }
+    });
+</script>
+
+<MenuItem onclick={newGroup}>
+    <Translatable resourceKey={i18nKey("newGroup")} />
+</MenuItem>
+<MenuItem disabled={!canMarkAllRead} onclick={() => client.markAllReadForCurrentScope()}>
+    <Translatable resourceKey={i18nKey("markAllRead")} />
+</MenuItem>

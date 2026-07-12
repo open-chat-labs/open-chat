@@ -1,0 +1,56 @@
+<script lang="ts">
+    import type { ResourceKey } from "@client";
+    import Tooltip from "@src/desktop/ui/tooltip/Tooltip.svelte";
+    import Translatable from "@src/ui/Translatable.svelte";
+
+    interface Props {
+        verified: boolean;
+        size: "small" | "default" | "large";
+        tooltip?: ResourceKey;
+    }
+
+    let { size, tooltip }: Props = $props();
+
+    // Verified user (DecideAI) concept is suspended - never render the badge.
+    const verified = false;
+</script>
+
+{#if verified}
+    {#if tooltip !== undefined}
+        <Tooltip uppercase position="top" align="middle">
+            <div class={`verified ${size}`}></div>
+            {#snippet popupTemplate()}
+                <Translatable resourceKey={tooltip} />
+            {/snippet}
+        </Tooltip>
+    {:else}
+        <div class={`verified ${size}`}></div>
+    {/if}
+{/if}
+
+<style lang="scss">
+    .verified {
+        $size: $avatar-mod;
+        width: $size;
+        height: $size;
+        background-image: url("/assets/verified.svg");
+        background-size: cover;
+        background-repeat: no-repeat;
+
+        @include mobile() {
+            $size: $avatar-mod-small;
+            width: $size;
+            height: $size;
+        }
+
+        &.small {
+            width: toRem(16);
+            height: toRem(16);
+        }
+
+        &.large {
+            width: toRem(26);
+            height: toRem(26);
+        }
+    }
+</style>

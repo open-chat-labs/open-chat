@@ -10,6 +10,7 @@ import globals from "globals";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 import noPagejsDirect from "./eslint-rules/no-pagejs-direct.mjs";
+import structureBoundaries from "./eslint-rules/structure-boundaries.mjs";
 
 // __dirname equivalent
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -37,7 +38,7 @@ export default defineConfig([
             "@typescript-eslint": typescriptEslint,
             prettier,
             svelte,
-            local: { rules: { "no-pagejs-direct": noPagejsDirect } },
+            local: { rules: { "no-pagejs-direct": noPagejsDirect, "structure-boundaries": structureBoundaries } },
         },
         extends: compat.extends(
             "eslint:recommended",
@@ -48,6 +49,7 @@ export default defineConfig([
             "@typescript-eslint/no-explicit-any": ["error"],
             "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
             "local/no-pagejs-direct": "error",
+            "local/structure-boundaries": "error",
         },
     },
     // Explicit exceptions: files that are permitted to import page.js directly.
@@ -65,9 +67,9 @@ export default defineConfig([
     },
     {
         files: [
-            "app/src/components/Router.svelte",
-            "app/src/components_mobile/Router.svelte",
-            "app/src/components_mobile/home/SlidingModals.svelte",
+            "app/src/desktop/shell/Router.svelte",
+            "app/src/mobile/shell/Router.svelte",
+            "app/src/mobile/shell/SlidingModals.svelte",
         ],
         languageOptions: {
             parser: svelteParser,
@@ -84,6 +86,41 @@ export default defineConfig([
             "local/no-pagejs-direct": "off",
             // PageJS types and callback signatures use `any`; pre-existing in these files.
             "@typescript-eslint/no-explicit-any": "off",
+        },
+    },
+    // Structure boundaries for all app svelte components. Svelte files are not
+    // otherwise linted (pre-consolidation status quo); this block parses them
+    // solely to enforce import boundaries, so unrelated recommended rules that
+    // would newly fire on svelte are disabled here.
+    {
+        files: ["app/src/**/*.svelte"],
+        languageOptions: {
+            parser: svelteParser,
+            parserOptions: {
+                parser: tsParser,
+            },
+        },
+        rules: {
+            // Existing cross-feature imports are tracked as warnings until each
+            // is resolved (exports/ surface, chats/core, or a move to shared/).
+            "local/structure-boundaries": "warn",
+            "no-unused-vars": "off",
+            "no-undef": "off",
+            "no-self-assign": "off", // svelte reactivity-trigger idiom
+            // Pre-existing style in svelte files, which were never linted before
+            // this block existed; only the boundary rule is enforced here.
+            "no-case-declarations": "off",
+            "no-empty": "off",
+            "no-useless-escape": "off",
+            "@typescript-eslint/ban-ts-comment": "off",
+            "@typescript-eslint/no-unused-expressions": "off",
+            "no-fallthrough": "off",
+            "no-async-promise-executor": "off",
+            "no-duplicate-case": "off",
+            "no-constant-condition": "off",
+            "@typescript-eslint/no-unused-vars": "off",
+            "@typescript-eslint/no-explicit-any": "off",
+            "prettier/prettier": "off",
         },
     },
     globalIgnores([
