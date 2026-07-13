@@ -42,7 +42,6 @@ fn accept_if_valid(state: &RuntimeState) {
         | "upgrade_local_user_index_canister_wasm"
         | "mark_local_user_index_full"
         | "set_personhood_verifier_canister_id"
-        | "wipe_legacy_unique_person_proofs"
         | "register_external_achievement"
         | "publish_bot"
         | "suspected_bots" => state.is_caller_governance_principal(),

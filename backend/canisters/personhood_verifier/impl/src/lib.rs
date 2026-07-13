@@ -116,7 +116,7 @@ struct Data {
     // are the r50-calibrated launch values
     #[serde(default)]
     pub uniqueness_thresholds: engine::UniquenessThresholds,
-    // Heap for now; moves to stable structures before real scale (Phase 2)
+    // Stable map source of truth + heap scan cache rebuilt in post_upgrade
     pub embeddings: EmbeddingStore,
     // Verified users whose proof has not yet been acknowledged by user_index.
     // Recorded durably at enrolment and retried by prune_sessions so a

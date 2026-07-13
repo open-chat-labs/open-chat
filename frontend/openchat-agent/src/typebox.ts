@@ -2073,11 +2073,6 @@ export const UserIndexUserArgs = Type.Object({
     username: Type.Optional(Type.String()),
 });
 
-export type UserIndexWipeLegacyUniquePersonProofsArgs = Static<
-    typeof UserIndexWipeLegacyUniquePersonProofsArgs
->;
-export const UserIndexWipeLegacyUniquePersonProofsArgs = Type.Record(Type.String(), Type.Never());
-
 export type UserIndexBotUpdatesArgs = Static<typeof UserIndexBotUpdatesArgs>;
 export const UserIndexBotUpdatesArgs = Type.Object({
     updated_since: Type.BigInt(),

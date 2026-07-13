@@ -1,16 +1,15 @@
 #!/bin/bash
 
-# Registers the 4 SNS generic functions needed to govern the personhood
-# verification system, as 4 separate AddGenericNervousSystemFunction
+# Registers the SNS generic functions needed to govern the personhood
+# verification system, as separate AddGenericNervousSystemFunction
 # proposals:
 #
 #   11000 commit_model                          (personhood_verifier)
 #   11001 set_uniqueness_thresholds             (personhood_verifier)
 #   1016  set_personhood_verifier_canister_id   (user_index)
-#   1017  wipe_legacy_unique_person_proofs      (user_index)
 #
-# IDs 1016/1017 were the lowest unused (and unreserved) ids in the
-# user_index range and 11000 starts a new range for the personhood_verifier
+# 11000 starts a new id range for the personhood_verifier and 1016 was the
+# lowest unused (and unreserved) id in the user_index range
 # at the time of writing; re-check against
 # `list_nervous_system_functions` on the SNS governance canister before
 # running. Validators follow the OpenChat convention: the target canister
@@ -68,13 +67,6 @@ register 1016 \
     "ApplicationBusinessLogic" \
     $USER_INDEX_CANISTER_ID \
     "set_personhood_verifier_canister_id"
-
-register 1017 \
-    "Wipe legacy DecideAI unique person proofs" \
-    "Triggers the one-off removal of all legacy DecideAI unique person proofs as part of the cutover to the in-house personhood verification system. Users then re-verify via the new system." \
-    "ApplicationBusinessLogic" \
-    $USER_INDEX_CANISTER_ID \
-    "wipe_legacy_unique_person_proofs"
 
 # Cleanup
 ./sns/scripts/utils/cleanup_env.sh

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Embeddings move to a StableBTreeMap source of truth with a heap scan cache rebuilt in post_upgrade, so the store no longer serializes through upgrades while the per-verification uniqueness scan stays on contiguous heap memory ([#9081](https://github.com/open-chat-labs/open-chat/pull/9081))
+
 ### Added
 
 - `upload_model_chunks_whitelist` init arg so dev principals can upload (inert) model chunks in production while activation stays proposal-only; `commit_model` and `set_uniqueness_thresholds` now expose `_validate` queries for SNS generic-function registration ([#9081](https://github.com/open-chat-labs/open-chat/pull/9081))

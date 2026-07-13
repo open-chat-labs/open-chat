@@ -11,7 +11,6 @@ pub struct Args {
     // dev team in production, mirroring openchat_installer's
     // upload_wasm_chunks_whitelist. Chunks only activate via a hash-pinned
     // commit_model proposal, so this grants no control over the live models.
-    #[serde(default)]
     pub upload_model_chunks_whitelist: Vec<Principal>,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,

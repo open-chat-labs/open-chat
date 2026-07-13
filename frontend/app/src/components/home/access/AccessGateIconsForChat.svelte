@@ -12,7 +12,7 @@
     let merged = $derived(mergeAccessGates(...gates));
 </script>
 
-{#if gates.length > 0}
+{#if merged.length > 0}
     <div class="icons">
         {#each merged as gate, i}
             <AccessGateIcon

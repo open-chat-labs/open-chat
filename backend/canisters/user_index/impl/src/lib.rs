@@ -409,9 +409,11 @@ struct Data {
     // against older versions lapse at the deadline
     #[serde(default)]
     pub personhood_model_lapse: Option<PersonhoodModelLapse>,
-    // One-shot: set by governance to wipe legacy DecideAI proofs. Cleared
-    // when the sweep completes. Deliberate rather than upgrade-coupled so the
-    // cutover controls exactly when badges disappear.
+    // One-shot: triggers the wipe of legacy DecideAI proofs. Cleared when the
+    // sweep completes. Set to true in post_upgrade in whichever release ships
+    // AFTER the verification UI has baked in production (see the rollout
+    // runbook) - never in the release that first carries this code, because
+    // users must be able to re-verify before their badge disappears.
     #[serde(default)]
     pub wipe_legacy_unique_person_proofs: bool,
     pub event_store_client: EventStoreClient<CdkRuntime>,

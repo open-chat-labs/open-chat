@@ -34,7 +34,7 @@ next starts.
 | Activate a model (`commit_model`) | SNS proposal only (function 11000) | Hash-pinned: the commit no-ops unless the assembled chunks hash to exactly the sha256 in the voted-on payload. Weights are also structurally validated by tract before activation. |
 | Tune uniqueness thresholds | SNS proposal only (function 11001) | Runtime-governable bands; invariant `clear <= duplicate_retry <= duplicate` enforced on-chain. |
 | Wire user_index → verifier | SNS proposal only (function 1016) | |
-| Wipe legacy DecideAI proofs | SNS proposal only (function 1017) | Deliberate, one-off, run late in the sequence. |
+| Wipe legacy DecideAI proofs | user_index upgrade proposal (post_upgrade one-liner in a designated release) | Deliberate, one-off, run late in the sequence; voters see it in the upgrade changelog. |
 | Upgrade the verifier wasm | SNS proposal (native "Upgrade SNS controlled canister") | Standard external-canister upgrade path. |
 
 The `governance_principals` init arg must be exactly
@@ -104,30 +104,29 @@ intended principals. Controller list is SNS root only.
 **At this point nothing is user-visible.** The canister accepts no
 verifications (no models) and the user_index does not know it exists.
 
-## Step 2 — register the four SNS generic functions
+## Step 2 — register the SNS generic functions
 
 ```bash
 ./scripts/proposals/register_personhood_verifier_functions.sh
 ```
 
-Submits four `AddGenericNervousSystemFunction` proposals:
+Submits an `AddGenericNervousSystemFunction` proposal per function:
 
 | Id | Function | Target |
 |---|---|---|
 | 11000 | `commit_model` | personhood_verifier |
 | 11001 | `set_uniqueness_thresholds` | personhood_verifier |
 | 1016 | `set_personhood_verifier_canister_id` | user_index |
-| 1017 | `wipe_legacy_unique_person_proofs` | user_index |
 
-Ids 1016/1017/11000/11001 were verified free (and unreserved) against the live
-registry on 2026-07-13; re-check with `list_nervous_system_functions` before
-submitting. Validators are the `<method>_validate` queries the `#[proposal]`
-macro generates on the target canisters — but note the user_index does not
-expose 1016/1017's methods until step 3 ships, so **wait for step 3 before
-executing them** (registration itself is fine in any order).
+Ids were verified free (and unreserved) against the live registry on
+2026-07-13; re-check with `list_nervous_system_functions` before submitting.
+Validators are the `<method>_validate` queries the `#[proposal]` macro
+generates on the target canisters — but note the user_index does not expose
+1016's method until step 3 ships, so **wait for step 3 before executing it**
+(registration itself is fine in any order).
 
-**Verify:** all four functions appear in `list_nervous_system_functions` with
-the right target/validator method names.
+**Verify:** the functions appear in `list_nervous_system_functions` with the
+right target/validator method names.
 
 ## Step 3 — ship the type-aware backend, enforcement OFF
 
@@ -278,15 +277,21 @@ enrolled population grows, raise the bands by proposal:
 ## Step 9 — wipe the legacy DecideAI proofs
 
 Only after phase A has baked (users must have a working re-verification path
-the moment their badge disappears):
+the moment their badge disappears).
 
-```bash
-./scripts/proposals/wipe_legacy_unique_person_proofs.sh
-```
+The trigger is a one-line `post_upgrade` change in the user_index: set
+`data.wipe_legacy_unique_person_proofs = true` (and restart the
+`remove_lapsed_unique_person_proofs` job) in whichever user_index release the
+team ships once phase A looks healthy. **It must not ride the step 3
+release** — the sweep starts the moment that upgrade lands. The wipe is
+approved like any other upgrade, via the user_index upgrade proposal whose
+changelog says exactly this.
 
 This triggers the one-off removal fan-out (user_index → LUI → user). It is
 **irreversible** — the DecideAI proofs cannot be restored — which is why it
-sits this late in the sequence.
+sits this late in the sequence. Remove the `post_upgrade` line again in the
+following release (the flag self-clears when the sweep completes, so this is
+belt-and-braces).
 
 **Verify:** legacy badges disappear; affected test account can re-verify via
 the new flow.
