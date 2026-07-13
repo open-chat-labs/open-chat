@@ -9,7 +9,7 @@ use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use constants::DAY_IN_MS;
+use constants::{DAY_IN_MS, PERSONHOOD_VERIFIER_CANISTER_ID};
 use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -96,7 +96,7 @@ impl RuntimeState {
     }
 
     pub fn is_caller_personhood_verifier_canister(&self) -> bool {
-        self.env.caller() == self.data.personhood_verifier_canister_id
+        self.env.caller() == PERSONHOOD_VERIFIER_CANISTER_ID
     }
 
     pub fn is_caller_local_user_index_canister(&self) -> bool {
@@ -235,14 +235,12 @@ impl RuntimeState {
     // Fire-and-forget deletion of a user's face embedding, attempt history
     // and any open verification sessions at the personhood verifier
     pub fn delete_user_embedding(&mut self, user_id: UserId) {
-        if self.data.personhood_verifier_canister_id != Principal::anonymous() {
-            let args = personhood_verifier_canister::c2c_delete_user_embedding::Args { user_id };
-            self.data.fire_and_forget_handler.send(
-                self.data.personhood_verifier_canister_id,
-                "c2c_delete_user_embedding_msgpack".to_string(),
-                msgpack::serialize_then_unwrap(&args),
-            );
-        }
+        let args = personhood_verifier_canister::c2c_delete_user_embedding::Args { user_id };
+        self.data.fire_and_forget_handler.send(
+            PERSONHOOD_VERIFIER_CANISTER_ID,
+            "c2c_delete_user_embedding_msgpack".to_string(),
+            msgpack::serialize_then_unwrap(&args),
+        );
     }
 
     pub fn user_metrics(&self, user_id: UserId) -> Option<UserMetrics> {
@@ -403,8 +401,6 @@ struct Data {
     pub escrow_canister_id: CanisterId,
     pub translations_canister_id: CanisterId,
     pub registry_canister_id: CanisterId,
-    #[serde(default = "anonymous_principal")]
-    pub personhood_verifier_canister_id: CanisterId,
     // Set when a new embedding model version is announced: proofs issued
     // against older versions lapse at the deadline
     #[serde(default)]
@@ -479,7 +475,6 @@ impl Data {
         internet_identity_canister_id: CanisterId,
         translations_canister_id: CanisterId,
         website_canister_id: CanisterId,
-        personhood_verifier_canister_id: CanisterId,
         video_call_operators: Vec<Principal>,
         oc_secret_key_der: Vec<u8>,
         test_mode: bool,
@@ -502,7 +497,6 @@ impl Data {
             escrow_canister_id,
             translations_canister_id,
             registry_canister_id,
-            personhood_verifier_canister_id,
             personhood_model_lapse: None,
             wipe_legacy_unique_person_proofs: false,
             event_store_client: EventStoreClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
@@ -632,7 +626,6 @@ impl Default for Data {
             escrow_canister_id: Principal::anonymous(),
             translations_canister_id: Principal::anonymous(),
             registry_canister_id: Principal::anonymous(),
-            personhood_verifier_canister_id: Principal::anonymous(),
             personhood_model_lapse: None,
             wipe_legacy_unique_person_proofs: false,
             event_store_client: EventStoreClientBuilder::new(Principal::anonymous(), CdkRuntime::default()).build(),

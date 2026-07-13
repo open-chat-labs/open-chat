@@ -20,7 +20,6 @@ pub struct Args {
     pub internet_identity_canister_id: CanisterId,
     pub translations_canister_id: CanisterId,
     pub website_canister_id: CanisterId,
-    pub personhood_verifier_canister_id: CanisterId,
     pub video_call_operators: Vec<Principal>,
     #[serde(with = "serde_bytes")]
     pub oc_secret_key_der: Vec<u8>,

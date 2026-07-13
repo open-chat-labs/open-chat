@@ -2205,13 +2205,6 @@ export const UserIndexBotInstallationEventsArgs = Type.Object({
     size: Type.Number(),
 });
 
-export type UserIndexSetPersonhoodVerifierCanisterIdArgs = Static<
-    typeof UserIndexSetPersonhoodVerifierCanisterIdArgs
->;
-export const UserIndexSetPersonhoodVerifierCanisterIdArgs = Type.Object({
-    canister_id: TSPrincipal,
-});
-
 export type UserIndexChitLeaderboardChitUserBalance = Static<
     typeof UserIndexChitLeaderboardChitUserBalance
 >;

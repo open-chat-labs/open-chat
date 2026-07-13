@@ -65,7 +65,6 @@ fn main() {
     generate_ts_method!(user_index, set_diamond_membership_fees);
     generate_ts_method!(user_index, set_display_name);
     generate_ts_method!(user_index, set_hide_online_status);
-    generate_ts_method!(user_index, set_personhood_verifier_canister_id);
     generate_ts_method!(user_index, set_premium_item_cost);
     generate_ts_method!(user_index, set_user_upgrade_concurrency);
     generate_ts_method!(user_index, set_moderation_flags);

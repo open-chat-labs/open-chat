@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - The legacy DecideAI proof wipe is triggered by a `post_upgrade` one-liner in a designated release (reviewed via the upgrade proposal changelog) rather than a dedicated governance endpoint ([#9081](https://github.com/open-chat-labs/open-chat/pull/9081))
-- `set_personhood_verifier_canister_id` is an SNS proposal endpoint (`#[proposal]`, with a `_validate` query) so it can be registered as a generic nervous system function ([#9081](https://github.com/open-chat-labs/open-chat/pull/9081))
+- The personhood_verifier canister id is the hardcoded constant `wji62-oiaaa-aaaaf-bsc7a-cai` (local deployments and tests create the canister with that exact id), replacing the init arg and the `set_personhood_verifier_canister_id` endpoint ([#9081](https://github.com/open-chat-labs/open-chat/pull/9081))
 - Remove the DecideAI submission endpoint; lapse proofs of superseded model versions ([#9072](https://github.com/open-chat-labs/open-chat/issues/9072))
 
 ### Added

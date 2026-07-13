@@ -7,6 +7,16 @@ comments.
 
 [#9072]: https://github.com/open-chat-labs/open-chat/issues/9072
 
+## The canister id is fixed
+
+The production canister already exists: **`wji62-oiaaa-aaaaf-bsc7a-cai`**,
+hardcoded as `PERSONHOOD_VERIFIER_CANISTER_ID` in the `constants` crate and
+recorded in `canister_ids.json`. The user_index authenticates the verifier
+against this constant — there is no wiring step and no init-arg plumbing.
+Local deployments and the integration tests create the canister with this
+exact id (specified-id creation), so the constant is correct in every
+environment.
+
 ## Why the order matters
 
 Two hard constraints drive everything:
@@ -14,14 +24,14 @@ Two hard constraints drive everything:
 1. **Users must have a working way to verify before anything new requires
    verification and before any legacy proof is wiped.** New unique-person
    gates and prize restrictions stay uncreatable (phase A feature flag,
-   step 7) until real-world verification data looks healthy (phase B,
-   step 10); the wipe (step 9) sits between them. Existing pre-sunset gates
-   re-enforce earlier, at step 3 — see the note in step 7.
+   step 6) until real-world verification data looks healthy (phase B,
+   step 9); the wipe (step 8) sits between them. Existing pre-sunset gates
+   re-enforce earlier, at step 3 — see the note in step 6.
 2. **Every canister that (de)serialises `UniquePersonProof` must understand
    the new `OpenChat` provider variant before any such proof exists**,
    otherwise `local_user_index` / `user` canisters panic on an unknown
    variant. So children upgrade before parents, and the whole backend
-   upgrades before the verifier is wired in.
+   upgrades before the verifier can issue proofs.
 
 Each numbered step below should complete (and, where noted, bake) before the
 next starts.
@@ -33,7 +43,6 @@ next starts.
 | Upload model chunks | Dev principals on `upload_model_chunks_whitelist` (init arg, mirrors `openchat_installer`'s `upload_wasm_chunks_whitelist`) | Chunks are inert. Nothing reads them until a commit activates them. |
 | Activate a model (`commit_model`) | SNS proposal only (function 11000) | Hash-pinned: the commit no-ops unless the assembled chunks hash to exactly the sha256 in the voted-on payload. Weights are also structurally validated by tract before activation. |
 | Tune uniqueness thresholds | SNS proposal only (function 11001) | Runtime-governable bands; invariant `clear <= duplicate_retry <= duplicate` enforced on-chain. |
-| Wire user_index → verifier | SNS proposal only (function 1016) | |
 | Wipe legacy DecideAI proofs | user_index upgrade proposal (post_upgrade one-liner in a designated release) | Deliberate, one-off, run late in the sequence; voters see it in the upgrade changelog. |
 | Upgrade the verifier wasm | SNS proposal (native "Upgrade SNS controlled canister") | Standard external-canister upgrade path. |
 
@@ -64,11 +73,11 @@ they don't already have.
   `PROPOSER_NEURON_ID`, `PEM_FILE` etc. (same setup as any other proposal
   script).
 
-## Step 1 — create, install and register the verifier canister
+## Step 1 — install and register the verifier canister
 
-1. Create the canister (dev identity, cycles wallet) and record the id in
-   `canister_ids.json` under `personhood_verifier.ic`.
-2. Install the release wasm with production init args:
+The canister exists (see above) but is empty and dev-controlled.
+
+1. Install the release wasm with production init args:
 
    ```candid
    (record {
@@ -81,7 +90,7 @@ they don't already have.
    })
    ```
 
-3. Set the SNS root canister (`3e3x2-xyaaa-aaaaq-aaalq-cai`) as an additional
+2. Set the SNS root canister (`3e3x2-xyaaa-aaaaq-aaalq-cai`) as an additional
    controller, then submit the **RegisterDappCanisters** proposal:
 
    ```bash
@@ -90,19 +99,19 @@ they don't already have.
 
    Once adopted, remove the dev identity as controller (SNS root does this as
    part of registration; verify with `dfx canister --network ic info`).
-4. Whitelist it with the cycles dispenser:
+3. Whitelist it with the cycles dispenser:
 
    ```bash
-   ./scripts/proposals/add_canister_to_cycles_dispenser.sh <personhood_verifier_canister_id> "<summary>"
+   ./scripts/proposals/add_canister_to_cycles_dispenser.sh wji62-oiaaa-aaaaf-bsc7a-cai "<summary>"
    ```
 
-**Verify:** `https://<canister_id>.raw.icp0.io/metrics` responds;
-`inference_engines_ready` is `false`, `current_model_version` is `0`,
-`governance_principals` and `upload_model_chunks_whitelist` show exactly the
-intended principals. Controller list is SNS root only.
+**Verify:** `https://wji62-oiaaa-aaaaf-bsc7a-cai.raw.icp0.io/metrics`
+responds; `inference_engines_ready` is `false`, `current_model_version` is
+`0`, `governance_principals` and `upload_model_chunks_whitelist` show exactly
+the intended principals. Controller list is SNS root only.
 
 **At this point nothing is user-visible.** The canister accepts no
-verifications (no models) and the user_index does not know it exists.
+verifications (no models are committed).
 
 ## Step 2 — register the SNS generic functions
 
@@ -116,19 +125,17 @@ Submits an `AddGenericNervousSystemFunction` proposal per function:
 |---|---|---|
 | 11000 | `commit_model` | personhood_verifier |
 | 11001 | `set_uniqueness_thresholds` | personhood_verifier |
-| 1016 | `set_personhood_verifier_canister_id` | user_index |
 
 Ids were verified free (and unreserved) against the live registry on
 2026-07-13; re-check with `list_nervous_system_functions` before submitting.
 Validators are the `<method>_validate` queries the `#[proposal]` macro
-generates on the target canisters — but note the user_index does not expose
-1016's method until step 3 ships, so **wait for step 3 before executing it**
-(registration itself is fine in any order).
+generates on the personhood_verifier itself, so registration can happen any
+time after step 1.
 
 **Verify:** the functions appear in `list_nervous_system_functions` with the
 right target/validator method names.
 
-## Step 3 — ship the type-aware backend, enforcement OFF
+## Step 3 — ship the type-aware backend
 
 Upgrade, in this order (children before parents, so no canister ever receives
 a variant it can't decode):
@@ -142,9 +149,10 @@ they carry the `UniquePerson` gate-evaluation changes but these are inert
 until proofs of the new provider exist.
 
 These versions understand the new `OpenChat` proof provider and
-`model_version`, accept `c2c_notify_personhood_verified`, and carry the gate
-code — but the verifier is not wired (`personhood_verifier_canister_id` is
-still anonymous on the user_index), so behaviour is unchanged.
+`model_version`, accept `c2c_notify_personhood_verified` (authenticated
+against the hardcoded verifier canister id), and carry the gate code. The
+verifier still has no models, so no proofs can be produced and behaviour is
+unchanged.
 
 **Verify:** normal post-upgrade checks; existing DecideAI badges still render;
 nothing personhood-related is reachable.
@@ -164,7 +172,7 @@ also why this isn't proposal-per-chunk):
 cargo run --package verification_model_uploader -- \
   --url https://ic0.app/ \
   --controller <whitelisted dfx identity> \
-  --personhood-verifier $(dfx canister --network ic id personhood_verifier) \
+  --personhood-verifier wji62-oiaaa-aaaaf-bsc7a-cai \
   --models-dir ./backend/personhood_bench/models \
   --embedding-version 1 \
   --skip-commit
@@ -204,28 +212,19 @@ Safety properties, for the proposal summaries:
   activation; a commit that produces an unloadable engine rolls itself back
   (`InvalidModel`).
 
+Once the final commit executes, verification is end-to-end functional for
+anyone calling the canister directly (there is still no UI): the user_index
+already accepts the verifier's proof notifications because it authenticates
+against the hardcoded canister id.
+
 **Verify:** `/metrics` shows all three `ModelRecord`s with the right hashes,
 `current_model_version = 1`, `inference_engines_ready = true`. The
-`model_info` query returns version 1. Verification is still unreachable by
-users (nothing points at the canister).
+`model_info` query returns version 1. Then run one real verification
+end-to-end with a test account (camera flow via a local frontend pointed at
+prod, or direct canister calls): the unique-person badge appears for that
+account and `enrolled_embeddings` on `/metrics` ticks to 1.
 
-## Step 6 — wire the user_index to the verifier
-
-```bash
-./scripts/proposals/set_personhood_verifier_canister_id.sh $(dfx canister --network ic id personhood_verifier)
-```
-
-After this, the user_index accepts proof notifications from the verifier and
-fans out embedding deletion when accounts are deleted. Verification is
-end-to-end functional for anyone calling the canister directly, but there is
-still no UI.
-
-**Verify:** run one real verification end-to-end with a test account against
-production (camera flow via a local frontend pointed at prod, or direct
-canister calls). Confirm the unique-person badge appears for that account and
-the embedding count on `/metrics` ticks to 1.
-
-## Step 7 — ship the frontend, phase A: users can verify, nothing new can require it
+## Step 6 — ship the frontend, phase A: users can verify, nothing new can require it
 
 The website carries a build-time feature flag,
 `OC_UNIQUE_PERSON_REQUIREMENTS_ENABLED` (`frontend/app/src/utils/featureFlags.ts`).
@@ -247,7 +246,7 @@ Note on existing (pre-DecideAI-sunset) unique-person gates: the backend
 enforces them for real from step 3, exactly as it did before the DecideAI
 sunset stub. Legacy proofs keep passing until the wipe; users without one
 are blocked from joining (and lapsed by expiring gates) until they verify —
-which phase A gives them the tool to do. Keep the step 3 → step 7 window
+which phase A gives them the tool to do. Keep the step 3 → step 6 window
 short for this reason.
 
 **Verify:** verification flow works in production from a clean browser
@@ -262,7 +261,7 @@ stable. Watch `/metrics` (enrolled_embeddings, queue depth, attempts) and
 canister logs. This is the checkpoint the two-phase split exists for: phase B
 is a judgement call made on this data.
 
-## Step 8 (optional, any time) — tune thresholds
+## Step 7 (optional, any time) — tune thresholds
 
 Launch defaults are `duplicate 0.55 / clear 0.45 / duplicate_retry 0.50`
 (r50-calibrated on LFW, ~1% innocent-rejection at ~100k enrolled). As the
@@ -274,7 +273,7 @@ enrolled population grows, raise the bands by proposal:
 
 **Verify:** `/metrics` reflects the new `uniqueness_thresholds` immediately.
 
-## Step 9 — wipe the legacy DecideAI proofs
+## Step 8 — wipe the legacy DecideAI proofs
 
 Only after phase A has baked (users must have a working re-verification path
 the moment their badge disappears).
@@ -296,7 +295,7 @@ belt-and-braces).
 **Verify:** legacy badges disappear; affected test account can re-verify via
 the new flow.
 
-## Step 10 — ship the frontend, phase B: verification can be required
+## Step 9 — ship the frontend, phase B: verification can be required
 
 Once phase A metrics look healthy and the wipe has settled, rebuild the
 website with the flag on — **no code change, same commit is fine**:
@@ -339,11 +338,6 @@ measured otherwise.
   "uncommit".
 - **Thresholds wrong** (false-reject spike / duplicate leak): a single
   `set_uniqueness_thresholds.sh` proposal fixes live state; no upgrade needed.
-- **Wire-up wrong** (`set_personhood_verifier_canister_id` pointed at the
-  wrong id): re-run the proposal with the right id; proofs submitted in the
-  interim are rejected by the user_index, and the verifier retries
-  undelivered proof notifications, so affected users get their badge when the
-  wiring is fixed (worst case they retry verification).
 - **Wipe fired early**: cannot be rolled back. The only mitigation is
-  accelerating steps 6–7 so users can re-verify. This is the step to
+  accelerating step 6 so users can re-verify. This is the step to
   triple-check ordering on.

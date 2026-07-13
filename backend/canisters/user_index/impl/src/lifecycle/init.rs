@@ -35,7 +35,6 @@ fn init(args: Args) {
         args.internet_identity_canister_id,
         args.translations_canister_id,
         args.website_canister_id,
-        args.personhood_verifier_canister_id,
         args.video_call_operators,
         args.oc_secret_key_der,
         args.test_mode,

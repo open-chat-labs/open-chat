@@ -110,7 +110,9 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let registry_canister_id = create_canister(env, controller);
     let escrow_canister_id = create_canister(env, controller);
     let translations_canister_id = create_canister(env, controller);
-    let personhood_verifier_canister_id = create_canister(env, controller);
+    // Must match constants::PERSONHOOD_VERIFIER_CANISTER_ID, which the
+    // user_index uses to authenticate the verifier
+    let personhood_verifier_canister_id = create_canister_with_id(env, controller, "wji62-oiaaa-aaaaf-bsc7a-cai");
     let event_relay_canister_id = create_canister(env, controller);
     let event_store_canister_id = create_canister(env, controller);
     let sign_in_with_email_canister_id = create_canister(env, controller);
@@ -161,7 +163,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         registry_canister_id,
         translations_canister_id,
         website_canister_id,
-        personhood_verifier_canister_id,
         sign_in_with_email_canister_id,
         nns_governance_canister_id,
         internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
