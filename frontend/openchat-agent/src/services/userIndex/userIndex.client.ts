@@ -173,7 +173,23 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             (_) => true,
             UserIndexRemoveUniquePersonProofArgs,
             SuccessOnly,
-        );
+        ).then((success) => {
+            if (success) {
+                this.setCachedUniquePersonStatus(false);
+            }
+            return success;
+        });
+    }
+
+    // Keeps the durable caches in step with a unique person status change so
+    // a page refresh doesn't resurrect the old status until the next server
+    // round-trip
+    async setCachedUniquePersonStatus(isUniquePerson: boolean): Promise<void> {
+        const current = await this.chatsDb.getCachedCurrentUser();
+        if (current !== undefined) {
+            this.chatsDb.setCurrentUserIsUniquePersonInCache(isUniquePerson);
+            this.userDb.setUserIsUniquePersonInCache(current.userId, isUniquePerson);
+        }
     }
 
     userRegistrationCanister(): Promise<string> {

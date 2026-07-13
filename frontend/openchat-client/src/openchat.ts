@@ -8731,6 +8731,12 @@ export class OpenChat {
                         ...u,
                         isUniquePerson: true,
                     }));
+                    // Also patch the durable caches so a refresh doesn't
+                    // show the pre-verification status until the next
+                    // server round-trip
+                    this.#worker
+                        .send({ kind: "setCachedUniquePersonStatus", isUniquePerson: true })
+                        .catch(() => undefined);
                     return status;
                 case "retry_required":
                 case "verification_failed":

@@ -444,6 +444,7 @@ export type WorkerRequest =
     | SubmitVerification
     | GetVerificationStatus
     | RemoveUniquePersonProof
+    | SetCachedUniquePersonStatus
     | LinkIdentities
     | RemoveIdentityLink
     | GetAuthenticationPrincipals
@@ -698,6 +699,11 @@ type GetVerificationStatus = {
 
 type RemoveUniquePersonProof = {
     kind: "removeUniquePersonProof";
+};
+
+type SetCachedUniquePersonStatus = {
+    kind: "setCachedUniquePersonStatus";
+    isUniquePerson: boolean;
 };
 
 type MarkAchievementsSeen = {
@@ -2595,6 +2601,8 @@ export type WorkerResult<T> = T extends Init
     ? VerificationStatus
     : T extends RemoveUniquePersonProof
     ? boolean
+    : T extends SetCachedUniquePersonStatus
+    ? void
     : T extends LinkIdentities
     ? LinkIdentitiesResponse
     : T extends RemoveIdentityLink

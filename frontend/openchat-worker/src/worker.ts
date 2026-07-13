@@ -1275,6 +1275,9 @@ function getAction(
         case "removeUniquePersonProof":
             return agent.removeUniquePersonProof();
 
+        case "setCachedUniquePersonStatus":
+            return agent.setCachedUniquePersonStatus(payload.isUniquePerson);
+
         case "linkIdentities":
             return linkIdentities(
                 payload.initiatorKey,

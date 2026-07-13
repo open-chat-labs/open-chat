@@ -4082,6 +4082,10 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.removeUniquePersonProof();
     }
 
+    setCachedUniquePersonStatus(isUniquePerson: boolean): Promise<void> {
+        return this._userIndexClient.setCachedUniquePersonStatus(isUniquePerson);
+    }
+
     configureWallet(config: WalletConfig): Promise<void> {
         return this.userClient.configureWallet(config);
     }

@@ -916,6 +916,16 @@ export class ChatsDb {
         (await this.getDb()).put("currentUser", { ...user, diamondStatus }, this.principalString);
     }
 
+    async setCurrentUserIsUniquePersonInCache(isUniquePerson: boolean): Promise<void> {
+        const user = await this.getCachedCurrentUser();
+        if (user === undefined) return;
+        (await this.getDb()).put(
+            "currentUser",
+            { ...user, isUniquePerson },
+            this.principalString,
+        );
+    }
+
     async getLocalUserIndexForUser(userId: string): Promise<string | undefined> {
         return (await this.getDb()).get("localUserIndex", userId);
     }
