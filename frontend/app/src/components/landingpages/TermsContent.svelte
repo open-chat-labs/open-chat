@@ -65,6 +65,9 @@
                         <li>Section E: Additional terms for dealing in CHAT</li>
                         <li>Section F: Additional terms for Diamond Membership holders</li>
                         <li>Section G: Participating in the OpenChat DAO</li>
+                        <li>
+                            Section H: Additional terms for unique personhood verification
+                        </li>
                         <li>Schedule 1: Risks relating to Cryptoassets</li>
                         <li>Schedule 2: Content Standards</li>
                         <li>Schedule 3: CHAT Features</li>
@@ -1562,6 +1565,184 @@
                     party operating the Voting Platform. Where this is the case, and you confirm
                     that (i) you accept and will comply with these additional terms as applicable to
                     you and (ii) you understand that we are not responsible for them.
+                </li>
+            </ul>
+        </li>
+    </ul>
+
+    <HashLinkTarget {onCopyUrl} id="12">
+        <h2>Section H: Additional terms for unique personhood verification</h2>
+    </HashLinkTarget>
+    <ul class="custom_list bold" style={"--prefix: 'H'; --suffix: ''"}>
+        <li>
+            <h3>Introduction</h3>
+            <ul class="custom_list" style={"--prefix: '1.'"}>
+                <li>
+                    This section of these Terms will apply if you choose to use the OpenChat
+                    unique personhood verification service (the "<strong>Verification
+                    Service</strong>"). The Verification Service is optional: you can use the
+                    OpenChat Platform without it, although some features (such as joining
+                    groups or communities with a "unique person" access gate, or claiming
+                    certain prizes) may be unavailable to you unless you are verified.
+                </li>
+                <li>
+                    The Verification Service processes images of your face and stores data
+                    derived from them. Because this is biometric information, we ask for your
+                    explicit consent before each verification attempt, and this section
+                    explains exactly what is processed, what is kept, for how long, and the
+                    rights and controls you have.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>What the Verification Service does</h3>
+            <ul class="custom_list" style={"--prefix: '2.'"}>
+                <li>
+                    The Verification Service exists to establish that your OpenChat account is
+                    operated by a unique human being — that is, that the same face has not
+                    already been used to verify another account. It does <strong>not</strong>
+                    establish or record who you are: no name, identity document, or other
+                    real-world identity information is requested, processed or stored.
+                </li>
+                <li>
+                    When you start a verification, you will be guided through a short camera
+                    challenge in which you are asked to hold a series of randomly chosen head
+                    poses. The captured images are uploaded to the OpenChat personhood
+                    verifier canister (a smart contract running on the Internet Computer
+                    blockchain), which checks the poses, detects your face, and computes a
+                    "<strong>Face Embedding</strong>" — a vector of 512 numbers summarising
+                    the geometry of your face. Your Face Embedding is compared with the Face
+                    Embeddings of already-verified users; if none is sufficiently similar,
+                    your account is verified.
+                </li>
+                <li>
+                    A face can back at most one verified account at a time. If you remove
+                    your verification (see paragraph 6 below) your face is treated as new,
+                    and could subsequently be used to verify a different account.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>The biometric data we process</h3>
+            <ul class="custom_list" style={"--prefix: '3.'"}>
+                <li>
+                    <strong>Camera images.</strong> The photographs captured during the
+                    challenge are processed only in the working memory of the verifier
+                    canister. They are never written to persistent storage, never included in
+                    backups or upgrades of the canister, and are discarded when your
+                    verification session ends (sessions are short-lived — a few minutes at
+                    most) or fails. Whether verification succeeds or fails, no images are
+                    kept.
+                </li>
+                <li>
+                    <strong>Face Embedding.</strong> If your verification succeeds, the only
+                    biometric-derived data retained is your Face Embedding, stored on-chain
+                    in the verifier canister and associated with your OpenChat user id. The
+                    Face Embedding is not an image, and is used solely to compare facial
+                    similarity for the uniqueness check described above. We treat it as
+                    biometric information and protect it accordingly.
+                </li>
+                <li>
+                    <strong>Attempt history.</strong> The verifier keeps a record of your
+                    verification attempts (timestamps and outcomes, not images) to apply
+                    fair-use limits on repeated attempts. This is deleted alongside your
+                    Face Embedding.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>Where processing happens and who could access data</h3>
+            <ul class="custom_list" style={"--prefix: '4.'"}>
+                <li>
+                    All processing happens inside the verifier canister on the Internet
+                    Computer blockchain. Your images are transmitted to the canister over
+                    encrypted connections. No third-party service, cloud provider or
+                    off-chain system receives your images or your Face Embedding.
+                </li>
+                <li>
+                    You should be aware that, as with any computation on the Internet
+                    Computer, the machines executing the verifier canister are operated by
+                    independent node providers. While the Internet Computer protocol is
+                    designed to prevent node providers from tampering with computation, a
+                    node provider could in principle inspect the memory of the machines they
+                    operate while your images are being processed. This is disclosed in the
+                    consent step before you start a verification.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>Purpose limitation</h3>
+            <ul class="custom_list" style={"--prefix: '5.'"}>
+                <li>
+                    Your images and Face Embedding are used only for the uniqueness check
+                    described in this section. They are not used to identify you, not used
+                    for advertising or profiling, not shared with, sold to or made available
+                    to any third party, and not used for any other purpose. The verification
+                    models and the similarity thresholds used by the verifier canister can
+                    only be changed by public, on-chain proposal of the OpenChat DAO.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>Retention and deletion</h3>
+            <ul class="custom_list" style={"--prefix: '6.'"}>
+                <li>
+                    Your Face Embedding is retained only while your verification is active.
+                    It is permanently deleted, together with your attempt history, when any
+                    of the following happens:
+                    <ul class="custom_list" style={"--prefix: '6.1.'"}>
+                        <li>
+                            you remove your verification, which you can do at any time from
+                            the Verification section of your user profile;
+                        </li>
+                        <li>you delete your OpenChat account; or</li>
+                        <li>
+                            the verification model is upgraded by the OpenChat DAO and the
+                            re-verification window for your embedding's model version
+                            expires, at which point superseded embeddings are purged.
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    Deletion is irreversible. Because images are never stored, there are no
+                    images to delete: only the Face Embedding and attempt history exist, and
+                    both are removed.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>Your rights and controls</h3>
+            <ul class="custom_list" style={"--prefix: '7.'"}>
+                <li>
+                    Verification is voluntary and based on your explicit consent, which you
+                    give by ticking the consent box at the start of each verification
+                    attempt. You may withdraw your consent at any time by removing your
+                    verification from your user profile; this immediately and permanently
+                    deletes your Face Embedding and attempt history, and no further
+                    processing of your biometric data takes place. You may verify again at
+                    any time afterwards.
+                </li>
+                <li>
+                    You can see whether you are currently verified in the Verification
+                    section of your user profile, and the badge shown on your profile
+                    reflects your verification status to other users.
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h3>Automated decision-making</h3>
+            <ul class="custom_list" style={"--prefix: '8.'"}>
+                <li>
+                    The uniqueness decision is fully automated: it is made by comparing your
+                    Face Embedding against those of verified users using similarity
+                    thresholds set by public proposal of the OpenChat DAO. If your result
+                    falls in an uncertain band you will be offered an immediate retry with a
+                    stricter challenge. If verification fails you may try again later,
+                    subject to fair-use limits. Because your images are not retained, a
+                    manual review of them is not possible; if you believe you have been
+                    wrongly rejected, you can raise the matter in the OpenChat community
+                    where the DAO discusses the operation and tuning of the Verification
+                    Service.
                 </li>
             </ul>
         </li>

@@ -87,6 +87,11 @@
                     <li><Translatable resourceKey={i18nKey("human.verification.consentPoint2")} /></li>
                     <li><Translatable resourceKey={i18nKey("human.verification.consentPoint3")} /></li>
                 </ul>
+                <p>
+                    <a href="/terms?section=12" target="_blank" rel="noreferrer">
+                        <Translatable resourceKey={i18nKey("human.verification.consentTerms")} />
+                    </a>
+                </p>
                 <AlertBox icon={false}>
                     <Checkbox
                         id="verification-consent"

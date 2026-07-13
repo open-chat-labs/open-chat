@@ -95,6 +95,11 @@
                 <BodySmall>
                     <Translatable resourceKey={i18nKey("human.verification.consentPoint3")} />
                 </BodySmall>
+                <BodySmall>
+                    <a href="/terms?section=12" target="_blank" rel="noreferrer">
+                        <Translatable resourceKey={i18nKey("human.verification.consentTerms")} />
+                    </a>
+                </BodySmall>
                 <Row crossAxisAlignment={"center"} gap={"md"}>
                     <Switch bind:checked={consented} />
                     <BodySmall>
