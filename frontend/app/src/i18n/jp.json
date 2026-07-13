@@ -899,7 +899,7 @@
         "verification.consentTitle": "開始する前に",
         "verification.consentBody": "あなたがユニークな人間であることを確認するため、OpenChat は短いカメラチャレンジへご案内します。撮影された写真は OpenChat のキャニスターにアップロードされ、数値の「顔埋め込み（フェイスエンベディング）」が計算されて、既に認証済みのユーザーのものと比較されます。",
         "verification.consentPoint1": "写真はメモリ内でのみ処理され、保存されることはありません。",
-        "verification.consentPoint2": "保持されるのは数値の埋め込みのみで、アカウントを削除すると削除されます。",
+        "verification.consentPoint2": "保持されるのは数値の埋め込みのみで、認証を有効に保つ目的に限られます。認証を削除したとき、アカウントを削除したとき、または OpenChat を3年間利用しなかったとき（いずれか早い方）に削除されます。",
         "verification.consentPoint3": "処理中、写真は Internet Computer のノードプロバイダーから見える状態になります。",
         "verification.consentCheckbox": "OpenChat 利用規約のセクション H に記載のとおり、自分がユニークな人物であることを確認するために顔が処理されることに同意します",
         "verification.consentTerms": "生体データの取り扱い — 何が保存されるか、保存期間、削除方法 — は OpenChat 利用規約のセクション H に定められています。",

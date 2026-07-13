@@ -1695,11 +1695,16 @@
                             you remove your verification, which you can do at any time from
                             the Verification section of your user profile;
                         </li>
-                        <li>you delete your OpenChat account; or</li>
+                        <li>you delete your OpenChat account;</li>
                         <li>
                             the verification model is upgraded by the OpenChat DAO and the
                             re-verification window for your embedding's model version
-                            expires, at which point superseded embeddings are purged.
+                            expires, at which point superseded embeddings are purged; or
+                        </li>
+                        <li>
+                            you stop using OpenChat: your Face Embedding, attempt history
+                            and verified status are automatically and permanently destroyed
+                            no later than 3 years after your last interaction with OpenChat.
                         </li>
                     </ul>
                 </li>
@@ -1707,6 +1712,11 @@
                     Deletion is irreversible. Because images are never stored, there are no
                     images to delete: only the Face Embedding and attempt history exist, and
                     both are removed.
+                </li>
+                <li>
+                    This paragraph 6 constitutes our retention schedule and our guidelines
+                    for permanently destroying biometric identifiers and biometric
+                    information.
                 </li>
             </ul>
         </li>

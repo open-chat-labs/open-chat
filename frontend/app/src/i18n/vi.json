@@ -899,7 +899,7 @@
         "verification.consentTitle": "Trước khi bắt đầu",
         "verification.consentBody": "Để xác minh rằng bạn là một con người độc nhất, OpenChat sẽ hướng dẫn bạn qua một thử thách ngắn với camera. Các ảnh chụp được tải lên một canister của OpenChat, nơi tính toán một \"dấu vân khuôn mặt\" dạng số và so sánh nó với dấu của những người dùng đã được xác minh.",
         "verification.consentPoint1": "Ảnh của bạn chỉ được xử lý trong bộ nhớ và không bao giờ được lưu trữ.",
-        "verification.consentPoint2": "Chỉ dấu số được giữ lại, và nó sẽ bị xóa nếu bạn xóa tài khoản của mình.",
+        "verification.consentPoint2": "Chỉ dấu số được giữ lại, chỉ để duy trì trạng thái xác minh của bạn. Nó bị xóa khi bạn xóa xác minh, khi bạn xóa tài khoản, hoặc sau 3 năm không sử dụng OpenChat — tùy điều kiện nào đến trước.",
         "verification.consentPoint3": "Trong quá trình xử lý, ảnh của bạn hiển thị với các nhà cung cấp nút của Internet Computer.",
         "verification.consentCheckbox": "Tôi đồng ý cho xử lý khuôn mặt của mình để xác minh rằng tôi là người độc nhất, như mô tả trong Mục H của Điều khoản OpenChat",
         "verification.consentTerms": "Cách dữ liệu sinh trắc học của bạn được xử lý — những gì được lưu trữ, trong bao lâu và cách xóa — được nêu trong Mục H của Điều khoản OpenChat.",

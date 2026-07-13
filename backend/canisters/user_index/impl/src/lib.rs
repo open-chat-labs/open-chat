@@ -596,10 +596,6 @@ impl Data {
     }
 }
 
-fn anonymous_principal() -> CanisterId {
-    Principal::anonymous()
-}
-
 #[derive(Serialize, Deserialize, Clone, Copy, Debug)]
 pub struct PersonhoodModelLapse {
     pub new_version: u16,

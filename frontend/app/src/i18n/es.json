@@ -899,7 +899,7 @@
         "verification.consentTitle": "Antes de empezar",
         "verification.consentBody": "Para verificar que eres un humano único, OpenChat te guiará a través de un breve desafío con la cámara. Las fotos capturadas se suben a un canister de OpenChat que calcula una \"huella facial\" numérica y la compara con las de usuarios ya verificados.",
         "verification.consentPoint1": "Tus fotos se procesan solo en memoria y nunca se almacenan.",
-        "verification.consentPoint2": "Solo se conserva la huella numérica, y se elimina si eliminas tu cuenta.",
+        "verification.consentPoint2": "Solo se conserva la huella numérica, únicamente para mantener activa tu verificación. Se elimina cuando eliminas tu verificación, cuando eliminas tu cuenta o tras 3 años sin usar OpenChat — lo que ocurra primero.",
         "verification.consentPoint3": "Durante el procesamiento, tus fotos son visibles para los proveedores de nodos de Internet Computer.",
         "verification.consentCheckbox": "Doy mi consentimiento para que se procese mi rostro con el fin de verificar que soy una persona única, tal como se describe en la Sección H de los Términos de OpenChat",
         "verification.consentTerms": "Cómo se tratan tus datos biométricos — qué se almacena, durante cuánto tiempo y cómo eliminarlos — se detalla en la Sección H de los Términos de OpenChat.",

@@ -476,3 +476,31 @@ fn removing_verification_erases_embedding_and_allows_reverification() {
     let current_user = client::user_index::happy_path::current_user(env, user.principal, canister_ids.user_index);
     assert!(current_user.is_unique_person);
 }
+
+#[test]
+fn biometric_data_purged_after_three_years_of_inactivity() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    // Markers: group 50 (200/201) - unique to this test
+    let user = client::register_user(env, canister_ids);
+    let status = verify_user(env, canister_ids, user.principal, 200);
+    assert!(matches!(status, StatusResponse::Verified { .. }), "{status:?}");
+    tick_many(env, 5);
+    let current_user = client::user_index::happy_path::current_user(env, user.principal, canister_ids.user_index);
+    assert!(current_user.is_unique_person);
+
+    // 3 years of inactivity: the daily sweep must purge the proof and the
+    // embedding (BIPA-style retention limit)
+    env.advance_time(Duration::from_secs(3 * 365 * 24 * 60 * 60));
+    tick_many(env, 25);
+
+    let current_user = client::user_index::happy_path::current_user(env, user.principal, canister_ids.user_index);
+    assert!(!current_user.is_unique_person);
+
+    // The embedding must be gone too: the same face (clear duplicate of the
+    // purged embedding) enrolls again cleanly
+    let user2 = client::register_user(env, canister_ids);
+    let status = verify_user(env, canister_ids, user2.principal, 201);
+    assert!(matches!(status, StatusResponse::Verified { .. }), "{status:?}");
+}

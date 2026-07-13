@@ -899,7 +899,7 @@
         "verification.consentTitle": "Before you start",
         "verification.consentBody": "To verify that you are a unique human, OpenChat will guide you through a short camera challenge. The captured photos are uploaded to an OpenChat canister which computes a numeric \"face embedding\" and compares it with those of already-verified users.",
         "verification.consentPoint1": "Your photos are processed in memory only and are never stored.",
-        "verification.consentPoint2": "Only the numeric embedding is kept, and it is deleted if you delete your account.",
+        "verification.consentPoint2": "Only the numeric embedding is kept, solely to keep your verification active. It is deleted when you remove your verification, when you delete your account, or after 3 years without using OpenChat — whichever comes first.",
         "verification.consentPoint3": "During processing your photos are visible to Internet Computer node providers.",
         "verification.consentCheckbox": "I consent to my face being processed to verify that I am a unique person, as described in Section H of the OpenChat Terms",
         "verification.consentTerms": "How your biometric data is handled — what is stored, for how long, and how to delete it — is set out in Section H of the OpenChat Terms.",

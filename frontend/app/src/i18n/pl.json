@@ -899,7 +899,7 @@
         "verification.consentTitle": "Zanim zaczniesz",
         "verification.consentBody": "Aby zweryfikować, że jesteś wyjątkowym człowiekiem, OpenChat przeprowadzi Cię przez krótkie zadanie z kamerą. Zrobione zdjęcia są przesyłane do kanistra OpenChat, który oblicza numeryczny „odcisk twarzy” i porównuje go z odciskami już zweryfikowanych użytkowników.",
         "verification.consentPoint1": "Twoje zdjęcia są przetwarzane wyłącznie w pamięci i nigdy nie są zapisywane.",
-        "verification.consentPoint2": "Zachowywany jest tylko numeryczny odcisk, który zostaje usunięty, jeśli usuniesz swoje konto.",
+        "verification.consentPoint2": "Zachowywany jest tylko numeryczny odcisk, wyłącznie po to, aby Twoja weryfikacja pozostała aktywna. Jest usuwany, gdy usuniesz weryfikację, gdy usuniesz konto lub po 3 latach nieużywania OpenChat — w zależności od tego, co nastąpi pierwsze.",
         "verification.consentPoint3": "Podczas przetwarzania Twoje zdjęcia są widoczne dla dostawców węzłów Internet Computer.",
         "verification.consentCheckbox": "Wyrażam zgodę na przetwarzanie mojej twarzy w celu zweryfikowania, że jestem wyjątkową osobą, zgodnie z opisem w Sekcji H Warunków OpenChat",
         "verification.consentTerms": "Sposób postępowania z Twoimi danymi biometrycznymi — co jest przechowywane, jak długo i jak je usunąć — opisano w Sekcji H Warunków OpenChat.",

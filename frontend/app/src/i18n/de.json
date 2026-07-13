@@ -899,7 +899,7 @@
         "verification.consentTitle": "Bevor Sie beginnen",
         "verification.consentBody": "Um zu verifizieren, dass Sie ein einzigartiger Mensch sind, führt OpenChat Sie durch eine kurze Kamera-Aufgabe. Die aufgenommenen Fotos werden in einen OpenChat-Canister hochgeladen, der ein numerisches „Gesichts-Embedding“ berechnet und es mit denen bereits verifizierter Nutzer vergleicht.",
         "verification.consentPoint1": "Ihre Fotos werden nur im Arbeitsspeicher verarbeitet und niemals gespeichert.",
-        "verification.consentPoint2": "Nur das numerische Embedding wird behalten, und es wird gelöscht, wenn Sie Ihr Konto löschen.",
+        "verification.consentPoint2": "Nur das numerische Embedding wird behalten, ausschließlich um Ihre Verifizierung aktiv zu halten. Es wird gelöscht, wenn Sie Ihre Verifizierung entfernen, Ihr Konto löschen oder OpenChat 3 Jahre lang nicht nutzen — je nachdem, was zuerst eintritt.",
         "verification.consentPoint3": "Während der Verarbeitung sind Ihre Fotos für die Node-Betreiber des Internet Computer sichtbar.",
         "verification.consentCheckbox": "Ich willige ein, dass mein Gesicht verarbeitet wird, um zu verifizieren, dass ich eine einzigartige Person bin, wie in Abschnitt H der OpenChat-Nutzungsbedingungen beschrieben",
         "verification.consentTerms": "Wie Ihre biometrischen Daten behandelt werden — was gespeichert wird, wie lange und wie Sie es löschen können — ist in Abschnitt H der OpenChat-Nutzungsbedingungen festgelegt.",
