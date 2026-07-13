@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
-    import { mainnet } from "@wagmi/chains";
+    import { mainnet } from "@wagmi/core/chains";
     import { coinbaseWallet, metaMask, walletConnect } from "@wagmi/connectors";
     import { createConfig, http, signMessage, type Connector } from "@wagmi/core";
     import { Button } from "component-lib";

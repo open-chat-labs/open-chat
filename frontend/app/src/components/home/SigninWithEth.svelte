@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createConfig, http, signMessage, type Connector } from "@wagmi/core";
     import { coinbaseWallet, walletConnect, metaMask } from "@wagmi/connectors";
-    import { mainnet } from "@wagmi/chains";
+    import { mainnet } from "@wagmi/core/chains";
     import { OpenChat } from "@client";
     import { getContext } from "svelte";
     import Button from "../Button.svelte";
