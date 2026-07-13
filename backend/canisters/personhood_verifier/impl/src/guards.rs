@@ -15,3 +15,11 @@ pub fn caller_is_governance_principal() -> Result<(), String> {
         Err("Caller is not a governance principal".to_string())
     }
 }
+
+pub fn caller_can_upload_model_chunks() -> Result<(), String> {
+    if read_state(|state| state.can_caller_upload_model_chunks()) {
+        Ok(())
+    } else {
+        Err("Caller is not permitted to upload model chunks".to_string())
+    }
+}

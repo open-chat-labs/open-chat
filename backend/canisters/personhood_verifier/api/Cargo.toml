@@ -5,6 +5,7 @@ edition.workspace = true
 
 [dependencies]
 candid = { workspace = true }
+human_readable = { path = "../../../libraries/human_readable" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 ts_export = { path = "../../../libraries/ts_export" }

@@ -1,7 +1,7 @@
 use crate::guards::caller_is_governance_principal;
 use crate::model::models::ModelRecord;
 use crate::{RuntimeState, engine, jobs, mutate_state};
-use canister_api_macros::update;
+use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use constants::DAY_IN_MS;
 use personhood_verifier_canister::ModelKind;
@@ -15,8 +15,10 @@ const LAPSE_WINDOW: u64 = 90 * DAY_IN_MS;
 
 // Activates a chunk-uploaded model, but only if the assembled bytes hash to
 // exactly the value pinned in the (SNS proposal) payload. Committing an
-// embedding model bumps the model version.
-#[update(guard = "caller_is_governance_principal", candid = true, msgpack = true)]
+// embedding model bumps the model version. The proposal macro also generates
+// the commit_model_validate query required to register this as an SNS
+// generic function.
+#[proposal(guard = "caller_is_governance_principal")]
 #[trace]
 fn commit_model(args: Args) -> Response {
     mutate_state(|state| commit_model_impl(args, state))

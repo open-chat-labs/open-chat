@@ -1,7 +1,7 @@
 use crate::engine::UniquenessThresholds;
 use crate::guards::caller_is_governance_principal;
 use crate::{RuntimeState, mutate_state};
-use canister_api_macros::update;
+use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use personhood_verifier_canister::set_uniqueness_thresholds::{Response::*, *};
 use tracing::info;
@@ -9,7 +9,7 @@ use tracing::info;
 // Tunes the uniqueness bands live (SNS proposal). The right value tracks the
 // enrolled population size, which grows, so this stays governable rather than
 // baked into the wasm.
-#[update(guard = "caller_is_governance_principal", candid = true, msgpack = true)]
+#[proposal(guard = "caller_is_governance_principal")]
 #[trace]
 fn set_uniqueness_thresholds(args: Args) -> Response {
     mutate_state(|state| set_uniqueness_thresholds_impl(args, state))

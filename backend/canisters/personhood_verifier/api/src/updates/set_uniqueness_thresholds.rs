@@ -1,9 +1,10 @@
 use candid::CandidType;
+use human_readable::HumanReadable;
 use serde::{Deserialize, Serialize};
 
 // SNS-governable uniqueness bands. Must satisfy
 // 0 <= clear <= duplicate_retry <= duplicate <= 1.
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, HumanReadable)]
 pub struct Args {
     pub duplicate: f32,
     pub clear: f32,

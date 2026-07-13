@@ -1,8 +1,9 @@
 use crate::ModelKind;
 use candid::CandidType;
+use human_readable::HumanReadable;
 use serde::{Deserialize, Serialize};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, HumanReadable)]
 pub struct Args {
     pub kind: ModelKind,
     pub version: u16,

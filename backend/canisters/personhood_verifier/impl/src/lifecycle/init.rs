@@ -15,6 +15,7 @@ fn init(args: Args) {
     let env = init_env([0; 32]);
     let data = Data::new(
         args.governance_principals,
+        args.upload_model_chunks_whitelist,
         args.user_index_canister_id,
         args.cycles_dispenser_canister_id,
         args.test_mode,

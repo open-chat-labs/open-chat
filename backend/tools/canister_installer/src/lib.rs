@@ -161,6 +161,7 @@ async fn install_service_canisters_impl(
     let personhood_verifier_canister_wasm = get_canister_wasm(CanisterName::PersonhoodVerifier, version);
     let personhood_verifier_init_args = personhood_verifier_canister::init::Args {
         governance_principals: vec![principal],
+        upload_model_chunks_whitelist: vec![principal],
         user_index_canister_id: canister_ids.user_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,

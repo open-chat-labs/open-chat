@@ -7648,6 +7648,7 @@ name = "personhood_verifier_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "human_readable",
  "serde",
  "serde_bytes",
  "ts-rs",
@@ -7681,6 +7682,7 @@ dependencies = [
  "face_pipeline",
  "getrandom 0.2.16",
  "http_request",
+ "human_readable",
  "ic-cdk",
  "ic-cdk-timers",
  "ic-stable-structures 0.7.0",

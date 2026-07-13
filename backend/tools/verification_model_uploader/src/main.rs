@@ -8,15 +8,25 @@ use types::CanisterId;
 
 const CHUNK_BYTES: usize = 1_000_000;
 
-// Uploads the personhood verification ONNX models (the insightface
-// buffalo_sc pairing) to the personhood_verifier canister and commits them
-// with their sha256 hashes. In production this is done via SNS proposals;
-// this tool covers local/test environments.
+// Uploads the personhood verification ONNX models to the personhood_verifier
+// canister and (unless --skip-commit is passed) commits them with their
+// sha256 hashes.
+//
+// Local/test environments: run without --skip-commit; the deployer identity
+// is a governance principal so it can both upload and commit.
+//
+// Production: run with --skip-commit using an identity on the canister's
+// upload_model_chunks_whitelist. Chunks are inert until activated, so the
+// upload needs no proposal; the printed sha256 hashes then go into the
+// hash-pinned commit_model SNS proposals (scripts/proposals/
+// commit_personhood_model.sh) which perform the activation.
 #[derive(Parser)]
 struct Opts {
     #[arg(long)]
     url: String,
 
+    // dfx identity to call with: the deployer locally, a whitelisted
+    // uploader in production
     #[arg(long)]
     controller: String,
 
@@ -29,6 +39,11 @@ struct Opts {
 
     #[arg(long, default_value_t = 1)]
     embedding_version: u16,
+
+    // Upload chunks only; activation happens separately via commit_model
+    // SNS proposals (the production flow)
+    #[arg(long)]
+    skip_commit: bool,
 }
 
 #[tokio::main]
@@ -36,6 +51,8 @@ async fn main() {
     let opts = Opts::parse();
     let identity = get_dfx_identity(&opts.controller);
     let agent = build_ic_agent(opts.url, identity).await;
+
+    let mut commit_args = Vec::new();
 
     for (kind, file, version) in [
         (ModelKind::Detection, "version-RFB-320.onnx", opts.embedding_version),
@@ -71,6 +88,12 @@ async fn main() {
             version,
             sha256: hash,
         };
+
+        if opts.skip_commit {
+            commit_args.push((file, args));
+            continue;
+        }
+
         let response = agent
             .update(&opts.personhood_verifier, "commit_model")
             .with_arg(Encode!(&args).unwrap())
@@ -84,5 +107,18 @@ async fn main() {
         }
     }
 
-    println!("All models uploaded and committed");
+    if opts.skip_commit {
+        println!();
+        println!("All chunks uploaded (inert). Activate each model by SNS proposal:");
+        for (file, args) in commit_args {
+            println!(
+                "  ./scripts/proposals/commit_personhood_model.sh {kind:?} {version} {sha256}  # {file}",
+                kind = args.kind,
+                version = args.version,
+                sha256 = args.sha256,
+            );
+        }
+    } else {
+        println!("All models uploaded and committed");
+    }
 }

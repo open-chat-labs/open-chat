@@ -61,6 +61,13 @@ impl RuntimeState {
         self.data.governance_principals.contains(&caller) || ic_cdk::api::is_controller(&caller)
     }
 
+    // Chunk uploads are inert until a hash-pinned commit_model proposal
+    // activates them, so a wider whitelist here grants no model control
+    pub fn can_caller_upload_model_chunks(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.upload_model_chunks_whitelist.contains(&caller) || self.is_caller_governance_principal()
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             heap_memory_used: utils::memory::heap(),
@@ -78,6 +85,8 @@ impl RuntimeState {
             users_with_attempts: self.data.attempts.len() as u64,
             detection_model: self.data.models.committed(ModelKind::Detection).cloned(),
             embedding_model: self.data.models.committed(ModelKind::Embedding).cloned(),
+            governance_principals: self.data.governance_principals.iter().copied().collect(),
+            upload_model_chunks_whitelist: self.data.upload_model_chunks_whitelist.iter().copied().collect(),
             inference_engines_ready: engine::real::engines_ready(),
             stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
@@ -92,6 +101,8 @@ impl RuntimeState {
 struct Data {
     #[serde(default)]
     pub governance_principals: HashSet<Principal>,
+    #[serde(default)]
+    pub upload_model_chunks_whitelist: HashSet<Principal>,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub current_model_version: u16,
@@ -128,12 +139,14 @@ struct Data {
 impl Data {
     pub fn new(
         governance_principals: Vec<Principal>,
+        upload_model_chunks_whitelist: Vec<Principal>,
         user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
         Data {
             governance_principals: governance_principals.into_iter().collect(),
+            upload_model_chunks_whitelist: upload_model_chunks_whitelist.into_iter().collect(),
             user_index_canister_id,
             cycles_dispenser_canister_id,
             // 0 = the pre-model stub era; the first committed embedding model
@@ -170,6 +183,8 @@ pub struct Metrics {
     pub users_with_attempts: u64,
     pub detection_model: Option<ModelRecord>,
     pub embedding_model: Option<ModelRecord>,
+    pub governance_principals: Vec<Principal>,
+    pub upload_model_chunks_whitelist: Vec<Principal>,
     pub inference_engines_ready: bool,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,

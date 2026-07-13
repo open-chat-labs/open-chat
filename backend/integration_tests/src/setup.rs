@@ -243,6 +243,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
 
     let personhood_verifier_init_args = personhood_verifier_canister::init::Args {
         governance_principals: vec![controller],
+        upload_model_chunks_whitelist: Vec::new(),
         user_index_canister_id,
         cycles_dispenser_canister_id,
         wasm_version,
