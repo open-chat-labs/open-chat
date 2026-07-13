@@ -58,7 +58,6 @@
         videoSectionOpen,
     } from "../../../stores/settings";
     import { toastStore } from "../../../stores/toast";
-    import { uniquePersonGate } from "../../../utils/access";
     import { isTouchDevice } from "../../../utils/devices";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -410,7 +409,10 @@
                 {/if}
             </CollapsibleCard>
         </div>
-        {#if !$anonUserStore && uniquePersonGate.enabled}
+        <!-- Deliberately NOT tied to uniquePersonGate.enabled: the ability to
+             verify ships in phase A while requiring verification (the gate)
+             is phase B (#9072) -->
+        {#if !$anonUserStore}
             <div class="verification">
                 <CollapsibleCard
                     onToggle={verificationSectionOpen.toggle}

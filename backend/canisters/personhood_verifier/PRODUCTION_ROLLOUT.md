@@ -11,9 +11,12 @@ comments.
 
 Two hard constraints drive everything:
 
-1. **Users must have a working way to verify before any gate enforces or any
-   legacy proof is wiped.** Gates that appear before the verification UI
-   ships, or a wipe before users can re-verify, both strand users.
+1. **Users must have a working way to verify before anything new requires
+   verification and before any legacy proof is wiped.** New unique-person
+   gates and prize restrictions stay uncreatable (phase A feature flag,
+   step 7) until real-world verification data looks healthy (phase B,
+   step 10); the wipe (step 9) sits between them. Existing pre-sunset gates
+   re-enforce earlier, at step 3 — see the note in step 7.
 2. **Every canister that (de)serialises `UniquePersonProof` must understand
    the new `OpenChat` provider variant before any such proof exists**,
    otherwise `local_user_index` / `user` canisters panic on an unknown
@@ -223,23 +226,42 @@ production (camera flow via a local frontend pointed at prod, or direct
 canister calls). Confirm the unique-person badge appears for that account and
 the embedding count on `/metrics` ticks to 1.
 
-## Step 7 — ship the frontend
+## Step 7 — ship the frontend, phase A: users can verify, nothing new can require it
 
-Deploy the website release with the un-stripped verification UI via the usual
-frontend proposal flow (upload assets, then `commit_frontend_assets`,
+The website carries a build-time feature flag,
+`OC_UNIQUE_PERSON_REQUIREMENTS_ENABLED` (`frontend/app/src/utils/featureFlags.ts`).
+**Phase A is the default build — leave the env var unset.** Deploy via the
+usual frontend proposal flow (upload assets, then `commit_frontend_assets`,
 function 10000). The iOS/macOS camera permission entries ride with the native
 app store builds.
 
-**Users can now actually verify.** This closes the coordinated window opened
-in step 3.
+With the flag off:
+
+- The verification flow, badges, and the gate evaluator (shown when a user
+  hits an *existing* unique-person gated group) are all live — **users can
+  now actually verify.** This closes the coordinated window opened in step 3.
+- The unique-person option in the access-gate builder is greyed out and the
+  unique-person restriction on prize messages is hidden — **no new
+  requirements on verification can be created** until the system is proven.
+
+Note on existing (pre-DecideAI-sunset) unique-person gates: the backend
+enforces them for real from step 3, exactly as it did before the DecideAI
+sunset stub. Legacy proofs keep passing until the wipe; users without one
+are blocked from joining (and lapsed by expiring gates) until they verify —
+which phase A gives them the tool to do. Keep the step 3 → step 7 window
+short for this reason.
 
 **Verify:** verification flow works in production from a clean browser
 profile; badge appears; re-verification of the same face by a second account
-is rejected as a duplicate.
+is rejected as a duplicate; the gate builder shows "Unique person" greyed
+out; the prize builder shows no unique-person restriction.
 
-**Bake:** leave the system running with organic verifications for a few days
-before the wipe. Watch `/metrics` (enrolled_embeddings, queue depth,
-attempts) and canister logs/cycles.
+**Bake:** leave the system running with organic verifications until you have
+confidence in the real-world numbers — false-reject reports in line with the
+~1% calibration, duplicate detections plausible, queue depth and cycles
+stable. Watch `/metrics` (enrolled_embeddings, queue depth, attempts) and
+canister logs. This is the checkpoint the two-phase split exists for: phase B
+is a judgement call made on this data.
 
 ## Step 8 (optional, any time) — tune thresholds
 
@@ -255,7 +277,7 @@ enrolled population grows, raise the bands by proposal:
 
 ## Step 9 — wipe the legacy DecideAI proofs
 
-Only after step 7 has baked (users must have a working re-verification path
+Only after phase A has baked (users must have a working re-verification path
 the moment their badge disappears):
 
 ```bash
@@ -269,13 +291,23 @@ sits this late in the sequence.
 **Verify:** legacy badges disappear; affected test account can re-verify via
 the new flow.
 
-## Step 10 — grace window, then gates
+## Step 10 — ship the frontend, phase B: verification can be required
 
-`UniquePerson` group/community gates evaluate against the new proofs from the
-moment they exist, but communities relying on the badge should be given a
-publicised grace window (suggested: 2–4 weeks, announced in the OpenChat
-community) between the wipe and any communication that gates are "enforced"
-again, so lapsed members have time to re-verify.
+Once phase A metrics look healthy and the wipe has settled, rebuild the
+website with the flag on — **no code change, same commit is fine**:
+
+```bash
+OC_UNIQUE_PERSON_REQUIREMENTS_ENABLED=true <usual website build>
+```
+
+and deploy by proposal as usual. This enables creating unique-person access
+gates and unique-person-restricted prize messages. Announce a publicised
+grace window (suggested: 2–4 weeks, in the OpenChat community) so members of
+gated communities have time to re-verify before owners start relying on the
+gates again.
+
+After phase B ships, remove the flag from the codebase (it defaults new
+builds to phase A behaviour forever otherwise).
 
 ---
 

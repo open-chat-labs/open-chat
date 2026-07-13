@@ -16,6 +16,7 @@ import {
 } from "@client";
 import { _ } from "svelte-i18n";
 import { get } from "svelte/store";
+import { uniquePersonRequirementsEnabled } from "./featureFlags";
 
 export type GateBinding = {
     key: string;
@@ -151,14 +152,16 @@ const lifetimeDiamondGate: GateBinding = {
     enabled: true,
 };
 
-// Re-enabled for the in-house verification revival (#9072). This restores the
-// profile "Verification" section; the gate itself stays out of getGateBindings
-// until gate checks are un-stubbed in the cutover phase.
+// Re-enabled for the in-house verification revival (#9072), but only
+// offered for new gates once the phase B feature flag is on - in phase A
+// users can verify, but nothing new can require verification. Shown greyed
+// out (not hidden) while disabled, and existing gates still display and
+// evaluate regardless.
 export const uniquePersonGate: GateBinding = {
     label: "access.uniquePerson",
     key: "unique_person_gate",
     gate: { kind: "unique_person_gate" },
-    enabled: true,
+    enabled: uniquePersonRequirementsEnabled,
 };
 
 export const lockedGate: GateBinding = {
