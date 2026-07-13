@@ -22,7 +22,7 @@ export RUSTFLAGS=""
 if [ "$CANISTER_NAME" = "personhood_verifier" ]
 then
   # ML inference: wasm SIMD roughly halves instruction counts (see
-  # backend/personhood_spike/README.md)
+  # backend/personhood_bench/README.md)
   export RUSTFLAGS="-C target-feature=+simd128"
 fi
 export RUSTFLAGS="$RUSTFLAGS --remap-path-prefix $(readlink -f ${SCRIPT_DIR}/..)=/build --remap-path-prefix ${CARGO_HOME}/bin=/cargo/bin --remap-path-prefix ${CARGO_HOME}/git=/cargo/git"

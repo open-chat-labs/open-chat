@@ -1,4 +1,13 @@
-# Personhood verification feasibility spike
+# Personhood verification benchmarks
+
+canbench instruction-count benchmarks for the on-chain face verification
+pipeline, plus the canonical `models/` directory used by the model uploader,
+the LFW threshold calibration, and `face_pipeline`'s end-to-end tests.
+Re-run these benches before committing a new model or upgrading `tract` -
+the DTS ceiling argument below must keep holding.
+
+This crate began as the Phase 0 feasibility spike (the hard go/no-go gate),
+and the measured verdict is preserved here as the record of that decision.
 
 Phase 0 hard gate for [#9072](https://github.com/open-chat-labs/open-chat/issues/9072):
 can the proposed face-verification pipeline (JPEG decode → face detect →
@@ -49,10 +58,10 @@ the `T_dup` / `T_clear` similarity bands, not feasibility of this design.
 ## Running
 
 ```bash
-./scripts/download-personhood-spike-models.sh   # models are not committed
-cd backend/personhood_spike
+./scripts/download-personhood-models.sh   # models are not committed
+cd backend/personhood_bench
 canbench                                        # scalar
-PERSONHOOD_SPIKE_RUSTFLAGS="-C target-feature=+simd128" canbench   # SIMD
+PERSONHOOD_BENCH_RUSTFLAGS="-C target-feature=+simd128" canbench   # SIMD
 ```
 
 Models: UltraFace RFB-320 (detection), insightface SCRFD-500M (detection

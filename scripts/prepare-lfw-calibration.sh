@@ -81,8 +81,8 @@ IMG_ROOT="$(cat "$ROOT/.calibration/pairs.calib.txt.imgroot")"
 echo
 echo "Done. Run the calibration with:"
 echo
-echo "  ./scripts/download-personhood-spike-models.sh"
+echo "  ./scripts/download-personhood-models.sh"
 echo "  cargo run -p threshold_calibration --release -- \\"
-echo "    --models-dir ./backend/personhood_spike/models \\"
+echo "    --models-dir ./backend/personhood_bench/models \\"
 echo "    --images-dir $IMG_ROOT \\"
 echo "    --pairs $ROOT/.calibration/pairs.calib.txt"

@@ -32,9 +32,9 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
-          # personhood_spike is excluded because it include_bytes!s onnx model
+          # personhood_bench is excluded because it include_bytes!s onnx model
           # files which are gitignored (see its README + download script)
-          args: --workspace --exclude personhood_spike --tests -- -D warnings
+          args: --workspace --exclude personhood_bench --tests -- -D warnings
 
   unit_tests:
     name: run unit tests
@@ -47,6 +47,6 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          # personhood_spike is excluded because it include_bytes!s onnx model
+          # personhood_bench is excluded because it include_bytes!s onnx model
           # files which are gitignored (see its README + download script)
-          args: --workspace --exclude integration_tests --exclude personhood_spike
+          args: --workspace --exclude integration_tests --exclude personhood_bench

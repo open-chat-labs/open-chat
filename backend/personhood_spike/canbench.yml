@@ -1,5 +1,0 @@
-build_cmd:
-  RUSTFLAGS="${PERSONHOOD_SPIKE_RUSTFLAGS:-}" cargo build -p personhood_spike --release --target wasm32-unknown-unknown --locked
-
-wasm_path:
-  ../../target/wasm32-unknown-unknown/release/personhood_spike.wasm

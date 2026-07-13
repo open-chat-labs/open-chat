@@ -673,12 +673,12 @@ mod tests {
     }
 
     // End-to-end over a real portrait, gated on the fixtures being present
-    // (run scripts/download-personhood-spike-models.sh). Also pins pipeline
+    // (run scripts/download-personhood-models.sh). Also pins pipeline
     // determinism - the SCRFD failure mode.
     #[test]
     fn real_pipeline_detects_and_embeds() {
         use std::path::PathBuf;
-        let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../personhood_spike/models");
+        let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../personhood_bench/models");
         let (Ok(det), Ok(lmk), Ok(emb), Ok(img)) = (
             std::fs::read(dir.join("version-RFB-320.onnx")),
             std::fs::read(dir.join("2d106det.onnx")),

@@ -160,7 +160,7 @@ members = [
     "backend/notification_pusher/aws",
     "backend/notification_pusher/cli",
     "backend/notification_pusher/core",
-    "backend/personhood_spike",
+    "backend/personhood_bench",
     "backend/tools/account_id",
     "backend/tools/canister_installer",
     "backend/tools/canister_upgrade_proposal_builder",
@@ -310,7 +310,7 @@ opt-level = 3
 opt-level = 3
 [profile.release.package.zune-jpeg]
 opt-level = 3
-[profile.release.package.personhood_spike]
+[profile.release.package.personhood_bench]
 opt-level = 3
 
 [patch.crates-io]

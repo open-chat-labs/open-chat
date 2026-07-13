@@ -1,4 +1,6 @@
-//! Phase 0 feasibility spike for on-chain personhood verification (issue #9072).
+//! Instruction-count benchmarks for on-chain personhood verification
+//! (issue #9072). Originally the Phase 0 feasibility spike; re-run when
+//! models or tract change (see README.md).
 //!
 //! Measures wasm instruction counts for each stage of the proposed pipeline
 //! (JPEG decode -> face detect -> landmarks/pose -> face embedding -> uniqueness scan)
@@ -7,9 +9,9 @@
 //! Exit criteria: every single inference < 40B instructions (DTS per-message ceiling),
 //! full verification < ~120B.
 //!
-//! Model files are not committed - run `./scripts/download-personhood-spike-models.sh`
-//! first, then `cd backend/personhood_spike && canbench`.
-//! SIMD variant: `PERSONHOOD_SPIKE_RUSTFLAGS="-C target-feature=+simd128" canbench`.
+//! Model files are not committed - run `./scripts/download-personhood-models.sh`
+//! first, then `cd backend/personhood_bench && canbench`.
+//! SIMD variant: `PERSONHOOD_BENCH_RUSTFLAGS="-C target-feature=+simd128" canbench`.
 
 mod inference;
 mod jpeg;

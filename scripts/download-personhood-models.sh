@@ -1,12 +1,13 @@
 #!/bin/bash
 
-# Downloads the candidate ONNX models for the personhood verification feasibility
-# spike (backend/personhood_spike). See that crate's README for context.
+# Downloads the ONNX models for personhood verification into
+# backend/personhood_bench/models - used by the benchmarks, the model
+# uploader, threshold calibration and face_pipeline's end-to-end tests.
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-MODELS_DIR="$SCRIPT_DIR/../backend/personhood_spike/models"
+MODELS_DIR="$SCRIPT_DIR/../backend/personhood_bench/models"
 mkdir -p "$MODELS_DIR"
 cd "$MODELS_DIR"
 

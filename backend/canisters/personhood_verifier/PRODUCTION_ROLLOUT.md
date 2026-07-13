@@ -53,7 +53,7 @@ they don't already have.
   as `openchat_installer`'s `upload_wasm_chunks_whitelist` (visible on its
   `/metrics` endpoint).
 - Model files present and hashed:
-  `./scripts/download-personhood-spike-models.sh` fetches
+  `./scripts/download-personhood-models.sh` fetches
   `version-RFB-320.onnx` (detection, ~1.2 MB), `2d106det.onnx` (landmarks,
   ~5 MB), `w600k_r50.onnx` (embedding, ~174 MB) and verifies each against a
   sha256 pinned in the script itself — i.e. in the reviewed repo, alongside
@@ -161,12 +161,12 @@ are inert (~180 x 1MB update calls for the embedding model alone, which is
 also why this isn't proposal-per-chunk):
 
 ```bash
-./scripts/download-personhood-spike-models.sh
+./scripts/download-personhood-models.sh
 cargo run --package verification_model_uploader -- \
   --url https://ic0.app/ \
   --controller <whitelisted dfx identity> \
   --personhood-verifier $(dfx canister --network ic id personhood_verifier) \
-  --models-dir ./backend/personhood_spike/models \
+  --models-dir ./backend/personhood_bench/models \
   --embedding-version 1 \
   --skip-commit
 ```
@@ -175,7 +175,7 @@ The tool prints the three ready-made commit commands with the exact sha256
 hashes when it finishes.
 
 **Verify:** the printed hashes match the hashes published by
-`download-personhood-spike-models.sh` in step 0 (they are computed from the
+`download-personhood-models.sh` in step 0 (they are computed from the
 same local files, so this is a sanity check against upload corruption only —
 the real integrity check is the hash pin in step 5).
 

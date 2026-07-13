@@ -1,5 +1,5 @@
 [package]
-name = "personhood_spike"
+name = "personhood_bench"
 version.workspace = true
 edition.workspace = true
 

@@ -34,10 +34,10 @@ visible.
 ## Usage
 
 ```bash
-./scripts/download-personhood-spike-models.sh          # models (gitignored)
+./scripts/download-personhood-models.sh          # models (gitignored)
 
 cargo run -p threshold_calibration --release -- \
-  --models-dir ./backend/personhood_spike/models \
+  --models-dir ./backend/personhood_bench/models \
   --images-dir /path/to/dataset \
   --pairs /path/to/pairs.txt \
   --scales 100000,1000000
