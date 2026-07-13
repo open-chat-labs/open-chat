@@ -889,6 +889,9 @@
     "human": {
         "already": "¡Felicidades! ¡Ya has comprobado que eres una persona real y única!",
         "notVerified": "Aún no has verificado que eres una persona real y única. La verificación es un breve desafío con la cámara que dura alrededor de un minuto y sirve como señal de tu fiabilidad ante otros usuarios.",
+        "removeVerification": "Eliminar la verificación",
+        "removeVerificationConfirm": "Esto eliminará tu estado de verificado y borrará todos los datos almacenados sobre tu verificación, incluida la huella numérica de tu rostro. Puedes verificarte de nuevo en cualquier momento.",
+        "removeVerificationFailed": "No se pudo eliminar tu verificación. Inténtalo de nuevo.",
         "verification": "Verificación",
         "verified": "Persona única verificada",
         "verify": "Verificar",

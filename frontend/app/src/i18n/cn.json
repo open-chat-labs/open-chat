@@ -889,6 +889,9 @@
     "human": {
         "already": "恭喜！您已验证您是一个真实而独特的人！",
         "notVerified": "您尚未验证自己是一个真实而独特的人。验证是一个大约一分钟的简短摄像头挑战，可作为您对其他用户可信度的一种证明。",
+        "removeVerification": "移除验证",
+        "removeVerificationConfirm": "这将移除您的已验证状态，并删除存储的所有与您的验证相关的数据，包括您面部的数字特征向量。您可以随时重新验证。",
+        "removeVerificationFailed": "无法移除您的验证。请重试。",
         "verification": "确认",
         "verified": "已验证的唯一人员",
         "verify": "核实",

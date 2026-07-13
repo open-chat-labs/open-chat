@@ -52,6 +52,7 @@ import {
     UserIndexRegisterBotResponse,
     UserIndexRemoveBotArgs,
     UserIndexRemoveBotResponse,
+    UserIndexRemoveUniquePersonProofArgs,
     UserIndexReportedMessagesArgs,
     UserIndexReportedMessagesResponse,
     UserIndexSearchArgs,
@@ -159,6 +160,18 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             },
             (_) => true,
             UserIndexSetModerationFlagsArgs,
+            SuccessOnly,
+        );
+    }
+
+    // Right to erasure: revokes the caller's unique personhood verification
+    // and deletes their face embedding from the personhood verifier
+    removeUniquePersonProof(): Promise<boolean> {
+        return this.update(
+            "remove_unique_person_proof",
+            {},
+            (_) => true,
+            UserIndexRemoveUniquePersonProofArgs,
             SuccessOnly,
         );
     }

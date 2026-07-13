@@ -22,6 +22,7 @@ generate_update_call!(add_platform_operator);
 generate_update_call!(assign_platform_moderators_group);
 generate_msgpack_update_call!(pay_for_diamond_membership);
 generate_msgpack_update_call!(remove_bot);
+generate_msgpack_update_call!(remove_unique_person_proof);
 generate_update_call!(remove_platform_moderator);
 generate_msgpack_update_call!(set_display_name);
 generate_msgpack_update_call!(set_premium_item_cost);

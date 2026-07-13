@@ -8745,6 +8745,26 @@ export class OpenChat {
         }
     }
 
+    // Right to erasure: revokes the user's unique personhood verification and
+    // deletes their face embedding from the personhood verifier. They can
+    // re-verify at any time.
+    async removeHumanVerification(): Promise<boolean> {
+        const success = await this.#worker
+            .send({ kind: "removeUniquePersonProof" })
+            .catch(() => false);
+        if (success) {
+            currentUserStore.set({
+                ...currentUserStore.value,
+                isUniquePerson: false,
+            });
+            userStore.updateUser(currentUserIdStore.value, (u) => ({
+                ...u,
+                isUniquePerson: false,
+            }));
+        }
+        return success;
+    }
+
     async joinCommunity(
         community: CommunitySummary,
         credentials: string[],

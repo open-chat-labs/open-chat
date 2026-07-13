@@ -20,6 +20,7 @@ pub mod publish_bot;
 pub mod register_bot;
 pub mod register_external_achievement;
 pub mod remove_bot;
+pub mod remove_unique_person_proof;
 pub mod remove_platform_moderator;
 pub mod remove_platform_operator;
 pub mod set_diamond_membership_fees;

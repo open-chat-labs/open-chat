@@ -889,6 +889,9 @@
     "human": {
         "already": "Gratulacje! Już zweryfikowałeś, że jesteś prawdziwą, wyjątkową osobą!",
         "notVerified": "Nie zweryfikowałeś jeszcze, że jesteś prawdziwą, wyjątkową osobą. Weryfikacja to krótkie zadanie z kamerą trwające około minuty, które jest dla innych użytkowników sygnałem Twojej wiarygodności.",
+        "removeVerification": "Usuń weryfikację",
+        "removeVerificationConfirm": "Spowoduje to usunięcie Twojego statusu zweryfikowanego oraz wszystkich danych przechowywanych o Twojej weryfikacji, w tym numerycznego odcisku Twojej twarzy. Możesz zweryfikować się ponownie w dowolnym momencie.",
+        "removeVerificationFailed": "Nie udało się usunąć weryfikacji. Spróbuj ponownie.",
         "verification": "Weryfikacja",
         "verified": "Zweryfikowana wyjątkowa osoba",
         "verify": "Zweryfikować",

@@ -18,6 +18,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "pay_for_diamond_membership"
         | "pay_for_premium_item"
         | "register_bot"
+        | "remove_unique_person_proof"
         | "set_display_name"
         | "set_hide_online_status"
         | "set_moderation_flags"

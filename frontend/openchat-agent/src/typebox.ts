@@ -227,6 +227,11 @@ export const GroupRegisterWebhookArgs = Type.Object({
     avatar: Type.Optional(Type.String()),
 });
 
+export type GroupDeleteHistoryArgs = Static<typeof GroupDeleteHistoryArgs>;
+export const GroupDeleteHistoryArgs = Type.Object({
+    before: Type.BigInt(),
+});
+
 export type GroupSelectedUpdatesArgs = Static<typeof GroupSelectedUpdatesArgs>;
 export const GroupSelectedUpdatesArgs = Type.Object({
     updates_since: Type.BigInt(),
@@ -517,7 +522,12 @@ export const OgPreviewImage = Type.Object({
 });
 
 export type ExchangeId = Static<typeof ExchangeId>;
-export const ExchangeId = Type.Union([Type.Literal("ICPSwap"), Type.Literal("Taco")]);
+export const ExchangeId = Type.Union([
+    Type.Literal("ICPSwap"),
+    Type.Literal("Taco"),
+    Type.Literal("Sonic"),
+    Type.Literal("KongSwap"),
+]);
 
 export type ProposalDecisionStatus = Static<typeof ProposalDecisionStatus>;
 export const ProposalDecisionStatus = Type.Union([
@@ -913,6 +923,7 @@ export const ChatEventType = Type.Union([
     Type.Literal("Frozen"),
     Type.Literal("Unfrozen"),
     Type.Literal("DisappearingMessagesUpdated"),
+    Type.Literal("HistoryDeleted"),
     Type.Literal("MessagePinned"),
     Type.Literal("MessageUnpinned"),
     Type.Literal("MembersJoined"),
@@ -2062,6 +2073,11 @@ export const UserIndexUserArgs = Type.Object({
     username: Type.Optional(Type.String()),
 });
 
+export type UserIndexWipeLegacyUniquePersonProofsArgs = Static<
+    typeof UserIndexWipeLegacyUniquePersonProofsArgs
+>;
+export const UserIndexWipeLegacyUniquePersonProofsArgs = Type.Record(Type.String(), Type.Never());
+
 export type UserIndexBotUpdatesArgs = Static<typeof UserIndexBotUpdatesArgs>;
 export const UserIndexBotUpdatesArgs = Type.Object({
     updated_since: Type.BigInt(),
@@ -2153,6 +2169,11 @@ export const UserIndexSetHideOnlineStatusArgs = Type.Object({
     hide_online_status: Type.Boolean(),
 });
 
+export type UserIndexRemoveUniquePersonProofArgs = Static<
+    typeof UserIndexRemoveUniquePersonProofArgs
+>;
+export const UserIndexRemoveUniquePersonProofArgs = Type.Record(Type.String(), Type.Never());
+
 export type UserIndexUnsuspendUserArgs = Static<typeof UserIndexUnsuspendUserArgs>;
 export const UserIndexUnsuspendUserArgs = Type.Object({
     user_id: UserId,
@@ -2189,26 +2210,11 @@ export const UserIndexBotInstallationEventsArgs = Type.Object({
     size: Type.Number(),
 });
 
-export type UserIndexSubmitProofOfUniquePersonhoodResponse = Static<
-    typeof UserIndexSubmitProofOfUniquePersonhoodResponse
+export type UserIndexSetPersonhoodVerifierCanisterIdArgs = Static<
+    typeof UserIndexSetPersonhoodVerifierCanisterIdArgs
 >;
-export const UserIndexSubmitProofOfUniquePersonhoodResponse = Type.Union([
-    Type.Literal("Success"),
-    Type.Object({
-        Invalid: Type.String(),
-    }),
-    Type.Literal("UserNotFound"),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
-
-export type UserIndexSubmitProofOfUniquePersonhoodArgs = Static<
-    typeof UserIndexSubmitProofOfUniquePersonhoodArgs
->;
-export const UserIndexSubmitProofOfUniquePersonhoodArgs = Type.Object({
-    user_ii_principal: TSPrincipal,
-    credential_jwt: Type.String(),
+export const UserIndexSetPersonhoodVerifierCanisterIdArgs = Type.Object({
+    canister_id: TSPrincipal,
 });
 
 export type UserIndexChitLeaderboardChitUserBalance = Static<
@@ -2923,6 +2929,12 @@ export const CommunityDeleteMessagesArgs = Type.Object({
     new_achievement: Type.Boolean(),
 });
 
+export type CommunityDeleteChannelHistoryArgs = Static<typeof CommunityDeleteChannelHistoryArgs>;
+export const CommunityDeleteChannelHistoryArgs = Type.Object({
+    channel_id: ChannelId,
+    before: Type.BigInt(),
+});
+
 export type CommunityRemoveMemberFromChannelArgs = Static<
     typeof CommunityRemoveMemberFromChannelArgs
 >;
@@ -3379,6 +3391,133 @@ export type NotificationsIndexAddFcmTokenArgs = Static<typeof NotificationsIndex
 export const NotificationsIndexAddFcmTokenArgs = Type.Object({
     fcm_token: FcmToken,
 });
+
+export type PersonhoodVerifierHeadPose = Static<typeof PersonhoodVerifierHeadPose>;
+export const PersonhoodVerifierHeadPose = Type.Union([
+    Type.Literal("Center"),
+    Type.Literal("Left"),
+    Type.Literal("Right"),
+    Type.Literal("Up"),
+    Type.Literal("Down"),
+]);
+
+export type PersonhoodVerifierSubmitVerificationArgs = Static<
+    typeof PersonhoodVerifierSubmitVerificationArgs
+>;
+export const PersonhoodVerifierSubmitVerificationArgs = Type.Object({
+    session_id: Type.BigInt(),
+});
+
+export type PersonhoodVerifierSubmitVerificationResponse = Static<
+    typeof PersonhoodVerifierSubmitVerificationResponse
+>;
+export const PersonhoodVerifierSubmitVerificationResponse = Type.Union([
+    Type.Literal("Accepted"),
+    Type.Literal("SessionNotFound"),
+    Type.Literal("SessionExpired"),
+    Type.Object({
+        IncompleteChallenge: Type.Object({
+            missing_steps: Type.Array(Type.Number()),
+        }),
+    }),
+]);
+
+export type PersonhoodVerifierUploadFrameResponse = Static<
+    typeof PersonhoodVerifierUploadFrameResponse
+>;
+export const PersonhoodVerifierUploadFrameResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("SessionNotFound"),
+    Type.Literal("SessionExpired"),
+    Type.Literal("InvalidChallengeIndex"),
+    Type.Literal("FrameTooLarge"),
+    Type.Literal("TotalBytesExceeded"),
+    Type.Literal("InvalidImage"),
+]);
+
+export type PersonhoodVerifierUploadFrameArgs = Static<typeof PersonhoodVerifierUploadFrameArgs>;
+export const PersonhoodVerifierUploadFrameArgs = Type.Object({
+    session_id: Type.BigInt(),
+    challenge_index: Type.Number(),
+    image: TSBytes,
+});
+
+export type PersonhoodVerifierVerificationStatusArgs = Static<
+    typeof PersonhoodVerifierVerificationStatusArgs
+>;
+export const PersonhoodVerifierVerificationStatusArgs = Type.Object({
+    session_id: Type.BigInt(),
+});
+
+export type PersonhoodVerifierVerificationFailureReason = Static<
+    typeof PersonhoodVerifierVerificationFailureReason
+>;
+export const PersonhoodVerifierVerificationFailureReason = Type.Union([
+    Type.Literal("ChallengeFailed"),
+    Type.Literal("NoFaceDetected"),
+    Type.Literal("NotUnique"),
+    Type.Literal("SessionExpired"),
+]);
+
+export type PersonhoodVerifierModelInfoModelInfo = Static<
+    typeof PersonhoodVerifierModelInfoModelInfo
+>;
+export const PersonhoodVerifierModelInfoModelInfo = Type.Object({
+    current_model_version: Type.Number(),
+    enrolled_embeddings: Type.BigInt(),
+});
+
+export type PersonhoodVerifierModelInfoResponse = Static<
+    typeof PersonhoodVerifierModelInfoResponse
+>;
+export const PersonhoodVerifierModelInfoResponse = Type.Object({
+    Success: PersonhoodVerifierModelInfoModelInfo,
+});
+
+export type PersonhoodVerifierVerificationChallenge = Static<
+    typeof PersonhoodVerifierVerificationChallenge
+>;
+export const PersonhoodVerifierVerificationChallenge = Type.Object({
+    session_id: Type.BigInt(),
+    challenge: Type.Array(PersonhoodVerifierHeadPose),
+    max_frames: Type.Number(),
+    max_frame_bytes: Type.Number(),
+    max_total_bytes: Type.Number(),
+    deadline: Type.BigInt(),
+    is_retry_round: Type.Boolean(),
+});
+
+export type PersonhoodVerifierVerificationRetryReason = Static<
+    typeof PersonhoodVerifierVerificationRetryReason
+>;
+export const PersonhoodVerifierVerificationRetryReason = Type.Union([
+    Type.Literal("InconclusiveMatch"),
+    Type.Literal("PoorQuality"),
+]);
+
+export type PersonhoodVerifierStartVerificationResponse = Static<
+    typeof PersonhoodVerifierStartVerificationResponse
+>;
+export const PersonhoodVerifierStartVerificationResponse = Type.Union([
+    Type.Object({
+        Success: PersonhoodVerifierVerificationChallenge,
+    }),
+    Type.Object({
+        SessionAlreadyActive: PersonhoodVerifierVerificationChallenge,
+    }),
+    Type.Literal("AlreadyVerified"),
+    Type.Object({
+        AttemptLimitReached: Type.Object({
+            next_attempt_at: Type.BigInt(),
+        }),
+    }),
+    Type.Literal("Busy"),
+    Type.Literal("NotReady"),
+    Type.Literal("UserNotFound"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
 
 export type StorageBucketDeleteFilesDeleteFileFailureReason = Static<
     typeof StorageBucketDeleteFilesDeleteFileFailureReason
@@ -4259,6 +4398,12 @@ export type UserSwapTokensExchangeSwapArgs = Static<typeof UserSwapTokensExchang
 export const UserSwapTokensExchangeSwapArgs = Type.Object({
     swap_canister_id: TSPrincipal,
     zero_for_one: Type.Boolean(),
+});
+
+export type UserSwapTokensTacoArgs = Static<typeof UserSwapTokensTacoArgs>;
+export const UserSwapTokensTacoArgs = Type.Object({
+    swap_canister_id: TSPrincipal,
+    treasury_canister_id: TSPrincipal,
 });
 
 export type UserSwapTokensResponse = Static<typeof UserSwapTokensResponse>;
@@ -5557,6 +5702,12 @@ export const MembersResponse = Type.Union([
     }),
 ]);
 
+export type HistoryDeleted = Static<typeof HistoryDeleted>;
+export const HistoryDeleted = Type.Object({
+    before: Type.BigInt(),
+    deleted_by: UserId,
+});
+
 export type RoleChanged = Static<typeof RoleChanged>;
 export const RoleChanged = Type.Object({
     user_ids: Type.Array(UserId),
@@ -6477,6 +6628,35 @@ export const CommunityUpdateChannelResponse = Type.Union([
     }),
 ]);
 
+export type PersonhoodVerifierVerificationStatusResponse = Static<
+    typeof PersonhoodVerifierVerificationStatusResponse
+>;
+export const PersonhoodVerifierVerificationStatusResponse = Type.Union([
+    Type.Literal("NotSubmitted"),
+    Type.Object({
+        Queued: Type.Object({
+            position: Type.Number(),
+        }),
+    }),
+    Type.Literal("Processing"),
+    Type.Object({
+        Verified: Type.Object({
+            model_version: Type.Number(),
+        }),
+    }),
+    Type.Object({
+        RetryRequired: Type.Object({
+            reason: PersonhoodVerifierVerificationRetryReason,
+        }),
+    }),
+    Type.Object({
+        Failed: Type.Object({
+            reason: PersonhoodVerifierVerificationFailureReason,
+        }),
+    }),
+    Type.Literal("SessionNotFound"),
+]);
+
 export type StorageBucketDeleteFilesResponse = Static<typeof StorageBucketDeleteFilesResponse>;
 export const StorageBucketDeleteFilesResponse = Type.Object({
     success: Type.Array(Type.BigInt()),
@@ -6669,12 +6849,6 @@ export const UserSetProfileBackgroundArgs = Type.Object({
     profile_background: Type.Optional(Document),
 });
 
-export type UserSwapTokensTacoArgs = Static<typeof UserSwapTokensTacoArgs>;
-export const UserSwapTokensTacoArgs = Type.Object({
-    swap_canister_id: TSPrincipal,
-    treasury_canister_id: TSPrincipal,
-});
-
 export type UserSwapTokensExchangeArgs = Static<typeof UserSwapTokensExchangeArgs>;
 export const UserSwapTokensExchangeArgs = Type.Union([
     Type.Object({
@@ -6682,6 +6856,12 @@ export const UserSwapTokensExchangeArgs = Type.Union([
     }),
     Type.Object({
         Taco: UserSwapTokensTacoArgs,
+    }),
+    Type.Object({
+        Sonic: UserSwapTokensExchangeSwapArgs,
+    }),
+    Type.Object({
+        KongSwap: UserSwapTokensExchangeSwapArgs,
     }),
 ]);
 
@@ -8854,6 +9034,9 @@ export const ChatEvent = Type.Union([
     Type.Object({
         BotUpdated: BotUpdated,
     }),
+    Type.Object({
+        HistoryDeleted: HistoryDeleted,
+    }),
     Type.Literal("FailedToDeserialize"),
 ]);
 
@@ -9772,171 +9955,3 @@ export const BotEventWrapper = Type.Object({
     event: BotEvent,
     timestamp: Type.BigInt(),
 });
-
-export type PersonhoodVerifierHeadPose = Static<typeof PersonhoodVerifierHeadPose>;
-
-export const PersonhoodVerifierHeadPose = Type.Union([
-    Type.Literal("Center"),
-    Type.Literal("Left"),
-    Type.Literal("Right"),
-    Type.Literal("Up"),
-    Type.Literal("Down"),
-]);
-
-export type PersonhoodVerifierSubmitVerificationArgs = Static<
-    typeof PersonhoodVerifierSubmitVerificationArgs
->;
-
-export const PersonhoodVerifierSubmitVerificationArgs = Type.Object({
-    session_id: Type.BigInt(),
-});
-
-export type PersonhoodVerifierSubmitVerificationResponse = Static<
-    typeof PersonhoodVerifierSubmitVerificationResponse
->;
-
-export const PersonhoodVerifierSubmitVerificationResponse = Type.Union([
-    Type.Literal("Accepted"),
-    Type.Literal("SessionNotFound"),
-    Type.Literal("SessionExpired"),
-    Type.Object({
-        IncompleteChallenge: Type.Object({
-            missing_steps: Type.Array(Type.Number()),
-        }),
-    }),
-]);
-
-export type PersonhoodVerifierUploadFrameResponse = Static<
-    typeof PersonhoodVerifierUploadFrameResponse
->;
-
-export const PersonhoodVerifierUploadFrameResponse = Type.Union([
-    Type.Literal("Success"),
-    Type.Literal("SessionNotFound"),
-    Type.Literal("SessionExpired"),
-    Type.Literal("InvalidChallengeIndex"),
-    Type.Literal("FrameTooLarge"),
-    Type.Literal("TotalBytesExceeded"),
-    Type.Literal("InvalidImage"),
-]);
-
-export type PersonhoodVerifierUploadFrameArgs = Static<typeof PersonhoodVerifierUploadFrameArgs>;
-
-export const PersonhoodVerifierUploadFrameArgs = Type.Object({
-    session_id: Type.BigInt(),
-    challenge_index: Type.Number(),
-    image: TSBytes,
-});
-
-export type PersonhoodVerifierVerificationStatusArgs = Static<
-    typeof PersonhoodVerifierVerificationStatusArgs
->;
-
-export const PersonhoodVerifierVerificationStatusArgs = Type.Object({
-    session_id: Type.BigInt(),
-});
-
-export type PersonhoodVerifierVerificationFailureReason = Static<
-    typeof PersonhoodVerifierVerificationFailureReason
->;
-
-export const PersonhoodVerifierVerificationFailureReason = Type.Union([
-    Type.Literal("ChallengeFailed"),
-    Type.Literal("NoFaceDetected"),
-    Type.Literal("NotUnique"),
-    Type.Literal("SessionExpired"),
-]);
-
-export type PersonhoodVerifierModelInfoModelInfo = Static<
-    typeof PersonhoodVerifierModelInfoModelInfo
->;
-
-export const PersonhoodVerifierModelInfoModelInfo = Type.Object({
-    current_model_version: Type.Number(),
-    enrolled_embeddings: Type.BigInt(),
-});
-
-export type PersonhoodVerifierModelInfoResponse = Static<
-    typeof PersonhoodVerifierModelInfoResponse
->;
-
-export const PersonhoodVerifierModelInfoResponse = Type.Object({
-    Success: PersonhoodVerifierModelInfoModelInfo,
-});
-
-export type PersonhoodVerifierVerificationChallenge = Static<
-    typeof PersonhoodVerifierVerificationChallenge
->;
-
-export const PersonhoodVerifierVerificationChallenge = Type.Object({
-    session_id: Type.BigInt(),
-    challenge: Type.Array(PersonhoodVerifierHeadPose),
-    max_frames: Type.Number(),
-    max_frame_bytes: Type.Number(),
-    max_total_bytes: Type.Number(),
-    deadline: Type.BigInt(),
-    is_retry_round: Type.Boolean(),
-});
-
-export type PersonhoodVerifierVerificationRetryReason = Static<
-    typeof PersonhoodVerifierVerificationRetryReason
->;
-
-export const PersonhoodVerifierVerificationRetryReason = Type.Union([
-    Type.Literal("InconclusiveMatch"),
-    Type.Literal("PoorQuality"),
-]);
-
-export type PersonhoodVerifierStartVerificationResponse = Static<
-    typeof PersonhoodVerifierStartVerificationResponse
->;
-
-export const PersonhoodVerifierStartVerificationResponse = Type.Union([
-    Type.Object({
-        Success: PersonhoodVerifierVerificationChallenge,
-    }),
-    Type.Object({
-        SessionAlreadyActive: PersonhoodVerifierVerificationChallenge,
-    }),
-    Type.Literal("AlreadyVerified"),
-    Type.Object({
-        AttemptLimitReached: Type.Object({
-            next_attempt_at: Type.BigInt(),
-        }),
-    }),
-    Type.Literal("Busy"),
-    Type.Literal("UserNotFound"),
-    Type.Object({
-        InternalError: Type.String(),
-    }),
-]);
-
-export type PersonhoodVerifierVerificationStatusResponse = Static<
-    typeof PersonhoodVerifierVerificationStatusResponse
->;
-
-export const PersonhoodVerifierVerificationStatusResponse = Type.Union([
-    Type.Literal("NotSubmitted"),
-    Type.Object({
-        Queued: Type.Object({
-            position: Type.Number(),
-        }),
-    }),
-    Type.Literal("Processing"),
-    Type.Object({
-        Verified: Type.Object({
-            model_version: Type.Number(),
-        }),
-    }),
-    Type.Object({
-        RetryRequired: Type.Object({
-            reason: PersonhoodVerifierVerificationRetryReason,
-        }),
-    }),
-    Type.Object({
-        Failed: Type.Object({
-            reason: PersonhoodVerifierVerificationFailureReason,
-        }),
-    }),
-    Type.Literal("SessionNotFound"),
-]);

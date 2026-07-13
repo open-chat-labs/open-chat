@@ -443,6 +443,7 @@ export type WorkerRequest =
     | UploadVerificationFrame
     | SubmitVerification
     | GetVerificationStatus
+    | RemoveUniquePersonProof
     | LinkIdentities
     | RemoveIdentityLink
     | GetAuthenticationPrincipals
@@ -693,6 +694,10 @@ type SubmitVerification = {
 type GetVerificationStatus = {
     kind: "verificationStatus";
     sessionId: bigint;
+};
+
+type RemoveUniquePersonProof = {
+    kind: "removeUniquePersonProof";
 };
 
 type MarkAchievementsSeen = {
@@ -2588,6 +2593,8 @@ export type WorkerResult<T> = T extends Init
     ? SubmitVerificationResponse
     : T extends GetVerificationStatus
     ? VerificationStatus
+    : T extends RemoveUniquePersonProof
+    ? boolean
     : T extends LinkIdentities
     ? LinkIdentitiesResponse
     : T extends RemoveIdentityLink

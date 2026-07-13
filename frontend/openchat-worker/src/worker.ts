@@ -1272,6 +1272,9 @@ function getAction(
         case "verificationStatus":
             return agent.verificationStatus(payload.sessionId);
 
+        case "removeUniquePersonProof":
+            return agent.removeUniquePersonProof();
+
         case "linkIdentities":
             return linkIdentities(
                 payload.initiatorKey,

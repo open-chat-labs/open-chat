@@ -4078,6 +4078,10 @@ export class OpenChatAgent extends EventTarget {
         return this._verifierClient.verificationStatus(sessionId);
     }
 
+    removeUniquePersonProof(): Promise<boolean> {
+        return this._userIndexClient.removeUniquePersonProof();
+    }
+
     configureWallet(config: WalletConfig): Promise<void> {
         return this.userClient.configureWallet(config);
     }

@@ -436,3 +436,43 @@ fn deleting_account_erases_embedding() {
     let status = verify_user(env, canister_ids, user2.principal, 220);
     assert!(matches!(status, StatusResponse::Verified { .. }), "{status:?}");
 }
+
+#[test]
+fn removing_verification_erases_embedding_and_allows_reverification() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    // Markers: group 45 (180/181) - unique to this test
+    let user = client::register_user(env, canister_ids);
+    let status = verify_user(env, canister_ids, user.principal, 180);
+    assert!(matches!(status, StatusResponse::Verified { .. }), "{status:?}");
+    tick_many(env, 5);
+    let current_user = client::user_index::happy_path::current_user(env, user.principal, canister_ids.user_index);
+    assert!(current_user.is_unique_person);
+
+    // The user removes their verification
+    let response = client::user_index::remove_unique_person_proof(
+        env,
+        user.principal,
+        canister_ids.user_index,
+        &user_index_canister::remove_unique_person_proof::Args {},
+    );
+    assert!(matches!(
+        response,
+        user_index_canister::remove_unique_person_proof::Response::Success
+    ));
+    tick_many(env, 20);
+
+    // The proof is gone everywhere the client sees it
+    let current_user = client::user_index::happy_path::current_user(env, user.principal, canister_ids.user_index);
+    assert!(!current_user.is_unique_person);
+
+    // The embedding must be gone too: re-verifying with the same face (a
+    // clear duplicate of the removed embedding) succeeds instead of failing
+    // as NotUnique, and start_verification no longer reports AlreadyVerified
+    let status = verify_user(env, canister_ids, user.principal, 181);
+    assert!(matches!(status, StatusResponse::Verified { .. }), "{status:?}");
+    tick_many(env, 5);
+    let current_user = client::user_index::happy_path::current_user(env, user.principal, canister_ids.user_index);
+    assert!(current_user.is_unique_person);
+}

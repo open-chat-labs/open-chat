@@ -889,6 +889,9 @@
     "human": {
         "already": "Chúc mừng! Bạn đã xác minh rằng bạn là một người thực sự, độc nhất!",
         "notVerified": "Bạn chưa xác minh rằng bạn là một người thực sự, độc nhất. Xác minh là một thử thách ngắn với camera, mất khoảng một phút, và là tín hiệu về độ tin cậy của bạn đối với người dùng khác.",
+        "removeVerification": "Xóa xác minh",
+        "removeVerificationConfirm": "Điều này sẽ xóa trạng thái đã xác minh của bạn và xóa tất cả dữ liệu được lưu về việc xác minh của bạn, bao gồm dấu số của khuôn mặt bạn. Bạn có thể xác minh lại bất cứ lúc nào.",
+        "removeVerificationFailed": "Không thể xóa xác minh của bạn. Vui lòng thử lại.",
         "verification": "xác minh",
         "verified": "Người duy nhất đã được xác minh",
         "verify": "Xác minh",

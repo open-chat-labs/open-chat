@@ -59,6 +59,7 @@
     } from "../../../stores/settings";
     import { toastStore } from "../../../stores/toast";
     import { isTouchDevice } from "../../../utils/devices";
+    import AreYouSure from "../../AreYouSure.svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
@@ -116,6 +117,7 @@
     let deleting = $state(false);
     let confirmDelete = $state(false);
     let botConfigData: BotClientConfigData | undefined = $state(undefined);
+    let confirmRemoveVerification = $state(false);
 
     let originalUsername = $derived(user?.username ?? "");
     let originalDisplayName = $derived(user?.displayName ?? undefined);
@@ -289,10 +291,28 @@
                 toastStore.showFailureToast(i18nKey("bots.config.failure"), err);
             });
     }
+
+    async function removeVerification(yes: boolean): Promise<void> {
+        confirmRemoveVerification = false;
+        if (yes) {
+            const success = await client.removeHumanVerification();
+            if (!success) {
+                toastStore.showFailureToast(i18nKey("human.removeVerificationFailed"));
+            }
+        }
+    }
 </script>
 
 {#if confirmDelete}
     <ConfirmDeleteAccount bind:deleting onClose={() => (confirmDelete = false)} />
+{/if}
+
+{#if confirmRemoveVerification}
+    <AreYouSure
+        title={i18nKey("human.removeVerification")}
+        message={i18nKey("human.removeVerificationConfirm")}
+        yesLabel={i18nKey("remove")}
+        action={removeVerification} />
 {/if}
 
 <SectionHeader border={false} flush shadow>
@@ -429,6 +449,15 @@
                             <div class="msg">
                                 <Translatable resourceKey={i18nKey("human.already")} />
                             </div>
+                        </div>
+                        <div class="full-width-btn">
+                            <Button
+                                onClick={() => (confirmRemoveVerification = true)}
+                                danger
+                                fill
+                                small>
+                                <Translatable resourceKey={i18nKey("human.removeVerification")} />
+                            </Button>
                         </div>
                     {:else}
                         <Translatable resourceKey={i18nKey("human.notVerified")} />

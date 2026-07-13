@@ -225,17 +225,23 @@ impl RuntimeState {
 
             // Right to erasure: remove the user's face embedding (and attempt
             // history) from the personhood verifier
-            if self.data.personhood_verifier_canister_id != Principal::anonymous() {
-                let args = personhood_verifier_canister::c2c_delete_user_embedding::Args { user_id };
-                self.data.fire_and_forget_handler.send(
-                    self.data.personhood_verifier_canister_id,
-                    "c2c_delete_user_embedding_msgpack".to_string(),
-                    msgpack::serialize_then_unwrap(&args),
-                );
-            }
+            self.delete_user_embedding(user_id);
             true
         } else {
             false
+        }
+    }
+
+    // Fire-and-forget deletion of a user's face embedding, attempt history
+    // and any open verification sessions at the personhood verifier
+    pub fn delete_user_embedding(&mut self, user_id: UserId) {
+        if self.data.personhood_verifier_canister_id != Principal::anonymous() {
+            let args = personhood_verifier_canister::c2c_delete_user_embedding::Args { user_id };
+            self.data.fire_and_forget_handler.send(
+                self.data.personhood_verifier_canister_id,
+                "c2c_delete_user_embedding_msgpack".to_string(),
+                msgpack::serialize_then_unwrap(&args),
+            );
         }
     }
 
