@@ -15,9 +15,9 @@ use types::{
     FileContentEventPayload, GiphyContent, GiphyImageVariant, GovernanceProposalContentEventPayload, ImageContent,
     ImageOrVideoContentEventPayload, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE, MessageContent, MessageContentEventPayload,
     MessageContentInitial, MessageContentType, MessageIndex, MessageReminderContent, MessageReminderContentEventPayload,
-    MessageReminderCreatedContent, MessageReport, Milliseconds, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted,
-    P2PSwapContent, P2PSwapContentEventPayload, P2PSwapContentInitial, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus,
-    PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload, PollVotes, PrizeContent,
+    MessageReminderCreatedContent, MessageReport, Milliseconds, ModerationInput, P2PSwapAccepted, P2PSwapCancelled,
+    P2PSwapCompleted, P2PSwapContent, P2PSwapContentEventPayload, P2PSwapContentInitial, P2PSwapExpired, P2PSwapReserved,
+    P2PSwapStatus, PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload, PollVotes, PrizeContent,
     PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal,
     ProposalContent, RegisterVoteResult, ReportedMessage, ReportedMessageContentEventPayload, TextContent,
     TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos, TokenInfo, TotalVotes, TransactionHash, UserId,
@@ -229,6 +229,44 @@ impl MessageContentInternal {
             | MessageContentInternal::Encrypted(_)
             | MessageContentInternal::Custom(_) => None,
         }
+    }
+
+    pub fn moderation_input(&self) -> ModerationInput {
+        let mut input = ModerationInput {
+            text: self.text().map(|t| t.to_string()),
+            image_urls: Vec::new(),
+        };
+
+        match self {
+            MessageContentInternal::Image(i) => {
+                if let Some(br) = &i.blob_reference {
+                    input.image_urls.push(BlobReference::from(br.clone()).url());
+                }
+            }
+            MessageContentInternal::Video(v) => {
+                if let Some(br) = &v.image_blob_reference {
+                    input.image_urls.push(BlobReference::from(br.clone()).url());
+                }
+            }
+            MessageContentInternal::Giphy(g) => {
+                if let Some(variant) = [&g.desktop, &g.mobile]
+                    .into_iter()
+                    .find(|v| v.mime_type.starts_with("image/"))
+                {
+                    input.image_urls.push(variant.url.clone());
+                }
+            }
+            MessageContentInternal::Poll(p) => {
+                let mut text = input.text.unwrap_or_default();
+                for option in p.config.options.iter() {
+                    text.push_str(&format!("\n- {option}"));
+                }
+                input.text = Some(text);
+            }
+            _ => {}
+        }
+
+        input
     }
 
     pub fn text_length(&self) -> u32 {

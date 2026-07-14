@@ -40,3 +40,17 @@ impl std::ops::BitOr for ModerationCategories {
         ModerationCategories(self.0 | rhs.0)
     }
 }
+
+// Content to be classified by the moderation API. Image-bearing inputs are classified
+// individually (text + images as one combined input); plain text inputs can be batched.
+#[derive(Clone, Debug, Default)]
+pub struct ModerationInput {
+    pub text: Option<String>,
+    pub image_urls: Vec<String>,
+}
+
+impl ModerationInput {
+    pub fn is_empty(&self) -> bool {
+        self.text.as_ref().is_none_or(|t| t.trim().is_empty()) && self.image_urls.is_empty()
+    }
+}

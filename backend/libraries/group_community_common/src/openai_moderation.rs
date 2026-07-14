@@ -1,7 +1,7 @@
 use ic_cdk::management_canister::{self, HttpHeader, HttpMethod, HttpRequestArgs, HttpRequestResult};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use types::{MessageId, MessageIndex, ModerationCategories};
+use types::{MessageId, MessageIndex, ModerationCategories, ModerationInput};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct PendingMessageModeration {
@@ -16,10 +16,32 @@ const MAX_RESPONSE_BYTES: u64 = 500 * 1024;
 
 // Classifies the given texts using the OpenAI Moderation API, returning the flagged categories
 // for each input text in order.
-pub async fn moderate(api_key: &str, texts: &[String]) -> Result<Vec<ModerationCategories>, String> {
+pub async fn moderate_text_batch(api_key: &str, texts: &[String]) -> Result<Vec<ModerationCategories>, String> {
+    call_moderation_api(api_key, serde_json::json!(texts)).await
+}
+
+// Classifies a single input using the OpenAI Moderation API. The text and any images are
+// classified together as one combined input, so a single set of flagged categories is returned.
+pub async fn moderate_input(api_key: &str, input: &ModerationInput) -> Result<ModerationCategories, String> {
+    let mut parts = Vec::new();
+    if let Some(text) = input.text.as_ref().filter(|t| !t.trim().is_empty()) {
+        parts.push(serde_json::json!({ "type": "text", "text": text }));
+    }
+    for url in &input.image_urls {
+        parts.push(serde_json::json!({ "type": "image_url", "image_url": { "url": url } }));
+    }
+
+    let results = call_moderation_api(api_key, serde_json::Value::Array(parts)).await?;
+    results
+        .into_iter()
+        .next()
+        .ok_or("Empty response from OpenAI Moderation API".to_string())
+}
+
+async fn call_moderation_api(api_key: &str, input: serde_json::Value) -> Result<Vec<ModerationCategories>, String> {
     let body = serde_json::json!({
         "model": MODEL,
-        "input": texts,
+        "input": input,
     });
 
     let response = management_canister::http_request_with_closure(

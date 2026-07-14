@@ -1,8 +1,8 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
     Achievement, CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, EncryptionKey, MessageIndex,
-    MessagePermission, Milliseconds, P2PSwapStatus, PendingCryptoTransaction, ProposalContent, TimestampMillis, TokenInfo,
-    TotalVotes, User, UserId, VideoCallType,
+    MessagePermission, Milliseconds, ModerationInput, P2PSwapStatus, PendingCryptoTransaction, ProposalContent,
+    TimestampMillis, TokenInfo, TotalVotes, User, UserId, VideoCallType,
 };
 use candid::CandidType;
 use oc_error_codes::{OCError, OCErrorCode};
@@ -200,6 +200,44 @@ impl MessageContent {
             | MessageContent::Encrypted(_)
             | MessageContent::Custom(_) => None,
         }
+    }
+
+    pub fn moderation_input(&self) -> ModerationInput {
+        let mut input = ModerationInput {
+            text: self.text().map(|t| t.to_string()),
+            image_urls: Vec::new(),
+        };
+
+        match self {
+            MessageContent::Image(i) => {
+                if let Some(br) = &i.blob_reference {
+                    input.image_urls.push(br.url());
+                }
+            }
+            MessageContent::Video(v) => {
+                if let Some(br) = &v.image_blob_reference {
+                    input.image_urls.push(br.url());
+                }
+            }
+            MessageContent::Giphy(g) => {
+                if let Some(variant) = [&g.desktop, &g.mobile]
+                    .into_iter()
+                    .find(|v| v.mime_type.starts_with("image/"))
+                {
+                    input.image_urls.push(variant.url.clone());
+                }
+            }
+            MessageContent::Poll(p) => {
+                let mut text = input.text.unwrap_or_default();
+                for option in p.config.options.iter() {
+                    text.push_str(&format!("\n- {option}"));
+                }
+                input.text = Some(text);
+            }
+            _ => {}
+        }
+
+        input
     }
 
     pub fn notification_text(&self, mentioned: &[User], user_groups_mentioned: &[(u32, String)]) -> Option<String> {

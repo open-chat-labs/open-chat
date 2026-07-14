@@ -189,7 +189,7 @@ fn process_send_message_result(
 
     register_timer_jobs(thread_root_message_index, message_event, now, &mut state.data);
 
-    if state.data.chat.is_public.value && message_event.event.content.text().is_some() {
+    if state.data.chat.is_public.value && !message_event.event.content.moderation_input().is_empty() {
         state.data.message_moderation_queue.push_back(PendingMessageModeration {
             thread_root_message_index,
             message_id,

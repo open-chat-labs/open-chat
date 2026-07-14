@@ -247,7 +247,7 @@ fn process_send_message_result(
     register_timer_jobs(channel_id, thread_root_message_index, message_event, now, &mut state.data);
 
     if state.data.is_public.value
-        && message_event.event.content.text().is_some()
+        && !message_event.event.content.moderation_input().is_empty()
         && state.data.channels.get(&channel_id).is_some_and(|c| c.chat.is_public.value)
     {
         state.data.message_moderation_queue.push_back((
