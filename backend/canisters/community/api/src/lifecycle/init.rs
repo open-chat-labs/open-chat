@@ -30,6 +30,8 @@ pub struct Args {
     pub default_channel_rules: Option<Rules>,
     pub source_group: Option<SourceGroup>,
     pub video_call_operators: Vec<Principal>,
+    #[serde(default)]
+    pub openai_api_key: Option<String>,
     #[deprecated]
     #[serde(with = "serde_bytes", default)]
     pub ic_root_key: Vec<u8>,

@@ -4180,8 +4180,10 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "constants",
+ "ic-cdk",
  "icrc-ledger-types",
  "serde",
+ "serde_json",
  "serde_repr",
  "types",
  "utils",

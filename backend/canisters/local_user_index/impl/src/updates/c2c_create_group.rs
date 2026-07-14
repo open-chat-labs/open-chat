@@ -117,6 +117,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
         avatar: args.avatar,
         gate_config: args.gate_config,
         video_call_operators: state.data.video_call_operators.clone(),
+        openai_api_key: state.data.openai_api_key.clone(),
         #[expect(deprecated)]
         ic_root_key: ic_cdk::api::root_key(),
         rng_seed: state.env.rng().r#gen(),

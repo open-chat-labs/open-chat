@@ -14,6 +14,7 @@ use event_store_types::Event;
 use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::{GatePayment, calculate_gate_payments};
 use group_chat_core::{AccessRulesInternal, AddResult};
+use group_community_common::openai_moderation::PendingMessageModeration;
 use group_community_common::{
     Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Members, PaymentReceipts, PendingPaymentsQueue,
     UserCache,
@@ -30,7 +31,7 @@ use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
@@ -542,6 +543,10 @@ struct Data {
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     bots: InstalledBots,
     verified: Timestamped<bool>,
+    #[serde(default)]
+    pub openai_api_key: Option<String>,
+    #[serde(default)]
+    pub message_moderation_queue: VecDeque<(ChannelId, PendingMessageModeration)>,
     idempotency_checker: IdempotencyChecker,
     public_channel_list_updated: TimestampMillis,
 }
@@ -652,6 +657,8 @@ impl Data {
             stable_memory_keys_to_garbage_collect: Vec::new(),
             bots: InstalledBots::default(),
             verified: Timestamped::default(),
+            openai_api_key: None,
+            message_moderation_queue: VecDeque::new(),
             idempotency_checker: IdempotencyChecker::default(),
             public_channel_list_updated: now,
         }

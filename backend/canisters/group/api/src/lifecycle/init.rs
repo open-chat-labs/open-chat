@@ -28,6 +28,8 @@ pub struct Args {
     pub internet_identity_canister_id: CanisterId,
     pub gate_config: Option<AccessGateConfig>,
     pub video_call_operators: Vec<Principal>,
+    #[serde(default)]
+    pub openai_api_key: Option<String>,
     #[deprecated]
     #[serde(with = "serde_bytes", default)]
     pub ic_root_key: Vec<u8>,

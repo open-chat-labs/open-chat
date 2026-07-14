@@ -22,6 +22,7 @@ pub enum EventsResponse {
 pub enum LocalIndexEvent {
     NameChanged(NameChanged),
     VerifiedChanged(VerifiedChanged),
+    OpenAIApiKeyUpdated(Option<String>),
     UserDeleted(UserId),
     BotUpdated(BotDefinitionUpdate),
     BotRemoved(UserId),

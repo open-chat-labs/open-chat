@@ -17,7 +17,7 @@ fn init(args: Args) {
 
     let mut env = Box::new(CanisterEnv::new(args.rng_seed));
 
-    let data = Data::new(
+    let mut data = Data::new(
         env.canister_id().into(),
         args.is_public,
         args.name,
@@ -45,6 +45,8 @@ fn init(args: Args) {
         args.video_call_operators,
         env.rng().r#gen(),
     );
+
+    data.openai_api_key = args.openai_api_key;
 
     init_state(env, data, args.wasm_version);
 
