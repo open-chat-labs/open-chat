@@ -31,6 +31,10 @@ impl ModerationCategories {
     pub fn contains(&self, other: ModerationCategories) -> bool {
         self.0 & other.0 == other.0
     }
+
+    pub fn intersects(&self, other: ModerationCategories) -> bool {
+        self.0 & other.0 != 0
+    }
 }
 
 impl std::ops::BitOr for ModerationCategories {
