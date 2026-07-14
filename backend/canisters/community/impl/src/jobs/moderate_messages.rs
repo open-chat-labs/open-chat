@@ -5,7 +5,7 @@ use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
-use types::{ChannelId, EventIndex, ModerationCategories, ModerationInput};
+use types::{ChannelId, EventIndex, MessageIndex, ModerationCategories, ModerationInput, UserId};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -40,6 +40,8 @@ struct Item {
     channel_id: ChannelId,
     entry: PendingMessageModeration,
     input: ModerationInput,
+    message_index: MessageIndex,
+    sender: UserId,
 }
 
 fn next_batch(state: &mut RuntimeState) -> Option<(String, Vec<Item>)> {
@@ -84,6 +86,8 @@ fn next_batch(state: &mut RuntimeState) -> Option<(String, Vec<Item>)> {
                 channel_id,
                 entry,
                 input,
+                message_index: message.message_index,
+                sender: message.sender,
             });
         }
     }
@@ -134,7 +138,23 @@ async fn process_batch(api_key: String, batch: Vec<Item>) {
                 any_flagged = true;
 
                 if categories.contains(ModerationCategories::SEXUAL_MINORS) {
-                    // TODO: Trigger the CSAM auto-sanction (escalation issue)
+                    // Notify the user_index (via the group_index) which applies the CSAM
+                    // auto-sanction: delete the message, suspend the sender, and post an alert
+                    // to the internal moderation channel
+                    let args = group_index_canister::c2c_csam_detected::Args {
+                        channel_id: Some(item.channel_id),
+                        thread_root_message_index: item.entry.thread_root_message_index,
+                        message_index: item.message_index,
+                        message_id: item.entry.message_id,
+                        sender: item.sender,
+                        flags: categories.bits(),
+                        content_excerpt: item.input.text.clone(),
+                    };
+                    state.data.fire_and_forget_handler.send(
+                        state.data.group_index_canister_id,
+                        "c2c_csam_detected_msgpack".to_string(),
+                        msgpack::serialize_then_unwrap(&args),
+                    );
                 }
             }
         }

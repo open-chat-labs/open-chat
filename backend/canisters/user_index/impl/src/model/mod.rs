@@ -4,6 +4,7 @@ pub mod diamond_membership_details;
 pub mod external_achievements;
 pub mod group_index_event_batch;
 pub mod local_user_index_map;
+pub mod moderation;
 pub mod pending_payments_queue;
 pub mod premium_items;
 pub mod reported_messages;

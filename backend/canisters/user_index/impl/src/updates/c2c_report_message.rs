@@ -1,22 +1,19 @@
 use crate::{
     RuntimeState,
     guards::caller_is_user_canister_or_group_index,
+    model::moderation::{self, ModerationAlert},
     model::reported_messages::{
-        AddReportArgs, AddReportResult, AutomatedOutcome, ModerationAction, RecordOutcomeResult, build_message_link,
-        build_message_to_reporter, build_message_to_sender, category_names,
+        AddReportArgs, AddReportResult, AutomatedOutcome, ModerationAction, RecordOutcomeResult, build_message_to_reporter,
+        build_message_to_sender,
     },
     mutate_state, read_state,
-    timer_job_types::{SetUserSuspended, TimerJob},
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use constants::OPENCHAT_BOT_USER_ID;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_community_common::openai_moderation;
 use tracing::error;
-use types::{
-    CanisterId, ChannelId, Chat, MessageId, MessageIndex, ModerationCategories, SuspensionDuration, TimestampMillis, UserId,
-};
+use types::{Chat, ModerationCategories};
 use user_index_canister::c2c_report_message::{Response::*, *};
 
 #[update(guard = "caller_is_user_canister_or_group_index", msgpack = true)]
@@ -100,9 +97,14 @@ fn handle_moderation_result(args: Args, report_index: u64, categories: Moderatio
 
     if is_csam {
         if !args.already_deleted {
-            delete_message(&args, &mut state.data.fire_and_forget_handler);
+            moderation::delete_message(
+                args.chat_id,
+                args.thread_root_message_index,
+                args.message.message_id,
+                &mut state.data.fire_and_forget_handler,
+            );
         }
-        suspend_sender(args.message.sender, now, state);
+        moderation::suspend_sender(args.message.sender, now, state);
     }
 
     let outcome = AutomatedOutcome {
@@ -126,7 +128,20 @@ fn handle_moderation_result(args: Args, report_index: u64, categories: Moderatio
         action,
         ModerationAction::AutoSanctioned | ModerationAction::EscalatedForHumanReview
     ) {
-        escalate_to_moderation_channel(&reported_message, categories, action, state);
+        moderation::post_moderation_alert(
+            ModerationAlert {
+                chat_id: reported_message.chat_id,
+                thread_root_message_index: reported_message.thread_root_message_index,
+                message_index: reported_message.message_index,
+                sender: reported_message.sender,
+                reporters: reported_message.reports.keys().copied().collect(),
+                categories,
+                auto_sanctioned: is_csam,
+                content_excerpt: args.message.content.moderation_input().text,
+                timestamp: now,
+            },
+            state,
+        );
     }
 
     if is_csam {
@@ -179,121 +194,4 @@ fn flag_message(args: &Args, categories: ModerationCategories, fire_and_forget_h
         }
         Chat::Direct(_) => {}
     }
-}
-
-fn delete_message(args: &Args, fire_and_forget_handler: &mut FireAndForgetHandler) {
-    match args.chat_id {
-        Chat::Group(group_id) => delete_group_message(
-            group_id.into(),
-            args.thread_root_message_index,
-            args.message.message_id,
-            fire_and_forget_handler,
-        ),
-        Chat::Channel(community_id, channel_id) => delete_channel_message(
-            community_id.into(),
-            channel_id,
-            args.thread_root_message_index,
-            args.message.message_id,
-            fire_and_forget_handler,
-        ),
-        // Don't delete messages from direct chats - the reporter can delete it themselves
-        Chat::Direct(_) => (),
-    }
-}
-
-fn delete_channel_message(
-    canister_id: CanisterId,
-    channel_id: ChannelId,
-    thread_root_message_index: Option<MessageIndex>,
-    message_id: MessageId,
-    fire_and_forget_handler: &mut FireAndForgetHandler,
-) {
-    let args = community_canister::delete_messages::Args {
-        channel_id,
-        thread_root_message_index,
-        message_ids: vec![message_id],
-        as_platform_moderator: Some(true),
-        new_achievement: false,
-    };
-    fire_and_forget_handler.send(
-        canister_id,
-        "delete_messages_msgpack".to_string(),
-        msgpack::serialize_then_unwrap(&args),
-    );
-}
-
-fn delete_group_message(
-    canister_id: CanisterId,
-    thread_root_message_index: Option<MessageIndex>,
-    message_id: MessageId,
-    fire_and_forget_handler: &mut FireAndForgetHandler,
-) {
-    let args = group_canister::delete_messages::Args {
-        thread_root_message_index,
-        message_ids: vec![message_id],
-        as_platform_moderator: Some(true),
-        new_achievement: false,
-    };
-    fire_and_forget_handler.send(
-        canister_id,
-        "delete_messages_msgpack".to_string(),
-        msgpack::serialize_then_unwrap(&args),
-    );
-}
-
-fn suspend_sender(sender: UserId, now: TimestampMillis, state: &mut RuntimeState) {
-    if let Some(user) = state.data.users.get_by_user_id(&sender) {
-        if user
-            .suspension_details
-            .as_ref()
-            .is_some_and(|d| matches!(d.duration, SuspensionDuration::Indefinitely))
-        {
-            return;
-        }
-
-        state.data.timer_jobs.enqueue_job(
-            TimerJob::SetUserSuspended(SetUserSuspended {
-                user_id: sender,
-                duration: None,
-                reason: "The message depicts, promotes or attempts to normalize child sexual abuse".to_string(),
-                suspended_by: OPENCHAT_BOT_USER_ID,
-            }),
-            now,
-            now,
-        );
-    }
-}
-
-fn escalate_to_moderation_channel(
-    reported_message: &crate::model::reported_messages::ReportedMessage,
-    categories: ModerationCategories,
-    action: ModerationAction,
-    state: &mut RuntimeState,
-) {
-    let Some((community_id, channel_id)) = state.data.internal_moderation_channel else {
-        error!("Reported message requires human review but no internal moderation channel is configured");
-        return;
-    };
-
-    let flagged = if categories.is_empty() { "none".to_string() } else { category_names(categories).join(", ") };
-    let action_text = match action {
-        ModerationAction::AutoSanctioned => "auto-sanctioned (message deleted, sender suspended)",
-        _ => "requires human review",
-    };
-
-    let text = format!(
-        "Reported message: {}\nSender: {}\nReports: {}\nFlagged categories: {}\nAction: {}",
-        build_message_link(reported_message),
-        reported_message.sender,
-        reported_message.reports.len(),
-        flagged,
-        action_text,
-    );
-
-    let args = community_canister::c2c_send_moderation_report::Args { channel_id, text };
-    state.data.fire_and_forget_handler.send(
-        community_id.into(),
-        "c2c_send_moderation_report_msgpack".to_string(),
-        msgpack::serialize_then_unwrap(&args),
-    );
 }
