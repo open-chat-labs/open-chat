@@ -15,8 +15,7 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use group_community_common::openai_moderation;
 use tracing::error;
 use types::{
-    CanisterId, ChannelId, Chat, MessageContent, MessageId, MessageIndex, ModerationCategories, SuspensionDuration,
-    TimestampMillis, UserId,
+    CanisterId, ChannelId, Chat, MessageId, MessageIndex, ModerationCategories, SuspensionDuration, TimestampMillis, UserId,
 };
 use user_index_canister::c2c_report_message::{Response::*, *};
 
@@ -63,14 +62,14 @@ fn add_report(args: &Args, state: &mut RuntimeState) -> Result<u64, Response> {
 async fn process_report(args: Args, report_index: u64) {
     let api_key = read_state(|state| state.data.openai_api_key.clone());
 
-    let text = extract_text(&args.message.content);
+    let input = args.message.content.moderation_input();
     let mut categories = ModerationCategories::default();
 
     if let Some(api_key) = api_key
-        && !text.trim().is_empty()
+        && !input.is_empty()
     {
-        match openai_moderation::moderate(&api_key, &[text]).await {
-            Ok(results) => categories = results.into_iter().next().unwrap_or_default(),
+        match openai_moderation::moderate_input(&api_key, &input).await {
+            Ok(result) => categories = result,
             Err(error) => error!(?error, "Failed to classify reported message"),
         }
     }
@@ -297,16 +296,4 @@ fn escalate_to_moderation_channel(
         "c2c_send_moderation_report_msgpack".to_string(),
         msgpack::serialize_then_unwrap(&args),
     );
-}
-
-fn extract_text(content: &MessageContent) -> String {
-    let mut text = format!("{}\n\n", content.text().unwrap_or_default());
-
-    if let MessageContent::Poll(p) = content {
-        for o in p.config.options.iter() {
-            text.push_str(&format!("- {o}\n"));
-        }
-    }
-
-    text
 }
