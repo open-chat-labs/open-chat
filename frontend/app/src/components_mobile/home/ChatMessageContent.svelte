@@ -14,6 +14,7 @@
     import MessageReminderCreatedContent from "./MessageReminderCreatedContent.svelte";
     import P2PSwapContent from "./P2PSwapContent.svelte";
     import PlaceholderContent from "./PlaceholderContent.svelte";
+    import RestrictedMessageContent from "./RestrictedMessageContent.svelte";
     import PollContent from "./PollContent.svelte";
     import PrizeContent from "./PrizeContent.svelte";
     import PrizeWinnerContent from "./PrizeWinnerContent.svelte";
@@ -52,10 +53,12 @@
         onRegisterVote?: (vote: { type: "delete" | "register"; answerIndex: number }) => void;
         ogPreviews?: OgPreview[];
         messagePreviews?: RehydratedMessagePreview[];
+        restricted?: boolean;
     }
 
     let {
         content,
+        restricted = false,
         contentWidth = $bindable(),
         me = false,
         truncate = false,
@@ -84,7 +87,9 @@
     }: Props = $props();
 </script>
 
-{#if content.kind === "text_content"}
+{#if restricted}
+    <RestrictedMessageContent />
+{:else if content.kind === "text_content"}
     <TextContent
         {me}
         {edited}

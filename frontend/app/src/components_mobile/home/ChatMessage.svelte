@@ -14,6 +14,7 @@
         Sheet,
     } from "component-lib";
     import {
+        messageRestricted,
         type ChatIdentifier,
         chatListScopeStore,
         type ChatType,
@@ -355,8 +356,10 @@
         showRemindMe = true;
     }
 
+    let restricted = $derived(messageRestricted(msg));
     let inert = $derived(
-        msg.content.kind === "deleted_content" ||
+        restricted ||
+            msg.content.kind === "deleted_content" ||
             msg.content.kind === "blocked_content" ||
             collapsed,
     );
@@ -738,6 +741,7 @@
                             {#snippet messageContent(me)}
                                 <ChatMessageContent
                                     bind:contentWidth
+                                    {restricted}
                                     senderId={msg.sender}
                                     {readonly}
                                     {fill}
