@@ -1,4 +1,6 @@
-use ic_cdk::management_canister::{self, HttpHeader, HttpMethod, HttpRequestArgs, HttpRequestResult};
+use candid::{CandidType, Principal};
+use ic_cdk::call::Call;
+use ic_cdk::management_canister::{HttpHeader, HttpMethod, HttpRequestResult, TransformContext};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use types::{MessageId, MessageIndex, ModerationCategories, ModerationInput};
@@ -38,59 +40,73 @@ pub async fn moderate_input(api_key: &str, input: &ModerationInput) -> Result<Mo
         .ok_or("Empty response from OpenAI Moderation API".to_string())
 }
 
+// The args accepted by the management canister's `http_request` method, including the
+// `is_replicated` field which the version of ic-cdk currently in use does not yet expose.
+// `is_replicated: Some(false)` makes the outcall from a single replica rather than from every
+// replica on the subnet, so OpenAI receives one request per call instead of ~13. The response
+// therefore needs no consensus (and no transform function). The trade-off is that the result is
+// only as trustworthy as a single replica, which is acceptable here: a bad result either hides a
+// message in the app store build or triggers a CSAM sanction which always alerts a human and is
+// reversible.
+#[derive(CandidType)]
+struct HttpRequestArgs {
+    url: String,
+    max_response_bytes: Option<u64>,
+    method: HttpMethod,
+    headers: Vec<HttpHeader>,
+    body: Option<Vec<u8>>,
+    transform: Option<TransformContext>,
+    is_replicated: Option<bool>,
+}
+
 async fn call_moderation_api(api_key: &str, input: serde_json::Value) -> Result<Vec<ModerationCategories>, String> {
     let body = serde_json::json!({
         "model": MODEL,
         "input": input,
     });
 
-    let response = management_canister::http_request_with_closure(
-        &HttpRequestArgs {
-            url: MODERATIONS_URL.to_string(),
-            max_response_bytes: Some(MAX_RESPONSE_BYTES),
-            method: HttpMethod::POST,
-            headers: vec![
-                HttpHeader {
-                    name: "content-type".to_string(),
-                    value: "application/json".to_string(),
-                },
-                HttpHeader {
-                    name: "authorization".to_string(),
-                    value: format!("Bearer {api_key}"),
-                },
-            ],
-            body: Some(serde_json::to_vec(&body).unwrap()),
-            transform: None,
-        },
-        transform_response,
-    )
-    .await
-    .map_err(|error| format!("HTTPS outcall failed: {error:?}"))?;
+    let args = HttpRequestArgs {
+        url: MODERATIONS_URL.to_string(),
+        max_response_bytes: Some(MAX_RESPONSE_BYTES),
+        method: HttpMethod::POST,
+        headers: vec![
+            HttpHeader {
+                name: "content-type".to_string(),
+                value: "application/json".to_string(),
+            },
+            HttpHeader {
+                name: "authorization".to_string(),
+                value: format!("Bearer {api_key}"),
+            },
+        ],
+        body: Some(serde_json::to_vec(&body).unwrap()),
+        transform: None,
+        is_replicated: Some(false),
+    };
+
+    // This computes the cost of a fully replicated call which is an overestimate for a
+    // single-replica call, but any excess is refunded
+    let request_size = (args.url.len()
+        + args.headers.iter().map(|h| h.name.len() + h.value.len()).sum::<usize>()
+        + args.body.as_ref().map_or(0, |b| b.len())) as u64;
+    let cycles = ic_cdk::api::cost_http_request(request_size, MAX_RESPONSE_BYTES);
+
+    let response: HttpRequestResult = Call::unbounded_wait(Principal::management_canister(), "http_request")
+        .with_arg(&args)
+        .with_cycles(cycles)
+        .await
+        .map_err(|error| format!("HTTPS outcall failed: {error:?}"))?
+        .candid()
+        .map_err(|error| format!("Failed to decode response: {error:?}"))?;
 
     if response.status != 200u32 {
         return Err(format!("OpenAI Moderation API returned status {}", response.status));
     }
 
-    let bits: Vec<u32> =
-        serde_json::from_slice(&response.body).map_err(|error| format!("Failed to parse response: {error}"))?;
-
-    Ok(bits
-        .into_iter()
-        .map(|b| ModerationCategories::from_bits(b).unwrap_or_default())
-        .collect())
+    extract_categories(&response.body).ok_or("Failed to parse OpenAI Moderation API response".to_string())
 }
 
-// Reduces the response to the minimal deterministic form needed for consensus across replicas:
-// one bitfield of flagged categories per input text.
-fn transform_response(mut response: HttpRequestResult) -> HttpRequestResult {
-    response.headers.clear();
-    response.body = extract_category_bits(&response.body)
-        .map(|bits| serde_json::to_vec(&bits).unwrap())
-        .unwrap_or_default();
-    response
-}
-
-fn extract_category_bits(body: &[u8]) -> Option<Vec<u32>> {
+fn extract_categories(body: &[u8]) -> Option<Vec<ModerationCategories>> {
     let response: ModerationsResponse = serde_json::from_slice(body).ok()?;
 
     Some(
@@ -105,7 +121,6 @@ fn extract_category_bits(body: &[u8]) -> Option<Vec<u32>> {
                     .fold(ModerationCategories::default(), |acc, (category, _)| {
                         acc | category_to_flag(&category)
                     })
-                    .bits()
             })
             .collect(),
     )
