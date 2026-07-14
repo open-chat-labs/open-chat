@@ -52,13 +52,22 @@ async fn create_canister(
     cycles: u128,
     effective_canister_id: CanisterId,
 ) -> Result<(String, LocalWrapper), String> {
-    match management_canister
-        .create_canister()
-        .as_provisional_create_with_amount(Some(cycles))
-        .with_effective_canister_id(effective_canister_id)
-        .call_and_wait()
-        .await
-    {
+    // The personhood_verifier's canister id is hardcoded (see constants), so
+    // the local canister must be created with exactly that id for the
+    // user_index to accept calls from it
+    let builder = if canister_name == "personhood_verifier" {
+        management_canister
+            .create_canister()
+            .as_provisional_create_with_specified_id(constants::PERSONHOOD_VERIFIER_CANISTER_ID)
+            .as_provisional_create_with_amount(Some(cycles))
+            .with_effective_canister_id(constants::PERSONHOOD_VERIFIER_CANISTER_ID)
+    } else {
+        management_canister
+            .create_canister()
+            .as_provisional_create_with_amount(Some(cycles))
+            .with_effective_canister_id(effective_canister_id)
+    };
+    match builder.call_and_wait().await {
         Ok((canister_id,)) => Ok((canister_name, LocalWrapper { local: canister_id })),
         Err(err) => Err(err.to_string()),
     }

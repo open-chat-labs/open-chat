@@ -9,7 +9,7 @@ use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use constants::DAY_IN_MS;
+use constants::{DAY_IN_MS, PERSONHOOD_VERIFIER_CANISTER_ID};
 use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -95,6 +95,10 @@ impl RuntimeState {
         self.env.caller() == self.data.registry_canister_id
     }
 
+    pub fn is_caller_personhood_verifier_canister(&self) -> bool {
+        self.env.caller() == PERSONHOOD_VERIFIER_CANISTER_ID
+    }
+
     pub fn is_caller_local_user_index_canister(&self) -> bool {
         let caller = self.env.caller();
         self.data.local_index_map.get(&caller).is_some()
@@ -152,6 +156,18 @@ impl RuntimeState {
         }
     }
 
+    // Removes a user's unique person proof and fans the removal out so the
+    // local user index mirrors and the user canister stay consistent
+    pub fn remove_unique_person_proof(&mut self, user_id: UserId) -> bool {
+        let now = self.env.now();
+        if self.data.users.remove_proof_of_unique_personhood(user_id, now) {
+            self.push_event_to_all_local_user_indexes(LocalUserIndexEvent::NotifyUniquePersonProofRemoved(user_id), None);
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn push_event_to_all_local_user_indexes(&mut self, event: LocalUserIndexEvent, except: Option<CanisterId>) {
         for canister_id in self.data.local_index_map.canisters() {
             if except != Some(*canister_id) {
@@ -206,10 +222,25 @@ impl RuntimeState {
             jobs::remove_from_online_users_canister::start_job_if_required(self);
 
             self.data.storage_index_users_to_remove_queue.push(user.principal);
+
+            // Right to erasure: remove the user's face embedding (and attempt
+            // history) from the personhood verifier
+            self.delete_user_embedding(user_id);
             true
         } else {
             false
         }
+    }
+
+    // Fire-and-forget deletion of a user's face embedding, attempt history
+    // and any open verification sessions at the personhood verifier
+    pub fn delete_user_embedding(&mut self, user_id: UserId) {
+        let args = personhood_verifier_canister::c2c_delete_user_embedding::Args { user_id };
+        self.data.fire_and_forget_handler.send(
+            PERSONHOOD_VERIFIER_CANISTER_ID,
+            "c2c_delete_user_embedding_msgpack".to_string(),
+            msgpack::serialize_then_unwrap(&args),
+        );
     }
 
     pub fn user_metrics(&self, user_id: UserId) -> Option<UserMetrics> {
@@ -370,6 +401,17 @@ struct Data {
     pub escrow_canister_id: CanisterId,
     pub translations_canister_id: CanisterId,
     pub registry_canister_id: CanisterId,
+    // Set when a new embedding model version is announced: proofs issued
+    // against older versions lapse at the deadline
+    #[serde(default)]
+    pub personhood_model_lapse: Option<PersonhoodModelLapse>,
+    // One-shot: triggers the wipe of legacy DecideAI proofs. Cleared when the
+    // sweep completes. Set to true in post_upgrade in whichever release ships
+    // AFTER the verification UI has baked in production (see the rollout
+    // runbook) - never in the release that first carries this code, because
+    // users must be able to re-verify before their badge disappears.
+    #[serde(default)]
+    pub wipe_legacy_unique_person_proofs: bool,
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub storage_index_user_sync_queue: BatchedTimerJobQueue<StorageIndexUserConfigBatch>,
     pub storage_index_users_to_remove_queue: BatchedTimerJobQueue<StorageIndexUsersToRemoveBatch>,
@@ -455,6 +497,8 @@ impl Data {
             escrow_canister_id,
             translations_canister_id,
             registry_canister_id,
+            personhood_model_lapse: None,
+            wipe_legacy_unique_person_proofs: false,
             event_store_client: EventStoreClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_secs(60))
                 .build(),
@@ -552,6 +596,12 @@ impl Data {
     }
 }
 
+#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
+pub struct PersonhoodModelLapse {
+    pub new_version: u16,
+    pub lapses_at: TimestampMillis,
+}
+
 #[cfg(test)]
 impl Default for Data {
     fn default() -> Data {
@@ -572,6 +622,8 @@ impl Default for Data {
             escrow_canister_id: Principal::anonymous(),
             translations_canister_id: Principal::anonymous(),
             registry_canister_id: Principal::anonymous(),
+            personhood_model_lapse: None,
+            wipe_legacy_unique_person_proofs: false,
             event_store_client: EventStoreClientBuilder::new(Principal::anonymous(), CdkRuntime::default()).build(),
             storage_index_user_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),

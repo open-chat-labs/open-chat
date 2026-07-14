@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Handle unique person proof removal (earned achievements/CHIT are kept) ([#9072](https://github.com/open-chat-labs/open-chat/issues/9072))
+
 ## [[2.0.1990-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1990-user)] - 2026-07-07
 
 ### Added

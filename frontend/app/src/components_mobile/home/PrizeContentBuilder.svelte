@@ -43,6 +43,7 @@
         ONE_DAY,
     } from "@client";
     import { onMount } from "svelte";
+    import Account from "svelte-material-icons/AccountOutline.svelte";
     import Diamond from "svelte-material-icons/DiamondOutline.svelte";
     import Lifetime from "svelte-material-icons/DiamondStone.svelte";
     import Fingerprint from "svelte-material-icons/Fingerprint.svelte";
@@ -50,6 +51,7 @@
     import Gift from "svelte-material-icons/GiftOutline.svelte";
     import LightningBolt from "svelte-material-icons/LightningBoltCircle.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import { uniquePersonRequirementsEnabled } from "../../utils/featureFlags";
     import Setting from "../Setting.svelte";
     import Translatable from "../Translatable.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
@@ -90,9 +92,9 @@
     let distribution: "equal" | "random" = $state($prizeConfig.distribution);
     let selectedDuration = $state($prizeConfig.duration);
     let diamondType: "none" | "standard" | "lifetime" = $state($prizeConfig.diamond);
-    // Unique-person ("verified user") gating is suspended - force off so a value persisted from a
-    // previous session can't be silently reapplied (there is no UI to clear it).
-    const uniquePersonOnly = false;
+    // While the phase B flag is off the restriction cannot be applied, and a
+    // value persisted from a previous session must not be silently reapplied
+    let uniquePersonOnly = $state(uniquePersonRequirementsEnabled && $prizeConfig.uniquePersonOnly);
     let minStreak = $state<number>($prizeConfig.minStreak);
     let minChitEarned = $state<number>($prizeConfig.minChitEarned);
     let tokenInputState: "ok" | "zero" | "too_low" | "too_high" = $state("ok");
@@ -436,7 +438,17 @@
                     {/snippet}
                     <Translatable resourceKey={i18nKey("Lifetime diamond membership")} />
                 </Chip>
-                <!-- Unique person ("verified user") gating is suspended -->
+                {#if uniquePersonRequirementsEnabled}
+                    <Chip
+                        onClick={() => (uniquePersonOnly = !uniquePersonOnly)}
+                        onRemove={uniquePersonOnly ? () => (uniquePersonOnly = false) : undefined}
+                        mode={uniquePersonOnly ? "filter" : "default"}>
+                        {#snippet icon(color)}
+                            <Account {color} />
+                        {/snippet}
+                        <Translatable resourceKey={i18nKey("Unique person")} />
+                    </Chip>
+                {/if}
                 <Chip
                     onClick={() => (selectMinChitEarned = true)}
                     onRemove={minChitEarned > 0 ? () => (minChitEarned = 0) : undefined}

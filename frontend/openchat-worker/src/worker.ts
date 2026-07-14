@@ -1255,8 +1255,28 @@ function getAction(
         case "markAchievementsSeen":
             return agent.markAchievementsSeen();
 
-        case "submitProofOfUniquePersonhood":
-            return agent.submitProofOfUniquePersonhood(payload.iiPrincipal, payload.credential);
+
+        case "startVerification":
+            return agent.startVerification();
+
+        case "uploadVerificationFrame":
+            return agent.uploadVerificationFrame(
+                payload.sessionId,
+                payload.challengeIndex,
+                payload.image,
+            );
+
+        case "submitVerification":
+            return agent.submitVerification(payload.sessionId);
+
+        case "verificationStatus":
+            return agent.verificationStatus(payload.sessionId);
+
+        case "removeUniquePersonProof":
+            return agent.removeUniquePersonProof();
+
+        case "setCachedUniquePersonStatus":
+            return agent.setCachedUniquePersonStatus(payload.isUniquePerson);
 
         case "linkIdentities":
             return linkIdentities(

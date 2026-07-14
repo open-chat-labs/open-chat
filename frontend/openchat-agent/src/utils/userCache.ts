@@ -117,6 +117,18 @@ export class UserDb {
         await tx.done;
     }
 
+    async setUserIsUniquePersonInCache(userId: string, isUniquePerson: boolean): Promise<void> {
+        const db = await this.connectionManager.getDb();
+        const tx = db.transaction("users", "readwrite", { durability: "relaxed" });
+        const store = tx.objectStore("users");
+        const user = await store.get(userId);
+        if (user !== undefined) {
+            user.isUniquePerson = isUniquePerson;
+            await store.put(user, userId);
+        }
+        await tx.done;
+    }
+
     async getSuspendedUsersSyncedUpTo(): Promise<bigint | undefined> {
         const db = await this.connectionManager.getDb();
         return db.get("suspendedUsersSyncedUpTo", "value");

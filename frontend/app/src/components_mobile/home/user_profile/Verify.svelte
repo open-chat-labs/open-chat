@@ -4,10 +4,8 @@
     import { publish } from "@client";
     import AccountStar from "svelte-material-icons/AccountStarOutline.svelte";
     import Translatable from "../../Translatable.svelte";
-    import HumanityConfirmation from "../HumanityConfirmation.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
 
-    let confirmed = $state(false);
     function verify() {
         publish("verifyHumanity");
     }
@@ -27,21 +25,16 @@
                 </H2>
 
                 <BodySmall>
-                    <Translatable resourceKey={i18nKey("human.instruction")}></Translatable>
+                    <Translatable resourceKey={i18nKey("human.verification.consentBody")}
+                    ></Translatable>
                 </BodySmall>
-
-                <HumanityConfirmation bind:confirmed />
             </Container>
 
             <Container mainAxisAlignment={"end"} gap={"sm"} crossAxisAlignment={"end"}>
                 <CommonButton onClick={() => publish("closeModalPage")} size={"small_text"}>
                     <Translatable resourceKey={i18nKey("Cancel")}></Translatable>
                 </CommonButton>
-                <CommonButton
-                    disabled={!confirmed}
-                    onClick={verify}
-                    size={"small_text"}
-                    mode={"active"}>
+                <CommonButton onClick={verify} size={"small_text"} mode={"active"}>
                     {#snippet icon(color, size)}
                         <AccountStar {color} {size}></AccountStar>
                     {/snippet}

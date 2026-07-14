@@ -1,0 +1,5 @@
+build_cmd:
+  RUSTFLAGS="${PERSONHOOD_BENCH_RUSTFLAGS:-}" cargo build -p personhood_bench --release --target wasm32-unknown-unknown --locked
+
+wasm_path:
+  ../../target/wasm32-unknown-unknown/release/personhood_bench.wasm

@@ -25,7 +25,6 @@ import type {
     PayForDiamondMembershipResponse,
     SetDisplayNameResponse,
     SetUsernameResponse,
-    SubmitProofOfUniquePersonhoodResponse,
     SuspendUserResponse,
     SuspensionAction,
     SuspensionDetails,
@@ -34,7 +33,7 @@ import type {
     UserSummary,
     UserSummaryUpdate,
 } from "@shared";
-import { CommonResponses, UnsupportedValueError } from "@shared";
+import { UnsupportedValueError } from "@shared";
 import type {
     BotDefinition as ApiBotDefinition,
     BotInstallationLocation as ApiBotInstallationLocation,
@@ -70,7 +69,6 @@ import type {
     UserIndexSearchResponse,
     UserIndexSetDisplayNameResponse,
     UserIndexSetUsernameResponse,
-    UserIndexSubmitProofOfUniquePersonhoodResponse,
     UserIndexSuspendUserResponse,
     UserIndexUnsuspendUserResponse,
     UserIndexUserRegistrationCanisterResponse,
@@ -617,27 +615,6 @@ function chitUserBalance(value: UserIndexChitLeaderboardChitUserBalance): ChitUs
         balance: value.balance,
         username: value.username,
     };
-}
-
-export function submitProofOfUniquePersonhoodResponse(
-    value: UserIndexSubmitProofOfUniquePersonhoodResponse,
-): SubmitProofOfUniquePersonhoodResponse {
-    if (value === "Success") {
-        return CommonResponses.success();
-    }
-    if (value === "UserNotFound") {
-        return CommonResponses.userNotFound();
-    }
-    if ("Invalid" in value) {
-        return CommonResponses.invalid();
-    }
-    if ("Error" in value) {
-        return ocError(value.Error);
-    }
-    throw new UnsupportedValueError(
-        "Unexpected SubmitProofOfUniquePersonhoodResponse type received",
-        value,
-    );
 }
 
 export function externalAchievementsResponse(

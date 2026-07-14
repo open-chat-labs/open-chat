@@ -28,3 +28,4 @@ frontend/app/src/stores/timeline.ts
 /Makefile
 claude.md
 GEMINI.md
+.calibration/

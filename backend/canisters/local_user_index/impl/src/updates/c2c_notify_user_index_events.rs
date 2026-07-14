@@ -247,6 +247,12 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             }
             state.data.global_users.insert_unique_person_proof(user_id, proof);
         }
+        UserIndexEvent::NotifyUniquePersonProofRemoved(user_id) => {
+            if state.data.local_users.contains(&user_id) {
+                state.push_event_to_user(user_id, UserEvent::NotifyUniquePersonProofRemoved, **now);
+            }
+            state.data.global_users.remove_unique_person_proof(&user_id);
+        }
         UserIndexEvent::UpdateChitBalance(user_id, chit_record) => {
             state.data.global_users.insert_chit_record(user_id, chit_record);
         }

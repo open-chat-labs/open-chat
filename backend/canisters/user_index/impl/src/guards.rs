@@ -32,6 +32,14 @@ pub fn caller_is_registry_canister() -> Result<(), String> {
     }
 }
 
+pub fn caller_is_personhood_verifier_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_personhood_verifier_canister()) {
+        Ok(())
+    } else {
+        Err("Caller is not the PersonhoodVerifier canister".to_string())
+    }
+}
+
 pub fn caller_is_local_user_index_canister() -> Result<(), String> {
     if read_state(|state| state.is_caller_local_user_index_canister()) {
         Ok(())

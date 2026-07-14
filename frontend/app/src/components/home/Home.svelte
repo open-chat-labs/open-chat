@@ -104,7 +104,7 @@
     import PinNumberModal from "./PinNumberModal.svelte";
     import AccountsModal from "./profile/AccountsModal.svelte";
     import SetPinNumberModal from "./profile/SetPinNumberModal.svelte";
-    import VerifyHumanity from "./profile/VerifyHumanity.svelte";
+    import VerificationModal from "./verification/VerificationModal.svelte";
     import ViewUserProfile from "./profile/ViewUserProfileModal.svelte";
     import MakeProposalModal from "./proposal/MakeProposalModal.svelte";
     import RightPanel from "./RightPanelWrapper.svelte";
@@ -1115,7 +1115,7 @@
         {:else if modal.kind === "claim_daily_chit"}
             <DailyChitModal onLeaderboard={leaderboard} onClose={closeModal} />
         {:else if modal.kind === "verify_humanity"}
-            <VerifyHumanity onClose={closeModal} onSuccess={closeModal} />
+            <VerificationModal onClose={closeModal} onSuccess={closeModal} />
         {:else if modal.kind === "suspending"}
             <SuspendModal userId={modal.userId} onClose={closeModal} />
         {/if}

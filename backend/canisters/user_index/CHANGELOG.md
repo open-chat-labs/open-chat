@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- The legacy DecideAI proof wipe is triggered by a `post_upgrade` one-liner in a designated release (reviewed via the upgrade proposal changelog) rather than a dedicated governance endpoint ([#9081](https://github.com/open-chat-labs/open-chat/pull/9081))
+- The personhood_verifier canister id is the hardcoded constant `wji62-oiaaa-aaaaf-bsc7a-cai` (local deployments and tests create the canister with that exact id), replacing the init arg and the `set_personhood_verifier_canister_id` endpoint ([#9081](https://github.com/open-chat-labs/open-chat/pull/9081))
+- Remove the DecideAI submission endpoint; lapse proofs of superseded model versions ([#9072](https://github.com/open-chat-labs/open-chat/issues/9072))
+
+### Added
+
+- Daily job purging the unique person proof, face embedding and attempt history of users inactive for ~3 years, keeping biometric retention inside the BIPA-style limits disclosed in the consent step and Terms Section H ([#9081](https://github.com/open-chat-labs/open-chat/pull/9081))
+- `remove_unique_person_proof` endpoint so a user can revoke their own verification, removing the proof everywhere and deleting their face embedding + attempt history from the personhood verifier ([#9081](https://github.com/open-chat-labs/open-chat/pull/9081))
+- `c2c_notify_personhood_verified` endpoint called by the new personhood_verifier canister to record OpenChat-provider unique person proofs ([#9072](https://github.com/open-chat-labs/open-chat/issues/9072))
+
 ### Removed
 
 - Remove deprecated `OpenChatBotMessage` event type ([#9032](https://github.com/open-chat-labs/open-chat/pull/9032))

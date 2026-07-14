@@ -14,6 +14,7 @@ canister_names=(
   local_user_index
   notifications_index
   online_users
+  personhood_verifier
   proposals_bot
   registry
   storage_bucket

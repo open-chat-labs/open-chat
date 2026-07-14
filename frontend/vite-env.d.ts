@@ -38,6 +38,9 @@ interface ImportMetaEnv {
     readonly OC_STORAGE_INDEX_CANISTER: string;
     readonly OC_KLIPY_APIKEY: string;
     readonly OC_TRANSLATIONS_CANISTER: string;
+    // Temporary phase B flag for the personhood rollout (#9072) - see
+    // app/src/utils/featureFlags.ts
+    readonly OC_UNIQUE_PERSON_REQUIREMENTS_ENABLED: string | undefined;
     readonly OC_USER_INDEX_CANISTER: string;
     readonly OC_USERGEEK_APIKEY: string;
     readonly OC_VIDEO_BRIDGE_URL: string;

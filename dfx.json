@@ -121,6 +121,13 @@
       "wasm": "wasms/translations.wasm.gz",
       "build": "./scripts/generate-wasm.sh translations"
     },
+    "personhood_verifier": {
+      "type": "custom",
+      "candid": "backend/canisters/personhood_verifier/api/can.did",
+      "wasm": "wasms/personhood_verifier.wasm.gz",
+      "build": "./scripts/generate-wasm.sh personhood_verifier",
+      "specified_id": "wji62-oiaaa-aaaaf-bsc7a-cai"
+    },
     "event_relay": {
       "type": "custom",
       "candid": "backend/canisters/event_relay/api/can.did",
@@ -150,7 +157,10 @@
     },
     "website": {
       "build": "",
-      "source": ["frontend/app/build", "frontend/app/public"],
+      "source": [
+        "frontend/app/build",
+        "frontend/app/public"
+      ],
       "type": "assets"
     },
     "sns_governance": {
@@ -199,15 +209,21 @@
       }
     },
     "ic": {
-      "providers": ["https://ic0.app/"],
+      "providers": [
+        "https://ic0.app/"
+      ],
       "type": "persistent"
     },
     "ic_test": {
-      "providers": ["https://ic0.app/"],
+      "providers": [
+        "https://ic0.app/"
+      ],
       "type": "persistent"
     },
     "web_test": {
-      "providers": ["https://ic0.app/"],
+      "providers": [
+        "https://ic0.app/"
+      ],
       "type": "persistent"
     }
   },

@@ -110,6 +110,9 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let registry_canister_id = create_canister(env, controller);
     let escrow_canister_id = create_canister(env, controller);
     let translations_canister_id = create_canister(env, controller);
+    // Must match constants::PERSONHOOD_VERIFIER_CANISTER_ID, which the
+    // user_index uses to authenticate the verifier
+    let personhood_verifier_canister_id = create_canister_with_id(env, controller, "wji62-oiaaa-aaaaf-bsc7a-cai");
     let event_relay_canister_id = create_canister(env, controller);
     let event_store_canister_id = create_canister(env, controller);
     let sign_in_with_email_canister_id = create_canister(env, controller);
@@ -135,6 +138,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let sns_wasm_canister_wasm = wasms::SNS_WASM.clone();
     let storage_bucket_canister_wasm = wasms::STORAGE_BUCKET.clone();
     let storage_index_canister_wasm = wasms::STORAGE_INDEX.clone();
+    let personhood_verifier_canister_wasm = wasms::PERSONHOOD_VERIFIER.clone();
     let translations_canister_wasm = wasms::TRANSLATIONS.clone();
     let user_canister_wasm = wasms::USER.clone();
     let user_index_canister_wasm = wasms::USER_INDEX.clone();
@@ -236,6 +240,22 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         translations_canister_id,
         translations_canister_wasm,
         translations_init_args,
+    );
+
+    let personhood_verifier_init_args = personhood_verifier_canister::init::Args {
+        governance_principals: vec![controller],
+        upload_model_chunks_whitelist: Vec::new(),
+        user_index_canister_id,
+        cycles_dispenser_canister_id,
+        wasm_version,
+        test_mode,
+    };
+    install_canister(
+        env,
+        controller,
+        personhood_verifier_canister_id,
+        personhood_verifier_canister_wasm,
+        personhood_verifier_init_args,
     );
 
     let online_users_init_args = online_users_canister::init::Args {
@@ -448,9 +468,16 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         icp_ledger_init_args,
     );
 
+    // Creating the personhood_verifier at its mainnet canister id makes PocketIC
+    // spin up an extra application subnet covering that id's range. Exclude it
+    // here - OpenChat must only expand onto the two subnets created by the
+    // PocketIcBuilder, otherwise users/groups get placed on the extra subnet and
+    // tests which assume the standard topology become flaky.
+    let personhood_verifier_subnet = env.get_subnet(personhood_verifier_canister_id);
     let application_subnets = env.topology().get_app_subnets();
     let subnets: Vec<_> = application_subnets
         .into_iter()
+        .filter(|s| Some(*s) != personhood_verifier_subnet)
         .map(|s| client::registry::happy_path::expand_onto_subnet(env, controller, registry_canister_id, s))
         .collect();
 
@@ -504,6 +531,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         registry: registry_canister_id,
         escrow: escrow_canister_id,
         translations: translations_canister_id,
+        personhood_verifier: personhood_verifier_canister_id,
         event_relay: event_relay_canister_id,
         event_store: event_store_canister_id,
         sign_in_with_email: sign_in_with_email_canister_id,

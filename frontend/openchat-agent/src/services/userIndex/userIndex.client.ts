@@ -16,7 +16,6 @@ import type {
     SetDisplayNameResponse,
     SetUsernameResponse,
     SetUserUpgradeConcurrencyResponse,
-    SubmitProofOfUniquePersonhoodResponse,
     SuspendUserResponse,
     UnsuspendUserResponse,
     UsersApiResponse,
@@ -53,6 +52,7 @@ import {
     UserIndexRegisterBotResponse,
     UserIndexRemoveBotArgs,
     UserIndexRemoveBotResponse,
+    UserIndexRemoveUniquePersonProofArgs,
     UserIndexReportedMessagesArgs,
     UserIndexReportedMessagesResponse,
     UserIndexSearchArgs,
@@ -67,8 +67,6 @@ import {
     UserIndexSetUsernameArgs,
     UserIndexSetUsernameResponse,
     UserIndexSetUserUpgradeConcurrencyArgs,
-    UserIndexSubmitProofOfUniquePersonhoodArgs,
-    UserIndexSubmitProofOfUniquePersonhoodResponse,
     UserIndexSuspendUserArgs,
     UserIndexSuspendUserResponse,
     UserIndexUnsuspendUserArgs,
@@ -105,7 +103,6 @@ import {
     payForDiamondMembershipResponse,
     setDisplayNameResponse,
     setUsernameResponse,
-    submitProofOfUniquePersonhoodResponse,
     suspendUserResponse,
     unsuspendUserResponse,
     userRegistrationCanisterResponse,
@@ -165,6 +162,34 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             UserIndexSetModerationFlagsArgs,
             SuccessOnly,
         );
+    }
+
+    // Right to erasure: revokes the caller's unique personhood verification
+    // and deletes their face embedding from the personhood verifier
+    removeUniquePersonProof(): Promise<boolean> {
+        return this.update(
+            "remove_unique_person_proof",
+            {},
+            (_) => true,
+            UserIndexRemoveUniquePersonProofArgs,
+            SuccessOnly,
+        ).then((success) => {
+            if (success) {
+                this.setCachedUniquePersonStatus(false);
+            }
+            return success;
+        });
+    }
+
+    // Keeps the durable caches in step with a unique person status change so
+    // a page refresh doesn't resurrect the old status until the next server
+    // round-trip
+    async setCachedUniquePersonStatus(isUniquePerson: boolean): Promise<void> {
+        const current = await this.chatsDb.getCachedCurrentUser();
+        if (current !== undefined) {
+            this.chatsDb.setCurrentUserIsUniquePersonInCache(isUniquePerson);
+            this.userDb.setUserIsUniquePersonInCache(current.userId, isUniquePerson);
+        }
     }
 
     userRegistrationCanister(): Promise<string> {
@@ -602,23 +627,6 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             chitLeaderboardResponse,
             Empty,
             UserIndexChitLeaderboardResponse,
-        );
-    }
-
-    submitProofOfUniquePersonhood(
-        iiPrincipal: string,
-        credential: string,
-    ): Promise<SubmitProofOfUniquePersonhoodResponse> {
-        const args = {
-            user_ii_principal: principalStringToBytes(iiPrincipal),
-            credential_jwt: credential,
-        };
-        return this.update(
-            "submit_proof_of_unique_personhood",
-            args,
-            submitProofOfUniquePersonhoodResponse,
-            UserIndexSubmitProofOfUniquePersonhoodArgs,
-            UserIndexSubmitProofOfUniquePersonhoodResponse,
         );
     }
 

@@ -42,6 +42,7 @@ export * from "./structure";
 export * from "./toast";
 export * from "./unread";
 export * from "./user";
+export * from "./verification";
 export * from "./version";
 export * from "./video";
 export * from "./wallet";

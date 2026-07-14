@@ -18,11 +18,11 @@ fn accept_if_valid(state: &RuntimeState) {
         | "pay_for_diamond_membership"
         | "pay_for_premium_item"
         | "register_bot"
+        | "remove_unique_person_proof"
         | "set_display_name"
         | "set_hide_online_status"
         | "set_moderation_flags"
         | "set_username"
-        | "submit_proof_of_unique_personhood"
         | "update_bot"
         | "update_diamond_membership_subscription" => state.is_caller_openchat_user(),
         "suspend_user" | "unsuspend_user" => state.is_caller_platform_moderator(),

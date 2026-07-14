@@ -7,7 +7,6 @@
         isChitEarnedGate,
         isCompositeGate,
         publish,
-        stripSuspendedGate,
         type AccessGate,
     } from "@client";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
@@ -30,7 +29,7 @@
     let { data }: Props = $props();
 
     let diamond = $derived($currentUserStore.diamondStatus.kind !== "inactive");
-    let hasAccessGates = $derived(stripSuspendedGate(data.gateConfig.gate).kind !== "no_gate");
+    let hasAccessGates = $derived(data.gateConfig.gate.kind !== "no_gate");
     let gateBindings: GateBinding[] = getGateBindings(data.candidate.level).filter(
         (b) => b.enabled && b.gate.kind !== "no_gate" && b.gate.kind !== "credential_gate",
     );

@@ -44,6 +44,9 @@ members = [
     "backend/canisters/openchat_installer/api",
     "backend/canisters/openchat_installer/client",
     "backend/canisters/openchat_installer/impl",
+    "backend/canisters/personhood_verifier/api",
+    "backend/canisters/personhood_verifier/c2c_client",
+    "backend/canisters/personhood_verifier/impl",
     "backend/canisters/proposal_validation/api",
     "backend/canisters/proposal_validation/impl",
     "backend/canisters/proposals_bot/api",
@@ -123,6 +126,7 @@ members = [
     "backend/libraries/email_magic_links",
     "backend/libraries/email_utils",
     "backend/libraries/error_codes",
+    "backend/libraries/face_pipeline",
     "backend/libraries/fire_and_forget_handler",
     "backend/libraries/gated_groups",
     "backend/libraries/group_chat_core",
@@ -141,7 +145,6 @@ members = [
     "backend/libraries/msgpack",
     "backend/libraries/p256_key_pair",
     "backend/libraries/principal_to_user_id_map",
-    "backend/libraries/proof_of_unique_personhood",
     "backend/libraries/storage_bucket_client",
     "backend/libraries/search",
     "backend/libraries/sha256",
@@ -157,6 +160,7 @@ members = [
     "backend/notification_pusher/aws",
     "backend/notification_pusher/cli",
     "backend/notification_pusher/core",
+    "backend/personhood_bench",
     "backend/tools/account_id",
     "backend/tools/canister_installer",
     "backend/tools/canister_upgrade_proposal_builder",
@@ -167,8 +171,10 @@ members = [
     "backend/tools/email_sender/core",
     "backend/tools/local_canister_creator",
     "backend/tools/principal_generator",
+    "backend/tools/threshold_calibration",
     "backend/tools/translation_tool",
     "backend/tools/ts_exporter",
+    "backend/tools/verification_model_uploader",
     "frontend/src-tauri",
     "frontend/tauri-plugin-oc",
 ]
@@ -294,6 +300,18 @@ lto = true
 opt-level = "z"
 codegen-units = 1
 debug = false
+
+# ML inference is compute-bound; "z" costs ~2-4x instructions vs 3 for these crates
+[profile.release.package.tract-core]
+opt-level = 3
+[profile.release.package.tract-linalg]
+opt-level = 3
+[profile.release.package.tract-data]
+opt-level = 3
+[profile.release.package.zune-jpeg]
+opt-level = 3
+[profile.release.package.personhood_bench]
+opt-level = 3
 
 [patch.crates-io]
 aws-sign-v4 = { git = "https://github.com/hpeebles/aws-sign-v4", rev = "33b65dfde0676544a23c41608da77bd0a117d9ce" }

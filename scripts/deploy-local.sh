@@ -57,6 +57,7 @@ cargo run --package local_canister_creator -- \
   --canister neuron_controller \
   --canister escrow \
   --canister translations \
+  --canister personhood_verifier \
   --canister event_relay \
   --canister event_store \
   --canister sign_in_with_email \

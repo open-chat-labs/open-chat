@@ -25,6 +25,8 @@ export type AgentConfig = {
     signInWithSolanaCanister: string;
     oneSecForwarderCanister: string;
     oneSecMinterCanister: string;
+    // When undefined the mock verifier client is used (Phase 0 of #9072)
+    verifierCanister?: string;
     bitcoinMainnetEnabled: boolean;
     groupInvite?: GroupInvite;
     logger: Logger;

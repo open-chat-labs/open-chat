@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { iconSize, stripSuspendedGate, type AccessGateConfig, type Level } from "@client";
+    import { iconSize, type AccessGateConfig, type Level } from "@client";
     import { _ } from "svelte-i18n";
     import LockOutline from "svelte-material-icons/LockOutline.svelte";
     import { fade } from "svelte/transition";
@@ -33,7 +33,7 @@
                 editable
                 bind:gateConfig />
         </div>
-        {#if stripSuspendedGate(gateConfig.gate).kind !== "no_gate"}
+        {#if gateConfig.gate.kind !== "no_gate"}
             <AlertBox>
                 <Translatable
                     resourceKey={i18nKey("access.bypassWarning", undefined, level, true)} />

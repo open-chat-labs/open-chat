@@ -215,7 +215,6 @@ import type {
     SetMessageReminderResponse,
     SetUsernameResponse,
     SetUserUpgradeConcurrencyResponse,
-    SubmitProofOfUniquePersonhoodResponse,
     SubmitProposalResponse,
     SuspendUserResponse,
     SwapTokensResponse,
@@ -227,6 +226,12 @@ import type {
     UsersResponse,
     UserSummary,
 } from "./user";
+import type {
+    StartVerificationResponse,
+    SubmitVerificationResponse,
+    UploadVerificationFrameResponse,
+    VerificationStatus,
+} from "./verification";
 import type { Verification } from "./wallet";
 
 /**
@@ -434,7 +439,12 @@ export type WorkerRequest =
     | ChitLeaderboard
     | ChitEventsRequest
     | MarkAchievementsSeen
-    | SubmitProofOfUniquePersonhood
+    | StartVerification
+    | UploadVerificationFrame
+    | SubmitVerification
+    | GetVerificationStatus
+    | RemoveUniquePersonProof
+    | SetCachedUniquePersonStatus
     | LinkIdentities
     | RemoveIdentityLink
     | GetAuthenticationPrincipals
@@ -666,10 +676,34 @@ type GetAuthenticationPrincipals = {
     kind: "getAuthenticationPrincipals";
 };
 
-type SubmitProofOfUniquePersonhood = {
-    kind: "submitProofOfUniquePersonhood";
-    iiPrincipal: string;
-    credential: string;
+type StartVerification = {
+    kind: "startVerification";
+};
+
+type UploadVerificationFrame = {
+    kind: "uploadVerificationFrame";
+    sessionId: bigint;
+    challengeIndex: number;
+    image: Uint8Array;
+};
+
+type SubmitVerification = {
+    kind: "submitVerification";
+    sessionId: bigint;
+};
+
+type GetVerificationStatus = {
+    kind: "verificationStatus";
+    sessionId: bigint;
+};
+
+type RemoveUniquePersonProof = {
+    kind: "removeUniquePersonProof";
+};
+
+type SetCachedUniquePersonStatus = {
+    kind: "setCachedUniquePersonStatus";
+    isUniquePerson: boolean;
 };
 
 type MarkAchievementsSeen = {
@@ -1876,7 +1910,10 @@ export type WorkerResponseInner =
     | ClaimDailyChitResponse
     | ChitLeaderboardResponse
     | ChitEventsResponse
-    | SubmitProofOfUniquePersonhoodResponse
+    | StartVerificationResponse
+    | UploadVerificationFrameResponse
+    | SubmitVerificationResponse
+    | VerificationStatus
     | AuthenticationPrincipalsResponse
     | ExternalAchievement[]
     | MessageActivityFeedResponse
@@ -2554,8 +2591,18 @@ export type WorkerResult<T> = T extends Init
     ? ChitEventsResponse
     : T extends MarkAchievementsSeen
     ? void
-    : T extends SubmitProofOfUniquePersonhood
-    ? SubmitProofOfUniquePersonhoodResponse
+    : T extends StartVerification
+    ? StartVerificationResponse
+    : T extends UploadVerificationFrame
+    ? UploadVerificationFrameResponse
+    : T extends SubmitVerification
+    ? SubmitVerificationResponse
+    : T extends GetVerificationStatus
+    ? VerificationStatus
+    : T extends RemoveUniquePersonProof
+    ? boolean
+    : T extends SetCachedUniquePersonStatus
+    ? void
     : T extends LinkIdentities
     ? LinkIdentitiesResponse
     : T extends RemoveIdentityLink

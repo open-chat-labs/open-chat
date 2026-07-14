@@ -277,8 +277,9 @@ import {
     type ShareRoute,
     type SiwePrepareLoginResponse,
     type SiwsPrepareLoginResponse,
+    type StartVerificationResponse,
     type StreakInsurance,
-    type SubmitProofOfUniquePersonhoodResponse,
+    type SubmitVerificationResponse,
     type Success,
     type SwapTokensResponse,
     type TermsRoute,
@@ -297,6 +298,7 @@ import {
     type UpdatedEvent,
     type UpdatedRules,
     type UpdatesResult,
+    type UploadVerificationFrameResponse,
     type User,
     type UserGroupDetails,
     type UserOrUserGroup,
@@ -305,6 +307,7 @@ import {
     type UsersArgs,
     type UsersResponse,
     type Verification,
+    type VerificationStatus,
     type VerifiedCredentialArgs,
     type VerifyAccountLinkingCodeResponse,
     type VersionedRules,
@@ -4868,22 +4871,16 @@ export class OpenChat {
 
     doesUserMeetAccessGate(gate: AccessGate): boolean {
         if (isCompositeGate(gate)) {
-            // Unique person gates are suspended and filtered out of composites: an OR then requires
-            // another branch (no one is a unique person), an AND is unaffected (everyone is). If
-            // nothing remains the gate collapses to no gate.
-            const gates = gate.gates.filter((g) => g.kind !== "unique_person_gate");
-            if (gates.length === 0) return true;
             return gate.operator === "and"
-                ? gates.every((g) => this.doesUserMeetAccessGate(g))
-                : gates.some((g) => this.doesUserMeetAccessGate(g));
+                ? gate.gates.every((g) => this.doesUserMeetAccessGate(g))
+                : gate.gates.some((g) => this.doesUserMeetAccessGate(g));
         } else {
             if (gate.kind === "diamond_gate") {
                 return currentUserStore.value.diamondStatus.kind !== "inactive";
             } else if (gate.kind === "lifetime_diamond_gate") {
                 return currentUserStore.value.diamondStatus.kind === "lifetime";
             } else if (gate.kind === "unique_person_gate") {
-                // Unique person verification (DecideAI) is suspended - always pass.
-                return true;
+                return currentUserStore.value.isUniquePerson;
             } else if (gate.kind === "chit_earned_gate") {
                 return currentUserStore.value.totalChitEarned >= gate.minEarned;
             } else if (gate.kind === "token_balance_gate") {
@@ -8689,18 +8686,43 @@ export class OpenChat {
             .catch(() => undefined);
     }
 
-    submitProofOfUniquePersonhood(
-        credential: string,
-        iiPrincipal: string,
-    ): Promise<SubmitProofOfUniquePersonhoodResponse> {
-        return this.#worker
-            .send({
-                kind: "submitProofOfUniquePersonhood",
-                iiPrincipal,
-                credential,
-            })
-            .then((resp) => {
-                if (resp.kind === "success") {
+    startHumanVerification(): Promise<StartVerificationResponse> {
+        return this.#worker.send({ kind: "startVerification" });
+    }
+
+    uploadVerificationFrame(
+        sessionId: bigint,
+        challengeIndex: number,
+        image: Uint8Array,
+    ): Promise<UploadVerificationFrameResponse> {
+        return this.#worker.send({
+            kind: "uploadVerificationFrame",
+            sessionId,
+            challengeIndex,
+            image,
+        });
+    }
+
+    submitHumanVerification(sessionId: bigint): Promise<SubmitVerificationResponse> {
+        return this.#worker.send({ kind: "submitVerification", sessionId });
+    }
+
+    // Polls until a terminal status is reached, calling onUpdate with every
+    // status seen. Backs off 2s -> 5s, gives up 60s after the session deadline.
+    async pollHumanVerification(
+        sessionId: bigint,
+        deadline: bigint,
+        onUpdate: (status: VerificationStatus) => void,
+    ): Promise<VerificationStatus> {
+        let interval = 2000;
+        const timeout = Number(deadline) + 60_000;
+        for (;;) {
+            const status: VerificationStatus = await this.#worker
+                .send({ kind: "verificationStatus", sessionId })
+                .catch(() => ({ kind: "processing" }) as VerificationStatus);
+            onUpdate(status);
+            switch (status.kind) {
+                case "verified":
                     currentUserStore.set({
                         ...currentUserStore.value,
                         isUniquePerson: true,
@@ -8709,13 +8731,44 @@ export class OpenChat {
                         ...u,
                         isUniquePerson: true,
                     }));
-                }
-                return resp;
-            })
-            .catch((err) => {
-                console.error("Failed to submit proof of unique personhood to the user index", err);
-                return { kind: "invalid" };
+                    // Also patch the durable caches so a refresh doesn't
+                    // show the pre-verification status until the next
+                    // server round-trip
+                    this.#worker
+                        .send({ kind: "setCachedUniquePersonStatus", isUniquePerson: true })
+                        .catch(() => undefined);
+                    return status;
+                case "retry_required":
+                case "verification_failed":
+                case "session_not_found":
+                    return status;
+            }
+            if (Date.now() > timeout) {
+                return { kind: "session_not_found" };
+            }
+            await new Promise((resolve) => setTimeout(resolve, interval));
+            interval = Math.min(5000, interval + 1000);
+        }
+    }
+
+    // Right to erasure: revokes the user's unique personhood verification and
+    // deletes their face embedding from the personhood verifier. They can
+    // re-verify at any time.
+    async removeHumanVerification(): Promise<boolean> {
+        const success = await this.#worker
+            .send({ kind: "removeUniquePersonProof" })
+            .catch(() => false);
+        if (success) {
+            currentUserStore.set({
+                ...currentUserStore.value,
+                isUniquePerson: false,
             });
+            userStore.updateUser(currentUserIdStore.value, (u) => ({
+                ...u,
+                isUniquePerson: false,
+            }));
+        }
+        return success;
     }
 
     async joinCommunity(

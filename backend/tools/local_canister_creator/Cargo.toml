@@ -6,6 +6,7 @@ edition.workspace = true
 [dependencies]
 canister_agent_utils = { path = "../../libraries/canister_agent_utils" }
 clap = { workspace = true, features = ["derive"] }
+constants = { path = "../../libraries/constants" }
 futures = { workspace = true }
 ic-agent = { workspace = true }
 ic-utils = { workspace = true }

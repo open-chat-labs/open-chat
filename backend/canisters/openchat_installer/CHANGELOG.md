@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Thread `personhood_verifier_canister_id` through to the user_index init args ([#9072](https://github.com/open-chat-labs/open-chat/issues/9072))
+
 ### Removed
 
 - Remove all code relating to captchas ([#8809](https://github.com/open-chat-labs/open-chat/pull/8809))

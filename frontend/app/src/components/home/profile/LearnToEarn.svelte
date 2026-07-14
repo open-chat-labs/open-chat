@@ -57,6 +57,7 @@
         "deleted_message",
         "tipped_message",
         "forwarded_message",
+        "proved_unique_personhood",
         "received_crypto",
         "received_reaction",
         "had_message_tipped",

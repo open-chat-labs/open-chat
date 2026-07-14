@@ -157,6 +157,16 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
+    let personhood_verifier_canister_wasm = get_canister_wasm(CanisterName::PersonhoodVerifier, version);
+    let personhood_verifier_init_args = personhood_verifier_canister::init::Args {
+        governance_principals: vec![principal],
+        upload_model_chunks_whitelist: vec![principal],
+        user_index_canister_id: canister_ids.user_index,
+        cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        wasm_version: version,
+        test_mode,
+    };
+
     let online_users_canister_wasm = get_canister_wasm(CanisterName::OnlineUsers, version);
     let online_users_init_args = online_users_canister::init::Args {
         user_index_canister_id: canister_ids.user_index,
@@ -386,6 +396,12 @@ async fn install_service_canisters_impl(
             &canister_ids.translations,
             &translations_canister_wasm.module,
             Encode!(&translations_init_args).unwrap(),
+        ),
+        install_wasm(
+            management_canister,
+            &canister_ids.personhood_verifier,
+            &personhood_verifier_canister_wasm.module,
+            Encode!(&personhood_verifier_init_args).unwrap(),
         ),
         install_wasm(
             management_canister,

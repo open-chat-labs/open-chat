@@ -1,0 +1,11 @@
+[package]
+name = "threshold_calibration"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+clap = { workspace = true, features = ["derive"] }
+face_pipeline = { path = "../../libraries/face_pipeline" }
+
+[profile.release]
+opt-level = 3

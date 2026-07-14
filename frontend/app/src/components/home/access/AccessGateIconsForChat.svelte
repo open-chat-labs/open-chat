@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type EnhancedAccessGate, stripSuspendedGate } from "@client";
+    import type { EnhancedAccessGate } from "@client";
     import AccessGateIcon from "./AccessGateIcon.svelte";
     import { mergeAccessGates } from "../../../utils/access";
 
@@ -9,11 +9,7 @@
 
     let { gates }: Props = $props();
 
-    // Drop gates that reduce to no gate once suspended (unique person) gates are stripped, so we
-    // don't render empty icons or dangling separators.
-    let merged = $derived(
-        mergeAccessGates(...gates).filter((g) => stripSuspendedGate(g).kind !== "no_gate"),
-    );
+    let merged = $derived(mergeAccessGates(...gates));
 </script>
 
 {#if merged.length > 0}

@@ -49,6 +49,7 @@ pub enum UserIndexEvent {
     DeleteUser(DeleteUser),
     SecretKeySet(Vec<u8>),
     NotifyUniquePersonProof(UserId, UniquePersonProof),
+    NotifyUniquePersonProofRemoved(UserId),
     AddCanisterToPool(CanisterId),
     ExternalAchievementAwarded(ExternalAchievementAwarded),
     SyncExistingUser(UserDetailsFull),

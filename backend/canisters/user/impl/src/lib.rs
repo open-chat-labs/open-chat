@@ -486,6 +486,8 @@ struct Data {
     pub external_achievements: HashSet<String>,
     pub achievements_last_seen: TimestampMillis,
     pub unique_person_proof: Option<UniquePersonProof>,
+    #[serde(default)]
+    pub unique_person_proof_removed_at: Option<TimestampMillis>,
     pub wallet_config: Timestamped<WalletConfig>,
     pub rng_seed: [u8; 32],
     pub referred_by: Option<UserId>,
@@ -556,6 +558,7 @@ impl Data {
             external_achievements: HashSet::new(),
             achievements_last_seen: 0,
             unique_person_proof: None,
+            unique_person_proof_removed_at: None,
             rng_seed: [0; 32],
             wallet_config: Timestamped::default(),
             referred_by,

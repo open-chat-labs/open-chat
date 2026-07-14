@@ -64,6 +64,9 @@
     "ic": "jodzs-iqaaa-aaaar-qamqa-cai",
     "ic_test": "xeg2u-baaaa-aaaaf-bscyq-cai"
   },
+  "personhood_verifier": {
+    "ic": "wji62-oiaaa-aaaaf-bsc7a-cai"
+  },
   "proposal_validation": {
     "ic": "wkype-7qaaa-aaaar-ajfyq-cai"
   },
@@ -74,9 +77,6 @@
   "registry": {
     "ic": "cpi5u-yiaaa-aaaar-aqw5a-cai",
     "ic_test": "cglwi-oaaaa-aaaar-aqw4q-cai"
-  },
-  "treasury": {
-    "ic": "nafek-diaaa-aaaar-qalxa-cai"
   },
   "sign_in_with_email": {
     "ic": "zi2i7-nqaaa-aaaar-qaemq-cai",
@@ -117,6 +117,9 @@
   "translations": {
     "ic": "lxq5i-mqaaa-aaaaf-bih7q-cai",
     "ic_test": "lqr34-biaaa-aaaaf-bih7a-cai"
+  },
+  "treasury": {
+    "ic": "nafek-diaaa-aaaar-qalxa-cai"
   },
   "user_index": {
     "ic": "4bkt6-4aaaa-aaaaf-aaaiq-cai",

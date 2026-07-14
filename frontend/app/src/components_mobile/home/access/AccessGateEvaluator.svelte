@@ -43,11 +43,7 @@
     import PaymentGateEvaluator from "./PaymentGateEvaluator.svelte";
     import UniqueHumanGateEvaluator from "./UniqueHumanGateEvaluator.svelte";
 
-    type SatisfiedLeafGate = EnhancedLeafGate & {
-        satisfied: boolean;
-        satisfiable: boolean;
-        originalIndex: number;
-    };
+    type SatisfiedLeafGate = EnhancedLeafGate & { satisfied: boolean; satisfiable: boolean };
 
     interface Props {
         gate: EnhancedAccessGate;
@@ -82,30 +78,17 @@
 
     function normaliseGates(gate: EnhancedAccessGate): SatisfiedLeafGate[] {
         if (isCompositeGate(gate)) {
-            // Keep originalIndex before filtering so compositeGateIndex still maps to the real gate.
-            // Unique person (DecideAI) verification is suspended - hide it from the join flow.
-            return gate.gates
-                .map((l, i) => ({
-                    ...l,
-                    level: gate.level,
-                    collectionName: gate.collectionName,
-                    expiry: gate.expiry,
-                    satisfied: doesUserMeetLeafGate(l),
-                    satisfiable: false,
-                    originalIndex: i,
-                }))
-                .filter((g) => !isUniquePersonGate(g));
+            return gate.gates.map((l) => ({
+                ...l,
+                level: gate.level,
+                collectionName: gate.collectionName,
+                expiry: gate.expiry,
+                satisfied: doesUserMeetLeafGate(l),
+                satisfiable: false,
+            }));
         }
         if (isLeafGate(gate)) {
-            if (isUniquePersonGate(gate)) return [];
-            return [
-                {
-                    ...gate,
-                    satisfied: doesUserMeetLeafGate(gate),
-                    satisfiable: false,
-                    originalIndex: 0,
-                },
-            ];
+            return [{ ...gate, satisfied: doesUserMeetLeafGate(gate), satisfiable: false }];
         }
         return [];
     }
@@ -191,6 +174,16 @@
         }
     }
 
+    // The unique person gate is satisfied by the on-chain verification
+    // itself - no credential is produced
+    function uniquePersonVerified() {
+        if (evaluatingGate !== undefined) {
+            evaluatingGate.satisfied = true;
+            refreshBalanceGates();
+            onBack();
+        }
+    }
+
     function onBack() {
         if (evaluatingGate !== undefined) {
             selectGate(-1);
@@ -201,10 +194,10 @@
 
     function handleComplete() {
         if (compositeOr) {
-            // Use originalIndex so the backend still maps to the real gate after filtering.
-            const satisfied = flattenedGates.find((g) => g.satisfied);
-            if (satisfied !== undefined) {
-                accessApprovalState.setCompositeGateIndex(satisfied.originalIndex);
+            // Find the index of the first satisfied gate in the original (unsorted) flattenedGates
+            const satisfiedIdx = flattenedGates.findIndex((g) => g.satisfied);
+            if (satisfiedIdx !== -1) {
+                accessApprovalState.setCompositeGateIndex(satisfiedIdx);
             }
         }
         onComplete();
@@ -219,7 +212,7 @@
         {#if evaluatingGate !== undefined}
             {#if isUniquePersonGate(evaluatingGate)}
                 <UniqueHumanGateEvaluator
-                    onCredentialReceived={credentialReceived}
+                    onVerified={uniquePersonVerified}
                     {onClose}
                     expiry={evaluatingGate.expiry}
                     level={evaluatingGate.level} />

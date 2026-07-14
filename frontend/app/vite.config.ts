@@ -183,6 +183,7 @@ export default defineConfig({
         execute({
             commands: [
                 `../../scripts/get-public-key.sh ${process.env.OC_DFX_NETWORK} > ./public/public-key`,
+                `../../scripts/copy-verification-assets.sh`,
             ],
             hook: "buildStart",
         }),

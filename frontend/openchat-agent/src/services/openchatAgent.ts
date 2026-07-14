@@ -153,9 +153,10 @@ import type {
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
     StakeNeuronForSubmittingProposalsResponse,
+    StartVerificationResponse,
     StorageStatus,
     StreakInsurance,
-    SubmitProofOfUniquePersonhoodResponse,
+    SubmitVerificationResponse,
     SubmitProposalResponse,
     SuspendUserResponse,
     SwapTokensResponse,
@@ -182,6 +183,7 @@ import type {
     UpdatedRules,
     UpdatesResult,
     UpdatesSuccessResponse,
+    UploadVerificationFrameResponse,
     User,
     UserCanisterCommunitySummary,
     UserCanisterCommunitySummaryUpdates,
@@ -191,6 +193,7 @@ import type {
     UsersArgs,
     UsersResponse,
     Verification,
+    VerificationStatus,
     VerifiedCredentialArgs,
     VideoCallParticipantsResponse,
     VideoCallPresence,
@@ -288,11 +291,14 @@ import { TranslationsClient } from "./translations/translations.client";
 import { AnonUserClient } from "./user/anonUser.client";
 import { UserClient } from "./user/user.client";
 import { UserIndexClient } from "./userIndex/userIndex.client";
+import { MockVerifierClient } from "./verifier/mockVerifier.client";
+import { VerifierClient } from "./verifier/verifier.client";
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
     private _userIndexClient: UserIndexClient;
     private _onlineClient: OnlineClient;
+    private _verifierClient: VerifierClient | MockVerifierClient;
     private _groupIndexClient: GroupIndexClient;
     private _userClient: UserClient | AnonUserClient;
     private _notificationClient: NotificationsClient;
@@ -340,6 +346,15 @@ export class OpenChatAgent extends EventTarget {
         this._userDb = new UserDb();
         this._registryDb = new RegistryDb();
         this._onlineClient = new OnlineClient(identity, this._agent, config.onlineCanister);
+        if (config.verifierCanister) {
+            this._verifierClient = new VerifierClient(identity, this._agent, config.verifierCanister);
+        } else if (import.meta.env.DEV) {
+            this._verifierClient = new MockVerifierClient();
+        } else {
+            // A production build with no verifier canister is a misconfiguration;
+            // fail loudly rather than silently mock personhood verification
+            throw new Error("verifierCanister is not configured");
+        }
         this._userClient = AnonUserClient.create();
         this._userIndexClient = new UserIndexClient(
             identity,
@@ -4043,11 +4058,32 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    submitProofOfUniquePersonhood(
-        iiPrincipal: string,
-        credential: string,
-    ): Promise<SubmitProofOfUniquePersonhoodResponse> {
-        return this._userIndexClient.submitProofOfUniquePersonhood(iiPrincipal, credential);
+    startVerification(): Promise<StartVerificationResponse> {
+        return this._verifierClient.startVerification();
+    }
+
+    uploadVerificationFrame(
+        sessionId: bigint,
+        challengeIndex: number,
+        image: Uint8Array,
+    ): Promise<UploadVerificationFrameResponse> {
+        return this._verifierClient.uploadVerificationFrame(sessionId, challengeIndex, image);
+    }
+
+    submitVerification(sessionId: bigint): Promise<SubmitVerificationResponse> {
+        return this._verifierClient.submitVerification(sessionId);
+    }
+
+    verificationStatus(sessionId: bigint): Promise<VerificationStatus> {
+        return this._verifierClient.verificationStatus(sessionId);
+    }
+
+    removeUniquePersonProof(): Promise<boolean> {
+        return this._userIndexClient.removeUniquePersonProof();
+    }
+
+    setCachedUniquePersonStatus(isUniquePerson: boolean): Promise<void> {
+        return this._userIndexClient.setCachedUniquePersonStatus(isUniquePerson);
     }
 
     configureWallet(config: WalletConfig): Promise<void> {

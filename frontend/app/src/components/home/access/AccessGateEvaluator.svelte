@@ -179,24 +179,20 @@
                     </p>
 
                     {#each currentGate.gates as subgate, i}
-                        <!-- Unique person (DecideAI) verification is suspended - hide it as an option.
-                             Keep the original index i so compositeGateIndex still maps to the real gate. -->
-                        {#if !isUniquePersonGate(subgate)}
-                            <div class="optional-gate">
-                                <Radio
-                                    group={"optional_gates"}
-                                    checked={!optionalGatesByIndex.has(i)}
-                                    onChange={() => toggleIndex(i, currentGate)}
-                                    label={i18nKey(subgate.kind)}
-                                    id={`subgate_${i}`}>
-                                    <AccessGateSummary
-                                        editable={false}
-                                        level={currentGate.level}
-                                        showNoGate={false}
-                                        gateConfig={{ expiry: undefined, gate: subgate }} />
-                                </Radio>
-                            </div>
-                        {/if}
+                        <div class="optional-gate">
+                            <Radio
+                                group={"optional_gates"}
+                                checked={!optionalGatesByIndex.has(i)}
+                                onChange={() => toggleIndex(i, currentGate)}
+                                label={i18nKey(subgate.kind)}
+                                id={`subgate_${i}`}>
+                                <AccessGateSummary
+                                    editable={false}
+                                    level={currentGate.level}
+                                    showNoGate={false}
+                                    gateConfig={{ expiry: undefined, gate: subgate }} />
+                            </Radio>
+                        </div>
                     {/each}
                 {:else if isCredentialGate(currentGate)}
                     <CredentialGateEvaluator
@@ -206,7 +202,7 @@
                         level={currentGate.level} />
                 {:else if isUniquePersonGate(currentGate)}
                     <UniqueHumanGateEvaluator
-                        onCredentialReceived={credentialReceived}
+                        onVerified={nextGate}
                         {onClose}
                         expiry={currentGate.expiry}
                         level={currentGate.level} />

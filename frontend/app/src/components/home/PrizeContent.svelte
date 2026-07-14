@@ -5,6 +5,7 @@
         chitBands,
         chitStateStore,
         cryptoLookup,
+        currentUserStore,
         isDiamondStore,
         isLifetimeDiamondStore,
         mobileWidth,
@@ -27,6 +28,7 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import Diamond from "../icons/Diamond.svelte";
     import SpinningToken from "../icons/SpinningToken.svelte";
+    import Verified from "../icons/Verified.svelte";
     import SecureButton from "../SecureButton.svelte";
     import Translatable from "../Translatable.svelte";
     import Badges from "./profile/Badges.svelte";
@@ -75,6 +77,10 @@
         publish("upgrade");
     }
 
+    function onUniquePersonClick() {
+        publish("verifyHumanity");
+    }
+
     function onStreakClick() {
         publish("claimDailyChit");
     }
@@ -91,7 +97,7 @@
     let userEligible = $derived(
         (!content.diamondOnly || $isDiamondStore) &&
             (!content.lifetimeDiamondOnly || $isLifetimeDiamondStore) &&
-            // Unique person ("verified user") gating is suspended - always eligible
+            (!content.uniquePersonOnly || $currentUserStore.isUniquePerson) &&
             content.streakOnly <= $chitStateStore.streak &&
             content.minChitEarned <= $chitStateStore.totalChitEarned,
     );
@@ -111,6 +117,7 @@
     let restrictedPrize = $derived(
         content.diamondOnly ||
             content.lifetimeDiamondOnly ||
+            content.uniquePersonOnly ||
             content.streakOnly > 0 ||
             content.requiresCaptcha ||
             content.minChitEarned > 0,
@@ -154,7 +161,7 @@
                 <div class="badges">
                     <Badges
                         {diamondStatus}
-                        uniquePerson={false}
+                        uniquePerson={content.uniquePersonOnly}
                         chitEarned={content.minChitEarned}
                         streak={content.streakOnly} />
                 </div>
@@ -216,7 +223,17 @@
                                 )} />
                         </div>
                     {/if}
-                    <!-- Unique person ("verified user") gating is suspended -->
+                    {#if content.uniquePersonOnly}
+                        <div onclick={onUniquePersonClick}>
+                            <div>
+                                <Verified
+                                    size={"small"}
+                                    verified={content.uniquePersonOnly}
+                                    tooltip={i18nKey("prizes.uniquePerson")} />
+                            </div>
+                            <Translatable resourceKey={i18nKey("prizes.uniquePerson")} />
+                        </div>
+                    {/if}
                     {#if content.streakOnly > 0}
                         <div onclick={onStreakClick}>
                             <div><Streak days={content.streakOnly} /></div>

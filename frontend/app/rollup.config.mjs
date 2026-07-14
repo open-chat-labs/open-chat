@@ -214,6 +214,9 @@ export default {
                 process.env.OC_IDENTITY_CANISTER,
             ),
             "import.meta.env.OC_ONLINE_CANISTER": JSON.stringify(process.env.OC_ONLINE_CANISTER),
+            "import.meta.env.OC_VERIFIER_CANISTER": JSON.stringify(
+                process.env.OC_VERIFIER_CANISTER,
+            ),
             "import.meta.env.OC_PROPOSALS_BOT_CANISTER": JSON.stringify(
                 process.env.OC_PROPOSALS_BOT_CANISTER,
             ),
@@ -398,6 +401,7 @@ export default {
         execute({
             commands: [
                 `../../scripts/get-public-key.sh ${process.env.OC_DFX_NETWORK} > ./public/public-key`,
+                `../../scripts/copy-verification-assets.sh`,
                 // Build the worker + service worker from source into their lib/
                 // dirs before the copy step above pulls them into build/.
                 `node ./build-workers.mjs`,
