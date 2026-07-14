@@ -6,9 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+<<<<<<< HEAD
 ### Changed
 
 - Sync community moderation flags to the community canisters ([#9088](https://github.com/open-chat-labs/open-chat/pull/9088))
+=======
+### Added
+
+- Add `set_group_moderation_flags` endpoint and filter group search by moderation flags ([#9089](https://github.com/open-chat-labs/open-chat/pull/9089))
+>>>>>>> group-moderation-flags
 
 ## [[2.0.1932](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1932-group_index)] - 2025-12-04
 

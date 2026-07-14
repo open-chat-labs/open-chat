@@ -1651,6 +1651,7 @@ export type GroupChatSummary = DataContent &
         isInvited: boolean;
         messagesVisibleToNonMembers: boolean;
         verified: boolean;
+        moderationFlags?: number;
     };
 
 export function nullMembership(): ChatMembership {
@@ -2328,6 +2329,13 @@ export type SetGroupUpgradeConcurrencyResponse =
 export type SetCommunityModerationFlagsResponse =
     | "success"
     | "community_not_found"
+    | "not_authorized"
+    | "invalid_flags"
+    | "internal_error"
+    | "offline";
+export type SetGroupModerationFlagsResponse =
+    | "success"
+    | "chat_not_found"
     | "not_authorized"
     | "invalid_flags"
     | "internal_error"
