@@ -53,12 +53,10 @@
         onRegisterVote?: (vote: { type: "delete" | "register"; answerIndex: number }) => void;
         ogPreviews?: OgPreview[];
         messagePreviews?: RehydratedMessagePreview[];
-        restricted?: boolean;
     }
 
     let {
         content,
-        restricted = false,
         contentWidth = $bindable(),
         me = false,
         truncate = false,
@@ -87,7 +85,7 @@
     }: Props = $props();
 </script>
 
-{#if restricted}
+{#if content.kind === "restricted_content"}
     <RestrictedMessageContent />
 {:else if content.kind === "text_content"}
     <TextContent

@@ -92,6 +92,7 @@ export type MessageContent =
     | AudioContent
     | DeletedContent
     | BlockedContent
+    | RestrictedContent
     | PlaceholderContent
     | BotPlaceholderContent
     | PollContent
@@ -643,6 +644,12 @@ export const BlockedContentSchema = Type.Object({
 });
 export type BlockedContent = Static<typeof BlockedContentSchema>;
 
+// Synthesised client-side in the app store build for messages with moderation flags
+export const RestrictedContentSchema = Type.Object({
+    kind: Type.Literal("restricted_content"),
+});
+export type RestrictedContent = Static<typeof RestrictedContentSchema>;
+
 export const PollConfigSchema = Type.Object({
     allowMultipleVotesPerUser: Type.Boolean(),
     allowUserToChangeVote: Type.Boolean(),
@@ -773,6 +780,7 @@ export type RehydratedReplyContext = {
     edited: boolean;
     isThreadRoot: boolean;
     sourceContext: MessageContext;
+    moderationFlags?: number;
 };
 
 export type EnhancedReplyContext = RehydratedReplyContext & {

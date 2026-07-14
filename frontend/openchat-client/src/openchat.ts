@@ -5654,6 +5654,7 @@ export class OpenChat {
                 kind: "getRecommendedGroups",
                 exclusions: [...exclusions],
             })
+            .then((groups) => (appStoreBuild ? groups.filter((g) => !chatRestricted(g)) : groups))
             .catch(() => []);
     }
 

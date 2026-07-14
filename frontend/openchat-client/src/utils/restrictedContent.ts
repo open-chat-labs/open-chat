@@ -4,6 +4,7 @@ import {
     type CommunitySummary,
     type Message,
 } from "@shared";
+import { communitiesStore } from "../state/app/stores";
 
 // True for app store builds which must hide Adult/Offensive content
 export const appStoreBuild = import.meta.env.OC_APP_STORE === "true";
@@ -21,11 +22,26 @@ export function communityRestricted(community: CommunitySummary): boolean {
 }
 
 export function chatRestricted(chat: ChatSummary): boolean {
-    return chat.kind === "group_chat" && moderationFlagsRestricted(chat.moderationFlags);
+    if (chat.kind === "group_chat") {
+        return moderationFlagsRestricted(chat.moderationFlags);
+    }
+    if (chat.kind === "channel") {
+        // A channel is restricted if its parent community is
+        const community = communitiesStore.value.get({
+            kind: "community",
+            communityId: chat.id.communityId,
+        });
+        return community !== undefined && communityRestricted(community);
+    }
+    return false;
 }
 
 // Messages are hidden in the app store build if they have been flagged in any moderation
 // category
+export function messageFlagsRestricted(moderationFlags: number | undefined): boolean {
+    return appStoreBuild && (moderationFlags ?? 0) !== 0;
+}
+
 export function messageRestricted(message: Message): boolean {
-    return appStoreBuild && (message.moderationFlags ?? 0) !== 0;
+    return messageFlagsRestricted(message.moderationFlags);
 }

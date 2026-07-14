@@ -102,6 +102,7 @@ import { distinctBy, groupWhile, toRecordFiltered } from "../utils/list";
 import { rtcConnectionsManager } from "../utils/rtcConnectionsManager";
 import { formatTokens } from "./cryptoFormatter";
 import { hasOwnerRights, isPermitted } from "./permissions";
+import { messageFlagsRestricted, messageRestricted } from "./restrictedContent";
 import { compareUsername, nullUser } from "./user";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
@@ -815,6 +816,7 @@ function updateReplyContexts(
                             ...event.event.repliesTo,
                             content: updated.event.content,
                             edited: updated.event.edited,
+                            moderationFlags: updated.event.moderationFlags,
                         },
                     },
                 };
@@ -1415,6 +1417,10 @@ export function mergeEventsAndLocalUpdates(
             const repliesToSenderBlocked =
                 e.event.repliesTo?.kind === "rehydrated_reply_context" &&
                 selectedChatBlockedOrSuspendedUsers.has(e.event.repliesTo.senderId);
+            const restricted = messageRestricted(e.event);
+            const repliesToRestricted =
+                e.event.repliesTo?.kind === "rehydrated_reply_context" &&
+                messageFlagsRestricted(e.event.repliesTo.moderationFlags);
 
             // Don't hide the sender's own messages
             const failedMessageFilter =
@@ -1430,6 +1436,8 @@ export function mergeEventsAndLocalUpdates(
                 replyTranslation !== undefined ||
                 senderBlocked ||
                 repliesToSenderBlocked ||
+                restricted ||
+                repliesToRestricted ||
                 failedMessageFilter
             ) {
                 return {
@@ -1524,6 +1532,13 @@ function mergeLocalUpdates(
             kind: "blocked_content",
         };
         return message;
+    }
+
+    // In the app store build, messages with moderation flags are hidden
+    if (message.content.kind !== "deleted_content" && messageRestricted(message)) {
+        message.content = {
+            kind: "restricted_content",
+        };
     }
 
     if (localUpdates?.cancelledReminder !== undefined) {
@@ -1634,6 +1649,10 @@ function mergeLocalUpdates(
         ) {
             message.repliesTo.content = {
                 kind: "blocked_content",
+            };
+        } else if (messageFlagsRestricted(message.repliesTo.moderationFlags)) {
+            message.repliesTo.content = {
+                kind: "restricted_content",
             };
         } else {
             if (replyContextLocalUpdates?.editedContent !== undefined) {
