@@ -558,6 +558,7 @@ export function message(value: TMessage): Message {
         senderContext: mapOptional(value.sender_context, senderContext),
         ogPreviews: (value.og_previews ?? []).map(ogPreview),
         messagePreviews: [], // this will be rehydrated later
+        moderationFlags: value.moderation_flags,
     };
 }
 

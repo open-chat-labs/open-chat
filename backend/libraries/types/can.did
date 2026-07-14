@@ -291,6 +291,7 @@ type Message = record {
     forwarded : bool;
     block_level_markdown : bool;
     og_previews : vec OgPreview;
+    moderation_flags : nat32;
 };
 
 type MessageEventWrapper = record {

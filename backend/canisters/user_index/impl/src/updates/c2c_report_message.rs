@@ -196,6 +196,7 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
             block_level_markdown: false,
             sender_context: None,
             og_previews: Vec::new(),
+            moderation_flags: 0,
         };
 
         let report = construct_html_report(Chat::Group(chat_id), None, &message, true);
@@ -234,6 +235,7 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
             block_level_markdown: false,
             sender_context: None,
             og_previews: Vec::new(),
+            moderation_flags: 0,
         };
 
         let report = construct_html_report(chat, None, &message, true);
@@ -276,6 +278,7 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
             block_level_markdown: false,
             sender_context: None,
             og_previews: Vec::new(),
+            moderation_flags: 0,
         };
 
         let report = construct_html_report(chat, None, &message, true);
