@@ -50,5 +50,6 @@ export function createCandidateCommunity(id: string, index: number): CommunitySu
         localUserIndex: "",
         isInvited: false,
         verified: false,
+        moderationFlags: 0,
     };
 }

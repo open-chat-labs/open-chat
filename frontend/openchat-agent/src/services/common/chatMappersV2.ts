@@ -2224,6 +2224,7 @@ export function communitySummary(value: TCommunityCanisterCommunitySummary): Com
         localUserIndex,
         isInvited: value.is_invited ?? false,
         verified: value.verified ?? false,
+        moderationFlags: value.moderation_flags ?? 0,
     };
 }
 

@@ -4,6 +4,7 @@ use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_time::now_millis;
 use canister_tracing_macros::trace;
+use community_canister::ModerationFlagsChanged as CommunityModerationFlagsChanged;
 use community_canister::NameChanged as CommunityNameChanged;
 use community_canister::VerifiedChanged as CommunityVerifiedChanged;
 use group_canister::NameChanged as GroupNameChanged;
@@ -64,6 +65,13 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             state.push_event_to_community(
                 ev.canister_id,
                 CommunityEvent::VerifiedChanged(CommunityVerifiedChanged { verified: ev.verified }),
+                **now,
+            );
+        }
+        GroupIndexEvent::CommunityModerationFlagsChanged(ev) => {
+            state.push_event_to_community(
+                ev.canister_id,
+                CommunityEvent::ModerationFlagsChanged(CommunityModerationFlagsChanged { flags: ev.flags }),
                 **now,
             );
         }

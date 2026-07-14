@@ -57,7 +57,7 @@ import {
 } from "@shared";
 import { IndexedDbConnectionManager } from "./indexedDb";
 
-const CACHE_VERSION = 148;
+const CACHE_VERSION = 149;
 const MAX_INDEX = 9999999999;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
@@ -298,7 +298,8 @@ export class ChatsDb {
             .withMigration(144, clearChatsStore)
             .withMigration(145, clearCachePrimerStore)
             .withMigration(146, clearEvents)
-            .withMigration(147, clearCachePrimerStore);
+            .withMigration(147, clearCachePrimerStore)
+            .withMigration(149, clearChatsStore);
     }
 
     getDb(): Database {
