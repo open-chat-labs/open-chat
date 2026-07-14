@@ -122,10 +122,8 @@ async fn process_batch(api_key: String, batch: Vec<Item>) {
         let now = state.env.now();
         let mut any_flagged = false;
         for (item, categories) in classified {
-            if categories.is_empty() {
-                continue;
-            }
-
+            // An empty result still calls flag_message so that stale flags are cleared if a
+            // previously flagged message has been edited to something clean
             if let Some(channel) = state.data.channels.get_mut(&item.channel_id)
                 && channel
                     .chat

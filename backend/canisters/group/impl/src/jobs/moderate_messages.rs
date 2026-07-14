@@ -111,13 +111,14 @@ async fn process_batch(api_key: String, batch: Vec<Item>) {
         let now = state.env.now();
         let mut any_flagged = false;
         for (item, categories) in classified {
-            if !categories.is_empty()
-                && state
-                    .data
-                    .chat
-                    .events
-                    .flag_message(item.entry.thread_root_message_index, item.entry.message_id, categories, now)
-                    .is_ok()
+            // An empty result still calls flag_message so that stale flags are cleared if a
+            // previously flagged message has been edited to something clean
+            if state
+                .data
+                .chat
+                .events
+                .flag_message(item.entry.thread_root_message_index, item.entry.message_id, categories, now)
+                .is_ok()
             {
                 any_flagged = true;
 

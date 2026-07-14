@@ -4,6 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::EditMessageArgs;
 use group_canister::edit_message_v2::*;
+use group_community_common::openai_moderation::PendingMessageModeration;
 use types::{Achievement, OCResult};
 
 #[update(msgpack = true)]
@@ -43,6 +44,16 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     if args.new_achievement && !is_bot {
         state.notify_user_of_achievement(sender, Achievement::EditedMessage, now);
+    }
+
+    // Re-classify the edited content
+    if state.data.chat.is_public.value {
+        state.data.message_moderation_queue.push_back(PendingMessageModeration {
+            thread_root_message_index: args.thread_root_message_index,
+            message_id: args.message_id,
+            attempts: 0,
+        });
+        crate::jobs::moderate_messages::start_job_if_required(state);
     }
 
     state.push_bot_notification(result.bot_notification);
