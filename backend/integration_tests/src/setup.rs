@@ -468,9 +468,16 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         icp_ledger_init_args,
     );
 
+    // Creating the personhood_verifier at its mainnet canister id makes PocketIC
+    // spin up an extra application subnet covering that id's range. Exclude it
+    // here - OpenChat must only expand onto the two subnets created by the
+    // PocketIcBuilder, otherwise users/groups get placed on the extra subnet and
+    // tests which assume the standard topology become flaky.
+    let personhood_verifier_subnet = env.get_subnet(personhood_verifier_canister_id);
     let application_subnets = env.topology().get_app_subnets();
     let subnets: Vec<_> = application_subnets
         .into_iter()
+        .filter(|s| Some(*s) != personhood_verifier_subnet)
         .map(|s| client::registry::happy_path::expand_onto_subnet(env, controller, registry_canister_id, s))
         .collect();
 

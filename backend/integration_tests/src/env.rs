@@ -44,11 +44,19 @@ impl TestEnvWrapper {
     pub fn env(&mut self) -> &mut TestEnv {
         self.env.as_mut().unwrap()
     }
+
+    // Drops the env instead of returning it to the pool. Use this when a test
+    // has mutated the env in a way that would corrupt later tests (eg. by
+    // advancing time a long way).
+    pub fn discard(mut self) {
+        self.env = None;
+    }
 }
 
 impl Drop for TestEnvWrapper {
     fn drop(&mut self) {
-        let env = std::mem::take(&mut self.env).unwrap();
-        ENV.deref().envs.lock().unwrap().push(env);
+        if let Some(env) = std::mem::take(&mut self.env) {
+            ENV.deref().envs.lock().unwrap().push(env);
+        }
     }
 }

@@ -503,4 +503,7 @@ fn biometric_data_purged_after_three_years_of_inactivity() {
     let user2 = client::register_user(env, canister_ids);
     let status = verify_user(env, canister_ids, user2.principal, 201);
     assert!(matches!(status, StatusResponse::Verified { .. }), "{status:?}");
+
+    // This env's clock is now 3 years ahead - don't let other tests inherit it
+    wrapper.discard();
 }
