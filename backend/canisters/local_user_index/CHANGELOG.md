@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Forward `CommunityModerationFlagsChanged` events from group_index to communities ([#9088](https://github.com/open-chat-labs/open-chat/pull/9088))
+
 ## [[2.0.1987](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1987-local_user_index)] - 2026-05-29
 
 ### Added

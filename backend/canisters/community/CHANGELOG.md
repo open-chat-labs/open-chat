@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Expose `moderation_flags` in community summary and summary updates ([#9088](https://github.com/open-chat-labs/open-chat/pull/9088))
+
 ### Changed
 
 - Suspend "verified user" (unique person) gating - the gate is ignored, filtered out of composite gates so an OR gate requires another branch ([#9061](https://github.com/open-chat-labs/open-chat/pull/9061))
