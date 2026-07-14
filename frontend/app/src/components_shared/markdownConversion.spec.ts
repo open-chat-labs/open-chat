@@ -155,3 +155,56 @@ describe("markdown roundtrip", () => {
         );
     });
 });
+
+// ProseMirror rejects empty text nodes ("Empty text nodes are not allowed"),
+// so zero-length delimiter matches must never produce them
+describe("no empty text nodes", () => {
+    type DocNode = { type: string; text?: string; content?: DocNode[] };
+    function hasEmptyText(node: DocNode): boolean {
+        if (node.type === "text" && !node.text) return true;
+        return (node.content ?? []).some(hasEmptyText);
+    }
+
+    it("triple backtick inline parses as code span", () => {
+        const doc = markdownToDoc("hello ```how are you``` test");
+        expect(hasEmptyText(doc)).toBe(false);
+        expect(doc.content[0].content).toEqual([
+            { type: "text", text: "hello " },
+            { type: "text", text: "how are you", marks: [{ type: "code" }] },
+            { type: "text", text: " test" },
+        ]);
+    });
+
+    it("unclosed backtick run stays literal", () => {
+        const doc = markdownToDoc("hello ``` test");
+        expect(hasEmptyText(doc)).toBe(false);
+        expect(doc.content[0].content).toEqual([{ type: "text", text: "hello ``` test" }]);
+    });
+
+    // empty spans are dropped entirely, delimiters included
+    it("empty link", () => {
+        const doc = markdownToDoc("a [](http://x.com) b");
+        expect(hasEmptyText(doc)).toBe(false);
+        expect(doc.content[0].content).toEqual([
+            { type: "text", text: "a " },
+            { type: "text", text: " b" },
+        ]);
+    });
+
+    it("empty bold", () => {
+        const doc = markdownToDoc("a **** b");
+        expect(hasEmptyText(doc)).toBe(false);
+        expect(doc.content[0].content).toEqual([
+            { type: "text", text: "a " },
+            { type: "text", text: " b" },
+        ]);
+    });
+
+    it("empty code block", () => {
+        const doc = markdownToDoc("```js\n\n```");
+        expect(hasEmptyText(doc)).toBe(false);
+        expect(doc.content[0].type).toBe("codeBlock");
+        // bare ``` fences with no language degrade to paragraphs but must not crash
+        expect(hasEmptyText(markdownToDoc("```\n\n```"))).toBe(false);
+    });
+});
