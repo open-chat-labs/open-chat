@@ -7,6 +7,7 @@ import type {
     GroupMatch,
     RemoveHotGroupExclusionResponse,
     SetCommunityModerationFlagsResponse,
+    SetGroupModerationFlagsResponse,
     SetGroupUpgradeConcurrencyResponse,
     UnfreezeGroupResponse,
     CommunityMatch,
@@ -30,6 +31,7 @@ import type {
     GroupIndexRecommendedGroupsResponse,
     GroupIndexRemoveHotGroupExclusionResponse,
     GroupIndexSetCommunityModerationFlagsResponse,
+    GroupIndexSetGroupModerationFlagsResponse,
     GroupIndexSetCommunityUpgradeConcurrencyResponse,
     GroupIndexUnfreezeGroupResponse,
     GroupMatch as TGroupMatch,
@@ -89,7 +91,12 @@ export function exploreCommunitiesResponse(
 }
 
 export function exploreGroupsResponse(value: GroupIndexExploreGroupsResponse): GroupSearchResponse {
-    if (value === "InvalidTerm" || "TermTooShort" in value || "TermTooLong" in value) {
+    if (
+        value === "InvalidTerm" ||
+        value === "InvalidFlags" ||
+        "TermTooShort" in value ||
+        "TermTooLong" in value
+    ) {
         return { kind: "term_invalid" };
     }
     if ("Success" in value) {
@@ -314,6 +321,30 @@ export function setCommunityModerationFlagsResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiSetCommunityModerationFlagsResponse type received",
+        value,
+    );
+}
+
+export function setGroupModerationFlagsResponse(
+    value: GroupIndexSetGroupModerationFlagsResponse,
+): SetGroupModerationFlagsResponse {
+    if (value === "Success" || value === "Unchanged") {
+        return "success";
+    }
+    if (value === "ChatNotFound") {
+        return "chat_not_found";
+    }
+    if (value === "InvalidFlags") {
+        return "invalid_flags";
+    }
+    if (value === "NotAuthorized") {
+        return "not_authorized";
+    }
+    if ("InternalError" in value) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiSetGroupModerationFlagsResponse type received",
         value,
     );
 }

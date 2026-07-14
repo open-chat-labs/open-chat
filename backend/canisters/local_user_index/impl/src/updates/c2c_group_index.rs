@@ -6,6 +6,7 @@ use canister_time::now_millis;
 use canister_tracing_macros::trace;
 use community_canister::NameChanged as CommunityNameChanged;
 use community_canister::VerifiedChanged as CommunityVerifiedChanged;
+use group_canister::ModerationFlagsChanged as GroupModerationFlagsChanged;
 use group_canister::NameChanged as GroupNameChanged;
 use group_canister::VerifiedChanged as GroupVerifiedChanged;
 use local_user_index_canister::GroupIndexEvent;
@@ -57,6 +58,13 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             state.push_event_to_group(
                 ev.canister_id,
                 GroupEvent::VerifiedChanged(GroupVerifiedChanged { verified: ev.verified }),
+                **now,
+            );
+        }
+        GroupIndexEvent::GroupModerationFlagsChanged(ev) => {
+            state.push_event_to_group(
+                ev.canister_id,
+                GroupEvent::ModerationFlagsChanged(GroupModerationFlagsChanged { flags: ev.flags }),
                 **now,
             );
         }

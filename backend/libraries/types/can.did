@@ -467,6 +467,7 @@ type PublicGroupSummary = record {
     events_ttl_last_updated : TimestampMillis;
     gate_config : opt AccessGateConfig;
     wasm_version : BuildVersion;
+    moderation_flags : nat32;
 };
 
 type ReplyContext = record {
