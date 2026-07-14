@@ -8720,6 +8720,7 @@ export const Message = Type.Object({
     forwarded: Type.Optional(Type.Boolean()),
     block_level_markdown: Type.Optional(Type.Boolean()),
     og_previews: Type.Optional(Type.Array(OgPreview)),
+    moderation_flags: Type.Optional(Type.Number()),
 });
 
 export type ChatSummary = Static<typeof ChatSummary>;

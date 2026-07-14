@@ -35,6 +35,9 @@ pub struct Message {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     #[ts(as = "Option<Vec<OgPreview>>", optional)]
     pub og_previews: Vec<OgPreview>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<u32>", optional)]
+    pub moderation_flags: u32,
 }
 
 impl Message {
