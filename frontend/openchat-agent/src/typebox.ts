@@ -1597,28 +1597,6 @@ export const GroupIndexSetCommunityModerationFlagsArgs = Type.Object({
     flags: Type.Number(),
 });
 
-export type GroupIndexSetGroupModerationFlagsResponse = Static<
-    typeof GroupIndexSetGroupModerationFlagsResponse
->;
-export const GroupIndexSetGroupModerationFlagsResponse = Type.Union([
-    Type.Literal("Success"),
-    Type.Literal("Unchanged"),
-    Type.Literal("ChatNotFound"),
-    Type.Literal("NotAuthorized"),
-    Type.Literal("InvalidFlags"),
-    Type.Object({
-        InternalError: Type.String(),
-    }),
-]);
-
-export type GroupIndexSetGroupModerationFlagsArgs = Static<
-    typeof GroupIndexSetGroupModerationFlagsArgs
->;
-export const GroupIndexSetGroupModerationFlagsArgs = Type.Object({
-    chat_id: ChatId,
-    flags: Type.Number(),
-});
-
 export type GroupIndexMarkLocalIndexFullResponse = Static<
     typeof GroupIndexMarkLocalIndexFullResponse
 >;
@@ -4789,6 +4767,29 @@ export const CommunityPermissionsChanged = Type.Object({
 
 export type ChatId = Static<typeof ChatId>;
 export const ChatId = TSPrincipal;
+
+export type GroupIndexSetGroupModerationFlagsResponse = Static<
+    typeof GroupIndexSetGroupModerationFlagsResponse
+>;
+export const GroupIndexSetGroupModerationFlagsResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("Unchanged"),
+    Type.Literal("ChatNotFound"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("InvalidFlags"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
+export type GroupIndexSetGroupModerationFlagsArgs = Static<
+    typeof GroupIndexSetGroupModerationFlagsArgs
+>;
+export const GroupIndexSetGroupModerationFlagsArgs = Type.Object({
+    chat_id: ChatId,
+    flags: Type.Number(),
+});
+
 
 export type EvmContractAddress = Static<typeof EvmContractAddress>;
 export const EvmContractAddress = Type.Object({
