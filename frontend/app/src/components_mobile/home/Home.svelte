@@ -116,7 +116,8 @@
         | { kind: "no_access" }
         | { kind: "hall_of_fame" }
         | { kind: "make_proposal"; chat: MultiUserChat; nervousSystem: NervousSystemDetails }
-        | { kind: "not_found" };
+        | { kind: "not_found" }
+        | { kind: "restricted_content" };
 
     let modal: ModalType = $state({ kind: "none" });
     let confirmActionEvent: ConfirmActionEvent | undefined = $state();
@@ -142,6 +143,7 @@
             subscribe("remoteVideoCallEnded", remoteVideoCallEnded),
             subscribe("notification", (n) => client.notificationReceived(n)),
             subscribe("noAccess", () => (modal = { kind: "no_access" })),
+            subscribe("restrictedContent", () => (modal = { kind: "restricted_content" })),
             subscribe("notFound", () => (modal = { kind: "not_found" })),
             subscribe("copyUrl", copyUrl),
             subscribe("suspendUser", suspendUser),
@@ -596,6 +598,11 @@
         <VerifyHumanity onClose={closeModal} onSuccess={closeModal} />
     {:else if modal.kind === "no_access"}
         <NoAccess onClose={closeNoAccess} />
+    {:else if modal.kind === "restricted_content"}
+        <NoAccess
+            onClose={closeNoAccess}
+            titleKey={"appStore.notAvailableTitle"}
+            textKey={"appStore.notAvailable"} />
     {:else if modal.kind === "make_proposal"}
         <MakeProposalModal
             selectedMultiUserChat={modal.chat}

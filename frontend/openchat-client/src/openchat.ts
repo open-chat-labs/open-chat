@@ -468,6 +468,12 @@ import {
 } from "./utils/androidWebAuthn";
 import { dataToBlobUrl } from "./utils/blob";
 import {
+    appStoreBuild,
+    chatRestricted,
+    communityRestricted,
+    moderationFlagsRestricted,
+} from "./utils/restrictedContent";
+import {
     activeUserIdFromEvent,
     applyTranslation,
     buildBlobUrl,
@@ -1305,6 +1311,10 @@ export class OpenChat {
                 return this.#worker
                     .send({ kind: "getPublicGroupSummary", chatId })
                     .then((resp) => {
+                        if (resp.kind === "success" && chatRestricted(resp.group)) {
+                            publish("restrictedContent");
+                            return CommonResponses.failure();
+                        }
                         if (resp.kind === "success" && !resp.group.frozen) {
                             localUpdates.addGroupPreview(resp.group);
                             return CommonResponses.success();
@@ -2936,6 +2946,11 @@ export class OpenChat {
         let chat = chatSummariesStore.value.get(chatId);
         const scope = chatListScopeStore.value;
         let autojoin = false;
+
+        if (chat !== undefined && chatRestricted(chat)) {
+            publish("restrictedContent");
+            return;
+        }
         this.#proposalTalliesPoller?.stop();
         this.#proposalTalliesPoller = undefined;
 
@@ -5640,6 +5655,7 @@ export class OpenChat {
                 kind: "getRecommendedGroups",
                 exclusions: [...exclusions],
             })
+            .then((groups) => (appStoreBuild ? groups.filter((g) => !chatRestricted(g)) : groups))
             .catch(() => []);
     }
 
@@ -5647,7 +5663,7 @@ export class OpenChat {
         return this.#worker.send({
             kind: "searchGroups",
             searchTerm,
-            flags: moderationFlagsEnabledStore.value,
+            flags: appStoreBuild ? 0 : moderationFlagsEnabledStore.value,
             maxResults,
         });
     }
@@ -5676,14 +5692,23 @@ export class OpenChat {
         flags: number,
         languages: string[],
     ): Promise<ExploreCommunitiesResponse> {
-        return this.#worker.send({
-            kind: "exploreCommunities",
-            searchTerm,
-            pageIndex,
-            pageSize,
-            flags,
-            languages,
-        });
+        return this.#worker
+            .send({
+                kind: "exploreCommunities",
+                searchTerm,
+                pageIndex,
+                pageSize,
+                flags: appStoreBuild ? 0 : flags,
+                languages,
+            })
+            .then((response) => {
+                if (appStoreBuild && response.kind === "success") {
+                    response.matches = response.matches.filter(
+                        (m) => !moderationFlagsRestricted(m.flags),
+                    );
+                }
+                return response;
+            });
     }
 
     exploreChannels(
@@ -8587,6 +8612,10 @@ export class OpenChat {
     async setSelectedCommunity(id: CommunityIdentifier): Promise<boolean> {
         let community = communitiesStore.value.get(id);
         let preview = false;
+        if (community !== undefined && communityRestricted(community)) {
+            publish("restrictedContent");
+            return false;
+        }
         if (community === undefined) {
             // if we don't have the community it means we're not a member and we need to look it up
             if (querystringCodeStore.value) {
@@ -8603,6 +8632,10 @@ export class OpenChat {
                 communityId: id.communityId,
             });
             if ("id" in resp) {
+                if (communityRestricted(resp)) {
+                    publish("restrictedContent");
+                    return false;
+                }
                 // Make the community appear at the top of the list
                 resp.membership.index = nextCommunityIndexStore.value;
                 community = resp;

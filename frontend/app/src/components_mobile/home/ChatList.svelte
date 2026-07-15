@@ -5,6 +5,7 @@
         allUsersStore,
         chatIdentifiersEqual,
         chatIdentifierToString,
+        chatRestricted,
         type ChatListScope,
         chatListScopesEqual,
         chatListScopeStore,
@@ -29,6 +30,7 @@
     import Pencil from "svelte-material-icons/LeadPencil.svelte";
     import ChatListFilters, { type ChatListFilter } from "./ChatListFilters.svelte";
     import ChatSummary from "./ChatSummary.svelte";
+    import RestrictedContentRow from "./RestrictedContentRow.svelte";
     import DirectAndGroupChatsHeader from "./communities/DirectAndGroupChatsHeader.svelte";
     import FavouriteChatsHeader from "./communities/FavouriteChatsHeader.svelte";
     import SelectedCommunityHeader from "./communities/SelectedCommunityHeader.svelte";
@@ -154,11 +156,15 @@
                 height={"hug"}
                 padding={["sm", "zero", "zero"]}>
                 {#each chats as chatSummary (chatIdentifierToString(chatSummary.id))}
-                    <ChatSummary
-                        {chatSummary}
-                        selected={chatIdentifiersEqual($selectedChatIdStore, chatSummary.id)}
-                        visible={!chatSummary.membership.archived}
-                        onChatSelected={chatSelected} />
+                    {#if chatRestricted(chatSummary)}
+                        <RestrictedContentRow textKey={"appStore.chatNotAvailable"} />
+                    {:else}
+                        <ChatSummary
+                            {chatSummary}
+                            selected={chatIdentifiersEqual($selectedChatIdStore, chatSummary.id)}
+                            visible={!chatSummary.membership.archived}
+                            onChatSelected={chatSelected} />
+                    {/if}
                 {/each}
             </Container>
         {/if}
