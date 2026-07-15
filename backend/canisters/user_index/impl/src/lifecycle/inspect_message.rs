@@ -28,6 +28,7 @@ fn accept_if_valid(state: &RuntimeState) {
         "resolve_moderation_report" | "suspend_user" | "unsuspend_user" => state.is_caller_platform_moderator(),
         "set_diamond_membership_fees"
         | "set_internal_moderation_channel"
+        | "set_openai_api_key"
         | "set_premium_item_cost"
         | "set_user_upgrade_concurrency"
         | "update_blocked_username_patterns" => state.is_caller_platform_operator(),
