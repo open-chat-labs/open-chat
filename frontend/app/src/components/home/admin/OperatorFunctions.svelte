@@ -51,6 +51,9 @@
     let feesTab: "ICP" | "CHAT" = $state("ICP");
     let tokenLedger = $state("");
     let tokenEnabled = $state(true);
+    let openAiApiKey = $state("");
+    let moderationCommunityId = $state("");
+    let moderationChannelId = $state("");
 
     let groupUpgradeConcurrencyInvalid = $derived(isNaN(parseInt(groupUpgradeConcurrency, 0)));
     let communityUpgradeConcurrencyInvalid = $derived(
@@ -272,6 +275,43 @@
         }
     }
 
+    function setOpenAIApiKey(): void {
+        error = undefined;
+        addBusy(7);
+        client
+            .setOpenAIApiKey(openAiApiKey === "" ? undefined : openAiApiKey)
+            .then((success) => {
+                if (success) {
+                    toastStore.showSuccessToast(i18nKey("OpenAI API key updated"));
+                } else {
+                    error = i18nKey("Failed to update OpenAI API key");
+                    toastStore.showFailureToast(error);
+                }
+            })
+            .finally(() => removeBusy(7));
+    }
+
+    function setInternalModerationChannel(): void {
+        error = undefined;
+        addBusy(8);
+        const channelIdNum = parseInt(moderationChannelId, 10);
+        const channel =
+            moderationCommunityId === "" || isNaN(channelIdNum)
+                ? undefined
+                : { communityId: moderationCommunityId, channelId: channelIdNum };
+        client
+            .setInternalModerationChannel(channel)
+            .then((success) => {
+                if (success) {
+                    toastStore.showSuccessToast(i18nKey("Internal moderation channel updated"));
+                } else {
+                    error = i18nKey("Failed to update internal moderation channel");
+                    toastStore.showFailureToast(error);
+                }
+            })
+            .finally(() => removeBusy(8));
+    }
+
     function setTokenEnabled(): void {
         error = undefined;
         addBusy(6);
@@ -489,6 +529,40 @@
                 loading={busy.has(6)}
                 onClick={setTokenEnabled}>Apply</Button>
         </ButtonGroup>
+    </section>
+
+    <section class="operator-function">
+        <div class="title">Set OpenAI API key (moderation)</div>
+        <div class="name-value">
+            <div class="label">API key:</div>
+            <div class="value">
+                <Input bind:value={openAiApiKey} />
+            </div>
+        </div>
+        <Button tiny disabled={busy.has(7)} loading={busy.has(7)} onClick={setOpenAIApiKey}>
+            Apply
+        </Button>
+    </section>
+
+    <section class="operator-function">
+        <div class="title">Set internal moderation channel</div>
+        <div class="name-value">
+            <div class="label">Community Id:</div>
+            <div class="value">
+                <Input bind:value={moderationCommunityId} />
+            </div>
+        </div>
+        <div class="name-value">
+            <div class="label">Channel Id:</div>
+            <div class="value">
+                <Input bind:value={moderationChannelId} />
+            </div>
+        </div>
+        <Button
+            tiny
+            disabled={busy.has(8)}
+            loading={busy.has(8)}
+            onClick={setInternalModerationChannel}>Apply</Button>
     </section>
 
     <section class="operator-function">

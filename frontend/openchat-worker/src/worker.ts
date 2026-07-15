@@ -984,6 +984,12 @@ function getAction(
         case "setModerationFlags":
             return agent.setModerationFlags(payload.flags);
 
+        case "setOpenAIApiKey":
+            return agent.setOpenAIApiKey(payload.apiKey);
+
+        case "setInternalModerationChannel":
+            return agent.setInternalModerationChannel(payload.channel);
+
         case "updateRegistry":
             return agent.getRegistry();
 
