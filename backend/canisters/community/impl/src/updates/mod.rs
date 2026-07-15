@@ -18,6 +18,7 @@ pub mod c2c_set_user_suspended;
 pub mod c2c_tip_message;
 pub mod c2c_unfreeze_community;
 pub mod c2c_uninstall_bot;
+pub mod c2c_update_moderation_report_status;
 pub mod c2c_update_proposals;
 pub mod c2c_update_user_principal;
 pub mod cancel_invites;

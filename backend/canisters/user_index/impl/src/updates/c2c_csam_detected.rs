@@ -29,9 +29,11 @@ fn c2c_csam_detected_impl(args: Args, state: &mut RuntimeState) {
     // already been applied, for legal record-keeping
     moderation::post_moderation_alert(
         ModerationAlert {
+            report_index: None,
             chat_id: args.chat_id,
             thread_root_message_index: args.thread_root_message_index,
             message_index: args.message_index,
+            message_id: args.message_id,
             sender: args.sender,
             reporters: Vec::new(),
             categories,

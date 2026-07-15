@@ -3,11 +3,10 @@ use crate::guards::caller_is_user_index;
 use crate::{CommunityEventPusher, RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::{MessageContentInternal, TextContentInternal};
+use chat_events::MessageContentInternal;
 use community_canister::c2c_send_moderation_report::*;
 use constants::OPENCHAT_BOT_USER_ID;
 use oc_error_codes::OCErrorCode;
-use rand::Rng;
 use types::{Caller, OCResult};
 
 #[update(guard = "caller_is_user_index", msgpack = true)]
@@ -18,7 +17,6 @@ fn c2c_send_moderation_report(args: Args) -> Response {
 
 fn c2c_send_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let now = state.env.now();
-    let message_id = state.env.rng().r#gen::<u128>().into();
 
     let channel = state
         .data
@@ -29,8 +27,8 @@ fn c2c_send_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRe
     channel.chat.send_message(
         &Caller::OCBot(OPENCHAT_BOT_USER_ID),
         None,
-        message_id,
-        MessageContentInternal::Text(TextContentInternal { text: args.text }),
+        args.message_id,
+        MessageContentInternal::ModerationReport(Box::new(args.report)),
         None,
         &[],
         false,

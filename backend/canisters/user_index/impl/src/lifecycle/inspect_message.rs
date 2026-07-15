@@ -25,7 +25,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "submit_proof_of_unique_personhood"
         | "update_bot"
         | "update_diamond_membership_subscription" => state.is_caller_openchat_user(),
-        "suspend_user" | "unsuspend_user" => state.is_caller_platform_moderator(),
+        "resolve_moderation_report" | "suspend_user" | "unsuspend_user" => state.is_caller_platform_moderator(),
         "set_diamond_membership_fees"
         | "set_internal_moderation_channel"
         | "set_premium_item_cost"

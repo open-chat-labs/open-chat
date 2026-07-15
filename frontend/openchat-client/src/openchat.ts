@@ -218,6 +218,7 @@ import {
     type MessageActivitySummary,
     type MessageContent,
     type MessageContext,
+    type ModerationVerdict,
     type MessageFilter,
     type MessageFormatter,
     type MessagePermission,
@@ -6267,6 +6268,12 @@ export class OpenChat {
                 }
                 return resp === "success";
             })
+            .catch(() => false);
+    }
+
+    resolveModerationReport(reportIndex: bigint, verdict: ModerationVerdict): Promise<boolean> {
+        return this.#worker
+            .send({ kind: "resolveModerationReport", reportIndex, verdict })
             .catch(() => false);
     }
 

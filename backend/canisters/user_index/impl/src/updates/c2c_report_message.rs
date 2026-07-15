@@ -10,10 +10,9 @@ use crate::{
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use fire_and_forget_handler::FireAndForgetHandler;
 use group_community_common::openai_moderation;
 use tracing::error;
-use types::{Chat, ModerationCategories};
+use types::ModerationCategories;
 use user_index_canister::c2c_report_message::{Response::*, *};
 
 #[update(guard = "caller_is_user_canister_or_group_index", msgpack = true)]
@@ -92,7 +91,13 @@ fn handle_moderation_result(args: Args, report_index: u64, categories: Moderatio
     // Store the flags on the originating canister so the message can be hidden in the app store
     // build (public chats only - private messages are classified but not flagged)
     if !categories.is_empty() && args.is_public {
-        flag_message(&args, categories, &mut state.data.fire_and_forget_handler);
+        moderation::set_message_moderation_flags(
+            args.chat_id,
+            args.thread_root_message_index,
+            args.message.message_id,
+            categories.bits(),
+            &mut state.data.fire_and_forget_handler,
+        );
     }
 
     if is_csam {
@@ -111,6 +116,7 @@ fn handle_moderation_result(args: Args, report_index: u64, categories: Moderatio
         timestamp: now,
         flagged_categories: categories.bits(),
         action,
+        human_verdict: None,
     };
     let reported_message = match state.data.reported_messages.record_outcome(report_index, outcome) {
         RecordOutcomeResult::Success(m) => m,
@@ -130,9 +136,11 @@ fn handle_moderation_result(args: Args, report_index: u64, categories: Moderatio
     ) {
         moderation::post_moderation_alert(
             ModerationAlert {
+                report_index: Some(report_index),
                 chat_id: reported_message.chat_id,
                 thread_root_message_index: reported_message.thread_root_message_index,
                 message_index: reported_message.message_index,
+                message_id: reported_message.message_id,
                 sender: reported_message.sender,
                 reporters: reported_message.reports.keys().copied().collect(),
                 categories,
@@ -163,35 +171,4 @@ fn human_review_categories() -> ModerationCategories {
         | ModerationCategories::VIOLENCE_GRAPHIC
         | ModerationCategories::SELF_HARM
         | ModerationCategories::ILLICIT
-}
-
-fn flag_message(args: &Args, categories: ModerationCategories, fire_and_forget_handler: &mut FireAndForgetHandler) {
-    match args.chat_id {
-        Chat::Group(group_id) => {
-            let c2c_args = group_canister::c2c_flag_message::Args {
-                thread_root_message_index: args.thread_root_message_index,
-                message_id: args.message.message_id,
-                flags: categories.bits(),
-            };
-            fire_and_forget_handler.send(
-                group_id.into(),
-                "c2c_flag_message_msgpack".to_string(),
-                msgpack::serialize_then_unwrap(&c2c_args),
-            );
-        }
-        Chat::Channel(community_id, channel_id) => {
-            let c2c_args = community_canister::c2c_flag_message::Args {
-                channel_id,
-                thread_root_message_index: args.thread_root_message_index,
-                message_id: args.message.message_id,
-                flags: categories.bits(),
-            };
-            fire_and_forget_handler.send(
-                community_id.into(),
-                "c2c_flag_message_msgpack".to_string(),
-                msgpack::serialize_then_unwrap(&c2c_args),
-            );
-        }
-        Chat::Direct(_) => {}
-    }
 }
