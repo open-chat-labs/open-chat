@@ -55,6 +55,10 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
         LocalIndexEvent::ModerationFlagsChanged(ev) => {
             state.data.moderation_flags = Timestamped::new(ev.flags, **now);
         }
+        LocalIndexEvent::OpenAIApiKeyUpdated(api_key) => {
+            state.data.openai_api_key = api_key;
+            crate::jobs::moderate_messages::start_job_if_required(state);
+        }
         LocalIndexEvent::UserDeleted(user_id) => {
             state.data.chat.members.remove(user_id, **now);
             state.data.remove_user(user_id, None);

@@ -21,7 +21,7 @@ fn init(args: Args) {
     assert!(args.channels.iter().all_unique());
 
     let now = env.now();
-    let data = Data::new(
+    let mut data = Data::new(
         env.canister_id().into(),
         args.created_by_principal,
         args.created_by_user_id,
@@ -49,6 +49,8 @@ fn init(args: Args) {
         env.rng(),
         now,
     );
+
+    data.openai_api_key = args.openai_api_key;
 
     init_state(env, data, args.wasm_version);
 

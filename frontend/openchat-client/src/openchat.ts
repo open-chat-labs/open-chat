@@ -218,6 +218,7 @@ import {
     type MessageActivitySummary,
     type MessageContent,
     type MessageContext,
+    type ModerationVerdict,
     type MessageFilter,
     type MessageFormatter,
     type MessagePermission,
@@ -6275,6 +6276,12 @@ export class OpenChat {
             .catch(() => false);
     }
 
+    resolveModerationReport(reportIndex: bigint, verdict: ModerationVerdict): Promise<boolean> {
+        return this.#worker
+            .send({ kind: "resolveModerationReport", reportIndex, verdict })
+            .catch(() => false);
+    }
+
     setCommunityModerationFlags(communityId: string, flags: number): Promise<boolean> {
         return this.#worker
             .send({ kind: "setCommunityModerationFlags", communityId, flags })
@@ -7272,6 +7279,18 @@ export class OpenChat {
 
     hasModerationFlag(flags: number, flag: ModerationFlag): boolean {
         return hasFlag(flags, flag);
+    }
+
+    setOpenAIApiKey(apiKey: string | undefined): Promise<boolean> {
+        return this.#worker.send({ kind: "setOpenAIApiKey", apiKey }).catch(() => false);
+    }
+
+    setInternalModerationChannel(
+        channel: { communityId: string; channelId: number } | undefined,
+    ): Promise<boolean> {
+        return this.#worker
+            .send({ kind: "setInternalModerationChannel", channel })
+            .catch(() => false);
     }
 
     setModerationFlags(flags: number): Promise<number> {

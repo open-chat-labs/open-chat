@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Forward `CommunityModerationFlagsChanged` events from group_index to communities ([#9088](https://github.com/open-chat-labs/open-chat/pull/9088))
 - Forward `GroupModerationFlagsChanged` events from group_index to groups ([#9089](https://github.com/open-chat-labs/open-chat/pull/9089))
+### Changed
+- Forward the OpenAI API key to local group and community canisters ([#9091](https://github.com/open-chat-labs/open-chat/pull/9091))
 
 ## [[2.0.1987](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1987-local_user_index)] - 2026-05-29
 

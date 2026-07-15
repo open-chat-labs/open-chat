@@ -331,7 +331,21 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             }
         }
         UserIndexEvent::SetOpenAIApiKey(ev) => {
-            state.data.openai_api_key = ev.api_key;
+            state.data.openai_api_key = ev.api_key.clone();
+
+            let group_ids: Vec<_> = state.data.local_groups.iter().map(|(id, _)| *id).collect();
+            for chat_id in group_ids {
+                state.push_event_to_group(chat_id.into(), GroupEvent::OpenAIApiKeyUpdated(ev.api_key.clone()), **now);
+            }
+
+            let community_ids: Vec<_> = state.data.local_communities.iter().map(|(id, _)| *id).collect();
+            for community_id in community_ids {
+                state.push_event_to_community(
+                    community_id.into(),
+                    CommunityEvent::OpenAIApiKeyUpdated(ev.api_key.clone()),
+                    **now,
+                );
+            }
         }
     }
 }

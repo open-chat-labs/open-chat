@@ -14,6 +14,7 @@ import type {
     PayForDiamondMembershipResponse,
     PremiumItem,
     SetDisplayNameResponse,
+    ModerationVerdict,
     SetUsernameResponse,
     SetUserUpgradeConcurrencyResponse,
     SubmitProofOfUniquePersonhoodResponse,
@@ -62,7 +63,10 @@ import {
     UserIndexSetDisplayNameArgs,
     UserIndexSetDisplayNameResponse,
     UserIndexSetHideOnlineStatusArgs,
+    UserIndexSetInternalModerationChannelArgs,
+    UserIndexResolveModerationReportArgs,
     UserIndexSetModerationFlagsArgs,
+    UserIndexSetOpenAiApiKeyArgs,
     UserIndexSetPremiumItemCostArgs,
     UserIndexSetUsernameArgs,
     UserIndexSetUsernameResponse,
@@ -87,6 +91,7 @@ import {
     mapOptional,
     principalBytesToString,
     principalStringToBytes,
+    toBigInt32,
     toVoid,
 } from "../../utils/mapping";
 import type { UserDb } from "../../utils/userCache";
@@ -164,6 +169,47 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             (_) => true,
             UserIndexSetModerationFlagsArgs,
             SuccessOnly,
+        );
+    }
+
+    setOpenAIApiKey(apiKey: string | undefined): Promise<boolean> {
+        return this.update(
+            "set_openai_api_key",
+            {
+                api_key: apiKey === undefined || apiKey === "" ? undefined : apiKey,
+            },
+            (resp) => resp === "Success",
+            UserIndexSetOpenAiApiKeyArgs,
+            UnitResult,
+        );
+    }
+
+    setInternalModerationChannel(
+        channel: { communityId: string; channelId: number } | undefined,
+    ): Promise<boolean> {
+        return this.update(
+            "set_internal_moderation_channel",
+            {
+                channel:
+                    channel === undefined
+                        ? undefined
+                        : {
+                              community_id: principalStringToBytes(channel.communityId),
+                              channel_id: toBigInt32(channel.channelId),
+                          },
+            },
+            (resp) => resp === "Success",
+            UserIndexSetInternalModerationChannelArgs,
+    resolveModerationReport(reportIndex: bigint, verdict: ModerationVerdict): Promise<boolean> {
+        return this.update(
+            "resolve_moderation_report",
+            {
+                report_index: reportIndex,
+                verdict: apiModerationVerdict(verdict),
+            },
+            (resp) => resp === "Success",
+            UserIndexResolveModerationReportArgs,
+            UnitResult,
         );
     }
 
@@ -758,5 +804,16 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             UserIndexUpdateBlockedUsernamePatternsArgs,
             UnitResult,
         );
+    }
+}
+
+function apiModerationVerdict(verdict: ModerationVerdict): "Upheld" | "UpheldAsCsam" | "Dismissed" {
+    switch (verdict) {
+        case "upheld":
+            return "Upheld";
+        case "upheld_as_csam":
+            return "UpheldAsCsam";
+        case "dismissed":
+            return "Dismissed";
     }
 }

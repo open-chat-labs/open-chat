@@ -141,6 +141,7 @@ import type {
     SearchGroupChatResponse,
     SendMessageResponse,
     SetBioResponse,
+    ModerationVerdict,
     SetCommunityModerationFlagsResponse,
     SetGroupModerationFlagsResponse,
     SetDisplayNameResponse,
@@ -2151,6 +2152,24 @@ export class OpenChatAgent extends EventTarget {
 
     getCurrentUser(): Stream<CurrentUserResponse> {
         return this._userIndexClient.getCurrentUser();
+    }
+
+    setOpenAIApiKey(apiKey: string | undefined): Promise<boolean> {
+        if (offline()) return Promise.resolve(false);
+
+        return this._userIndexClient.setOpenAIApiKey(apiKey);
+    }
+
+    setInternalModerationChannel(
+        channel: { communityId: string; channelId: number } | undefined,
+    ): Promise<boolean> {
+        if (offline()) return Promise.resolve(false);
+
+        return this._userIndexClient.setInternalModerationChannel(channel);
+    resolveModerationReport(reportIndex: bigint, verdict: ModerationVerdict): Promise<boolean> {
+        if (offline()) return Promise.resolve(false);
+
+        return this._userIndexClient.resolveModerationReport(reportIndex, verdict);
     }
 
     setModerationFlags(flags: number): Promise<boolean> {

@@ -11,6 +11,7 @@ use community_canister::c2c_bot_send_message;
 use community_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
 use community_canister::send_message::{Response::*, *};
 use group_chat_core::SendMessageSuccess;
+use group_community_common::openai_moderation::PendingMessageModeration;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use oc_error_codes::OCErrorCode;
@@ -244,6 +245,21 @@ fn process_send_message_result(
     let community_id: CommunityId = state.env.canister_id().into();
 
     register_timer_jobs(channel_id, thread_root_message_index, message_event, now, &mut state.data);
+
+    if state.data.is_public.value
+        && !message_event.event.content.moderation_input().is_empty()
+        && state.data.channels.get(&channel_id).is_some_and(|c| c.chat.is_public.value)
+    {
+        state.data.message_moderation_queue.push_back((
+            channel_id,
+            PendingMessageModeration {
+                thread_root_message_index,
+                message_id,
+                attempts: 0,
+            },
+        ));
+        crate::jobs::moderate_messages::start_job_if_required(state);
+    }
 
     if !result.unfinalised_bot_message {
         let sender = caller.agent();

@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Sync community moderation flags to the community canisters ([#9088](https://github.com/open-chat-labs/open-chat/pull/9088))
 ### Added
 - Add `set_group_moderation_flags` endpoint and filter group search by moderation flags ([#9089](https://github.com/open-chat-labs/open-chat/pull/9089))
+- Add `c2c_csam_detected` endpoint forwarding CSAM detections from groups/communities to user_index ([#9093](https://github.com/open-chat-labs/open-chat/pull/9093))
 
 ## [[2.0.1932](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1932-group_index)] - 2025-12-04
 

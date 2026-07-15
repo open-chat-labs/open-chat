@@ -305,6 +305,8 @@ pub struct MessageInternal {
     pub block_level_markdown: bool,
     #[serde(rename = "og", default, skip_serializing_if = "Vec::is_empty")]
     pub og_previews: Vec<OgPreview>,
+    #[serde(rename = "mf", default, skip_serializing_if = "is_default")]
+    pub moderation_flags: u32,
 }
 
 impl MessageInternal {
@@ -331,6 +333,7 @@ impl MessageInternal {
             thread_summary: self.thread_summary.as_ref().map(|t| t.hydrate(my_user_id)),
             block_level_markdown: self.block_level_markdown,
             og_previews: self.og_previews,
+            moderation_flags: self.moderation_flags,
         }
     }
 
@@ -379,6 +382,7 @@ impl MessageInternal {
                 metrics.incr(MetricKey::MessageReminders, 1);
             }
             MessageContentType::ReportedMessage => {}
+            MessageContentType::ModerationReport => {}
             MessageContentType::P2PSwap => {
                 metrics.incr(MetricKey::P2pSwaps, 1);
             }
@@ -603,6 +607,7 @@ mod tests {
             forwarded: false,
             block_level_markdown: false,
             og_previews: Vec::new(),
+            moderation_flags: 0,
         };
 
         let message_bytes_len = msgpack::serialize_then_unwrap(&message).len();

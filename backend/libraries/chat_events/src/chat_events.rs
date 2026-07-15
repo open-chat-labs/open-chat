@@ -21,11 +21,12 @@ use types::{
     ChatEventType, ChatType, CompletedCryptoTransaction, DiamondMembershipStatus, DirectChatCreated, EventContext, EventIndex,
     EventMetaData, EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated,
     GroupFrozen, GroupUnfrozen, HydratedMention, Mention, Message, MessageEditedEventPayload, MessageEventPayload, MessageId,
-    MessageIndex, MessageMatch, MessageTippedEventPayload, Milliseconds, MultiUserChat, OCResult, OgPreview, OptionUpdate,
-    P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction,
-    PollVotes, ProposalRewardStatus, ProposalUpdate, Reaction, ReactionAddedEventPayload, RegisterVoteResult,
-    ReserveP2PSwapSuccess, SenderContext, Tally, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall,
-    VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VideoCallType, VoteOperation,
+    MessageIndex, MessageMatch, MessageTippedEventPayload, Milliseconds, ModerationCategories, ModerationReportStatus,
+    MultiUserChat, OCResult, OgPreview, OptionUpdate, P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload,
+    P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalRewardStatus, ProposalUpdate, Reaction,
+    ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess, SenderContext, Tally, TimestampMillis,
+    TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence,
+    VideoCallType, VoteOperation,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -208,6 +209,7 @@ impl ChatEvents {
             forwarded: args.forwarded,
             block_level_markdown: args.block_level_markdown,
             og_previews: args.og_previews,
+            moderation_flags: 0,
         };
 
         add_to_metrics(
@@ -803,6 +805,70 @@ impl ChatEvents {
             .iter()
             .map(|(idx, tally)| (*idx, tally.clone()))
             .collect()
+    }
+
+    pub fn flag_message(
+        &mut self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        categories: ModerationCategories,
+        now: TimestampMillis,
+    ) -> OCResult<EventIndex> {
+        match self.update_event(
+            thread_root_message_index,
+            message_id.into(),
+            EventIndex::default(),
+            Some(now),
+            |event| {
+                if let ChatEventInternal::Message(m) = &mut event.event {
+                    if m.moderation_flags == categories.bits() {
+                        Err(UpdateEventError::NoChange(()))
+                    } else {
+                        m.moderation_flags = categories.bits();
+                        Ok(())
+                    }
+                } else {
+                    Err(UpdateEventError::NotFound)
+                }
+            },
+        ) {
+            Ok(result) => Ok(result.event_index),
+            Err(UpdateEventError::NoChange(_)) => Err(OCErrorCode::NoChange.into()),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::MessageNotFound.into()),
+        }
+    }
+
+    pub fn update_moderation_report_status(
+        &mut self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        status: ModerationReportStatus,
+        now: TimestampMillis,
+    ) -> OCResult<()> {
+        match self.update_event(
+            thread_root_message_index,
+            message_id.into(),
+            EventIndex::default(),
+            Some(now),
+            |event| {
+                if let ChatEventInternal::Message(m) = &mut event.event
+                    && let MessageContentInternal::ModerationReport(report) = &mut m.content
+                {
+                    if report.status == status {
+                        Err(UpdateEventError::NoChange(()))
+                    } else {
+                        report.status = status;
+                        Ok(())
+                    }
+                } else {
+                    Err(UpdateEventError::NotFound)
+                }
+            },
+        ) {
+            Ok(_) => Ok(()),
+            Err(UpdateEventError::NoChange(_)) => Err(OCErrorCode::NoChange.into()),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::MessageNotFound.into()),
+        }
     }
 
     pub fn add_reaction<P: EventPusher>(

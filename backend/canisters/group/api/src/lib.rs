@@ -23,6 +23,7 @@ pub enum LocalIndexEvent {
     NameChanged(NameChanged),
     VerifiedChanged(VerifiedChanged),
     ModerationFlagsChanged(ModerationFlagsChanged),
+    OpenAIApiKeyUpdated(Option<String>),
     UserDeleted(UserId),
     BotUpdated(BotDefinitionUpdate),
     BotRemoved(UserId),

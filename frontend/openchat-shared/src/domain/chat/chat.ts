@@ -92,6 +92,7 @@ export type MessageContent =
     | AudioContent
     | DeletedContent
     | BlockedContent
+    | ModerationReportContent
     | PlaceholderContent
     | BotPlaceholderContent
     | PollContent
@@ -643,6 +644,30 @@ export const BlockedContentSchema = Type.Object({
 });
 export type BlockedContent = Static<typeof BlockedContentSchema>;
 
+export type ModerationReportContent = {
+    kind: "moderation_report_content";
+    reportIndex: bigint | undefined;
+    chatId: ChatIdentifier;
+    threadRootMessageIndex: number | undefined;
+    messageIndex: number;
+    messageId: bigint;
+    sender: string;
+    reporters: string[];
+    flaggedCategories: number;
+    autoSanctioned: boolean;
+    contentExcerpt: string | undefined;
+    reportedAt: bigint;
+    status: ModerationReportStatus;
+};
+
+export type ModerationReportStatus =
+    | { kind: "pending" }
+    | { kind: "upheld"; moderator: string; timestamp: bigint }
+    | { kind: "upheld_as_csam"; moderator: string; timestamp: bigint }
+    | { kind: "dismissed"; moderator: string; timestamp: bigint };
+
+export type ModerationVerdict = "upheld" | "upheld_as_csam" | "dismissed";
+
 export const PollConfigSchema = Type.Object({
     allowMultipleVotesPerUser: Type.Boolean(),
     allowUserToChangeVote: Type.Boolean(),
@@ -801,6 +826,7 @@ export type Message<T extends MessageContent = MessageContent> = {
     senderContext?: SenderContext;
     ogPreviews: OgPreview[];
     messagePreviews: RehydratedMessagePreview[];
+    moderationFlags?: number;
 };
 
 export type BotContextCommand = {

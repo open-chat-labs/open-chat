@@ -70,6 +70,7 @@ import type {
     RemoveMemberResponse,
     ResetInviteCodeResponse,
     SendMessageResponse,
+    ModerationVerdict,
     SetCommunityModerationFlagsResponse,
     SetGroupModerationFlagsResponse,
     SetGroupUpgradeConcurrencyResponse,
@@ -379,6 +380,9 @@ export type WorkerRequest =
     | ConvertGroupToCommunity
     | ImportGroupToCommunity
     | SetModerationFlags
+    | SetOpenAIApiKey
+    | SetInternalModerationChannel
+    | ResolveModerationReport
     | ChangeCommunityRole
     | SetCommunityIndexes
     | UpdateRegistry
@@ -806,6 +810,22 @@ type SetCommunityIndexes = {
 type SetModerationFlags = {
     kind: "setModerationFlags";
     flags: number;
+};
+
+type SetOpenAIApiKey = {
+    kind: "setOpenAIApiKey";
+    apiKey: string | undefined;
+};
+
+type SetInternalModerationChannel = {
+    kind: "setInternalModerationChannel";
+    channel: { communityId: string; channelId: number } | undefined;
+};
+
+type ResolveModerationReport = {
+    kind: "resolveModerationReport";
+    reportIndex: bigint;
+    verdict: ModerationVerdict;
 };
 
 type ImportGroupToCommunity = {
@@ -2466,6 +2486,12 @@ export type WorkerResult<T> = T extends Init
     : T extends UpdateRegistry
     ? [RegistryValue, boolean]
     : T extends SetCommunityIndexes
+    ? boolean
+    : T extends SetOpenAIApiKey
+    ? boolean
+    : T extends SetInternalModerationChannel
+    ? boolean
+    : T extends ResolveModerationReport
     ? boolean
     : T extends CreateUserGroup
     ? CreateUserGroupResponse
