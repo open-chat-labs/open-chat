@@ -1651,6 +1651,7 @@ export function apiMessageContent(domain: MessageContent): TMessageContentInitia
         case "message_reminder_content":
         case "message_reminder_created_content":
         case "reported_message_content":
+        case "moderation_report_content":
         case "p2p_swap_content":
         case "encrypted_content":
             throw new Error(`Incorrectly attempting to send {domain.kind} content to the server`);

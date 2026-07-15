@@ -26,6 +26,7 @@ import type {
     UserSummary,
     UserSummaryUpdate,
 } from "@shared";
+import { toBigInt32 } from "@shared";
 import {
     mergeUserSummaryWithUpdates,
     offline,
@@ -91,7 +92,6 @@ import {
     mapOptional,
     principalBytesToString,
     principalStringToBytes,
-    toBigInt32,
     toVoid,
 } from "../../utils/mapping";
 import type { UserDb } from "../../utils/userCache";
@@ -200,6 +200,10 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             },
             (resp) => resp === "Success",
             UserIndexSetInternalModerationChannelArgs,
+            UnitResult,
+        );
+    }
+
     resolveModerationReport(reportIndex: bigint, verdict: ModerationVerdict): Promise<boolean> {
         return this.update(
             "resolve_moderation_report",
