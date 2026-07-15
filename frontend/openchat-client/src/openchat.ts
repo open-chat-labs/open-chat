@@ -5643,7 +5643,12 @@ export class OpenChat {
     }
 
     searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
-        return this.#worker.send({ kind: "searchGroups", searchTerm, maxResults });
+        return this.#worker.send({
+            kind: "searchGroups",
+            searchTerm,
+            flags: moderationFlagsEnabledStore.value,
+            maxResults,
+        });
     }
 
     exploreBots(
@@ -6273,6 +6278,13 @@ export class OpenChat {
     setCommunityModerationFlags(communityId: string, flags: number): Promise<boolean> {
         return this.#worker
             .send({ kind: "setCommunityModerationFlags", communityId, flags })
+            .then((resp) => resp === "success")
+            .catch(() => false);
+    }
+
+    setGroupModerationFlags(chatId: string, flags: number): Promise<boolean> {
+        return this.#worker
+            .send({ kind: "setGroupModerationFlags", chatId, flags })
             .then((resp) => resp === "success")
             .catch(() => false);
     }

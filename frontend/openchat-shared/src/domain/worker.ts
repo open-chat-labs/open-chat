@@ -71,6 +71,7 @@ import type {
     ResetInviteCodeResponse,
     SendMessageResponse,
     SetCommunityModerationFlagsResponse,
+    SetGroupModerationFlagsResponse,
     SetGroupUpgradeConcurrencyResponse,
     SetPinNumberResponse,
     SetVideoCallPresenceResponse,
@@ -342,6 +343,7 @@ export type WorkerRequest =
     | ClaimPrize
     | PayForDiamondMembership
     | SetCommunityModerationFlags
+    | SetGroupModerationFlags
     | SetGroupUpgradeConcurrency
     | SetCommunityUpgradeConcurrency
     | SetUserUpgradeConcurrency
@@ -1026,6 +1028,7 @@ type ExploreBots = {
 
 type SearchGroups = {
     searchTerm: string;
+    flags: number;
     maxResults: number;
     kind: "searchGroups";
 };
@@ -1457,6 +1460,12 @@ type SetCommunityModerationFlags = {
     communityId: string;
     flags: number;
     kind: "setCommunityModerationFlags";
+};
+
+type SetGroupModerationFlags = {
+    chatId: string;
+    flags: number;
+    kind: "setGroupModerationFlags";
 };
 
 type SetGroupUpgradeConcurrency = {
@@ -2376,6 +2385,8 @@ export type WorkerResult<T> = T extends Init
     ? UnsuspendUserResponse
     : T extends SetCommunityModerationFlags
     ? SetCommunityModerationFlagsResponse
+    : T extends SetGroupModerationFlags
+    ? SetGroupModerationFlagsResponse
     : T extends SetGroupUpgradeConcurrency
     ? SetGroupUpgradeConcurrencyResponse
     : T extends SetCommunityUpgradeConcurrency

@@ -178,6 +178,7 @@
             freezeGroup,
             removeHotGroupExclusion,
             setCommunityModerationFlags,
+            setGroupModerationFlags,
             unfreezeGroup,
             addMessageFilter,
             removeMessageFilter,
@@ -351,6 +352,16 @@
                 console.log("Community moderation flags updated", communityId);
             } else {
                 console.log("Failed to set community moderation flags", communityId);
+            }
+        });
+    }
+
+    function setGroupModerationFlags(chatId: string, flags: number): void {
+        client.setGroupModerationFlags(chatId, flags).then((success) => {
+            if (success) {
+                console.log("Group moderation flags updated", chatId);
+            } else {
+                console.log("Failed to set group moderation flags", chatId);
             }
         });
     }
