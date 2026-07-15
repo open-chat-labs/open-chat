@@ -20,7 +20,16 @@ use user_index_canister::c2c_report_message::{Response::*, *};
 fn c2c_report_message(args: Args) -> Response {
     match mutate_state(|state| add_report(&args, state)) {
         Ok(report_index) => {
-            ic_cdk::futures::spawn(process_report(args, report_index));
+            // If the message has already been classified by the active moderation pipeline (only
+            // public messages are, and only flagged categories are stored) then reuse that
+            // judgement rather than calling the OpenAI API again
+            if args.message.moderation_flags != 0
+                && let Some(categories) = ModerationCategories::from_bits(args.message.moderation_flags)
+            {
+                mutate_state(|state| handle_moderation_result(args, report_index, categories, state));
+            } else {
+                ic_cdk::futures::spawn(process_report(args, report_index));
+            }
             Success
         }
         Err(response) => response,
