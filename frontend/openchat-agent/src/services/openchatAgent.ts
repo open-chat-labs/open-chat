@@ -2152,6 +2152,20 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.getCurrentUser();
     }
 
+    setOpenAIApiKey(apiKey: string | undefined): Promise<boolean> {
+        if (offline()) return Promise.resolve(false);
+
+        return this._userIndexClient.setOpenAIApiKey(apiKey);
+    }
+
+    setInternalModerationChannel(
+        channel: { communityId: string; channelId: number } | undefined,
+    ): Promise<boolean> {
+        if (offline()) return Promise.resolve(false);
+
+        return this._userIndexClient.setInternalModerationChannel(channel);
+    }
+
     setModerationFlags(flags: number): Promise<boolean> {
         if (offline()) return Promise.resolve(false);
 

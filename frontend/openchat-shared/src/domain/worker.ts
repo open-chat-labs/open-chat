@@ -377,6 +377,8 @@ export type WorkerRequest =
     | ConvertGroupToCommunity
     | ImportGroupToCommunity
     | SetModerationFlags
+    | SetOpenAIApiKey
+    | SetInternalModerationChannel
     | ChangeCommunityRole
     | SetCommunityIndexes
     | UpdateRegistry
@@ -804,6 +806,16 @@ type SetCommunityIndexes = {
 type SetModerationFlags = {
     kind: "setModerationFlags";
     flags: number;
+};
+
+type SetOpenAIApiKey = {
+    kind: "setOpenAIApiKey";
+    apiKey: string | undefined;
+};
+
+type SetInternalModerationChannel = {
+    kind: "setInternalModerationChannel";
+    channel: { communityId: string; channelId: number } | undefined;
 };
 
 type ImportGroupToCommunity = {
@@ -2455,6 +2467,10 @@ export type WorkerResult<T> = T extends Init
     : T extends UpdateRegistry
     ? [RegistryValue, boolean]
     : T extends SetCommunityIndexes
+    ? boolean
+    : T extends SetOpenAIApiKey
+    ? boolean
+    : T extends SetInternalModerationChannel
     ? boolean
     : T extends CreateUserGroup
     ? CreateUserGroupResponse
