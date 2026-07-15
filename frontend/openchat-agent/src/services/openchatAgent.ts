@@ -2167,6 +2167,8 @@ export class OpenChatAgent extends EventTarget {
         if (offline()) return Promise.resolve(false);
 
         return this._userIndexClient.setInternalModerationChannel(channel);
+    }
+
     resolveModerationReport(reportIndex: bigint, verdict: ModerationVerdict): Promise<boolean> {
         if (offline()) return Promise.resolve(false);
 
