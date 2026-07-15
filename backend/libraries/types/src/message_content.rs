@@ -1,8 +1,8 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
-    Achievement, CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, EncryptionKey, MessageIndex,
-    MessagePermission, Milliseconds, ModerationInput, P2PSwapStatus, PendingCryptoTransaction, ProposalContent,
-    TimestampMillis, TokenInfo, TotalVotes, User, UserId, VideoCallType,
+    Achievement, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, EncryptionKey,
+    MessageId, MessageIndex, MessagePermission, Milliseconds, ModerationInput, P2PSwapStatus, PendingCryptoTransaction,
+    ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId, VideoCallType,
 };
 use candid::CandidType;
 use oc_error_codes::{OCError, OCErrorCode};
@@ -54,6 +54,7 @@ pub enum MessageContent {
     MessageReminderCreated(MessageReminderCreatedContent),
     MessageReminder(MessageReminderContent),
     ReportedMessage(ReportedMessage),
+    ModerationReport(ModerationReportContent),
     P2PSwap(P2PSwapContent),
     VideoCall(VideoCallContent),
     Encrypted(EncryptedContent),
@@ -78,6 +79,7 @@ pub enum MessageContentType {
     MessageReminderCreated,
     MessageReminder,
     ReportedMessage,
+    ModerationReport,
     P2PSwap,
     VideoCall,
     Custom(String),
@@ -169,6 +171,7 @@ impl MessageContent {
             | MessageContent::MessageReminderCreated(_)
             | MessageContent::MessageReminder(_)
             | MessageContent::ReportedMessage(_)
+            | MessageContent::ModerationReport(_)
             | MessageContent::P2PSwap(_)
             | MessageContent::VideoCall(_)
             | MessageContent::Encrypted(_)
@@ -196,6 +199,7 @@ impl MessageContent {
             | MessageContent::MessageReminderCreated(_)
             | MessageContent::MessageReminder(_)
             | MessageContent::ReportedMessage(_)
+            | MessageContent::ModerationReport(_)
             | MessageContent::VideoCall(_)
             | MessageContent::Encrypted(_)
             | MessageContent::Custom(_) => None,
@@ -274,6 +278,7 @@ impl MessageContent {
             | MessageContent::MessageReminderCreated(_)
             | MessageContent::MessageReminder(_)
             | MessageContent::ReportedMessage(_)
+            | MessageContent::ModerationReport(_)
             | MessageContent::P2PSwap(_)
             | MessageContent::VideoCall(_)
             | MessageContent::Encrypted(_)
@@ -298,6 +303,7 @@ impl MessageContent {
             | MessageContent::MessageReminderCreated(_)
             | MessageContent::MessageReminder(_)
             | MessageContent::ReportedMessage(_)
+            | MessageContent::ModerationReport(_)
             | MessageContent::P2PSwap(_)
             | MessageContent::VideoCall(_)
             | MessageContent::Encrypted(_)
@@ -406,6 +412,7 @@ impl From<MessageContent> for MessageContentInitial {
             MessageContent::MessageReminderCreated(r) => MessageContentInitial::MessageReminderCreated(r),
             MessageContent::MessageReminder(r) => MessageContentInitial::MessageReminder(r),
             MessageContent::ReportedMessage(_) => panic!("Cannot send a 'reported message' message"),
+            MessageContent::ModerationReport(_) => panic!("Cannot send a 'moderation report' message"),
             MessageContent::Encrypted(e) => MessageContentInitial::Encrypted(e),
             MessageContent::Custom(c) => MessageContentInitial::Custom(c),
             MessageContent::P2PSwap(_) | MessageContent::VideoCall(_) => unimplemented!(),
@@ -472,6 +479,7 @@ impl MessageContentType {
             MessageContentType::MessageReminderCreated => Some(Achievement::SentReminder),
             MessageContentType::MessageReminder => Some(Achievement::SentReminder),
             MessageContentType::ReportedMessage => None,
+            MessageContentType::ModerationReport => None,
             MessageContentType::P2PSwap => Some(Achievement::SentP2PSwapOffer),
             MessageContentType::VideoCall => Some(Achievement::StartedCall),
             MessageContentType::Custom(c) => {
@@ -503,6 +511,7 @@ impl Display for MessageContentType {
             MessageContentType::MessageReminderCreated => "MessageReminderCreated",
             MessageContentType::MessageReminder => "MessageReminder",
             MessageContentType::ReportedMessage => "ReportedMessage",
+            MessageContentType::ModerationReport => "ModerationReport",
             MessageContentType::P2PSwap => "P2PSwap",
             MessageContentType::VideoCall => "VideoCall",
             MessageContentType::Custom(c) => c,
@@ -530,6 +539,7 @@ impl From<&MessageContent> for MessageContentType {
             MessageContent::MessageReminderCreated(_) => MessageContentType::MessageReminderCreated,
             MessageContent::MessageReminder(_) => MessageContentType::MessageReminder,
             MessageContent::ReportedMessage(_) => MessageContentType::ReportedMessage,
+            MessageContent::ModerationReport(_) => MessageContentType::ModerationReport,
             MessageContent::P2PSwap(_) => MessageContentType::P2PSwap,
             MessageContent::VideoCall(_) => MessageContentType::VideoCall,
             MessageContent::Encrypted(e) => e.content_type.clone().into(),
@@ -732,6 +742,45 @@ pub struct MessageReminderContent {
 pub struct ReportedMessage {
     pub reports: Vec<MessageReport>,
     pub count: u32,
+}
+
+// A moderation alert posted by the user_index into the internal moderation channel
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ModerationReportContent {
+    // The index of the report on the user_index, used to resolve the report with a verdict.
+    // None if this alert came from the automated pipeline (eg. a CSAM detection) in which case
+    // there is nothing to resolve.
+    pub report_index: Option<u64>,
+    pub chat_id: Chat,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_index: MessageIndex,
+    pub message_id: MessageId,
+    pub sender: UserId,
+    // Empty if the alert was triggered by the automated moderation pipeline
+    pub reporters: Vec<UserId>,
+    pub flagged_categories: u32,
+    // True if the CSAM auto-sanction has already been applied
+    pub auto_sanctioned: bool,
+    pub content_excerpt: Option<String>,
+    pub reported_at: TimestampMillis,
+    pub status: ModerationReportStatus,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ModerationReportStatus {
+    Pending,
+    Upheld(ModerationReportResolution),
+    UpheldAsCsam(ModerationReportResolution),
+    Dismissed(ModerationReportResolution),
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ModerationReportResolution {
+    pub moderator: UserId,
+    pub timestamp: TimestampMillis,
 }
 
 #[ts_export]

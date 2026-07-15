@@ -2,7 +2,8 @@ use chat_events::deep_message_links;
 use local_user_index_canister::{OpenChatBotMessageV2, UserIndexEvent};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{Chat, MessageContentInitial, MessageId, MessageIndex, ModerationCategories, TextContent, TimestampMillis, UserId};
+use types::{Chat, MessageContentInitial, MessageId, MessageIndex, TextContent, TimestampMillis, UserId};
+use user_index_canister::resolve_moderation_report::ModerationVerdict;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct ReportedMessages {
@@ -41,6 +42,7 @@ impl ReportedMessages {
                 already_deleted: args.already_deleted,
                 reports: HashMap::from([(args.reporter, args.timestamp)]),
                 outcome: None,
+                moderation_channel_message_id: None,
             });
             AddReportResult::New(new_index as u64)
         }
@@ -73,6 +75,39 @@ impl ReportedMessages {
     pub fn iter(&self) -> impl Iterator<Item = &ReportedMessage> {
         self.messages.iter()
     }
+
+    pub fn set_moderation_channel_message_id(&mut self, report_index: u64, message_id: MessageId) {
+        if let Some(message) = self.messages.get_mut(report_index as usize) {
+            message.moderation_channel_message_id = Some(message_id);
+        }
+    }
+
+    pub fn record_human_verdict(&mut self, report_index: u64, human_verdict: HumanVerdict) -> RecordVerdictResult {
+        let Some(message) = self.messages.get_mut(report_index as usize) else {
+            return RecordVerdictResult::ReportNotFound;
+        };
+
+        match &mut message.outcome {
+            Some(ReportOutcome::Automated(outcome)) => {
+                if outcome.human_verdict.is_some() {
+                    RecordVerdictResult::AlreadyResolved
+                } else if !matches!(outcome.action, ModerationAction::EscalatedForHumanReview) {
+                    RecordVerdictResult::NotEscalated
+                } else {
+                    outcome.human_verdict = Some(human_verdict);
+                    RecordVerdictResult::Success(Box::new(message.clone()))
+                }
+            }
+            _ => RecordVerdictResult::NotEscalated,
+        }
+    }
+}
+
+pub enum RecordVerdictResult {
+    Success(Box<ReportedMessage>),
+    ReportNotFound,
+    AlreadyResolved,
+    NotEscalated,
 }
 
 #[derive(Serialize, Debug)]
@@ -117,6 +152,25 @@ pub struct ReportedMessage {
     pub already_deleted: bool,
     pub reports: HashMap<UserId, TimestampMillis>,
     pub outcome: Option<ReportOutcome>,
+    // The id of the alert message posted into the internal moderation channel
+    #[serde(default)]
+    pub moderation_channel_message_id: Option<MessageId>,
+}
+
+impl ReportedMessage {
+    // True if this message was judged to have broken the platform rules
+    pub fn in_breach(&self) -> bool {
+        match &self.outcome {
+            Some(ReportOutcome::Modclub(o)) => o.approved < o.rejected,
+            Some(ReportOutcome::Automated(a)) => {
+                matches!(a.action, ModerationAction::AutoSanctioned)
+                    || a.human_verdict
+                        .as_ref()
+                        .is_some_and(|v| matches!(v.verdict, ModerationVerdict::Upheld | ModerationVerdict::UpheldAsCsam))
+            }
+            None => false,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -133,6 +187,16 @@ pub struct AutomatedOutcome {
     pub timestamp: TimestampMillis,
     pub flagged_categories: u32,
     pub action: ModerationAction,
+    // Set once a platform moderator has resolved an escalated report
+    #[serde(default)]
+    pub human_verdict: Option<HumanVerdict>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct HumanVerdict {
+    pub verdict: ModerationVerdict,
+    pub moderator: UserId,
+    pub timestamp: TimestampMillis,
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
@@ -191,6 +255,33 @@ pub fn build_message_to_reporter(reported_message: &ReportedMessage, reporter: U
     build_oc_bot_message(text, reporter)
 }
 
+pub fn build_verdict_message_to_reporter(
+    reported_message: &ReportedMessage,
+    verdict: ModerationVerdict,
+    reporter: UserId,
+) -> UserIndexEvent {
+    let link = build_message_link(reported_message);
+    let text = match verdict {
+        ModerationVerdict::Upheld | ModerationVerdict::UpheldAsCsam => format!(
+            "The OpenChat moderation team reviewed [the message you reported]({link}) and confirmed that it broke [the platform rules](https://oc.app/guidelines?section=3). The message has been removed and the sender sanctioned. Thank you for helping to keep OpenChat safe."
+        ),
+        ModerationVerdict::Dismissed => format!(
+            "The OpenChat moderation team reviewed [the message you reported]({link}) and decided that it did not break [the platform rules](https://oc.app/guidelines?section=3)."
+        ),
+    };
+
+    build_oc_bot_message(text, reporter)
+}
+
+pub fn build_verdict_message_to_sender(reported_message: &ReportedMessage) -> UserIndexEvent {
+    let text = format!(
+        "Your [message]({}) was reported by another user and the OpenChat moderation team confirmed that it broke [the platform rules](https://oc.app/guidelines?section=3). The message has been removed and your account has been suspended.",
+        build_message_link(reported_message),
+    );
+
+    build_oc_bot_message(text, reported_message.sender)
+}
+
 pub fn build_message_to_sender(reported_message: &ReportedMessage) -> UserIndexEvent {
     let text = format!(
         "Your [message]({}) was reported by another user and automated moderation determined that it contained content which breaks [the platform rules](https://oc.app/guidelines?section=3). The message has been removed and your account has been suspended.",
@@ -198,23 +289,6 @@ pub fn build_message_to_sender(reported_message: &ReportedMessage) -> UserIndexE
     );
 
     build_oc_bot_message(text, reported_message.sender)
-}
-
-pub fn category_names(categories: ModerationCategories) -> Vec<&'static str> {
-    [
-        (ModerationCategories::SEXUAL, "sexual"),
-        (ModerationCategories::SEXUAL_MINORS, "sexual/minors"),
-        (ModerationCategories::VIOLENCE, "violence"),
-        (ModerationCategories::VIOLENCE_GRAPHIC, "violence/graphic"),
-        (ModerationCategories::HARASSMENT, "harassment"),
-        (ModerationCategories::HARASSMENT_THREATENING, "harassment/threatening"),
-        (ModerationCategories::SELF_HARM, "self-harm"),
-        (ModerationCategories::ILLICIT, "illicit"),
-    ]
-    .into_iter()
-    .filter(|(c, _)| categories.contains(*c))
-    .map(|(_, name)| name)
-    .collect()
 }
 
 fn build_oc_bot_message(text: String, user_id: UserId) -> UserIndexEvent {
@@ -327,6 +401,7 @@ mod tests {
             timestamp: 1706107419000,
             flagged_categories: 2,
             action: ModerationAction::AutoSanctioned,
+            human_verdict: None,
         });
 
         let bytes = msgpack::serialize_then_unwrap(&automated);
@@ -352,6 +427,7 @@ mod tests {
             timestamp: 1706107419000,
             flagged_categories: 0,
             action: ModerationAction::EscalatedForHumanReview,
+            human_verdict: None,
         }
     }
 }

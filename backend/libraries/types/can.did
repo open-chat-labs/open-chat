@@ -294,6 +294,33 @@ type Message = record {
     moderation_flags : nat32;
 };
 
+type ModerationReportContent = record {
+    report_index : opt nat64;
+    chat_id : Chat;
+    thread_root_message_index : opt MessageIndex;
+    message_index : MessageIndex;
+    message_id : MessageId;
+    sender : UserId;
+    reporters : vec UserId;
+    flagged_categories : nat32;
+    auto_sanctioned : bool;
+    content_excerpt : opt text;
+    reported_at : TimestampMillis;
+    status : ModerationReportStatus;
+};
+
+type ModerationReportStatus = variant {
+    Pending;
+    Upheld : ModerationReportResolution;
+    UpheldAsCsam : ModerationReportResolution;
+    Dismissed : ModerationReportResolution;
+};
+
+type ModerationReportResolution = record {
+    moderator : UserId;
+    timestamp : TimestampMillis;
+};
+
 type MessageEventWrapper = record {
     index : EventIndex;
     timestamp : TimestampMillis;
@@ -546,6 +573,7 @@ type MessageContent = variant {
     PrizeWinner : PrizeWinnerContent;
     MessageReminderCreated : MessageReminderCreated;
     MessageReminder : MessageReminder;
+    ModerationReport : ModerationReportContent;
     P2PSwap : P2PSwapContent;
     VideoCall : VideoCallContent;
     Encrypted : EncryptedContent;

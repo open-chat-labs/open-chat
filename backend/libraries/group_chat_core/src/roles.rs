@@ -127,7 +127,8 @@ impl GroupRoleInternal {
             | MessageContentType::MessageReminderCreated
             | MessageContentType::MessageReminder
             | MessageContentType::PrizeWinner
-            | MessageContentType::ReportedMessage => GroupPermissionRole::None,
+            | MessageContentType::ReportedMessage
+            | MessageContentType::ModerationReport => GroupPermissionRole::None,
         };
 
         self.is_permitted(sender_role)
