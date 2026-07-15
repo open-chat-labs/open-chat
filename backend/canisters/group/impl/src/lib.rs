@@ -562,7 +562,6 @@ struct Data {
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     verified: Timestamped<bool>,
     #[serde(default)]
-    #[serde(default)]
     moderation_flags: Timestamped<u32>,
     #[serde(default)]
     pub openai_api_key: Option<String>,

@@ -545,7 +545,6 @@ struct Data {
     bots: InstalledBots,
     verified: Timestamped<bool>,
     #[serde(default)]
-    #[serde(default)]
     moderation_flags: Timestamped<u32>,
     #[serde(default)]
     pub openai_api_key: Option<String>,
