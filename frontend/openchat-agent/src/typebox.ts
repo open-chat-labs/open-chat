@@ -2012,6 +2012,8 @@ export type UserIndexSetInternalModerationChannelArgs = Static<
 >;
 export const UserIndexSetInternalModerationChannelArgs = Type.Object({
     channel: Type.Optional(UserIndexInternalModerationChannel),
+});
+
 export type UserIndexResolveModerationReportVerdict = Static<
     typeof UserIndexResolveModerationReportVerdict
 >;
