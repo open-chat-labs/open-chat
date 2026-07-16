@@ -240,24 +240,27 @@ pub fn suspend_sender_for_upheld_violation(sender: UserId, now: TimestampMillis,
 }
 
 fn suspend(sender: UserId, duration: Option<u64>, reason: String, now: TimestampMillis, state: &mut RuntimeState) {
-    if let Some(user) = state.data.users.get_by_user_id(&sender) {
-        if user
-            .suspension_details
-            .as_ref()
-            .is_some_and(|d| matches!(d.duration, SuspensionDuration::Indefinitely))
-        {
-            return;
-        }
+    let Some(user) = state.data.users.get_by_user_id(&sender) else {
+        error!(%sender, "Cannot suspend message sender, user not found");
+        return;
+    };
 
-        state.data.timer_jobs.enqueue_job(
-            TimerJob::SetUserSuspended(SetUserSuspended {
-                user_id: sender,
-                duration,
-                reason,
-                suspended_by: OPENCHAT_BOT_USER_ID,
-            }),
-            now,
-            now,
-        );
+    if user
+        .suspension_details
+        .as_ref()
+        .is_some_and(|d| matches!(d.duration, SuspensionDuration::Indefinitely))
+    {
+        return;
     }
+
+    state.data.timer_jobs.enqueue_job(
+        TimerJob::SetUserSuspended(SetUserSuspended {
+            user_id: sender,
+            duration,
+            reason,
+            suspended_by: OPENCHAT_BOT_USER_ID,
+        }),
+        now,
+        now,
+    );
 }
