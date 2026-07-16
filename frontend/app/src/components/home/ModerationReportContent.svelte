@@ -1,13 +1,16 @@
 <script lang="ts">
     import {
+        allUsersStore,
         platformModeratorStore,
         routeForMessage,
         type ModerationReportContent,
         type ModerationVerdict,
         type OpenChat,
     } from "@client";
+    import Markdown from "@src/components_shared/Markdown.svelte";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import Button from "../Button.svelte";
     import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -31,6 +34,12 @@
 
     let busy = $state(false);
     let failed = $state(false);
+    let moderatorId = $derived(
+        content.status.kind !== "pending" ? content.status.moderator : undefined,
+    );
+    let moderator = $derived(moderatorId ? $allUsersStore.get(moderatorId) : undefined);
+    let sender = $derived($allUsersStore.get(content.sender)?.username ?? content.sender);
+    let reporters = $derived(content.reporters.map((r) => $allUsersStore.get(r)?.username ?? r));
 
     let csam = $derived((content.flaggedCategories & 2) !== 0);
     let categories = $derived(
@@ -49,7 +58,9 @@
         ),
     );
     let canResolve = $derived(
-        $platformModeratorStore && content.reportIndex !== undefined && content.status.kind === "pending",
+        $platformModeratorStore &&
+            content.reportIndex !== undefined &&
+            content.status.kind === "pending",
     );
 
     function resolve(verdict: ModerationVerdict) {
@@ -66,22 +77,25 @@
 <div class="report">
     <div class="header">
         {#if csam}
-            <span class="csam"><Translatable resourceKey={i18nKey("moderationReport.csam")} /></span>
+            <span class="csam"
+                ><Translatable resourceKey={i18nKey("moderationReport.csam")} /></span>
         {/if}
         <Translatable resourceKey={i18nKey("moderationReport.title")} />
     </div>
 
-    <div class="row">
+    <div class="row link">
         <a href={url}><Translatable resourceKey={i18nKey("moderationReport.viewMessage")} /></a>
     </div>
     <div class="row">
-        <Translatable resourceKey={i18nKey("moderationReport.sender")} />: {content.sender}
+        <Translatable resourceKey={i18nKey("moderationReport.sender")} />: {sender}
     </div>
     <div class="row">
-        {#if content.reporters.length === 0}
+        {#if reporters.length === 0}
             <Translatable resourceKey={i18nKey("moderationReport.pipeline")} />
         {:else}
-            <Translatable resourceKey={i18nKey("moderationReport.reporters")} />: {content.reporters.join(", ")}
+            <Translatable resourceKey={i18nKey("moderationReport.reporters")} />: {reporters.join(
+                ", ",
+            )}
         {/if}
     </div>
     {#if categories !== ""}
@@ -94,29 +108,38 @@
             <Translatable resourceKey={i18nKey("moderationReport.autoSanctioned")} />
         </div>
     {/if}
+
     {#if content.contentExcerpt !== undefined}
-        <blockquote class="excerpt">{content.contentExcerpt}</blockquote>
+        <blockquote class="excerpt">
+            <Markdown text={content.contentExcerpt} />
+        </blockquote>
     {/if}
 
     {#if content.status.kind === "upheld" || content.status.kind === "upheld_as_csam"}
         <div class="row resolved">
-            <Translatable resourceKey={i18nKey("moderationReport.upheld", { moderator: content.status.moderator })} />
+            <Translatable
+                resourceKey={i18nKey("moderationReport.upheld", {
+                    moderator: moderator?.username,
+                })} />
         </div>
     {:else if content.status.kind === "dismissed"}
         <div class="row resolved">
-            <Translatable resourceKey={i18nKey("moderationReport.dismissed", { moderator: content.status.moderator })} />
+            <Translatable
+                resourceKey={i18nKey("moderationReport.dismissed", {
+                    moderator: moderator?.username,
+                })} />
         </div>
     {:else if canResolve}
         <div class="actions">
-            <button disabled={busy} onclick={() => resolve("upheld")}>
+            <Button loading={busy} disabled={busy} onClick={() => resolve("upheld")}>
                 <Translatable resourceKey={i18nKey("moderationReport.uphold")} />
-            </button>
-            <button class="danger" disabled={busy} onclick={() => resolve("upheld_as_csam")}>
+            </Button>
+            <Button loading={busy} danger disabled={busy} onClick={() => resolve("upheld_as_csam")}>
                 <Translatable resourceKey={i18nKey("moderationReport.upholdCsam")} />
-            </button>
-            <button disabled={busy} onclick={() => resolve("dismissed")}>
+            </Button>
+            <Button loading={busy} secondary disabled={busy} onClick={() => resolve("dismissed")}>
                 <Translatable resourceKey={i18nKey("moderationReport.dismiss")} />
-            </button>
+            </Button>
         </div>
         {#if failed}
             <div class="row failed">
@@ -130,63 +153,46 @@
     .report {
         display: flex;
         flex-direction: column;
-        gap: toRem(6);
-        padding: toRem(8);
-        font-size: toRem(14);
+        gap: $sp4;
+        padding: $sp3;
     }
     .header {
-        font-weight: 700;
+        @include font(bold, normal, fs-120);
         display: flex;
-        gap: toRem(8);
+        gap: $sp3;
         align-items: center;
     }
     .csam {
+        @include font(bold, normal, fs-100);
         background-color: var(--error);
         color: #ffffff;
         border-radius: toRem(4);
         padding: toRem(1) toRem(6);
-        font-size: toRem(12);
-        font-weight: 700;
     }
     .row {
         color: var(--txt-light, inherit);
         word-break: break-all;
+
+        &.link {
+            color: var(--secondary);
+        }
     }
     .excerpt {
         margin: 0;
-        padding-left: toRem(8);
-        border-left: 2px solid var(--error);
+        padding-left: $sp3;
+        border-left: $sp1 solid var(--error);
         font-style: italic;
         white-space: pre-wrap;
     }
     .resolved {
-        font-weight: 600;
+        font-weight: bold;
     }
     .failed {
         color: var(--error);
     }
     .actions {
         display: flex;
-        gap: toRem(8);
-        margin-top: toRem(4);
-
-        button {
-            cursor: pointer;
-            padding: toRem(4) toRem(12);
-            border-radius: toRem(6);
-            border: 1px solid var(--bd, #999999);
-            background: none;
-            color: inherit;
-
-            &.danger {
-                border-color: var(--error);
-                color: var(--error);
-            }
-
-            &:disabled {
-                opacity: 0.5;
-                cursor: default;
-            }
-        }
+        gap: $sp3;
+        margin-top: $sp2;
     }
 </style>
