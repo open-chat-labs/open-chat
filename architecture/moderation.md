@@ -21,11 +21,13 @@ flowchart LR
         B[User report<br/>report_message]
         C[Moderator verdict<br/>internal channel]
     end
+    L[local_user_index broker<br/>one per subnet]
     O[(OpenAI<br/>Moderation API)]
     F[(Per-message flags<br/>group / community canister)]
     S[Sanctions<br/>delete + suspend via user_index]
     M[Moderation channel<br/>ModerationReport messages]
-    A --> O --> F
+    A --> L --> O
+    L --> F
     B --> O
     B --> F
     B --> M
@@ -82,21 +84,27 @@ Unknown categories returned by OpenAI map to no flags and are logged (`category_
 
 ## 3. Active pipeline (#9091) — every public message gets classified
 
-Sending or editing a message in a *public* group or channel enqueues it for classification. A
-10-second timer job drains the queue in batches and writes the resulting flags back onto the
-message.
+Classification is brokered by the `local_user_index` so that each subnet runs **one** OpenAI
+client instead of one per chat canister. Sending or editing a message in a *public* group or
+channel pushes a `ClassifyMessageRequest` to the local index over the existing (batched,
+retrying) event sync channel. The broker queues it, classifies in batches on a timer, and routes
+the result back as a `MessageClassified` event; the owning canister then stores the flags via
+`flag_message` and fires the CSAM escalation if needed.
 
 ```mermaid
 sequenceDiagram
     participant U as User
     participant G as group / community canister
+    participant L as local_user_index (broker)
     participant O as OpenAI /v1/moderations
     U->>G: send_message / edit_message (public chat)
-    G->>G: enqueue (cap 10k, drop oldest)
+    G-)L: ClassifyMessageRequest (batched event sync)
+    Note over L: per-source fair queue<br/>dedup by message id, caps 2k/source, 20k total
     loop timer, every 10s (backs off to 5 min while failing)
-        G->>G: next_batch - 20 msgs, max 5 with images
-        G->>O: HTTPS outcall - texts batched, images per-message
-        O-->>G: flagged categories per input
+        L->>L: next_batch - 32 msgs round-robin, max 5 with images
+        L->>O: one HTTPS outcall for all texts, images per-message
+        O-->>L: flagged categories per input
+        L-)G: MessageClassified (batched event sync)
         G->>G: flag_message (empty result clears stale flags)
         alt SEXUAL_MINORS flagged
             G->>G: trigger CSAM escalation (see section 5)
@@ -104,19 +112,25 @@ sequenceDiagram
     end
 ```
 
-- **API key distribution** — set once on `user_index` via `set_openai_api_key`, broadcast through
-  `local_user_index` to every group and community canister as a
-  `LocalIndexEvent::OpenAIApiKeyUpdated` event.
+- **Why a broker** — one OpenAI caller per subnet (~a dozen fleet-wide) instead of one per active
+  chat (unbounded): org rate-limit consumption becomes predictable, HTTPS outcall usage aligns
+  with the per-subnet slot budget, and the API key never leaves `user_index` and the local
+  indexes.
+- **Fairness and dedup** — batches are taken round-robin across source canisters so a single busy
+  chat cannot starve the subnet; queued messages are keyed by message id so an edit replaces the
+  queued content instead of classifying the message twice.
 - **Outcalls** — `is_replicated: Some(false)`: one request from a single replica instead of ~13,
   no consensus or transform needed. Acceptable because a bad result either hides a message in the
   app-store build or triggers a CSAM sanction that always alerts a human and is reversible. Cycles
   are charged at the replicated rate and the excess refunded.
-- **Text vs images** — texts for a whole batch go in one call; each image-bearing message is
-  classified separately (text and images in separate calls), so an unreachable blob URL can't
-  block text classification. The message result is the union of category bits.
-- **Resilience** — queue capped at 10k entries (drop-oldest, logged); 3 attempts per message; the
-  job interval backs off exponentially (10s → 5 min) while every call in a batch fails, and resets
-  on the first success.
+- **Text vs images** — texts for a whole batch (from many chats) go in one call; each
+  image-bearing message is classified separately (text and images in separate calls), so an
+  unreachable blob URL can't block text classification. The message result is the union of
+  category bits.
+- **Resilience** — queue capped at 2k per source / 20k total (drop-oldest, logged); 3 attempts per
+  message; the job interval backs off exponentially (10s → 5 min) while every call in a batch
+  fails, and resets on the first success. Requests and results ride the existing idempotent event
+  sync queues, which retry until delivered.
 
 ## 4. Report flow (#9092) — user reports reuse the pipeline's judgement
 
@@ -259,23 +273,30 @@ Known, deliberate limits: quoted excerpts, search results and notifications are 
 
 ## 8. Operations — deploying and running it
 
-- **Upgrade order** — deploy group and community canisters before `local_user_index` starts
-  broadcasting `OpenAIApiKeyUpdated`. An old receiver traps decoding the new event variant; the
-  event batch then retries every 5 minutes and heals itself once the receiver is upgraded, so the
-  order is a smoothness concern, not a correctness one.
+- **Upgrade order** — the pipeline adds two event variants: `MessageClassifyRequest`
+  (group/community → local_user_index) and `MessageClassified` (local_user_index →
+  group/community). A not-yet-upgraded receiver traps decoding an unknown variant; the batched
+  event sync then retries every 5 minutes and heals itself once the receiver is upgraded, so
+  ordering is a smoothness concern, not a correctness one. Upgrading local indexes before
+  groups/communities minimises the retry window.
 - **API key** — `set_openai_api_key` on `user_index` (ingress allowed in `inspect_message`); it
-  fans out from there. No key ⇒ the pipeline queues stay parked and report classification falls
-  back to "no categories" (which still escalates to human review).
+  syncs to the local indexes only — group and community canisters never hold it. No key ⇒ the
+  broker queue stays parked and report classification falls back to "no categories" (which still
+  escalates to human review).
 - **Frontend cache** — the chats IndexedDB cache version bumps to 149 (#9088) and 150 (#9094);
   both clear the chats store so summaries refetch with the new flag fields. If another PR bumps
   the version, take the next free number — two PRs claiming the same version means the second
   deploy's migration never runs.
-- **Costs** — one OpenAI call per text batch (≤20 messages) plus one per image-bearing message;
-  report-path calls only for messages the pipeline hasn't already classified. Single-replica
-  outcalls keep cycle costs at 1/13th of a replicated call.
+- **Costs and rate limits** — one OpenAI call per subnet per tick for all queued texts (≤32
+  messages across all chats) plus one per image-bearing message (≤5 per tick); report-path calls
+  only for messages the pipeline hasn't already classified. With ~a dozen local indexes the
+  fleet's worst-case OpenAI request rate is ~13 × 6/min for texts — comfortably inside org rate
+  limits and predictable. Single-replica outcalls keep cycle costs at 1/13th of a replicated
+  call.
 - **Observability** — dropped queue entries, rate-limited reporters, unknown OpenAI categories and
-  missing users at suspension time are all logged with `warn`/`error`; reporting metrics expose
-  message counts and pending outcomes.
+  missing users at suspension time are all logged with `warn`/`error`; each local index exposes
+  its broker queue length in metrics (`message_moderation_queue_len`), and reporting metrics
+  expose message counts and pending outcomes.
 
 **Still open**: PocketIC integration test for the CSAM path is planned once manual verification
 completes — it should also cover the third-report-of-same-message case (a pre-existing
