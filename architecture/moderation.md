@@ -120,6 +120,44 @@ sequenceDiagram
 
 ## 4. Report flow (#9092) — user reports reuse the pipeline's judgement
 
+The mechanics first — who calls whom when a user reports a message. Reports on group and channel
+messages route via `group_index`; direct-chat reports go straight from the reporter's user
+canister to `user_index` (private content is classified but never flagged, and never deleted —
+the reporter can delete it themselves).
+
+```mermaid
+sequenceDiagram
+    participant R as Reporter
+    participant G as Owning group / community
+    participant GI as group_index
+    participant UI as user_index
+    participant O as OpenAI /v1/moderations
+    participant MC as Moderation channel
+    R->>G: report_message
+    G->>GI: c2c_report_message
+    GI->>UI: c2c_report_message (content + any pipeline flags)
+    Note over UI: dedup + reporter rate limit,<br/>report recorded against sender
+    alt already classified by the pipeline
+        UI->>UI: reuse stored flags
+    else not yet classified
+        UI->>O: classify content (async)
+        O-->>UI: flagged categories
+    end
+    UI-)G: c2c_flag_message (public chats, when flagged)
+    alt CSAM
+        UI-)G: delete message
+        UI->>UI: suspend sender indefinitely (timer job)
+        UI-)MC: post ModerationReport alert (auto-sanctioned)
+    else clean, or human-review categories
+        UI-)MC: post ModerationReport for review
+    else adult only
+        Note over UI: flag only - no sanction, no escalation
+    end
+    UI-)R: OC bot message with the outcome<br/>(sender also notified on CSAM)
+```
+
+And the decision routing in full:
+
 ```mermaid
 flowchart TD
     R[User reports message] --> UC[user canister or group_index]
