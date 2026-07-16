@@ -4185,6 +4185,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_repr",
+ "tracing",
  "types",
  "utils",
 ]
@@ -6369,6 +6370,7 @@ dependencies = [
  "futures",
  "group_canister",
  "group_canister_c2c_client",
+ "group_community_common",
  "http_request",
  "ic-cdk",
  "ic-cdk-timers",
