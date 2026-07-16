@@ -148,7 +148,7 @@
                 <Translatable resourceKey={i18nKey("moderationReport.uphold")} />
             </Button>
             <Button
-                secondary
+                danger
                 disabled={busy}
                 loading={busy}
                 onClick={() => resolve("upheld_as_csam")}>
