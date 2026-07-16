@@ -166,7 +166,11 @@ fn category_to_flag(category: &str) -> ModerationCategories {
         "harassment/threatening" | "hate/threatening" => ModerationCategories::HARASSMENT_THREATENING,
         "self-harm" | "self-harm/intent" | "self-harm/instructions" => ModerationCategories::SELF_HARM,
         "illicit" | "illicit/violent" => ModerationCategories::ILLICIT,
-        _ => ModerationCategories::default(),
+        _ => {
+            // OpenAI may add categories over time; surface them rather than silently ignoring
+            tracing::warn!(category, "Unknown OpenAI moderation category");
+            ModerationCategories::default()
+        }
     }
 }
 

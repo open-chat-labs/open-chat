@@ -48,12 +48,14 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     // Re-classify the edited content
     if state.data.chat.is_public.value {
-        state.data.message_moderation_queue.push_back(PendingMessageModeration {
-            thread_root_message_index: args.thread_root_message_index,
-            message_id: args.message_id,
-            attempts: 0,
-        });
-        crate::jobs::moderate_messages::start_job_if_required(state);
+        crate::jobs::moderate_messages::enqueue(
+            state,
+            PendingMessageModeration {
+                thread_root_message_index: args.thread_root_message_index,
+                message_id: args.message_id,
+                attempts: 0,
+            },
+        );
     }
 
     state.push_bot_notification(result.bot_notification);

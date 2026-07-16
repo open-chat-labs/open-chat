@@ -190,12 +190,14 @@ fn process_send_message_result(
     register_timer_jobs(thread_root_message_index, message_event, now, &mut state.data);
 
     if state.data.chat.is_public.value && !message_event.event.content.moderation_input().is_empty() {
-        state.data.message_moderation_queue.push_back(PendingMessageModeration {
-            thread_root_message_index,
-            message_id,
-            attempts: 0,
-        });
-        crate::jobs::moderate_messages::start_job_if_required(state);
+        crate::jobs::moderate_messages::enqueue(
+            state,
+            PendingMessageModeration {
+                thread_root_message_index,
+                message_id,
+                attempts: 0,
+            },
+        );
     }
 
     if !result.unfinalised_bot_message {

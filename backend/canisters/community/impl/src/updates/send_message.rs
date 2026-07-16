@@ -250,15 +250,15 @@ fn process_send_message_result(
         && !message_event.event.content.moderation_input().is_empty()
         && state.data.channels.get(&channel_id).is_some_and(|c| c.chat.is_public.value)
     {
-        state.data.message_moderation_queue.push_back((
+        crate::jobs::moderate_messages::enqueue(
+            state,
             channel_id,
             PendingMessageModeration {
                 thread_root_message_index,
                 message_id,
                 attempts: 0,
             },
-        ));
-        crate::jobs::moderate_messages::start_job_if_required(state);
+        );
     }
 
     if !result.unfinalised_bot_message {

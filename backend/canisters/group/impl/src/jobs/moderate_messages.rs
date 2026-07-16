@@ -4,27 +4,48 @@ use group_community_common::openai_moderation::{self, PendingMessageModeration};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
-use tracing::{error, trace};
+use tracing::{error, trace, warn};
 use types::{EventIndex, ModerationCategories, ModerationInput};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
+    static CONSECUTIVE_FAILURES: Cell<u32> = Cell::default();
 }
 
 const INTERVAL: Duration = Duration::from_secs(10);
+const MAX_BACKOFF: Duration = Duration::from_secs(300);
 const BATCH_SIZE: usize = 20;
 // Image-bearing messages are classified individually, so cap the number of outcalls per batch
 const MAX_IMAGE_INPUTS_PER_BATCH: usize = 5;
 const MAX_ATTEMPTS: u8 = 3;
+// Cap the queue so that a prolonged API outage or a flood of messages cannot grow it unboundedly
+const MAX_QUEUE_SIZE: usize = 10_000;
+
+pub(crate) fn enqueue(state: &mut RuntimeState, entry: PendingMessageModeration) {
+    // Drop the oldest entries when full so that the most recent messages still get moderated
+    while state.data.message_moderation_queue.len() >= MAX_QUEUE_SIZE {
+        state.data.message_moderation_queue.pop_front();
+        warn!("Message moderation queue full, dropping oldest entry");
+    }
+    state.data.message_moderation_queue.push_back(entry);
+    start_job_if_required(state);
+}
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && state.data.openai_api_key.is_some() && !state.data.message_moderation_queue.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer(INTERVAL, run);
+        let timer_id = ic_cdk_timers::set_timer(next_interval(), run);
         TIMER_ID.set(Some(timer_id));
         true
     } else {
         false
     }
+}
+
+// Backs off exponentially while the API is failing so that an outage isn't hammered every tick
+fn next_interval() -> Duration {
+    INTERVAL
+        .saturating_mul(2u32.saturating_pow(CONSECUTIVE_FAILURES.get()))
+        .min(MAX_BACKOFF)
 }
 
 pub fn run() {
@@ -105,6 +126,12 @@ async fn process_batch(api_key: String, batch: Vec<Item>) {
                 failed.push(item);
             }
         }
+    }
+
+    if classified.is_empty() && !failed.is_empty() {
+        CONSECUTIVE_FAILURES.set(CONSECUTIVE_FAILURES.get().saturating_add(1));
+    } else {
+        CONSECUTIVE_FAILURES.set(0);
     }
 
     mutate_state(|state| {
