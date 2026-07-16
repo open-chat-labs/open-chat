@@ -9,7 +9,8 @@ use constants::OPENCHAT_BOT_USER_ID;
 use group_canister::LocalIndexEvent;
 use group_canister::c2c_local_index::*;
 use std::cell::LazyCell;
-use types::{GroupNameChanged, TimestampMillis, Timestamped};
+use msgpack::serialize_then_unwrap;
+use types::{EventIndex, GroupNameChanged, ModerationCategories, TimestampMillis, Timestamped};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -52,9 +53,43 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
         LocalIndexEvent::VerifiedChanged(ev) => {
             state.data.verified = Timestamped::new(ev.verified, **now);
         }
-        LocalIndexEvent::OpenAIApiKeyUpdated(api_key) => {
-            state.data.openai_api_key = api_key;
-            crate::jobs::moderate_messages::start_job_if_required(state);
+        LocalIndexEvent::MessageClassified(ev) => {
+            // An empty result still calls flag_message so that stale flags are cleared if a
+            // previously flagged message has been edited to something clean
+            if let Some(categories) = ModerationCategories::from_bits(ev.flags)
+                && state
+                    .data
+                    .chat
+                    .events
+                    .flag_message(ev.thread_root_message_index, ev.message_id, categories, **now)
+                    .is_ok()
+            {
+                if categories.contains(ModerationCategories::SEXUAL_MINORS)
+                    && let Some((message, _)) = state.data.chat.events.message_internal(
+                        EventIndex::default(),
+                        ev.thread_root_message_index,
+                        ev.message_id.into(),
+                    )
+                {
+                    // Notify the user_index (via the group_index) which applies the CSAM
+                    // auto-sanction: delete the message, suspend the sender, and post an alert
+                    // to the internal moderation channel
+                    let args = group_index_canister::c2c_csam_detected::Args {
+                        channel_id: None,
+                        thread_root_message_index: ev.thread_root_message_index,
+                        message_index: message.message_index,
+                        message_id: ev.message_id,
+                        sender: message.sender,
+                        flags: categories.bits(),
+                        content_excerpt: message.content.moderation_input().text,
+                    };
+                    state.data.fire_and_forget_handler.send(
+                        state.data.group_index_canister_id,
+                        "c2c_csam_detected_msgpack".to_string(),
+                        serialize_then_unwrap(&args),
+                    );
+                }
+            }
         }
         LocalIndexEvent::UserDeleted(user_id) => {
             state.data.chat.members.remove(user_id, **now);

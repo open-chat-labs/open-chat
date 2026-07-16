@@ -13,6 +13,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Classify reported messages with the OpenAI Moderation API and remove Modclub ([#9092](https://github.com/open-chat-labs/open-chat/pull/9092))
 - Add `set_internal_moderation_channel` endpoint for platform operators ([#9092](https://github.com/open-chat-labs/open-chat/pull/9092))
 
+### Fixed
+
+- Bump `date_updated` on suspension so clients receive the suspended flag ([#9092](https://github.com/open-chat-labs/open-chat/pull/9092))
+
 ### Removed
 
 - Remove deprecated `OpenChatBotMessage` event type ([#9032](https://github.com/open-chat-labs/open-chat/pull/9032))

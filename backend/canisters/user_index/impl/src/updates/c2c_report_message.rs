@@ -11,7 +11,7 @@ use crate::{
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_community_common::openai_moderation;
-use tracing::error;
+use tracing::{error, warn};
 use types::ModerationCategories;
 use user_index_canister::c2c_report_message::{Response::*, *};
 
@@ -61,6 +61,12 @@ fn add_report(args: &Args, state: &mut RuntimeState) -> Result<u64, Response> {
         }
         AddReportResult::ExistingPending => Err(Success),
         AddReportResult::AlreadyReportedByUser => Err(AlreadyReported),
+        AddReportResult::RateLimited => {
+            // Silently dropped: only the flooding reporter's own excess reports are affected and
+            // the message can still be reported by anyone else
+            warn!(reporter = %args.reporter, "Report rate limit exceeded, dropping report");
+            Err(Success)
+        }
     }
 }
 

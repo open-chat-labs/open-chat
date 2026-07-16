@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Forward the OpenAI API key to local group and community canisters ([#9091](https://github.com/open-chat-labs/open-chat/pull/9091))
+- Classify public group and community messages via the OpenAI Moderation API, batching requests across all local canisters ([#9091](https://github.com/open-chat-labs/open-chat/pull/9091))
 
 ## [[2.0.1987](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1987-local_user_index)] - 2026-05-29
 

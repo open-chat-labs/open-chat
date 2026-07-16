@@ -3,9 +3,8 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::EditMessageArgs;
 use community_canister::edit_message::*;
-use group_community_common::openai_moderation::PendingMessageModeration;
 use oc_error_codes::OCErrorCode;
-use types::{Achievement, OCResult};
+use types::{Achievement, EventIndex, OCResult};
 
 #[update(msgpack = true)]
 #[trace]
@@ -57,15 +56,19 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             .get(&args.channel_id)
             .is_some_and(|c| c.chat.is_public.value)
     {
-        state.data.message_moderation_queue.push_back((
-            args.channel_id,
-            PendingMessageModeration {
-                thread_root_message_index: args.thread_root_message_index,
-                message_id: args.message_id,
-                attempts: 0,
-            },
-        ));
-        crate::jobs::moderate_messages::start_job_if_required(state);
+        if let Some(channel) = state.data.channels.get(&args.channel_id)
+            && let Some((message, _)) = channel.chat.events.message_internal(
+                EventIndex::default(),
+                args.thread_root_message_index,
+                args.message_id.into(),
+            )
+            && message.deleted_by.is_none()
+        {
+            let input = message.content.moderation_input();
+            if !input.is_empty() {
+                state.queue_message_for_moderation(args.channel_id, args.thread_root_message_index, args.message_id, input);
+            }
+        }
     }
 
     state.push_bot_notification(result.bot_notification);

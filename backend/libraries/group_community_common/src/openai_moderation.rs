@@ -1,16 +1,9 @@
 use candid::{CandidType, Principal};
 use ic_cdk::call::Call;
 use ic_cdk::management_canister::{HttpHeader, HttpMethod, HttpRequestResult, TransformContext};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::collections::BTreeMap;
-use types::{MessageId, MessageIndex, ModerationCategories, ModerationInput};
-
-#[derive(Serialize, Deserialize, Clone)]
-pub struct PendingMessageModeration {
-    pub thread_root_message_index: Option<MessageIndex>,
-    pub message_id: MessageId,
-    pub attempts: u8,
-}
+use types::{ModerationCategories, ModerationInput};
 
 const MODERATIONS_URL: &str = "https://api.openai.com/v1/moderations";
 const MODEL: &str = "omni-moderation-latest";
@@ -166,7 +159,11 @@ fn category_to_flag(category: &str) -> ModerationCategories {
         "harassment/threatening" | "hate/threatening" => ModerationCategories::HARASSMENT_THREATENING,
         "self-harm" | "self-harm/intent" | "self-harm/instructions" => ModerationCategories::SELF_HARM,
         "illicit" | "illicit/violent" => ModerationCategories::ILLICIT,
-        _ => ModerationCategories::default(),
+        _ => {
+            // OpenAI may add categories over time; surface them rather than silently ignoring
+            tracing::warn!(category, "Unknown OpenAI moderation category");
+            ModerationCategories::default()
+        }
     }
 }
 

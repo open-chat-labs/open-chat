@@ -128,7 +128,6 @@ fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
         rng_seed: state.env.rng().r#gen(),
         wasm_version: canister_wasm.version,
         video_call_operators: state.data.video_call_operators.clone(),
-        openai_api_key: state.data.openai_api_key.clone(),
         test_mode: state.data.test_mode,
         primary_language: args.primary_language,
     };

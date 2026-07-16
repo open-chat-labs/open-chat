@@ -50,8 +50,6 @@ fn init(args: Args) {
         now,
     );
 
-    data.openai_api_key = args.openai_api_key;
-
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Initialization complete");
