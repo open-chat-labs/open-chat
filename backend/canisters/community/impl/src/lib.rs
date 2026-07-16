@@ -14,7 +14,6 @@ use event_store_types::Event;
 use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::{GatePayment, calculate_gate_payments};
 use group_chat_core::{AccessRulesInternal, AddResult};
-use group_community_common::openai_moderation::PendingMessageModeration;
 use group_community_common::{
     Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Members, PaymentReceipts, PendingPaymentsQueue,
     UserCache,
@@ -31,7 +30,7 @@ use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashMap, VecDeque};
+use std::collections::{BTreeMap, HashMap};
 use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
@@ -39,8 +38,8 @@ use types::{
     BotInitiator, BotNotification, BotPermissions, BotUpdated, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId,
     ChannelUserNotificationPayload, ChatMetrics, ChatPermission, CommunityCanisterCommunitySummary, CommunityEvent,
     CommunityMembership, CommunityPermissions, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupRole,
-    IdempotentEnvelope, MembersAdded, Milliseconds, Notification, PendingCryptoTransaction, Rules, TimestampMillis,
-    Timestamped, UserId, UserNotification, UserType,
+    IdempotentEnvelope, MembersAdded, MessageId, MessageIndex, Milliseconds, Notification, PendingCryptoTransaction, Rules,
+    TimestampMillis, Timestamped, UserId, UserNotification, UserType,
 };
 use types::{BotSubscriptions, CommunityId};
 use user_canister::CommunityCanisterEvent;
@@ -191,6 +190,27 @@ impl RuntimeState {
             created_at: self.env.now(),
             idempotency_id: self.env.rng().next_u64(),
             value: local_user_index_canister::CommunityEvent::Notification(Box::new(notification)),
+        });
+    }
+
+    // Asks the local_user_index to classify the message via the moderation API; the result
+    // arrives back as a `MessageClassified` event which stores the flags on the message
+    pub fn queue_message_for_moderation(
+        &mut self,
+        channel_id: ChannelId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        input: types::ModerationInput,
+    ) {
+        self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
+            created_at: self.env.now(),
+            idempotency_id: self.env.rng().next_u64(),
+            value: local_user_index_canister::CommunityEvent::MessageClassifyRequest(Box::new(types::ClassifyMessageRequest {
+                channel_id: Some(channel_id),
+                thread_root_message_index,
+                message_id,
+                input,
+            })),
         });
     }
 
@@ -546,10 +566,6 @@ struct Data {
     verified: Timestamped<bool>,
     #[serde(default)]
     moderation_flags: Timestamped<u32>,
-    #[serde(default)]
-    pub openai_api_key: Option<String>,
-    #[serde(default)]
-    pub message_moderation_queue: VecDeque<(ChannelId, PendingMessageModeration)>,
     idempotency_checker: IdempotencyChecker,
     public_channel_list_updated: TimestampMillis,
 }
@@ -661,8 +677,6 @@ impl Data {
             bots: InstalledBots::default(),
             verified: Timestamped::default(),
             moderation_flags: Timestamped::default(),
-            openai_api_key: None,
-            message_moderation_queue: VecDeque::new(),
             idempotency_checker: IdempotencyChecker::default(),
             public_channel_list_updated: now,
         }
