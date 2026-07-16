@@ -145,24 +145,27 @@ fn delete_group_message(
 }
 
 pub fn suspend_sender(sender: UserId, now: TimestampMillis, state: &mut RuntimeState) {
-    if let Some(user) = state.data.users.get_by_user_id(&sender) {
-        if user
-            .suspension_details
-            .as_ref()
-            .is_some_and(|d| matches!(d.duration, SuspensionDuration::Indefinitely))
-        {
-            return;
-        }
+    let Some(user) = state.data.users.get_by_user_id(&sender) else {
+        error!(%sender, "Cannot suspend message sender, user not found");
+        return;
+    };
 
-        state.data.timer_jobs.enqueue_job(
-            TimerJob::SetUserSuspended(SetUserSuspended {
-                user_id: sender,
-                duration: None,
-                reason: "The message depicts, promotes or attempts to normalize child sexual abuse".to_string(),
-                suspended_by: OPENCHAT_BOT_USER_ID,
-            }),
-            now,
-            now,
-        );
+    if user
+        .suspension_details
+        .as_ref()
+        .is_some_and(|d| matches!(d.duration, SuspensionDuration::Indefinitely))
+    {
+        return;
     }
+
+    state.data.timer_jobs.enqueue_job(
+        TimerJob::SetUserSuspended(SetUserSuspended {
+            user_id: sender,
+            duration: None,
+            reason: "The message depicts, promotes or attempts to normalize child sexual abuse".to_string(),
+            suspended_by: OPENCHAT_BOT_USER_ID,
+        }),
+        now,
+        now,
+    );
 }
