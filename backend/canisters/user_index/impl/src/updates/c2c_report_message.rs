@@ -13,7 +13,7 @@ use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_community_common::openai_moderation;
-use tracing::error;
+use tracing::{error, warn};
 use types::{
     CanisterId, ChannelId, Chat, MessageId, MessageIndex, ModerationCategories, SuspensionDuration, TimestampMillis, UserId,
 };
@@ -65,6 +65,12 @@ fn add_report(args: &Args, state: &mut RuntimeState) -> Result<u64, Response> {
         }
         AddReportResult::ExistingPending => Err(Success),
         AddReportResult::AlreadyReportedByUser => Err(AlreadyReported),
+        AddReportResult::RateLimited => {
+            // Silently dropped: only the flooding reporter's own excess reports are affected and
+            // the message can still be reported by anyone else
+            warn!(reporter = %args.reporter, "Report rate limit exceeded, dropping report");
+            Err(Success)
+        }
     }
 }
 
@@ -251,26 +257,29 @@ fn delete_group_message(
 }
 
 fn suspend_sender(sender: UserId, now: TimestampMillis, state: &mut RuntimeState) {
-    if let Some(user) = state.data.users.get_by_user_id(&sender) {
-        if user
-            .suspension_details
-            .as_ref()
-            .is_some_and(|d| matches!(d.duration, SuspensionDuration::Indefinitely))
-        {
-            return;
-        }
+    let Some(user) = state.data.users.get_by_user_id(&sender) else {
+        error!(%sender, "Cannot suspend sender of CSAM message, user not found");
+        return;
+    };
 
-        state.data.timer_jobs.enqueue_job(
-            TimerJob::SetUserSuspended(SetUserSuspended {
-                user_id: sender,
-                duration: None,
-                reason: "The message depicts, promotes or attempts to normalize child sexual abuse".to_string(),
-                suspended_by: OPENCHAT_BOT_USER_ID,
-            }),
-            now,
-            now,
-        );
+    if user
+        .suspension_details
+        .as_ref()
+        .is_some_and(|d| matches!(d.duration, SuspensionDuration::Indefinitely))
+    {
+        return;
     }
+
+    state.data.timer_jobs.enqueue_job(
+        TimerJob::SetUserSuspended(SetUserSuspended {
+            user_id: sender,
+            duration: None,
+            reason: "The message depicts, promotes or attempts to normalize child sexual abuse".to_string(),
+            suspended_by: OPENCHAT_BOT_USER_ID,
+        }),
+        now,
+        now,
+    );
 }
 
 fn escalate_to_moderation_channel(
