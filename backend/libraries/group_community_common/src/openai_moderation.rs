@@ -1,16 +1,9 @@
 use candid::{CandidType, Principal};
 use ic_cdk::call::Call;
 use ic_cdk::management_canister::{HttpHeader, HttpMethod, HttpRequestResult, TransformContext};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::collections::BTreeMap;
-use types::{MessageId, MessageIndex, ModerationCategories, ModerationInput};
-
-#[derive(Serialize, Deserialize, Clone)]
-pub struct PendingMessageModeration {
-    pub thread_root_message_index: Option<MessageIndex>,
-    pub message_id: MessageId,
-    pub attempts: u8,
-}
+use types::{ModerationCategories, ModerationInput};
 
 const MODERATIONS_URL: &str = "https://api.openai.com/v1/moderations";
 const MODEL: &str = "omni-moderation-latest";

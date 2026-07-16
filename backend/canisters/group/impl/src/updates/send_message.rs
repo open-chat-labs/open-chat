@@ -9,7 +9,6 @@ use group_canister::c2c_bot_send_message;
 use group_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
 use group_canister::send_message_v2::{Response::*, *};
 use group_chat_core::SendMessageSuccess;
-use group_community_common::openai_moderation::PendingMessageModeration;
 use oc_error_codes::OCErrorCode;
 use types::{
     Achievement, BotCaller, BotPermissions, Caller, Chat, ChatId, EventIndex, EventWrapper, GroupChatUserNotificationPayload,
@@ -189,15 +188,11 @@ fn process_send_message_result(
 
     register_timer_jobs(thread_root_message_index, message_event, now, &mut state.data);
 
-    if state.data.chat.is_public.value && !message_event.event.content.moderation_input().is_empty() {
-        crate::jobs::moderate_messages::enqueue(
-            state,
-            PendingMessageModeration {
-                thread_root_message_index,
-                message_id,
-                attempts: 0,
-            },
-        );
+    if state.data.chat.is_public.value {
+        let input = message_event.event.content.moderation_input();
+        if !input.is_empty() {
+            state.queue_message_for_moderation(thread_root_message_index, message_id, input);
+        }
     }
 
     if !result.unfinalised_bot_message {

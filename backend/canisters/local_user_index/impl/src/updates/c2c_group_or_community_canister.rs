@@ -68,6 +68,10 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             }
         }
         GroupOrCommunityEvent::EventStoreEvent(event) => state.data.event_store_client.push(event),
+        GroupOrCommunityEvent::MessageClassifyRequest(request) => {
+            state.data.message_moderation_queue.enqueue(caller.into(), is_group, *request);
+            crate::jobs::moderate_messages::start_job_if_required(state);
+        }
         GroupOrCommunityEvent::Notification(mut notification) => {
             if let Notification::Bot(bot_notification) = &mut *notification
                 && let BotEvent::Lifecycle(BotLifecycleEvent::Installed(event)) = &bot_notification.event
