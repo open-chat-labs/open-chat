@@ -1,23 +1,27 @@
 use chat_events::deep_message_links;
+use constants::HOUR_IN_MS;
 use local_user_index_canister::{OpenChatBotMessageV2, UserIndexEvent};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{Chat, MessageContentInitial, MessageId, MessageIndex, ModerationCategories, TextContent, TimestampMillis, UserId};
 
+// Generous cap on how many not-yet-reported messages a single user can report per hour, so that
+// one user cannot mass-report to trigger unbounded OpenAI calls and flood the moderation channel
+const MAX_NEW_REPORTS_PER_HOUR: usize = 10;
+
 #[derive(Serialize, Deserialize, Default)]
 pub struct ReportedMessages {
     messages: Vec<ReportedMessage>,
     lookup: HashMap<(Chat, Option<MessageIndex>, MessageIndex), usize>,
+    #[serde(default)]
+    recent_reports_per_reporter: HashMap<UserId, Vec<TimestampMillis>>,
 }
 
 impl ReportedMessages {
     pub fn add_report(&mut self, args: AddReportArgs) -> AddReportResult {
-        let new_index = self.messages.len();
+        let key = (args.chat_id, args.thread_root_message_index, args.message_index);
 
-        if let Some(index) = self
-            .lookup
-            .insert((args.chat_id, args.thread_root_message_index, args.message_index), new_index)
-        {
+        if let Some(&index) = self.lookup.get(&key) {
             let message = self.messages.get_mut(index).unwrap();
 
             if args.already_deleted {
@@ -31,7 +35,11 @@ impl ReportedMessages {
             } else {
                 AddReportResult::ExistingPending
             }
+        } else if self.reporter_rate_limited(args.reporter, args.timestamp) {
+            AddReportResult::RateLimited
         } else {
+            let new_index = self.messages.len();
+            self.lookup.insert(key, new_index);
             self.messages.push(ReportedMessage {
                 chat_id: args.chat_id,
                 thread_root_message_index: args.thread_root_message_index,
@@ -43,6 +51,19 @@ impl ReportedMessages {
                 outcome: None,
             });
             AddReportResult::New(new_index as u64)
+        }
+    }
+
+    // Only reports of not-yet-reported messages count towards the limit since only those trigger
+    // downstream processing (an OpenAI call and possibly an escalation)
+    fn reporter_rate_limited(&mut self, reporter: UserId, now: TimestampMillis) -> bool {
+        let timestamps = self.recent_reports_per_reporter.entry(reporter).or_default();
+        timestamps.retain(|&t| now.saturating_sub(t) < HOUR_IN_MS);
+        if timestamps.len() >= MAX_NEW_REPORTS_PER_HOUR {
+            true
+        } else {
+            timestamps.push(now);
+            false
         }
     }
 
@@ -99,6 +120,7 @@ pub enum AddReportResult {
     ExistingPending,
     ExistingOutcome(u64),
     AlreadyReportedByUser,
+    RateLimited,
 }
 
 pub enum RecordOutcomeResult {

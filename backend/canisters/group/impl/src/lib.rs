@@ -11,7 +11,6 @@ use event_store_types::Event;
 use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::{GatePayment, calculate_gate_payments};
 use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersSuccess, UserInvitation};
-use group_community_common::openai_moderation::PendingMessageModeration;
 use group_community_common::{
     Achievements, ExpiringMemberActions, ExpiringMembers, PaymentReceipts, PaymentRecipient, PendingPayment,
     PendingPaymentReason, PendingPaymentsQueue, UserCache,
@@ -30,7 +29,7 @@ use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix, StableMemoryMap};
 use std::cell::RefCell;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
@@ -38,8 +37,8 @@ use types::{
     BotPermissions, BotRemoved, BotSubscriptions, BotUpdated, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics,
     CommunityId, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupCanisterGroupChatSummary,
     GroupChatUserNotificationPayload, GroupMembership, GroupPermissions, GroupSubtype, IdempotentEnvelope,
-    MAX_THREADS_IN_SUMMARY, MessageIndex, Milliseconds, MultiUserChat, Notification, OCResult, Rules, TimestampMillis,
-    Timestamped, UserId, UserNotification, UserType,
+    MAX_THREADS_IN_SUMMARY, MessageId, MessageIndex, Milliseconds, MultiUserChat, Notification, OCResult, Rules,
+    TimestampMillis, Timestamped, UserId, UserNotification, UserType,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -160,6 +159,26 @@ impl RuntimeState {
             created_at: self.env.now(),
             idempotency_id: self.env.rng().next_u64(),
             value: local_user_index_canister::GroupEvent::Notification(Box::new(notification)),
+        });
+    }
+
+    // Asks the local_user_index to classify the message via the moderation API; the result
+    // arrives back as a `MessageClassified` event which stores the flags on the message
+    pub fn queue_message_for_moderation(
+        &mut self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        input: types::ModerationInput,
+    ) {
+        self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
+            created_at: self.env.now(),
+            idempotency_id: self.env.rng().next_u64(),
+            value: local_user_index_canister::GroupEvent::MessageClassifyRequest(Box::new(types::ClassifyMessageRequest {
+                channel_id: None,
+                thread_root_message_index,
+                message_id,
+                input,
+            })),
         });
     }
 
@@ -561,10 +580,6 @@ struct Data {
     local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     verified: Timestamped<bool>,
-    #[serde(default)]
-    pub openai_api_key: Option<String>,
-    #[serde(default)]
-    pub message_moderation_queue: VecDeque<PendingMessageModeration>,
     pub bots: InstalledBots,
     idempotency_checker: IdempotencyChecker,
 }
@@ -658,8 +673,6 @@ impl Data {
             local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             verified: Timestamped::default(),
-            openai_api_key: None,
-            message_moderation_queue: VecDeque::new(),
             bots: InstalledBots::default(),
             idempotency_checker: IdempotencyChecker::default(),
         }
