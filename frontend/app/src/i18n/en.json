@@ -1164,7 +1164,7 @@
         "categories": "Flagged categories",
         "viewMessage": "View message",
         "uphold": "Uphold",
-        "upholdCsam": "Uphold as CSAM",
+        "upholdCsam": "CSAM",
         "dismiss": "Dismiss",
         "upheld": "Upheld by {moderator} - the message has been deleted and the sender suspended",
         "dismissed": "Dismissed by {moderator} - no violation",
