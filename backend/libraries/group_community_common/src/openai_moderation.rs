@@ -22,22 +22,52 @@ pub async fn moderate_text_batch(api_key: &str, texts: &[String]) -> Result<Vec<
     call_moderation_api(api_key, serde_json::json!(texts)).await
 }
 
-// Classifies a single input using the OpenAI Moderation API. The text and any images are
-// classified together as one combined input, so a single set of flagged categories is returned.
+// Classifies the text and any images of a single message using the OpenAI Moderation API,
+// returning the union of the flagged categories.
+//
+// The text and the images are classified in separate calls rather than as one combined
+// multi-modal input, so that a failure to fetch or classify an image (eg. a transient error, or a
+// blob url the API cannot reach) does not prevent the text from being classified. The result is
+// Ok as long as at least one part was classified; it is only Err if every part failed.
 pub async fn moderate_input(api_key: &str, input: &ModerationInput) -> Result<ModerationCategories, String> {
-    let mut parts = Vec::new();
+    let mut categories = ModerationCategories::default();
+    let mut classified_any = false;
+    let mut last_error = None;
+
     if let Some(text) = input.text.as_ref().filter(|t| !t.trim().is_empty()) {
-        parts.push(serde_json::json!({ "type": "text", "text": text }));
-    }
-    for url in &input.image_urls {
-        parts.push(serde_json::json!({ "type": "image_url", "image_url": { "url": url } }));
+        match call_moderation_api(api_key, serde_json::json!([text])).await {
+            Ok(results) => {
+                if let Some(c) = results.into_iter().next() {
+                    categories = categories | c;
+                    classified_any = true;
+                }
+            }
+            Err(error) => last_error = Some(error),
+        }
     }
 
-    let results = call_moderation_api(api_key, serde_json::Value::Array(parts)).await?;
-    results
-        .into_iter()
-        .next()
-        .ok_or("Empty response from OpenAI Moderation API".to_string())
+    if !input.image_urls.is_empty() {
+        let parts: Vec<_> = input
+            .image_urls
+            .iter()
+            .map(|url| serde_json::json!({ "type": "image_url", "image_url": { "url": url } }))
+            .collect();
+        match call_moderation_api(api_key, serde_json::Value::Array(parts)).await {
+            Ok(results) => {
+                for c in results {
+                    categories = categories | c;
+                }
+                classified_any = true;
+            }
+            Err(error) => last_error = Some(error),
+        }
+    }
+
+    if classified_any {
+        Ok(categories)
+    } else {
+        Err(last_error.unwrap_or_else(|| "No content to classify".to_string()))
+    }
 }
 
 // The args accepted by the management canister's `http_request` method, including the

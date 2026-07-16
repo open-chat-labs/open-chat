@@ -1340,30 +1340,11 @@ function replyContext(value: TReplyContext): ReplyContext {
 }
 
 function replySourceContext([chatId, maybeThreadRoot]: [TChat, number | null]): MessageContext {
-    if ("Direct" in chatId) {
-        return {
-            chatId: { kind: "direct_chat", userId: principalBytesToString(chatId.Direct) },
-            threadRootMessageIndex: undefined,
-        };
-    }
-    if ("Group" in chatId) {
-        return {
-            chatId: { kind: "group_chat", groupId: principalBytesToString(chatId.Group) },
-            threadRootMessageIndex: mapOptional(maybeThreadRoot, identity),
-        };
-    }
-    if ("Channel" in chatId) {
-        const [communityId, channelId] = chatId.Channel;
-        return {
-            chatId: {
-                kind: "channel",
-                communityId: principalBytesToString(communityId),
-                channelId: Number(toBigInt32(channelId)),
-            },
-            threadRootMessageIndex: mapOptional(maybeThreadRoot, identity),
-        };
-    }
-    throw new UnsupportedValueError("Unexpected ApiMultiUserChat type received", chatId);
+    return {
+        chatId: chatIdentifierFromApi(chatId),
+        threadRootMessageIndex:
+            "Direct" in chatId ? undefined : mapOptional(maybeThreadRoot, identity),
+    };
 }
 
 function reactions(value: [string, ApiPrincipal[]][]): Reaction[] {

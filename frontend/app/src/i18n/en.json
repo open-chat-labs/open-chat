@@ -1112,7 +1112,7 @@
     "membersHeader": "{level} members",
     "messageBlocked": "Message hidden",
     "messageDeleted": "Message deleted by {username} on {timestamp}",
-    "messageDeletedByOpenChatBot": "This message was first reported by an OpenChat user, then sent to [Modclub]({modclub}) where it was decided the message broke a [platform rule]({rules}), and finally deleted by the {username} on {timestamp}",
+    "messageDeletedByOpenChatBot": "This message was removed by {username} for breaking a [platform rule]({rules}) on {timestamp}",
     "messages": "Messages",
     "messageUrlCopiedToClipboard": "Message url copied to clipboard!",
     "minimumAmount": "Minimum: {amount} {symbol}",
