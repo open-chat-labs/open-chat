@@ -39,10 +39,14 @@ fn next_interval() -> Duration {
 
 pub fn run() {
     trace!("'moderate_messages' job running");
-    TIMER_ID.set(None);
 
     if let Some((api_key, batch)) = mutate_state(next_batch) {
+        // TIMER_ID is deliberately left set while the batch is in flight so that an enqueue
+        // during the outcall cannot arm a second concurrent batch; it is cleared, and the timer
+        // re-armed if required, when the batch completes
         ic_cdk::futures::spawn(process_batch(api_key, batch));
+    } else {
+        TIMER_ID.set(None);
     }
 }
 
@@ -112,6 +116,7 @@ async fn process_batch(api_key: String, batch: Vec<QueueItem>) {
                 state.data.message_moderation_queue.requeue(item);
             }
         }
+        TIMER_ID.set(None);
         start_job_if_required(state);
     });
 }
