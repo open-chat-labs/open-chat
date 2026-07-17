@@ -299,7 +299,8 @@ export class ChatsDb {
             .withMigration(145, clearCachePrimerStore)
             .withMigration(146, clearEvents)
             .withMigration(147, clearCachePrimerStore)
-            .withMigration(150, clearChatsStore);
+            .withMigration(148, clearChatsStore)
+            .withMigration(149, clearChatsStore);
     }
 
     getDb(): Database {
