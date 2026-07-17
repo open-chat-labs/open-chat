@@ -17,7 +17,7 @@ fn init(args: Args) {
 
     let mut env = Box::new(CanisterEnv::new(args.rng_seed));
 
-    let mut data = Data::new(
+    let data = Data::new(
         env.canister_id().into(),
         args.is_public,
         args.name,

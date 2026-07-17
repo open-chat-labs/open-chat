@@ -21,7 +21,7 @@ fn init(args: Args) {
     assert!(args.channels.iter().all_unique());
 
     let now = env.now();
-    let mut data = Data::new(
+    let data = Data::new(
         env.canister_id().into(),
         args.created_by_principal,
         args.created_by_user_id,
