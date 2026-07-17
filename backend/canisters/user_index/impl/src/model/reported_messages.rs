@@ -299,6 +299,11 @@ pub struct ViolatedRules {
 pub fn build_message_to_reporter(reported_message: &ReportedMessage, reporter: UserId) -> UserIndexEvent {
     let text = match reported_message.outcome.as_ref().unwrap() {
         ReportOutcome::Automated(outcome) => {
+            // If a platform moderator has already resolved this report, give the reporter the
+            // verdict rather than telling them it is pending review
+            if let Some(verdict) = &outcome.human_verdict {
+                return build_verdict_message_to_reporter(reported_message, verdict.verdict, reporter);
+            }
             let link = build_message_link(reported_message);
             match outcome.action {
                 ModerationAction::AutoSanctioned => format!(

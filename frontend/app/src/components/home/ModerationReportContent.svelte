@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
         allUsersStore,
+        MODERATION_CATEGORY_NAMES,
         platformModeratorStore,
         routeForMessage,
         type ModerationReportContent,
@@ -15,17 +16,6 @@
 
     const client = getContext<OpenChat>("client");
 
-    const CATEGORY_NAMES: [number, string][] = [
-        [1, "sexual"],
-        [2, "sexual/minors"],
-        [4, "violence"],
-        [8, "violence/graphic"],
-        [16, "harassment"],
-        [32, "harassment/threatening"],
-        [64, "self-harm"],
-        [128, "illicit"],
-    ];
-
     interface Props {
         content: ModerationReportContent;
     }
@@ -34,28 +24,35 @@
 
     let busy = $state(false);
     let failed = $state(false);
+    let resolved = $state(false);
     let moderatorId = $derived(
         content.status.kind !== "pending" ? content.status.moderator : undefined,
     );
-    let moderator = $derived(moderatorId ? $allUsersStore.get(moderatorId) : undefined);
+    let moderator = $derived(
+        moderatorId ? ($allUsersStore.get(moderatorId)?.username ?? moderatorId) : undefined,
+    );
     let sender = $derived($allUsersStore.get(content.sender)?.username ?? content.sender);
     let reporters = $derived(content.reporters.map((r) => $allUsersStore.get(r)?.username ?? r));
 
     let csam = $derived((content.flaggedCategories & 2) !== 0);
     let categories = $derived(
-        CATEGORY_NAMES.filter(([bit, _name]) => (content.flaggedCategories & bit) !== 0)
+        MODERATION_CATEGORY_NAMES.filter(([bit, _name]) => (content.flaggedCategories & bit) !== 0)
             .map(([_bit, name]) => name)
             .join(", "),
     );
+    // Direct-chat routes resolve relative to the viewer, so a link to someone
+    // else's private chat would be dead for moderators — show no link instead.
     let url = $derived(
-        routeForMessage(
-            content.chatId.kind === "channel" ? "community" : "chats",
-            {
-                chatId: content.chatId,
-                threadRootMessageIndex: content.threadRootMessageIndex,
-            },
-            content.messageIndex,
-        ),
+        content.chatId.kind === "direct_chat"
+            ? undefined
+            : routeForMessage(
+                  content.chatId.kind === "channel" ? "community" : "chats",
+                  {
+                      chatId: content.chatId,
+                      threadRootMessageIndex: content.threadRootMessageIndex,
+                  },
+                  content.messageIndex,
+              ),
     );
     let canResolve = $derived(
         $platformModeratorStore &&
@@ -64,11 +61,12 @@
     );
 
     function resolve(verdict: ModerationVerdict) {
-        if (content.reportIndex === undefined || busy) return;
+        if (content.reportIndex === undefined || busy || resolved) return;
         busy = true;
         failed = false;
         client.resolveModerationReport(content.reportIndex, verdict).then((success) => {
             busy = false;
+            resolved = success;
             failed = !success;
         });
     }
@@ -83,9 +81,15 @@
         <Translatable resourceKey={i18nKey("moderationReport.title")} />
     </div>
 
-    <div class="row link">
-        <a href={url}><Translatable resourceKey={i18nKey("moderationReport.viewMessage")} /></a>
-    </div>
+    {#if url !== undefined}
+        <div class="row link">
+            <a href={url}><Translatable resourceKey={i18nKey("moderationReport.viewMessage")} /></a>
+        </div>
+    {:else}
+        <div class="row">
+            <Translatable resourceKey={i18nKey("moderationReport.privateChat")} />
+        </div>
+    {/if}
     <div class="row">
         <Translatable resourceKey={i18nKey("moderationReport.sender")} />: {sender}
     </div>
@@ -119,25 +123,33 @@
         <div class="row resolved">
             <Translatable
                 resourceKey={i18nKey("moderationReport.upheld", {
-                    moderator: moderator?.username,
+                    moderator,
                 })} />
         </div>
     {:else if content.status.kind === "dismissed"}
         <div class="row resolved">
             <Translatable
                 resourceKey={i18nKey("moderationReport.dismissed", {
-                    moderator: moderator?.username,
+                    moderator,
                 })} />
         </div>
     {:else if canResolve}
         <div class="actions">
-            <Button loading={busy} disabled={busy} onClick={() => resolve("upheld")}>
+            <Button loading={busy} disabled={busy || resolved} onClick={() => resolve("upheld")}>
                 <Translatable resourceKey={i18nKey("moderationReport.uphold")} />
             </Button>
-            <Button loading={busy} danger disabled={busy} onClick={() => resolve("upheld_as_csam")}>
+            <Button
+                loading={busy}
+                danger
+                disabled={busy || resolved}
+                onClick={() => resolve("upheld_as_csam")}>
                 <Translatable resourceKey={i18nKey("moderationReport.upholdCsam")} />
             </Button>
-            <Button loading={busy} secondary disabled={busy} onClick={() => resolve("dismissed")}>
+            <Button
+                loading={busy}
+                secondary
+                disabled={busy || resolved}
+                onClick={() => resolve("dismissed")}>
                 <Translatable resourceKey={i18nKey("moderationReport.dismiss")} />
             </Button>
         </div>

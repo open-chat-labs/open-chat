@@ -668,6 +668,18 @@ export type ModerationReportStatus =
 
 export type ModerationVerdict = "upheld" | "upheld_as_csam" | "dismissed";
 
+// Mirrors the category bits of `ModerationCategories` in the rust backend
+export const MODERATION_CATEGORY_NAMES: [number, string][] = [
+    [1, "sexual"],
+    [2, "sexual/minors"],
+    [4, "violence"],
+    [8, "violence/graphic"],
+    [16, "harassment"],
+    [32, "harassment/threatening"],
+    [64, "self-harm"],
+    [128, "illicit"],
+];
+
 export const PollConfigSchema = Type.Object({
     allowMultipleVotesPerUser: Type.Boolean(),
     allowUserToChangeVote: Type.Boolean(),
