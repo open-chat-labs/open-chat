@@ -321,6 +321,7 @@ export function mergeGroupChatUpdates(
             messagesVisibleToNonMembers:
                 g?.messagesVisibleToNonMembers ?? c.messagesVisibleToNonMembers,
             verified: g?.verified ?? c.verified,
+            moderationFlags: g?.moderationFlags ?? c.moderationFlags ?? 0,
         };
     });
 }
@@ -382,6 +383,7 @@ export function mergeGroupChats(
             isInvited: false,
             messagesVisibleToNonMembers: g.messagesVisibleToNonMembers,
             verified: g.verified,
+            moderationFlags: g.moderationFlags,
         };
     });
 }

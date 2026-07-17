@@ -1719,6 +1719,7 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         messagesVisibleToNonMembers: boolean;
         membership: GroupCanisterGroupMembership;
         verified: boolean;
+        moderationFlags: number;
     };
 
 export type GroupCanisterGroupMembership = {
@@ -1763,6 +1764,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     messagesVisibleToNonMembers?: boolean;
     membership: GroupMembershipUpdates | undefined;
     verified?: boolean;
+    moderationFlags?: number;
 };
 
 export type GroupMembershipUpdates = {

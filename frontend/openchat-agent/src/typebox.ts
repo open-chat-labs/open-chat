@@ -9119,6 +9119,7 @@ export const GroupCanisterGroupChatSummary = Type.Object({
     membership: Type.Optional(GroupMembership),
     video_call_in_progress: Type.Optional(VideoCall),
     verified: Type.Optional(Type.Boolean()),
+    moderation_flags: Type.Optional(Type.Number()),
 });
 
 export type EventWrapperChatEvent = Static<typeof EventWrapperChatEvent>;
@@ -9169,6 +9170,7 @@ export const GroupCanisterGroupChatSummaryUpdates = Type.Object({
     video_call_in_progress: Type.Optional(OptionUpdateVideoCall),
     any_updates_missed: Type.Optional(Type.Boolean()),
     verified: Type.Optional(Type.Boolean()),
+    moderation_flags: Type.Optional(Type.Number()),
 });
 
 export type DirectChatSummaryUpdates = Static<typeof DirectChatSummaryUpdates>;
