@@ -50,24 +50,18 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     // Re-classify the edited content
     if state.data.is_public.value
-        && state
-            .data
-            .channels
-            .get(&args.channel_id)
-            .is_some_and(|c| c.chat.is_public.value)
+        && let Some(channel) = state.data.channels.get(&args.channel_id)
+        && channel.chat.is_public.value
+        && let Some((message, _)) =
+            channel
+                .chat
+                .events
+                .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
+        && message.deleted_by.is_none()
     {
-        if let Some(channel) = state.data.channels.get(&args.channel_id)
-            && let Some((message, _)) = channel.chat.events.message_internal(
-                EventIndex::default(),
-                args.thread_root_message_index,
-                args.message_id.into(),
-            )
-            && message.deleted_by.is_none()
-        {
-            let input = message.content.moderation_input();
-            if !input.is_empty() {
-                state.queue_message_for_moderation(args.channel_id, args.thread_root_message_index, args.message_id, input);
-            }
+        let input = message.content.moderation_input();
+        if !input.is_empty() {
+            state.queue_message_for_moderation(args.channel_id, args.thread_root_message_index, args.message_id, input);
         }
     }
 

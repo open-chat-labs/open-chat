@@ -1,8 +1,10 @@
 use crate::{ChannelId, MessageId, MessageIndex};
 use serde::{Deserialize, Serialize};
 
-// A set of OpenAI moderation categories, stored as a bitfield
-#[derive(Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
+// A set of OpenAI moderation categories, stored as a bitfield. Deliberately not serializable:
+// it travels on the wire as a raw u32 and must be rebuilt via `from_bits` so that unknown bits
+// cannot enter.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct ModerationCategories(u32);
 
 impl ModerationCategories {
@@ -47,7 +49,7 @@ impl std::ops::BitOr for ModerationCategories {
 }
 
 // Content to be classified by the moderation API. Image-bearing inputs are classified
-// individually (text + images as one combined input); plain text inputs can be batched.
+// individually (the text and the images in separate calls); plain text inputs can be batched.
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct ModerationInput {
     pub text: Option<String>,

@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, VecDeque};
+use std::collections::{BTreeMap, VecDeque, btree_map};
 use tracing::warn;
 use types::{CanisterId, ChannelId, ClassifyMessageRequest, MessageId, MessageIndex, ModerationInput};
 
@@ -8,6 +8,9 @@ use types::{CanisterId, ChannelId, ClassifyMessageRequest, MessageId, MessageInd
 // moderated
 const PER_SOURCE_CAP: usize = 2_000;
 const TOTAL_CAP: usize = 20_000;
+// Text is truncated to this many chars at enqueue time; it is plenty for the classifier and it
+// bounds the heap held by a full queue
+const MAX_TEXT_CHARS: usize = 4_000;
 
 type Key = (Option<ChannelId>, MessageId);
 
@@ -61,9 +64,15 @@ impl ModerationQueue {
 
     pub fn enqueue(&mut self, source: CanisterId, is_group: bool, request: ClassifyMessageRequest) {
         let key = (request.channel_id, request.message_id);
+        let mut input = request.input;
+        if let Some(text) = input.text.as_mut()
+            && let Some((index, _)) = text.char_indices().nth(MAX_TEXT_CHARS)
+        {
+            text.truncate(index);
+        }
         let entry = Entry {
             thread_root_message_index: request.thread_root_message_index,
-            input: request.input,
+            input,
             attempts: 0,
         };
         self.insert(source, is_group, key, entry, false);
@@ -163,17 +172,20 @@ impl ModerationQueue {
                 order: VecDeque::new(),
             });
 
-            if source_queue.entries.contains_key(&key) {
-                if !skip_if_present {
-                    // Replace the content of an already queued message (eg. it has been edited
-                    // again); its position in the queue is retained
-                    source_queue.entries.insert(key, entry);
+            match source_queue.entries.entry(key) {
+                btree_map::Entry::Occupied(mut o) => {
+                    if !skip_if_present {
+                        // Replace the content of an already queued message (eg. it has been edited
+                        // again); its position in the queue is retained
+                        o.insert(entry);
+                    }
+                    (false, false)
                 }
-                (false, false)
-            } else {
-                source_queue.entries.insert(key, entry);
-                source_queue.order.push_back(key);
-                (true, source_queue.order.len() > PER_SOURCE_CAP)
+                btree_map::Entry::Vacant(v) => {
+                    v.insert(entry);
+                    source_queue.order.push_back(key);
+                    (true, source_queue.order.len() > PER_SOURCE_CAP)
+                }
             }
         };
 

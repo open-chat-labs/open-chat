@@ -69,7 +69,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         }
         GroupOrCommunityEvent::EventStoreEvent(event) => state.data.event_store_client.push(event),
         GroupOrCommunityEvent::MessageClassifyRequest(request) => {
-            state.data.message_moderation_queue.enqueue(caller.into(), is_group, *request);
+            state.data.message_moderation_queue.enqueue(caller, is_group, *request);
             crate::jobs::moderate_messages::start_job_if_required(state);
         }
         GroupOrCommunityEvent::Notification(mut notification) => {
