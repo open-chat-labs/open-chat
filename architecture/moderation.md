@@ -5,7 +5,7 @@ one set of moderation state: an always-on pipeline for public messages, a user-r
 human verdicts in an internal moderation channel. The same state drives content gating in the
 app-store builds.
 
-Introduced across PRs [#9088](https://github.com/open-chat-labs/open-chat/pull/9088)–[#9096](https://github.com/open-chat-labs/open-chat/pull/9096). Last updated 2026-07-16.
+Introduced across PRs [#9088](https://github.com/open-chat-labs/open-chat/pull/9088)–[#9096](https://github.com/open-chat-labs/open-chat/pull/9096). Last updated 2026-07-17.
 
 ## 1. The big picture
 
@@ -124,13 +124,16 @@ sequenceDiagram
   app-store build or triggers a CSAM sanction that always alerts a human and is reversible. Cycles
   are charged at the replicated rate and the excess refunded.
 - **Text vs images** — texts for a whole batch (from many chats) go in one call; each
-  image-bearing message is classified separately (text and images in separate calls), so an
-  unreachable blob URL can't block text classification. The message result is the union of
-  category bits.
-- **Resilience** — queue capped at 2k per source / 20k total (drop-oldest, logged); 3 attempts per
-  message; the job interval backs off exponentially (10s → 5 min) while every call in a batch
-  fails, and resets on the first success. Requests and results ride the existing idempotent event
-  sync queues, which retry until delivered.
+  image-bearing message is classified separately (text and images in separate calls). The message
+  result is the union of category bits; if *any* part fails (e.g. an unreachable blob URL), the
+  whole message is treated as failed and retried, so a transient image error can't silently skip
+  image classification. A text batch whose response has fewer results than inputs is also treated
+  as failed and retried.
+- **Resilience** — queue capped at 2k per source / 20k total (drop-oldest, logged), with queued
+  text truncated to 4000 chars at enqueue to bound memory; 3 attempts per message; the job is
+  non-reentrant (one batch in flight at a time) and its interval backs off exponentially (10s →
+  5 min) while every call in a batch fails, resetting on the first success. Requests and results
+  ride the existing idempotent event sync queues, which retry until delivered.
 
 ## 4. Report flow (#9092) — user reports reuse the pipeline's judgement
 
@@ -193,7 +196,14 @@ flowchart TD
 ```
 
 - **One classification per message** — reports are deduplicated on (chat, thread, message index);
-  later reporters attach to the existing report and get notified when the outcome lands.
+  later reporters attach to the existing report and get notified when the outcome lands. A report
+  arriving after a human verdict already landed gets the verdict wording, not "referred for
+  review".
+- **Classification is durable** — every new report writes a persisted pending-classification
+  entry (removed when the outcome is recorded). Failures retry on a timer with exponential
+  backoff (up to 5 attempts) and post_upgrade re-enqueues pending entries, so an upgrade or
+  outcall failure mid-classification can't strand a report. If retries exhaust, the outcome is
+  recorded with a distinct classification-failed marker and still escalates to human review.
 - **Unflagged reports still escalate** — the API can't judge scam/spam, so a clean classification
   goes to human review rather than being dismissed.
 - **Rate limit** — 10 not-yet-reported messages per reporter per hour. Excess reports are dropped
@@ -212,8 +222,10 @@ the sender, and post an alert into the moderation channel. The shared logic live
 `backend/canisters/user_index/impl/src/model/moderation.rs` so the two paths can't drift.
 
 - Message excerpts are truncated to 500 chars, Unicode-safe, before leaving the canister.
-- Delivery uses the existing fire-and-forget retry handler (up to 50 attempts, exponential
-  backoff).
+- Both hops are fire-and-forget with retries (up to 50 attempts, exponential backoff):
+  group_index verifies the caller synchronously, then forwards to user_index via its own
+  fire-and-forget handler — so a stopped or upgrading user_index delays delivery instead of
+  dropping it.
 - The alert is posted for the legal record even if the sanction itself fails.
 
 ## 6. Human verdicts (#9095) — the moderation channel is an inbox with buttons
@@ -249,7 +261,12 @@ sequenceDiagram
 - Suspension tiers come from the sender's in-breach report count: ≤2 upheld breaches → 1-day
   suspension, more → indefinite.
 - The verdict UI exists in both component trees (`components/` and `components_mobile/`);
-  "Uphold as CSAM" uses the danger variant on both.
+  "Uphold as CSAM" uses the danger variant on both. Buttons stay disabled after a successful
+  verdict until the status update syncs back, and the flagged-category names come from a single
+  table in openchat-shared (mirroring the Rust bitfield) rather than per-component copies.
+- Reports on direct-chat messages show "link unavailable (private chat)" instead of a message
+  link — direct-chat routes resolve relative to the viewer, so a link into someone else's private
+  chat would be dead for moderators. The excerpt and flagged categories are still shown.
 
 > **Recently fixed — suspension visibility.** Suspending a user never bumped their
 > `date_updated`, and the `users_suspended_since` fallback in the `users` query excluded any user
@@ -265,11 +282,17 @@ baked in at build time, so there is nothing for a client to toggle. The web app 
 | Content | Hidden when | How it shows |
 |---------|-------------|--------------|
 | Community | `Adult \| Offensive` flag set | Filtered from explore/search (backend + client), navigation blocked, membership placeholder |
-| Group | `Adult \| Offensive` flag set | Same as communities; channels inherit their parent community's restriction |
-| Message | any `ModerationCategories` bit set | Rendered as an inert restricted placeholder, like a deleted message |
+| Group | `Adult \| Offensive` flag set | Same as communities; channels inherit their parent community's restriction (including channel deep links, which check the parent community's flags before previewing) |
+| Message | any `ModerationCategories` bit set | Rendered as an inert restricted placeholder, like a deleted message; chat-list previews and quoted reply excerpts show the restricted placeholder too |
 
-Known, deliberate limits: quoted excerpts, search results and notifications are not yet gated
-(called out in the PR).
+Member-facing group summaries (`GroupCanisterGroupChatSummary` + updates) carry
+`moderation_flags` just like the community equivalents, so gating applies to groups the user is
+already a member of, not only previews and explore results. Search/explore filtering strips only
+the Adult/Offensive bits — a user's UnderReview preference is preserved, since UnderReview must
+never hide anything.
+
+Known, deliberate limits: search results and notifications are not yet gated (called out in the
+PR).
 
 ## 8. Operations — deploying and running it
 
@@ -281,12 +304,13 @@ Known, deliberate limits: quoted excerpts, search results and notifications are 
   groups/communities minimises the retry window.
 - **API key** — `set_openai_api_key` on `user_index` (ingress allowed in `inspect_message`); it
   syncs to the local indexes only — group and community canisters never hold it. No key ⇒ the
-  broker queue stays parked and report classification falls back to "no categories" (which still
-  escalates to human review).
+  broker queue stays parked and report classification retries with backoff, then records a
+  classification-failed outcome (which still escalates to human review).
 - **Frontend cache** — the chats IndexedDB cache version bumps to 149 (#9088) and 150 (#9094);
-  both clear the chats store so summaries refetch with the new flag fields. If another PR bumps
-  the version, take the next free number — two PRs claiming the same version means the second
-  deploy's migration never runs.
+  both clear the chats store so summaries refetch with the new flag fields. Migrations are keyed
+  by the version being upgraded *from*: bumping to N registers `.withMigration(N-1, …)`. If
+  another PR bumps the version, take the next free number — two PRs claiming the same version
+  means the second deploy's migration never runs.
 - **Costs and rate limits** — one OpenAI call per subnet per tick for all queued texts (≤32
   messages across all chats) plus one per image-bearing message (≤5 per tick); report-path calls
   only for messages the pipeline hasn't already classified. With ~a dozen local indexes the
@@ -298,7 +322,8 @@ Known, deliberate limits: quoted excerpts, search results and notifications are 
   its broker queue length in metrics (`message_moderation_queue_len`), and reporting metrics
   expose message counts and pending outcomes.
 
-**Still open**: PocketIC integration test for the CSAM path is planned once manual verification
-completes — it should also cover the third-report-of-same-message case (a pre-existing
-lookup-corruption bug in `reported_messages::add_report`, fixed in #9092). Notification and
-search-excerpt gating remain future work.
+**Still open**: PocketIC coverage exists for the pipeline CSAM auto-sanction, the
+report→UpheldAsCsam path (including double-resolution rejection and suspended-flag visibility)
+and multi-reporter dedup, but not yet for the Uphold 1-day vs >2-breach boundary, Dismissed
+(flag clearing), the reporter rate limiter, or a non-moderator calling
+`resolve_moderation_report`. Notification and search-excerpt gating remain future work.

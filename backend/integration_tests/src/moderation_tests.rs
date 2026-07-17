@@ -9,8 +9,8 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    ChannelId, ChatEvent, ChatId, CommunityId, EventIndex, MessageContent, ModerationReportContent,
-    ModerationReportStatus, SuspensionAction, UnitResult,
+    ChannelId, ChatEvent, ChatId, CommunityId, EventIndex, MessageContent, ModerationReportContent, ModerationReportStatus,
+    SuspensionAction, UnitResult,
 };
 use user_index_canister::resolve_moderation_report::ModerationVerdict;
 use user_index_canister::set_internal_moderation_channel::InternalModerationChannel;
@@ -57,8 +57,7 @@ fn csam_pipeline_detection_triggers_auto_sanction() {
     let message_content = get_message_content(env, &test_data.group_owner, test_data.group_id, message_id);
     assert!(matches!(message_content, MessageContent::Deleted(_)), "{message_content:?}");
 
-    let sender_state =
-        client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
     let suspension_details = sender_state.suspension_details.expect("sender should be suspended");
     assert!(matches!(suspension_details.action, SuspensionAction::Delete(_)));
 
@@ -145,8 +144,7 @@ fn report_then_upheld_as_csam_verdict_applies_sanction() {
     let message_content = get_message_content(env, &test_data.group_owner, test_data.group_id, message_id);
     assert!(matches!(message_content, MessageContent::Deleted(_)), "{message_content:?}");
 
-    let sender_state =
-        client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
     let suspension_details = sender_state.suspension_details.expect("sender should be suspended");
     assert!(matches!(suspension_details.action, SuspensionAction::Delete(_)));
 
@@ -310,8 +308,7 @@ fn mock_moderation_outcalls(env: &mut PocketIc, flagged_categories: &[&str], exp
 }
 
 fn get_message_content(env: &PocketIc, reader: &User, group_id: ChatId, message_id: types::MessageId) -> MessageContent {
-    let events =
-        client::group::happy_path::events(env, reader, group_id, EventIndex::from(0), true, 100, 200);
+    let events = client::group::happy_path::events(env, reader, group_id, EventIndex::from(0), true, 100, 200);
     events
         .events
         .into_iter()
@@ -336,13 +333,11 @@ fn get_moderation_reports(env: &PocketIc, test_data: &TestData) -> Vec<Moderatio
         .events
         .into_iter()
         .filter_map(|e| if let ChatEvent::Message(m) = e.event { Some(*m) } else { None })
-        .filter_map(|m| {
-            if let MessageContent::ModerationReport(report) = m.content {
-                Some(report)
-            } else {
-                None
-            }
-        })
+        .filter_map(
+            |m| {
+                if let MessageContent::ModerationReport(report) = m.content { Some(report) } else { None }
+            },
+        )
         .collect()
 }
 
@@ -373,8 +368,13 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
 
     let moderation_community_id =
         client::user::happy_path::create_community(env, &moderator, &random_string(), false, vec![random_string()]);
-    let moderation_channel_id =
-        client::community::happy_path::create_channel(env, moderator.principal, moderation_community_id, false, random_string());
+    let moderation_channel_id = client::community::happy_path::create_channel(
+        env,
+        moderator.principal,
+        moderation_community_id,
+        false,
+        random_string(),
+    );
 
     client::user_index::set_internal_moderation_channel(
         env,

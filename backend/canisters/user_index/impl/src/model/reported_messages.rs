@@ -3,7 +3,7 @@ use constants::HOUR_IN_MS;
 use local_user_index_canister::{OpenChatBotMessageV2, UserIndexEvent};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{Chat, MessageContentInitial, MessageId, MessageIndex, TextContent, TimestampMillis, UserId};
+use types::{Chat, MessageContent, MessageContentInitial, MessageId, MessageIndex, TextContent, TimestampMillis, UserId};
 use user_index_canister::resolve_moderation_report::ModerationVerdict;
 
 // Generous cap on how many not-yet-reported messages a single user can report per hour, so that
@@ -16,6 +16,10 @@ pub struct ReportedMessages {
     lookup: HashMap<(Chat, Option<MessageIndex>, MessageIndex), usize>,
     #[serde(default)]
     recent_reports_per_reporter: HashMap<UserId, Vec<TimestampMillis>>,
+    // Reports awaiting classification by the OpenAI moderation API, keyed by report index.
+    // Persisted so that classification survives an upgrade and failed API calls can be retried.
+    #[serde(default)]
+    pending_classifications: HashMap<u64, PendingClassification>,
 }
 
 impl ReportedMessages {
@@ -59,8 +63,13 @@ impl ReportedMessages {
     // Only reports of not-yet-reported messages count towards the limit since only those trigger
     // downstream processing (an OpenAI call and possibly an escalation)
     fn reporter_rate_limited(&mut self, reporter: UserId, now: TimestampMillis) -> bool {
+        // Drop expired timestamps, and any reporters left with none, so the map doesn't grow forever
+        self.recent_reports_per_reporter.retain(|_, timestamps| {
+            timestamps.retain(|&t| now.saturating_sub(t) < HOUR_IN_MS);
+            !timestamps.is_empty()
+        });
+
         let timestamps = self.recent_reports_per_reporter.entry(reporter).or_default();
-        timestamps.retain(|&t| now.saturating_sub(t) < HOUR_IN_MS);
         if timestamps.len() >= MAX_NEW_REPORTS_PER_HOUR {
             true
         } else {
@@ -75,11 +84,40 @@ impl ReportedMessages {
                 RecordOutcomeResult::OutcomeExists(report_index)
             } else {
                 message.outcome = Some(ReportOutcome::Automated(outcome));
+                self.pending_classifications.remove(&report_index);
                 RecordOutcomeResult::Success(message.clone())
             }
         } else {
             RecordOutcomeResult::ReportNotFound(report_index)
         }
+    }
+
+    pub fn add_pending_classification(&mut self, report_index: u64, content: MessageContent, is_public: bool) {
+        self.pending_classifications.insert(
+            report_index,
+            PendingClassification {
+                content,
+                is_public,
+                attempts: 0,
+            },
+        );
+    }
+
+    pub fn pending_classification(&self, report_index: u64) -> Option<&PendingClassification> {
+        self.pending_classifications.get(&report_index)
+    }
+
+    // Records a failed classification attempt and returns the total number of failed attempts,
+    // or None if the report has already been classified
+    pub fn record_classification_failure(&mut self, report_index: u64) -> Option<u32> {
+        self.pending_classifications.get_mut(&report_index).map(|pending| {
+            pending.attempts += 1;
+            pending.attempts
+        })
+    }
+
+    pub fn pending_classification_report_indexes(&self) -> Vec<u64> {
+        self.pending_classifications.keys().copied().collect()
     }
 
     pub fn get(&self, index: u64) -> Option<&ReportedMessage> {
@@ -164,6 +202,15 @@ pub enum RecordOutcomeResult {
     ReportNotFound(u64),
 }
 
+// A report awaiting classification by the OpenAI moderation API. Persisted so that an upgrade
+// or a failed API call cannot strand the report without an outcome.
+#[derive(Serialize, Deserialize)]
+pub struct PendingClassification {
+    pub content: MessageContent,
+    pub is_public: bool,
+    pub attempts: u32,
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ReportedMessage {
     pub chat_id: Chat,
@@ -209,6 +256,10 @@ pub struct AutomatedOutcome {
     pub timestamp: TimestampMillis,
     pub flagged_categories: u32,
     pub action: ModerationAction,
+    // True if the OpenAI classification could not be completed (even after retries), in which
+    // case flagged_categories being 0 means "unknown" rather than "classified clean"
+    #[serde(default)]
+    pub classification_failed: bool,
     // Set once a platform moderator has resolved an escalated report
     #[serde(default)]
     pub human_verdict: Option<HumanVerdict>,
@@ -248,6 +299,11 @@ pub struct ViolatedRules {
 pub fn build_message_to_reporter(reported_message: &ReportedMessage, reporter: UserId) -> UserIndexEvent {
     let text = match reported_message.outcome.as_ref().unwrap() {
         ReportOutcome::Automated(outcome) => {
+            // If a platform moderator has already resolved this report, give the reporter the
+            // verdict rather than telling them it is pending review
+            if let Some(verdict) = &outcome.human_verdict {
+                return build_verdict_message_to_reporter(reported_message, verdict.verdict, reporter);
+            }
             let link = build_message_link(reported_message);
             match outcome.action {
                 ModerationAction::AutoSanctioned => format!(
@@ -297,8 +353,9 @@ pub fn build_verdict_message_to_reporter(
 
 pub fn build_verdict_message_to_sender(reported_message: &ReportedMessage) -> UserIndexEvent {
     let text = format!(
-        "Your [message]({}) was reported by another user and the OpenChat moderation team confirmed that it broke [the platform rules](https://oc.app/guidelines?section=3). The message has been removed and your account has been suspended.",
+        "Your [message]({}) was reported by another user and the OpenChat moderation team confirmed that it broke [the platform rules](https://oc.app/guidelines?section=3). {}",
         build_message_link(reported_message),
+        removal_and_suspension_text(reported_message),
     );
 
     build_oc_bot_message(text, reported_message.sender)
@@ -306,11 +363,22 @@ pub fn build_verdict_message_to_sender(reported_message: &ReportedMessage) -> Us
 
 pub fn build_message_to_sender(reported_message: &ReportedMessage) -> UserIndexEvent {
     let text = format!(
-        "Your [message]({}) was reported by another user and automated moderation determined that it contained content which breaks [the platform rules](https://oc.app/guidelines?section=3). The message has been removed and your account has been suspended.",
+        "Your [message]({}) was reported by another user and automated moderation determined that it contained content which breaks [the platform rules](https://oc.app/guidelines?section=3). {}",
         build_message_link(reported_message),
+        removal_and_suspension_text(reported_message),
     );
 
     build_oc_bot_message(text, reported_message.sender)
+}
+
+// Direct chat messages are never deleted by moderation, so only claim removal for group/channel
+// messages
+fn removal_and_suspension_text(reported_message: &ReportedMessage) -> &'static str {
+    if matches!(reported_message.chat_id, Chat::Direct(_)) {
+        "Your account has been suspended."
+    } else {
+        "The message has been removed and your account has been suspended."
+    }
 }
 
 fn build_oc_bot_message(text: String, user_id: UserId) -> UserIndexEvent {
@@ -423,6 +491,7 @@ mod tests {
             timestamp: 1706107419000,
             flagged_categories: 2,
             action: ModerationAction::AutoSanctioned,
+            classification_failed: false,
             human_verdict: None,
         });
 
@@ -449,6 +518,7 @@ mod tests {
             timestamp: 1706107419000,
             flagged_categories: 0,
             action: ModerationAction::EscalatedForHumanReview,
+            classification_failed: false,
             human_verdict: None,
         }
     }

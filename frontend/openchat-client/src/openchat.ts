@@ -25,6 +25,7 @@ import {
     LEDGER_CANISTER_CHAT,
     LazyFile,
     MessageContextMap,
+    ModerationFlags,
     NoMeetingToJoin,
     ONE_DAY,
     ONE_HOUR,
@@ -1329,8 +1330,18 @@ export class OpenChat {
             case "channel":
                 return this.#worker
                     .send({ kind: "getChannelSummary", chatId })
-                    .then((resp) => {
+                    .then(async (resp) => {
                         if (resp.kind === "channel") {
+                            if (appStoreBuild) {
+                                const community = await this.getCommunitySummary({
+                                    kind: "community",
+                                    communityId: chatId.communityId,
+                                });
+                                if (community !== undefined && communityRestricted(community)) {
+                                    publish("restrictedContent");
+                                    return CommonResponses.failure();
+                                }
+                            }
                             localUpdates.addGroupPreview(resp);
                             return CommonResponses.success();
                         }
@@ -5663,7 +5674,9 @@ export class OpenChat {
         return this.#worker.send({
             kind: "searchGroups",
             searchTerm,
-            flags: appStoreBuild ? 0 : moderationFlagsEnabledStore.value,
+            flags: appStoreBuild
+                ? moderationFlagsEnabledStore.value & ModerationFlags.UnderReview
+                : moderationFlagsEnabledStore.value,
             maxResults,
         });
     }
@@ -5698,7 +5711,7 @@ export class OpenChat {
                 searchTerm,
                 pageIndex,
                 pageSize,
-                flags: appStoreBuild ? 0 : flags,
+                flags: appStoreBuild ? flags & ModerationFlags.UnderReview : flags,
                 languages,
             })
             .then((response) => {

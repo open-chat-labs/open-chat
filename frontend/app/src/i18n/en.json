@@ -1163,6 +1163,7 @@
         "pipeline": "Detected by automated moderation",
         "categories": "Flagged categories",
         "viewMessage": "View message",
+        "privateChat": "Message link unavailable (private chat)",
         "uphold": "Uphold",
         "upholdCsam": "CSAM",
         "dismiss": "Dismiss",

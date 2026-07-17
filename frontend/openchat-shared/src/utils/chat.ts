@@ -68,6 +68,12 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Partitione
                     userIds.add(e.event.content.transfer.recipient);
                 } else if (e.event.content.kind === "reported_message_content") {
                     e.event.content.reports.forEach((r) => userIds.add(r.reportedBy));
+                } else if (e.event.content.kind === "moderation_report_content") {
+                    userIds.add(e.event.content.sender);
+                    e.event.content.reporters.forEach((r) => userIds.add(r));
+                    if (e.event.content.status.kind !== "pending") {
+                        userIds.add(e.event.content.status.moderator);
+                    }
                 } else if (e.event.content.kind === "prize_winner_content") {
                     userIds.add(e.event.content.transaction.recipient);
                 } else if (

@@ -157,7 +157,9 @@
                 padding={["sm", "zero", "zero"]}>
                 {#each chats as chatSummary (chatIdentifierToString(chatSummary.id))}
                     {#if chatRestricted(chatSummary)}
-                        <RestrictedContentRow textKey={"appStore.chatNotAvailable"} />
+                        {#if !chatSummary.membership.archived}
+                            <RestrictedContentRow textKey={"appStore.chatNotAvailable"} />
+                        {/if}
                     {:else}
                         <ChatSummary
                             {chatSummary}

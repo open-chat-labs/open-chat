@@ -1635,7 +1635,8 @@ function mergeLocalUpdates(
         message.repliesTo?.kind === "rehydrated_reply_context" &&
         (replyContextLocalUpdates !== undefined ||
             replyTranslation !== undefined ||
-            repliesToSenderBlocked)
+            repliesToSenderBlocked ||
+            messageFlagsRestricted(message.repliesTo.moderationFlags))
     ) {
         if (replyContextLocalUpdates?.deleted !== undefined) {
             message.repliesTo.content = {

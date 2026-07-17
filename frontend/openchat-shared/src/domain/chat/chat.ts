@@ -668,6 +668,18 @@ export type ModerationReportStatus =
     | { kind: "dismissed"; moderator: string; timestamp: bigint };
 
 export type ModerationVerdict = "upheld" | "upheld_as_csam" | "dismissed";
+
+// Mirrors the category bits of `ModerationCategories` in the rust backend
+export const MODERATION_CATEGORY_NAMES: [number, string][] = [
+    [1, "sexual"],
+    [2, "sexual/minors"],
+    [4, "violence"],
+    [8, "violence/graphic"],
+    [16, "harassment"],
+    [32, "harassment/threatening"],
+    [64, "self-harm"],
+    [128, "illicit"],
+];
 // Synthesised client-side in the app store build for messages with moderation flags
 export const RestrictedContentSchema = Type.Object({
     kind: Type.Literal("restricted_content"),
@@ -1752,6 +1764,7 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         messagesVisibleToNonMembers: boolean;
         membership: GroupCanisterGroupMembership;
         verified: boolean;
+        moderationFlags: number;
     };
 
 export type GroupCanisterGroupMembership = {
@@ -1796,6 +1809,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     messagesVisibleToNonMembers?: boolean;
     membership: GroupMembershipUpdates | undefined;
     verified?: boolean;
+    moderationFlags?: number;
 };
 
 export type GroupMembershipUpdates = {

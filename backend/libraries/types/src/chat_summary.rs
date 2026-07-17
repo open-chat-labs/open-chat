@@ -139,6 +139,9 @@ pub struct GroupCanisterGroupChatSummary {
     #[serde(default, skip_serializing_if = "is_default")]
     #[ts(as = "Option<bool>", optional)]
     pub verified: bool,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<u32>", optional)]
+    pub moderation_flags: u32,
 }
 
 #[ts_export]
@@ -186,6 +189,7 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     #[ts(as = "Option<bool>", optional)]
     pub any_updates_missed: bool,
     pub verified: Option<bool>,
+    pub moderation_flags: Option<u32>,
 }
 
 #[ts_export]

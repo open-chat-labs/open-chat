@@ -7,13 +7,19 @@ use crate::{
         build_message_to_sender,
     },
     mutate_state, read_state,
+    timer_job_types::{ProcessReportClassification, TimerJob},
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::MINUTE_IN_MS;
 use group_community_common::openai_moderation;
 use tracing::{error, warn};
 use types::ModerationCategories;
 use user_index_canister::c2c_report_message::{Response::*, *};
+
+// How many times classification is attempted before the failure is recorded on the outcome and
+// the report is escalated for human review regardless
+const MAX_CLASSIFICATION_ATTEMPTS: u32 = 5;
 
 #[update(guard = "caller_is_user_canister_or_group_index", msgpack = true)]
 #[trace]
@@ -26,9 +32,11 @@ fn c2c_report_message(args: Args) -> Response {
             if args.message.moderation_flags != 0
                 && let Some(categories) = ModerationCategories::from_bits(args.message.moderation_flags)
             {
-                mutate_state(|state| handle_moderation_result(args, report_index, categories, state));
+                mutate_state(|state| handle_moderation_result(report_index, categories, false, state));
             } else {
-                ic_cdk::futures::spawn(process_report(args, report_index));
+                // The classification inputs were persisted in `add_report`, so if this call is
+                // lost to an upgrade the classification is resumed in post_upgrade
+                ic_cdk::futures::spawn(process_report(report_index));
             }
             Success
         }
@@ -51,6 +59,12 @@ fn add_report(args: &Args, state: &mut RuntimeState) -> Result<u64, Response> {
         AddReportResult::New(report_index) => {
             // Record the reported message against the sender's user record
             state.data.users.push_reported_message(args.message.sender, report_index);
+            // Persist everything needed to classify the message so that classification survives
+            // an upgrade and failed API calls can be retried
+            state
+                .data
+                .reported_messages
+                .add_pending_classification(report_index, args.message.content.clone(), args.is_public);
             Ok(report_index)
         }
         AddReportResult::ExistingOutcome(report_index) => {
@@ -70,25 +84,83 @@ fn add_report(args: &Args, state: &mut RuntimeState) -> Result<u64, Response> {
     }
 }
 
-async fn process_report(args: Args, report_index: u64) {
-    let api_key = read_state(|state| state.data.openai_api_key.clone());
+pub(crate) async fn process_report(report_index: u64) {
+    let Some((api_key, input)) = read_state(|state| {
+        state
+            .data
+            .reported_messages
+            .pending_classification(report_index)
+            .map(|pending| (state.data.openai_api_key.clone(), pending.content.moderation_input()))
+    }) else {
+        // The outcome has already been recorded
+        return;
+    };
 
-    let input = args.message.content.moderation_input();
-    let mut categories = ModerationCategories::default();
+    let result = if input.is_empty() {
+        // There is nothing the API can classify, but the report may still be valid for a reason
+        // the API cannot evaluate, so it continues with no flagged categories
+        Ok(ModerationCategories::default())
+    } else if let Some(api_key) = api_key {
+        openai_moderation::moderate_input(&api_key, &input).await
+    } else {
+        Err("OpenAI API key has not been set".to_string())
+    };
 
-    if let Some(api_key) = api_key
-        && !input.is_empty()
-    {
-        match openai_moderation::moderate_input(&api_key, &input).await {
-            Ok(result) => categories = result,
-            Err(error) => error!(?error, "Failed to classify reported message"),
+    mutate_state(|state| match result {
+        Ok(categories) => handle_moderation_result(report_index, categories, false, state),
+        Err(error) => {
+            error!(?error, report_index, "Failed to classify reported message");
+            let Some(attempts) = state.data.reported_messages.record_classification_failure(report_index) else {
+                return;
+            };
+            if attempts < MAX_CLASSIFICATION_ATTEMPTS {
+                let now = state.env.now();
+                state.data.timer_jobs.enqueue_job(
+                    TimerJob::ProcessReportClassification(ProcessReportClassification { report_index }),
+                    now + (1u64 << attempts) * MINUTE_IN_MS,
+                    now,
+                );
+            } else {
+                // Retries exhausted: record the failure on the outcome, so that it cannot be
+                // mistaken for a clean classification, and hand the report to the moderators
+                handle_moderation_result(report_index, ModerationCategories::default(), true, state);
+            }
         }
-    }
-
-    mutate_state(|state| handle_moderation_result(args, report_index, categories, state));
+    });
 }
 
-fn handle_moderation_result(args: Args, report_index: u64, categories: ModerationCategories, state: &mut RuntimeState) {
+fn handle_moderation_result(
+    report_index: u64,
+    categories: ModerationCategories,
+    classification_failed: bool,
+    state: &mut RuntimeState,
+) {
+    // The pending classification is removed when the outcome is recorded, so if it is missing
+    // the report has already been handled
+    let Some((content_excerpt, is_public)) = state
+        .data
+        .reported_messages
+        .pending_classification(report_index)
+        .map(|pending| (pending.content.moderation_input().text, pending.is_public))
+    else {
+        error!(report_index, "Report outcome already recorded");
+        return;
+    };
+    let Some((chat_id, thread_root_message_index, message_id, sender, already_deleted)) =
+        state.data.reported_messages.get(report_index).map(|r| {
+            (
+                r.chat_id,
+                r.thread_root_message_index,
+                r.message_id,
+                r.sender,
+                r.already_deleted,
+            )
+        })
+    else {
+        error!(report_index, "Report not found");
+        return;
+    };
+
     let now = state.env.now();
     let is_csam = categories.contains(ModerationCategories::SEXUAL_MINORS);
 
@@ -105,32 +177,33 @@ fn handle_moderation_result(args: Args, report_index: u64, categories: Moderatio
 
     // Store the flags on the originating canister so the message can be hidden in the app store
     // build (public chats only - private messages are classified but not flagged)
-    if !categories.is_empty() && args.is_public {
+    if !categories.is_empty() && is_public {
         moderation::set_message_moderation_flags(
-            args.chat_id,
-            args.thread_root_message_index,
-            args.message.message_id,
+            chat_id,
+            thread_root_message_index,
+            message_id,
             categories.bits(),
             &mut state.data.fire_and_forget_handler,
         );
     }
 
     if is_csam {
-        if !args.already_deleted {
+        if !already_deleted {
             moderation::delete_message(
-                args.chat_id,
-                args.thread_root_message_index,
-                args.message.message_id,
+                chat_id,
+                thread_root_message_index,
+                message_id,
                 &mut state.data.fire_and_forget_handler,
             );
         }
-        moderation::suspend_sender(args.message.sender, now, state);
+        moderation::suspend_sender(sender, now, state);
     }
 
     let outcome = AutomatedOutcome {
         timestamp: now,
         flagged_categories: categories.bits(),
         action,
+        classification_failed,
         human_verdict: None,
     };
     let reported_message = match state.data.reported_messages.record_outcome(report_index, outcome) {
@@ -160,7 +233,7 @@ fn handle_moderation_result(args: Args, report_index: u64, categories: Moderatio
                 reporters: reported_message.reports.keys().copied().collect(),
                 categories,
                 auto_sanctioned: is_csam,
-                content_excerpt: args.message.content.moderation_input().text,
+                content_excerpt,
                 timestamp: now,
             },
             state,
