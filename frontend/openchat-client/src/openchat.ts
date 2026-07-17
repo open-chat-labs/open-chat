@@ -1332,6 +1332,8 @@ export class OpenChat {
                     .send({ kind: "getChannelSummary", chatId })
                     .then(async (resp) => {
                         if (resp.kind === "channel") {
+                            // Channels inherit their parent community's restriction, and for a
+                            // non-member the community may not be in the store yet
                             if (appStoreBuild) {
                                 const community = await this.getCommunitySummary({
                                     kind: "community",
