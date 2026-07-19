@@ -99,7 +99,11 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
             ValidateNewMessageContentResult::SuccessP2PSwap(content) => {
                 let (escrow_canister_id, now, is_diamond) = read_state(|state| {
                     let now = state.env.now();
-                    (state.data.escrow_canister_id, now, state.data.membership(now).is_diamond_member())
+                    (
+                        state.data.escrow_canister_id,
+                        now,
+                        state.data.membership(now).is_diamond_member(),
+                    )
                 });
                 if !is_diamond {
                     return Error(OCErrorCode::NotDiamondMember.into());

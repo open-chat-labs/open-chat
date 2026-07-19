@@ -3,9 +3,9 @@ use crate::utils::{chat_token_info, icp_token_info, tick_many};
 use crate::{TestEnv, client};
 use candid::Principal;
 use constants::{CHAT_TRANSFER_FEE, DAY_IN_MS, MINUTE_IN_MS};
+use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
 use std::time::Duration;
-use oc_error_codes::OCErrorCode;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{ChatEvent, MessageContent, MessageContentInitial, P2PSwapContentInitial, P2PSwapStatus};
@@ -700,6 +700,7 @@ fn p2p_swap_rejected_for_non_diamond_user() {
     // Group
     let group_id = client::user::happy_path::create_group(env, &diamond_user, &random_string(), true, true);
     client::group::happy_path::join_group(env, user.principal, group_id);
+    tick_many(env, 5);
 
     let group_response = client::user::send_message_with_transfer_to_group(
         env,
@@ -727,13 +728,15 @@ fn p2p_swap_rejected_for_non_diamond_user() {
     );
 
     // Channel
-    let community_id = client::user::happy_path::create_community(env, &diamond_user, &random_string(), true, vec![random_string()]);
+    let community_id =
+        client::user::happy_path::create_community(env, &diamond_user, &random_string(), true, vec![random_string()]);
     let channel_id = client::community::happy_path::summary(env, diamond_user.principal, community_id)
         .channels
         .first()
         .unwrap()
         .channel_id;
     client::community::happy_path::join_community(env, user.principal, community_id);
+    tick_many(env, 5);
 
     let channel_response = client::user::send_message_with_transfer_to_channel(
         env,
