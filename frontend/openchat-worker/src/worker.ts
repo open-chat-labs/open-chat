@@ -780,6 +780,9 @@ function getAction(
         case "addRemoveSwapProvider":
             return agent.addRemoveSwapProvider(payload.swapProvider, payload.add);
 
+        case "modelCatalog":
+            return agent.modelCatalog();
+
         case "addMessageFilter":
             return agent.addMessageFilter(payload.regex);
 

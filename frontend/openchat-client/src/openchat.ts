@@ -6326,6 +6326,10 @@ export class OpenChat {
         return this.#worker.send({ kind: "addMessageFilter", regex });
     }
 
+    modelCatalog() {
+        return this.#worker.send({ kind: "modelCatalog" });
+    }
+
     removeMessageFilter(id: bigint): Promise<boolean> {
         return this.#worker.send({ kind: "removeMessageFilter", id }).catch(() => false);
     }

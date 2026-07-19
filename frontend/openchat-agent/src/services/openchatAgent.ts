@@ -3803,6 +3803,10 @@ export class OpenChatAgent extends EventTarget {
         return this._registryClient.addRemoveSwapProvider(swapProvider, add);
     }
 
+    modelCatalog() {
+        return this._registryClient.modelCatalog();
+    }
+
     addMessageFilter(regex: string): Promise<boolean> {
         return this._registryClient.addMessageFilter(regex);
     }

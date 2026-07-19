@@ -11,7 +11,10 @@ use registry_canister::{MessageFilterSummary, NervousSystemDetails};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
-use types::{AirdropConfig, BuildVersion, CanisterId, Cycles, EvmContractAddress, ExchangeId, TimestampMillis, Timestamped};
+use types::{
+    AirdropConfig, BuildVersion, CanisterId, Cycles, EvmContractAddress, ExchangeId, ModelCatalog, TimestampMillis,
+    Timestamped,
+};
 use utils::env::Environment;
 
 mod guards;
@@ -105,6 +108,11 @@ struct Data {
     total_supply: Timestamped<u128>,
     circulating_supply: Timestamped<u128>,
     airdrop_config: Timestamped<Option<AirdropConfig>>,
+    // #[serde(default)] so upgrading a registry whose stable memory predates this field doesn't trap in
+    // post_upgrade (msgpack struct-map deserialize errors on a missing field otherwise). Timestamped<T:
+    // Default> is Default, and ModelCatalog::default() is an empty (version 0) catalog.
+    #[serde(default)]
+    model_catalog: Timestamped<ModelCatalog>,
     subnets: Subnets,
     timer_jobs: TimerJobs<TimerJob>,
     evm_contract_addresses: HashMap<CanisterId, Vec<EvmContractAddress>>,
@@ -148,6 +156,7 @@ impl Data {
             total_supply: Timestamped::default(),
             circulating_supply: Timestamped::default(),
             airdrop_config: Timestamped::default(),
+            model_catalog: Timestamped::default(),
             subnets: Subnets::default(),
             timer_jobs: TimerJobs::default(),
             evm_contract_addresses: HashMap::new(),
