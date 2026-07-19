@@ -31,9 +31,8 @@ export OC_WALLET_CONNECT_PROJECT_ID=b9aafebed2abfaf8341afd9428c947d5
 export OC_WEBSITE_VERSION=
 export OC_BASE_ORIGIN=http://localhost:5001
 
-# override klipy and translate api keys from local environment (app only)
+# override klipy api key from local environment (app only)
 export OC_KLIPY_APIKEY="$OC_APP_KLIPY_APIKEY"
-export OC_PUBLIC_TRANSLATE_API_KEY="$OC_APP_TRANSLATE_API_KEY"
 
 # Run dev app
 npx vite --strictPort --port $OC_DEV_PORT

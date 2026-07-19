@@ -7930,6 +7930,51 @@ export class OpenChat {
         return token;
     }
 
+    async translateText(text: string, targetLocale: string): Promise<string | undefined> {
+        const token = await this.getTranslationToken();
+        if (token === undefined) return undefined;
+
+        let resp = await this.#translateRequest(token, text, targetLocale);
+        if (resp?.status === 401) {
+            const freshToken = await this.getTranslationToken(true);
+            if (freshToken === undefined) return undefined;
+            resp = await this.#translateRequest(freshToken, text, targetLocale);
+        }
+        if (resp === undefined || !resp.ok) return undefined;
+
+        const { translations } = await resp.json();
+        return Array.isArray(translations) ? translations[0] : undefined;
+    }
+
+    #translateRequest(
+        token: string,
+        text: string,
+        targetLocale: string,
+    ): Promise<Response | undefined> {
+        return fetch(`${this.config.translateProxyUrl}/translate`, {
+            method: "POST",
+            headers: {
+                "x-auth-jwt": token,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ texts: [text], target: targetLocale }),
+        }).catch((err) => {
+            console.warn("Translation request failed: ", err);
+            return undefined;
+        });
+    }
+
+    async translateMessage(
+        messageId: bigint,
+        text: string,
+        targetLocale: string,
+    ): Promise<boolean> {
+        const translation = await this.translateText(text, targetLocale);
+        if (translation === undefined) return false;
+        this.translate(messageId, translation);
+        return true;
+    }
+
     #startBtcBalanceUpdateJob() {
         bitcoinAddress.subscribe((addr) => {
             if (addr !== undefined) {
