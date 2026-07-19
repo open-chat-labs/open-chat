@@ -10,7 +10,13 @@ use serde::Serialize;
 use types::c2c_can_issue_access_token::{
     AccessTypeArgs, BotActionByCommandArgs, JoinVideoCallArgs, MarkVideoCallAsEndedArgs, StartVideoCallArgs,
 };
-use types::{AutonomousBotScope, BotActionByCommandClaims, BotCommand, Chat, JoinOrEndVideoCallClaims, StartVideoCallClaims};
+use types::{
+    AutonomousBotScope, BotActionByCommandClaims, BotCommand, Chat, JoinOrEndVideoCallClaims, Milliseconds,
+    StartVideoCallClaims, TranslateClaims,
+};
+
+const DEFAULT_TOKEN_VALIDITY: Milliseconds = 5 * 60 * 1000;
+const TRANSLATE_TOKEN_VALIDITY: Milliseconds = 30 * 60 * 1000;
 
 #[query(composite = true, msgpack = true)]
 #[trace]
@@ -18,6 +24,10 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
     let Ok(args_wrapper) = ArgsInternal::from(args_wrapper) else {
         return InternalError("Failed to parse arguments".to_string());
     };
+
+    if let ArgsInternal::Translate = &args_wrapper {
+        return mutate_state(translate_token);
+    }
 
     let PrepareResult { scope, access_type_args } = match read_state(|state| prepare(&args_wrapper, state)) {
         Ok(r) => r,
@@ -48,7 +58,7 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
                     meta: args.command.meta.clone(),
                 },
             };
-            return build_token(token_type_name, custom_claims, state);
+            return build_token(token_type_name, custom_claims, DEFAULT_TOKEN_VALIDITY, state);
         }
 
         match access_type_args {
@@ -59,21 +69,21 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
                     call_type: args.call_type,
                     is_diamond: args.is_diamond,
                 };
-                build_token(token_type_name, custom_claims, state)
+                build_token(token_type_name, custom_claims, DEFAULT_TOKEN_VALIDITY, state)
             }
             AccessTypeArgs::JoinVideoCall(args) => {
                 let custom_claims = JoinOrEndVideoCallClaims {
                     user_id: args.initiator,
                     chat_id: chat.unwrap(),
                 };
-                build_token(token_type_name, custom_claims, state)
+                build_token(token_type_name, custom_claims, DEFAULT_TOKEN_VALIDITY, state)
             }
             AccessTypeArgs::MarkVideoCallAsEnded(args) => {
                 let custom_claims = JoinOrEndVideoCallClaims {
                     user_id: args.initiator,
                     chat_id: chat.unwrap(),
                 };
-                build_token(token_type_name, custom_claims, state)
+                build_token(token_type_name, custom_claims, DEFAULT_TOKEN_VALIDITY, state)
             }
             _ => unreachable!(),
         }
@@ -144,18 +154,45 @@ fn prepare(args_outer: &ArgsInternal, state: &RuntimeState) -> Result<PrepareRes
     Ok(result)
 }
 
-fn build_token<T: Serialize>(token_type_name: String, custom_claims: T, state: &mut RuntimeState) -> Response {
+fn translate_token(state: &mut RuntimeState) -> Response {
+    let Some(user) = state
+        .data
+        .global_users
+        .get_by_principal(&state.env.caller())
+        .filter(|u| !u.user_type.is_bot())
+    else {
+        return NotAuthorized;
+    };
+
+    let user_id = user.user_id;
+    let is_authorized = state.data.global_users.is_diamond_member(&user_id, state.env.now())
+        || state.data.global_users.platform_moderators().contains(&user_id);
+
+    if !is_authorized {
+        return NotAuthorized;
+    }
+
+    build_token(
+        "Translate".to_string(),
+        TranslateClaims { user_id },
+        TRANSLATE_TOKEN_VALIDITY,
+        state,
+    )
+}
+
+fn build_token<T: Serialize>(
+    token_type_name: String,
+    custom_claims: T,
+    validity: Milliseconds,
+    state: &mut RuntimeState,
+) -> Response {
     if !state.data.oc_key_pair.is_initialised() {
         return InternalError("OC Secret not set".to_string());
     };
 
     let mut rng = StdRng::from_seed(state.env.entropy());
 
-    let claims = Claims::new(
-        state.env.now() + 300_000, // Token valid for 5 mins from now
-        token_type_name,
-        custom_claims,
-    );
+    let claims = Claims::new(state.env.now() + validity, token_type_name, custom_claims);
 
     match jwt::sign_and_encode_token(state.data.oc_key_pair.secret_key_der(), claims, &mut rng) {
         Ok(token) => Success(token),
@@ -169,6 +206,7 @@ enum ArgsInternal {
     JoinVideoCall(access_token_v2::JoinVideoCallArgs),
     MarkVideoCallAsEnded(access_token_v2::MarkVideoCallAsEndedArgs),
     BotActionByCommand(access_token_v2::BotActionByCommandArgs),
+    Translate,
 }
 
 impl ArgsInternal {
@@ -178,6 +216,7 @@ impl ArgsInternal {
             Args::JoinVideoCall(args) => Ok(ArgsInternal::JoinVideoCall(args)),
             Args::MarkVideoCallAsEnded(args) => Ok(ArgsInternal::MarkVideoCallAsEnded(args)),
             Args::BotActionByCommand(args) => Ok(ArgsInternal::BotActionByCommand(args)),
+            Args::Translate => Ok(ArgsInternal::Translate),
         }
     }
 
@@ -187,6 +226,7 @@ impl ArgsInternal {
             Self::JoinVideoCall(_) => "JoinVideoCall",
             Self::MarkVideoCallAsEnded(_) => "MarkVideoCallAsEnded",
             Self::BotActionByCommand(_) => "BotActionByCommand",
+            Self::Translate => "Translate",
         }
     }
 
@@ -196,6 +236,7 @@ impl ArgsInternal {
             Self::JoinVideoCall(args) => Some(args.chat),
             Self::MarkVideoCallAsEnded(args) => Some(args.chat),
             Self::BotActionByCommand(args) => args.scope.chat(None),
+            Self::Translate => None,
         }
     }
 }

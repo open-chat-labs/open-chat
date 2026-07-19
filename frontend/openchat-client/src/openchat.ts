@@ -7901,6 +7901,35 @@ export class OpenChat {
         });
     }
 
+    #translationToken: { token: string; expiresAt: number } | undefined;
+
+    async getTranslationToken(forceRefresh: boolean = false): Promise<string | undefined> {
+        const margin = 60 * 1000;
+        if (
+            !forceRefresh &&
+            this.#translationToken !== undefined &&
+            this.#translationToken.expiresAt - margin > Date.now()
+        ) {
+            return this.#translationToken.token;
+        }
+
+        const localUserIndex = await this.#worker.send({
+            kind: "getLocalUserIndexForUser",
+            userId: currentUserIdStore.value,
+        });
+        const token = await this.#worker.send({
+            kind: "getAccessToken",
+            accessTokenType: { kind: "translate" },
+            localUserIndex,
+        });
+        if (token === undefined) {
+            this.#translationToken = undefined;
+            return undefined;
+        }
+        this.#translationToken = { token, expiresAt: jwtExpiryMs(token) ?? 0 };
+        return token;
+    }
+
     #startBtcBalanceUpdateJob() {
         bitcoinAddress.subscribe((addr) => {
             if (addr !== undefined) {
@@ -10562,3 +10591,20 @@ export class OpenChat {
 type UserIndexMetrics = {
     oc_public_key: string;
 };
+
+function jwtExpiryMs(token: string): number | undefined {
+    const parts = token.split(".");
+    if (parts.length < 2) return undefined;
+    try {
+        const payload = JSON.parse(
+            new TextDecoder().decode(
+                Uint8Array.from(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")), (c) =>
+                    c.charCodeAt(0),
+                ),
+            ),
+        );
+        return typeof payload.exp === "number" ? payload.exp * 1000 : undefined;
+    } catch {
+        return undefined;
+    }
+}

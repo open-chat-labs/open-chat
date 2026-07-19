@@ -8052,6 +8052,7 @@ export const LocalUserIndexAccessTokenV2Args = Type.Union([
     Type.Object({
         BotActionByCommand: BotActionByCommandArgs,
     }),
+    Type.Literal("Translate"),
 ]);
 
 export type LocalUserIndexBotSendMessageArgs = Static<typeof LocalUserIndexBotSendMessageArgs>;
