@@ -1,26 +1,67 @@
 <script lang="ts">
     import { selectedModelId } from "@src/stores/onDeviceModels";
+    import {
+        addCustomModel,
+        customModels,
+        fileNameFromUrl,
+        makeCustomModelId,
+        recordDownloadedHashes,
+        removeCustomModel,
+        toDisplay,
+        type CustomModelEntry,
+        type CustomModelFile,
+        type DisplayModel,
+    } from "@src/stores/customModels";
     import { defaultModelCatalog } from "@utils/modelCatalog";
     import { isNativeClient } from "@utils/onDeviceInference";
-    import type { ModelCatalogEntry } from "openchat-shared";
-    import { onDestroy, onMount } from "svelte";
+    import {
+        assessSuitability,
+        hasBlocker,
+        type SuitabilityWarning,
+        type UrlProbe,
+    } from "@utils/modelSuitability";
+    import type { ModelCatalogEntry, ModelModality } from "openchat-shared";
+    import type { OpenChat } from "openchat-client";
+    import { getContext, onDestroy, onMount } from "svelte";
     import { get } from "svelte/store";
     import {
         deleteModel,
         downloadModel,
         listLocalModels,
         onModelDownloadProgress,
+        probeModelUrl,
+        systemResources,
         type LocalModel,
+        type SystemResources,
     } from "tauri-plugin-oc-api";
     import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
+    import Input from "../../Input.svelte";
     import Toggle from "../../Toggle.svelte";
     import Translatable from "../../Translatable.svelte";
 
     // On-device inference runs wherever the Tauri native bridge is present (desktop + mobile); degrade
     // gracefully in the plain web/PWA build. The catalog is data; nothing is bundled.
+    const client = getContext<OpenChat>("client");
     const native = isNativeClient();
-    const catalog = defaultModelCatalog.models;
+
+    // Prefer the OpenChat-hosted catalog (owner-curated on the registry, updatable without a client
+    // release); fall back to the built-in default when it's empty (not yet configured) or unreachable.
+    let catalogSource = $state<ModelCatalogEntry[]>(defaultModelCatalog.models);
+
+    async function loadCatalog() {
+        try {
+            const remote = await client.modelCatalog();
+            if (remote.models.length > 0) {
+                catalogSource = remote.models;
+            }
+        } catch {
+            // keep the built-in default (offline / not yet configured)
+        }
+    }
+
+    // What the list renders: the registry/default catalog ⊕ the user's device-local custom models.
+    let display = $derived<DisplayModel[]>([...catalogSource.map(toDisplay), ...$customModels]);
 
     let localModels = $state<LocalModel[]>([]);
     let loading = $state(false);
@@ -31,6 +72,27 @@
     let downloading = $state<Record<string, boolean>>({});
     let accepted = $state<Record<string, boolean>>({});
     let errors = $state<Record<string, string>>({});
+
+    // "Add a model from URL" form state.
+    let showAdd = $state(false);
+    let addUrl = $state("");
+    let addMmprojUrl = $state("");
+    let addName = $state("");
+    let checking = $state(false);
+    let checked = $state(false);
+    let warnings = $state<SuitabilityWarning[]>([]);
+    let addError = $state("");
+    // Probes captured by "Check", reused by "Add & Download" (for the entry's file sizes).
+    let primaryProbe = $state<UrlProbe | undefined>(undefined);
+    let mmprojProbe = $state<UrlProbe | undefined>(undefined);
+    // The exact inputs "Check" ran against. The assessment (and captured probe sizes) are only valid while
+    // the fields still match — editing the URL afterwards makes checkFresh false, hiding Add & Download
+    // until a fresh Check, so a stale passing assessment can't be used to bypass the blockers.
+    let checkedUrl = $state("");
+    let checkedMmproj = $state("");
+    let checkFresh = $derived(
+        checked && addUrl.trim() === checkedUrl && addMmprojUrl.trim() === checkedMmproj,
+    );
 
     let unlisten: (() => void) | undefined;
 
@@ -50,12 +112,21 @@
         }
     }
 
-    async function download(entry: ModelCatalogEntry) {
+    async function download(entry: DisplayModel) {
         errors = { ...errors, [entry.id]: "" };
         downloading = { ...downloading, [entry.id]: true };
         progress = { ...progress, [entry.id]: { received: 0, total: entry.sizeBytes } };
         try {
-            await downloadModel({ modelId: entry.id, runtime: entry.runtime, files: entry.files });
+            const res = await downloadModel({
+                modelId: entry.id,
+                runtime: entry.runtime,
+                files: entry.files,
+            });
+            // For a trust-on-first-use custom model, persist the observed hashes so a later re-download
+            // is integrity-checked against the first.
+            if (entry.custom === true) {
+                recordDownloadedHashes(entry.id, res.files);
+            }
             await load();
         } catch (e) {
             errors = { ...errors, [entry.id]: String(e) };
@@ -69,9 +140,20 @@
         selected = id;
     }
 
-    async function remove(id: string) {
-        await deleteModel(id);
-        if (selected === id) {
+    async function remove(entry: DisplayModel) {
+        // Deleting can fail (e.g. the file is still mmap'd by the cached model on Windows) — surface it
+        // rather than silently leaving the entry orphaned in the list + localStorage.
+        try {
+            await deleteModel(entry.id);
+        } catch (e) {
+            errors = { ...errors, [entry.id]: String(e) };
+            return;
+        }
+        // Custom models also have a localStorage entry — remove it so it leaves the list entirely.
+        if (entry.custom === true) {
+            removeCustomModel(entry.id);
+        }
+        if (selected === entry.id) {
             selectedModelId.set("");
             selected = "";
         }
@@ -89,7 +171,103 @@
         return Math.min(100, Math.round((p.received / p.total) * 100));
     }
 
+    // --- Add a model from URL ---
+
+    function resetAdd() {
+        showAdd = false;
+        addUrl = "";
+        addMmprojUrl = "";
+        addName = "";
+        checked = false;
+        warnings = [];
+        addError = "";
+        checkedUrl = "";
+        checkedMmproj = "";
+        primaryProbe = undefined;
+        mmprojProbe = undefined;
+    }
+
+    // Native preflight: probe the file(s) + read device resources, then assess suitability (no download).
+    async function checkModel() {
+        addError = "";
+        const url = addUrl.trim();
+        const mmproj = addMmprojUrl.trim();
+        if (url === "") {
+            addError = "Enter a model URL.";
+            return;
+        }
+        checking = true;
+        try {
+            primaryProbe = await probeModelUrl(url);
+            mmprojProbe = mmproj !== "" ? await probeModelUrl(mmproj) : undefined;
+            let resources: SystemResources | undefined;
+            try {
+                resources = await systemResources();
+            } catch {
+                resources = undefined;
+            }
+            warnings = assessSuitability({
+                url,
+                mmprojUrl: mmproj !== "" ? mmproj : undefined,
+                probe: primaryProbe,
+                mmprojProbe,
+                resources,
+            });
+            checkedUrl = url;
+            checkedMmproj = mmproj;
+            checked = true;
+        } catch (e) {
+            addError = String(e);
+        } finally {
+            checking = false;
+        }
+    }
+
+    async function addAndDownload() {
+        const url = addUrl.trim();
+        const mmproj = addMmprojUrl.trim();
+        // Only proceed against an assessment that matches the CURRENT inputs (checkFresh) — never a stale one.
+        if (url === "" || !checkFresh || hasBlocker(warnings)) return;
+
+        // Force deterministic on-disk names so the native runtime classifies the files correctly: the
+        // language model as "model.gguf" (find_gguf) and the projector as "mmproj.gguf" (find_mmproj),
+        // regardless of what the source URLs are named.
+        const files: CustomModelFile[] = [
+            { url, bytes: primaryProbe?.contentLength ?? 0, filename: "model.gguf" },
+        ];
+        if (mmproj !== "") {
+            files.push({
+                url: mmproj,
+                bytes: mmprojProbe?.contentLength ?? 0,
+                filename: "mmproj.gguf",
+            });
+        }
+        const modalities: ModelModality[] = mmproj !== "" ? ["text", "image"] : ["text"];
+        const name = addName.trim() !== "" ? addName.trim() : fileNameFromUrl(url) || "Custom model";
+        const entry: CustomModelEntry = {
+            id: makeCustomModelId(url),
+            name,
+            modalities,
+            runtime: "llama-cpp",
+            files,
+            license: "User-provided (not verified by OpenChat)",
+            sizeBytes: files.reduce((acc, f) => acc + f.bytes, 0),
+            custom: true,
+            sourceUrl: url,
+            addedAt: Date.now(),
+        };
+
+        const result = addCustomModel(entry);
+        if (!result.ok) {
+            addError = result.error;
+            return;
+        }
+        resetAdd();
+        await download(entry);
+    }
+
     onMount(async () => {
+        void loadCatalog();
         await load();
         if (native) {
             unlisten = await onModelDownloadProgress((p) => {
@@ -119,7 +297,65 @@
             )} />
     </p>
 
-    {#each catalog as entry (entry.id)}
+    <div class="add">
+        {#if !showAdd}
+            <Button secondary small onClick={() => (showAdd = true)}>
+                <Translatable resourceKey={i18nKey("+ Add a model from URL")} />
+            </Button>
+        {:else}
+            <div class="add-form">
+                <p class="hint">
+                    <Translatable
+                        resourceKey={i18nKey(
+                            "Paste a direct link to a .gguf model file — opening it should start a download, not show a web page (e.g. https://huggingface.co/<org>/<repo>/resolve/main/<file>.gguf). It must be publicly downloadable; login/token-gated models won't work.",
+                        )} />
+                </p>
+                <Input bind:value={addUrl} placeholder={i18nKey("Model URL (.gguf)")} />
+                <Input
+                    bind:value={addMmprojUrl}
+                    placeholder={i18nKey("Vision projector URL (optional — enables image input)")} />
+                <Input bind:value={addName} placeholder={i18nKey("Name (optional)")} />
+                <div class="actions">
+                    <Button small onClick={checkModel} disabled={checking || addUrl.trim() === ""}>
+                        <Translatable resourceKey={i18nKey(checking ? "Checking…" : "Check")} />
+                    </Button>
+                    <Button secondary small onClick={resetAdd}>
+                        <Translatable resourceKey={i18nKey("Cancel")} />
+                    </Button>
+                </div>
+
+                {#if checkFresh}
+                    <div class="warnings">
+                        {#each warnings as w (w.code)}
+                            <div class="warning {w.level}">
+                                <span class="icon">{w.level === "blocker" ? "⛔" : "⚠️"}</span>
+                                <span>{w.message}</span>
+                            </div>
+                        {/each}
+                    </div>
+                    <div class="actions">
+                        <Button small disabled={hasBlocker(warnings)} onClick={addAndDownload}>
+                            <Translatable resourceKey={i18nKey("Add & Download")} />
+                        </Button>
+                    </div>
+                    {#if hasBlocker(warnings)}
+                        <p class="blocked-note">
+                            <Translatable
+                                resourceKey={i18nKey(
+                                    "Resolve the items marked ⛔ above before this model can be added.",
+                                )} />
+                        </p>
+                    {/if}
+                {/if}
+
+                {#if addError}
+                    <div class="error">{addError}</div>
+                {/if}
+            </div>
+        {/if}
+    </div>
+
+    {#each display as entry (entry.id)}
         {@const downloaded = isDownloaded(entry.id)}
         {@const busy = downloading[entry.id] === true}
         <div class="model">
@@ -131,8 +367,16 @@
                 {#each entry.modalities as modality}
                     <span class="chip">{modality}</span>
                 {/each}
+                {#if entry.custom}
+                    <span class="chip custom">
+                        <Translatable resourceKey={i18nKey("Custom")} />
+                    </span>
+                {/if}
                 <span class="size">{formatSize(entry.sizeBytes)}</span>
             </div>
+            {#if entry.custom && entry.sourceUrl}
+                <div class="source" title={entry.sourceUrl}>{entry.sourceUrl}</div>
+            {/if}
 
             {#if downloaded}
                 <div class="actions">
@@ -140,7 +384,7 @@
                         <Translatable
                             resourceKey={i18nKey(selected === entry.id ? "Selected" : "Select")} />
                     </Button>
-                    <Button secondary onClick={() => remove(entry.id)} small>
+                    <Button secondary onClick={() => remove(entry)} small>
                         <Translatable resourceKey={i18nKey("Remove")} />
                     </Button>
                 </div>
@@ -150,7 +394,7 @@
                 </div>
                 <div class="size">
                     {percent(entry.id)}% · {formatSize(progress[entry.id]?.received ?? 0)} / {formatSize(
-                        entry.sizeBytes,
+                        progress[entry.id]?.total || entry.sizeBytes,
                     )}
                 </div>
             {:else}
@@ -197,6 +441,45 @@
         color: var(--txt-light);
         margin-bottom: $sp3;
     }
+    .add {
+        margin-bottom: $sp4;
+    }
+    .add-form {
+        display: flex;
+        flex-direction: column;
+        gap: $sp3;
+        padding: $sp4 0;
+    }
+    .hint {
+        @include font-size(fs-70);
+        color: var(--txt-light);
+        word-break: break-word;
+    }
+    .warnings {
+        display: flex;
+        flex-direction: column;
+        gap: $sp2;
+    }
+    .warning {
+        display: flex;
+        gap: $sp2;
+        align-items: flex-start;
+        @include font-size(fs-70);
+
+        .icon {
+            flex: 0 0 auto;
+        }
+        &.blocker {
+            color: var(--error);
+        }
+        &.caution {
+            color: var(--txt-light);
+        }
+    }
+    .blocked-note {
+        @include font-size(fs-60);
+        color: var(--error);
+    }
     .model {
         display: flex;
         flex-direction: column;
@@ -226,6 +509,16 @@
         border-radius: var(--rd);
         background-color: var(--input-bg);
         color: var(--txt-light);
+
+        &.custom {
+            background-color: var(--accent);
+            color: #fff;
+        }
+    }
+    .source {
+        @include font-size(fs-60);
+        color: var(--txt-light);
+        word-break: break-all;
     }
     .size {
         @include font-size(fs-70);
