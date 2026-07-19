@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
     addCustomModel,
     type CustomModelEntry,
@@ -109,5 +109,59 @@ describe("custom-models store", () => {
         // A fresh add still works (load() swallows the parse error and starts empty).
         expect(addCustomModel(entry()).ok).toBe(true);
         expect(getCustomModels()).toHaveLength(1);
+    });
+});
+
+describe("custom-models store — edge cases", () => {
+    beforeEach(() => {
+        localStorage.clear();
+    });
+
+    it("recordDownloadedHashes leaves a file untouched when no URL matches", () => {
+        const url = "https://host/model.gguf";
+        const e = entry({ sourceUrl: url, files: [{ url, bytes: 1000 }] });
+        addCustomModel(e);
+        recordDownloadedHashes(e.id, [{ url: "https://other/x.gguf", sha256: "deadbeef" }]);
+        expect(getCustomModels()[0].files[0].sha256).toBeUndefined();
+    });
+
+    it("recordDownloadedHashes is a no-op for an empty file list or an unknown id", () => {
+        const e = entry();
+        addCustomModel(e);
+        recordDownloadedHashes(e.id, []); // empty ⇒ early return
+        recordDownloadedHashes("no-such-id", [{ url: e.sourceUrl, sha256: "abc" }]); // wrong id
+        expect(getCustomModels()[0].files[0].sha256).toBeUndefined();
+    });
+
+    it("removing a non-existent id leaves the list unchanged", () => {
+        const e = entry();
+        addCustomModel(e);
+        removeCustomModel("does-not-exist");
+        expect(getCustomModels()).toHaveLength(1);
+    });
+
+    it("re-adding the same source URL is rejected — makeCustomModelId is stable ⇒ dedupe", () => {
+        const url = "https://host/repo/resolve/main/model.gguf";
+        expect(addCustomModel(entry({ sourceUrl: url })).ok).toBe(true);
+        // different entry object, same URL ⇒ same id ⇒ duplicate
+        const again = addCustomModel(entry({ sourceUrl: url, name: "Renamed" }));
+        expect(again.ok).toBe(false);
+        expect(getCustomModels()).toHaveLength(1);
+    });
+
+    it("surfaces a storage error (quota exceeded) and persists nothing", () => {
+        const spy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+            throw new Error("QuotaExceededError");
+        });
+        try {
+            const res = addCustomModel(entry());
+            expect(res.ok).toBe(false);
+            if (!res.ok) expect(res.error).toMatch(/storage may be full/i);
+        } finally {
+            spy.mockRestore();
+        }
+        // Nothing was written — localStorage (the source of truth) has no entry. (getCustomModels()
+        // reads the module-level in-memory store, which a failed persist deliberately does NOT advance.)
+        expect(localStorage.getItem("openchat_custom_models")).toBeNull();
     });
 });

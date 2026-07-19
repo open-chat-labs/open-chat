@@ -4,12 +4,14 @@ use registry_canister::*;
 // Queries
 generate_query_call!(subnets);
 generate_msgpack_query_call!(updates);
+generate_msgpack_query_call!(model_catalog);
 
 // Updates
 generate_update_call!(add_token);
 generate_update_call!(expand_onto_subnet);
 generate_update_call!(update_token);
 generate_msgpack_update_call!(set_token_enabled);
+generate_msgpack_update_call!(set_model_catalog);
 
 pub mod happy_path {
     use super::*;

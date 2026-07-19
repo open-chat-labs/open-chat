@@ -222,4 +222,62 @@ describe("assessSuitability", () => {
         expect(lastBlocker).toBeLessThan(firstCaution);
         expect(hasBlocker(result)).toBe(true);
     });
+
+    // --- URL / vision-projector edge cases (not covered above) ---
+    describe("URL + mmproj edge cases", () => {
+        it("blocks an empty (whitespace-only) URL, still emits trust, and doesn't double-flag not-https/not-gguf", () => {
+            const c = codes({ url: "   ", resources: AMPLE });
+            expect(c).toContain("empty-url");
+            expect(c).toContain("trust");
+            // empty-url subsumes the format checks — they must not also fire on ""
+            expect(c).not.toContain("not-https");
+            expect(c).not.toContain("not-gguf");
+        });
+
+        it("blocks a non-https vision projector URL", () => {
+            expect(
+                blockers({
+                    url: "https://host/m.gguf",
+                    mmprojUrl: "http://host/mmproj.gguf",
+                    probe: okProbe(GiB),
+                    mmprojProbe: okProbe(0.3 * GiB),
+                    resources: AMPLE,
+                }),
+            ).toContain("mmproj-not-https");
+        });
+
+        it("only CAUTIONS (never blocks) when the vision projector isn't a .gguf", () => {
+            const result = assessSuitability({
+                url: "https://host/m.gguf",
+                mmprojUrl: "https://host/projector.bin",
+                probe: okProbe(GiB),
+                mmprojProbe: okProbe(0.3 * GiB, { filename: "projector.bin" }),
+                resources: AMPLE,
+            });
+            const w = result.find((x) => x.code === "mmproj-not-gguf");
+            expect(w).toBeDefined();
+            expect(w!.level).toBe("caution");
+            expect(hasBlocker(result)).toBe(false);
+        });
+
+        it("hasBlocker is false when every warning is a caution", () => {
+            const result = assessSuitability({
+                url: "https://host/m.gguf",
+                probe: okProbe(GiB),
+                resources: AMPLE,
+            });
+            expect(result.every((w) => w.level === "caution")).toBe(true);
+            expect(hasBlocker(result)).toBe(false);
+        });
+
+        it("accumulates multiple blockers (non-https + html page) and hasBlocker is true", () => {
+            const b = blockers({
+                url: "http://host/model.gguf",
+                probe: okProbe(GiB, { contentType: "text/html" }),
+                resources: AMPLE,
+            });
+            expect(b).toContain("not-https");
+            expect(b).toContain("html-response");
+        });
+    });
 });
