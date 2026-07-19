@@ -19,7 +19,7 @@ fn p2p_swap_in_direct_chat_succeeds() {
         ..
     } = wrapper.env();
 
-    let user1 = client::register_user(env, canister_ids);
+    let user1 = client::register_diamond_user(env, canister_ids, *controller);
     let user2 = client::register_user(env, canister_ids);
 
     client::ledger::happy_path::transfer(
@@ -241,7 +241,7 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
         ..
     } = wrapper.env();
 
-    let user1 = client::register_user(env, canister_ids);
+    let user1 = client::register_diamond_user(env, canister_ids, *controller);
     let user2 = client::register_user(env, canister_ids);
 
     let original_chat_balance = 11_000_000_000;
@@ -486,7 +486,7 @@ fn deposit_refunded_if_swap_expires() {
         ..
     } = wrapper.env();
 
-    let user1 = client::register_user(env, canister_ids);
+    let user1 = client::register_diamond_user(env, canister_ids, *controller);
     let user2 = client::register_user(env, canister_ids);
 
     let original_chat_balance = 11_000_000_000;
