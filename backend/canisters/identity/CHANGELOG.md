@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1979](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1979-identity)] - 2026-04-10
+
 ### Removed
 
 - Remove all code relating to captchas ([#8809](https://github.com/open-chat-labs/open-chat/pull/8809))
