@@ -384,22 +384,12 @@
     }
 
     function getTranslation(text: string, messageId: bigint) {
-        const params = new URLSearchParams();
-        params.append("q", text);
-        params.append("target", translationCodes[$locale || "en"] || "en");
-        params.append("format", "text");
-        params.append("key", import.meta.env.OC_PUBLIC_TRANSLATE_API_KEY!);
-        fetch(`https://translation.googleapis.com/language/translate/v2?${params}`, {
-            method: "POST",
-        })
-            .then((resp) => resp.json())
-            .then(({ data: { translations } }) => {
-                if (Array.isArray(translations) && translations.length > 0) {
-                    client.translate(messageId, translations[0].translatedText);
+        client
+            .translateMessage(messageId, text, translationCodes[$locale || "en"] || "en")
+            .then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast(i18nKey("unableToTranslate"));
                 }
-            })
-            .catch((_err) => {
-                toastStore.showFailureToast(i18nKey("unableToTranslate"));
             });
     }
 
