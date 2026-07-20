@@ -296,6 +296,7 @@ impl RuntimeState {
             is_invited,
             metrics: data.cached_chat_metrics.value.clone(),
             verified: data.verified.value,
+            moderation_flags: data.moderation_flags.value,
         }
     }
 
@@ -563,6 +564,8 @@ struct Data {
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     bots: InstalledBots,
     verified: Timestamped<bool>,
+    #[serde(default)]
+    moderation_flags: Timestamped<u32>,
     idempotency_checker: IdempotencyChecker,
     public_channel_list_updated: TimestampMillis,
 }
@@ -673,6 +676,7 @@ impl Data {
             stable_memory_keys_to_garbage_collect: Vec::new(),
             bots: InstalledBots::default(),
             verified: Timestamped::default(),
+            moderation_flags: Timestamped::default(),
             idempotency_checker: IdempotencyChecker::default(),
             public_channel_list_updated: now,
         }

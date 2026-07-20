@@ -10,6 +10,8 @@ pub struct Args {
     pub search_term: Option<String>,
     pub page_index: u32,
     pub page_size: u8,
+    #[serde(default)]
+    pub include_moderation_flags: Option<u32>,
 }
 
 #[ts_export(group_index, explore_groups)]
@@ -19,6 +21,7 @@ pub enum Response {
     TermTooShort(u8),
     TermTooLong(u8),
     InvalidTerm,
+    InvalidFlags,
     Error(OCError),
 }
 

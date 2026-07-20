@@ -100,6 +100,9 @@ export function apiAccessTokenType(domain: AccessTokenType): LocalUserIndexAcces
         case "mark_video_call_ended":
             return { MarkVideoCallAsEnded: { chat: apiChatIdentifier(domain.chatId) } };
 
+        case "translate":
+            return "Translate";
+
         case "bot_action_by_command":
             return {
                 BotActionByCommand: {
