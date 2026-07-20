@@ -927,7 +927,14 @@ export type ChatEvent =
     | ExternalUrlUpdated
     | BotAdded
     | BotRemoved
-    | BotUpdated;
+    | BotUpdated
+    | HistoryDeleted;
+
+export type HistoryDeleted = {
+    kind: "history_deleted";
+    before: bigint;
+    deletedBy: string;
+};
 
 export type BotAdded = {
     kind: "bot_added";
@@ -1728,6 +1735,7 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         messagesVisibleToNonMembers: boolean;
         membership: GroupCanisterGroupMembership;
         verified: boolean;
+        moderationFlags: number;
     };
 
 export type GroupCanisterGroupMembership = {
@@ -1772,6 +1780,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     messagesVisibleToNonMembers?: boolean;
     membership: GroupMembershipUpdates | undefined;
     verified?: boolean;
+    moderationFlags?: number;
 };
 
 export type GroupMembershipUpdates = {
@@ -2549,7 +2558,8 @@ export type ChatEventType =
     | "UsersUnblocked"
     | "BotAdded"
     | "BotRemoved"
-    | "BotUpdated";
+    | "BotUpdated"
+    | "HistoryDeleted";
 
 export function emptyEventsResponse<T extends ChatEvent>(): EventsSuccessResult<T> {
     return {

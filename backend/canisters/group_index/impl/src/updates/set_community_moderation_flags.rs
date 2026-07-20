@@ -1,21 +1,13 @@
 use crate::{RuntimeState, model::moderation_flags::ModerationFlags, mutate_state, read_state};
-use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::set_community_moderation_flags::{Response::*, *};
-use types::CanisterId;
 use user_index_canister_c2c_client::lookup_user;
 
 #[update(msgpack = true)]
 #[trace]
 async fn set_community_moderation_flags(args: Args) -> Response {
-    let PrepareResult {
-        caller,
-        user_index_canister_id,
-    } = match read_state(|state| prepare(&args, state)) {
-        Ok(result) => result,
-        Err(response) => return response,
-    };
+    let (caller, user_index_canister_id) = read_state(|state| (state.env.caller(), state.data.user_index_canister_id));
 
     match lookup_user(caller, user_index_canister_id).await {
         Ok(Some(user)) if user.is_platform_moderator => (),
@@ -26,33 +18,21 @@ async fn set_community_moderation_flags(args: Args) -> Response {
     mutate_state(|state| commit(&args, state))
 }
 
-struct PrepareResult {
-    caller: Principal,
-    user_index_canister_id: CanisterId,
-}
-
-fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
+fn commit(args: &Args, state: &mut RuntimeState) -> Response {
     if let Some(community) = state.data.public_communities.get(&args.community_id) {
         if args.flags == community.moderation_flags().bits() {
-            return Err(Unchanged);
+            return Unchanged;
         }
 
-        if ModerationFlags::from_bits(args.flags).is_none() {
-            return Err(InvalidFlags);
+        let Some(moderation_flags) = ModerationFlags::from_bits(args.flags) else {
+            return InvalidFlags;
+        };
+
+        if state.set_community_moderation_flags(args.community_id, moderation_flags) {
+            Success
+        } else {
+            CommunityNotFound
         }
-
-        Ok(PrepareResult {
-            caller: state.env.caller(),
-            user_index_canister_id: state.data.user_index_canister_id,
-        })
-    } else {
-        Err(CommunityNotFound)
-    }
-}
-
-fn commit(args: &Args, state: &mut RuntimeState) -> Response {
-    if state.set_community_moderation_flags(args.community_id, ModerationFlags::from_bits(args.flags).unwrap()) {
-        Success
     } else {
         CommunityNotFound
     }

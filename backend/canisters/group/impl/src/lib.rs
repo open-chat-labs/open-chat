@@ -230,6 +230,7 @@ impl RuntimeState {
             membership: Some(membership),
             video_call_in_progress: chat.events.video_call_in_progress(Some(member.user_id())),
             verified: self.data.verified.value,
+            moderation_flags: self.data.moderation_flags.value,
         }
     }
 

@@ -1,7 +1,7 @@
-use serde::{Deserialize, Serialize};
-
-// A set of OpenAI moderation categories, stored as a bitfield
-#[derive(Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
+// A set of OpenAI moderation categories, stored as a bitfield. Deliberately not serializable:
+// it travels on the wire as a raw u32 and must be rebuilt via `from_bits` so that unknown bits
+// cannot enter.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct ModerationCategories(u32);
 
 impl ModerationCategories {
