@@ -91,6 +91,7 @@
             nfidUrl: import.meta.env.OC_NFID_URL!,
             userGeekApiKey: import.meta.env.OC_USERGEEK_APIKEY!,
             videoBridgeUrl: import.meta.env.OC_VIDEO_BRIDGE_URL!,
+            translateProxyUrl: import.meta.env.OC_TRANSLATE_PROXY_URL!,
             meteredApiKey: import.meta.env.OC_METERED_APIKEY!,
             blobUrlPattern: import.meta.env.OC_BLOB_URL_PATTERN!,
             canisterUrlPath: import.meta.env.OC_CANISTER_URL_PATH!,
@@ -178,6 +179,7 @@
             freezeGroup,
             removeHotGroupExclusion,
             setCommunityModerationFlags,
+            setGroupModerationFlags,
             unfreezeGroup,
             addMessageFilter,
             removeMessageFilter,
@@ -351,6 +353,16 @@
                 console.log("Community moderation flags updated", communityId);
             } else {
                 console.log("Failed to set community moderation flags", communityId);
+            }
+        });
+    }
+
+    function setGroupModerationFlags(chatId: string, flags: number): void {
+        client.setGroupModerationFlags(chatId, flags).then((success) => {
+            if (success) {
+                console.log("Group moderation flags updated", chatId);
+            } else {
+                console.log("Failed to set group moderation flags", chatId);
             }
         });
     }

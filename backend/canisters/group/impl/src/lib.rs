@@ -230,6 +230,7 @@ impl RuntimeState {
             membership: Some(membership),
             video_call_in_progress: chat.events.video_call_in_progress(Some(member.user_id())),
             verified: self.data.verified.value,
+            moderation_flags: self.data.moderation_flags.value,
         }
     }
 
@@ -560,6 +561,8 @@ struct Data {
     local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     verified: Timestamped<bool>,
+    #[serde(default)]
+    moderation_flags: Timestamped<u32>,
     pub bots: InstalledBots,
     idempotency_checker: IdempotencyChecker,
 }
@@ -653,6 +656,7 @@ impl Data {
             local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             verified: Timestamped::default(),
+            moderation_flags: Timestamped::default(),
             bots: InstalledBots::default(),
             idempotency_checker: IdempotencyChecker::default(),
         }

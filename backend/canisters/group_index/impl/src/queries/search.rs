@@ -1,4 +1,4 @@
-use crate::{RuntimeState, read_state};
+use crate::{RuntimeState, model::moderation_flags::ModerationFlags, read_state};
 use canister_api_macros::query;
 use group_index_canister::search::{Response::*, *};
 
@@ -21,7 +21,11 @@ fn search_impl(args: Args, state: &RuntimeState) -> Response {
         return TermTooLong(MAX_TERM_LENGTH);
     }
 
-    let (matches, total) = state.data.public_groups.search(Some(args.search_term), 0, args.max_results);
+    let (matches, total) =
+        state
+            .data
+            .public_groups
+            .search(Some(args.search_term), ModerationFlags::default(), 0, args.max_results);
 
     Success(SuccessResult { matches, total })
 }

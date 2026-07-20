@@ -801,6 +801,7 @@ export type Message<T extends MessageContent = MessageContent> = {
     senderContext?: SenderContext;
     ogPreviews: OgPreview[];
     messagePreviews: RehydratedMessagePreview[];
+    moderationFlags?: number;
 };
 
 export type BotContextCommand = {
@@ -918,7 +919,14 @@ export type ChatEvent =
     | ExternalUrlUpdated
     | BotAdded
     | BotRemoved
-    | BotUpdated;
+    | BotUpdated
+    | HistoryDeleted;
+
+export type HistoryDeleted = {
+    kind: "history_deleted";
+    before: bigint;
+    deletedBy: string;
+};
 
 export type BotAdded = {
     kind: "bot_added";
@@ -1651,6 +1659,7 @@ export type GroupChatSummary = DataContent &
         isInvited: boolean;
         messagesVisibleToNonMembers: boolean;
         verified: boolean;
+        moderationFlags?: number;
     };
 
 export function nullMembership(): ChatMembership {
@@ -1718,6 +1727,7 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         messagesVisibleToNonMembers: boolean;
         membership: GroupCanisterGroupMembership;
         verified: boolean;
+        moderationFlags: number;
     };
 
 export type GroupCanisterGroupMembership = {
@@ -1762,6 +1772,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     messagesVisibleToNonMembers?: boolean;
     membership: GroupMembershipUpdates | undefined;
     verified?: boolean;
+    moderationFlags?: number;
 };
 
 export type GroupMembershipUpdates = {
@@ -2332,6 +2343,13 @@ export type SetCommunityModerationFlagsResponse =
     | "invalid_flags"
     | "internal_error"
     | "offline";
+export type SetGroupModerationFlagsResponse =
+    | "success"
+    | "chat_not_found"
+    | "not_authorized"
+    | "invalid_flags"
+    | "internal_error"
+    | "offline";
 
 export type MarkPinnedMessagesReadResponse = Success | OCError | Offline;
 export type ClaimPrizeResponse = Success | OCError | Failure | Offline;
@@ -2532,7 +2550,8 @@ export type ChatEventType =
     | "UsersUnblocked"
     | "BotAdded"
     | "BotRemoved"
-    | "BotUpdated";
+    | "BotUpdated"
+    | "HistoryDeleted";
 
 export function emptyEventsResponse<T extends ChatEvent>(): EventsSuccessResult<T> {
     return {

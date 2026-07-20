@@ -28,6 +28,11 @@ pub struct StartVideoCallClaims {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct TranslateClaims {
+    pub user_id: UserId,
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct BotActionByCommandClaims {
     pub bot_api_gateway: CanisterId,
     pub bot: UserId,

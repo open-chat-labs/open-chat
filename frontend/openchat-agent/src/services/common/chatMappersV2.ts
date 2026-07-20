@@ -535,6 +535,14 @@ export function event(value: TChatEvent): ChatEvent {
         };
     }
 
+    if ("HistoryDeleted" in value) {
+        return {
+            kind: "history_deleted",
+            before: value.HistoryDeleted.before,
+            deletedBy: principalBytesToString(value.HistoryDeleted.deleted_by),
+        };
+    }
+
     throw new UnsupportedValueError("Unexpected ApiEventWrapper type received", value);
 }
 
@@ -558,6 +566,7 @@ export function message(value: TMessage): Message {
         senderContext: mapOptional(value.sender_context, senderContext),
         ogPreviews: (value.og_previews ?? []).map(ogPreview),
         messagePreviews: [], // this will be rehydrated later
+        moderationFlags: value.moderation_flags,
     };
 }
 
@@ -2149,6 +2158,7 @@ export function groupChatSummary(value: TGroupCanisterGroupChatSummary): GroupCh
         isInvited: false, // this is only applicable when we are not a member
         messagesVisibleToNonMembers: value.messages_visible_to_non_members ?? false,
         verified: value.verified ?? false,
+        moderationFlags: value.moderation_flags ?? 0,
     };
 }
 
@@ -2224,6 +2234,7 @@ export function communitySummary(value: TCommunityCanisterCommunitySummary): Com
         localUserIndex,
         isInvited: value.is_invited ?? false,
         verified: value.verified ?? false,
+        moderationFlags: value.moderation_flags ?? 0,
     };
 }
 

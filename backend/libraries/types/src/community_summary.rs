@@ -37,6 +37,9 @@ pub struct CommunityCanisterCommunitySummary {
     #[serde(default, skip_serializing_if = "is_default")]
     #[ts(as = "Option<bool>", optional)]
     pub verified: bool,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<u32>", optional)]
+    pub moderation_flags: u32,
 }
 
 #[ts_export]
@@ -97,6 +100,7 @@ pub struct CommunityCanisterCommunitySummaryUpdates {
     pub user_groups_deleted: Vec<u32>,
     pub metrics: Option<ChatMetrics>,
     pub verified: Option<bool>,
+    pub moderation_flags: Option<u32>,
 }
 
 #[ts_export]
