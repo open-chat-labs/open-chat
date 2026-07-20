@@ -47,6 +47,8 @@ mod file;
 mod file_status;
 mod frozen_group_info;
 mod gated_groups;
+#[cfg(target_arch = "wasm32")]
+mod getrandom_backend;
 mod group_activity;
 mod group_match;
 mod group_member;

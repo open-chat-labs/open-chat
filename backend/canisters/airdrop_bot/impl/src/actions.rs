@@ -3,7 +3,7 @@ use crate::{USERNAME, mutate_state, read_state};
 use candid::Deserialize;
 use constants::{CHAT_TRANSFER_FEE, MEMO_CHIT_FOR_CHAT_AIRDROP, MEMO_CHIT_FOR_CHAT_LOTTERY};
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
-use rand::Rng;
+use rand::RngExt;
 use serde::Serialize;
 use timer_job_queues::TimerJobItem;
 use tracing::{error, info, trace};
@@ -254,7 +254,7 @@ async fn handle_lottery_message_action(action: AirdropMessage) -> Result<(), Opt
             .data
             .airdrops
             .current(state.env.now())
-            .map(|c| (c.community_id, c.channel_id, state.env.rng().r#gen()))
+            .map(|c| (c.community_id, c.channel_id, state.env.rng().random()))
     }) else {
         return Err(None);
     };

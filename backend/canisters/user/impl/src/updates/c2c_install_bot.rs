@@ -3,7 +3,7 @@ use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
-use rand::Rng;
+use rand::RngExt;
 use types::{OCResult, UserType, c2c_install_bot::*};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
@@ -38,7 +38,7 @@ fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let chat = state
         .data
         .direct_chats
-        .get_or_create(args.bot_id, UserType::BotV2, || state.env.rng().r#gen(), now);
+        .get_or_create(args.bot_id, UserType::BotV2, || state.env.rng().random(), now);
 
     // Subscribe to permitted chat events
     if let (Some(subscriptions), Some(permissions)) = (args.default_subscriptions, args.granted_autonomous_permissions.clone())

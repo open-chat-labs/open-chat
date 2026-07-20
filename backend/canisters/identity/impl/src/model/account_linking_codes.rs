@@ -2,7 +2,7 @@ use crate::UserId;
 use candid::{CandidType, Principal};
 use constants::MINUTE_IN_MS;
 use identity_canister::account_linking_code::AccountLinkingCode;
-use rand::{Rng, rngs::StdRng};
+use rand::{RngExt, rngs::StdRng};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::TimestampMillis;
@@ -97,7 +97,7 @@ impl AccountLinkingCodes {
         loop {
             let code = (0..ALC_LENGTH)
                 .map(|_| {
-                    let idx = rng.gen_range(0..ALC_CHARSET.len());
+                    let idx = rng.random_range(0..ALC_CHARSET.len());
                     ALC_CHARSET[idx] as char
                 })
                 .collect();

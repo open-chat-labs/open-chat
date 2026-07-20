@@ -24,7 +24,7 @@ use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
 use model::reported_messages::{ReportedMessages, ReportingMetrics};
 use model::user::SuspensionDetails;
 use p256_key_pair::P256KeyPair;
-use rand::RngCore;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::UserIdsKeyPrefix;
 use std::cell::RefCell;
@@ -597,7 +597,7 @@ impl Default for Data {
             rng_seed: [0; 32],
             diamond_membership_fees: DiamondMembershipFees::default(),
             video_call_operators: Vec::default(),
-            oc_key_pair: P256KeyPair::new(&mut rand::thread_rng()),
+            oc_key_pair: P256KeyPair::new(&mut rand::rng()),
             empty_users: HashSet::new(),
             chit_leaderboard: ChitLeaderboard::new(0),
             deleted_users: Vec::new(),

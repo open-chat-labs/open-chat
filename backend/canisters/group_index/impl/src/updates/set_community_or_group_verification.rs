@@ -5,7 +5,7 @@ use crate::{
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use group_index_canister::{set_community_verification, set_group_verification};
-use rand::Rng;
+use rand::RngExt;
 use tracing::info;
 
 #[proposal(guard = "caller_is_governance_principal")]
@@ -133,7 +133,7 @@ fn rename_other_if_name_clashes(name: &str, state: &mut RuntimeState) -> RenameO
 
 fn find_new_name(existing_name: &str, state: &mut RuntimeState) -> Option<String> {
     fn generate_candidate(existing_name: &str, state: &mut RuntimeState) -> String {
-        let suffix = state.env.rng().r#gen::<u16>() % 1000;
+        let suffix = state.env.rng().random::<u16>() % 1000;
         format!("{existing_name}_{suffix:03}")
     }
 

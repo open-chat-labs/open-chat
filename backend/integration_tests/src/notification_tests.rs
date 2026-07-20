@@ -5,7 +5,7 @@ use candid::Principal;
 use constants::{DAY_IN_MS, NANOS_PER_MILLISECOND};
 use itertools::Itertools;
 use pocket_ic::{PocketIc, Time};
-use rand::{RngCore, thread_rng};
+use rand::{Rng, rng};
 use std::collections::VecDeque;
 use std::ops::Deref;
 use std::time::Duration;
@@ -285,7 +285,7 @@ fn subscriptions_removed_based_on_last_active() {
         env.advance_time(Duration::from_secs(1));
     }
 
-    let mut random_ordering: VecDeque<_> = (0..10).sorted_by_cached_key(|_| thread_rng().next_u64()).collect();
+    let mut random_ordering: VecDeque<_> = (0..10).sorted_by_cached_key(|_| rng().next_u64()).collect();
 
     for i in random_ordering.iter() {
         client::notifications_index::happy_path::mark_subscription_active(

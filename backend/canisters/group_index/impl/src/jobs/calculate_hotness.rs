@@ -1,6 +1,6 @@
 use crate::{RuntimeState, mutate_state};
 use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
-use rand::RngCore;
+use rand::Rng;
 use std::time::Duration;
 use types::{Activity, Milliseconds, TimestampMillis};
 use utils::canister_timers::run_now_then_interval;

@@ -3,7 +3,7 @@ use crate::lifecycle::init_state;
 use canister_tracing_macros::trace;
 use ic_cdk::init;
 use identity_canister::init::Args;
-use rand::Rng;
+use rand::RngExt;
 use tracing::info;
 use utils::cycles::init_cycles_dispenser_client;
 use utils::env::Environment;
@@ -23,7 +23,7 @@ fn init(args: Args) {
         args.sign_in_with_email_canister_id,
         args.originating_canisters,
         args.oc_secret_key_der,
-        env.rng().r#gen(),
+        env.rng().random(),
         args.test_mode,
     );
 

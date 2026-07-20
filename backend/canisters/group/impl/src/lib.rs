@@ -22,7 +22,7 @@ use model::user_event_batch::UserEventBatch;
 use msgpack::serialize_then_unwrap;
 use oc_error_codes::OCErrorCode;
 use principal_to_user_id_map::PrincipalToUserIdMap;
-use rand::RngCore;
+use rand::Rng;
 use rand::prelude::StdRng;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;

@@ -28,7 +28,7 @@ use model::message_activity_events::MessageActivityEvents;
 use model::referrals::Referrals;
 use model::streak::Streak;
 use oc_error_codes::OCErrorCode;
-use rand::RngCore;
+use rand::Rng;
 use rand::prelude::StdRng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};

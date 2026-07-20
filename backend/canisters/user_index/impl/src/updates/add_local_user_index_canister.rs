@@ -5,7 +5,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ic_cdk_management_canister::{CanisterInfoArgs, CanisterInstallMode};
 use local_user_index_canister::{SetPremiumItemCost, UserDetailsFull, UserIndexEvent};
-use rand::Rng;
+use rand::RngExt;
 use tracing::info;
 use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
 use user_index_canister::ChildCanisterType;
@@ -121,7 +121,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
                 website_canister_id: state.data.website_canister_id,
                 video_call_operators: state.data.video_call_operators.clone(),
                 oc_secret_key_der: state.data.oc_key_pair.secret_key_der().to_vec(),
-                rng_seed: state.env.rng().r#gen(),
+                rng_seed: state.env.rng().random(),
                 ic_root_key: ic_cdk::api::root_key(),
                 openai_api_key: state.data.openai_api_key.clone(),
                 test_mode: state.data.test_mode,

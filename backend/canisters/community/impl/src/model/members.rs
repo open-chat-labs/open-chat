@@ -5,7 +5,7 @@ use group_community_common::{Member, MemberUpdate, Members};
 use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use principal_to_user_id_map::PrincipalToUserIdMap;
-use rand::RngCore;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::StableMemoryMap;
 use std::collections::btree_map::Entry::Vacant;
@@ -287,7 +287,7 @@ impl CommunityMembers {
         result
     }
 
-    pub fn create_user_group<R: RngCore>(
+    pub fn create_user_group<R: Rng>(
         &mut self,
         name: String,
         mut users: Vec<UserId>,

@@ -6,7 +6,7 @@ use ic_transport_types::EnvelopeContent;
 use k256::PublicKey;
 use k256::pkcs8::EncodePublicKey;
 use nns_governance_canister::types::Neuron;
-use rand::Rng;
+use rand::RngExt;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::BTreeMap;
@@ -50,7 +50,7 @@ impl RuntimeState {
         method_name: String,
         args: A,
     ) -> CanisterEcdsaRequest {
-        let nonce: [u8; 8] = self.env.rng().r#gen();
+        let nonce: [u8; 8] = self.env.rng().random();
 
         let envelope_content = EnvelopeContent::Call {
             nonce: Some(nonce.to_vec()),
