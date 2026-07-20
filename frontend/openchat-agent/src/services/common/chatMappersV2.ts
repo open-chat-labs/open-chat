@@ -535,6 +535,14 @@ export function event(value: TChatEvent): ChatEvent {
         };
     }
 
+    if ("HistoryDeleted" in value) {
+        return {
+            kind: "history_deleted",
+            before: value.HistoryDeleted.before,
+            deletedBy: principalBytesToString(value.HistoryDeleted.deleted_by),
+        };
+    }
+
     throw new UnsupportedValueError("Unexpected ApiEventWrapper type received", value);
 }
 

@@ -40,7 +40,9 @@ export function updatesResponse(
                 ) ?? [],
             tokensUninstalled: value.Success.tokens_uninstalled?.map(principalBytesToString) ?? [],
             nervousSystemSummary: value.Success.nervous_system_details.map(nervousSystemSummary),
-            swapProviders: mapOptional(value.Success.swap_providers, (r) => r.map(swapProvider)),
+            swapProviders: mapOptional(value.Success.swap_providers, (r) =>
+                r.flatMap((e) => swapProvider(e) ?? []),
+            ),
             messageFiltersAdded: value.Success.message_filters_added,
             messageFiltersRemoved: value.Success.message_filters_removed,
             currentAirdropChannel: optionUpdateV2(value.Success.airdrop_config, (cfg) => {
@@ -129,8 +131,9 @@ function nervousSystemSummary(value: RegistryNervousSystemSummary): NervousSyste
     };
 }
 
-function swapProvider(value: TExchangeId): DexId {
+// Exchanges which exist in the backend enum but have no swap support in this client map to undefined
+function swapProvider(value: TExchangeId): DexId | undefined {
     if (value === "ICPSwap") return "icpswap";
     if (value === "Taco") return "taco";
-    throw new UnsupportedValueError("Unexpected ApiSwapProvider type received", value);
+    return undefined;
 }
