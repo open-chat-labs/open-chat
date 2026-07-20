@@ -11,9 +11,8 @@ use types::c2c_can_issue_access_token::{
     AccessTypeArgs, BotActionByCommandArgs, JoinVideoCallArgs, MarkVideoCallAsEndedArgs, StartVideoCallArgs,
 };
 use types::{
-    AutonomousBotScope, BotActionByCommandClaims, BotCommand, CLAIM_TYPE_BOT_ACTION_BY_COMMAND,
-    CLAIM_TYPE_JOIN_VIDEO_CALL, CLAIM_TYPE_MARK_VIDEO_CALL_AS_ENDED, CLAIM_TYPE_START_VIDEO_CALL, Chat,
-    JoinOrEndVideoCallClaims, StartVideoCallClaims,
+    AutonomousBotScope, BotActionByCommandClaims, BotCommand, CLAIM_TYPE_BOT_ACTION_BY_COMMAND, CLAIM_TYPE_JOIN_VIDEO_CALL,
+    CLAIM_TYPE_MARK_VIDEO_CALL_AS_ENDED, CLAIM_TYPE_START_VIDEO_CALL, Chat, JoinOrEndVideoCallClaims, StartVideoCallClaims,
 };
 
 #[query(composite = true, msgpack = true)]

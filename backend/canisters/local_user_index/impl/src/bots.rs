@@ -2,7 +2,8 @@ use crate::RuntimeState;
 use rand::Rng;
 use types::{
     BotActionByCommandClaims, BotActionChatDetails, BotActionCommunityDetails, BotActionScope, BotChatContext,
-    BotCommunityOrGroupContext, BotInitiator, CLAIM_TYPE_BOT_ACTION_BY_COMMAND, Chat, CommunityOrGroup, MessageId, User, UserId,
+    BotCommunityOrGroupContext, BotInitiator, CLAIM_TYPE_BOT_ACTION_BY_COMMAND, Chat, CommunityOrGroup, MessageId, User,
+    UserId,
 };
 
 pub struct BotAccessContext {

@@ -37,9 +37,8 @@ use types::{
     BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion,
     CLAIM_TYPE_DIAMOND_MEMBERSHIP, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms,
     CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
-    IdempotentEnvelope, MessageContentInitial, Milliseconds, Notification,
-    NotificationEnvelope, ReferralType, TimestampMillis, Timestamped, UserId, UserNotificationEnvelope,
-    VerifiedCredentialGateArgs,
+    IdempotentEnvelope, MessageContentInitial, Milliseconds, Notification, NotificationEnvelope, ReferralType, TimestampMillis,
+    Timestamped, UserId, UserNotificationEnvelope, VerifiedCredentialGateArgs,
 };
 use user_canister::LocalUserIndexEvent as UserEvent;
 use user_ids_set::UserIdsSet;
