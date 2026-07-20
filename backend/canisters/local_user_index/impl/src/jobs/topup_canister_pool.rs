@@ -13,7 +13,7 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState, delay: Option<Duration>) -> bool {
     if TIMER_ID.get().is_none() && !state.data.canister_pool.is_full() {
-        let timer_id = ic_cdk_timers::set_timer(delay.unwrap_or_default(), run);
+        let timer_id = ic_cdk_timers::set_timer(delay.unwrap_or_default(), async { run() });
         TIMER_ID.set(Some(timer_id));
         true
     } else {

@@ -23,7 +23,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
         let expiry_delay = if state.data.test_mode { 30 * 1000 } else { MEMBER_ACCESS_EXPIRY_DELAY };
         let timer_id = ic_cdk_timers::set_timer(
             Duration::from_millis((next_expiry + expiry_delay).saturating_sub(state.env.now())),
-            run,
+            async { run() },
         );
         TIMER_ID.set(Some(timer_id));
         return true;

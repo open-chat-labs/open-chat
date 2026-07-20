@@ -3,7 +3,7 @@ use crate::updates::upgrade_user_canister_wasm::upgrade_user_wasm_in_local_user_
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::management_canister::{CanisterInfoArgs, CanisterInstallMode};
+use ic_cdk_management_canister::{CanisterInfoArgs, CanisterInstallMode};
 use local_user_index_canister::{SetPremiumItemCost, UserDetailsFull, UserIndexEvent};
 use rand::Rng;
 use tracing::info;
@@ -21,7 +21,7 @@ async fn add_local_user_index_canister(args: Args) -> Response {
         Ok(result) => {
             let wasm_version = result.canister_wasm.version;
 
-            let canister_info = match ic_cdk::management_canister::canister_info(&CanisterInfoArgs {
+            let canister_info = match ic_cdk_management_canister::canister_info(&CanisterInfoArgs {
                 canister_id: args.canister_id,
                 num_requested_changes: None,
             })

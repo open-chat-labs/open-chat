@@ -13,7 +13,7 @@ mod pre_upgrade;
 
 fn init_env(rng_seed: [u8; 32]) -> Box<CanisterEnv> {
     let canister_env = if rng_seed == [0; 32] {
-        ic_cdk_timers::set_timer(Duration::ZERO, reseed_rng);
+        ic_cdk_timers::set_timer(Duration::ZERO, async { reseed_rng() });
         CanisterEnv::default()
     } else {
         CanisterEnv::new(rng_seed)

@@ -2,7 +2,7 @@ use crate::canister;
 use crate::canister::{convert_cdk_error, is_out_of_cycles_error};
 use candid::CandidType;
 use constants::CYCLES_REQUIRED_FOR_UPGRADE;
-use ic_cdk::management_canister::{self, CanisterInstallMode, ChunkHash};
+use ic_cdk_management_canister::{self as management_canister, CanisterInstallMode, ChunkHash};
 use tracing::{error, trace};
 use types::{BuildVersion, C2CError, CanisterId, CanisterWasm, CanisterWasmBytes, Cycles, Hash};
 

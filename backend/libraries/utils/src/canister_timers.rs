@@ -3,8 +3,5 @@ use std::time::Duration;
 
 pub fn run_now_then_interval(interval: Duration, func: fn()) -> TimerId {
     ic_cdk_timers::set_timer(Duration::ZERO, async move { func() });
-    ic_cdk_timers::set_timer_interval(interval, move || {
-        func();
-        std::future::ready(())
-    })
+    ic_cdk_timers::set_timer_interval(interval, move || async move { func() })
 }

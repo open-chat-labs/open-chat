@@ -17,7 +17,7 @@ thread_local! {
 
 pub(crate) fn start_job_if_required() -> bool {
     if !STARTED.get() {
-        ic_cdk_timers::set_timer(Duration::ZERO, run);
+        ic_cdk_timers::set_timer(Duration::ZERO, async { run() });
         STARTED.set(true);
         true
     } else {
@@ -28,7 +28,7 @@ pub(crate) fn start_job_if_required() -> bool {
 fn run() {
     ic_cdk::futures::spawn_migratory(async {
         let delay = run_async().await;
-        ic_cdk_timers::set_timer(Duration::from_millis(delay), run);
+        ic_cdk_timers::set_timer(Duration::from_millis(delay), async { run() });
     });
 }
 

@@ -1,5 +1,5 @@
 use crate::{RuntimeState, mutate_state};
-use ic_cdk::management_canister::CanisterInstallMode;
+use ic_cdk_management_canister::CanisterInstallMode;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
@@ -17,7 +17,9 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
         && (state.data.canisters_requiring_upgrade.count_pending() > 0
             || state.data.canisters_requiring_upgrade.count_in_progress() > 0)
     {
-        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, || async {
+            run();
+        });
         TIMER_ID.set(Some(timer_id));
         trace!("'upgrade_canisters' job started");
         true

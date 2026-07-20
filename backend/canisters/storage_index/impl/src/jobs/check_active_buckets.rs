@@ -1,6 +1,6 @@
 use crate::{mutate_state, read_state};
 use constants::{HOUR_IN_MS, MINUTE_IN_MS};
-use ic_cdk::management_canister::CanisterStatusArgs;
+use ic_cdk_management_canister::CanisterStatusArgs;
 use std::time::Duration;
 use tracing::trace;
 use types::CanisterId;
@@ -20,7 +20,7 @@ fn run() {
 
 async fn run_async(buckets: Vec<CanisterId>) {
     for bucket in buckets {
-        if let Ok(status) = ic_cdk::management_canister::canister_status(&CanisterStatusArgs { canister_id: bucket }).await {
+        if let Ok(status) = ic_cdk_management_canister::canister_status(&CanisterStatusArgs { canister_id: bucket }).await {
             // If the subnet memory has grown to the stage where canisters are now having to pay
             // reserved cycles when requesting additional memory pages, then mark the bucket as full
             if status.reserved_cycles > 0u32 {

@@ -30,7 +30,7 @@ const NNS_TOPICS_TO_PUSH_SNS_PROPOSALS_FOR: [i32; 3] = [
 
 pub fn start_job(state: &RuntimeState) {
     let interval = Duration::from_millis(if state.data.test_mode { 30 * MINUTE_IN_MS } else { MINUTE_IN_MS });
-    ic_cdk_timers::set_timer_interval(interval, run);
+    ic_cdk_timers::set_timer_interval(interval, || async { run() });
 }
 
 pub fn run() {

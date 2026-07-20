@@ -111,8 +111,8 @@ where
         if should_set_timer {
             let clone = self.clone();
             let timer_id = ic_cdk_timers::set_timer_interval(Duration::from_millis(delay), move || {
-                clone.run();
-                std::future::ready(())
+                let clone = clone.clone();
+                async move { clone.run() }
             });
             self.within_lock(|i| i.timer_id = Some(timer_id));
             true

@@ -13,6 +13,7 @@ email_magic_links.path = "../../../libraries/email_magic_links"
 email_sender_core.path = "../core"
 http.workspace = true
 ic-cdk.workspace = true
+ic-cdk-management-canister.workspace = true
 ic_principal.workspace = true
 serde_json.workspace = true
 serde_urlencoded.workspace = true

@@ -23,7 +23,7 @@ pub(crate) fn start_airdrop_timer(state: &RuntimeState) -> bool {
     if let Some(config) = state.data.airdrops.next() {
         // Start the airdrop now if the start date is in the past
         let delay = config.start.saturating_sub(state.env.now());
-        let timer_id = ic_cdk_timers::set_timer(Duration::from_millis(delay), run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::from_millis(delay), async { run() });
         TIMER_ID.set(Some(timer_id));
         true
     } else {
@@ -78,7 +78,7 @@ async fn prepare_airdrop(config: AirdropConfig, user_index_canister_id: Canister
         }
         Err(err) => {
             error!("{err:?}");
-            let timer_id = ic_cdk_timers::set_timer(Duration::from_millis(60_000), run);
+            let timer_id = ic_cdk_timers::set_timer(Duration::from_millis(60_000), async { run() });
             TIMER_ID.set(Some(timer_id));
             return;
         }
@@ -100,7 +100,7 @@ async fn prepare_airdrop(config: AirdropConfig, user_index_canister_id: Canister
         }
         Err(err) => {
             error!("{err:?}");
-            let timer_id = ic_cdk_timers::set_timer(Duration::from_secs(60), run);
+            let timer_id = ic_cdk_timers::set_timer(Duration::from_secs(60), async { run() });
             TIMER_ID.set(Some(timer_id));
             return;
         }
@@ -135,7 +135,7 @@ async fn prepare_airdrop(config: AirdropConfig, user_index_canister_id: Canister
         Ok(user_index_canister::users_chit::Response::Success(result)) => result.chit,
         Err(err) => {
             error!("{err:?}");
-            let timer_id = ic_cdk_timers::set_timer(Duration::from_secs(60), run);
+            let timer_id = ic_cdk_timers::set_timer(Duration::from_secs(60), async { run() });
             TIMER_ID.set(Some(timer_id));
             return;
         }

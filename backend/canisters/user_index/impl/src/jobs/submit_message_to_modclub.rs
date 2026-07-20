@@ -12,7 +12,7 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.with(|t| t.get().is_none()) && !state.data.pending_modclub_submissions_queue.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, async { run() });
         TIMER_ID.with(|t| t.set(Some(timer_id)));
         true
     } else {

@@ -1,11 +1,11 @@
 use crate::canister::convert_cdk_error;
 use ic_cdk::call::RejectCode;
-use ic_cdk::management_canister::{CanisterStatusArgs, CanisterStatusType, StopCanisterArgs};
+use ic_cdk_management_canister::{CanisterStatusArgs, CanisterStatusType, StopCanisterArgs};
 use tracing::{error, trace};
 use types::{C2CError, CanisterId};
 
 pub async fn stop(canister_id: CanisterId) -> Result<(), C2CError> {
-    if let Err(e) = ic_cdk::management_canister::stop_canister(&StopCanisterArgs { canister_id }).await {
+    if let Err(e) = ic_cdk_management_canister::stop_canister(&StopCanisterArgs { canister_id }).await {
         let error = convert_cdk_error(canister_id, "stop_canister", e);
         error!(?error, "Error calling stop_canister");
         return Err(error);
@@ -14,7 +14,7 @@ pub async fn stop(canister_id: CanisterId) -> Result<(), C2CError> {
     let mut iterations = 0;
     let mut failures = 0;
     loop {
-        match ic_cdk::management_canister::canister_status(&CanisterStatusArgs { canister_id }).await {
+        match ic_cdk_management_canister::canister_status(&CanisterStatusArgs { canister_id }).await {
             Ok(response) => {
                 let status = response.status;
                 if status == CanisterStatusType::Stopped {

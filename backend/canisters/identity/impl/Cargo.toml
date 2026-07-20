@@ -20,6 +20,7 @@ http_request = { path = "../../../libraries/http_request" }
 ic-canister-sig-creation = { workspace = true }
 ic-captcha = { workspace = true }
 ic-cdk = { workspace = true }
+ic-cdk-management-canister = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-certification = { workspace = true }
 ic-stable-structures = { workspace = true }

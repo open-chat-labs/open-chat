@@ -1,7 +1,7 @@
 use crate::jobs::clear_chunk_store_if_no_pending_upgrades;
 use crate::{RuntimeState, mutate_state};
 use constants::min_cycles_balance;
-use ic_cdk::management_canister::CanisterInstallMode;
+use ic_cdk_management_canister::CanisterInstallMode;
 use ic_cdk_timers::TimerId;
 use local_user_index_canister::ChildCanisterType;
 use std::cell::Cell;
@@ -20,7 +20,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
         && (state.data.groups_requiring_upgrade.count_pending() > 0
             || state.data.groups_requiring_upgrade.count_in_progress() > 0)
     {
-        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, || async { run() });
         TIMER_ID.set(Some(timer_id));
         trace!("'upgrade_groups' job started");
         true

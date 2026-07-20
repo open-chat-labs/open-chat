@@ -20,7 +20,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
             .get_neuron_in_need_of_dissolve_delay_increase()
             .is_some()
     {
-        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, async { run() });
         TIMER_ID.set(Some(timer_id));
         true
     } else {

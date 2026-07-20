@@ -84,8 +84,8 @@ impl FireAndForgetHandler {
         if self.within_lock(|i| i.should_start_job()) {
             let clone = self.clone();
             let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, move || {
-                clone.run();
-                std::future::ready(())
+                let clone = clone.clone();
+                async move { clone.run() }
             });
             self.within_lock(|i| i.timer_id = Some(timer_id));
             trace!("FireAndForgetHandler job started");

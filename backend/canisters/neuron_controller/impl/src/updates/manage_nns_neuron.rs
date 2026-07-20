@@ -26,7 +26,7 @@ pub(crate) async fn manage_nns_neuron_impl(neuron_id: u64, command: Command) -> 
 
     match make_canister_call_via_ecdsa(request).await {
         Ok(response) => {
-            ic_cdk_timers::set_timer(Duration::from_secs(60), process_neurons);
+            ic_cdk_timers::set_timer(Duration::from_secs(60), async { process_neurons() });
             Success(response)
         }
         Err(error) => InternalError(error),

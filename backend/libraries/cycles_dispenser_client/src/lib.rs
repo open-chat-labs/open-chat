@@ -54,7 +54,7 @@ pub fn start(config: Config) {
 
     CONFIG.set(Some(config));
 
-    let timer_id = ic_cdk_timers::set_timer_interval(Duration::from_millis(interval), run_once);
+    let timer_id = ic_cdk_timers::set_timer_interval(Duration::from_millis(interval), || async { run_once() });
 
     if let Some(previous) = TIMER_ID.replace(Some(timer_id)) {
         ic_cdk_timers::clear_timer(previous);

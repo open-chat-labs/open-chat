@@ -2,7 +2,7 @@ use crate::updates::c2c_notify_low_balance::top_up_child_canister;
 use crate::{RuntimeState, mutate_state};
 use candid::Nat;
 use constants::DAY_IN_MS;
-use ic_cdk::management_canister::CanisterStatusArgs;
+use ic_cdk_management_canister::CanisterStatusArgs;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
@@ -41,7 +41,7 @@ fn populate_canisters() {
     if let Some(timer_id) = TIMER_ID.take() {
         ic_cdk_timers::clear_timer(timer_id);
     }
-    let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
+    let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, || async { run() });
     TIMER_ID.set(Some(timer_id));
     info!("Top up canisters job starting");
 }
@@ -90,7 +90,7 @@ fn next(state: &mut RuntimeState) -> GetNextResult {
 }
 
 async fn run_async(canister_id: CanisterId) {
-    match ic_cdk::management_canister::canister_status(&CanisterStatusArgs { canister_id }).await {
+    match ic_cdk_management_canister::canister_status(&CanisterStatusArgs { canister_id }).await {
         Ok(status) => {
             if status.cycles < utils::cycles::MIN_CYCLES_BALANCE
                 || status.cycles < Nat::from(60u32) * status.idle_cycles_burned_per_day
