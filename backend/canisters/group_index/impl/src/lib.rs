@@ -170,6 +170,25 @@ impl RuntimeState {
         true
     }
 
+    pub fn set_group_moderation_flags(&mut self, group_id: ChatId, flags: ModerationFlags) -> bool {
+        let Some(group) = self.data.public_groups.get_mut(&group_id) else {
+            return false;
+        };
+
+        group.set_moderation_flags(flags);
+
+        self.push_group_event_to_local_index(
+            group_id,
+            LocalIndexEvent::GroupModerationFlagsChanged(ModerationFlagsChanged {
+                canister_id: group_id.into(),
+                flags: flags.bits(),
+            }),
+            self.env.now(),
+        );
+
+        true
+    }
+
     pub fn rename_public_community(&mut self, community_id: CommunityId, new_name: String) -> bool {
         let Some(community) = self.data.public_communities.get_mut(&community_id) else {
             return false;

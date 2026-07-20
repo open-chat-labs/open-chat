@@ -142,6 +142,7 @@ import type {
     SendMessageResponse,
     SetBioResponse,
     SetCommunityModerationFlagsResponse,
+    SetGroupModerationFlagsResponse,
     SetDisplayNameResponse,
     SetGroupUpgradeConcurrencyResponse,
     SetMemberDisplayNameResponse,
@@ -1368,10 +1369,10 @@ export class OpenChatAgent extends EventTarget {
             });
     }
 
-    searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
+    searchGroups(searchTerm: string, flags: number, maxResults = 10): Promise<GroupSearchResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
-        return this._groupIndexClient.searchGroups(searchTerm, maxResults).then((res) => {
+        return this._groupIndexClient.searchGroups(searchTerm, flags, maxResults).then((res) => {
             if (res.kind === "success") {
                 return {
                     ...res,
@@ -3232,6 +3233,12 @@ export class OpenChatAgent extends EventTarget {
         if (offline()) return Promise.resolve("offline");
 
         return this._groupIndexClient.setCommunityModerationFlags(communityId, flags);
+    }
+
+    setGroupModerationFlags(chatId: string, flags: number): Promise<SetGroupModerationFlagsResponse> {
+        if (offline()) return Promise.resolve("offline");
+
+        return this._groupIndexClient.setGroupModerationFlags(chatId, flags);
     }
 
     setGroupUpgradeConcurrency(value: number): Promise<SetGroupUpgradeConcurrencyResponse> {

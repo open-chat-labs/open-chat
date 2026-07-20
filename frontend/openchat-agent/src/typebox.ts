@@ -1644,6 +1644,7 @@ export const GroupIndexExploreGroupsArgs = Type.Object({
     search_term: Type.Optional(Type.String()),
     page_index: Type.Number(),
     page_size: Type.Number(),
+    include_moderation_flags: Type.Optional(Type.Number()),
 });
 
 export type GroupIndexSetCommunityUpgradeConcurrencyResponse = Static<
@@ -4789,6 +4790,29 @@ export const CommunityPermissionsChanged = Type.Object({
 
 export type ChatId = Static<typeof ChatId>;
 export const ChatId = TSPrincipal;
+
+export type GroupIndexSetGroupModerationFlagsResponse = Static<
+    typeof GroupIndexSetGroupModerationFlagsResponse
+>;
+export const GroupIndexSetGroupModerationFlagsResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("Unchanged"),
+    Type.Literal("ChatNotFound"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("InvalidFlags"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
+export type GroupIndexSetGroupModerationFlagsArgs = Static<
+    typeof GroupIndexSetGroupModerationFlagsArgs
+>;
+export const GroupIndexSetGroupModerationFlagsArgs = Type.Object({
+    chat_id: ChatId,
+    flags: Type.Number(),
+});
+
 
 export type EvmContractAddress = Static<typeof EvmContractAddress>;
 export const EvmContractAddress = Type.Object({
@@ -8306,6 +8330,7 @@ export const GroupIndexExploreGroupsResponse = Type.Union([
         TermTooLong: Type.Number(),
     }),
     Type.Literal("InvalidTerm"),
+    Type.Literal("InvalidFlags"),
     Type.Object({
         Error: OCError,
     }),
@@ -9128,6 +9153,7 @@ export const GroupCanisterGroupChatSummary = Type.Object({
     membership: Type.Optional(GroupMembership),
     video_call_in_progress: Type.Optional(VideoCall),
     verified: Type.Optional(Type.Boolean()),
+    moderation_flags: Type.Optional(Type.Number()),
 });
 
 export type EventWrapperChatEvent = Static<typeof EventWrapperChatEvent>;
@@ -9178,6 +9204,7 @@ export const GroupCanisterGroupChatSummaryUpdates = Type.Object({
     video_call_in_progress: Type.Optional(OptionUpdateVideoCall),
     any_updates_missed: Type.Optional(Type.Boolean()),
     verified: Type.Optional(Type.Boolean()),
+    moderation_flags: Type.Optional(Type.Number()),
 });
 
 export type DirectChatSummaryUpdates = Static<typeof DirectChatSummaryUpdates>;
@@ -9220,6 +9247,7 @@ export const PublicGroupSummary = Type.Object({
     events_ttl: Type.Optional(Type.BigInt()),
     events_ttl_last_updated: Type.BigInt(),
     gate_config: Type.Optional(AccessGateConfig),
+    moderation_flags: Type.Optional(Type.Number()),
 });
 
 export type CommunityCanisterChannelSummary = Static<typeof CommunityCanisterChannelSummary>;

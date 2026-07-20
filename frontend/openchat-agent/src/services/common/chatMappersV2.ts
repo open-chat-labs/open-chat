@@ -2158,6 +2158,7 @@ export function groupChatSummary(value: TGroupCanisterGroupChatSummary): GroupCh
         isInvited: false, // this is only applicable when we are not a member
         messagesVisibleToNonMembers: value.messages_visible_to_non_members ?? false,
         verified: value.verified ?? false,
+        moderationFlags: value.moderation_flags ?? 0,
     };
 }
 
