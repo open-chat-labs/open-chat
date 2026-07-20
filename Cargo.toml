@@ -224,7 +224,7 @@ ic_principal = "0.1"
 ic-stable-structures = "0.7"
 ic-transport-types = "0.40"
 ic-utils = "0.40"
-ic-verifiable-credentials = { git = "https://github.com/hpeebles/verifiable-credentials-sdk", branch = "deps" }
+ic-verifiable-credentials = { git = "https://github.com/hpeebles/verifiable-credentials-sdk", rev = "4a8498c627cd44b87b936ab59559e12682e23ef6" }
 icrc-ledger-types = "0.1"
 ic0 = "1"
 itertools = "0.14"
