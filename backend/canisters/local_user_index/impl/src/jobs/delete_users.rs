@@ -25,7 +25,7 @@ fn run() {
     TIMER_ID.set(None);
 
     if let Some(user) = mutate_state(get_next) {
-        ic_cdk::futures::spawn(process_user(user));
+        ic_cdk::futures::spawn_migratory(process_user(user));
     }
 }
 

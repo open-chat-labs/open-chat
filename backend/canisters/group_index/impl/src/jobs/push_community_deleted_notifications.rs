@@ -29,7 +29,7 @@ fn run() {
     if let Some(batch) = mutate_state(next_batch)
         && !batch.is_empty()
     {
-        ic_cdk::futures::spawn(push_notifications(batch));
+        ic_cdk::futures::spawn_migratory(push_notifications(batch));
         read_state(start_job_if_required);
     }
 }

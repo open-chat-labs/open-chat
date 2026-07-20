@@ -32,7 +32,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 fn run() {
     if let Some(batch) = mutate_state(next_batch) {
         if !batch.is_empty() {
-            ic_cdk::futures::spawn(perform_upgrades(batch));
+            ic_cdk::futures::spawn_migratory(perform_upgrades(batch));
         }
     } else if let Some(timer_id) = TIMER_ID.take() {
         ic_cdk_timers::clear_timer(timer_id);

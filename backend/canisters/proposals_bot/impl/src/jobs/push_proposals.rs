@@ -31,7 +31,7 @@ pub fn run() {
     TIMER_ID.set(None);
 
     if let Some(proposal) = mutate_state(|state| state.data.nervous_systems.dequeue_next_proposal_to_push()) {
-        ic_cdk::futures::spawn(push_proposal(proposal));
+        ic_cdk::futures::spawn_migratory(push_proposal(proposal));
     }
     read_state(start_job_if_required);
 }

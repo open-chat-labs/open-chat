@@ -79,7 +79,7 @@ fn run_once() {
         let cycles_balance = ic_cdk::api::canister_cycle_balance();
 
         if cycles_balance < min_cycles_balance {
-            ic_cdk::futures::spawn(request_top_up(cycles_balance, cycles_dispenser_canister_id))
+            ic_cdk::futures::spawn_migratory(request_top_up(cycles_balance, cycles_dispenser_canister_id))
         }
     }
 }

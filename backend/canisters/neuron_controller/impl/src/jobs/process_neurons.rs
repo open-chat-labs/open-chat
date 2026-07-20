@@ -21,7 +21,7 @@ pub fn start_job() {
 }
 
 pub(crate) fn process_neurons() {
-    ic_cdk::futures::spawn(run_async());
+    ic_cdk::futures::spawn_migratory(run_async());
 }
 
 async fn run_async() {

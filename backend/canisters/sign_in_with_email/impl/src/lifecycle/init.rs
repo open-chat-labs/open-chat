@@ -25,7 +25,7 @@ fn init(args: InitOrUpgradeArgs) {
         set_salt(salt, 0)
     } else {
         ic_cdk_timers::set_timer(Duration::ZERO, || {
-            ic_cdk::futures::spawn(async {
+            ic_cdk::futures::spawn_migratory(async {
                 let salt: [u8; 32] = ic_cdk::management_canister::raw_rand().await.unwrap().try_into().unwrap();
 
                 set_salt(salt, env::now());

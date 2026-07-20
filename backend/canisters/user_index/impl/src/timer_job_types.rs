@@ -84,7 +84,7 @@ impl Job for RecurringDiamondMembershipPayment {
                         .map(|duration| (duration, d.pay_in_chat(), fees))
                 })
         }) {
-            ic_cdk::futures::spawn(pay_for_diamond_membership(self.user_id, duration, fees, pay_in_chat));
+            ic_cdk::futures::spawn_migratory(pay_for_diamond_membership(self.user_id, duration, fees, pay_in_chat));
         }
 
         async fn pay_for_diamond_membership(
@@ -150,7 +150,7 @@ If you would like to extend your Diamond membership you will need to top up your
 
 impl Job for SetUserSuspended {
     fn execute(self) {
-        ic_cdk::futures::spawn(suspend_user(
+        ic_cdk::futures::spawn_migratory(suspend_user(
             self.user_id,
             self.duration,
             self.reason.clone(),
@@ -165,7 +165,7 @@ impl Job for SetUserSuspended {
 
 impl Job for SetUserSuspendedInGroup {
     fn execute(self) {
-        ic_cdk::futures::spawn(set_user_suspended_in_group(
+        ic_cdk::futures::spawn_migratory(set_user_suspended_in_group(
             self.user_id,
             self.group,
             self.suspended,
@@ -199,7 +199,7 @@ impl Job for SetUserSuspendedInGroup {
 
 impl Job for SetUserSuspendedInCommunity {
     fn execute(self) {
-        ic_cdk::futures::spawn(set_user_suspended_in_community(
+        ic_cdk::futures::spawn_migratory(set_user_suspended_in_community(
             self.user_id,
             self.community,
             self.suspended,
@@ -233,7 +233,7 @@ impl Job for SetUserSuspendedInCommunity {
 
 impl Job for UnsuspendUser {
     fn execute(self) {
-        ic_cdk::futures::spawn(unsuspend_user(self.user_id));
+        ic_cdk::futures::spawn_migratory(unsuspend_user(self.user_id));
 
         async fn unsuspend_user(user_id: UserId) {
             unsuspend_user_impl(user_id).await;

@@ -19,7 +19,7 @@ pub fn start_job() {
 fn run() {
     let exchanges = read_state(get_active_exchanges);
     if !exchanges.is_empty() {
-        ic_cdk::futures::spawn(run_async(exchanges));
+        ic_cdk::futures::spawn_migratory(run_async(exchanges));
     }
 }
 

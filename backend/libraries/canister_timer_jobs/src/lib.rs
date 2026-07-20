@@ -19,7 +19,7 @@ impl<J: Job> TimerJobs<J> {
         let delay = due.saturating_sub(now);
         let wrapper = Rc::new(RefCell::new(Some(job)));
         let clone = wrapper.clone();
-        let timer_id = ic_cdk_timers::set_timer(Duration::from_millis(delay), move || {
+        let timer_id = ic_cdk_timers::set_timer(Duration::from_millis(delay), async move {
             if let Some(j) = clone.take() {
                 j.execute();
             }

@@ -28,7 +28,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 
 fn run() {
     match mutate_state(try_get_next) {
-        GetNextResult::Success(canister_to_upgrade) => ic_cdk::futures::spawn(perform_upgrade(canister_to_upgrade)),
+        GetNextResult::Success(canister_to_upgrade) => ic_cdk::futures::spawn_migratory(perform_upgrade(canister_to_upgrade)),
         GetNextResult::Continue => {}
         GetNextResult::QueueEmpty => {
             if let Some(timer_id) = TIMER_ID.take() {

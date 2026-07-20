@@ -26,7 +26,7 @@ fn clear_chunk_store_if_no_pending_upgrades() {
 
         if should_clear_chunk_store { Some(state.env.canister_id()) } else { None }
     }) {
-        ic_cdk::futures::spawn(async move {
+        ic_cdk::futures::spawn_migratory(async move {
             ic_cdk::management_canister::clear_chunk_store(&ClearChunkStoreArgs { canister_id })
                 .await
                 .unwrap();

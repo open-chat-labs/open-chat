@@ -180,7 +180,7 @@ where
 
         if !batches.is_empty() {
             let clone = self.clone();
-            ic_cdk::futures::spawn(clone.process_all_batches(batches));
+            ic_cdk::futures::spawn_migratory(clone.process_all_batches(batches));
         }
     }
 
@@ -188,7 +188,10 @@ where
         let should_set_timer = self.within_lock(|i| i.timer_id.is_none() && !i.queue.is_empty());
         if should_set_timer {
             let clone = self.clone();
-            let timer_id = ic_cdk_timers::set_timer_interval(Duration::from_millis(delay), move || clone.flush());
+            let timer_id = ic_cdk_timers::set_timer_interval(Duration::from_millis(delay), move || {
+                clone.flush();
+                std::future::ready(())
+            });
             self.within_lock(|i| i.timer_id = Some(timer_id));
             true
         } else {

@@ -37,7 +37,7 @@ fn run_impl(state: &mut RuntimeState) {
     {
         let is_nns = governance_canister_id == state.data.nns_governance_canister_id;
 
-        ic_cdk::futures::spawn(process_proposal(governance_canister_id, proposal_id, is_nns));
+        ic_cdk::futures::spawn_migratory(process_proposal(governance_canister_id, proposal_id, is_nns));
     }
     start_job_if_required(state);
 }

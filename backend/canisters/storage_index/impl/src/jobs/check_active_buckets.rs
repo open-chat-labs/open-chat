@@ -15,7 +15,7 @@ pub fn start_job() {
 fn run() {
     trace!("'check_active_buckets' job started");
     let buckets = read_state(|state| state.data.buckets.iter_active_buckets().map(|b| b.canister_id).collect());
-    ic_cdk::futures::spawn(run_async(buckets));
+    ic_cdk::futures::spawn_migratory(run_async(buckets));
 }
 
 async fn run_async(buckets: Vec<CanisterId>) {

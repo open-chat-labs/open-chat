@@ -32,7 +32,7 @@ impl FireAndForgetHandler {
             attempt: 0,
         };
 
-        ic_cdk::futures::spawn(self.clone().process_single(call));
+        ic_cdk::futures::spawn_migratory(self.clone().process_single(call));
     }
 
     pub fn send_candid<A: CandidType>(&self, canister_id: CanisterId, method_name: impl Into<String>, args: A) {
@@ -83,7 +83,10 @@ impl FireAndForgetHandler {
     fn start_job_if_required(&self) {
         if self.within_lock(|i| i.should_start_job()) {
             let clone = self.clone();
-            let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, move || clone.run());
+            let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, move || {
+                clone.run();
+                std::future::ready(())
+            });
             self.within_lock(|i| i.timer_id = Some(timer_id));
             trace!("FireAndForgetHandler job started");
         }
@@ -93,7 +96,7 @@ impl FireAndForgetHandler {
         let now = canister_time::now_millis();
         let next_batch = self.within_lock(|i| i.next_batch(50, now));
         match next_batch {
-            NextBatchResult::Success(batch) => ic_cdk::futures::spawn(self.clone().process_batch(batch)),
+            NextBatchResult::Success(batch) => ic_cdk::futures::spawn_migratory(self.clone().process_batch(batch)),
             NextBatchResult::Continue => {}
             NextBatchResult::StopJob => {
                 if let Some(timer_id) = self.within_lock(|i| i.timer_id.take()) {
