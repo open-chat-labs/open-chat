@@ -3342,12 +3342,16 @@ export class OpenChatAgent extends EventTarget {
                 try {
                     const updates = await this._registryClient.updates(current?.lastUpdated);
                     if (updates.kind === "success") {
+                        // Ledgers the registry has detected as uninstalled must be dropped from
+                        // the cached token list, otherwise we keep querying dead ledgers forever
+                        // (they never reappear in `tokenDetails`, only in `tokensUninstalled`).
+                        const uninstalled = new Set(updates.tokensUninstalled);
                         const updated = {
                             lastUpdated: updates.lastUpdated,
                             tokenDetails: distinctBy(
                                 [...updates.tokenDetails, ...(current?.tokenDetails ?? [])],
                                 (t) => t.ledger,
-                            ),
+                            ).filter((t) => !uninstalled.has(t.ledger)),
                             nervousSystemSummary: distinctBy(
                                 [
                                     ...updates.nervousSystemSummary,
