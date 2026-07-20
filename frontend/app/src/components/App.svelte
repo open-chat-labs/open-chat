@@ -91,6 +91,7 @@
             nfidUrl: import.meta.env.OC_NFID_URL!,
             userGeekApiKey: import.meta.env.OC_USERGEEK_APIKEY!,
             videoBridgeUrl: import.meta.env.OC_VIDEO_BRIDGE_URL!,
+            translateProxyUrl: import.meta.env.OC_TRANSLATE_PROXY_URL!,
             meteredApiKey: import.meta.env.OC_METERED_APIKEY!,
             blobUrlPattern: import.meta.env.OC_BLOB_URL_PATTERN!,
             canisterUrlPath: import.meta.env.OC_CANISTER_URL_PATH!,

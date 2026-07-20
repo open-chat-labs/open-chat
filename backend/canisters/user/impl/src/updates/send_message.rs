@@ -97,7 +97,17 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
             }
             ValidateNewMessageContentResult::SuccessPrize(_) => unreachable!(),
             ValidateNewMessageContentResult::SuccessP2PSwap(content) => {
-                let (escrow_canister_id, now) = read_state(|state| (state.data.escrow_canister_id, state.env.now()));
+                let (escrow_canister_id, now, is_diamond) = read_state(|state| {
+                    let now = state.env.now();
+                    (
+                        state.data.escrow_canister_id,
+                        now,
+                        state.data.membership(now).is_diamond_member(),
+                    )
+                });
+                if !is_diamond {
+                    return Error(OCErrorCode::NotDiamondMember.into());
+                }
                 let create_swap_args = escrow_canister::create_swap::Args {
                     location: P2PSwapLocation::from_message(Chat::Direct(args.recipient.into()), None, args.message_id),
                     token0: content.token0.clone(),
