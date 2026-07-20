@@ -66,7 +66,7 @@ async fn process_proposal(governance_canister_id: CanisterId, proposal_id: Propo
                     .finished_proposals_to_process
                     .push_back((governance_canister_id, proposal_id));
 
-                if delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message()).is_none() {
+                if delay_if_should_retry_failed_c2c_call(&error).is_none() {
                     state.data.nervous_systems.mark_disabled(&governance_canister_id);
                 }
 
