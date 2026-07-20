@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { DOMPurifyDefault, sanitizeOneLine } from "./domPurify";
+import { sanitizeOneLine } from "./domPurify";
 
 describe("sanitizeOneLine", () => {
     test("replaces <br> variants with a space", () => {
@@ -44,11 +44,24 @@ describe("sanitizeOneLine", () => {
         expect(out).not.toContain("javascript:");
     });
 
-    test.each(xssPayloads)(
-        "one-line output equals default sanitisation minus <br> (%s)",
-        (payload) => {
-            const expected = DOMPurifyDefault.sanitize(payload).replace(/<br\b[^>]*>/gi, " ");
-            expect(sanitizeOneLine(payload)).toBe(expected);
-        },
-    );
+    // Concrete expected output pins the security boundary: each payload maps to
+    // its exact sanitised form. A refactor that weakened the strip or the config
+    // would change one of these strings and fail the test.
+    const equivalence: [string, string][] = [
+        [`<script>alert(1)</script>`, ``],
+        [`<img src=x onerror=alert(1)>`, `<img src="x">`],
+        [`<a href="javascript:alert(1)">x</a>`, `<a>x</a>`],
+        [`<svg><script>alert(1)</script></svg>`, `<svg></svg>`],
+        [`<svg onload=alert(1)></svg>`, `<svg></svg>`],
+        [`<iframe src="javascript:alert(1)"></iframe>`, ``],
+        [`<div onclick="alert(1)">x</div>`, `<div>x</div>`],
+        [`<br><script>alert(1)</script>`, ` `],
+        [`<math><mtext><script>alert(1)</script></mtext></math>`, `<math><mtext></mtext></math>`],
+        [`<a href="  javascript:alert(1)">x</a>`, `<a>x</a>`],
+        [`<style>*{background:url(javascript:alert(1))}</style>`, ``],
+    ];
+
+    test.each(equivalence)("sanitises %s to exact expected output", (payload, expected) => {
+        expect(sanitizeOneLine(payload)).toBe(expected);
+    });
 });
