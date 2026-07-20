@@ -2710,7 +2710,7 @@ export class OpenChatAgent extends EventTarget {
                 });
             });
         } else {
-            return this.userClient.getPublicProfile();
+            return this.userClient.getPublicProfile().map<PublicProfile | undefined>((p) => p);
         }
     }
 

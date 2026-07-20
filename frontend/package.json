@@ -13,9 +13,11 @@
         "build:docker": "cd app && sh ./build_docker.sh",
         "android:release": "cd app && bash ./build_android.sh",
         "typecheck": "svelte-check --tsconfig ./app/tsconfig.json --threshold error",
+        "typecheck:agent": "tsc --noEmit -p openchat-agent/tsconfig.json",
+        "typebox": "ts2typebox --input ../tsBindings/types.d.ts --output ./openchat-agent/src/typebox.ts",
         "lint": "eslint . --fix",
         "test": "vitest --run",
-        "build:ci": "npm run typecheck && npm run lint && npm run test && npm run build:prod",
+        "build:ci": "npm run typecheck && npm run typecheck:agent && npm run lint && npm run test && npm run build:prod",
         "changelog": "auto-changelog --tag-pattern '-website' --file-pattern '^frontend'",
         "tauri": "tauri",
         "mobile": "cargo tauri android dev --no-watch"

@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Forward `GroupModerationFlagsChanged` events from group_index to groups ([#9089](https://github.com/open-chat-labs/open-chat/pull/9089))
+- Add `Translate` access token type for the translation proxy, issued to diamond members and platform moderators ([#9100](https://github.com/open-chat-labs/open-chat/pull/9100))
 
 ## [[2.0.1987](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1987-local_user_index)] - 2026-05-29
 
