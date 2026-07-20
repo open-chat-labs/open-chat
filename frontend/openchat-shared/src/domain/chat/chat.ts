@@ -801,6 +801,7 @@ export type Message<T extends MessageContent = MessageContent> = {
     senderContext?: SenderContext;
     ogPreviews: OgPreview[];
     messagePreviews: RehydratedMessagePreview[];
+    moderationFlags?: number;
 };
 
 export type BotContextCommand = {
@@ -1658,6 +1659,7 @@ export type GroupChatSummary = DataContent &
         isInvited: boolean;
         messagesVisibleToNonMembers: boolean;
         verified: boolean;
+        moderationFlags?: number;
     };
 
 export function nullMembership(): ChatMembership {
@@ -1725,6 +1727,7 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         messagesVisibleToNonMembers: boolean;
         membership: GroupCanisterGroupMembership;
         verified: boolean;
+        moderationFlags: number;
     };
 
 export type GroupCanisterGroupMembership = {
@@ -1769,6 +1772,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     messagesVisibleToNonMembers?: boolean;
     membership: GroupMembershipUpdates | undefined;
     verified?: boolean;
+    moderationFlags?: number;
 };
 
 export type GroupMembershipUpdates = {
@@ -2335,6 +2339,13 @@ export type SetGroupUpgradeConcurrencyResponse =
 export type SetCommunityModerationFlagsResponse =
     | "success"
     | "community_not_found"
+    | "not_authorized"
+    | "invalid_flags"
+    | "internal_error"
+    | "offline";
+export type SetGroupModerationFlagsResponse =
+    | "success"
+    | "chat_not_found"
     | "not_authorized"
     | "invalid_flags"
     | "internal_error"
