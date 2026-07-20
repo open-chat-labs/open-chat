@@ -34,9 +34,10 @@ use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use tracing::error;
 use types::{
-    BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion, CanisterId,
-    ChannelLatestMessageIndex, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
-    CommunityId, Cycles, DiamondMembershipDetails, IdempotentEnvelope, MessageContentInitial, Milliseconds, Notification,
+    BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion,
+    CLAIM_TYPE_DIAMOND_MEMBERSHIP, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms,
+    CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
+    IdempotentEnvelope, MessageContentInitial, Milliseconds, Notification,
     NotificationEnvelope, ReferralType, TimestampMillis, Timestamped, UserId, UserNotificationEnvelope,
     VerifiedCredentialGateArgs,
 };
@@ -124,10 +125,11 @@ impl RuntimeState {
                     self.data
                         .global_users
                         .insert_unique_person_proof(user_id, unique_person_proof);
-                } else if let Ok(claims) =
-                    verify_and_decode::<DiamondMembershipDetails>(jwt, self.data.oc_key_pair.public_key_pem())
-                    && claims.claim_type() == "diamond_membership"
-                {
+                } else if let Ok(claims) = verify_and_decode::<DiamondMembershipDetails>(
+                    jwt,
+                    self.data.oc_key_pair.public_key_pem(),
+                    CLAIM_TYPE_DIAMOND_MEMBERSHIP,
+                ) {
                     let expires_at = claims.custom().expires_at;
                     user_details.diamond_membership_expires_at = Some(expires_at);
                     self.data.global_users.set_diamond_membership_expiry_date(user_id, expires_at);

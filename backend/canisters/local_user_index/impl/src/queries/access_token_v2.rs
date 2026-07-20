@@ -10,7 +10,11 @@ use serde::Serialize;
 use types::c2c_can_issue_access_token::{
     AccessTypeArgs, BotActionByCommandArgs, JoinVideoCallArgs, MarkVideoCallAsEndedArgs, StartVideoCallArgs,
 };
-use types::{AutonomousBotScope, BotActionByCommandClaims, BotCommand, Chat, JoinOrEndVideoCallClaims, StartVideoCallClaims};
+use types::{
+    AutonomousBotScope, BotActionByCommandClaims, BotCommand, CLAIM_TYPE_BOT_ACTION_BY_COMMAND,
+    CLAIM_TYPE_JOIN_VIDEO_CALL, CLAIM_TYPE_MARK_VIDEO_CALL_AS_ENDED, CLAIM_TYPE_START_VIDEO_CALL, Chat,
+    JoinOrEndVideoCallClaims, StartVideoCallClaims,
+};
 
 #[query(composite = true, msgpack = true)]
 #[trace]
@@ -183,10 +187,10 @@ impl ArgsInternal {
 
     pub fn type_name(&self) -> &str {
         match self {
-            Self::StartVideoCall(_) => "StartVideoCall",
-            Self::JoinVideoCall(_) => "JoinVideoCall",
-            Self::MarkVideoCallAsEnded(_) => "MarkVideoCallAsEnded",
-            Self::BotActionByCommand(_) => "BotActionByCommand",
+            Self::StartVideoCall(_) => CLAIM_TYPE_START_VIDEO_CALL,
+            Self::JoinVideoCall(_) => CLAIM_TYPE_JOIN_VIDEO_CALL,
+            Self::MarkVideoCallAsEnded(_) => CLAIM_TYPE_MARK_VIDEO_CALL_AS_ENDED,
+            Self::BotActionByCommand(_) => CLAIM_TYPE_BOT_ACTION_BY_COMMAND,
         }
     }
 
