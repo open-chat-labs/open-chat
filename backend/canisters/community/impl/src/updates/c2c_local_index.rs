@@ -49,6 +49,9 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
         LocalIndexEvent::VerifiedChanged(ev) => {
             state.data.verified = Timestamped::new(ev.verified, **now);
         }
+        LocalIndexEvent::ModerationFlagsChanged(ev) => {
+            state.data.moderation_flags = Timestamped::new(ev.flags, **now);
+        }
         LocalIndexEvent::UserDeleted(user_id) => {
             for channel in state.data.channels.iter_mut() {
                 channel.chat.members.remove(user_id, **now);

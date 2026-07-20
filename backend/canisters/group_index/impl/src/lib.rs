@@ -2,6 +2,7 @@ use crate::model::cached_hot_groups::CachedHotGroups;
 use crate::model::deleted_communities::DeletedCommunities;
 use crate::model::deleted_groups::DeletedGroups;
 use crate::model::local_index_map::LocalIndex;
+use crate::model::moderation_flags::ModerationFlags;
 use crate::model::private_communities::PrivateCommunities;
 use crate::model::private_groups::PrivateGroups;
 use crate::model::public_communities::PublicCommunities;
@@ -12,7 +13,7 @@ use canister_state_macros::canister_state;
 use constants::MINUTE_IN_MS;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_index_canister::ChildCanisterType;
-use local_user_index_canister::{GroupIndexEvent as LocalIndexEvent, NameChanged, VerifiedChanged};
+use local_user_index_canister::{GroupIndexEvent as LocalIndexEvent, ModerationFlagsChanged, NameChanged, VerifiedChanged};
 use model::local_index_event_batch::LocalIndexEventBatch;
 use model::local_index_map::LocalIndexMap;
 use rand::RngCore;
@@ -124,6 +125,25 @@ impl RuntimeState {
             LocalIndexEvent::CommunityVerifiedChanged(VerifiedChanged {
                 canister_id: community_id.into(),
                 verified,
+            }),
+            self.env.now(),
+        );
+
+        true
+    }
+
+    pub fn set_community_moderation_flags(&mut self, community_id: CommunityId, flags: ModerationFlags) -> bool {
+        let Some(community) = self.data.public_communities.get_mut(&community_id) else {
+            return false;
+        };
+
+        community.set_moderation_flags(flags);
+
+        self.push_community_event_to_local_index(
+            community_id,
+            LocalIndexEvent::CommunityModerationFlagsChanged(ModerationFlagsChanged {
+                canister_id: community_id.into(),
+                flags: flags.bits(),
             }),
             self.env.now(),
         );

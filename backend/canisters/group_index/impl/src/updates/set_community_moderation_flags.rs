@@ -51,8 +51,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 }
 
 fn commit(args: &Args, state: &mut RuntimeState) -> Response {
-    if let Some(community) = state.data.public_communities.get_mut(&args.community_id) {
-        community.set_moderation_flags(ModerationFlags::from_bits(args.flags).unwrap());
+    if state.set_community_moderation_flags(args.community_id, ModerationFlags::from_bits(args.flags).unwrap()) {
         Success
     } else {
         CommunityNotFound
