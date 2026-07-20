@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Lock against a user having two gate payments in progress concurrently ([#9080](https://github.com/open-chat-labs/open-chat/pull/9080))
+- Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
 
 ## [[2.0.1988](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1988-community)] - 2026-06-18
 

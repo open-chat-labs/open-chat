@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `remove_fcm_tokens` endpoint so the notification pusher can drop FCM tokens that Firebase reports as `UNREGISTERED`
 
+### Fixed
+
+- Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
+
 ## [[2.0.1954](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1954-notifications_index)] - 2026-01-14
 
 ### Changed
