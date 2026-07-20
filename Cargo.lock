@@ -5197,7 +5197,7 @@ dependencies = [
 [[package]]
 name = "ic-verifiable-credentials"
 version = "1.3.0"
-source = "git+https://github.com/hpeebles/verifiable-credentials-sdk?branch=deps#4a8498c627cd44b87b936ab59559e12682e23ef6"
+source = "git+https://github.com/hpeebles/verifiable-credentials-sdk?rev=4a8498c627cd44b87b936ab59559e12682e23ef6#4a8498c627cd44b87b936ab59559e12682e23ef6"
 dependencies = [
  "base64 0.22.1",
  "candid",
