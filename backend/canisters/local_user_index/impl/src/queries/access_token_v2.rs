@@ -12,8 +12,8 @@ use types::c2c_can_issue_access_token::{
 };
 use types::{
     AutonomousBotScope, BotActionByCommandClaims, BotCommand, CLAIM_TYPE_BOT_ACTION_BY_COMMAND, CLAIM_TYPE_JOIN_VIDEO_CALL,
-    CLAIM_TYPE_MARK_VIDEO_CALL_AS_ENDED, CLAIM_TYPE_START_VIDEO_CALL, Chat, JoinOrEndVideoCallClaims, StartVideoCallClaims,
-    TranslateClaims,
+    CLAIM_TYPE_MARK_VIDEO_CALL_AS_ENDED, CLAIM_TYPE_START_VIDEO_CALL, Chat, JoinOrEndVideoCallClaims, Milliseconds,
+    StartVideoCallClaims, TranslateClaims,
 };
 
 const DEFAULT_TOKEN_VALIDITY: Milliseconds = 5 * 60 * 1000;
