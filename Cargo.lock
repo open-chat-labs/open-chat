@@ -4877,7 +4877,7 @@ dependencies = [
  "candid",
  "hex",
  "ic-certification",
- "ic-representation-independent-hash 3.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ic-representation-independent-hash 3.1.0",
  "ic0",
  "lazy_static",
  "serde",
@@ -4902,8 +4902,8 @@ dependencies = [
 
 [[package]]
 name = "ic-cbor"
-version = "3.1.0"
-source = "git+https://github.com/hpeebles/response-verification?rev=a1dfbe2b339752c9771ac0c55395ee420f3dbd6f#a1dfbe2b339752c9771ac0c55395ee420f3dbd6f"
+version = "3.2.0"
+source = "git+https://github.com/dfinity/response-verification?rev=85dd37f54b882dc5c490a02f467023470ac6faf4#85dd37f54b882dc5c490a02f467023470ac6faf4"
 dependencies = [
  "candid",
  "ic-certification",
@@ -4997,8 +4997,8 @@ dependencies = [
 
 [[package]]
 name = "ic-certificate-verification"
-version = "3.1.0"
-source = "git+https://github.com/hpeebles/response-verification?rev=a1dfbe2b339752c9771ac0c55395ee420f3dbd6f#a1dfbe2b339752c9771ac0c55395ee420f3dbd6f"
+version = "3.2.0"
+source = "git+https://github.com/dfinity/response-verification?rev=85dd37f54b882dc5c490a02f467023470ac6faf4#85dd37f54b882dc5c490a02f467023470ac6faf4"
 dependencies = [
  "candid",
  "ic-cbor",
@@ -5011,8 +5011,8 @@ dependencies = [
 
 [[package]]
 name = "ic-certification"
-version = "3.1.0"
-source = "git+https://github.com/hpeebles/response-verification?rev=a1dfbe2b339752c9771ac0c55395ee420f3dbd6f#a1dfbe2b339752c9771ac0c55395ee420f3dbd6f"
+version = "3.2.0"
+source = "git+https://github.com/dfinity/response-verification?rev=85dd37f54b882dc5c490a02f467023470ac6faf4#85dd37f54b882dc5c490a02f467023470ac6faf4"
 dependencies = [
  "hex",
  "serde",
@@ -5033,14 +5033,14 @@ dependencies = [
 
 [[package]]
 name = "ic-http-certification"
-version = "3.1.0"
-source = "git+https://github.com/hpeebles/response-verification?rev=a1dfbe2b339752c9771ac0c55395ee420f3dbd6f#a1dfbe2b339752c9771ac0c55395ee420f3dbd6f"
+version = "3.2.0"
+source = "git+https://github.com/dfinity/response-verification?rev=85dd37f54b882dc5c490a02f467023470ac6faf4#85dd37f54b882dc5c490a02f467023470ac6faf4"
 dependencies = [
  "base64 0.22.1",
  "candid",
  "http 1.3.1",
  "ic-certification",
- "ic-representation-independent-hash 3.1.0 (git+https://github.com/hpeebles/response-verification?rev=a1dfbe2b339752c9771ac0c55395ee420f3dbd6f)",
+ "ic-representation-independent-hash 3.2.0",
  "serde",
  "serde_cbor",
  "thiserror 1.0.69",
@@ -5096,8 +5096,8 @@ dependencies = [
 
 [[package]]
 name = "ic-representation-independent-hash"
-version = "3.1.0"
-source = "git+https://github.com/hpeebles/response-verification?rev=a1dfbe2b339752c9771ac0c55395ee420f3dbd6f#a1dfbe2b339752c9771ac0c55395ee420f3dbd6f"
+version = "3.2.0"
+source = "git+https://github.com/dfinity/response-verification?rev=85dd37f54b882dc5c490a02f467023470ac6faf4#85dd37f54b882dc5c490a02f467023470ac6faf4"
 dependencies = [
  "leb128",
  "sha2 0.10.9",
@@ -5180,6 +5180,7 @@ dependencies = [
 [[package]]
 name = "ic-verifiable-credentials"
 version = "1.3.0"
+source = "git+https://github.com/hpeebles/verifiable-credentials-sdk?branch=deps#4a8498c627cd44b87b936ab59559e12682e23ef6"
 dependencies = [
  "base64 0.22.1",
  "candid",
