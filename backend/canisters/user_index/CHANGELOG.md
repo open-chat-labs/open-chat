@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Pass in `expected_claim_type` when verifying JWT claims ([#9102](https://github.com/open-chat-labs/open-chat/pull/9102))
+
 ### Removed
 
 - Remove deprecated `OpenChatBotMessage` event type ([#9032](https://github.com/open-chat-labs/open-chat/pull/9032))

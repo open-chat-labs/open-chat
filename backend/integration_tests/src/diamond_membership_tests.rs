@@ -8,8 +8,8 @@ use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use types::{
-    Achievement, ChitEventType, DiamondMembershipDetails, DiamondMembershipFees, DiamondMembershipPlanDuration,
-    DiamondMembershipSubscription, ReferralStatus,
+    Achievement, CLAIM_TYPE_DIAMOND_MEMBERSHIP, ChitEventType, DiamondMembershipDetails, DiamondMembershipFees,
+    DiamondMembershipPlanDuration, DiamondMembershipSubscription, ReferralStatus,
 };
 
 #[test_case(true, false)]
@@ -58,7 +58,8 @@ fn can_upgrade_to_diamond(pay_in_chat: bool, lifetime: bool) {
     assert!(!diamond_response.subscription.is_active());
 
     let public_key = client::user_index::happy_path::public_key(env, canister_ids.user_index);
-    let claims: Claims<DiamondMembershipDetails> = verify_and_decode(&diamond_response.proof_jwt, &public_key).unwrap();
+    let claims: Claims<DiamondMembershipDetails> =
+        verify_and_decode(&diamond_response.proof_jwt, &public_key, CLAIM_TYPE_DIAMOND_MEMBERSHIP).unwrap();
 
     let claims_expiry = claims.exp_ms();
     assert!(now < claims_expiry && claims_expiry < now + DAY_IN_MS);

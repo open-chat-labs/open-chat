@@ -18,7 +18,7 @@ use rand::Rng;
 use serde::Serialize;
 use storage_index_canister::add_or_update_users::UserConfig;
 use tracing::error;
-use types::{DiamondMembershipPlanDuration, ICP, UserId};
+use types::{CLAIM_TYPE_DIAMOND_MEMBERSHIP, DiamondMembershipPlanDuration, ICP, UserId};
 use user_index_canister::pay_for_diamond_membership::{Response::*, *};
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
@@ -226,7 +226,7 @@ fn process_charge(
                 .push((token_symbol.to_string(), args.expected_price_e8s as u128));
         }
 
-        let claims = Claims::new(now + HOUR_IN_MS, "diamond_membership".to_string(), result.clone());
+        let claims = Claims::new(now + HOUR_IN_MS, CLAIM_TYPE_DIAMOND_MEMBERSHIP.to_string(), result.clone());
         let proof_jwt =
             sign_and_encode_token(state.data.oc_key_pair.secret_key_der(), claims, state.env.rng()).unwrap_or_default();
 
