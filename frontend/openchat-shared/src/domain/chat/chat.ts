@@ -801,6 +801,7 @@ export type Message<T extends MessageContent = MessageContent> = {
     senderContext?: SenderContext;
     ogPreviews: OgPreview[];
     messagePreviews: RehydratedMessagePreview[];
+    moderationFlags?: number;
 };
 
 export type BotContextCommand = {
