@@ -132,6 +132,25 @@ impl RuntimeState {
         true
     }
 
+    pub fn set_community_moderation_flags(&mut self, community_id: CommunityId, flags: ModerationFlags) -> bool {
+        let Some(community) = self.data.public_communities.get_mut(&community_id) else {
+            return false;
+        };
+
+        community.set_moderation_flags(flags);
+
+        self.push_community_event_to_local_index(
+            community_id,
+            LocalIndexEvent::CommunityModerationFlagsChanged(ModerationFlagsChanged {
+                canister_id: community_id.into(),
+                flags: flags.bits(),
+            }),
+            self.env.now(),
+        );
+
+        true
+    }
+
     pub fn set_verified_group(&mut self, group_id: ChatId, verified: bool) -> bool {
         let Some(group) = self.data.public_groups.get_mut(&group_id) else {
             return false;

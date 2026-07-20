@@ -8775,6 +8775,7 @@ export const Message = Type.Object({
     forwarded: Type.Optional(Type.Boolean()),
     block_level_markdown: Type.Optional(Type.Boolean()),
     og_previews: Type.Optional(Type.Array(OgPreview)),
+    moderation_flags: Type.Optional(Type.Number()),
 });
 
 export type ChatSummary = Static<typeof ChatSummary>;
@@ -9519,6 +9520,7 @@ export const CommunityCanisterCommunitySummary = Type.Object({
     is_invited: Type.Optional(Type.Boolean()),
     metrics: ChatMetrics,
     verified: Type.Optional(Type.Boolean()),
+    moderation_flags: Type.Optional(Type.Number()),
 });
 
 export type CommunityCanisterCommunitySummaryUpdates = Static<
@@ -9546,6 +9548,7 @@ export const CommunityCanisterCommunitySummaryUpdates = Type.Object({
     user_groups_deleted: Type.Optional(Type.Array(Type.Number())),
     metrics: Type.Optional(ChatMetrics),
     verified: Type.Optional(Type.Boolean()),
+    moderation_flags: Type.Optional(Type.Number()),
 });
 
 export type LocalUserIndexGroupAndCommunitySummaryUpdatesV2SummaryUpdatesResponse = Static<

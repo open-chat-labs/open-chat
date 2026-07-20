@@ -66,6 +66,7 @@ pub enum GroupIndexEvent {
     CommunityNameChanged(NameChanged),
     GroupVerifiedChanged(VerifiedChanged),
     CommunityVerifiedChanged(VerifiedChanged),
+    CommunityModerationFlagsChanged(ModerationFlagsChanged),
     GroupModerationFlagsChanged(ModerationFlagsChanged),
     NotifyOfUserDeleted(CanisterId, UserId),
 }

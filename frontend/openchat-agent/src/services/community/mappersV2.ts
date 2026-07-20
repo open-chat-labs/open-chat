@@ -243,6 +243,7 @@ export function communitySummaryUpdates(
         userGroups: value.user_groups?.map(userGroup).map(([_, g]) => g) ?? [],
         userGroupsDeleted: new Set(value.user_groups_deleted ?? []),
         verified: mapOptional(value.verified, identity),
+        moderationFlags: mapOptional(value.moderation_flags, identity),
     };
 }
 

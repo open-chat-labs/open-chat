@@ -19,7 +19,7 @@ async fn set_community_moderation_flags(args: Args) -> Response {
 }
 
 fn commit(args: &Args, state: &mut RuntimeState) -> Response {
-    if let Some(community) = state.data.public_communities.get_mut(&args.community_id) {
+    if let Some(community) = state.data.public_communities.get(&args.community_id) {
         if args.flags == community.moderation_flags().bits() {
             return Unchanged;
         }
@@ -28,8 +28,11 @@ fn commit(args: &Args, state: &mut RuntimeState) -> Response {
             return InvalidFlags;
         };
 
-        community.set_moderation_flags(moderation_flags);
-        Success
+        if state.set_community_moderation_flags(args.community_id, moderation_flags) {
+            Success
+        } else {
+            CommunityNotFound
+        }
     } else {
         CommunityNotFound
     }

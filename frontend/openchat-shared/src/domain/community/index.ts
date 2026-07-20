@@ -67,6 +67,7 @@ export type CommunitySummary = AccessControlled &
         localUserIndex: string;
         isInvited: boolean;
         verified: boolean;
+        moderationFlags: number;
     };
 
 export type DefaultChannel = {
@@ -176,6 +177,7 @@ export type CommunityCanisterCommunitySummaryUpdates = {
     userGroups: UserGroupSummary[];
     userGroupsDeleted: Set<number>;
     verified?: boolean;
+    moderationFlags?: number;
 };
 
 export type CommunityCanisterChannelSummaryUpdates = {

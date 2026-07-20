@@ -587,6 +587,7 @@ fn generate_value<R: RngCore>(content: MessageContentInternal, rng: &mut R) -> E
             block_level_markdown: true,
             sender_context: None,
             og_previews: Vec::new(),
+            moderation_flags: 0,
         })),
     }
 }
