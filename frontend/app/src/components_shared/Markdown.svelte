@@ -9,7 +9,7 @@
         userIdMentionRegex,
     } from "@client";
     import { getContext } from "svelte";
-    import { DOMPurifyDefault, DOMPurifyOneLine } from "../utils/domPurify";
+    import { DOMPurifyDefault, sanitizeOneLine } from "../utils/domPurify";
     import { isSingleEmoji } from "../utils/emojis";
 
     const client = getContext<OpenChat>("client");
@@ -60,9 +60,8 @@
             client.logError("Error parsing markdown: ", err);
         }
 
-        const domPurify = oneLine ? DOMPurifyOneLine : DOMPurifyDefault;
         try {
-            return domPurify.sanitize(parsed);
+            return oneLine ? sanitizeOneLine(parsed) : DOMPurifyDefault.sanitize(parsed);
         } catch (err: any) {
             client.logError("Error sanitizing message content: ", err);
             return "unsafe";
