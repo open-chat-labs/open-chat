@@ -291,6 +291,7 @@ type Message = record {
     forwarded : bool;
     block_level_markdown : bool;
     og_previews : vec OgPreview;
+    moderation_flags : nat32;
 };
 
 type MessageEventWrapper = record {
@@ -467,6 +468,7 @@ type PublicGroupSummary = record {
     events_ttl_last_updated : TimestampMillis;
     gate_config : opt AccessGateConfig;
     wasm_version : BuildVersion;
+    moderation_flags : nat32;
 };
 
 type ReplyContext = record {

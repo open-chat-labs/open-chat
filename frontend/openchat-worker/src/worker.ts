@@ -655,7 +655,7 @@ function getAction(
             );
 
         case "searchGroups":
-            return agent.searchGroups(payload.searchTerm, payload.maxResults);
+            return agent.searchGroups(payload.searchTerm, payload.flags, payload.maxResults);
 
         case "dismissRecommendation":
             return agent.dismissRecommendation(payload.chatId).then(() => undefined);
@@ -797,6 +797,9 @@ function getAction(
 
         case "setCommunityModerationFlags":
             return agent.setCommunityModerationFlags(payload.communityId, payload.flags);
+
+        case "setGroupModerationFlags":
+            return agent.setGroupModerationFlags(payload.chatId, payload.flags);
 
         case "setGroupUpgradeConcurrency":
             return agent.setGroupUpgradeConcurrency(payload.value);

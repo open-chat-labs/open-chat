@@ -12,6 +12,7 @@ import type {
     GroupSearchResponse,
     RemoveHotGroupExclusionResponse,
     SetCommunityModerationFlagsResponse,
+    SetGroupModerationFlagsResponse,
     SetGroupUpgradeConcurrencyResponse,
     UnfreezeCommunityResponse,
     UnfreezeGroupResponse,
@@ -39,6 +40,8 @@ import {
     GroupIndexRemoveHotGroupExclusionResponse,
     GroupIndexSetCommunityModerationFlagsArgs,
     GroupIndexSetCommunityModerationFlagsResponse,
+    GroupIndexSetGroupModerationFlagsArgs,
+    GroupIndexSetGroupModerationFlagsResponse,
     GroupIndexSetCommunityUpgradeConcurrencyArgs,
     GroupIndexSetCommunityUpgradeConcurrencyResponse,
     GroupIndexSetGroupUpgradeConcurrencyArgs,
@@ -61,6 +64,7 @@ import {
     recommendedGroupsResponse,
     removeHotGroupExclusionResponse,
     setCommunityModerationFlagsResponse,
+    setGroupModerationFlagsResponse,
     setUpgradeConcurrencyResponse,
     unfreezeCommunityResponse,
     unfreezeGroupResponse,
@@ -85,11 +89,12 @@ export class GroupIndexClient extends SingleCanisterMsgpackAgent {
         );
     }
 
-    searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
+    searchGroups(searchTerm: string, flags: number, maxResults = 10): Promise<GroupSearchResponse> {
         const args = {
             search_term: searchTerm,
             page_index: 0,
             page_size: maxResults,
+            include_moderation_flags: flags,
         };
         return this.query(
             "explore_groups",
@@ -229,6 +234,19 @@ export class GroupIndexClient extends SingleCanisterMsgpackAgent {
             setCommunityModerationFlagsResponse,
             GroupIndexSetCommunityModerationFlagsArgs,
             GroupIndexSetCommunityModerationFlagsResponse,
+        );
+    }
+
+    setGroupModerationFlags(chatId: string, flags: number): Promise<SetGroupModerationFlagsResponse> {
+        return this.update(
+            "set_group_moderation_flags",
+            {
+                chat_id: principalStringToBytes(chatId),
+                flags,
+            },
+            setGroupModerationFlagsResponse,
+            GroupIndexSetGroupModerationFlagsArgs,
+            GroupIndexSetGroupModerationFlagsResponse,
         );
     }
 

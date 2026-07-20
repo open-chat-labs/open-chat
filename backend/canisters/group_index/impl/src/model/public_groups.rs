@@ -1,4 +1,5 @@
 use crate::model::cached_hot_groups::CachedPublicGroupSummary;
+use crate::model::moderation_flags::ModerationFlags;
 use crate::model::private_groups::PrivateGroupInfo;
 use crate::{CACHED_HOT_GROUPS_COUNT, MARK_ACTIVE_DURATION};
 use constants::DAY_IN_MS;
@@ -47,12 +48,19 @@ impl PublicGroups {
         );
     }
 
-    pub fn search(&self, search_term: Option<String>, page_index: u32, page_size: u8) -> (Vec<GroupMatch>, u32) {
+    pub fn search(
+        &self,
+        search_term: Option<String>,
+        include_moderation_flags: ModerationFlags,
+        page_index: u32,
+        page_size: u8,
+    ) -> (Vec<GroupMatch>, u32) {
         let query = search_term.map(Query::parse);
 
         let mut matches: Vec<_> = self
             .iter()
             .filter(|c| !c.is_frozen())
+            .filter(|c| include_moderation_flags.contains(*c.moderation_flags()))
             .map(|c| {
                 let score = if let Some(query) = &query {
                     let document: Document = c.into();
@@ -103,6 +111,7 @@ impl PublicGroups {
             events_ttl_last_updated: summary.events_ttl_last_updated,
             gate_config: summary.gate_config,
             wasm_version: BuildVersion::default(),
+            moderation_flags: group.moderation_flags.bits(),
         })
     }
 
@@ -170,6 +179,8 @@ pub struct PublicGroupInfo {
     exclude_from_hotlist: bool,
     gate_config: Option<AccessGateConfigInternal>,
     verified: bool,
+    #[serde(default)]
+    moderation_flags: ModerationFlags,
 }
 
 pub enum UpdateGroupResult {
@@ -201,6 +212,7 @@ impl PublicGroupInfo {
             frozen: None,
             exclude_from_hotlist: false,
             verified: false,
+            moderation_flags: ModerationFlags::default(),
         }
     }
 
@@ -251,6 +263,14 @@ impl PublicGroupInfo {
 
     pub fn set_verified(&mut self, verified: bool) {
         self.verified = verified;
+    }
+
+    pub fn moderation_flags(&self) -> &ModerationFlags {
+        &self.moderation_flags
+    }
+
+    pub fn set_moderation_flags(&mut self, flags: ModerationFlags) {
+        self.moderation_flags = flags;
     }
 
     pub fn set_frozen(&mut self, info: Option<FrozenGroupInfo>) {
