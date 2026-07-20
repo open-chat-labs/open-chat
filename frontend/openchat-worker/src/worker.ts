@@ -21,6 +21,7 @@ import {
     inititaliseLogger,
     MessagesReadFromServer,
     setMinLogLevel,
+    shouldReportWorkerError,
     StorageUpdated,
     Stream,
     UsersLoaded,
@@ -151,7 +152,11 @@ function handleAgentEvent(ev: Event): void {
 
 const sendError = (kind: string, correlationId: number, payload?: unknown) => {
     return (error: unknown) => {
-        logger.error("WORKER: error caused by payload: ", kind, error, payload);
+        if (shouldReportWorkerError(kind, error)) {
+            logger.error("WORKER: error caused by payload: ", kind, error, payload);
+        } else {
+            logger.debug("WORKER: expected request failure (not reported): ", kind, error);
+        }
         postMessage({
             kind: "worker_error",
             requestKind: kind,
