@@ -38,8 +38,8 @@ use types::{
     BotInitiator, BotNotification, BotPermissions, BotUpdated, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId,
     ChannelUserNotificationPayload, ChatMetrics, ChatPermission, CommunityCanisterCommunitySummary, CommunityEvent,
     CommunityMembership, CommunityPermissions, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupRole,
-    IdempotentEnvelope, MembersAdded, Milliseconds, Notification, PendingCryptoTransaction, Rules, TimestampMillis,
-    Timestamped, UserId, UserNotification, UserType,
+    IdempotentEnvelope, MembersAdded, MessageId, MessageIndex, Milliseconds, Notification, PendingCryptoTransaction, Rules,
+    TimestampMillis, Timestamped, UserId, UserNotification, UserType,
 };
 use types::{BotSubscriptions, CommunityId};
 use user_canister::CommunityCanisterEvent;
@@ -190,6 +190,27 @@ impl RuntimeState {
             created_at: self.env.now(),
             idempotency_id: self.env.rng().next_u64(),
             value: local_user_index_canister::CommunityEvent::Notification(Box::new(notification)),
+        });
+    }
+
+    // Asks the local_user_index to classify the message via the moderation API; the result
+    // arrives back as a `MessageClassified` event which stores the flags on the message
+    pub fn queue_message_for_moderation(
+        &mut self,
+        channel_id: ChannelId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        input: types::ModerationInput,
+    ) {
+        self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
+            created_at: self.env.now(),
+            idempotency_id: self.env.rng().next_u64(),
+            value: local_user_index_canister::CommunityEvent::MessageClassifyRequest(Box::new(types::ClassifyMessageRequest {
+                channel_id: Some(channel_id),
+                thread_root_message_index,
+                message_id,
+                input,
+            })),
         });
     }
 

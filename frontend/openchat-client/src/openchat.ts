@@ -7314,6 +7314,18 @@ export class OpenChat {
         return hasFlag(flags, flag);
     }
 
+    setOpenAIApiKey(apiKey: string | undefined): Promise<boolean> {
+        return this.#worker.send({ kind: "setOpenAIApiKey", apiKey }).catch(() => false);
+    }
+
+    setInternalModerationChannel(
+        channel: { communityId: string; channelId: number } | undefined,
+    ): Promise<boolean> {
+        return this.#worker
+            .send({ kind: "setInternalModerationChannel", channel })
+            .catch(() => false);
+    }
+
     setModerationFlags(flags: number): Promise<number> {
         const previousValue = moderationFlagsEnabledStore.value;
         currentUserStore.set({

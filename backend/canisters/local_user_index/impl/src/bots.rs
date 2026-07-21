@@ -2,7 +2,8 @@ use crate::RuntimeState;
 use rand::Rng;
 use types::{
     BotActionByCommandClaims, BotActionChatDetails, BotActionCommunityDetails, BotActionScope, BotChatContext,
-    BotCommunityOrGroupContext, BotInitiator, Chat, CommunityOrGroup, MessageId, User, UserId,
+    BotCommunityOrGroupContext, BotInitiator, CLAIM_TYPE_BOT_ACTION_BY_COMMAND, Chat, CommunityOrGroup, MessageId, User,
+    UserId,
 };
 
 pub struct BotAccessContext {
@@ -90,8 +91,12 @@ pub fn extract_access_context_from_community_or_group_context(
 fn extract_access_context_from_jwt(jwt: &str, bot: &User, state: &mut RuntimeState) -> Result<BotAccessContext, String> {
     const INVALID_MESSAGE: &str = "Not a valid access token JWT";
 
-    let claims = jwt::verify_and_decode::<BotActionByCommandClaims>(jwt, state.data.oc_key_pair.public_key_pem())
-        .map_err(|_| INVALID_MESSAGE.to_string())?;
+    let claims = jwt::verify_and_decode::<BotActionByCommandClaims>(
+        jwt,
+        state.data.oc_key_pair.public_key_pem(),
+        CLAIM_TYPE_BOT_ACTION_BY_COMMAND,
+    )
+    .map_err(|_| INVALID_MESSAGE.to_string())?;
 
     if claims.exp_ms() < state.env.now() {
         return Err("Access token expired".to_string());

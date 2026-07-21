@@ -651,6 +651,9 @@ impl UserMap {
             };
             info!(%user_id, ?suspension_details, "User suspended");
             user.suspension_details = Some(suspension_details);
+            // Bump date_updated so that clients already tracking this user receive the
+            // suspended flag on their next poll of the `users` endpoint
+            user.date_updated = now;
             self.suspended_or_unsuspended_users.insert((now, user_id));
             true
         } else {
@@ -662,6 +665,7 @@ impl UserMap {
         if let Some(user) = self.users.get_mut(&user_id) {
             info!(%user_id, "User unsuspended");
             user.suspension_details = None;
+            user.date_updated = now;
             self.suspended_or_unsuspended_users.insert((now, user_id));
             true
         } else {

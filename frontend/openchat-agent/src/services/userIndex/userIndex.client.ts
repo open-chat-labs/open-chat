@@ -29,6 +29,7 @@ import {
     mergeUserSummaryWithUpdates,
     offline,
     Stream,
+    toBigInt32,
     userSummaryFromCurrentUserSummary,
 } from "@shared";
 import {
@@ -62,7 +63,9 @@ import {
     UserIndexSetDisplayNameArgs,
     UserIndexSetDisplayNameResponse,
     UserIndexSetHideOnlineStatusArgs,
+    UserIndexSetInternalModerationChannelArgs,
     UserIndexSetModerationFlagsArgs,
+    UserIndexSetOpenAiApiKeyArgs,
     UserIndexSetPremiumItemCostArgs,
     UserIndexSetUsernameArgs,
     UserIndexSetUsernameResponse,
@@ -164,6 +167,38 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             (_) => true,
             UserIndexSetModerationFlagsArgs,
             SuccessOnly,
+        );
+    }
+
+    setOpenAIApiKey(apiKey: string | undefined): Promise<boolean> {
+        return this.update(
+            "set_openai_api_key",
+            {
+                api_key: apiKey === undefined || apiKey === "" ? undefined : apiKey,
+            },
+            (resp) => resp === "Success",
+            UserIndexSetOpenAiApiKeyArgs,
+            UnitResult,
+        );
+    }
+
+    setInternalModerationChannel(
+        channel: { communityId: string; channelId: number } | undefined,
+    ): Promise<boolean> {
+        return this.update(
+            "set_internal_moderation_channel",
+            {
+                channel:
+                    channel === undefined
+                        ? undefined
+                        : {
+                              community_id: principalStringToBytes(channel.communityId),
+                              channel_id: toBigInt32(channel.channelId),
+                          },
+            },
+            (resp) => resp === "Success",
+            UserIndexSetInternalModerationChannelArgs,
+            UnitResult,
         );
     }
 

@@ -184,6 +184,7 @@
             addMessageFilter,
             removeMessageFilter,
             reportedMessages,
+            unsuspendUser,
         };
 
         //@ts-ignore
@@ -387,6 +388,12 @@
 
     function reportedMessages(userId?: string): void {
         console.log(client.reportedMessages(userId));
+    }
+
+    function unsuspendUser(userId: string): void {
+        client.unsuspendUser(userId).then((success) => {
+            console.log(success ? "User unsuspended" : "Failed to unsuspend user", userId);
+        });
     }
 
     function deleteChannelMessage(
