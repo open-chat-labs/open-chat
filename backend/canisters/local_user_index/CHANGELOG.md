@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Classify public group and community messages via the OpenAI Moderation API, batching requests across all local canisters ([#9091](https://github.com/open-chat-labs/open-chat/pull/9091))
 - Pass in `expected_claim_type` when verifying JWT claims ([#9102](https://github.com/open-chat-labs/open-chat/pull/9102))
 
 ## [[2.0.1987](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1987-local_user_index)] - 2026-05-29

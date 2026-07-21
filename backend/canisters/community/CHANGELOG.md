@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Queue public messages for classification via the local_user_index and store the returned moderation flags ([#9091](https://github.com/open-chat-labs/open-chat/pull/9091))
 - Expose `moderation_flags` in community summary and summary updates ([#9088](https://github.com/open-chat-labs/open-chat/pull/9088))
 - Add per-message moderation flags, exposed as `moderation_flags` on messages ([#9090](https://github.com/open-chat-labs/open-chat/pull/9090))
 

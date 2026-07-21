@@ -331,7 +331,8 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             }
         }
         UserIndexEvent::SetOpenAIApiKey(ev) => {
-            state.data.openai_api_key = ev.api_key;
+            state.data.openai_api_key = ev.api_key.clone();
+            crate::jobs::moderate_messages::start_job_if_required(state);
         }
     }
 }

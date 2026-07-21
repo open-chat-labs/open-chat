@@ -4215,9 +4215,12 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "constants",
+ "ic-cdk",
  "icrc-ledger-types",
  "serde",
+ "serde_json",
  "serde_repr",
+ "tracing",
  "types",
  "utils",
 ]
@@ -6402,6 +6405,7 @@ dependencies = [
  "futures",
  "group_canister",
  "group_canister_c2c_client",
+ "group_community_common",
  "http_request",
  "ic-cdk",
  "ic-cdk-timers",

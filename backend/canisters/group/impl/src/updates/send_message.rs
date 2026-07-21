@@ -188,6 +188,13 @@ fn process_send_message_result(
 
     register_timer_jobs(thread_root_message_index, message_event, now, &mut state.data);
 
+    if state.data.chat.is_public.value {
+        let input = message_event.event.content.moderation_input();
+        if !input.is_empty() {
+            state.queue_message_for_moderation(thread_root_message_index, message_id, input);
+        }
+    }
+
     if !result.unfinalised_bot_message {
         let chat_id: ChatId = state.env.canister_id().into();
         let sender = caller.agent();

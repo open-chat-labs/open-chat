@@ -9,7 +9,7 @@ use constants::OPENCHAT_BOT_USER_ID;
 use group_canister::LocalIndexEvent;
 use group_canister::c2c_local_index::*;
 use std::cell::LazyCell;
-use types::{GroupNameChanged, TimestampMillis, Timestamped};
+use types::{GroupNameChanged, ModerationCategories, TimestampMillis, Timestamped};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -51,6 +51,23 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
         }
         LocalIndexEvent::VerifiedChanged(ev) => {
             state.data.verified = Timestamped::new(ev.verified, **now);
+        }
+        LocalIndexEvent::MessageClassified(ev) => {
+            // An empty result still calls flag_message so that stale flags are cleared if a
+            // previously flagged message has been edited to something clean
+            if let Some(categories) = ModerationCategories::from_bits(ev.flags)
+                && state
+                    .data
+                    .chat
+                    .events
+                    .flag_message(ev.thread_root_message_index, ev.message_id, categories, **now)
+                    .is_ok()
+            {
+                if categories.contains(ModerationCategories::SEXUAL_MINORS) {
+                    // TODO: Trigger the CSAM auto-sanction (escalation issue)
+                }
+                handle_activity_notification(state);
+            }
         }
         LocalIndexEvent::ModerationFlagsChanged(ev) => {
             state.data.moderation_flags = Timestamped::new(ev.flags, **now);
