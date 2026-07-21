@@ -19,7 +19,6 @@ use local_user_index_canister::UserIndexEvent as LocalUserIndexEvent;
 use model::chit_leaderboard::ChitLeaderboard;
 use model::external_achievements::{ExternalAchievementMetrics, ExternalAchievements};
 use model::local_user_index_map::LocalUserIndexMap;
-use model::pending_modclub_submissions_queue::{PendingModclubSubmission, PendingModclubSubmissionsQueue};
 use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
 use model::reported_messages::{ReportedMessages, ReportingMetrics};
 use model::user::SuspensionDetails;
@@ -32,8 +31,8 @@ use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use timer_job_queues::BatchedTimerJobQueue;
 use types::{
-    BuildVersion, CanisterId, ChatId, ChildCanisterWasms, Cycles, DiamondMembershipFees, Milliseconds, TimestampMillis,
-    Timestamped, UserId, UserType,
+    BuildVersion, CanisterId, ChannelId, ChatId, ChildCanisterWasms, CommunityId, Cycles, DiamondMembershipFees, Milliseconds,
+    TimestampMillis, Timestamped, UserId, UserType,
 };
 use user_ids_set::UserIdsSet;
 use user_index_canister::ChildCanisterType;
@@ -128,21 +127,9 @@ impl RuntimeState {
         }
     }
 
-    pub fn is_caller_modclub(&self) -> bool {
-        let caller = self.env.caller();
-        caller == self.modclub_canister_id()
-    }
-
     pub fn can_caller_upload_wasm_chunks(&self) -> bool {
         let caller = self.env.caller();
         self.data.governance_principals.contains(&caller) || self.data.upload_wasm_chunks_whitelist.contains(&caller)
-    }
-
-    pub fn modclub_canister_id(&self) -> CanisterId {
-        let modclub_canister_id =
-            if self.data.test_mode { "d7isk-4aaaa-aaaah-qdbsa-cai" } else { "gwuzc-waaaa-aaaah-qdboa-cai" };
-
-        Principal::from_text(modclub_canister_id).unwrap()
     }
 
     pub fn push_event_to_local_user_index(&mut self, user_id: UserId, event: LocalUserIndexEvent) {
@@ -170,11 +157,6 @@ impl RuntimeState {
     pub fn queue_payment(&mut self, pending_payment: PendingPayment) {
         self.data.pending_payments_queue.push(pending_payment);
         jobs::make_pending_payments::start_job_if_required(self);
-    }
-
-    pub fn queue_modclub_submission(&mut self, pending_submission: PendingModclubSubmission) {
-        self.data.pending_modclub_submissions_queue.push(pending_submission);
-        jobs::submit_message_to_modclub::start_job_if_required(self);
     }
 
     pub fn delete_user(&mut self, user_id: UserId, triggered_by_user: bool) -> bool {
@@ -277,7 +259,6 @@ impl RuntimeState {
             platform_moderators_group: self.data.platform_moderators_group,
             nns_8_year_neuron: self.data.nns_8_year_neuron.clone(),
             event_store_client_info,
-            pending_modclub_submissions: self.data.pending_modclub_submissions_queue.len(),
             pending_payments: self.data.pending_payments_queue.len(),
             pending_users_to_sync_to_storage_index: self.data.storage_index_user_sync_queue.len(),
             reporting_metrics: self.data.reported_messages.metrics(),
@@ -376,7 +357,6 @@ struct Data {
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub group_index_event_sync_queue: BatchedTimerJobQueue<GroupIndexEventBatch>,
     pub pending_payments_queue: PendingPaymentsQueue,
-    pub pending_modclub_submissions_queue: PendingModclubSubmissionsQueue,
     pub platform_moderators: HashSet<UserId>,
     pub platform_operators: HashSet<UserId>,
     pub test_mode: bool,
@@ -412,6 +392,8 @@ struct Data {
     #[serde(default)]
     pub blocked_username_patterns: Vec<String>,
     pub openai_api_key: Option<String>,
+    #[serde(default)]
+    pub internal_moderation_channel: Option<(CommunityId, ChannelId)>,
 }
 
 impl Data {
@@ -463,7 +445,6 @@ impl Data {
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             group_index_event_sync_queue: BatchedTimerJobQueue::new(group_index_canister_id, false),
             pending_payments_queue: PendingPaymentsQueue::default(),
-            pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
             platform_moderators: HashSet::new(),
             platform_operators: HashSet::new(),
             test_mode,
@@ -497,6 +478,7 @@ impl Data {
             premium_items: PremiumItems::default(),
             blocked_username_patterns: Vec::new(),
             openai_api_key: None,
+            internal_moderation_channel: None,
         };
 
         // Register the ProposalsBot
@@ -578,7 +560,6 @@ impl Default for Data {
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             group_index_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             pending_payments_queue: PendingPaymentsQueue::default(),
-            pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
             platform_moderators: HashSet::new(),
             platform_operators: HashSet::new(),
             test_mode: true,
@@ -612,6 +593,7 @@ impl Default for Data {
             premium_items: PremiumItems::default(),
             blocked_username_patterns: Vec::new(),
             openai_api_key: None,
+            internal_moderation_channel: None,
         }
     }
 }
@@ -643,7 +625,6 @@ pub struct Metrics {
     pub platform_moderators_group: Option<ChatId>,
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub event_store_client_info: EventStoreClientInfo,
-    pub pending_modclub_submissions: usize,
     pub pending_payments: usize,
     pub pending_users_to_sync_to_storage_index: usize,
     pub reporting_metrics: ReportingMetrics,

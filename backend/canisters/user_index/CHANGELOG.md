@@ -8,7 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Add `c2c_csam_detected` endpoint - applies the CSAM auto-sanction and posts a moderation alert ([#9093](https://github.com/open-chat-labs/open-chat/pull/9093))
+- Classify reported messages with the OpenAI Moderation API and remove Modclub ([#9092](https://github.com/open-chat-labs/open-chat/pull/9092))
+- Add `set_internal_moderation_channel` endpoint for platform operators ([#9092](https://github.com/open-chat-labs/open-chat/pull/9092))
 - Pass in `expected_claim_type` when verifying JWT claims ([#9102](https://github.com/open-chat-labs/open-chat/pull/9102))
+
+### Fixed
+
+- Bump `date_updated` on suspension so clients receive the suspended flag ([#9092](https://github.com/open-chat-labs/open-chat/pull/9092))
 
 ### Removed
 

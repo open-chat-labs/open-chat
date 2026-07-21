@@ -4446,9 +4446,13 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "constants",
+ "ic-cdk 0.20.2",
+ "ic-cdk-management-canister",
  "icrc-ledger-types",
  "serde",
+ "serde_json",
  "serde_repr",
+ "tracing",
  "types",
  "utils",
 ]
@@ -6680,6 +6684,7 @@ dependencies = [
  "futures",
  "group_canister",
  "group_canister_c2c_client",
+ "group_community_common",
  "http_request",
  "ic-cdk 0.20.2",
  "ic-cdk-management-canister",
@@ -6977,25 +6982,6 @@ dependencies = [
  "pkcs8 0.11.0",
  "sha3 0.11.0",
  "signature 3.0.0",
-]
-
-[[package]]
-name = "modclub_canister"
-version = "0.1.0"
-dependencies = [
- "candid",
- "serde",
-]
-
-[[package]]
-name = "modclub_canister_c2c_client"
-version = "0.1.0"
-dependencies = [
- "candid",
- "canister_client",
- "ic-cdk 0.20.2",
- "modclub_canister",
- "types",
 ]
 
 [[package]]
@@ -8780,24 +8766,6 @@ dependencies = [
  "ar_archive_writer",
  "cc",
 ]
-
-[[package]]
-name = "pulldown-cmark"
-version = "0.13.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e9f068eba8e7071c5f9511831b44f32c740d5adf574e990f946ddb53db2f314e"
-dependencies = [
- "bitflags 2.13.1",
- "memchr",
- "pulldown-cmark-escape",
- "unicase",
-]
-
-[[package]]
-name = "pulldown-cmark-escape"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "007d8adb5ddab6f8e3f491ac63566a7d5002cc7ed73901f72057943fa71ae1ae"
 
 [[package]]
 name = "querystring"
@@ -12650,7 +12618,6 @@ dependencies = [
  "constants",
  "human_readable",
  "ic-ledger-types",
- "modclub_canister",
  "oc_error_codes",
  "serde",
  "serde_bytes",
@@ -12707,6 +12674,7 @@ dependencies = [
  "futures",
  "group_canister",
  "group_canister_c2c_client",
+ "group_community_common",
  "group_index_canister",
  "group_index_canister_c2c_client",
  "hex",
@@ -12726,8 +12694,6 @@ dependencies = [
  "ledger_utils",
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
- "modclub_canister",
- "modclub_canister_c2c_client",
  "msgpack",
  "oc_error_codes",
  "online_users_canister",
@@ -12735,7 +12701,6 @@ dependencies = [
  "p256_key_pair",
  "per_round_timer",
  "proof_of_unique_personhood",
- "pulldown-cmark",
  "rand 0.10.2",
  "search",
  "serde",

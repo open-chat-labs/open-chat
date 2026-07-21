@@ -245,6 +245,13 @@ fn process_send_message_result(
 
     register_timer_jobs(channel_id, thread_root_message_index, message_event, now, &mut state.data);
 
+    if state.data.is_public.value && state.data.channels.get(&channel_id).is_some_and(|c| c.chat.is_public.value) {
+        let input = message_event.event.content.moderation_input();
+        if !input.is_empty() {
+            state.queue_message_for_moderation(channel_id, thread_root_message_index, message_id, input);
+        }
+    }
+
     if !result.unfinalised_bot_message {
         let sender = caller.agent();
         let message_text =

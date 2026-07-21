@@ -1,25 +1,34 @@
 use chat_events::deep_message_links;
+use constants::HOUR_IN_MS;
 use local_user_index_canister::{OpenChatBotMessageV2, UserIndexEvent};
-use modclub_canister::{getProviderRules::Rule, subscribe::ContentResult};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{Chat, MessageContentInitial, MessageId, MessageIndex, TextContent, TimestampMillis, UserId};
+use types::{
+    Chat, MessageContent, MessageContentInitial, MessageId, MessageIndex, ModerationCategories, TextContent, TimestampMillis,
+    UserId,
+};
+
+// Generous cap on how many not-yet-reported messages a single user can report per hour, so that
+// one user cannot mass-report to trigger unbounded OpenAI calls and flood the moderation channel
+const MAX_NEW_REPORTS_PER_HOUR: usize = 10;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct ReportedMessages {
     messages: Vec<ReportedMessage>,
     lookup: HashMap<(Chat, Option<MessageIndex>, MessageIndex), usize>,
-    rules: Vec<Rule>,
+    #[serde(default)]
+    recent_reports_per_reporter: HashMap<UserId, Vec<TimestampMillis>>,
+    // Reports awaiting classification by the OpenAI moderation API, keyed by report index.
+    // Persisted so that classification survives an upgrade and failed API calls can be retried.
+    #[serde(default)]
+    pending_classifications: HashMap<u64, PendingClassification>,
 }
 
 impl ReportedMessages {
     pub fn add_report(&mut self, args: AddReportArgs) -> AddReportResult {
-        let new_index = self.messages.len();
+        let key = (args.chat_id, args.thread_root_message_index, args.message_index);
 
-        if let Some(index) = self
-            .lookup
-            .insert((args.chat_id, args.thread_root_message_index, args.message_index), new_index)
-        {
+        if let Some(&index) = self.lookup.get(&key) {
             let message = self.messages.get_mut(index).unwrap();
 
             if args.already_deleted {
@@ -33,7 +42,11 @@ impl ReportedMessages {
             } else {
                 AddReportResult::ExistingPending
             }
+        } else if self.reporter_rate_limited(args.reporter, args.timestamp) {
+            AddReportResult::RateLimited
         } else {
+            let new_index = self.messages.len();
+            self.lookup.insert(key, new_index);
             self.messages.push(ReportedMessage {
                 chat_id: args.chat_id,
                 thread_root_message_index: args.thread_root_message_index,
@@ -48,35 +61,64 @@ impl ReportedMessages {
         }
     }
 
-    pub fn record_outcome(&mut self, result: ContentResult, now: TimestampMillis) -> RecordOutcomeResult {
-        let approved = result.approvedCount.0.try_into().unwrap();
-        let rejected = result.rejectedCount.0.try_into().unwrap();
-        let report_index: u64 = result.sourceId.parse().unwrap();
+    // Only reports of not-yet-reported messages count towards the limit since only those trigger
+    // downstream processing (an OpenAI call and possibly an escalation)
+    fn reporter_rate_limited(&mut self, reporter: UserId, now: TimestampMillis) -> bool {
+        // Drop expired timestamps, and any reporters left with none, so the map doesn't grow forever
+        self.recent_reports_per_reporter.retain(|_, timestamps| {
+            timestamps.retain(|&t| now.saturating_sub(t) < HOUR_IN_MS);
+            !timestamps.is_empty()
+        });
 
-        let outcome = ReportOutcome {
-            timestamp: now,
-            approved,
-            rejected,
-            violated_rules: result
-                .violatedRules
-                .into_iter()
-                .map(|v| ViolatedRules {
-                    rule_index: self.index_from_rule_id(v.id),
-                    rejected,
-                })
-                .collect(),
-        };
+        let timestamps = self.recent_reports_per_reporter.entry(reporter).or_default();
+        if timestamps.len() >= MAX_NEW_REPORTS_PER_HOUR {
+            true
+        } else {
+            timestamps.push(now);
+            false
+        }
+    }
 
+    pub fn record_outcome(&mut self, report_index: u64, outcome: AutomatedOutcome) -> RecordOutcomeResult {
         if let Some(message) = self.messages.get_mut(report_index as usize) {
             if message.outcome.is_some() {
                 RecordOutcomeResult::OutcomeExists(report_index)
             } else {
-                message.outcome = Some(outcome);
+                message.outcome = Some(ReportOutcome::Automated(outcome));
+                self.pending_classifications.remove(&report_index);
                 RecordOutcomeResult::Success(message.clone())
             }
         } else {
             RecordOutcomeResult::ReportNotFound(report_index)
         }
+    }
+
+    pub fn add_pending_classification(&mut self, report_index: u64, content: MessageContent, is_public: bool) {
+        self.pending_classifications.insert(
+            report_index,
+            PendingClassification {
+                content,
+                is_public,
+                attempts: 0,
+            },
+        );
+    }
+
+    pub fn pending_classification(&self, report_index: u64) -> Option<&PendingClassification> {
+        self.pending_classifications.get(&report_index)
+    }
+
+    // Records a failed classification attempt and returns the total number of failed attempts,
+    // or None if the report has already been classified
+    pub fn record_classification_failure(&mut self, report_index: u64) -> Option<u32> {
+        self.pending_classifications.get_mut(&report_index).map(|pending| {
+            pending.attempts += 1;
+            pending.attempts
+        })
+    }
+
+    pub fn pending_classification_report_indexes(&self) -> Vec<u64> {
+        self.pending_classifications.keys().copied().collect()
     }
 
     pub fn get(&self, index: u64) -> Option<&ReportedMessage> {
@@ -87,21 +129,11 @@ impl ReportedMessages {
         ReportingMetrics {
             messages_reported: self.messages.len(),
             messages_pending_outcome: self.messages.iter().filter(|m| m.outcome.is_none()).count(),
-            rules: self.rules.clone(),
         }
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &ReportedMessage> {
         self.messages.iter()
-    }
-
-    fn index_from_rule_id(&self, rule_id: String) -> usize {
-        self.rules.iter().position(|r| r.id == rule_id).unwrap()
-    }
-
-    #[cfg(test)]
-    pub fn set_rules(&mut self, rules: Vec<Rule>) {
-        self.rules = rules;
     }
 }
 
@@ -109,7 +141,6 @@ impl ReportedMessages {
 pub struct ReportingMetrics {
     pub messages_reported: usize,
     pub messages_pending_outcome: usize,
-    pub rules: Vec<Rule>,
 }
 
 #[derive(Clone)]
@@ -130,12 +161,22 @@ pub enum AddReportResult {
     ExistingPending,
     ExistingOutcome(u64),
     AlreadyReportedByUser,
+    RateLimited,
 }
 
 pub enum RecordOutcomeResult {
     Success(ReportedMessage),
     OutcomeExists(u64),
     ReportNotFound(u64),
+}
+
+// A report awaiting classification by the OpenAI moderation API. Persisted so that an upgrade
+// or a failed API call cannot strand the report without an outcome.
+#[derive(Serialize, Deserialize)]
+pub struct PendingClassification {
+    pub content: MessageContent,
+    pub is_public: bool,
+    pub attempts: u32,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -150,37 +191,42 @@ pub struct ReportedMessage {
     pub outcome: Option<ReportOutcome>,
 }
 
-impl ReportedMessage {
-    pub fn rejected(&self) -> bool {
-        self.outcome.as_ref().map(|o| o.approved < o.rejected).unwrap_or_default()
-    }
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(untagged)]
+pub enum ReportOutcome {
+    Automated(AutomatedOutcome),
+    // Legacy outcomes recorded when reports were reviewed by Modclub
+    Modclub(ModclubOutcome),
+}
+
+// The outcome of classifying a reported message with the OpenAI Moderation API
+#[derive(Serialize, Deserialize, Clone)]
+pub struct AutomatedOutcome {
+    pub timestamp: TimestampMillis,
+    pub flagged_categories: u32,
+    pub action: ModerationAction,
+    // True if the OpenAI classification could not be completed (even after retries), in which
+    // case flagged_categories being 0 means "unknown" rather than "classified clean"
+    #[serde(default)]
+    pub classification_failed: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ModerationAction {
+    // CSAM: the message was deleted and the sender suspended, then escalated to the moderators
+    AutoSanctioned,
+    // Escalated to the internal moderation channel for human review
+    EscalatedForHumanReview,
+    // Flagged (eg. as adult content) so it can be hidden in the app store build, but no sanction
+    FlaggedOnly,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct ReportOutcome {
+pub struct ModclubOutcome {
     pub timestamp: TimestampMillis,
     pub approved: u32,
     pub rejected: u32,
     pub violated_rules: Vec<ViolatedRules>,
-}
-
-impl ReportOutcome {
-    pub fn unanimous_rejection_decision(&self, rule_index: Option<usize>) -> bool {
-        if self.approved > 0 {
-            false
-        } else if let Some(i) = rule_index {
-            let rejected_given_rule = self
-                .violated_rules
-                .iter()
-                .find(|r| r.rule_index == i)
-                .map(|r| r.rejected)
-                .unwrap_or_default();
-
-            self.rejected == rejected_given_rule
-        } else {
-            true
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -190,33 +236,72 @@ pub struct ViolatedRules {
 }
 
 pub fn build_message_to_reporter(reported_message: &ReportedMessage, reporter: UserId) -> UserIndexEvent {
-    let outcome = reported_message.outcome.as_ref().unwrap();
-    let rejected = reported_message.rejected();
-
-    let text = format!(
-        "You reported [this message]({}) for breaking [the platform rules](https://oc.app/guidelines?section=3) and it was referred to [Modclub](https://modclub.ai/) for external moderation. A group of {} moderators decided the message {} the platform rules {} - {}.",
-        build_message_link(reported_message),
-        outcome.rejected + outcome.approved,
-        if rejected { "broke" } else { "didn't break" },
-        if rejected { outcome.rejected } else { outcome.approved },
-        if rejected { outcome.approved } else { outcome.rejected },
-    );
+    let text = match reported_message.outcome.as_ref().unwrap() {
+        ReportOutcome::Automated(outcome) => {
+            let link = build_message_link(reported_message);
+            match outcome.action {
+                ModerationAction::AutoSanctioned => format!(
+                    "You reported [this message]({link}) for breaking [the platform rules](https://oc.app/guidelines?section=3). Automated moderation determined that it contained prohibited content, so the message has been removed and the sender suspended."
+                ),
+                ModerationAction::EscalatedForHumanReview => format!(
+                    "You reported [this message]({link}) for breaking [the platform rules](https://oc.app/guidelines?section=3). It has been referred to the OpenChat moderation team for review."
+                ),
+                ModerationAction::FlaggedOnly => format!(
+                    "You reported [this message]({link}) for breaking [the platform rules](https://oc.app/guidelines?section=3). Automated moderation classified it as adult content which does not break the platform rules, but it has been flagged accordingly."
+                ),
+            }
+        }
+        ReportOutcome::Modclub(outcome) => {
+            let rejected = outcome.approved < outcome.rejected;
+            format!(
+                "You reported [this message]({}) for breaking [the platform rules](https://oc.app/guidelines?section=3) and it was referred to [Modclub](https://modclub.ai/) for external moderation. A group of {} moderators decided the message {} the platform rules {} - {}.",
+                build_message_link(reported_message),
+                outcome.rejected + outcome.approved,
+                if rejected { "broke" } else { "didn't break" },
+                if rejected { outcome.rejected } else { outcome.approved },
+                if rejected { outcome.approved } else { outcome.rejected },
+            )
+        }
+    };
 
     build_oc_bot_message(text, reporter)
 }
 
 pub fn build_message_to_sender(reported_message: &ReportedMessage) -> UserIndexEvent {
-    let outcome = reported_message.outcome.as_ref().unwrap();
-
     let text = format!(
-        "Your [message]({}) was reported by another user for breaking [the platform rules](https://oc.app/guidelines?section=3) and it was referred to [Modclub](https://modclub.ai/) for external moderation. A group of {} moderators decided your message broke the platform rules {} - {}.",
+        "Your [message]({}) was reported by another user and automated moderation determined that it contained content which breaks [the platform rules](https://oc.app/guidelines?section=3). {}",
         build_message_link(reported_message),
-        outcome.rejected + outcome.approved,
-        outcome.rejected,
-        outcome.approved
+        removal_and_suspension_text(reported_message),
     );
 
     build_oc_bot_message(text, reported_message.sender)
+}
+
+// Direct chat messages are never deleted by moderation, so only claim removal for group/channel
+// messages
+fn removal_and_suspension_text(reported_message: &ReportedMessage) -> &'static str {
+    if matches!(reported_message.chat_id, Chat::Direct(_)) {
+        "Your account has been suspended."
+    } else {
+        "The message has been removed and your account has been suspended."
+    }
+}
+
+pub fn category_names(categories: ModerationCategories) -> Vec<&'static str> {
+    [
+        (ModerationCategories::SEXUAL, "sexual"),
+        (ModerationCategories::SEXUAL_MINORS, "sexual/minors"),
+        (ModerationCategories::VIOLENCE, "violence"),
+        (ModerationCategories::VIOLENCE_GRAPHIC, "violence/graphic"),
+        (ModerationCategories::HARASSMENT, "harassment"),
+        (ModerationCategories::HARASSMENT_THREATENING, "harassment/threatening"),
+        (ModerationCategories::SELF_HARM, "self-harm"),
+        (ModerationCategories::ILLICIT, "illicit"),
+    ]
+    .into_iter()
+    .filter(|(c, _)| categories.contains(*c))
+    .map(|(_, name)| name)
+    .collect()
 }
 
 fn build_oc_bot_message(text: String, user_id: UserId) -> UserIndexEvent {
@@ -228,7 +313,7 @@ fn build_oc_bot_message(text: String, user_id: UserId) -> UserIndexEvent {
     }))
 }
 
-fn build_message_link(reported_message: &ReportedMessage) -> String {
+pub fn build_message_link(reported_message: &ReportedMessage) -> String {
     deep_message_links::build_message_link(
         reported_message.chat_id,
         reported_message.thread_root_message_index,
@@ -239,7 +324,6 @@ fn build_message_link(reported_message: &ReportedMessage) -> String {
 #[cfg(test)]
 mod tests {
     use candid::Principal;
-    use modclub_canister::subscribe::ContentStatus;
 
     use super::*;
 
@@ -283,14 +367,10 @@ mod tests {
     #[test]
     fn reporting_same_message_and_different_reporter_with_outcome_returns_expected() {
         let mut reported_messages = ReportedMessages::default();
-        reported_messages.set_rules(vec![Rule {
-            description: "Thou shalt not kill".to_string(),
-            id: "4bkt6-4aaaa-aaaaf-aaaiq-cai-rule-1".to_string(),
-        }]);
         let mut args = dummy_report_args();
 
         reported_messages.add_report(args.clone());
-        reported_messages.record_outcome(dummy_outcome(), 1706107419000);
+        reported_messages.record_outcome(0, dummy_outcome());
 
         args.reporter = Principal::from_text("2yfsq-kaaaa-aaaaf-aaa4q-cai").unwrap().into();
         let result = reported_messages.add_report(args);
@@ -314,6 +394,34 @@ mod tests {
         }
     }
 
+    #[test]
+    fn legacy_modclub_outcome_deserializes() {
+        let outcome = ReportOutcome::Modclub(ModclubOutcome {
+            timestamp: 1706107419000,
+            approved: 0,
+            rejected: 3,
+            violated_rules: vec![ViolatedRules {
+                rule_index: 0,
+                rejected: 3,
+            }],
+        });
+
+        let bytes = msgpack::serialize_then_unwrap(&outcome);
+        let deserialized: ReportOutcome = msgpack::deserialize_then_unwrap(&bytes);
+        assert!(matches!(deserialized, ReportOutcome::Modclub(_)));
+
+        let automated = ReportOutcome::Automated(AutomatedOutcome {
+            timestamp: 1706107419000,
+            flagged_categories: 2,
+            action: ModerationAction::AutoSanctioned,
+            classification_failed: false,
+        });
+
+        let bytes = msgpack::serialize_then_unwrap(&automated);
+        let deserialized: ReportOutcome = msgpack::deserialize_then_unwrap(&bytes);
+        assert!(matches!(deserialized, ReportOutcome::Automated(_)));
+    }
+
     fn dummy_report_args() -> AddReportArgs {
         AddReportArgs {
             chat_id: Chat::Group(Principal::from_text("wowos-hyaaa-aaaar-ar4ca-cai").unwrap().into()),
@@ -327,16 +435,12 @@ mod tests {
         }
     }
 
-    fn dummy_outcome() -> ContentResult {
-        ContentResult {
-            approvedCount: 0u32.into(),
-            rejectedCount: 3u32.into(),
-            sourceId: "0".to_string(),
-            status: ContentStatus::rejected,
-            violatedRules: vec![modclub_canister::subscribe::ViolatedRules {
-                id: "4bkt6-4aaaa-aaaaf-aaaiq-cai-rule-1".to_string(),
-                rejectionCount: 3u32.into(),
-            }],
+    fn dummy_outcome() -> AutomatedOutcome {
+        AutomatedOutcome {
+            timestamp: 1706107419000,
+            flagged_categories: 0,
+            action: ModerationAction::EscalatedForHumanReview,
+            classification_failed: false,
         }
     }
 }

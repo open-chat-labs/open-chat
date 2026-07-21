@@ -37,8 +37,8 @@ use types::{
     BotPermissions, BotRemoved, BotSubscriptions, BotUpdated, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics,
     CommunityId, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupCanisterGroupChatSummary,
     GroupChatUserNotificationPayload, GroupMembership, GroupPermissions, GroupSubtype, IdempotentEnvelope,
-    MAX_THREADS_IN_SUMMARY, MessageIndex, Milliseconds, MultiUserChat, Notification, OCResult, Rules, TimestampMillis,
-    Timestamped, UserId, UserNotification, UserType,
+    MAX_THREADS_IN_SUMMARY, MessageId, MessageIndex, Milliseconds, MultiUserChat, Notification, OCResult, Rules,
+    TimestampMillis, Timestamped, UserId, UserNotification, UserType,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -159,6 +159,26 @@ impl RuntimeState {
             created_at: self.env.now(),
             idempotency_id: self.env.rng().next_u64(),
             value: local_user_index_canister::GroupEvent::Notification(Box::new(notification)),
+        });
+    }
+
+    // Asks the local_user_index to classify the message via the moderation API; the result
+    // arrives back as a `MessageClassified` event which stores the flags on the message
+    pub fn queue_message_for_moderation(
+        &mut self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        input: types::ModerationInput,
+    ) {
+        self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
+            created_at: self.env.now(),
+            idempotency_id: self.env.rng().next_u64(),
+            value: local_user_index_canister::GroupEvent::MessageClassifyRequest(Box::new(types::ClassifyMessageRequest {
+                channel_id: None,
+                thread_root_message_index,
+                message_id,
+                input,
+            })),
         });
     }
 

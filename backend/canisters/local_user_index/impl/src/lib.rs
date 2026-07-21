@@ -2,6 +2,7 @@ use crate::model::community_event_batch::CommunityEventBatch;
 use crate::model::group_event_batch::GroupEventBatch;
 use crate::model::local_community_map::LocalCommunityMap;
 use crate::model::local_group_map::LocalGroupMap;
+use crate::model::moderation_queue::ModerationQueue;
 use crate::model::premium_items::PremiumItems;
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use crate::model::user_event_batch::UserEventBatch;
@@ -512,6 +513,7 @@ impl RuntimeState {
             blocked_user_pairs: self.data.blocked_users.len() as u64,
             oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
             openai_api_key_set: self.data.openai_api_key.is_some(),
+            message_moderation_queue_len: self.data.message_moderation_queue.len() as u32,
             cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
             bots: self
                 .data
@@ -595,6 +597,8 @@ struct Data {
     pub premium_items: PremiumItems,
     pub blocked_username_patterns: Vec<String>,
     pub openai_api_key: Option<String>,
+    #[serde(default)]
+    pub message_moderation_queue: ModerationQueue,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -687,6 +691,7 @@ impl Data {
             premium_items: PremiumItems::default(),
             blocked_username_patterns: Vec::new(),
             openai_api_key,
+            message_moderation_queue: ModerationQueue::default(),
         }
     }
 }
@@ -749,6 +754,7 @@ pub struct Metrics {
     pub blocked_user_pairs: u64,
     pub oc_secret_key_initialized: bool,
     pub openai_api_key_set: bool,
+    pub message_moderation_queue_len: u32,
     pub cycles_balance_check_queue_len: u32,
     pub bots: Vec<BotMetrics>,
     pub blocked_username_patterns: Vec<String>,

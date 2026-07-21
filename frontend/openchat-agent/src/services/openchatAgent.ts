@@ -1145,6 +1145,7 @@ export class OpenChatAgent extends EventTarget {
                         edited: msg.edited,
                         isThreadRoot: msg.thread !== undefined,
                         sourceContext: messageContext,
+                        moderationFlags: msg.moderationFlags,
                     };
                 } else {
                     this._logger.log(
@@ -2151,6 +2152,20 @@ export class OpenChatAgent extends EventTarget {
 
     getCurrentUser(): Stream<CurrentUserResponse> {
         return this._userIndexClient.getCurrentUser();
+    }
+
+    setOpenAIApiKey(apiKey: string | undefined): Promise<boolean> {
+        if (offline()) return Promise.resolve(false);
+
+        return this._userIndexClient.setOpenAIApiKey(apiKey);
+    }
+
+    setInternalModerationChannel(
+        channel: { communityId: string; channelId: number } | undefined,
+    ): Promise<boolean> {
+        if (offline()) return Promise.resolve(false);
+
+        return this._userIndexClient.setInternalModerationChannel(channel);
     }
 
     setModerationFlags(flags: number): Promise<boolean> {

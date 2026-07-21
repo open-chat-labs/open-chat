@@ -1,26 +1,51 @@
 use crate::{
     RuntimeState,
     guards::caller_is_user_canister_or_group_index,
-    model::{
-        pending_modclub_submissions_queue::PendingModclubSubmission,
-        reported_messages::{AddReportArgs, AddReportResult, build_message_to_reporter},
+    model::moderation::{self, ModerationAlert},
+    model::reported_messages::{
+        AddReportArgs, AddReportResult, AutomatedOutcome, ModerationAction, RecordOutcomeResult, build_message_to_reporter,
+        build_message_to_sender,
     },
-    mutate_state,
+    mutate_state, read_state,
+    timer_job_types::{ProcessReportClassification, TimerJob},
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::deep_message_links;
-use modclub_canister::submitHtmlContent::Level;
-use types::{Chat, Message, MessageContent, MessageIndex};
+use constants::MINUTE_IN_MS;
+use fire_and_forget_handler::FireAndForgetHandler;
+use group_community_common::openai_moderation;
+use tracing::{error, warn};
+use types::{Chat, MessageId, MessageIndex, ModerationCategories};
 use user_index_canister::c2c_report_message::{Response::*, *};
+
+// How many times classification is attempted before the failure is recorded on the outcome and
+// the report is escalated for human review regardless
+const MAX_CLASSIFICATION_ATTEMPTS: u32 = 5;
 
 #[update(guard = "caller_is_user_canister_or_group_index", msgpack = true)]
 #[trace]
 fn c2c_report_message(args: Args) -> Response {
-    mutate_state(|state| c2c_report_message_impl(args, state))
+    match mutate_state(|state| add_report(&args, state)) {
+        Ok(report_index) => {
+            // If the message has already been classified by the active moderation pipeline (only
+            // public messages are, and only flagged categories are stored) then reuse that
+            // judgement rather than calling the OpenAI API again
+            if args.message.moderation_flags != 0
+                && let Some(categories) = ModerationCategories::from_bits(args.message.moderation_flags)
+            {
+                mutate_state(|state| handle_moderation_result(report_index, categories, false, state));
+            } else {
+                // The classification inputs were persisted in `add_report`, so if this call is
+                // lost to an upgrade the classification is resumed in post_upgrade
+                ic_cdk::futures::spawn(process_report(report_index));
+            }
+            Success
+        }
+        Err(response) => response,
+    }
 }
 
-fn c2c_report_message_impl(args: Args, state: &mut RuntimeState) -> Response {
+fn add_report(args: &Args, state: &mut RuntimeState) -> Result<u64, Response> {
     let add_report_args = AddReportArgs {
         chat_id: args.chat_id,
         thread_root_message_index: args.thread_root_message_index,
@@ -31,258 +56,242 @@ fn c2c_report_message_impl(args: Args, state: &mut RuntimeState) -> Response {
         reporter: args.reporter,
         timestamp: state.env.now(),
     };
-    let report_index = match state.data.reported_messages.add_report(add_report_args) {
-        AddReportResult::New(report_index) => report_index,
+    match state.data.reported_messages.add_report(add_report_args) {
+        AddReportResult::New(report_index) => {
+            // Record the reported message against the sender's user record
+            state.data.users.push_reported_message(args.message.sender, report_index);
+            // Persist everything needed to classify the message so that classification survives
+            // an upgrade and failed API calls can be retried
+            state
+                .data
+                .reported_messages
+                .add_pending_classification(report_index, args.message.content.clone(), args.is_public);
+            Ok(report_index)
+        }
         AddReportResult::ExistingOutcome(report_index) => {
             // Queue a message from the OC bot to the reporter describing what happened
             let reported_message = state.data.reported_messages.get(report_index).unwrap();
             state.push_event_to_local_user_index(args.reporter, build_message_to_reporter(reported_message, args.reporter));
-            return Success;
+            Err(Success)
         }
-        AddReportResult::ExistingPending => return Success,
-        AddReportResult::AlreadyReportedByUser => return AlreadyReported,
+        AddReportResult::ExistingPending => Err(Success),
+        AddReportResult::AlreadyReportedByUser => Err(AlreadyReported),
+        AddReportResult::RateLimited => {
+            // Silently dropped: only the flooding reporter's own excess reports are affected and
+            // the message can still be reported by anyone else
+            warn!(reporter = %args.reporter, "Report rate limit exceeded, dropping report");
+            Err(Success)
+        }
+    }
+}
+
+pub(crate) async fn process_report(report_index: u64) {
+    let Some((api_key, input)) = read_state(|state| {
+        state
+            .data
+            .reported_messages
+            .pending_classification(report_index)
+            .map(|pending| (state.data.openai_api_key.clone(), pending.content.moderation_input()))
+    }) else {
+        // The outcome has already been recorded
+        return;
     };
 
-    // Record the reported message against the sender's user record
-    state.data.users.push_reported_message(args.message.sender, report_index);
+    let result = if input.is_empty() {
+        // There is nothing the API can classify, but the report may still be valid for a reason
+        // the API cannot evaluate, so it continues with no flagged categories
+        Ok(ModerationCategories::default())
+    } else if let Some(api_key) = api_key {
+        openai_moderation::moderate_input(&api_key, &input).await
+    } else {
+        Err("OpenAI API key has not been set".to_string())
+    };
 
-    // Queue submission of the report to Modclub
-    state.queue_modclub_submission(PendingModclubSubmission {
-        report_index,
-        title: construct_report_title(args.chat_id, args.thread_root_message_index, &args.message),
-        html_report: construct_html_report(args.chat_id, args.thread_root_message_index, &args.message, args.is_public),
-        level: Level::simple,
+    mutate_state(|state| match result {
+        Ok(categories) => handle_moderation_result(report_index, categories, false, state),
+        Err(error) => {
+            error!(?error, report_index, "Failed to classify reported message");
+            let Some(attempts) = state.data.reported_messages.record_classification_failure(report_index) else {
+                return;
+            };
+            if attempts < MAX_CLASSIFICATION_ATTEMPTS {
+                let now = state.env.now();
+                state.data.timer_jobs.enqueue_job(
+                    TimerJob::ProcessReportClassification(ProcessReportClassification { report_index }),
+                    now + (1u64 << attempts) * MINUTE_IN_MS,
+                    now,
+                );
+            } else {
+                // Retries exhausted: record the failure on the outcome, so that it cannot be
+                // mistaken for a clean classification, and hand the report to the moderators
+                handle_moderation_result(report_index, ModerationCategories::default(), true, state);
+            }
+        }
     });
-
-    Success
 }
 
-fn construct_report_title(chat_id: Chat, thread_root_message_index: Option<MessageIndex>, message: &Message) -> String {
-    // Use the message url as the title so we can find it from the modclub admin dashboard
-    deep_message_links::build_message_link(chat_id, thread_root_message_index, message.message_index)
+fn handle_moderation_result(
+    report_index: u64,
+    categories: ModerationCategories,
+    classification_failed: bool,
+    state: &mut RuntimeState,
+) {
+    // The pending classification is removed when the outcome is recorded, so if it is missing
+    // the report has already been handled
+    let Some((content_excerpt, is_public)) = state
+        .data
+        .reported_messages
+        .pending_classification(report_index)
+        .map(|pending| (pending.content.moderation_input().text, pending.is_public))
+    else {
+        error!(report_index, "Report outcome already recorded");
+        return;
+    };
+    let Some((chat_id, thread_root_message_index, message_id, sender, already_deleted)) =
+        state.data.reported_messages.get(report_index).map(|r| {
+            (
+                r.chat_id,
+                r.thread_root_message_index,
+                r.message_id,
+                r.sender,
+                r.already_deleted,
+            )
+        })
+    else {
+        error!(report_index, "Report not found");
+        return;
+    };
+
+    let now = state.env.now();
+    let is_csam = categories.contains(ModerationCategories::SEXUAL_MINORS);
+
+    let action = if is_csam {
+        ModerationAction::AutoSanctioned
+    } else if categories.is_empty() || categories.intersects(human_review_categories()) {
+        // If the message wasn't flagged, the report may still be valid for a reason the API
+        // cannot evaluate (eg. scam, spam), so it goes for human review either way
+        ModerationAction::EscalatedForHumanReview
+    } else {
+        // Flagged as adult content only - hidden in the app store build but not a violation
+        ModerationAction::FlaggedOnly
+    };
+
+    // Store the flags on the originating canister so the message can be hidden in the app store
+    // build (public chats only - private messages are classified but not flagged)
+    if !categories.is_empty() && is_public {
+        flag_message(
+            chat_id,
+            thread_root_message_index,
+            message_id,
+            categories,
+            &mut state.data.fire_and_forget_handler,
+        );
+    }
+
+    if is_csam {
+        if !already_deleted {
+            moderation::delete_message(
+                chat_id,
+                thread_root_message_index,
+                message_id,
+                &mut state.data.fire_and_forget_handler,
+            );
+        }
+        moderation::suspend_sender(sender, now, state);
+    }
+
+    let outcome = AutomatedOutcome {
+        timestamp: now,
+        flagged_categories: categories.bits(),
+        action,
+        classification_failed,
+    };
+    let reported_message = match state.data.reported_messages.record_outcome(report_index, outcome) {
+        RecordOutcomeResult::Success(m) => m,
+        RecordOutcomeResult::OutcomeExists(index) => {
+            error!(?index, "Report outcome already recorded");
+            return;
+        }
+        RecordOutcomeResult::ReportNotFound(index) => {
+            error!(?index, "Report not found");
+            return;
+        }
+    };
+
+    if matches!(
+        action,
+        ModerationAction::AutoSanctioned | ModerationAction::EscalatedForHumanReview
+    ) {
+        moderation::post_moderation_alert(
+            ModerationAlert {
+                chat_id: reported_message.chat_id,
+                thread_root_message_index: reported_message.thread_root_message_index,
+                message_index: reported_message.message_index,
+                sender: reported_message.sender,
+                reporters: reported_message.reports.keys().copied().collect(),
+                categories,
+                auto_sanctioned: is_csam,
+                content_excerpt,
+                timestamp: now,
+            },
+            state,
+        );
+    }
+
+    if is_csam {
+        // Inform the sender that their message has violated the platform rules
+        state.push_event_to_local_user_index(reported_message.sender, build_message_to_sender(&reported_message));
+    }
+
+    // Inform each reporter of the outcome of their report
+    for reporter in reported_message.reports.keys() {
+        state.push_event_to_local_user_index(*reporter, build_message_to_reporter(&reported_message, *reporter));
+    }
 }
 
-fn construct_html_report(
+// Categories which map to OpenChat T&C violations requiring human review
+fn human_review_categories() -> ModerationCategories {
+    ModerationCategories::HARASSMENT
+        | ModerationCategories::HARASSMENT_THREATENING
+        | ModerationCategories::VIOLENCE
+        | ModerationCategories::VIOLENCE_GRAPHIC
+        | ModerationCategories::SELF_HARM
+        | ModerationCategories::ILLICIT
+}
+
+fn flag_message(
     chat_id: Chat,
     thread_root_message_index: Option<MessageIndex>,
-    message: &Message,
-    is_public: bool,
-) -> String {
-    let content = &message.content;
-
-    let mut html = String::new();
-
-    // 1. Media/file
-    match content {
-        MessageContent::Giphy(g) => {
-            let (w, h) = impose_max_dimensions(g.desktop.height, g.desktop.height);
-            html.push_str(&format!("<img width=\"{}\" height=\"{}\" src=\"{}\">\n", w, h, g.desktop.url));
+    message_id: MessageId,
+    categories: ModerationCategories,
+    fire_and_forget_handler: &mut FireAndForgetHandler,
+) {
+    match chat_id {
+        Chat::Group(group_id) => {
+            let c2c_args = group_canister::c2c_flag_message::Args {
+                thread_root_message_index,
+                message_id,
+                flags: categories.bits(),
+            };
+            fire_and_forget_handler.send(
+                group_id.into(),
+                "c2c_flag_message_msgpack".to_string(),
+                msgpack::serialize_then_unwrap(&c2c_args),
+            );
         }
-        MessageContent::Image(i) => {
-            if let Some(br) = i.blob_reference.as_ref() {
-                let (w, h) = impose_max_dimensions(i.width, i.height);
-                html.push_str(&format!("<img width=\"{}\" height=\"{}\" src=\"{}\">\n", w, h, br.url()));
-            }
+        Chat::Channel(community_id, channel_id) => {
+            let c2c_args = community_canister::c2c_flag_message::Args {
+                channel_id,
+                thread_root_message_index,
+                message_id,
+                flags: categories.bits(),
+            };
+            fire_and_forget_handler.send(
+                community_id.into(),
+                "c2c_flag_message_msgpack".to_string(),
+                msgpack::serialize_then_unwrap(&c2c_args),
+            );
         }
-        MessageContent::Video(v) => {
-            if let Some(br) = v.video_blob_reference.as_ref() {
-                let (w, h) = impose_max_dimensions(v.width, v.height);
-                let preload = v
-                    .image_blob_reference
-                    .as_ref()
-                    .map(|b| format!(" preload=\"{}\"", b.url()))
-                    .unwrap_or_default();
-                html.push_str(&format!(
-                    "<video{} width=\"{}\" height=\"{}\" controls><source src=\"{}\"></video>\n",
-                    preload,
-                    w,
-                    h,
-                    br.url()
-                ));
-            }
-        }
-        MessageContent::Audio(a) => {
-            if let Some(br) = a.blob_reference.as_ref() {
-                html.push_str(&format!("<audio controls src=\"{}\">\n", br.url()));
-            }
-        }
-        MessageContent::File(f) => {
-            if let Some(br) = f.blob_reference.as_ref() {
-                html.push_str(&format!("<a href=\"{}\">link to file</a>\n", br.url()));
-            }
-        }
-        _ => (),
-    }
-
-    // 2. Text/caption
-    html.push_str(&markdown_to_html(&extract_text(content)));
-
-    // 3. Message link
-    if is_public {
-        let message_link = deep_message_links::build_message_link(chat_id, thread_root_message_index, message.message_index);
-        html.push_str(&format!("<a href=\"{message_link}\">link to message</a>\n"));
-    }
-
-    html
-}
-
-fn impose_max_dimensions(w: u32, h: u32) -> (u32, u32) {
-    const MAX_W: u32 = 500;
-    const MAX_H: u32 = 500;
-
-    if w == 0 || h == 0 {
-        (MAX_W, MAX_H)
-    } else if w <= MAX_W && h <= MAX_H {
-        (w, h)
-    } else if w > h {
-        (MAX_W, (h * MAX_W) / w)
-    } else {
-        ((w * MAX_H / h), MAX_H)
-    }
-}
-
-fn extract_text(content: &MessageContent) -> String {
-    let mut text = format!("{}\n\n", content.text().unwrap_or_default());
-
-    if let MessageContent::Poll(p) = content {
-        for o in p.config.options.iter() {
-            text.push_str(&format!("- {o}\n"));
-        }
-    }
-
-    text
-}
-
-fn markdown_to_html(markdown: &str) -> String {
-    let parser = pulldown_cmark::Parser::new(markdown);
-    let mut html_output = String::new();
-    pulldown_cmark::html::push_html(&mut html_output, parser);
-    html_output
-}
-
-#[cfg(test)]
-mod tests {
-    use candid::Principal;
-    use types::{BlobReference, ChatId, ImageContent, TextContent, ThumbnailData, Tips, VideoContent};
-
-    use super::*;
-
-    #[test]
-    fn create_report_from_text_message() {
-        let chat_id: ChatId = Principal::from_text("2rgzm-4iaaa-aaaaf-aaa5a-cai").unwrap().into();
-        let text = "## GitHub commit
-
-https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938b84bb3371f2
-
-## Description
-
-- Support submitting proposals of type 'Upgrade SNS to next version'
-- Support submitting proposals of type 'Add token'
-- Final changes needed for disappearing messages (will be enabled soon)
-- A few minor bugfixes"
-            .to_string();
-
-        let message = Message {
-            message_index: 27461.into(),
-            message_id: 188960262885472233086330058967164649472u128.into(),
-            sender: Principal::from_text("3skqk-iqaaa-aaaaf-aaa3q-cai").unwrap().into(),
-            content: types::MessageContent::Text(TextContent { text }),
-            replies_to: None,
-            reactions: Vec::new(),
-            tips: Tips::default(),
-            thread_summary: None,
-            edited: false,
-            forwarded: false,
-            block_level_markdown: false,
-            sender_context: None,
-            og_previews: Vec::new(),
-            moderation_flags: 0,
-        };
-
-        let report = construct_html_report(Chat::Group(chat_id), None, &message, true);
-
-        print!("{report}");
-    }
-
-    #[test]
-    fn create_report_from_image_message() {
-        let chat = Chat::Channel(
-            Principal::from_text("wowos-hyaaa-aaaar-ar4ca-cai").unwrap().into(),
-            259630963639405604007172212966027535235u128.into(),
-        );
-
-        let message = Message {
-            message_index: 72805.into(),
-            message_id: 123356442671309293004896491442800689152u128.into(),
-            sender: Principal::from_text("6oehr-mqaaa-aaaaf-ahlaa-cai").unwrap().into(),
-            content: types::MessageContent::Image(ImageContent {
-                width: 100,
-                height: 50,
-                thumbnail_data: ThumbnailData("blank".to_string()),
-                caption: Some("It's over!".to_string()),
-                mime_type: "image/png".to_string(),
-                blob_reference: Some(BlobReference {
-                    canister_id: Principal::from_text("m7ykd-3iaaa-aaaar-ad2uq-cai").unwrap(),
-                    blob_id: 181941936258991437198326577112311764747,
-                }),
-            }),
-            replies_to: None,
-            reactions: Vec::new(),
-            tips: Tips::default(),
-            thread_summary: None,
-            edited: false,
-            forwarded: false,
-            block_level_markdown: false,
-            sender_context: None,
-            og_previews: Vec::new(),
-            moderation_flags: 0,
-        };
-
-        let report = construct_html_report(chat, None, &message, true);
-
-        print!("{report}");
-    }
-
-    #[test]
-    fn create_report_from_video_message() {
-        let chat = Chat::Channel(
-            Principal::from_text("wowos-hyaaa-aaaar-ar4ca-cai").unwrap().into(),
-            259630963639405604007172212966027535235u128.into(),
-        );
-
-        let message = Message {
-            message_index: 72805.into(),
-            message_id: 123356442671309293004896491442800689152u128.into(),
-            sender: Principal::from_text("6oehr-mqaaa-aaaaf-ahlaa-cai").unwrap().into(),
-            content: types::MessageContent::Video(VideoContent {
-                width: 200,
-                height: 100,
-                thumbnail_data: ThumbnailData("blank".to_string()),
-                caption: Some("Hello world".to_string()),
-                mime_type: "video/mpeg".to_string(),
-                image_blob_reference: Some(BlobReference {
-                    canister_id: Principal::from_text("m7ykd-3iaaa-aaaar-ad2uq-cai").unwrap(),
-                    blob_id: 181941936277550442520330478250480023339,
-                }),
-                video_blob_reference: Some(BlobReference {
-                    canister_id: Principal::from_text("m7ykd-3iaaa-aaaar-ad2uq-cai").unwrap(),
-                    blob_id: 181941936239106898356555537109512322009,
-                }),
-            }),
-            replies_to: None,
-            reactions: Vec::new(),
-            tips: Tips::default(),
-            thread_summary: None,
-            edited: false,
-            forwarded: false,
-            block_level_markdown: false,
-            sender_context: None,
-            og_previews: Vec::new(),
-            moderation_flags: 0,
-        };
-
-        let report = construct_html_report(chat, None, &message, true);
-
-        print!("{report}");
+        Chat::Direct(_) => {}
     }
 }
