@@ -2025,6 +2025,23 @@ export const UserIndexSetInternalModerationChannelArgs = Type.Object({
     channel: Type.Optional(UserIndexInternalModerationChannel),
 });
 
+export type UserIndexResolveModerationReportVerdict = Static<
+    typeof UserIndexResolveModerationReportVerdict
+>;
+export const UserIndexResolveModerationReportVerdict = Type.Union([
+    Type.Literal("Upheld"),
+    Type.Literal("UpheldAsCsam"),
+    Type.Literal("Dismissed"),
+]);
+
+export type UserIndexResolveModerationReportArgs = Static<
+    typeof UserIndexResolveModerationReportArgs
+>;
+export const UserIndexResolveModerationReportArgs = Type.Object({
+    report_index: Type.BigInt(),
+    verdict: UserIndexResolveModerationReportVerdict,
+});
+
 export type UserIndexSetModerationFlagsArgs = Static<typeof UserIndexSetModerationFlagsArgs>;
 export const UserIndexSetModerationFlagsArgs = Type.Object({
     moderation_flags_enabled: Type.Number(),
@@ -8180,6 +8197,42 @@ export const PrizeContentInitial = Type.Object({
 });
 
 export type MessageContent = Static<typeof MessageContent>;
+export type ModerationReportResolution = Static<typeof ModerationReportResolution>;
+export const ModerationReportResolution = Type.Object({
+    moderator: UserId,
+    timestamp: Type.BigInt(),
+});
+
+export type ModerationReportStatus = Static<typeof ModerationReportStatus>;
+export const ModerationReportStatus = Type.Union([
+    Type.Literal("Pending"),
+    Type.Object({
+        Upheld: ModerationReportResolution,
+    }),
+    Type.Object({
+        UpheldAsCsam: ModerationReportResolution,
+    }),
+    Type.Object({
+        Dismissed: ModerationReportResolution,
+    }),
+]);
+
+export type ModerationReportContent = Static<typeof ModerationReportContent>;
+export const ModerationReportContent = Type.Object({
+    report_index: Type.Optional(Type.BigInt()),
+    chat_id: Chat,
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_index: MessageIndex,
+    message_id: MessageId,
+    sender: UserId,
+    reporters: Type.Array(UserId),
+    flagged_categories: Type.Number(),
+    auto_sanctioned: Type.Boolean(),
+    content_excerpt: Type.Optional(Type.String()),
+    reported_at: Type.BigInt(),
+    status: ModerationReportStatus,
+});
+
 export const MessageContent = Type.Union([
     Type.Object({
         Text: TextContent,
@@ -8225,6 +8278,9 @@ export const MessageContent = Type.Union([
     }),
     Type.Object({
         ReportedMessage: ReportedMessage,
+    }),
+    Type.Object({
+        ModerationReport: ModerationReportContent,
     }),
     Type.Object({
         P2PSwap: P2PSwapContent,

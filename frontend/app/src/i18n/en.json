@@ -1154,6 +1154,23 @@
     "next": "Next",
     "nMessagesDeleted": "{number} messages deleted",
     "no": "No",
+    "moderationReport": {
+        "title": "Moderation report",
+        "csam": "CSAM",
+        "autoSanctioned": "Auto-sanction applied: message deleted and sender suspended",
+        "sender": "Sender",
+        "reporters": "Reported by",
+        "pipeline": "Detected by automated moderation",
+        "categories": "Flagged categories",
+        "viewMessage": "View message",
+        "privateChat": "Message link unavailable (private chat)",
+        "uphold": "Uphold",
+        "upholdCsam": "CSAM",
+        "dismiss": "Dismiss",
+        "upheld": "Upheld by {moderator} - the message has been deleted and the sender suspended",
+        "dismissed": "Dismissed by {moderator} - no violation",
+        "failed": "Failed to resolve the report"
+    },
     "appStore": {
         "notAvailableTitle": "Content not available",
         "notAvailable": "This content is not available in this version of the app. You can still access it from the web app at [oc.app](https://oc.app).",

@@ -382,6 +382,7 @@ impl MessageInternal {
                 metrics.incr(MetricKey::MessageReminders, 1);
             }
             MessageContentType::ReportedMessage => {}
+            MessageContentType::ModerationReport => {}
             MessageContentType::P2PSwap => {
                 metrics.incr(MetricKey::P2pSwaps, 1);
             }
