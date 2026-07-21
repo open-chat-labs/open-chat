@@ -29,6 +29,7 @@ import {
     mergeUserSummaryWithUpdates,
     offline,
     Stream,
+    toBigInt32,
     userSummaryFromCurrentUserSummary,
 } from "@shared";
 import {
@@ -89,7 +90,6 @@ import {
     mapOptional,
     principalBytesToString,
     principalStringToBytes,
-    toBigInt32,
     toVoid,
 } from "../../utils/mapping";
 import type { UserDb } from "../../utils/userCache";
