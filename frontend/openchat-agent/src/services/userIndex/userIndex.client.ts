@@ -14,6 +14,7 @@ import type {
     PayForDiamondMembershipResponse,
     PremiumItem,
     SetDisplayNameResponse,
+    ModerationVerdict,
     SetUsernameResponse,
     SetUserUpgradeConcurrencyResponse,
     SubmitProofOfUniquePersonhoodResponse,
@@ -64,6 +65,7 @@ import {
     UserIndexSetDisplayNameResponse,
     UserIndexSetHideOnlineStatusArgs,
     UserIndexSetInternalModerationChannelArgs,
+    UserIndexResolveModerationReportArgs,
     UserIndexSetModerationFlagsArgs,
     UserIndexSetOpenAiApiKeyArgs,
     UserIndexSetPremiumItemCostArgs,
@@ -198,6 +200,19 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             },
             (resp) => resp === "Success",
             UserIndexSetInternalModerationChannelArgs,
+            UnitResult,
+        );
+    }
+
+    resolveModerationReport(reportIndex: bigint, verdict: ModerationVerdict): Promise<boolean> {
+        return this.update(
+            "resolve_moderation_report",
+            {
+                report_index: reportIndex,
+                verdict: apiModerationVerdict(verdict),
+            },
+            (resp) => resp === "Success",
+            UserIndexResolveModerationReportArgs,
             UnitResult,
         );
     }
@@ -793,5 +808,16 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             UserIndexUpdateBlockedUsernamePatternsArgs,
             UnitResult,
         );
+    }
+}
+
+function apiModerationVerdict(verdict: ModerationVerdict): "Upheld" | "UpheldAsCsam" | "Dismissed" {
+    switch (verdict) {
+        case "upheld":
+            return "Upheld";
+        case "upheld_as_csam":
+            return "UpheldAsCsam";
+        case "dismissed":
+            return "Dismissed";
     }
 }

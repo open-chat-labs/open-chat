@@ -20,6 +20,7 @@ pub mod register_external_achievement;
 pub mod remove_bot;
 pub mod remove_platform_moderator;
 pub mod remove_platform_operator;
+pub mod resolve_moderation_report;
 pub mod set_diamond_membership_fees;
 pub mod set_display_name;
 pub mod set_hide_online_status;

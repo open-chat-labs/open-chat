@@ -997,6 +997,8 @@ function getAction(
 
         case "setInternalModerationChannel":
             return agent.setInternalModerationChannel(payload.channel);
+        case "resolveModerationReport":
+            return agent.resolveModerationReport(payload.reportIndex, payload.verdict);
 
         case "updateRegistry":
             return agent.getRegistry();
