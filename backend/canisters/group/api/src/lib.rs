@@ -22,6 +22,7 @@ pub enum EventsResponse {
 pub enum LocalIndexEvent {
     NameChanged(NameChanged),
     VerifiedChanged(VerifiedChanged),
+    ModerationFlagsChanged(ModerationFlagsChanged),
     MessageClassified(MessageClassified),
     UserDeleted(UserId),
     BotUpdated(BotDefinitionUpdate),
@@ -36,4 +37,9 @@ pub struct NameChanged {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct VerifiedChanged {
     pub verified: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ModerationFlagsChanged {
+    pub flags: u32,
 }

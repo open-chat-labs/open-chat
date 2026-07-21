@@ -10,8 +10,9 @@ use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    Chat, ChatType, CryptoContent, CryptoTransaction, GroupReplyContext, MessageContentInitial, P2PSwapContentInitial,
-    PendingCryptoTransaction, PollConfig, PollContent, PollVotes, TextContent, TimestampMillis, TotalVotes,
+    Chat, ChatType, CryptoContent, CryptoTransaction, DiamondMembershipPlanDuration, GroupReplyContext, MessageContentInitial,
+    P2PSwapContentInitial, PendingCryptoTransaction, PollConfig, PollContent, PollVotes, TextContent, TimestampMillis,
+    TotalVotes,
 };
 use user_canister::MessageActivity;
 
@@ -338,6 +339,16 @@ fn accept_p2p_swap_and_check_activity_feed(chat_type: ChatType) {
     } = wrapper.env();
 
     let TestData { them, us, chat } = init_test_data(env, canister_ids, *controller, chat_type);
+
+    // Initiating a P2P swap requires Diamond membership
+    client::upgrade_user(
+        &us,
+        env,
+        canister_ids,
+        *controller,
+        DiamondMembershipPlanDuration::OneMonth,
+        true,
+    );
 
     client::ledger::happy_path::transfer(
         env,

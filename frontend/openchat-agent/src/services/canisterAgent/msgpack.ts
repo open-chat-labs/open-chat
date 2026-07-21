@@ -103,6 +103,7 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
             const { requestId, response } = await this.agent.call(canisterIdPrincipal, {
                 methodName: methodName + "_msgpack",
                 arg: payload,
+                effectiveCanisterId: canisterIdPrincipal,
                 callSync: onRequestAccepted === undefined,
             });
 

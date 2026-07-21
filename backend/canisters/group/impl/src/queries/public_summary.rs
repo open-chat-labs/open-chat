@@ -49,6 +49,7 @@ fn public_summary_impl(args: Args, state: &RuntimeState) -> Response {
         events_ttl_last_updated: events_ttl.timestamp,
         gate_config: data.chat.gate_config.value.clone().map(|gc| gc.into()),
         wasm_version: BuildVersion::default(),
+        moderation_flags: data.moderation_flags.value,
     };
     Success(SuccessResult {
         summary,

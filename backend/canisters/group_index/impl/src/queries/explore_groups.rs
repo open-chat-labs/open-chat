@@ -1,4 +1,4 @@
-use crate::{RuntimeState, read_state};
+use crate::{RuntimeState, model::moderation_flags::ModerationFlags, read_state};
 use canister_api_macros::query;
 use group_index_canister::explore_groups::{Response::*, *};
 
@@ -21,10 +21,16 @@ fn explore_groups_impl(args: Args, state: &RuntimeState) -> Response {
         }
     }
 
-    let (matches, total) = state
-        .data
-        .public_groups
-        .search(args.search_term, args.page_index, args.page_size);
+    let include_moderation_flags = match ModerationFlags::from_bits(args.include_moderation_flags.unwrap_or_default()) {
+        Some(flags) => flags,
+        None => return InvalidFlags,
+    };
+
+    let (matches, total) =
+        state
+            .data
+            .public_groups
+            .search(args.search_term, include_moderation_flags, args.page_index, args.page_size);
 
     Success(SuccessResult { matches, total })
 }

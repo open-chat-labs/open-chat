@@ -69,6 +69,9 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
                 handle_activity_notification(state);
             }
         }
+        LocalIndexEvent::ModerationFlagsChanged(ev) => {
+            state.data.moderation_flags = Timestamped::new(ev.flags, **now);
+        }
         LocalIndexEvent::UserDeleted(user_id) => {
             state.data.chat.members.remove(user_id, **now);
             state.data.remove_user(user_id, None);
