@@ -31,10 +31,14 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
     };
 
     let chat = &state.data.chat;
-    let chat_last_updated = [chat.last_updated(Some(member.user_id())), state.data.verified.timestamp]
-        .into_iter()
-        .max()
-        .unwrap();
+    let chat_last_updated = [
+        chat.last_updated(Some(member.user_id())),
+        state.data.verified.timestamp,
+        state.data.moderation_flags.timestamp,
+    ]
+    .into_iter()
+    .max()
+    .unwrap();
 
     if chat_last_updated <= updates_since {
         return SuccessNoUpdates;
@@ -104,6 +108,7 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
             video_call_in_progress: updates.video_call_in_progress,
             any_updates_missed: updates.any_updates_missed,
             verified: state.data.verified.if_set_after(updates_since).copied(),
+            moderation_flags: state.data.moderation_flags.if_set_after(updates_since).copied(),
         },
     })
 }

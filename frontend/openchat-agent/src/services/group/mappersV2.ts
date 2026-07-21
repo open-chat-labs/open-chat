@@ -116,6 +116,7 @@ export function groupChatSummary(
             lapsed: false,
         },
         verified: value.verified ?? false,
+        moderationFlags: value.moderation_flags ?? 0,
     };
 }
 
@@ -160,6 +161,7 @@ export function groupChatSummaryUpdates(
         messagesVisibleToNonMembers: value.messages_visible_to_non_members,
         membership: mapOptional(value.membership, groupMembershipUpdates),
         verified: mapOptional(value.verified, identity),
+        moderationFlags: mapOptional(value.moderation_flags, identity),
     };
 }
 

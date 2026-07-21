@@ -362,6 +362,7 @@
     let inert = $derived(
         msg.content.kind === "deleted_content" ||
             msg.content.kind === "blocked_content" ||
+            msg.content.kind === "restricted_content" ||
             collapsed,
     );
     let canTip = $derived(!me && confirmed && !inert && !failed);

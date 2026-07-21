@@ -88,6 +88,7 @@ type ExploreGroupsArgs = record {
     search_term : opt text;
     page_index : nat32;
     page_size : nat8;
+    include_moderation_flags : opt nat32;
 };
 
 type ExploreGroupsResponse = variant {
@@ -95,6 +96,7 @@ type ExploreGroupsResponse = variant {
     TermTooShort : nat8;
     TermTooLong : nat8;
     InvalidTerm;
+    InvalidFlags;
     Error : OCError;
 };
 

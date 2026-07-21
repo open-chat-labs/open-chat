@@ -4,7 +4,7 @@ use candid::Principal;
 use canister_api_macros::update;
 use local_user_index_canister::c2c_verify_sign_in_proof::*;
 use oc_error_codes::OCErrorCode;
-use types::{TimestampMillis, UserSignedInClaims};
+use types::{CLAIM_TYPE_USER_SIGNED_IN, TimestampMillis, UserSignedInClaims};
 
 #[update(guard = "caller_is_local_user_canister", msgpack = true)]
 fn c2c_verify_sign_in_proof(args: Args) -> Response {
@@ -23,6 +23,6 @@ fn c2c_verify_sign_in_proof(args: Args) -> Response {
 }
 
 pub(crate) fn verify_sign_in_proof(jwt: &str, user_principal: Principal, public_key_pem: &str, now: TimestampMillis) -> bool {
-    jwt::verify_and_decode::<UserSignedInClaims>(jwt, public_key_pem)
+    jwt::verify_and_decode::<UserSignedInClaims>(jwt, public_key_pem, CLAIM_TYPE_USER_SIGNED_IN)
         .is_ok_and(|claims| claims.exp_ms() > now && claims.custom().principal == user_principal)
 }

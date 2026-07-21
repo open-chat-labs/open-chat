@@ -227,6 +227,8 @@ export function getContentAsFormattedText(
         text = "Encrypted message";
     } else if (content.kind === "moderation_report_content") {
         text = "Moderation report";
+    } else if (content.kind === "restricted_content") {
+        text = "Restricted message";
     } else {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }

@@ -66,6 +66,8 @@ pub enum GroupIndexEvent {
     CommunityNameChanged(NameChanged),
     GroupVerifiedChanged(VerifiedChanged),
     CommunityVerifiedChanged(VerifiedChanged),
+    CommunityModerationFlagsChanged(ModerationFlagsChanged),
+    GroupModerationFlagsChanged(ModerationFlagsChanged),
     NotifyOfUserDeleted(CanisterId, UserId),
 }
 
@@ -92,6 +94,12 @@ pub struct NameChanged {
 pub struct VerifiedChanged {
     pub canister_id: CanisterId,
     pub verified: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ModerationFlagsChanged {
+    pub canister_id: CanisterId,
+    pub flags: u32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

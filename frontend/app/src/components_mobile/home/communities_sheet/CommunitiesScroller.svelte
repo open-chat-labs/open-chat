@@ -2,6 +2,7 @@
     import { Avatar, Container, ListAction, NotificationIndicator } from "component-lib";
     import {
         communityIdentifiersEqual,
+        communityRestricted,
         OpenChat,
         selectedCommunityIdStore,
         sortedCommunitiesStore,
@@ -51,24 +52,32 @@
     gap={"lg"}>
     {#each $sortedCommunitiesStore as community}
         {@const [unread] = hasUnread(community)}
-        <Container
-            supplementalClass={`scroller_item ${unread ? "unread" : ""} ${
-                communityIdentifiersEqual(community.id, $selectedCommunityIdStore) ? "selected" : ""
-            }`}
-            id={`scroller_item_${community.id.communityId}`}
-            overflow={"visible"}
-            width={"hug"}
-            onClick={() => onSelect(community)}>
-            <Avatar
-                url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
-                size={"md"}
-                radius={"md"} />
-            {#if unread}
-                <div class="unread">
-                    <NotificationIndicator border={"secondary"}></NotificationIndicator>
-                </div>
-            {/if}
-        </Container>
+        {#if communityRestricted(community)}
+            <Container supplementalClass={"scroller_item"} overflow={"visible"} width={"hug"}>
+                <div class="restricted_item">🔒</div>
+            </Container>
+        {:else}
+            <Container
+                supplementalClass={`scroller_item ${unread ? "unread" : ""} ${
+                    communityIdentifiersEqual(community.id, $selectedCommunityIdStore)
+                        ? "selected"
+                        : ""
+                }`}
+                id={`scroller_item_${community.id.communityId}`}
+                overflow={"visible"}
+                width={"hug"}
+                onClick={() => onSelect(community)}>
+                <Avatar
+                    url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
+                    size={"md"}
+                    radius={"md"} />
+                {#if unread}
+                    <div class="unread">
+                        <NotificationIndicator border={"secondary"}></NotificationIndicator>
+                    </div>
+                {/if}
+            </Container>
+        {/if}
     {/each}
     <ListAction size={"default"} onClick={onExplore}>
         {#snippet icon(color)}
@@ -83,6 +92,17 @@
 </Container>
 
 <style lang="scss">
+    .restricted_item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: toRem(40);
+        height: toRem(40);
+        border-radius: toRem(12);
+        background-color: var(--background-0);
+        font-size: toRem(18);
+    }
+
     :global(.scroller_item.selected::before) {
         content: "";
         width: 95%;

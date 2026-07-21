@@ -539,6 +539,14 @@ export function event(value: TChatEvent): ChatEvent {
         };
     }
 
+    if ("HistoryDeleted" in value) {
+        return {
+            kind: "history_deleted",
+            before: value.HistoryDeleted.before,
+            deletedBy: principalBytesToString(value.HistoryDeleted.deleted_by),
+        };
+    }
+
     throw new UnsupportedValueError("Unexpected ApiEventWrapper type received", value);
 }
 
@@ -1635,6 +1643,7 @@ export function apiMessageContent(domain: MessageContent): TMessageContentInitia
         case "moderation_report_content":
         case "p2p_swap_content":
         case "encrypted_content":
+        case "restricted_content":
             throw new Error(`Incorrectly attempting to send {domain.kind} content to the server`);
     }
 }
@@ -2197,6 +2206,7 @@ export function groupChatSummary(value: TGroupCanisterGroupChatSummary): GroupCh
         isInvited: false, // this is only applicable when we are not a member
         messagesVisibleToNonMembers: value.messages_visible_to_non_members ?? false,
         verified: value.verified ?? false,
+        moderationFlags: value.moderation_flags ?? 0,
     };
 }
 
@@ -2272,6 +2282,7 @@ export function communitySummary(value: TCommunityCanisterCommunitySummary): Com
         localUserIndex,
         isInvited: value.is_invited ?? false,
         verified: value.verified ?? false,
+        moderationFlags: value.moderation_flags ?? 0,
     };
 }
 

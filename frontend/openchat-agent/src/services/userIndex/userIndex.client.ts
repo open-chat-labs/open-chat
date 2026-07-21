@@ -26,11 +26,11 @@ import type {
     UserSummary,
     UserSummaryUpdate,
 } from "@shared";
-import { toBigInt32 } from "@shared";
 import {
     mergeUserSummaryWithUpdates,
     offline,
     Stream,
+    toBigInt32,
     userSummaryFromCurrentUserSummary,
 } from "@shared";
 import {

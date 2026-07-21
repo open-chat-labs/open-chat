@@ -1171,6 +1171,13 @@
         "dismissed": "Dismissed by {moderator} - no violation",
         "failed": "Failed to resolve the report"
     },
+    "appStore": {
+        "notAvailableTitle": "Content not available",
+        "notAvailable": "This content is not available in this version of the app. You can still access it from the web app at [oc.app](https://oc.app).",
+        "communityNotAvailable": "A community you're a member of is not available in this version of the app",
+        "chatNotAvailable": "A group you're a member of is not available in this version of the app",
+        "messageNotAvailable": "This message is not available in this version of the app"
+    },
     "noAccess": "No access",
     "noAccessText": "Sorry, but you do not have access to the community, group or channel that you are trying to access.",
     "noAudio": "You browser does not support embedded audio",

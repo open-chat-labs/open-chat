@@ -3,6 +3,7 @@ use crate::utils::{chat_token_info, icp_token_info, tick_many};
 use crate::{TestEnv, client};
 use candid::Principal;
 use constants::{CHAT_TRANSFER_FEE, DAY_IN_MS, MINUTE_IN_MS};
+use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
@@ -19,7 +20,7 @@ fn p2p_swap_in_direct_chat_succeeds() {
         ..
     } = wrapper.env();
 
-    let user1 = client::register_user(env, canister_ids);
+    let user1 = client::register_diamond_user(env, canister_ids, *controller);
     let user2 = client::register_user(env, canister_ids);
 
     client::ledger::happy_path::transfer(
@@ -241,7 +242,7 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
         ..
     } = wrapper.env();
 
-    let user1 = client::register_user(env, canister_ids);
+    let user1 = client::register_diamond_user(env, canister_ids, *controller);
     let user2 = client::register_user(env, canister_ids);
 
     let original_chat_balance = 11_000_000_000;
@@ -486,7 +487,7 @@ fn deposit_refunded_if_swap_expires() {
         ..
     } = wrapper.env();
 
-    let user1 = client::register_user(env, canister_ids);
+    let user1 = client::register_diamond_user(env, canister_ids, *controller);
     let user2 = client::register_user(env, canister_ids);
 
     let original_chat_balance = 11_000_000_000;
@@ -646,6 +647,123 @@ fn p2p_swap_blocked_if_token_disabled(input_token: bool) {
     } else {
         panic!("Unexpected response: {send_message_response:?}");
     }
+}
+
+#[test]
+fn p2p_swap_rejected_for_non_diamond_user() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let diamond_user = client::register_diamond_user(env, canister_ids, *controller);
+    let user = client::register_user(env, canister_ids);
+
+    // The Diamond check runs before any transfer, so the non-Diamond sender needs no funds
+    let swap_content = || {
+        MessageContentInitial::P2PSwap(P2PSwapContentInitial {
+            token0: icp_token_info(),
+            token0_amount: 1_000_000_000,
+            token1: chat_token_info(),
+            token1_amount: 10_000_000_000,
+            expires_in: DAY_IN_MS,
+            caption: None,
+        })
+    };
+
+    // Direct chat
+    let direct_response = client::user::send_message_v2(
+        env,
+        user.principal,
+        user.canister(),
+        &user_canister::send_message_v2::Args {
+            recipient: diamond_user.user_id,
+            thread_root_message_index: None,
+            message_id: random_from_u128(),
+            content: swap_content(),
+            replies_to: None,
+            forwarding: false,
+            block_level_markdown: false,
+            message_filter_failed: None,
+            pin: None,
+            og_previews: Vec::new(),
+        },
+    );
+    assert!(
+        matches!(&direct_response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::NotDiamondMember)),
+        "{direct_response:?}"
+    );
+
+    // Group
+    let group_id = client::user::happy_path::create_group(env, &diamond_user, &random_string(), true, true);
+    client::group::happy_path::join_group(env, user.principal, group_id);
+    tick_many(env, 5);
+
+    let group_response = client::user::send_message_with_transfer_to_group(
+        env,
+        user.principal,
+        user.canister(),
+        &user_canister::send_message_with_transfer_to_group::Args {
+            group_id,
+            thread_root_message_index: None,
+            message_id: random_from_u128(),
+            content: swap_content(),
+            sender_name: user.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            block_level_markdown: false,
+            rules_accepted: None,
+            message_filter_failed: None,
+            pin: None,
+            og_previews: Vec::new(),
+        },
+    );
+    assert!(
+        matches!(&group_response, user_canister::send_message_with_transfer_to_group::Response::Error(e) if e.matches_code(OCErrorCode::NotDiamondMember)),
+        "{group_response:?}"
+    );
+
+    // Channel
+    let community_id =
+        client::user::happy_path::create_community(env, &diamond_user, &random_string(), true, vec![random_string()]);
+    let channel_id = client::community::happy_path::summary(env, diamond_user.principal, community_id)
+        .channels
+        .first()
+        .unwrap()
+        .channel_id;
+    client::community::happy_path::join_community(env, user.principal, community_id);
+    tick_many(env, 5);
+
+    let channel_response = client::user::send_message_with_transfer_to_channel(
+        env,
+        user.principal,
+        user.canister(),
+        &user_canister::send_message_with_transfer_to_channel::Args {
+            community_id,
+            channel_id,
+            thread_root_message_index: None,
+            message_id: random_from_u128(),
+            content: swap_content(),
+            sender_name: user.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            block_level_markdown: false,
+            community_rules_accepted: None,
+            channel_rules_accepted: None,
+            message_filter_failed: None,
+            pin: None,
+            og_previews: Vec::new(),
+        },
+    );
+    assert!(
+        matches!(&channel_response, user_canister::send_message_with_transfer_to_channel::Response::Error(e) if e.matches_code(OCErrorCode::NotDiamondMember)),
+        "{channel_response:?}"
+    );
 }
 
 pub(crate) fn verify_swap_status<F: FnOnce(&P2PSwapStatus) -> bool>(event: ChatEvent, predicate: F) {
