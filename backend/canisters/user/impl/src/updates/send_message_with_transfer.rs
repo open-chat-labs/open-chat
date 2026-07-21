@@ -306,6 +306,9 @@ fn prepare(
             }
         }
         MessageContentInitial::P2PSwap(p) => {
+            if !state.data.membership(now).is_diamond_member() {
+                return Err(OCErrorCode::NotDiamondMember.into());
+            }
             let chat_canister_id = chat.canister_id();
             let create_swap_args = escrow_canister::create_swap::Args {
                 location: P2PSwapLocation::from_message(chat, thread_root_message_index, message_id),

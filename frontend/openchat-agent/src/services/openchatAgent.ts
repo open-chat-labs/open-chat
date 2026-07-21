@@ -141,7 +141,9 @@ import type {
     SearchGroupChatResponse,
     SendMessageResponse,
     SetBioResponse,
+    ModerationVerdict,
     SetCommunityModerationFlagsResponse,
+    SetGroupModerationFlagsResponse,
     SetDisplayNameResponse,
     SetGroupUpgradeConcurrencyResponse,
     SetMemberDisplayNameResponse,
@@ -1144,6 +1146,7 @@ export class OpenChatAgent extends EventTarget {
                         edited: msg.edited,
                         isThreadRoot: msg.thread !== undefined,
                         sourceContext: messageContext,
+                        moderationFlags: msg.moderationFlags,
                     };
                 } else {
                     this._logger.log(
@@ -1368,10 +1371,10 @@ export class OpenChatAgent extends EventTarget {
             });
     }
 
-    searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
+    searchGroups(searchTerm: string, flags: number, maxResults = 10): Promise<GroupSearchResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
-        return this._groupIndexClient.searchGroups(searchTerm, maxResults).then((res) => {
+        return this._groupIndexClient.searchGroups(searchTerm, flags, maxResults).then((res) => {
             if (res.kind === "success") {
                 return {
                     ...res,
@@ -2152,6 +2155,26 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.getCurrentUser();
     }
 
+    setOpenAIApiKey(apiKey: string | undefined): Promise<boolean> {
+        if (offline()) return Promise.resolve(false);
+
+        return this._userIndexClient.setOpenAIApiKey(apiKey);
+    }
+
+    setInternalModerationChannel(
+        channel: { communityId: string; channelId: number } | undefined,
+    ): Promise<boolean> {
+        if (offline()) return Promise.resolve(false);
+
+        return this._userIndexClient.setInternalModerationChannel(channel);
+    }
+
+    resolveModerationReport(reportIndex: bigint, verdict: ModerationVerdict): Promise<boolean> {
+        if (offline()) return Promise.resolve(false);
+
+        return this._userIndexClient.resolveModerationReport(reportIndex, verdict);
+    }
+
     setModerationFlags(flags: number): Promise<boolean> {
         if (offline()) return Promise.resolve(false);
 
@@ -2709,7 +2732,7 @@ export class OpenChatAgent extends EventTarget {
                 });
             });
         } else {
-            return this.userClient.getPublicProfile();
+            return this.userClient.getPublicProfile().map<PublicProfile | undefined>((p) => p);
         }
     }
 
@@ -3234,6 +3257,12 @@ export class OpenChatAgent extends EventTarget {
         return this._groupIndexClient.setCommunityModerationFlags(communityId, flags);
     }
 
+    setGroupModerationFlags(chatId: string, flags: number): Promise<SetGroupModerationFlagsResponse> {
+        if (offline()) return Promise.resolve("offline");
+
+        return this._groupIndexClient.setGroupModerationFlags(chatId, flags);
+    }
+
     setGroupUpgradeConcurrency(value: number): Promise<SetGroupUpgradeConcurrencyResponse> {
         if (offline()) return Promise.resolve("offline");
 
@@ -3342,12 +3371,16 @@ export class OpenChatAgent extends EventTarget {
                 try {
                     const updates = await this._registryClient.updates(current?.lastUpdated);
                     if (updates.kind === "success") {
+                        // Ledgers the registry has detected as uninstalled must be dropped from
+                        // the cached token list, otherwise we keep querying dead ledgers forever
+                        // (they never reappear in `tokenDetails`, only in `tokensUninstalled`).
+                        const uninstalled = new Set(updates.tokensUninstalled);
                         const updated = {
                             lastUpdated: updates.lastUpdated,
                             tokenDetails: distinctBy(
                                 [...updates.tokenDetails, ...(current?.tokenDetails ?? [])],
                                 (t) => t.ledger,
-                            ),
+                            ).filter((t) => !uninstalled.has(t.ledger)),
                             nervousSystemSummary: distinctBy(
                                 [
                                     ...updates.nervousSystemSummary,

@@ -41,6 +41,7 @@ fn summary_updates_impl(
         state.data.details_last_updated(),
         member.as_ref().map(|m| m.last_updated()).unwrap_or_default(),
         state.data.verified.timestamp,
+        state.data.moderation_flags.timestamp,
     ]
     .into_iter()
     .max()
@@ -195,5 +196,6 @@ fn summary_updates_impl(
         user_groups_deleted: state.data.members.user_groups_deleted_since(updates_since),
         metrics: state.data.cached_chat_metrics.if_set_after(updates_since).cloned(),
         verified: state.data.verified.if_set_after(updates_since).copied(),
+        moderation_flags: state.data.moderation_flags.if_set_after(updates_since).copied(),
     })
 }

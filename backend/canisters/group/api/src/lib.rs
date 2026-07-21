@@ -8,7 +8,7 @@ mod updates;
 pub use lifecycle::*;
 use oc_error_codes::OCError;
 pub use queries::*;
-use types::{BotDefinitionUpdate, UserId};
+use types::{BotDefinitionUpdate, MessageClassified, UserId};
 pub use updates::*;
 
 #[ts_export(group)]
@@ -22,6 +22,8 @@ pub enum EventsResponse {
 pub enum LocalIndexEvent {
     NameChanged(NameChanged),
     VerifiedChanged(VerifiedChanged),
+    ModerationFlagsChanged(ModerationFlagsChanged),
+    MessageClassified(MessageClassified),
     UserDeleted(UserId),
     BotUpdated(BotDefinitionUpdate),
     BotRemoved(UserId),
@@ -35,4 +37,9 @@ pub struct NameChanged {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct VerifiedChanged {
     pub verified: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ModerationFlagsChanged {
+    pub flags: u32,
 }

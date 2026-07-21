@@ -80,10 +80,24 @@ pub fn verify(jwt: &str, public_key_pem: &str) -> Result<String, Box<dyn Error>>
     Ok(claims_json.to_string())
 }
 
-pub fn verify_and_decode<T: DeserializeOwned>(jwt: &str, public_key_pem: &str) -> Result<Claims<T>, Box<dyn Error>> {
+pub fn verify_and_decode<T: DeserializeOwned>(
+    jwt: &str,
+    public_key_pem: &str,
+    expected_claim_type: &str,
+) -> Result<Claims<T>, Box<dyn Error>> {
     let claims_json = verify(jwt, public_key_pem)?;
 
-    decode_from_json(&claims_json)
+    let claims: Claims<T> = decode_from_json(&claims_json)?;
+
+    if claims.claim_type != expected_claim_type {
+        return Err(format!(
+            "Unexpected claim type. Expected: {expected_claim_type}. Found: {}",
+            claims.claim_type
+        )
+        .into());
+    }
+
+    Ok(claims)
 }
 
 pub fn sign_token(token: &str, secret_key_der: &[u8], rng: &mut impl CryptoRngCore) -> Result<Vec<u8>, Box<dyn Error>> {
@@ -156,9 +170,47 @@ mod tests {
 
             let jwt = sign_and_encode_token(sk_der, claims, &mut rng).unwrap();
 
-            let claims: Claims<StartVideoCallClaims> = verify_and_decode(&jwt, pk_pem).unwrap();
+            let claims: Claims<StartVideoCallClaims> = verify_and_decode(&jwt, pk_pem, "StartVideoCall").unwrap();
 
             assert_eq!(claims.claim_type, "StartVideoCall");
         }
+    }
+
+    #[test]
+    fn verify_and_decode_with_unexpected_claim_type_fails() {
+        let mut rng = rand::thread_rng();
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64;
+
+        let kp = P256KeyPair::new(&mut rng);
+        let sk_der = kp.secret_key_der();
+        let pk_pem = kp.public_key_pem();
+
+        // A token whose claims are a superset of those expected by the target type - without the
+        // claim type check this would be decoded successfully as a `SubsetClaims` token
+        #[derive(Serialize, Deserialize)]
+        struct SupersetClaims {
+            principal: String,
+            extra: u32,
+        }
+        #[derive(Serialize, Deserialize)]
+        struct SubsetClaims {
+            principal: String,
+        }
+
+        let claims = Claims::new(
+            now + 300_000,
+            "some_other_claim_type".to_string(),
+            SupersetClaims {
+                principal: "2lcnt-ryaaa-aaaaf-aaula-cai".to_string(),
+                extra: 1,
+            },
+        );
+
+        let jwt = sign_and_encode_token(sk_der, claims, &mut rng).unwrap();
+
+        // The signature is valid and the claims deserialize, so only the claim type check rejects it
+        assert!(verify(&jwt, pk_pem).is_ok());
+        assert!(verify_and_decode::<SubsetClaims>(&jwt, pk_pem, "some_other_claim_type").is_ok());
+        assert!(verify_and_decode::<SubsetClaims>(&jwt, pk_pem, "user_signed_in").is_err());
     }
 }

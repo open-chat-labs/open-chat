@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `c2c_flag_message` endpoint so user_index can flag reported messages ([#9092](https://github.com/open-chat-labs/open-chat/pull/9092))
+- Notify user_index of CSAM detections for auto-sanction and escalation ([#9093](https://github.com/open-chat-labs/open-chat/pull/9093))
+- Queue public messages for classification via the local_user_index and store the returned moderation flags ([#9091](https://github.com/open-chat-labs/open-chat/pull/9091))
+- Expose `moderation_flags` in public group summary ([#9089](https://github.com/open-chat-labs/open-chat/pull/9089))
+- Add per-message moderation flags, exposed as `moderation_flags` on messages ([#9090](https://github.com/open-chat-labs/open-chat/pull/9090))
+
 ### Changed
 
 - Suspend "verified user" (unique person) gating - the gate is ignored, filtered out of composite gates so an OR gate requires another branch ([#9061](https://github.com/open-chat-labs/open-chat/pull/9061))

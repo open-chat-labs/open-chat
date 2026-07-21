@@ -38,8 +38,8 @@ use types::{
     BotInitiator, BotNotification, BotPermissions, BotUpdated, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId,
     ChannelUserNotificationPayload, ChatMetrics, ChatPermission, CommunityCanisterCommunitySummary, CommunityEvent,
     CommunityMembership, CommunityPermissions, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupRole,
-    IdempotentEnvelope, MembersAdded, Milliseconds, Notification, PendingCryptoTransaction, Rules, TimestampMillis,
-    Timestamped, UserId, UserNotification, UserType,
+    IdempotentEnvelope, MembersAdded, MessageId, MessageIndex, Milliseconds, Notification, PendingCryptoTransaction, Rules,
+    TimestampMillis, Timestamped, UserId, UserNotification, UserType,
 };
 use types::{BotSubscriptions, CommunityId};
 use user_canister::CommunityCanisterEvent;
@@ -193,6 +193,27 @@ impl RuntimeState {
         });
     }
 
+    // Asks the local_user_index to classify the message via the moderation API; the result
+    // arrives back as a `MessageClassified` event which stores the flags on the message
+    pub fn queue_message_for_moderation(
+        &mut self,
+        channel_id: ChannelId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        input: types::ModerationInput,
+    ) {
+        self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
+            created_at: self.env.now(),
+            idempotency_id: self.env.rng().next_u64(),
+            value: local_user_index_canister::CommunityEvent::MessageClassifyRequest(Box::new(types::ClassifyMessageRequest {
+                channel_id: Some(channel_id),
+                thread_root_message_index,
+                message_id,
+                input,
+            })),
+        });
+    }
+
     pub fn queue_access_gate_payments(&mut self, payment: GatePayment) {
         for payment in calculate_gate_payments(payment, self.data.members.owners()) {
             self.data.pending_payments_queue.push(payment);
@@ -275,6 +296,7 @@ impl RuntimeState {
             is_invited,
             metrics: data.cached_chat_metrics.value.clone(),
             verified: data.verified.value,
+            moderation_flags: data.moderation_flags.value,
         }
     }
 
@@ -542,6 +564,8 @@ struct Data {
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     bots: InstalledBots,
     verified: Timestamped<bool>,
+    #[serde(default)]
+    moderation_flags: Timestamped<u32>,
     idempotency_checker: IdempotencyChecker,
     public_channel_list_updated: TimestampMillis,
 }
@@ -652,6 +676,7 @@ impl Data {
             stable_memory_keys_to_garbage_collect: Vec::new(),
             bots: InstalledBots::default(),
             verified: Timestamped::default(),
+            moderation_flags: Timestamped::default(),
             idempotency_checker: IdempotencyChecker::default(),
             public_channel_list_updated: now,
         }

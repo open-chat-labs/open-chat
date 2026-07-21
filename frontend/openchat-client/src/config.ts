@@ -17,6 +17,7 @@ export type OpenChatConfig = {
     nfidUrl: string;
     userGeekApiKey: string;
     videoBridgeUrl: string;
+    translateProxyUrl: string;
     meteredApiKey: string;
     enableMultiCrypto?: boolean;
     blobUrlPattern: string;

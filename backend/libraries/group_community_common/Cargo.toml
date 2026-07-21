@@ -8,8 +8,11 @@ edition.workspace = true
 [dependencies]
 candid = { workspace = true }
 constants = { path = "../constants" }
+ic-cdk = { workspace = true, features = ["transform-closure"] }
 icrc-ledger-types = { workspace = true }
 serde = { workspace = true }
+serde_json = { workspace = true }
 serde_repr = { workspace = true }
+tracing = { workspace = true }
 types = { path = "../types" }
 utils = { path = "../utils" }

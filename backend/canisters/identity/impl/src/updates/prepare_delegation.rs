@@ -7,7 +7,7 @@ use ic_canister_sig_creation::signature_map::CanisterSigInputs;
 use ic_canister_sig_creation::{DELEGATION_SIG_DOMAIN, delegation_signature_msg};
 use identity_canister::prepare_delegation::{Response::*, *};
 use jwt::Claims;
-use types::{Nanoseconds, UserSignedInClaims};
+use types::{CLAIM_TYPE_USER_SIGNED_IN, Nanoseconds, UserSignedInClaims};
 
 const DEFAULT_EXPIRATION_PERIOD: Nanoseconds = 30 * DAY_IN_MS * NANOS_PER_MILLISECOND;
 const MAX_EXPIRATION_PERIOD: Nanoseconds = 90 * DAY_IN_MS * NANOS_PER_MILLISECOND;
@@ -57,7 +57,7 @@ pub(crate) fn prepare_delegation_inner(
     let principal = Principal::self_authenticating(&public_key);
     let claims = Claims::new(
         state.env.now() + 5 * MINUTE_IN_MS,
-        "user_signed_in".to_string(),
+        CLAIM_TYPE_USER_SIGNED_IN.to_string(),
         UserSignedInClaims { principal },
     );
     let proof_jwt = jwt::sign_and_encode_token(state.data.oc_key_pair.secret_key_der(), claims, state.env.rng()).unwrap();

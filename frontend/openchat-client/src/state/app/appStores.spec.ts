@@ -603,6 +603,7 @@ function createCommunitySummary(id: string, index: number): CommunitySummary {
         localUserIndex: "",
         isInvited: false,
         verified: false,
+        moderationFlags: 0,
     };
 }
 

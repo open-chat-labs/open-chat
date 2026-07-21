@@ -70,7 +70,9 @@ import type {
     RemoveMemberResponse,
     ResetInviteCodeResponse,
     SendMessageResponse,
+    ModerationVerdict,
     SetCommunityModerationFlagsResponse,
+    SetGroupModerationFlagsResponse,
     SetGroupUpgradeConcurrencyResponse,
     SetPinNumberResponse,
     SetVideoCallPresenceResponse,
@@ -342,6 +344,7 @@ export type WorkerRequest =
     | ClaimPrize
     | PayForDiamondMembership
     | SetCommunityModerationFlags
+    | SetGroupModerationFlags
     | SetGroupUpgradeConcurrency
     | SetCommunityUpgradeConcurrency
     | SetUserUpgradeConcurrency
@@ -377,6 +380,9 @@ export type WorkerRequest =
     | ConvertGroupToCommunity
     | ImportGroupToCommunity
     | SetModerationFlags
+    | SetOpenAIApiKey
+    | SetInternalModerationChannel
+    | ResolveModerationReport
     | ChangeCommunityRole
     | SetCommunityIndexes
     | UpdateRegistry
@@ -806,6 +812,22 @@ type SetModerationFlags = {
     flags: number;
 };
 
+type SetOpenAIApiKey = {
+    kind: "setOpenAIApiKey";
+    apiKey: string | undefined;
+};
+
+type SetInternalModerationChannel = {
+    kind: "setInternalModerationChannel";
+    channel: { communityId: string; channelId: number } | undefined;
+};
+
+type ResolveModerationReport = {
+    kind: "resolveModerationReport";
+    reportIndex: bigint;
+    verdict: ModerationVerdict;
+};
+
 type ImportGroupToCommunity = {
     kind: "importGroupToCommunity";
     groupId: GroupChatIdentifier;
@@ -1026,6 +1048,7 @@ type ExploreBots = {
 
 type SearchGroups = {
     searchTerm: string;
+    flags: number;
     maxResults: number;
     kind: "searchGroups";
 };
@@ -1457,6 +1480,12 @@ type SetCommunityModerationFlags = {
     communityId: string;
     flags: number;
     kind: "setCommunityModerationFlags";
+};
+
+type SetGroupModerationFlags = {
+    chatId: string;
+    flags: number;
+    kind: "setGroupModerationFlags";
 };
 
 type SetGroupUpgradeConcurrency = {
@@ -2376,6 +2405,8 @@ export type WorkerResult<T> = T extends Init
     ? UnsuspendUserResponse
     : T extends SetCommunityModerationFlags
     ? SetCommunityModerationFlagsResponse
+    : T extends SetGroupModerationFlags
+    ? SetGroupModerationFlagsResponse
     : T extends SetGroupUpgradeConcurrency
     ? SetGroupUpgradeConcurrencyResponse
     : T extends SetCommunityUpgradeConcurrency
@@ -2455,6 +2486,12 @@ export type WorkerResult<T> = T extends Init
     : T extends UpdateRegistry
     ? [RegistryValue, boolean]
     : T extends SetCommunityIndexes
+    ? boolean
+    : T extends SetOpenAIApiKey
+    ? boolean
+    : T extends SetInternalModerationChannel
+    ? boolean
+    : T extends ResolveModerationReport
     ? boolean
     : T extends CreateUserGroup
     ? CreateUserGroupResponse

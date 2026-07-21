@@ -13,12 +13,14 @@
     } from "component-lib";
     import {
         allUsersStore,
+        communityRestricted,
         currentUserIdStore,
         OpenChat,
         sortedCommunitiesStore,
         type CommunitySummary,
         type UnreadCounts,
     } from "@client";
+    import RestrictedContentRow from "../RestrictedContentRow.svelte";
     import { getContext } from "svelte";
     import { dragHandle, dragHandleZone, type DndEvent } from "svelte-dnd-action";
     import AccountGroupOutline from "svelte-material-icons/AccountGroupOutline.svelte";
@@ -59,6 +61,14 @@
 </script>
 
 {#snippet communityRow(community: CommunitySummary)}
+    {#if communityRestricted(community)}
+        <RestrictedContentRow textKey={"appStore.communityNotAvailable"} />
+    {:else}
+        {@render availableCommunityRow(community)}
+    {/if}
+{/snippet}
+
+{#snippet availableCommunityRow(community: CommunitySummary)}
     {@const [unread, counts] = props.hasUnread(community)}
     {@const count = counts.unmuted}
     {@const mentions = counts.mentions}

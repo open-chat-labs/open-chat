@@ -7,11 +7,11 @@ use std::collections::HashMap;
 use types::nns::CryptoAmount;
 use types::{
     AutonomousConfig, BotCommandDefinition, BotDataEncoding, BotDefinition, BotDefinitionUpdate, BotInstallationLocation,
-    BotSubscriptions, BuildVersion, CanisterId, ChannelLatestMessageIndex, ChannelUserNotificationPayload, ChatId, CommunityId,
-    CyclesTopUp, DiamondMembershipPlanDuration, GroupChatUserNotificationPayload, MessageContentInitial, MessageId,
-    MessageIndex, Notification, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis, UniquePersonProof,
-    UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
-    UserNotificationPayload, UserType, is_default,
+    BotSubscriptions, BuildVersion, CanisterId, ChannelLatestMessageIndex, ChannelUserNotificationPayload, ChatId,
+    ClassifyMessageRequest, CommunityId, CyclesTopUp, DiamondMembershipPlanDuration, GroupChatUserNotificationPayload,
+    MessageContentInitial, MessageId, MessageIndex, Notification, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration,
+    TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim,
+    UserCanisterStreakInsurancePayment, UserId, UserNotificationPayload, UserType, is_default,
 };
 
 mod lifecycle;
@@ -66,6 +66,8 @@ pub enum GroupIndexEvent {
     CommunityNameChanged(NameChanged),
     GroupVerifiedChanged(VerifiedChanged),
     CommunityVerifiedChanged(VerifiedChanged),
+    CommunityModerationFlagsChanged(ModerationFlagsChanged),
+    GroupModerationFlagsChanged(ModerationFlagsChanged),
     NotifyOfUserDeleted(CanisterId, UserId),
 }
 
@@ -76,6 +78,7 @@ pub enum GroupOrCommunityEvent<T = UserNotificationPayload> {
     MarkActivityForUser(TimestampMillis, UserId),
     EventStoreEvent(Event),
     Notification(Box<Notification<T>>),
+    MessageClassifyRequest(Box<ClassifyMessageRequest>),
 }
 
 pub type GroupEvent = GroupOrCommunityEvent<GroupChatUserNotificationPayload>;
@@ -91,6 +94,12 @@ pub struct NameChanged {
 pub struct VerifiedChanged {
     pub canister_id: CanisterId,
     pub verified: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ModerationFlagsChanged {
+    pub canister_id: CanisterId,
+    pub flags: u32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

@@ -91,6 +91,7 @@
             nfidUrl: import.meta.env.OC_NFID_URL!,
             userGeekApiKey: import.meta.env.OC_USERGEEK_APIKEY!,
             videoBridgeUrl: import.meta.env.OC_VIDEO_BRIDGE_URL!,
+            translateProxyUrl: import.meta.env.OC_TRANSLATE_PROXY_URL!,
             meteredApiKey: import.meta.env.OC_METERED_APIKEY!,
             blobUrlPattern: import.meta.env.OC_BLOB_URL_PATTERN!,
             canisterUrlPath: import.meta.env.OC_CANISTER_URL_PATH!,
@@ -178,10 +179,12 @@
             freezeGroup,
             removeHotGroupExclusion,
             setCommunityModerationFlags,
+            setGroupModerationFlags,
             unfreezeGroup,
             addMessageFilter,
             removeMessageFilter,
             reportedMessages,
+            unsuspendUser,
         };
 
         //@ts-ignore
@@ -355,6 +358,16 @@
         });
     }
 
+    function setGroupModerationFlags(chatId: string, flags: number): void {
+        client.setGroupModerationFlags(chatId, flags).then((success) => {
+            if (success) {
+                console.log("Group moderation flags updated", chatId);
+            } else {
+                console.log("Failed to set group moderation flags", chatId);
+            }
+        });
+    }
+
     function unfreezeGroup(chatId: string): void {
         client.unfreezeGroup({ kind: "group_chat", groupId: chatId }).then((success) => {
             if (success) {
@@ -375,6 +388,12 @@
 
     function reportedMessages(userId?: string): void {
         console.log(client.reportedMessages(userId));
+    }
+
+    function unsuspendUser(userId: string): void {
+        client.unsuspendUser(userId).then((success) => {
+            console.log(success ? "User unsuspended" : "Failed to unsuspend user", userId);
+        });
     }
 
     function deleteChannelMessage(

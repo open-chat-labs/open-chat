@@ -144,25 +144,13 @@
         if (verifications[key]) {
             return Promise.resolve(verifications[key]);
         }
-        const params = new URLSearchParams();
-        params.append("q", correction.value);
-        params.append("target", "en");
-        params.append("format", "text");
-        params.append("key", import.meta.env.OC_PUBLIC_TRANSLATE_API_KEY!);
-        return fetch(`https://translation.googleapis.com/language/translate/v2?${params}`, {
-            method: "POST",
-        })
-            .then((resp) => resp.json())
-            .then(({ data: { translations } }) => {
-                if (Array.isArray(translations) && translations.length > 0) {
-                    verifications[key] = translations[0].translatedText;
-                    return translations[0].translatedText;
-                }
-            })
-            .catch((err) => {
-                console.error("Couldn't get english translation: ", err);
-                return "Unable to get english translation at the moment";
-            });
+        return client.translateText(correction.value, "en").then((english) => {
+            if (english !== undefined) {
+                verifications[key] = english;
+                return english;
+            }
+            return "Unable to get english translation at the moment";
+        });
     }
 </script>
 

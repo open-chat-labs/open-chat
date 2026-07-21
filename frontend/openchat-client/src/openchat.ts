@@ -25,6 +25,7 @@ import {
     LEDGER_CANISTER_CHAT,
     LazyFile,
     MessageContextMap,
+    ModerationFlags,
     NoMeetingToJoin,
     ONE_DAY,
     ONE_HOUR,
@@ -218,6 +219,7 @@ import {
     type MessageActivitySummary,
     type MessageContent,
     type MessageContext,
+    type ModerationVerdict,
     type MessageFilter,
     type MessageFormatter,
     type MessagePermission,
@@ -466,6 +468,12 @@ import {
     createAndroidWebAuthnPasskeyIdentity,
 } from "./utils/androidWebAuthn";
 import { dataToBlobUrl } from "./utils/blob";
+import {
+    appStoreBuild,
+    chatRestricted,
+    communityRestricted,
+    moderationFlagsRestricted,
+} from "./utils/restrictedContent";
 import {
     activeUserIdFromEvent,
     applyTranslation,
@@ -1304,6 +1312,10 @@ export class OpenChat {
                 return this.#worker
                     .send({ kind: "getPublicGroupSummary", chatId })
                     .then((resp) => {
+                        if (resp.kind === "success" && chatRestricted(resp.group)) {
+                            publish("restrictedContent");
+                            return CommonResponses.failure();
+                        }
                         if (resp.kind === "success" && !resp.group.frozen) {
                             localUpdates.addGroupPreview(resp.group);
                             return CommonResponses.success();
@@ -1318,8 +1330,20 @@ export class OpenChat {
             case "channel":
                 return this.#worker
                     .send({ kind: "getChannelSummary", chatId })
-                    .then((resp) => {
+                    .then(async (resp) => {
                         if (resp.kind === "channel") {
+                            // Channels inherit their parent community's restriction, and for a
+                            // non-member the community may not be in the store yet
+                            if (appStoreBuild) {
+                                const community = await this.getCommunitySummary({
+                                    kind: "community",
+                                    communityId: chatId.communityId,
+                                });
+                                if (community !== undefined && communityRestricted(community)) {
+                                    publish("restrictedContent");
+                                    return CommonResponses.failure();
+                                }
+                            }
                             localUpdates.addGroupPreview(resp);
                             return CommonResponses.success();
                         }
@@ -2935,6 +2959,11 @@ export class OpenChat {
         let chat = chatSummariesStore.value.get(chatId);
         const scope = chatListScopeStore.value;
         let autojoin = false;
+
+        if (chat !== undefined && chatRestricted(chat)) {
+            publish("restrictedContent");
+            return;
+        }
         this.#proposalTalliesPoller?.stop();
         this.#proposalTalliesPoller = undefined;
 
@@ -5639,11 +5668,19 @@ export class OpenChat {
                 kind: "getRecommendedGroups",
                 exclusions: [...exclusions],
             })
+            .then((groups) => (appStoreBuild ? groups.filter((g) => !chatRestricted(g)) : groups))
             .catch(() => []);
     }
 
     searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
-        return this.#worker.send({ kind: "searchGroups", searchTerm, maxResults });
+        return this.#worker.send({
+            kind: "searchGroups",
+            searchTerm,
+            flags: appStoreBuild
+                ? moderationFlagsEnabledStore.value & ModerationFlags.UnderReview
+                : moderationFlagsEnabledStore.value,
+            maxResults,
+        });
     }
 
     exploreBots(
@@ -5670,14 +5707,23 @@ export class OpenChat {
         flags: number,
         languages: string[],
     ): Promise<ExploreCommunitiesResponse> {
-        return this.#worker.send({
-            kind: "exploreCommunities",
-            searchTerm,
-            pageIndex,
-            pageSize,
-            flags,
-            languages,
-        });
+        return this.#worker
+            .send({
+                kind: "exploreCommunities",
+                searchTerm,
+                pageIndex,
+                pageSize,
+                flags: appStoreBuild ? flags & ModerationFlags.UnderReview : flags,
+                languages,
+            })
+            .then((response) => {
+                if (appStoreBuild && response.kind === "success") {
+                    response.matches = response.matches.filter(
+                        (m) => !moderationFlagsRestricted(m.flags),
+                    );
+                }
+                return response;
+            });
     }
 
     exploreChannels(
@@ -6270,9 +6316,22 @@ export class OpenChat {
             .catch(() => false);
     }
 
+    resolveModerationReport(reportIndex: bigint, verdict: ModerationVerdict): Promise<boolean> {
+        return this.#worker
+            .send({ kind: "resolveModerationReport", reportIndex, verdict })
+            .catch(() => false);
+    }
+
     setCommunityModerationFlags(communityId: string, flags: number): Promise<boolean> {
         return this.#worker
             .send({ kind: "setCommunityModerationFlags", communityId, flags })
+            .then((resp) => resp === "success")
+            .catch(() => false);
+    }
+
+    setGroupModerationFlags(chatId: string, flags: number): Promise<boolean> {
+        return this.#worker
+            .send({ kind: "setGroupModerationFlags", chatId, flags })
             .then((resp) => resp === "success")
             .catch(() => false);
     }
@@ -7262,6 +7321,18 @@ export class OpenChat {
         return hasFlag(flags, flag);
     }
 
+    setOpenAIApiKey(apiKey: string | undefined): Promise<boolean> {
+        return this.#worker.send({ kind: "setOpenAIApiKey", apiKey }).catch(() => false);
+    }
+
+    setInternalModerationChannel(
+        channel: { communityId: string; channelId: number } | undefined,
+    ): Promise<boolean> {
+        return this.#worker
+            .send({ kind: "setInternalModerationChannel", channel })
+            .catch(() => false);
+    }
+
     setModerationFlags(flags: number): Promise<number> {
         const previousValue = moderationFlagsEnabledStore.value;
         currentUserStore.set({
@@ -7899,6 +7970,80 @@ export class OpenChat {
                 })
                 .then((token) => this.#getRoomAccessToken(token));
         });
+    }
+
+    #translationToken: { token: string; expiresAt: number } | undefined;
+
+    async getTranslationToken(forceRefresh: boolean = false): Promise<string | undefined> {
+        const margin = 60 * 1000;
+        if (
+            !forceRefresh &&
+            this.#translationToken !== undefined &&
+            this.#translationToken.expiresAt - margin > Date.now()
+        ) {
+            return this.#translationToken.token;
+        }
+
+        const localUserIndex = await this.#worker.send({
+            kind: "getLocalUserIndexForUser",
+            userId: currentUserIdStore.value,
+        });
+        const token = await this.#worker.send({
+            kind: "getAccessToken",
+            accessTokenType: { kind: "translate" },
+            localUserIndex,
+        });
+        if (token === undefined) {
+            this.#translationToken = undefined;
+            return undefined;
+        }
+        this.#translationToken = { token, expiresAt: jwtExpiryMs(token) ?? 0 };
+        return token;
+    }
+
+    async translateText(text: string, targetLocale: string): Promise<string | undefined> {
+        const token = await this.getTranslationToken();
+        if (token === undefined) return undefined;
+
+        let resp = await this.#translateRequest(token, text, targetLocale);
+        if (resp?.status === 401) {
+            const freshToken = await this.getTranslationToken(true);
+            if (freshToken === undefined) return undefined;
+            resp = await this.#translateRequest(freshToken, text, targetLocale);
+        }
+        if (resp === undefined || !resp.ok) return undefined;
+
+        const { translations } = await resp.json();
+        return Array.isArray(translations) ? translations[0] : undefined;
+    }
+
+    #translateRequest(
+        token: string,
+        text: string,
+        targetLocale: string,
+    ): Promise<Response | undefined> {
+        return fetch(`${this.config.translateProxyUrl}/translate`, {
+            method: "POST",
+            headers: {
+                "x-auth-jwt": token,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ texts: [text], target: targetLocale }),
+        }).catch((err) => {
+            console.warn("Translation request failed: ", err);
+            return undefined;
+        });
+    }
+
+    async translateMessage(
+        messageId: bigint,
+        text: string,
+        targetLocale: string,
+    ): Promise<boolean> {
+        const translation = await this.translateText(text, targetLocale);
+        if (translation === undefined) return false;
+        this.translate(messageId, translation);
+        return true;
     }
 
     #startBtcBalanceUpdateJob() {
@@ -8556,6 +8701,10 @@ export class OpenChat {
     async setSelectedCommunity(id: CommunityIdentifier): Promise<boolean> {
         let community = communitiesStore.value.get(id);
         let preview = false;
+        if (community !== undefined && communityRestricted(community)) {
+            publish("restrictedContent");
+            return false;
+        }
         if (community === undefined) {
             // if we don't have the community it means we're not a member and we need to look it up
             if (querystringCodeStore.value) {
@@ -8572,6 +8721,10 @@ export class OpenChat {
                 communityId: id.communityId,
             });
             if ("id" in resp) {
+                if (communityRestricted(resp)) {
+                    publish("restrictedContent");
+                    return false;
+                }
                 // Make the community appear at the top of the list
                 resp.membership.index = nextCommunityIndexStore.value;
                 community = resp;
@@ -10562,3 +10715,20 @@ export class OpenChat {
 type UserIndexMetrics = {
     oc_public_key: string;
 };
+
+function jwtExpiryMs(token: string): number | undefined {
+    const parts = token.split(".");
+    if (parts.length < 2) return undefined;
+    try {
+        const payload = JSON.parse(
+            new TextDecoder().decode(
+                Uint8Array.from(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")), (c) =>
+                    c.charCodeAt(0),
+                ),
+            ),
+        );
+        return typeof payload.exp === "number" ? payload.exp * 1000 : undefined;
+    } catch {
+        return undefined;
+    }
+}

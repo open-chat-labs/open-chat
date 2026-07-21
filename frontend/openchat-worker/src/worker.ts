@@ -21,6 +21,7 @@ import {
     inititaliseLogger,
     MessagesReadFromServer,
     setMinLogLevel,
+    shouldReportWorkerError,
     StorageUpdated,
     Stream,
     UsersLoaded,
@@ -151,7 +152,11 @@ function handleAgentEvent(ev: Event): void {
 
 const sendError = (kind: string, correlationId: number, payload?: unknown) => {
     return (error: unknown) => {
-        logger.error("WORKER: error caused by payload: ", kind, error, payload);
+        if (shouldReportWorkerError(kind, error)) {
+            logger.error("WORKER: error caused by payload: ", kind, error, payload);
+        } else {
+            logger.debug("WORKER: expected request failure (not reported): ", kind, error);
+        }
         postMessage({
             kind: "worker_error",
             requestKind: kind,
@@ -650,7 +655,7 @@ function getAction(
             );
 
         case "searchGroups":
-            return agent.searchGroups(payload.searchTerm, payload.maxResults);
+            return agent.searchGroups(payload.searchTerm, payload.flags, payload.maxResults);
 
         case "dismissRecommendation":
             return agent.dismissRecommendation(payload.chatId).then(() => undefined);
@@ -792,6 +797,9 @@ function getAction(
 
         case "setCommunityModerationFlags":
             return agent.setCommunityModerationFlags(payload.communityId, payload.flags);
+
+        case "setGroupModerationFlags":
+            return agent.setGroupModerationFlags(payload.chatId, payload.flags);
 
         case "setGroupUpgradeConcurrency":
             return agent.setGroupUpgradeConcurrency(payload.value);
@@ -983,6 +991,14 @@ function getAction(
 
         case "setModerationFlags":
             return agent.setModerationFlags(payload.flags);
+
+        case "setOpenAIApiKey":
+            return agent.setOpenAIApiKey(payload.apiKey);
+
+        case "setInternalModerationChannel":
+            return agent.setInternalModerationChannel(payload.channel);
+        case "resolveModerationReport":
+            return agent.resolveModerationReport(payload.reportIndex, payload.verdict);
 
         case "updateRegistry":
             return agent.getRegistry();
