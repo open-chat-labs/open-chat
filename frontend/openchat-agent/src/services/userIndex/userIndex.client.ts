@@ -90,7 +90,6 @@ import {
     mapOptional,
     principalBytesToString,
     principalStringToBytes,
-    toBigInt32,
     toVoid,
 } from "../../utils/mapping";
 import type { UserDb } from "../../utils/userCache";
