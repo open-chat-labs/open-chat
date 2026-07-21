@@ -1,0 +1,7 @@
+[package]
+name = "per_round_timer"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+ic-cdk-timers = { workspace = true }

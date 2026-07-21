@@ -1,5 +1,5 @@
 use crate::TimerJobItem;
-use ic_cdk_timers::TimerId;
+use per_round_timer::PerRoundTimer;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::VecDeque;
 use std::ops::DerefMut;
@@ -20,7 +20,7 @@ impl<T> TimerJobQueue<T> {
                 in_progress: 0,
                 max_concurrency,
                 defer_processing,
-                timer_id: None,
+                timer: None,
             })),
         }
     }
@@ -70,7 +70,7 @@ struct TimerJobQueueInner<T> {
     max_concurrency: usize,
     defer_processing: bool,
     #[serde(skip)]
-    timer_id: Option<TimerId>,
+    timer: Option<PerRoundTimer>,
 }
 
 impl<T> TimerJobQueue<T>
@@ -107,18 +107,17 @@ where
     }
 
     fn set_timer_if_required(&self, delay: Milliseconds) -> bool {
-        let should_set_timer = self.within_lock(|i| i.timer_id.is_none() && !i.queue.is_empty());
-        if should_set_timer {
-            let clone = self.clone();
-            let timer_id = ic_cdk_timers::set_timer_interval(Duration::from_millis(delay), move || {
-                let clone = clone.clone();
-                async move { clone.run() }
-            });
-            self.within_lock(|i| i.timer_id = Some(timer_id));
-            true
-        } else {
-            false
-        }
+        let clone = self.clone();
+        self.within_lock(|i| {
+            if !i.queue.is_empty() && i.timer.is_none() {
+                i.timer = Some(PerRoundTimer::new_with_interval(Duration::from_millis(delay), move || {
+                    clone.run()
+                }));
+                true
+            } else {
+                false
+            }
+        })
     }
 
     fn run(&self) {
@@ -136,10 +135,8 @@ where
             let count = items.len();
             i.in_progress = i.in_progress.saturating_add(count);
 
-            if i.queue.is_empty()
-                && let Some(timer_id) = i.timer_id.take()
-            {
-                ic_cdk_timers::clear_timer(timer_id);
+            if i.queue.is_empty() {
+                i.timer = None;
             }
         });
 

@@ -1,5 +1,5 @@
 use crate::TimerJobItemGroup;
-use ic_cdk_timers::TimerId;
+use per_round_timer::PerRoundTimer;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::btree_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
@@ -37,7 +37,7 @@ impl<T: TimerJobItemGroup> GroupedTimerJobQueue<T> {
                 in_progress: BTreeSet::new(),
                 max_concurrency,
                 defer_processing,
-                timer_id: None,
+                timer: None,
             })),
             phantom: PhantomData,
         }
@@ -94,7 +94,7 @@ struct GroupedTimerJobQueueInner<S: Clone, K: Clone + Ord, I> {
     max_concurrency: usize,
     defer_processing: bool,
     #[serde(skip)]
-    timer_id: Option<TimerId>,
+    timer: Option<PerRoundTimer>,
 }
 
 impl<T: TimerJobItemGroup + 'static> GroupedTimerJobQueue<T>
@@ -171,10 +171,8 @@ where
                 }
             }
 
-            if i.queue.is_empty()
-                && let Some(timer_id) = i.timer_id.take()
-            {
-                ic_cdk_timers::clear_timer(timer_id);
+            if i.queue.is_empty() {
+                i.timer = None;
             }
         });
 
@@ -185,18 +183,17 @@ where
     }
 
     fn set_timer_if_required(&self, delay: Milliseconds) -> bool {
-        let should_set_timer = self.within_lock(|i| i.timer_id.is_none() && !i.queue.is_empty());
-        if should_set_timer {
-            let clone = self.clone();
-            let timer_id = ic_cdk_timers::set_timer_interval(Duration::from_millis(delay), move || {
-                let clone = clone.clone();
-                async move { clone.flush() }
-            });
-            self.within_lock(|i| i.timer_id = Some(timer_id));
-            true
-        } else {
-            false
-        }
+        let clone = self.clone();
+        self.within_lock(|i| {
+            if !i.queue.is_empty() && i.timer.is_none() {
+                i.timer = Some(PerRoundTimer::new_with_interval(Duration::from_millis(delay), move || {
+                    clone.flush()
+                }));
+                true
+            } else {
+                false
+            }
+        })
     }
 
     async fn process_all_batches(self, batches: Vec<T>) {

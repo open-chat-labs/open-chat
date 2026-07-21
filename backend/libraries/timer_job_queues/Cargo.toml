@@ -6,6 +6,6 @@ edition.workspace = true
 [dependencies]
 futures = { workspace = true }
 ic-cdk = { workspace = true }
-ic-cdk-timers = { workspace = true }
+per_round_timer = { path = "../per_round_timer" }
 serde = { workspace = true }
 types = { path = "../types" }

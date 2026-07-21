@@ -3777,7 +3777,7 @@ dependencies = [
  "constants",
  "futures",
  "ic-cdk 0.20.2",
- "ic-cdk-timers",
+ "per_round_timer",
  "serde",
  "serde_bytes",
  "tracing",
@@ -6696,6 +6696,7 @@ dependencies = [
  "online_users_canister",
  "online_users_canister_c2c_client",
  "p256_key_pair",
+ "per_round_timer",
  "principal_to_user_id_map",
  "proof_of_unique_personhood",
  "rand 0.10.2",
@@ -8164,6 +8165,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a6305423e0e7738146434843d1694d621cce767262b2a86910beab705e4493d9"
 dependencies = [
  "base64ct",
+]
+
+[[package]]
+name = "per_round_timer"
+version = "0.1.0"
+dependencies = [
+ "ic-cdk-timers",
 ]
 
 [[package]]
@@ -10738,6 +10746,7 @@ dependencies = [
  "icp_ledger_canister_c2c_client",
  "json",
  "msgpack",
+ "per_round_timer",
  "rand 0.10.2",
  "serde",
  "stable_memory",
@@ -11671,7 +11680,7 @@ version = "0.1.0"
 dependencies = [
  "futures",
  "ic-cdk 0.20.2",
- "ic-cdk-timers",
+ "per_round_timer",
  "serde",
  "types",
 ]
@@ -12724,6 +12733,7 @@ dependencies = [
  "online_users_canister",
  "online_users_canister_c2c_client",
  "p256_key_pair",
+ "per_round_timer",
  "proof_of_unique_personhood",
  "pulldown-cmark",
  "rand 0.10.2",

@@ -3,15 +3,15 @@ use crate::{RuntimeState, mutate_state};
 use candid::Nat;
 use constants::DAY_IN_MS;
 use ic_cdk_management_canister::CanisterStatusArgs;
-use ic_cdk_timers::TimerId;
-use std::cell::Cell;
+use per_round_timer::PerRoundTimer;
+use std::cell::RefCell;
 use std::time::Duration;
 use tracing::{error, info};
 use types::{CanisterId, Milliseconds};
 use utils::canister_timers::run_now_then_interval;
 
 thread_local! {
-    static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
+    static TIMER: RefCell<Option<PerRoundTimer>> = RefCell::default();
 }
 
 const CYCLES_CHECK_INTERVAL: Milliseconds = 7 * DAY_IN_MS;
@@ -38,11 +38,7 @@ fn populate_canisters() {
         }
     });
 
-    if let Some(timer_id) = TIMER_ID.take() {
-        ic_cdk_timers::clear_timer(timer_id);
-    }
-    let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, || async { run() });
-    TIMER_ID.set(Some(timer_id));
+    TIMER.set(Some(PerRoundTimer::new(run)));
     info!("Top up canisters job starting");
 }
 
@@ -54,15 +50,11 @@ enum GetNextResult {
 
 fn run() {
     match mutate_state(next) {
-        GetNextResult::Success(canister_id) => {
-            ic_cdk::futures::spawn_migratory(run_async(canister_id));
-        }
+        GetNextResult::Success(canister_id) => ic_cdk::futures::spawn_migratory(run_async(canister_id)),
         GetNextResult::Continue => {}
         GetNextResult::Break => {
-            if let Some(timer_id) = TIMER_ID.take() {
-                ic_cdk_timers::clear_timer(timer_id);
-                info!("Top up canisters job finished");
-            }
+            TIMER.set(None);
+            info!("Top up canisters job finished");
         }
     }
 }

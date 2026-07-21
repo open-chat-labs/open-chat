@@ -12,7 +12,7 @@ canister_time = { path = "../canister_time" }
 constants = { path = "../constants" }
 futures = { workspace = true }
 ic-cdk = { workspace = true }
-ic-cdk-timers = { workspace = true }
+per_round_timer = { path = "../per_round_timer" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 tracing = { workspace = true }
