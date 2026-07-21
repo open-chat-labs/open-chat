@@ -1596,6 +1596,7 @@ export function apiMessageContent(domain: MessageContent): TMessageContentInitia
         case "reported_message_content":
         case "p2p_swap_content":
         case "encrypted_content":
+        case "restricted_content":
             throw new Error(`Incorrectly attempting to send {domain.kind} content to the server`);
     }
 }

@@ -14,6 +14,7 @@
     import MessageReminderCreatedContent from "./MessageReminderCreatedContent.svelte";
     import P2PSwapContent from "./P2PSwapContent.svelte";
     import PlaceholderContent from "./PlaceholderContent.svelte";
+    import RestrictedMessageContent from "./RestrictedMessageContent.svelte";
     import PollContent from "./PollContent.svelte";
     import PrizeContent from "./PrizeContent.svelte";
     import PrizeWinnerContent from "./PrizeWinnerContent.svelte";
@@ -84,7 +85,9 @@
     }: Props = $props();
 </script>
 
-{#if content.kind === "text_content"}
+{#if content.kind === "restricted_content"}
+    <RestrictedMessageContent />
+{:else if content.kind === "text_content"}
     <TextContent
         {me}
         {edited}

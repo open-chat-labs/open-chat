@@ -26,6 +26,7 @@
         communitiesStore,
         currentUserIdStore,
         favouritesStore,
+        messageFlagsRestricted,
         messagesRead,
         notificationsSupported,
         OpenChat,
@@ -265,10 +266,12 @@
 
         const latestMessageText = client.getContentAsText(
             $_,
-            translateMessage(
-                chatSummary.latestMessage.event.messageId,
-                chatSummary.latestMessage.event.content,
-            ),
+            messageFlagsRestricted(chatSummary.latestMessage.event.moderationFlags)
+                ? { kind: "restricted_content" }
+                : translateMessage(
+                      chatSummary.latestMessage.event.messageId,
+                      chatSummary.latestMessage.event.content,
+                  ),
         );
 
         if (chatSummary.kind === "direct_chat") {

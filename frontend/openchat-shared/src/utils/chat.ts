@@ -219,6 +219,8 @@ export function getContentAsFormattedText(
         text = "Video call";
     } else if (content.kind === "encrypted_content") {
         text = "Encrypted message";
+    } else if (content.kind === "restricted_content") {
+        text = "Restricted message";
     } else {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }
