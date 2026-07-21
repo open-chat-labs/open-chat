@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Add `c2c_flag_message` endpoint so user_index can flag reported messages ([#9092](https://github.com/open-chat-labs/open-chat/pull/9092))
 - Queue public messages for classification via the local_user_index and store the returned moderation flags ([#9091](https://github.com/open-chat-labs/open-chat/pull/9091))
 - Expose `moderation_flags` in public group summary ([#9089](https://github.com/open-chat-labs/open-chat/pull/9089))
 - Add per-message moderation flags, exposed as `moderation_flags` on messages ([#9090](https://github.com/open-chat-labs/open-chat/pull/9090))

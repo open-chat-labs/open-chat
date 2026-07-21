@@ -1,3 +1,4 @@
+use crate::updates::c2c_report_message::process_report;
 use crate::updates::pay_for_diamond_membership::pay_for_diamond_membership_impl;
 use crate::updates::suspend_user::suspend_user_impl;
 use crate::updates::unsuspend_user::unsuspend_user_impl;
@@ -19,6 +20,7 @@ pub enum TimerJob {
     SetUserSuspendedInGroup(SetUserSuspendedInGroup),
     SetUserSuspendedInCommunity(SetUserSuspendedInCommunity),
     UnsuspendUser(UnsuspendUser),
+    ProcessReportClassification(ProcessReportClassification),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -55,6 +57,11 @@ pub struct UnsuspendUser {
     pub user_id: UserId,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ProcessReportClassification {
+    pub report_index: u64,
+}
+
 impl Job for TimerJob {
     fn execute(self) {
         match self {
@@ -63,7 +70,14 @@ impl Job for TimerJob {
             TimerJob::SetUserSuspendedInGroup(job) => job.execute(),
             TimerJob::SetUserSuspendedInCommunity(job) => job.execute(),
             TimerJob::UnsuspendUser(job) => job.execute(),
+            TimerJob::ProcessReportClassification(job) => job.execute(),
         }
+    }
+}
+
+impl Job for ProcessReportClassification {
+    fn execute(self) {
+        ic_cdk::futures::spawn(process_report(self.report_index));
     }
 }
 

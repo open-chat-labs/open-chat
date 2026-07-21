@@ -6713,25 +6713,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "modclub_canister"
-version = "0.1.0"
-dependencies = [
- "candid",
- "serde",
-]
-
-[[package]]
-name = "modclub_canister_c2c_client"
-version = "0.1.0"
-dependencies = [
- "candid",
- "canister_client",
- "ic-cdk",
- "modclub_canister",
- "types",
-]
-
-[[package]]
 name = "msgpack"
 version = "0.1.0"
 dependencies = [
@@ -8607,24 +8588,6 @@ checksum = "6e944464ec8536cd1beb0bbfd96987eb5e3b72f2ecdafdc5c769a37f1fa2ae1f"
 dependencies = [
  "cc",
 ]
-
-[[package]]
-name = "pulldown-cmark"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e8bbe1a966bd2f362681a44f6edce3c2310ac21e4d5067a6e7ec396297a6ea0"
-dependencies = [
- "bitflags 2.9.2",
- "memchr",
- "pulldown-cmark-escape",
- "unicase",
-]
-
-[[package]]
-name = "pulldown-cmark-escape"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "007d8adb5ddab6f8e3f491ac63566a7d5002cc7ed73901f72057943fa71ae1ae"
 
 [[package]]
 name = "querystring"
@@ -12420,7 +12383,6 @@ dependencies = [
  "constants",
  "human_readable",
  "ic-ledger-types",
- "modclub_canister",
  "oc_error_codes",
  "serde",
  "serde_bytes",
@@ -12477,6 +12439,7 @@ dependencies = [
  "futures",
  "group_canister",
  "group_canister_c2c_client",
+ "group_community_common",
  "group_index_canister",
  "group_index_canister_c2c_client",
  "hex",
@@ -12495,15 +12458,12 @@ dependencies = [
  "ledger_utils",
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
- "modclub_canister",
- "modclub_canister_c2c_client",
  "msgpack",
  "oc_error_codes",
  "online_users_canister",
  "online_users_canister_c2c_client",
  "p256_key_pair",
  "proof_of_unique_personhood",
- "pulldown-cmark",
  "rand 0.8.5",
  "search",
  "serde",

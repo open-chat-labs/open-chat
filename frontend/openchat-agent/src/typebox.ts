@@ -2007,6 +2007,24 @@ export const UserIndexCheckUsernameArgs = Type.Object({
     is_bot: Type.Boolean(),
 });
 
+export type UserIndexSetOpenAiApiKeyArgs = Static<typeof UserIndexSetOpenAiApiKeyArgs>;
+export const UserIndexSetOpenAiApiKeyArgs = Type.Object({
+    api_key: Type.Optional(Type.String()),
+});
+
+export type UserIndexInternalModerationChannel = Static<typeof UserIndexInternalModerationChannel>;
+export const UserIndexInternalModerationChannel = Type.Object({
+    community_id: CommunityId,
+    channel_id: ChannelId,
+});
+
+export type UserIndexSetInternalModerationChannelArgs = Static<
+    typeof UserIndexSetInternalModerationChannelArgs
+>;
+export const UserIndexSetInternalModerationChannelArgs = Type.Object({
+    channel: Type.Optional(UserIndexInternalModerationChannel),
+});
+
 export type UserIndexSetModerationFlagsArgs = Static<typeof UserIndexSetModerationFlagsArgs>;
 export const UserIndexSetModerationFlagsArgs = Type.Object({
     moderation_flags_enabled: Type.Number(),

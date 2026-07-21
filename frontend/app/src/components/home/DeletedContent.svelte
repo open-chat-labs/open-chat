@@ -44,7 +44,6 @@
                     username,
                     timestamp: timestampStr,
                     rules: "/guidelines?section=3",
-                    modclub: "https://modclub.ai/",
                 },
             })} />
     {:else}
