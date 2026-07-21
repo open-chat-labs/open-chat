@@ -29,6 +29,7 @@ import {
     mergeUserSummaryWithUpdates,
     offline,
     Stream,
+    toBigInt32,
     userSummaryFromCurrentUserSummary,
 } from "@shared";
 import {

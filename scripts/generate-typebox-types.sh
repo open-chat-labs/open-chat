@@ -29,11 +29,11 @@ done
 
 cargo run -p ts_exporter
 
-cd frontend/openchat-agent
+cd frontend
 
 npm run typebox
 
-awk '{sub(/import { Type, Static }/,"import { Type, type Static }")}1' ./src/typebox.ts > ./tmp.ts
-mv tmp.ts ./src/typebox.ts
-awk '{sub(/"BigIntZero"/,"BigInt(0)")}1' ./src/typebox.ts > ./tmp.ts
-mv tmp.ts ./src/typebox.ts
+awk '{sub(/import { Type, Static }/,"import { Type, type Static }")}1' ./openchat-agent/src/typebox.ts > ./tmp.ts
+mv tmp.ts ./openchat-agent/src/typebox.ts
+awk '{sub(/"BigIntZero"/,"BigInt(0)")}1' ./openchat-agent/src/typebox.ts > ./tmp.ts
+mv tmp.ts ./openchat-agent/src/typebox.ts

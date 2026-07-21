@@ -57,6 +57,7 @@ pub mod happy_path {
                 search_term: None,
                 page_index: 0,
                 page_size: 50,
+                include_moderation_flags: None,
             },
         );
 

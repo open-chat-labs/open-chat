@@ -1,4 +1,4 @@
-use crate::{RuntimeState, read_state};
+use crate::{RuntimeState, model::moderation_flags::ModerationFlags, read_state};
 use canister_api_macros::query;
 use group_index_canister::recommended_groups::{Response::*, *};
 use std::collections::HashSet;
@@ -16,6 +16,8 @@ fn recommended_groups_impl(args: Args, state: &RuntimeState) -> Response {
         .get(args.count as usize, &exclusions)
         .into_iter()
         .filter_map(|g| state.data.public_groups.hydrate_cached_summary(g))
+        // Consistent with `explore_groups`, exclude groups with any moderation flags set
+        .filter(|g| ModerationFlags::from_bits(g.moderation_flags).is_some_and(|flags| flags.is_empty()))
         .collect();
 
     Success(SuccessResult { groups })
