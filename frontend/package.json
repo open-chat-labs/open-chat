@@ -58,7 +58,7 @@
         "chrono-node": "^2.7.8",
         "component-lib": "file:./component-lib",
         "dequal": "^2.0.3",
-        "dompurify": "^3.4.11",
+        "dompurify": "^3.4.12",
         "drange": "^2.0.1",
         "emoji-picker-element": "1.22.6",
         "highlight.js": "^11.11.1",
