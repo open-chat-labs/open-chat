@@ -35,6 +35,12 @@ pub fn is_out_of_cycles_error(reject_code: RejectCode, message: &str) -> bool {
     matches!(reject_code, RejectCode::SysTransient) && message.contains("out of cycles")
 }
 
+// The reject message for this case doesn't always include the `IC0512` code, so also match on
+// the message text
+pub fn is_invalid_controller_error(reject_code: RejectCode, message: &str) -> bool {
+    matches!(reject_code, RejectCode::CanisterError) && (message.contains("IC0512") || message.contains("can control it"))
+}
+
 // Returns `Some(delay)` if the call should be retried, else `None`.
 pub fn delay_if_should_retry_failed_c2c_call(reject_code: RejectCode, message: &str) -> Option<Milliseconds> {
     match reject_code {
