@@ -9,6 +9,7 @@ use ledger_utils::default_ledger_account;
 use local_user_index_canister::ChildCanisterType;
 use local_user_index_canister::register_user::{Response::*, *};
 use rand::Rng;
+use tracing::error;
 use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, MessageContentInitial, TextContent, UserId, UserType};
 use user_canister::ReferredUserRegistered;
 use user_canister::init::Args as InitUserCanisterArgs;
@@ -69,7 +70,16 @@ async fn register_user(args: Args) -> Response {
             mutate_state(|state| {
                 state.data.local_users.mark_registration_failed(&caller);
                 if let Some(id) = canister_id {
-                    state.data.canister_pool.push(id);
+                    // If this canister is not controlled by the LocalUserIndex then installs into
+                    // it can never succeed, so drop it from the pool and let the topup job replace
+                    // it, else registrations would keep pulling the same unusable canisters out of
+                    // the pool
+                    if canister::is_invalid_controller_error(error.reject_code(), error.message()) {
+                        error!(canister_id = %id, "Dropping canister from pool - LocalUserIndex is not a controller");
+                        crate::jobs::topup_canister_pool::start_job_if_required(state, None);
+                    } else {
+                        state.data.canister_pool.push(id);
+                    }
                 }
             });
             Error(error.into())

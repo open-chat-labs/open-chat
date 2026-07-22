@@ -9,9 +9,10 @@ use local_user_index_canister::ChildCanisterType;
 use local_user_index_canister::c2c_create_community::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use rand::{Rng, RngCore};
+use tracing::error;
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, ChannelId, CommunityCreatedEventPayload, CommunityId, Cycles, OCResult, UserId,
-    UserType,
+    BuildVersion, C2CError, CanisterId, CanisterWasm, ChannelId, CommunityCreatedEventPayload, CommunityId, Cycles, OCResult,
+    UserId, UserType,
 };
 use utils::canister;
 
@@ -67,7 +68,7 @@ async fn c2c_create_community(args: Args) -> Response {
             })
         }
         Err((canister_id, error)) => {
-            mutate_state(|state| rollback(canister_id, state));
+            mutate_state(|state| rollback(canister_id, &error, state));
             Error(error.into())
         }
     }
@@ -162,9 +163,17 @@ fn commit(
     crate::jobs::topup_canister_pool::start_job_if_required(state, None);
 }
 
-fn rollback(canister_id: Option<CanisterId>, state: &mut RuntimeState) {
+fn rollback(canister_id: Option<CanisterId>, error: &C2CError, state: &mut RuntimeState) {
     if let Some(canister_id) = canister_id {
-        state.data.canister_pool.push(canister_id);
+        // If this canister is not controlled by the LocalUserIndex then installs into it can
+        // never succeed, so drop it from the pool and let the topup job replace it, else
+        // creations would keep pulling the same unusable canisters out of the pool
+        if canister::is_invalid_controller_error(error.reject_code(), error.message()) {
+            error!(%canister_id, "Dropping canister from pool - LocalUserIndex is not a controller");
+            crate::jobs::topup_canister_pool::start_job_if_required(state, None);
+        } else {
+            state.data.canister_pool.push(canister_id);
+        }
     }
 }
 
