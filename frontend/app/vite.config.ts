@@ -79,6 +79,10 @@ function ocWorkerPlugin(): Plugin {
                     (fileName === "worker.js" || fileName === "worker.js.map") &&
                     fs.existsSync(filePath)
                 ) {
+                    // This middleware writes the response itself, so `server.headers` does not
+                    // apply. Preserve cross-origin isolation for the browser inference worker.
+                    res.setHeader("Cross-Origin-Embedder-Policy", "credentialless");
+                    res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
                     res.setHeader(
                         "Content-Type",
                         fileName.endsWith(".map") ? "application/json" : "text/javascript",

@@ -53,6 +53,7 @@
         "@wagmi/connectors": "^8.0.22",
         "@wagmi/core": "^3.6.1",
         "@walletconnect/ethereum-provider": "^2.23.10",
+        "@wllama/wllama": "3.5.1",
         "borc": "^3.0.0",
         "bs58": "^5.0.0",
         "chrono-node": "^2.7.8",

@@ -15,6 +15,13 @@
     import { defaultModelCatalog } from "@utils/modelCatalog";
     import { isNativeClient } from "@utils/onDeviceInference";
     import {
+        clearWebModel,
+        pickWebModelFromDisk,
+        restoreWebModel,
+        setWebModelFile,
+        webModelStatus,
+    } from "@utils/webInference";
+    import {
         assessSuitability,
         hasBlocker,
         type SuitabilityWarning,
@@ -95,6 +102,31 @@
     );
 
     let unlisten: (() => void) | undefined;
+
+    // ── Browser (non-native) model-from-disk state ────────────────────────────────────────────
+    // A GGUF picked from a NORMAL DISK LOCATION runs in the browser via llama.cpp-WASM (see
+    // webInference.ts). The picker path persists across sessions; the file input is session-only.
+    let webError = $state("");
+    const hasPicker = typeof window !== "undefined" && "showOpenFilePicker" in window;
+
+    async function attachWebFile(e: Event) {
+        webError = "";
+        const input = e.target as HTMLInputElement;
+        const file = input.files?.[0];
+        if (file === undefined) return;
+        webError = (await setWebModelFile(file)) ?? "";
+        input.value = "";
+    }
+
+    async function attachWebPicker() {
+        webError = "";
+        webError = (await pickWebModelFromDisk()) ?? "";
+    }
+
+    async function detachWebModel() {
+        webError = "";
+        await clearWebModel();
+    }
 
     function isDownloaded(id: string): boolean {
         return localModels.some((m) => m.modelId === id);
@@ -276,6 +308,9 @@
                     [p.modelId]: { received: p.receivedBytes, total: p.totalBytes },
                 };
             });
+        } else {
+            // Re-attach a previously picked disk model (persisted FileSystemFileHandle).
+            void restoreWebModel();
         }
     });
 
@@ -286,9 +321,60 @@
     <p class="blurb">
         <Translatable
             resourceKey={i18nKey(
-                "On-device models are only available in the OpenChat desktop or mobile app.",
+                "Run a local model in this browser: pick a .gguf file from your disk (up to ~2 GB — a ≤2B parameter model at Q4 works well). " +
+                    "The file is read in place — nothing is uploaded or copied. Text extraction only; image understanding needs the desktop or mobile app.",
             )} />
     </p>
+
+    <div class="web-model">
+        {#if $webModelStatus.status === "none" && $webModelStatus.name !== undefined}
+            <p class="hint">
+                <Translatable
+                    resourceKey={i18nKey(
+                        `Previously attached: ${$webModelStatus.name} — re-attach to grant file access for this session.`,
+                    )} />
+            </p>
+        {/if}
+        {#if $webModelStatus.status === "attached" || $webModelStatus.status === "loaded" || $webModelStatus.status === "loading"}
+            <p>
+                <Translatable
+                    resourceKey={i18nKey(
+                        `Model: ${$webModelStatus.name}` +
+                            ($webModelStatus.status === "loading"
+                                ? " (loading into memory…)"
+                                : $webModelStatus.status === "loaded"
+                                  ? " (loaded)"
+                                  : " (attached — loads on first use)"),
+                    )} />
+            </p>
+            <Button secondary small onClick={detachWebModel}>
+                <Translatable resourceKey={i18nKey("Remove model")} />
+            </Button>
+        {:else}
+            <div class="web-attach">
+                {#if hasPicker}
+                    <Button secondary small onClick={attachWebPicker}>
+                        <Translatable resourceKey={i18nKey("Pick a .gguf from disk (remembered)")} />
+                    </Button>
+                {/if}
+                <label class="file-label">
+                    <input
+                        class="web-model-file"
+                        type="file"
+                        accept=".gguf"
+                        onchange={attachWebFile} />
+                </label>
+            </div>
+        {/if}
+        {#if $webModelStatus.status === "error"}
+            <p class="error">
+                <Translatable resourceKey={i18nKey(`Model failed to load: ${$webModelStatus.error ?? "unknown error"}`)} />
+            </p>
+        {/if}
+        {#if webError !== ""}
+            <p class="error"><Translatable resourceKey={i18nKey(webError)} /></p>
+        {/if}
+    </div>
 {:else}
     <p class="blurb">
         <Translatable
@@ -436,6 +522,19 @@
 {/if}
 
 <style lang="scss">
+    .web-model {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin: 8px 0 16px;
+    }
+    .web-attach {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+    }
+
     .blurb {
         @include font-size(fs-80);
         color: var(--txt-light);

@@ -16,6 +16,13 @@
     import { defaultModelCatalog } from "@utils/modelCatalog";
     import { isNativeClient } from "@utils/onDeviceInference";
     import {
+        clearWebModel,
+        pickWebModelFromDisk,
+        restoreWebModel,
+        setWebModelFile,
+        webModelStatus,
+    } from "@utils/webInference";
+    import {
         assessSuitability,
         hasBlocker,
         type SuitabilityWarning,
@@ -43,6 +50,26 @@
     // gracefully in the plain web/PWA build.
     const client = getContext<OpenChat>("client");
     const native = isNativeClient();
+
+    // Browser model-from-disk (llama.cpp-WASM over a GGUF read in place from disk — webInference.ts).
+    let webError = $state("");
+    const hasPicker = typeof window !== "undefined" && "showOpenFilePicker" in window;
+    async function attachWebFile(e: Event) {
+        webError = "";
+        const input = e.target as HTMLInputElement;
+        const file = input.files?.[0];
+        if (file === undefined) return;
+        webError = (await setWebModelFile(file)) ?? "";
+        input.value = "";
+    }
+    async function attachWebPicker() {
+        webError = "";
+        webError = (await pickWebModelFromDisk()) ?? "";
+    }
+    async function detachWebModel() {
+        webError = "";
+        await clearWebModel();
+    }
 
     // Prefer the OpenChat-hosted catalog (owner-curated on the registry, updatable without a client
     // release); fall back to the built-in default when it's empty (not configured) or unreachable.
@@ -268,6 +295,7 @@
     onMount(async () => {
         void loadCatalog();
         await load();
+        if (!native) void restoreWebModel();
         if (native) {
             unlisten = await onModelDownloadProgress((p) => {
                 progress = {
@@ -287,9 +315,45 @@
             <BodySmall>
                 <Translatable
                     resourceKey={i18nKey(
-                        "On-device models are only available in the OpenChat desktop or mobile app.",
+                        "Run a local model in this browser: pick a .gguf file from your disk (up to ~2 GB — a ≤2B parameter model at Q4 works well). The file is read in place — nothing is uploaded or copied. Text extraction only; image understanding needs the desktop or mobile app.",
                     )}></Translatable>
             </BodySmall>
+            {#if $webModelStatus.status === "attached" || $webModelStatus.status === "loaded" || $webModelStatus.status === "loading"}
+                <BodySmall>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            `Model: ${$webModelStatus.name}` +
+                                ($webModelStatus.status === "loading"
+                                    ? " (loading into memory…)"
+                                    : $webModelStatus.status === "loaded"
+                                      ? " (loaded)"
+                                      : " (attached — loads on first use)"),
+                        )}></Translatable>
+                </BodySmall>
+                <Button size={"sm"} secondary onclick={detachWebModel}>
+                    <Translatable resourceKey={i18nKey("Remove model")}></Translatable>
+                </Button>
+            {:else}
+                {#if hasPicker}
+                    <Button size={"sm"} secondary onclick={attachWebPicker}>
+                        <Translatable resourceKey={i18nKey("Pick a .gguf from disk (remembered)")}></Translatable>
+                    </Button>
+                {/if}
+                <input class="web-model-file" type="file" accept=".gguf" onchange={attachWebFile} />
+            {/if}
+            {#if $webModelStatus.status === "error"}
+                <BodySmall>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            `Model failed to load: ${$webModelStatus.error ?? "unknown error"}`,
+                        )}></Translatable>
+                </BodySmall>
+            {/if}
+            {#if webError !== ""}
+                <BodySmall>
+                    <Translatable resourceKey={i18nKey(webError)}></Translatable>
+                </BodySmall>
+            {/if}
         {:else}
             <H2 fontWeight={"bold"} colour={"primary"}>
                 <Translatable resourceKey={i18nKey("Available models")}></Translatable>
