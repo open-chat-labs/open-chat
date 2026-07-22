@@ -1430,3 +1430,17 @@ fn register_bot(
         },
     )
 }
+
+#[test]
+fn candid_roundtrip_experiment() {
+    use community_canister::c2c_bot_community_events::{EventsByIndexArgs as EBIA, EventsSelectionCriteria as ESC};
+    let args = local_user_index_canister::bot_community_events::Args {
+        community_id: candid::Principal::anonymous().into(),
+        events: ESC::ByIndex(EBIA {
+            events: vec![types::EventIndex::from(10u32)],
+        }),
+    };
+    let bytes = candid::encode_one(&args).unwrap();
+    let decoded: local_user_index_canister::bot_community_events::Args = candid::decode_one(&bytes).unwrap();
+    println!("host roundtrip OK: {decoded:?}");
+}

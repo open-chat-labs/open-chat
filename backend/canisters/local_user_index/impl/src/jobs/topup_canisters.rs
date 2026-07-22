@@ -2,7 +2,6 @@ use crate::updates::c2c_notify_low_balance::top_up_child_canister;
 use crate::{RuntimeState, mutate_state};
 use candid::Nat;
 use constants::DAY_IN_MS;
-use ic_cdk_management_canister::CanisterStatusArgs;
 use per_round_timer::PerRoundTimer;
 use std::cell::RefCell;
 use std::time::Duration;
@@ -82,7 +81,7 @@ fn next(state: &mut RuntimeState) -> GetNextResult {
 }
 
 async fn run_async(canister_id: CanisterId) {
-    match ic_cdk_management_canister::canister_status(&CanisterStatusArgs { canister_id }).await {
+    match utils::canister::canister_status(canister_id).await {
         Ok(status) => {
             if status.cycles < utils::cycles::MIN_CYCLES_BALANCE
                 || status.cycles < Nat::from(60u32) * status.idle_cycles_burned_per_day
