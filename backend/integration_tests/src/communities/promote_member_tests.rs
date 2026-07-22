@@ -1,6 +1,7 @@
 use crate::env::ENV;
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
+use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
@@ -81,7 +82,8 @@ fn admin_cannot_demote_owner() {
     );
 
     assert!(
-        matches!(&response, community_canister::change_role::Response::PartialSuccess(errors) if errors.contains_key(&user1.user_id)),
+        matches!(&response, community_canister::change_role::Response::PartialSuccess(errors)
+            if errors.get(&user1.user_id).is_some_and(|e| e.matches_code(OCErrorCode::InitiatorNotAuthorized))),
         "{response:?}",
     );
 
@@ -138,7 +140,8 @@ fn channel_admin_cannot_demote_channel_owner() {
     );
 
     assert!(
-        matches!(&response, community_canister::change_channel_role::Response::PartialSuccess(errors) if errors.contains_key(&user1.user_id)),
+        matches!(&response, community_canister::change_channel_role::Response::PartialSuccess(errors)
+            if errors.get(&user1.user_id).is_some_and(|e| e.matches_code(OCErrorCode::InitiatorNotAuthorized))),
         "{response:?}",
     );
 
