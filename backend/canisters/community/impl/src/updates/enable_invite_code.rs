@@ -7,7 +7,7 @@ use community_canister::enable_invite_code::{Response::*, *};
 use community_canister::reset_invite_code;
 use oc_error_codes::OCErrorCode;
 use rand::rngs::StdRng;
-use rand::{RngCore, SeedableRng};
+use rand::{Rng, SeedableRng};
 use types::{GroupInviteCodeChange, GroupInviteCodeChanged, OCResult, Timestamped, UserId};
 use utils::canister;
 

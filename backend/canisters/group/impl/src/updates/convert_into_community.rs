@@ -6,7 +6,7 @@ use constants::OPENCHAT_BOT_USER_ID;
 use group_canister::convert_into_community::{Response::*, *};
 use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
-use rand::RngCore;
+use rand::Rng;
 use std::collections::HashMap;
 use types::{CanisterId, OCResult, UserId};
 

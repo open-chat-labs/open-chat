@@ -6,7 +6,7 @@ use crate::{
 use canister_api_macros::update;
 use local_user_index_canister::bot_send_message::*;
 use oc_error_codes::{OCError, OCErrorCode};
-use rand::Rng;
+use rand::RngExt;
 use types::{
     BotActionScope, BotInitiator, BotMessageContent, ChannelId, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex,
     OgPreview, UserId,
@@ -139,7 +139,7 @@ fn extract_message_access_context(
                 return Err(OCErrorCode::InvalidRequest.with_message("Channel ID does not match access token"));
             };
             let chat = Chat::Channel(details.community_id, channel_id);
-            let message_id = message_id.unwrap_or_else(|| state.env.rng().r#gen::<u64>().into());
+            let message_id = message_id.unwrap_or_else(|| state.env.rng().random::<u64>().into());
             (chat, thread, message_id, None)
         }
     };

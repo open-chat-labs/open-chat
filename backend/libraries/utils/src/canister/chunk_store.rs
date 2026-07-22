@@ -1,5 +1,5 @@
 use crate::canister::convert_cdk_error;
-use ic_cdk::management_canister::{self, ClearChunkStoreArgs, UploadChunkArgs};
+use ic_cdk_management_canister::{self as management_canister, ClearChunkStoreArgs, UploadChunkArgs};
 use types::{C2CError, CanisterId, Hash};
 
 const ONE_MB: usize = 1024 * 1024;

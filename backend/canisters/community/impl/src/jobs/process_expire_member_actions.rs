@@ -15,7 +15,7 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && !state.data.expiring_member_actions.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, async { run() });
         TIMER_ID.set(Some(timer_id));
         true
     } else {
@@ -30,7 +30,7 @@ fn run() {
     let actions = mutate_state(|state| state.data.expiring_member_actions.pop_batch());
 
     for action in actions {
-        ic_cdk::futures::spawn(process_action(action));
+        ic_cdk::futures::spawn_migratory(process_action(action));
     }
 
     read_state(start_job_if_required);

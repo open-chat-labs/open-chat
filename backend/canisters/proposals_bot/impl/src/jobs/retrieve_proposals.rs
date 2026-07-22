@@ -30,15 +30,15 @@ const NNS_TOPICS_TO_PUSH_SNS_PROPOSALS_FOR: [i32; 3] = [
 
 pub fn start_job(state: &RuntimeState) {
     let interval = Duration::from_millis(if state.data.test_mode { 30 * MINUTE_IN_MS } else { MINUTE_IN_MS });
-    ic_cdk_timers::set_timer_interval(interval, run);
+    ic_cdk_timers::set_timer_interval(interval, || async { run() });
 }
 
 pub fn run() {
     for (governance_canister_id, is_nns) in mutate_state(start_next_sync) {
         if is_nns {
-            ic_cdk::futures::spawn(get_and_process_nns_proposals(governance_canister_id));
+            ic_cdk::futures::spawn_migratory(get_and_process_nns_proposals(governance_canister_id));
         } else {
-            ic_cdk::futures::spawn(get_and_process_sns_proposals(governance_canister_id));
+            ic_cdk::futures::spawn_migratory(get_and_process_sns_proposals(governance_canister_id));
         }
     }
 }

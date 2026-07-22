@@ -13,7 +13,7 @@ mod pre_upgrade;
 
 fn init_env(rng_seed: [u8; 32]) -> Box<CanisterEnv> {
     let canister_env = if rng_seed == [0; 32] {
-        ic_cdk_timers::set_timer(Duration::ZERO, reseed_rng);
+        ic_cdk_timers::set_timer(Duration::ZERO, async { reseed_rng() });
         CanisterEnv::default()
     } else {
         CanisterEnv::new(rng_seed)
@@ -23,7 +23,7 @@ fn init_env(rng_seed: [u8; 32]) -> Box<CanisterEnv> {
 
 fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: BuildVersion) {
     if data.public_key.is_empty() {
-        ic_cdk_timers::set_timer(Duration::ZERO, init_public_key);
+        ic_cdk_timers::set_timer(Duration::ZERO, async { init_public_key() });
     }
 
     let now = env.now();
@@ -35,7 +35,7 @@ fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: BuildVersion)
 }
 
 fn reseed_rng() {
-    ic_cdk::futures::spawn(reseed_rng_inner());
+    ic_cdk::futures::spawn_migratory(reseed_rng_inner());
 
     async fn reseed_rng_inner() {
         let seed = get_random_seed().await;
@@ -48,7 +48,7 @@ fn reseed_rng() {
 }
 
 fn init_public_key() {
-    ic_cdk::futures::spawn(init_public_key_inner());
+    ic_cdk::futures::spawn_migratory(init_public_key_inner());
 
     async fn init_public_key_inner() {
         let key_id = get_key_id(false);

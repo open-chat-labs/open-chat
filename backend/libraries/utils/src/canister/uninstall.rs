@@ -1,5 +1,5 @@
 use crate::canister::convert_cdk_error;
-use ic_cdk::management_canister::{self, UninstallCodeArgs};
+use ic_cdk_management_canister::{self as management_canister, UninstallCodeArgs};
 use tracing::error;
 use types::{C2CError, CanisterId};
 

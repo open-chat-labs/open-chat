@@ -1,6 +1,6 @@
 use crate::canister::convert_cdk_error;
 use candid::Principal;
-use ic_cdk::management_canister::{self, CanisterSettings, UpdateSettingsArgs};
+use ic_cdk_management_canister::{self as management_canister, CanisterSettings, UpdateSettingsArgs};
 use tracing::error;
 use types::{C2CError, CanisterId, Cycles};
 

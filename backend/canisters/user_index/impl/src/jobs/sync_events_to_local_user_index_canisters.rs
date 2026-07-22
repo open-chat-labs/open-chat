@@ -12,7 +12,7 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && !state.data.user_index_event_sync_queue.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, async { run() });
         TIMER_ID.set(Some(timer_id));
         true
     } else {
@@ -25,7 +25,7 @@ pub(crate) fn try_run_now(state: &mut RuntimeState) -> bool {
         if let Some(timer_id) = TIMER_ID.take() {
             ic_cdk_timers::clear_timer(timer_id);
         }
-        ic_cdk::futures::spawn(process_batch(batch));
+        ic_cdk::futures::spawn_migratory(process_batch(batch));
         true
     } else {
         false
@@ -37,7 +37,7 @@ fn run() {
     TIMER_ID.set(None);
 
     if let Some(batch) = mutate_state(next_batch) {
-        ic_cdk::futures::spawn(process_batch(batch));
+        ic_cdk::futures::spawn_migratory(process_batch(batch));
     }
 }
 

@@ -10,7 +10,7 @@ use icrc_ledger_types::icrc1::account::Account;
 use identity_canister::WEBAUTHN_ORIGINATING_CANISTER;
 use pocket_ic::common::rest::{IcpFeatures, IcpFeaturesConfig};
 use pocket_ic::{PocketIc, PocketIcBuilder, PocketIcState};
-use rand::{Rng, SeedableRng, rngs::StdRng};
+use rand::{RngExt, SeedableRng, rngs::StdRng};
 use sha256::sha256;
 use std::collections::{HashMap, HashSet};
 use std::env;
@@ -65,7 +65,7 @@ fn initialize_base_state(controller: Principal, seed: Option<Hash>) -> (PocketIc
 
     println!("PocketIC instance ready. Installing canisters...");
 
-    let ticks: u8 = seed.map_or(0, |s| StdRng::from_seed(s).r#gen());
+    let ticks: u8 = seed.map_or(0, |s| StdRng::from_seed(s).random());
     tick_many(&mut env, ticks as usize);
 
     let canister_ids = install_canisters(&mut env, controller);

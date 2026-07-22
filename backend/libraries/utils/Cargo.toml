@@ -15,6 +15,7 @@ dataurl = { workspace = true }
 futures = { workspace = true }
 getrandom = { workspace = true }
 ic-cdk = { workspace = true }
+ic-cdk-management-canister = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-management-canister-types = { workspace = true }
 itertools = { workspace = true }

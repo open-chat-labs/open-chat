@@ -18,7 +18,10 @@ then
 fi
 
 echo Building package $PACKAGE
-export RUSTFLAGS="--remap-path-prefix $(readlink -f ${SCRIPT_DIR}/..)=/build --remap-path-prefix ${CARGO_HOME}/bin=/cargo/bin --remap-path-prefix ${CARGO_HOME}/git=/cargo/git"
+# `--cfg getrandom_backend="custom"` selects getrandom's custom backend on wasm (see
+# .cargo/config.toml). Setting RUSTFLAGS here means cargo ignores that config file, so the cfg has
+# to be repeated in the flags below.
+export RUSTFLAGS="--cfg getrandom_backend=\"custom\" --remap-path-prefix $(readlink -f ${SCRIPT_DIR}/..)=/build --remap-path-prefix ${CARGO_HOME}/bin=/cargo/bin --remap-path-prefix ${CARGO_HOME}/git=/cargo/git"
 for l in $(ls ${CARGO_HOME}/registry/src/)
 do
   export RUSTFLAGS="--remap-path-prefix ${CARGO_HOME}/registry/src/${l}=/cargo/registry/src/github ${RUSTFLAGS}"

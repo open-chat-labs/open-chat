@@ -23,12 +23,14 @@ futures = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
 human_readable = { path = "../../../libraries/human_readable" }
 ic-cdk = { workspace = true }
+ic-cdk-management-canister = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
 icp_ledger_canister_c2c_client = { path = "../../../external_canisters/icp_ledger/c2c_client" }
 json = { path = "../../../libraries/json" }
 msgpack = { path = "../../../libraries/msgpack" }
+per_round_timer = { path = "../../../libraries/per_round_timer" }
 rand = { workspace = true }
 serde = { workspace = true }
 stable_memory = { path = "../../../libraries/stable_memory" }

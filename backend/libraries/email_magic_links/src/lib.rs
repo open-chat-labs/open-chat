@@ -1,5 +1,5 @@
 use rsa::pkcs1v15::{SigningKey, VerifyingKey};
-use rsa::rand_core::CryptoRngCore;
+use rsa::rand_core::CryptoRng;
 use rsa::sha2::Sha256;
 use rsa::signature::{SignatureEncoding, Signer, Verifier};
 use rsa::{RsaPrivateKey, RsaPublicKey};
@@ -12,7 +12,7 @@ use sign_in_with_email_canister::{
 
 const MAGIC_LINK_EXPIRATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
 
-pub fn generate<R: CryptoRngCore>(
+pub fn generate<R: CryptoRng>(
     email: String,
     session_key: Vec<u8>,
     max_time_to_live: Option<Nanoseconds>,
@@ -35,7 +35,7 @@ pub fn generate<R: CryptoRngCore>(
     MagicLink::new(email, delegation, code, now)
 }
 
-pub fn generate_random_3digit_code<R: CryptoRngCore>(rng: &mut R) -> String {
+pub fn generate_random_3digit_code<R: CryptoRng>(rng: &mut R) -> String {
     let code = rng.next_u32() % 1000;
     format!("{:0>3}", code)
 }
@@ -189,7 +189,7 @@ mod tests {
             code: "123".to_string(),
         };
 
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let private_key1 = RsaPrivateKey::new(&mut rng, 2048).unwrap();
         let public_key1 = private_key1.to_public_key();
 

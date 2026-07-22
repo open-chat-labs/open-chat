@@ -13,7 +13,7 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && !state.data.remove_from_online_users_queue.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, async { run() });
         TIMER_ID.set(Some(timer_id));
         true
     } else {
@@ -32,7 +32,7 @@ pub fn run() {
             .pop_front()
             .map(|p| (state.data.online_users_canister_id, p))
     }) {
-        ic_cdk::futures::spawn(remove_user(canister_id, principal));
+        ic_cdk::futures::spawn_migratory(remove_user(canister_id, principal));
     }
 }
 

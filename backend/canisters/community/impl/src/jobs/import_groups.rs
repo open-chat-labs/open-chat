@@ -29,7 +29,7 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && !state.data.groups_being_imported.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, async { run() });
         TIMER_ID.set(Some(timer_id));
         true
     } else {
@@ -43,7 +43,7 @@ fn run() {
 
     let batch = mutate_state(next_batch);
     if !batch.is_empty() {
-        ic_cdk::futures::spawn(import_groups(batch));
+        ic_cdk::futures::spawn_migratory(import_groups(batch));
     }
 }
 
@@ -85,7 +85,7 @@ async fn import_group(group: GroupToImport) {
 
                             // We set a timer to trigger an upgrade in case deserializing the group requires
                             // more instructions than are allowed in a normal update call
-                            ic_cdk_timers::set_timer(Duration::from_secs(10), move || {
+                            ic_cdk_timers::set_timer(Duration::from_secs(10), async move {
                                 trigger_upgrade_to_finalize_import(group_id)
                             });
 
@@ -349,7 +349,7 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
         })));
     });
 
-    ic_cdk_timers::set_timer(Duration::ZERO, move || mark_import_complete(group_id, channel_id));
+    ic_cdk_timers::set_timer(Duration::ZERO, async move { mark_import_complete(group_id, channel_id) });
     info!(%group_id, attempt, "'process_channel_members' completed");
 }
 

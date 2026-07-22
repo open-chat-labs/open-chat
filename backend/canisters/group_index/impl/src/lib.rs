@@ -16,7 +16,7 @@ use group_index_canister::ChildCanisterType;
 use local_user_index_canister::{GroupIndexEvent as LocalIndexEvent, ModerationFlagsChanged, NameChanged, VerifiedChanged};
 use model::local_index_event_batch::LocalIndexEventBatch;
 use model::local_index_map::LocalIndexMap;
-use rand::RngCore;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};

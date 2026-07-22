@@ -1,6 +1,7 @@
 use ic_cdk::call::RejectCode;
-use ic_cdk::management_canister::{
-    self, EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyArgs, HttpHeader, HttpMethod, HttpRequestArgs, SignCallError, SignWithEcdsaArgs,
+use ic_cdk_management_canister::{
+    self as management_canister, EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyArgs, HttpHeader, HttpMethod, HttpRequestArgs,
+    SignCallError, SignWithEcdsaArgs,
 };
 use ic_transport_types::{EnvelopeContent, to_request_id};
 use serde::Serialize;
@@ -59,6 +60,8 @@ pub async fn make_canister_call_via_ecdsa(request: CanisterEcdsaRequest) -> Resu
             }],
             body: Some(body),
             transform: None,
+            // `None` keeps the default behaviour of the request being made by all nodes in the subnet
+            is_replicated: None,
         },
         |mut response| {
             response.headers.clear();

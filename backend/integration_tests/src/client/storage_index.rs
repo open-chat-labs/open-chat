@@ -17,7 +17,7 @@ pub mod happy_path {
     use crate::utils::tick_many;
     use candid::Principal;
     use pocket_ic::PocketIc;
-    use rand::{RngCore, thread_rng};
+    use rand::{Rng, rng};
     use storage_index_canister::add_or_update_users::UserConfig;
     use storage_index_canister::user::UserRecord;
     use types::{AccessorId, BlobReference, CanisterId, CanisterWasm};
@@ -120,7 +120,7 @@ pub mod happy_path {
         accessors: Vec<AccessorId>,
     ) -> BlobReference {
         let mut file = vec![0; file_size as usize];
-        thread_rng().fill_bytes(file.as_mut_slice());
+        rng().fill_bytes(file.as_mut_slice());
 
         let bucket_response = allocated_bucket(env, sender, storage_index_canister_id, &file);
 

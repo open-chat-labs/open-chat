@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use notifications_index_canister::notify_local_index_added::*;
 use notifications_index_canister::{NotificationsIndexEvent, SubscriptionAdded};
 use oc_error_codes::OCErrorCode;
-use rand::RngCore;
+use rand::Rng;
 use types::IdempotentEnvelope;
 
 #[update(guard = "caller_is_registry_canister", msgpack = true)]

@@ -24,9 +24,9 @@ fn init(args: InitOrUpgradeArgs) {
         email_sender::init(NullEmailSender::default());
         set_salt(salt, 0)
     } else {
-        ic_cdk_timers::set_timer(Duration::ZERO, || {
-            ic_cdk::futures::spawn(async {
-                let salt: [u8; 32] = ic_cdk::management_canister::raw_rand().await.unwrap().try_into().unwrap();
+        ic_cdk_timers::set_timer(Duration::ZERO, async {
+            ic_cdk::futures::spawn_migratory(async {
+                let salt: [u8; 32] = ic_cdk_management_canister::raw_rand().await.unwrap().try_into().unwrap();
 
                 set_salt(salt, env::now());
             })

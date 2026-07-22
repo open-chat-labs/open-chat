@@ -20,7 +20,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
         }
         if let Some(expiry) = next_expiry {
             let delay = Duration::from_millis(expiry.saturating_sub(state.env.now()));
-            let timer_id = ic_cdk_timers::set_timer(delay, run);
+            let timer_id = ic_cdk_timers::set_timer(delay, async { run() });
             TIMER_ID.set(Some(timer_id));
             return true;
         }

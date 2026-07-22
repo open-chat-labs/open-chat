@@ -1,13 +1,12 @@
 use candid::CandidType;
 use canister_client::make_c2c_call_raw;
 use constants::SECOND_IN_MS;
-use ic_cdk_timers::TimerId;
+use per_round_timer::PerRoundTimer;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::{BTreeMap, HashMap};
 use std::ops::DerefMut;
 use std::rc::Rc;
 use std::sync::Mutex;
-use std::time::Duration;
 use tracing::trace;
 use types::{CanisterId, TimestampMillis};
 use utils::canister::delay_if_should_retry_failed_c2c_call;
@@ -32,7 +31,7 @@ impl FireAndForgetHandler {
             attempt: 0,
         };
 
-        ic_cdk::futures::spawn(self.clone().process_single(call));
+        ic_cdk::futures::spawn_migratory(self.clone().process_single(call));
     }
 
     pub fn send_candid<A: CandidType>(&self, canister_id: CanisterId, method_name: impl Into<String>, args: A) {
@@ -40,8 +39,9 @@ impl FireAndForgetHandler {
     }
 
     fn init(inner: FireAndForgetHandlerInner) -> Self {
-        let wrapped = Rc::new(Mutex::new(inner));
-        let handler = FireAndForgetHandler { inner: wrapped };
+        let handler = FireAndForgetHandler {
+            inner: Rc::new(Mutex::new(inner)),
+        };
         handler.start_job_if_required();
         handler
     }
@@ -81,10 +81,15 @@ impl FireAndForgetHandler {
     }
 
     fn start_job_if_required(&self) {
-        if self.within_lock(|i| i.should_start_job()) {
-            let clone = self.clone();
-            let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, move || clone.run());
-            self.within_lock(|i| i.timer_id = Some(timer_id));
+        let clone = self.clone();
+        if self.within_lock(|i| {
+            if !i.canisters.is_empty() && i.timer.is_none() {
+                i.timer = Some(PerRoundTimer::new(move || clone.run()));
+                true
+            } else {
+                false
+            }
+        }) {
             trace!("FireAndForgetHandler job started");
         }
     }
@@ -93,13 +98,11 @@ impl FireAndForgetHandler {
         let now = canister_time::now_millis();
         let next_batch = self.within_lock(|i| i.next_batch(50, now));
         match next_batch {
-            NextBatchResult::Success(batch) => ic_cdk::futures::spawn(self.clone().process_batch(batch)),
+            NextBatchResult::Success(batch) => ic_cdk::futures::spawn_migratory(self.clone().process_batch(batch)),
             NextBatchResult::Continue => {}
             NextBatchResult::StopJob => {
-                if let Some(timer_id) = self.within_lock(|i| i.timer_id.take()) {
-                    ic_cdk_timers::clear_timer(timer_id);
-                    trace!("FireAndForgetHandler job stopped");
-                }
+                self.within_lock(|i| i.timer = None);
+                trace!("FireAndForgetHandler job stopped");
             }
         }
     }
@@ -115,7 +118,7 @@ struct FireAndForgetHandlerInner {
     canisters: HashMap<CanisterId, PendingC2cCalls>,
     next_id: u64,
     #[serde(skip)]
-    timer_id: Option<TimerId>,
+    timer: Option<PerRoundTimer>,
 }
 
 enum NextBatchResult {
@@ -150,10 +153,6 @@ impl FireAndForgetHandlerInner {
                 NextBatchResult::Success(results)
             }
         }
-    }
-
-    fn should_start_job(&self) -> bool {
-        self.timer_id.is_none() && !self.canisters.is_empty()
     }
 }
 

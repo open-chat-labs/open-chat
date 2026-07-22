@@ -40,14 +40,14 @@ impl CommunityEventKey {
 mod tests {
     use super::*;
     use crate::{BaseKey, Key};
-    use rand::{RngCore, thread_rng};
+    use rand::{Rng, rng};
     use types::EventIndex;
 
     #[test]
     fn community_event_key_e2e() {
         for _ in 0..100 {
             let prefix = CommunityEventKeyPrefix::new();
-            let event_index = EventIndex::from(thread_rng().next_u32());
+            let event_index = EventIndex::from(rng().next_u32());
             let key = BaseKey::from(prefix.create_key(&event_index));
             let event_key = CommunityEventKey::try_from(key.clone()).unwrap();
 

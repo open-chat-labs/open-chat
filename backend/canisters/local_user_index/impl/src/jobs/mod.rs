@@ -1,5 +1,5 @@
 use crate::{RuntimeState, read_state};
-use ic_cdk::management_canister::ClearChunkStoreArgs;
+use ic_cdk_management_canister::ClearChunkStoreArgs;
 use tracing::info;
 
 pub mod delete_users;
@@ -28,8 +28,8 @@ fn clear_chunk_store_if_no_pending_upgrades() {
 
         if should_clear_chunk_store { Some(state.env.canister_id()) } else { None }
     }) {
-        ic_cdk::futures::spawn(async move {
-            ic_cdk::management_canister::clear_chunk_store(&ClearChunkStoreArgs { canister_id })
+        ic_cdk::futures::spawn_migratory(async move {
+            ic_cdk_management_canister::clear_chunk_store(&ClearChunkStoreArgs { canister_id })
                 .await
                 .unwrap();
 

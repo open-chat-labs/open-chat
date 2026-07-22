@@ -1,5 +1,9 @@
+# `--cfg getrandom_backend="custom"` selects getrandom's custom backend on wasm (see
+# .cargo/config.toml). It must be repeated here because if the RUSTFLAGS env variable is set (eg.
+# by the setup-rust-toolchain GitHub action, which exports RUSTFLAGS="-D warnings" by default),
+# cargo ignores the rustflags in config.toml.
 build_cmd:
-  cargo build -p benchmarks --release --target wasm32-unknown-unknown --locked
+  RUSTFLAGS="--cfg getrandom_backend=\"custom\" ${RUSTFLAGS:-}" cargo build -p benchmarks --release --target wasm32-unknown-unknown --locked
 
 wasm_path:
   ./target/wasm32-unknown-unknown/release/benchmarks.wasm

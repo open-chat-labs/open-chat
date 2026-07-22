@@ -13,7 +13,7 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState, delay: Option<Duration>) -> bool {
     if TIMER_ID.get().is_none() && !state.data.canister_pool.is_full() {
-        let timer_id = ic_cdk_timers::set_timer(delay.unwrap_or_default(), run);
+        let timer_id = ic_cdk_timers::set_timer(delay.unwrap_or_default(), async { run() });
         TIMER_ID.set(Some(timer_id));
         true
     } else {
@@ -31,7 +31,7 @@ fn run() {
 
         // Only create the new canister if it won't result in the cycles balance being too low
         if utils::cycles::can_spend_cycles(cycles_to_use, min_cycles_balance(test_mode)) {
-            ic_cdk::futures::spawn(add_new_canister(cycles_to_use));
+            ic_cdk::futures::spawn_migratory(add_new_canister(cycles_to_use));
         } else {
             read_state(|state| start_job_if_required(state, Some(Duration::from_secs(300))));
         }

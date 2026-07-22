@@ -14,7 +14,7 @@ use icrc_ledger_types::icrc1;
 use icrc_ledger_types::icrc1::account::Account;
 use jwt::{Claims, sign_and_encode_token};
 use local_user_index_canister::{DiamondMembershipPaymentReceived, UserIndexEvent};
-use rand::Rng;
+use rand::RngExt;
 use serde::Serialize;
 use storage_index_canister::add_or_update_users::UserConfig;
 use tracing::error;
@@ -199,7 +199,7 @@ fn process_charge(
             fee: transfer_fee,
             timestamp: now_nanos,
             recipient_account,
-            memo: state.env.rng().r#gen(),
+            memo: state.env.rng().random(),
             reason,
         };
         state.queue_payment(treasury_payment);
