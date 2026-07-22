@@ -38,8 +38,7 @@ pub fn is_out_of_cycles_error(reject_code: RejectCode, message: &str) -> bool {
 // The reject message for this case doesn't always include the `IC0512` code, so also match on
 // the message text
 pub fn is_invalid_controller_error(reject_code: RejectCode, message: &str) -> bool {
-    matches!(reject_code, RejectCode::CanisterError)
-        && (message.contains("IC0512") || message.contains("can control it"))
+    matches!(reject_code, RejectCode::CanisterError) && (message.contains("IC0512") || message.contains("can control it"))
 }
 
 // Returns `Some(delay)` if the call should be retried, else `None`.
