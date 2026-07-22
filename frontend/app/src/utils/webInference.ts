@@ -350,11 +350,20 @@ export async function webInfer(request: InferenceRequest): Promise<InferenceResu
     try {
         await ensureLoaded();
         const content = request.text !== undefined ? `${request.prompt}\n\n${request.text}` : request.prompt;
-        const text: string = await runtime.createChatCompletion({
+        // OAI-compat API: the non-stream overload returns a ChatCompletionResponse OBJECT — the text
+        // lives at choices[0].message.content (returning the object raw broke downstream `.match`).
+        // When the caller supplied a response schema, constrain decoding to valid JSON via wllama's
+        // json_object response_format (grammar-enforced — stronger than prompt discipline alone).
+        const res = await runtime.createChatCompletion({
             messages: [{ role: "user", content }],
-            nPredict: request.maxTokens ?? 512,
-            sampling: { temp: 0 }, // deterministic-leaning extraction, same spirit as the native path
+            max_tokens: request.maxTokens ?? 512,
+            temperature: 0, // deterministic-leaning extraction, same spirit as the native path
+            ...(request.responseSchema !== undefined ? { response_format: { type: "json_object" } } : {}),
         });
+        const text = res?.choices?.[0]?.message?.content;
+        if (typeof text !== "string") {
+            return { kind: "error", error: "browser model returned no text" };
+        }
         return { kind: "ok", text };
     } catch (err) {
         return { kind: "error", error: err instanceof Error ? err.message : String(err) };
