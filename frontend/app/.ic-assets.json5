@@ -2,7 +2,17 @@
     {
         match: "**/*",
         headers: {
-            "Permissions-Policy": "accelerometer=(), ambient-light-sensor=(), autoplay=*, battery=(), camera=*, cross-origin-isolated=(), display-capture=*, document-domain=(), encrypted-media=*, execution-while-not-rendered=(), execution-while-out-of-viewport=(), fullscreen=*, geolocation=(), gyroscope=(), keyboard-map=(), magnetometer=(), microphone=*, midi=(), navigation-override=(), payment=(), picture-in-picture=*, publickey-credentials-get=(self), screen-wake-lock=(), sync-xhr=(), usb=(), web-share=*, xr-spatial-tracking=(), clipboard-read=*, clipboard-write=*, idle-detection=*",
+            // cross-origin-isolated=(self) (NOT "()", which disallows the capability): required for
+            // COOP+COEP below to grant crossOriginIsolated → SharedArrayBuffer → MULTITHREADED
+            // llama.cpp-WASM for the in-browser local-model path (webInference.ts). Without these
+            // headers everything still works — wllama just falls back to single-thread (slower).
+            "Permissions-Policy": "accelerometer=(), ambient-light-sensor=(), autoplay=*, battery=(), camera=*, cross-origin-isolated=(self), display-capture=*, document-domain=(), encrypted-media=*, execution-while-not-rendered=(), execution-while-out-of-viewport=(), fullscreen=*, geolocation=(), gyroscope=(), keyboard-map=(), magnetometer=(), microphone=*, midi=(), navigation-override=(), payment=(), picture-in-picture=*, publickey-credentials-get=(self), screen-wake-lock=(), sync-xhr=(), usb=(), web-share=*, xr-spatial-tracking=(), clipboard-read=*, clipboard-write=*, idle-detection=*",
+            // "credentialless" (not require-corp) keeps no-credential cross-origin subresources
+            // loading without CORP headers. Known trade-offs: third-party iframes that don't send
+            // COEP (e.g. Twitter embeds) are blocked under isolation; Safari doesn't support
+            // credentialless and simply stays non-isolated (single-thread fallback).
+            "Cross-Origin-Opener-Policy": "same-origin",
+            "Cross-Origin-Embedder-Policy": "credentialless",
             "X-Frame-Options": "set in csp",
             "Referrer-Policy": "same-origin",
             "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
