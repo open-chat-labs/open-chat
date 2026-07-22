@@ -27,6 +27,10 @@ for (const target of targets) {
     await build({
         configFile: false,
         logLevel: "warn",
+        // Without this Vite copies frontend/app/public into the lib/ outDir,
+        // which the app build then sweeps into build/, clashing with dfx's
+        // separate frontend/app/public asset source.
+        publicDir: false,
         resolve: { alias: ocPackageAliases },
         define: { "process.env.NODE_ENV": JSON.stringify("production") },
         build: {
