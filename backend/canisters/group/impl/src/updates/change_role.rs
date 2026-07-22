@@ -67,6 +67,7 @@ fn change_role_inner(
     // Check whether the initiating user is permitted
     // Note: A bot acting in autonomous mode with the "change role" permission is
     // able to promote/demote owners
+    let mut changed_by_role = None;
     if let Some(initiator) = caller.initiator() {
         let member = state.data.chat.members.get_verified_member(initiator)?;
         if !member
@@ -75,10 +76,14 @@ fn change_role_inner(
         {
             return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
+        changed_by_role = Some(member.role());
     }
 
     let now = state.env.now();
-    let results = state.data.chat.change_role(caller.agent(), args.user_ids, args.new_role, now);
+    let results = state
+        .data
+        .chat
+        .change_role(caller.agent(), changed_by_role, args.user_ids, args.new_role, now);
 
     // Owners can't "lapse" so either add or remove user from expiry list if they lose or gain owner status
     if let Some(gate_expiry) = state.data.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry()) {
