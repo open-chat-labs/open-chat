@@ -62,7 +62,7 @@ async fn process_batch(batch: Vec<(CanisterId, Vec<LocalUserIndexEvent>)>) {
 async fn sync_events(canister_id: CanisterId, events: Vec<LocalUserIndexEvent>) {
     let args = local_user_index_canister::c2c_notify_user_index_events::Args { events: events.clone() };
     if let Err(error) = local_user_index_canister_c2c_client::c2c_notify_user_index_events(canister_id, &args).await
-        && delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message()).is_some()
+        && delay_if_should_retry_failed_c2c_call(&error).is_some()
     {
         mutate_state(|state| {
             state

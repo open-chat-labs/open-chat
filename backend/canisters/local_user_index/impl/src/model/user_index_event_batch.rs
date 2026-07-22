@@ -18,7 +18,7 @@ impl TimerJobItem for UserIndexEventBatch {
         match response {
             Ok(user_index_canister::c2c_local_user_index::Response::Success) => Ok(()),
             Err(error) => {
-                let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message());
+                let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(&error);
                 Err(delay_if_should_retry)
             }
         }

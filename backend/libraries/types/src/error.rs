@@ -6,22 +6,70 @@ use std::fmt::{Debug, Formatter};
 
 pub type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
 
+// Whether a failed c2c call is worth retrying. This is determined when the error is first
+// converted from the CDK error (see `utils::canister::convert_cdk_error`), because that is the
+// only point at which we have the CDK's own view of the failure - once flattened into a reject
+// code plus a message the detail is lost.
+#[derive(Serialize, Clone, Copy, Debug, Eq, PartialEq)]
+pub enum C2CRetryPolicy {
+    // The call will fail the same way however many times we retry it
+    DoNotRetry,
+    // The failure was transient and an immediate retry may succeed
+    RetryImmediately,
+    // The failure may resolve, but not straight away (eg. the callee needs topping up with cycles),
+    // so retrying immediately would just burn our own cycles
+    RetryAfterDelay,
+}
+
+impl C2CRetryPolicy {
+    // Used for errors which did not originate from a failed CDK call, so the reject code is all we
+    // have to go on
+    pub fn from_reject_code(reject_code: RejectCode) -> Self {
+        match reject_code {
+            RejectCode::DestinationInvalid | RejectCode::CanisterReject => C2CRetryPolicy::DoNotRetry,
+            _ => C2CRetryPolicy::RetryImmediately,
+        }
+    }
+}
+
 #[derive(Serialize, Clone)]
 pub struct C2CError {
     canister_id: CanisterId,
     method_name: String,
     reject_code: RejectCode,
     message: String,
+    retry_policy: C2CRetryPolicy,
 }
 
 impl C2CError {
     pub fn new(canister_id: CanisterId, method_name: &str, reject_code: RejectCode, message: String) -> Self {
+        C2CError::new_with_retry_policy(
+            canister_id,
+            method_name,
+            reject_code,
+            message,
+            C2CRetryPolicy::from_reject_code(reject_code),
+        )
+    }
+
+    pub fn new_with_retry_policy(
+        canister_id: CanisterId,
+        method_name: &str,
+        reject_code: RejectCode,
+        message: String,
+        retry_policy: C2CRetryPolicy,
+    ) -> Self {
         C2CError {
             canister_id,
             method_name: method_name.to_string(),
             reject_code,
             message,
+            retry_policy,
         }
+    }
+
+    pub fn retry_policy(&self) -> C2CRetryPolicy {
+        self.retry_policy
     }
 
     pub fn canister_id(&self) -> CanisterId {
@@ -48,6 +96,7 @@ impl Debug for C2CError {
             .field("method_name", &self.method_name)
             .field("reject_code", &self.reject_code)
             .field("message", &self.message)
+            .field("retry_policy", &self.retry_policy)
             .finish()
     }
 }

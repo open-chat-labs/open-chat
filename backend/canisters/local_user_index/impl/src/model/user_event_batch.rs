@@ -28,7 +28,7 @@ impl TimerJobItem for UserEventBatch {
                 if is_out_of_cycles_error(error.reject_code(), error.message()) {
                     top_up_child_canister(Some(self.key.into())).await;
                 }
-                let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message());
+                let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(&error);
                 Err(delay_if_should_retry)
             }
         }

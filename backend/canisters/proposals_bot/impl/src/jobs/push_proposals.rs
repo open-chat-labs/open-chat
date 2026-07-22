@@ -173,7 +173,7 @@ fn mark_proposal_pushed(
                     .nervous_systems
                     .mark_proposal_push_failed(&governance_canister_id, proposal, state.env.now());
 
-                if delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message()).is_none() {
+                if delay_if_should_retry_failed_c2c_call(&error).is_none() {
                     state.data.nervous_systems.mark_disabled(&governance_canister_id);
                 }
             }
