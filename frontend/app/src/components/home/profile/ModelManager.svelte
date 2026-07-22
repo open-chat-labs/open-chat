@@ -19,6 +19,7 @@
         pickWebModelFromDisk,
         restoreWebModel,
         setWebModelFile,
+        useWebModelFromUrl,
         webModelStatus,
     } from "@utils/webInference";
     import {
@@ -108,6 +109,24 @@
     // webInference.ts). The picker path persists across sessions; the file input is session-only.
     let webError = $state("");
     const hasPicker = typeof window !== "undefined" && "showOpenFilePicker" in window;
+
+    // Catalog models a BROWSER can run: a single GGUF within the ~2 GB wasm32 envelope. Catalog
+    // order is the recommendation order (Gemma first = the default suggestion).
+    const WEB_MODEL_MAX = 2_147_483_648;
+    let webChoices = $derived(
+        catalogSource.filter((m) => m.files.length === 1 && m.sizeBytes <= WEB_MODEL_MAX),
+    );
+
+    async function chooseWebModel(entry: ModelCatalogEntry) {
+        webError = "";
+        webError =
+            (await useWebModelFromUrl({
+                id: entry.id,
+                name: entry.name,
+                url: entry.files[0].url,
+                sizeBytes: entry.sizeBytes,
+            })) ?? "";
+    }
 
     async function attachWebFile(e: Event) {
         webError = "";
@@ -350,7 +369,36 @@
             <Button secondary small onClick={detachWebModel}>
                 <Translatable resourceKey={i18nKey("Remove model")} />
             </Button>
+        {:else if $webModelStatus.status === "downloading"}
+            <p>
+                <Translatable
+                    resourceKey={i18nKey(
+                        `Downloading ${$webModelStatus.name}… ` +
+                            ($webModelStatus.progress !== undefined
+                                ? `${Math.round(($webModelStatus.progress.received / Math.max(1, $webModelStatus.progress.total)) * 100)}%`
+                                : ""),
+                    )} />
+            </p>
         {:else}
+            <div class="web-choices">
+                {#each webChoices as entry, i (entry.id)}
+                    <div class="web-choice">
+                        <div class="web-choice-info">
+                            <div class="name">
+                                {entry.name}
+                                <span class="muted">({formatSize(entry.sizeBytes)})</span>
+                            </div>
+                            {#if entry.description !== undefined}
+                                <div class="desc">{entry.description}</div>
+                            {/if}
+                        </div>
+                        <Button secondary={i !== 0} small onClick={() => chooseWebModel(entry)}>
+                            <Translatable
+                                resourceKey={i18nKey(i === 0 ? "Download & use (default)" : "Download & use")} />
+                        </Button>
+                    </div>
+                {/each}
+            </div>
             <div class="web-attach">
                 {#if hasPicker}
                     <Button secondary small onClick={attachWebPicker}>
@@ -527,6 +575,28 @@
         flex-direction: column;
         gap: 8px;
         margin: 8px 0 16px;
+    }
+    .web-choices {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .web-choice {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+    }
+    .web-choice-info .name {
+        font-weight: 700;
+    }
+    .web-choice-info .desc {
+        font-size: 0.85em;
+        color: var(--txt-light, inherit);
+    }
+    .web-choice-info .muted {
+        font-weight: 400;
+        color: var(--txt-light, inherit);
     }
     .web-attach {
         display: flex;

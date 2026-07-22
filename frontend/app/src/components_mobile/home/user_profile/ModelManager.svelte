@@ -20,6 +20,7 @@
         pickWebModelFromDisk,
         restoreWebModel,
         setWebModelFile,
+        useWebModelFromUrl,
         webModelStatus,
     } from "@utils/webInference";
     import {
@@ -74,6 +75,24 @@
     // Prefer the OpenChat-hosted catalog (owner-curated on the registry, updatable without a client
     // release); fall back to the built-in default when it's empty (not configured) or unreachable.
     let catalogSource = $state<ModelCatalogEntry[]>(defaultModelCatalog.models);
+
+    // Catalog models a BROWSER can run: a single GGUF within the ~2 GB wasm32 envelope. Catalog
+    // order is the recommendation order (Gemma first = the default suggestion).
+    const WEB_MODEL_MAX = 2_147_483_648;
+    let webChoices = $derived(
+        catalogSource.filter((m) => m.files.length === 1 && m.sizeBytes <= WEB_MODEL_MAX),
+    );
+
+    async function chooseWebModel(entry: ModelCatalogEntry) {
+        webError = "";
+        webError =
+            (await useWebModelFromUrl({
+                id: entry.id,
+                name: entry.name,
+                url: entry.files[0].url,
+                sizeBytes: entry.sizeBytes,
+            })) ?? "";
+    }
 
     async function loadCatalog() {
         try {
@@ -333,7 +352,36 @@
                 <Button size={"sm"} secondary onclick={detachWebModel}>
                     <Translatable resourceKey={i18nKey("Remove model")}></Translatable>
                 </Button>
+            {:else if $webModelStatus.status === "downloading"}
+                <BodySmall>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            `Downloading ${$webModelStatus.name}… ` +
+                                ($webModelStatus.progress !== undefined
+                                    ? `${Math.round(($webModelStatus.progress.received / Math.max(1, $webModelStatus.progress.total)) * 100)}%`
+                                    : ""),
+                        )}></Translatable>
+                </BodySmall>
             {:else}
+                {#each webChoices as entry, i (entry.id)}
+                    <Container gap={"xs"} direction={"vertical"}>
+                        <BodySmall fontWeight={"bold"}>
+                            <Translatable
+                                resourceKey={i18nKey(`${entry.name} (${formatSize(entry.sizeBytes)})`)}></Translatable>
+                        </BodySmall>
+                        {#if entry.description !== undefined}
+                            <Caption colour={"textSecondary"}>
+                                <Translatable resourceKey={i18nKey(entry.description)}></Translatable>
+                            </Caption>
+                        {/if}
+                        <Button size={"sm"} secondary={i !== 0} onclick={() => chooseWebModel(entry)}>
+                            <Translatable
+                                resourceKey={i18nKey(
+                                    i === 0 ? "Download & use (default)" : "Download & use",
+                                )}></Translatable>
+                        </Button>
+                    </Container>
+                {/each}
                 {#if hasPicker}
                     <Button size={"sm"} secondary onclick={attachWebPicker}>
                         <Translatable resourceKey={i18nKey("Pick a .gguf from disk (remembered)")}></Translatable>

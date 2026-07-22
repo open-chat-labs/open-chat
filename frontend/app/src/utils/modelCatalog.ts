@@ -12,6 +12,68 @@ import type { ModelCatalog } from "openchat-shared";
 export const defaultModelCatalog: ModelCatalog = {
     version: 1,
     models: [
+        // ── Browser-capable small models (single GGUF ≤ 2 GB — they also run natively) ─────────
+        // Listed Gemma-first: it is the DEFAULT suggestion in the browser chooser.
+        {
+            id: "gemma-3-1b-it-q4",
+            name: "Gemma 3 1B (instruct) — default",
+            description:
+                "Default. Google's small instruct model, same family as the desktop model. " +
+                "Pros: balanced quality, broad language coverage, modest size (~0.8 GB). " +
+                "Cons: a little chattier about output format than Qwen; Gemma license terms.",
+            modalities: ["text"],
+            runtime: "llama-cpp",
+            files: [
+                {
+                    url: "https://huggingface.co/ggml-org/gemma-3-1b-it-GGUF/resolve/main/gemma-3-1b-it-Q4_K_M.gguf",
+                    sha256: "8ccc5cd1f1b3602548715ae25a66ed73fd5dc68a210412eea643eb20eb75a135",
+                    bytes: 806058240,
+                },
+            ],
+            license: "Gemma Terms of Use",
+            licenseUrl: "https://ai.google.dev/gemma/terms",
+            sizeBytes: 806058240,
+        },
+        {
+            id: "qwen2.5-1.5b-instruct-q4",
+            name: "Qwen2.5 1.5B (instruct)",
+            description:
+                "Best extraction quality of the small models. " +
+                "Pros: strictest JSON/format discipline per MB, Apache-2.0 license. " +
+                "Cons: largest of the three (~1.1 GB) — slower to load and run in a browser.",
+            modalities: ["text"],
+            runtime: "llama-cpp",
+            files: [
+                {
+                    url: "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf",
+                    sha256: "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e",
+                    bytes: 1117320736,
+                },
+            ],
+            license: "Apache 2.0",
+            licenseUrl: "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+            sizeBytes: 1117320736,
+        },
+        {
+            id: "qwen2.5-0.5b-instruct-q4",
+            name: "Qwen2.5 0.5B (instruct)",
+            description:
+                "Fastest and lightest (~0.5 GB) — good for weaker machines. " +
+                "Pros: quickest load + response, Apache-2.0 license. " +
+                "Cons: weakest extraction quality — leans on the app's built-in correction rules.",
+            modalities: ["text"],
+            runtime: "llama-cpp",
+            files: [
+                {
+                    url: "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf",
+                    sha256: "74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db",
+                    bytes: 491400032,
+                },
+            ],
+            license: "Apache 2.0",
+            licenseUrl: "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+            sizeBytes: 491400032,
+        },
         {
             id: "gemma-4-e2b-it-q4",
             name: "Gemma 4 E2B (instruct)",
