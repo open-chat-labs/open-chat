@@ -349,7 +349,7 @@
                                       : " (attached — loads on first use)"),
                         )}></Translatable>
                 </BodySmall>
-                <Button size={"sm"} secondary onclick={detachWebModel}>
+                <Button size={"sm"} secondary onClick={detachWebModel}>
                     <Translatable resourceKey={i18nKey("Remove model")}></Translatable>
                 </Button>
             {:else if $webModelStatus.status === "downloading"}
@@ -374,7 +374,7 @@
                                 <Translatable resourceKey={i18nKey(entry.description)}></Translatable>
                             </Caption>
                         {/if}
-                        <Button size={"sm"} secondary={i !== 0} onclick={() => chooseWebModel(entry)}>
+                        <Button size={"sm"} secondary={i !== 0} onClick={() => chooseWebModel(entry)}>
                             <Translatable
                                 resourceKey={i18nKey(
                                     i === 0 ? "Download & use (default)" : "Download & use",
@@ -383,7 +383,7 @@
                     </Container>
                 {/each}
                 {#if hasPicker}
-                    <Button size={"sm"} secondary onclick={attachWebPicker}>
+                    <Button size={"sm"} secondary onClick={attachWebPicker}>
                         <Translatable resourceKey={i18nKey("Pick a .gguf from disk (remembered)")}></Translatable>
                     </Button>
                 {/if}

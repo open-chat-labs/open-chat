@@ -36,7 +36,8 @@ export function generateCspForScripts(inlineScripts, development) {
         object-src 'none';
         base-uri 'self';
         form-action 'self';${production ? "\nupgrade-insecure-requests;" : ""}
-        script-src 'self' https://www.instagram.com https://scripts.wobbl3.com/ https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(" ")} ${development ? "http://localhost:* http://127.0.0.1:*" : ""};
+        worker-src 'self' blob:;
+        script-src 'self' 'wasm-unsafe-eval' https://www.instagram.com https://scripts.wobbl3.com/ https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(" ")} ${development ? "http://localhost:* http://127.0.0.1:*" : ""};
         connect-src 'self'${development ? " ws: http:" : ""}${production || isNative ? " wss: https:" : ""}${isNative ? " ipc: http://ipc.localhost http://asset.localhost asset: *" : ""};`;
 
     return csp;
