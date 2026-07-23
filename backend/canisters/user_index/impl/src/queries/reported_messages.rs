@@ -1,6 +1,6 @@
 use crate::guards::caller_is_platform_moderator;
 use crate::{RuntimeState, read_state};
-use ic_cdk::query;
+use canister_api_macros::query;
 use user_index_canister::reported_messages::{Response::*, *};
 
 #[query(guard = "caller_is_platform_moderator", candid = true, msgpack = true)]
