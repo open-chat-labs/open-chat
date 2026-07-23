@@ -387,7 +387,7 @@
     }
 
     function reportedMessages(userId?: string): void {
-        console.log(client.reportedMessages(userId));
+        client.reportedMessages(userId).then((json) => console.log(JSON.parse(json)));
     }
 
     function unsuspendUser(userId: string): void {
