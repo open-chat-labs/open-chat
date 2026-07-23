@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Expose `reported_messages` query over msgpack so the website can call it again ([#9116](https://github.com/open-chat-labs/open-chat/pull/9116))
+
+## [[2.0.1993](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1993-user_index)] - 2026-07-21
+
 ### Changed
 
 - Add `c2c_csam_detected` endpoint - applies the CSAM auto-sanction and posts a moderation alert ([#9093](https://github.com/open-chat-labs/open-chat/pull/9093))
