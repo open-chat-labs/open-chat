@@ -275,7 +275,12 @@ fn repeat_reports_of_same_message_attach_to_a_single_report() {
 // posts a second alert into the moderation channel. Returns the number of requests which
 // included `target_text`, once `expected_calls` such requests have been answered and none
 // remain pending, or after a bounded number of ticks.
-fn mock_moderation_outcalls(env: &mut PocketIc, target_text: &str, flagged_categories: &[&str], expected_calls: usize) -> usize {
+fn mock_moderation_outcalls(
+    env: &mut PocketIc,
+    target_text: &str,
+    flagged_categories: &[&str],
+    expected_calls: usize,
+) -> usize {
     let mut handled = 0;
 
     for _ in 0..100 {
@@ -308,13 +313,11 @@ fn mock_moderation_outcalls(env: &mut PocketIc, target_text: &str, flagged_categ
                 .collect();
             let results: Vec<Value> = inputs
                 .iter()
-                .map(|input| {
-                    if input_matches(input) {
-                        json!({ "categories": categories })
-                    } else {
-                        json!({ "categories": {} })
-                    }
-                })
+                .map(
+                    |input| {
+                        if input_matches(input) { json!({ "categories": categories }) } else { json!({ "categories": {} }) }
+                    },
+                )
                 .collect();
             let response_body = serde_json::to_vec(&json!({ "results": results })).unwrap();
 
