@@ -19,6 +19,12 @@ use user_index_canister::users::UserGroup;
 // All message content in these tests is benign placeholder text. The classification outcome is
 // dictated entirely by the mocked moderation API responses below - the real API is never called
 // and nothing resembling abusive content exists anywhere in these tests.
+//
+// Each test appends a random suffix to this text so that its own classify requests can be told
+// apart from stale ones: test envs are pooled, so an env which previously ran a moderation test
+// still has the API key configured, and a later test which sends a public message and advances
+// time can leave a classify outcall pending (or a message queued in the broker) which then
+// surfaces during whichever moderation test draws that env next.
 const TEST_MESSAGE_TEXT: &str = "an entirely ordinary test message";
 const CSAM_CATEGORY: &str = "sexual/minors";
 
@@ -34,12 +40,13 @@ fn csam_pipeline_detection_triggers_auto_sanction() {
     let test_data = init_test_data(env, canister_ids, *controller);
 
     let message_id = random_from_u128();
+    let message_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
     client::group::happy_path::send_text_message(
         env,
         &test_data.sender,
         test_data.group_id,
         None,
-        TEST_MESSAGE_TEXT,
+        &message_text,
         Some(message_id),
     );
 
@@ -47,7 +54,7 @@ fn csam_pipeline_detection_triggers_auto_sanction() {
     // broker classifies on a 10s timer
     tick_many(env, 3);
     env.advance_time(Duration::from_secs(10));
-    let handled = mock_moderation_outcalls(env, &[CSAM_CATEGORY], 1);
+    let handled = mock_moderation_outcalls(env, &message_text, &[CSAM_CATEGORY], 1);
     assert_eq!(handled, 1);
 
     // Flags route back to the group, which escalates to user_index (via group_index), which
@@ -82,12 +89,13 @@ fn report_then_upheld_as_csam_verdict_applies_sanction() {
     let test_data = init_test_data(env, canister_ids, *controller);
 
     let message_id = random_from_u128();
+    let message_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
     client::group::happy_path::send_text_message(
         env,
         &test_data.sender,
         test_data.group_id,
         None,
-        TEST_MESSAGE_TEXT,
+        &message_text,
         Some(message_id),
     );
     tick_many(env, 3);
@@ -109,7 +117,7 @@ fn report_then_upheld_as_csam_verdict_applies_sanction() {
 
     tick_many(env, 3);
     env.advance_time(Duration::from_secs(10));
-    mock_moderation_outcalls(env, &[], 2);
+    mock_moderation_outcalls(env, &message_text, &[], 2);
     tick_many(env, 10);
 
     let reports = get_moderation_reports(env, &test_data);
@@ -210,12 +218,13 @@ fn repeat_reports_of_same_message_attach_to_a_single_report() {
     }
 
     let message_id = random_from_u128();
+    let message_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
     client::group::happy_path::send_text_message(
         env,
         &test_data.sender,
         test_data.group_id,
         None,
-        TEST_MESSAGE_TEXT,
+        &message_text,
         Some(message_id),
     );
     tick_many(env, 3);
@@ -238,7 +247,7 @@ fn repeat_reports_of_same_message_attach_to_a_single_report() {
     assert!(matches!(report(env, test_data.reporter.principal), UnitResult::Success));
     tick_many(env, 3);
     env.advance_time(Duration::from_secs(10));
-    mock_moderation_outcalls(env, &[], 2);
+    mock_moderation_outcalls(env, &message_text, &[], 2);
     tick_many(env, 10);
 
     // Second and third reports attach to the existing report. Before the add_report lookup fix
@@ -258,10 +267,15 @@ fn repeat_reports_of_same_message_attach_to_a_single_report() {
     assert_eq!(reports[0].reporters, vec![test_data.reporter.user_id]);
 }
 
-// Waits for pending moderation API outcalls and answers each one, classifying every input in
-// each request with `flagged_categories` (empty = clean). Returns once `expected_calls` have
-// been answered and none remain pending, or after a bounded number of ticks.
-fn mock_moderation_outcalls(env: &mut PocketIc, flagged_categories: &[&str], expected_calls: usize) -> usize {
+// Waits for pending moderation API outcalls and answers each one. Only inputs containing
+// `target_text` are classified with `flagged_categories` (empty = clean); every other input is
+// classified clean. The test envs are pooled, so requests for messages sent by earlier tests on
+// the same env can still be pending - those must be drained (a clean classification has no side
+// effects) but must not be counted or flagged, otherwise eg. a stale message flagged as CSAM
+// posts a second alert into the moderation channel. Returns the number of requests which
+// included `target_text`, once `expected_calls` such requests have been answered and none
+// remain pending, or after a bounded number of ticks.
+fn mock_moderation_outcalls(env: &mut PocketIc, target_text: &str, flagged_categories: &[&str], expected_calls: usize) -> usize {
     let mut handled = 0;
 
     for _ in 0..100 {
@@ -277,15 +291,31 @@ fn mock_moderation_outcalls(env: &mut PocketIc, flagged_categories: &[&str], exp
         }
 
         for request in requests {
-            let body: Value = serde_json::from_slice(&request.body).expect("moderation request body should be JSON");
-            assert_eq!(body["model"], "omni-moderation-latest");
-            let input_count = body["input"].as_array().map_or(1, |inputs| inputs.len());
+            // Stale requests from other tests may not even be text classifications (eg. image
+            // inputs), so parse leniently and answer anything unrecognized clean
+            let body: Value = serde_json::from_slice(&request.body).unwrap_or_default();
+            let inputs = body["input"].as_array().cloned().unwrap_or_default();
+            let input_matches = |input: &Value| input.as_str().is_some_and(|text| text.contains(target_text));
+            let request_matches = inputs.iter().any(input_matches);
+
+            if request_matches {
+                assert_eq!(body["model"], "omni-moderation-latest");
+            }
 
             let categories: serde_json::Map<String, Value> = flagged_categories
                 .iter()
                 .map(|category| (category.to_string(), Value::Bool(true)))
                 .collect();
-            let results: Vec<Value> = (0..input_count).map(|_| json!({ "categories": categories })).collect();
+            let results: Vec<Value> = inputs
+                .iter()
+                .map(|input| {
+                    if input_matches(input) {
+                        json!({ "categories": categories })
+                    } else {
+                        json!({ "categories": {} })
+                    }
+                })
+                .collect();
             let response_body = serde_json::to_vec(&json!({ "results": results })).unwrap();
 
             env.mock_canister_http_response(MockCanisterHttpResponse {
@@ -298,7 +328,10 @@ fn mock_moderation_outcalls(env: &mut PocketIc, flagged_categories: &[&str], exp
                 }),
                 additional_responses: Vec::new(),
             });
-            handled += 1;
+
+            if request_matches {
+                handled += 1;
+            }
         }
 
         env.tick();
