@@ -82,8 +82,26 @@ type FileInfoSuccessResult = record {
     file_hash : Hash;
 };
 
+type VaultFileChunkArgs = record {
+    file_id : FileId;
+    chunk_index : nat32;
+};
+
+type VaultFileChunkResponse = variant {
+    Success : record {
+        bytes : blob;
+        chunk_index : nat32;
+        chunk_count : nat32;
+        total_size : nat64;
+        mime_type : text;
+    };
+    NotAuthorized;
+    NotFound;
+};
+
 service : {
     upload_chunk_v2 : (UploadChunkArgs) -> (UploadChunkResponse);
+    vault_file_chunk : (VaultFileChunkArgs) -> (VaultFileChunkResponse);
     delete_file : (DeleteFileArgs) -> (DeleteFileResponse);
     delete_files : (DeleteFilesArgs) -> (DeleteFilesResponse);
     forward_file : (ForwardFileArgs) -> (ForwardFileResponse);

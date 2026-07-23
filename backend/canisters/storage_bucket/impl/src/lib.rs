@@ -1,6 +1,7 @@
 use crate::model::files::{Files, RemoveFileResult};
 use crate::model::index_event_batch::{EventToSync, IndexEventBatch};
 use crate::model::users::Users;
+use crate::model::vault::Vault;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
@@ -49,6 +50,7 @@ impl RuntimeState {
 
     pub fn metrics(&self) -> Metrics {
         let file_metrics = self.data.files.metrics();
+        let vault_metrics = self.data.vault.metrics();
 
         Metrics {
             now: self.env.now(),
@@ -65,6 +67,10 @@ impl RuntimeState {
             total_file_bytes: file_metrics.total_file_bytes,
             index_sync_queue_length: self.data.index_event_sync_queue.len() as u32,
             expiration_queue_length: file_metrics.expiration_queue_len,
+            vault_quarantined: vault_metrics.quarantined,
+            vault_legal_holds: vault_metrics.legal_holds,
+            vault_reviewers: vault_metrics.reviewers,
+            vault_log_length: vault_metrics.log_length,
             stable_memory_sizes: memory::memory_sizes(),
         }
     }
@@ -75,6 +81,8 @@ struct Data {
     storage_index_canister_id: CanisterId,
     users: Users,
     files: Files,
+    #[serde(default)]
+    vault: Vault,
     index_event_sync_queue: BatchedTimerJobQueue<IndexEventBatch>,
     created: TimestampMillis,
     rng_seed: [u8; 32],
@@ -87,6 +95,7 @@ impl Data {
             storage_index_canister_id,
             users: Users::default(),
             files: Files::default(),
+            vault: Vault::default(),
             index_event_sync_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             created: now,
             rng_seed: [0; 32],
@@ -126,6 +135,10 @@ pub struct Metrics {
     pub total_file_bytes: u64,
     pub index_sync_queue_length: u32,
     pub expiration_queue_length: u64,
+    pub vault_quarantined: u64,
+    pub vault_legal_holds: u64,
+    pub vault_reviewers: u64,
+    pub vault_log_length: u64,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
 }
 
