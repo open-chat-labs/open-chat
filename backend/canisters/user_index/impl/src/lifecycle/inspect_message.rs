@@ -10,7 +10,10 @@ fn accept_if_valid(state: &RuntimeState) {
     let method_name = ic_cdk::api::msg_method_name().trim_end_matches("_msgpack").to_string();
 
     let is_valid = match method_name.as_str() {
-        "claim_daily_chit"
+        // Deliberately callable while suspended: contesting an automated sanction is the
+        // GDPR Art 22 human-intervention safeguard, and the caller is suspended by definition
+        "contest_moderation_sanction"
+        | "claim_daily_chit"
         | "create_canister"
         | "delete_user"
         | "mark_as_online"
@@ -26,8 +29,10 @@ fn accept_if_valid(state: &RuntimeState) {
         | "update_bot"
         | "update_diamond_membership_subscription" => state.is_caller_openchat_user(),
         "resolve_moderation_report" | "suspend_user" | "unsuspend_user" => state.is_caller_platform_moderator(),
-        "set_diamond_membership_fees"
+        "record_authority_report_filed"
+        | "set_diamond_membership_fees"
         | "set_internal_moderation_channel"
+        | "set_vault_reviewers"
         | "set_openai_api_key"
         | "set_premium_item_cost"
         | "set_user_upgrade_concurrency"
