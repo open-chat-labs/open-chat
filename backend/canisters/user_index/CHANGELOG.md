@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2001](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2001-user_index)] - 2026-07-23
+
 ### Fixed
 
 - Expose `reported_messages` query over msgpack so the website can call it again ([#9116](https://github.com/open-chat-labs/open-chat/pull/9116))
