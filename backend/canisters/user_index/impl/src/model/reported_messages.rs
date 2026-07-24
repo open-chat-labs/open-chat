@@ -3,7 +3,9 @@ use constants::HOUR_IN_MS;
 use local_user_index_canister::{OpenChatBotMessageV2, UserIndexEvent};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{Chat, MessageContent, MessageContentInitial, MessageId, MessageIndex, TextContent, TimestampMillis, UserId};
+use types::{
+    BlobReference, Chat, MessageContent, MessageContentInitial, MessageId, MessageIndex, TextContent, TimestampMillis, UserId,
+};
 use user_index_canister::resolve_moderation_report::ModerationVerdict;
 
 // Generous cap on how many not-yet-reported messages a single user can report per hour, so that
@@ -55,6 +57,10 @@ impl ReportedMessages {
                 reports: HashMap::from([(args.reporter, args.timestamp)]),
                 outcome: None,
                 moderation_channel_message_id: None,
+                blob_references: Vec::new(),
+                detection: DetectionSource::UserReport,
+                contested: None,
+                unverified_report_filed: None,
             });
             AddReportResult::New(new_index as u64)
         }
@@ -85,7 +91,7 @@ impl ReportedMessages {
             } else {
                 message.outcome = Some(ReportOutcome::Automated(outcome));
                 self.pending_classifications.remove(&report_index);
-                RecordOutcomeResult::Success(message.clone())
+                RecordOutcomeResult::Success(Box::new(message.clone()))
             }
         } else {
             RecordOutcomeResult::ReportNotFound(report_index)
@@ -128,6 +134,14 @@ impl ReportedMessages {
         ReportingMetrics {
             messages_reported: self.messages.len(),
             messages_pending_outcome: self.messages.iter().filter(|m| m.outcome.is_none()).count(),
+            pending_contests: self
+                .messages
+                .iter()
+                .filter(|m| {
+                    m.contested.is_some()
+                        && matches!(&m.outcome, Some(ReportOutcome::Automated(a)) if a.human_verdict.is_none())
+                })
+                .count(),
         }
     }
 
@@ -150,7 +164,10 @@ impl ReportedMessages {
             Some(ReportOutcome::Automated(outcome)) => {
                 if outcome.human_verdict.is_some() {
                     RecordVerdictResult::AlreadyResolved
-                } else if !matches!(outcome.action, ModerationAction::EscalatedForHumanReview) {
+                } else if !matches!(
+                    outcome.action,
+                    ModerationAction::EscalatedForHumanReview | ModerationAction::AutoSanctioned
+                ) {
                     RecordVerdictResult::NotEscalated
                 } else {
                     outcome.human_verdict = Some(human_verdict);
@@ -160,6 +177,98 @@ impl ReportedMessages {
             _ => RecordVerdictResult::NotEscalated,
         }
     }
+
+    // Records a proactive (pipeline) CSAM detection. Returns the report index if the sanction
+    // outcome was recorded now (either a new report or filling in an unresolved user report),
+    // or None if an outcome already exists (duplicate event - the sanction must not re-apply).
+    pub fn add_proactive_detection(&mut self, args: AddProactiveDetectionArgs) -> Option<u64> {
+        let key = (args.chat_id, args.thread_root_message_index, args.message_index);
+        let outcome = ReportOutcome::Automated(AutomatedOutcome {
+            timestamp: args.timestamp,
+            flagged_categories: args.flags,
+            action: ModerationAction::AutoSanctioned,
+            classification_failed: false,
+            human_verdict: None,
+        });
+
+        if let Some(&index) = self.lookup.get(&key) {
+            let message = self.messages.get_mut(index).unwrap();
+            if message.outcome.is_some() {
+                None
+            } else {
+                message.outcome = Some(outcome);
+                message.blob_references = args.blob_references;
+                self.pending_classifications.remove(&(index as u64));
+                Some(index as u64)
+            }
+        } else {
+            let new_index = self.messages.len();
+            self.lookup.insert(key, new_index);
+            self.messages.push(ReportedMessage {
+                chat_id: args.chat_id,
+                thread_root_message_index: args.thread_root_message_index,
+                message_index: args.message_index,
+                message_id: args.message_id,
+                sender: args.sender,
+                already_deleted: false,
+                reports: HashMap::new(),
+                outcome: Some(outcome),
+                moderation_channel_message_id: None,
+                blob_references: args.blob_references,
+                detection: DetectionSource::Proactive,
+                contested: None,
+                unverified_report_filed: None,
+            });
+            Some(new_index as u64)
+        }
+    }
+
+    pub fn set_blob_references(&mut self, report_index: u64, blob_references: Vec<BlobReference>) {
+        if let Some(message) = self.messages.get_mut(report_index as usize) {
+            message.blob_references = blob_references;
+        }
+    }
+
+    pub fn mark_contested(&mut self, report_index: u64, caller: UserId, now: TimestampMillis) -> ContestResult {
+        let Some(message) = self.messages.get_mut(report_index as usize) else {
+            return ContestResult::NotFound;
+        };
+        if message.sender != caller {
+            return ContestResult::NotFound;
+        }
+        let Some(ReportOutcome::Automated(outcome)) = &message.outcome else {
+            return ContestResult::NotContestable;
+        };
+        if outcome.human_verdict.is_some() {
+            return ContestResult::AlreadyResolved;
+        }
+        if !matches!(outcome.action, ModerationAction::AutoSanctioned) {
+            return ContestResult::NotContestable;
+        }
+        if message.contested.is_some() {
+            return ContestResult::AlreadyContested;
+        }
+        message.contested = Some(now);
+        ContestResult::Success
+    }
+
+    pub fn mark_unverified_report_filed(&mut self, report_index: u64, now: TimestampMillis) -> bool {
+        if let Some(message) = self.messages.get_mut(report_index as usize)
+            && message.unverified_report_filed.is_none()
+        {
+            message.unverified_report_filed = Some(now);
+            return true;
+        }
+        false
+    }
+}
+
+pub enum ContestResult {
+    Success,
+    NotFound,
+    NotContestable,
+    AlreadyContested,
+    AlreadyResolved,
 }
 
 pub enum RecordVerdictResult {
@@ -173,6 +282,7 @@ pub enum RecordVerdictResult {
 pub struct ReportingMetrics {
     pub messages_reported: usize,
     pub messages_pending_outcome: usize,
+    pub pending_contests: usize,
 }
 
 #[derive(Clone)]
@@ -187,6 +297,18 @@ pub struct AddReportArgs {
     pub timestamp: TimestampMillis,
 }
 
+#[derive(Clone)]
+pub struct AddProactiveDetectionArgs {
+    pub chat_id: Chat,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_index: MessageIndex,
+    pub message_id: MessageId,
+    pub sender: UserId,
+    pub flags: u32,
+    pub blob_references: Vec<BlobReference>,
+    pub timestamp: TimestampMillis,
+}
+
 #[derive(PartialEq, Debug)]
 pub enum AddReportResult {
     New(u64),
@@ -197,7 +319,7 @@ pub enum AddReportResult {
 }
 
 pub enum RecordOutcomeResult {
-    Success(ReportedMessage),
+    Success(Box<ReportedMessage>),
     OutcomeExists(u64),
     ReportNotFound(u64),
 }
@@ -224,19 +346,46 @@ pub struct ReportedMessage {
     // The id of the alert message posted into the internal moderation channel
     #[serde(default)]
     pub moderation_channel_message_id: Option<MessageId>,
+    // The message's media attachments, quarantined in the evidence vault while unresolved
+    #[serde(default)]
+    pub blob_references: Vec<BlobReference>,
+    #[serde(default)]
+    pub detection: DetectionSource,
+    // Set when the sanctioned sender contests the automated decision (GDPR Art 22 safeguard);
+    // a contested report jumps the review queue
+    #[serde(default)]
+    pub contested: Option<TimestampMillis>,
+    // Set when an honest-unverified authority report was filed before any verdict (the urgency
+    // valve); the verdict remains open and is resolved by a reviewer
+    #[serde(default)]
+    pub unverified_report_filed: Option<TimestampMillis>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum DetectionSource {
+    #[default]
+    UserReport,
+    Proactive,
 }
 
 impl ReportedMessage {
+    pub fn automated_action(&self) -> Option<ModerationAction> {
+        match &self.outcome {
+            Some(ReportOutcome::Automated(a)) => Some(a.action),
+            _ => None,
+        }
+    }
+
     // True if this message was judged to have broken the platform rules
     pub fn in_breach(&self) -> bool {
         match &self.outcome {
             Some(ReportOutcome::Modclub(o)) => o.approved < o.rejected,
-            Some(ReportOutcome::Automated(a)) => {
-                matches!(a.action, ModerationAction::AutoSanctioned)
-                    || a.human_verdict
-                        .as_ref()
-                        .is_some_and(|v| matches!(v.verdict, ModerationVerdict::Upheld | ModerationVerdict::UpheldAsCsam))
-            }
+            // A human verdict always overrides the automated action, so a Dismissed false
+            // positive does not count towards the sender's strikes
+            Some(ReportOutcome::Automated(a)) => match &a.human_verdict {
+                Some(v) => matches!(v.verdict, ModerationVerdict::Upheld | ModerationVerdict::UpheldAsCsam),
+                None => matches!(a.action, ModerationAction::AutoSanctioned),
+            },
             None => false,
         }
     }
@@ -356,6 +505,17 @@ pub fn build_verdict_message_to_sender(reported_message: &ReportedMessage) -> Us
         "Your [message]({}) was reported by another user and the OpenChat moderation team confirmed that it broke [the platform rules](https://oc.app/guidelines?section=3). {}",
         build_message_link(reported_message),
         removal_and_suspension_text(reported_message),
+    );
+
+    build_oc_bot_message(text, reported_message.sender)
+}
+
+// Sent when a Dismissed verdict reverses an automated sanction: the statement of reasons for
+// the restoration. Deliberately does not disclose whether any agency report was filed.
+pub fn build_restoration_message_to_sender(reported_message: &ReportedMessage) -> UserIndexEvent {
+    let text = format!(
+        "The OpenChat moderation team reviewed your [message]({}) which had been removed by automated moderation, and determined that it does not break [the platform rules](https://oc.app/guidelines?section=3). The message has been restored and your account unsuspended. We apologise for the disruption.",
+        build_message_link(reported_message),
     );
 
     build_oc_bot_message(text, reported_message.sender)

@@ -16,6 +16,7 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use identity_canister::UserIdentity;
 use local_user_index_canister::UserIndexEvent as LocalUserIndexEvent;
+use model::authority_reports::{AuthorityReportMetrics, AuthorityReports};
 use model::chit_leaderboard::ChitLeaderboard;
 use model::external_achievements::{ExternalAchievementMetrics, ExternalAchievements};
 use model::local_user_index_map::LocalUserIndexMap;
@@ -262,6 +263,8 @@ impl RuntimeState {
             pending_payments: self.data.pending_payments_queue.len(),
             pending_users_to_sync_to_storage_index: self.data.storage_index_user_sync_queue.len(),
             reporting_metrics: self.data.reported_messages.metrics(),
+            authority_report_metrics: self.data.authority_reports.metrics(),
+            vault_reviewers: self.data.vault_reviewers.len() as u32,
             oc_public_key: self.data.oc_key_pair.public_key_pem().to_string(),
             empty_users: self.data.empty_users.len(),
             deleted_users: self.data.deleted_users.len(),
@@ -370,6 +373,10 @@ struct Data {
     pub website_canister_id: CanisterId,
     pub platform_moderators_group: Option<ChatId>,
     pub reported_messages: ReportedMessages,
+    #[serde(default)]
+    pub authority_reports: AuthorityReports,
+    #[serde(default)]
+    pub vault_reviewers: HashSet<UserId>,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub rng_seed: [u8; 32],
@@ -459,6 +466,8 @@ impl Data {
             platform_moderators_group: None,
             nns_8_year_neuron: None,
             reported_messages: ReportedMessages::default(),
+            authority_reports: AuthorityReports::default(),
+            vault_reviewers: HashSet::new(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             rng_seed: [0; 32],
             diamond_membership_fees: DiamondMembershipFees::default(),
@@ -573,6 +582,8 @@ impl Default for Data {
             website_canister_id: Principal::anonymous(),
             platform_moderators_group: None,
             reported_messages: ReportedMessages::default(),
+            authority_reports: AuthorityReports::default(),
+            vault_reviewers: HashSet::new(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             nns_8_year_neuron: None,
             rng_seed: [0; 32],
@@ -628,6 +639,8 @@ pub struct Metrics {
     pub pending_payments: usize,
     pub pending_users_to_sync_to_storage_index: usize,
     pub reporting_metrics: ReportingMetrics,
+    pub authority_report_metrics: AuthorityReportMetrics,
+    pub vault_reviewers: u32,
     pub oc_public_key: String,
     pub empty_users: usize,
     pub deleted_users: usize,

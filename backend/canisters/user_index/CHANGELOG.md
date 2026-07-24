@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Proactive CSAM detections now create resolvable reports so the auto-sanction can be upheld, dismissed (reversing it in full), or contested by the sender ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- `contest_moderation_sanction` - the sanctioned sender can contest an automated decision, queuing it for priority human verdict ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- `set_vault_reviewers` (platform operator) - designates vault reviewers from among the platform moderators, synced to the storage buckets ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- Authority-report register with `authority_reports` query and `record_authority_report_filed` (platform operator) - the filed-report compliance evidence ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- Quarantine media in the evidence vault on CSAM detection (both pipeline and report flows), releasing or retaining it per the verdict ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+
 ### Fixed
 
 - Expose `reported_messages` query over msgpack so the website can call it again ([#9116](https://github.com/open-chat-labs/open-chat/pull/9116))

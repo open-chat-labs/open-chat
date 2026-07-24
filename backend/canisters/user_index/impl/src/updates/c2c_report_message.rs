@@ -137,11 +137,17 @@ fn handle_moderation_result(
 ) {
     // The pending classification is removed when the outcome is recorded, so if it is missing
     // the report has already been handled
-    let Some((content_excerpt, is_public)) = state
+    let Some((content_excerpt, is_public, blob_references)) = state
         .data
         .reported_messages
         .pending_classification(report_index)
-        .map(|pending| (pending.content.moderation_input().text, pending.is_public))
+        .map(|pending| {
+            (
+                pending.content.moderation_input().text,
+                pending.is_public,
+                pending.content.blob_references(),
+            )
+        })
     else {
         error!(report_index, "Report outcome already recorded");
         return;
@@ -188,6 +194,16 @@ fn handle_moderation_result(
     }
 
     if is_csam {
+        // Preserve evidence ahead of the sanction: store the media references on the report and
+        // quarantine the blobs in the vault (blocks public serving, pins against deletion)
+        state
+            .data
+            .reported_messages
+            .set_blob_references(report_index, blob_references.clone());
+        if let Some(report) = state.data.reported_messages.get(report_index) {
+            let report = report.clone();
+            moderation::quarantine_blobs(report_index, &report, categories.bits(), state);
+        }
         if !already_deleted {
             moderation::delete_message(
                 chat_id,
@@ -234,6 +250,7 @@ fn handle_moderation_result(
                 categories,
                 auto_sanctioned: is_csam,
                 content_excerpt,
+                blob_references: if is_csam { blob_references } else { Vec::new() },
                 timestamp: now,
             },
             state,

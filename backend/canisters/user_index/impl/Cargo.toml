@@ -61,6 +61,7 @@ serde_bytes = { workspace = true }
 serde_json = { workspace = true }
 stable_memory = { path = "../../../libraries/stable_memory" }
 stable_memory_map = { path = "../../../libraries/stable_memory_map" }
+storage_bucket_canister = { path = "../../storage_bucket/api" }
 storage_index_canister = { path = "../../storage_index/api" }
 storage_index_canister_c2c_client = { path = "../../storage_index/c2c_client" }
 time = { workspace = true }

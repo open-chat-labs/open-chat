@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Include blob references when escalating CSAM detections, for evidence-vault quarantine ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+
 ### Added
 
 - Add `c2c_flag_message` endpoint so user_index can flag reported messages ([#9092](https://github.com/open-chat-labs/open-chat/pull/9092))

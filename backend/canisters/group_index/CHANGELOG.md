@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Forward blob references with CSAM detections so the evidence vault can quarantine media ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+
 ### Added
 
 - Add `c2c_csam_detected` endpoint forwarding CSAM detections from groups/communities to user_index ([#9093](https://github.com/open-chat-labs/open-chat/pull/9093))

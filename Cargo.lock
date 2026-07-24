@@ -12472,6 +12472,7 @@ dependencies = [
  "serde_json",
  "stable_memory",
  "stable_memory_map",
+ "storage_bucket_canister",
  "storage_index_canister",
  "storage_index_canister_c2c_client",
  "testing",

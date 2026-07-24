@@ -748,9 +748,7 @@ pub struct ReportedMessage {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ModerationReportContent {
-    // The index of the report on the user_index, used to resolve the report with a verdict.
-    // None if this alert came from the automated pipeline (eg. a CSAM detection) in which case
-    // there is nothing to resolve.
+    // The index of the report on the user_index, used to resolve the report with a verdict
     pub report_index: Option<u64>,
     pub chat_id: Chat,
     pub thread_root_message_index: Option<MessageIndex>,
@@ -763,6 +761,10 @@ pub struct ModerationReportContent {
     // True if the CSAM auto-sanction has already been applied
     pub auto_sanctioned: bool,
     pub content_excerpt: Option<String>,
+    // The message's media attachments, held in the evidence vault; viewable only by designated
+    // vault reviewers via the explicit Review affordance (no media is ever embedded in alerts)
+    #[serde(default)]
+    pub blob_references: Vec<BlobReference>,
     pub reported_at: TimestampMillis,
     pub status: ModerationReportStatus,
 }

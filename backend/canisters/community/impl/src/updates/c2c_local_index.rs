@@ -79,6 +79,7 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
                     sender: message.sender,
                     flags: categories.bits(),
                     content_excerpt: message.content.moderation_input().text,
+                    blob_references: message.content.blob_references(),
                 };
                 state.data.fire_and_forget_handler.send(
                     state.data.group_index_canister_id,

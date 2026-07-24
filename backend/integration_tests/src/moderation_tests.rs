@@ -73,8 +73,49 @@ fn csam_pipeline_detection_triggers_auto_sanction() {
     let report = &reports[0];
     assert_eq!(report.sender, test_data.sender.user_id);
     assert!(report.auto_sanctioned);
-    assert!(report.report_index.is_none());
     assert!(report.reporters.is_empty());
+    // Proactive detections now create a resolvable report so the auto-sanction can be
+    // reviewed, contested, or reversed
+    let report_index = report.report_index.expect("proactive detection should carry a report index");
+
+    // The sanctioned sender contests the automated decision (the Art 22 safeguard)
+    let contest_response = client::user_index::contest_moderation_sanction(
+        env,
+        test_data.sender.principal,
+        canister_ids.user_index,
+        &types::Empty {},
+    );
+    assert!(matches!(contest_response, UnitResult::Success), "{contest_response:?}");
+
+    // A second contest of the same sanction is rejected
+    let second_contest = client::user_index::contest_moderation_sanction(
+        env,
+        test_data.sender.principal,
+        canister_ids.user_index,
+        &types::Empty {},
+    );
+    assert!(matches!(second_contest, UnitResult::Error(_)));
+
+    // A Dismissed verdict reverses the sanction: the sender is unsuspended and the report is
+    // resolved. (Message restoration is asserted once the chat-canister receivers land.)
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index,
+            verdict: ModerationVerdict::Dismissed,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    assert!(sender_state.suspension_details.is_none(), "sender should be unsuspended");
+
+    let reports = get_moderation_reports(env, &test_data);
+    assert!(matches!(reports[0].status, ModerationReportStatus::Dismissed(_)));
 }
 
 #[test]
@@ -144,6 +185,7 @@ fn report_then_upheld_as_csam_verdict_applies_sanction() {
         &user_index_canister::resolve_moderation_report::Args {
             report_index,
             verdict: ModerationVerdict::UpheldAsCsam,
+            urgent: Some(false),
         },
     );
     assert!(matches!(resolve_response, UnitResult::Success));
@@ -190,9 +232,33 @@ fn report_then_upheld_as_csam_verdict_applies_sanction() {
         &user_index_canister::resolve_moderation_report::Args {
             report_index,
             verdict: ModerationVerdict::Dismissed,
+            urgent: None,
         },
     );
     assert!(matches!(second_resolve, UnitResult::Error(_)));
+
+    // The upheld CSAM verdict put an authority report on the due register; the operator files
+    // it (manually, via the portal) and records the filing reference
+    let register = get_authority_reports(env, &test_data, canister_ids);
+    assert_eq!(register["due"].as_array().unwrap().len(), 1);
+    assert_eq!(register["due"][0]["report_index"], report_index);
+
+    let record_response = client::user_index::record_authority_report_filed(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::record_authority_report_filed::Args {
+            report_index,
+            portal_reference: "CSEA-IRP-TEST-0001".to_string(),
+            urgent: false,
+            unverified: false,
+        },
+    );
+    assert!(matches!(record_response, UnitResult::Success));
+
+    let register = get_authority_reports(env, &test_data, canister_ids);
+    assert!(register["due"].as_array().unwrap().is_empty());
+    assert_eq!(register["filed"][0]["portal_reference"], "CSEA-IRP-TEST-0001");
 }
 
 #[test]
@@ -375,6 +441,12 @@ fn get_moderation_reports(env: &PocketIc, test_data: &TestData) -> Vec<Moderatio
             },
         )
         .collect()
+}
+
+fn get_authority_reports(env: &PocketIc, test_data: &TestData, canister_ids: &CanisterIds) -> Value {
+    let user_index_canister::authority_reports::Response::Success(result) =
+        client::user_index::authority_reports(env, test_data.moderator.principal, canister_ids.user_index, &types::Empty {});
+    serde_json::from_str(&result.json).unwrap()
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
