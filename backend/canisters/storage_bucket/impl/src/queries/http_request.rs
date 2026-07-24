@@ -49,6 +49,9 @@ fn http_request_streaming_callback(token: Token) -> StreamingCallbackHttpRespons
 
 fn start_streaming_file(file_id: FileId, request_headers: &[(String, String)], state: &RuntimeState) -> HttpResponse {
     if let Some(file) = state.data.files.get(&file_id)
+        // Quarantined blobs are never served publicly. The check is hash-based, so any file
+        // referencing a quarantined blob (including re-uploads of the same content) is covered.
+        && !state.data.files.is_vault_pinned(&file.hash)
         && let Some(file_bytes) = state.data.files.blob_bytes(&file.hash)
     {
         let file_bytes_len = file_bytes.len();
@@ -140,7 +143,11 @@ fn continue_streaming_file(token: Token, state: &RuntimeState) -> StreamingCallb
         let chunk_index = token.index.0.to_u32().unwrap();
         let files = &state.data.files;
 
-        if let Some(bytes) = files.get(&file_id).and_then(|f| files.blob_bytes(&f.hash)) {
+        if let Some(bytes) = files
+            .get(&file_id)
+            .filter(|f| !files.is_vault_pinned(&f.hash))
+            .and_then(|f| files.blob_bytes(&f.hash))
+        {
             let (chunk_bytes, stream_next_chunk) = chunk_bytes(bytes, chunk_index);
 
             let token = if stream_next_chunk { Some(build_token(file_id, chunk_index + 1)) } else { None };

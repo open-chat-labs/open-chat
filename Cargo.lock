@@ -10442,6 +10442,7 @@ dependencies = [
  "oc_error_codes",
  "serde",
  "serde_bytes",
+ "storage_bucket_canister",
  "ts-rs",
  "ts_export",
  "types",
