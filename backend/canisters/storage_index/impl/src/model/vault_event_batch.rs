@@ -12,6 +12,9 @@ impl TimerJobItem for VaultEventBatch {
         let response = storage_bucket_canister_c2c_client::c2c_vault_sync(self.key, &args).await;
 
         match response {
+            // TODO(user_index wiring PR): propagate response.quarantine_failures back to
+            // user_index so the report records reflect evidence-capture failure instead of
+            // silently treating the blob as vaulted
             Ok(_) => Ok(()),
             Err(error) => {
                 let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message());

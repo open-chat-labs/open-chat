@@ -6,10 +6,10 @@ use storage_bucket_canister::vault_file_chunk::{Response::*, *};
 const VAULT_CHUNK_SIZE_BYTES: u32 = 1 << 20; // 1MB
 
 // Streams a quarantined blob to an allowlisted vault reviewer. Deliberately an update call (not
-// a query) so that fetching cannot happen without writing to the vault's tamper-evident access
-// log. Only the first chunk of a fetch is logged: chunk 0 corresponds 1:1 with the reviewer's
-// explicit "Review" action, and subsequent chunks are its mechanical continuation (this also
-// bounds log growth to deliberate review acts).
+// a query) so that fetching cannot happen outside a logged session: chunk 0 is the deliberate
+// "Review" act — it is logged and opens a sequential read session — and later chunks are served
+// only in session order, so no bytes are ever fetched unlogged while log growth stays bounded
+// to review acts.
 // Perf note: blob_bytes copies the full blob per chunk call (matching the existing http_request
 // pattern); a ranged read from stable storage is the eventual fix if vault media grows large.
 #[update]
@@ -42,13 +42,17 @@ fn vault_file_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
         return NotFound;
     }
 
+    let now = state.env.now();
+    if !state
+        .data
+        .vault
+        .authorize_view(args.file_id, caller, args.chunk_index, chunk_count, now)
+    {
+        return SessionRequired;
+    }
+
     let start = (args.chunk_index as usize) * (VAULT_CHUNK_SIZE_BYTES as usize);
     let end = std::cmp::min(start + VAULT_CHUNK_SIZE_BYTES as usize, bytes.len());
-
-    if args.chunk_index == 0 {
-        let now = state.env.now();
-        state.data.vault.log_view(args.file_id, caller, args.chunk_index, now);
-    }
 
     Success(SuccessResult {
         bytes: bytes[start..end].to_vec(),

@@ -16,6 +16,11 @@ pub struct Vault {
     log: Vec<VaultLogEntry>,
     #[serde(default)]
     quarantine_failures: u64,
+    // Ephemeral read sessions: (reviewer, file_id) -> next expected chunk. Not serialized:
+    // an upgrade resets sessions and reviewers restart from chunk 0 (an extra logged act,
+    // never an unlogged one).
+    #[serde(skip)]
+    sessions: BTreeMap<(Principal, FileId), u32>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -52,7 +57,7 @@ pub enum VaultLogEvent {
     LegalHoldCleared(FileId),
     Destroyed(FileId, String),
     RetentionExpired(FileId),
-    Viewed(FileId, Principal, u32),
+    Viewed(FileId, Principal),
 }
 
 pub enum VaultOpOutcome {
@@ -114,8 +119,9 @@ impl Vault {
             // destruction is the only operation which overrides a hold)
             return VaultOpOutcome::Blocked;
         }
-        self.remove_all_references(&hash);
-        self.append_log(VaultLogEvent::Unquarantined(file_id), now);
+        for alias in self.remove_all_references(&hash) {
+            self.append_log(VaultLogEvent::Unquarantined(alias), now);
+        }
         VaultOpOutcome::ReleasePin(hash)
     }
 
@@ -148,13 +154,43 @@ impl Vault {
         let Some(hash) = self.file_id_to_hash.get(&file_id).copied() else {
             return VaultOpOutcome::NotFound;
         };
-        self.remove_all_references(&hash);
-        self.append_log(VaultLogEvent::Destroyed(file_id, le_request_ref), now);
+        for alias in self.remove_all_references(&hash) {
+            self.append_log(VaultLogEvent::Destroyed(alias, le_request_ref.clone()), now);
+        }
         VaultOpOutcome::ReleasePin(hash)
     }
 
-    pub fn log_view(&mut self, file_id: FileId, reviewer: Principal, chunk_index: u32, now: TimestampMillis) {
-        self.append_log(VaultLogEvent::Viewed(file_id, reviewer, chunk_index), now);
+    // Authorizes serving a chunk to a reviewer. Chunk 0 always succeeds: it is the deliberate
+    // review act, is logged, and (re)opens a sequential read session. Later chunks are served
+    // only as the session's next expected chunk, so no bytes can ever be fetched outside a
+    // logged session, while the log stays 1:1 with review acts.
+    pub fn authorize_view(
+        &mut self,
+        file_id: FileId,
+        reviewer: Principal,
+        chunk_index: u32,
+        chunk_count: u32,
+        now: TimestampMillis,
+    ) -> bool {
+        let key = (reviewer, file_id);
+        if chunk_index == 0 {
+            self.append_log(VaultLogEvent::Viewed(file_id, reviewer), now);
+            if chunk_count > 1 {
+                self.sessions.insert(key, 1);
+            } else {
+                self.sessions.remove(&key);
+            }
+            true
+        } else if self.sessions.get(&key) == Some(&chunk_index) {
+            if chunk_index + 1 < chunk_count {
+                self.sessions.insert(key, chunk_index + 1);
+            } else {
+                self.sessions.remove(&key);
+            }
+            true
+        } else {
+            false
+        }
     }
 
     pub fn next_retention_expiry(&self) -> Option<TimestampMillis> {
@@ -174,9 +210,10 @@ impl Vault {
             .map(|r| (r.original_file_id, r.hash))
             .collect();
 
-        for (file_id, hash) in expired.iter() {
-            self.remove_all_references(hash);
-            self.append_log(VaultLogEvent::RetentionExpired(*file_id), now);
+        for (_, hash) in expired.iter() {
+            for alias in self.remove_all_references(hash) {
+                self.append_log(VaultLogEvent::RetentionExpired(alias), now);
+            }
         }
 
         expired.into_iter().map(|(_, hash)| hash).collect()
@@ -194,9 +231,17 @@ impl Vault {
 
     // Removes the record and every file_id alias mapping to the hash, so that quarantine state
     // is released for all sibling files referencing the same blob at once
-    fn remove_all_references(&mut self, hash: &Hash) {
+    fn remove_all_references(&mut self, hash: &Hash) -> Vec<FileId> {
         self.records.remove(hash);
+        let aliases: Vec<FileId> = self
+            .file_id_to_hash
+            .iter()
+            .filter(|(_, h)| *h == hash)
+            .map(|(id, _)| *id)
+            .collect();
         self.file_id_to_hash.retain(|_, h| h != hash);
+        self.sessions.retain(|(_, file_id), _| !aliases.contains(file_id));
+        aliases
     }
 
     fn append_log(&mut self, event: VaultLogEvent, now: TimestampMillis) {

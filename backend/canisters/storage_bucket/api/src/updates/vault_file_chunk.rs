@@ -16,6 +16,9 @@ pub enum Response {
     Success(SuccessResult),
     NotAuthorized,
     NotFound,
+    // Chunks after the first are served only in order within a session opened (and logged) by
+    // fetching chunk 0
+    SessionRequired,
 }
 
 #[ts_export(storage_bucket, vault_file_chunk)]
