@@ -33,32 +33,44 @@
     async function fetchAll() {
         stage = "loading";
         const loaded: LoadedItem[] = [];
-        for (const ref of blobReferences) {
-            const chunks: Uint8Array[] = [];
-            let mimeType = "application/octet-stream";
-            let chunkIndex = 0;
-            let chunkCount = 1;
-            while (chunkIndex < chunkCount) {
-                const resp = await client.vaultFileChunk(ref.canisterId, ref.blobId, chunkIndex);
-                if (cancelled) {
-                    loaded.forEach((item) => URL.revokeObjectURL(item.url));
-                    return;
+        try {
+            for (const ref of blobReferences) {
+                const chunks: Uint8Array[] = [];
+                let mimeType = "application/octet-stream";
+                let chunkIndex = 0;
+                let chunkCount = 1;
+                while (chunkIndex < chunkCount) {
+                    const resp = await client.vaultFileChunk(
+                        ref.canisterId,
+                        ref.blobId,
+                        chunkIndex,
+                    );
+                    if (cancelled) {
+                        loaded.forEach((item) => URL.revokeObjectURL(item.url));
+                        return;
+                    }
+                    if (resp.kind === "not_authorized") {
+                        stage = "not_authorized";
+                        return;
+                    }
+                    if (resp.kind !== "success") {
+                        stage = "error";
+                        return;
+                    }
+                    chunks.push(resp.bytes);
+                    mimeType = resp.mimeType;
+                    chunkCount = resp.chunkCount;
+                    chunkIndex++;
                 }
-                if (resp.kind === "not_authorized") {
-                    stage = "not_authorized";
-                    return;
-                }
-                if (resp.kind !== "success") {
-                    stage = "error";
-                    return;
-                }
-                chunks.push(resp.bytes);
-                mimeType = resp.mimeType;
-                chunkCount = resp.chunkCount;
-                chunkIndex++;
+                const url = URL.createObjectURL(new Blob(chunks as BlobPart[], { type: mimeType }));
+                loaded.push({ url, mimeType });
             }
-            const url = URL.createObjectURL(new Blob(chunks as BlobPart[], { type: mimeType }));
-            loaded.push({ url, mimeType });
+        } catch {
+            loaded.forEach((item) => URL.revokeObjectURL(item.url));
+            if (!cancelled) {
+                stage = "error";
+            }
+            return;
         }
         items = loaded;
         revealed = items.map(() => false);
@@ -112,10 +124,9 @@
                                 })} />
                         </div>
                         {#if !revealed[i]}
-                            <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-                            <div class="shroud" onclick={() => (revealed[i] = true)}>
+                            <button class="shroud" onclick={() => (revealed[i] = true)}>
                                 <Translatable resourceKey={i18nKey("vaultViewer.reveal")} />
-                            </div>
+                            </button>
                         {:else if item.mimeType.startsWith("image/")}
                             <img class="media" src={item.url} alt="" />
                         {:else if item.mimeType.startsWith("video/")}
@@ -158,6 +169,9 @@
         justify-content: center;
         height: toRem(200);
         border-radius: toRem(8);
+        border: none;
+        padding: 0;
+        width: 100%;
         cursor: pointer;
         background: repeating-linear-gradient(
             45deg,
