@@ -54,5 +54,12 @@ pub struct DestroyOp {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success,
+    Success(SuccessResult),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct SuccessResult {
+    // Evidence-capture failures (eg. file deleted before the op arrived) — callers must not
+    // treat these as quarantined
+    pub quarantine_failures: Vec<FileId>,
 }

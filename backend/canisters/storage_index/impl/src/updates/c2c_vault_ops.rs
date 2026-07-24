@@ -84,5 +84,10 @@ fn push_for_blob(state: &mut RuntimeState, blob_reference: &BlobReference, op: b
 }
 
 fn push(state: &mut RuntimeState, bucket: types::CanisterId, op: bucket_vault::VaultOp) {
+    // Defense in depth: never c2c-call a canister we don't recognise as one of our buckets
+    if state.data.buckets.get(&bucket).is_none() {
+        tracing::error!(%bucket, "Vault op dropped: unknown bucket canister");
+        return;
+    }
     state.data.vault_event_sync_queue.push(bucket, op);
 }

@@ -14,12 +14,17 @@ pub struct Vault {
     file_id_to_hash: BTreeMap<FileId, Hash>,
     reviewers: HashSet<Principal>,
     log: Vec<VaultLogEntry>,
+    #[serde(default)]
+    quarantine_failures: u64,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct VaultRecord {
     pub hash: Hash,
     pub original_file_id: FileId,
+    // Captured at quarantine time since the file record may be deleted while the blob is vaulted
+    #[serde(default)]
+    pub mime_type: String,
     pub metadata: VaultCaptureMetadata,
     pub quarantined_at: TimestampMillis,
     pub retention_until: Option<TimestampMillis>,
@@ -37,7 +42,10 @@ pub struct VaultLogEntry {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum VaultLogEvent {
-    Quarantined(FileId),
+    // FileId plus the report_index which triggered the quarantine, so that when multiple
+    // reports reference the same blob each report's linkage is preserved in the log even
+    // though the vault keeps a single record per hash
+    Quarantined(FileId, u64),
     Unquarantined(FileId),
     VerdictApplied(FileId, TimestampMillis),
     LegalHoldSet(FileId),
@@ -51,6 +59,8 @@ pub enum VaultOpOutcome {
     Applied,
     // The blob is no longer referenced by the vault and its pin should be released
     ReleasePin(Hash),
+    // The operation was refused because the record is under legal hold
+    Blocked,
     NotFound,
 }
 
@@ -63,36 +73,48 @@ impl Vault {
         self.reviewers.contains(principal)
     }
 
-    pub fn hash_for_file(&self, file_id: &FileId) -> Option<Hash> {
-        self.file_id_to_hash.get(file_id).copied()
+    pub fn record_for_file(&self, file_id: &FileId) -> Option<&VaultRecord> {
+        self.file_id_to_hash.get(file_id).and_then(|h| self.records.get(h))
     }
 
-    // Returns false if the hash is already quarantined (the pin is already held)
-    pub fn quarantine(&mut self, file_id: FileId, hash: Hash, metadata: VaultCaptureMetadata, now: TimestampMillis) -> bool {
+    pub fn quarantine(
+        &mut self,
+        file_id: FileId,
+        hash: Hash,
+        mime_type: String,
+        metadata: VaultCaptureMetadata,
+        now: TimestampMillis,
+    ) {
         self.file_id_to_hash.insert(file_id, hash);
-        self.append_log(VaultLogEvent::Quarantined(file_id), now);
+        self.append_log(VaultLogEvent::Quarantined(file_id, metadata.report_index), now);
 
-        match self.records.entry(hash) {
-            std::collections::btree_map::Entry::Occupied(_) => false,
-            std::collections::btree_map::Entry::Vacant(e) => {
-                e.insert(VaultRecord {
-                    hash,
-                    original_file_id: file_id,
-                    metadata,
-                    quarantined_at: now,
-                    retention_until: None,
-                    legal_hold: false,
-                });
-                true
-            }
-        }
+        // If the hash is already quarantined (another file referencing the same blob), the
+        // original record is kept; the log entry above preserves this report's linkage
+        self.records.entry(hash).or_insert(VaultRecord {
+            hash,
+            original_file_id: file_id,
+            mime_type,
+            metadata,
+            quarantined_at: now,
+            retention_until: None,
+            legal_hold: false,
+        });
+    }
+
+    pub fn record_quarantine_failure(&mut self) {
+        self.quarantine_failures += 1;
     }
 
     pub fn unquarantine(&mut self, file_id: FileId, now: TimestampMillis) -> VaultOpOutcome {
-        let Some(hash) = self.file_id_to_hash.remove(&file_id) else {
+        let Some(hash) = self.file_id_to_hash.get(&file_id).copied() else {
             return VaultOpOutcome::NotFound;
         };
-        self.records.remove(&hash);
+        if self.records.get(&hash).is_some_and(|r| r.legal_hold) {
+            // A legal hold blocks release; it must be explicitly cleared first (LE-requested
+            // destruction is the only operation which overrides a hold)
+            return VaultOpOutcome::Blocked;
+        }
+        self.remove_all_references(&hash);
         self.append_log(VaultLogEvent::Unquarantined(file_id), now);
         VaultOpOutcome::ReleasePin(hash)
     }
@@ -120,13 +142,13 @@ impl Vault {
         VaultOpOutcome::Applied
     }
 
-    // Permanent destruction on law enforcement request, overriding the retention clock.
-    // The log entry (including the request reference) survives the record.
+    // Permanent destruction on law enforcement request, overriding the retention clock and any
+    // legal hold. The log entry (including the request reference) survives the record.
     pub fn destroy(&mut self, file_id: FileId, le_request_ref: String, now: TimestampMillis) -> VaultOpOutcome {
-        let Some(hash) = self.file_id_to_hash.remove(&file_id) else {
+        let Some(hash) = self.file_id_to_hash.get(&file_id).copied() else {
             return VaultOpOutcome::NotFound;
         };
-        self.records.remove(&hash);
+        self.remove_all_references(&hash);
         self.append_log(VaultLogEvent::Destroyed(file_id, le_request_ref), now);
         VaultOpOutcome::ReleasePin(hash)
     }
@@ -153,8 +175,7 @@ impl Vault {
             .collect();
 
         for (file_id, hash) in expired.iter() {
-            self.records.remove(hash);
-            self.file_id_to_hash.retain(|_, h| h != hash);
+            self.remove_all_references(hash);
             self.append_log(VaultLogEvent::RetentionExpired(*file_id), now);
         }
 
@@ -167,7 +188,15 @@ impl Vault {
             legal_holds: self.records.values().filter(|r| r.legal_hold).count() as u64,
             reviewers: self.reviewers.len() as u64,
             log_length: self.log.len() as u64,
+            quarantine_failures: self.quarantine_failures,
         }
+    }
+
+    // Removes the record and every file_id alias mapping to the hash, so that quarantine state
+    // is released for all sibling files referencing the same blob at once
+    fn remove_all_references(&mut self, hash: &Hash) {
+        self.records.remove(hash);
+        self.file_id_to_hash.retain(|_, h| h != hash);
     }
 
     fn append_log(&mut self, event: VaultLogEvent, now: TimestampMillis) {
@@ -191,4 +220,5 @@ pub struct VaultMetrics {
     pub legal_holds: u64,
     pub reviewers: u64,
     pub log_length: u64,
+    pub quarantine_failures: u64,
 }

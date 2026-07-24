@@ -71,6 +71,7 @@ impl RuntimeState {
             vault_legal_holds: vault_metrics.legal_holds,
             vault_reviewers: vault_metrics.reviewers,
             vault_log_length: vault_metrics.log_length,
+            vault_quarantine_failures: vault_metrics.quarantine_failures,
             stable_memory_sizes: memory::memory_sizes(),
         }
     }
@@ -139,6 +140,7 @@ pub struct Metrics {
     pub vault_legal_holds: u64,
     pub vault_reviewers: u64,
     pub vault_log_length: u64,
+    pub vault_quarantine_failures: u64,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
 }
 

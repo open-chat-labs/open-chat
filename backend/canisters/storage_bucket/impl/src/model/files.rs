@@ -371,13 +371,14 @@ impl Files {
     }
 
     // Takes a vault pin on the hash of the given file, incrementing the reference count so the
-    // blob survives every existing deletion path. Returns the hash, or None if the file is gone.
-    pub fn vault_pin(&mut self, file_id: &FileId) -> Option<Hash> {
-        let hash = self.get(file_id)?.hash;
-        if self.vault_pins.insert(hash) {
-            self.reference_counts.incr(hash);
+    // blob survives every existing deletion path. Returns the hash and mime type, or None if
+    // the file is gone.
+    pub fn vault_pin(&mut self, file_id: &FileId) -> Option<(Hash, String)> {
+        let file = self.get(file_id)?;
+        if self.vault_pins.insert(file.hash) {
+            self.reference_counts.incr(file.hash);
         }
-        Some(hash)
+        Some((file.hash, file.mime_type))
     }
 
     // Releases a vault pin, removing the blob if the pin held the last reference
