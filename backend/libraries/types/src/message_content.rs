@@ -773,6 +773,8 @@ pub struct ModerationReportContent {
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ModerationReportStatus {
     Pending,
+    // The sanctioned sender has contested the automated decision - prioritise review
+    Contested,
     Upheld(ModerationReportResolution),
     UpheldAsCsam(ModerationReportResolution),
     Dismissed(ModerationReportResolution),

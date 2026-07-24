@@ -22,7 +22,7 @@ fn c2c_csam_detected_impl(args: Args, state: &mut RuntimeState) {
     // Create a resolvable report so that the auto-sanction can be reviewed: upheld, dismissed
     // (which reverses it), or contested by the sender. If an outcome already exists this is a
     // duplicate event and the sanction must not re-apply.
-    let Some(report_index) = state
+    let Some((report_index, is_new_report)) = state
         .data
         .reported_messages
         .add_proactive_detection(AddProactiveDetectionArgs {
@@ -40,8 +40,11 @@ fn c2c_csam_detected_impl(args: Args, state: &mut RuntimeState) {
         return;
     };
 
-    // Record the report against the sender's user record (feeds the repeat-offender count)
-    state.data.users.push_reported_message(args.sender, report_index);
+    // Record the report against the sender's user record (feeds the repeat-offender count).
+    // Only for new reports: filling in an existing user report would double-count the index.
+    if is_new_report {
+        state.data.users.push_reported_message(args.sender, report_index);
+    }
 
     let reported_message = state.data.reported_messages.get(report_index).unwrap().clone();
 

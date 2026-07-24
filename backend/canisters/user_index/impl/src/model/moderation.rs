@@ -222,20 +222,7 @@ pub fn suspend_sender(sender: UserId, now: TimestampMillis, state: &mut RuntimeS
 // Suspends the sender of a message which a platform moderator has judged to break the platform
 // rules: for a day, or indefinitely for repeat offenders
 pub fn suspend_sender_for_upheld_violation(sender: UserId, now: TimestampMillis, state: &mut RuntimeState) {
-    let in_breach_count = state
-        .data
-        .users
-        .get_by_user_id(&sender)
-        .map(|user| {
-            user.reported_messages
-                .iter()
-                .filter_map(|i| state.data.reported_messages.get(*i))
-                .filter(|r| r.in_breach())
-                .count()
-        })
-        .unwrap_or_default();
-
-    let (duration, reason) = if in_breach_count > 2 {
+    let (duration, reason) = if in_breach_count(sender, state) > 2 {
         (None, "Multiple violations of the platform rules".to_string())
     } else {
         (Some(DAY_IN_MS), "Violation of platform rules".to_string())
@@ -362,8 +349,22 @@ fn send_vault_ops(ops: Vec<VaultOp>, state: &mut RuntimeState) {
 // Quarantines the report's media in the evidence vault: blocks public serving, pins the blobs
 // against deletion, and captures chain-of-custody metadata
 pub fn quarantine_blobs(report_index: u64, report: &ReportedMessage, flags: u32, state: &mut RuntimeState) {
+    let ops = quarantine_ops(report_index, report, flags, state.env.now());
+    send_vault_ops(ops, state);
+}
+
+// Quarantine plus the uphold verdict in a single message, so the bucket processes them in
+// order: separate fire-and-forget sends carry no ordering guarantee, and a verdict arriving
+// before its quarantine would be dropped, leaving the blob retained with no retention clock
+pub fn quarantine_blobs_and_apply_verdict(report_index: u64, report: &ReportedMessage, flags: u32, state: &mut RuntimeState) {
     let now = state.env.now();
-    let ops = report
+    let mut ops = quarantine_ops(report_index, report, flags, now);
+    ops.extend(verdict_ops(&report.blob_references, now));
+    send_vault_ops(ops, state);
+}
+
+fn quarantine_ops(report_index: u64, report: &ReportedMessage, flags: u32, now: TimestampMillis) -> Vec<VaultOp> {
+    report
         .blob_references
         .iter()
         .map(|blob_reference| {
@@ -380,8 +381,7 @@ pub fn quarantine_blobs(report_index: u64, report: &ReportedMessage, flags: u32,
                 },
             })
         })
-        .collect();
-    send_vault_ops(ops, state);
+        .collect()
 }
 
 pub fn unquarantine_blobs(blob_references: &[BlobReference], state: &mut RuntimeState) {
@@ -392,8 +392,13 @@ pub fn unquarantine_blobs(blob_references: &[BlobReference], state: &mut Runtime
 // Applies the uphold verdict to the vault: the retention clock starts and the blob is deleted
 // only when it expires (never while a legal hold is set)
 pub fn apply_vault_verdict(blob_references: &[BlobReference], state: &mut RuntimeState) {
-    let retention_until = state.env.now() + VAULT_RETENTION_MS;
-    let ops = blob_references
+    let ops = verdict_ops(blob_references, state.env.now());
+    send_vault_ops(ops, state);
+}
+
+fn verdict_ops(blob_references: &[BlobReference], now: TimestampMillis) -> Vec<VaultOp> {
+    let retention_until = now + VAULT_RETENTION_MS;
+    blob_references
         .iter()
         .cloned()
         .map(|blob_reference| {
@@ -402,8 +407,7 @@ pub fn apply_vault_verdict(blob_references: &[BlobReference], state: &mut Runtim
                 retention_until,
             })
         })
-        .collect();
-    send_vault_ops(ops, state);
+        .collect()
 }
 
 // Pushes the current vault-reviewer principal set to the storage buckets (via the storage
@@ -430,20 +434,7 @@ pub fn unsuspend_sender(sender: UserId, now: TimestampMillis, state: &mut Runtim
 // violation. Enqueues directly, bypassing the already-indefinitely-suspended guard in suspend()
 // since a downgrade is exactly what is intended here.
 pub fn downgrade_suspension_to_upheld_violation(sender: UserId, now: TimestampMillis, state: &mut RuntimeState) {
-    let in_breach_count = state
-        .data
-        .users
-        .get_by_user_id(&sender)
-        .map(|user| {
-            user.reported_messages
-                .iter()
-                .filter_map(|i| state.data.reported_messages.get(*i))
-                .filter(|r| r.in_breach())
-                .count()
-        })
-        .unwrap_or_default();
-
-    let (duration, reason) = if in_breach_count > 2 {
+    let (duration, reason) = if in_breach_count(sender, state) > 2 {
         (None, "Multiple violations of the platform rules".to_string())
     } else {
         (Some(DAY_IN_MS), "Violation of platform rules".to_string())
@@ -459,4 +450,41 @@ pub fn downgrade_suspension_to_upheld_violation(sender: UserId, now: TimestampMi
         now,
         now,
     );
+}
+
+fn in_breach_count(sender: UserId, state: &RuntimeState) -> usize {
+    state
+        .data
+        .users
+        .get_by_user_id(&sender)
+        .map(|user| {
+            user.reported_messages
+                .iter()
+                .filter_map(|i| state.data.reported_messages.get(*i))
+                .filter(|r| r.in_breach())
+                .count()
+        })
+        .unwrap_or_default()
+}
+
+// True if the sender has another unresolved automated sanction besides `except_report_index` -
+// in which case a Dismissed verdict on one report must not lift the suspension
+pub fn has_other_unresolved_auto_sanction(sender: UserId, except_report_index: u64, state: &RuntimeState) -> bool {
+    state
+        .data
+        .users
+        .get_by_user_id(&sender)
+        .map(|user| {
+            user.reported_messages
+                .iter()
+                .filter(|i| **i != except_report_index)
+                .filter_map(|i| state.data.reported_messages.get(*i))
+                .any(|r| {
+                    matches!(
+                        r.automated_action(),
+                        Some(crate::model::reported_messages::ModerationAction::AutoSanctioned)
+                    ) && !r.has_human_verdict()
+                })
+        })
+        .unwrap_or_default()
 }

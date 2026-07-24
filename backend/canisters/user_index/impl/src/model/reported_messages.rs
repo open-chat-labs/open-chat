@@ -178,10 +178,11 @@ impl ReportedMessages {
         }
     }
 
-    // Records a proactive (pipeline) CSAM detection. Returns the report index if the sanction
-    // outcome was recorded now (either a new report or filling in an unresolved user report),
-    // or None if an outcome already exists (duplicate event - the sanction must not re-apply).
-    pub fn add_proactive_detection(&mut self, args: AddProactiveDetectionArgs) -> Option<u64> {
+    // Records a proactive (pipeline) CSAM detection. Returns the report index and whether a
+    // new report was created (vs filling in an unresolved user report - already recorded
+    // against the sender), or None if an outcome already exists (duplicate event - the
+    // sanction must not re-apply).
+    pub fn add_proactive_detection(&mut self, args: AddProactiveDetectionArgs) -> Option<(u64, bool)> {
         let key = (args.chat_id, args.thread_root_message_index, args.message_index);
         let outcome = ReportOutcome::Automated(AutomatedOutcome {
             timestamp: args.timestamp,
@@ -199,7 +200,7 @@ impl ReportedMessages {
                 message.outcome = Some(outcome);
                 message.blob_references = args.blob_references;
                 self.pending_classifications.remove(&(index as u64));
-                Some(index as u64)
+                Some((index as u64, false))
             }
         } else {
             let new_index = self.messages.len();
@@ -219,7 +220,7 @@ impl ReportedMessages {
                 contested: None,
                 unverified_report_filed: None,
             });
-            Some(new_index as u64)
+            Some((new_index as u64, true))
         }
     }
 
@@ -249,7 +250,7 @@ impl ReportedMessages {
             return ContestResult::AlreadyContested;
         }
         message.contested = Some(now);
-        ContestResult::Success
+        ContestResult::Success(Box::new(message.clone()))
     }
 
     pub fn mark_unverified_report_filed(&mut self, report_index: u64, now: TimestampMillis) -> bool {
@@ -264,7 +265,7 @@ impl ReportedMessages {
 }
 
 pub enum ContestResult {
-    Success,
+    Success(Box<ReportedMessage>),
     NotFound,
     NotContestable,
     AlreadyContested,
@@ -369,6 +370,10 @@ pub enum DetectionSource {
 }
 
 impl ReportedMessage {
+    pub fn has_human_verdict(&self) -> bool {
+        matches!(&self.outcome, Some(ReportOutcome::Automated(a)) if a.human_verdict.is_some())
+    }
+
     pub fn automated_action(&self) -> Option<ModerationAction> {
         match &self.outcome {
             Some(ReportOutcome::Automated(a)) => Some(a.action),

@@ -26,6 +26,9 @@
     let stage: "interstitial" | "loading" | "view" | "not_authorized" | "error" = $state("interstitial");
     let items: LoadedItem[] = $state([]);
     let revealed: boolean[] = $state([]);
+    // Closing mid-fetch must stop pulling quarantined material: checked after every await,
+    // and any object URLs already created are revoked immediately
+    let cancelled = false;
 
     async function fetchAll() {
         stage = "loading";
@@ -37,6 +40,10 @@
             let chunkCount = 1;
             while (chunkIndex < chunkCount) {
                 const resp = await client.vaultFileChunk(ref.canisterId, ref.blobId, chunkIndex);
+                if (cancelled) {
+                    loaded.forEach((item) => URL.revokeObjectURL(item.url));
+                    return;
+                }
                 if (resp.kind === "not_authorized") {
                     stage = "not_authorized";
                     return;
@@ -59,6 +66,7 @@
     }
 
     function revoke() {
+        cancelled = true;
         items.forEach((item) => URL.revokeObjectURL(item.url));
         items = [];
     }

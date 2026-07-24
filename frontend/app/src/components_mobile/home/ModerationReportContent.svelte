@@ -28,7 +28,9 @@
     let urgent = $state(false);
 
     let moderatorId = $derived(
-        content.status.kind !== "pending" ? content.status.moderator : undefined,
+        content.status.kind !== "pending" && content.status.kind !== "contested"
+            ? content.status.moderator
+            : undefined,
     );
     let moderator = $derived(
         moderatorId ? ($allUsersStore.get(moderatorId)?.username ?? moderatorId) : undefined,
@@ -58,7 +60,7 @@
     let canResolve = $derived(
         $platformModeratorStore &&
             content.reportIndex !== undefined &&
-            content.status.kind === "pending",
+            (content.status.kind === "pending" || content.status.kind === "contested"),
     );
 
     function resolve(verdict: ModerationVerdict) {
@@ -122,9 +124,14 @@
                 <Translatable resourceKey={i18nKey("moderationReport.categories")} />: {categories}
             </Body>
         {/if}
+        {#if content.status.kind === "contested"}
+            <Body colour="error" fontWeight="bold">
+                <Translatable resourceKey={i18nKey("moderationReport.contested")} />
+            </Body>
+        {/if}
         {#if content.autoSanctioned}
             <Body colour="textSecondary">
-                {#if content.status.kind === "pending"}
+                {#if content.status.kind === "pending" || content.status.kind === "contested"}
                     <Translatable resourceKey={i18nKey("moderationReport.sanctionPending")} />
                 {:else}
                     <Translatable resourceKey={i18nKey("moderationReport.autoSanctioned")} />

@@ -664,6 +664,7 @@ export type ModerationReportContent = {
 
 export type ModerationReportStatus =
     | { kind: "pending" }
+    | { kind: "contested" }
     | { kind: "upheld"; moderator: string; timestamp: bigint }
     | { kind: "upheld_as_csam"; moderator: string; timestamp: bigint }
     | { kind: "dismissed"; moderator: string; timestamp: bigint };

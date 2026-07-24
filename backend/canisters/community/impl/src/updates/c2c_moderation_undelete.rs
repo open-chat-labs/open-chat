@@ -22,6 +22,11 @@ fn c2c_moderation_undelete_impl(args: Args, state: &mut RuntimeState) -> UnitRes
         .chat
         .events
         .moderation_undelete(args.thread_root_message_index, args.message_id, now)
+        .inspect_err(|error| {
+            // Eg. the sender self-deleted before the report so the content was purged at the
+            // 5-minute hard delete: the user is unsuspended but the message cannot come back
+            tracing::error!(?error, message_id = %args.message_id, "Moderation restore failed");
+        })
         .map(|_| ())
         .into()
 }

@@ -50,6 +50,9 @@ impl AuthorityReports {
         now: TimestampMillis,
     ) {
         self.due.retain(|d| d.report_index != report_index);
+        // Idempotent per report: a repeat filing (eg. a corrected portal reference) replaces
+        // the existing row rather than appending a duplicate
+        self.filed.retain(|f| f.report_index != report_index);
         self.filed.push(AuthorityReportFiled {
             report_index,
             filed_at: now,

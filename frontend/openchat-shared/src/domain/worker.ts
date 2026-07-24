@@ -1,4 +1,3 @@
-
 import type { JsonnableDelegationChain } from "@icp-sdk/core/identity";
 import type { AccessGateConfig, Rules, UpdatedRules, VerifiedCredentialArgs } from "./access";
 import type {
@@ -136,8 +135,7 @@ import type {
     TokenExchangeRates,
     WalletConfig,
 } from "./crypto";
-import type {
-    VaultFileChunkResponse, BlobReference, StorageStatus } from "./data/data";
+import type { VaultFileChunkResponse, BlobReference, StorageStatus } from "./data/data";
 import type { DexId } from "./dexes";
 import type { GenerateMagicLinkResponse } from "./email";
 import type {

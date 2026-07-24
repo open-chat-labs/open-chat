@@ -296,6 +296,7 @@ import { StorageBucketClient } from "./storageBucket/storageBucket.client";
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
     private _userIndexClient: UserIndexClient;
+    private _storageBucketClients: Map<string, StorageBucketClient> = new Map();
     private _onlineClient: OnlineClient;
     private _groupIndexClient: GroupIndexClient;
     private _userClient: UserClient | AnonUserClient;
@@ -1087,7 +1088,10 @@ export class OpenChatAgent extends EventTarget {
             if (ev.event.kind === "message" && ev.event.content.kind === "text_content") {
                 for (const preview of extractMessagePreviews(ev.event.content.text)) {
                     result.insert(
-                        { chatId: preview.chatId, threadRootMessageIndex: preview.threadRootMessageIndex },
+                        {
+                            chatId: preview.chatId,
+                            threadRootMessageIndex: preview.threadRootMessageIndex,
+                        },
                         preview.messageIndex,
                     );
                 }
@@ -1106,7 +1110,12 @@ export class OpenChatAgent extends EventTarget {
         const mapped = await contextMap.asyncMap((ctx, idxs) => {
             const uniqueIdxs = [...new Set(idxs)];
             return this._chatEventsReader
-                .messagesByMessageIndex(ctx.chatId, ctx.threadRootMessageIndex, uniqueIdxs, undefined)
+                .messagesByMessageIndex(
+                    ctx.chatId,
+                    ctx.threadRootMessageIndex,
+                    uniqueIdxs,
+                    undefined,
+                )
                 .aggregate(mergeEventStreamResponses, emptyEventsResponse())
                 .toPromise()
                 .then((resp) => this.messagesFromEventsResponse(ctx, resp));
@@ -1173,7 +1182,7 @@ export class OpenChatAgent extends EventTarget {
                     const msg = messages.find(
                         (me) => me.event.messageIndex === preview.messageIndex,
                     )?.event;
-                    if(msg) {
+                    if (msg) {
                         messagePreviews.push({
                             url: preview.url,
                             chatId: preview.chatId,
@@ -1312,7 +1321,13 @@ export class OpenChatAgent extends EventTarget {
             ),
             this.resolveMissingMessagePreviews([message]),
         ]);
-        return this.rehydrateEvent(message, chatId, missing, missingPreviews, threadRootMessageIndex);
+        return this.rehydrateEvent(
+            message,
+            chatId,
+            missing,
+            missingPreviews,
+            threadRootMessageIndex,
+        );
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
@@ -2171,7 +2186,11 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.setInternalModerationChannel(channel);
     }
 
-    resolveModerationReport(reportIndex: bigint, verdict: ModerationVerdict, urgent: boolean | undefined): Promise<boolean> {
+    resolveModerationReport(
+        reportIndex: bigint,
+        verdict: ModerationVerdict,
+        urgent: boolean | undefined,
+    ): Promise<boolean> {
         if (offline()) return Promise.resolve(false);
 
         return this._userIndexClient.resolveModerationReport(reportIndex, verdict, urgent);
@@ -2183,8 +2202,16 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.contestModerationSanction();
     }
 
-    vaultFileChunk(bucketCanisterId: string, fileId: bigint, chunkIndex: number): Promise<VaultFileChunkResponse> {
-        const bucketClient = new StorageBucketClient(this.identity, this._agent, bucketCanisterId);
+    vaultFileChunk(
+        bucketCanisterId: string,
+        fileId: bigint,
+        chunkIndex: number,
+    ): Promise<VaultFileChunkResponse> {
+        let bucketClient = this._storageBucketClients.get(bucketCanisterId);
+        if (bucketClient === undefined) {
+            bucketClient = new StorageBucketClient(this.identity, this._agent, bucketCanisterId);
+            this._storageBucketClients.set(bucketCanisterId, bucketClient);
+        }
         return bucketClient.vaultFileChunk(fileId, chunkIndex);
     }
 
@@ -3270,7 +3297,10 @@ export class OpenChatAgent extends EventTarget {
         return this._groupIndexClient.setCommunityModerationFlags(communityId, flags);
     }
 
-    setGroupModerationFlags(chatId: string, flags: number): Promise<SetGroupModerationFlagsResponse> {
+    setGroupModerationFlags(
+        chatId: string,
+        flags: number,
+    ): Promise<SetGroupModerationFlagsResponse> {
         if (offline()) return Promise.resolve("offline");
 
         return this._groupIndexClient.setGroupModerationFlags(chatId, flags);

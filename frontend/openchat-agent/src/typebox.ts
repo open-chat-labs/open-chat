@@ -5804,6 +5804,7 @@ export const BotActionChatDetails = Type.Object({
 export type ModerationReportStatus = Static<typeof ModerationReportStatus>;
 export const ModerationReportStatus = Type.Union([
     Type.Literal("Pending"),
+    Type.Literal("Contested"),
     Type.Object({
         Upheld: ModerationReportResolution,
     }),

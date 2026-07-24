@@ -312,6 +312,7 @@ type ModerationReportContent = record {
 
 type ModerationReportStatus = variant {
     Pending;
+    Contested;
     Upheld : ModerationReportResolution;
     UpheldAsCsam : ModerationReportResolution;
     Dismissed : ModerationReportResolution;

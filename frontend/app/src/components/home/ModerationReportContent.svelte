@@ -30,7 +30,9 @@
     let urgent = $state(false);
     let showViewer = $state(false);
     let moderatorId = $derived(
-        content.status.kind !== "pending" ? content.status.moderator : undefined,
+        content.status.kind !== "pending" && content.status.kind !== "contested"
+            ? content.status.moderator
+            : undefined,
     );
     let moderator = $derived(
         moderatorId ? ($allUsersStore.get(moderatorId)?.username ?? moderatorId) : undefined,
@@ -61,7 +63,7 @@
     let canResolve = $derived(
         $platformModeratorStore &&
             content.reportIndex !== undefined &&
-            content.status.kind === "pending",
+            (content.status.kind === "pending" || content.status.kind === "contested"),
     );
 
     function resolve(verdict: ModerationVerdict) {
@@ -117,9 +119,14 @@
             <Translatable resourceKey={i18nKey("moderationReport.categories")} />: {categories}
         </div>
     {/if}
+    {#if content.status.kind === "contested"}
+        <div class="row contested">
+            <Translatable resourceKey={i18nKey("moderationReport.contested")} />
+        </div>
+    {/if}
     {#if content.autoSanctioned}
         <div class="row">
-            {#if content.status.kind === "pending"}
+            {#if content.status.kind === "pending" || content.status.kind === "contested"}
                 <Translatable resourceKey={i18nKey("moderationReport.sanctionPending")} />
             {:else}
                 <Translatable resourceKey={i18nKey("moderationReport.autoSanctioned")} />
@@ -155,22 +162,25 @@
                 </Button>
             </div>
         {/if}
-        <Checkbox
-            id={`urgent-${content.messageId}`}
-            label={i18nKey("moderationReport.urgent")}
-            checked={urgent}
-            onChange={() => (urgent = !urgent)} />
         <div class="actions">
             <Button loading={busy} disabled={busy || resolved} onClick={() => resolve("upheld")}>
                 <Translatable resourceKey={i18nKey("moderationReport.uphold")} />
             </Button>
-            <Button
-                loading={busy}
-                danger
-                disabled={busy || resolved}
-                onClick={() => resolve("upheld_as_csam")}>
-                <Translatable resourceKey={i18nKey("moderationReport.upholdCsam")} />
-            </Button>
+            <div class="csamAction">
+                <Button
+                    loading={busy}
+                    danger
+                    disabled={busy || resolved}
+                    onClick={() => resolve("upheld_as_csam")}>
+                    <Translatable resourceKey={i18nKey("moderationReport.upholdCsam")} />
+                </Button>
+                <Checkbox
+                    id={`urgent-${content.messageId}`}
+                    small
+                    label={i18nKey("moderationReport.urgent")}
+                    checked={urgent}
+                    onChange={() => (urgent = !urgent)} />
+            </div>
             <Button
                 loading={busy}
                 secondary
@@ -233,6 +243,15 @@
     }
     .failed {
         color: var(--error);
+    }
+    .contested {
+        color: var(--error);
+        font-weight: bold;
+    }
+    .csamAction {
+        display: flex;
+        flex-direction: column;
+        gap: $sp2;
     }
     .actions {
         display: flex;

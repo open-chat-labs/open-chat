@@ -1174,8 +1174,7 @@
         "contested": "The sender has contested this sanction - please prioritise",
         "urgent": "Imminent threat to a child (reports urgently)",
         "reviewMedia": "Review media",
-        "reviewMediaMobile": "Attached media can be reviewed from the desktop app",
-        "unverifiedFiled": "An unverified authority report has been filed for this case"
+        "reviewMediaMobile": "Attached media can be reviewed from the desktop app"
     },
     "vaultViewer": {
         "title": "Quarantined media review",

@@ -1,9 +1,10 @@
+use crate::model::moderation;
 use crate::model::reported_messages::ContestResult;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
-use types::OCResult;
+use types::{ModerationReportStatus, OCResult};
 use user_index_canister::contest_moderation_sanction::*;
 
 // The GDPR Article 22 safeguard: the sender of an auto-sanctioned message contests the
@@ -27,16 +28,25 @@ fn contest_moderation_sanction_impl(state: &mut RuntimeState) -> OCResult {
     let user_id = user.user_id;
     let report_indexes: Vec<u64> = user.reported_messages.iter().rev().copied().collect();
 
+    // One active contest per REPORT: an already-contested report is skipped so that a user
+    // with multiple unresolved sanctions can contest each of them
+    let mut saw_already_contested = false;
     for report_index in report_indexes {
         match state.data.reported_messages.mark_contested(report_index, user_id, now) {
-            ContestResult::Success => return Ok(()),
-            ContestResult::AlreadyContested => {
-                return Err(OCErrorCode::NoChange.with_message("Already contested"));
+            ContestResult::Success(report) => {
+                // Surface the contest to the moderators on the alert message
+                moderation::update_moderation_alert_status(&report, ModerationReportStatus::Contested, state);
+                return Ok(());
             }
+            ContestResult::AlreadyContested => saw_already_contested = true,
             // Not this report - keep looking
             ContestResult::NotFound | ContestResult::NotContestable | ContestResult::AlreadyResolved => (),
         }
     }
 
-    Err(OCErrorCode::MessageNotFound.with_message("No contestable sanction found"))
+    if saw_already_contested {
+        Err(OCErrorCode::NoChange.with_message("Already contested"))
+    } else {
+        Err(OCErrorCode::MessageNotFound.with_message("No contestable sanction found"))
+    }
 }

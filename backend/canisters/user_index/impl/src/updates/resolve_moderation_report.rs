@@ -73,13 +73,12 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                 // read-gate for everyone. (No hard delete here: unlike the auto-sanctioned
                 // path the vault pins are not yet held, so releasing file references could
                 // destroy the blob before the quarantine op lands.)
-                moderation::quarantine_blobs(
+                moderation::quarantine_blobs_and_apply_verdict(
                     args.report_index,
                     &reported_message,
                     ModerationCategories::SEXUAL_MINORS.bits(),
                     state,
                 );
-                moderation::apply_vault_verdict(&reported_message.blob_references, state);
                 if !reported_message.already_deleted {
                     moderation::delete_message(
                         reported_message.chat_id,
@@ -135,7 +134,11 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                 // message, release the vault, clear the flags. (If an authority report was
                 // already filed for this case - contested hash match or valve filing - a
                 // supplementary portal correction is a discretionary manual step.)
-                moderation::unsuspend_sender(reported_message.sender, now, state);
+                // The unsuspend is skipped if the sender has another unresolved automated
+                // sanction: each report's dismissal only reverses its own contribution.
+                if !moderation::has_other_unresolved_auto_sanction(reported_message.sender, args.report_index, state) {
+                    moderation::unsuspend_sender(reported_message.sender, now, state);
+                }
                 moderation::undelete_message(
                     reported_message.chat_id,
                     reported_message.thread_root_message_index,

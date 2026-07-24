@@ -750,6 +750,9 @@ function moderationReportStatus(value: TModerationReportStatus): ModerationRepor
     if (value === "Pending") {
         return { kind: "pending" };
     }
+    if (value === "Contested") {
+        return { kind: "contested" };
+    }
     if ("Upheld" in value) {
         return {
             kind: "upheld",
