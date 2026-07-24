@@ -473,10 +473,18 @@ function getAction(
             return agent.leaveGroup(payload.chatId);
 
         case "joinGroup":
-            return agent.joinGroup(payload.chatId, payload.credentialArgs, payload.compositeGateIndex);
+            return agent.joinGroup(
+                payload.chatId,
+                payload.credentialArgs,
+                payload.compositeGateIndex,
+            );
 
         case "joinCommunity":
-            return agent.joinCommunity(payload.id, payload.credentialArgs, payload.compositeGateIndex);
+            return agent.joinCommunity(
+                payload.id,
+                payload.credentialArgs,
+                payload.compositeGateIndex,
+            );
 
         case "updateGroup":
             return agent.updateGroup(
@@ -994,17 +1002,27 @@ function getAction(
 
         case "setOpenAIApiKey":
             return agent.setOpenAIApiKey(payload.apiKey);
+        case "setModerationReferralConfig":
+            return agent.setModerationReferralConfig(payload.config);
 
         case "setInternalModerationChannel":
             return agent.setInternalModerationChannel(payload.channel);
         case "resolveModerationReport":
-            return agent.resolveModerationReport(payload.reportIndex, payload.verdict, payload.urgent);
+            return agent.resolveModerationReport(
+                payload.reportIndex,
+                payload.verdict,
+                payload.urgent,
+            );
 
         case "contestModerationSanction":
             return agent.contestModerationSanction();
 
         case "vaultFileChunk":
-            return agent.vaultFileChunk(payload.bucketCanisterId, payload.fileId, payload.chunkIndex);
+            return agent.vaultFileChunk(
+                payload.bucketCanisterId,
+                payload.fileId,
+                payload.chunkIndex,
+            );
 
         case "updateRegistry":
             return agent.getRegistry();

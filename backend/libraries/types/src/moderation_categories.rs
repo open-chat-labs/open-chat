@@ -81,4 +81,19 @@ pub struct MessageClassified {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
     pub flags: u32,
+    // Categories which scored above the moderation-referral threshold: the message is
+    // referred for human review as a suspected ToS violation (no automatic action is ever
+    // taken on these)
+    #[serde(default)]
+    pub moderation_referral_flags: u32,
+}
+
+// Operator config determining which classifier categories (other than sexual/minors, which
+// always takes the CSAM auto-sanction path) refer a message for human moderator review, and
+// the confidence score required. None/empty = referral disabled.
+#[ts_export::ts_export]
+#[derive(candid::CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq)]
+pub struct ModerationReferralConfig {
+    pub categories: u32,
+    pub score_threshold: f64,
 }

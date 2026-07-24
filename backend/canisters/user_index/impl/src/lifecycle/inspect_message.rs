@@ -33,6 +33,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "set_diamond_membership_fees"
         | "set_internal_moderation_channel"
         | "set_vault_reviewers"
+        | "set_moderation_referral_config"
         | "set_openai_api_key"
         | "set_premium_item_cost"
         | "set_user_upgrade_concurrency"

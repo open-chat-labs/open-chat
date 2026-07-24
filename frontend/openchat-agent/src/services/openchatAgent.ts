@@ -2172,6 +2172,12 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.getCurrentUser();
     }
 
+    setModerationReferralConfig(
+        config: { categories: number; scoreThreshold: number } | undefined,
+    ): Promise<boolean> {
+        return this._userIndexClient.setModerationReferralConfig(config);
+    }
+
     setOpenAIApiKey(apiKey: string | undefined): Promise<boolean> {
         if (offline()) return Promise.resolve(false);
 

@@ -187,7 +187,7 @@ impl ReportedMessages {
         let outcome = ReportOutcome::Automated(AutomatedOutcome {
             timestamp: args.timestamp,
             flagged_categories: args.flags,
-            action: ModerationAction::AutoSanctioned,
+            action: args.action,
             classification_failed: false,
             human_verdict: None,
         });
@@ -300,6 +300,8 @@ pub struct AddReportArgs {
 
 #[derive(Clone)]
 pub struct AddProactiveDetectionArgs {
+    // AutoSanctioned for CSAM detections, EscalatedForHumanReview for moderation referrals
+    pub action: ModerationAction,
     pub chat_id: Chat,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,

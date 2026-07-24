@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Escalate classifier moderation referrals to the user_index (via the group_index) for human review ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 - Post moderation alerts as a structured `ModerationReport` message type and support status updates ([#9095](https://github.com/open-chat-labs/open-chat/pull/9095))
 - Add `c2c_send_moderation_report` endpoint for posting escalations into the internal moderation channel ([#9092](https://github.com/open-chat-labs/open-chat/pull/9092))
 - Add `c2c_flag_message` endpoint so user_index can flag reported messages ([#9092](https://github.com/open-chat-labs/open-chat/pull/9092))

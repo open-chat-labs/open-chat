@@ -278,8 +278,12 @@ fn report_then_upheld_as_csam_verdict_applies_sanction() {
     // Filter by report index: the register is global state, and a pooled env may hold due
     // rows left behind by other moderation tests
     let register = get_authority_reports(env, &test_data, canister_ids);
-    let due_rows: Vec<_> =
-        register["due"].as_array().unwrap().iter().filter(|r| r["report_index"] == report_index).collect();
+    let due_rows: Vec<_> = register["due"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|r| r["report_index"] == report_index)
+        .collect();
     assert_eq!(due_rows.len(), 1);
 
     let record_response = client::user_index::record_authority_report_filed(
@@ -296,7 +300,13 @@ fn report_then_upheld_as_csam_verdict_applies_sanction() {
     assert!(matches!(record_response, UnitResult::Success));
 
     let register = get_authority_reports(env, &test_data, canister_ids);
-    assert!(!register["due"].as_array().unwrap().iter().any(|r| r["report_index"] == report_index));
+    assert!(
+        !register["due"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|r| r["report_index"] == report_index)
+    );
     let filed_row = register["filed"]
         .as_array()
         .unwrap()
@@ -629,6 +639,96 @@ fn proactive_detection_upheld_downgrades_suspension() {
     assert!(matches!(reports[0].status, ModerationReportStatus::Upheld(_)));
 }
 
+#[test]
+fn moderation_referral_creates_report_and_upheld_verdict_sanctions() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    // Configure the classifier to refer high-scoring `sexual` hits for human review
+    let config_response = client::user_index::set_moderation_referral_config(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::set_moderation_referral_config::Args {
+            config: Some(types::ModerationReferralConfig {
+                categories: types::ModerationCategories::SEXUAL.bits(),
+                score_threshold: 0.9,
+            }),
+        },
+    );
+    assert!(matches!(config_response, UnitResult::Success), "{config_response:?}");
+    tick_many(env, 5);
+
+    let message_id = random_from_u128();
+    let message_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
+    client::group::happy_path::send_text_message(
+        env,
+        &test_data.sender,
+        test_data.group_id,
+        None,
+        &message_text,
+        Some(message_id),
+    );
+    tick_many(env, 3);
+    env.advance_time(Duration::from_secs(10));
+    let handled = mock_moderation_outcalls(env, &message_text, &["sexual"], 1);
+    assert_eq!(handled, 1);
+    tick_many(env, 10);
+
+    // A referral creates a report and alerts the moderators, but takes no action: the message
+    // stays live and the sender is untouched
+    let message_content = get_message_content(env, &test_data.group_owner, test_data.group_id, message_id);
+    assert!(matches!(message_content, MessageContent::Text(_)), "{message_content:?}");
+
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    assert!(sender_state.suspension_details.is_none());
+
+    let reports = get_moderation_reports(env, &test_data);
+    let report = reports
+        .iter()
+        .find(|r| r.sender == test_data.sender.user_id && matches!(r.status, ModerationReportStatus::Pending))
+        .expect("referral should create a pending report");
+    assert!(!report.auto_sanctioned);
+    assert!(report.reporters.is_empty());
+    let report_index = report.report_index.expect("referral should carry a report index");
+
+    // A human upholds the referral: the message is deleted and the sender receives the
+    // standard (timed) suspension
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index,
+            verdict: ModerationVerdict::Upheld,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+
+    let message_content = get_message_content(env, &test_data.group_owner, test_data.group_id, message_id);
+    assert!(matches!(message_content, MessageContent::Deleted(_)), "{message_content:?}");
+
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    let suspension_details = sender_state.suspension_details.expect("sender should be suspended");
+    assert!(
+        matches!(suspension_details.action, SuspensionAction::Unsuspend(_)),
+        "{:?}",
+        suspension_details.action
+    );
+
+    let reports = get_moderation_reports(env, &test_data);
+    let report = reports.iter().find(|r| r.report_index == Some(report_index)).unwrap();
+    assert!(matches!(report.status, ModerationReportStatus::Upheld(_)));
+}
+
 // Waits for pending moderation API outcalls and answers each one. Only inputs containing
 // `target_text` are classified with `flagged_categories` (empty = clean); every other input is
 // classified clean. The test envs are pooled, so requests for messages sent by earlier tests on
@@ -673,13 +773,19 @@ fn mock_moderation_outcalls(
                 .iter()
                 .map(|category| (category.to_string(), Value::Bool(true)))
                 .collect();
+            let category_scores: serde_json::Map<String, Value> = flagged_categories
+                .iter()
+                .map(|category| (category.to_string(), json!(0.97)))
+                .collect();
             let results: Vec<Value> = inputs
                 .iter()
-                .map(
-                    |input| {
-                        if input_matches(input) { json!({ "categories": categories }) } else { json!({ "categories": {} }) }
-                    },
-                )
+                .map(|input| {
+                    if input_matches(input) {
+                        json!({ "categories": categories, "category_scores": category_scores })
+                    } else {
+                        json!({ "categories": {} })
+                    }
+                })
                 .collect();
             let response_body = serde_json::to_vec(&json!({ "results": results })).unwrap();
 

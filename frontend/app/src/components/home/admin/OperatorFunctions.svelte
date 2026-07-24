@@ -1,9 +1,10 @@
 <script lang="ts">
-    import type {
-        DiamondMembershipFees,
-        OpenChat,
-        ResourceKey,
-        UpdateMarketMakerConfigArgs,
+    import {
+        MODERATION_CATEGORY_NAMES,
+        type DiamondMembershipFees,
+        type OpenChat,
+        type ResourceKey,
+        type UpdateMarketMakerConfigArgs,
     } from "@client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -54,7 +55,15 @@
     let openAiApiKey = $state("");
     let moderationCommunityId = $state("");
     let moderationChannelId = $state("");
+    // sexual/minors always takes the CSAM auto-sanction path so is not offered here
+    let referralCategories: Set<number> = $state(new Set());
+    let referralScoreThreshold = $state("0.95");
 
+    const CSAM_CATEGORY_BIT = 2;
+    let referralThresholdInvalid = $derived.by(() => {
+        const threshold = Number(referralScoreThreshold);
+        return isNaN(threshold) || threshold < 0 || threshold > 1;
+    });
     let groupUpgradeConcurrencyInvalid = $derived(isNaN(parseInt(groupUpgradeConcurrency, 0)));
     let communityUpgradeConcurrencyInvalid = $derived(
         isNaN(parseInt(communityUpgradeConcurrency, 0)),
@@ -289,6 +298,42 @@
                 }
             })
             .finally(() => removeBusy(7));
+    }
+
+    function toggleReferralCategory(bit: number): void {
+        if (referralCategories.has(bit)) {
+            referralCategories.delete(bit);
+        } else {
+            referralCategories.add(bit);
+        }
+        referralCategories = referralCategories;
+    }
+
+    function setModerationReferralConfig(): void {
+        error = undefined;
+        addBusy(9);
+        const categories = [...referralCategories].reduce((total, bit) => total | bit, 0);
+        const config =
+            categories === 0
+                ? undefined
+                : { categories, scoreThreshold: Number(referralScoreThreshold) };
+        client
+            .setModerationReferralConfig(config)
+            .then((success) => {
+                if (success) {
+                    toastStore.showSuccessToast(
+                        i18nKey(
+                            config === undefined
+                                ? "Moderation referral disabled"
+                                : "Moderation referral config updated",
+                        ),
+                    );
+                } else {
+                    error = i18nKey("Failed to update moderation referral config");
+                    toastStore.showFailureToast(error);
+                }
+            })
+            .finally(() => removeBusy(9));
     }
 
     function setInternalModerationChannel(): void {
@@ -545,6 +590,37 @@
     </section>
 
     <section class="operator-function">
+        <div class="title">Set moderation referral config</div>
+        <div class="hint">
+            Classifier categories which refer a message for human moderator review when scoring
+            above the threshold. No categories selected = referral disabled.
+        </div>
+        {#each MODERATION_CATEGORY_NAMES.filter(([bit, _]) => bit !== CSAM_CATEGORY_BIT) as [bit, name] (bit)}
+            <div class="name-value">
+                <div class="label">{name}:</div>
+                <div class="value">
+                    <Toggle
+                        small
+                        id={`referral-category-${bit}`}
+                        checked={referralCategories.has(bit)}
+                        onChange={() => toggleReferralCategory(bit)} />
+                </div>
+            </div>
+        {/each}
+        <div class="name-value">
+            <div class="label">Score threshold (0-1):</div>
+            <div class="value">
+                <Input invalid={referralThresholdInvalid} bind:value={referralScoreThreshold} />
+            </div>
+        </div>
+        <Button
+            tiny
+            disabled={busy.has(9) || referralThresholdInvalid}
+            loading={busy.has(9)}
+            onClick={setModerationReferralConfig}>Apply</Button>
+    </section>
+
+    <section class="operator-function">
         <div class="title">Set internal moderation channel</div>
         <div class="name-value">
             <div class="label">Community Id:</div>
@@ -629,5 +705,11 @@
     .title {
         margin-bottom: $sp3;
         @include font(bold, normal, fs-100);
+    }
+
+    .hint {
+        margin-bottom: $sp3;
+        color: var(--txt-light);
+        @include font(light, normal, fs-80);
     }
 </style>

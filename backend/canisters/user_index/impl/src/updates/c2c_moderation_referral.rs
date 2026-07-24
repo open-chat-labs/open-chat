@@ -6,27 +6,30 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use tracing::info;
 use types::ModerationCategories;
-use user_index_canister::c2c_csam_detected::*;
+use user_index_canister::c2c_moderation_referral::*;
 
+// A message whose classifier score for a configured category (other than sexual/minors)
+// exceeded the moderation-referral threshold: create a resolvable report and alert the
+// moderators. No action is taken against the message or the sender unless a human upholds
+// the report.
 #[update(guard = "caller_is_group_index", msgpack = true)]
 #[trace]
-fn c2c_csam_detected(args: Args) -> Response {
-    mutate_state(|state| c2c_csam_detected_impl(args, state));
+fn c2c_moderation_referral(args: Args) -> Response {
+    mutate_state(|state| c2c_moderation_referral_impl(args, state));
     Response::Success
 }
 
-fn c2c_csam_detected_impl(args: Args, state: &mut RuntimeState) {
+fn c2c_moderation_referral_impl(args: Args, state: &mut RuntimeState) {
     let now = state.env.now();
-    let categories = ModerationCategories::from_bits(args.flags).unwrap_or(ModerationCategories::SEXUAL_MINORS);
+    let Some(categories) = ModerationCategories::from_bits(args.flags) else {
+        return;
+    };
 
-    // Create a resolvable report so that the auto-sanction can be reviewed: upheld, dismissed
-    // (which reverses it), or contested by the sender. If an outcome already exists this is a
-    // duplicate event and the sanction must not re-apply.
     let Some((report_index, is_new_report)) = state
         .data
         .reported_messages
         .add_proactive_detection(AddProactiveDetectionArgs {
-            action: ModerationAction::AutoSanctioned,
+            action: ModerationAction::EscalatedForHumanReview,
             chat_id: args.chat_id,
             thread_root_message_index: args.thread_root_message_index,
             message_index: args.message_index,
@@ -37,29 +40,15 @@ fn c2c_csam_detected_impl(args: Args, state: &mut RuntimeState) {
             timestamp: now,
         })
     else {
-        info!("CSAM detection ignored: report already has an outcome");
+        info!("Moderation referral ignored: report already has an outcome");
         return;
     };
 
-    // Record the report against the sender's user record (feeds the repeat-offender count).
-    // Only for new reports: filling in an existing user report would double-count the index.
+    // Record the report against the sender's user record (feeds the repeat-offender count,
+    // which only counts reports once a human upholds them)
     if is_new_report {
         state.data.users.push_reported_message(args.sender, report_index);
     }
-
-    let reported_message = state.data.reported_messages.get(report_index).unwrap().clone();
-
-    // Quarantine media in the evidence vault first: this blocks public serving and pins the
-    // blobs against every deletion path, preserving evidence ahead of the sanction
-    moderation::quarantine_blobs(report_index, &reported_message, categories.bits(), state);
-
-    moderation::delete_message(
-        args.chat_id,
-        args.thread_root_message_index,
-        args.message_id,
-        &mut state.data.fire_and_forget_handler,
-    );
-    moderation::suspend_sender(args.sender, now, state);
 
     moderation::post_moderation_alert(
         ModerationAlert {
@@ -71,9 +60,11 @@ fn c2c_csam_detected_impl(args: Args, state: &mut RuntimeState) {
             sender: args.sender,
             reporters: Vec::new(),
             categories,
-            auto_sanctioned: true,
+            auto_sanctioned: false,
             content_excerpt: args.content_excerpt,
-            blob_references: reported_message.blob_references,
+            // The content is still live in the chat, so the moderator reviews it in place;
+            // the blob references stay on the report record for the verdict to act on
+            blob_references: Vec::new(),
             timestamp: now,
         },
         state,

@@ -381,6 +381,7 @@ export type WorkerRequest =
     | ImportGroupToCommunity
     | SetModerationFlags
     | SetOpenAIApiKey
+    | SetModerationReferralConfig
     | SetInternalModerationChannel
     | ResolveModerationReport
     | ContestModerationSanction
@@ -817,6 +818,11 @@ type SetModerationFlags = {
 type SetOpenAIApiKey = {
     kind: "setOpenAIApiKey";
     apiKey: string | undefined;
+};
+
+type SetModerationReferralConfig = {
+    kind: "setModerationReferralConfig";
+    config: { categories: number; scoreThreshold: number } | undefined;
 };
 
 type SetInternalModerationChannel = {
@@ -2503,6 +2509,8 @@ export type WorkerResult<T> = T extends Init
     : T extends SetCommunityIndexes
     ? boolean
     : T extends SetOpenAIApiKey
+    ? boolean
+    : T extends SetModerationReferralConfig
     ? boolean
     : T extends SetInternalModerationChannel
     ? boolean

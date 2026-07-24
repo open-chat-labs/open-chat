@@ -67,6 +67,7 @@ import {
     UserIndexSetInternalModerationChannelArgs,
     UserIndexResolveModerationReportArgs,
     UserIndexSetModerationFlagsArgs,
+    UserIndexSetModerationReferralConfigArgs,
     UserIndexSetOpenaiApiKeyArgs,
     UserIndexSetPremiumItemCostArgs,
     UserIndexSetUsernameArgs,
@@ -172,6 +173,23 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         );
     }
 
+    setModerationReferralConfig(
+        config: { categories: number; scoreThreshold: number } | undefined,
+    ): Promise<boolean> {
+        return this.update(
+            "set_moderation_referral_config",
+            {
+                config:
+                    config === undefined
+                        ? undefined
+                        : { categories: config.categories, score_threshold: config.scoreThreshold },
+            },
+            (resp) => resp === "Success",
+            UserIndexSetModerationReferralConfigArgs,
+            UnitResult,
+        );
+    }
+
     setOpenAIApiKey(apiKey: string | undefined): Promise<boolean> {
         return this.update(
             "set_openai_api_key",
@@ -204,7 +222,11 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         );
     }
 
-    resolveModerationReport(reportIndex: bigint, verdict: ModerationVerdict, urgent: boolean | undefined): Promise<boolean> {
+    resolveModerationReport(
+        reportIndex: bigint,
+        verdict: ModerationVerdict,
+        urgent: boolean | undefined,
+    ): Promise<boolean> {
         return this.update(
             "resolve_moderation_report",
             {

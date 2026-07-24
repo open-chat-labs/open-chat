@@ -33,7 +33,7 @@ use std::time::Duration;
 use timer_job_queues::BatchedTimerJobQueue;
 use types::{
     BuildVersion, CanisterId, ChannelId, ChatId, ChildCanisterWasms, CommunityId, Cycles, DiamondMembershipFees, Milliseconds,
-    TimestampMillis, Timestamped, UserId, UserType,
+    ModerationReferralConfig, TimestampMillis, Timestamped, UserId, UserType,
 };
 use user_ids_set::UserIdsSet;
 use user_index_canister::ChildCanisterType;
@@ -400,6 +400,8 @@ struct Data {
     pub blocked_username_patterns: Vec<String>,
     pub openai_api_key: Option<String>,
     #[serde(default)]
+    pub moderation_referral_config: Option<ModerationReferralConfig>,
+    #[serde(default)]
     pub internal_moderation_channel: Option<(CommunityId, ChannelId)>,
 }
 
@@ -487,6 +489,7 @@ impl Data {
             premium_items: PremiumItems::default(),
             blocked_username_patterns: Vec::new(),
             openai_api_key: None,
+            moderation_referral_config: None,
             internal_moderation_channel: None,
         };
 
@@ -604,6 +607,7 @@ impl Default for Data {
             premium_items: PremiumItems::default(),
             blocked_username_patterns: Vec::new(),
             openai_api_key: None,
+            moderation_referral_config: None,
             internal_moderation_channel: None,
         }
     }

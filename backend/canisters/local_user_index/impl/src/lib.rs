@@ -38,8 +38,8 @@ use types::{
     BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion,
     CLAIM_TYPE_DIAMOND_MEMBERSHIP, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms,
     CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
-    IdempotentEnvelope, MessageContentInitial, Milliseconds, Notification, NotificationEnvelope, ReferralType, TimestampMillis,
-    Timestamped, UserId, UserNotificationEnvelope, VerifiedCredentialGateArgs,
+    IdempotentEnvelope, MessageContentInitial, Milliseconds, ModerationReferralConfig, Notification, NotificationEnvelope,
+    ReferralType, TimestampMillis, Timestamped, UserId, UserNotificationEnvelope, VerifiedCredentialGateArgs,
 };
 use user_canister::LocalUserIndexEvent as UserEvent;
 use user_ids_set::UserIdsSet;
@@ -57,6 +57,7 @@ mod guards;
 mod jobs;
 mod lifecycle;
 mod memory;
+mod no_inline_anchor;
 mod model;
 mod queries;
 mod updates;
@@ -598,6 +599,8 @@ struct Data {
     pub blocked_username_patterns: Vec<String>,
     pub openai_api_key: Option<String>,
     #[serde(default)]
+    pub moderation_referral_config: Option<ModerationReferralConfig>,
+    #[serde(default)]
     pub message_moderation_queue: ModerationQueue,
 }
 
@@ -634,6 +637,7 @@ impl Data {
         video_call_operators: Vec<Principal>,
         oc_secret_key_der: Vec<u8>,
         openai_api_key: Option<String>,
+        moderation_referral_config: Option<ModerationReferralConfig>,
         test_mode: bool,
     ) -> Self {
         Data {
@@ -691,6 +695,7 @@ impl Data {
             premium_items: PremiumItems::default(),
             blocked_username_patterns: Vec::new(),
             openai_api_key,
+            moderation_referral_config,
             message_moderation_queue: ModerationQueue::default(),
         }
     }

@@ -1402,6 +1402,12 @@ export const DecimalParam = Type.Object({
     choices: Type.Array(BotCommandOptionChoiceF64),
 });
 
+export type ModerationReferralConfig = Static<typeof ModerationReferralConfig>;
+export const ModerationReferralConfig = Type.Object({
+    categories: Type.Number(),
+    score_threshold: Type.Number(),
+});
+
 export type DiamondMembershipStatus = Static<typeof DiamondMembershipStatus>;
 export const DiamondMembershipStatus = Type.Union([
     Type.Literal("Inactive"),
@@ -2329,6 +2335,13 @@ export const UserIndexUpdateBotResponse = Type.Union([
         Error: OCError,
     }),
 ]);
+
+export type UserIndexSetModerationReferralConfigArgs = Static<
+    typeof UserIndexSetModerationReferralConfigArgs
+>;
+export const UserIndexSetModerationReferralConfigArgs = Type.Object({
+    config: Type.Optional(ModerationReferralConfig),
+});
 
 export type UserIndexSetInternalModerationChannelInternalModerationChannel = Static<
     typeof UserIndexSetInternalModerationChannelInternalModerationChannel

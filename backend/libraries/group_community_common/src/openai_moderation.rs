@@ -3,16 +3,37 @@ use ic_cdk::call::Call;
 use ic_cdk::management_canister::{HttpHeader, HttpMethod, HttpRequestResult, TransformContext};
 use serde::Deserialize;
 use std::collections::BTreeMap;
-use types::{ModerationCategories, ModerationInput};
+use types::{ModerationCategories, ModerationInput, ModerationReferralConfig};
 
 const MODERATIONS_URL: &str = "https://api.openai.com/v1/moderations";
 const MODEL: &str = "omni-moderation-latest";
 const MAX_RESPONSE_BYTES: u64 = 500 * 1024;
 
+// A single input's classification: the categories the API flagged, plus the categories which
+// scored above the caller's moderation-referral threshold (always empty when no referral
+// config is given)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Classification {
+    pub flagged: ModerationCategories,
+    pub moderation_referral: ModerationCategories,
+}
+
 // Classifies the given texts using the OpenAI Moderation API, returning the flagged categories
 // for each input text in order.
 pub async fn moderate_text_batch(api_key: &str, texts: &[String]) -> Result<Vec<ModerationCategories>, String> {
-    let results = call_moderation_api(api_key, serde_json::json!(texts)).await?;
+    Ok(classify_text_batch(api_key, texts, None)
+        .await?
+        .into_iter()
+        .map(|c| c.flagged)
+        .collect())
+}
+
+pub async fn classify_text_batch(
+    api_key: &str,
+    texts: &[String],
+    moderation_referral: Option<ModerationReferralConfig>,
+) -> Result<Vec<Classification>, String> {
+    let results = call_moderation_api(api_key, serde_json::json!(texts), moderation_referral).await?;
     if results.len() == texts.len() {
         Ok(results)
     } else {
@@ -32,11 +53,20 @@ pub async fn moderate_text_batch(api_key: &str, texts: &[String]) -> Result<Vec<
 // reach) the whole item fails so that the caller retries it; re-classifying a part which
 // already succeeded is harmless because flagging is idempotent.
 pub async fn moderate_input(api_key: &str, input: &ModerationInput) -> Result<ModerationCategories, String> {
-    let mut categories = ModerationCategories::default();
+    Ok(classify_input(api_key, input, None).await?.flagged)
+}
+
+pub async fn classify_input(
+    api_key: &str,
+    input: &ModerationInput,
+    moderation_referral: Option<ModerationReferralConfig>,
+) -> Result<Classification, String> {
+    let mut classification = Classification::default();
 
     if let Some(text) = input.text.as_ref().filter(|t| !t.trim().is_empty()) {
-        for c in call_moderation_api(api_key, serde_json::json!([text])).await? {
-            categories = categories | c;
+        for c in call_moderation_api(api_key, serde_json::json!([text]), moderation_referral).await? {
+            classification.flagged = classification.flagged | c.flagged;
+            classification.moderation_referral = classification.moderation_referral | c.moderation_referral;
         }
     }
 
@@ -46,12 +76,13 @@ pub async fn moderate_input(api_key: &str, input: &ModerationInput) -> Result<Mo
             .iter()
             .map(|url| serde_json::json!({ "type": "image_url", "image_url": { "url": url } }))
             .collect();
-        for c in call_moderation_api(api_key, serde_json::Value::Array(parts)).await? {
-            categories = categories | c;
+        for c in call_moderation_api(api_key, serde_json::Value::Array(parts), moderation_referral).await? {
+            classification.flagged = classification.flagged | c.flagged;
+            classification.moderation_referral = classification.moderation_referral | c.moderation_referral;
         }
     }
 
-    Ok(categories)
+    Ok(classification)
 }
 
 // The args accepted by the management canister's `http_request` method, including the
@@ -73,7 +104,11 @@ struct HttpRequestArgs {
     is_replicated: Option<bool>,
 }
 
-async fn call_moderation_api(api_key: &str, input: serde_json::Value) -> Result<Vec<ModerationCategories>, String> {
+async fn call_moderation_api(
+    api_key: &str,
+    input: serde_json::Value,
+    moderation_referral: Option<ModerationReferralConfig>,
+) -> Result<Vec<Classification>, String> {
     let body = serde_json::json!({
         "model": MODEL,
         "input": input,
@@ -117,10 +152,11 @@ async fn call_moderation_api(api_key: &str, input: serde_json::Value) -> Result<
         return Err(format!("OpenAI Moderation API returned status {}", response.status));
     }
 
-    extract_categories(&response.body).ok_or("Failed to parse OpenAI Moderation API response".to_string())
+    extract_classifications(&response.body, moderation_referral)
+        .ok_or("Failed to parse OpenAI Moderation API response".to_string())
 }
 
-fn extract_categories(body: &[u8]) -> Option<Vec<ModerationCategories>> {
+fn extract_classifications(body: &[u8], moderation_referral: Option<ModerationReferralConfig>) -> Option<Vec<Classification>> {
     let response: ModerationsResponse = serde_json::from_slice(body).ok()?;
 
     Some(
@@ -128,13 +164,37 @@ fn extract_categories(body: &[u8]) -> Option<Vec<ModerationCategories>> {
             .results
             .into_iter()
             .map(|result| {
-                result
+                let flagged = result
                     .categories
                     .into_iter()
                     .filter(|(_, flagged)| *flagged)
                     .fold(ModerationCategories::default(), |acc, (category, _)| {
                         acc | category_to_flag(&category)
+                    });
+
+                // Referral is score-based rather than reusing the API's flagged booleans so
+                // that the threshold can be set well above the API's own, keeping borderline
+                // content out of the human review queue
+                let moderation_referral_categories = moderation_referral
+                    .map(|config| {
+                        result
+                            .category_scores
+                            .iter()
+                            .filter(|(_, score)| **score >= config.score_threshold)
+                            .fold(ModerationCategories::default(), |acc, (category, _)| {
+                                acc | category_to_flag(category)
+                            })
+                            .bits()
+                            & config.categories
+                            & !ModerationCategories::SEXUAL_MINORS.bits()
                     })
+                    .and_then(ModerationCategories::from_bits)
+                    .unwrap_or_default();
+
+                Classification {
+                    flagged,
+                    moderation_referral: moderation_referral_categories,
+                }
             })
             .collect(),
     )
@@ -166,4 +226,6 @@ struct ModerationsResponse {
 #[derive(Deserialize)]
 struct ModerationResult {
     categories: BTreeMap<String, bool>,
+    #[serde(default)]
+    category_scores: BTreeMap<String, f64>,
 }

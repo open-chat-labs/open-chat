@@ -124,6 +124,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
                 rng_seed: state.env.rng().r#gen(),
                 ic_root_key: ic_cdk::api::root_key(),
                 openai_api_key: state.data.openai_api_key.clone(),
+                moderation_referral_config: state.data.moderation_referral_config,
                 test_mode: state.data.test_mode,
             },
         })

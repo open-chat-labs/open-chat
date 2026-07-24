@@ -27,6 +27,7 @@ generate_msgpack_update_call!(contest_moderation_sanction);
 generate_msgpack_update_call!(record_authority_report_filed);
 generate_msgpack_update_call!(resolve_moderation_report);
 generate_msgpack_update_call!(set_internal_moderation_channel);
+generate_msgpack_update_call!(set_moderation_referral_config);
 generate_msgpack_update_call!(set_vault_reviewers);
 generate_msgpack_update_call!(set_openai_api_key);
 generate_update_call!(remove_platform_moderator);

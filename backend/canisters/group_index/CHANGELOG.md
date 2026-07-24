@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- `c2c_moderation_referral` - forwards moderation referrals from group/community canisters to the user_index ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+
 ### Changed
 
 - Forward blob references with CSAM detections so the evidence vault can quarantine media ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
