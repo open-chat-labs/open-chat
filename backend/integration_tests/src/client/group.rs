@@ -5,6 +5,7 @@ use ic_stable_structures::memory_manager::MemoryId;
 pub const CHAT_EVENTS_MEMORY_ID: MemoryId = MemoryId::new(3);
 
 // Queries
+generate_msgpack_query_call!(deleted_message);
 generate_msgpack_query_call!(events);
 generate_msgpack_query_call!(events_by_index);
 generate_msgpack_query_call!(events_window);

@@ -8,7 +8,7 @@ use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
-use types::{ModerationReportResolution, ModerationReportStatus, OCResult};
+use types::{ModerationCategories, ModerationReportResolution, ModerationReportStatus, OCResult};
 use user_index_canister::resolve_moderation_report::*;
 
 #[update(guard = "caller_is_platform_moderator", msgpack = true)]
@@ -67,6 +67,19 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     .authority_reports
                     .push_due(args.report_index, args.urgent.unwrap_or_default(), now);
             } else {
+                // An escalated report upheld as CSAM: the sanction applies now. Quarantine
+                // before anything else so the media is pinned, soft-delete the message, and
+                // set the CSAM flag - which locks the deleted content behind the quarantine
+                // read-gate for everyone. (No hard delete here: unlike the auto-sanctioned
+                // path the vault pins are not yet held, so releasing file references could
+                // destroy the blob before the quarantine op lands.)
+                moderation::quarantine_blobs(
+                    args.report_index,
+                    &reported_message,
+                    ModerationCategories::SEXUAL_MINORS.bits(),
+                    state,
+                );
+                moderation::apply_vault_verdict(&reported_message.blob_references, state);
                 if !reported_message.already_deleted {
                     moderation::delete_message(
                         reported_message.chat_id,
@@ -75,6 +88,13 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                         &mut state.data.fire_and_forget_handler,
                     );
                 }
+                moderation::set_message_moderation_flags(
+                    reported_message.chat_id,
+                    reported_message.thread_root_message_index,
+                    reported_message.message_id,
+                    ModerationCategories::SEXUAL_MINORS.bits(),
+                    &mut state.data.fire_and_forget_handler,
+                );
                 moderation::suspend_sender(reported_message.sender, now, state);
                 state
                     .data

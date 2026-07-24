@@ -1758,7 +1758,24 @@ export interface WebhookDetails {
   'name' : string,
   'avatar_id' : [] | [bigint],
 }
+export interface VaultFileChunkArgs {
+  'file_id' : FileId,
+  'chunk_index' : number,
+}
+export type VaultFileChunkResponse = {
+    'Success' : {
+      'bytes' : Uint8Array | number[],
+      'chunk_index' : number,
+      'chunk_count' : number,
+      'total_size' : bigint,
+      'mime_type' : string,
+    }
+  } |
+  { 'NotAuthorized' : null } |
+  { 'NotFound' : null } |
+  { 'SessionRequired' : null };
 export interface _SERVICE {
+  'vault_file_chunk' : ActorMethod<[VaultFileChunkArgs], VaultFileChunkResponse>,
   'delete_file' : ActorMethod<[DeleteFileArgs], DeleteFileResponse>,
   'delete_files' : ActorMethod<[DeleteFilesArgs], DeleteFilesResponse>,
   'file_info' : ActorMethod<[FileInfoArgs], FileInfoResponse>,

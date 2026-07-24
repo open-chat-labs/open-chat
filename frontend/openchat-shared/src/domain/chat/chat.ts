@@ -15,7 +15,7 @@ import type {
     CommunitySummary,
 } from "../community";
 import type { WalletConfig } from "../crypto";
-import { DataContentSchema, type DataContent } from "../data/data";
+import { type BlobReference, DataContentSchema, type DataContent } from "../data/data";
 import type { OCError } from "../error";
 import type { OptionUpdate } from "../optionUpdate";
 import type {
@@ -657,6 +657,7 @@ export type ModerationReportContent = {
     flaggedCategories: number;
     autoSanctioned: boolean;
     contentExcerpt: string | undefined;
+    blobReferences: BlobReference[];
     reportedAt: bigint;
     status: ModerationReportStatus;
 };

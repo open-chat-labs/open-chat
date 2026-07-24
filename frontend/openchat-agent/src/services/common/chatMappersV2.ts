@@ -740,6 +740,7 @@ function moderationReportContent(value: TModerationReportContent): ModerationRep
         flaggedCategories: value.flagged_categories,
         autoSanctioned: value.auto_sanctioned,
         contentExcerpt: value.content_excerpt,
+        blobReferences: value.blob_references.map(blobReference),
         reportedAt: value.reported_at,
         status: moderationReportStatus(value.status),
     };

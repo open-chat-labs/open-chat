@@ -998,7 +998,13 @@ function getAction(
         case "setInternalModerationChannel":
             return agent.setInternalModerationChannel(payload.channel);
         case "resolveModerationReport":
-            return agent.resolveModerationReport(payload.reportIndex, payload.verdict);
+            return agent.resolveModerationReport(payload.reportIndex, payload.verdict, payload.urgent);
+
+        case "contestModerationSanction":
+            return agent.contestModerationSanction();
+
+        case "vaultFileChunk":
+            return agent.vaultFileChunk(payload.bucketCanisterId, payload.fileId, payload.chunkIndex);
 
         case "updateRegistry":
             return agent.getRegistry();

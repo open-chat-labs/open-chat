@@ -78,6 +78,22 @@ fn csam_pipeline_detection_triggers_auto_sanction() {
     // reviewed, contested, or reversed
     let report_index = report.report_index.expect("proactive detection should carry a report index");
 
+    // While quarantined, the soft-deleted content is viewable by no one - not even the group
+    // owner who could normally view messages deleted by moderation
+    let deleted_message_response = client::group::deleted_message(
+        env,
+        test_data.group_owner.principal,
+        test_data.group_id.into(),
+        &group_canister::deleted_message::Args {
+            thread_root_message_index: None,
+            message_id,
+        },
+    );
+    assert!(
+        matches!(deleted_message_response, group_canister::deleted_message::Response::Error(_)),
+        "{deleted_message_response:?}"
+    );
+
     // The sanctioned sender contests the automated decision (the Art 22 safeguard)
     let contest_response = client::user_index::contest_moderation_sanction(
         env,
@@ -113,6 +129,10 @@ fn csam_pipeline_detection_triggers_auto_sanction() {
 
     let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
     assert!(sender_state.suspension_details.is_none(), "sender should be unsuspended");
+
+    // The false positive is fully reversed: the message is restored for everyone
+    let message_content = get_message_content(env, &test_data.group_owner, test_data.group_id, message_id);
+    assert!(matches!(message_content, MessageContent::Text(_)), "{message_content:?}");
 
     let reports = get_moderation_reports(env, &test_data);
     assert!(matches!(reports[0].status, ModerationReportStatus::Dismissed(_)));
@@ -236,6 +256,22 @@ fn report_then_upheld_as_csam_verdict_applies_sanction() {
         },
     );
     assert!(matches!(second_resolve, UnitResult::Error(_)));
+
+    // The upheld verdict locked the content behind the quarantine read-gate: even the sender
+    // can no longer retrieve it via the deleted_message escape hatch
+    let deleted_message_response = client::group::deleted_message(
+        env,
+        test_data.sender.principal,
+        test_data.group_id.into(),
+        &group_canister::deleted_message::Args {
+            thread_root_message_index: None,
+            message_id,
+        },
+    );
+    assert!(
+        matches!(deleted_message_response, group_canister::deleted_message::Response::Error(_)),
+        "{deleted_message_response:?}"
+    );
 
     // The upheld CSAM verdict put an authority report on the due register; the operator files
     // it (manually, via the portal) and records the filing reference

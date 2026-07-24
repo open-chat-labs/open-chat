@@ -1169,7 +1169,30 @@
         "dismiss": "Dismiss",
         "upheld": "Upheld by {moderator} - the message has been deleted and the sender suspended",
         "dismissed": "Dismissed by {moderator} - no violation",
-        "failed": "Failed to resolve the report"
+        "failed": "Failed to resolve the report",
+        "sanctionPending": "Auto-sanction applied - awaiting review: uphold to confirm, dismiss to reverse it in full",
+        "contested": "The sender has contested this sanction - please prioritise",
+        "urgent": "Imminent threat to a child (reports urgently)",
+        "reviewMedia": "Review media",
+        "reviewMediaMobile": "Attached media can be reviewed from the desktop app",
+        "unverifiedFiled": "An unverified authority report has been filed for this case"
+    },
+    "vaultViewer": {
+        "title": "Quarantined media review",
+        "interstitial": "You are about to view quarantined material held in the evidence vault. This action is recorded in a tamper-evident access log, with your identity and the time. Proceed only to decide whether this report should be upheld or dismissed.",
+        "proceed": "Review",
+        "cancel": "Cancel",
+        "loading": "Fetching from the vault...",
+        "reveal": "Click to reveal",
+        "notAuthorized": "You are not a designated vault reviewer",
+        "error": "Failed to fetch the media",
+        "item": "Item {n} of {total}"
+    },
+    "suspendedContest": {
+        "info": "If your account was suspended by automated moderation, you can request a human review of that decision.",
+        "button": "Request human review",
+        "requested": "Review requested. A moderator will review the decision and your account will be restored if it was suspended in error.",
+        "failed": "No reviewable sanction was found for your account, or a review has already been requested."
     },
     "appStore": {
         "notAvailableTitle": "Content not available",

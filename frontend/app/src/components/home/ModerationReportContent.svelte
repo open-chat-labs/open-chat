@@ -12,7 +12,9 @@
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";
+    import Checkbox from "../Checkbox.svelte";
     import Translatable from "../Translatable.svelte";
+    import VaultMediaViewer from "./VaultMediaViewer.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -25,6 +27,8 @@
     let busy = $state(false);
     let failed = $state(false);
     let resolved = $state(false);
+    let urgent = $state(false);
+    let showViewer = $state(false);
     let moderatorId = $derived(
         content.status.kind !== "pending" ? content.status.moderator : undefined,
     );
@@ -64,11 +68,17 @@
         if (content.reportIndex === undefined || busy || resolved) return;
         busy = true;
         failed = false;
-        client.resolveModerationReport(content.reportIndex, verdict).then((success) => {
-            busy = false;
-            resolved = success;
-            failed = !success;
-        });
+        client
+            .resolveModerationReport(
+                content.reportIndex,
+                verdict,
+                verdict === "upheld_as_csam" ? urgent : undefined,
+            )
+            .then((success) => {
+                busy = false;
+                resolved = success;
+                failed = !success;
+            });
     }
 </script>
 
@@ -109,7 +119,11 @@
     {/if}
     {#if content.autoSanctioned}
         <div class="row">
-            <Translatable resourceKey={i18nKey("moderationReport.autoSanctioned")} />
+            {#if content.status.kind === "pending"}
+                <Translatable resourceKey={i18nKey("moderationReport.sanctionPending")} />
+            {:else}
+                <Translatable resourceKey={i18nKey("moderationReport.autoSanctioned")} />
+            {/if}
         </div>
     {/if}
 
@@ -134,6 +148,18 @@
                 })} />
         </div>
     {:else if canResolve}
+        {#if content.blobReferences.length > 0}
+            <div class="row">
+                <Button secondary onClick={() => (showViewer = true)}>
+                    <Translatable resourceKey={i18nKey("moderationReport.reviewMedia")} />
+                </Button>
+            </div>
+        {/if}
+        <Checkbox
+            id={`urgent-${content.messageId}`}
+            label={i18nKey("moderationReport.urgent")}
+            checked={urgent}
+            onChange={() => (urgent = !urgent)} />
         <div class="actions">
             <Button loading={busy} disabled={busy || resolved} onClick={() => resolve("upheld")}>
                 <Translatable resourceKey={i18nKey("moderationReport.uphold")} />
@@ -160,6 +186,12 @@
         {/if}
     {/if}
 </div>
+
+{#if showViewer}
+    <VaultMediaViewer
+        blobReferences={content.blobReferences}
+        onClose={() => (showViewer = false)} />
+{/if}
 
 <style lang="scss">
     .report {

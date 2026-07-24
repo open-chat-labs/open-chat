@@ -477,6 +477,12 @@ impl GroupChatCore {
                 return if let Some(deleted_by) = &message.deleted_by {
                     if matches!(message.content, MessageContentInternal::Deleted(_)) {
                         Err(OCErrorCode::MessageHardDeleted.into())
+                    } else if deleted_by.deleted_by != message.sender
+                        && message.moderation_flags & types::ModerationCategories::SEXUAL_MINORS.bits() != 0
+                    {
+                        // Quarantined: suspected CSAM removed by moderation is viewable by no
+                        // one here - designated reviewers access it via the evidence vault
+                        Err(OCErrorCode::MessageHardDeleted.into())
                     } else if user_id == message.sender
                         || (deleted_by.deleted_by != message.sender && member.role().can_delete_messages(&self.permissions))
                     {

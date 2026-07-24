@@ -477,6 +477,31 @@ impl ChatEvents {
         }
     }
 
+    // Restores a message deleted by automated moderation, after a Dismissed verdict on the
+    // report. Bypasses member permission checks (the caller is the user_index) by acting as
+    // the original deleter.
+    pub fn moderation_undelete(
+        &mut self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        now: TimestampMillis,
+    ) -> OCResult<Option<BotNotification>> {
+        let deleted_by = self
+            .events_reader(EventIndex::default(), thread_root_message_index, None)
+            .and_then(|reader| reader.message_internal(message_id.into()))
+            .and_then(|message| message.deleted_by.as_ref().map(|db| db.deleted_by))
+            .ok_or(OCErrorCode::MessageNotFound)?;
+
+        self.undelete_message(DeleteUndeleteMessageArgs {
+            caller: deleted_by,
+            is_admin: false,
+            min_visible_event_index: EventIndex::default(),
+            thread_root_message_index,
+            message_id,
+            now,
+        })
+    }
+
     fn undelete_message(&mut self, args: DeleteUndeleteMessageArgs) -> OCResult<Option<BotNotification>> {
         match self.update_message(
             args.thread_root_message_index,
@@ -522,6 +547,16 @@ impl ChatEvents {
         let Some(deleted_by) = message.deleted_by.as_ref().map(|db| db.deleted_by) else {
             return Err(UpdateEventError::NoChange(OCErrorCode::NoChange));
         };
+
+        // Quarantined messages (CSAM-flagged, deleted by moderation) cannot be restored by the
+        // sender or admins; only the moderation Dismissed-verdict path (which acts as the
+        // original deleter) may restore them
+        if args.caller != deleted_by
+            && deleted_by != message.sender
+            && message.moderation_flags & types::ModerationCategories::SEXUAL_MINORS.bits() != 0
+        {
+            return Err(UpdateEventError::NoChange(OCErrorCode::InitiatorNotAuthorized));
+        }
 
         if deleted_by == args.caller || (args.is_admin && message.sender != deleted_by) {
             match message.content {

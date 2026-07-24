@@ -7,17 +7,29 @@ import {
     fileInfoResponse,
     forwardFileResponse,
     uploadChunkResponse,
+    vaultFileChunkResponse,
 } from "./mappers";
 import type {
     DeleteFileResponse,
     FileInfoResponse,
     ForwardFileResponse,
     UploadChunkResponse,
+    VaultFileChunkResponse,
 } from "@shared";
 
 export class StorageBucketClient extends CandidCanisterAgent<StorageBucketService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
         super(identity, agent, canisterId, idlFactory, "StorageBucket");
+    }
+
+    // Fetches one chunk of a quarantined blob for an allowlisted vault reviewer. An update
+    // call by design: every fetch session is recorded in the vault's access log, and chunks
+    // after the first are served only in session order.
+    vaultFileChunk(fileId: bigint, chunkIndex: number): Promise<VaultFileChunkResponse> {
+        return this.handleResponse(
+            this.service.vault_file_chunk({ file_id: fileId, chunk_index: chunkIndex }),
+            vaultFileChunkResponse,
+        );
     }
 
     uploadChunk(

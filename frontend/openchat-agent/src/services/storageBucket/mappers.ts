@@ -1,4 +1,5 @@
-import type { CandidDeleteFileResponse, CandidFileInfoResponse, CandidForwardFileResponse, CandidUploadChunkResponse } from "./candid/idl";
+import type { VaultFileChunkResponse } from "@shared";
+import type { CandidDeleteFileResponse, CandidFileInfoResponse, CandidForwardFileResponse, CandidUploadChunkResponse, CandidVaultFileChunkResponse } from "./candid/idl";
 import type { DeleteFileResponse, FileInfoResponse, ForwardFileResponse, UploadChunkResponse } from "@shared";
 import { UnsupportedValueError } from "@shared";
 
@@ -86,4 +87,22 @@ export function fileInfoResponse(candid: CandidFileInfoResponse): FileInfoRespon
         return { kind: "file_not_found" };
     }
     throw new UnsupportedValueError("Unknown Bucket.CandidFileInfoResponse type received", candid);
+}
+
+export function vaultFileChunkResponse(
+    candid: CandidVaultFileChunkResponse,
+): VaultFileChunkResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            bytes: new Uint8Array(candid.Success.bytes),
+            chunkIndex: candid.Success.chunk_index,
+            chunkCount: candid.Success.chunk_count,
+            totalSize: candid.Success.total_size,
+            mimeType: candid.Success.mime_type,
+        };
+    }
+    if ("SessionRequired" in candid) return { kind: "session_required" };
+    if ("NotFound" in candid) return { kind: "not_found" };
+    return { kind: "not_authorized" };
 }

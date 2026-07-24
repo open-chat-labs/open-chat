@@ -200,6 +200,7 @@ import type {
     WalletConfig,
     WithdrawBtcResponse,
     WithdrawCryptocurrencyResponse,
+    VaultFileChunkResponse,
 } from "@shared";
 import {
     ANON_USER_ID,
@@ -290,6 +291,7 @@ import { TranslationsClient } from "./translations/translations.client";
 import { AnonUserClient } from "./user/anonUser.client";
 import { UserClient } from "./user/user.client";
 import { UserIndexClient } from "./userIndex/userIndex.client";
+import { StorageBucketClient } from "./storageBucket/storageBucket.client";
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
@@ -2169,10 +2171,21 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.setInternalModerationChannel(channel);
     }
 
-    resolveModerationReport(reportIndex: bigint, verdict: ModerationVerdict): Promise<boolean> {
+    resolveModerationReport(reportIndex: bigint, verdict: ModerationVerdict, urgent: boolean | undefined): Promise<boolean> {
         if (offline()) return Promise.resolve(false);
 
-        return this._userIndexClient.resolveModerationReport(reportIndex, verdict);
+        return this._userIndexClient.resolveModerationReport(reportIndex, verdict, urgent);
+    }
+
+    contestModerationSanction(): Promise<boolean> {
+        if (offline()) return Promise.resolve(false);
+
+        return this._userIndexClient.contestModerationSanction();
+    }
+
+    vaultFileChunk(bucketCanisterId: string, fileId: bigint, chunkIndex: number): Promise<VaultFileChunkResponse> {
+        const bucketClient = new StorageBucketClient(this.identity, this._agent, bucketCanisterId);
+        return bucketClient.vaultFileChunk(fileId, chunkIndex);
     }
 
     setModerationFlags(flags: number): Promise<boolean> {

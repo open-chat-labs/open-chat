@@ -25,6 +25,7 @@
     let busy = $state(false);
     let failed = $state(false);
     let resolved = $state(false);
+    let urgent = $state(false);
 
     let moderatorId = $derived(
         content.status.kind !== "pending" ? content.status.moderator : undefined,
@@ -64,11 +65,17 @@
         if (content.reportIndex === undefined || busy || resolved) return;
         busy = true;
         failed = false;
-        client.resolveModerationReport(content.reportIndex, verdict).then((success) => {
-            busy = false;
-            resolved = success;
-            failed = !success;
-        });
+        client
+            .resolveModerationReport(
+                content.reportIndex,
+                verdict,
+                verdict === "upheld_as_csam" ? urgent : undefined,
+            )
+            .then((success) => {
+                busy = false;
+                resolved = success;
+                failed = !success;
+            });
     }
 </script>
 
@@ -117,7 +124,16 @@
         {/if}
         {#if content.autoSanctioned}
             <Body colour="textSecondary">
-                <Translatable resourceKey={i18nKey("moderationReport.autoSanctioned")} />
+                {#if content.status.kind === "pending"}
+                    <Translatable resourceKey={i18nKey("moderationReport.sanctionPending")} />
+                {:else}
+                    <Translatable resourceKey={i18nKey("moderationReport.autoSanctioned")} />
+                {/if}
+            </Body>
+        {/if}
+        {#if content.blobReferences.length > 0 && content.status.kind === "pending"}
+            <Body colour="textSecondary">
+                <Translatable resourceKey={i18nKey("moderationReport.reviewMediaMobile")} />
             </Body>
         {/if}
     </Column>

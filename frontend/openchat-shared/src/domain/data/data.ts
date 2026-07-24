@@ -103,3 +103,16 @@ export type ProjectedAllowance = {
     bytesUsed: bigint;
     bytesUsedAfterOperation: bigint;
 };
+
+export type VaultFileChunkResponse =
+    | {
+          kind: "success";
+          bytes: Uint8Array;
+          chunkIndex: number;
+          chunkCount: number;
+          totalSize: bigint;
+          mimeType: string;
+      }
+    | { kind: "not_authorized" }
+    | { kind: "not_found" }
+    | { kind: "session_required" };

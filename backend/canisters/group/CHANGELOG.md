@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Add `c2c_moderation_undelete` and `c2c_moderation_hard_delete` so verdicts can restore or permanently remove auto-sanctioned messages ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- Quarantined messages (CSAM-flagged, deleted by moderation) are viewable by no one and cannot be user-restored while the report is unresolved ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 - Include blob references when escalating CSAM detections, for evidence-vault quarantine ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 
 ### Added

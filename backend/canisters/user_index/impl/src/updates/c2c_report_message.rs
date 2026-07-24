@@ -193,13 +193,16 @@ fn handle_moderation_result(
         );
     }
 
+    // Store the media references on the report: verdicts may need them for quarantine even
+    // when the classifier did not flag CSAM (a moderator can still uphold as CSAM)
+    state
+        .data
+        .reported_messages
+        .set_blob_references(report_index, blob_references.clone());
+
     if is_csam {
-        // Preserve evidence ahead of the sanction: store the media references on the report and
-        // quarantine the blobs in the vault (blocks public serving, pins against deletion)
-        state
-            .data
-            .reported_messages
-            .set_blob_references(report_index, blob_references.clone());
+        // Preserve evidence ahead of the sanction: quarantine the blobs in the vault
+        // (blocks public serving, pins against deletion)
         if let Some(report) = state.data.reported_messages.get(report_index) {
             let report = report.clone();
             moderation::quarantine_blobs(report_index, &report, categories.bits(), state);
