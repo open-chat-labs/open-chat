@@ -9,6 +9,7 @@ generate_query_call!(file_status);
 generate_update_call!(delete_file);
 generate_update_call!(delete_files);
 generate_update_call!(forward_file);
+generate_update_call!(vault_file_chunk);
 generate_update_call!(upload_chunk_v2);
 
 pub mod happy_path {

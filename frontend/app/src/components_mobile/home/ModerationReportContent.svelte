@@ -25,9 +25,12 @@
     let busy = $state(false);
     let failed = $state(false);
     let resolved = $state(false);
+    let urgent = $state(false);
 
     let moderatorId = $derived(
-        content.status.kind !== "pending" ? content.status.moderator : undefined,
+        content.status.kind !== "pending" && content.status.kind !== "contested"
+            ? content.status.moderator
+            : undefined,
     );
     let moderator = $derived(
         moderatorId ? ($allUsersStore.get(moderatorId)?.username ?? moderatorId) : undefined,
@@ -57,18 +60,24 @@
     let canResolve = $derived(
         $platformModeratorStore &&
             content.reportIndex !== undefined &&
-            content.status.kind === "pending",
+            (content.status.kind === "pending" || content.status.kind === "contested"),
     );
 
     function resolve(verdict: ModerationVerdict) {
         if (content.reportIndex === undefined || busy || resolved) return;
         busy = true;
         failed = false;
-        client.resolveModerationReport(content.reportIndex, verdict).then((success) => {
-            busy = false;
-            resolved = success;
-            failed = !success;
-        });
+        client
+            .resolveModerationReport(
+                content.reportIndex,
+                verdict,
+                verdict === "upheld_as_csam" ? urgent : undefined,
+            )
+            .then((success) => {
+                busy = false;
+                resolved = success;
+                failed = !success;
+            });
     }
 </script>
 
@@ -115,9 +124,23 @@
                 <Translatable resourceKey={i18nKey("moderationReport.categories")} />: {categories}
             </Body>
         {/if}
+        {#if content.status.kind === "contested"}
+            <Body colour="error" fontWeight="bold">
+                <Translatable resourceKey={i18nKey("moderationReport.contested")} />
+            </Body>
+        {/if}
         {#if content.autoSanctioned}
             <Body colour="textSecondary">
-                <Translatable resourceKey={i18nKey("moderationReport.autoSanctioned")} />
+                {#if content.status.kind === "pending" || content.status.kind === "contested"}
+                    <Translatable resourceKey={i18nKey("moderationReport.sanctionPending")} />
+                {:else}
+                    <Translatable resourceKey={i18nKey("moderationReport.autoSanctioned")} />
+                {/if}
+            </Body>
+        {/if}
+        {#if content.blobReferences.length > 0 && content.status.kind === "pending"}
+            <Body colour="textSecondary">
+                <Translatable resourceKey={i18nKey("moderationReport.reviewMediaMobile")} />
             </Body>
         {/if}
     </Column>

@@ -305,12 +305,14 @@ type ModerationReportContent = record {
     flagged_categories : nat32;
     auto_sanctioned : bool;
     content_excerpt : opt text;
+    blob_references : vec BlobReference;
     reported_at : TimestampMillis;
     status : ModerationReportStatus;
 };
 
 type ModerationReportStatus = variant {
     Pending;
+    Contested;
     Upheld : ModerationReportResolution;
     UpheldAsCsam : ModerationReportResolution;
     Dismissed : ModerationReportResolution;

@@ -1,5 +1,6 @@
+pub mod authority_reports;
 pub mod bot_installation_events;
-pub mod bot_updates;
+mod bot_updates;
 pub mod c2c_lookup_user;
 pub mod check_username;
 pub mod chit_leaderboard;

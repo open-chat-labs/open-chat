@@ -135,7 +135,7 @@ import type {
     TokenExchangeRates,
     WalletConfig,
 } from "./crypto";
-import type { BlobReference, StorageStatus } from "./data/data";
+import type { VaultFileChunkResponse, BlobReference, StorageStatus } from "./data/data";
 import type { DexId } from "./dexes";
 import type { GenerateMagicLinkResponse } from "./email";
 import type {
@@ -381,8 +381,11 @@ export type WorkerRequest =
     | ImportGroupToCommunity
     | SetModerationFlags
     | SetOpenAIApiKey
+    | SetModerationReferralConfig
     | SetInternalModerationChannel
     | ResolveModerationReport
+    | ContestModerationSanction
+    | VaultFileChunk
     | ChangeCommunityRole
     | SetCommunityIndexes
     | UpdateRegistry
@@ -817,6 +820,11 @@ type SetOpenAIApiKey = {
     apiKey: string | undefined;
 };
 
+type SetModerationReferralConfig = {
+    kind: "setModerationReferralConfig";
+    config: { categories: number; scoreThreshold: number } | undefined;
+};
+
 type SetInternalModerationChannel = {
     kind: "setInternalModerationChannel";
     channel: { communityId: string; channelId: number } | undefined;
@@ -826,6 +834,18 @@ type ResolveModerationReport = {
     kind: "resolveModerationReport";
     reportIndex: bigint;
     verdict: ModerationVerdict;
+    urgent: boolean | undefined;
+};
+
+type ContestModerationSanction = {
+    kind: "contestModerationSanction";
+};
+
+type VaultFileChunk = {
+    kind: "vaultFileChunk";
+    bucketCanisterId: string;
+    fileId: bigint;
+    chunkIndex: number;
 };
 
 type ImportGroupToCommunity = {
@@ -1759,6 +1779,7 @@ export type WorkerError = {
  * Worker response types
  */
 export type WorkerResponseInner =
+    | VaultFileChunkResponse
     | void
     | bigint
     | boolean
@@ -2489,10 +2510,16 @@ export type WorkerResult<T> = T extends Init
     ? boolean
     : T extends SetOpenAIApiKey
     ? boolean
+    : T extends SetModerationReferralConfig
+    ? boolean
     : T extends SetInternalModerationChannel
     ? boolean
     : T extends ResolveModerationReport
     ? boolean
+    : T extends ContestModerationSanction
+    ? boolean
+    : T extends VaultFileChunk
+    ? VaultFileChunkResponse
     : T extends CreateUserGroup
     ? CreateUserGroupResponse
     : T extends UpdateUserGroup

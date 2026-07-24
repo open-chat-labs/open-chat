@@ -220,6 +220,7 @@ import {
     type MessageContent,
     type MessageContext,
     type ModerationVerdict,
+    type VaultFileChunkResponse,
     type MessageFilter,
     type MessageFormatter,
     type MessagePermission,
@@ -6316,10 +6317,26 @@ export class OpenChat {
             .catch(() => false);
     }
 
-    resolveModerationReport(reportIndex: bigint, verdict: ModerationVerdict): Promise<boolean> {
+    resolveModerationReport(
+        reportIndex: bigint,
+        verdict: ModerationVerdict,
+        urgent: boolean | undefined,
+    ): Promise<boolean> {
         return this.#worker
-            .send({ kind: "resolveModerationReport", reportIndex, verdict })
+            .send({ kind: "resolveModerationReport", reportIndex, verdict, urgent })
             .catch(() => false);
+    }
+
+    contestModerationSanction(): Promise<boolean> {
+        return this.#worker.send({ kind: "contestModerationSanction" }).catch(() => false);
+    }
+
+    vaultFileChunk(
+        bucketCanisterId: string,
+        fileId: bigint,
+        chunkIndex: number,
+    ): Promise<VaultFileChunkResponse> {
+        return this.#worker.send({ kind: "vaultFileChunk", bucketCanisterId, fileId, chunkIndex });
     }
 
     setCommunityModerationFlags(communityId: string, flags: number): Promise<boolean> {
@@ -7323,6 +7340,14 @@ export class OpenChat {
 
     setOpenAIApiKey(apiKey: string | undefined): Promise<boolean> {
         return this.#worker.send({ kind: "setOpenAIApiKey", apiKey }).catch(() => false);
+    }
+
+    setModerationReferralConfig(
+        config: { categories: number; scoreThreshold: number } | undefined,
+    ): Promise<boolean> {
+        return this.#worker
+            .send({ kind: "setModerationReferralConfig", config })
+            .catch(() => false);
     }
 
     setInternalModerationChannel(

@@ -67,7 +67,8 @@ import {
     UserIndexSetInternalModerationChannelArgs,
     UserIndexResolveModerationReportArgs,
     UserIndexSetModerationFlagsArgs,
-    UserIndexSetOpenAiApiKeyArgs,
+    UserIndexSetModerationReferralConfigArgs,
+    UserIndexSetOpenaiApiKeyArgs,
     UserIndexSetPremiumItemCostArgs,
     UserIndexSetUsernameArgs,
     UserIndexSetUsernameResponse,
@@ -172,6 +173,23 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         );
     }
 
+    setModerationReferralConfig(
+        config: { categories: number; scoreThreshold: number } | undefined,
+    ): Promise<boolean> {
+        return this.update(
+            "set_moderation_referral_config",
+            {
+                config:
+                    config === undefined
+                        ? undefined
+                        : { categories: config.categories, score_threshold: config.scoreThreshold },
+            },
+            (resp) => resp === "Success",
+            UserIndexSetModerationReferralConfigArgs,
+            UnitResult,
+        );
+    }
+
     setOpenAIApiKey(apiKey: string | undefined): Promise<boolean> {
         return this.update(
             "set_openai_api_key",
@@ -179,7 +197,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                 api_key: apiKey === undefined || apiKey === "" ? undefined : apiKey,
             },
             (resp) => resp === "Success",
-            UserIndexSetOpenAiApiKeyArgs,
+            UserIndexSetOpenaiApiKeyArgs,
             UnitResult,
         );
     }
@@ -204,15 +222,30 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         );
     }
 
-    resolveModerationReport(reportIndex: bigint, verdict: ModerationVerdict): Promise<boolean> {
+    resolveModerationReport(
+        reportIndex: bigint,
+        verdict: ModerationVerdict,
+        urgent: boolean | undefined,
+    ): Promise<boolean> {
         return this.update(
             "resolve_moderation_report",
             {
                 report_index: reportIndex,
                 verdict: apiModerationVerdict(verdict),
+                urgent,
             },
             (resp) => resp === "Success",
             UserIndexResolveModerationReportArgs,
+            UnitResult,
+        );
+    }
+
+    contestModerationSanction(): Promise<boolean> {
+        return this.update(
+            "contest_moderation_sanction",
+            {},
+            (resp) => resp === "Success",
+            Empty,
             UnitResult,
         );
     }

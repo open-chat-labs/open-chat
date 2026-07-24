@@ -34,6 +34,7 @@ fn c2c_csam_detected_impl(args: Args, state: &RuntimeState) -> Response {
             sender: args.sender,
             flags: args.flags,
             content_excerpt: args.content_excerpt,
+            blob_references: args.blob_references,
         }),
     );
 

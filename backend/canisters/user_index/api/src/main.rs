@@ -73,4 +73,15 @@ fn main() {
     generate_ts_method!(user_index, unsuspend_user);
     generate_ts_method!(user_index, update_bot);
     generate_ts_method!(user_index, update_diamond_membership_subscription);
+
+    // Moderation (these entries were lost in the moderation-stack merges; typebox.ts kept the
+    // stale output because bindings are committed rather than regenerated in CI)
+    generate_ts_method!(user_index, authority_reports);
+    generate_ts_method!(user_index, contest_moderation_sanction);
+    generate_ts_method!(user_index, record_authority_report_filed);
+    generate_ts_method!(user_index, resolve_moderation_report);
+    generate_ts_method!(user_index, set_internal_moderation_channel);
+    generate_ts_method!(user_index, set_moderation_referral_config);
+    generate_ts_method!(user_index, set_openai_api_key);
+    generate_ts_method!(user_index, set_vault_reviewers);
 }

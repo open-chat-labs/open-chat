@@ -1,11 +1,11 @@
 use crate::model::moderation_queue::QueueItem;
 use crate::{CommunityEvent, GroupEvent, RuntimeState, mutate_state};
-use group_community_common::openai_moderation;
+use group_community_common::openai_moderation::{self, Classification};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
-use types::{MessageClassified, ModerationCategories};
+use types::{MessageClassified, ModerationReferralConfig};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -40,27 +40,27 @@ fn next_interval() -> Duration {
 pub fn run() {
     trace!("'moderate_messages' job running");
 
-    if let Some((api_key, batch)) = mutate_state(next_batch) {
+    if let Some((api_key, moderation_referral_config, batch)) = mutate_state(next_batch) {
         // TIMER_ID is deliberately left set while the batch is in flight so that an enqueue
         // during the outcall cannot arm a second concurrent batch; it is cleared, and the timer
         // re-armed if required, when the batch completes
-        ic_cdk::futures::spawn(process_batch(api_key, batch));
+        ic_cdk::futures::spawn(process_batch(api_key, moderation_referral_config, batch));
     } else {
         TIMER_ID.set(None);
     }
 }
 
-fn next_batch(state: &mut RuntimeState) -> Option<(String, Vec<QueueItem>)> {
+fn next_batch(state: &mut RuntimeState) -> Option<(String, Option<ModerationReferralConfig>, Vec<QueueItem>)> {
     let api_key = state.data.openai_api_key.clone()?;
     let batch = state
         .data
         .message_moderation_queue
         .next_batch(BATCH_SIZE, MAX_IMAGE_INPUTS_PER_BATCH);
-    (!batch.is_empty()).then_some((api_key, batch))
+    (!batch.is_empty()).then_some((api_key, state.data.moderation_referral_config, batch))
 }
 
-async fn process_batch(api_key: String, batch: Vec<QueueItem>) {
-    let mut classified: Vec<(QueueItem, ModerationCategories)> = Vec::new();
+async fn process_batch(api_key: String, moderation_referral_config: Option<ModerationReferralConfig>, batch: Vec<QueueItem>) {
+    let mut classified: Vec<(QueueItem, Classification)> = Vec::new();
     let mut failed: Vec<QueueItem> = Vec::new();
 
     let (image_items, text_items): (Vec<_>, Vec<_>) = batch.into_iter().partition(|i| !i.entry.input.image_urls.is_empty());
@@ -70,7 +70,7 @@ async fn process_batch(api_key: String, batch: Vec<QueueItem>) {
             .iter()
             .map(|i| i.entry.input.text.clone().unwrap_or_default())
             .collect();
-        match openai_moderation::moderate_text_batch(&api_key, &texts).await {
+        match openai_moderation::classify_text_batch(&api_key, &texts, moderation_referral_config).await {
             Ok(results) => classified.extend(text_items.into_iter().zip(results)),
             Err(error) => {
                 error!(?error, "Failed to classify messages for moderation");
@@ -80,8 +80,8 @@ async fn process_batch(api_key: String, batch: Vec<QueueItem>) {
     }
 
     for item in image_items {
-        match openai_moderation::moderate_input(&api_key, &item.entry.input).await {
-            Ok(categories) => classified.push((item, categories)),
+        match openai_moderation::classify_input(&api_key, &item.entry.input, moderation_referral_config).await {
+            Ok(classification) => classified.push((item, classification)),
             Err(error) => {
                 error!(?error, "Failed to classify message for moderation");
                 failed.push(item);
@@ -97,12 +97,13 @@ async fn process_batch(api_key: String, batch: Vec<QueueItem>) {
 
     mutate_state(|state| {
         let now = state.env.now();
-        for (item, categories) in classified {
+        for (item, classification) in classified {
             let result = MessageClassified {
                 channel_id: item.channel_id,
                 thread_root_message_index: item.entry.thread_root_message_index,
                 message_id: item.message_id,
-                flags: categories.bits(),
+                flags: classification.flagged.bits(),
+                moderation_referral_flags: classification.moderation_referral.bits(),
             };
             if item.is_group {
                 state.push_event_to_group(item.source, GroupEvent::MessageClassified(result), now);

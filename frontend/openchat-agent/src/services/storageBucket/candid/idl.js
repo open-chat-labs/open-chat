@@ -52,6 +52,22 @@ export const idlFactory = ({ IDL }) => {
     'chunk_size' : IDL.Nat32,
     'file_id' : FileId,
   });
+  const VaultFileChunkArgs = IDL.Record({
+    'file_id' : FileId,
+    'chunk_index' : IDL.Nat32,
+  });
+  const VaultFileChunkResponse = IDL.Variant({
+    'Success' : IDL.Record({
+      'bytes' : IDL.Vec(IDL.Nat8),
+      'chunk_index' : IDL.Nat32,
+      'chunk_count' : IDL.Nat32,
+      'total_size' : IDL.Nat64,
+      'mime_type' : IDL.Text,
+    }),
+    'NotAuthorized' : IDL.Null,
+    'NotFound' : IDL.Null,
+    'SessionRequired' : IDL.Null,
+  });
   const UploadChunkResponse = IDL.Variant({
     'ChunkAlreadyExists' : IDL.Null,
     'Full' : IDL.Null,
@@ -67,6 +83,7 @@ export const idlFactory = ({ IDL }) => {
     'UserNotFound' : IDL.Null,
   });
   return IDL.Service({
+    'vault_file_chunk' : IDL.Func([VaultFileChunkArgs], [VaultFileChunkResponse], []),
     'delete_file' : IDL.Func([DeleteFileArgs], [DeleteFileResponse], []),
     'delete_files' : IDL.Func([DeleteFilesArgs], [DeleteFilesResponse], []),
     'file_info' : IDL.Func([FileInfoArgs], [FileInfoResponse], ['query']),

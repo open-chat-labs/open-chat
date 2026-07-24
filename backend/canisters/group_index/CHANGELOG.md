@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- `c2c_moderation_referral` - forwards moderation referrals from group/community canisters to the user_index ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+
+### Changed
+
+- Forward blob references with CSAM detections so the evidence vault can quarantine media ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+
+### Added
+
 - Add `c2c_csam_detected` endpoint forwarding CSAM detections from groups/communities to user_index ([#9093](https://github.com/open-chat-labs/open-chat/pull/9093))
 - Add `set_group_moderation_flags` endpoint and filter group search by moderation flags ([#9089](https://github.com/open-chat-labs/open-chat/pull/9089))
 

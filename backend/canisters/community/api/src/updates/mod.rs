@@ -23,6 +23,8 @@ pub mod c2c_join_channel;
 pub mod c2c_join_community;
 pub mod c2c_leave_community;
 pub mod c2c_local_index;
+pub mod c2c_moderation_hard_delete;
+pub mod c2c_moderation_undelete;
 pub mod c2c_send_message;
 pub mod c2c_send_moderation_report;
 pub mod c2c_set_user_suspended;

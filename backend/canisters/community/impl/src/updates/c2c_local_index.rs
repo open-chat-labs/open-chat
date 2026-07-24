@@ -61,30 +61,56 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
                     .events
                     .flag_message(ev.thread_root_message_index, ev.message_id, categories, **now)
                     .is_ok()
-                && categories.contains(ModerationCategories::SEXUAL_MINORS)
-                && let Some((message, _)) = channel.chat.events.message_internal(
-                    EventIndex::default(),
-                    ev.thread_root_message_index,
-                    ev.message_id.into(),
-                )
             {
-                // Notify the user_index (via the group_index) which applies the CSAM
-                // auto-sanction: delete the message, suspend the sender, and post an alert
-                // to the internal moderation channel
-                let args = group_index_canister::c2c_csam_detected::Args {
-                    channel_id: Some(channel_id),
-                    thread_root_message_index: ev.thread_root_message_index,
-                    message_index: message.message_index,
-                    message_id: ev.message_id,
-                    sender: message.sender,
-                    flags: categories.bits(),
-                    content_excerpt: message.content.moderation_input().text,
-                };
-                state.data.fire_and_forget_handler.send(
-                    state.data.group_index_canister_id,
-                    "c2c_csam_detected_msgpack".to_string(),
-                    serialize_then_unwrap(&args),
-                );
+                let is_csam = categories.contains(ModerationCategories::SEXUAL_MINORS);
+                let moderation_referral = ModerationCategories::from_bits(ev.moderation_referral_flags).unwrap_or_default();
+                if (is_csam || !moderation_referral.is_empty())
+                    && let Some((message, _)) = channel.chat.events.message_internal(
+                        EventIndex::default(),
+                        ev.thread_root_message_index,
+                        ev.message_id.into(),
+                    )
+                {
+                    if is_csam {
+                        // Notify the user_index (via the group_index) which applies the CSAM
+                        // auto-sanction: delete the message, suspend the sender, and post an
+                        // alert to the internal moderation channel
+                        let args = group_index_canister::c2c_csam_detected::Args {
+                            channel_id: Some(channel_id),
+                            thread_root_message_index: ev.thread_root_message_index,
+                            message_index: message.message_index,
+                            message_id: ev.message_id,
+                            sender: message.sender,
+                            flags: categories.bits(),
+                            content_excerpt: message.content.moderation_input().text,
+                            blob_references: message.content.blob_references(),
+                        };
+                        state.data.fire_and_forget_handler.send(
+                            state.data.group_index_canister_id,
+                            "c2c_csam_detected_msgpack".to_string(),
+                            serialize_then_unwrap(&args),
+                        );
+                    } else {
+                        // Refer for human review as a suspected ToS violation: the user_index
+                        // creates a resolvable report and a moderator decides; no automatic
+                        // action is taken against the message or the sender
+                        let args = group_index_canister::c2c_moderation_referral::Args {
+                            channel_id: Some(channel_id),
+                            thread_root_message_index: ev.thread_root_message_index,
+                            message_index: message.message_index,
+                            message_id: ev.message_id,
+                            sender: message.sender,
+                            flags: moderation_referral.bits(),
+                            content_excerpt: message.content.moderation_input().text,
+                            blob_references: message.content.blob_references(),
+                        };
+                        state.data.fire_and_forget_handler.send(
+                            state.data.group_index_canister_id,
+                            "c2c_moderation_referral_msgpack".to_string(),
+                            serialize_then_unwrap(&args),
+                        );
+                    }
+                }
             }
         }
         LocalIndexEvent::ModerationFlagsChanged(ev) => {
