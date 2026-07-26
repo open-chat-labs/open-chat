@@ -1965,6 +1965,11 @@ export const UserIndexPublicKeyResponse = Type.Union([
     }),
 ]);
 
+export type UserIndexAcceptTermsArgs = Static<typeof UserIndexAcceptTermsArgs>;
+export const UserIndexAcceptTermsArgs = Type.Object({
+    version: Type.Number(),
+});
+
 export type UserIndexUpdateDiamondMembershipSubscriptionArgs = Static<
     typeof UserIndexUpdateDiamondMembershipSubscriptionArgs
 >;
@@ -7651,6 +7656,7 @@ export const UserIndexCurrentUserSuccessResult = Type.Object({
     streak: Type.Number(),
     max_streak: Type.Number(),
     hide_online_status: Type.Optional(Type.Boolean()),
+    accepted_terms_version: Type.Optional(Type.Number()),
 });
 
 export type UserIndexCurrentUserResponse = Static<typeof UserIndexCurrentUserResponse>;

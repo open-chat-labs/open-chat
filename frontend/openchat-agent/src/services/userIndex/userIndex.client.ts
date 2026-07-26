@@ -67,6 +67,7 @@ import {
     UserIndexSetInternalModerationChannelArgs,
     UserIndexResolveModerationReportArgs,
     UserIndexSetModerationFlagsArgs,
+    UserIndexAcceptTermsArgs,
     UserIndexSetModerationReferralConfigArgs,
     UserIndexSetOpenaiApiKeyArgs,
     UserIndexSetPremiumItemCostArgs,
@@ -170,6 +171,16 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             (_) => true,
             UserIndexSetModerationFlagsArgs,
             SuccessOnly,
+        );
+    }
+
+    acceptTerms(version: number): Promise<boolean> {
+        return this.update(
+            "accept_terms",
+            { version },
+            (resp) => resp === "Success",
+            UserIndexAcceptTermsArgs,
+            UnitResult,
         );
     }
 

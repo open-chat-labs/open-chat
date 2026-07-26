@@ -22,6 +22,9 @@
     import {
         allUsersStore,
         anonUserStore,
+        ANON_USER_ID,
+        CURRENT_TERMS_VERSION,
+        currentUserStore,
         chatIdentifiersEqual,
         chatListScopeStore,
         chatsInitialisedStore,
@@ -54,6 +57,7 @@
     import OfflineFooter from "../OfflineFooter.svelte";
     import OnboardModal from "../onboard/OnboardModal.svelte";
     import SuspendedModal from "../SuspendedModal.svelte";
+    import TermsUpdatedModal from "../TermsUpdatedModal.svelte";
     import Toast from "../Toast.svelte";
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
     import AnonFooter from "./AnonFooter.svelte";
@@ -552,7 +556,8 @@
             inGlobalContext={showProfileCard.inGlobalContext}
             chatButton={showProfileCard.chatButton}
             onOpenDirectChat={chatWithFromProfileCard}
-            onClose={() => (showProfileCard = undefined)} />
+            onClose={() => (showProfileCard = undefined)}
+        />
     {/if}
 {/if}
 
@@ -582,7 +587,8 @@
             ? confirmActionEvent.doubleCheck
             : undefined}
         message={confirmMessage}
-        action={onConfirmAction} />
+        action={onConfirmAction}
+    />
 {/if}
 
 <Toast />
@@ -602,29 +608,37 @@
         <NoAccess
             onClose={closeNoAccess}
             titleKey={"appStore.notAvailableTitle"}
-            textKey={"appStore.notAvailable"} />
+            textKey={"appStore.notAvailable"}
+        />
     {:else if modal.kind === "make_proposal"}
         <MakeProposalModal
             selectedMultiUserChat={modal.chat}
             nervousSystem={modal.nervousSystem}
-            onClose={closeModal} />
+            onClose={closeModal}
+        />
     {/if}
 {/if}
 
 {#if $rulesAcceptanceStore !== undefined}
     <AcceptRulesModal />
+
+    {#if $currentUserStore.userId !== ANON_USER_ID && ($currentUserStore.acceptedTermsVersion ?? 0) < CURRENT_TERMS_VERSION}
+        <TermsUpdatedModal />
+    {/if}
 {:else if forgotPin}
     <Sheet onDismiss={() => (forgotPin = false)}>
         <SetPinNumberModal
             onPinSet={onPinNumberComplete}
             onClose={() => (forgotPin = false)}
-            type={{ kind: "forgot", while: { kind: "enter" } }} />
+            type={{ kind: "forgot", while: { kind: "enter" } }}
+        />
     </Sheet>
 {:else if $pinNumberResolverStore !== undefined}
     <PinNumberModal
         onClose={onPinNumberClose}
         onComplete={onPinNumberComplete}
-        onForgot={onForgotPin} />
+        onForgot={onForgotPin}
+    />
 {/if}
 
 {#if $chitPopup && !$disableChit}

@@ -10,6 +10,7 @@ import {
 } from "@icp-sdk/core/identity";
 import DRange from "drange";
 import {
+    CURRENT_TERMS_VERSION,
     ARBITRUM_NETWORK,
     AuthProvider,
     BASE_NETWORK,
@@ -1035,6 +1036,10 @@ export class OpenChat {
     }
 
     onRegisteredUser(user: CreatedUser) {
+        // Registering constitutes acceptance of the current terms, so new users never see the
+        // terms-updated notice
+        user = { ...user, acceptedTermsVersion: CURRENT_TERMS_VERSION };
+        this.acceptTerms(CURRENT_TERMS_VERSION);
         user.blobUrl = buildUserAvatarUrl(
             this.config.blobUrlPattern,
             user.userId,
@@ -6038,6 +6043,13 @@ export class OpenChat {
             }
             return resp;
         });
+    }
+
+    acceptTerms(version: number): Promise<boolean> {
+        // Update the store immediately so the blocking notice closes; the acceptance is
+        // recorded against the user record on the user_index
+        currentUserStore.set({ ...currentUserStore.value, acceptedTermsVersion: version });
+        return this.#worker.send({ kind: "acceptTerms", version }).catch(() => false);
     }
 
     setHideOnlineStatus(hideOnlineStatus: boolean): Promise<void> {

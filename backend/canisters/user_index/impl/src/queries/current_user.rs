@@ -37,6 +37,7 @@ fn current_user_impl(state: &RuntimeState) -> Response {
             streak: u.streak,
             max_streak: u.max_streak,
             hide_online_status: u.hide_online_status,
+            accepted_terms_version: u.accepted_terms_version,
         })
     } else {
         UserNotFound

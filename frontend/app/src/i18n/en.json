@@ -1187,6 +1187,12 @@
         "error": "Failed to fetch the media",
         "item": "Item {n} of {total}"
     },
+    "termsUpdated": {
+        "title": "Our terms have changed",
+        "info": "We have updated the OpenChat terms of service, including new rules about prohibited content and how moderation works. Please review the updated terms. By selecting \"I agree\" you accept the updated terms.",
+        "link": "Read the updated terms",
+        "agree": "I agree"
+    },
     "suspendedNotice": {
         "intro": "Your account has been suspended.",
         "reason": "Reason:",

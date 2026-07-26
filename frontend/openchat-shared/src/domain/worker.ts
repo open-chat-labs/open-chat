@@ -382,6 +382,7 @@ export type WorkerRequest =
     | SetModerationFlags
     | SetOpenAIApiKey
     | SetModerationReferralConfig
+    | AcceptTerms
     | SetInternalModerationChannel
     | ResolveModerationReport
     | ContestModerationSanction
@@ -818,6 +819,11 @@ type SetModerationFlags = {
 type SetOpenAIApiKey = {
     kind: "setOpenAIApiKey";
     apiKey: string | undefined;
+};
+
+type AcceptTerms = {
+    kind: "acceptTerms";
+    version: number;
 };
 
 type SetModerationReferralConfig = {
@@ -2511,6 +2517,8 @@ export type WorkerResult<T> = T extends Init
     : T extends SetOpenAIApiKey
     ? boolean
     : T extends SetModerationReferralConfig
+    ? boolean
+    : T extends AcceptTerms
     ? boolean
     : T extends SetInternalModerationChannel
     ? boolean

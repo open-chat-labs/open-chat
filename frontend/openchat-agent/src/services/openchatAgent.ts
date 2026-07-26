@@ -2172,6 +2172,10 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.getCurrentUser();
     }
 
+    acceptTerms(version: number): Promise<boolean> {
+        return this._userIndexClient.acceptTerms(version);
+    }
+
     setModerationReferralConfig(
         config: { categories: number; scoreThreshold: number } | undefined,
     ): Promise<boolean> {

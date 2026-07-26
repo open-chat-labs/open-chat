@@ -1,3 +1,4 @@
+pub mod accept_terms;
 pub mod add_local_user_index_canister;
 pub mod add_platform_moderator;
 pub mod add_platform_operator;

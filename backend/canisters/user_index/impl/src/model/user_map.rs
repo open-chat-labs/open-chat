@@ -764,6 +764,19 @@ impl UserMap {
         map
     }
 
+    pub fn accept_terms(&mut self, caller: &Principal, version: u32, now: TimestampMillis) -> bool {
+        if let Some(user) = self.principal_to_user_id.get(caller).and_then(|u| self.users.get_mut(u)) {
+            // Never downgrade: an out-of-date client cannot roll the accepted version back
+            if version > user.accepted_terms_version {
+                user.accepted_terms_version = version;
+                user.accepted_terms_at = now;
+            }
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn set_moderation_flags_enabled(&mut self, caller: &Principal, moderation_flags_enabled: u32) -> bool {
         if let Some(user) = self.principal_to_user_id.get(caller).and_then(|u| self.users.get_mut(u)) {
             user.moderation_flags_enabled = moderation_flags_enabled;

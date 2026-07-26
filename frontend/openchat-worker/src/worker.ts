@@ -1004,6 +1004,8 @@ function getAction(
             return agent.setOpenAIApiKey(payload.apiKey);
         case "setModerationReferralConfig":
             return agent.setModerationReferralConfig(payload.config);
+        case "acceptTerms":
+            return agent.acceptTerms(payload.version);
 
         case "setInternalModerationChannel":
             return agent.setInternalModerationChannel(payload.channel);
