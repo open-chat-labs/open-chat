@@ -6,10 +6,13 @@
     <h2>Introduction</h2>
 
     <p>
-        OpenChat is about to make the biggest change to how content moderation works on the platform
-        since it launched. This post explains what is changing, why we have to do it, how the new
-        system works, and what it means for you. Some of it is not optional for us, and we want to
-        be completely open about that rather than have it arrive unannounced.
+        Preparing our Android app for app store readiness has led us to uncover some pretty serious
+        gaps and as such, OpenChat will soon be making some very significant changes to how content
+        moderation works on the platform. This post explains what is changing, why we have to do it,
+        how the new system works, and what it means for you. I want to stress that while the team
+        agree with all of these changes, they mostly stem from serious legal obligations that we
+        have not taken as seriously as we should, and we want to be completely open about that
+        rather than have it arrive unannounced.
     </p>
 
     <p>
@@ -33,21 +36,33 @@
     <p>
         The most significant of these for us is the UK Online Safety Act 2023, which is now fully in
         force. Among many other things it requires platforms to assess the risk of illegal content,
-        to take proportionate measures against it, and — since April 2026 — to report child sexual
+        to take proportionate measures against it, and, since April 2026, to report child sexual
         exploitation and abuse (CSEA) content to the UK National Crime Agency. Alongside the UK
-        regime sit equivalent and overlapping obligations elsewhere, including EU law and US federal
-        law on the reporting and preservation of child sexual abuse material.
+        regimes sit equivalent and overlapping obligations elsewhere, including EU law and US
+        federal law on the reporting and preservation of child sexual abuse material.
     </p>
 
     <p>
-        These duties are not abstract. OpenChat Labs Ltd — the UK company behind OpenChat's
-        development, which performs trust and safety functions for the platform — carries real legal
+        These duties are not abstract. OpenChat Labs Ltd, the UK company behind OpenChat's
+        development, which performs trust and safety functions for the platform, carries real legal
         exposure if the platform does not meet them. The people building OpenChat should not have to
         choose between working on the product they love and their own legal safety, and the platform
         itself cannot grow, or remain in the app stores, without meeting the standards that
         mainstream distribution requires. Apple and Google both mandate child safety standards, and
         Google Play now requires a published statement of standards against CSEA together with a
         working reporting and enforcement capability behind it.
+    </p>
+
+    <p>
+        If that sounds theoretical, recent history says otherwise. In 2024 the founder of Telegram
+        was arrested in France and placed under formal investigation, with the charges including
+        complicity in the distribution of child sexual abuse material on the platform and failure to
+        cooperate with law enforcement. Omegle — a service smaller than many realise — shut down
+        entirely in 2023 under the weight of child-safety litigation. And the Online Safety Act
+        itself carries fines of up to £18 million or 10% of global revenue, with criminal liability
+        for senior managers in certain cases of non-compliance. Platforms that treat child safety as
+        optional are being closed, fined, and in the worst case their people prosecuted. We are not
+        willing to gamble on being the exception.
     </p>
 </section>
 
@@ -56,18 +71,19 @@
 
     <p>
         OpenChat has always had content rules and a reporting mechanism, and for some time we used
-        the third-party decentralized moderation service Modclub to review reported content. We have
-        to be honest about how that has worked out: it hasn't. Reports frequently went unreviewed,
-        outcomes were inconsistent, and in practice the pipeline stopped functioning altogether. A
-        moderation system which does not reliably work does not meet our legal obligations, and it
-        does not protect our users either.
+        the third-party decentralized moderation service Modclub to review reported content. In the
+        current legal environment, even if that system were up and running and working as intended,
+        it would not come close to meeting the relevant legal requirements. Reports frequently went
+        unreviewed, outcomes were inconsistent, and in practice the pipeline stopped functioning
+        altogether. A moderation system which does not reliably work does not meet our legal
+        obligations, and it does not protect our users either.
     </p>
 
     <p>
-        The existing arrangements also predate the Online Safety Act's specific duties. Nothing in
-        the old system could detect illegal content proactively, preserve evidence in the way the
-        law requires, or make a report to the National Crime Agency. Those capabilities have to be
-        built deliberately, and that is what we have done.
+        The existing arrangements predated the Online Safety Act's specific duties. Nothing in the
+        old system could detect illegal content proactively, preserve evidence in the way the law
+        requires, or make a report to the National Crime Agency. Those capabilities have to be built
+        deliberately, and that is what we have now done.
     </p>
 </section>
 
@@ -77,10 +93,10 @@
     <p>There are three headline changes:</p>
 
     <p>
-        <strong>1. An automated moderation system with humans in the loop.</strong> Messages sent to public
-        groups and channels will be automatically classified for the most serious categories of harmful
-        content. Automated detection is backed by human review at every consequential step — more on how
-        this works below.
+        <strong>1. An automated moderation system with human moderators in the loop.</strong> Messages
+        sent to public groups and channels will be automatically classified for the most serious categories
+        of harmful content. Automated detection is backed by human review at every consequential step
+        — more on how this works below.
     </p>
 
     <p>
@@ -119,8 +135,7 @@
         >
         The content of a private message is only ever classified if one of its recipients reports it.
         This is a deliberate line. The law asks us to take proportionate measures, and proactively scanning
-        private conversations would be neither proportionate nor compatible with what OpenChat stands
-        for.
+        private conversations would be neither proportionate nor compatible with privacy.
     </p>
 
     <h3>Detection with human review</h3>
@@ -151,11 +166,13 @@
 
     <p>
         If your account is ever suspended by the automated system, the suspension notice tells you
-        why, and you have the right to contest the decision and have it reviewed by a human — a
-        right you can exercise directly from within the app, even while suspended. This is not just
-        good practice; where automated decisions significantly affect people, data protection law
-        (GDPR Article 22) guarantees the right to human intervention, and we have built the system
-        around that guarantee rather than treating it as an afterthought.
+        why, and you have the right to contest the decision and have it reviewed by a human. You can
+        request that review directly from the suspension notice where your app supports it, and in
+        any case by emailing
+        <a href="mailto:safety@openchatlabs.org">safety@openchatlabs.org</a> — the review happens either
+        way. This is not just good practice; where automated decisions significantly affect people, data
+        protection law (GDPR Article 22) guarantees the right to human intervention, and we have built
+        the system around that guarantee rather than treating it as an afterthought.
     </p>
 
     <h3>Evidence, not destruction</h3>
@@ -196,7 +213,7 @@
     <h2>When will this happen?</h2>
 
     <p>
-        The system is built and tested, and will be released in stages. The updated terms and
+        The system is built and in testing, and will be released in stages. The updated terms and
         guidelines will be published first — that is what this post is preparing you for — followed
         by the platform changes. Automated detection itself is switched on only when the remaining
         pieces are in place: our registration with the National Crime Agency's reporting portal and
