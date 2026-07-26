@@ -1061,9 +1061,12 @@
             <ul class="custom_list" style={"--prefix: '6.'"}>
                 <li>
                     Moderation, enforcement and other safety functions for the OpenChat Platform,
-                    including reporting to authorities, are performed on our behalf by OpenChat Labs
-                    Ltd, a company registered in England and Wales with company number 14871398
-                    ("<strong>OpenChat Labs</strong>").
+                    including reporting to authorities, are performed on our behalf by
+                    <a href="https://openchatlabs.org" target="_blank" rel="noreferrer noopener"
+                        >OpenChat Labs Ltd</a
+                    >, a company registered in England and Wales with company number 14871398 ("<strong
+                        >OpenChat Labs</strong
+                    >").
                 </li>
                 <li>
                     Pornographic content, and all other content falling within the categories of
@@ -1113,21 +1116,22 @@
                     OpenChat Platform for all other content.
                 </li>
                 <li>
-                    For the purposes of data protection law, OpenChat Labs is the controller in
-                    respect of the processing described in this clause B 6. The legal basis for
-                    this processing is compliance with legal obligations to which OpenChat Labs is
-                    subject. This processing involves automated decision-making; the right to
-                    contest such decisions and obtain human review is described in clause B 6.5.
-                    Data may be shared with the processors identified in clause B 6.3 and, where
-                    required by Applicable Law, with law enforcement authorities.
+                    For the purposes of data protection law,
+                    <a href="https://openchatlabs.org" target="_blank" rel="noreferrer noopener"
+                        >OpenChat Labs</a
+                    > is the controller in respect of the processing described in this clause B 6. The
+                    legal basis for this processing is compliance with legal obligations to which OpenChat
+                    Labs is subject. This processing involves automated decision-making; the right to
+                    contest such decisions and obtain human review is described in clause B 6.5. Data
+                    may be shared with the processors identified in clause B 6.3 and, where required by
+                    Applicable Law, with law enforcement authorities.
                 </li>
                 <li>
                     If you wish to complain about any safety matter, including any moderation
                     decision, you may do so via the help channel in the OpenChat Community
                     (accessible via the OpenChat Platform) or by emailing
-                    <strong>safety@openchatlabs.org</strong> (which does not require access to an
-                    OpenChat account). Complaints will be acknowledged and investigated within a
-                    reasonable time.
+                    <strong>safety@openchatlabs.org</strong> (which does not require access to an OpenChat
+                    account). Complaints will be acknowledged and investigated within a reasonable time.
                 </li>
                 <li>
                     Our published standards against child sexual abuse and exploitation are
@@ -2069,11 +2073,11 @@
             applied to a Group or Community.
         </li>
         <li>
-            share content that glorifies, promotes, normalises, or provides instructions for
-            suicide or other acts of physical self-harm. This includes content that encourages
-            others to cut, burn, or starve themselves, as well as content that normalizes eating
-            disorders, such as anorexia and bulimia. Self-harm acts or threats used as a form of
-            emotional manipulation or coercion are also prohibited.
+            share content that glorifies, promotes, normalises, or provides instructions for suicide
+            or other acts of physical self-harm. This includes content that encourages others to
+            cut, burn, or starve themselves, as well as content that normalizes eating disorders,
+            such as anorexia and bulimia. Self-harm acts or threats used as a form of emotional
+            manipulation or coercion are also prohibited.
         </li>
         <li>
             share real media depicting gore, excessive violence, or animal harm, especially with the
@@ -2096,7 +2100,8 @@
         <strong
             >PLEASE NOTE THAT THE BELOW REPRESENTS FEATURES OF CHAT AS AT THE CURRENT DATE OF THESE
             TERMS. HOWEVER, THERE MAY BE LEGAL, REGULATORY OR COMMERCIAL REASONS WHY CHAT FEATURE
-            MAY IN THE FUTURE CHANGE FROM THE BELOW.</strong>
+            MAY IN THE FUTURE CHANGE FROM THE BELOW.</strong
+        >
     </p>
     <p>CHAT gives CHAT holders the following rights:</p>
     <p>CHAT may be:</p>
