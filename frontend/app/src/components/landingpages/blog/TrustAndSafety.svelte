@@ -10,9 +10,9 @@
         gaps and as such, OpenChat will soon be making some very significant changes to how content
         moderation works on the platform. This post explains what is changing, why we have to do it,
         how the new system works, and what it means for you. I want to stress that while the team
-        agree with all of these changes, they mostly stem from serious legal obligations that we
-        have not taken as seriously as we should, and we want to be completely open about that
-        rather than have it arrive unannounced.
+        agree with all of these changes, they mostly stem from serious legal obligations which have
+        grown much faster than the systems we had in place to meet them, and we want to be
+        completely open about that rather than have it all arrive unannounced.
     </p>
 
     <p>
