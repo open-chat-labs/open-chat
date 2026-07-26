@@ -1187,6 +1187,12 @@
         "error": "Failed to fetch the media",
         "item": "Item {n} of {total}"
     },
+    "suspendedNotice": {
+        "intro": "Your account has been suspended.",
+        "reason": "Reason:",
+        "appealDeleted": "You can appeal this suspension by emailing {email}, otherwise your account will be deleted on {date}.",
+        "appealUnsuspended": "You can appeal this suspension by emailing {email}. Your account will be unsuspended on {date}."
+    },
     "suspendedContest": {
         "info": "If your account was suspended by automated moderation, you can request a human review of that decision.",
         "button": "Request human review",

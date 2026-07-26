@@ -1,6 +1,7 @@
 <script lang="ts">
     import { currentUserStore, type OpenChat } from "@client";
     import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
     import { i18nKey } from "../i18n/i18n";
     import Markdown from "@shared_components/Markdown.svelte";
     import Button from "./Button.svelte";
@@ -32,15 +33,20 @@
     function buildNoticeText(): string {
         const suspensionDetails = $currentUserStore.suspensionDetails!;
         const actionDate = new Date(Number(suspensionDetails.action.timestamp));
-        const actionText =
-            suspensionDetails.action.kind === "delete_action" ? "deleted" : "unsuspended";
+        const appealKey =
+            suspensionDetails.action.kind === "delete_action"
+                ? "suspendedNotice.appealDeleted"
+                : "suspendedNotice.appealUnsuspended";
+        const appeal = $_(appealKey, {
+            values: { email: "safety@openchatlabs.org", date: actionDate.toLocaleString() },
+        });
 
-        return `Your account has been suspended.
+        return `${$_("suspendedNotice.intro")}
 
-Reason:
+${$_("suspendedNotice.reason")}
 "${suspensionDetails.reason}"
 
-You can appeal this suspension by sending a direct message to the @OpenChat Twitter account otherwise your account will be ${actionText} on ${actionDate.toLocaleString()}.`;
+${appeal}`;
     }
 </script>
 
