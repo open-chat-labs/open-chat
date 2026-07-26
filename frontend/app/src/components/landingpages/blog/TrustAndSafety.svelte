@@ -43,14 +43,17 @@
     </p>
 
     <p>
-        These duties are not abstract. OpenChat Labs Ltd, the UK company behind OpenChat's
-        development, which performs trust and safety functions for the platform, carries real legal
-        exposure if the platform does not meet them. The people building OpenChat should not have to
-        choose between working on the product they love and their own legal safety, and the platform
-        itself cannot grow, or remain in the app stores, without meeting the standards that
-        mainstream distribution requires. Apple and Google both mandate child safety standards, and
-        Google Play now requires a published statement of standards against CSEA together with a
-        working reporting and enforcement capability behind it.
+        These duties are not abstract.
+        <a href="https://openchatlabs.org" target="_blank" rel="noreferrer noopener"
+            >OpenChat Labs Ltd</a
+        >, the UK company behind OpenChat's development, which performs trust and safety functions
+        for the platform, carries real legal exposure if the platform does not meet them. The people
+        building OpenChat should not have to choose between working on the product they love and
+        their own legal safety, and the platform itself cannot grow, or remain in the app stores,
+        without meeting the standards that mainstream distribution requires. Apple and Google both
+        mandate child safety standards, and Google Play now requires a published statement of
+        standards against CSEA together with a working reporting and enforcement capability behind
+        it.
     </p>
 
     <p>
