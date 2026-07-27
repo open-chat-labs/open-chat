@@ -172,6 +172,7 @@ fn report_then_upheld_as_csam_verdict_applies_sanction() {
             thread_root_message_index: None,
             message_id,
             delete: false,
+            csam: false,
         },
     );
     assert!(matches!(report_response, UnitResult::Success));
@@ -378,6 +379,7 @@ fn repeat_reports_of_same_message_attach_to_a_single_report() {
                 thread_root_message_index: None,
                 message_id,
                 delete: false,
+                csam: false,
             },
         )
     };
@@ -483,6 +485,7 @@ fn escalated_media_report_upheld_as_csam_vaults_evidence() {
             thread_root_message_index: None,
             message_id,
             delete: false,
+            csam: false,
         },
     );
     assert!(matches!(report_response, UnitResult::Success));
@@ -729,6 +732,99 @@ fn moderation_referral_creates_report_and_upheld_verdict_sanctions() {
     let reports = get_moderation_reports(env, &test_data);
     let report = reports.iter().find(|r| r.report_index == Some(report_index)).unwrap();
     assert!(matches!(report.status, ModerationReportStatus::Upheld(_)));
+}
+
+#[test]
+fn csam_asserted_report_applies_auto_sanction_and_dismissal_reverses() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    let message_id = random_from_u128();
+    let message_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
+    client::group::happy_path::send_text_message(
+        env,
+        &test_data.sender,
+        test_data.group_id,
+        None,
+        &message_text,
+        Some(message_id),
+    );
+    tick_many(env, 3);
+
+    // The reporter asserts CSAM: the report is treated like a classifier detection - the
+    // auto-sanction applies immediately with no classifier call and no human in the loop yet
+    let report_response = client::group::report_message(
+        env,
+        test_data.reporter.principal,
+        test_data.group_id.into(),
+        &group_canister::report_message::Args {
+            thread_root_message_index: None,
+            message_id,
+            delete: false,
+            csam: true,
+        },
+    );
+    assert!(matches!(report_response, UnitResult::Success));
+    tick_many(env, 10);
+
+    let message_content = get_message_content(env, &test_data.group_owner, test_data.group_id, message_id);
+    assert!(matches!(message_content, MessageContent::Deleted(_)), "{message_content:?}");
+
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    let suspension_details = sender_state.suspension_details.expect("sender should be suspended");
+    assert!(matches!(suspension_details.action, SuspensionAction::Delete(_)));
+
+    // The alert reflects an auto-sanctioned report raised by a user (not the pipeline)
+    let reports = get_moderation_reports(env, &test_data);
+    let report = reports
+        .iter()
+        .find(|r| r.sender == test_data.sender.user_id && r.reporters.contains(&test_data.reporter.user_id))
+        .expect("report should exist");
+    assert!(report.auto_sanctioned);
+    assert!(matches!(report.status, ModerationReportStatus::Pending));
+    let report_index = report.report_index.expect("report should carry an index");
+
+    // The quarantine read-gate holds even though this was reporter-asserted rather than
+    // classifier-detected
+    let deleted_message_response = client::group::deleted_message(
+        env,
+        test_data.sender.principal,
+        test_data.group_id.into(),
+        &group_canister::deleted_message::Args {
+            thread_root_message_index: None,
+            message_id,
+        },
+    );
+    assert!(
+        matches!(deleted_message_response, group_canister::deleted_message::Response::Error(_)),
+        "{deleted_message_response:?}"
+    );
+
+    // A moderator dismisses the false report: full reversal
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index,
+            verdict: ModerationVerdict::Dismissed,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    assert!(sender_state.suspension_details.is_none(), "sender should be unsuspended");
+
+    let message_content = get_message_content(env, &test_data.group_owner, test_data.group_id, message_id);
+    assert!(matches!(message_content, MessageContent::Text(_)), "{message_content:?}");
 }
 
 // Waits for pending moderation API outcalls and answers each one. Only inputs containing

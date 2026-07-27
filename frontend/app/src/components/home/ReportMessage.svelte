@@ -41,6 +41,9 @@
         "report.scam",
     ];
 
+    // Index 1 is "child sexual content": the report is treated like a classifier detection
+    // and the auto-sanction applies immediately, so it gets an explicit warning
+    let csam = $derived(selectedReasonIndex === 1);
     let valid = $derived(selectedReasonIndex > -1);
 
     function createReport() {
@@ -50,7 +53,13 @@
 
     function report() {
         client
-            .reportMessage(chatId, threadRootMessageIndex, messageId, canDelete && deleteMessage)
+            .reportMessage(
+                chatId,
+                threadRootMessageIndex,
+                messageId,
+                canDelete && deleteMessage,
+                csam,
+            )
             .then((success) => {
                 if (success) {
                     toastStore.showSuccessToast(i18nKey("report.success"));
@@ -81,6 +90,11 @@
                         {/each}
                     </Select>
                 </div>
+                {#if csam}
+                    <div class="csam-warning">
+                        <Translatable resourceKey={i18nKey("report.csamWarning")} />
+                    </div>
+                {/if}
                 {#if canDelete}
                     <div class="delete">
                         <Checkbox
@@ -120,6 +134,15 @@
 </Overlay>
 
 <style lang="scss">
+    .csam-warning {
+        margin-bottom: $sp4;
+        padding: $sp3;
+        border: 1px solid var(--error);
+        border-radius: $sp2;
+        color: var(--error);
+        @include font(book, normal, fs-80);
+    }
+
     .header {
         display: flex;
         gap: $sp3;

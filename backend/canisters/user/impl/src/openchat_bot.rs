@@ -109,12 +109,14 @@ pub(crate) fn send_user_suspended_message(event: &UserSuspended, state: &mut Run
 
     let reason = &event.reason;
 
-    let text = format!("Your account has been suspended.
+    let text = format!(
+        "Your account has been suspended.
 
 Reason:
 \"{reason}\"
 
-You can appeal this suspension by emailing safety@openchatlabs.org otherwise your account will be {action}.");
+You can appeal this suspension by emailing safety@openchatlabs.org otherwise your account will be {action}."
+    );
 
     send_text_message(text, Vec::new(), false, state);
 }

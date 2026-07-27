@@ -7313,6 +7313,7 @@ export class OpenChat {
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         deleteMessage: boolean,
+        csam: boolean,
     ): Promise<boolean> {
         return this.#worker
             .send({
@@ -7321,6 +7322,7 @@ export class OpenChat {
                 threadRootMessageIndex,
                 messageId,
                 deleteMessage,
+                csam,
             })
             .catch(() => false);
     }

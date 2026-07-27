@@ -2043,6 +2043,7 @@ type ReportMessage = {
     threadRootMessageIndex: number | undefined;
     messageId: bigint;
     deleteMessage: boolean;
+    csam: boolean;
     kind: "reportMessage";
 };
 

@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Reports which assert child sexual abuse content apply the auto-sanction immediately (quarantine, delete, suspend) ahead of the human verdict, so the material is never viewed outside the quarantine framework ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+
 - Suspension notice from the OC bot points appeals at safety@openchatlabs.org instead of a Twitter DM ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 
 ### Fixed

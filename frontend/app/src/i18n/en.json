@@ -1763,6 +1763,7 @@
     "report": {
         "advice": "If you believe this message violates the rules of this group, please contact the owners and admins on the group in the first instance. Only report a message for platform moderation if you feel like it violates the [platform rules]({rules}) otherwise it wastes moderators time. Persistent mis-reporting could lead to your own account being suspended.",
         "child": "Message contains child sexual content",
+        "csamWarning": "Reporting under this category immediately removes the message and suspends the sender pending human review. Knowingly false reports are a serious violation of the platform rules and will result in action against your own account.",
         "deleteMessage": "Delete reported message",
         "failure": "Sorry we were unable to report this message to the platform moderators",
         "menu": "Report",

@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Reports which assert child sexual abuse content apply the auto-sanction immediately (quarantine, delete, suspend) ahead of the human verdict, so the material is never viewed outside the quarantine framework ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+
 - `c2c_moderation_referral` - forwards moderation referrals from group/community canisters to the user_index ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 
 ### Changed

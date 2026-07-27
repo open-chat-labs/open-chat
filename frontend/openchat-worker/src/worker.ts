@@ -881,6 +881,7 @@ function getAction(
                 payload.threadRootMessageIndex,
                 payload.messageId,
                 payload.deleteMessage,
+                payload.csam,
             );
 
         case "approveTransfer":

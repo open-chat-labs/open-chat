@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Reports which assert child sexual abuse content apply the auto-sanction immediately (quarantine, delete, suspend) ahead of the human verdict, so the material is never viewed outside the quarantine framework ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+
 - Escalate classifier moderation referrals to the user_index (via the group_index) for human review ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 - Add `c2c_flag_message` endpoint so user_index can flag reported messages ([#9092](https://github.com/open-chat-labs/open-chat/pull/9092))
 - Notify user_index of CSAM detections for auto-sanction and escalation ([#9093](https://github.com/open-chat-labs/open-chat/pull/9093))

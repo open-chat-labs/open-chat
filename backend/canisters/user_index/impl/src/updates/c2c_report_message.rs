@@ -26,12 +26,31 @@ const MAX_CLASSIFICATION_ATTEMPTS: u32 = 5;
 fn c2c_report_message(args: Args) -> Response {
     match mutate_state(|state| add_report(&args, state)) {
         Ok(report_index) => {
-            // If the message has already been classified by the active moderation pipeline (only
-            // public messages are, and only flagged categories are stored) then reuse that
-            // judgement rather than calling the OpenAI API again
-            if args.message.moderation_flags != 0
+            if args.csam {
+                // The reporter asserts the content is CSAM: treat the report like a classifier
+                // detection and apply the auto-sanction immediately - quarantine the media in
+                // the vault, delete the message and suspend the sender - ahead of the human
+                // verdict, which confirms or fully reverses it. Nobody views the material
+                // outside the quarantine framework. The moderation flags are set even for
+                // private chats so that the deleted content is locked behind the read-gate.
+                mutate_state(|state| {
+                    handle_moderation_result(report_index, ModerationCategories::SEXUAL_MINORS, false, state);
+                    if let Some(reported_message) = state.data.reported_messages.get(report_index) {
+                        moderation::set_message_moderation_flags(
+                            reported_message.chat_id,
+                            reported_message.thread_root_message_index,
+                            reported_message.message_id,
+                            ModerationCategories::SEXUAL_MINORS.bits(),
+                            &mut state.data.fire_and_forget_handler,
+                        );
+                    }
+                });
+            } else if args.message.moderation_flags != 0
                 && let Some(categories) = ModerationCategories::from_bits(args.message.moderation_flags)
             {
+                // The message has already been classified by the active moderation pipeline
+                // (only public messages are, and only flagged categories are stored): reuse
+                // that judgement rather than calling the OpenAI API again
                 mutate_state(|state| handle_moderation_result(report_index, categories, false, state));
             } else {
                 // The classification inputs were persisted in `add_report`, so if this call is

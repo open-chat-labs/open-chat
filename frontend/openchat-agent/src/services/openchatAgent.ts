@@ -3585,6 +3585,7 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         deleteMessage: boolean,
+        csam: boolean,
     ): Promise<boolean> {
         if (offline()) return Promise.resolve(false);
 
@@ -3594,6 +3595,7 @@ export class OpenChatAgent extends EventTarget {
                 threadRootMessageIndex,
                 messageId,
                 deleteMessage,
+                csam,
             );
         } else if (chatId.kind === "group_chat") {
             return this._groupClient.reportMessage(
@@ -3601,6 +3603,7 @@ export class OpenChatAgent extends EventTarget {
                 threadRootMessageIndex,
                 messageId,
                 deleteMessage,
+                csam,
             );
         } else {
             return this.userClient.reportMessage(
@@ -3608,6 +3611,7 @@ export class OpenChatAgent extends EventTarget {
                 threadRootMessageIndex,
                 messageId,
                 deleteMessage,
+                csam,
             );
         }
     }

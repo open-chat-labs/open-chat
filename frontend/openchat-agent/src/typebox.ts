@@ -3382,6 +3382,7 @@ export const CommunityReportMessageArgs = Type.Object({
     thread_root_message_index: Type.Optional(MessageIndex),
     message_id: MessageId,
     delete: Type.Boolean(),
+    csam: Type.Boolean(),
 });
 
 export type CommunityUpdateChannelSuccessResult = Static<
@@ -4278,6 +4279,7 @@ export const GroupReportMessageArgs = Type.Object({
     thread_root_message_index: Type.Optional(MessageIndex),
     message_id: MessageId,
     delete: Type.Boolean(),
+    csam: Type.Boolean(),
 });
 
 export type GroupFollowThreadArgs = Static<typeof GroupFollowThreadArgs>;
@@ -4689,6 +4691,7 @@ export const UserReportMessageArgs = Type.Object({
     thread_root_message_index: Type.Optional(MessageIndex),
     message_id: MessageId,
     delete: Type.Boolean(),
+    csam: Type.Boolean(),
 });
 
 export type UserGenerateOneSecAddressResponse = Static<typeof UserGenerateOneSecAddressResponse>;
