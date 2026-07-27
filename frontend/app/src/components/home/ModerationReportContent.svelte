@@ -92,8 +92,8 @@
 <div class="report">
     <div class="header">
         {#if csam}
-            <span class="csam"
-                ><Translatable resourceKey={i18nKey("moderationReport.csam")} /></span>
+            <span class="csam"><Translatable resourceKey={i18nKey("moderationReport.csam")} /></span
+            >
         {/if}
         <Translatable resourceKey={i18nKey("moderationReport.title")} />
     </div>
@@ -137,7 +137,8 @@
                     content.classificationFailed
                         ? "moderationReport.classifierFailed"
                         : "moderationReport.classifierClean",
-                )} />
+                )}
+            />
         </div>
     {/if}
     {#if content.status.kind === "contested"}
@@ -166,14 +167,16 @@
             <Translatable
                 resourceKey={i18nKey("moderationReport.upheld", {
                     moderator,
-                })} />
+                })}
+            />
         </div>
     {:else if content.status.kind === "dismissed"}
         <div class="row resolved">
             <Translatable
                 resourceKey={i18nKey("moderationReport.dismissed", {
                     moderator,
-                })} />
+                })}
+            />
         </div>
     {:else if canResolve}
         {#if content.blobReferences.length > 0}
@@ -183,16 +186,13 @@
                 </Button>
             </div>
         {/if}
-        {#if needsMediaReview}
-            <div class="row light">
-                <Translatable resourceKey={i18nKey("moderationReport.reviewFirst")} />
-            </div>
-        {:else}
+        {#if !needsMediaReview}
             <div class="actions">
                 <Button
                     loading={busy}
                     disabled={busy || resolved}
-                    onClick={() => resolve("upheld")}>
+                    onClick={() => resolve("upheld")}
+                >
                     <Translatable resourceKey={i18nKey("moderationReport.uphold")} />
                 </Button>
                 <div class="csamAction">
@@ -200,7 +200,8 @@
                         loading={busy}
                         danger
                         disabled={busy || resolved}
-                        onClick={() => resolve("upheld_as_csam")}>
+                        onClick={() => resolve("upheld_as_csam")}
+                    >
                         <Translatable resourceKey={i18nKey("moderationReport.upholdCsam")} />
                     </Button>
                     <Checkbox
@@ -208,13 +209,15 @@
                         small
                         label={i18nKey("moderationReport.urgent")}
                         checked={urgent}
-                        onChange={() => (urgent = !urgent)} />
+                        onChange={() => (urgent = !urgent)}
+                    />
                 </div>
                 <Button
                     loading={busy}
                     secondary
                     disabled={busy || resolved}
-                    onClick={() => resolve("dismissed")}>
+                    onClick={() => resolve("dismissed")}
+                >
                     <Translatable resourceKey={i18nKey("moderationReport.dismiss")} />
                 </Button>
             </div>
@@ -232,7 +235,8 @@
         blobReferences={content.blobReferences}
         quarantined={content.autoSanctioned}
         onReviewed={() => (mediaReviewed = true)}
-        onClose={() => (showViewer = false)} />
+        onClose={() => (showViewer = false)}
+    />
 {/if}
 
 <style lang="scss">

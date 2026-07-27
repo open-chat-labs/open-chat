@@ -196,11 +196,7 @@
                 </Button>
             </Row>
         {/if}
-        {#if needsMediaReview}
-            <Body colour="textSecondary" fontWeight="bold">
-                <Translatable resourceKey={i18nKey("moderationReport.reviewFirst")} />
-            </Body>
-        {:else}
+        {#if !needsMediaReview}
             <Row gap="sm">
                 <Switch bind:checked={urgent}>
                     <Body width={"hug"} colour={"textSecondary"}>
