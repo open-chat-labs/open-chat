@@ -1861,7 +1861,7 @@ dependencies = [
  "search",
  "serde",
  "serde_bytes",
- "sha2 0.10.9",
+ "sha2 0.11.0",
  "stable_memory_map",
  "test-case",
  "testing",
@@ -3430,7 +3430,7 @@ dependencies = [
  "rsa 0.10.0-rc.18",
  "serde",
  "serde_bytes",
- "sha2 0.10.9",
+ "sha2 0.11.0",
  "sign_in_with_email_canister",
 ]
 
@@ -6584,7 +6584,7 @@ dependencies = [
  "icp_ledger_canister_c2c_client",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
- "sha2 0.10.9",
+ "sha2 0.11.0",
  "test-case",
  "tracing",
  "types",
@@ -8791,7 +8791,7 @@ dependencies = [
  "registry_canister",
  "registry_canister_c2c_client",
  "serde",
- "sha2 0.10.9",
+ "sha2 0.11.0",
  "sns_governance_canister",
  "sns_governance_canister_c2c_client",
  "stable_memory",
@@ -10202,7 +10202,7 @@ dependencies = [
 name = "sha256"
 version = "0.1.0"
 dependencies = [
- "sha2 0.10.9",
+ "sha2 0.11.0",
 ]
 
 [[package]]
@@ -10223,6 +10223,17 @@ checksum = "be176f1a57ce4e3d31c1a166222d9768de5954f811601fb7ca06fc8203905ce1"
 dependencies = [
  "digest 0.11.3",
  "keccak 0.2.0",
+]
+
+[[package]]
+name = "sha3"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc9bad02c26382724b2d2692c6f179285e4b54eeecd7968f52a50059c3c11759"
+dependencies = [
+ "digest 0.11.3",
+ "keccak 0.2.0",
+ "sponge-cursor",
 ]
 
 [[package]]
@@ -10627,6 +10638,12 @@ dependencies = [
  "base64ct",
  "der 0.8.1",
 ]
+
+[[package]]
+name = "sponge-cursor"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a0219bd7d979d58245a4f41f695e1ac9f8befdffadd7f61f1bae9e39abc6620"
 
 [[package]]
 name = "stable_deref_trait"
@@ -12455,7 +12472,7 @@ dependencies = [
  "range-set",
  "serde",
  "serde_bytes",
- "sha2 0.10.9",
+ "sha2 0.11.0",
  "subenum",
  "ts-rs",
  "ts_export",
@@ -12877,7 +12894,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha256",
- "sha3 0.10.9",
+ "sha3 0.12.0",
  "time",
  "tracing",
  "twox-hash",
