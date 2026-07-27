@@ -226,6 +226,12 @@ impl CommunityMembers {
             .get(&target_user_id)
             .ok_or(OCErrorCode::TargetUserNotInCommunity)?;
 
+        // The initiator must be the same or senior to the target's current role, otherwise eg. an
+        // admin could demote an owner
+        if !initiator.role.is_same_or_senior(member.role) {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
+        }
+
         // It is not possible to change the role of the last owner
         if member.role.is_owner() && self.owners.len() <= 1 {
             return Err(OCErrorCode::CannotChangeRoleOfLastOwner.into());

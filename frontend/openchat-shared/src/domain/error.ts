@@ -10,7 +10,21 @@ export class UnsupportedValueError extends Error {
     }
 }
 
+// The IC error codes we make decisions on. These do not map onto distinct reject codes - a frozen
+// canister is `SysTransient` and one with no wasm module is `CanisterError`, both of which are
+// retryable in general - so the specific code has to be used to tell them apart.
+// See https://internetcomputer.org/docs/references/execution-errors
+export const ICErrorCode = {
+    CanisterOutOfCycles: "IC0207", // the canister is frozen
+    CanisterNotFound: "IC0301", // the canister has been deleted
+    CanisterWasmModuleNotFound: "IC0537", // the canister has been uninstalled
+} as const;
+
 export class HttpError extends Error {
+    // The IC error code of the underlying rejection, eg. "IC0301", where the failure was a
+    // rejection which carried one. Populated by `toCanisterResponseError`.
+    public rejectErrorCode: string | undefined;
+
     constructor(
         public code: number,
         error: Error,
@@ -33,13 +47,19 @@ export class AuthError extends HttpError {
     }
 }
 
+// Errors lose their prototype when they cross the worker boundary (they are serialised with
+// `JSON.stringify`), so on the client side they can only be recognised by `name`. These constants
+// keep the names the classes set below and the checks which read them in a single place.
+export const SESSION_EXPIRY_ERROR_NAME = "SessionExpiryError";
+export const INVALID_DELEGATION_ERROR_NAME = "InvalidDelegationError";
+
 export class SessionExpiryError extends HttpError {
     constructor(
         public code: number,
         error: Error,
     ) {
         super(code, error);
-        this.name = "SessionExpiryError";
+        this.name = SESSION_EXPIRY_ERROR_NAME;
     }
 }
 
@@ -47,6 +67,17 @@ export class DestinationInvalidError extends HttpError {
     constructor(error: Error) {
         super(404, error);
         this.name = "DestinationInvalidError";
+    }
+}
+
+// The canister exists but cannot serve the call right now - it is frozen (out of cycles) or has no
+// wasm module (uninstalled). Unlike `DestinationInvalidError` this does not mean the canister is
+// gone: it may recover once it is topped up or reinstalled. But it cannot recover within the
+// lifetime of a single request, so retrying here only stalls the caller.
+export class CanisterUnavailableError extends HttpError {
+    constructor(error: Error) {
+        super(503, error);
+        this.name = "CanisterUnavailableError";
     }
 }
 
@@ -64,7 +95,7 @@ export class ResponseTooLargeError extends HttpError {
 export class InvalidDelegationError extends HttpError {
     constructor(error: Error) {
         super(403, error);
-        this.name = "InvalidDelegationError";
+        this.name = INVALID_DELEGATION_ERROR_NAME;
     }
 }
 

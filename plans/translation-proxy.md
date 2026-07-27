@@ -22,7 +22,7 @@ We explicitly considered and rejected doing the translation on-chain via the mes
 
 Lambda (function URL, no API Gateway) + DynamoDB, deployed via a SAM template:
 
-- **Auth**: verify the OC JWT signature (Ed25519, OC public key) and expiry.
+- **Auth**: verify the OC JWT signature (ES256 / ECDSA P-256, OC public key — `user_index.public_key`; the key differs per environment, so accept a list) and expiry.
 - **Request**: `{ texts: [...], target_locale }` — batch accepted from day one (Google v2 supports up to 128 `q` segments per request); the client will initially send single items.
 - **Cache**: DynamoDB, keyed on `hash(text + target_locale)` → translated text, with native DynamoDB TTL for eviction. Content-addressed keying means message edits and deletions need no invalidation at all: edited text produces a new key, and stale/orphaned entries simply age out. It also dedupes identical text across all chats.
 - **Rate limits** (DynamoDB atomic counters):

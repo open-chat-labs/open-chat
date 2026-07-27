@@ -38,6 +38,7 @@
         identityStateStore,
         inititaliseLogger,
         notFoundStore,
+        requiresLogout,
         routeForChatIdentifier,
         routeForScope,
         routeStore,
@@ -387,7 +388,7 @@
     }
 
     function reportedMessages(userId?: string): void {
-        console.log(client.reportedMessages(userId));
+        client.reportedMessages(userId).then((json) => console.log(JSON.parse(json)));
     }
 
     function unsuspendUser(userId: string): void {
@@ -626,11 +627,7 @@
         }
 
         logger?.error("Unhandled error: ", ev);
-        if (
-            ev instanceof PromiseRejectionEvent &&
-            (ev.reason?.name === "SessionExpiryError" ||
-                ev.reason?.name === "InvalidDelegationError")
-        ) {
+        if (ev instanceof PromiseRejectionEvent && requiresLogout(ev.reason)) {
             client.logout();
             ev.preventDefault();
         }

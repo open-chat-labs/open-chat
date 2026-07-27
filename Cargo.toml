@@ -298,6 +298,13 @@ debug = false
 
 [patch.crates-io]
 aws-sign-v4 = { git = "https://github.com/hpeebles/aws-sign-v4", rev = "33b65dfde0676544a23c41608da77bd0a117d9ce" }
+# Fixes a regression where a `Vec` of newtype structs (eg. `Vec<EventIndex>`) fails to decode its
+# own encoding - the bulk fast path added in 0.10.28 feeds vec elements through deserializers which
+# don't implement `deserialize_newtype_struct`. See https://github.com/dfinity/candid/issues/752
+candid = { git = "https://github.com/hpeebles/candid", rev = "1959c23e6a9f5d8bfccbe8f17682337dc9662b75" }
+# `candid` depends on `ic_principal` by path, so without patching it too the git checkout's copy
+# would coexist with the crates.io one and their `Principal` types wouldn't be interchangeable
+ic_principal = { git = "https://github.com/hpeebles/candid", rev = "1959c23e6a9f5d8bfccbe8f17682337dc9662b75" }
 ic-cbor = { git = "https://github.com/dfinity/response-verification", rev = "85dd37f54b882dc5c490a02f467023470ac6faf4" }
 ic-certificate-verification = { git = "https://github.com/dfinity/response-verification", rev = "85dd37f54b882dc5c490a02f467023470ac6faf4" }
 ic-certification = { git = "https://github.com/dfinity/response-verification", rev = "85dd37f54b882dc5c490a02f467023470ac6faf4" }

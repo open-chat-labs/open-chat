@@ -28,6 +28,10 @@ pub struct Files {
     expiration_queue: BTreeSet<(TimestampMillis, FileId)>,
     #[serde(alias = "bytes_used")]
     total_file_bytes: u64,
+    // Hashes pinned by the evidence vault. A pin holds one reference so that no deletion path
+    // can remove the blob while it is quarantined (see model::vault).
+    #[serde(default)]
+    vault_pins: BTreeSet<Hash>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -366,6 +370,28 @@ impl Files {
         }
     }
 
+    // Takes a vault pin on the hash of the given file, incrementing the reference count so the
+    // blob survives every existing deletion path. Returns the hash and mime type, or None if
+    // the file is gone.
+    pub fn vault_pin(&mut self, file_id: &FileId) -> Option<(Hash, String)> {
+        let file = self.get(file_id)?;
+        if self.vault_pins.insert(file.hash) {
+            self.reference_counts.incr(file.hash);
+        }
+        Some((file.hash, file.mime_type))
+    }
+
+    // Releases a vault pin, removing the blob if the pin held the last reference
+    pub fn vault_unpin(&mut self, hash: &Hash) {
+        if self.vault_pins.remove(hash) && self.reference_counts.decr(*hash) == 0 {
+            self.remove_blob(hash);
+        }
+    }
+
+    pub fn is_vault_pinned(&self, hash: &Hash) -> bool {
+        self.vault_pins.contains(hash)
+    }
+
     fn remove_blob(&mut self, hash: &Hash) {
         if let Some(size) = self.blobs.data_size(hash) {
             self.blobs.remove(hash);
@@ -403,6 +429,10 @@ impl Files {
                 files_per_accessor.entry(*accessor).or_default().push(file_id);
             }
             *reference_counts.entry(file.hash).or_default() += 1;
+        }
+
+        for hash in self.vault_pins.iter() {
+            *reference_counts.entry(*hash).or_default() += 1;
         }
 
         assert_eq!(files_per_accessor, self.accessors_map.get_all());

@@ -266,6 +266,7 @@ impl GroupMembers {
     pub fn change_role(
         &mut self,
         user_id: UserId,
+        changed_by_role: Option<GroupRoleInternal>,
         new_role: GroupRoleInternal,
         now: TimestampMillis,
     ) -> OCResult<GroupRoleInternal> {
@@ -273,6 +274,13 @@ impl GroupMembers {
             Some(p) => p,
             None => return Err(OCErrorCode::TargetUserNotFound.into()),
         };
+
+        // The caller must be the same or senior to the target's current role, otherwise eg. an
+        // admin could demote an owner. `None` means the change is not on behalf of a member (ie.
+        // an autonomous bot) in which case this check does not apply.
+        if changed_by_role.is_some_and(|role| !role.is_same_or_senior(member.role.value)) {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
+        }
 
         // It is not possible to change the role of the last owner
         if member.role.is_owner() && self.owners.len() <= 1 {
