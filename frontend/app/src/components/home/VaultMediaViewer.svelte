@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { BlobReference, OpenChat } from "@client";
+    import { VaultMediaReview } from "@shared_components/vaultMediaReview.svelte";
     import { getContext, onDestroy } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";
@@ -22,104 +23,16 @@
 
     let { blobReferences, quarantined, onClose, onReviewed }: Props = $props();
 
-    type LoadedItem = {
-        url: string;
-        mimeType: string;
-    };
-
-    // Nothing is fetched until the reviewer passes the interstitial: chunk 0 of each fetch is
-    // the logged review act, and later chunks are served only in session order. Media is
-    // assembled into object URLs which are revoked on close and never written to any cache.
-    let stage: "interstitial" | "loading" | "view" | "not_authorized" | "error" =
-        $state("interstitial");
-    let items: LoadedItem[] = $state([]);
-    let revealed: boolean[] = $state([]);
-    // Closing mid-fetch must stop pulling quarantined material: checked after every await,
-    // and any object URLs already created are revoked immediately
-    let cancelled = false;
-
-    async function fetchDirect(ref: BlobReference): Promise<LoadedItem | "error"> {
-        const resp = await fetch(client.reportedMediaUrl(ref), { cache: "no-store" });
-        if (!resp.ok) return "error";
-        const bytes = await resp.arrayBuffer();
-        const mimeType = resp.headers.get("content-type") ?? "application/octet-stream";
-        return { url: URL.createObjectURL(new Blob([bytes], { type: mimeType })), mimeType };
-    }
-
-    async function fetchAll() {
-        stage = "loading";
-        const loaded: LoadedItem[] = [];
-        try {
-            for (const ref of blobReferences) {
-                if (!quarantined) {
-                    const item = await fetchDirect(ref);
-                    if (cancelled) {
-                        if (item !== "error") URL.revokeObjectURL(item.url);
-                        loaded.forEach((i) => URL.revokeObjectURL(i.url));
-                        return;
-                    }
-                    if (item === "error") {
-                        stage = "error";
-                        return;
-                    }
-                    loaded.push(item);
-                    continue;
-                }
-                const chunks: Uint8Array[] = [];
-                let mimeType = "application/octet-stream";
-                let chunkIndex = 0;
-                let chunkCount = 1;
-                while (chunkIndex < chunkCount) {
-                    const resp = await client.vaultFileChunk(
-                        ref.canisterId,
-                        ref.blobId,
-                        chunkIndex,
-                    );
-                    if (cancelled) {
-                        loaded.forEach((item) => URL.revokeObjectURL(item.url));
-                        return;
-                    }
-                    if (resp.kind === "not_authorized") {
-                        stage = "not_authorized";
-                        return;
-                    }
-                    if (resp.kind !== "success") {
-                        stage = "error";
-                        return;
-                    }
-                    chunks.push(resp.bytes);
-                    mimeType = resp.mimeType;
-                    chunkCount = resp.chunkCount;
-                    chunkIndex++;
-                }
-                const url = URL.createObjectURL(new Blob(chunks as BlobPart[], { type: mimeType }));
-                loaded.push({ url, mimeType });
-            }
-        } catch {
-            loaded.forEach((item) => URL.revokeObjectURL(item.url));
-            if (!cancelled) {
-                stage = "error";
-            }
-            return;
-        }
-        items = loaded;
-        revealed = items.map(() => false);
-        stage = "view";
-        onReviewed?.();
-    }
-
-    function revoke() {
-        cancelled = true;
-        items.forEach((item) => URL.revokeObjectURL(item.url));
-        items = [];
-    }
+    // All review behaviour lives in the shared state machine so that the desktop and mobile
+    // viewers are equivalent by construction; this component is markup only
+    const review = new VaultMediaReview(client, blobReferences, quarantined, onReviewed);
 
     function close() {
-        revoke();
+        review.dispose();
         onClose();
     }
 
-    onDestroy(revoke);
+    onDestroy(() => review.dispose());
 </script>
 
 <ModalContent onClose={close}>
@@ -128,35 +41,35 @@
     {/snippet}
     {#snippet body()}
         <div class="viewer">
-            {#if stage === "interstitial"}
+            {#if review.stage === "interstitial"}
                 <p><Translatable resourceKey={i18nKey("vaultViewer.interstitial")} /></p>
                 <div class="actions">
-                    <Button onClick={fetchAll}>
+                    <Button onClick={() => review.fetchAll()}>
                         <Translatable resourceKey={i18nKey("vaultViewer.proceed")} />
                     </Button>
                     <Button secondary onClick={close}>
                         <Translatable resourceKey={i18nKey("vaultViewer.cancel")} />
                     </Button>
                 </div>
-            {:else if stage === "loading"}
+            {:else if review.stage === "loading"}
                 <p><Translatable resourceKey={i18nKey("vaultViewer.loading")} /></p>
-            {:else if stage === "not_authorized"}
+            {:else if review.stage === "not_authorized"}
                 <p><Translatable resourceKey={i18nKey("vaultViewer.notAuthorized")} /></p>
-            {:else if stage === "error"}
+            {:else if review.stage === "error"}
                 <p><Translatable resourceKey={i18nKey("vaultViewer.error")} /></p>
             {:else}
-                {#each items as item, i}
+                {#each review.items as item, i}
                     <div class="item">
                         <div class="label">
                             <Translatable
                                 resourceKey={i18nKey("vaultViewer.item", {
                                     n: `${i + 1}`,
-                                    total: `${items.length}`,
+                                    total: `${review.items.length}`,
                                 })}
                             />
                         </div>
-                        {#if !revealed[i]}
-                            <button class="shroud" onclick={() => (revealed[i] = true)}>
+                        {#if !review.revealed[i]}
+                            <button class="shroud" onclick={() => review.reveal(i)}>
                                 <Translatable resourceKey={i18nKey("vaultViewer.reveal")} />
                             </button>
                         {:else if item.mimeType.startsWith("image/")}

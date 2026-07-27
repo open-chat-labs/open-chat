@@ -13,6 +13,7 @@
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
+    import VaultMediaViewer from "./VaultMediaViewer.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -26,6 +27,10 @@
     let failed = $state(false);
     let resolved = $state(false);
     let urgent = $state(false);
+    let showViewer = $state(false);
+    // A verdict on a media report requires the media to have been reviewed first: deciding
+    // without looking is exactly what this system exists to prevent
+    let mediaReviewed = $state(false);
 
     let moderatorId = $derived(
         content.status.kind !== "pending" && content.status.kind !== "contested"
@@ -59,7 +64,7 @@
     );
     // No vault viewer on mobile: verdicts on quarantined-media reports require reviewing the
     // media first, so they can only be resolved on desktop
-    let needsMediaReview = $derived(content.blobReferences.length > 0);
+    let needsMediaReview = $derived(content.blobReferences.length > 0 && !mediaReviewed);
     let canResolve = $derived(
         $platformModeratorStore &&
             content.reportIndex !== undefined &&
@@ -184,9 +189,16 @@
             />
         </Body>
     {:else if canResolve}
+        {#if content.blobReferences.length > 0}
+            <Row gap="sm">
+                <Button secondary onClick={() => (showViewer = true)}>
+                    <Translatable resourceKey={i18nKey("moderationReport.reviewMedia")} />
+                </Button>
+            </Row>
+        {/if}
         {#if needsMediaReview}
             <Body colour="textSecondary" fontWeight="bold">
-                <Translatable resourceKey={i18nKey("moderationReport.reviewMediaMobile")} />
+                <Translatable resourceKey={i18nKey("moderationReport.reviewFirst")} />
             </Body>
         {:else}
             <Row gap="sm">
@@ -229,6 +241,15 @@
         {/if}
     {/if}
 </Column>
+
+{#if showViewer}
+    <VaultMediaViewer
+        blobReferences={content.blobReferences}
+        quarantined={content.autoSanctioned}
+        onReviewed={() => (mediaReviewed = true)}
+        onClose={() => (showViewer = false)}
+    />
+{/if}
 
 <style lang="scss">
     .link {
