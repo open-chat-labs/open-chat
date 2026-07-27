@@ -1133,6 +1133,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
+name = "base64"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b25655df2c3cdd83c5e5b293b88acd880332b2ddadd7c30ac43144fdc0033da9"
+
+[[package]]
 name = "base64-simd"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1522,7 +1528,7 @@ dependencies = [
  "candid",
  "ic-agent",
  "ic-utils",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "types",
 ]
 
@@ -1838,7 +1844,7 @@ dependencies = [
  "ic-cdk 0.20.2",
  "ic-ledger-types",
  "ic-stable-structures 0.7.2",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "ledger_utils",
  "msgpack",
  "oc_error_codes",
@@ -2155,7 +2161,7 @@ dependencies = [
  "icrc-ledger-types",
  "installed_bots",
  "instruction_counts_log",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "lazy_static",
  "ledger_utils",
  "local_user_index_canister",
@@ -3252,9 +3258,9 @@ dependencies = [
 
 [[package]]
 name = "either"
-version = "1.16.0"
+version = "1.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91622ff5e7162018101f2fea40d6ebf4a78bbe5a49736a2020649edf9693679e"
+checksum = "9e5e8f6c15a24b9a3ee5efec809ccd006d3b30e8b3bb63c39af737c7f87daa1d"
 
 [[package]]
 name = "elliptic-curve"
@@ -4388,7 +4394,7 @@ dependencies = [
  "icrc-ledger-types",
  "installed_bots",
  "instruction_counts_log",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "ledger_utils",
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
@@ -4422,7 +4428,7 @@ dependencies = [
  "group_community_common",
  "hex",
  "ic-stable-structures 0.7.2",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "lazy_static",
  "msgpack",
  "oc_error_codes",
@@ -6077,7 +6083,7 @@ dependencies = [
  "ic-stable-structures 0.7.2",
  "icrc-ledger-types",
  "identity_canister",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "jwt",
  "jwt-simple",
  "lazy_static",
@@ -6175,9 +6181,9 @@ dependencies = [
 
 [[package]]
 name = "itertools"
-version = "0.14.0"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
+checksum = "8b4baf93f58d4425749ca49a51c50ebab072c5df6994d08fed93541c331481dc"
 dependencies = [
  "either",
 ]
@@ -6687,7 +6693,7 @@ dependencies = [
  "ic-cdk-management-canister",
  "ic-cdk-timers",
  "ic-stable-structures 0.7.2",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "json",
  "jwt",
  "ledger_utils",
@@ -6827,7 +6833,7 @@ dependencies = [
  "icdex_client",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "market_maker_canister",
  "msgpack",
  "rand 0.10.2",
@@ -8663,7 +8669,7 @@ dependencies = [
  "ic-stable-structures 0.7.2",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "ledger_utils",
  "msgpack",
  "nns_governance_canister",
@@ -9944,14 +9950,14 @@ dependencies = [
 
 [[package]]
 name = "serde_tokenstream"
-version = "0.2.3"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7c49585c52c01f13c5c2ebb333f14f6885d76daa768d8a037d28017ec538c69"
+checksum = "db95b8acf6eca5bc1bc771a7d7fb1a0d1485bdef0c46eec2f573bbaf4b4118f8"
 dependencies = [
  "proc-macro2",
  "quote",
  "serde",
- "syn 2.0.119",
+ "syn 3.0.2",
 ]
 
 [[package]]
@@ -10131,7 +10137,7 @@ checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
 name = "sign_in_with_email_canister"
 version = "0.1.0"
 dependencies = [
- "base64 0.22.1",
+ "base64 0.23.0",
  "candid",
  "candid_gen",
  "rsa 0.10.0-rc.18",
@@ -10155,7 +10161,7 @@ dependencies = [
 name = "sign_in_with_email_canister_impl"
 version = "0.1.0"
 dependencies = [
- "base64 0.22.1",
+ "base64 0.23.0",
  "candid",
  "email_address",
  "email_magic_links",
@@ -12155,7 +12161,7 @@ version = "0.1.0"
 dependencies = [
  "canister_agent_utils",
  "clap 4.6.3",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "serde",
  "serde_json",
  "tokio",
@@ -12203,7 +12209,7 @@ dependencies = [
  "icrc-ledger-types",
  "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "ledger_utils",
  "msgpack",
  "rand 0.10.2",
@@ -12563,7 +12569,7 @@ dependencies = [
  "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
  "installed_bots",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "ledger_utils",
  "legacy_bot_api",
  "legacy_bot_c2c_client",
@@ -12688,7 +12694,7 @@ dependencies = [
  "icrc_ledger_canister_c2c_client",
  "identity_canister",
  "identity_canister_c2c_client",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "jwt",
  "ledger_utils",
  "local_user_index_canister",
@@ -12750,7 +12756,7 @@ dependencies = [
  "ic-cdk-management-canister",
  "ic-cdk-timers",
  "ic-management-canister-types 0.7.1",
- "itertools 0.14.0",
+ "itertools 0.15.0",
  "msgpack",
  "oc_error_codes",
  "rand 0.10.2",
@@ -13722,9 +13728,9 @@ dependencies = [
 
 [[package]]
 name = "x509-parser"
-version = "0.17.0"
+version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4569f339c0c402346d4a75a9e39cf8dad310e287eef1ff56d4c68e5067f53460"
+checksum = "d43b0f71ce057da06bc0851b23ee24f3f86190b07203dd8f567d0b706a185202"
 dependencies = [
  "asn1-rs",
  "data-encoding",

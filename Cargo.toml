@@ -184,7 +184,7 @@ aws-config = "1"
 aws-sdk-dynamodb = "1"
 aws-sign-v4 = "0.3"
 aws-types = "1"
-base64 = "0.22"
+base64 = "0.23"
 bitflags = { version = "2", features = ["serde"] }
 candid = "0.10"
 canbench-rs = "0.6"
@@ -193,7 +193,7 @@ ct-codecs = "1"
 data-encoding = "2"
 dataurl = "0.1"
 dotenv = "0.15.0"
-either = "1.15.0"
+either = "1.17.0"
 email_address = "0.2"
 enum-repr = "0.2"
 envconfig = "0.11"
@@ -228,7 +228,7 @@ ic-utils = "0.40"
 ic-verifiable-credentials = { git = "https://github.com/hpeebles/verifiable-credentials-sdk", rev = "4a8498c627cd44b87b936ab59559e12682e23ef6" }
 icrc-ledger-types = "0.1"
 ic0 = "1"
-itertools = "0.14"
+itertools = "0.15"
 jwt-simple = { version = "0.12", default-features = false, features = [
     "pure-rust",
 ] }
@@ -260,18 +260,18 @@ serde_bytes = "0.11"
 serde_cbor = "0.11"
 serde_json = "1"
 serde_repr = "0.1"
-serde_tokenstream = "0.2"
+serde_tokenstream = "0.3"
 serde_urlencoded = "0.7"
 serde_with = "3"
 sha2 = "0.10"
 sha3 = "0.10"
-subenum = "1.1.2"
+subenum = "1.2.0"
 syn = "2"
-tauri = { version = "2.11.1", features = ["protocol-asset"] }
-tauri-build = "2.5.3"
+tauri = { version = "2.11.5", features = ["protocol-asset"] }
+tauri-build = "2.6.3"
 tauri-plugin-android-fs = "28.1.0"
-tauri-plugin-devtools = "2.0.1"
-tauri-plugin-deep-link = "2.4.6"
+tauri-plugin-devtools = "2.1.0"
+tauri-plugin-deep-link = "2.4.9"
 tauri-plugin-notification = "2.3.3"
 test-case = "3"
 test-strategy = "0.4"
@@ -288,7 +288,7 @@ url = "2"
 web-push = { version = "0.11", default-features = false, features = [
     "hyper-client",
 ] }
-x509-parser = "0.17"
+x509-parser = "0.18"
 
 [profile.release]
 lto = true
