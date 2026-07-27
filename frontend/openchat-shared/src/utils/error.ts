@@ -6,6 +6,9 @@ import {
     type PinNumberFailures,
     SESSION_EXPIRY_ERROR_NAME,
 } from "../domain";
+// Imported from the module rather than the barrel: `../domain` cycles back through here, so a
+// binding read at module scope (as below) is not yet initialised when going via the barrel
+import { ICErrorCode } from "../domain/error";
 import { parseBigInt } from "./bigint";
 
 export function isError(value: unknown): value is OCError {
@@ -21,7 +24,11 @@ const callerToleratedErrorKinds = new Set<string>(["refreshAccountBalance"]);
 // expected: for the ~30 day window before the IC uninstalls a frozen canister, and until the
 // registry's uninstalled-token detection + client cache purge remove the token. Any OTHER failure
 // is a real signal.
-const DEAD_LEDGER_ERROR_CODES = ["IC0207", "IC0301", "IC0537"];
+const DEAD_LEDGER_ERROR_CODES: string[] = [
+    ICErrorCode.CanisterOutOfCycles,
+    ICErrorCode.CanisterNotFound,
+    ICErrorCode.CanisterWasmModuleNotFound,
+];
 function isDeadLedgerError(error: unknown): boolean {
     return (
         error instanceof HttpError &&

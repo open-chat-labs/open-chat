@@ -1,6 +1,11 @@
 import { describe, expect, test } from "vitest";
 
-import { HttpError, INVALID_DELEGATION_ERROR_NAME, SESSION_EXPIRY_ERROR_NAME } from "../domain";
+import {
+    CanisterUnavailableError,
+    HttpError,
+    INVALID_DELEGATION_ERROR_NAME,
+    SESSION_EXPIRY_ERROR_NAME,
+} from "../domain";
 import { requiresLogout, shouldReportWorkerError } from "./error";
 
 // `toCanisterResponseError` copies the IC error code of the rejection onto the mapped error
@@ -35,6 +40,15 @@ describe("shouldReportWorkerError", () => {
         const mentionsCode = new HttpError(500, new Error("trapped while handling IC0207"));
 
         expect(shouldReportWorkerError("refreshAccountBalance", mentionsCode)).toBe(true);
+    });
+
+    // A frozen or uninstalled ledger is mapped to `CanisterUnavailableError` so that it stops
+    // retrying, which is the form this check actually receives it in
+    test("silences an unavailable ledger", () => {
+        const unavailable = new CanisterUnavailableError(new Error("Canister x is frozen."));
+        unavailable.rejectErrorCode = "IC0207";
+
+        expect(shouldReportWorkerError("refreshAccountBalance", unavailable)).toBe(false);
     });
 
     test("reports everything for kinds that are not tolerated", () => {

@@ -7,7 +7,12 @@ import {
     UncertifiedRejectErrorCode,
     type Identity,
 } from "@icp-sdk/core/agent";
-import { DestinationInvalidError, HttpError, InvalidDelegationError } from "@shared";
+import {
+    CanisterUnavailableError,
+    DestinationInvalidError,
+    HttpError,
+    InvalidDelegationError,
+} from "@shared";
 import { toCanisterResponseError } from "./error";
 
 // An expired session is the default - only the delegation tests need a live one
@@ -48,6 +53,44 @@ describe("toCanisterResponseError", () => {
 
             expect(error).toBeInstanceOf(HttpError);
             expect(error).not.toBeInstanceOf(DestinationInvalidError);
+        }
+    });
+
+    // A frozen or uninstalled canister can't serve the call and won't recover during this request,
+    // but its reject code is shared with failures which are worth retrying - so without keying on
+    // the IC error code these fall through to the retry loop and stall the caller for ~13s.
+    test("a frozen or uninstalled canister is not retryable", () => {
+        // Reject codes as the replica actually sends them for these cases
+        const frozen = reject(ReplicaRejectCode.SysTransient, "Canister x is frozen.", "IC0207");
+        const noWasm = reject(
+            ReplicaRejectCode.CanisterError,
+            "...contains no Wasm module.",
+            "IC0537",
+        );
+
+        expect(toCanisterResponseError(frozen, identity)).toBeInstanceOf(CanisterUnavailableError);
+        expect(toCanisterResponseError(noWasm, identity)).toBeInstanceOf(CanisterUnavailableError);
+    });
+
+    // It may come back once topped up or reinstalled, so it must not be reported as a canister
+    // which no longer exists - that drives things like the "group moved" lookup
+    test("an unavailable canister is not reported as a destination which doesn't exist", () => {
+        const frozen = reject(ReplicaRejectCode.SysTransient, "Canister x is frozen.", "IC0207");
+
+        expect(toCanisterResponseError(frozen, identity)).not.toBeInstanceOf(
+            DestinationInvalidError,
+        );
+    });
+
+    test("other failures sharing those reject codes remain retryable", () => {
+        const trapped = reject(ReplicaRejectCode.CanisterError, "trapped", "IC0502");
+        const transient = reject(ReplicaRejectCode.SysTransient, "try again");
+
+        for (const error of [trapped, transient]) {
+            const mapped = toCanisterResponseError(error, identity);
+
+            expect(mapped).toBeInstanceOf(HttpError);
+            expect(mapped).not.toBeInstanceOf(CanisterUnavailableError);
         }
     });
 

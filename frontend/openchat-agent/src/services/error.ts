@@ -10,8 +10,10 @@ import { ResponseTooLargeError } from "@shared";
 import {
     getSessionExpiryMs,
     HttpError,
+    ICErrorCode,
     SessionExpiryError,
     AuthError,
+    CanisterUnavailableError,
     DestinationInvalidError,
     InvalidDelegationError,
     TypeboxValidationError,
@@ -56,6 +58,20 @@ function destinationInvalid(error: Error): boolean {
 // without having to match on the error message.
 function rejectErrorCode(error: Error): string | undefined {
     return errorCode(error)?.rejectErrorCode;
+}
+
+// A canister which is frozen or has been uninstalled can't serve the call, and won't start being
+// able to within the lifetime of this request, so retrying only stalls the caller. These have to be
+// recognised by their IC error code - unlike a deleted canister they share their reject codes
+// (`SysTransient` and `CanisterError`) with failures which genuinely are worth retrying.
+const UNAVAILABLE_ERROR_CODES: string[] = [
+    ICErrorCode.CanisterOutOfCycles,
+    ICErrorCode.CanisterWasmModuleNotFound,
+];
+
+function canisterUnavailable(error: Error): boolean {
+    const code = rejectErrorCode(error);
+    return code !== undefined && UNAVAILABLE_ERROR_CODES.includes(code);
 }
 
 // A delegation which the boundary node refuses is reported as a 400 whose *body* explains why.
@@ -108,6 +124,10 @@ function classifyError(
 
     if (destinationInvalid(error)) {
         return new DestinationInvalidError(error);
+    }
+
+    if (canisterUnavailable(error)) {
+        return new CanisterUnavailableError(error);
     }
 
     const tooLarge = responseTooLarge(error);
