@@ -3,11 +3,10 @@ use crate::{RuntimeState, generate_message_id, mutate_state, read_state};
 use chat_events::{MessageContentInternal, ProposalContentInternal};
 use ic_cdk::call::RejectCode;
 use ic_cdk_timers::TimerId;
-use oc_error_codes::OCErrorCode;
+use oc_error_codes::{OCError, OCErrorCode};
 use sns_governance_canister::types::{ProposalId, get_proposal_response};
 use std::cell::Cell;
 use std::collections::BTreeMap;
-use std::fmt::Debug;
 use std::time::Duration;
 use tracing::{error, trace};
 use types::{C2CError, CanisterId, ChannelId, ChatId, CommunityId, MessageId, MessageIndex, MultiUserChat, Proposal};
@@ -188,16 +187,14 @@ fn extract_channel_result(
     response: Result<community_canister::c2c_send_message::Response, C2CError>,
     canister_id: CanisterId,
 ) -> Result<(MessageId, Option<MessageIndex>), C2CError> {
-    match response {
-        Ok(community_canister::c2c_send_message::Response::Success(result)) => Ok((message_id, Some(result.message_index))),
-        // The messageId is derived from the proposal, so if it is already in use then this
-        // proposal has already been pushed
-        Ok(community_canister::c2c_send_message::Response::Error(error))
+    match response? {
+        community_canister::c2c_send_message::Response::Success(result) => Ok((message_id, Some(result.message_index))),
+        community_canister::c2c_send_message::Response::Error(error)
             if error.matches_code(OCErrorCode::MessageIdAlreadyExists) =>
         {
             Ok((message_id, None))
         }
-        other => extract_result_inner(other, canister_id),
+        community_canister::c2c_send_message::Response::Error(error) => Err(handle_error(error, canister_id)),
     }
 }
 
@@ -206,33 +203,21 @@ fn extract_group_result(
     response: Result<group_canister::c2c_send_message::Response, C2CError>,
     canister_id: CanisterId,
 ) -> Result<(MessageId, Option<MessageIndex>), C2CError> {
-    match response {
-        Ok(group_canister::c2c_send_message::Response::Success(result)) => Ok((message_id, Some(result.message_index))),
-        // The messageId is derived from the proposal, so if it is already in use then this
-        // proposal has already been pushed
-        Ok(group_canister::c2c_send_message::Response::Error(error))
-            if error.matches_code(OCErrorCode::MessageIdAlreadyExists) =>
-        {
+    match response? {
+        group_canister::c2c_send_message::Response::Success(result) => Ok((message_id, Some(result.message_index))),
+        group_canister::c2c_send_message::Response::Error(error) if error.matches_code(OCErrorCode::MessageIdAlreadyExists) => {
             Ok((message_id, None))
         }
-        other => extract_result_inner(other, canister_id),
+        group_canister::c2c_send_message::Response::Error(error) => Err(handle_error(error, canister_id)),
     }
 }
 
-fn extract_result_inner<T: Debug>(
-    response: Result<T, C2CError>,
-    canister_id: CanisterId,
-) -> Result<(MessageId, Option<MessageIndex>), C2CError> {
-    match response {
-        Err(error) => Err(error),
-        _ => {
-            error!(?response, %canister_id, "Failed to push proposal");
-            Err(C2CError::new(
-                canister_id,
-                "c2c_send_message",
-                RejectCode::CanisterError,
-                "Unexpected response type".to_string(),
-            ))
-        }
-    }
+fn handle_error(error: OCError, canister_id: CanisterId) -> C2CError {
+    error!(?error, %canister_id, "Failed to push proposal");
+    C2CError::new(
+        canister_id,
+        "c2c_send_message",
+        RejectCode::CanisterError,
+        "Unexpected response type".to_string(),
+    )
 }
