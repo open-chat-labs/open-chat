@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Vault control plane: `c2c_vault_ops` routes evidence-vault operations to the owning buckets and syncs the vault-reviewer allowlist ([#9118](https://github.com/open-chat-labs/open-chat/pull/9118))
+
 ### Changed
 
 - Switch some endpoints over to using common response types ([#8450](https://github.com/open-chat-labs/open-chat/pull/8450))

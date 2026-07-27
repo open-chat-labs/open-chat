@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Evidence vault: quarantine blobs by hash so they are never publicly served and survive every deletion path, with capture metadata, retention clock, legal holds, LE-requested destruction, a hash-chained append-only access log, and a `vault_file_chunk` endpoint restricted to designated reviewers ([#9118](https://github.com/open-chat-labs/open-chat/pull/9118))
+
 ## [[2.0.1857](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1857-storage_bucket)] - 2025-08-05
 
 ### Fixed

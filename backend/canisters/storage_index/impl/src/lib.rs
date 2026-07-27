@@ -1,6 +1,7 @@
 use crate::model::bucket_event_batch::{BucketEventBatch, EventToSync};
 use crate::model::buckets::{BucketRecord, Buckets};
 use crate::model::files::Files;
+use crate::model::vault_event_batch::VaultEventBatch;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
 use constants::ICP_LEDGER_CANISTER_ID;
@@ -110,6 +111,10 @@ struct Data {
     pub files: Files,
     pub buckets: Buckets,
     pub bucket_event_sync_queue: GroupedTimerJobQueue<BucketEventBatch>,
+    #[serde(default = "default_vault_event_sync_queue")]
+    pub vault_event_sync_queue: GroupedTimerJobQueue<VaultEventBatch>,
+    #[serde(default)]
+    pub vault_reviewers: HashSet<Principal>,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_config: CyclesDispenserConfig,
@@ -119,6 +124,10 @@ struct Data {
     pub cycles_minting_canister_id: CanisterId,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
+}
+
+fn default_vault_event_sync_queue() -> GroupedTimerJobQueue<VaultEventBatch> {
+    GroupedTimerJobQueue::new(5, false)
 }
 
 fn icp_ledger_canister_id() -> CanisterId {
@@ -147,6 +156,8 @@ impl Data {
             files: Files::default(),
             buckets: Buckets::default(),
             bucket_event_sync_queue: GroupedTimerJobQueue::new(5, false),
+            vault_event_sync_queue: default_vault_event_sync_queue(),
+            vault_reviewers: HashSet::new(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,
             cycles_dispenser_config,
@@ -224,6 +235,12 @@ impl Data {
             bucket.canister_id,
             self.users.keys().map(|p| EventToSync::UserAdded(*p)).collect(),
         );
+        if !self.vault_reviewers.is_empty() {
+            self.vault_event_sync_queue.push(
+                bucket.canister_id,
+                storage_bucket_canister::c2c_vault_sync::VaultOp::SetReviewers(self.vault_reviewers.iter().copied().collect()),
+            );
+        }
         self.buckets.add_bucket(bucket);
     }
 }
