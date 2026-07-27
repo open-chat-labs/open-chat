@@ -114,7 +114,7 @@ pub(crate) fn send_user_suspended_message(event: &UserSuspended, state: &mut Run
 Reason:
 \"{reason}\"
 
-You can appeal this suspension by sending a direct message to the @OpenChat Twitter account otherwise your account will be {action}.");
+You can appeal this suspension by emailing safety@openchatlabs.org otherwise your account will be {action}.");
 
     send_text_message(text, Vec::new(), false, state);
 }
