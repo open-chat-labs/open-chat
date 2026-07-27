@@ -9,7 +9,7 @@
         type OpenChat,
     } from "@client";
     import Markdown from "@src/components_shared/Markdown.svelte";
-    import { Body, BodySmall, Button, Column, Row, Subtitle } from "component-lib";
+    import { Body, BodySmall, Button, Column, Row, Subtitle, Switch } from "component-lib";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
@@ -97,7 +97,8 @@
         <BodySmall>
             {#if url !== undefined}
                 <a class="link" href={url}
-                    ><Translatable resourceKey={i18nKey("moderationReport.viewMessage")} /></a>
+                    ><Translatable resourceKey={i18nKey("moderationReport.viewMessage")} /></a
+                >
             {:else}
                 <Translatable resourceKey={i18nKey("moderationReport.privateChat")} />
             {/if}
@@ -158,16 +159,25 @@
             <Translatable
                 resourceKey={i18nKey("moderationReport.upheld", {
                     moderator,
-                })} />
+                })}
+            />
         </Body>
     {:else if content.status.kind === "dismissed"}
         <Body colour="textSecondary" fontWeight="bold">
             <Translatable
                 resourceKey={i18nKey("moderationReport.dismissed", {
                     moderator,
-                })} />
+                })}
+            />
         </Body>
     {:else if canResolve}
+        <Row gap="sm">
+            <Switch bind:checked={urgent}>
+                <Body width={"hug"} colour={"textSecondary"}>
+                    <Translatable resourceKey={i18nKey("moderationReport.urgent")} />
+                </Body>
+            </Switch>
+        </Row>
         <Row gap="sm" padding={["zero", "zero", "md", "zero"]}>
             <Button disabled={busy || resolved} loading={busy} onClick={() => resolve("upheld")}>
                 <Translatable resourceKey={i18nKey("moderationReport.uphold")} />
@@ -176,14 +186,16 @@
                 danger
                 disabled={busy || resolved}
                 loading={busy}
-                onClick={() => resolve("upheld_as_csam")}>
+                onClick={() => resolve("upheld_as_csam")}
+            >
                 <Translatable resourceKey={i18nKey("moderationReport.upholdCsam")} />
             </Button>
             <Button
                 secondary
                 disabled={busy || resolved}
                 loading={busy}
-                onClick={() => resolve("dismissed")}>
+                onClick={() => resolve("dismissed")}
+            >
                 <Translatable resourceKey={i18nKey("moderationReport.dismiss")} />
             </Button>
         </Row>
