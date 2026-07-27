@@ -1527,7 +1527,7 @@ name = "candid_gen"
 version = "0.1.0"
 dependencies = [
  "quote",
- "syn 2.0.119",
+ "syn 3.0.2",
 ]
 
 [[package]]
@@ -1549,7 +1549,7 @@ dependencies = [
  "quote",
  "serde",
  "serde_tokenstream",
- "syn 2.0.119",
+ "syn 3.0.2",
 ]
 
 [[package]]
@@ -1644,7 +1644,7 @@ version = "0.1.0"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.119",
+ "syn 3.0.2",
 ]
 
 [[package]]
@@ -4957,7 +4957,7 @@ name = "human_readable_derive"
 version = "0.1.0"
 dependencies = [
  "quote",
- "syn 2.0.119",
+ "syn 3.0.2",
 ]
 
 [[package]]
@@ -12398,7 +12398,7 @@ name = "ts_export_macros"
 version = "0.1.0"
 dependencies = [
  "quote",
- "syn 2.0.119",
+ "syn 3.0.2",
 ]
 
 [[package]]

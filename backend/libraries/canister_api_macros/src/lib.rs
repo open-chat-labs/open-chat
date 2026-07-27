@@ -261,6 +261,7 @@ pub fn proposal_validation(input: TokenStream) -> TokenStream {
 }
 
 fn convert_to_validate_fn(original: ItemFn) -> ItemFn {
+    let modifiers = original.modifiers;
     let mut sig = original.sig;
     let name = format!("{}_validate", sig.ident);
     sig.ident = Ident::new(&name, Span::call_site());
@@ -283,6 +284,7 @@ fn convert_to_validate_fn(original: ItemFn) -> ItemFn {
     ItemFn {
         attrs: original.attrs,
         vis: original.vis,
+        modifiers,
         sig,
         block: Box::new(block),
     }
