@@ -38,6 +38,7 @@
         identityStateStore,
         inititaliseLogger,
         notFoundStore,
+        requiresLogout,
         routeForChatIdentifier,
         routeForScope,
         routeStore,
@@ -626,11 +627,7 @@
         }
 
         logger?.error("Unhandled error: ", ev);
-        if (
-            ev instanceof PromiseRejectionEvent &&
-            (ev.reason?.name === "SessionExpiryError" ||
-                ev.reason?.name === "InvalidDelegationError")
-        ) {
+        if (ev instanceof PromiseRejectionEvent && requiresLogout(ev.reason)) {
             client.logout();
             ev.preventDefault();
         }
