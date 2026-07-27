@@ -57,6 +57,9 @@
                   content.messageIndex,
               ),
     );
+    // No vault viewer on mobile: verdicts on quarantined-media reports require reviewing the
+    // media first, so they can only be resolved on desktop
+    let needsMediaReview = $derived(content.autoSanctioned && content.blobReferences.length > 0);
     let canResolve = $derived(
         $platformModeratorStore &&
             content.reportIndex !== undefined &&
@@ -154,7 +157,7 @@
                 {/if}
             </Body>
         {/if}
-        {#if content.blobReferences.length > 0 && content.status.kind === "pending"}
+        {#if content.blobReferences.length > 0 && (content.status.kind === "pending" || content.status.kind === "contested")}
             <Body colour="textSecondary">
                 <Translatable resourceKey={i18nKey("moderationReport.reviewMediaMobile")} />
             </Body>
@@ -194,7 +197,11 @@
             </Switch>
         </Row>
         <Row gap="sm" padding={["zero", "zero", "md", "zero"]}>
-            <Button disabled={busy || resolved} loading={busy} onClick={() => resolve("upheld")}>
+            <Button
+                disabled={busy || resolved || needsMediaReview}
+                loading={busy}
+                onClick={() => resolve("upheld")}
+            >
                 <Translatable resourceKey={i18nKey("moderationReport.uphold")} />
             </Button>
             <Button

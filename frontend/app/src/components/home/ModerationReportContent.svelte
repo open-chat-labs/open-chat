@@ -29,6 +29,9 @@
     let resolved = $state(false);
     let urgent = $state(false);
     let showViewer = $state(false);
+    // A verdict on a quarantined-media report requires the media to have been reviewed via
+    // the vault first: deciding without looking is exactly what this system exists to prevent
+    let mediaReviewed = $state(false);
     let moderatorId = $derived(
         content.status.kind !== "pending" && content.status.kind !== "contested"
             ? content.status.moderator
@@ -64,6 +67,9 @@
         $platformModeratorStore &&
             content.reportIndex !== undefined &&
             (content.status.kind === "pending" || content.status.kind === "contested"),
+    );
+    let needsMediaReview = $derived(
+        content.autoSanctioned && content.blobReferences.length > 0 && !mediaReviewed,
     );
 
     function resolve(verdict: ModerationVerdict) {
@@ -181,9 +187,18 @@
                     <Translatable resourceKey={i18nKey("moderationReport.reviewMedia")} />
                 </Button>
             </div>
+            {#if needsMediaReview}
+                <div class="row light">
+                    <Translatable resourceKey={i18nKey("moderationReport.reviewFirst")} />
+                </div>
+            {/if}
         {/if}
         <div class="actions">
-            <Button loading={busy} disabled={busy || resolved} onClick={() => resolve("upheld")}>
+            <Button
+                loading={busy}
+                disabled={busy || resolved || needsMediaReview}
+                onClick={() => resolve("upheld")}
+            >
                 <Translatable resourceKey={i18nKey("moderationReport.uphold")} />
             </Button>
             <div class="csamAction">
@@ -223,6 +238,7 @@
 {#if showViewer}
     <VaultMediaViewer
         blobReferences={content.blobReferences}
+        onReviewed={() => (mediaReviewed = true)}
         onClose={() => (showViewer = false)}
     />
 {/if}

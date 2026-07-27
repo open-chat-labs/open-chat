@@ -11,9 +11,12 @@
     interface Props {
         blobReferences: BlobReference[];
         onClose: () => void;
+        // Fired when the media has successfully loaded: the review act has taken place (and
+        // has been recorded in the vault access log by the chunk fetches)
+        onReviewed?: () => void;
     }
 
-    let { blobReferences, onClose }: Props = $props();
+    let { blobReferences, onClose, onReviewed }: Props = $props();
 
     type LoadedItem = {
         url: string;
@@ -23,7 +26,8 @@
     // Nothing is fetched until the reviewer passes the interstitial: chunk 0 of each fetch is
     // the logged review act, and later chunks are served only in session order. Media is
     // assembled into object URLs which are revoked on close and never written to any cache.
-    let stage: "interstitial" | "loading" | "view" | "not_authorized" | "error" = $state("interstitial");
+    let stage: "interstitial" | "loading" | "view" | "not_authorized" | "error" =
+        $state("interstitial");
     let items: LoadedItem[] = $state([]);
     let revealed: boolean[] = $state([]);
     // Closing mid-fetch must stop pulling quarantined material: checked after every await,
@@ -75,6 +79,7 @@
         items = loaded;
         revealed = items.map(() => false);
         stage = "view";
+        onReviewed?.();
     }
 
     function revoke() {
@@ -121,7 +126,8 @@
                                 resourceKey={i18nKey("vaultViewer.item", {
                                     n: `${i + 1}`,
                                     total: `${items.length}`,
-                                })} />
+                                })}
+                            />
                         </div>
                         {#if !revealed[i]}
                             <button class="shroud" onclick={() => (revealed[i] = true)}>

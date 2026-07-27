@@ -1172,12 +1172,13 @@
         "failed": "Failed to resolve the report",
         "sanctionPending": "Auto-sanction applied - awaiting review: uphold to confirm, dismiss to reverse it in full",
         "contested": "The sender has contested this sanction - please prioritise",
+        "reviewFirst": "Review the quarantined media before deciding",
         "vaultOnly": "Quarantined content - never view it outside the vault. Use Review media.",
         "classifierClean": "The classifier found no violation - review the reporter's complaint on its merits",
         "classifierFailed": "Automated classification FAILED - this content has not been checked by the classifier",
         "urgent": "Imminent threat to a child (reports urgently)",
         "reviewMedia": "Review media",
-        "reviewMediaMobile": "Attached media can be reviewed from the desktop app"
+        "reviewMediaMobile": "Quarantined media must be reviewed before deciding - use the desktop app"
     },
     "vaultViewer": {
         "title": "Quarantined media review",
