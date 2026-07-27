@@ -80,11 +80,7 @@
                             })}
                         />
                     </BodySmall>
-                    {#if !review.revealed[i]}
-                        <button class="shroud" onclick={() => review.reveal(i)}>
-                            <Translatable resourceKey={i18nKey("vaultViewer.reveal")} />
-                        </button>
-                    {:else if item.mimeType.startsWith("image/")}
+                    {#if item.mimeType.startsWith("image/")}
                         <img class="media" src={item.url} alt="" />
                     {:else if item.mimeType.startsWith("video/")}
                         <!-- svelte-ignore a11y_media_has_caption -->
@@ -101,25 +97,6 @@
 </Sheet>
 
 <style lang="scss">
-    .shroud {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 12.5rem;
-        border-radius: 0.5rem;
-        border: none;
-        padding: 0;
-        width: 100%;
-        cursor: pointer;
-        background: repeating-linear-gradient(
-            45deg,
-            var(--button-bg),
-            var(--button-bg) 0.625rem,
-            var(--button-hv) 0.625rem,
-            var(--button-hv) 1.25rem
-        );
-        color: var(--button-txt);
-    }
     .media {
         // The flex column stretches children by default, which breaks the aspect ratio once
         // max-height clamps the image

@@ -18,10 +18,10 @@ export type ReviewStage = "interstitial" | "loading" | "view" | "not_authorized"
 export class VaultMediaReview {
     stage = $state<ReviewStage>("interstitial");
     items = $state<LoadedMedia[]>([]);
-    revealed = $state<boolean[]>([]);
     // Disposal mid-fetch must stop pulling the material: checked after every await, and any
     // object URLs already created are revoked immediately
     #cancelled = false;
+    #viewed = false;
     #notified = false;
 
     #client: OpenChat;
@@ -96,22 +96,17 @@ export class VaultMediaReview {
             return abort("error");
         }
         this.items = loaded;
-        this.revealed = loaded.map(() => false);
         this.stage = "view";
-    }
-
-    reveal(index: number): void {
-        this.revealed[index] = true;
+        this.#viewed = true;
     }
 
     dispose(): void {
         this.#cancelled = true;
         this.items.forEach((item) => URL.revokeObjectURL(item.url));
         this.items = [];
-        // The review only counts once the viewer is closed, and only if every item was
-        // actually revealed: loading blurred thumbnails is not looking at the evidence
-        const reviewed = this.revealed.length > 0 && this.revealed.every((r) => r);
-        if (reviewed && !this.#notified) {
+        // The review only counts once the viewer is closed: notifying at load time would
+        // reveal the verdict actions behind the still-open viewer
+        if (this.#viewed && !this.#notified) {
             this.#notified = true;
             this.#onReviewed?.();
         }

@@ -80,11 +80,7 @@
                                     })}
                                 />
                             </div>
-                            {#if !review.revealed[i]}
-                                <button class="shroud" onclick={() => review.reveal(i)}>
-                                    <Translatable resourceKey={i18nKey("vaultViewer.reveal")} />
-                                </button>
-                            {:else if item.mimeType.startsWith("image/")}
+                            {#if item.mimeType.startsWith("image/")}
                                 <img class="media" src={item.url} alt="" />
                             {:else if item.mimeType.startsWith("video/")}
                                 <!-- svelte-ignore a11y_media_has_caption -->
@@ -136,25 +132,6 @@
     .label {
         @include font(book, normal, fs-80);
         color: var(--txt-light);
-    }
-    .shroud {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: toRem(200);
-        border-radius: toRem(8);
-        border: none;
-        padding: 0;
-        width: 100%;
-        cursor: pointer;
-        background: repeating-linear-gradient(
-            45deg,
-            var(--button-bg),
-            var(--button-bg) toRem(10),
-            var(--button-hv) toRem(10),
-            var(--button-hv) toRem(20)
-        );
-        color: var(--button-txt);
     }
     .media {
         // The flex column stretches children by default, which breaks the aspect ratio once

@@ -1189,7 +1189,6 @@
         "cancel": "Cancel",
         "close": "Close",
         "loading": "Fetching from the vault...",
-        "reveal": "Click to reveal",
         "notAuthorized": "You are not a designated vault reviewer",
         "error": "Failed to fetch the media",
         "item": "Item {n} of {total}"
