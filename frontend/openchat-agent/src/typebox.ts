@@ -588,6 +588,12 @@ export const ChatMetrics = Type.Object({
     last_active: Type.BigInt(),
 });
 
+export type ModerationReferralCategory = Static<typeof ModerationReferralCategory>;
+export const ModerationReferralCategory = Type.Object({
+    category: Type.Number(),
+    score_threshold: Type.Number(),
+});
+
 export type VideoCallType = Static<typeof VideoCallType>;
 export const VideoCallType = Type.Union([Type.Literal("Broadcast"), Type.Literal("Default")]);
 
@@ -1404,8 +1410,7 @@ export const DecimalParam = Type.Object({
 
 export type ModerationReferralConfig = Static<typeof ModerationReferralConfig>;
 export const ModerationReferralConfig = Type.Object({
-    categories: Type.Number(),
-    score_threshold: Type.Number(),
+    categories: Type.Array(ModerationReferralCategory),
 });
 
 export type DiamondMembershipStatus = Static<typeof DiamondMembershipStatus>;

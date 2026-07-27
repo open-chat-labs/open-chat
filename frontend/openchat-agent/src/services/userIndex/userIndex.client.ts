@@ -185,7 +185,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
     }
 
     setModerationReferralConfig(
-        config: { categories: number; scoreThreshold: number } | undefined,
+        config: { categories: { category: number; scoreThreshold: number }[] } | undefined,
     ): Promise<boolean> {
         return this.update(
             "set_moderation_referral_config",
@@ -193,7 +193,12 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                 config:
                     config === undefined
                         ? undefined
-                        : { categories: config.categories, score_threshold: config.scoreThreshold },
+                        : {
+                              categories: config.categories.map((c) => ({
+                                  category: c.category,
+                                  score_threshold: c.scoreThreshold,
+                              })),
+                          },
             },
             (resp) => resp === "Success",
             UserIndexSetModerationReferralConfigArgs,

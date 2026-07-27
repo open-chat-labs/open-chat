@@ -828,7 +828,7 @@ type AcceptTerms = {
 
 type SetModerationReferralConfig = {
     kind: "setModerationReferralConfig";
-    config: { categories: number; scoreThreshold: number } | undefined;
+    config: { categories: { category: number; scoreThreshold: number }[] } | undefined;
 };
 
 type SetInternalModerationChannel = {

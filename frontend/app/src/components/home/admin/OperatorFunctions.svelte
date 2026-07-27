@@ -55,14 +55,19 @@
     let openAiApiKey = $state("");
     let moderationCommunityId = $state("");
     let moderationChannelId = $state("");
-    // sexual/minors always takes the CSAM auto-sanction path so is not offered here
-    let referralCategories: Set<number> = $state(new Set());
-    let referralScoreThreshold = $state("0.95");
+    // sexual/minors always takes the CSAM auto-sanction path so is not offered here.
+    // Empty threshold = category disabled; thresholds are per category because the right
+    // value differs between eg. sexual (catch the target content) and harassment (keep
+    // noise out of the queue)
+    let referralThresholds: Record<number, string> = $state({});
 
     const CSAM_CATEGORY_BIT = 2;
-    let referralThresholdInvalid = $derived.by(() => {
-        const threshold = Number(referralScoreThreshold);
-        return isNaN(threshold) || threshold < 0 || threshold > 1;
+    let referralThresholdsInvalid = $derived.by(() => {
+        return Object.values(referralThresholds).some((t) => {
+            if (t === "") return false;
+            const threshold = Number(t);
+            return isNaN(threshold) || threshold < 0 || threshold > 1;
+        });
     });
     let groupUpgradeConcurrencyInvalid = $derived(isNaN(parseInt(groupUpgradeConcurrency, 0)));
     let communityUpgradeConcurrencyInvalid = $derived(
@@ -300,23 +305,13 @@
             .finally(() => removeBusy(7));
     }
 
-    function toggleReferralCategory(bit: number): void {
-        if (referralCategories.has(bit)) {
-            referralCategories.delete(bit);
-        } else {
-            referralCategories.add(bit);
-        }
-        referralCategories = referralCategories;
-    }
-
     function setModerationReferralConfig(): void {
         error = undefined;
         addBusy(9);
-        const categories = [...referralCategories].reduce((total, bit) => total | bit, 0);
-        const config =
-            categories === 0
-                ? undefined
-                : { categories, scoreThreshold: Number(referralScoreThreshold) };
+        const categories = Object.entries(referralThresholds)
+            .filter(([_, t]) => t !== "")
+            .map(([bit, t]) => ({ category: Number(bit), scoreThreshold: Number(t) }));
+        const config = categories.length === 0 ? undefined : { categories };
         client
             .setModerationReferralConfig(config)
             .then((success) => {
@@ -592,30 +587,26 @@
     <section class="operator-function">
         <div class="title">Set moderation referral config</div>
         <div class="hint">
-            Classifier categories which refer a message for human moderator review when scoring
-            above the threshold. No categories selected = referral disabled.
+            Per-category score thresholds (0-1) above which a message is referred for human
+            moderator review. Leave a category blank to disable it. All blank = referral
+            disabled.
         </div>
         {#each MODERATION_CATEGORY_NAMES.filter(([bit, _]) => bit !== CSAM_CATEGORY_BIT) as [bit, name] (bit)}
             <div class="name-value">
                 <div class="label">{name}:</div>
                 <div class="value">
-                    <Toggle
-                        small
-                        id={`referral-category-${bit}`}
-                        checked={referralCategories.has(bit)}
-                        onChange={() => toggleReferralCategory(bit)} />
+                    <Input
+                        placeholder={i18nKey("disabled")}
+                        bind:value={
+                            () => referralThresholds[bit] ?? "",
+                            (v) => (referralThresholds[bit] = v)
+                        } />
                 </div>
             </div>
         {/each}
-        <div class="name-value">
-            <div class="label">Score threshold (0-1):</div>
-            <div class="value">
-                <Input invalid={referralThresholdInvalid} bind:value={referralScoreThreshold} />
-            </div>
-        </div>
         <Button
             tiny
-            disabled={busy.has(9) || referralThresholdInvalid}
+            disabled={busy.has(9) || referralThresholdsInvalid}
             loading={busy.has(9)}
             onClick={setModerationReferralConfig}>Apply</Button>
     </section>

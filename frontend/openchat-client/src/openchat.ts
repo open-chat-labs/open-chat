@@ -7355,7 +7355,7 @@ export class OpenChat {
     }
 
     setModerationReferralConfig(
-        config: { categories: number; scoreThreshold: number } | undefined,
+        config: { categories: { category: number; scoreThreshold: number }[] } | undefined,
     ): Promise<boolean> {
         return this.#worker
             .send({ kind: "setModerationReferralConfig", config })
