@@ -69,6 +69,7 @@ import {
     UserIndexSetModerationFlagsArgs,
     UserIndexAcceptTermsArgs,
     UserIndexSetModerationReferralConfigArgs,
+    UserIndexSetVaultReviewersArgs,
     UserIndexSetOpenaiApiKeyArgs,
     UserIndexSetPremiumItemCostArgs,
     UserIndexSetUsernameArgs,
@@ -180,6 +181,16 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             { version },
             (resp) => resp === "Success",
             UserIndexAcceptTermsArgs,
+            UnitResult,
+        );
+    }
+
+    setVaultReviewers(userIds: string[]): Promise<boolean> {
+        return this.update(
+            "set_vault_reviewers",
+            { user_ids: userIds.map(principalStringToBytes) },
+            (resp) => resp === "Success",
+            UserIndexSetVaultReviewersArgs,
             UnitResult,
         );
     }

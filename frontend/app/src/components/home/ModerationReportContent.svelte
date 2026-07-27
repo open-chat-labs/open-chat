@@ -68,6 +68,7 @@
 
     function resolve(verdict: ModerationVerdict) {
         if (content.reportIndex === undefined || busy || resolved) return;
+
         busy = true;
         failed = false;
         client

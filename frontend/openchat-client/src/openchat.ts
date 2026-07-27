@@ -7354,6 +7354,10 @@ export class OpenChat {
         return this.#worker.send({ kind: "setOpenAIApiKey", apiKey }).catch(() => false);
     }
 
+    setVaultReviewers(userIds: string[]): Promise<boolean> {
+        return this.#worker.send({ kind: "setVaultReviewers", userIds }).catch(() => false);
+    }
+
     setModerationReferralConfig(
         config: { categories: { category: number; scoreThreshold: number }[] } | undefined,
     ): Promise<boolean> {

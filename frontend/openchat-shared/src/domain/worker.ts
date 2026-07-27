@@ -382,6 +382,7 @@ export type WorkerRequest =
     | SetModerationFlags
     | SetOpenAIApiKey
     | SetModerationReferralConfig
+    | SetVaultReviewers
     | AcceptTerms
     | SetInternalModerationChannel
     | ResolveModerationReport
@@ -824,6 +825,11 @@ type SetOpenAIApiKey = {
 type AcceptTerms = {
     kind: "acceptTerms";
     version: number;
+};
+
+type SetVaultReviewers = {
+    kind: "setVaultReviewers";
+    userIds: string[];
 };
 
 type SetModerationReferralConfig = {
@@ -2517,6 +2523,8 @@ export type WorkerResult<T> = T extends Init
     : T extends SetOpenAIApiKey
     ? boolean
     : T extends SetModerationReferralConfig
+    ? boolean
+    : T extends SetVaultReviewers
     ? boolean
     : T extends AcceptTerms
     ? boolean

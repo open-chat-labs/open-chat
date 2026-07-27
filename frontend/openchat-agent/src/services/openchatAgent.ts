@@ -2176,6 +2176,10 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.acceptTerms(version);
     }
 
+    setVaultReviewers(userIds: string[]): Promise<boolean> {
+        return this._userIndexClient.setVaultReviewers(userIds);
+    }
+
     setModerationReferralConfig(
         config: { categories: { category: number; scoreThreshold: number }[] } | undefined,
     ): Promise<boolean> {

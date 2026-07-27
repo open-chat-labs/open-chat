@@ -60,6 +60,7 @@
     // value differs between eg. sexual (catch the target content) and harassment (keep
     // noise out of the queue)
     let referralThresholds: Record<number, string> = $state({});
+    let vaultReviewerIds = $state("");
 
     const CSAM_CATEGORY_BIT = 2;
     let referralThresholdsInvalid = $derived.by(() => {
@@ -331,6 +332,29 @@
             .finally(() => removeBusy(9));
     }
 
+    // Replaces the full reviewer set: user ids must already be platform moderators
+    function setVaultReviewers(): void {
+        error = undefined;
+        addBusy(10);
+        const userIds = vaultReviewerIds
+            .split(",")
+            .map((id) => id.trim())
+            .filter((id) => id !== "");
+        client
+            .setVaultReviewers(userIds)
+            .then((success) => {
+                if (success) {
+                    toastStore.showSuccessToast(i18nKey("Vault reviewers updated"));
+                } else {
+                    error = i18nKey(
+                        "Failed to update vault reviewers (are they all platform moderators?)",
+                    );
+                    toastStore.showFailureToast(error);
+                }
+            })
+            .finally(() => removeBusy(10));
+    }
+
     function setInternalModerationChannel(): void {
         error = undefined;
         addBusy(8);
@@ -382,7 +406,8 @@
                 tiny
                 disabled={busy.has(0) || groupUpgradeConcurrencyInvalid}
                 loading={busy.has(0)}
-                onClick={setGroupUpgradeConcurrency}>Apply</Button>
+                onClick={setGroupUpgradeConcurrency}>Apply</Button
+            >
         </ButtonGroup>
     </section>
 
@@ -391,12 +416,14 @@
         <ButtonGroup align="fill">
             <Input
                 invalid={communityUpgradeConcurrencyInvalid}
-                bind:value={communityUpgradeConcurrency} />
+                bind:value={communityUpgradeConcurrency}
+            />
             <Button
                 tiny
                 disabled={busy.has(1) || communityUpgradeConcurrencyInvalid}
                 loading={busy.has(1)}
-                onClick={setCommunityUpgradeConcurrency}>Apply</Button>
+                onClick={setCommunityUpgradeConcurrency}>Apply</Button
+            >
         </ButtonGroup>
     </section>
 
@@ -408,7 +435,8 @@
                 tiny
                 disabled={busy.has(2) || userUpgradeConcurrencyInvalid}
                 loading={busy.has(2)}
-                onClick={setUserUpgradeConcurrency}>Apply</Button>
+                onClick={setUserUpgradeConcurrency}>Apply</Button
+            >
         </ButtonGroup>
     </section>
 
@@ -452,7 +480,8 @@
                 tiny
                 disabled={busy.has(3)}
                 loading={busy.has(3)}
-                onClick={setDiamondMembershipFees}>Apply</Button>
+                onClick={setDiamondMembershipFees}>Apply</Button
+            >
         </section>
     {/if}
 
@@ -474,7 +503,8 @@
             tiny
             disabled={busy.has(4)}
             loading={busy.has(4)}
-            onClick={stakeNeuronForSubmittingProposals}>Apply</Button>
+            onClick={stakeNeuronForSubmittingProposals}>Apply</Button
+        >
     </section>
 
     <section class="operator-function">
@@ -555,7 +585,8 @@
             tiny
             disabled={busy.has(5) || exchangeIdInvalid}
             loading={busy.has(5)}
-            onClick={updateMarketMakerConfig}>Apply</Button>
+            onClick={updateMarketMakerConfig}>Apply</Button
+        >
     </section>
 
     <section class="operator-function">
@@ -567,7 +598,8 @@
                 tiny
                 disabled={busy.has(6) || !tokenLedgerValid}
                 loading={busy.has(6)}
-                onClick={setTokenEnabled}>Apply</Button>
+                onClick={setTokenEnabled}>Apply</Button
+            >
         </ButtonGroup>
     </section>
 
@@ -588,8 +620,7 @@
         <div class="title">Set moderation referral config</div>
         <div class="hint">
             Per-category score thresholds (0-1) above which a message is referred for human
-            moderator review. Leave a category blank to disable it. All blank = referral
-            disabled.
+            moderator review. Leave a category blank to disable it. All blank = referral disabled.
         </div>
         {#each MODERATION_CATEGORY_NAMES.filter(([bit, _]) => bit !== CSAM_CATEGORY_BIT) as [bit, name] (bit)}
             <div class="name-value">
@@ -600,7 +631,8 @@
                         bind:value={
                             () => referralThresholds[bit] ?? "",
                             (v) => (referralThresholds[bit] = v)
-                        } />
+                        }
+                    />
                 </div>
             </div>
         {/each}
@@ -608,7 +640,22 @@
             tiny
             disabled={busy.has(9) || referralThresholdsInvalid}
             loading={busy.has(9)}
-            onClick={setModerationReferralConfig}>Apply</Button>
+            onClick={setModerationReferralConfig}>Apply</Button
+        >
+    </section>
+
+    <section class="operator-function">
+        <div class="title">Set vault reviewers</div>
+        <div class="hint">
+            Comma-separated user ids. Replaces the whole set; each must already be a platform
+            moderator. An empty list revokes all reviewers.
+        </div>
+        <ButtonGroup align="fill">
+            <Input bind:value={vaultReviewerIds} />
+            <Button tiny disabled={busy.has(10)} loading={busy.has(10)} onClick={setVaultReviewers}>
+                Apply
+            </Button>
+        </ButtonGroup>
     </section>
 
     <section class="operator-function">
@@ -629,7 +676,8 @@
             tiny
             disabled={busy.has(8)}
             loading={busy.has(8)}
-            onClick={setInternalModerationChannel}>Apply</Button>
+            onClick={setInternalModerationChannel}>Apply</Button
+        >
     </section>
 
     <section class="operator-function">
