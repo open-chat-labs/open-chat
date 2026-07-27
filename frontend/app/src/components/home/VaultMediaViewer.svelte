@@ -142,11 +142,5 @@
         object-fit: contain;
         max-width: 100%;
         max-height: toRem(400);
-        // Initial render is deliberately reduced; the reviewer already chose to reveal
-        filter: grayscale(1);
-        &:hover,
-        &:focus {
-            filter: none;
-        }
     }
 </style>

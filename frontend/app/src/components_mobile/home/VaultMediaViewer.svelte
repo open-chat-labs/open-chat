@@ -106,11 +106,5 @@
         object-fit: contain;
         max-width: 100%;
         max-height: 25rem;
-        // Initial render is deliberately reduced; the reviewer already chose to reveal
-        filter: grayscale(1);
-        &:active,
-        &:focus {
-            filter: none;
-        }
     }
 </style>
