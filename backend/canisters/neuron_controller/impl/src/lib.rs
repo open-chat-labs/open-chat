@@ -59,6 +59,9 @@ impl RuntimeState {
             canister_id,
             method_name,
             arg: candid::encode_one(&args).unwrap(),
+            // We sign these calls with ECDSA rather than attaching canister-certified sender info.
+            // The field is skipped when serializing, so the request id is unchanged.
+            sender_info: None,
         };
 
         CanisterEcdsaRequest {
