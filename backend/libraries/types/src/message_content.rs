@@ -762,6 +762,7 @@ pub struct ModerationReportContent {
     // classifier could not check this content" (true - API failure after retries): a failed
     // classification must never present as a clean one
     #[serde(default)]
+    #[ts(as = "Option<bool>", optional)]
     pub classification_failed: bool,
     // True if the CSAM auto-sanction has already been applied
     pub auto_sanctioned: bool,
