@@ -22,7 +22,6 @@ export class VaultMediaReview {
     // Disposal mid-fetch must stop pulling the material: checked after every await, and any
     // object URLs already created are revoked immediately
     #cancelled = false;
-    #viewed = false;
     #notified = false;
 
     #client: OpenChat;
@@ -99,7 +98,6 @@ export class VaultMediaReview {
         this.items = loaded;
         this.revealed = loaded.map(() => false);
         this.stage = "view";
-        this.#viewed = true;
     }
 
     reveal(index: number): void {
@@ -110,9 +108,10 @@ export class VaultMediaReview {
         this.#cancelled = true;
         this.items.forEach((item) => URL.revokeObjectURL(item.url));
         this.items = [];
-        // The review only counts once the viewer is closed: notifying at load time would
-        // reveal the verdict actions behind the still-open viewer
-        if (this.#viewed && !this.#notified) {
+        // The review only counts once the viewer is closed, and only if every item was
+        // actually revealed: loading blurred thumbnails is not looking at the evidence
+        const reviewed = this.revealed.length > 0 && this.revealed.every((r) => r);
+        if (reviewed && !this.#notified) {
             this.#notified = true;
             this.#onReviewed?.();
         }
