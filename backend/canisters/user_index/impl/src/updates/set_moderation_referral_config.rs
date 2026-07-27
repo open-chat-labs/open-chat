@@ -15,16 +15,29 @@ fn set_moderation_referral_config(args: Args) -> Response {
 fn set_moderation_referral_config_impl(args: Args, state: &mut RuntimeState) -> Response {
     let mut config = args.config;
     if let Some(c) = config.as_mut() {
-        if ModerationCategories::from_bits(c.categories).is_none() || !(0.0..=1.0).contains(&c.score_threshold) {
+        let valid = c.categories.iter().all(|entry| {
+            entry.category.is_power_of_two()
+                && ModerationCategories::from_bits(entry.category).is_some()
+                && (0.0..=1.0).contains(&entry.score_threshold)
+        });
+        let duplicates = c
+            .categories
+            .iter()
+            .map(|entry| entry.category)
+            .collect::<std::collections::BTreeSet<_>>()
+            .len()
+            != c.categories.len();
+        if !valid || duplicates {
             return Response::Error(oc_error_codes::OCErrorCode::InvalidRequest.into());
         }
         // sexual/minors always takes the CSAM auto-sanction path; it can never be downgraded
         // to a referral category
-        c.categories &= !ModerationCategories::SEXUAL_MINORS.bits();
+        c.categories
+            .retain(|entry| entry.category != ModerationCategories::SEXUAL_MINORS.bits());
     }
-    let config = config.filter(|c| c.categories != 0);
+    let config = config.filter(|c| !c.categories.is_empty());
 
-    state.data.moderation_referral_config = config;
+    state.data.moderation_referral_config = config.clone();
 
     state.push_event_to_all_local_user_indexes(
         UserIndexEvent::SetModerationReferralConfig(SetModerationReferralConfig { config }),

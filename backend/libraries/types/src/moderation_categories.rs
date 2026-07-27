@@ -90,10 +90,19 @@ pub struct MessageClassified {
 
 // Operator config determining which classifier categories (other than sexual/minors, which
 // always takes the CSAM auto-sanction path) refer a message for human moderator review, and
-// the confidence score required. None/empty = referral disabled.
+// the confidence score each requires. Thresholds are per category because the right value
+// differs: high enough to keep noise out of the review queue, low enough to catch the target
+// content. None/empty = referral disabled.
+#[ts_export::ts_export]
+#[derive(candid::CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct ModerationReferralConfig {
+    pub categories: Vec<ModerationReferralCategory>,
+}
+
 #[ts_export::ts_export]
 #[derive(candid::CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq)]
-pub struct ModerationReferralConfig {
-    pub categories: u32,
+pub struct ModerationReferralCategory {
+    // A single ModerationCategories bit
+    pub category: u32,
     pub score_threshold: f64,
 }

@@ -657,8 +657,10 @@ fn moderation_referral_creates_report_and_upheld_verdict_sanctions() {
         canister_ids.user_index,
         &user_index_canister::set_moderation_referral_config::Args {
             config: Some(types::ModerationReferralConfig {
-                categories: types::ModerationCategories::SEXUAL.bits(),
-                score_threshold: 0.9,
+                categories: vec![types::ModerationReferralCategory {
+                    category: types::ModerationCategories::SEXUAL.bits(),
+                    score_threshold: 0.9,
+                }],
             }),
         },
     );

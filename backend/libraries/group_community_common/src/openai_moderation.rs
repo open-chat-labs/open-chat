@@ -31,7 +31,7 @@ pub async fn moderate_text_batch(api_key: &str, texts: &[String]) -> Result<Vec<
 pub async fn classify_text_batch(
     api_key: &str,
     texts: &[String],
-    moderation_referral: Option<ModerationReferralConfig>,
+    moderation_referral: Option<&ModerationReferralConfig>,
 ) -> Result<Vec<Classification>, String> {
     let results = call_moderation_api(api_key, serde_json::json!(texts), moderation_referral).await?;
     if results.len() == texts.len() {
@@ -59,7 +59,7 @@ pub async fn moderate_input(api_key: &str, input: &ModerationInput) -> Result<Mo
 pub async fn classify_input(
     api_key: &str,
     input: &ModerationInput,
-    moderation_referral: Option<ModerationReferralConfig>,
+    moderation_referral: Option<&ModerationReferralConfig>,
 ) -> Result<Classification, String> {
     let mut classification = Classification::default();
 
@@ -107,7 +107,7 @@ struct HttpRequestArgs {
 async fn call_moderation_api(
     api_key: &str,
     input: serde_json::Value,
-    moderation_referral: Option<ModerationReferralConfig>,
+    moderation_referral: Option<&ModerationReferralConfig>,
 ) -> Result<Vec<Classification>, String> {
     let body = serde_json::json!({
         "model": MODEL,
@@ -156,7 +156,7 @@ async fn call_moderation_api(
         .ok_or("Failed to parse OpenAI Moderation API response".to_string())
 }
 
-fn extract_classifications(body: &[u8], moderation_referral: Option<ModerationReferralConfig>) -> Option<Vec<Classification>> {
+fn extract_classifications(body: &[u8], moderation_referral: Option<&ModerationReferralConfig>) -> Option<Vec<Classification>> {
     let response: ModerationsResponse = serde_json::from_slice(body).ok()?;
 
     Some(
@@ -173,19 +173,22 @@ fn extract_classifications(body: &[u8], moderation_referral: Option<ModerationRe
                     });
 
                 // Referral is score-based rather than reusing the API's flagged booleans so
-                // that the threshold can be set well above the API's own, keeping borderline
-                // content out of the human review queue
+                // that each category's threshold can be tuned independently of the API's own,
+                // keeping borderline content out of the human review queue
                 let moderation_referral_categories = moderation_referral
                     .map(|config| {
                         result
                             .category_scores
                             .iter()
-                            .filter(|(_, score)| **score >= config.score_threshold)
-                            .fold(ModerationCategories::default(), |acc, (category, _)| {
-                                acc | category_to_flag(category)
+                            .fold(ModerationCategories::default(), |acc, (category, score)| {
+                                let bit = category_to_flag(category).bits();
+                                let referred = config
+                                    .categories
+                                    .iter()
+                                    .any(|c| c.category == bit && *score >= c.score_threshold);
+                                if referred { acc | category_to_flag(category) } else { acc }
                             })
                             .bits()
-                            & config.categories
                             & !ModerationCategories::SEXUAL_MINORS.bits()
                     })
                     .and_then(ModerationCategories::from_bits)

@@ -56,7 +56,7 @@ fn next_batch(state: &mut RuntimeState) -> Option<(String, Option<ModerationRefe
         .data
         .message_moderation_queue
         .next_batch(BATCH_SIZE, MAX_IMAGE_INPUTS_PER_BATCH);
-    (!batch.is_empty()).then_some((api_key, state.data.moderation_referral_config, batch))
+    (!batch.is_empty()).then_some((api_key, state.data.moderation_referral_config.clone(), batch))
 }
 
 async fn process_batch(api_key: String, moderation_referral_config: Option<ModerationReferralConfig>, batch: Vec<QueueItem>) {
@@ -70,7 +70,7 @@ async fn process_batch(api_key: String, moderation_referral_config: Option<Moder
             .iter()
             .map(|i| i.entry.input.text.clone().unwrap_or_default())
             .collect();
-        match openai_moderation::classify_text_batch(&api_key, &texts, moderation_referral_config).await {
+        match openai_moderation::classify_text_batch(&api_key, &texts, moderation_referral_config.as_ref()).await {
             Ok(results) => classified.extend(text_items.into_iter().zip(results)),
             Err(error) => {
                 error!(?error, "Failed to classify messages for moderation");
@@ -80,7 +80,7 @@ async fn process_batch(api_key: String, moderation_referral_config: Option<Moder
     }
 
     for item in image_items {
-        match openai_moderation::classify_input(&api_key, &item.entry.input, moderation_referral_config).await {
+        match openai_moderation::classify_input(&api_key, &item.entry.input, moderation_referral_config.as_ref()).await {
             Ok(classification) => classified.push((item, classification)),
             Err(error) => {
                 error!(?error, "Failed to classify message for moderation");
