@@ -1,4 +1,10 @@
-import { HttpErrorCode, type Identity, ProtocolError } from "@icp-sdk/core/agent";
+import {
+    AgentError,
+    HttpErrorCode,
+    type Identity,
+    ProtocolError,
+    ReplicaRejectCode,
+} from "@icp-sdk/core/agent";
 import { ResponseTooLargeError } from "@shared";
 import {
     getSessionExpiryMs,
@@ -26,6 +32,20 @@ export class ReplicaNotUpToDateError extends Error {
     }
 }
 
+// A `DestinationInvalid` rejection means the target canister doesn't exist, eg. because the group
+// or community has been deleted. No amount of retrying can make it exist, so it is mapped to a
+// `DestinationInvalidError` to short-circuit the retry mechanism.
+//
+// The reject code has to be read from the error rather than matched on its message - the message
+// only ever contains the numeric code ("Reject code: 3"), never the name.
+function destinationInvalid(error: Error): boolean {
+    return (
+        error instanceof AgentError &&
+        (error.code as Partial<{ rejectCode: ReplicaRejectCode }>).rejectCode ===
+            ReplicaRejectCode.DestinationInvalid
+    );
+}
+
 function responseTooLarge(error: Error): ResponseTooLargeError | undefined {
     const regex = /application payload size \((\d+)\) cannot be larger than (\d+)/;
     const match = error.message.match(regex);
@@ -48,8 +68,7 @@ export function toCanisterResponseError(
 
     let code = 500;
 
-    if (error.message.includes("DestinationInvalid")) {
-        // this will allow us to short-circuit the retry mechanism in this circumstance
+    if (destinationInvalid(error)) {
         return new DestinationInvalidError(error);
     }
 
