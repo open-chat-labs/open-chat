@@ -3,7 +3,9 @@
     import { VaultMediaReview } from "@shared_components/vaultMediaReview.svelte";
     import { getContext, onDestroy } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import { mobileWidth } from "@client";
     import Button from "../Button.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
     import Translatable from "../Translatable.svelte";
@@ -45,14 +47,6 @@
             <div class="viewer">
                 {#if review.stage === "interstitial"}
                     <p><Translatable resourceKey={i18nKey("vaultViewer.interstitial")} /></p>
-                    <div class="actions">
-                        <Button onClick={() => review.fetchAll()}>
-                            <Translatable resourceKey={i18nKey("vaultViewer.proceed")} />
-                        </Button>
-                        <Button secondary onClick={close}>
-                            <Translatable resourceKey={i18nKey("vaultViewer.cancel")} />
-                        </Button>
-                    </div>
                 {:else if review.stage === "loading"}
                     <p><Translatable resourceKey={i18nKey("vaultViewer.loading")} /></p>
                 {:else if review.stage === "not_authorized"}
@@ -89,6 +83,26 @@
                 {/if}
             </div>
         {/snippet}
+        {#snippet footer()}
+            <ButtonGroup>
+                {#if review.stage === "interstitial"}
+                    <Button secondary small={!$mobileWidth} tiny={$mobileWidth} onClick={close}>
+                        <Translatable resourceKey={i18nKey("vaultViewer.cancel")} />
+                    </Button>
+                    <Button
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}
+                        onClick={() => review.fetchAll()}
+                    >
+                        <Translatable resourceKey={i18nKey("vaultViewer.proceed")} />
+                    </Button>
+                {:else}
+                    <Button secondary small={!$mobileWidth} tiny={$mobileWidth} onClick={close}>
+                        <Translatable resourceKey={i18nKey("vaultViewer.close")} />
+                    </Button>
+                {/if}
+            </ButtonGroup>
+        {/snippet}
     </ModalContent>
 </Overlay>
 
@@ -97,10 +111,6 @@
         display: flex;
         flex-direction: column;
         gap: $sp4;
-    }
-    .actions {
-        display: flex;
-        gap: $sp3;
     }
     .item {
         display: flex;

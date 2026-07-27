@@ -1184,6 +1184,7 @@
         "interstitial": "You are about to view quarantined material held in the evidence vault. This action is recorded in a tamper-evident access log, with your identity and the time. Proceed only to decide whether this report should be upheld or dismissed.",
         "proceed": "Review",
         "cancel": "Cancel",
+        "close": "Close",
         "loading": "Fetching from the vault...",
         "reveal": "Click to reveal",
         "notAuthorized": "You are not a designated vault reviewer",
