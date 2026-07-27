@@ -1,4 +1,11 @@
-import { ErrorCode, HttpError, type OCError, type PinNumberFailures } from "../domain";
+import {
+    ErrorCode,
+    HttpError,
+    INVALID_DELEGATION_ERROR_NAME,
+    type OCError,
+    type PinNumberFailures,
+    SESSION_EXPIRY_ERROR_NAME,
+} from "../domain";
 import { parseBigInt } from "./bigint";
 
 export function isError(value: unknown): value is OCError {
@@ -12,13 +19,14 @@ const callerToleratedErrorKinds = new Set<string>(["refreshAccountBalance"]);
 // A ledger canister that is frozen (IC0207), has no wasm module (IC0537) or has been deleted
 // (IC0301) is a dead / decommissioned token ledger. Balance refreshes against these are
 // expected: for the ~30 day window before the IC uninstalls a frozen canister, and until the
-// registry's uninstalled-token detection + client cache purge remove the token. The agent's
-// reject message includes the IC error code, so we can recognise these here. Any OTHER failure
+// registry's uninstalled-token detection + client cache purge remove the token. Any OTHER failure
 // is a real signal.
 const DEAD_LEDGER_ERROR_CODES = ["IC0207", "IC0301", "IC0537"];
 function isDeadLedgerError(error: unknown): boolean {
     return (
-        error instanceof HttpError && DEAD_LEDGER_ERROR_CODES.some((c) => error.message.includes(c))
+        error instanceof HttpError &&
+        error.rejectErrorCode !== undefined &&
+        DEAD_LEDGER_ERROR_CODES.includes(error.rejectErrorCode)
     );
 }
 
@@ -27,6 +35,15 @@ function isDeadLedgerError(error: unknown): boolean {
 // boundary error, a decode error, a code bug - is still reported so real regressions stay visible.
 export function shouldReportWorkerError(kind: string, error: unknown): boolean {
     return !(callerToleratedErrorKinds.has(kind) && isDeadLedgerError(error));
+}
+
+// Whether a rejected promise means the user's session is no longer usable and they must be logged
+// out. These errors reach the client through the worker, so their prototype is gone and `name` is
+// all that survives - see the constants in ../domain/error.
+export function requiresLogout(error: unknown): boolean {
+    if (error == null || typeof error !== "object" || !("name" in error)) return false;
+
+    return error.name === SESSION_EXPIRY_ERROR_NAME || error.name === INVALID_DELEGATION_ERROR_NAME;
 }
 
 export function pinNumberFailureFromError(error: OCError): PinNumberFailures | undefined {

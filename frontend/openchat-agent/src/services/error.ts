@@ -1,5 +1,6 @@
 import {
     AgentError,
+    type ErrorCode,
     HttpErrorCode,
     type Identity,
     ProtocolError,
@@ -32,6 +33,15 @@ export class ReplicaNotUpToDateError extends Error {
     }
 }
 
+// The SDK hangs the details of a failure off `AgentError.code`. Which fields are present depends
+// on how the call failed, so each accessor below returns `undefined` for the cases which don't
+// carry it. Always prefer these over matching on the error message.
+function errorCode(error: Error): Partial<ErrorCode & RejectFields & HttpErrorCode> | undefined {
+    return error instanceof AgentError ? error.code : undefined;
+}
+
+type RejectFields = { rejectCode: ReplicaRejectCode; rejectErrorCode: string | undefined };
+
 // A `DestinationInvalid` rejection means the target canister doesn't exist, eg. because the group
 // or community has been deleted. No amount of retrying can make it exist, so it is mapped to a
 // `DestinationInvalidError` to short-circuit the retry mechanism.
@@ -39,10 +49,23 @@ export class ReplicaNotUpToDateError extends Error {
 // The reject code has to be read from the error rather than matched on its message - the message
 // only ever contains the numeric code ("Reject code: 3"), never the name.
 function destinationInvalid(error: Error): boolean {
+    return errorCode(error)?.rejectCode === ReplicaRejectCode.DestinationInvalid;
+}
+
+// The IC error code of a rejection, eg. "IC0301". Callers use this to recognise specific failures
+// without having to match on the error message.
+function rejectErrorCode(error: Error): string | undefined {
+    return errorCode(error)?.rejectErrorCode;
+}
+
+// A delegation which the boundary node refuses is reported as a 400 whose *body* explains why.
+// Unlike a rejection there is no code for this, so the body text has to be matched - but match the
+// body specifically rather than the composed error message, which also contains the response
+// headers.
+function invalidDelegation(error: Error): boolean {
+    const code = errorCode(error);
     return (
-        error instanceof AgentError &&
-        (error.code as Partial<{ rejectCode: ReplicaRejectCode }>).rejectCode ===
-            ReplicaRejectCode.DestinationInvalid
+        code instanceof HttpErrorCode && (code.bodyText?.includes("Invalid delegation") ?? false)
     );
 }
 
@@ -59,6 +82,21 @@ function responseTooLarge(error: Error): ResponseTooLargeError | undefined {
 }
 
 export function toCanisterResponseError(
+    error: Error,
+    identity: Identity,
+): HttpError | ReplicaNotUpToDateError | TypeboxValidationError {
+    const responseError = classifyError(error, identity);
+
+    // Carry the IC error code across so that callers downstream (which only see the mapped error)
+    // can recognise specific failures without matching on the error message
+    if (responseError instanceof HttpError) {
+        responseError.rejectErrorCode = rejectErrorCode(error);
+    }
+
+    return responseError;
+}
+
+function classifyError(
     error: Error,
     identity: Identity,
 ): HttpError | ReplicaNotUpToDateError | TypeboxValidationError {
@@ -88,7 +126,7 @@ export function toCanisterResponseError(
                 timeUntilSessionExpiryMs,
             );
             return new SessionExpiryError(code, error);
-        } else if (error.message.includes("Invalid delegation")) {
+        } else if (invalidDelegation(error)) {
             return new InvalidDelegationError(error);
         }
     }

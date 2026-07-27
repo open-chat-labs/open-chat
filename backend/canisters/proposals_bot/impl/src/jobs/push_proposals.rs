@@ -3,6 +3,7 @@ use crate::{RuntimeState, generate_message_id, mutate_state, read_state};
 use chat_events::{MessageContentInternal, ProposalContentInternal};
 use ic_cdk::call::RejectCode;
 use ic_cdk_timers::TimerId;
+use oc_error_codes::OCErrorCode;
 use sns_governance_canister::types::{ProposalId, get_proposal_response};
 use std::cell::Cell;
 use std::collections::BTreeMap;
@@ -189,7 +190,14 @@ fn extract_channel_result(
 ) -> Result<(MessageId, Option<MessageIndex>), C2CError> {
     match response {
         Ok(community_canister::c2c_send_message::Response::Success(result)) => Ok((message_id, Some(result.message_index))),
-        other => extract_result_inner(message_id, other, canister_id),
+        // The messageId is derived from the proposal, so if it is already in use then this
+        // proposal has already been pushed
+        Ok(community_canister::c2c_send_message::Response::Error(error))
+            if error.matches_code(OCErrorCode::MessageIdAlreadyExists) =>
+        {
+            Ok((message_id, None))
+        }
+        other => extract_result_inner(other, canister_id),
     }
 }
 
@@ -200,20 +208,22 @@ fn extract_group_result(
 ) -> Result<(MessageId, Option<MessageIndex>), C2CError> {
     match response {
         Ok(group_canister::c2c_send_message::Response::Success(result)) => Ok((message_id, Some(result.message_index))),
-        other => extract_result_inner(message_id, other, canister_id),
+        // The messageId is derived from the proposal, so if it is already in use then this
+        // proposal has already been pushed
+        Ok(group_canister::c2c_send_message::Response::Error(error))
+            if error.matches_code(OCErrorCode::MessageIdAlreadyExists) =>
+        {
+            Ok((message_id, None))
+        }
+        other => extract_result_inner(other, canister_id),
     }
 }
 
 fn extract_result_inner<T: Debug>(
-    message_id: MessageId,
     response: Result<T, C2CError>,
     canister_id: CanisterId,
 ) -> Result<(MessageId, Option<MessageIndex>), C2CError> {
     match response {
-        // If the messageId has already been used, treat that as success
-        Err(error) if error.reject_code() == RejectCode::CanisterError && error.message().contains("MessageId") => {
-            Ok((message_id, None))
-        }
         Err(error) => Err(error),
         _ => {
             error!(?response, %canister_id, "Failed to push proposal");
