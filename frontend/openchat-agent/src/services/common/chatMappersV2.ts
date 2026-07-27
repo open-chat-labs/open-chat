@@ -738,6 +738,7 @@ function moderationReportContent(value: TModerationReportContent): ModerationRep
         sender: principalBytesToString(value.sender),
         reporters: value.reporters.map(principalBytesToString),
         flaggedCategories: value.flagged_categories,
+        classificationFailed: value.classification_failed ?? false,
         autoSanctioned: value.auto_sanctioned,
         contentExcerpt: value.content_excerpt,
         blobReferences: value.blob_references.map(blobReference),

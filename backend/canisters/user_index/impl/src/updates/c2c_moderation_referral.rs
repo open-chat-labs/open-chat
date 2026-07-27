@@ -60,6 +60,7 @@ fn c2c_moderation_referral_impl(args: Args, state: &mut RuntimeState) {
             sender: args.sender,
             reporters: Vec::new(),
             categories,
+            classification_failed: false,
             auto_sanctioned: false,
             content_excerpt: args.content_excerpt,
             // The content is still live in the chat, so the moderator reviews it in place;

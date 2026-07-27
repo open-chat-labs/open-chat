@@ -251,6 +251,7 @@ fn handle_moderation_result(
                 sender: reported_message.sender,
                 reporters: reported_message.reports.keys().copied().collect(),
                 categories,
+                classification_failed,
                 auto_sanctioned: is_csam,
                 content_excerpt,
                 blob_references: if is_csam { blob_references } else { Vec::new() },

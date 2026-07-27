@@ -27,6 +27,7 @@ pub struct ModerationAlert {
     // Empty if the alert was triggered by the automated moderation pipeline rather than a report
     pub reporters: Vec<UserId>,
     pub categories: ModerationCategories,
+    pub classification_failed: bool,
     pub auto_sanctioned: bool,
     pub content_excerpt: Option<String>,
     pub blob_references: Vec<BlobReference>,
@@ -51,6 +52,7 @@ pub fn post_moderation_alert(alert: ModerationAlert, state: &mut RuntimeState) {
         sender: alert.sender,
         reporters: alert.reporters,
         flagged_categories: alert.categories.bits(),
+        classification_failed: alert.classification_failed,
         auto_sanctioned: alert.auto_sanctioned,
         content_excerpt: alert
             .content_excerpt

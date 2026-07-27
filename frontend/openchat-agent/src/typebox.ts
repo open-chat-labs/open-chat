@@ -7438,6 +7438,7 @@ export const ModerationReportContent = Type.Object({
     sender: UserId,
     reporters: Type.Array(UserId),
     flagged_categories: Type.Number(),
+    classification_failed: Type.Boolean(),
     auto_sanctioned: Type.Boolean(),
     content_excerpt: Type.Optional(Type.String()),
     blob_references: Type.Array(BlobReference),

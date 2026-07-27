@@ -303,6 +303,7 @@ type ModerationReportContent = record {
     sender : UserId;
     reporters : vec UserId;
     flagged_categories : nat32;
+    classification_failed : bool;
     auto_sanctioned : bool;
     content_excerpt : opt text;
     blob_references : vec BlobReference;

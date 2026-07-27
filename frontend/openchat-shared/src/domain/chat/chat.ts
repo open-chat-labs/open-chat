@@ -655,6 +655,7 @@ export type ModerationReportContent = {
     sender: string;
     reporters: string[];
     flaggedCategories: number;
+    classificationFailed: boolean;
     autoSanctioned: boolean;
     contentExcerpt: string | undefined;
     blobReferences: BlobReference[];

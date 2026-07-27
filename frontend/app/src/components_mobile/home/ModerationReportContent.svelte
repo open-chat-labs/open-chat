@@ -125,6 +125,17 @@
                 <Translatable resourceKey={i18nKey("moderationReport.categories")} />: {categories}
             </Body>
         {/if}
+        {#if content.flaggedCategories === 0 && content.status.kind === "pending"}
+            <Body colour="textSecondary">
+                <Translatable
+                    resourceKey={i18nKey(
+                        content.classificationFailed
+                            ? "moderationReport.classifierFailed"
+                            : "moderationReport.classifierClean",
+                    )}
+                />
+            </Body>
+        {/if}
         {#if content.status.kind === "contested"}
             <Body colour="error" fontWeight="bold">
                 <Translatable resourceKey={i18nKey("moderationReport.contested")} />

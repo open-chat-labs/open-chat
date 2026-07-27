@@ -758,6 +758,11 @@ pub struct ModerationReportContent {
     // Empty if the alert was triggered by the automated moderation pipeline
     pub reporters: Vec<UserId>,
     pub flagged_categories: u32,
+    // Distinguishes "the classifier found nothing" (false, no flagged categories) from "the
+    // classifier could not check this content" (true - API failure after retries): a failed
+    // classification must never present as a clean one
+    #[serde(default)]
+    pub classification_failed: bool,
     // True if the CSAM auto-sanction has already been applied
     pub auto_sanctioned: bool,
     pub content_excerpt: Option<String>,

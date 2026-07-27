@@ -71,6 +71,7 @@ fn c2c_csam_detected_impl(args: Args, state: &mut RuntimeState) {
             sender: args.sender,
             reporters: Vec::new(),
             categories,
+            classification_failed: false,
             auto_sanctioned: true,
             content_excerpt: args.content_excerpt,
             blob_references: reported_message.blob_references,
