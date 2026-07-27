@@ -5,6 +5,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";
     import ModalContent from "../ModalContent.svelte";
+    import Overlay from "../Overlay.svelte";
     import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -35,59 +36,61 @@
     onDestroy(() => review.dispose());
 </script>
 
-<ModalContent onClose={close}>
-    {#snippet header()}
-        <Translatable resourceKey={i18nKey("vaultViewer.title")} />
-    {/snippet}
-    {#snippet body()}
-        <div class="viewer">
-            {#if review.stage === "interstitial"}
-                <p><Translatable resourceKey={i18nKey("vaultViewer.interstitial")} /></p>
-                <div class="actions">
-                    <Button onClick={() => review.fetchAll()}>
-                        <Translatable resourceKey={i18nKey("vaultViewer.proceed")} />
-                    </Button>
-                    <Button secondary onClick={close}>
-                        <Translatable resourceKey={i18nKey("vaultViewer.cancel")} />
-                    </Button>
-                </div>
-            {:else if review.stage === "loading"}
-                <p><Translatable resourceKey={i18nKey("vaultViewer.loading")} /></p>
-            {:else if review.stage === "not_authorized"}
-                <p><Translatable resourceKey={i18nKey("vaultViewer.notAuthorized")} /></p>
-            {:else if review.stage === "error"}
-                <p><Translatable resourceKey={i18nKey("vaultViewer.error")} /></p>
-            {:else}
-                {#each review.items as item, i}
-                    <div class="item">
-                        <div class="label">
-                            <Translatable
-                                resourceKey={i18nKey("vaultViewer.item", {
-                                    n: `${i + 1}`,
-                                    total: `${review.items.length}`,
-                                })}
-                            />
-                        </div>
-                        {#if !review.revealed[i]}
-                            <button class="shroud" onclick={() => review.reveal(i)}>
-                                <Translatable resourceKey={i18nKey("vaultViewer.reveal")} />
-                            </button>
-                        {:else if item.mimeType.startsWith("image/")}
-                            <img class="media" src={item.url} alt="" />
-                        {:else if item.mimeType.startsWith("video/")}
-                            <!-- svelte-ignore a11y_media_has_caption -->
-                            <video class="media" src={item.url} controls preload="none"></video>
-                        {:else if item.mimeType.startsWith("audio/")}
-                            <audio src={item.url} controls preload="none"></audio>
-                        {:else}
-                            <p>{item.mimeType}</p>
-                        {/if}
+<Overlay onClose={close} dismissible>
+    <ModalContent onClose={close}>
+        {#snippet header()}
+            <Translatable resourceKey={i18nKey("vaultViewer.title")} />
+        {/snippet}
+        {#snippet body()}
+            <div class="viewer">
+                {#if review.stage === "interstitial"}
+                    <p><Translatable resourceKey={i18nKey("vaultViewer.interstitial")} /></p>
+                    <div class="actions">
+                        <Button onClick={() => review.fetchAll()}>
+                            <Translatable resourceKey={i18nKey("vaultViewer.proceed")} />
+                        </Button>
+                        <Button secondary onClick={close}>
+                            <Translatable resourceKey={i18nKey("vaultViewer.cancel")} />
+                        </Button>
                     </div>
-                {/each}
-            {/if}
-        </div>
-    {/snippet}
-</ModalContent>
+                {:else if review.stage === "loading"}
+                    <p><Translatable resourceKey={i18nKey("vaultViewer.loading")} /></p>
+                {:else if review.stage === "not_authorized"}
+                    <p><Translatable resourceKey={i18nKey("vaultViewer.notAuthorized")} /></p>
+                {:else if review.stage === "error"}
+                    <p><Translatable resourceKey={i18nKey("vaultViewer.error")} /></p>
+                {:else}
+                    {#each review.items as item, i}
+                        <div class="item">
+                            <div class="label">
+                                <Translatable
+                                    resourceKey={i18nKey("vaultViewer.item", {
+                                        n: `${i + 1}`,
+                                        total: `${review.items.length}`,
+                                    })}
+                                />
+                            </div>
+                            {#if !review.revealed[i]}
+                                <button class="shroud" onclick={() => review.reveal(i)}>
+                                    <Translatable resourceKey={i18nKey("vaultViewer.reveal")} />
+                                </button>
+                            {:else if item.mimeType.startsWith("image/")}
+                                <img class="media" src={item.url} alt="" />
+                            {:else if item.mimeType.startsWith("video/")}
+                                <!-- svelte-ignore a11y_media_has_caption -->
+                                <video class="media" src={item.url} controls preload="none"></video>
+                            {:else if item.mimeType.startsWith("audio/")}
+                                <audio src={item.url} controls preload="none"></audio>
+                            {:else}
+                                <p>{item.mimeType}</p>
+                            {/if}
+                        </div>
+                    {/each}
+                {/if}
+            </div>
+        {/snippet}
+    </ModalContent>
+</Overlay>
 
 <style lang="scss">
     .viewer {
