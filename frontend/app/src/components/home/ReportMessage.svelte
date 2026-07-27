@@ -35,6 +35,7 @@
         "report.threat",
         "report.child",
         "report.nonConsensual",
+        "report.sexual",
         "report.selfHarm",
         "report.violence",
         "report.scam",
@@ -75,7 +76,8 @@
                     <Select bind:value={selectedReasonIndex}>
                         {#each reasons as reason, i}
                             <option disabled={i === 0} value={i - 1}
-                                ><Translatable resourceKey={i18nKey(reason)} /></option>
+                                ><Translatable resourceKey={i18nKey(reason)} /></option
+                            >
                         {/each}
                     </Select>
                 </div>
@@ -84,14 +86,16 @@
                         <Checkbox
                             id={"delete_message"}
                             label={i18nKey("report.deleteMessage")}
-                            bind:checked={deleteMessage} />
+                            bind:checked={deleteMessage}
+                        />
                     </div>
                 {/if}
                 <div class="advice">
                     <Markdown
                         text={$_("report.advice", {
                             values: { rules: "https://oc.app/guidelines?section=3" },
-                        })} />
+                        })}
+                    />
                 </div>
             </span>
         {/snippet}
@@ -99,14 +103,16 @@
             <span>
                 <ButtonGroup>
                     <Button secondary small={!$mobileWidth} tiny={$mobileWidth} onClick={onClose}
-                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                        ><Translatable resourceKey={i18nKey("cancel")} /></Button
+                    >
                     <Button
                         disabled={busy || !valid}
                         loading={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
                         onClick={createReport}
-                        ><Translatable resourceKey={i18nKey("report.menu")} /></Button>
+                        ><Translatable resourceKey={i18nKey("report.menu")} /></Button
+                    >
                 </ButtonGroup>
             </span>
         {/snippet}

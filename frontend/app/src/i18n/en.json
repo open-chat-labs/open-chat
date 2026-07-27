@@ -1766,6 +1766,7 @@
         "menu": "Report",
         "messageReport": "Reported by @{username} on {timestamp} for the following reason: **{reason}**",
         "nonConsensual": "Message contains non-consensual sexual content",
+        "sexual": "Message contains pornographic or sexually explicit content",
         "note": "Add a note",
         "notePlaceholder": "Tell us why you are reporting this content",
         "optional": "Optional",
