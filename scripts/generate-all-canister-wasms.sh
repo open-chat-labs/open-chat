@@ -66,8 +66,11 @@ fi
 mkdir -p wasms
 for CANISTER in "${CANISTERS[@]}"; do
   PACKAGE="${CANISTER}_canister_impl"
-  ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm shrink
-  ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm optimize Oz || exit 1
+  # Invoke the version installed above rather than whatever is first on the PATH - a different
+  # `ic-wasm` there (eg. from a package manager) may not take the same arguments, and this loop
+  # would then silently reuse the `-opt.wasm` left behind by an earlier build
+  ${CARGO_HOME}/bin/ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm shrink || exit 1
+  ${CARGO_HOME}/bin/ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm optimize Oz || exit 1
   gzip -fckn9 target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm > ./wasms/$CANISTER.wasm.gz
 done
 
