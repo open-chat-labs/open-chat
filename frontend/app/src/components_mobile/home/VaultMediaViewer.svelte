@@ -121,6 +121,12 @@
         color: var(--button-txt);
     }
     .media {
+        // The flex column stretches children by default, which breaks the aspect ratio once
+        // max-height clamps the image
+        align-self: center;
+        width: auto;
+        height: auto;
+        object-fit: contain;
         max-width: 100%;
         max-height: 25rem;
         // Initial render is deliberately reduced; the reviewer already chose to reveal
