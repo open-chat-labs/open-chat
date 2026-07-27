@@ -10,6 +10,7 @@ import {
 } from "@icp-sdk/core/identity";
 import DRange from "drange";
 import {
+    type BlobReference,
     CURRENT_TERMS_VERSION,
     ARBITRUM_NETWORK,
     AuthProvider,
@@ -6341,6 +6342,11 @@ export class OpenChat {
 
     contestModerationSanction(): Promise<boolean> {
         return this.#worker.send({ kind: "contestModerationSanction" }).catch(() => false);
+    }
+
+    // Direct blob URL for reviewing non-quarantined reported media (content still live)
+    reportedMediaUrl(ref: BlobReference): string {
+        return buildBlobUrl(this.config.blobUrlPattern, ref.canisterId, ref.blobId, "blobs");
     }
 
     vaultFileChunk(

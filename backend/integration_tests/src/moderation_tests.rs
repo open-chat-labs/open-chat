@@ -494,11 +494,10 @@ fn escalated_media_report_upheld_as_csam_vaults_evidence() {
     let reports = get_moderation_reports(env, &test_data);
     assert_eq!(reports.len(), 1);
     assert!(matches!(reports[0].status, ModerationReportStatus::Pending));
-    // The alert carries no blob references while the report is merely escalated: the content
-    // is still live in the chat, so the moderator reviews it in place via the message link.
-    // The references are held on the user_index report record, which is what drives the vault
-    // ops if the verdict is UpheldAsCsam.
-    assert!(reports[0].blob_references.is_empty());
+    // The alert carries the blob references even while the report is merely escalated, so the
+    // moderator can review private-chat media they cannot view in place (fetched from the
+    // ordinary blob url pre-verdict; via the vault once quarantined)
+    assert_eq!(reports[0].blob_references, vec![blob_reference.clone()]);
     let report_index = reports[0].report_index.expect("report should carry an index");
 
     // Upheld as CSAM with the imminent-threat flag: quarantine + retention verdict travel to

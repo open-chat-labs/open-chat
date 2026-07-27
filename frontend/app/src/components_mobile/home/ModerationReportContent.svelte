@@ -59,7 +59,7 @@
     );
     // No vault viewer on mobile: verdicts on quarantined-media reports require reviewing the
     // media first, so they can only be resolved on desktop
-    let needsMediaReview = $derived(content.autoSanctioned && content.blobReferences.length > 0);
+    let needsMediaReview = $derived(content.blobReferences.length > 0);
     let canResolve = $derived(
         $platformModeratorStore &&
             content.reportIndex !== undefined &&

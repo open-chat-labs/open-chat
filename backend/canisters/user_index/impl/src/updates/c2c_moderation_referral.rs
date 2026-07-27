@@ -36,7 +36,7 @@ fn c2c_moderation_referral_impl(args: Args, state: &mut RuntimeState) {
             message_id: args.message_id,
             sender: args.sender,
             flags: categories.bits(),
-            blob_references: args.blob_references,
+            blob_references: args.blob_references.clone(),
             timestamp: now,
         })
     else {
@@ -63,9 +63,9 @@ fn c2c_moderation_referral_impl(args: Args, state: &mut RuntimeState) {
             classification_failed: false,
             auto_sanctioned: false,
             content_excerpt: args.content_excerpt,
-            // The content is still live in the chat, so the moderator reviews it in place;
-            // the blob references stay on the report record for the verdict to act on
-            blob_references: Vec::new(),
+            // The content is still live (not quarantined), so the Review affordance fetches
+            // it from its ordinary blob url
+            blob_references: args.blob_references.clone(),
             timestamp: now,
         },
         state,

@@ -277,7 +277,10 @@ fn handle_moderation_result(
                 classification_failed,
                 auto_sanctioned: is_csam,
                 content_excerpt,
-                blob_references: if is_csam { blob_references } else { Vec::new() },
+                // Included even for escalated reports: private-chat media cannot be reviewed
+                // in place (the moderator is not a member), so the alert's Review affordance
+                // fetches it - via the vault when quarantined, else from its ordinary blob url
+                blob_references,
                 timestamp: now,
             },
             state,

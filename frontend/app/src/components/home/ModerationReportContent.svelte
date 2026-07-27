@@ -68,9 +68,7 @@
             content.reportIndex !== undefined &&
             (content.status.kind === "pending" || content.status.kind === "contested"),
     );
-    let needsMediaReview = $derived(
-        content.autoSanctioned && content.blobReferences.length > 0 && !mediaReviewed,
-    );
+    let needsMediaReview = $derived(content.blobReferences.length > 0 && !mediaReviewed);
 
     function resolve(verdict: ModerationVerdict) {
         if (content.reportIndex === undefined || busy || resolved) return;
@@ -94,8 +92,8 @@
 <div class="report">
     <div class="header">
         {#if csam}
-            <span class="csam"><Translatable resourceKey={i18nKey("moderationReport.csam")} /></span
-            >
+            <span class="csam"
+                ><Translatable resourceKey={i18nKey("moderationReport.csam")} /></span>
         {/if}
         <Translatable resourceKey={i18nKey("moderationReport.title")} />
     </div>
@@ -139,8 +137,7 @@
                     content.classificationFailed
                         ? "moderationReport.classifierFailed"
                         : "moderationReport.classifierClean",
-                )}
-            />
+                )} />
         </div>
     {/if}
     {#if content.status.kind === "contested"}
@@ -169,21 +166,19 @@
             <Translatable
                 resourceKey={i18nKey("moderationReport.upheld", {
                     moderator,
-                })}
-            />
+                })} />
         </div>
     {:else if content.status.kind === "dismissed"}
         <div class="row resolved">
             <Translatable
                 resourceKey={i18nKey("moderationReport.dismissed", {
                     moderator,
-                })}
-            />
+                })} />
         </div>
     {:else if canResolve}
         {#if content.blobReferences.length > 0}
             <div class="row">
-                <Button secondary onClick={() => (showViewer = true)}>
+                <Button onClick={() => (showViewer = true)}>
                     <Translatable resourceKey={i18nKey("moderationReport.reviewMedia")} />
                 </Button>
             </div>
@@ -197,8 +192,7 @@
                 <Button
                     loading={busy}
                     disabled={busy || resolved}
-                    onClick={() => resolve("upheld")}
-                >
+                    onClick={() => resolve("upheld")}>
                     <Translatable resourceKey={i18nKey("moderationReport.uphold")} />
                 </Button>
                 <div class="csamAction">
@@ -206,8 +200,7 @@
                         loading={busy}
                         danger
                         disabled={busy || resolved}
-                        onClick={() => resolve("upheld_as_csam")}
-                    >
+                        onClick={() => resolve("upheld_as_csam")}>
                         <Translatable resourceKey={i18nKey("moderationReport.upholdCsam")} />
                     </Button>
                     <Checkbox
@@ -215,15 +208,13 @@
                         small
                         label={i18nKey("moderationReport.urgent")}
                         checked={urgent}
-                        onChange={() => (urgent = !urgent)}
-                    />
+                        onChange={() => (urgent = !urgent)} />
                 </div>
                 <Button
                     loading={busy}
                     secondary
                     disabled={busy || resolved}
-                    onClick={() => resolve("dismissed")}
-                >
+                    onClick={() => resolve("dismissed")}>
                     <Translatable resourceKey={i18nKey("moderationReport.dismiss")} />
                 </Button>
             </div>
@@ -239,9 +230,9 @@
 {#if showViewer}
     <VaultMediaViewer
         blobReferences={content.blobReferences}
+        quarantined={content.autoSanctioned}
         onReviewed={() => (mediaReviewed = true)}
-        onClose={() => (showViewer = false)}
-    />
+        onClose={() => (showViewer = false)} />
 {/if}
 
 <style lang="scss">

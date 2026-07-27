@@ -10,13 +10,17 @@
 
     interface Props {
         blobReferences: BlobReference[];
+        // Quarantined media is served through the vault (reviewer-gated, access-logged);
+        // non-quarantined media (an escalated report whose content is still live) is fetched
+        // from its ordinary blob URL with the same interstitial and no-cache hygiene
+        quarantined: boolean;
         onClose: () => void;
         // Fired when the media has successfully loaded: the review act has taken place (and
-        // has been recorded in the vault access log by the chunk fetches)
+        // for vault media has been recorded in the access log by the chunk fetches)
         onReviewed?: () => void;
     }
 
-    let { blobReferences, onClose, onReviewed }: Props = $props();
+    let { blobReferences, quarantined, onClose, onReviewed }: Props = $props();
 
     type LoadedItem = {
         url: string;
@@ -34,11 +38,33 @@
     // and any object URLs already created are revoked immediately
     let cancelled = false;
 
+    async function fetchDirect(ref: BlobReference): Promise<LoadedItem | "error"> {
+        const resp = await fetch(client.reportedMediaUrl(ref), { cache: "no-store" });
+        if (!resp.ok) return "error";
+        const bytes = await resp.arrayBuffer();
+        const mimeType = resp.headers.get("content-type") ?? "application/octet-stream";
+        return { url: URL.createObjectURL(new Blob([bytes], { type: mimeType })), mimeType };
+    }
+
     async function fetchAll() {
         stage = "loading";
         const loaded: LoadedItem[] = [];
         try {
             for (const ref of blobReferences) {
+                if (!quarantined) {
+                    const item = await fetchDirect(ref);
+                    if (cancelled) {
+                        if (item !== "error") URL.revokeObjectURL(item.url);
+                        loaded.forEach((i) => URL.revokeObjectURL(i.url));
+                        return;
+                    }
+                    if (item === "error") {
+                        stage = "error";
+                        return;
+                    }
+                    loaded.push(item);
+                    continue;
+                }
                 const chunks: Uint8Array[] = [];
                 let mimeType = "application/octet-stream";
                 let chunkIndex = 0;
