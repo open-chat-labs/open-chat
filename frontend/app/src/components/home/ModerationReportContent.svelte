@@ -94,7 +94,13 @@
         <Translatable resourceKey={i18nKey("moderationReport.title")} />
     </div>
 
-    {#if url !== undefined}
+    {#if csam || content.status.kind === "upheld_as_csam"}
+        <!-- Alleged or confirmed CSAM must never be viewed in place: the vault viewer is the
+             only sanctioned route -->
+        <div class="row">
+            <Translatable resourceKey={i18nKey("moderationReport.vaultOnly")} />
+        </div>
+    {:else if url !== undefined}
         <div class="row link">
             <a href={url}><Translatable resourceKey={i18nKey("moderationReport.viewMessage")} /></a>
         </div>

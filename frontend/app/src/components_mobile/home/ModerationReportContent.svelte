@@ -95,7 +95,11 @@
         </Row>
 
         <BodySmall>
-            {#if url !== undefined}
+            {#if csam || content.status.kind === "upheld_as_csam"}
+                <!-- Alleged or confirmed CSAM must never be viewed in place: the vault viewer
+                     is the only sanctioned route -->
+                <Translatable resourceKey={i18nKey("moderationReport.vaultOnly")} />
+            {:else if url !== undefined}
                 <a class="link" href={url}
                     ><Translatable resourceKey={i18nKey("moderationReport.viewMessage")} /></a
                 >
