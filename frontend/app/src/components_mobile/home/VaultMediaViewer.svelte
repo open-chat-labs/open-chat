@@ -37,10 +37,18 @@
 <Sheet onDismiss={close}>
     <Column gap={"xl"} padding={"xl"}>
         <Subtitle fontWeight={"bold"}>
-            <Translatable resourceKey={i18nKey("vaultViewer.title")} />
+            <Translatable
+                resourceKey={i18nKey(quarantined ? "vaultViewer.title" : "vaultViewer.titleLive")}
+            />
         </Subtitle>
         {#if review.stage === "interstitial"}
-            <Body><Translatable resourceKey={i18nKey("vaultViewer.interstitial")} /></Body>
+            <Body>
+                <Translatable
+                    resourceKey={i18nKey(
+                        quarantined ? "vaultViewer.interstitial" : "vaultViewer.interstitialLive",
+                    )}
+                />
+            </Body>
             <Column gap={"sm"}>
                 <Button onClick={() => review.fetchAll()}>
                     <Translatable resourceKey={i18nKey("vaultViewer.proceed")} />
@@ -50,7 +58,13 @@
                 </Button>
             </Column>
         {:else if review.stage === "loading"}
-            <Body><Translatable resourceKey={i18nKey("vaultViewer.loading")} /></Body>
+            <Body>
+                <Translatable
+                    resourceKey={i18nKey(
+                        quarantined ? "vaultViewer.loading" : "vaultViewer.loadingLive",
+                    )}
+                />
+            </Body>
         {:else if review.stage === "not_authorized"}
             <Body><Translatable resourceKey={i18nKey("vaultViewer.notAuthorized")} /></Body>
         {:else if review.stage === "error"}

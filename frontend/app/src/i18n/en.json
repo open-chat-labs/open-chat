@@ -1181,6 +1181,9 @@
     },
     "vaultViewer": {
         "title": "Quarantined media review",
+        "titleLive": "Reported media review",
+        "interstitialLive": "You are about to view the media attached to a reported message. Review it only to decide whether the report should be upheld or dismissed.",
+        "loadingLive": "Fetching the reported media...",
         "interstitial": "You are about to view quarantined material held in the evidence vault. This action is recorded in a tamper-evident access log, with your identity and the time. Proceed only to decide whether this report should be upheld or dismissed.",
         "proceed": "Review",
         "cancel": "Cancel",

@@ -41,14 +41,30 @@
 <Overlay onClose={close} dismissible>
     <ModalContent onClose={close}>
         {#snippet header()}
-            <Translatable resourceKey={i18nKey("vaultViewer.title")} />
+            <Translatable
+                resourceKey={i18nKey(quarantined ? "vaultViewer.title" : "vaultViewer.titleLive")}
+            />
         {/snippet}
         {#snippet body()}
             <div class="viewer">
                 {#if review.stage === "interstitial"}
-                    <p><Translatable resourceKey={i18nKey("vaultViewer.interstitial")} /></p>
+                    <p>
+                        <Translatable
+                            resourceKey={i18nKey(
+                                quarantined
+                                    ? "vaultViewer.interstitial"
+                                    : "vaultViewer.interstitialLive",
+                            )}
+                        />
+                    </p>
                 {:else if review.stage === "loading"}
-                    <p><Translatable resourceKey={i18nKey("vaultViewer.loading")} /></p>
+                    <p>
+                        <Translatable
+                            resourceKey={i18nKey(
+                                quarantined ? "vaultViewer.loading" : "vaultViewer.loadingLive",
+                            )}
+                        />
+                    </p>
                 {:else if review.stage === "not_authorized"}
                     <p><Translatable resourceKey={i18nKey("vaultViewer.notAuthorized")} /></p>
                 {:else if review.stage === "error"}
