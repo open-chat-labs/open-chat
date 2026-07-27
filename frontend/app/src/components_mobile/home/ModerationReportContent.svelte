@@ -157,11 +157,6 @@
                 {/if}
             </Body>
         {/if}
-        {#if content.blobReferences.length > 0 && (content.status.kind === "pending" || content.status.kind === "contested")}
-            <Body colour="textSecondary">
-                <Translatable resourceKey={i18nKey("moderationReport.reviewMediaMobile")} />
-            </Body>
-        {/if}
     </Column>
 
     {#if content.contentExcerpt !== undefined}
@@ -189,38 +184,44 @@
             />
         </Body>
     {:else if canResolve}
-        <Row gap="sm">
-            <Switch bind:checked={urgent}>
-                <Body width={"hug"} colour={"textSecondary"}>
-                    <Translatable resourceKey={i18nKey("moderationReport.urgent")} />
-                </Body>
-            </Switch>
-        </Row>
-        <Row gap="sm" padding={["zero", "zero", "md", "zero"]}>
-            <Button
-                disabled={busy || resolved || needsMediaReview}
-                loading={busy}
-                onClick={() => resolve("upheld")}
-            >
-                <Translatable resourceKey={i18nKey("moderationReport.uphold")} />
-            </Button>
-            <Button
-                danger
-                disabled={busy || resolved}
-                loading={busy}
-                onClick={() => resolve("upheld_as_csam")}
-            >
-                <Translatable resourceKey={i18nKey("moderationReport.upholdCsam")} />
-            </Button>
-            <Button
-                secondary
-                disabled={busy || resolved}
-                loading={busy}
-                onClick={() => resolve("dismissed")}
-            >
-                <Translatable resourceKey={i18nKey("moderationReport.dismiss")} />
-            </Button>
-        </Row>
+        {#if needsMediaReview}
+            <Body colour="textSecondary" fontWeight="bold">
+                <Translatable resourceKey={i18nKey("moderationReport.reviewMediaMobile")} />
+            </Body>
+        {:else}
+            <Row gap="sm">
+                <Switch bind:checked={urgent}>
+                    <Body width={"hug"} colour={"textSecondary"}>
+                        <Translatable resourceKey={i18nKey("moderationReport.urgent")} />
+                    </Body>
+                </Switch>
+            </Row>
+            <Row gap="sm" padding={["zero", "zero", "md", "zero"]}>
+                <Button
+                    disabled={busy || resolved}
+                    loading={busy}
+                    onClick={() => resolve("upheld")}
+                >
+                    <Translatable resourceKey={i18nKey("moderationReport.uphold")} />
+                </Button>
+                <Button
+                    danger
+                    disabled={busy || resolved}
+                    loading={busy}
+                    onClick={() => resolve("upheld_as_csam")}
+                >
+                    <Translatable resourceKey={i18nKey("moderationReport.upholdCsam")} />
+                </Button>
+                <Button
+                    secondary
+                    disabled={busy || resolved}
+                    loading={busy}
+                    onClick={() => resolve("dismissed")}
+                >
+                    <Translatable resourceKey={i18nKey("moderationReport.dismiss")} />
+                </Button>
+            </Row>
+        {/if}
         {#if failed}
             <Body colour="error" fontWeight="bold">
                 <Translatable resourceKey={i18nKey("moderationReport.failed")} />

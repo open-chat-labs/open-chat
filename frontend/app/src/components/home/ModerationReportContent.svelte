@@ -187,46 +187,47 @@
                     <Translatable resourceKey={i18nKey("moderationReport.reviewMedia")} />
                 </Button>
             </div>
-            {#if needsMediaReview}
-                <div class="row light">
-                    <Translatable resourceKey={i18nKey("moderationReport.reviewFirst")} />
-                </div>
-            {/if}
         {/if}
-        <div class="actions">
-            <Button
-                loading={busy}
-                disabled={busy || resolved || needsMediaReview}
-                onClick={() => resolve("upheld")}
-            >
-                <Translatable resourceKey={i18nKey("moderationReport.uphold")} />
-            </Button>
-            <div class="csamAction">
+        {#if needsMediaReview}
+            <div class="row light">
+                <Translatable resourceKey={i18nKey("moderationReport.reviewFirst")} />
+            </div>
+        {:else}
+            <div class="actions">
                 <Button
                     loading={busy}
-                    danger
                     disabled={busy || resolved}
-                    onClick={() => resolve("upheld_as_csam")}
+                    onClick={() => resolve("upheld")}
                 >
-                    <Translatable resourceKey={i18nKey("moderationReport.upholdCsam")} />
+                    <Translatable resourceKey={i18nKey("moderationReport.uphold")} />
                 </Button>
-                <Checkbox
-                    id={`urgent-${content.messageId}`}
-                    small
-                    label={i18nKey("moderationReport.urgent")}
-                    checked={urgent}
-                    onChange={() => (urgent = !urgent)}
-                />
+                <div class="csamAction">
+                    <Button
+                        loading={busy}
+                        danger
+                        disabled={busy || resolved}
+                        onClick={() => resolve("upheld_as_csam")}
+                    >
+                        <Translatable resourceKey={i18nKey("moderationReport.upholdCsam")} />
+                    </Button>
+                    <Checkbox
+                        id={`urgent-${content.messageId}`}
+                        small
+                        label={i18nKey("moderationReport.urgent")}
+                        checked={urgent}
+                        onChange={() => (urgent = !urgent)}
+                    />
+                </div>
+                <Button
+                    loading={busy}
+                    secondary
+                    disabled={busy || resolved}
+                    onClick={() => resolve("dismissed")}
+                >
+                    <Translatable resourceKey={i18nKey("moderationReport.dismiss")} />
+                </Button>
             </div>
-            <Button
-                loading={busy}
-                secondary
-                disabled={busy || resolved}
-                onClick={() => resolve("dismissed")}
-            >
-                <Translatable resourceKey={i18nKey("moderationReport.dismiss")} />
-            </Button>
-        </div>
+        {/if}
         {#if failed}
             <div class="row failed">
                 <Translatable resourceKey={i18nKey("moderationReport.failed")} />
