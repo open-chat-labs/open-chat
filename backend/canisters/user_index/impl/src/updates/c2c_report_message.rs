@@ -113,7 +113,11 @@ pub(crate) async fn process_report(report_index: u64) {
             let Some(attempts) = state.data.reported_messages.record_classification_failure(report_index) else {
                 return;
             };
-            if attempts < MAX_CLASSIFICATION_ATTEMPTS {
+            // A 4xx response is permanent (eg. an image URL the API cannot fetch because the
+            // blob was deleted): retrying cannot succeed, so hand straight to the moderators.
+            // 429 is rate limiting, which is transient and worth the backoff.
+            let permanent = error.contains("status 4") && !error.contains("status 429");
+            if !permanent && attempts < MAX_CLASSIFICATION_ATTEMPTS {
                 let now = state.env.now();
                 state.data.timer_jobs.enqueue_job(
                     TimerJob::ProcessReportClassification(ProcessReportClassification { report_index }),
