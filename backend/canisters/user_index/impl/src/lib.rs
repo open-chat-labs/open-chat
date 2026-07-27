@@ -399,7 +399,7 @@ struct Data {
     #[serde(default)]
     pub blocked_username_patterns: Vec<String>,
     pub openai_api_key: Option<String>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_moderation_referral_config")]
     pub moderation_referral_config: Option<ModerationReferralConfig>,
     #[serde(default)]
     pub internal_moderation_channel: Option<(CommunityId, ChannelId)>,
@@ -753,4 +753,97 @@ pub struct CanisterIds {
     pub registry: CanisterId,
     pub internet_identity: CanisterId,
     pub website: CanisterId,
+}
+
+// The referral config briefly shipped (to test envs only) as a single shared threshold;
+// accept that shape on upgrade and convert it so those envs upgrade cleanly. Inert
+// everywhere else - production never held the old shape.
+fn deserialize_moderation_referral_config<'de, D>(d: D) -> Result<Option<ModerationReferralConfig>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum Compat {
+        New(ModerationReferralConfig),
+        Old { categories: u32, score_threshold: f64 },
+    }
+
+    Ok(match Option::<Compat>::deserialize(d)? {
+        Some(Compat::New(config)) => Some(config),
+        Some(Compat::Old {
+            categories,
+            score_threshold,
+        }) => {
+            let categories = (0..32)
+                .map(|i| 1u32 << i)
+                .filter(|bit| categories & bit != 0)
+                .map(|category| types::ModerationReferralCategory {
+                    category,
+                    score_threshold,
+                })
+                .collect::<Vec<_>>();
+            (!categories.is_empty()).then_some(ModerationReferralConfig { categories })
+        }
+        None => None,
+    })
+}
+
+#[cfg(test)]
+mod moderation_referral_config_compat_tests {
+    use super::*;
+
+    #[derive(Serialize, Deserialize)]
+    struct OldShape {
+        categories: u32,
+        score_threshold: f64,
+    }
+
+    #[derive(Serialize, Deserialize)]
+    struct Holder {
+        #[serde(default, deserialize_with = "deserialize_moderation_referral_config")]
+        config: Option<ModerationReferralConfig>,
+    }
+
+    #[derive(Serialize)]
+    struct OldHolder {
+        config: Option<OldShape>,
+    }
+
+    #[test]
+    fn old_shape_converts() {
+        let bytes = msgpack::serialize_then_unwrap(OldHolder {
+            config: Some(OldShape {
+                categories: 1 | 16,
+                score_threshold: 0.9,
+            }),
+        });
+        let holder: Holder = msgpack::deserialize(bytes.as_slice()).unwrap();
+        let config = holder.config.unwrap();
+        assert_eq!(config.categories.len(), 2);
+        assert!(config.categories.iter().all(|c| c.score_threshold == 0.9));
+        assert_eq!(config.categories[0].category, 1);
+        assert_eq!(config.categories[1].category, 16);
+    }
+
+    #[test]
+    fn new_shape_roundtrips() {
+        let bytes = msgpack::serialize_then_unwrap(Holder {
+            config: Some(ModerationReferralConfig {
+                categories: vec![types::ModerationReferralCategory {
+                    category: 4,
+                    score_threshold: 0.8,
+                }],
+            }),
+        });
+        let holder: Holder = msgpack::deserialize(bytes.as_slice()).unwrap();
+        assert_eq!(holder.config.unwrap().categories[0].category, 4);
+    }
+
+    #[test]
+    fn none_roundtrips() {
+        let bytes = msgpack::serialize_then_unwrap(OldHolder { config: None });
+        let holder: Holder = msgpack::deserialize(bytes.as_slice()).unwrap();
+        assert!(holder.config.is_none());
+    }
 }
