@@ -8527,6 +8527,7 @@ dependencies = [
  "msgpack",
  "nns_governance_canister",
  "nns_governance_canister_c2c_client",
+ "oc_error_codes",
  "proposals_bot_canister",
  "rand 0.8.5",
  "registry_canister",
