@@ -70,16 +70,8 @@
                 {:else if review.stage === "error"}
                     <p><Translatable resourceKey={i18nKey("vaultViewer.error")} /></p>
                 {:else}
-                    {#each review.items as item, i}
+                    {#each review.items as item}
                         <div class="item">
-                            <div class="label">
-                                <Translatable
-                                    resourceKey={i18nKey("vaultViewer.item", {
-                                        n: `${i + 1}`,
-                                        total: `${review.items.length}`,
-                                    })}
-                                />
-                            </div>
                             {#if item.mimeType.startsWith("image/")}
                                 <img class="media" src={item.url} alt="" />
                             {:else if item.mimeType.startsWith("video/")}
@@ -128,10 +120,6 @@
         display: flex;
         flex-direction: column;
         gap: $sp2;
-    }
-    .label {
-        @include font(book, normal, fs-80);
-        color: var(--txt-light);
     }
     .media {
         // The flex column stretches children by default, which breaks the aspect ratio once

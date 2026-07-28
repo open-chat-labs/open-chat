@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { BlobReference, OpenChat } from "@client";
     import { VaultMediaReview } from "@shared_components/vaultMediaReview.svelte";
-    import { Body, BodySmall, Button, Column, Sheet, Subtitle } from "component-lib";
+    import { Body, Button, Column, Sheet, Subtitle } from "component-lib";
     import { getContext, onDestroy } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
@@ -70,16 +70,8 @@
         {:else if review.stage === "error"}
             <Body><Translatable resourceKey={i18nKey("vaultViewer.error")} /></Body>
         {:else}
-            {#each review.items as item, i}
+            {#each review.items as item}
                 <Column gap={"sm"}>
-                    <BodySmall colour={"textSecondary"}>
-                        <Translatable
-                            resourceKey={i18nKey("vaultViewer.item", {
-                                n: `${i + 1}`,
-                                total: `${review.items.length}`,
-                            })}
-                        />
-                    </BodySmall>
                     {#if item.mimeType.startsWith("image/")}
                         <img class="media" src={item.url} alt="" />
                     {:else if item.mimeType.startsWith("video/")}
