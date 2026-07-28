@@ -564,6 +564,20 @@ export const VideoCallPresence = Type.Union([
     Type.Literal("Hidden"),
 ]);
 
+export type AuthorityReportState = Static<typeof AuthorityReportState>;
+export const AuthorityReportState = Type.Union([
+    Type.Object({
+        Due: Type.Object({
+            urgent: Type.Boolean(),
+        }),
+    }),
+    Type.Object({
+        Filed: Type.Object({
+            portal_reference: Type.String(),
+        }),
+    }),
+]);
+
 export type ChatMetrics = Static<typeof ChatMetrics>;
 export const ChatMetrics = Type.Object({
     text_messages: Type.Optional(Type.Number()),
@@ -7489,6 +7503,7 @@ export const ModerationReportContent = Type.Object({
     blob_references: Type.Array(BlobReference),
     reported_at: Type.BigInt(),
     status: ModerationReportStatus,
+    authority_report: Type.Optional(AuthorityReportState),
 });
 
 export type ProposalContent = Static<typeof ProposalContent>;

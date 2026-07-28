@@ -64,6 +64,7 @@ pub fn post_moderation_alert(alert: ModerationAlert, state: &mut RuntimeState) {
         blob_references: alert.blob_references,
         reported_at: alert.timestamp,
         status: ModerationReportStatus::Pending,
+        authority_report: None,
     };
 
     if let Some(report_index) = alert.report_index {
@@ -101,7 +102,35 @@ pub fn update_moderation_alert_status(
     let args = community_canister::c2c_update_moderation_report_status::Args {
         channel_id,
         message_id,
-        status,
+        status: Some(status),
+        authority_report: None,
+    };
+    state.data.fire_and_forget_handler.send(
+        community_id.into(),
+        "c2c_update_moderation_report_status_msgpack".to_string(),
+        msgpack::serialize_then_unwrap(&args),
+    );
+}
+
+// Updates the authority-report (NCA filing) state shown on the alert message: Due when an
+// UpheldAsCsam verdict creates the obligation, Filed once the portal reference is recorded
+pub fn update_moderation_alert_authority_report(
+    reported_message: &ReportedMessage,
+    authority_report: types::AuthorityReportState,
+    state: &mut RuntimeState,
+) {
+    let Some((community_id, channel_id)) = state.data.internal_moderation_channel else {
+        return;
+    };
+    let Some(message_id) = reported_message.moderation_channel_message_id else {
+        return;
+    };
+
+    let args = community_canister::c2c_update_moderation_report_status::Args {
+        channel_id,
+        message_id,
+        status: None,
+        authority_report: Some(authority_report),
     };
     state.data.fire_and_forget_handler.send(
         community_id.into(),

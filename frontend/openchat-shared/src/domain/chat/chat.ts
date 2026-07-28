@@ -656,6 +656,10 @@ export type ModerationReportContent = {
     reporters: string[];
     flaggedCategories: number;
     classificationFailed: boolean;
+    authorityReport:
+        | { kind: "due"; urgent: boolean }
+        | { kind: "filed"; portalReference: string }
+        | undefined;
     autoSanctioned: boolean;
     contentExcerpt: string | undefined;
     blobReferences: BlobReference[];

@@ -66,6 +66,13 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     .data
                     .authority_reports
                     .push_due(args.report_index, args.urgent.unwrap_or_default(), now);
+                moderation::update_moderation_alert_authority_report(
+                    &reported_message,
+                    types::AuthorityReportState::Due {
+                        urgent: args.urgent.unwrap_or_default(),
+                    },
+                    state,
+                );
             } else {
                 // An escalated report upheld as CSAM: the sanction applies now. Quarantine
                 // before anything else so the media is pinned, soft-delete the message, and
@@ -100,6 +107,13 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     .data
                     .authority_reports
                     .push_due(args.report_index, args.urgent.unwrap_or_default(), now);
+                moderation::update_moderation_alert_authority_report(
+                    &reported_message,
+                    types::AuthorityReportState::Due {
+                        urgent: args.urgent.unwrap_or_default(),
+                    },
+                    state,
+                );
             }
             state.push_event_to_local_user_index(reported_message.sender, build_verdict_message_to_sender(&reported_message));
         }

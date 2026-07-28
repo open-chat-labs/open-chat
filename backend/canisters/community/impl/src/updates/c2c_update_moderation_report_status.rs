@@ -24,7 +24,7 @@ fn c2c_update_moderation_report_status_impl(args: Args, state: &mut RuntimeState
     channel
         .chat
         .events
-        .update_moderation_report_status(None, args.message_id, args.status, now)?;
+        .update_moderation_report(None, args.message_id, args.status, args.authority_report, now)?;
 
     handle_activity_notification(state);
     Ok(())

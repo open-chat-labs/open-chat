@@ -773,6 +773,18 @@ pub struct ModerationReportContent {
     pub blob_references: Vec<BlobReference>,
     pub reported_at: TimestampMillis,
     pub status: ModerationReportStatus,
+    // Present on UpheldAsCsam reports: whether the authority (NCA) report is still due or has
+    // been filed, so the filing workflow lives on the report card itself
+    #[serde(default)]
+    #[ts(optional)]
+    pub authority_report: Option<AuthorityReportState>,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum AuthorityReportState {
+    Due { urgent: bool },
+    Filed { portal_reference: String },
 }
 
 #[ts_export]

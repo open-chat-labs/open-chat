@@ -1,4 +1,5 @@
 use crate::guards::caller_is_platform_operator;
+use crate::model::moderation;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -19,10 +20,25 @@ fn record_authority_report_filed_impl(args: Args, state: &mut RuntimeState) -> O
         return Err(OCErrorCode::MessageNotFound.into());
     }
 
-    state
-        .data
-        .authority_reports
-        .record_filed(args.report_index, args.portal_reference, args.urgent, args.unverified, now);
+    state.data.authority_reports.record_filed(
+        args.report_index,
+        args.portal_reference.clone(),
+        args.urgent,
+        args.unverified,
+        now,
+    );
+
+    // Flip the alert card's filing state to Filed
+    if let Some(reported_message) = state.data.reported_messages.get(args.report_index) {
+        let reported_message = reported_message.clone();
+        moderation::update_moderation_alert_authority_report(
+            &reported_message,
+            types::AuthorityReportState::Filed {
+                portal_reference: args.portal_reference,
+            },
+            state,
+        );
+    }
 
     if args.unverified {
         // The urgency valve: an honest-unverified report was filed before any verdict; the

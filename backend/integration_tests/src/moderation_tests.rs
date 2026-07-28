@@ -287,6 +287,18 @@ fn report_then_upheld_as_csam_verdict_applies_sanction() {
         .collect();
     assert_eq!(due_rows.len(), 1);
 
+    // The alert card carries the filing obligation: Due after the verdict...
+    let reports = get_moderation_reports(env, &test_data);
+    let report = reports.iter().find(|r| r.report_index == Some(report_index)).unwrap();
+    assert!(
+        matches!(
+            report.authority_report,
+            Some(types::AuthorityReportState::Due { urgent: false })
+        ),
+        "{:?}",
+        report.authority_report
+    );
+
     let record_response = client::user_index::record_authority_report_filed(
         env,
         test_data.moderator.principal,
@@ -299,6 +311,19 @@ fn report_then_upheld_as_csam_verdict_applies_sanction() {
         },
     );
     assert!(matches!(record_response, UnitResult::Success));
+    tick_many(env, 5);
+
+    // ...and Filed once the portal reference is recorded
+    let reports = get_moderation_reports(env, &test_data);
+    let report = reports.iter().find(|r| r.report_index == Some(report_index)).unwrap();
+    assert!(
+        matches!(
+            &report.authority_report,
+            Some(types::AuthorityReportState::Filed { portal_reference }) if portal_reference == "CSEA-IRP-TEST-0001"
+        ),
+        "{:?}",
+        report.authority_report
+    );
 
     let register = get_authority_reports(env, &test_data, canister_ids);
     assert!(

@@ -17,16 +17,16 @@ use std::mem;
 use std::ops::DerefMut;
 use tracing::error;
 use types::{
-    BlobReference, BotChatEvent, BotNotification, CallParticipant, CanisterId, Chat, ChatEvent, ChatEventCategory,
-    ChatEventType, ChatType, CompletedCryptoTransaction, DiamondMembershipStatus, DirectChatCreated, EventContext, EventIndex,
-    EventMetaData, EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated,
-    GroupFrozen, GroupUnfrozen, HydratedMention, Mention, Message, MessageEditedEventPayload, MessageEventPayload, MessageId,
-    MessageIndex, MessageMatch, MessageTippedEventPayload, Milliseconds, ModerationCategories, ModerationReportStatus,
-    MultiUserChat, OCResult, OgPreview, OptionUpdate, P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload,
-    P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalRewardStatus, ProposalUpdate, Reaction,
-    ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess, SenderContext, Tally, TimestampMillis,
-    TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence,
-    VideoCallType, VoteOperation,
+    AuthorityReportState, BlobReference, BotChatEvent, BotNotification, CallParticipant, CanisterId, Chat, ChatEvent,
+    ChatEventCategory, ChatEventType, ChatType, CompletedCryptoTransaction, DiamondMembershipStatus, DirectChatCreated,
+    EventContext, EventIndex, EventMetaData, EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated,
+    GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, HydratedMention, Mention, Message,
+    MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageTippedEventPayload,
+    Milliseconds, ModerationCategories, ModerationReportStatus, MultiUserChat, OCResult, OgPreview, OptionUpdate,
+    P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction,
+    PollVotes, ProposalRewardStatus, ProposalUpdate, Reaction, ReactionAddedEventPayload, RegisterVoteResult,
+    ReserveP2PSwapSuccess, SenderContext, Tally, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall,
+    VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VideoCallType, VoteOperation,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -873,11 +873,12 @@ impl ChatEvents {
         }
     }
 
-    pub fn update_moderation_report_status(
+    pub fn update_moderation_report(
         &mut self,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
-        status: ModerationReportStatus,
+        status: Option<ModerationReportStatus>,
+        authority_report: Option<AuthorityReportState>,
         now: TimestampMillis,
     ) -> OCResult<()> {
         match self.update_event(
@@ -889,12 +890,18 @@ impl ChatEvents {
                 if let ChatEventInternal::Message(m) = &mut event.event
                     && let MessageContentInternal::ModerationReport(report) = &mut m.content
                 {
-                    if report.status == status {
-                        Err(UpdateEventError::NoChange(()))
-                    } else {
+                    let mut changed = false;
+                    if let Some(status) = status
+                        && report.status != status
+                    {
                         report.status = status;
-                        Ok(())
+                        changed = true;
                     }
+                    if let Some(authority_report) = authority_report {
+                        report.authority_report = Some(authority_report);
+                        changed = true;
+                    }
+                    if changed { Ok(()) } else { Err(UpdateEventError::NoChange(())) }
                 } else {
                     Err(UpdateEventError::NotFound)
                 }

@@ -739,6 +739,11 @@ function moderationReportContent(value: TModerationReportContent): ModerationRep
         reporters: value.reporters.map(principalBytesToString),
         flaggedCategories: value.flagged_categories,
         classificationFailed: value.classification_failed ?? false,
+        authorityReport: mapOptional(value.authority_report, (a) =>
+            "Due" in a
+                ? ({ kind: "due", urgent: a.Due.urgent } as const)
+                : ({ kind: "filed", portalReference: a.Filed.portal_reference } as const),
+        ),
         autoSanctioned: value.auto_sanctioned,
         contentExcerpt: value.content_excerpt,
         blobReferences: value.blob_references.map(blobReference),

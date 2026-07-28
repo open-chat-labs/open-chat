@@ -3,6 +3,7 @@
         allUsersStore,
         MODERATION_CATEGORY_NAMES,
         platformModeratorStore,
+        platformOperatorStore,
         routeForMessage,
         type ModerationReportContent,
         type ModerationVerdict,
@@ -17,6 +18,7 @@
     import Button from "../Button.svelte";
     import Checkbox from "../Checkbox.svelte";
     import Translatable from "../Translatable.svelte";
+    import FileAuthorityReport from "./FileAuthorityReport.svelte";
     import VaultAccessLog from "./VaultAccessLog.svelte";
     import VaultMediaViewer from "./VaultMediaViewer.svelte";
 
@@ -34,6 +36,14 @@
     let urgent = $state(false);
     let showViewer = $state(false);
     let showAccessLog = $state(false);
+    let showFiling = $state(false);
+    // Set once a filing is recorded from this card, ahead of the content update round-trip
+    let filedReference = $state<string | undefined>(undefined);
+    let authorityReport = $derived(
+        filedReference !== undefined
+            ? { kind: "filed" as const, portalReference: filedReference }
+            : content.authorityReport,
+    );
     // A verdict on a quarantined-media report requires the media to have been reviewed via
     // the vault first: deciding without looking is exactly what this system exists to prevent
     let mediaReviewed = $state(false);
@@ -345,6 +355,44 @@
         {@render resolution()}
     {/if}
 
+    {#if authorityReport !== undefined}
+        <Row
+            crossAxisAlignment="center"
+            gap="md"
+            wrap
+            padding="lg"
+            borderRadius="md"
+            backgroundColor={authorityReport.kind === "due"
+                ? ColourVars.tertiaryMuted
+                : ColourVars.background1}
+        >
+            {#if authorityReport.kind === "due"}
+                <Body
+                    width="hug"
+                    fontWeight="bold"
+                    colour={authorityReport.urgent ? "error" : undefined}
+                >
+                    <Translatable
+                        resourceKey={i18nKey(
+                            authorityReport.urgent
+                                ? "moderationReport.ncaDueUrgent"
+                                : "moderationReport.ncaDue",
+                        )}
+                    />
+                </Body>
+                {#if $platformOperatorStore && content.reportIndex !== undefined}
+                    <Button tiny onClick={() => (showFiling = true)}>
+                        <Translatable resourceKey={i18nKey("moderationReport.recordFiling")} />
+                    </Button>
+                {/if}
+            {:else}
+                <Body width="hug">
+                    <Translatable resourceKey={i18nKey("moderationReport.ncaFiled")} />: {authorityReport.portalReference}
+                </Body>
+            {/if}
+        </Row>
+    {/if}
+
     {#if canResolve && !needsMediaReview}
         {@render actions()}
     {/if}
@@ -355,6 +403,18 @@
         </Body>
     {/if}
 </Column>
+
+{#if showFiling && content.reportIndex !== undefined && authorityReport?.kind === "due"}
+    <FileAuthorityReport
+        reportIndex={content.reportIndex}
+        urgent={authorityReport.urgent}
+        onFiled={(ref) => {
+            filedReference = ref;
+            showFiling = false;
+        }}
+        onClose={() => (showFiling = false)}
+    />
+{/if}
 
 {#if showAccessLog}
     <VaultAccessLog
