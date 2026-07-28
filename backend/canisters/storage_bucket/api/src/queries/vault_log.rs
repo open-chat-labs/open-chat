@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::TimestampMillis;
+use types::{FileId, TimestampMillis};
 
 // A page of the vault's tamper-evident access log, readable only by designated vault
 // reviewers: the chain of custody evidence for auditors and law enforcement.
@@ -10,6 +10,10 @@ use types::TimestampMillis;
 pub struct Args {
     pub start: u64,
     pub max: u32,
+    // Restricts to entries for one file: the per-report view. Unfiltered pages are the
+    // whole-chain audit view (hash-chain verification only makes sense unfiltered).
+    #[serde(default)]
+    pub file_id: Option<FileId>,
 }
 
 #[ts_export(storage_bucket, vault_log)]

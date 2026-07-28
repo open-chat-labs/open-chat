@@ -27,9 +27,14 @@ export class StorageBucketClient extends CandidCanisterAgent<StorageBucketServic
     // Fetches one chunk of a quarantined blob for an allowlisted vault reviewer. An update
     // call by design: every fetch session is recorded in the vault's access log, and chunks
     // after the first are served only in session order.
-    vaultLog(start: bigint, max: number): Promise<VaultLogResponse> {
+    vaultLog(start: bigint, max: number, fileId: bigint | undefined): Promise<VaultLogResponse> {
         return this.handleQueryResponse(
-            () => this.service.vault_log({ start, max }),
+            () =>
+                this.service.vault_log({
+                    start,
+                    max,
+                    file_id: fileId !== undefined ? [fileId] : [],
+                }),
             vaultLogResponse,
         );
     }

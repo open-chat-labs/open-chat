@@ -103,6 +103,7 @@ type VaultFileChunkResponse = variant {
 type VaultLogArgs = record {
     start : nat64;
     max : nat32;
+    file_id : opt FileId;
 };
 type VaultLogEntry = record {
     index : nat64;

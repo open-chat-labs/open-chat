@@ -1848,6 +1848,7 @@ export interface WebhookDetails {
 export interface VaultLogArgs {
     start: bigint;
     max: number;
+    file_id: [] | [FileId];
 }
 export interface VaultLogEntry {
     index: bigint;

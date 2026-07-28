@@ -1181,6 +1181,13 @@
         "reviewMedia": "Review media",
         "reviewMediaMobile": "Attached media must be reviewed before deciding - use the desktop app"
     },
+    "vaultLog": {
+        "title": "Vault access log",
+        "button": "Access log",
+        "loading": "Fetching the access log...",
+        "failed": "Failed to fetch the access log (vault reviewers only)",
+        "empty": "No entries"
+    },
     "vaultViewer": {
         "title": "Quarantined media review",
         "titleLive": "Reported media review",

@@ -55,6 +55,7 @@ export const idlFactory = ({ IDL }) => {
     const VaultLogArgs = IDL.Record({
         start: IDL.Nat64,
         max: IDL.Nat32,
+        file_id: IDL.Opt(FileId),
     });
     const VaultLogEntry = IDL.Record({
         index: IDL.Nat64,

@@ -60,6 +60,21 @@ pub enum VaultLogEvent {
     Viewed(FileId, Principal),
 }
 
+impl VaultLogEvent {
+    pub fn file_id(&self) -> FileId {
+        match self {
+            VaultLogEvent::Quarantined(file_id, _)
+            | VaultLogEvent::Unquarantined(file_id)
+            | VaultLogEvent::VerdictApplied(file_id, _)
+            | VaultLogEvent::LegalHoldSet(file_id)
+            | VaultLogEvent::LegalHoldCleared(file_id)
+            | VaultLogEvent::Destroyed(file_id, _)
+            | VaultLogEvent::RetentionExpired(file_id)
+            | VaultLogEvent::Viewed(file_id, _) => *file_id,
+        }
+    }
+}
+
 pub enum VaultOpOutcome {
     Applied,
     // The blob is no longer referenced by the vault and its pin should be released
@@ -219,11 +234,17 @@ impl Vault {
         expired.into_iter().map(|(_, hash)| hash).collect()
     }
 
-    pub fn log_page(&self, start: u64, max: u32) -> (u64, &[VaultLogEntry]) {
-        let total = self.log.len() as u64;
-        let from = (start as usize).min(self.log.len());
-        let to = from.saturating_add(max as usize).min(self.log.len());
-        (total, &self.log[from..to])
+    pub fn log_page(&self, start: u64, max: u32, file_id: Option<FileId>) -> (u64, Vec<&VaultLogEntry>) {
+        let matches = |e: &VaultLogEntry| file_id.is_none_or(|f| e.event.file_id() == f);
+        let total = self.log.iter().filter(|e| matches(e)).count() as u64;
+        let entries = self
+            .log
+            .iter()
+            .filter(|e| matches(e))
+            .skip(start as usize)
+            .take(max as usize)
+            .collect();
+        (total, entries)
     }
 
     pub fn metrics(&self) -> VaultMetrics {

@@ -13,6 +13,7 @@
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
+    import VaultAccessLog from "./VaultAccessLog.svelte";
     import VaultMediaViewer from "./VaultMediaViewer.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -28,6 +29,7 @@
     let resolved = $state(false);
     let urgent = $state(false);
     let showViewer = $state(false);
+    let showAccessLog = $state(false);
     // A verdict on a media report requires the media to have been reviewed first: deciding
     // without looking is exactly what this system exists to prevent
     let mediaReviewed = $state(false);
@@ -194,6 +196,11 @@
                 <Button secondary onClick={() => (showViewer = true)}>
                     <Translatable resourceKey={i18nKey("moderationReport.reviewMedia")} />
                 </Button>
+                {#if content.autoSanctioned}
+                    <Button secondary onClick={() => (showAccessLog = true)}>
+                        <Translatable resourceKey={i18nKey("vaultLog.button")} />
+                    </Button>
+                {/if}
             </Row>
         {/if}
         {#if !needsMediaReview}
@@ -237,6 +244,13 @@
         {/if}
     {/if}
 </Column>
+
+{#if showAccessLog}
+    <VaultAccessLog
+        blobReferences={content.blobReferences}
+        onClose={() => (showAccessLog = false)}
+    />
+{/if}
 
 {#if showViewer}
     <VaultMediaViewer

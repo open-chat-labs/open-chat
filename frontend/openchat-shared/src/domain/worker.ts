@@ -840,6 +840,7 @@ type VaultLog = {
     bucketCanisterId: string;
     start: bigint;
     max: number;
+    fileId: bigint | undefined;
 };
 
 type AuthorityReports = {

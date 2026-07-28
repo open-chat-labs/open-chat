@@ -15,7 +15,7 @@ fn vault_log_impl(args: Args, state: &RuntimeState) -> Response {
         return Response::NotAuthorized;
     }
 
-    let (total, entries) = state.data.vault.log_page(args.start, args.max.min(PAGE_MAX));
+    let (total, entries) = state.data.vault.log_page(args.start, args.max.min(PAGE_MAX), args.file_id);
     Response::Success(SuccessResult {
         total,
         entries: entries

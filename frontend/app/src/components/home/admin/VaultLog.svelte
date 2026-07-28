@@ -27,7 +27,7 @@
         entries = [];
         total = undefined;
         client
-            .vaultLog(canisterId, 0n, PAGE_SIZE)
+            .vaultLog(canisterId, 0n, PAGE_SIZE, undefined)
             .then((resp) => {
                 if (resp.kind === "success") {
                     entries = resp.entries;
@@ -44,7 +44,7 @@
         if (busy || total === undefined || BigInt(entries.length) >= total) return;
         busy = true;
         client
-            .vaultLog(bucketCanisterId.trim(), BigInt(entries.length), PAGE_SIZE)
+            .vaultLog(bucketCanisterId.trim(), BigInt(entries.length), PAGE_SIZE, undefined)
             .then((resp) => {
                 if (resp.kind === "success") {
                     entries = [...entries, ...resp.entries];

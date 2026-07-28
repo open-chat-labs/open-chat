@@ -2217,13 +2217,18 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.contestModerationSanction();
     }
 
-    vaultLog(bucketCanisterId: string, start: bigint, max: number): Promise<VaultLogResponse> {
+    vaultLog(
+        bucketCanisterId: string,
+        start: bigint,
+        max: number,
+        fileId: bigint | undefined,
+    ): Promise<VaultLogResponse> {
         let bucketClient = this._storageBucketClients.get(bucketCanisterId);
         if (bucketClient === undefined) {
             bucketClient = new StorageBucketClient(this.identity, this._agent, bucketCanisterId);
             this._storageBucketClients.set(bucketCanisterId, bucketClient);
         }
-        return bucketClient.vaultLog(start, max);
+        return bucketClient.vaultLog(start, max, fileId);
     }
 
     authorityReports(): Promise<string | undefined> {

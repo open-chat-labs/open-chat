@@ -1008,7 +1008,12 @@ function getAction(
         case "setVaultReviewers":
             return agent.setVaultReviewers(payload.userIds);
         case "vaultLog":
-            return agent.vaultLog(payload.bucketCanisterId, payload.start, payload.max);
+            return agent.vaultLog(
+                payload.bucketCanisterId,
+                payload.start,
+                payload.max,
+                payload.fileId,
+            );
         case "authorityReports":
             return agent.authorityReports();
         case "recordAuthorityReportFiled":

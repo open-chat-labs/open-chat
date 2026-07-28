@@ -3489,6 +3489,7 @@ export type StorageBucketVaultLogArgs = Static<typeof StorageBucketVaultLogArgs>
 export const StorageBucketVaultLogArgs = Type.Object({
     start: Type.BigInt(),
     max: Type.Number(),
+    file_id: Type.Optional(Type.BigInt()),
 });
 
 export type StorageBucketVaultLogVaultLogEntry = Static<typeof StorageBucketVaultLogVaultLogEntry>;
