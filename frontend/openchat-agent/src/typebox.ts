@@ -3498,6 +3498,7 @@ export const StorageBucketVaultLogVaultLogEntry = Type.Object({
     timestamp: Type.BigInt(),
     prev_hash: Type.String(),
     event: Type.String(),
+    user_id: Type.Optional(UserId),
 });
 
 export type StorageBucketDeleteFilesDeleteFileFailureReason = Static<

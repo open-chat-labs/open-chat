@@ -67,10 +67,17 @@ fn c2c_vault_ops_impl(args: Args, state: &mut RuntimeState) -> Response {
                 );
             }
             VaultOp::SetReviewers(reviewers) => {
-                state.data.vault_reviewers = reviewers.iter().copied().collect();
+                state.data.vault_reviewers = reviewers.clone();
+                let bucket_reviewers: Vec<_> = reviewers
+                    .iter()
+                    .map(|r| bucket_vault::VaultReviewer {
+                        principal: r.principal,
+                        user_id: r.user_id,
+                    })
+                    .collect();
                 let buckets: Vec<_> = state.data.buckets.iter().map(|b| b.canister_id).collect();
                 for bucket in buckets {
-                    push(state, bucket, bucket_vault::VaultOp::SetReviewers(reviewers.clone()));
+                    push(state, bucket, bucket_vault::VaultOp::SetReviewers(bucket_reviewers.clone()));
                 }
             }
         }

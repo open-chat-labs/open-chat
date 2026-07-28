@@ -110,6 +110,7 @@ type VaultLogEntry = record {
     timestamp : TimestampMillis;
     prev_hash : text;
     event : text;
+    user_id : opt UserId;
 };
 type VaultLogResponse = variant {
     Success : record {

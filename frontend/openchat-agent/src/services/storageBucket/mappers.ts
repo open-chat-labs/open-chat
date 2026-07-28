@@ -120,6 +120,7 @@ export function vaultLogResponse(candid: CandidVaultLogResponse): VaultLogRespon
                 timestamp: e.timestamp,
                 prevHash: e.prev_hash,
                 event: e.event,
+                userId: e.user_id[0]?.toString(),
             })),
         };
     }

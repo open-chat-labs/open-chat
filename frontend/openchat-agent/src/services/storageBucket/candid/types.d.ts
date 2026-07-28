@@ -1855,6 +1855,7 @@ export interface VaultLogEntry {
     timestamp: bigint;
     prev_hash: string;
     event: string;
+    user_id: [] | [Principal];
 }
 export type VaultLogResponse =
     | {

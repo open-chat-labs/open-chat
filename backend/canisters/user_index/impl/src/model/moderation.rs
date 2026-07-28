@@ -5,7 +5,7 @@ use constants::{DAY_IN_MS, OPENCHAT_BOT_USER_ID};
 use fire_and_forget_handler::FireAndForgetHandler;
 use rand::Rng;
 use storage_bucket_canister::c2c_vault_sync::VaultCaptureMetadata;
-use storage_index_canister::c2c_vault_ops::{ApplyVerdictOp, Args as VaultOpsArgs, QuarantineOp, VaultOp};
+use storage_index_canister::c2c_vault_ops::{ApplyVerdictOp, Args as VaultOpsArgs, QuarantineOp, VaultOp, VaultReviewer};
 use tracing::error;
 use types::{BlobReference, Milliseconds};
 use types::{
@@ -415,13 +415,18 @@ fn verdict_ops(blob_references: &[BlobReference], now: TimestampMillis) -> Vec<V
 // Pushes the current vault-reviewer principal set to the storage buckets (via the storage
 // index). Called on any change to the reviewer set, and on moderator-revocation cascade.
 pub fn sync_vault_reviewers(state: &mut RuntimeState) {
-    let principals = state
+    let reviewers = state
         .data
         .vault_reviewers
         .iter()
-        .filter_map(|user_id| state.data.users.get_by_user_id(user_id).map(|u| u.principal))
+        .filter_map(|user_id| {
+            state.data.users.get_by_user_id(user_id).map(|u| VaultReviewer {
+                principal: u.principal,
+                user_id: *user_id,
+            })
+        })
         .collect();
-    send_vault_ops(vec![VaultOp::SetReviewers(principals)], state);
+    send_vault_ops(vec![VaultOp::SetReviewers(reviewers)], state);
 }
 
 // Lifts a suspension after a Dismissed verdict on an automated sanction

@@ -14,7 +14,7 @@ pub enum VaultOp {
     ApplyVerdict(ApplyVerdictOp),
     SetLegalHold(SetLegalHoldOp),
     Destroy(DestroyOp),
-    SetReviewers(Vec<Principal>),
+    SetReviewers(Vec<VaultReviewer>),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -62,4 +62,10 @@ pub struct SuccessResult {
     // Evidence-capture failures (eg. file deleted before the op arrived) — callers must not
     // treat these as quarantined
     pub quarantine_failures: Vec<FileId>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct VaultReviewer {
+    pub principal: Principal,
+    pub user_id: UserId,
 }

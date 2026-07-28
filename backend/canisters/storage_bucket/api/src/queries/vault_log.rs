@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{FileId, TimestampMillis};
+use types::{FileId, TimestampMillis, UserId};
 
 // A page of the vault's tamper-evident access log, readable only by designated vault
 // reviewers: the chain of custody evidence for auditors and law enforcement.
@@ -39,4 +39,6 @@ pub struct VaultLogEntry {
     pub prev_hash: String,
     // Human-readable description of the event
     pub event: String,
+    // For viewing events: the reviewer's user id as captured at event time
+    pub user_id: Option<UserId>,
 }

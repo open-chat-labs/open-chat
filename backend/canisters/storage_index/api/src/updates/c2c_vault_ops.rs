@@ -1,7 +1,7 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use storage_bucket_canister::c2c_vault_sync::VaultCaptureMetadata;
-use types::{BlobReference, TimestampMillis};
+use types::{BlobReference, TimestampMillis, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -15,7 +15,7 @@ pub enum VaultOp {
     ApplyVerdict(ApplyVerdictOp),
     SetLegalHold(SetLegalHoldOp),
     Destroy(DestroyOp),
-    SetReviewers(Vec<Principal>),
+    SetReviewers(Vec<VaultReviewer>),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -45,4 +45,10 @@ pub struct DestroyOp {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct VaultReviewer {
+    pub principal: Principal,
+    pub user_id: UserId,
 }

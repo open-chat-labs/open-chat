@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { BlobReference, OpenChat, VaultLogEntry } from "@client";
+    import { allUsersStore, type BlobReference, type OpenChat, type VaultLogEntry } from "@client";
     import { Body, BodySmall, Column, Sheet, Subtitle } from "component-lib";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -54,7 +54,12 @@
                     <BodySmall colour={"textSecondary"}>
                         {new Date(Number(entry.timestamp)).toLocaleString()}
                     </BodySmall>
-                    <Body>{entry.event}</Body>
+                    <Body>
+                        {entry.event}
+                        {#if entry.userId !== undefined}
+                            ({$allUsersStore.get(entry.userId)?.username ?? "unknown user"})
+                        {/if}
+                    </Body>
                 </Column>
             {/each}
         {/if}

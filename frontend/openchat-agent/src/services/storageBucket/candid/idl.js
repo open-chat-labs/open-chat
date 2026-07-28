@@ -31,6 +31,7 @@ export const idlFactory = ({ IDL }) => {
         Success: FileInfoSuccessResult,
     });
     const AccessorId = IDL.Principal;
+    const UserId = IDL.Principal;
     const ForwardFileArgs = IDL.Record({
         accessors: IDL.Vec(AccessorId),
         file_id: FileId,
@@ -62,6 +63,7 @@ export const idlFactory = ({ IDL }) => {
         timestamp: TimestampMillis,
         prev_hash: IDL.Text,
         event: IDL.Text,
+        user_id: IDL.Opt(UserId),
     });
     const VaultLogResponse = IDL.Variant({
         Success: IDL.Record({

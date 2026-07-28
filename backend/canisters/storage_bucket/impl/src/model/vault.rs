@@ -1,8 +1,9 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use storage_bucket_canister::c2c_vault_sync::VaultCaptureMetadata;
-use types::{FileId, Hash, TimestampMillis};
+use storage_bucket_canister::c2c_vault_sync::VaultReviewer;
+use types::{FileId, Hash, TimestampMillis, UserId};
 use utils::hasher::hash_bytes;
 
 // Evidence vault: metadata, retention state and the append-only access log for quarantined
@@ -12,7 +13,8 @@ use utils::hasher::hash_bytes;
 pub struct Vault {
     records: BTreeMap<Hash, VaultRecord>,
     file_id_to_hash: BTreeMap<FileId, Hash>,
-    reviewers: HashSet<Principal>,
+    #[serde(default, deserialize_with = "deserialize_reviewers")]
+    reviewers: HashMap<Principal, UserId>,
     log: Vec<VaultLogEntry>,
     #[serde(default)]
     quarantine_failures: u64,
@@ -57,7 +59,9 @@ pub enum VaultLogEvent {
     LegalHoldCleared(FileId),
     Destroyed(FileId, String),
     RetentionExpired(FileId),
+    // Legacy entries from before the reviewer user_id was captured at event time
     Viewed(FileId, Principal),
+    ViewedBy(FileId, Principal, Option<UserId>),
 }
 
 impl VaultLogEvent {
@@ -70,7 +74,8 @@ impl VaultLogEvent {
             | VaultLogEvent::LegalHoldCleared(file_id)
             | VaultLogEvent::Destroyed(file_id, _)
             | VaultLogEvent::RetentionExpired(file_id)
-            | VaultLogEvent::Viewed(file_id, _) => *file_id,
+            | VaultLogEvent::Viewed(file_id, _)
+            | VaultLogEvent::ViewedBy(file_id, _, _) => *file_id,
         }
     }
 }
@@ -85,12 +90,12 @@ pub enum VaultOpOutcome {
 }
 
 impl Vault {
-    pub fn set_reviewers(&mut self, reviewers: Vec<Principal>) {
-        self.reviewers = reviewers.into_iter().collect();
+    pub fn set_reviewers(&mut self, reviewers: Vec<VaultReviewer>) {
+        self.reviewers = reviewers.into_iter().map(|r| (r.principal, r.user_id)).collect();
     }
 
     pub fn is_reviewer(&self, principal: &Principal) -> bool {
-        self.reviewers.contains(principal)
+        self.reviewers.contains_key(principal)
     }
 
     pub fn record_for_file(&self, file_id: &FileId) -> Option<&VaultRecord> {
@@ -189,7 +194,10 @@ impl Vault {
     ) -> bool {
         let key = (reviewer, file_id);
         if chunk_index == 0 {
-            self.append_log(VaultLogEvent::Viewed(file_id, reviewer), now);
+            // The user_id is captured at event time: resolving it later through a live
+            // mapping would break as reviewers are replaced or accounts deleted
+            let user_id = self.reviewers.get(&reviewer).copied();
+            self.append_log(VaultLogEvent::ViewedBy(file_id, reviewer, user_id), now);
             if chunk_count > 1 {
                 self.sessions.insert(key, 1);
             } else {
@@ -294,4 +302,24 @@ pub struct VaultMetrics {
     pub reviewers: u64,
     pub log_length: u64,
     pub quarantine_failures: u64,
+}
+
+// The reviewer set briefly shipped (to test envs only) as a bare principal set; accept that
+// shape on upgrade as an empty map (the set is re-synced whenever the operator applies it).
+// Inert everywhere else - production never held the old shape.
+fn deserialize_reviewers<'de, D>(d: D) -> Result<HashMap<Principal, UserId>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum Compat {
+        New(HashMap<Principal, UserId>),
+        Old(HashSet<Principal>),
+    }
+
+    Ok(match Compat::deserialize(d)? {
+        Compat::New(reviewers) => reviewers,
+        Compat::Old(_) => HashMap::new(),
+    })
 }

@@ -122,6 +122,7 @@ export type VaultLogEntry = {
     timestamp: bigint;
     prevHash: string;
     event: string;
+    userId: string | undefined;
 };
 
 export type VaultLogResponse =

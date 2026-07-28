@@ -8,6 +8,7 @@ use constants::ICP_LEDGER_CANISTER_ID;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
+use storage_index_canister::c2c_vault_ops::VaultReviewer;
 use storage_index_canister::init::CyclesDispenserConfig;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
@@ -113,8 +114,8 @@ struct Data {
     pub bucket_event_sync_queue: GroupedTimerJobQueue<BucketEventBatch>,
     #[serde(default = "default_vault_event_sync_queue")]
     pub vault_event_sync_queue: GroupedTimerJobQueue<VaultEventBatch>,
-    #[serde(default)]
-    pub vault_reviewers: HashSet<Principal>,
+    #[serde(default, deserialize_with = "deserialize_vault_reviewers")]
+    pub vault_reviewers: Vec<VaultReviewer>,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_config: CyclesDispenserConfig,
@@ -157,7 +158,7 @@ impl Data {
             buckets: Buckets::default(),
             bucket_event_sync_queue: GroupedTimerJobQueue::new(5, false),
             vault_event_sync_queue: default_vault_event_sync_queue(),
-            vault_reviewers: HashSet::new(),
+            vault_reviewers: Vec::new(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,
             cycles_dispenser_config,
@@ -238,7 +239,15 @@ impl Data {
         if !self.vault_reviewers.is_empty() {
             self.vault_event_sync_queue.push(
                 bucket.canister_id,
-                storage_bucket_canister::c2c_vault_sync::VaultOp::SetReviewers(self.vault_reviewers.iter().copied().collect()),
+                storage_bucket_canister::c2c_vault_sync::VaultOp::SetReviewers(
+                    self.vault_reviewers
+                        .iter()
+                        .map(|r| storage_bucket_canister::c2c_vault_sync::VaultReviewer {
+                            principal: r.principal,
+                            user_id: r.user_id,
+                        })
+                        .collect(),
+                ),
             );
         }
         self.buckets.add_bucket(bucket);
@@ -297,4 +306,24 @@ pub struct CanisterIds {
     cycles_dispenser: CanisterId,
     icp_ledger: CanisterId,
     cmc: CanisterId,
+}
+
+// The reviewer set briefly shipped (to test envs only) as a bare principal set; accept that
+// shape on upgrade as an empty list (the set is re-synced whenever the operator applies it).
+// Inert everywhere else - production never held the old shape.
+fn deserialize_vault_reviewers<'de, D>(d: D) -> Result<Vec<VaultReviewer>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum Compat {
+        New(Vec<VaultReviewer>),
+        Old(Vec<Principal>),
+    }
+
+    Ok(match Compat::deserialize(d)? {
+        Compat::New(reviewers) => reviewers,
+        Compat::Old(_) => Vec::new(),
+    })
 }

@@ -24,6 +24,10 @@ fn vault_log_impl(args: Args, state: &RuntimeState) -> Response {
                 index: e.index,
                 timestamp: e.timestamp,
                 prev_hash: hex::encode(e.prev_hash),
+                user_id: match &e.event {
+                    VaultLogEvent::ViewedBy(_, _, user_id) => *user_id,
+                    _ => None,
+                },
                 event: match &e.event {
                     VaultLogEvent::Quarantined(file_id, report_index) => {
                         format!("Quarantined file {file_id} (report {report_index})")
@@ -46,6 +50,10 @@ fn vault_log_impl(args: Args, state: &RuntimeState) -> Response {
                     VaultLogEvent::Viewed(file_id, principal) => {
                         format!("File {file_id} viewed by {principal}")
                     }
+                    VaultLogEvent::ViewedBy(file_id, principal, user_id) => match user_id {
+                        Some(user_id) => format!("File {file_id} viewed by user {user_id}"),
+                        None => format!("File {file_id} viewed by {principal}"),
+                    },
                 },
             })
             .collect(),
