@@ -68,6 +68,8 @@ import {
     UserIndexResolveModerationReportArgs,
     UserIndexSetModerationFlagsArgs,
     UserIndexAcceptTermsArgs,
+    UserIndexAuthorityReportsResponse,
+    UserIndexRecordAuthorityReportFiledArgs,
     UserIndexSetModerationReferralConfigArgs,
     UserIndexSetVaultReviewersArgs,
     UserIndexSetOpenaiApiKeyArgs,
@@ -263,6 +265,36 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             },
             (resp) => resp === "Success",
             UserIndexResolveModerationReportArgs,
+            UnitResult,
+        );
+    }
+
+    authorityReports(): Promise<string | undefined> {
+        return this.query(
+            "authority_reports",
+            {},
+            (resp) => ("Success" in resp ? resp.Success.json : undefined),
+            Empty,
+            UserIndexAuthorityReportsResponse,
+        );
+    }
+
+    recordAuthorityReportFiled(
+        reportIndex: bigint,
+        portalReference: string,
+        urgent: boolean,
+        unverified: boolean,
+    ): Promise<boolean> {
+        return this.update(
+            "record_authority_report_filed",
+            {
+                report_index: reportIndex,
+                portal_reference: portalReference,
+                urgent,
+                unverified,
+            },
+            (resp) => resp === "Success",
+            UserIndexRecordAuthorityReportFiledArgs,
             UnitResult,
         );
     }

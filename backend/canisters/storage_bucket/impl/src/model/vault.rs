@@ -219,6 +219,13 @@ impl Vault {
         expired.into_iter().map(|(_, hash)| hash).collect()
     }
 
+    pub fn log_page(&self, start: u64, max: u32) -> (u64, &[VaultLogEntry]) {
+        let total = self.log.len() as u64;
+        let from = (start as usize).min(self.log.len());
+        let to = from.saturating_add(max as usize).min(self.log.len());
+        (total, &self.log[from..to])
+    }
+
     pub fn metrics(&self) -> VaultMetrics {
         VaultMetrics {
             quarantined: self.records.len() as u64,

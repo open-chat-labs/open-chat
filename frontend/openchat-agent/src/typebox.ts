@@ -3485,6 +3485,20 @@ export const NotificationsIndexAddFcmTokenArgs = Type.Object({
     fcm_token: FcmToken,
 });
 
+export type StorageBucketVaultLogArgs = Static<typeof StorageBucketVaultLogArgs>;
+export const StorageBucketVaultLogArgs = Type.Object({
+    start: Type.BigInt(),
+    max: Type.Number(),
+});
+
+export type StorageBucketVaultLogVaultLogEntry = Static<typeof StorageBucketVaultLogVaultLogEntry>;
+export const StorageBucketVaultLogVaultLogEntry = Type.Object({
+    index: Type.BigInt(),
+    timestamp: Type.BigInt(),
+    prev_hash: Type.String(),
+    event: Type.String(),
+});
+
 export type StorageBucketDeleteFilesDeleteFileFailureReason = Static<
     typeof StorageBucketDeleteFilesDeleteFileFailureReason
 >;
@@ -6656,6 +6670,20 @@ export const CommunityUpdateChannelResponse = Type.Union([
     Type.Object({
         Error: OCError,
     }),
+]);
+
+export type StorageBucketVaultLogSuccessResult = Static<typeof StorageBucketVaultLogSuccessResult>;
+export const StorageBucketVaultLogSuccessResult = Type.Object({
+    total: Type.BigInt(),
+    entries: Type.Array(StorageBucketVaultLogVaultLogEntry),
+});
+
+export type StorageBucketVaultLogResponse = Static<typeof StorageBucketVaultLogResponse>;
+export const StorageBucketVaultLogResponse = Type.Union([
+    Type.Object({
+        Success: StorageBucketVaultLogSuccessResult,
+    }),
+    Type.Literal("NotAuthorized"),
 ]);
 
 export type StorageBucketDeleteFilesResponse = Static<typeof StorageBucketDeleteFilesResponse>;

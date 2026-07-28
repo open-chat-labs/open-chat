@@ -2,6 +2,7 @@
 import { HttpAgent, type Identity } from "@icp-sdk/core/agent";
 import type { Principal } from "@icp-sdk/core/principal";
 import type {
+    VaultLogResponse,
     AcceptP2PSwapResponse,
     AcceptedRules,
     AccessGateConfig,
@@ -2214,6 +2215,33 @@ export class OpenChatAgent extends EventTarget {
         if (offline()) return Promise.resolve(false);
 
         return this._userIndexClient.contestModerationSanction();
+    }
+
+    vaultLog(bucketCanisterId: string, start: bigint, max: number): Promise<VaultLogResponse> {
+        let bucketClient = this._storageBucketClients.get(bucketCanisterId);
+        if (bucketClient === undefined) {
+            bucketClient = new StorageBucketClient(this.identity, this._agent, bucketCanisterId);
+            this._storageBucketClients.set(bucketCanisterId, bucketClient);
+        }
+        return bucketClient.vaultLog(start, max);
+    }
+
+    authorityReports(): Promise<string | undefined> {
+        return this._userIndexClient.authorityReports();
+    }
+
+    recordAuthorityReportFiled(
+        reportIndex: bigint,
+        portalReference: string,
+        urgent: boolean,
+        unverified: boolean,
+    ): Promise<boolean> {
+        return this._userIndexClient.recordAuthorityReportFiled(
+            reportIndex,
+            portalReference,
+            urgent,
+            unverified,
+        );
     }
 
     vaultFileChunk(

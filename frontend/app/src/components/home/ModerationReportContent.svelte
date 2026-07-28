@@ -9,8 +9,10 @@
         type OpenChat,
     } from "@client";
     import Markdown from "@src/components_shared/Markdown.svelte";
-    import { Body, Column, Row, Title } from "component-lib";
+    import { Body, BodySmall, ColourVars, Column, Row, Subtitle } from "component-lib";
     import { getContext } from "svelte";
+    import Upheld from "svelte-material-icons/CheckCircleOutline.svelte";
+    import Dismissed from "svelte-material-icons/CloseCircleOutline.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";
     import Checkbox from "../Checkbox.svelte";
@@ -45,10 +47,13 @@
     let reporters = $derived(content.reporters.map((r) => $allUsersStore.get(r)?.username ?? r));
 
     let csam = $derived((content.flaggedCategories & 2) !== 0);
+    // Alleged OR confirmed CSAM: a classifier-clean escalated report upheld as CSAM has no
+    // flag bits, but must still never link to the content in place
+    let csamish = $derived(csam || content.status.kind === "upheld_as_csam");
     let categories = $derived(
-        MODERATION_CATEGORY_NAMES.filter(([bit, _name]) => (content.flaggedCategories & bit) !== 0)
-            .map(([_bit, name]) => name)
-            .join(", "),
+        MODERATION_CATEGORY_NAMES.filter(
+            ([bit, _name]) => (content.flaggedCategories & bit) !== 0,
+        ).map(([_bit, name]) => name),
     );
     // Direct-chat routes resolve relative to the viewer, so a link to someone
     // else's private chat would be dead for moderators — show no link instead.
@@ -69,7 +74,8 @@
             content.reportIndex !== undefined &&
             (content.status.kind === "pending" || content.status.kind === "contested"),
     );
-    let needsMediaReview = $derived(content.blobReferences.length > 0 && !mediaReviewed);
+    let hasMedia = $derived(content.blobReferences.length > 0);
+    let needsMediaReview = $derived(hasMedia && !mediaReviewed);
 
     function resolve(verdict: ModerationVerdict) {
         if (content.reportIndex === undefined || busy || resolved) return;
@@ -90,140 +96,240 @@
     }
 </script>
 
-<Column gap="md" padding={["lg", "md"]}>
-    <Row gap="md">
-        {#if csam}
-            <span class="csam"
-                ><Translatable resourceKey={i18nKey("moderationReport.csam")} /></span>
-        {/if}
-        <Title>
-            <Translatable resourceKey={i18nKey("moderationReport.title")} />
-        </Title>
-    </Row>
-
-    {#if csam || content.status.kind === "upheld_as_csam"}
-        <!-- Alleged or confirmed CSAM must never be viewed in place: the vault viewer is the
-                 only sanctioned route -->
-        <Body>
-            <Translatable resourceKey={i18nKey("moderationReport.vaultOnly")} />
-        </Body>
-    {:else if url !== undefined}
-        <Body>
-            <a class="link" href={url}
-                ><Translatable resourceKey={i18nKey("moderationReport.viewMessage")} /></a>
-        </Body>
-    {:else}
-        <Body>
-            <Translatable resourceKey={i18nKey("moderationReport.privateChat")} />
-        </Body>
-    {/if}
-    <Body>
-        <Translatable resourceKey={i18nKey("moderationReport.sender")} />: {sender}
-    </Body>
-    <Body>
-        {#if reporters.length === 0}
-            <Translatable resourceKey={i18nKey("moderationReport.pipeline")} />
-        {:else}
-            <Translatable resourceKey={i18nKey("moderationReport.reporters")} />: {reporters.join(
-                ", ",
-            )}
-        {/if}
-    </Body>
-    {#if categories !== ""}
-        <Body>
-            <Translatable resourceKey={i18nKey("moderationReport.categories")} />: {categories}
-        </Body>
-    {/if}
-    {#if content.flaggedCategories === 0 && content.status.kind === "pending"}
-        <Body>
-            <Translatable
-                resourceKey={i18nKey(
-                    content.classificationFailed
-                        ? "moderationReport.classifierFailed"
-                        : "moderationReport.classifierClean",
-                )} />
-        </Body>
-    {/if}
-    {#if content.status.kind === "contested"}
-        <Body fontWeight="bold" colour="error">
-            <Translatable resourceKey={i18nKey("moderationReport.contested")} />
-        </Body>
-    {/if}
-    {#if content.autoSanctioned}
-        <Body>
-            {#if content.status.kind === "pending" || content.status.kind === "contested"}
-                <Translatable resourceKey={i18nKey("moderationReport.sanctionPending")} />
-            {:else}
-                <Translatable resourceKey={i18nKey("moderationReport.autoSanctioned")} />
+{#snippet reportCard()}
+    <Column borderRadius="md" backgroundColor={ColourVars.background1}>
+        <Row
+            padding="lg"
+            backgroundColor={csam ? ColourVars.tertiaryMuted : ColourVars.background0}
+            gap="md">
+            {#if csam}
+                <span class="csam"
+                    ><Translatable resourceKey={i18nKey("moderationReport.csam")} /></span>
             {/if}
-        </Body>
-    {/if}
-
-    {#if content.contentExcerpt !== undefined}
-        <Row padding={["lg", "zero"]}>
-            <blockquote class="excerpt">
-                <Markdown text={content.contentExcerpt} />
-            </blockquote>
+            <Subtitle>
+                <Translatable resourceKey={i18nKey("moderationReport.title")} />
+            </Subtitle>
         </Row>
-    {/if}
-
-    {#if content.status.kind === "upheld" || content.status.kind === "upheld_as_csam"}
-        <Body fontWeight="bold">
-            <Translatable
-                resourceKey={i18nKey("moderationReport.upheld", {
-                    moderator,
-                })} />
-        </Body>
-    {:else if content.status.kind === "dismissed"}
-        <Body fontWeight="bold">
-            <Translatable
-                resourceKey={i18nKey("moderationReport.dismissed", {
-                    moderator,
-                })} />
-        </Body>
-    {:else if canResolve}
-        {#if content.blobReferences.length > 0}
-            <Button onClick={() => (showViewer = true)}>
-                <Translatable resourceKey={i18nKey("moderationReport.reviewMedia")} />
-            </Button>
-        {/if}
-        {#if !needsMediaReview}
-            <Row gap="sm">
-                <Button
-                    loading={busy}
-                    disabled={busy || resolved}
-                    onClick={() => resolve("upheld")}>
-                    <Translatable resourceKey={i18nKey("moderationReport.uphold")} />
-                </Button>
-                <Column>
-                    <Button
-                        loading={busy}
-                        danger
-                        disabled={busy || resolved}
-                        onClick={() => resolve("upheld_as_csam")}>
-                        <Translatable resourceKey={i18nKey("moderationReport.upholdCsam")} />
-                    </Button>
-                    <Checkbox
-                        id={`urgent-${content.messageId}`}
-                        small
-                        label={i18nKey("moderationReport.urgent")}
-                        checked={urgent}
-                        onChange={() => (urgent = !urgent)} />
-                </Column>
-                <Button
-                    loading={busy}
-                    secondary
-                    disabled={busy || resolved}
-                    onClick={() => resolve("dismissed")}>
-                    <Translatable resourceKey={i18nKey("moderationReport.dismiss")} />
-                </Button>
+        {#if csamish}
+            <Row backgroundColor={ColourVars.background0} padding="lg" gap="md">
+                <Body>
+                    <Translatable resourceKey={i18nKey("moderationReport.vaultOnly")} />
+                </Body>
             </Row>
         {/if}
-        {#if failed}
-            <Body colour="error">
-                <Translatable resourceKey={i18nKey("moderationReport.failed")} />
-            </Body>
+        <Column padding="lg" gap="sm">
+            <Row gap="md">
+                <Body uppercase colour="textSecondary" width={{ size: "6rem" }}>
+                    <Translatable resourceKey={i18nKey("moderationReport.sender")} />
+                </Body>
+                <Body>{sender}</Body>
+            </Row>
+            <Row gap="md">
+                <Body uppercase colour="textSecondary" width={{ size: "6rem" }}>
+                    <Translatable resourceKey={i18nKey("moderationReport.reporters")} />
+                </Body>
+                <Body>
+                    {#if reporters.length === 0}
+                        <Translatable resourceKey={i18nKey("moderationReport.pipeline")} />
+                    {:else}
+                        {reporters.join(", ")}
+                    {/if}
+                </Body>
+            </Row>
+            {#if categories.length > 0}
+                <Row gap="md">
+                    <Body uppercase colour="textSecondary" width={{ size: "6rem" }}>
+                        <Translatable resourceKey={i18nKey("moderationReport.categories")} />
+                    </Body>
+                    {#each categories as category, i (i)}
+                        <span class="category">
+                            <BodySmall>
+                                {category}
+                            </BodySmall>
+                        </span>
+                    {/each}
+                </Row>
+            {/if}
+
+            <Row gap="md">
+                <Body uppercase colour="textSecondary" width={{ size: "6rem" }}>
+                    <Translatable resourceKey={i18nKey("moderationReport.context")} />
+                </Body>
+
+                <Body>
+                    {#if csamish}
+                        Message link unavailable for CSAM reports
+                    {:else if url !== undefined}
+                        <a class="link" href={url}
+                            ><Translatable
+                                resourceKey={i18nKey("moderationReport.viewMessage")} /></a>
+                    {:else}
+                        <Translatable resourceKey={i18nKey("moderationReport.privateChat")} />
+                    {/if}
+                </Body>
+            </Row>
+        </Column>
+        {#if content.contentExcerpt !== undefined}
+            <Column backgroundColor={ColourVars.background0} padding="lg" gap="md">
+                <BodySmall colour="textSecondary" uppercase>
+                    <Translatable resourceKey={i18nKey("moderationReport.reportedMessage")} />
+                </BodySmall>
+                <blockquote class="excerpt">
+                    <Markdown text={content.contentExcerpt} />
+                </blockquote>
+            </Column>
         {/if}
+        {#if canResolve}
+            {#if hasMedia}
+                <Row
+                    padding="lg"
+                    backgroundColor={csam ? ColourVars.tertiaryMuted : ColourVars.background0}>
+                    {#if csam}
+                        <Column>
+                            <BodySmall>quarantined media attachment</BodySmall>
+                            <BodySmall colour="textSecondary"
+                                >Opens in the vault viewer. Access is logged.</BodySmall>
+                        </Column>
+                    {:else}
+                        <Column>
+                            <BodySmall>media attachment</BodySmall>
+                            <BodySmall colour="textSecondary"
+                                >Not shown until you open review.</BodySmall>
+                        </Column>
+                    {/if}
+                    <Button onClick={() => (showViewer = true)}>
+                        <Translatable resourceKey={i18nKey("moderationReport.reviewMedia")} />
+                    </Button>
+                </Row>
+            {/if}
+        {/if}
+    </Column>
+{/snippet}
+
+{#snippet statusLine()}
+    {@const classifierLine = content.flaggedCategories === 0 && content.status.kind === "pending"}
+    {#if (content.status.kind === "pending" || content.status.kind === "contested") && (classifierLine || content.status.kind === "contested" || content.autoSanctioned)}
+        <Row gap="sm" wrap padding="lg" borderRadius="md" backgroundColor={ColourVars.background1}>
+            {#if classifierLine}
+                <Body width="hug">
+                    <Translatable
+                        resourceKey={i18nKey(
+                            content.classificationFailed
+                                ? "moderationReport.classifierFailed"
+                                : "moderationReport.classifierClean",
+                        )} />
+                </Body>
+            {/if}
+            {#if content.status.kind === "contested"}
+                <Body width="hug" fontWeight="bold" colour="error">
+                    <Translatable resourceKey={i18nKey("moderationReport.contested")} />
+                </Body>
+            {/if}
+            {#if content.autoSanctioned}
+                <Body width="hug">
+                    <Translatable resourceKey={i18nKey("moderationReport.sanctionPending")} />
+                </Body>
+            {/if}
+        </Row>
+    {/if}
+{/snippet}
+
+{#snippet resolution()}
+    <Row
+        crossAxisAlignment="center"
+        gap="md"
+        wrap
+        padding="lg"
+        borderRadius="md"
+        backgroundColor={content.status.kind === "upheld_as_csam"
+            ? ColourVars.tertiaryMuted
+            : ColourVars.background1}>
+        {#if content.status.kind === "dismissed"}
+            <Dismissed color="var(--text-secondary)" size="1.6rem" />
+            <Column>
+                <Body>Dismissed</Body>
+                <BodySmall colour="textSecondary"
+                    >Resolved by {moderator} - any sanction reversed</BodySmall>
+            </Column>
+        {:else if content.status.kind === "upheld"}
+            <Upheld color="var(--success)" size="1.6rem" />
+            <Column>
+                <Body>Upheld</Body>
+                <BodySmall colour="textSecondary">Resolved by {moderator}</BodySmall>
+            </Column>
+        {:else if content.status.kind === "upheld_as_csam"}
+            <Upheld color="var(--error)" size="1.6rem" />
+            <Column>
+                <Body>Upheld as CSAM</Body>
+                <BodySmall colour="textSecondary">
+                    {#if content.autoSanctioned}
+                        Resolved by {moderator} - the auto-sanction stands
+                    {:else}
+                        Resolved by {moderator}
+                    {/if}
+                </BodySmall>
+            </Column>
+        {/if}
+    </Row>
+{/snippet}
+
+{#snippet actions()}
+    <Column gap="sm">
+        <Row gap="md">
+            <Button loading={busy} disabled={busy || resolved} onClick={() => resolve("upheld")}>
+                <Translatable resourceKey={i18nKey("moderationReport.uphold")} />
+            </Button>
+            <Button
+                loading={busy}
+                danger
+                disabled={busy || resolved}
+                onClick={() => resolve("upheld_as_csam")}>
+                <Translatable resourceKey={i18nKey("moderationReport.upholdCsam")} />
+            </Button>
+            <Button
+                loading={busy}
+                secondary
+                disabled={busy || resolved}
+                onClick={() => resolve("dismissed")}>
+                <Translatable resourceKey={i18nKey("moderationReport.dismiss")} />
+            </Button>
+        </Row>
+
+        <Row borderRadius="md" padding="lg" backgroundColor={ColourVars.tertiaryMuted}>
+            <Checkbox
+                id={`urgent-${content.messageId}`}
+                small
+                label={i18nKey("moderationReport.urgent")}
+                checked={urgent}
+                onChange={() => (urgent = !urgent)}>
+                <Column>
+                    <Body>Imminent threat to a child</Body>
+                    <BodySmall colour="textSecondary"
+                        >Escalates urgently. Only applies to "Uphold as CSAM"</BodySmall>
+                </Column>
+            </Checkbox>
+        </Row>
+    </Column>
+{/snippet}
+
+<Column gap="md" padding={["lg", "zero"]}>
+    {@const status = content.status.kind}
+    <!-- report -->
+    {@render reportCard()}
+    {@render statusLine()}
+
+    {#if status === "upheld" || status === "upheld_as_csam" || status === "dismissed"}
+        {@render resolution()}
+    {/if}
+
+    {#if canResolve && !needsMediaReview}
+        {@render actions()}
+    {/if}
+
+    {#if failed}
+        <Body colour="error">
+            <Translatable resourceKey={i18nKey("moderationReport.failed")} />
+        </Body>
     {/if}
 </Column>
 
@@ -236,6 +342,11 @@
 {/if}
 
 <style lang="scss">
+    .category {
+        background-color: var(--tertiary-muted);
+        padding: 0 var(--sp-sm);
+        border-radius: var(--rad-md);
+    }
     .csam {
         @include font(bold, normal, fs-100);
         background-color: var(--error);
@@ -249,5 +360,8 @@
         border-left: $sp1 solid var(--error);
         font-style: italic;
         white-space: pre-wrap;
+    }
+    .link {
+        color: var(--secondary);
     }
 </style>

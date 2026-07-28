@@ -100,9 +100,28 @@ type VaultFileChunkResponse = variant {
     SessionRequired;
 };
 
+type VaultLogArgs = record {
+    start : nat64;
+    max : nat32;
+};
+type VaultLogEntry = record {
+    index : nat64;
+    timestamp : TimestampMillis;
+    prev_hash : text;
+    event : text;
+};
+type VaultLogResponse = variant {
+    Success : record {
+        total : nat64;
+        entries : vec VaultLogEntry;
+    };
+    NotAuthorized;
+};
+
 service : {
     upload_chunk_v2 : (UploadChunkArgs) -> (UploadChunkResponse);
     vault_file_chunk : (VaultFileChunkArgs) -> (VaultFileChunkResponse);
+    vault_log : (VaultLogArgs) -> (VaultLogResponse) query;
     delete_file : (DeleteFileArgs) -> (DeleteFileResponse);
     delete_files : (DeleteFilesArgs) -> (DeleteFilesResponse);
     forward_file : (ForwardFileArgs) -> (ForwardFileResponse);

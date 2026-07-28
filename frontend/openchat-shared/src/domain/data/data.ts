@@ -4,7 +4,7 @@ import { Type, type Static } from "@sinclair/typebox";
 export const BlobReferenceSchema = Type.Object({
     blobId: Type.BigInt(),
     canisterId: Type.String(),
-})
+});
 export type BlobReference = Static<typeof BlobReferenceSchema>;
 
 export const DataContentSchema = Type.Object({
@@ -116,3 +116,14 @@ export type VaultFileChunkResponse =
     | { kind: "not_authorized" }
     | { kind: "not_found" }
     | { kind: "session_required" };
+
+export type VaultLogEntry = {
+    index: bigint;
+    timestamp: bigint;
+    prevHash: string;
+    event: string;
+};
+
+export type VaultLogResponse =
+    | { kind: "success"; total: bigint; entries: VaultLogEntry[] }
+    | { kind: "not_authorized" };

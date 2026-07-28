@@ -6,6 +6,7 @@ import {
     ForwardFileResponse,
     UploadChunkResponse,
     VaultFileChunkResponse,
+    VaultLogResponse,
 } from "./types";
 export {
     _SERVICE as StorageBucketService,
@@ -14,6 +15,7 @@ export {
     ForwardFileResponse as CandidForwardFileResponse,
     UploadChunkResponse as CandidUploadChunkResponse,
     VaultFileChunkResponse as CandidVaultFileChunkResponse,
+    VaultLogResponse as CandidVaultLogResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

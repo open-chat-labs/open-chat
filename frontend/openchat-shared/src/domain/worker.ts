@@ -135,7 +135,12 @@ import type {
     TokenExchangeRates,
     WalletConfig,
 } from "./crypto";
-import type { VaultFileChunkResponse, BlobReference, StorageStatus } from "./data/data";
+import type {
+    VaultFileChunkResponse,
+    VaultLogResponse,
+    BlobReference,
+    StorageStatus,
+} from "./data/data";
 import type { DexId } from "./dexes";
 import type { GenerateMagicLinkResponse } from "./email";
 import type {
@@ -383,6 +388,9 @@ export type WorkerRequest =
     | SetOpenAIApiKey
     | SetModerationReferralConfig
     | SetVaultReviewers
+    | VaultLog
+    | AuthorityReports
+    | RecordAuthorityReportFiled
     | AcceptTerms
     | SetInternalModerationChannel
     | ResolveModerationReport
@@ -825,6 +833,25 @@ type SetOpenAIApiKey = {
 type AcceptTerms = {
     kind: "acceptTerms";
     version: number;
+};
+
+type VaultLog = {
+    kind: "vaultLog";
+    bucketCanisterId: string;
+    start: bigint;
+    max: number;
+};
+
+type AuthorityReports = {
+    kind: "authorityReports";
+};
+
+type RecordAuthorityReportFiled = {
+    kind: "recordAuthorityReportFiled";
+    reportIndex: bigint;
+    portalReference: string;
+    urgent: boolean;
+    unverified: boolean;
 };
 
 type SetVaultReviewers = {
@@ -2526,6 +2553,12 @@ export type WorkerResult<T> = T extends Init
     : T extends SetModerationReferralConfig
     ? boolean
     : T extends SetVaultReviewers
+    ? boolean
+    : T extends VaultLog
+    ? VaultLogResponse
+    : T extends AuthorityReports
+    ? string | undefined
+    : T extends RecordAuthorityReportFiled
     ? boolean
     : T extends AcceptTerms
     ? boolean

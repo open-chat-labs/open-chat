@@ -10,6 +10,7 @@ import {
 } from "@icp-sdk/core/identity";
 import DRange from "drange";
 import {
+    type VaultLogResponse,
     type BlobReference,
     CURRENT_TERMS_VERSION,
     ARBITRUM_NETWORK,
@@ -7360,6 +7361,31 @@ export class OpenChat {
 
     setOpenAIApiKey(apiKey: string | undefined): Promise<boolean> {
         return this.#worker.send({ kind: "setOpenAIApiKey", apiKey }).catch(() => false);
+    }
+
+    vaultLog(bucketCanisterId: string, start: bigint, max: number): Promise<VaultLogResponse> {
+        return this.#worker.send({ kind: "vaultLog", bucketCanisterId, start, max });
+    }
+
+    authorityReports(): Promise<string | undefined> {
+        return this.#worker.send({ kind: "authorityReports" }).catch(() => undefined);
+    }
+
+    recordAuthorityReportFiled(
+        reportIndex: bigint,
+        portalReference: string,
+        urgent: boolean,
+        unverified: boolean,
+    ): Promise<boolean> {
+        return this.#worker
+            .send({
+                kind: "recordAuthorityReportFiled",
+                reportIndex,
+                portalReference,
+                urgent,
+                unverified,
+            })
+            .catch(() => false);
     }
 
     setVaultReviewers(userIds: string[]): Promise<boolean> {
