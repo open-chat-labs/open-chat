@@ -26,7 +26,7 @@
     let due: DueRow[] = $state([]);
     let filed: FiledRow[] = $state([]);
     let loaded = $state(false);
-    let busy = $state(false);
+    let busyReportIndex = $state<number | undefined>(undefined);
     let error = $state<string | undefined>(undefined);
     let references: Record<number, string> = $state({});
 
@@ -54,8 +54,8 @@
 
     function recordFiled(row: DueRow) {
         const reference = (references[row.report_index] ?? "").trim();
-        if (reference === "" || busy) return;
-        busy = true;
+        if (reference === "" || busyReportIndex !== undefined) return;
+        busyReportIndex = row.report_index;
         client
             .recordAuthorityReportFiled(BigInt(row.report_index), reference, row.urgent, false)
             .then((success) => {
@@ -66,7 +66,7 @@
                     toastStore.showFailureToast(i18nKey("Failed to record the filing"));
                 }
             })
-            .finally(() => (busy = false));
+            .finally(() => (busyReportIndex = undefined));
     }
 
     onMount(load);
@@ -102,8 +102,9 @@
                 />
                 <Button
                     tiny
-                    disabled={busy || (references[row.report_index] ?? "").trim() === ""}
-                    loading={busy}
+                    disabled={busyReportIndex !== undefined ||
+                        (references[row.report_index] ?? "").trim() === ""}
+                    loading={busyReportIndex === row.report_index}
                     onClick={() => recordFiled(row)}
                 >
                     Record filing
