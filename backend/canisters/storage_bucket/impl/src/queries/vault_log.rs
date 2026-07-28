@@ -30,7 +30,10 @@ fn vault_log_impl(args: Args, state: &RuntimeState) -> Response {
                     }
                     VaultLogEvent::Unquarantined(file_id) => format!("Unquarantined file {file_id}"),
                     VaultLogEvent::VerdictApplied(file_id, retention_until) => {
-                        format!("Verdict applied to file {file_id}, retained until {retention_until}")
+                        format!(
+                            "Verdict applied to file {file_id}, retained until {}",
+                            format_ts(*retention_until)
+                        )
                     }
                     VaultLogEvent::LegalHoldSet(file_id) => format!("Legal hold set on file {file_id}"),
                     VaultLogEvent::LegalHoldCleared(file_id) => format!("Legal hold cleared on file {file_id}"),
@@ -47,4 +50,12 @@ fn vault_log_impl(args: Args, state: &RuntimeState) -> Response {
             })
             .collect(),
     })
+}
+
+// RFC 3339 UTC, the unambiguous form for an audit surface
+fn format_ts(ts_millis: u64) -> String {
+    time::OffsetDateTime::from_unix_timestamp_nanos((ts_millis as i128) * 1_000_000)
+        .ok()
+        .and_then(|dt| dt.format(&time::format_description::well_known::Rfc3339).ok())
+        .unwrap_or_else(|| ts_millis.to_string())
 }
