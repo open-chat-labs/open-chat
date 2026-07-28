@@ -319,6 +319,7 @@ where
     #[serde(untagged)]
     enum Compat {
         New(Vec<VaultReviewer>),
+        #[allow(dead_code)]
         Old(Vec<Principal>),
     }
 

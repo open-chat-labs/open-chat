@@ -10,7 +10,7 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum VaultOp {
     Quarantine(QuarantineOp),
-    Unquarantine(FileId),
+    Unquarantine(UnquarantineOp),
     ApplyVerdict(ApplyVerdictOp),
     SetLegalHold(SetLegalHoldOp),
     Destroy(DestroyOp),
@@ -35,9 +35,18 @@ pub struct VaultCaptureMetadata {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct UnquarantineOp {
+    pub file_id: FileId,
+    #[serde(default)]
+    pub moderator: Option<UserId>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ApplyVerdictOp {
     pub file_id: FileId,
     pub retention_until: TimestampMillis,
+    #[serde(default)]
+    pub moderator: Option<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

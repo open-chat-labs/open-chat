@@ -29,11 +29,14 @@ fn c2c_vault_ops_impl(args: Args, state: &mut RuntimeState) -> Response {
                     }),
                 );
             }
-            VaultOp::Unquarantine(blob_reference) => {
+            VaultOp::Unquarantine(u) => {
                 push_for_blob(
                     state,
-                    &blob_reference,
-                    bucket_vault::VaultOp::Unquarantine(blob_reference.blob_id),
+                    &u.blob_reference,
+                    bucket_vault::VaultOp::Unquarantine(bucket_vault::UnquarantineOp {
+                        file_id: u.blob_reference.blob_id,
+                        moderator: u.moderator,
+                    }),
                 );
             }
             VaultOp::ApplyVerdict(v) => {
@@ -43,6 +46,7 @@ fn c2c_vault_ops_impl(args: Args, state: &mut RuntimeState) -> Response {
                     bucket_vault::VaultOp::ApplyVerdict(bucket_vault::ApplyVerdictOp {
                         file_id: v.blob_reference.blob_id,
                         retention_until: v.retention_until,
+                        moderator: v.moderator,
                     }),
                 );
             }

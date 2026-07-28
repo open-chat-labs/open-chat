@@ -61,7 +61,7 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     reported_message.message_id,
                     &mut state.data.fire_and_forget_handler,
                 );
-                moderation::apply_vault_verdict(&reported_message.blob_references, state);
+                moderation::apply_vault_verdict(&reported_message.blob_references, moderator, state);
                 state
                     .data
                     .authority_reports
@@ -77,6 +77,7 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     args.report_index,
                     &reported_message,
                     ModerationCategories::SEXUAL_MINORS.bits(),
+                    moderator,
                     state,
                 );
                 if !reported_message.already_deleted {
@@ -113,7 +114,7 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     reported_message.message_id,
                     &mut state.data.fire_and_forget_handler,
                 );
-                moderation::unquarantine_blobs(&reported_message.blob_references, state);
+                moderation::unquarantine_blobs(&reported_message.blob_references, moderator, state);
                 moderation::downgrade_suspension_to_upheld_violation(reported_message.sender, now, state);
             } else {
                 if !reported_message.already_deleted {
@@ -145,7 +146,7 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     reported_message.message_id,
                     &mut state.data.fire_and_forget_handler,
                 );
-                moderation::unquarantine_blobs(&reported_message.blob_references, state);
+                moderation::unquarantine_blobs(&reported_message.blob_references, moderator, state);
                 state.push_event_to_local_user_index(
                     reported_message.sender,
                     build_restoration_message_to_sender(&reported_message),

@@ -26,6 +26,8 @@ fn vault_log_impl(args: Args, state: &RuntimeState) -> Response {
                 prev_hash: hex::encode(e.prev_hash),
                 user_id: match &e.event {
                     VaultLogEvent::ViewedBy(_, _, user_id) => *user_id,
+                    VaultLogEvent::UnquarantinedBy(_, moderator) => *moderator,
+                    VaultLogEvent::VerdictAppliedBy(_, _, moderator) => *moderator,
                     _ => None,
                 },
                 event: match &e.event {
@@ -54,6 +56,19 @@ fn vault_log_impl(args: Args, state: &RuntimeState) -> Response {
                         Some(user_id) => format!("File {file_id} viewed by user {user_id}"),
                         None => format!("File {file_id} viewed by {principal}"),
                     },
+                    VaultLogEvent::UnquarantinedBy(file_id, moderator) => match moderator {
+                        Some(moderator) => format!("Unquarantined file {file_id} (verdict by user {moderator})"),
+                        None => format!("Unquarantined file {file_id}"),
+                    },
+                    VaultLogEvent::VerdictAppliedBy(file_id, retention_until, moderator) => {
+                        let until = format_ts(*retention_until);
+                        match moderator {
+                            Some(moderator) => {
+                                format!("Verdict applied to file {file_id} by user {moderator}, retained until {until}")
+                            }
+                            None => format!("Verdict applied to file {file_id}, retained until {until}"),
+                        }
+                    }
                 },
             })
             .collect(),

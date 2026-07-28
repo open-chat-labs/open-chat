@@ -11,7 +11,7 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum VaultOp {
     Quarantine(QuarantineOp),
-    Unquarantine(BlobReference),
+    Unquarantine(UnquarantineOp),
     ApplyVerdict(ApplyVerdictOp),
     SetLegalHold(SetLegalHoldOp),
     Destroy(DestroyOp),
@@ -25,9 +25,18 @@ pub struct QuarantineOp {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct UnquarantineOp {
+    pub blob_reference: BlobReference,
+    #[serde(default)]
+    pub moderator: Option<UserId>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ApplyVerdictOp {
     pub blob_reference: BlobReference,
     pub retention_until: TimestampMillis,
+    #[serde(default)]
+    pub moderator: Option<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

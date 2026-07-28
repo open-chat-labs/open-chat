@@ -62,6 +62,8 @@ pub enum VaultLogEvent {
     // Legacy entries from before the reviewer user_id was captured at event time
     Viewed(FileId, Principal),
     ViewedBy(FileId, Principal, Option<UserId>),
+    UnquarantinedBy(FileId, Option<UserId>),
+    VerdictAppliedBy(FileId, TimestampMillis, Option<UserId>),
 }
 
 impl VaultLogEvent {
@@ -75,7 +77,9 @@ impl VaultLogEvent {
             | VaultLogEvent::Destroyed(file_id, _)
             | VaultLogEvent::RetentionExpired(file_id)
             | VaultLogEvent::Viewed(file_id, _)
-            | VaultLogEvent::ViewedBy(file_id, _, _) => *file_id,
+            | VaultLogEvent::ViewedBy(file_id, _, _)
+            | VaultLogEvent::UnquarantinedBy(file_id, _)
+            | VaultLogEvent::VerdictAppliedBy(file_id, _, _) => *file_id,
         }
     }
 }
@@ -130,7 +134,7 @@ impl Vault {
         self.quarantine_failures += 1;
     }
 
-    pub fn unquarantine(&mut self, file_id: FileId, now: TimestampMillis) -> VaultOpOutcome {
+    pub fn unquarantine(&mut self, file_id: FileId, moderator: Option<UserId>, now: TimestampMillis) -> VaultOpOutcome {
         let Some(hash) = self.file_id_to_hash.get(&file_id).copied() else {
             return VaultOpOutcome::NotFound;
         };
@@ -140,17 +144,23 @@ impl Vault {
             return VaultOpOutcome::Blocked;
         }
         for alias in self.remove_all_references(&hash) {
-            self.append_log(VaultLogEvent::Unquarantined(alias), now);
+            self.append_log(VaultLogEvent::UnquarantinedBy(alias, moderator), now);
         }
         VaultOpOutcome::ReleasePin(hash)
     }
 
-    pub fn apply_verdict(&mut self, file_id: FileId, retention_until: TimestampMillis, now: TimestampMillis) -> VaultOpOutcome {
+    pub fn apply_verdict(
+        &mut self,
+        file_id: FileId,
+        retention_until: TimestampMillis,
+        moderator: Option<UserId>,
+        now: TimestampMillis,
+    ) -> VaultOpOutcome {
         let Some(record) = self.file_id_to_hash.get(&file_id).and_then(|h| self.records.get_mut(h)) else {
             return VaultOpOutcome::NotFound;
         };
         record.retention_until = Some(retention_until);
-        self.append_log(VaultLogEvent::VerdictApplied(file_id, retention_until), now);
+        self.append_log(VaultLogEvent::VerdictAppliedBy(file_id, retention_until, moderator), now);
         VaultOpOutcome::Applied
     }
 
@@ -315,6 +325,7 @@ where
     #[serde(untagged)]
     enum Compat {
         New(HashMap<Principal, UserId>),
+        #[allow(dead_code)]
         Old(HashSet<Principal>),
     }
 

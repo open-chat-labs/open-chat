@@ -30,18 +30,21 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
                     quarantine_failures.push(q.file_id);
                 }
             }
-            VaultOp::Unquarantine(file_id) => match state.data.vault.unquarantine(file_id, now) {
-                VaultOpOutcome::ReleasePin(hash) => {
-                    state.data.files.vault_unpin(&hash);
-                    info!(%file_id, "Vault: unquarantined");
+            VaultOp::Unquarantine(u) => {
+                let file_id = u.file_id;
+                match state.data.vault.unquarantine(u.file_id, u.moderator, now) {
+                    VaultOpOutcome::ReleasePin(hash) => {
+                        state.data.files.vault_unpin(&hash);
+                        info!(%file_id, "Vault: unquarantined");
+                    }
+                    VaultOpOutcome::Blocked => {
+                        error!(%file_id, "Vault: unquarantine refused, record is under legal hold");
+                    }
+                    _ => (),
                 }
-                VaultOpOutcome::Blocked => {
-                    error!(%file_id, "Vault: unquarantine refused, record is under legal hold");
-                }
-                _ => (),
-            },
+            }
             VaultOp::ApplyVerdict(v) => {
-                state.data.vault.apply_verdict(v.file_id, v.retention_until, now);
+                state.data.vault.apply_verdict(v.file_id, v.retention_until, v.moderator, now);
             }
             VaultOp::SetLegalHold(l) => {
                 state.data.vault.set_legal_hold(l.file_id, l.legal_hold, now);

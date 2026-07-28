@@ -5,7 +5,9 @@ use constants::{DAY_IN_MS, OPENCHAT_BOT_USER_ID};
 use fire_and_forget_handler::FireAndForgetHandler;
 use rand::Rng;
 use storage_bucket_canister::c2c_vault_sync::VaultCaptureMetadata;
-use storage_index_canister::c2c_vault_ops::{ApplyVerdictOp, Args as VaultOpsArgs, QuarantineOp, VaultOp, VaultReviewer};
+use storage_index_canister::c2c_vault_ops::{
+    ApplyVerdictOp, Args as VaultOpsArgs, QuarantineOp, UnquarantineOp, VaultOp, VaultReviewer,
+};
 use tracing::error;
 use types::{BlobReference, Milliseconds};
 use types::{
@@ -358,10 +360,16 @@ pub fn quarantine_blobs(report_index: u64, report: &ReportedMessage, flags: u32,
 // Quarantine plus the uphold verdict in a single message, so the bucket processes them in
 // order: separate fire-and-forget sends carry no ordering guarantee, and a verdict arriving
 // before its quarantine would be dropped, leaving the blob retained with no retention clock
-pub fn quarantine_blobs_and_apply_verdict(report_index: u64, report: &ReportedMessage, flags: u32, state: &mut RuntimeState) {
+pub fn quarantine_blobs_and_apply_verdict(
+    report_index: u64,
+    report: &ReportedMessage,
+    flags: u32,
+    moderator: UserId,
+    state: &mut RuntimeState,
+) {
     let now = state.env.now();
     let mut ops = quarantine_ops(report_index, report, flags, now);
-    ops.extend(verdict_ops(&report.blob_references, now));
+    ops.extend(verdict_ops(&report.blob_references, moderator, now));
     send_vault_ops(ops, state);
 }
 
@@ -386,19 +394,28 @@ fn quarantine_ops(report_index: u64, report: &ReportedMessage, flags: u32, now: 
         .collect()
 }
 
-pub fn unquarantine_blobs(blob_references: &[BlobReference], state: &mut RuntimeState) {
-    let ops = blob_references.iter().cloned().map(VaultOp::Unquarantine).collect();
+pub fn unquarantine_blobs(blob_references: &[BlobReference], moderator: UserId, state: &mut RuntimeState) {
+    let ops = blob_references
+        .iter()
+        .cloned()
+        .map(|blob_reference| {
+            VaultOp::Unquarantine(UnquarantineOp {
+                blob_reference,
+                moderator: Some(moderator),
+            })
+        })
+        .collect();
     send_vault_ops(ops, state);
 }
 
 // Applies the uphold verdict to the vault: the retention clock starts and the blob is deleted
 // only when it expires (never while a legal hold is set)
-pub fn apply_vault_verdict(blob_references: &[BlobReference], state: &mut RuntimeState) {
-    let ops = verdict_ops(blob_references, state.env.now());
+pub fn apply_vault_verdict(blob_references: &[BlobReference], moderator: UserId, state: &mut RuntimeState) {
+    let ops = verdict_ops(blob_references, moderator, state.env.now());
     send_vault_ops(ops, state);
 }
 
-fn verdict_ops(blob_references: &[BlobReference], now: TimestampMillis) -> Vec<VaultOp> {
+fn verdict_ops(blob_references: &[BlobReference], moderator: UserId, now: TimestampMillis) -> Vec<VaultOp> {
     let retention_until = now + VAULT_RETENTION_MS;
     blob_references
         .iter()
@@ -407,6 +424,7 @@ fn verdict_ops(blob_references: &[BlobReference], now: TimestampMillis) -> Vec<V
             VaultOp::ApplyVerdict(ApplyVerdictOp {
                 blob_reference,
                 retention_until,
+                moderator: Some(moderator),
             })
         })
         .collect()
