@@ -21,7 +21,7 @@ pub fn start_job() {
 }
 
 pub(crate) fn process_neurons() {
-    ic_cdk::futures::spawn(run_async());
+    ic_cdk::futures::spawn_migratory(run_async());
 }
 
 async fn run_async() {
@@ -86,7 +86,7 @@ async fn run_async() {
 
         if neurons_updated {
             // Refresh the neurons again given that they've been updated
-            ic_cdk_timers::set_timer(Duration::ZERO, process_neurons);
+            ic_cdk_timers::set_timer(Duration::ZERO, async { process_neurons() });
         }
     }
 }

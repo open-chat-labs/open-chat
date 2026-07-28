@@ -1,7 +1,7 @@
 use p256::pkcs8::DecodePrivateKey;
 use p256::{
     NistP256, ecdsa,
-    elliptic_curve::{NonZeroScalar, rand_core::CryptoRngCore, subtle::CtOption},
+    elliptic_curve::{Generate, NonZeroScalar, rand_core::CryptoRng, subtle::CtOption},
     pkcs8::{EncodePrivateKey, EncodePublicKey},
 };
 use serde::{Deserialize, Serialize};
@@ -15,8 +15,8 @@ pub struct P256KeyPair {
 }
 
 impl P256KeyPair {
-    pub fn new(rng: &mut impl CryptoRngCore) -> P256KeyPair {
-        let sk: ecdsa::SigningKey = ecdsa::SigningKey::random(rng);
+    pub fn new(rng: &mut impl CryptoRng) -> P256KeyPair {
+        let sk: ecdsa::SigningKey = ecdsa::SigningKey::generate_from_rng(rng);
 
         P256KeyPair {
             sk_der: P256KeyPair::to_der(&sk).unwrap(),

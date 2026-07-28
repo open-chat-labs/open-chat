@@ -24,7 +24,7 @@ fn c2c_delete_group_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
 // TODO make this retry upon failure
 pub(crate) fn spawn_delete_canister(canister_id: CanisterId) {
-    ic_cdk::futures::spawn(async move {
+    ic_cdk::futures::spawn_migratory(async move {
         let _ = stop(canister_id).await;
 
         // Note: we are hoping the spec/implementation of delete_canister will change so that

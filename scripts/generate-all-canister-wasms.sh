@@ -41,7 +41,10 @@ CANISTERS=(
 )
 
 echo Building wasms
-export RUSTFLAGS="--remap-path-prefix $(readlink -f ${SCRIPT_DIR}/..)=/build --remap-path-prefix ${CARGO_HOME}/bin=/cargo/bin --remap-path-prefix ${CARGO_HOME}/git=/cargo/git"
+# `--cfg getrandom_backend="custom"` selects getrandom's custom backend on wasm (see
+# .cargo/config.toml). Setting RUSTFLAGS here means cargo ignores that config file, so the cfg has
+# to be repeated in the flags below.
+export RUSTFLAGS="--cfg getrandom_backend=\"custom\" --remap-path-prefix $(readlink -f ${SCRIPT_DIR}/..)=/build --remap-path-prefix ${CARGO_HOME}/bin=/cargo/bin --remap-path-prefix ${CARGO_HOME}/git=/cargo/git"
 for l in $(ls ${CARGO_HOME}/registry/src/)
 do
   export RUSTFLAGS="--remap-path-prefix ${CARGO_HOME}/registry/src/${l}=/cargo/registry/src/github ${RUSTFLAGS}"
@@ -63,8 +66,11 @@ fi
 mkdir -p wasms
 for CANISTER in "${CANISTERS[@]}"; do
   PACKAGE="${CANISTER}_canister_impl"
-  ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm shrink
-  ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm optimize Oz || exit 1
+  # Invoke the version installed above rather than whatever is first on the PATH - a different
+  # `ic-wasm` there (eg. from a package manager) may not take the same arguments, and this loop
+  # would then silently reuse the `-opt.wasm` left behind by an earlier build
+  ${CARGO_HOME}/bin/ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm shrink || exit 1
+  ${CARGO_HOME}/bin/ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm optimize Oz || exit 1
   gzip -fckn9 target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm > ./wasms/$CANISTER.wasm.gz
 done
 

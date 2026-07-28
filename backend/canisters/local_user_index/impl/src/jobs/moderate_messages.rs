@@ -22,7 +22,7 @@ const MAX_ATTEMPTS: u8 = 3;
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && state.data.openai_api_key.is_some() && !state.data.message_moderation_queue.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer(next_interval(), run);
+        let timer_id = ic_cdk_timers::set_timer(next_interval(), async { run() });
         TIMER_ID.set(Some(timer_id));
         true
     } else {
@@ -44,7 +44,7 @@ pub fn run() {
         // TIMER_ID is deliberately left set while the batch is in flight so that an enqueue
         // during the outcall cannot arm a second concurrent batch; it is cleared, and the timer
         // re-armed if required, when the batch completes
-        ic_cdk::futures::spawn(process_batch(api_key, batch));
+        ic_cdk::futures::spawn_migratory(process_batch(api_key, batch));
     } else {
         TIMER_ID.set(None);
     }

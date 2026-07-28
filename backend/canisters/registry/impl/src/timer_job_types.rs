@@ -45,7 +45,7 @@ impl Job for ExpandOntoSubnetJob {
         if let Some((next_step, now)) =
             read_state(|state| state.data.subnets.in_progress().map(|s| (s.next_step(), state.env.now())))
         {
-            ic_cdk::futures::spawn(self.process_step(next_step, now));
+            ic_cdk::futures::spawn_migratory(self.process_step(next_step, now));
         }
     }
 }

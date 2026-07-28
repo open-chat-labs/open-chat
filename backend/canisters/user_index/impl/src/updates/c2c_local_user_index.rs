@@ -11,7 +11,7 @@ use local_user_index_canister::{
     ChitBalance, OpenChatBotMessageV2, UserIndexEvent, UserJoinedCommunityOrChannel, UserJoinedGroup, UserRegistered,
     UsernameChanged,
 };
-use rand::RngCore;
+use rand::Rng;
 use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
 use storage_index_canister::add_or_update_users::UserConfig;

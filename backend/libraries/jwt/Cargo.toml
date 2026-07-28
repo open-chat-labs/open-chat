@@ -8,7 +8,6 @@ edition.workspace = true
 [dependencies]
 candid = { workspace = true }
 ct-codecs = { workspace = true }
-hmac-sha256 = { workspace = true }
 p256 = { workspace = true, features = ["ecdsa", "pkcs8"] }
 rand = { workspace = true }
 serde = { workspace = true }

@@ -18,7 +18,7 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && state.data.nervous_systems.any_proposals_to_push() {
-        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, async { run() });
         TIMER_ID.set(Some(timer_id));
         true
     } else {
@@ -31,7 +31,7 @@ pub fn run() {
     TIMER_ID.set(None);
 
     if let Some(proposal) = mutate_state(|state| state.data.nervous_systems.dequeue_next_proposal_to_push()) {
-        ic_cdk::futures::spawn(push_proposal(proposal));
+        ic_cdk::futures::spawn_migratory(push_proposal(proposal));
     }
     read_state(start_job_if_required);
 }

@@ -18,7 +18,7 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && !state.data.pending_payments_queue.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, async { run() });
         TIMER_ID.set(Some(timer_id));
         true
     } else {
@@ -33,7 +33,7 @@ pub fn run() {
     let (pending_payment, now_nanos) = mutate_state(|state| (state.data.pending_payments_queue.pop(), state.env.now_nanos()));
 
     if let Some(pending_payment) = pending_payment {
-        ic_cdk::futures::spawn(process_payment(pending_payment, now_nanos));
+        ic_cdk::futures::spawn_migratory(process_payment(pending_payment, now_nanos));
         read_state(start_job_if_required);
     }
 }

@@ -5,7 +5,7 @@ use crate::model::users::{FileStatusInternal, IndexSyncComplete};
 use crate::{RuntimeState, check_cycles_balance, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use rand::Rng;
+use rand::RngExt;
 use storage_bucket_canister::forward_file::{Response::*, *};
 
 #[update(guard = "caller_is_known_user", candid = true, json = true, msgpack = true)]
@@ -20,7 +20,7 @@ fn forward_file_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     let now = state.env.now();
     let canister_id = state.env.canister_id();
-    let file_id_seed: u128 = state.env.rng().r#gen();
+    let file_id_seed: u128 = state.env.rng().random();
     let accessors = args.accessors.into_iter().collect();
 
     match state

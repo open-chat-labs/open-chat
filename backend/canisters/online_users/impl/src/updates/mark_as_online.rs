@@ -6,7 +6,7 @@ use canister_tracing_macros::trace;
 use constants::SECOND_IN_MS;
 use event_store_producer::EventBuilder;
 use online_users_canister::mark_as_online::{Response::*, *};
-use rand::RngCore;
+use rand::Rng;
 use stable_memory_map::StableMemoryMap;
 use types::{CanisterId, IdempotentEnvelope, UserId};
 use utils::time::MonthKey;

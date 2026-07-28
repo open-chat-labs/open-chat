@@ -14,7 +14,7 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && state.data.deleted_communities.notifications_pending() > 0 {
-        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, async { run() });
         TIMER_ID.set(Some(timer_id));
         true
     } else {
@@ -29,7 +29,7 @@ fn run() {
     if let Some(batch) = mutate_state(next_batch)
         && !batch.is_empty()
     {
-        ic_cdk::futures::spawn(push_notifications(batch));
+        ic_cdk::futures::spawn_migratory(push_notifications(batch));
         read_state(start_job_if_required);
     }
 }
