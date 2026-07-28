@@ -3,6 +3,7 @@ use user_index_canister::*;
 
 // Queries
 generate_msgpack_query_call!(check_username);
+generate_msgpack_query_call!(moderation_config);
 generate_msgpack_query_call!(current_user);
 generate_msgpack_query_call!(search);
 generate_msgpack_query_call!(platform_moderators);
@@ -27,6 +28,7 @@ generate_msgpack_update_call!(contest_moderation_sanction);
 generate_msgpack_update_call!(record_authority_report_filed);
 generate_msgpack_update_call!(resolve_moderation_report);
 generate_msgpack_update_call!(set_internal_moderation_channel);
+generate_msgpack_update_call!(accept_terms);
 generate_msgpack_update_call!(set_moderation_referral_config);
 generate_msgpack_update_call!(set_vault_reviewers);
 generate_msgpack_update_call!(set_openai_api_key);

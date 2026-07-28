@@ -232,3 +232,107 @@ struct ModerationResult {
     #[serde(default)]
     category_scores: BTreeMap<String, f64>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn body(categories: &[(&str, bool)], scores: &[(&str, f64)]) -> Vec<u8> {
+        let categories: serde_json::Map<String, serde_json::Value> = categories
+            .iter()
+            .map(|(c, f)| (c.to_string(), serde_json::json!(f)))
+            .collect();
+        let scores: serde_json::Map<String, serde_json::Value> =
+            scores.iter().map(|(c, v)| (c.to_string(), serde_json::json!(v))).collect();
+        serde_json::to_vec(&serde_json::json!({
+            "results": [{ "categories": categories, "category_scores": scores }]
+        }))
+        .unwrap()
+    }
+
+    fn config(categories: u32, score_threshold: f64) -> ModerationReferralConfig {
+        ModerationReferralConfig {
+            categories: (0..32)
+                .map(|i| 1u32 << i)
+                .filter(|bit| categories & bit != 0)
+                .map(|category| types::ModerationReferralCategory {
+                    category,
+                    score_threshold,
+                })
+                .collect(),
+        }
+    }
+
+    #[test]
+    fn flagged_categories_map_to_bits() {
+        let body = body(&[("sexual", true), ("violence", true), ("self-harm", false)], &[]);
+        let result = extract_classifications(&body, None).unwrap();
+        assert_eq!(
+            result[0].flagged.bits(),
+            (ModerationCategories::SEXUAL | ModerationCategories::VIOLENCE).bits()
+        );
+        assert!(result[0].moderation_referral.is_empty());
+    }
+
+    #[test]
+    fn referral_is_score_based_not_flag_based() {
+        // Flagged but below the referral threshold: no referral. Unflagged but above: referral.
+        let body = body(
+            &[("sexual", true), ("harassment", false)],
+            &[("sexual", 0.7), ("harassment", 0.96)],
+        );
+        let cfg = config((ModerationCategories::SEXUAL | ModerationCategories::HARASSMENT).bits(), 0.9);
+        let result = extract_classifications(&body, Some(&cfg)).unwrap();
+        assert_eq!(result[0].moderation_referral.bits(), ModerationCategories::HARASSMENT.bits());
+    }
+
+    #[test]
+    fn per_category_thresholds_apply_independently() {
+        let body = body(&[], &[("sexual", 0.86), ("violence", 0.86)]);
+        let cfg = ModerationReferralConfig {
+            categories: vec![
+                types::ModerationReferralCategory {
+                    category: ModerationCategories::SEXUAL.bits(),
+                    score_threshold: 0.85,
+                },
+                types::ModerationReferralCategory {
+                    category: ModerationCategories::VIOLENCE.bits(),
+                    score_threshold: 0.95,
+                },
+            ],
+        };
+        let result = extract_classifications(&body, Some(&cfg)).unwrap();
+        assert_eq!(result[0].moderation_referral.bits(), ModerationCategories::SEXUAL.bits());
+    }
+
+    #[test]
+    fn sexual_minors_never_becomes_a_referral() {
+        // Even a malformed config containing the CSAM bit cannot demote it to referral
+        let body = body(&[("sexual/minors", true)], &[("sexual/minors", 0.99)]);
+        let cfg = config(ModerationCategories::SEXUAL_MINORS.bits(), 0.5);
+        let result = extract_classifications(&body, Some(&cfg)).unwrap();
+        assert!(result[0].moderation_referral.is_empty());
+        // But it is still flagged - the CSAM auto-sanction path sees it
+        assert!(result[0].flagged.contains(ModerationCategories::SEXUAL_MINORS));
+    }
+
+    #[test]
+    fn unknown_categories_are_ignored() {
+        let body = body(&[("some-new-category", true), ("sexual", true)], &[]);
+        let result = extract_classifications(&body, None).unwrap();
+        assert_eq!(result[0].flagged.bits(), ModerationCategories::SEXUAL.bits());
+    }
+
+    #[test]
+    fn missing_scores_mean_no_referral() {
+        // omni responses without category_scores (or malformed) must not panic
+        let body = serde_json::to_vec(&serde_json::json!({
+            "results": [{ "categories": { "sexual": true } }]
+        }))
+        .unwrap();
+        let cfg = config(ModerationCategories::SEXUAL.bits(), 0.5);
+        let result = extract_classifications(&body, Some(&cfg)).unwrap();
+        assert!(result[0].moderation_referral.is_empty());
+        assert!(result[0].flagged.contains(ModerationCategories::SEXUAL));
+    }
+}

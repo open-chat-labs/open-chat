@@ -714,3 +714,81 @@ mod tests {
         }
     }
 }
+
+#[cfg(test)]
+mod report_status_tests {
+    use super::*;
+    use candid::Principal;
+
+    fn base_report() -> ReportedMessage {
+        ReportedMessage {
+            chat_id: Chat::Group(Principal::anonymous().into()),
+            thread_root_message_index: None,
+            message_index: 0.into(),
+            message_id: 1u64.into(),
+            sender: Principal::anonymous().into(),
+            already_deleted: false,
+            reports: HashMap::new(),
+            outcome: None,
+            moderation_channel_message_id: None,
+            blob_references: Vec::new(),
+            detection: DetectionSource::Proactive,
+            contested: None,
+            unverified_report_filed: None,
+        }
+    }
+
+    fn with_verdict(verdict: ModerationVerdict) -> ReportedMessage {
+        let mut report = base_report();
+        report.outcome = Some(ReportOutcome::Automated(AutomatedOutcome {
+            timestamp: 1,
+            flagged_categories: 2,
+            action: ModerationAction::AutoSanctioned,
+            classification_failed: false,
+            human_verdict: Some(HumanVerdict {
+                verdict,
+                moderator: Principal::anonymous().into(),
+                timestamp: 2,
+            }),
+        }));
+        report
+    }
+
+    #[test]
+    fn status_reflects_report_state() {
+        assert!(matches!(
+            ReportedMessages::report_status(&base_report()),
+            ModerationReportStatus::Pending
+        ));
+
+        let mut contested = base_report();
+        contested.contested = Some(1);
+        assert!(matches!(
+            ReportedMessages::report_status(&contested),
+            ModerationReportStatus::Contested
+        ));
+
+        assert!(matches!(
+            ReportedMessages::report_status(&with_verdict(ModerationVerdict::Upheld)),
+            ModerationReportStatus::Upheld(_)
+        ));
+        assert!(matches!(
+            ReportedMessages::report_status(&with_verdict(ModerationVerdict::UpheldAsCsam)),
+            ModerationReportStatus::UpheldAsCsam(_)
+        ));
+        assert!(matches!(
+            ReportedMessages::report_status(&with_verdict(ModerationVerdict::Dismissed)),
+            ModerationReportStatus::Dismissed(_)
+        ));
+    }
+
+    #[test]
+    fn a_verdict_takes_precedence_over_contested() {
+        let mut report = with_verdict(ModerationVerdict::Dismissed);
+        report.contested = Some(1);
+        assert!(matches!(
+            ReportedMessages::report_status(&report),
+            ModerationReportStatus::Dismissed(_)
+        ));
+    }
+}

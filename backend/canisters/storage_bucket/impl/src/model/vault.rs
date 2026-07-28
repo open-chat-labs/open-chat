@@ -334,3 +334,148 @@ where
         Compat::Old(_) => HashMap::new(),
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Principal;
+    use types::Chat;
+
+    fn metadata(report_index: u64) -> VaultCaptureMetadata {
+        VaultCaptureMetadata {
+            report_index,
+            chat: Chat::Group(Principal::anonymous().into()),
+            message_index: 0.into(),
+            message_id: 1u64.into(),
+            sender: Principal::anonymous().into(),
+            detection_timestamp: 1,
+            classifier_categories: 2,
+        }
+    }
+
+    fn reviewer(n: u8) -> Principal {
+        Principal::from_slice(&[n; 8])
+    }
+
+    fn vault_with_reviewer() -> Vault {
+        let mut vault = Vault::default();
+        vault.set_reviewers(vec![VaultReviewer {
+            principal: reviewer(1),
+            user_id: Principal::from_slice(&[9; 8]).into(),
+        }]);
+        vault
+    }
+
+    #[test]
+    fn log_is_hash_chained_and_verifiable() {
+        let mut vault = vault_with_reviewer();
+        vault.quarantine(1, [1u8; 32], "image/png".to_string(), metadata(0), 100);
+        assert!(vault.authorize_view(1, reviewer(1), 0, 1, 200));
+        vault.apply_verdict(1, 999, Some(Principal::from_slice(&[9; 8]).into()), 300);
+
+        let (total, entries) = vault.log_page(0, 100, None);
+        assert_eq!(total, 3);
+        // Each entry's prev_hash is the hash of the previous entry; the first chains from zero
+        assert_eq!(entries[0].prev_hash, Hash::default());
+        for pair in entries.windows(2) {
+            assert_eq!(pair[1].prev_hash, Vault::entry_hash(pair[0]));
+        }
+        // Tampering with any entry breaks the chain for its successor
+        let tampered = VaultLogEntry {
+            index: entries[1].index,
+            timestamp: entries[1].timestamp + 1,
+            prev_hash: entries[1].prev_hash,
+            event: entries[1].event.clone(),
+        };
+        assert_ne!(Vault::entry_hash(&tampered), entries[2].prev_hash);
+    }
+
+    #[test]
+    fn view_attribution_is_captured_at_event_time() {
+        let mut vault = vault_with_reviewer();
+        vault.quarantine(1, [1u8; 32], "image/png".to_string(), metadata(0), 100);
+        assert!(vault.authorize_view(1, reviewer(1), 0, 1, 200));
+
+        // Replacing the reviewer set afterwards must not change what was recorded
+        vault.set_reviewers(Vec::new());
+        let (_, entries) = vault.log_page(0, 100, None);
+        let user_id = Principal::from_slice(&[9; 8]).into();
+        assert!(matches!(&entries[1].event, VaultLogEvent::ViewedBy(1, p, Some(u)) if *p == reviewer(1) && *u == user_id));
+    }
+
+    #[test]
+    fn chunk_sessions_must_be_ordered() {
+        let mut vault = vault_with_reviewer();
+        vault.quarantine(1, [1u8; 32], "video/mp4".to_string(), metadata(0), 100);
+
+        // Chunk 0 starts a session; later chunks only in order
+        assert!(vault.authorize_view(1, reviewer(1), 0, 3, 200));
+        assert!(!vault.authorize_view(1, reviewer(1), 2, 3, 201));
+        assert!(vault.authorize_view(1, reviewer(1), 1, 3, 202));
+        assert!(vault.authorize_view(1, reviewer(1), 2, 3, 203));
+        // Session complete: repeating a later chunk without a new session is refused
+        assert!(!vault.authorize_view(1, reviewer(1), 1, 3, 204));
+        // Only chunk 0 is a logged act
+        let (_, entries) = vault.log_page(0, 100, None);
+        assert_eq!(
+            entries
+                .iter()
+                .filter(|e| matches!(e.event, VaultLogEvent::ViewedBy(..)))
+                .count(),
+            1
+        );
+    }
+
+    #[test]
+    fn legal_hold_blocks_release() {
+        let mut vault = vault_with_reviewer();
+        vault.quarantine(1, [1u8; 32], "image/png".to_string(), metadata(0), 100);
+        vault.set_legal_hold(1, true, 200);
+        assert!(matches!(vault.unquarantine(1, None, 300), VaultOpOutcome::Blocked));
+        vault.set_legal_hold(1, false, 400);
+        assert!(matches!(vault.unquarantine(1, None, 500), VaultOpOutcome::ReleasePin(_)));
+    }
+
+    #[test]
+    fn log_page_filters_by_file() {
+        let mut vault = vault_with_reviewer();
+        vault.quarantine(1, [1u8; 32], "image/png".to_string(), metadata(0), 100);
+        vault.quarantine(2, [2u8; 32], "image/png".to_string(), metadata(1), 101);
+        assert!(vault.authorize_view(2, reviewer(1), 0, 1, 200));
+
+        let (total_all, _) = vault.log_page(0, 100, None);
+        assert_eq!(total_all, 3);
+        let (total_one, entries) = vault.log_page(0, 100, Some(2));
+        assert_eq!(total_one, 2);
+        assert!(entries.iter().all(|e| e.event.file_id() == 2));
+    }
+
+    #[test]
+    fn reviewer_compat_accepts_old_principal_set() {
+        #[derive(Serialize)]
+        struct OldHolder {
+            reviewers: HashSet<Principal>,
+        }
+        #[derive(Deserialize)]
+        struct Holder {
+            #[serde(default, deserialize_with = "deserialize_reviewers")]
+            reviewers: HashMap<Principal, UserId>,
+        }
+        let bytes = msgpack::serialize_then_unwrap(OldHolder {
+            reviewers: [reviewer(1)].into_iter().collect(),
+        });
+        let holder: Holder = msgpack::deserialize(bytes.as_slice()).unwrap();
+        assert!(holder.reviewers.is_empty());
+
+        #[derive(Serialize)]
+        struct NewHolder {
+            reviewers: HashMap<Principal, UserId>,
+        }
+        let user_id: UserId = Principal::from_slice(&[9; 8]).into();
+        let bytes = msgpack::serialize_then_unwrap(NewHolder {
+            reviewers: [(reviewer(1), user_id)].into_iter().collect(),
+        });
+        let holder: Holder = msgpack::deserialize(bytes.as_slice()).unwrap();
+        assert_eq!(holder.reviewers.get(&reviewer(1)), Some(&user_id));
+    }
+}

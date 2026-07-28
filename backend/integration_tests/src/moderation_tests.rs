@@ -594,6 +594,66 @@ fn escalated_media_report_upheld_as_csam_vaults_evidence() {
         unauthorized,
         storage_bucket_canister::vault_file_chunk::Response::NotAuthorized
     ));
+
+    // The storage index lists the bucket for the vault-log audit view
+    let storage_index_canister::vault_buckets::Response::Success(buckets) = client::storage_index::vault_buckets(
+        env,
+        test_data.moderator.principal,
+        canister_ids.storage_index,
+        &types::Empty {},
+    );
+    assert!(buckets.buckets.contains(&blob_reference.canister_id));
+
+    // The vault access log is the complete attributed chain of custody: quarantined (with the
+    // report linkage), viewed by the reviewer, verdict applied by the moderator - and it is
+    // readable by the designated reviewer only
+    let storage_bucket_canister::vault_log::Response::Success(log) = client::storage_bucket::vault_log(
+        env,
+        test_data.moderator.principal,
+        blob_reference.canister_id,
+        &storage_bucket_canister::vault_log::Args {
+            start: 0,
+            max: 100,
+            file_id: Some(blob_reference.blob_id),
+        },
+    ) else {
+        panic!("reviewer should be able to read the vault log");
+    };
+    assert!(log.total >= 3, "{:?}", log.entries);
+    let events: Vec<&str> = log.entries.iter().map(|e| e.event.as_str()).collect();
+    assert!(
+        events[0].starts_with(&format!("Quarantined file {}", blob_reference.blob_id)),
+        "{events:?}"
+    );
+    assert!(
+        log.entries
+            .iter()
+            .any(|e| e.event.contains("viewed by user") && e.user_id == Some(test_data.moderator.user_id)),
+        "{events:?}"
+    );
+    assert!(
+        log.entries
+            .iter()
+            .any(|e| e.event.starts_with("Verdict applied") && e.user_id == Some(test_data.moderator.user_id)),
+        "{events:?}"
+    );
+    // Entries chain: each prev_hash is non-trivial after the first
+    assert!(log.entries.iter().skip(1).all(|e| e.prev_hash.chars().any(|c| c != '0')));
+
+    let not_a_reviewer = client::storage_bucket::vault_log(
+        env,
+        test_data.sender.principal,
+        blob_reference.canister_id,
+        &storage_bucket_canister::vault_log::Args {
+            start: 0,
+            max: 100,
+            file_id: None,
+        },
+    );
+    assert!(matches!(
+        not_a_reviewer,
+        storage_bucket_canister::vault_log::Response::NotAuthorized
+    ));
 }
 
 #[test]
@@ -693,6 +753,15 @@ fn moderation_referral_creates_report_and_upheld_verdict_sanctions() {
     );
     assert!(matches!(config_response, UnitResult::Success), "{config_response:?}");
     tick_many(env, 5);
+
+    // The config is observable: operators can see what is actually set
+    let user_index_canister::moderation_config::Response::Success(config) =
+        client::user_index::moderation_config(env, test_data.moderator.principal, canister_ids.user_index, &types::Empty {});
+    assert!(config.openai_api_key_set);
+    assert!(config.internal_moderation_channel.is_some());
+    let referral = config.moderation_referral_config.expect("referral config should be set");
+    assert_eq!(referral.categories.len(), 1);
+    assert_eq!(referral.categories[0].category, types::ModerationCategories::SEXUAL.bits());
 
     let message_id = random_from_u128();
     let message_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
@@ -849,6 +918,152 @@ fn csam_asserted_report_applies_auto_sanction_and_dismissal_reverses() {
 
     let message_content = get_message_content(env, &test_data.group_owner, test_data.group_id, message_id);
     assert!(matches!(message_content, MessageContent::Text(_)), "{message_content:?}");
+}
+
+#[test]
+fn csam_asserted_media_report_quarantines_immediately() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    let set_reviewers_response = client::user_index::set_vault_reviewers(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::set_vault_reviewers::Args {
+            user_ids: vec![test_data.moderator.user_id],
+        },
+    );
+    assert!(matches!(set_reviewers_response, UnitResult::Success));
+    tick_many(env, 5);
+
+    let file_size = 1000u32;
+    let blob_reference = client::storage_index::happy_path::upload_file(
+        env,
+        test_data.sender.principal,
+        canister_ids.storage_index,
+        file_size,
+        vec![test_data.sender.canister()],
+    );
+    let message_id = random_from_u128();
+    let send_response = client::group::send_message_v2(
+        env,
+        test_data.sender.principal,
+        test_data.group_id.into(),
+        &group_canister::send_message_v2::Args {
+            thread_root_message_index: None,
+            message_id,
+            content: MessageContentInitial::File(FileContent {
+                name: random_string(),
+                caption: None,
+                mime_type: "application/octet-stream".to_string(),
+                file_size,
+                blob_reference: Some(blob_reference.clone()),
+            }),
+            sender_name: test_data.sender.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            forwarding: false,
+            block_level_markdown: false,
+            rules_accepted: None,
+            message_filter_failed: None,
+            new_achievement: false,
+            og_previews: Vec::new(),
+        },
+    );
+    assert!(
+        matches!(send_response, group_canister::send_message_v2::Response::Success(_)),
+        "{send_response:?}"
+    );
+    tick_many(env, 3);
+
+    // A CSAM-asserted report: the auto-sanction applies immediately with no classifier call -
+    // media quarantined in the vault, message deleted and read-gated, sender suspended
+    let report_response = client::group::report_message(
+        env,
+        test_data.reporter.principal,
+        test_data.group_id.into(),
+        &group_canister::report_message::Args {
+            thread_root_message_index: None,
+            message_id,
+            delete: false,
+            csam: true,
+        },
+    );
+    assert!(matches!(report_response, UnitResult::Success));
+    tick_many(env, 10);
+
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    let suspension_details = sender_state.suspension_details.expect("sender should be suspended");
+    assert!(matches!(suspension_details.action, SuspensionAction::Delete(_)));
+
+    // The vault holds the media: the reviewer can fetch it, nobody else can
+    let chunk_response = client::storage_bucket::vault_file_chunk(
+        env,
+        test_data.moderator.principal,
+        blob_reference.canister_id,
+        &storage_bucket_canister::vault_file_chunk::Args {
+            file_id: blob_reference.blob_id,
+            chunk_index: 0,
+        },
+    );
+    assert!(
+        matches!(
+            chunk_response,
+            storage_bucket_canister::vault_file_chunk::Response::Success(_)
+        ),
+        "{chunk_response:?}"
+    );
+
+    // The alert is auto-sanctioned with the media attached for vault review
+    let reports = get_moderation_reports(env, &test_data);
+    let report = reports
+        .iter()
+        .find(|r| r.reporters.contains(&test_data.reporter.user_id))
+        .expect("report should exist");
+    assert!(report.auto_sanctioned);
+    assert_eq!(report.blob_references, vec![blob_reference.clone()]);
+    assert!(matches!(report.status, ModerationReportStatus::Pending));
+}
+
+#[test]
+fn accept_terms_records_version_and_never_downgrades() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    let accept = client::user_index::accept_terms(
+        env,
+        test_data.sender.principal,
+        canister_ids.user_index,
+        &user_index_canister::accept_terms::Args { version: 3 },
+    );
+    assert!(matches!(accept, UnitResult::Success));
+
+    let state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    assert_eq!(state.accepted_terms_version, 3);
+
+    // An out-of-date client cannot roll the accepted version back
+    let downgrade = client::user_index::accept_terms(
+        env,
+        test_data.sender.principal,
+        canister_ids.user_index,
+        &user_index_canister::accept_terms::Args { version: 1 },
+    );
+    assert!(matches!(downgrade, UnitResult::Success));
+    let state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    assert_eq!(state.accepted_terms_version, 3);
 }
 
 // Waits for pending moderation API outcalls and answers each one. Only inputs containing

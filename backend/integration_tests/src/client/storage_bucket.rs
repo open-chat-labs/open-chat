@@ -4,6 +4,7 @@ use storage_bucket_canister::*;
 // Queries
 generate_query_call!(file_info);
 generate_query_call!(file_status);
+generate_query_call!(vault_log);
 
 // Updates
 generate_update_call!(delete_file);

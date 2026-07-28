@@ -13,6 +13,7 @@ fn accept_if_valid(state: &RuntimeState) {
         // Deliberately callable while suspended: contesting an automated sanction is the
         // GDPR Art 22 human-intervention safeguard, and the caller is suspended by definition
         "contest_moderation_sanction"
+        | "accept_terms"
         | "claim_daily_chit"
         | "create_canister"
         | "delete_user"
@@ -33,7 +34,6 @@ fn accept_if_valid(state: &RuntimeState) {
         | "set_diamond_membership_fees"
         | "set_internal_moderation_channel"
         | "set_vault_reviewers"
-        | "accept_terms"
         | "set_moderation_referral_config"
         | "set_openai_api_key"
         | "set_premium_item_cost"
