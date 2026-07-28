@@ -1190,8 +1190,7 @@
         "close": "Close",
         "loading": "Fetching from the vault...",
         "notAuthorized": "You are not a designated vault reviewer",
-        "error": "Failed to fetch the media",
-        "item": "Item {n} of {total}"
+        "error": "Failed to fetch the media"
     },
     "termsUpdated": {
         "title": "Our terms have changed",
