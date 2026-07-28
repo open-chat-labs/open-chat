@@ -10,6 +10,7 @@ import {
 } from "@icp-sdk/core/identity";
 import DRange from "drange";
 import {
+    type ModerationConfig,
     type VaultLogResponse,
     type BlobReference,
     CURRENT_TERMS_VERSION,
@@ -7374,6 +7375,10 @@ export class OpenChat {
         fileId?: bigint,
     ): Promise<VaultLogResponse> {
         return this.#worker.send({ kind: "vaultLog", bucketCanisterId, start, max, fileId });
+    }
+
+    moderationConfig(): Promise<ModerationConfig | undefined> {
+        return this.#worker.send({ kind: "moderationConfig" }).catch(() => undefined);
     }
 
     authorityReports(): Promise<string | undefined> {

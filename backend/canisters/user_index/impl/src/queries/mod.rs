@@ -9,6 +9,7 @@ pub mod diamond_membership_fees;
 pub mod explore_bots;
 pub mod external_achievements;
 pub mod http_request;
+pub mod moderation_config;
 pub mod platform_moderators;
 pub mod platform_moderators_group;
 pub mod platform_operators;

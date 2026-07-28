@@ -113,12 +113,10 @@
         <Row
             padding="lg"
             backgroundColor={csam ? ColourVars.tertiaryMuted : ColourVars.background0}
-            gap="md"
-        >
+            gap="md">
             {#if csam}
                 <span class="csam"
-                    ><Translatable resourceKey={i18nKey("moderationReport.csam")} /></span
-                >
+                    ><Translatable resourceKey={i18nKey("moderationReport.csam")} /></span>
             {/if}
             <Subtitle>
                 <Translatable resourceKey={i18nKey("moderationReport.title")} />
@@ -176,9 +174,7 @@
                     {:else if url !== undefined}
                         <a class="link" href={url}
                             ><Translatable
-                                resourceKey={i18nKey("moderationReport.viewMessage")}
-                            /></a
-                        >
+                                resourceKey={i18nKey("moderationReport.viewMessage")} /></a>
                     {:else}
                         <Translatable resourceKey={i18nKey("moderationReport.privateChat")} />
                     {/if}
@@ -199,21 +195,18 @@
             {#if hasMedia}
                 <Row
                     padding="lg"
-                    backgroundColor={csam ? ColourVars.tertiaryMuted : ColourVars.background0}
-                >
+                    backgroundColor={csam ? ColourVars.tertiaryMuted : ColourVars.background0}>
                     {#if csam}
                         <Column>
                             <BodySmall>quarantined media attachment</BodySmall>
                             <BodySmall colour="textSecondary"
-                                >Opens in the vault viewer. Access is logged.</BodySmall
-                            >
+                                >Opens in the vault viewer. Access is logged.</BodySmall>
                         </Column>
                     {:else}
                         <Column>
                             <BodySmall>media attachment</BodySmall>
                             <BodySmall colour="textSecondary"
-                                >Not shown until you open review.</BodySmall
-                            >
+                                >Not shown until you open review.</BodySmall>
                         </Column>
                     {/if}
                     <Button onClick={() => (showViewer = true)}>
@@ -243,8 +236,7 @@
                             content.classificationFailed
                                 ? "moderationReport.classifierFailed"
                                 : "moderationReport.classifierClean",
-                        )}
-                    />
+                        )} />
                 </Body>
             {/if}
             {#if content.status.kind === "contested"}
@@ -270,15 +262,13 @@
         borderRadius="md"
         backgroundColor={content.status.kind === "upheld_as_csam"
             ? ColourVars.tertiaryMuted
-            : ColourVars.background1}
-    >
+            : ColourVars.background1}>
         {#if content.status.kind === "dismissed"}
             <Dismissed color="var(--text-secondary)" size="1.6rem" />
             <Column>
                 <Body>Dismissed</Body>
                 <BodySmall colour="textSecondary"
-                    >Resolved by {moderator} - any sanction reversed</BodySmall
-                >
+                    >Resolved by {moderator} - any sanction reversed</BodySmall>
             </Column>
         {:else if content.status.kind === "upheld"}
             <Upheld color="var(--success)" size="1.6rem" />
@@ -312,16 +302,14 @@
                 loading={busy}
                 danger
                 disabled={busy || resolved}
-                onClick={() => resolve("upheld_as_csam")}
-            >
+                onClick={() => resolve("upheld_as_csam")}>
                 <Translatable resourceKey={i18nKey("moderationReport.upholdCsam")} />
             </Button>
             <Button
                 loading={busy}
                 secondary
                 disabled={busy || resolved}
-                onClick={() => resolve("dismissed")}
-            >
+                onClick={() => resolve("dismissed")}>
                 <Translatable resourceKey={i18nKey("moderationReport.dismiss")} />
             </Button>
         </Row>
@@ -332,29 +320,18 @@
                 small
                 label={i18nKey("moderationReport.urgent")}
                 checked={urgent}
-                onChange={() => (urgent = !urgent)}
-            >
+                onChange={() => (urgent = !urgent)}>
                 <Column>
                     <Body>Imminent threat to a child</Body>
                     <BodySmall colour="textSecondary"
-                        >Escalates urgently. Only applies to "Uphold as CSAM"</BodySmall
-                    >
+                        >Escalates urgently. Only applies to "Uphold as CSAM"</BodySmall>
                 </Column>
             </Checkbox>
         </Row>
     </Column>
 {/snippet}
 
-<Column gap="md" padding={["lg", "zero"]}>
-    {@const status = content.status.kind}
-    <!-- report -->
-    {@render reportCard()}
-    {@render statusLine()}
-
-    {#if status === "upheld" || status === "upheld_as_csam" || status === "dismissed"}
-        {@render resolution()}
-    {/if}
-
+{#snippet authReport()}
     {#if authorityReport !== undefined}
         <Row
             crossAxisAlignment="center"
@@ -364,21 +341,18 @@
             borderRadius="md"
             backgroundColor={authorityReport.kind === "due"
                 ? ColourVars.tertiaryMuted
-                : ColourVars.background1}
-        >
+                : ColourVars.background1}>
             {#if authorityReport.kind === "due"}
                 <Body
                     width="hug"
                     fontWeight="bold"
-                    colour={authorityReport.urgent ? "error" : undefined}
-                >
+                    colour={authorityReport.urgent ? "error" : undefined}>
                     <Translatable
                         resourceKey={i18nKey(
                             authorityReport.urgent
                                 ? "moderationReport.ncaDueUrgent"
                                 : "moderationReport.ncaDue",
-                        )}
-                    />
+                        )} />
                 </Body>
                 {#if $platformOperatorStore && content.reportIndex !== undefined}
                     <Button tiny onClick={() => (showFiling = true)}>
@@ -392,6 +366,19 @@
             {/if}
         </Row>
     {/if}
+{/snippet}
+
+<Column gap="md" padding={["lg", "zero"]}>
+    {@const status = content.status.kind}
+    <!-- report -->
+    {@render reportCard()}
+    {@render statusLine()}
+
+    {#if status === "upheld" || status === "upheld_as_csam" || status === "dismissed"}
+        {@render resolution()}
+    {/if}
+
+    {@render authReport()}
 
     {#if canResolve && !needsMediaReview}
         {@render actions()}
@@ -412,15 +399,13 @@
             filedReference = ref;
             showFiling = false;
         }}
-        onClose={() => (showFiling = false)}
-    />
+        onClose={() => (showFiling = false)} />
 {/if}
 
 {#if showAccessLog}
     <VaultAccessLog
         blobReferences={content.blobReferences}
-        onClose={() => (showAccessLog = false)}
-    />
+        onClose={() => (showAccessLog = false)} />
 {/if}
 
 {#if showViewer}
@@ -428,8 +413,7 @@
         blobReferences={content.blobReferences}
         quarantined={content.autoSanctioned}
         onReviewed={() => (mediaReviewed = true)}
-        onClose={() => (showViewer = false)}
-    />
+        onClose={() => (showViewer = false)} />
 {/if}
 
 <style lang="scss">

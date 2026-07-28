@@ -514,6 +514,7 @@ impl RuntimeState {
             blocked_user_pairs: self.data.blocked_users.len() as u64,
             oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
             openai_api_key_set: self.data.openai_api_key.is_some(),
+            moderation_referral_config: self.data.moderation_referral_config.clone(),
             message_moderation_queue_len: self.data.message_moderation_queue.len() as u32,
             cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
             bots: self
@@ -759,6 +760,7 @@ pub struct Metrics {
     pub blocked_user_pairs: u64,
     pub oc_secret_key_initialized: bool,
     pub openai_api_key_set: bool,
+    pub moderation_referral_config: Option<ModerationReferralConfig>,
     pub message_moderation_queue_len: u32,
     pub cycles_balance_check_queue_len: u32,
     pub bots: Vec<BotMetrics>,

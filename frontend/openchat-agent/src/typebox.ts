@@ -2346,6 +2346,14 @@ export const UserIndexResolveModerationReportModerationVerdict = Type.Union([
     Type.Literal("Dismissed"),
 ]);
 
+export type UserIndexModerationConfigInternalModerationChannel = Static<
+    typeof UserIndexModerationConfigInternalModerationChannel
+>;
+export const UserIndexModerationConfigInternalModerationChannel = Type.Object({
+    community_id: CommunityId,
+    channel_id: ChannelId,
+});
+
 export type UserIndexUpdateBotResponse = Static<typeof UserIndexUpdateBotResponse>;
 export const UserIndexUpdateBotResponse = Type.Union([
     Type.Literal("Success"),
@@ -6322,6 +6330,21 @@ export const UserIndexResolveModerationReportArgs = Type.Object({
     report_index: Type.BigInt(),
     verdict: UserIndexResolveModerationReportModerationVerdict,
     urgent: Type.Optional(Type.Boolean()),
+});
+
+export type UserIndexModerationConfigSuccessResult = Static<
+    typeof UserIndexModerationConfigSuccessResult
+>;
+export const UserIndexModerationConfigSuccessResult = Type.Object({
+    openai_api_key_set: Type.Boolean(),
+    internal_moderation_channel: Type.Optional(UserIndexModerationConfigInternalModerationChannel),
+    moderation_referral_config: Type.Optional(ModerationReferralConfig),
+    vault_reviewers: Type.Array(UserId),
+});
+
+export type UserIndexModerationConfigResponse = Static<typeof UserIndexModerationConfigResponse>;
+export const UserIndexModerationConfigResponse = Type.Object({
+    Success: UserIndexModerationConfigSuccessResult,
 });
 
 export type UserIndexSetInternalModerationChannelArgs = Static<

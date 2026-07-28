@@ -1,5 +1,6 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import type {
+    ModerationConfig,
     BotDefinition,
     BotInstallationLocation,
     BotsResponse,
@@ -69,6 +70,7 @@ import {
     UserIndexSetModerationFlagsArgs,
     UserIndexAcceptTermsArgs,
     UserIndexAuthorityReportsResponse,
+    UserIndexModerationConfigResponse,
     UserIndexRecordAuthorityReportFiledArgs,
     UserIndexSetModerationReferralConfigArgs,
     UserIndexSetVaultReviewersArgs,
@@ -266,6 +268,38 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             (resp) => resp === "Success",
             UserIndexResolveModerationReportArgs,
             UnitResult,
+        );
+    }
+
+    moderationConfig(): Promise<ModerationConfig | undefined> {
+        return this.query(
+            "moderation_config",
+            {},
+            (resp) =>
+                "Success" in resp
+                    ? {
+                          openaiApiKeySet: resp.Success.openai_api_key_set,
+                          internalModerationChannel: mapOptional(
+                              resp.Success.internal_moderation_channel,
+                              (c) => ({
+                                  communityId: principalBytesToString(c.community_id),
+                                  channelId: Number(c.channel_id),
+                              }),
+                          ),
+                          referralConfig: mapOptional(
+                              resp.Success.moderation_referral_config,
+                              (r) => ({
+                                  categories: r.categories.map((c) => ({
+                                      category: c.category,
+                                      scoreThreshold: c.score_threshold,
+                                  })),
+                              }),
+                          ),
+                          vaultReviewers: resp.Success.vault_reviewers.map(principalBytesToString),
+                      }
+                    : undefined,
+            Empty,
+            UserIndexModerationConfigResponse,
         );
     }
 

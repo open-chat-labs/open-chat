@@ -135,6 +135,7 @@ import type {
     TokenExchangeRates,
     WalletConfig,
 } from "./crypto";
+import type { ModerationConfig } from "./user/user";
 import type {
     VaultFileChunkResponse,
     VaultLogResponse,
@@ -391,6 +392,7 @@ export type WorkerRequest =
     | VaultLog
     | VaultBuckets
     | AuthorityReports
+    | GetModerationConfig
     | RecordAuthorityReportFiled
     | AcceptTerms
     | SetInternalModerationChannel
@@ -846,6 +848,10 @@ type VaultLog = {
     start: bigint;
     max: number;
     fileId: bigint | undefined;
+};
+
+type GetModerationConfig = {
+    kind: "moderationConfig";
 };
 
 type AuthorityReports = {
@@ -2566,6 +2572,8 @@ export type WorkerResult<T> = T extends Init
     ? string[]
     : T extends AuthorityReports
     ? string | undefined
+    : T extends GetModerationConfig
+    ? ModerationConfig | undefined
     : T extends RecordAuthorityReportFiled
     ? boolean
     : T extends AcceptTerms

@@ -2,6 +2,7 @@
 import { HttpAgent, type Identity } from "@icp-sdk/core/agent";
 import type { Principal } from "@icp-sdk/core/principal";
 import type {
+    ModerationConfig,
     VaultLogResponse,
     AcceptP2PSwapResponse,
     AcceptedRules,
@@ -2233,6 +2234,10 @@ export class OpenChatAgent extends EventTarget {
             this._storageBucketClients.set(bucketCanisterId, bucketClient);
         }
         return bucketClient.vaultLog(start, max, fileId);
+    }
+
+    moderationConfig(): Promise<ModerationConfig | undefined> {
+        return this._userIndexClient.moderationConfig();
     }
 
     authorityReports(): Promise<string | undefined> {

@@ -1016,6 +1016,8 @@ function getAction(
                 payload.max,
                 payload.fileId,
             );
+        case "moderationConfig":
+            return agent.moderationConfig();
         case "authorityReports":
             return agent.authorityReports();
         case "recordAuthorityReportFiled":

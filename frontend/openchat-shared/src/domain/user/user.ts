@@ -548,3 +548,10 @@ export type Referral = {
     userId: string;
     status: ReferralStatus;
 };
+
+export type ModerationConfig = {
+    openaiApiKeySet: boolean;
+    internalModerationChannel: { communityId: string; channelId: number } | undefined;
+    referralConfig: { categories: { category: number; scoreThreshold: number }[] } | undefined;
+    vaultReviewers: string[];
+};

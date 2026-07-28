@@ -78,7 +78,28 @@
     let exchangeIdInvalid = $derived(isNaN(parseInt(exchangeId, 0)));
     let tokenLedgerValid = $derived(tokenLedger.length > 0);
 
+    let openAiKeySet = $state(false);
+
     onMount(() => {
+        // Pre-fill the moderation config so the forms show what is actually set rather than
+        // being write-only
+        client.moderationConfig().then((config) => {
+            if (config === undefined) return;
+            openAiKeySet = config.openaiApiKeySet;
+            if (config.internalModerationChannel !== undefined) {
+                moderationCommunityId = config.internalModerationChannel.communityId;
+                moderationChannelId = config.internalModerationChannel.channelId.toString();
+            }
+            if (config.referralConfig !== undefined) {
+                referralThresholds = Object.fromEntries(
+                    config.referralConfig.categories.map((c) => [
+                        c.category,
+                        c.scoreThreshold.toString(),
+                    ]),
+                );
+            }
+            vaultReviewerIds = config.vaultReviewers.join(", ");
+        });
         client.diamondMembershipFees().then((fees) => {
             originalFees = client.toRecord(fees, (f) => f.token);
             currentFees = client.toRecord2(
@@ -604,7 +625,9 @@
     </section>
 
     <section class="operator-function">
-        <div class="title">Set OpenAI API key (moderation)</div>
+        <div class="title">
+            Set OpenAI API key (moderation) {openAiKeySet ? "- currently set" : "- NOT SET"}
+        </div>
         <div class="name-value">
             <div class="label">API key:</div>
             <div class="value">
