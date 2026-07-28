@@ -4,7 +4,8 @@ use local_user_index_canister::{OpenChatBotMessageV2, UserIndexEvent};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
-    BlobReference, Chat, MessageContent, MessageContentInitial, MessageId, MessageIndex, TextContent, TimestampMillis, UserId,
+    BlobReference, Chat, MessageContent, MessageContentInitial, MessageId, MessageIndex, ModerationReportResolution,
+    ModerationReportStatus, TextContent, TimestampMillis, UserId,
 };
 use user_index_canister::resolve_moderation_report::ModerationVerdict;
 
@@ -221,6 +222,29 @@ impl ReportedMessages {
                 unverified_report_filed: None,
             });
             Some((new_index as u64, true))
+        }
+    }
+
+    // The current status as shown on the alert card, derived from the report state
+    pub fn report_status(reported_message: &ReportedMessage) -> ModerationReportStatus {
+        let human_verdict = reported_message.outcome.as_ref().and_then(|o| match o {
+            ReportOutcome::Automated(a) => a.human_verdict.as_ref(),
+            ReportOutcome::Modclub(_) => None,
+        });
+        if let Some(verdict) = human_verdict {
+            let resolution = ModerationReportResolution {
+                moderator: verdict.moderator,
+                timestamp: verdict.timestamp,
+            };
+            match verdict.verdict {
+                ModerationVerdict::Upheld => ModerationReportStatus::Upheld(resolution),
+                ModerationVerdict::UpheldAsCsam => ModerationReportStatus::UpheldAsCsam(resolution),
+                ModerationVerdict::Dismissed => ModerationReportStatus::Dismissed(resolution),
+            }
+        } else if reported_message.contested.is_some() {
+            ModerationReportStatus::Contested
+        } else {
+            ModerationReportStatus::Pending
         }
     }
 

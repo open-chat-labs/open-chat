@@ -126,10 +126,14 @@ pub fn update_moderation_alert_authority_report(
         return;
     };
 
+    // The current status is always included (never None): a not-yet-upgraded community can
+    // then still decode the update, merely dropping the unknown authority_report field
     let args = community_canister::c2c_update_moderation_report_status::Args {
         channel_id,
         message_id,
-        status: None,
+        status: Some(crate::model::reported_messages::ReportedMessages::report_status(
+            reported_message,
+        )),
         authority_report: Some(authority_report),
     };
     state.data.fire_and_forget_handler.send(
