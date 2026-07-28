@@ -9,6 +9,7 @@
         type OpenChat,
     } from "@client";
     import Markdown from "@src/components_shared/Markdown.svelte";
+    import { Body, Column, Row, Title } from "component-lib";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";
@@ -89,34 +90,37 @@
     }
 </script>
 
-<div class="report">
-    <div class="header">
+<Column gap="md" padding={["lg", "md"]}>
+    <Row gap="md">
         {#if csam}
-            <span class="csam"><Translatable resourceKey={i18nKey("moderationReport.csam")} /></span
-            >
+            <span class="csam"
+                ><Translatable resourceKey={i18nKey("moderationReport.csam")} /></span>
         {/if}
-        <Translatable resourceKey={i18nKey("moderationReport.title")} />
-    </div>
+        <Title>
+            <Translatable resourceKey={i18nKey("moderationReport.title")} />
+        </Title>
+    </Row>
 
     {#if csam || content.status.kind === "upheld_as_csam"}
         <!-- Alleged or confirmed CSAM must never be viewed in place: the vault viewer is the
-             only sanctioned route -->
-        <div class="row">
+                 only sanctioned route -->
+        <Body>
             <Translatable resourceKey={i18nKey("moderationReport.vaultOnly")} />
-        </div>
+        </Body>
     {:else if url !== undefined}
-        <div class="row link">
-            <a href={url}><Translatable resourceKey={i18nKey("moderationReport.viewMessage")} /></a>
-        </div>
+        <Body>
+            <a class="link" href={url}
+                ><Translatable resourceKey={i18nKey("moderationReport.viewMessage")} /></a>
+        </Body>
     {:else}
-        <div class="row">
+        <Body>
             <Translatable resourceKey={i18nKey("moderationReport.privateChat")} />
-        </div>
+        </Body>
     {/if}
-    <div class="row">
+    <Body>
         <Translatable resourceKey={i18nKey("moderationReport.sender")} />: {sender}
-    </div>
-    <div class="row">
+    </Body>
+    <Body>
         {#if reporters.length === 0}
             <Translatable resourceKey={i18nKey("moderationReport.pipeline")} />
         {:else}
@@ -124,84 +128,79 @@
                 ", ",
             )}
         {/if}
-    </div>
+    </Body>
     {#if categories !== ""}
-        <div class="row">
+        <Body>
             <Translatable resourceKey={i18nKey("moderationReport.categories")} />: {categories}
-        </div>
+        </Body>
     {/if}
     {#if content.flaggedCategories === 0 && content.status.kind === "pending"}
-        <div class="row light">
+        <Body>
             <Translatable
                 resourceKey={i18nKey(
                     content.classificationFailed
                         ? "moderationReport.classifierFailed"
                         : "moderationReport.classifierClean",
-                )}
-            />
-        </div>
+                )} />
+        </Body>
     {/if}
     {#if content.status.kind === "contested"}
-        <div class="row contested">
+        <Body fontWeight="bold" colour="error">
             <Translatable resourceKey={i18nKey("moderationReport.contested")} />
-        </div>
+        </Body>
     {/if}
     {#if content.autoSanctioned}
-        <div class="row">
+        <Body>
             {#if content.status.kind === "pending" || content.status.kind === "contested"}
                 <Translatable resourceKey={i18nKey("moderationReport.sanctionPending")} />
             {:else}
                 <Translatable resourceKey={i18nKey("moderationReport.autoSanctioned")} />
             {/if}
-        </div>
+        </Body>
     {/if}
 
     {#if content.contentExcerpt !== undefined}
-        <blockquote class="excerpt">
-            <Markdown text={content.contentExcerpt} />
-        </blockquote>
+        <Row padding={["lg", "zero"]}>
+            <blockquote class="excerpt">
+                <Markdown text={content.contentExcerpt} />
+            </blockquote>
+        </Row>
     {/if}
 
     {#if content.status.kind === "upheld" || content.status.kind === "upheld_as_csam"}
-        <div class="row resolved">
+        <Body fontWeight="bold">
             <Translatable
                 resourceKey={i18nKey("moderationReport.upheld", {
                     moderator,
-                })}
-            />
-        </div>
+                })} />
+        </Body>
     {:else if content.status.kind === "dismissed"}
-        <div class="row resolved">
+        <Body fontWeight="bold">
             <Translatable
                 resourceKey={i18nKey("moderationReport.dismissed", {
                     moderator,
-                })}
-            />
-        </div>
+                })} />
+        </Body>
     {:else if canResolve}
         {#if content.blobReferences.length > 0}
-            <div class="row">
-                <Button onClick={() => (showViewer = true)}>
-                    <Translatable resourceKey={i18nKey("moderationReport.reviewMedia")} />
-                </Button>
-            </div>
+            <Button onClick={() => (showViewer = true)}>
+                <Translatable resourceKey={i18nKey("moderationReport.reviewMedia")} />
+            </Button>
         {/if}
         {#if !needsMediaReview}
-            <div class="actions">
+            <Row gap="sm">
                 <Button
                     loading={busy}
                     disabled={busy || resolved}
-                    onClick={() => resolve("upheld")}
-                >
+                    onClick={() => resolve("upheld")}>
                     <Translatable resourceKey={i18nKey("moderationReport.uphold")} />
                 </Button>
-                <div class="csamAction">
+                <Column>
                     <Button
                         loading={busy}
                         danger
                         disabled={busy || resolved}
-                        onClick={() => resolve("upheld_as_csam")}
-                    >
+                        onClick={() => resolve("upheld_as_csam")}>
                         <Translatable resourceKey={i18nKey("moderationReport.upholdCsam")} />
                     </Button>
                     <Checkbox
@@ -209,49 +208,34 @@
                         small
                         label={i18nKey("moderationReport.urgent")}
                         checked={urgent}
-                        onChange={() => (urgent = !urgent)}
-                    />
-                </div>
+                        onChange={() => (urgent = !urgent)} />
+                </Column>
                 <Button
                     loading={busy}
                     secondary
                     disabled={busy || resolved}
-                    onClick={() => resolve("dismissed")}
-                >
+                    onClick={() => resolve("dismissed")}>
                     <Translatable resourceKey={i18nKey("moderationReport.dismiss")} />
                 </Button>
-            </div>
+            </Row>
         {/if}
         {#if failed}
-            <div class="row failed">
+            <Body colour="error">
                 <Translatable resourceKey={i18nKey("moderationReport.failed")} />
-            </div>
+            </Body>
         {/if}
     {/if}
-</div>
+</Column>
 
 {#if showViewer}
     <VaultMediaViewer
         blobReferences={content.blobReferences}
         quarantined={content.autoSanctioned}
         onReviewed={() => (mediaReviewed = true)}
-        onClose={() => (showViewer = false)}
-    />
+        onClose={() => (showViewer = false)} />
 {/if}
 
 <style lang="scss">
-    .report {
-        display: flex;
-        flex-direction: column;
-        gap: $sp4;
-        padding: $sp3;
-    }
-    .header {
-        @include font(bold, normal, fs-120);
-        display: flex;
-        gap: $sp3;
-        align-items: center;
-    }
     .csam {
         @include font(bold, normal, fs-100);
         background-color: var(--error);
@@ -259,39 +243,11 @@
         border-radius: toRem(4);
         padding: toRem(1) toRem(6);
     }
-    .row {
-        color: var(--txt-light, inherit);
-        word-break: break-all;
-
-        &.link {
-            color: var(--secondary);
-        }
-    }
     .excerpt {
         margin: 0;
         padding-left: $sp3;
         border-left: $sp1 solid var(--error);
         font-style: italic;
         white-space: pre-wrap;
-    }
-    .resolved {
-        font-weight: bold;
-    }
-    .failed {
-        color: var(--error);
-    }
-    .contested {
-        color: var(--error);
-        font-weight: bold;
-    }
-    .csamAction {
-        display: flex;
-        flex-direction: column;
-        gap: $sp2;
-    }
-    .actions {
-        display: flex;
-        gap: $sp3;
-        margin-top: $sp2;
     }
 </style>
