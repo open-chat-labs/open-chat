@@ -288,6 +288,7 @@ type CurrentUserCommon = DataContent & {
     // Absent on summaries from the user canister (only the user_index holds it), so updates
     // spread over a CreatedUser without clobbering the known value
     acceptedTermsVersion?: number;
+    currentTermsVersion?: number;
 };
 
 export type CurrentUserSummary = CurrentUserCommon & {

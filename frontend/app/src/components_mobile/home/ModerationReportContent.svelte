@@ -43,6 +43,19 @@
     // A verdict on a media report requires the media to have been reviewed first: deciding
     // without looking is exactly what this system exists to prevent
     let mediaReviewed = $state(false);
+    let reviewerRequired = $state(false);
+    let mediaUnavailable = $state(false);
+
+    function onReviewResult(outcome: "viewed" | "not_authorized" | "error") {
+        if (outcome === "viewed") {
+            mediaReviewed = true;
+        } else if (outcome === "not_authorized") {
+            reviewerRequired = true;
+        } else {
+            mediaUnavailable = true;
+            mediaReviewed = true;
+        }
+    }
 
     let moderatorId = $derived(
         content.status.kind !== "pending" && content.status.kind !== "contested"
@@ -240,7 +253,17 @@
                 {/if}
             </Row>
         {/if}
-        {#if !needsMediaReview}
+        {#if reviewerRequired}
+            <Body colour="error" fontWeight="bold">
+                <Translatable resourceKey={i18nKey("moderationReport.reviewerRequired")} />
+            </Body>
+        {/if}
+        {#if mediaUnavailable}
+            <Body colour="error">
+                <Translatable resourceKey={i18nKey("moderationReport.mediaUnavailable")} />
+            </Body>
+        {/if}
+        {#if !needsMediaReview && !reviewerRequired}
             <Row gap="sm">
                 <Switch bind:checked={urgent}>
                     <Body width={"hug"} colour={"textSecondary"}>
@@ -305,7 +328,7 @@
     <VaultMediaViewer
         blobReferences={content.blobReferences}
         quarantined={content.autoSanctioned}
-        onReviewed={() => (mediaReviewed = true)}
+        onResult={onReviewResult}
         onClose={() => (showViewer = false)}
     />
 {/if}

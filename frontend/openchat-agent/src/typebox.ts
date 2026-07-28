@@ -3525,6 +3525,7 @@ export type StorageBucketVaultLogVaultLogEntry = Static<typeof StorageBucketVaul
 export const StorageBucketVaultLogVaultLogEntry = Type.Object({
     index: Type.BigInt(),
     timestamp: Type.BigInt(),
+    hash: Type.String(),
     prev_hash: Type.String(),
     event: Type.String(),
     user_id: Type.Optional(UserId),
@@ -7746,6 +7747,7 @@ export const UserIndexCurrentUserSuccessResult = Type.Object({
     max_streak: Type.Number(),
     hide_online_status: Type.Optional(Type.Boolean()),
     accepted_terms_version: Type.Optional(Type.Number()),
+    current_terms_version: Type.Optional(Type.Number()),
 });
 
 export type UserIndexCurrentUserResponse = Static<typeof UserIndexCurrentUserResponse>;

@@ -108,6 +108,7 @@ type VaultLogArgs = record {
 type VaultLogEntry = record {
     index : nat64;
     timestamp : TimestampMillis;
+    hash : text;
     prev_hash : text;
     event : text;
     user_id : opt UserId;

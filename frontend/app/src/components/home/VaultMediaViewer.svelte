@@ -1,6 +1,9 @@
 <script lang="ts">
     import type { BlobReference, OpenChat } from "@client";
-    import { VaultMediaReview } from "@shared_components/vaultMediaReview.svelte";
+    import {
+        VaultMediaReview,
+        type ReviewOutcome,
+    } from "@shared_components/vaultMediaReview.svelte";
     import { getContext, onDestroy } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { mobileWidth } from "@client";
@@ -19,16 +22,17 @@
         // from its ordinary blob URL with the same interstitial and no-cache hygiene
         quarantined: boolean;
         onClose: () => void;
-        // Fired when the media has successfully loaded: the review act has taken place (and
-        // for vault media has been recorded in the access log by the chunk fetches)
-        onReviewed?: () => void;
+        // Fired when the viewer closes with the terminal outcome: "viewed" (the review act
+        // took place - for vault media it is in the access log), "not_authorized" (not a
+        // designated vault reviewer) or "error" (media could not be fetched)
+        onResult?: (outcome: ReviewOutcome) => void;
     }
 
-    let { blobReferences, quarantined, onClose, onReviewed }: Props = $props();
+    let { blobReferences, quarantined, onClose, onResult }: Props = $props();
 
     // All review behaviour lives in the shared state machine so that the desktop and mobile
     // viewers are equivalent by construction; this component is markup only
-    const review = new VaultMediaReview(client, blobReferences, quarantined, onReviewed);
+    const review = new VaultMediaReview(client, blobReferences, quarantined, onResult);
 
     function close() {
         review.dispose();

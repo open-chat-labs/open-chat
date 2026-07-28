@@ -61,6 +61,7 @@ export const idlFactory = ({ IDL }) => {
     const VaultLogEntry = IDL.Record({
         index: IDL.Nat64,
         timestamp: TimestampMillis,
+        hash: IDL.Text,
         prev_hash: IDL.Text,
         event: IDL.Text,
         user_id: IDL.Opt(UserId),

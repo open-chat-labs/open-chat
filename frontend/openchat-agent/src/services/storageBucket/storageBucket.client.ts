@@ -24,9 +24,7 @@ export class StorageBucketClient extends CandidCanisterAgent<StorageBucketServic
         super(identity, agent, canisterId, idlFactory, "StorageBucket");
     }
 
-    // Fetches one chunk of a quarantined blob for an allowlisted vault reviewer. An update
-    // call by design: every fetch session is recorded in the vault's access log, and chunks
-    // after the first are served only in session order.
+    // A page of the vault's tamper-evident access log, readable by designated vault reviewers
     vaultLog(start: bigint, max: number, fileId: bigint | undefined): Promise<VaultLogResponse> {
         return this.handleQueryResponse(
             () =>
@@ -39,11 +37,13 @@ export class StorageBucketClient extends CandidCanisterAgent<StorageBucketServic
         );
     }
 
+    // Fetches one chunk of a quarantined blob for an allowlisted vault reviewer. An update
+    // call by design: every fetch session is recorded in the vault's access log, and chunks
+    // after the first are served only in session order.
     vaultFileChunk(fileId: bigint, chunkIndex: number): Promise<VaultFileChunkResponse> {
         return this.handleResponse(
             this.service.vault_file_chunk({ file_id: fileId, chunk_index: chunkIndex }),
             vaultFileChunkResponse,
-            vaultLogResponse,
         );
     }
 

@@ -781,7 +781,7 @@ pub struct ModerationReportContent {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum AuthorityReportState {
     Due { urgent: bool },
     Filed { portal_reference: String },

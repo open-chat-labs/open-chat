@@ -78,6 +78,8 @@ type CurrentUserResponse = variant {
         streak : nat16;
         max_streak : nat16;
         hide_online_status : bool;
+        accepted_terms_version : nat32;
+        current_terms_version : nat32;
     };
     UserNotFound;
     Error : OCError;

@@ -118,6 +118,7 @@ export function vaultLogResponse(candid: CandidVaultLogResponse): VaultLogRespon
             entries: candid.Success.entries.map((e) => ({
                 index: e.index,
                 timestamp: e.timestamp,
+                hash: e.hash,
                 prevHash: e.prev_hash,
                 event: e.event,
                 userId: e.user_id[0]?.toString(),

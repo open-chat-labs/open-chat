@@ -52,9 +52,12 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
     match args.verdict {
         ModerationVerdict::UpheldAsCsam => {
             if was_auto_sanctioned {
-                // Suspension stays indefinite. The chat-canister copy is permanently removed;
-                // the vault copy persists with the retention clock started, and an authority
-                // report becomes due.
+                // The suspension becomes (or stays) indefinite: reporter-asserted sanctions
+                // deliberately defer suspension to this verdict, and for classifier detections
+                // the call is a no-op since the sender is already indefinitely suspended. The
+                // chat-canister copy is permanently removed; the vault copy persists with the
+                // retention clock started, and an authority report becomes due.
+                moderation::suspend_sender(reported_message.sender, now, state);
                 moderation::hard_delete_message(
                     reported_message.chat_id,
                     reported_message.thread_root_message_index,
@@ -144,6 +147,14 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
             state.push_event_to_local_user_index(reported_message.sender, build_verdict_message_to_sender(&reported_message));
         }
         ModerationVerdict::Dismissed => {
+            // A dismissed CSAM assertion was a false allegation with real consequences for the
+            // sender: record it against each reporter (knowingly false reports are themselves
+            // a violation - this is the evidence base for acting on repeat offenders)
+            if reported_message.csam_asserted {
+                for reporter in reported_message.reports.keys() {
+                    state.data.users.record_false_csam_report(*reporter);
+                }
+            }
             if was_auto_sanctioned {
                 // A false positive: reverse the sanction in full - unsuspend, restore the
                 // message, release the vault, clear the flags. (If an authority report was
@@ -154,6 +165,9 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                 if !moderation::has_other_unresolved_auto_sanction(reported_message.sender, args.report_index, state) {
                     moderation::unsuspend_sender(reported_message.sender, now, state);
                 }
+                // Restored unconditionally, including reports filed with delete: true - a
+                // dismissal means the allegation was wrong, so the reporter's deletion is
+                // reversed along with everything else (deliberate full-reversal semantics)
                 moderation::undelete_message(
                     reported_message.chat_id,
                     reported_message.thread_root_message_index,

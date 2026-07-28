@@ -38,6 +38,7 @@ fn current_user_impl(state: &RuntimeState) -> Response {
             max_streak: u.max_streak,
             hide_online_status: u.hide_online_status,
             accepted_terms_version: u.accepted_terms_version,
+            current_terms_version: crate::updates::accept_terms::CURRENT_TERMS_VERSION,
         })
     } else {
         UserNotFound

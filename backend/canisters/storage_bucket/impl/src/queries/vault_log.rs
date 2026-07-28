@@ -23,6 +23,7 @@ fn vault_log_impl(args: Args, state: &RuntimeState) -> Response {
             .map(|e| VaultLogEntry {
                 index: e.index,
                 timestamp: e.timestamp,
+                hash: hex::encode(crate::model::vault::Vault::entry_hash(e)),
                 prev_hash: hex::encode(e.prev_hash),
                 user_id: match &e.event {
                     VaultLogEvent::ViewedBy(_, _, user_id) => *user_id,

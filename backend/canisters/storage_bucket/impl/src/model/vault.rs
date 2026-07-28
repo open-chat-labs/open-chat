@@ -252,16 +252,18 @@ impl Vault {
         expired.into_iter().map(|(_, hash)| hash).collect()
     }
 
+    // A single O(n) pass; acceptable while logs are small (a handful of events per report).
+    // If growth ever threatens the query instruction limit, add a per-file index.
     pub fn log_page(&self, start: u64, max: u32, file_id: Option<FileId>) -> (u64, Vec<&VaultLogEntry>) {
         let matches = |e: &VaultLogEntry| file_id.is_none_or(|f| e.event.file_id() == f);
-        let total = self.log.iter().filter(|e| matches(e)).count() as u64;
-        let entries = self
-            .log
-            .iter()
-            .filter(|e| matches(e))
-            .skip(start as usize)
-            .take(max as usize)
-            .collect();
+        let mut total = 0u64;
+        let mut entries = Vec::new();
+        for entry in self.log.iter().filter(|e| matches(e)) {
+            if total >= start && entries.len() < max as usize {
+                entries.push(entry);
+            }
+            total += 1;
+        }
         (total, entries)
     }
 
@@ -300,7 +302,7 @@ impl Vault {
         });
     }
 
-    fn entry_hash(entry: &VaultLogEntry) -> Hash {
+    pub(crate) fn entry_hash(entry: &VaultLogEntry) -> Hash {
         hash_bytes(msgpack::serialize_then_unwrap(entry))
     }
 }

@@ -7,6 +7,11 @@ export type LoadedMedia = {
 
 export type ReviewStage = "interstitial" | "loading" | "view" | "not_authorized" | "error";
 
+// The terminal outcome reported when the viewer closes: "viewed" completes the
+// review-before-verdict gate; "not_authorized" means the caller is not a designated vault
+// reviewer; "error" means the media could not be fetched (eg. removed before quarantine)
+export type ReviewOutcome = "viewed" | "not_authorized" | "error";
+
 // The single review state machine shared by the desktop and mobile media viewers, so that the
 // two are equivalent by construction and only their markup differs.
 //
@@ -21,24 +26,24 @@ export class VaultMediaReview {
     // Disposal mid-fetch must stop pulling the material: checked after every await, and any
     // object URLs already created are revoked immediately
     #cancelled = false;
-    #viewed = false;
+    #outcome: ReviewOutcome | undefined = undefined;
     #notified = false;
 
     #client: OpenChat;
     #blobReferences: BlobReference[];
     #quarantined: boolean;
-    #onReviewed: (() => void) | undefined;
+    #onResult: ((outcome: ReviewOutcome) => void) | undefined;
 
     constructor(
         client: OpenChat,
         blobReferences: BlobReference[],
         quarantined: boolean,
-        onReviewed?: () => void,
+        onResult?: (outcome: ReviewOutcome) => void,
     ) {
         this.#client = client;
         this.#blobReferences = blobReferences;
         this.#quarantined = quarantined;
-        this.#onReviewed = onReviewed;
+        this.#onResult = onResult;
     }
 
     async #fetchDirect(ref: BlobReference): Promise<LoadedMedia | "error"> {
@@ -88,27 +93,34 @@ export class VaultMediaReview {
                     if (typeof item === "object") URL.revokeObjectURL(item.url);
                     return abort();
                 }
-                if (item === "not_authorized") return abort("not_authorized");
-                if (item === "error") return abort("error");
+                if (item === "not_authorized") {
+                    this.#outcome = "not_authorized";
+                    return abort("not_authorized");
+                }
+                if (item === "error") {
+                    this.#outcome = "error";
+                    return abort("error");
+                }
                 loaded.push(item);
             }
         } catch {
+            this.#outcome = "error";
             return abort("error");
         }
         this.items = loaded;
         this.stage = "view";
-        this.#viewed = true;
+        this.#outcome = "viewed";
     }
 
     dispose(): void {
         this.#cancelled = true;
         this.items.forEach((item) => URL.revokeObjectURL(item.url));
         this.items = [];
-        // The review only counts once the viewer is closed: notifying at load time would
+        // The outcome only counts once the viewer is closed: notifying at load time would
         // reveal the verdict actions behind the still-open viewer
-        if (this.#viewed && !this.#notified) {
+        if (this.#outcome !== undefined && !this.#notified) {
             this.#notified = true;
-            this.#onReviewed?.();
+            this.#onResult?.(this.#outcome);
         }
     }
 }

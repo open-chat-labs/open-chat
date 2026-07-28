@@ -1151,14 +1151,14 @@
 
 <EditLabel />
 
+{#if $currentUserStore.userId !== ANON_USER_ID && ($currentUserStore.acceptedTermsVersion ?? 0) < ($currentUserStore.currentTermsVersion ?? CURRENT_TERMS_VERSION)}
+    <Overlay>
+        <TermsUpdatedModal />
+    </Overlay>
+{/if}
+
 {#if $rulesAcceptanceStore !== undefined}
     <AcceptRulesModal />
-
-    {#if $currentUserStore.userId !== ANON_USER_ID && ($currentUserStore.acceptedTermsVersion ?? 0) < CURRENT_TERMS_VERSION}
-        <Overlay>
-            <TermsUpdatedModal />
-        </Overlay>
-    {/if}
 {:else if forgotPin}
     <Overlay>
         <SetPinNumberModal

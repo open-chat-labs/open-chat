@@ -850,8 +850,9 @@ fn csam_asserted_report_applies_auto_sanction_and_dismissal_reverses() {
     );
     tick_many(env, 3);
 
-    // The reporter asserts CSAM: the report is treated like a classifier detection - the
-    // auto-sanction applies immediately with no classifier call and no human in the loop yet
+    // The reporter asserts CSAM: quarantine + deletion apply immediately, but the suspension
+    // waits for the human verdict - a reporter is not a trusted classifier, and immediate
+    // suspension would let any account grind others offline with false assertions
     let report_response = client::group::report_message(
         env,
         test_data.reporter.principal,
@@ -870,8 +871,10 @@ fn csam_asserted_report_applies_auto_sanction_and_dismissal_reverses() {
     assert!(matches!(message_content, MessageContent::Deleted(_)), "{message_content:?}");
 
     let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
-    let suspension_details = sender_state.suspension_details.expect("sender should be suspended");
-    assert!(matches!(suspension_details.action, SuspensionAction::Delete(_)));
+    assert!(
+        sender_state.suspension_details.is_none(),
+        "suspension should await the verdict"
+    );
 
     // The alert reflects an auto-sanctioned report raised by a user (not the pipeline)
     let reports = get_moderation_reports(env, &test_data);
@@ -1000,8 +1003,10 @@ fn csam_asserted_media_report_quarantines_immediately() {
     tick_many(env, 10);
 
     let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
-    let suspension_details = sender_state.suspension_details.expect("sender should be suspended");
-    assert!(matches!(suspension_details.action, SuspensionAction::Delete(_)));
+    assert!(
+        sender_state.suspension_details.is_none(),
+        "suspension should await the verdict"
+    );
 
     // The vault holds the media: the reviewer can fetch it, nobody else can
     let chunk_response = client::storage_bucket::vault_file_chunk(
@@ -1030,6 +1035,28 @@ fn csam_asserted_media_report_quarantines_immediately() {
     assert!(report.auto_sanctioned);
     assert_eq!(report.blob_references, vec![blob_reference.clone()]);
     assert!(matches!(report.status, ModerationReportStatus::Pending));
+    let report_index = report.report_index.expect("report should carry an index");
+
+    // The UpheldAsCsam verdict is what applies the (indefinite) suspension for a
+    // reporter-asserted sanction
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index,
+            verdict: ModerationVerdict::UpheldAsCsam,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    let suspension_details = sender_state
+        .suspension_details
+        .expect("sender should be suspended by the verdict");
+    assert!(matches!(suspension_details.action, SuspensionAction::Delete(_)));
 }
 
 #[test]

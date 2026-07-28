@@ -120,6 +120,7 @@ export type VaultFileChunkResponse =
 export type VaultLogEntry = {
     index: bigint;
     timestamp: bigint;
+    hash: string;
     prevHash: string;
     event: string;
     userId: string | undefined;

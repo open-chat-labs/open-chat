@@ -619,12 +619,12 @@
     {/if}
 {/if}
 
+{#if $currentUserStore.userId !== ANON_USER_ID && ($currentUserStore.acceptedTermsVersion ?? 0) < ($currentUserStore.currentTermsVersion ?? CURRENT_TERMS_VERSION)}
+    <TermsUpdatedModal />
+{/if}
+
 {#if $rulesAcceptanceStore !== undefined}
     <AcceptRulesModal />
-
-    {#if $currentUserStore.userId !== ANON_USER_ID && ($currentUserStore.acceptedTermsVersion ?? 0) < CURRENT_TERMS_VERSION}
-        <TermsUpdatedModal />
-    {/if}
 {:else if forgotPin}
     <Sheet onDismiss={() => (forgotPin = false)}>
         <SetPinNumberModal

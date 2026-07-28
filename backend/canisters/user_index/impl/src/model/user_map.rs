@@ -764,6 +764,12 @@ impl UserMap {
         map
     }
 
+    pub fn record_false_csam_report(&mut self, user_id: UserId) {
+        if let Some(user) = self.users.get_mut(&user_id) {
+            user.false_csam_reports = user.false_csam_reports.saturating_add(1);
+        }
+    }
+
     pub fn accept_terms(&mut self, caller: &Principal, version: u32, now: TimestampMillis) -> bool {
         if let Some(user) = self.principal_to_user_id.get(caller).and_then(|u| self.users.get_mut(u)) {
             // Never downgrade: an out-of-date client cannot roll the accepted version back

@@ -492,6 +492,16 @@ impl ChatEvents {
             .and_then(|message| message.deleted_by.as_ref().map(|db| db.deleted_by))
             .ok_or(OCErrorCode::MessageNotFound)?;
 
+        // A moderation restore means the allegation was dismissed: clear the CSAM flag first,
+        // since the flag alone is what locks quarantined content (making the read/undelete
+        // gates unconditional closes the hole where a self-deleting sender was exempt)
+        let _ = self.flag_message(
+            thread_root_message_index,
+            message_id,
+            types::ModerationCategories::default(),
+            now,
+        );
+
         self.undelete_message(DeleteUndeleteMessageArgs {
             caller: deleted_by,
             is_admin: false,
@@ -548,13 +558,10 @@ impl ChatEvents {
             return Err(UpdateEventError::NoChange(OCErrorCode::NoChange));
         };
 
-        // Quarantined messages (CSAM-flagged, deleted by moderation) cannot be restored by the
-        // sender or admins; only the moderation Dismissed-verdict path (which acts as the
-        // original deleter) may restore them
-        if args.caller != deleted_by
-            && deleted_by != message.sender
-            && message.moderation_flags & types::ModerationCategories::SEXUAL_MINORS.bits() != 0
-        {
+        // Quarantined messages (CSAM-flagged) cannot be restored by anyone - including a
+        // sender who self-deleted before the detection. The moderation Dismissed-verdict path
+        // clears the flag before restoring, so it alone passes this gate.
+        if message.moderation_flags & types::ModerationCategories::SEXUAL_MINORS.bits() != 0 {
             return Err(UpdateEventError::NoChange(OCErrorCode::InitiatorNotAuthorized));
         }
 
@@ -897,7 +904,9 @@ impl ChatEvents {
                         report.status = status;
                         changed = true;
                     }
-                    if let Some(authority_report) = authority_report {
+                    if let Some(authority_report) = authority_report
+                        && report.authority_report.as_ref() != Some(&authority_report)
+                    {
                         report.authority_report = Some(authority_report);
                         changed = true;
                     }

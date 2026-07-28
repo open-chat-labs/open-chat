@@ -36,12 +36,15 @@ impl ReportedMessages {
                 message.already_deleted = true;
             }
 
+            if args.csam {
+                message.csam_asserted = true;
+            }
             if message.reports.insert(args.reporter, args.timestamp).is_some() {
                 AddReportResult::AlreadyReportedByUser
             } else if message.outcome.is_some() {
                 AddReportResult::ExistingOutcome(index as u64)
             } else {
-                AddReportResult::ExistingPending
+                AddReportResult::ExistingPending(index as u64)
             }
         } else if self.reporter_rate_limited(args.reporter, args.timestamp) {
             AddReportResult::RateLimited
@@ -62,6 +65,7 @@ impl ReportedMessages {
                 detection: DetectionSource::UserReport,
                 contested: None,
                 unverified_report_filed: None,
+                csam_asserted: args.csam,
             });
             AddReportResult::New(new_index as u64)
         }
@@ -220,6 +224,7 @@ impl ReportedMessages {
                 detection: DetectionSource::Proactive,
                 contested: None,
                 unverified_report_filed: None,
+                csam_asserted: false,
             });
             Some((new_index as u64, true))
         }
@@ -319,6 +324,7 @@ pub struct AddReportArgs {
     pub sender: UserId,
     pub reporter: UserId,
     pub already_deleted: bool,
+    pub csam: bool,
     pub timestamp: TimestampMillis,
 }
 
@@ -339,7 +345,7 @@ pub struct AddProactiveDetectionArgs {
 #[derive(PartialEq, Debug)]
 pub enum AddReportResult {
     New(u64),
-    ExistingPending,
+    ExistingPending(u64),
     ExistingOutcome(u64),
     AlreadyReportedByUser,
     RateLimited,
@@ -378,6 +384,10 @@ pub struct ReportedMessage {
     pub blob_references: Vec<BlobReference>,
     #[serde(default)]
     pub detection: DetectionSource,
+    // True when a reporter asserted CSAM (triggering immediate quarantine + deletion): if the
+    // report is later dismissed, the assertion was false and is recorded against the reporter
+    #[serde(default)]
+    pub csam_asserted: bool,
     // Set when the sanctioned sender contests the automated decision (GDPR Art 22 safeguard);
     // a contested report jumps the review queue
     #[serde(default)]
@@ -535,7 +545,7 @@ pub fn build_verdict_message_to_sender(reported_message: &ReportedMessage) -> Us
     let text = format!(
         "Your [message]({}) was reported by another user and the OpenChat moderation team confirmed that it broke [the platform rules](https://oc.app/guidelines?section=3). {}",
         build_message_link(reported_message),
-        removal_and_suspension_text(reported_message),
+        removal_and_suspension_text(reported_message, true),
     );
 
     build_oc_bot_message(text, reported_message.sender)
@@ -552,11 +562,11 @@ pub fn build_restoration_message_to_sender(reported_message: &ReportedMessage) -
     build_oc_bot_message(text, reported_message.sender)
 }
 
-pub fn build_message_to_sender(reported_message: &ReportedMessage) -> UserIndexEvent {
+pub fn build_message_to_sender(reported_message: &ReportedMessage, suspended: bool) -> UserIndexEvent {
     let text = format!(
         "Your [message]({}) was reported by another user and automated moderation determined that it contained content which breaks [the platform rules](https://oc.app/guidelines?section=3). {}",
         build_message_link(reported_message),
-        removal_and_suspension_text(reported_message),
+        removal_and_suspension_text(reported_message, suspended),
     );
 
     build_oc_bot_message(text, reported_message.sender)
@@ -564,11 +574,12 @@ pub fn build_message_to_sender(reported_message: &ReportedMessage) -> UserIndexE
 
 // Direct chat messages are never deleted by moderation, so only claim removal for group/channel
 // messages
-fn removal_and_suspension_text(reported_message: &ReportedMessage) -> &'static str {
-    if matches!(reported_message.chat_id, Chat::Direct(_)) {
-        "Your account has been suspended."
-    } else {
-        "The message has been removed and your account has been suspended."
+fn removal_and_suspension_text(reported_message: &ReportedMessage, suspended: bool) -> &'static str {
+    match (matches!(reported_message.chat_id, Chat::Direct(_)), suspended) {
+        (true, true) => "Your account has been suspended.",
+        (true, false) => "The report is awaiting review by a moderator.",
+        (false, true) => "The message has been removed and your account has been suspended.",
+        (false, false) => "The message has been removed pending review by a moderator.",
     }
 }
 
@@ -629,7 +640,7 @@ mod tests {
         args.reporter = Principal::from_text("2yfsq-kaaaa-aaaaf-aaa4q-cai").unwrap().into();
         let result = reported_messages.add_report(args);
 
-        assert_eq!(result, AddReportResult::ExistingPending);
+        assert!(matches!(result, AddReportResult::ExistingPending(_)));
     }
 
     #[test]
@@ -735,6 +746,7 @@ mod report_status_tests {
             detection: DetectionSource::Proactive,
             contested: None,
             unverified_report_filed: None,
+            csam_asserted: false,
         }
     }
 

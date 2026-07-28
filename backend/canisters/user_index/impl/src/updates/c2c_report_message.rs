@@ -27,14 +27,15 @@ fn c2c_report_message(args: Args) -> Response {
     match mutate_state(|state| add_report(&args, state)) {
         Ok(report_index) => {
             if args.csam {
-                // The reporter asserts the content is CSAM: treat the report like a classifier
-                // detection and apply the auto-sanction immediately - quarantine the media in
-                // the vault, delete the message and suspend the sender - ahead of the human
-                // verdict, which confirms or fully reverses it. Nobody views the material
-                // outside the quarantine framework. The moderation flags are set even for
-                // private chats so that the deleted content is locked behind the read-gate.
+                // The reporter asserts the content is CSAM: quarantine the media in the vault
+                // and delete the message immediately - nobody views the material outside the
+                // quarantine framework - but the SUSPENSION waits for the human verdict. A
+                // reporter is not a trusted classifier: an immediate suspension would let any
+                // account grind others offline with false assertions. The moderation flags are
+                // set even for private chats so the deleted content is locked behind the
+                // read-gate.
                 mutate_state(|state| {
-                    handle_moderation_result(report_index, ModerationCategories::SEXUAL_MINORS, false, state);
+                    handle_moderation_result(report_index, ModerationCategories::SEXUAL_MINORS, false, false, state);
                     if let Some(reported_message) = state.data.reported_messages.get(report_index) {
                         moderation::set_message_moderation_flags(
                             reported_message.chat_id,
@@ -51,7 +52,7 @@ fn c2c_report_message(args: Args) -> Response {
                 // The message has already been classified by the active moderation pipeline
                 // (only public messages are, and only flagged categories are stored): reuse
                 // that judgement rather than calling the OpenAI API again
-                mutate_state(|state| handle_moderation_result(report_index, categories, false, state));
+                mutate_state(|state| handle_moderation_result(report_index, categories, false, true, state));
             } else {
                 // The classification inputs were persisted in `add_report`, so if this call is
                 // lost to an upgrade the classification is resumed in post_upgrade
@@ -72,6 +73,7 @@ fn add_report(args: &Args, state: &mut RuntimeState) -> Result<u64, Response> {
         sender: args.message.sender,
         already_deleted: args.already_deleted,
         reporter: args.reporter,
+        csam: args.csam,
         timestamp: state.env.now(),
     };
     match state.data.reported_messages.add_report(add_report_args) {
@@ -92,7 +94,10 @@ fn add_report(args: &Args, state: &mut RuntimeState) -> Result<u64, Response> {
             state.push_event_to_local_user_index(args.reporter, build_message_to_reporter(reported_message, args.reporter));
             Err(Success)
         }
-        AddReportResult::ExistingPending => Err(Success),
+        // A CSAM assertion on an already-pending report must still take the CSAM path: the
+        // earlier reporter's plain report did not quarantine anything
+        AddReportResult::ExistingPending(report_index) if args.csam => Ok(report_index),
+        AddReportResult::ExistingPending(_) => Err(Success),
         AddReportResult::AlreadyReportedByUser => Err(AlreadyReported),
         AddReportResult::RateLimited => {
             // Silently dropped: only the flooding reporter's own excess reports are affected and
@@ -126,7 +131,7 @@ pub(crate) async fn process_report(report_index: u64) {
     };
 
     mutate_state(|state| match result {
-        Ok(categories) => handle_moderation_result(report_index, categories, false, state),
+        Ok(categories) => handle_moderation_result(report_index, categories, false, true, state),
         Err(error) => {
             error!(?error, report_index, "Failed to classify reported message");
             let Some(attempts) = state.data.reported_messages.record_classification_failure(report_index) else {
@@ -146,7 +151,7 @@ pub(crate) async fn process_report(report_index: u64) {
             } else {
                 // Retries exhausted: record the failure on the outcome, so that it cannot be
                 // mistaken for a clean classification, and hand the report to the moderators
-                handle_moderation_result(report_index, ModerationCategories::default(), true, state);
+                handle_moderation_result(report_index, ModerationCategories::default(), true, true, state);
             }
         }
     });
@@ -156,6 +161,7 @@ fn handle_moderation_result(
     report_index: u64,
     categories: ModerationCategories,
     classification_failed: bool,
+    suspend_sender: bool,
     state: &mut RuntimeState,
 ) {
     // The pending classification is removed when the outcome is recorded, so if it is missing
@@ -238,7 +244,9 @@ fn handle_moderation_result(
                 &mut state.data.fire_and_forget_handler,
             );
         }
-        moderation::suspend_sender(sender, now, state);
+        if suspend_sender {
+            moderation::suspend_sender(sender, now, state);
+        }
     }
 
     let outcome = AutomatedOutcome {
@@ -289,7 +297,10 @@ fn handle_moderation_result(
 
     if is_csam {
         // Inform the sender that their message has violated the platform rules
-        state.push_event_to_local_user_index(reported_message.sender, build_message_to_sender(&reported_message));
+        state.push_event_to_local_user_index(
+            reported_message.sender,
+            build_message_to_sender(&reported_message, suspend_sender),
+        );
     }
 
     // Inform each reporter of the outcome of their report

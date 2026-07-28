@@ -35,7 +35,9 @@ pub struct SuccessResult {
 pub struct VaultLogEntry {
     pub index: u64,
     pub timestamp: TimestampMillis,
-    // Hex hash of the previous entry: verifies the chain externally
+    // Hex hash of this entry and of its predecessor: consecutive entries chain-link
+    // (entry.hash == successor.prev_hash), which an auditor can verify across the response
+    pub hash: String,
     pub prev_hash: String,
     // Human-readable description of the event
     pub event: String,

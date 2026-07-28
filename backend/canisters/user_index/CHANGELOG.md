@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Reports which assert child sexual abuse content apply the auto-sanction immediately (quarantine, delete, suspend) ahead of the human verdict, so the material is never viewed outside the quarantine framework ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- Reports which assert child sexual abuse content quarantine the media and delete the message immediately - the material is never viewed outside the quarantine framework - while the suspension waits for the human verdict ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 
 - `accept_terms` - records the user's affirmative acceptance of the platform terms (version + timestamp), returned via `current_user` so clients can show a blocking terms-updated notice ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 - `set_moderation_referral_config` (platform operator) - configures which classifier categories (other than sexual/minors) refer messages for human moderator review, with a score threshold per category ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))

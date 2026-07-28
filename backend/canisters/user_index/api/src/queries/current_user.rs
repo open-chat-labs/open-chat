@@ -47,4 +47,7 @@ pub struct SuccessResult {
     #[serde(default, skip_serializing_if = "is_default")]
     #[ts(as = "Option<u32>", optional)]
     pub accepted_terms_version: u32,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<u32>", optional)]
+    pub current_terms_version: u32,
 }

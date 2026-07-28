@@ -1853,6 +1853,7 @@ export interface VaultLogArgs {
 export interface VaultLogEntry {
     index: bigint;
     timestamp: bigint;
+    hash: string;
     prev_hash: string;
     event: string;
     user_id: [] | [Principal];

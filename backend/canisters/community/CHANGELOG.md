@@ -14,7 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Reports which assert child sexual abuse content apply the auto-sanction immediately (quarantine, delete, suspend) ahead of the human verdict, so the material is never viewed outside the quarantine framework ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- Reports which assert child sexual abuse content quarantine the media and delete the message immediately - the material is never viewed outside the quarantine framework - while the suspension waits for the human verdict ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 
 - Escalate classifier moderation referrals to the user_index (via the group_index) for human review ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 - Post moderation alerts as a structured `ModerationReport` message type and support status updates ([#9095](https://github.com/open-chat-labs/open-chat/pull/9095))

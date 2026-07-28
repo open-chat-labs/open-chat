@@ -75,6 +75,8 @@ pub struct User {
     pub chit_balance: i32,
     #[serde(rename = "ho", default, skip_serializing_if = "is_default")]
     pub hide_online_status: bool,
+    #[serde(rename = "fcr", default, skip_serializing_if = "is_default")]
+    pub false_csam_reports: u32,
     #[serde(rename = "tv", default, skip_serializing_if = "is_default")]
     pub accepted_terms_version: u32,
     #[serde(rename = "ta", default, skip_serializing_if = "is_default")]
@@ -134,6 +136,7 @@ impl User {
             total_chit_earned: 0,
             chit_balance: 0,
             hide_online_status: false,
+            false_csam_reports: 0,
             accepted_terms_version: 0,
             accepted_terms_at: 0,
         }
@@ -273,6 +276,7 @@ impl Default for User {
             total_chit_earned: 0,
             chit_balance: 0,
             hide_online_status: false,
+            false_csam_reports: 0,
             accepted_terms_version: 0,
             accepted_terms_at: 0,
         }

@@ -17,7 +17,8 @@
 
     let { blobReferences, onClose }: Props = $props();
 
-    let entries: VaultLogEntry[] = $state([]);
+    // Log indexes are per-bucket, so entries are keyed by (bucket, index) and ordered by time
+    let entries: (VaultLogEntry & { canisterId: string })[] = $state([]);
     let failed = $state(false);
     let loading = $state(true);
 
@@ -28,12 +29,12 @@
             blobReferences.map((ref) =>
                 client.vaultLog(ref.canisterId, 0n, 200, ref.blobId).then((resp) => {
                     if (resp.kind !== "success") throw new Error(resp.kind);
-                    return resp.entries;
+                    return resp.entries.map((e) => ({ ...e, canisterId: ref.canisterId }));
                 }),
             ),
         )
             .then((pages) => {
-                entries = pages.flat().sort((a, b) => Number(a.index - b.index));
+                entries = pages.flat().sort((a, b) => Number(a.timestamp - b.timestamp));
             })
             .catch(() => (failed = true))
             .finally(() => (loading = false));
@@ -54,7 +55,7 @@
                 <p><Translatable resourceKey={i18nKey("vaultLog.empty")} /></p>
             {:else}
                 <div class="entries">
-                    {#each entries as entry (entry.index)}
+                    {#each entries as entry (`${entry.canisterId}-${entry.index}`)}
                         <div class="entry">
                             <div class="time">
                                 {new Date(Number(entry.timestamp)).toLocaleString()}

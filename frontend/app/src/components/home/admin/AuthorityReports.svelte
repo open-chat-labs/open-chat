@@ -68,8 +68,12 @@
                         <td class="ref">{row.portal_reference}</td>
                         <td>{new Date(row.filed_at).toLocaleString()}</td>
                         <td>
-                            {#if row.urgent}urgent{/if}
-                            {#if row.unverified}unverified{/if}
+                            {[
+                                row.urgent ? "urgent" : undefined,
+                                row.unverified ? "unverified" : undefined,
+                            ]
+                                .filter((f) => f !== undefined)
+                                .join(", ")}
                         </td>
                     </tr>
                 {/each}
