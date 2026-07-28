@@ -1007,6 +1007,8 @@ function getAction(
             return agent.setModerationReferralConfig(payload.config);
         case "setVaultReviewers":
             return agent.setVaultReviewers(payload.userIds);
+        case "vaultBuckets":
+            return agent.vaultBuckets();
         case "vaultLog":
             return agent.vaultLog(
                 payload.bucketCanisterId,

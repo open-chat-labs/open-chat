@@ -389,6 +389,7 @@ export type WorkerRequest =
     | SetModerationReferralConfig
     | SetVaultReviewers
     | VaultLog
+    | VaultBuckets
     | AuthorityReports
     | RecordAuthorityReportFiled
     | AcceptTerms
@@ -833,6 +834,10 @@ type SetOpenAIApiKey = {
 type AcceptTerms = {
     kind: "acceptTerms";
     version: number;
+};
+
+type VaultBuckets = {
+    kind: "vaultBuckets";
 };
 
 type VaultLog = {
@@ -2557,6 +2562,8 @@ export type WorkerResult<T> = T extends Init
     ? boolean
     : T extends VaultLog
     ? VaultLogResponse
+    : T extends VaultBuckets
+    ? string[]
     : T extends AuthorityReports
     ? string | undefined
     : T extends RecordAuthorityReportFiled

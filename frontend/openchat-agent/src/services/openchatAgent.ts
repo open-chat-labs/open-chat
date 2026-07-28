@@ -2217,6 +2217,10 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.contestModerationSanction();
     }
 
+    vaultBuckets(): Promise<string[]> {
+        return this._dataClient.vaultBuckets();
+    }
+
     vaultLog(
         bucketCanisterId: string,
         start: bigint,

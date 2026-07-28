@@ -1818,6 +1818,13 @@ export const StorageIndexAllocationBucketArgs = Type.Object({
     file_id_seed: Type.Optional(Type.BigInt()),
 });
 
+export type StorageIndexVaultBucketsSuccessResult = Static<
+    typeof StorageIndexVaultBucketsSuccessResult
+>;
+export const StorageIndexVaultBucketsSuccessResult = Type.Object({
+    buckets: Type.Array(TSBytes),
+});
+
 export type RegistryAddMessageFilterArgs = Static<typeof RegistryAddMessageFilterArgs>;
 export const RegistryAddMessageFilterArgs = Type.Object({
     regex: Type.String(),
@@ -6154,6 +6161,11 @@ export const StorageIndexCanForwardResponse = Type.Union([
     }),
     Type.Literal("UserNotFound"),
 ]);
+
+export type StorageIndexVaultBucketsResponse = Static<typeof StorageIndexVaultBucketsResponse>;
+export const StorageIndexVaultBucketsResponse = Type.Object({
+    Success: StorageIndexVaultBucketsSuccessResult,
+});
 
 export type RegistryTokenDetails = Static<typeof RegistryTokenDetails>;
 export const RegistryTokenDetails = Type.Object({

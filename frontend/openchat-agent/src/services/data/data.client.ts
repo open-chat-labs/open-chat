@@ -20,13 +20,21 @@ import { StorageIndexClient } from "../storageIndex/storageIndex.client";
 export class DataClient extends EventTarget {
     private storageIndexClient: StorageIndexClient;
 
-    constructor(private identity: Identity, private agent: HttpAgent, private config: AgentConfig) {
+    constructor(
+        private identity: Identity,
+        private agent: HttpAgent,
+        private config: AgentConfig,
+    ) {
         super();
         this.storageIndexClient = new StorageIndexClient(
             identity,
             agent,
             config.openStorageIndexCanister,
         );
+    }
+
+    vaultBuckets(): Promise<string[]> {
+        return this.storageIndexClient.vaultBuckets();
     }
 
     storageStatus(): Promise<StorageStatus> {

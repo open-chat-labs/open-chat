@@ -7363,6 +7363,10 @@ export class OpenChat {
         return this.#worker.send({ kind: "setOpenAIApiKey", apiKey }).catch(() => false);
     }
 
+    vaultBuckets(): Promise<string[]> {
+        return this.#worker.send({ kind: "vaultBuckets" }).catch(() => []);
+    }
+
     vaultLog(
         bucketCanisterId: string,
         start: bigint,
