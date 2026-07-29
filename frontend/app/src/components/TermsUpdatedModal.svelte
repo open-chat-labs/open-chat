@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { CURRENT_TERMS_VERSION, type OpenChat } from "@client";
+    import { CURRENT_TERMS_VERSION, currentUserStore, type OpenChat } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../i18n/i18n";
     import Button from "./Button.svelte";
@@ -11,11 +11,16 @@
     let busy = $state(false);
 
     // Deliberately undismissible: the only way past is the affirmative accept, which is
-    // recorded (with version and timestamp) against the user record
+    // recorded (with version and timestamp) against the user record. Accept the version the
+    // canister reports (the same one the notice is gated on) rather than the frontend
+    // constant - otherwise a canister ahead of the website would accept a version below the
+    // gate, leaving this undismissible modal permanently open.
     function accept() {
         if (busy) return;
         busy = true;
-        client.acceptTerms(CURRENT_TERMS_VERSION);
+        client
+            .acceptTerms($currentUserStore.currentTermsVersion ?? CURRENT_TERMS_VERSION)
+            .finally(() => (busy = false));
     }
 </script>
 
