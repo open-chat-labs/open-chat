@@ -31,6 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Only abandon a group import due to a contract violation if the reject code matches too ([#9124](https://github.com/open-chat-labs/open-chat/pull/9124))
 - Prevent members from demoting others more senior than themselves ([#9115](https://github.com/open-chat-labs/open-chat/pull/9115))
 - Lock against a user having two gate payments in progress concurrently ([#9080](https://github.com/open-chat-labs/open-chat/pull/9080))
 

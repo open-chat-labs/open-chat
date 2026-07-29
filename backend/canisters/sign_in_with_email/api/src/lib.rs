@@ -1,7 +1,7 @@
 use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
 use candid::CandidType;
-use rsa::rand_core::CryptoRngCore;
+use rsa::rand_core::CryptoRng;
 use rsa::{Pkcs1v15Encrypt, RsaPrivateKey, RsaPublicKey};
 use serde::{Deserialize, Serialize};
 
@@ -78,7 +78,7 @@ pub struct AwsEmailSenderConfigPublic {
 }
 
 impl EmailSenderConfig {
-    pub fn encrypt<R: CryptoRngCore>(self, rsa_public_key: &RsaPublicKey, rng: &mut R) -> EncryptedEmailSenderConfig {
+    pub fn encrypt<R: CryptoRng>(self, rsa_public_key: &RsaPublicKey, rng: &mut R) -> EncryptedEmailSenderConfig {
         match self {
             EmailSenderConfig::Aws(aws) => EncryptedEmailSenderConfig::Aws(aws.encrypt(rsa_public_key, rng)),
         }
@@ -94,7 +94,7 @@ impl EncryptedEmailSenderConfig {
 }
 
 impl AwsEmailSenderConfig {
-    pub fn encrypt<R: CryptoRngCore>(self, rsa_public_key: &RsaPublicKey, rng: &mut R) -> EncryptedAwsEmailSenderConfig {
+    pub fn encrypt<R: CryptoRng>(self, rsa_public_key: &RsaPublicKey, rng: &mut R) -> EncryptedAwsEmailSenderConfig {
         EncryptedAwsEmailSenderConfig {
             region: self.region,
             function_url: self.function_url,
@@ -133,7 +133,7 @@ impl From<&AwsEmailSenderConfig> for AwsEmailSenderConfigPublic {
     }
 }
 
-fn encrypt<R: CryptoRngCore>(value: &str, rsa_public_key: &RsaPublicKey, rng: &mut R) -> String {
+fn encrypt<R: CryptoRng>(value: &str, rsa_public_key: &RsaPublicKey, rng: &mut R) -> String {
     BASE64_STANDARD.encode(rsa_public_key.encrypt(rng, Pkcs1v15Encrypt, value.as_bytes()).unwrap())
 }
 

@@ -88,7 +88,7 @@ impl Job for TimerJob {
 
 impl Job for SubmitProposalJob {
     fn execute(self) {
-        ic_cdk::futures::spawn(async move {
+        ic_cdk::futures::spawn_migratory(async move {
             submit_proposal(
                 self.user_id_and_payment,
                 self.governance_canister_id,
@@ -111,7 +111,7 @@ impl Job for ProcessUserRefundJob {
             memo: None,
             amount: self.amount.into(),
         };
-        ic_cdk::futures::spawn(async move {
+        ic_cdk::futures::spawn_migratory(async move {
             match icrc_ledger_canister_c2c_client::icrc1_transfer(self.ledger_canister_id, &transfer_args).await {
                 Ok(Ok(_)) => {}
                 Ok(Err(error)) => {
@@ -143,7 +143,7 @@ impl Job for TopUpNeuronJob {
             memo: None,
             amount: self.amount.into(),
         };
-        ic_cdk::futures::spawn(async move {
+        ic_cdk::futures::spawn_migratory(async move {
             match icrc_ledger_canister_c2c_client::icrc1_transfer(self.ledger_canister_id, &transfer_args).await {
                 Ok(Ok(_)) => {
                     let refresh_job = RefreshNeuronJob {
@@ -176,7 +176,7 @@ impl Job for RefreshNeuronJob {
             })),
         };
 
-        ic_cdk::futures::spawn(async move {
+        ic_cdk::futures::spawn_migratory(async move {
             match sns_governance_canister_c2c_client::manage_neuron(self.governance_canister_id, &args).await {
                 Ok(response) => match response.command.unwrap() {
                     manage_neuron_response::Command::ClaimOrRefresh(_) => {}
@@ -211,7 +211,7 @@ impl Job for VoteOnNnsProposalJob {
             })),
         };
 
-        ic_cdk::futures::spawn(async move {
+        ic_cdk::futures::spawn_migratory(async move {
             match nns_governance_canister_c2c_client::manage_neuron(self.nns_governance_canister_id, &args).await {
                 Ok(response) => match response.command.unwrap() {
                     manage_neuron_response::Command::RegisterVote(_) => {}
@@ -234,7 +234,7 @@ impl Job for VoteOnNnsProposalJob {
 
 impl Job for CheckSnsProposalTallyThenVoteOnNnsProposalJob {
     fn execute(self) {
-        ic_cdk::futures::spawn(async move {
+        ic_cdk::futures::spawn_migratory(async move {
             match sns_governance_canister_c2c_client::get_proposal(
                 self.sns_governance_canister_id,
                 &sns_governance_canister::get_proposal::Args {

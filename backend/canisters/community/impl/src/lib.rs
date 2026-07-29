@@ -25,7 +25,7 @@ use model::events::CommunityEventInternal;
 use model::user_event_batch::UserEventBatch;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use oc_error_codes::OCErrorCode;
-use rand::RngCore;
+use rand::Rng;
 use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};

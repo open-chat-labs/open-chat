@@ -9,7 +9,7 @@ use chat_events::{
 };
 use constants::{HOUR_IN_MS, MINUTE_IN_MS};
 use ledger_utils::format_crypto_amount_with_symbol;
-use rand::Rng;
+use rand::RngExt;
 use types::{
     Achievement, Chat, ChitEvent, ChitEventType, DirectChatUserNotificationPayload, DirectMessageTipped,
     DirectReactionAddedNotification, EventIndex, MessageContentInitial, P2PSwapStatus, UserId, UserType, VideoCallPresence,
@@ -154,7 +154,7 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
             let chat = state
                 .data
                 .direct_chats
-                .get_or_create(caller_user_id, UserType::User, || state.env.rng().r#gen(), now);
+                .get_or_create(caller_user_id, UserType::User, || state.env.rng().random(), now);
 
             let last_updated_timestamp = chat.events.get_events_time_to_live().timestamp;
 

@@ -3,7 +3,7 @@ use crate::model::reported_messages::ReportedMessage;
 use crate::timer_job_types::{SetUserSuspended, TimerJob, UnsuspendUser};
 use constants::{DAY_IN_MS, OPENCHAT_BOT_USER_ID};
 use fire_and_forget_handler::FireAndForgetHandler;
-use rand::Rng;
+use rand::RngExt;
 use storage_bucket_canister::c2c_vault_sync::VaultCaptureMetadata;
 use storage_index_canister::c2c_vault_ops::{
     ApplyVerdictOp, Args as VaultOpsArgs, QuarantineOp, UnquarantineOp, VaultOp, VaultReviewer,
@@ -43,7 +43,7 @@ pub fn post_moderation_alert(alert: ModerationAlert, state: &mut RuntimeState) {
         return;
     };
 
-    let channel_message_id: MessageId = state.env.rng().r#gen::<u128>().into();
+    let channel_message_id: MessageId = state.env.rng().random::<u128>().into();
 
     let report = ModerationReportContent {
         report_index: alert.report_index,

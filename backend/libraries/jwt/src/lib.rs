@@ -1,8 +1,8 @@
 use ct_codecs::Encoder;
 use ct_codecs::{Base64UrlSafeNoPadding, Decoder};
 use p256::ecdsa;
-use p256::ecdsa::signature::{RandomizedDigestSigner, Verifier};
-use p256::elliptic_curve::rand_core::CryptoRngCore;
+use p256::ecdsa::signature::{RandomizedSigner, Verifier};
+use p256::elliptic_curve::rand_core::CryptoRng;
 use p256::pkcs8::{DecodePrivateKey, DecodePublicKey};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
@@ -50,7 +50,7 @@ impl<T> Claims<T> {
 pub fn sign_and_encode_token<T: Serialize>(
     secret_key_der: &[u8],
     claims: T,
-    rng: &mut impl CryptoRngCore,
+    rng: &mut impl CryptoRng,
 ) -> Result<String, Box<dyn Error>> {
     let jwt_header = JwtHeader {
         alg: "ES256".to_string(),
@@ -100,17 +100,16 @@ pub fn verify_and_decode<T: DeserializeOwned>(
     Ok(claims)
 }
 
-pub fn sign_token(token: &str, secret_key_der: &[u8], rng: &mut impl CryptoRngCore) -> Result<Vec<u8>, Box<dyn Error>> {
+pub fn sign_token(token: &str, secret_key_der: &[u8], rng: &mut impl CryptoRng) -> Result<Vec<u8>, Box<dyn Error>> {
     sign_bytes(token.as_bytes(), secret_key_der, rng)
 }
 
-pub fn sign_bytes(bytes: &[u8], secret_key_der: &[u8], rng: &mut impl CryptoRngCore) -> Result<Vec<u8>, Box<dyn Error>> {
-    let mut digest = hmac_sha256::Hash::new();
-    digest.update(bytes);
-
+pub fn sign_bytes(bytes: &[u8], secret_key_der: &[u8], rng: &mut impl CryptoRng) -> Result<Vec<u8>, Box<dyn Error>> {
     let p256_sk = ecdsa::SigningKey::from_pkcs8_der(secret_key_der)?;
 
-    let signature: ecdsa::Signature = p256_sk.sign_digest_with_rng(rng, digest);
+    // `sign_with_rng` hashes `bytes` with the curve's associated digest (SHA-256 for P-256) before
+    // signing, which is the ES256 construction - equivalent to the previous manual SHA-256 digest.
+    let signature: ecdsa::Signature = p256_sk.sign_with_rng(rng, bytes);
 
     Ok(signature.to_vec())
 }
@@ -148,7 +147,7 @@ mod tests {
 
     #[test]
     fn sign_and_encode_token_then_verify_succeeds() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64;
 
         for _ in 0..50 {
@@ -178,7 +177,7 @@ mod tests {
 
     #[test]
     fn verify_and_decode_with_unexpected_claim_type_fails() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64;
 
         let kp = P256KeyPair::new(&mut rng);

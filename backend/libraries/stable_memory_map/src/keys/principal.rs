@@ -43,13 +43,13 @@ impl PrincipalKey {
 mod tests {
     use super::*;
     use crate::{BaseKey, Key};
-    use rand::{Rng, RngCore, thread_rng};
+    use rand::{Rng, RngExt, rng};
 
     #[test]
     fn principal_to_user_id_key_e2e() {
         for _ in 0..100 {
             let prefix = PrincipalKeyPrefix::new_for_principal_to_user_id_map();
-            let principal = Principal::from_slice(&thread_rng().next_u32().to_be_bytes());
+            let principal = Principal::from_slice(&rng().next_u32().to_be_bytes());
             let key = BaseKey::from(prefix.create_key(&principal));
             let principal_to_user_id_key = PrincipalKey::try_from(key.clone()).unwrap();
 
@@ -69,7 +69,7 @@ mod tests {
     #[test]
     fn user_storage_record_key_e2e() {
         for _ in 0..100 {
-            let principal_bytes: [u8; 29] = thread_rng().r#gen();
+            let principal_bytes: [u8; 29] = rng().random();
             let principal = Principal::from_slice(&principal_bytes);
             let prefix = PrincipalKeyPrefix::new_for_storage_record();
             let key = BaseKey::from(prefix.create_key(&principal));

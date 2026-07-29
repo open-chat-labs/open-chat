@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Authority-report register with `authority_reports` query and `record_authority_report_filed` (platform operator) - the filed-report compliance evidence ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 - Quarantine media in the evidence vault on CSAM detection (both pipeline and report flows), releasing or retaining it per the verdict ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 
+## [[2.0.2001](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2001-user_index)] - 2026-07-23
+
 ### Fixed
 
 - Expose `reported_messages` query over msgpack so the website can call it again ([#9116](https://github.com/open-chat-labs/open-chat/pull/9116))

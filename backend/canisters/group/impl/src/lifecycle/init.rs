@@ -4,7 +4,7 @@ use crate::memory::get_stable_memory_map_memory;
 use canister_api_macros::init;
 use canister_tracing_macros::trace;
 use group_canister::init::Args;
-use rand::Rng;
+use rand::RngExt;
 use tracing::info;
 use utils::env::Environment;
 use utils::env::canister::CanisterEnv;
@@ -43,7 +43,7 @@ fn init(args: Args) {
         args.permissions_v2,
         args.gate_config.map(|g| g.into()),
         args.video_call_operators,
-        env.rng().r#gen(),
+        env.rng().random(),
     );
 
     init_state(env, data, args.wasm_version);

@@ -3,7 +3,7 @@ use constants::{
     CHAT_LEDGER_CANISTER_ID, CHAT_SYMBOL, CHAT_TRANSFER_FEE, ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE,
 };
 use pocket_ic::PocketIc;
-use rand::{Rng, SeedableRng, rngs::StdRng};
+use rand::{RngExt, SeedableRng, rngs::StdRng};
 use std::time::SystemTime;
 use std::{path::PathBuf, time::UNIX_EPOCH};
 use types::{Hash, TimestampMillis, TimestampNanos, TokenInfo};
@@ -35,7 +35,7 @@ pub fn local_bin() -> PathBuf {
 
 pub fn generate_seed() -> Hash {
     let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64;
-    StdRng::seed_from_u64(now).r#gen()
+    StdRng::seed_from_u64(now).random()
 }
 
 pub fn chat_token_info() -> TokenInfo {

@@ -1,5 +1,5 @@
 use crate::RuntimeState;
-use rand::Rng;
+use rand::RngExt;
 use types::{
     BotActionByCommandClaims, BotActionChatDetails, BotActionCommunityDetails, BotActionScope, BotChatContext,
     BotCommunityOrGroupContext, BotInitiator, CLAIM_TYPE_BOT_ACTION_BY_COMMAND, Chat, CommunityOrGroup, MessageId, User,
@@ -37,7 +37,7 @@ pub fn extract_access_context_from_chat_context(
             scope: BotActionScope::Chat(BotActionChatDetails {
                 chat,
                 thread: None,
-                message_id: state.env.rng().r#gen::<u64>().into(),
+                message_id: state.env.rng().random::<u64>().into(),
                 user_message_id: None,
             }),
         }),

@@ -2,7 +2,7 @@ use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ic_cdk::call::RejectCode;
-use ic_cdk::management_canister::{VetKDCurve, VetKDDeriveKeyArgs, VetKDKeyId};
+use ic_cdk_management_canister::{VetKDCurve, VetKDDeriveKeyArgs, VetKDKeyId};
 use identity_canister::get_encryption_key::{Response::*, *};
 use oc_error_codes::{OCError, OCErrorCode};
 use types::{C2CError, CanisterId, OCResult, UserId};
@@ -17,7 +17,7 @@ async fn get_encryption_key(args: Args) -> Response {
 
     let ContextAndInput { context, input } = calculate_context_and_input(caller_user_id, args.key_type);
 
-    let derive_key_result = ic_cdk::management_canister::vetkd_derive_key(&VetKDDeriveKeyArgs {
+    let derive_key_result = ic_cdk_management_canister::vetkd_derive_key(&VetKDDeriveKeyArgs {
         key_id: VetKDKeyId {
             curve: VetKDCurve::Bls12_381_G2,
             name: "test_key_1".to_string(),

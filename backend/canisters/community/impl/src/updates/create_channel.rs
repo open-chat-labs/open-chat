@@ -11,7 +11,7 @@ use community_canister::create_channel::{Response::*, *};
 use community_canister::{c2c_bot_create_channel, c2c_join_community};
 use group_chat_core::GroupChatCore;
 use oc_error_codes::OCErrorCode;
-use rand::Rng;
+use rand::RngExt;
 use types::{BotCaller, BotPermissions, Caller, ChannelCreated, CommunityPermission, MultiUserChat, OCResult, UserType};
 use url::Url;
 use utils::document::validate_avatar;
@@ -189,7 +189,7 @@ fn create_channel_impl(
         args.gate_config.clone().map(|gc| gc.into()),
         args.events_ttl,
         (&caller).into(),
-        state.env.rng().r#gen(),
+        state.env.rng().random(),
         args.external_url,
         now,
     );

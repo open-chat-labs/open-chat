@@ -14,7 +14,7 @@ use group_chat_core::SendMessageSuccess;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use oc_error_codes::OCErrorCode;
-use rand::RngCore;
+use rand::Rng;
 use regex_lite::Regex;
 use std::str::FromStr;
 use types::{

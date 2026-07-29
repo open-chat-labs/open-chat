@@ -2,7 +2,7 @@ use crate::{RuntimeState, execute_update};
 use group_canister::handle_webhook::*;
 use group_canister::send_message_v2::SuccessResult;
 use oc_error_codes::OCErrorCode;
-use rand::Rng;
+use rand::RngExt;
 use types::{Caller, MessageContentInitial, OCResult, TextContent};
 
 use super::send_message::send_message_impl;
@@ -25,7 +25,7 @@ fn handle_webhook_impl(args: Args, state: &mut RuntimeState) -> OCResult<Success
 
     let send_message_args = group_canister::send_message_v2::Args {
         thread_root_message_index: None,
-        message_id: state.env.rng().r#gen::<u64>().into(),
+        message_id: state.env.rng().random::<u64>().into(),
         content: MessageContentInitial::Text(TextContent { text: args.message }),
         sender_name: webhook.name.clone(),
         sender_display_name: None,
