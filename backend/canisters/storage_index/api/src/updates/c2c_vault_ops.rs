@@ -37,6 +37,11 @@ pub struct ApplyVerdictOp {
     pub retention_until: TimestampMillis,
     #[serde(default)]
     pub moderator: Option<UserId>,
+    // True when this only re-anchors the retention clock (eg. at filing time) rather than
+    // recording a verdict: the record stays "unresolved" and the log entry is labelled as a
+    // re-anchor, not a second verdict
+    #[serde(default)]
+    pub reanchor: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

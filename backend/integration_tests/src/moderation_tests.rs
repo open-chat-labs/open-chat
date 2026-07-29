@@ -1037,6 +1037,52 @@ fn csam_asserted_media_report_quarantines_immediately() {
     assert!(matches!(report.status, ModerationReportStatus::Pending));
     let report_index = report.report_index.expect("report should carry an index");
 
+    // The urgency valve: an honest-unverified filing before any verdict re-anchors the vault
+    // retention clock but does NOT resolve the record - the log must show a re-anchor by the
+    // operator, not a second verdict
+    let file_unverified = client::user_index::record_authority_report_filed(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::record_authority_report_filed::Args {
+            report_index,
+            portal_reference: "CSEA-IRP-TEST-VALVE-0001".to_string(),
+            urgent: true,
+            unverified: true,
+        },
+    );
+    assert!(matches!(file_unverified, UnitResult::Success));
+    tick_many(env, 10);
+
+    let vault_log = |env: &mut PocketIc| {
+        let storage_bucket_canister::vault_log::Response::Success(log) = client::storage_bucket::vault_log(
+            env,
+            test_data.moderator.principal,
+            blob_reference.canister_id,
+            &storage_bucket_canister::vault_log::Args {
+                start: 0,
+                max: 100,
+                file_id: Some(blob_reference.blob_id),
+            },
+        ) else {
+            panic!("reviewer should be able to read the vault log");
+        };
+        log
+    };
+    let log = vault_log(env);
+    assert!(
+        log.entries
+            .iter()
+            .any(|e| e.event.starts_with("Retention re-anchored") && e.user_id == Some(test_data.moderator.user_id)),
+        "{:?}",
+        log.entries
+    );
+    assert!(
+        !log.entries.iter().any(|e| e.event.starts_with("Verdict applied")),
+        "an unverified filing must not appear in the chain as a verdict: {:?}",
+        log.entries
+    );
+
     // The UpheldAsCsam verdict is what applies the (indefinite) suspension for a
     // reporter-asserted sanction
     let resolve_response = client::user_index::resolve_moderation_report(
@@ -1057,6 +1103,17 @@ fn csam_asserted_media_report_quarantines_immediately() {
         .suspension_details
         .expect("sender should be suspended by the verdict");
     assert!(matches!(suspension_details.action, SuspensionAction::Delete(_)));
+
+    // The verdict resolves the record: exactly one verdict entry in the chain, attributed to
+    // the moderator, alongside the earlier re-anchor
+    let log = vault_log(env);
+    let verdicts: Vec<_> = log
+        .entries
+        .iter()
+        .filter(|e| e.event.starts_with("Verdict applied"))
+        .collect();
+    assert_eq!(verdicts.len(), 1, "{:?}", log.entries);
+    assert_eq!(verdicts[0].user_id, Some(test_data.moderator.user_id));
 }
 
 #[test]

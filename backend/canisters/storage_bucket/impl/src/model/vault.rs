@@ -26,6 +26,7 @@ pub struct Vault {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(from = "VaultRecordCompat")]
 pub struct VaultRecord {
     pub hash: Hash,
     pub original_file_id: FileId,
@@ -35,7 +36,41 @@ pub struct VaultRecord {
     pub metadata: VaultCaptureMetadata,
     pub quarantined_at: TimestampMillis,
     pub retention_until: Option<TimestampMillis>,
+    // Tracked separately from retention_until: an honest-unverified filing anchors the
+    // retention clock without a verdict, and such a record must still count as unresolved
+    pub verdict_applied: bool,
     pub legal_hold: bool,
+}
+
+// Records serialized before verdict_applied existed only ever had retention_until set by a
+// verdict, so infer the flag from it on deserialization
+#[derive(Deserialize)]
+struct VaultRecordCompat {
+    hash: Hash,
+    original_file_id: FileId,
+    #[serde(default)]
+    mime_type: String,
+    metadata: VaultCaptureMetadata,
+    quarantined_at: TimestampMillis,
+    retention_until: Option<TimestampMillis>,
+    #[serde(default)]
+    verdict_applied: Option<bool>,
+    legal_hold: bool,
+}
+
+impl From<VaultRecordCompat> for VaultRecord {
+    fn from(c: VaultRecordCompat) -> Self {
+        VaultRecord {
+            hash: c.hash,
+            original_file_id: c.original_file_id,
+            mime_type: c.mime_type,
+            metadata: c.metadata,
+            quarantined_at: c.quarantined_at,
+            verdict_applied: c.verdict_applied.unwrap_or(c.retention_until.is_some()),
+            retention_until: c.retention_until,
+            legal_hold: c.legal_hold,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -64,6 +99,8 @@ pub enum VaultLogEvent {
     ViewedBy(FileId, Principal, Option<UserId>),
     UnquarantinedBy(FileId, Option<UserId>),
     VerdictAppliedBy(FileId, TimestampMillis, Option<UserId>),
+    // Retention clock re-anchored (eg. at filing time) without a verdict being recorded
+    RetentionReanchoredBy(FileId, TimestampMillis, Option<UserId>),
 }
 
 impl VaultLogEvent {
@@ -79,7 +116,8 @@ impl VaultLogEvent {
             | VaultLogEvent::Viewed(file_id, _)
             | VaultLogEvent::ViewedBy(file_id, _, _)
             | VaultLogEvent::UnquarantinedBy(file_id, _)
-            | VaultLogEvent::VerdictAppliedBy(file_id, _, _) => *file_id,
+            | VaultLogEvent::VerdictAppliedBy(file_id, _, _)
+            | VaultLogEvent::RetentionReanchoredBy(file_id, _, _) => *file_id,
         }
     }
 }
@@ -126,6 +164,7 @@ impl Vault {
             metadata,
             quarantined_at: now,
             retention_until: None,
+            verdict_applied: false,
             legal_hold: false,
         });
     }
@@ -154,13 +193,22 @@ impl Vault {
         file_id: FileId,
         retention_until: TimestampMillis,
         moderator: Option<UserId>,
+        reanchor: bool,
         now: TimestampMillis,
     ) -> VaultOpOutcome {
         let Some(record) = self.file_id_to_hash.get(&file_id).and_then(|h| self.records.get_mut(h)) else {
             return VaultOpOutcome::NotFound;
         };
+        // The clock only ever extends: a re-anchor (or a verdict landing after an
+        // honest-unverified filing) must never shorten an already-set retention
+        let retention_until = record.retention_until.map_or(retention_until, |r| r.max(retention_until));
         record.retention_until = Some(retention_until);
-        self.append_log(VaultLogEvent::VerdictAppliedBy(file_id, retention_until, moderator), now);
+        if reanchor {
+            self.append_log(VaultLogEvent::RetentionReanchoredBy(file_id, retention_until, moderator), now);
+        } else {
+            record.verdict_applied = true;
+            self.append_log(VaultLogEvent::VerdictAppliedBy(file_id, retention_until, moderator), now);
+        }
         VaultOpOutcome::Applied
     }
 
@@ -268,19 +316,20 @@ impl Vault {
     }
 
     pub fn metrics(&self) -> VaultMetrics {
-        // A record with no retention_until has had no verdict: unresolved quarantines pin
-        // media indefinitely with nothing else watching, so surface the count and the oldest
+        // Unresolved means no verdict, not "no retention clock": an honest-unverified filing
+        // anchors retention without resolving anything, and unresolved quarantines pin media
+        // indefinitely with nothing else watching, so surface the count and the oldest
         VaultMetrics {
             quarantined: self.records.len() as u64,
             legal_holds: self.records.values().filter(|r| r.legal_hold).count() as u64,
             reviewers: self.reviewers.len() as u64,
             log_length: self.log.len() as u64,
             quarantine_failures: self.quarantine_failures,
-            unresolved_quarantines: self.records.values().filter(|r| r.retention_until.is_none()).count() as u64,
+            unresolved_quarantines: self.records.values().filter(|r| !r.verdict_applied).count() as u64,
             oldest_unresolved_quarantined_at: self
                 .records
                 .values()
-                .filter(|r| r.retention_until.is_none())
+                .filter(|r| !r.verdict_applied)
                 .map(|r| r.quarantined_at)
                 .min(),
         }
@@ -384,7 +433,7 @@ mod tests {
         let mut vault = vault_with_reviewer();
         vault.quarantine(1, [1u8; 32], "image/png".to_string(), metadata(0), 100);
         assert!(vault.authorize_view(1, reviewer(1), 0, 1, 200));
-        vault.apply_verdict(1, 999, Some(Principal::from_slice(&[9; 8]).into()), 300);
+        vault.apply_verdict(1, 999, Some(Principal::from_slice(&[9; 8]).into()), false, 300);
 
         let (total, entries) = vault.log_page(0, 100, None);
         assert_eq!(total, 3);
@@ -461,6 +510,65 @@ mod tests {
         let (total_one, entries) = vault.log_page(0, 100, Some(2));
         assert_eq!(total_one, 2);
         assert!(entries.iter().all(|e| e.event.file_id() == 2));
+    }
+
+    #[test]
+    fn reanchor_extends_retention_without_resolving() {
+        let mut vault = vault_with_reviewer();
+        vault.quarantine(1, [1u8; 32], "image/png".to_string(), metadata(0), 100);
+        let operator: UserId = Principal::from_slice(&[9; 8]).into();
+
+        // An honest-unverified filing re-anchors retention but the record stays unresolved
+        vault.apply_verdict(1, 999, Some(operator), true, 300);
+        let metrics = vault.metrics();
+        assert_eq!(metrics.unresolved_quarantines, 1);
+        assert_eq!(metrics.oldest_unresolved_quarantined_at, Some(100));
+
+        // The log shows a re-anchor, not a verdict
+        let (_, entries) = vault.log_page(0, 100, None);
+        assert!(matches!(&entries[1].event, VaultLogEvent::RetentionReanchoredBy(1, 999, Some(u)) if *u == operator));
+        assert!(!entries.iter().any(|e| matches!(e.event, VaultLogEvent::VerdictAppliedBy(..))));
+
+        // The later verdict resolves the record and never shortens the clock
+        vault.apply_verdict(1, 500, Some(operator), false, 400);
+        let metrics = vault.metrics();
+        assert_eq!(metrics.unresolved_quarantines, 0);
+        assert_eq!(metrics.oldest_unresolved_quarantined_at, None);
+        let (_, entries) = vault.log_page(0, 100, None);
+        assert!(matches!(&entries[2].event, VaultLogEvent::VerdictAppliedBy(1, 999, Some(u)) if *u == operator));
+    }
+
+    #[test]
+    fn record_compat_infers_verdict_applied_from_retention() {
+        // The record shape from before verdict_applied existed
+        #[derive(Serialize)]
+        struct OldRecord {
+            hash: Hash,
+            original_file_id: FileId,
+            mime_type: String,
+            metadata: VaultCaptureMetadata,
+            quarantined_at: TimestampMillis,
+            retention_until: Option<TimestampMillis>,
+            legal_hold: bool,
+        }
+        let old = |retention_until| OldRecord {
+            hash: [1u8; 32],
+            original_file_id: 1,
+            mime_type: "image/png".to_string(),
+            metadata: metadata(0),
+            quarantined_at: 100,
+            retention_until,
+            legal_hold: false,
+        };
+
+        // Old records only ever had retention set by a verdict, so infer resolution from it
+        let bytes = msgpack::serialize_then_unwrap(old(Some(999)));
+        let record: VaultRecord = msgpack::deserialize_then_unwrap(&bytes);
+        assert!(record.verdict_applied);
+
+        let bytes = msgpack::serialize_then_unwrap(old(None));
+        let record: VaultRecord = msgpack::deserialize_then_unwrap(&bytes);
+        assert!(!record.verdict_applied);
     }
 
     #[test]

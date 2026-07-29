@@ -29,6 +29,7 @@ fn vault_log_impl(args: Args, state: &RuntimeState) -> Response {
                     VaultLogEvent::ViewedBy(_, _, user_id) => *user_id,
                     VaultLogEvent::UnquarantinedBy(_, moderator) => *moderator,
                     VaultLogEvent::VerdictAppliedBy(_, _, moderator) => *moderator,
+                    VaultLogEvent::RetentionReanchoredBy(_, _, operator) => *operator,
                     _ => None,
                 },
                 event: match &e.event {
@@ -68,6 +69,15 @@ fn vault_log_impl(args: Args, state: &RuntimeState) -> Response {
                                 format!("Verdict applied to file {file_id} by user {moderator}, retained until {until}")
                             }
                             None => format!("Verdict applied to file {file_id}, retained until {until}"),
+                        }
+                    }
+                    VaultLogEvent::RetentionReanchoredBy(file_id, retention_until, operator) => {
+                        let until = format_ts(*retention_until);
+                        match operator {
+                            Some(operator) => format!(
+                                "Retention re-anchored at filing for file {file_id} by user {operator}, retained until {until}"
+                            ),
+                            None => format!("Retention re-anchored at filing for file {file_id}, retained until {until}"),
                         }
                     }
                 },

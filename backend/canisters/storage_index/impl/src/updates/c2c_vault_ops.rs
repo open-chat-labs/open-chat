@@ -47,6 +47,7 @@ fn c2c_vault_ops_impl(args: Args, state: &mut RuntimeState) -> Response {
                         file_id: v.blob_reference.blob_id,
                         retention_until: v.retention_until,
                         moderator: v.moderator,
+                        reanchor: v.reanchor,
                     }),
                 );
             }

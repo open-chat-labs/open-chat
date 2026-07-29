@@ -32,9 +32,10 @@ fn record_authority_report_filed_impl(args: Args, state: &mut RuntimeState) -> O
         let reported_message = reported_message.clone();
 
         // Re-anchor the vault retention clock at filing time: the statutory 1 year runs from
-        // the report being sent, not from the verdict
-        if let Some(moderator) = state.data.users.get_by_principal(&state.env.caller()).map(|u| u.user_id) {
-            moderation::apply_vault_verdict(&reported_message.blob_references, moderator, state);
+        // the report being sent, not from the verdict. Not a verdict: an unverified filing
+        // leaves the record unresolved and awaiting a reviewer
+        if let Some(operator) = state.data.users.get_by_principal(&state.env.caller()).map(|u| u.user_id) {
+            moderation::reanchor_vault_retention(&reported_message.blob_references, operator, state);
         }
 
         // Flip the alert card's filing state to Filed

@@ -44,7 +44,10 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
                 }
             }
             VaultOp::ApplyVerdict(v) => {
-                state.data.vault.apply_verdict(v.file_id, v.retention_until, v.moderator, now);
+                state
+                    .data
+                    .vault
+                    .apply_verdict(v.file_id, v.retention_until, v.moderator, v.reanchor, now);
             }
             VaultOp::SetLegalHold(l) => {
                 state.data.vault.set_legal_hold(l.file_id, l.legal_hold, now);

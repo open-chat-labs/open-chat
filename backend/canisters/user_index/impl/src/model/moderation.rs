@@ -404,7 +404,7 @@ pub fn quarantine_blobs_and_apply_verdict(
 ) {
     let now = state.env.now();
     let mut ops = quarantine_ops(report_index, report, flags, now);
-    ops.extend(verdict_ops(&report.blob_references, moderator, now));
+    ops.extend(verdict_ops(&report.blob_references, moderator, false, now));
     send_vault_ops(ops, state);
 }
 
@@ -446,11 +446,19 @@ pub fn unquarantine_blobs(blob_references: &[BlobReference], moderator: UserId, 
 // Applies the uphold verdict to the vault: the retention clock starts and the blob is deleted
 // only when it expires (never while a legal hold is set)
 pub fn apply_vault_verdict(blob_references: &[BlobReference], moderator: UserId, state: &mut RuntimeState) {
-    let ops = verdict_ops(blob_references, moderator, state.env.now());
+    let ops = verdict_ops(blob_references, moderator, false, state.env.now());
     send_vault_ops(ops, state);
 }
 
-fn verdict_ops(blob_references: &[BlobReference], moderator: UserId, now: TimestampMillis) -> Vec<VaultOp> {
+// Re-anchors the retention clock at filing time without recording a verdict: the record stays
+// unresolved (an honest-unverified filing still needs a reviewer) and the vault log shows a
+// re-anchor rather than a second verdict
+pub fn reanchor_vault_retention(blob_references: &[BlobReference], operator: UserId, state: &mut RuntimeState) {
+    let ops = verdict_ops(blob_references, operator, true, state.env.now());
+    send_vault_ops(ops, state);
+}
+
+fn verdict_ops(blob_references: &[BlobReference], moderator: UserId, reanchor: bool, now: TimestampMillis) -> Vec<VaultOp> {
     let retention_until = now + VAULT_RETENTION_MS;
     blob_references
         .iter()
@@ -460,6 +468,7 @@ fn verdict_ops(blob_references: &[BlobReference], moderator: UserId, now: Timest
                 blob_reference,
                 retention_until,
                 moderator: Some(moderator),
+                reanchor,
             })
         })
         .collect()
