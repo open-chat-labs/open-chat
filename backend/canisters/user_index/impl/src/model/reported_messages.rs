@@ -981,13 +981,17 @@ mod report_status_tests {
 
     #[test]
     fn late_csam_assertion_is_refused_once_a_verdict_stands() {
-        let mut reported_messages = ReportedMessages::default();
-        reported_messages.messages = vec![with_verdict(ModerationVerdict::Dismissed)];
+        let mut reported_messages = ReportedMessages {
+            messages: vec![with_verdict(ModerationVerdict::Dismissed)],
+            ..Default::default()
+        };
         assert!(!reported_messages.assert_csam_if_unverdicted(0, Principal::anonymous().into()));
         assert!(reported_messages.messages[0].csam_asserted_by.is_empty());
 
-        let mut reported_messages = ReportedMessages::default();
-        reported_messages.messages = vec![with_unverdicted_outcome(true)];
+        let mut reported_messages = ReportedMessages {
+            messages: vec![with_unverdicted_outcome(true)],
+            ..Default::default()
+        };
         assert!(reported_messages.assert_csam_if_unverdicted(0, Principal::anonymous().into()));
         assert_eq!(reported_messages.messages[0].csam_asserted_by.len(), 1);
         // Idempotent for the same reporter
