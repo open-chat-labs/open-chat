@@ -1199,8 +1199,7 @@
         "classifierClean": "The classifier found no violation - review the reporter's complaint on its merits",
         "classifierFailed": "Automated classification FAILED - this content has not been checked by the classifier",
         "urgent": "Imminent threat to a child (reports urgently)",
-        "reviewMedia": "Review media",
-        "reviewMediaMobile": "Attached media must be reviewed before deciding - use the desktop app"
+        "reviewMedia": "Review media"
     },
     "vaultLog": {
         "title": "Vault access log",
