@@ -148,12 +148,11 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
         }
         ModerationVerdict::Dismissed => {
             // A dismissed CSAM assertion was a false allegation with real consequences for the
-            // sender: record it against each reporter (knowingly false reports are themselves
-            // a violation - this is the evidence base for acting on repeat offenders)
-            if reported_message.csam_asserted {
-                for reporter in reported_message.reports.keys() {
-                    state.data.users.record_false_csam_report(*reporter);
-                }
+            // sender: record it against exactly the reporters who made the assertion
+            // (knowingly false reports are themselves a violation - this is the evidence base
+            // for acting on repeat offenders)
+            for reporter in &reported_message.csam_asserted_by {
+                state.data.users.record_false_csam_report(*reporter);
             }
             if was_auto_sanctioned {
                 // A false positive: reverse the sanction in full - unsuspend, restore the

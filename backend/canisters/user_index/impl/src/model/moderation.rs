@@ -367,8 +367,10 @@ pub fn hard_delete_message(
     }
 }
 
-// Conservative default retention for vaulted evidence: 1 year from report filing, per
-// 18 U.S.C. 2258A(h) and reg 8 SI 2026/268
+// Retention for vaulted evidence: 1 year, initially anchored at the verdict and re-anchored
+// at filing time when the authority filing is recorded - the statutory duty (18 U.S.C.
+// 2258A(h), reg 8 SI 2026/268) runs 1 year FROM THE REPORT BEING SENT, which is always after
+// the verdict, so the verdict-time clock alone would expire early by the filing lag
 const VAULT_RETENTION_MS: Milliseconds = 365 * DAY_IN_MS;
 
 fn send_vault_ops(ops: Vec<VaultOp>, state: &mut RuntimeState) {
@@ -538,10 +540,9 @@ pub fn has_other_unresolved_auto_sanction(sender: UserId, except_report_index: u
                 .filter(|i| **i != except_report_index)
                 .filter_map(|i| state.data.reported_messages.get(*i))
                 .any(|r| {
-                    matches!(
-                        r.automated_action(),
-                        Some(crate::model::reported_messages::ModerationAction::AutoSanctioned)
-                    ) && !r.has_human_verdict()
+                    // Only sanctions that actually suspended count: an unverified reporter
+                    // assertion must not block a legitimate unsuspension
+                    r.suspension_applied_without_verdict()
                 })
         })
         .unwrap_or_default()

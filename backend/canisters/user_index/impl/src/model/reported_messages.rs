@@ -36,8 +36,8 @@ impl ReportedMessages {
                 message.already_deleted = true;
             }
 
-            if args.csam {
-                message.csam_asserted = true;
+            if args.csam && !message.csam_asserted_by.contains(&args.reporter) {
+                message.csam_asserted_by.push(args.reporter);
             }
             if message.reports.insert(args.reporter, args.timestamp).is_some() {
                 AddReportResult::AlreadyReportedByUser
@@ -65,7 +65,7 @@ impl ReportedMessages {
                 detection: DetectionSource::UserReport,
                 contested: None,
                 unverified_report_filed: None,
-                csam_asserted: args.csam,
+                csam_asserted_by: if args.csam { vec![args.reporter] } else { Vec::new() },
             });
             AddReportResult::New(new_index as u64)
         }
@@ -136,6 +136,23 @@ impl ReportedMessages {
     }
 
     pub fn metrics(&self) -> ReportingMetrics {
+        // With reporter-asserted suspensions deferred to the verdict, review latency is what
+        // bounds the remaining harm in this system: surface the contest backlog and how fast
+        // contests actually get resolved
+        let resolved_contest_latencies: Vec<u64> = self
+            .messages
+            .iter()
+            .filter_map(|m| {
+                let contested = m.contested?;
+                match &m.outcome {
+                    Some(ReportOutcome::Automated(a)) => {
+                        let verdict = a.human_verdict.as_ref()?;
+                        Some(verdict.timestamp.saturating_sub(contested))
+                    }
+                    _ => None,
+                }
+            })
+            .collect();
         ReportingMetrics {
             messages_reported: self.messages.len(),
             messages_pending_outcome: self.messages.iter().filter(|m| m.outcome.is_none()).count(),
@@ -147,6 +164,17 @@ impl ReportedMessages {
                         && matches!(&m.outcome, Some(ReportOutcome::Automated(a)) if a.human_verdict.is_none())
                 })
                 .count(),
+            oldest_pending_contested_at: self
+                .messages
+                .iter()
+                .filter(|m| matches!(&m.outcome, Some(ReportOutcome::Automated(a)) if a.human_verdict.is_none()))
+                .filter_map(|m| m.contested)
+                .min(),
+            mean_contest_resolution_ms: if resolved_contest_latencies.is_empty() {
+                None
+            } else {
+                Some(resolved_contest_latencies.iter().sum::<u64>() / resolved_contest_latencies.len() as u64)
+            },
         }
     }
 
@@ -193,6 +221,8 @@ impl ReportedMessages {
             timestamp: args.timestamp,
             flagged_categories: args.flags,
             action: args.action,
+            // Pipeline CSAM detections suspend at detection time; referrals never do
+            sanctioned: matches!(args.action, ModerationAction::AutoSanctioned),
             classification_failed: false,
             human_verdict: None,
         });
@@ -224,7 +254,7 @@ impl ReportedMessages {
                 detection: DetectionSource::Proactive,
                 contested: None,
                 unverified_report_filed: None,
-                csam_asserted: false,
+                csam_asserted_by: Vec::new(),
             });
             Some((new_index as u64, true))
         }
@@ -313,6 +343,8 @@ pub struct ReportingMetrics {
     pub messages_reported: usize,
     pub messages_pending_outcome: usize,
     pub pending_contests: usize,
+    pub oldest_pending_contested_at: Option<TimestampMillis>,
+    pub mean_contest_resolution_ms: Option<u64>,
 }
 
 #[derive(Clone)]
@@ -384,10 +416,11 @@ pub struct ReportedMessage {
     pub blob_references: Vec<BlobReference>,
     #[serde(default)]
     pub detection: DetectionSource,
-    // True when a reporter asserted CSAM (triggering immediate quarantine + deletion): if the
-    // report is later dismissed, the assertion was false and is recorded against the reporter
+    // The reporters who asserted CSAM (triggering immediate quarantine + deletion): if the
+    // report is later dismissed those assertions were false, and are recorded against exactly
+    // the users who made them
     #[serde(default)]
-    pub csam_asserted: bool,
+    pub csam_asserted_by: Vec<UserId>,
     // Set when the sanctioned sender contests the automated decision (GDPR Art 22 safeguard);
     // a contested report jumps the review queue
     #[serde(default)]
@@ -406,8 +439,9 @@ pub enum DetectionSource {
 }
 
 impl ReportedMessage {
-    pub fn has_human_verdict(&self) -> bool {
-        matches!(&self.outcome, Some(ReportOutcome::Automated(a)) if a.human_verdict.is_some())
+    // True while a without-verdict suspension is outstanding on this report
+    pub fn suspension_applied_without_verdict(&self) -> bool {
+        matches!(&self.outcome, Some(ReportOutcome::Automated(a)) if a.sanctioned && a.human_verdict.is_none())
     }
 
     pub fn automated_action(&self) -> Option<ModerationAction> {
@@ -425,7 +459,7 @@ impl ReportedMessage {
             // positive does not count towards the sender's strikes
             Some(ReportOutcome::Automated(a)) => match &a.human_verdict {
                 Some(v) => matches!(v.verdict, ModerationVerdict::Upheld | ModerationVerdict::UpheldAsCsam),
-                None => matches!(a.action, ModerationAction::AutoSanctioned),
+                None => a.sanctioned,
             },
             None => false,
         }
@@ -446,6 +480,11 @@ pub struct AutomatedOutcome {
     pub timestamp: TimestampMillis,
     pub flagged_categories: u32,
     pub action: ModerationAction,
+    // True only when a suspension was actually applied without a verdict (classifier
+    // detections). A reporter-asserted quarantine sets AutoSanctioned action but NOT this:
+    // an unverified assertion must never count as a strike nor block an unsuspension.
+    #[serde(default)]
+    pub sanctioned: bool,
     // True if the OpenAI classification could not be completed (even after retries), in which
     // case flagged_categories being 0 means "unknown" rather than "classified clean"
     #[serde(default)]
@@ -693,6 +732,7 @@ mod tests {
             timestamp: 1706107419000,
             flagged_categories: 2,
             action: ModerationAction::AutoSanctioned,
+            sanctioned: true,
             classification_failed: false,
             human_verdict: None,
         });
@@ -711,6 +751,7 @@ mod tests {
             sender: Principal::from_text("3skqk-iqaaa-aaaaf-aaa3q-cai").unwrap().into(),
             reporter: Principal::from_text("27eue-hyaaa-aaaaf-aaa4a-cai").unwrap().into(),
             already_deleted: false,
+            csam: false,
             timestamp: 1706107415000,
         }
     }
@@ -720,6 +761,7 @@ mod tests {
             timestamp: 1706107419000,
             flagged_categories: 0,
             action: ModerationAction::EscalatedForHumanReview,
+            sanctioned: false,
             classification_failed: false,
             human_verdict: None,
         }
@@ -746,7 +788,7 @@ mod report_status_tests {
             detection: DetectionSource::Proactive,
             contested: None,
             unverified_report_filed: None,
-            csam_asserted: false,
+            csam_asserted_by: Vec::new(),
         }
     }
 
@@ -756,6 +798,7 @@ mod report_status_tests {
             timestamp: 1,
             flagged_categories: 2,
             action: ModerationAction::AutoSanctioned,
+            sanctioned: true,
             classification_failed: false,
             human_verdict: Some(HumanVerdict {
                 verdict,
@@ -802,5 +845,56 @@ mod report_status_tests {
             ReportedMessages::report_status(&report),
             ModerationReportStatus::Dismissed(_)
         ));
+    }
+
+    fn with_unverdicted_outcome(sanctioned: bool) -> ReportedMessage {
+        let mut report = base_report();
+        report.outcome = Some(ReportOutcome::Automated(AutomatedOutcome {
+            timestamp: 1,
+            flagged_categories: 2,
+            action: ModerationAction::AutoSanctioned,
+            sanctioned,
+            classification_failed: false,
+            human_verdict: None,
+        }));
+        report
+    }
+
+    #[test]
+    fn reporter_asserted_csam_is_not_a_strike_until_upheld() {
+        // A reporter-asserted CSAM report quarantines without suspending (sanctioned: false);
+        // it must not count towards the sender's strikes until a moderator upholds it
+        let report = with_unverdicted_outcome(false);
+        assert!(!report.in_breach());
+        assert!(!report.suspension_applied_without_verdict());
+
+        let classifier_detection = with_unverdicted_outcome(true);
+        assert!(classifier_detection.in_breach());
+        assert!(classifier_detection.suspension_applied_without_verdict());
+
+        // Once a verdict lands, it overrides the automated action in both directions
+        assert!(with_verdict(ModerationVerdict::UpheldAsCsam).in_breach());
+        assert!(!with_verdict(ModerationVerdict::Dismissed).in_breach());
+    }
+
+    #[test]
+    fn contest_metrics_reflect_pending_and_resolved_contests() {
+        let mut reported_messages = ReportedMessages::default();
+
+        let mut pending = with_unverdicted_outcome(true);
+        pending.contested = Some(100);
+        let mut older_pending = with_unverdicted_outcome(true);
+        older_pending.message_id = 2u64.into();
+        older_pending.contested = Some(50);
+        let mut resolved = with_verdict(ModerationVerdict::Dismissed);
+        resolved.message_id = 3u64.into();
+        resolved.contested = Some(1); // verdict timestamp is 2 => latency 1ms
+
+        reported_messages.messages = vec![pending, older_pending, resolved];
+
+        let metrics = reported_messages.metrics();
+        assert_eq!(metrics.pending_contests, 2);
+        assert_eq!(metrics.oldest_pending_contested_at, Some(50));
+        assert_eq!(metrics.mean_contest_resolution_ms, Some(1));
     }
 }

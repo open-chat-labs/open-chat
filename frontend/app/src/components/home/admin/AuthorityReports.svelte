@@ -5,6 +5,11 @@
 
     const client = getContext<OpenChat>("client");
 
+    type DueRow = {
+        report_index: number;
+        urgent: boolean;
+        created: number;
+    };
     type FiledRow = {
         report_index: number;
         portal_reference: string;
@@ -13,6 +18,7 @@
         unverified: boolean;
     };
 
+    let due: DueRow[] = $state([]);
     let filed: FiledRow[] = $state([]);
     let loaded = $state(false);
     let error = $state<string | undefined>(undefined);
@@ -30,12 +36,33 @@
                     return;
                 }
                 const register = JSON.parse(json);
+                due = (register.due ?? []).sort((a: DueRow, b: DueRow) => a.created - b.created);
                 filed = (register.filed ?? []).sort(
                     (a: FiledRow, b: FiledRow) => b.filed_at - a.filed_at,
                 );
                 loaded = true;
             })
             .catch(() => (error = "Failed to load the register"));
+    }
+
+    // Internal SLA targets, NOT statutory deadlines: the regulations require reporting "as
+    // soon as reasonably practicable" with no fixed period, so these are the operating
+    // targets we hold ourselves to (and the evidence we would point to)
+    const URGENT_SLA_MS = 24 * 60 * 60 * 1000;
+    const STANDARD_SLA_MS = 72 * 60 * 60 * 1000;
+
+    function ageOf(row: DueRow): number {
+        return Date.now() - row.created;
+    }
+
+    function overdue(row: DueRow): boolean {
+        return ageOf(row) > (row.urgent ? URGENT_SLA_MS : STANDARD_SLA_MS);
+    }
+
+    function formatAge(ms: number): string {
+        const hours = Math.floor(ms / (60 * 60 * 1000));
+        if (hours < 48) return `${hours}h`;
+        return `${Math.floor(hours / 24)}d`;
     }
 
     onMount(load);
@@ -46,6 +73,41 @@
         The register of authority (NCA CSEA-IRP) filings - the compliance evidence that reporting
         duties were met. Filings are recorded from the moderation report itself.
     </div>
+
+    <h4>Due ({due.length})</h4>
+    {#if loaded && due.length === 0}
+        <div class="empty">Nothing due</div>
+    {/if}
+    {#if due.length > 0}
+        <div class="hint">
+            File from the moderation report card. Ages are measured against our internal SLA targets
+            (urgent: 24h, standard: 72h) - the statutory duty is "as soon as reasonably
+            practicable".
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Report</th>
+                    <th>Due since</th>
+                    <th>Age</th>
+                    <th>Flags</th>
+                </tr>
+            </thead>
+            <tbody>
+                {#each due as row (row.report_index)}
+                    <tr class:overdue={overdue(row)}>
+                        <td>#{row.report_index}</td>
+                        <td>{new Date(row.created).toLocaleString()}</td>
+                        <td>
+                            {formatAge(ageOf(row))}
+                            {#if overdue(row)}<span class="overdue-badge">OVERDUE</span>{/if}
+                        </td>
+                        <td>{row.urgent ? "urgent" : ""}</td>
+                    </tr>
+                {/each}
+            </tbody>
+        </table>
+    {/if}
 
     <h4>Filed ({filed.length})</h4>
     {#if loaded && filed.length === 0}
@@ -117,5 +179,19 @@
     }
     .ref {
         font-family: monospace;
+    }
+    .overdue td {
+        color: var(--error);
+    }
+    .overdue-badge {
+        background-color: var(--error);
+        color: #ffffff;
+        border-radius: toRem(4);
+        padding: toRem(1) toRem(6);
+        margin-left: $sp3;
+        @include font(bold, normal, fs-80);
+    }
+    .empty {
+        color: var(--txt-light);
     }
 </style>

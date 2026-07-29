@@ -5,6 +5,11 @@ use types::{FileId, TimestampMillis, UserId};
 
 // A page of the vault's tamper-evident access log, readable only by designated vault
 // reviewers: the chain of custody evidence for auditors and law enforcement.
+//
+// Served as an (uncertified) query for cheap in-app display: a single malicious replica
+// could serve a well-formed forgery. For evidentiary export, invoke the same method as an
+// update call (the IC executes query methods in replicated mode when called that way), which
+// carries consensus.
 #[ts_export(storage_bucket, vault_log)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {

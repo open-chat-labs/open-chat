@@ -268,12 +268,21 @@ impl Vault {
     }
 
     pub fn metrics(&self) -> VaultMetrics {
+        // A record with no retention_until has had no verdict: unresolved quarantines pin
+        // media indefinitely with nothing else watching, so surface the count and the oldest
         VaultMetrics {
             quarantined: self.records.len() as u64,
             legal_holds: self.records.values().filter(|r| r.legal_hold).count() as u64,
             reviewers: self.reviewers.len() as u64,
             log_length: self.log.len() as u64,
             quarantine_failures: self.quarantine_failures,
+            unresolved_quarantines: self.records.values().filter(|r| r.retention_until.is_none()).count() as u64,
+            oldest_unresolved_quarantined_at: self
+                .records
+                .values()
+                .filter(|r| r.retention_until.is_none())
+                .map(|r| r.quarantined_at)
+                .min(),
         }
     }
 
@@ -314,6 +323,8 @@ pub struct VaultMetrics {
     pub reviewers: u64,
     pub log_length: u64,
     pub quarantine_failures: u64,
+    pub unresolved_quarantines: u64,
+    pub oldest_unresolved_quarantined_at: Option<TimestampMillis>,
 }
 
 // The reviewer set briefly shipped (to test envs only) as a bare principal set; accept that

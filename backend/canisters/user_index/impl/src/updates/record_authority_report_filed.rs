@@ -28,9 +28,16 @@ fn record_authority_report_filed_impl(args: Args, state: &mut RuntimeState) -> O
         now,
     );
 
-    // Flip the alert card's filing state to Filed
     if let Some(reported_message) = state.data.reported_messages.get(args.report_index) {
         let reported_message = reported_message.clone();
+
+        // Re-anchor the vault retention clock at filing time: the statutory 1 year runs from
+        // the report being sent, not from the verdict
+        if let Some(moderator) = state.data.users.get_by_principal(&state.env.caller()).map(|u| u.user_id) {
+            moderation::apply_vault_verdict(&reported_message.blob_references, moderator, state);
+        }
+
+        // Flip the alert card's filing state to Filed
         moderation::update_moderation_alert_authority_report(
             &reported_message,
             types::AuthorityReportState::Filed {

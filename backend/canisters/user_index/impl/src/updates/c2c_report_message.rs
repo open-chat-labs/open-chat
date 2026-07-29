@@ -253,6 +253,7 @@ fn handle_moderation_result(
         timestamp: now,
         flagged_categories: categories.bits(),
         action,
+        sanctioned: is_csam && suspend_sender,
         classification_failed,
         human_verdict: None,
     };
