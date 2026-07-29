@@ -23,8 +23,9 @@
         quarantined: boolean;
         onClose: () => void;
         // Fired when the viewer closes with the terminal outcome: "viewed" (the review act
-        // took place - for vault media it is in the access log), "not_authorized" (not a
-        // designated vault reviewer) or "error" (media could not be fetched)
+        // took place - for vault media it is in the access log), "not_found" (the media no
+        // longer exists), "not_authorized" (not a designated vault reviewer) or "error"
+        // (transient fetch failure - the review gate stays shut)
         onResult?: (outcome: ReviewOutcome) => void;
     }
 
@@ -71,6 +72,8 @@
                     </p>
                 {:else if review.stage === "not_authorized"}
                     <p><Translatable resourceKey={i18nKey("vaultViewer.notAuthorized")} /></p>
+                {:else if review.stage === "not_found"}
+                    <p><Translatable resourceKey={i18nKey("vaultViewer.notFound")} /></p>
                 {:else if review.stage === "error"}
                     <p><Translatable resourceKey={i18nKey("vaultViewer.error")} /></p>
                 {:else}

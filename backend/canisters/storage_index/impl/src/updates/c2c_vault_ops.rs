@@ -36,6 +36,7 @@ fn c2c_vault_ops_impl(args: Args, state: &mut RuntimeState) -> Response {
                     bucket_vault::VaultOp::Unquarantine(bucket_vault::UnquarantineOp {
                         file_id: u.blob_reference.blob_id,
                         moderator: u.moderator,
+                        report_index: u.report_index,
                     }),
                 );
             }

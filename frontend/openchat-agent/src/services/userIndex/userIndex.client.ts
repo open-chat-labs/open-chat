@@ -186,7 +186,14 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             (resp) => resp === "Success",
             UserIndexAcceptTermsArgs,
             UnitResult,
-        );
+        ).then((success) => {
+            if (success) {
+                // Patch the durable cache too, otherwise the next cold start resolves the
+                // stale cached record first and re-opens the blocking terms notice
+                this.chatsDb.patchCachedCurrentUser({ acceptedTermsVersion: version });
+            }
+            return success;
+        });
     }
 
     setVaultReviewers(userIds: string[]): Promise<boolean> {

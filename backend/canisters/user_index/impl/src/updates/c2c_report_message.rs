@@ -21,32 +21,51 @@ use user_index_canister::c2c_report_message::{Response::*, *};
 // the report is escalated for human review regardless
 const MAX_CLASSIFICATION_ATTEMPTS: u32 = 5;
 
+// A reporter with this many dismissed CSAM assertions loses the instant-takedown path: their
+// reports still reach the moderators via the ordinary classification pipeline, but no longer
+// delete or quarantine anything before a human looks
+const FALSE_CSAM_ASSERTION_LIMIT: u32 = 2;
+
+enum ReportAction {
+    Classify(u64),
+    CsamAssertion(u64),
+    // A CSAM assertion on a report that already has an automated outcome (but no verdict):
+    // apply the protective quarantine only, leaving the recorded outcome untouched
+    CsamProtectionOnly(u64),
+}
+
 #[update(guard = "caller_is_user_canister_or_group_index", msgpack = true)]
 #[trace]
 fn c2c_report_message(args: Args) -> Response {
     match mutate_state(|state| add_report(&args, state)) {
-        Ok(report_index) => {
-            if args.csam {
-                // The reporter asserts the content is CSAM: quarantine the media in the vault
-                // and delete the message immediately - nobody views the material outside the
-                // quarantine framework - but the SUSPENSION waits for the human verdict. A
-                // reporter is not a trusted classifier: an immediate suspension would let any
-                // account grind others offline with false assertions. The moderation flags are
-                // set even for private chats so the deleted content is locked behind the
-                // read-gate.
-                mutate_state(|state| {
-                    handle_moderation_result(report_index, ModerationCategories::SEXUAL_MINORS, false, false, state);
-                    if let Some(reported_message) = state.data.reported_messages.get(report_index) {
-                        moderation::set_message_moderation_flags(
-                            reported_message.chat_id,
-                            reported_message.thread_root_message_index,
-                            reported_message.message_id,
-                            ModerationCategories::SEXUAL_MINORS.bits(),
-                            &mut state.data.fire_and_forget_handler,
-                        );
-                    }
-                });
-            } else if args.message.moderation_flags != 0
+        Ok(ReportAction::CsamAssertion(report_index)) => {
+            // The reporter asserts the content is CSAM: quarantine the media in the vault
+            // and delete the message immediately - nobody views the material outside the
+            // quarantine framework - but the SUSPENSION waits for the human verdict. A
+            // reporter is not a trusted classifier: an immediate suspension would let any
+            // account grind others offline with false assertions. The moderation flags are
+            // set even for private chats so the deleted content is locked behind the
+            // read-gate.
+            mutate_state(|state| {
+                handle_moderation_result(report_index, ModerationCategories::SEXUAL_MINORS, false, false, state);
+                if let Some(reported_message) = state.data.reported_messages.get(report_index) {
+                    moderation::set_message_moderation_flags(
+                        reported_message.chat_id,
+                        reported_message.thread_root_message_index,
+                        reported_message.message_id,
+                        ModerationCategories::SEXUAL_MINORS.bits(),
+                        &mut state.data.fire_and_forget_handler,
+                    );
+                }
+            });
+            Success
+        }
+        Ok(ReportAction::CsamProtectionOnly(report_index)) => {
+            mutate_state(|state| apply_csam_assertion_protection(report_index, state));
+            Success
+        }
+        Ok(ReportAction::Classify(report_index)) => {
+            if args.message.moderation_flags != 0
                 && let Some(categories) = ModerationCategories::from_bits(args.message.moderation_flags)
             {
                 // The message has already been classified by the active moderation pipeline
@@ -64,7 +83,16 @@ fn c2c_report_message(args: Args) -> Response {
     }
 }
 
-fn add_report(args: &Args, state: &mut RuntimeState) -> Result<u64, Response> {
+fn add_report(args: &Args, state: &mut RuntimeState) -> Result<ReportAction, Response> {
+    // An assertion from a reporter with a record of dismissed (false) CSAM assertions is
+    // downgraded to an ordinary report: no pre-verdict takedown, no assertion recorded
+    let csam = args.csam
+        && state
+            .data
+            .users
+            .get_by_user_id(&args.reporter)
+            .is_none_or(|u| u.false_csam_reports < FALSE_CSAM_ASSERTION_LIMIT);
+
     let add_report_args = AddReportArgs {
         chat_id: args.chat_id,
         thread_root_message_index: args.thread_root_message_index,
@@ -73,7 +101,7 @@ fn add_report(args: &Args, state: &mut RuntimeState) -> Result<u64, Response> {
         sender: args.message.sender,
         already_deleted: args.already_deleted,
         reporter: args.reporter,
-        csam: args.csam,
+        csam,
         timestamp: state.env.now(),
     };
     match state.data.reported_messages.add_report(add_report_args) {
@@ -86,9 +114,20 @@ fn add_report(args: &Args, state: &mut RuntimeState) -> Result<u64, Response> {
                 .data
                 .reported_messages
                 .add_pending_classification(report_index, args.message.content.clone(), args.is_public);
-            Ok(report_index)
+            Ok(if csam { ReportAction::CsamAssertion(report_index) } else { ReportAction::Classify(report_index) })
         }
         AddReportResult::ExistingOutcome(report_index) => {
+            // A CSAM assertion on an already-classified (but unverdicted) report still takes
+            // the protective action: the earlier classification did not quarantine anything
+            // and the asserted media would otherwise stay publicly served until the verdict
+            if csam
+                && state
+                    .data
+                    .reported_messages
+                    .assert_csam_if_unverdicted(report_index, args.reporter)
+            {
+                return Ok(ReportAction::CsamProtectionOnly(report_index));
+            }
             // Queue a message from the OC bot to the reporter describing what happened
             let reported_message = state.data.reported_messages.get(report_index).unwrap();
             state.push_event_to_local_user_index(args.reporter, build_message_to_reporter(reported_message, args.reporter));
@@ -96,7 +135,7 @@ fn add_report(args: &Args, state: &mut RuntimeState) -> Result<u64, Response> {
         }
         // A CSAM assertion on an already-pending report must still take the CSAM path: the
         // earlier reporter's plain report did not quarantine anything
-        AddReportResult::ExistingPending(report_index) if args.csam => Ok(report_index),
+        AddReportResult::ExistingPending(report_index) if csam => Ok(ReportAction::CsamAssertion(report_index)),
         AddReportResult::ExistingPending(_) => Err(Success),
         AddReportResult::AlreadyReportedByUser => Err(AlreadyReported),
         AddReportResult::RateLimited => {
@@ -106,6 +145,33 @@ fn add_report(args: &Args, state: &mut RuntimeState) -> Result<u64, Response> {
             Err(Success)
         }
     }
+}
+
+// The protective half of the CSAM path for a report whose automated outcome already exists:
+// quarantine the media, delete the message and set the read-gate flag, without touching the
+// recorded outcome (the moderator alert already exists and the verdict decides the rest).
+// Every step is idempotent, so re-assertion by a second reporter is harmless.
+fn apply_csam_assertion_protection(report_index: u64, state: &mut RuntimeState) {
+    let Some(report) = state.data.reported_messages.get(report_index) else {
+        return;
+    };
+    let report = report.clone();
+    moderation::quarantine_blobs(report_index, &report, ModerationCategories::SEXUAL_MINORS.bits(), state);
+    if !report.already_deleted {
+        moderation::delete_message(
+            report.chat_id,
+            report.thread_root_message_index,
+            report.message_id,
+            &mut state.data.fire_and_forget_handler,
+        );
+    }
+    moderation::set_message_moderation_flags(
+        report.chat_id,
+        report.thread_root_message_index,
+        report.message_id,
+        ModerationCategories::SEXUAL_MINORS.bits(),
+        &mut state.data.fire_and_forget_handler,
+    );
 }
 
 pub(crate) async fn process_report(report_index: u64) {

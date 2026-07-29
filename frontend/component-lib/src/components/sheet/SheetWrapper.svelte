@@ -25,7 +25,9 @@
     }
 
     function onKeyDown(ev: KeyboardEvent) {
-        if (ev.key === "Escape") sheetBehavior.collapse();
+        // Escape follows the same rule as the backdrop and drag handle: a sheet with no
+        // onDismiss is not user-dismissible
+        if (ev.key === "Escape" && onDismiss) sheetBehavior.collapse();
     }
 </script>
 

@@ -267,7 +267,15 @@ impl RuntimeState {
             vault_reviewers: self.data.vault_reviewers.len() as u32,
             openai_api_key_set: self.data.openai_api_key.is_some(),
             internal_moderation_channel_set: self.data.internal_moderation_channel.is_some(),
-            moderation_referral_config: self.data.moderation_referral_config.clone(),
+            // Presence and size only: the metrics endpoint is public and the per-category
+            // thresholds must not be readable by people tuning content to sit under them.
+            // Operators read the full config via the guarded moderation_config query.
+            moderation_referral_config_set: self.data.moderation_referral_config.is_some(),
+            moderation_referral_categories: self
+                .data
+                .moderation_referral_config
+                .as_ref()
+                .map_or(0, |c| c.categories.len() as u32),
             oc_public_key: self.data.oc_key_pair.public_key_pem().to_string(),
             empty_users: self.data.empty_users.len(),
             deleted_users: self.data.deleted_users.len(),
@@ -650,7 +658,8 @@ pub struct Metrics {
     pub vault_reviewers: u32,
     pub openai_api_key_set: bool,
     pub internal_moderation_channel_set: bool,
-    pub moderation_referral_config: Option<ModerationReferralConfig>,
+    pub moderation_referral_config_set: bool,
+    pub moderation_referral_categories: u32,
     pub oc_public_key: String,
     pub empty_users: usize,
     pub deleted_users: usize,

@@ -56,11 +56,17 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
             if let Some(channel_id) = ev.channel_id
                 && let Some(categories) = ModerationCategories::from_bits(ev.flags)
                 && let Some(channel) = state.data.channels.get_mut(&channel_id)
-                && channel
-                    .chat
-                    .events
-                    .flag_message(ev.thread_root_message_index, ev.message_id, categories, **now)
-                    .is_ok()
+                && {
+                    let flag_result =
+                        channel
+                            .chat
+                            .events
+                            .flag_message(ev.thread_root_message_index, ev.message_id, categories, **now);
+                    // NoChange must still dispatch: a message can score above a referral
+                    // threshold without altering the stored flag bits (the API flagged
+                    // nothing, so the bits stay 0), and a referral must not depend on them
+                    flag_result.is_ok() || flag_result.is_err_and(|e| e.matches_code(oc_error_codes::OCErrorCode::NoChange))
+                }
             {
                 let is_csam = categories.contains(ModerationCategories::SEXUAL_MINORS);
                 let moderation_referral = ModerationCategories::from_bits(ev.moderation_referral_flags).unwrap_or_default();

@@ -1,5 +1,5 @@
 use chat_events::deep_message_links;
-use constants::HOUR_IN_MS;
+use constants::{DAY_IN_MS, HOUR_IN_MS};
 use local_user_index_canister::{OpenChatBotMessageV2, UserIndexEvent};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -36,14 +36,22 @@ impl ReportedMessages {
                 message.already_deleted = true;
             }
 
-            if args.csam && !message.csam_asserted_by.contains(&args.reporter) {
-                message.csam_asserted_by.push(args.reporter);
-            }
-            if message.reports.insert(args.reporter, args.timestamp).is_some() {
+            let new_reporter = message.reports.insert(args.reporter, args.timestamp).is_none();
+            let new_assertion = args.csam && !message.csam_asserted_by.contains(&args.reporter);
+
+            if !new_reporter && !new_assertion {
                 AddReportResult::AlreadyReportedByUser
             } else if message.outcome.is_some() {
+                // The assertion is NOT registered here: whether it is acted on (and therefore
+                // whether the asserter is on the hook for a false report) is decided by the
+                // caller, which knows whether a human verdict already stands
                 AddReportResult::ExistingOutcome(index as u64)
             } else {
+                // An assertion on a pending report is always acted on, so register it: the
+                // asserter carries the consequences of a false allegation
+                if new_assertion {
+                    message.csam_asserted_by.push(args.reporter);
+                }
                 AddReportResult::ExistingPending(index as u64)
             }
         } else if self.reporter_rate_limited(args.reporter, args.timestamp) {
@@ -133,6 +141,24 @@ impl ReportedMessages {
 
     pub fn get(&self, index: u64) -> Option<&ReportedMessage> {
         self.messages.get(index as usize)
+    }
+
+    // Registers a CSAM assertion against a report that already has an automated outcome,
+    // provided no human verdict stands yet (a verdict is final: a late assertion neither
+    // reopens the case nor exposes the asserter to false-report consequences). Returns true
+    // if the assertion was acted on and the caller should apply the protective quarantine.
+    pub fn assert_csam_if_unverdicted(&mut self, report_index: u64, reporter: UserId) -> bool {
+        let Some(message) = self.messages.get_mut(report_index as usize) else {
+            return false;
+        };
+        if matches!(&message.outcome, Some(ReportOutcome::Automated(a)) if a.human_verdict.is_none()) {
+            if !message.csam_asserted_by.contains(&reporter) {
+                message.csam_asserted_by.push(reporter);
+            }
+            true
+        } else {
+            false
+        }
     }
 
     pub fn metrics(&self) -> ReportingMetrics {
@@ -439,6 +465,25 @@ pub enum DetectionSource {
 }
 
 impl ReportedMessage {
+    // True if this report justifies keeping its sender suspended at `now`: an unresolved
+    // automated sanction, an upheld-as-CSAM verdict (indefinite suspension), or an upheld
+    // violation whose one-day suspension is still running
+    pub fn keeps_sender_sanctioned(&self, now: TimestampMillis) -> bool {
+        match &self.outcome {
+            Some(ReportOutcome::Automated(a)) => match &a.human_verdict {
+                // Only sanctions that actually suspended count: an unverified reporter
+                // assertion must not block a legitimate unsuspension
+                None => self.suspension_applied_without_verdict(),
+                Some(v) => match v.verdict {
+                    ModerationVerdict::UpheldAsCsam => true,
+                    ModerationVerdict::Upheld => v.timestamp.saturating_add(DAY_IN_MS) > now,
+                    ModerationVerdict::Dismissed => false,
+                },
+            },
+            _ => false,
+        }
+    }
+
     // True while a without-verdict suspension is outstanding on this report
     pub fn suspension_applied_without_verdict(&self) -> bool {
         matches!(&self.outcome, Some(ReportOutcome::Automated(a)) if a.sanctioned && a.human_verdict.is_none())
@@ -713,6 +758,48 @@ mod tests {
     }
 
     #[test]
+    fn csam_escalation_of_own_earlier_report_is_acted_on_once() {
+        let mut reported_messages = ReportedMessages::default();
+        let mut args = dummy_report_args();
+        reported_messages.add_report(args.clone());
+
+        // Escalating your own earlier plain report to a CSAM assertion is acted on
+        // (ExistingPending routes to the protective path) and registers the asserter
+        args.csam = true;
+        assert!(matches!(
+            reported_messages.add_report(args.clone()),
+            AddReportResult::ExistingPending(0)
+        ));
+        assert_eq!(reported_messages.get(0).unwrap().csam_asserted_by, vec![args.reporter]);
+
+        // Re-asserting is a no-op
+        assert!(matches!(
+            reported_messages.add_report(args.clone()),
+            AddReportResult::AlreadyReportedByUser
+        ));
+        assert_eq!(reported_messages.get(0).unwrap().csam_asserted_by.len(), 1);
+    }
+
+    #[test]
+    fn csam_assertion_after_outcome_defers_registration_to_the_caller() {
+        let mut reported_messages = ReportedMessages::default();
+        let args = dummy_report_args();
+        reported_messages.add_report(args.clone());
+        reported_messages.record_outcome(0, dummy_outcome());
+
+        let mut second = dummy_report_args();
+        second.reporter = Principal::from_text("wowos-hyaaa-aaaar-ar4ca-cai").unwrap().into();
+        second.csam = true;
+        assert!(matches!(
+            reported_messages.add_report(second.clone()),
+            AddReportResult::ExistingOutcome(0)
+        ));
+        // add_report must NOT register the asserter: whether the assertion is acted on (and so
+        // whether the asserter carries false-report consequences) is the caller's decision
+        assert!(reported_messages.get(0).unwrap().csam_asserted_by.is_empty());
+    }
+
+    #[test]
     fn legacy_modclub_outcome_deserializes() {
         let outcome = ReportOutcome::Modclub(ModclubOutcome {
             timestamp: 1706107419000,
@@ -875,6 +962,37 @@ mod report_status_tests {
         // Once a verdict lands, it overrides the automated action in both directions
         assert!(with_verdict(ModerationVerdict::UpheldAsCsam).in_breach());
         assert!(!with_verdict(ModerationVerdict::Dismissed).in_breach());
+    }
+
+    #[test]
+    fn keeps_sender_sanctioned_matches_suspension_semantics() {
+        // Unverdicted: only an actually-applied suspension counts
+        assert!(with_unverdicted_outcome(true).keeps_sender_sanctioned(1000));
+        assert!(!with_unverdicted_outcome(false).keeps_sender_sanctioned(1000));
+        // An upheld-as-CSAM verdict means an indefinite suspension: always counts
+        assert!(with_verdict(ModerationVerdict::UpheldAsCsam).keeps_sender_sanctioned(u64::MAX));
+        // An upheld violation counts only while its one-day suspension is still running
+        // (verdict fixtures are timestamped 2)
+        assert!(with_verdict(ModerationVerdict::Upheld).keeps_sender_sanctioned(2 + DAY_IN_MS - 1));
+        assert!(!with_verdict(ModerationVerdict::Upheld).keeps_sender_sanctioned(2 + DAY_IN_MS));
+        assert!(!with_verdict(ModerationVerdict::Dismissed).keeps_sender_sanctioned(3));
+        assert!(!base_report().keeps_sender_sanctioned(3));
+    }
+
+    #[test]
+    fn late_csam_assertion_is_refused_once_a_verdict_stands() {
+        let mut reported_messages = ReportedMessages::default();
+        reported_messages.messages = vec![with_verdict(ModerationVerdict::Dismissed)];
+        assert!(!reported_messages.assert_csam_if_unverdicted(0, Principal::anonymous().into()));
+        assert!(reported_messages.messages[0].csam_asserted_by.is_empty());
+
+        let mut reported_messages = ReportedMessages::default();
+        reported_messages.messages = vec![with_unverdicted_outcome(true)];
+        assert!(reported_messages.assert_csam_if_unverdicted(0, Principal::anonymous().into()));
+        assert_eq!(reported_messages.messages[0].csam_asserted_by.len(), 1);
+        // Idempotent for the same reporter
+        assert!(reported_messages.assert_csam_if_unverdicted(0, Principal::anonymous().into()));
+        assert_eq!(reported_messages.messages[0].csam_asserted_by.len(), 1);
     }
 
     #[test]

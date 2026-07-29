@@ -1117,6 +1117,287 @@ fn csam_asserted_media_report_quarantines_immediately() {
 }
 
 #[test]
+fn shared_blob_evidence_survives_dismissal_of_a_sibling_report() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    let set_reviewers_response = client::user_index::set_vault_reviewers(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::set_vault_reviewers::Args {
+            user_ids: vec![test_data.moderator.user_id],
+        },
+    );
+    assert!(matches!(set_reviewers_response, UnitResult::Success));
+    tick_many(env, 5);
+
+    // The same blob carried by two messages: one vault record, two evidence claims
+    let file_size = 1000u32;
+    let blob_reference = client::storage_index::happy_path::upload_file(
+        env,
+        test_data.sender.principal,
+        canister_ids.storage_index,
+        file_size,
+        vec![test_data.sender.canister()],
+    );
+    let mut message_ids = Vec::new();
+    for _ in 0..2 {
+        let message_id = random_from_u128();
+        let send_response = client::group::send_message_v2(
+            env,
+            test_data.sender.principal,
+            test_data.group_id.into(),
+            &group_canister::send_message_v2::Args {
+                thread_root_message_index: None,
+                message_id,
+                content: MessageContentInitial::File(FileContent {
+                    name: random_string(),
+                    caption: None,
+                    mime_type: "application/octet-stream".to_string(),
+                    file_size,
+                    blob_reference: Some(blob_reference.clone()),
+                }),
+                sender_name: test_data.sender.username(),
+                sender_display_name: None,
+                replies_to: None,
+                mentioned: Vec::new(),
+                forwarding: false,
+                block_level_markdown: false,
+                rules_accepted: None,
+                message_filter_failed: None,
+                new_achievement: false,
+                og_previews: Vec::new(),
+            },
+        );
+        assert!(
+            matches!(send_response, group_canister::send_message_v2::Response::Success(_)),
+            "{send_response:?}"
+        );
+        message_ids.push(message_id);
+    }
+    tick_many(env, 3);
+
+    // Both messages CSAM-reported: two reports, each holding the single vaulted blob
+    for message_id in &message_ids {
+        let report_response = client::group::report_message(
+            env,
+            test_data.reporter.principal,
+            test_data.group_id.into(),
+            &group_canister::report_message::Args {
+                thread_root_message_index: None,
+                message_id: *message_id,
+                delete: false,
+                csam: true,
+            },
+        );
+        assert!(matches!(report_response, UnitResult::Success));
+        tick_many(env, 10);
+    }
+
+    let fetch_chunk = |env: &mut PocketIc| {
+        client::storage_bucket::vault_file_chunk(
+            env,
+            test_data.moderator.principal,
+            blob_reference.canister_id,
+            &storage_bucket_canister::vault_file_chunk::Args {
+                file_id: blob_reference.blob_id,
+                chunk_index: 0,
+            },
+        )
+    };
+    assert!(matches!(
+        fetch_chunk(env),
+        storage_bucket_canister::vault_file_chunk::Response::Success(_)
+    ));
+
+    let reports = get_moderation_reports(env, &test_data);
+    let report_index_for = |reports: &[ModerationReportContent], message_id| {
+        reports
+            .iter()
+            .find(|r| r.message_id == message_id)
+            .and_then(|r| r.report_index)
+            .expect("report should exist with an index")
+    };
+    let first_report = report_index_for(&reports, message_ids[0]);
+    let second_report = report_index_for(&reports, message_ids[1]);
+    assert_ne!(first_report, second_report);
+
+    // Dismissing the first report must NOT release the evidence: the second report (which
+    // could yet be upheld) still holds the blob. Without per-report claims, a duplicate
+    // report's dismissal would destroy the evidence of a still-open case.
+    let dismiss = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index: first_report,
+            verdict: ModerationVerdict::Dismissed,
+            urgent: None,
+        },
+    );
+    assert!(matches!(dismiss, UnitResult::Success), "{dismiss:?}");
+    tick_many(env, 10);
+    assert!(matches!(
+        fetch_chunk(env),
+        storage_bucket_canister::vault_file_chunk::Response::Success(_)
+    ));
+
+    // The surviving report can still be upheld and the retention clock applied
+    let uphold = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index: second_report,
+            verdict: ModerationVerdict::UpheldAsCsam,
+            urgent: None,
+        },
+    );
+    assert!(matches!(uphold, UnitResult::Success), "{uphold:?}");
+    tick_many(env, 10);
+    assert!(matches!(
+        fetch_chunk(env),
+        storage_bucket_canister::vault_file_chunk::Response::Success(_)
+    ));
+}
+
+#[test]
+fn media_report_dismissal_releases_the_vault() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    let set_reviewers_response = client::user_index::set_vault_reviewers(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::set_vault_reviewers::Args {
+            user_ids: vec![test_data.moderator.user_id],
+        },
+    );
+    assert!(matches!(set_reviewers_response, UnitResult::Success));
+    tick_many(env, 5);
+
+    let file_size = 1000u32;
+    let blob_reference = client::storage_index::happy_path::upload_file(
+        env,
+        test_data.sender.principal,
+        canister_ids.storage_index,
+        file_size,
+        vec![test_data.sender.canister()],
+    );
+    let message_id = random_from_u128();
+    let send_response = client::group::send_message_v2(
+        env,
+        test_data.sender.principal,
+        test_data.group_id.into(),
+        &group_canister::send_message_v2::Args {
+            thread_root_message_index: None,
+            message_id,
+            content: MessageContentInitial::File(FileContent {
+                name: random_string(),
+                caption: None,
+                mime_type: "application/octet-stream".to_string(),
+                file_size,
+                blob_reference: Some(blob_reference.clone()),
+            }),
+            sender_name: test_data.sender.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            forwarding: false,
+            block_level_markdown: false,
+            rules_accepted: None,
+            message_filter_failed: None,
+            new_achievement: false,
+            og_previews: Vec::new(),
+        },
+    );
+    assert!(matches!(send_response, group_canister::send_message_v2::Response::Success(_)));
+    tick_many(env, 3);
+
+    let report_response = client::group::report_message(
+        env,
+        test_data.reporter.principal,
+        test_data.group_id.into(),
+        &group_canister::report_message::Args {
+            thread_root_message_index: None,
+            message_id,
+            delete: false,
+            csam: true,
+        },
+    );
+    assert!(matches!(report_response, UnitResult::Success));
+    tick_many(env, 10);
+
+    let fetch_chunk = |env: &mut PocketIc| {
+        client::storage_bucket::vault_file_chunk(
+            env,
+            test_data.moderator.principal,
+            blob_reference.canister_id,
+            &storage_bucket_canister::vault_file_chunk::Args {
+                file_id: blob_reference.blob_id,
+                chunk_index: 0,
+            },
+        )
+    };
+    assert!(matches!(
+        fetch_chunk(env),
+        storage_bucket_canister::vault_file_chunk::Response::Success(_)
+    ));
+
+    let reports = get_moderation_reports(env, &test_data);
+    let report_index = reports
+        .iter()
+        .find(|r| r.message_id == message_id)
+        .and_then(|r| r.report_index)
+        .expect("report should exist with an index");
+
+    // The false allegation is dismissed: the full reversal chain must run - message restored,
+    // flags cleared, and the vault releases the blob so it is publicly served again
+    let dismiss = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index,
+            verdict: ModerationVerdict::Dismissed,
+            urgent: None,
+        },
+    );
+    assert!(matches!(dismiss, UnitResult::Success), "{dismiss:?}");
+    tick_many(env, 10);
+
+    // The vault record is gone...
+    assert!(matches!(
+        fetch_chunk(env),
+        storage_bucket_canister::vault_file_chunk::Response::NotFound
+    ));
+    // ...the blob is publicly served again...
+    assert!(client::storage_bucket::happy_path::file_exists(
+        env,
+        test_data.sender.principal,
+        blob_reference.canister_id,
+        blob_reference.blob_id,
+    ));
+    // ...and the message is restored (no longer deleted)
+    let message_content = get_message_content(env, &test_data.group_owner, test_data.group_id, message_id);
+    assert!(matches!(message_content, MessageContent::File(_)), "{message_content:?}");
+}
+
+#[test]
 fn accept_terms_records_version_and_never_downgrades() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {

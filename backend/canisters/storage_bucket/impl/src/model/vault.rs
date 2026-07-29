@@ -1,6 +1,6 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use storage_bucket_canister::c2c_vault_sync::VaultCaptureMetadata;
 use storage_bucket_canister::c2c_vault_sync::VaultReviewer;
 use types::{FileId, Hash, TimestampMillis, UserId};
@@ -40,6 +40,9 @@ pub struct VaultRecord {
     // retention clock without a verdict, and such a record must still count as unresolved
     pub verdict_applied: bool,
     pub legal_hold: bool,
+    // Every report holding this blob as evidence; the record is only released when the last
+    // one lets go (see unquarantine)
+    pub report_indexes: BTreeSet<u64>,
 }
 
 // Records serialized before verdict_applied existed only ever had retention_until set by a
@@ -56,6 +59,8 @@ struct VaultRecordCompat {
     #[serde(default)]
     verdict_applied: Option<bool>,
     legal_hold: bool,
+    #[serde(default)]
+    report_indexes: BTreeSet<u64>,
 }
 
 impl From<VaultRecordCompat> for VaultRecord {
@@ -69,6 +74,7 @@ impl From<VaultRecordCompat> for VaultRecord {
             verdict_applied: c.verdict_applied.unwrap_or(c.retention_until.is_some()),
             retention_until: c.retention_until,
             legal_hold: c.legal_hold,
+            report_indexes: c.report_indexes,
         }
     }
 }
@@ -126,6 +132,8 @@ pub enum VaultOpOutcome {
     Applied,
     // The blob is no longer referenced by the vault and its pin should be released
     ReleasePin(Hash),
+    // The record was kept because other reports still hold the blob as evidence
+    Retained,
     // The operation was refused because the record is under legal hold
     Blocked,
     NotFound,
@@ -157,7 +165,8 @@ impl Vault {
 
         // If the hash is already quarantined (another file referencing the same blob), the
         // original record is kept; the log entry above preserves this report's linkage
-        self.records.entry(hash).or_insert(VaultRecord {
+        let report_index = metadata.report_index;
+        let record = self.records.entry(hash).or_insert(VaultRecord {
             hash,
             original_file_id: file_id,
             mime_type,
@@ -166,14 +175,22 @@ impl Vault {
             retention_until: None,
             verdict_applied: false,
             legal_hold: false,
+            report_indexes: BTreeSet::new(),
         });
+        record.report_indexes.insert(report_index);
     }
 
     pub fn record_quarantine_failure(&mut self) {
         self.quarantine_failures += 1;
     }
 
-    pub fn unquarantine(&mut self, file_id: FileId, moderator: Option<UserId>, now: TimestampMillis) -> VaultOpOutcome {
+    pub fn unquarantine(
+        &mut self,
+        file_id: FileId,
+        moderator: Option<UserId>,
+        report_index: Option<u64>,
+        now: TimestampMillis,
+    ) -> VaultOpOutcome {
         let Some(hash) = self.file_id_to_hash.get(&file_id).copied() else {
             return VaultOpOutcome::NotFound;
         };
@@ -181,6 +198,19 @@ impl Vault {
             // A legal hold blocks release; it must be explicitly cleared first (LE-requested
             // destruction is the only operation which overrides a hold)
             return VaultOpOutcome::Blocked;
+        }
+        // One blob can be evidence for several reports (the same content posted in more than
+        // one message dedupes to a single hash). A dismissal releases only its own report's
+        // claim; the blob is released only when no report holds it any more - otherwise a
+        // dismissal of a duplicate would destroy the evidence of a still-open report. A
+        // release without a report index (legacy sender) keeps the whole-record semantics.
+        if let Some(report_index) = report_index
+            && let Some(record) = self.records.get_mut(&hash)
+        {
+            record.report_indexes.remove(&report_index);
+            if !record.report_indexes.is_empty() {
+                return VaultOpOutcome::Retained;
+            }
         }
         for alias in self.remove_all_references(&hash) {
             self.append_log(VaultLogEvent::UnquarantinedBy(alias, moderator), now);
@@ -493,9 +523,50 @@ mod tests {
         let mut vault = vault_with_reviewer();
         vault.quarantine(1, [1u8; 32], "image/png".to_string(), metadata(0), 100);
         vault.set_legal_hold(1, true, 200);
-        assert!(matches!(vault.unquarantine(1, None, 300), VaultOpOutcome::Blocked));
+        assert!(matches!(vault.unquarantine(1, None, Some(0), 300), VaultOpOutcome::Blocked));
         vault.set_legal_hold(1, false, 400);
-        assert!(matches!(vault.unquarantine(1, None, 500), VaultOpOutcome::ReleasePin(_)));
+        assert!(matches!(
+            vault.unquarantine(1, None, Some(0), 500),
+            VaultOpOutcome::ReleasePin(_)
+        ));
+    }
+
+    #[test]
+    fn shared_hash_release_waits_for_the_last_report() {
+        let mut vault = vault_with_reviewer();
+        // The same blob (one hash) quarantined via two files, each held by a different report
+        vault.quarantine(1, [1u8; 32], "image/png".to_string(), metadata(7), 100);
+        vault.quarantine(2, [1u8; 32], "image/png".to_string(), metadata(8), 101);
+
+        // Dismissing report 8 keeps the record: report 7's evidence must survive
+        assert!(matches!(vault.unquarantine(2, None, Some(8), 200), VaultOpOutcome::Retained));
+        assert!(vault.record_for_file(&1).is_some());
+        assert!(matches!(
+            vault.apply_verdict(1, 999, None, false, 250),
+            VaultOpOutcome::Applied
+        ));
+
+        // No UnquarantinedBy entry was logged: the blob's custody did not change
+        let (_, entries) = vault.log_page(0, 100, None);
+        assert!(!entries.iter().any(|e| matches!(e.event, VaultLogEvent::UnquarantinedBy(..))));
+
+        // The last report letting go releases the blob
+        assert!(matches!(
+            vault.unquarantine(1, None, Some(7), 300),
+            VaultOpOutcome::ReleasePin(_)
+        ));
+        assert!(vault.record_for_file(&1).is_none());
+        assert!(vault.record_for_file(&2).is_none());
+
+        // A release with no report index (legacy sender) keeps whole-record semantics
+        let mut vault = vault_with_reviewer();
+        vault.quarantine(3, [2u8; 32], "image/png".to_string(), metadata(9), 100);
+        vault.quarantine(4, [2u8; 32], "image/png".to_string(), metadata(10), 101);
+        assert!(matches!(
+            vault.unquarantine(3, None, None, 200),
+            VaultOpOutcome::ReleasePin(_)
+        ));
+        assert!(vault.record_for_file(&4).is_none());
     }
 
     #[test]

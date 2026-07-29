@@ -52,15 +52,20 @@
     let mediaReviewed = $state(false);
     let reviewerRequired = $state(false);
     let mediaUnavailable = $state(false);
+    let mediaFetchFailed = $state(false);
 
-    function onReviewResult(outcome: "viewed" | "not_authorized" | "error") {
+    function onReviewResult(outcome: "viewed" | "not_authorized" | "not_found" | "error") {
         if (outcome === "viewed") {
             mediaReviewed = true;
         } else if (outcome === "not_authorized") {
             reviewerRequired = true;
-        } else {
+        } else if (outcome === "not_found") {
+            // The media genuinely no longer exists, so the review requirement is satisfied
+            // with an advisory note; a transient fetch failure keeps the gate shut instead
             mediaUnavailable = true;
             mediaReviewed = true;
+        } else {
+            mediaFetchFailed = true;
         }
     }
     let moderatorId = $derived(
@@ -460,6 +465,10 @@
     {#if canResolve && reviewerRequired}
         <Body colour="error">
             <Translatable resourceKey={i18nKey("moderationReport.reviewerRequired")} />
+        </Body>
+    {:else if canResolve && needsMediaReview && mediaFetchFailed}
+        <Body colour="error">
+            <Translatable resourceKey={i18nKey("moderationReport.mediaFetchFailed")} />
         </Body>
     {:else if canResolve && !needsMediaReview}
         {#if mediaUnavailable}

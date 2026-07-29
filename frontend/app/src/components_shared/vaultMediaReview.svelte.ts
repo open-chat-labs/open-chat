@@ -5,12 +5,14 @@ export type LoadedMedia = {
     mimeType: string;
 };
 
-export type ReviewStage = "interstitial" | "loading" | "view" | "not_authorized" | "error";
+export type ReviewStage = "interstitial" | "loading" | "view" | "not_authorized" | "not_found" | "error";
 
 // The terminal outcome reported when the viewer closes: "viewed" completes the
-// review-before-verdict gate; "not_authorized" means the caller is not a designated vault
-// reviewer; "error" means the media could not be fetched (eg. removed before quarantine)
-export type ReviewOutcome = "viewed" | "not_authorized" | "error";
+// review-before-verdict gate; "not_found" also completes it (the media genuinely no longer
+// exists, eg. removed before quarantine, so there is nothing to review); "not_authorized"
+// means the caller is not a designated vault reviewer; "error" is a transient fetch failure
+// and does NOT complete the gate - the reviewer should retry
+export type ReviewOutcome = "viewed" | "not_authorized" | "not_found" | "error";
 
 // The single review state machine shared by the desktop and mobile media viewers, so that the
 // two are equivalent by construction and only their markup differs.
@@ -46,15 +48,18 @@ export class VaultMediaReview {
         this.#onResult = onResult;
     }
 
-    async #fetchDirect(ref: BlobReference): Promise<LoadedMedia | "error"> {
+    async #fetchDirect(ref: BlobReference): Promise<LoadedMedia | "error" | "not_found"> {
         const resp = await fetch(this.#client.reportedMediaUrl(ref), { cache: "no-store" });
+        // 404/403: the blob no longer exists (or was hidden by deletion) - permanently gone,
+        // unlike a transient failure
+        if (resp.status === 404 || resp.status === 403) return "not_found";
         if (!resp.ok) return "error";
         const bytes = await resp.arrayBuffer();
         const mimeType = resp.headers.get("content-type") ?? "application/octet-stream";
         return { url: URL.createObjectURL(new Blob([bytes], { type: mimeType })), mimeType };
     }
 
-    async #fetchVault(ref: BlobReference): Promise<LoadedMedia | "error" | "not_authorized"> {
+    async #fetchVault(ref: BlobReference): Promise<LoadedMedia | "error" | "not_authorized" | "not_found"> {
         const chunks: Uint8Array[] = [];
         let mimeType = "application/octet-stream";
         let chunkIndex = 0;
@@ -63,6 +68,7 @@ export class VaultMediaReview {
             const resp = await this.#client.vaultFileChunk(ref.canisterId, ref.blobId, chunkIndex);
             if (this.#cancelled) return "error";
             if (resp.kind === "not_authorized") return "not_authorized";
+            if (resp.kind === "not_found") return "not_found";
             if (resp.kind !== "success") return "error";
             chunks.push(resp.bytes);
             mimeType = resp.mimeType;
@@ -96,6 +102,10 @@ export class VaultMediaReview {
                 if (item === "not_authorized") {
                     this.#outcome = "not_authorized";
                     return abort("not_authorized");
+                }
+                if (item === "not_found") {
+                    this.#outcome = "not_found";
+                    return abort("not_found");
                 }
                 if (item === "error") {
                     this.#outcome = "error";

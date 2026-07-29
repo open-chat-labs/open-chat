@@ -33,10 +33,10 @@ fn record_authority_report_filed_impl(args: Args, state: &mut RuntimeState) -> O
 
         // Re-anchor the vault retention clock at filing time: the statutory 1 year runs from
         // the report being sent, not from the verdict. Not a verdict: an unverified filing
-        // leaves the record unresolved and awaiting a reviewer
-        if let Some(operator) = state.data.users.get_by_principal(&state.env.caller()).map(|u| u.user_id) {
-            moderation::reanchor_vault_retention(&reported_message.blob_references, operator, state);
-        }
+        // leaves the record unresolved and awaiting a reviewer. Sent even if the caller has
+        // no user record - an unattributed re-anchor beats an early-expiring clock.
+        let operator = state.data.users.get_by_principal(&state.env.caller()).map(|u| u.user_id);
+        moderation::reanchor_vault_retention(&reported_message.blob_references, operator, state);
 
         // Flip the alert card's filing state to Filed
         moderation::update_moderation_alert_authority_report(

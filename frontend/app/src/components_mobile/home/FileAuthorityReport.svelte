@@ -2,6 +2,7 @@
     import type { OpenChat } from "@client";
     import { Body, Button, Column, Input, Sheet, Subtitle } from "component-lib";
     import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
 
@@ -50,7 +51,7 @@
                 )}
             />
         </Body>
-        <Input placeholder={"Portal reference (URN)"} bind:value={reference} />
+        <Input placeholder={$_("moderationReport.filingReference")} bind:value={reference} />
         {#if failed}
             <Body colour={"error"}>
                 <Translatable resourceKey={i18nKey("moderationReport.failed")} />

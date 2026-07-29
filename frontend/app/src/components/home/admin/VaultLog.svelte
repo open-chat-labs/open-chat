@@ -30,6 +30,11 @@
     // The vault access log is readable only by designated vault reviewers: the chain of
     // custody evidence. prev_hash of each entry is the hash of the one before it, so the
     // chain can be verified externally.
+    // The bucket whose entries are currently loaded: loadMore must page the SAME bucket even
+    // if the select has since changed, or entries from two buckets (with clashing per-bucket
+    // indexes) end up interleaved in one list
+    let loadedCanisterId = $state("");
+
     function load() {
         const canisterId = bucketCanisterId.trim();
         if (canisterId === "" || busy) return;
@@ -37,6 +42,7 @@
         error = undefined;
         entries = [];
         total = undefined;
+        loadedCanisterId = canisterId;
         client
             .vaultLog(canisterId, 0n, PAGE_SIZE, undefined)
             .then((resp) => {
@@ -55,13 +61,16 @@
         if (busy || total === undefined || BigInt(entries.length) >= total) return;
         busy = true;
         client
-            .vaultLog(bucketCanisterId.trim(), BigInt(entries.length), PAGE_SIZE, undefined)
+            .vaultLog(loadedCanisterId, BigInt(entries.length), PAGE_SIZE, undefined)
             .then((resp) => {
                 if (resp.kind === "success") {
                     entries = [...entries, ...resp.entries];
                     total = resp.total;
+                } else {
+                    error = "Not authorized - the vault log is readable by vault reviewers only";
                 }
             })
+            .catch(() => (error = "Failed to fetch more of the vault log"))
             .finally(() => (busy = false));
     }
 </script>

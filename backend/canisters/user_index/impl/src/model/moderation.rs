@@ -404,7 +404,7 @@ pub fn quarantine_blobs_and_apply_verdict(
 ) {
     let now = state.env.now();
     let mut ops = quarantine_ops(report_index, report, flags, now);
-    ops.extend(verdict_ops(&report.blob_references, moderator, false, now));
+    ops.extend(verdict_ops(&report.blob_references, Some(moderator), false, now));
     send_vault_ops(ops, state);
 }
 
@@ -429,7 +429,7 @@ fn quarantine_ops(report_index: u64, report: &ReportedMessage, flags: u32, now: 
         .collect()
 }
 
-pub fn unquarantine_blobs(blob_references: &[BlobReference], moderator: UserId, state: &mut RuntimeState) {
+pub fn unquarantine_blobs(blob_references: &[BlobReference], moderator: UserId, report_index: u64, state: &mut RuntimeState) {
     let ops = blob_references
         .iter()
         .cloned()
@@ -437,6 +437,7 @@ pub fn unquarantine_blobs(blob_references: &[BlobReference], moderator: UserId, 
             VaultOp::Unquarantine(UnquarantineOp {
                 blob_reference,
                 moderator: Some(moderator),
+                report_index: Some(report_index),
             })
         })
         .collect();
@@ -446,19 +447,25 @@ pub fn unquarantine_blobs(blob_references: &[BlobReference], moderator: UserId, 
 // Applies the uphold verdict to the vault: the retention clock starts and the blob is deleted
 // only when it expires (never while a legal hold is set)
 pub fn apply_vault_verdict(blob_references: &[BlobReference], moderator: UserId, state: &mut RuntimeState) {
-    let ops = verdict_ops(blob_references, moderator, false, state.env.now());
+    let ops = verdict_ops(blob_references, Some(moderator), false, state.env.now());
     send_vault_ops(ops, state);
 }
 
 // Re-anchors the retention clock at filing time without recording a verdict: the record stays
 // unresolved (an honest-unverified filing still needs a reviewer) and the vault log shows a
-// re-anchor rather than a second verdict
-pub fn reanchor_vault_retention(blob_references: &[BlobReference], operator: UserId, state: &mut RuntimeState) {
+// re-anchor rather than a second verdict. The operator is Option: an unattributed re-anchor
+// is better than a retention clock that expires early because the op was dropped.
+pub fn reanchor_vault_retention(blob_references: &[BlobReference], operator: Option<UserId>, state: &mut RuntimeState) {
     let ops = verdict_ops(blob_references, operator, true, state.env.now());
     send_vault_ops(ops, state);
 }
 
-fn verdict_ops(blob_references: &[BlobReference], moderator: UserId, reanchor: bool, now: TimestampMillis) -> Vec<VaultOp> {
+fn verdict_ops(
+    blob_references: &[BlobReference],
+    moderator: Option<UserId>,
+    reanchor: bool,
+    now: TimestampMillis,
+) -> Vec<VaultOp> {
     let retention_until = now + VAULT_RETENTION_MS;
     blob_references
         .iter()
@@ -467,8 +474,8 @@ fn verdict_ops(blob_references: &[BlobReference], moderator: UserId, reanchor: b
             VaultOp::ApplyVerdict(ApplyVerdictOp {
                 blob_reference,
                 retention_until,
-                moderator: Some(moderator),
-                reanchor,
+                moderator,
+                reanchor: Some(reanchor),
             })
         })
         .collect()
@@ -536,9 +543,12 @@ fn in_breach_count(sender: UserId, state: &RuntimeState) -> usize {
         .unwrap_or_default()
 }
 
-// True if the sender has another unresolved automated sanction besides `except_report_index` -
-// in which case a Dismissed verdict on one report must not lift the suspension
-pub fn has_other_unresolved_auto_sanction(sender: UserId, except_report_index: u64, state: &RuntimeState) -> bool {
+// True if another report besides `except_report_index` justifies keeping the sender
+// suspended: an unresolved automated sanction, an upheld-as-CSAM verdict (indefinite
+// suspension), or an upheld violation whose one-day suspension is still running. A Dismissed
+// verdict on one report must only reverse that report's own contribution - it must never lift
+// a suspension imposed by a different, still-standing report.
+pub fn has_other_active_sanction(sender: UserId, except_report_index: u64, now: TimestampMillis, state: &RuntimeState) -> bool {
     state
         .data
         .users
@@ -548,11 +558,7 @@ pub fn has_other_unresolved_auto_sanction(sender: UserId, except_report_index: u
                 .iter()
                 .filter(|i| **i != except_report_index)
                 .filter_map(|i| state.data.reported_messages.get(*i))
-                .any(|r| {
-                    // Only sanctions that actually suspended count: an unverified reporter
-                    // assertion must not block a legitimate unsuspension
-                    r.suspension_applied_without_verdict()
-                })
+                .any(|r| r.keeps_sender_sanctioned(now))
         })
         .unwrap_or_default()
 }

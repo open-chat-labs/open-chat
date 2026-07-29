@@ -10368,6 +10368,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
+ "msgpack",
  "serde",
  "serde_bytes",
  "ts-rs",

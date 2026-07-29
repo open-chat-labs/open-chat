@@ -32,10 +32,13 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
             }
             VaultOp::Unquarantine(u) => {
                 let file_id = u.file_id;
-                match state.data.vault.unquarantine(u.file_id, u.moderator, now) {
+                match state.data.vault.unquarantine(u.file_id, u.moderator, u.report_index, now) {
                     VaultOpOutcome::ReleasePin(hash) => {
                         state.data.files.vault_unpin(&hash);
                         info!(%file_id, "Vault: unquarantined");
+                    }
+                    VaultOpOutcome::Retained => {
+                        info!(%file_id, "Vault: release deferred, other reports still hold the blob");
                     }
                     VaultOpOutcome::Blocked => {
                         error!(%file_id, "Vault: unquarantine refused, record is under legal hold");
@@ -44,10 +47,20 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
                 }
             }
             VaultOp::ApplyVerdict(v) => {
-                state
-                    .data
-                    .vault
-                    .apply_verdict(v.file_id, v.retention_until, v.moderator, v.reanchor, now);
+                // Loud on NotFound: a verdict landing on a missing record means evidence that
+                // should have been held was already released - the worst failure mode
+                if matches!(
+                    state.data.vault.apply_verdict(
+                        v.file_id,
+                        v.retention_until,
+                        v.moderator,
+                        v.reanchor.unwrap_or_default(),
+                        now
+                    ),
+                    VaultOpOutcome::NotFound
+                ) {
+                    error!(file_id = %v.file_id, "Vault: verdict for a file that is not quarantined");
+                }
             }
             VaultOp::SetLegalHold(l) => {
                 state.data.vault.set_legal_hold(l.file_id, l.legal_hold, now);

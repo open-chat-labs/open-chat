@@ -6049,10 +6049,18 @@ export class OpenChat {
     }
 
     acceptTerms(version: number): Promise<boolean> {
-        // Update the store immediately so the blocking notice closes; the acceptance is
-        // recorded against the user record on the user_index
-        currentUserStore.set({ ...currentUserStore.value, acceptedTermsVersion: version });
-        return this.#worker.send({ kind: "acceptTerms", version }).catch(() => false);
+        // The blocking notice closes only once the acceptance is recorded against the user
+        // record on the user_index: closing on a failed call would leave the session usable
+        // with no acceptance recorded - the record is the whole point of the gate
+        return this.#worker
+            .send({ kind: "acceptTerms", version })
+            .then((success) => {
+                if (success) {
+                    currentUserStore.set({ ...currentUserStore.value, acceptedTermsVersion: version });
+                }
+                return success;
+            })
+            .catch(() => false);
     }
 
     setHideOnlineStatus(hideOnlineStatus: boolean): Promise<void> {

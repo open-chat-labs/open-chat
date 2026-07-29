@@ -29,6 +29,9 @@ pub struct UnquarantineOp {
     pub blob_reference: BlobReference,
     #[serde(default)]
     pub moderator: Option<UserId>,
+    // The report releasing its claim on the blob; None releases the whole record
+    #[serde(default)]
+    pub report_index: Option<u64>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -39,9 +42,10 @@ pub struct ApplyVerdictOp {
     pub moderator: Option<UserId>,
     // True when this only re-anchors the retention clock (eg. at filing time) rather than
     // recording a verdict: the record stays "unresolved" and the log entry is labelled as a
-    // re-anchor, not a second verdict
+    // re-anchor, not a second verdict. Option rather than bool so that this hop stays
+    // candid-decodable for senders which predate the field.
     #[serde(default)]
-    pub reanchor: bool,
+    pub reanchor: Option<bool>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

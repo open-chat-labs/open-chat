@@ -45,15 +45,20 @@
     let mediaReviewed = $state(false);
     let reviewerRequired = $state(false);
     let mediaUnavailable = $state(false);
+    let mediaFetchFailed = $state(false);
 
-    function onReviewResult(outcome: "viewed" | "not_authorized" | "error") {
+    function onReviewResult(outcome: "viewed" | "not_authorized" | "not_found" | "error") {
         if (outcome === "viewed") {
             mediaReviewed = true;
         } else if (outcome === "not_authorized") {
             reviewerRequired = true;
-        } else {
+        } else if (outcome === "not_found") {
+            // The media genuinely no longer exists, so the review requirement is satisfied
+            // with an advisory note; a transient fetch failure keeps the gate shut instead
             mediaUnavailable = true;
             mediaReviewed = true;
+        } else {
+            mediaFetchFailed = true;
         }
     }
 
@@ -87,8 +92,6 @@
                   content.messageIndex,
               ),
     );
-    // No vault viewer on mobile: verdicts on quarantined-media reports require reviewing the
-    // media first, so they can only be resolved on desktop
     let needsMediaReview = $derived(content.blobReferences.length > 0 && !mediaReviewed);
     let canResolve = $derived(
         $platformModeratorStore &&
@@ -263,6 +266,11 @@
                 <Translatable resourceKey={i18nKey("moderationReport.mediaUnavailable")} />
             </Body>
         {/if}
+        {#if needsMediaReview && mediaFetchFailed}
+            <Body colour="error">
+                <Translatable resourceKey={i18nKey("moderationReport.mediaFetchFailed")} />
+            </Body>
+        {/if}
         {#if !needsMediaReview && !reviewerRequired}
             <Row gap="sm">
                 <Switch bind:checked={urgent}>
@@ -302,6 +310,16 @@
                 <Translatable resourceKey={i18nKey("moderationReport.failed")} />
             </Body>
         {/if}
+    {/if}
+
+    <!-- The access log stays reachable after the report is resolved (parity with desktop):
+         chain-of-custody review is most useful once the case is closed -->
+    {#if !canResolve && content.autoSanctioned && content.blobReferences.length > 0}
+        <Row gap="sm">
+            <Button secondary onClick={() => (showAccessLog = true)}>
+                <Translatable resourceKey={i18nKey("vaultLog.button")} />
+            </Button>
+        </Row>
     {/if}
 </Column>
 

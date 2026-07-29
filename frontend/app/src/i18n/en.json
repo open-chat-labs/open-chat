@@ -1190,6 +1190,7 @@
         "urgentHint": "Escalates urgently. Only applies to \"Uphold as CSAM\"",
         "reviewerRequired": "Only a designated vault reviewer can decide this report - ask a platform operator for the designation",
         "mediaUnavailable": "The media could not be fetched (it may have been deleted before quarantine) - decide on the remaining evidence",
+        "mediaFetchFailed": "Fetching the media failed - check your connection and use Review media to try again",
         "ncaDue": "Authority report due - file with the NCA (CSEA-IRP), then record the reference",
         "ncaDueUrgent": "URGENT: imminent threat - phone the NCA/999 first, then file via the portal",
         "ncaFiled": "Authority report filed",
@@ -1206,7 +1207,8 @@
         "button": "Access log",
         "loading": "Fetching the access log...",
         "failed": "Failed to fetch the access log (vault reviewers only)",
-        "empty": "No entries"
+        "empty": "No entries",
+        "unknownUser": "unknown user"
     },
     "vaultViewer": {
         "title": "Quarantined media review",
@@ -1219,13 +1221,15 @@
         "close": "Close",
         "loading": "Fetching from the vault...",
         "notAuthorized": "You are not a designated vault reviewer",
-        "error": "Failed to fetch the media"
+        "notFound": "The media no longer exists - it was removed before it could be preserved",
+        "error": "Failed to fetch the media - check your connection and try again"
     },
     "termsUpdated": {
         "title": "Our terms have changed",
         "info": "We have updated the OpenChat terms of service, including new rules about prohibited content and how moderation works. Please review the updated terms. By selecting \"I agree\" you accept the updated terms.",
         "link": "Read the updated terms",
-        "agree": "I agree"
+        "agree": "I agree",
+        "failed": "Something went wrong recording your acceptance. Please check your connection and try again."
     },
     "suspendedNotice": {
         "intro": "Your account has been suspended.",

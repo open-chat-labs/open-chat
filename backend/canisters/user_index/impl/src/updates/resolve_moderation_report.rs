@@ -131,7 +131,7 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     reported_message.message_id,
                     &mut state.data.fire_and_forget_handler,
                 );
-                moderation::unquarantine_blobs(&reported_message.blob_references, moderator, state);
+                moderation::unquarantine_blobs(&reported_message.blob_references, moderator, args.report_index, state);
                 moderation::downgrade_suspension_to_upheld_violation(reported_message.sender, now, state);
             } else {
                 if !reported_message.already_deleted {
@@ -159,9 +159,9 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                 // message, release the vault, clear the flags. (If an authority report was
                 // already filed for this case - contested hash match or valve filing - a
                 // supplementary portal correction is a discretionary manual step.)
-                // The unsuspend is skipped if the sender has another unresolved automated
-                // sanction: each report's dismissal only reverses its own contribution.
-                if !moderation::has_other_unresolved_auto_sanction(reported_message.sender, args.report_index, state) {
+                // The unsuspend is skipped if the sender has another report still keeping
+                // them sanctioned: each report's dismissal only reverses its own contribution.
+                if !moderation::has_other_active_sanction(reported_message.sender, args.report_index, now, state) {
                     moderation::unsuspend_sender(reported_message.sender, now, state);
                 }
                 // Restored unconditionally, including reports filed with delete: true - a
@@ -173,7 +173,7 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     reported_message.message_id,
                     &mut state.data.fire_and_forget_handler,
                 );
-                moderation::unquarantine_blobs(&reported_message.blob_references, moderator, state);
+                moderation::unquarantine_blobs(&reported_message.blob_references, moderator, args.report_index, state);
                 state.push_event_to_local_user_index(
                     reported_message.sender,
                     build_restoration_message_to_sender(&reported_message),
