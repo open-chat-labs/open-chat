@@ -308,41 +308,41 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
             if let Ok(result) = chat.events.add_reaction::<UserEventPusher>(add_remove_reaction_args, None) {
                 let message = result.value;
 
-                if message.sender != caller_user_id
-                    && !state.data.suspended.value
-                    && !args.username.is_empty()
-                    && !chat.notifications_muted.value
-                {
-                    let notification =
-                        DirectChatUserNotificationPayload::DirectReactionAdded(DirectReactionAddedNotification {
-                            them: chat.them,
+                // They may be reacting to their own message, in which case there is nothing to
+                // notify this user about
+                if message.sender != caller_user_id {
+                    if !state.data.suspended.value && !args.username.is_empty() && !chat.notifications_muted.value {
+                        let notification =
+                            DirectChatUserNotificationPayload::DirectReactionAdded(DirectReactionAddedNotification {
+                                them: chat.them,
+                                thread_root_message_index,
+                                message_index: message.message_index,
+                                message_event_index: result.event_index,
+                                username: args.username,
+                                display_name: args.display_name,
+                                reaction: args.reaction,
+                                user_avatar_id: args.user_avatar_id,
+                            });
+
+                        state.push_notification(Some(caller_user_id), message.sender, notification);
+                    }
+
+                    state.data.push_message_activity(
+                        MessageActivityEvent {
+                            chat: Chat::Direct(caller_user_id.into()),
                             thread_root_message_index,
                             message_index: message.message_index,
-                            message_event_index: result.event_index,
-                            username: args.username,
-                            display_name: args.display_name,
-                            reaction: args.reaction,
-                            user_avatar_id: args.user_avatar_id,
-                        });
+                            message_id: message.message_id,
+                            event_index: result.event_index,
+                            activity: MessageActivity::Reaction,
+                            timestamp: now,
+                            user_id: Some(caller_user_id),
+                        },
+                        now,
+                    );
 
-                    state.push_notification(Some(caller_user_id), message.sender, notification);
+                    state.award_achievement_and_notify(Achievement::HadMessageReactedTo, now);
                 }
-
-                state.data.push_message_activity(
-                    MessageActivityEvent {
-                        chat: Chat::Direct(caller_user_id.into()),
-                        thread_root_message_index,
-                        message_index: message.message_index,
-                        message_id: message.message_id,
-                        event_index: result.event_index,
-                        activity: MessageActivity::Reaction,
-                        timestamp: now,
-                        user_id: Some(caller_user_id),
-                    },
-                    now,
-                );
-
-                state.award_achievement_and_notify(Achievement::HadMessageReactedTo, now);
             }
         } else {
             let _ = chat.events.remove_reaction(add_remove_reaction_args);
