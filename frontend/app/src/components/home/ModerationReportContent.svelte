@@ -225,7 +225,11 @@
                                 /></BodySmall
                             >
                             <BodySmall colour="textSecondary"
-                                >Opens in the vault viewer. Access is logged.</BodySmall
+                                ><Translatable
+                                    resourceKey={i18nKey(
+                                        "moderationReport.quarantinedAttachmentHint",
+                                    )}
+                                /></BodySmall
                             >
                         </Column>
                     {:else}
@@ -236,7 +240,9 @@
                                 /></BodySmall
                             >
                             <BodySmall colour="textSecondary"
-                                >Not shown until you open review.</BodySmall
+                                ><Translatable
+                                    resourceKey={i18nKey("moderationReport.attachmentHint")}
+                                /></BodySmall
                             >
                         </Column>
                     {/if}
@@ -389,7 +395,9 @@
                         /></Body
                     >
                     <BodySmall colour="textSecondary"
-                        >Escalates urgently. Only applies to "Uphold as CSAM"</BodySmall
+                        ><Translatable
+                            resourceKey={i18nKey("moderationReport.urgentHint")}
+                        /></BodySmall
                     >
                 </Column>
             </Checkbox>
