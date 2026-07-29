@@ -55,6 +55,7 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
                         v.retention_until,
                         v.moderator,
                         v.reanchor.unwrap_or_default(),
+                        v.report_index,
                         now
                     ),
                     VaultOpOutcome::NotFound
@@ -63,7 +64,11 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
                 }
             }
             VaultOp::SetLegalHold(l) => {
-                state.data.vault.set_legal_hold(l.file_id, l.legal_hold, now);
+                // Clearing a hold can perform a release that the hold previously refused
+                if let VaultOpOutcome::ReleasePin(hash) = state.data.vault.set_legal_hold(l.file_id, l.legal_hold, now) {
+                    state.data.files.vault_unpin(&hash);
+                    info!(file_id = %l.file_id, "Vault: unquarantined on legal-hold clear");
+                }
             }
             VaultOp::Destroy(d) => {
                 let file_id = d.file_id;

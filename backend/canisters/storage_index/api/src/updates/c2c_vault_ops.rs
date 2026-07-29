@@ -46,6 +46,9 @@ pub struct ApplyVerdictOp {
     // candid-decodable for senders which predate the field.
     #[serde(default)]
     pub reanchor: Option<bool>,
+    // The report whose verdict this is (per-claim resolution on shared blobs)
+    #[serde(default)]
+    pub report_index: Option<u64>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

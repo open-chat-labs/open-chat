@@ -60,6 +60,7 @@
     function loadMore() {
         if (busy || total === undefined || BigInt(entries.length) >= total) return;
         busy = true;
+        error = undefined;
         client
             .vaultLog(loadedCanisterId, BigInt(entries.length), PAGE_SIZE, undefined)
             .then((resp) => {

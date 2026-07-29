@@ -50,9 +50,10 @@ export class VaultMediaReview {
 
     async #fetchDirect(ref: BlobReference): Promise<LoadedMedia | "error" | "not_found"> {
         const resp = await fetch(this.#client.reportedMediaUrl(ref), { cache: "no-store" });
-        // 404/403: the blob no longer exists (or was hidden by deletion) - permanently gone,
-        // unlike a transient failure
-        if (resp.status === 404 || resp.status === 403) return "not_found";
+        // 404: the blob no longer exists - permanently gone. Anything else (including 403,
+        // which can come from a boundary node or proxy, not just deletion) is transient and
+        // must NOT complete the review gate
+        if (resp.status === 404) return "not_found";
         if (!resp.ok) return "error";
         const bytes = await resp.arrayBuffer();
         const mimeType = resp.headers.get("content-type") ?? "application/octet-stream";
@@ -90,6 +91,7 @@ export class VaultMediaReview {
                 this.stage = stage;
             }
         };
+        let anyMissing = false;
         try {
             for (const ref of this.#blobReferences) {
                 const item = this.#quarantined
@@ -104,8 +106,10 @@ export class VaultMediaReview {
                     return abort("not_authorized");
                 }
                 if (item === "not_found") {
-                    this.#outcome = "not_found";
-                    return abort("not_found");
+                    // A missing blob must not hide the ones that still exist: keep going and
+                    // report not_found only if NOTHING could be shown
+                    anyMissing = true;
+                    continue;
                 }
                 if (item === "error") {
                     this.#outcome = "error";
@@ -116,6 +120,10 @@ export class VaultMediaReview {
         } catch {
             this.#outcome = "error";
             return abort("error");
+        }
+        if (loaded.length === 0) {
+            this.#outcome = anyMissing ? "not_found" : "viewed";
+            return abort(anyMissing ? "not_found" : "view");
         }
         this.items = loaded;
         this.stage = "view";

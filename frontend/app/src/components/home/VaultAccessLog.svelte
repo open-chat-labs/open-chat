@@ -29,13 +29,16 @@
     // paging until the bucket reports no more entries for this file
     async function fetchAllPages(ref: BlobReference) {
         const acc: (VaultLogEntry & { canisterId: string })[] = [];
-        for (;;) {
+        // Cap defends against a misbehaving bucket reporting an inflated total: a single
+        // report's chain is tiny, so hitting this means the source is lying
+        const MAX_PAGES = 50;
+        for (let page = 0; page < MAX_PAGES; page++) {
             const resp = await client.vaultLog(ref.canisterId, BigInt(acc.length), 200, ref.blobId);
             if (resp.kind !== "success") throw new Error(resp.kind);
             acc.push(...resp.entries.map((e) => ({ ...e, canisterId: ref.canisterId })));
-            if (resp.entries.length === 0 || BigInt(acc.length) >= resp.total) break;
+            if (resp.entries.length === 0 || BigInt(acc.length) >= resp.total) return acc;
         }
-        return acc;
+        throw new Error("vault log paging did not terminate");
     }
 
     onMount(() => {

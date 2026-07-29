@@ -149,7 +149,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                 }
 
                 if (!isOffline) {
-                    const liveUser = await this.query(
+                    let liveUser = await this.query(
                         "current_user",
                         {},
                         currentUserResponse,
@@ -157,6 +157,14 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                         UserIndexCurrentUserResponse,
                     );
                     if (liveUser.kind === "created_user") {
+                        // A terms acceptance recorded while this query was in flight must not
+                        // be clobbered by the (older) response - that would re-open the
+                        // blocking terms notice and, offline, lock the user out entirely
+                        const latest = await this.chatsDb.getCachedCurrentUser();
+                        const accepted = latest?.acceptedTermsVersion;
+                        if (accepted !== undefined && (liveUser.acceptedTermsVersion ?? 0) < accepted) {
+                            liveUser = { ...liveUser, acceptedTermsVersion: accepted };
+                        }
                         this.chatsDb.setCachedCurrentUser(liveUser);
                     }
                     resolve(liveUser, true);

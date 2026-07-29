@@ -11,6 +11,10 @@ pub struct Args {
     pub status: Option<ModerationReportStatus>,
     #[serde(default)]
     pub authority_report: Option<AuthorityReportState>,
+    // Set when a protective quarantine is applied to an already-alerted report (a CSAM
+    // assertion on an escalated report): flips the card to the vault review path
+    #[serde(default)]
+    pub auto_sanctioned: Option<bool>,
 }
 
 pub type Response = UnitResult;

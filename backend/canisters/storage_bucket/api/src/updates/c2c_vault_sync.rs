@@ -67,6 +67,10 @@ pub struct ApplyVerdictOp {
     // for senders which predate the field (candid rejects a missing non-opt field).
     #[serde(default)]
     pub reanchor: Option<bool>,
+    // The report whose verdict this is: resolution is tracked per claim so that the first
+    // verdict on a shared blob does not mask a sibling report's still-open claim
+    #[serde(default)]
+    pub report_index: Option<u64>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

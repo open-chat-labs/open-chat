@@ -21,10 +21,14 @@ fn c2c_update_moderation_report_status_impl(args: Args, state: &mut RuntimeState
         .ok_or(OCErrorCode::ChatNotFound)?;
     let now = state.env.now();
 
-    channel
-        .chat
-        .events
-        .update_moderation_report(None, args.message_id, args.status, args.authority_report, now)?;
+    channel.chat.events.update_moderation_report(
+        None,
+        args.message_id,
+        args.status,
+        args.authority_report,
+        args.auto_sanctioned,
+        now,
+    )?;
 
     handle_activity_notification(state);
     Ok(())

@@ -64,7 +64,7 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     reported_message.message_id,
                     &mut state.data.fire_and_forget_handler,
                 );
-                moderation::apply_vault_verdict(&reported_message.blob_references, moderator, state);
+                moderation::apply_vault_verdict(&reported_message.blob_references, moderator, args.report_index, state);
                 state
                     .data
                     .authority_reports
@@ -142,6 +142,20 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                         &mut state.data.fire_and_forget_handler,
                     );
                 }
+                // An escalated report can have been protectively quarantined by a CSAM
+                // assertion; not-CSAM means no preservation duty, so release the vault claim
+                // and clear the assertion's read-gate flag (the message stays deleted as an
+                // ordinary violation)
+                if !reported_message.csam_asserted_by.is_empty() {
+                    moderation::unquarantine_blobs(&reported_message.blob_references, moderator, args.report_index, state);
+                    moderation::set_message_moderation_flags(
+                        reported_message.chat_id,
+                        reported_message.thread_root_message_index,
+                        reported_message.message_id,
+                        0,
+                        &mut state.data.fire_and_forget_handler,
+                    );
+                }
                 moderation::suspend_sender_for_upheld_violation(reported_message.sender, now, state);
             }
             state.push_event_to_local_user_index(reported_message.sender, build_verdict_message_to_sender(&reported_message));
@@ -154,16 +168,22 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
             for reporter in &reported_message.csam_asserted_by {
                 state.data.users.record_false_csam_report(*reporter);
             }
+            // A protective takedown can also come from a CSAM assertion on an escalated
+            // report (no auto-sanction, but the message was deleted and the media vaulted):
+            // its dismissal must reverse exactly the same way
+            let protection_applied = was_auto_sanctioned || !reported_message.csam_asserted_by.is_empty();
             if was_auto_sanctioned {
-                // A false positive: reverse the sanction in full - unsuspend, restore the
-                // message, release the vault, clear the flags. (If an authority report was
-                // already filed for this case - contested hash match or valve filing - a
-                // supplementary portal correction is a discretionary manual step.)
                 // The unsuspend is skipped if the sender has another report still keeping
                 // them sanctioned: each report's dismissal only reverses its own contribution.
                 if !moderation::has_other_active_sanction(reported_message.sender, args.report_index, now, state) {
                     moderation::unsuspend_sender(reported_message.sender, now, state);
                 }
+            }
+            if protection_applied {
+                // A false positive: reverse the takedown in full - restore the message,
+                // release the vault, clear the flags. (If an authority report was already
+                // filed for this case - contested hash match or valve filing - a
+                // supplementary portal correction is a discretionary manual step.)
                 // Restored unconditionally, including reports filed with delete: true - a
                 // dismissal means the allegation was wrong, so the reporter's deletion is
                 // reversed along with everything else (deliberate full-reversal semantics)

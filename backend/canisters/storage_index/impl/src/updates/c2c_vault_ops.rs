@@ -49,6 +49,7 @@ fn c2c_vault_ops_impl(args: Args, state: &mut RuntimeState) -> Response {
                         retention_until: v.retention_until,
                         moderator: v.moderator,
                         reanchor: v.reanchor,
+                        report_index: v.report_index,
                     }),
                 );
             }

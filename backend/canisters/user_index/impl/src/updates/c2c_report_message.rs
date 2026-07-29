@@ -119,7 +119,11 @@ fn add_report(args: &Args, state: &mut RuntimeState) -> Result<ReportAction, Res
         AddReportResult::ExistingOutcome(report_index) => {
             // A CSAM assertion on an already-classified (but unverdicted) report still takes
             // the protective action: the earlier classification did not quarantine anything
-            // and the asserted media would otherwise stay publicly served until the verdict
+            // and the asserted media would otherwise stay publicly served until the verdict.
+            // (Deliberate: an assertion against a report with a HUMAN verdict - or a legacy
+            // Modclub outcome, which likewise cannot be re-verdicted - is refused; the
+            // reporter gets the outcome description and can report the content to the
+            // authorities directly if they disagree.)
             if csam
                 && state
                     .data
@@ -172,6 +176,32 @@ fn apply_csam_assertion_protection(report_index: u64, state: &mut RuntimeState) 
         ModerationCategories::SEXUAL_MINORS.bits(),
         &mut state.data.fire_and_forget_handler,
     );
+    if report.moderation_channel_message_id.is_some() {
+        // The alert card was posted before the media was vaulted: flip it to the quarantined
+        // review path, or the moderator's direct blob fetch dead-ends on the vault pin
+        moderation::update_moderation_alert_quarantined(&report, state);
+    } else {
+        // A FlaggedOnly outcome never posted an alert; the assertion escalated it (see
+        // assert_csam_if_unverdicted) and the alert is posted now so a verdict can happen
+        moderation::post_moderation_alert(
+            ModerationAlert {
+                report_index: Some(report_index),
+                chat_id: report.chat_id,
+                thread_root_message_index: report.thread_root_message_index,
+                message_index: report.message_index,
+                message_id: report.message_id,
+                sender: report.sender,
+                reporters: report.reports.keys().copied().collect(),
+                categories: ModerationCategories::SEXUAL_MINORS,
+                classification_failed: false,
+                auto_sanctioned: true,
+                content_excerpt: None,
+                blob_references: report.blob_references.clone(),
+                timestamp: state.env.now(),
+            },
+            state,
+        );
+    }
 }
 
 pub(crate) async fn process_report(report_index: u64) {

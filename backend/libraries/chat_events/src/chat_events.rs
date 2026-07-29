@@ -886,6 +886,7 @@ impl ChatEvents {
         message_id: MessageId,
         status: Option<ModerationReportStatus>,
         authority_report: Option<AuthorityReportState>,
+        auto_sanctioned: Option<bool>,
         now: TimestampMillis,
     ) -> OCResult<()> {
         match self.update_event(
@@ -908,6 +909,12 @@ impl ChatEvents {
                         && report.authority_report.as_ref() != Some(&authority_report)
                     {
                         report.authority_report = Some(authority_report);
+                        changed = true;
+                    }
+                    if let Some(auto_sanctioned) = auto_sanctioned
+                        && report.auto_sanctioned != auto_sanctioned
+                    {
+                        report.auto_sanctioned = auto_sanctioned;
                         changed = true;
                     }
                     if changed { Ok(()) } else { Err(UpdateEventError::NoChange(())) }

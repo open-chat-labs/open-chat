@@ -104,6 +104,7 @@ pub fn update_moderation_alert_status(
         message_id,
         status: Some(status),
         authority_report: None,
+        auto_sanctioned: None,
     };
     state.data.fire_and_forget_handler.send(
         community_id.into(),
@@ -135,6 +136,35 @@ pub fn update_moderation_alert_authority_report(
             reported_message,
         )),
         authority_report: Some(authority_report),
+        auto_sanctioned: None,
+    };
+    state.data.fire_and_forget_handler.send(
+        community_id.into(),
+        "c2c_update_moderation_report_status_msgpack".to_string(),
+        msgpack::serialize_then_unwrap(&args),
+    );
+}
+
+// Flips an existing alert card to the quarantined (vault) review path: sent when a CSAM
+// assertion applies protective quarantine to a report whose alert was posted before the media
+// was vaulted - the card's direct blob fetch would otherwise dead-end on the vault pin,
+// leaving the moderator unable to complete the review gate
+pub fn update_moderation_alert_quarantined(reported_message: &ReportedMessage, state: &mut RuntimeState) {
+    let Some((community_id, channel_id)) = state.data.internal_moderation_channel else {
+        return;
+    };
+    let Some(message_id) = reported_message.moderation_channel_message_id else {
+        return;
+    };
+
+    let args = community_canister::c2c_update_moderation_report_status::Args {
+        channel_id,
+        message_id,
+        status: Some(crate::model::reported_messages::ReportedMessages::report_status(
+            reported_message,
+        )),
+        authority_report: None,
+        auto_sanctioned: Some(true),
     };
     state.data.fire_and_forget_handler.send(
         community_id.into(),
@@ -404,7 +434,13 @@ pub fn quarantine_blobs_and_apply_verdict(
 ) {
     let now = state.env.now();
     let mut ops = quarantine_ops(report_index, report, flags, now);
-    ops.extend(verdict_ops(&report.blob_references, Some(moderator), false, now));
+    ops.extend(verdict_ops(
+        &report.blob_references,
+        Some(moderator),
+        false,
+        Some(report_index),
+        now,
+    ));
     send_vault_ops(ops, state);
 }
 
@@ -446,8 +482,8 @@ pub fn unquarantine_blobs(blob_references: &[BlobReference], moderator: UserId, 
 
 // Applies the uphold verdict to the vault: the retention clock starts and the blob is deleted
 // only when it expires (never while a legal hold is set)
-pub fn apply_vault_verdict(blob_references: &[BlobReference], moderator: UserId, state: &mut RuntimeState) {
-    let ops = verdict_ops(blob_references, Some(moderator), false, state.env.now());
+pub fn apply_vault_verdict(blob_references: &[BlobReference], moderator: UserId, report_index: u64, state: &mut RuntimeState) {
+    let ops = verdict_ops(blob_references, Some(moderator), false, Some(report_index), state.env.now());
     send_vault_ops(ops, state);
 }
 
@@ -456,7 +492,7 @@ pub fn apply_vault_verdict(blob_references: &[BlobReference], moderator: UserId,
 // re-anchor rather than a second verdict. The operator is Option: an unattributed re-anchor
 // is better than a retention clock that expires early because the op was dropped.
 pub fn reanchor_vault_retention(blob_references: &[BlobReference], operator: Option<UserId>, state: &mut RuntimeState) {
-    let ops = verdict_ops(blob_references, operator, true, state.env.now());
+    let ops = verdict_ops(blob_references, operator, true, None, state.env.now());
     send_vault_ops(ops, state);
 }
 
@@ -464,6 +500,7 @@ fn verdict_ops(
     blob_references: &[BlobReference],
     moderator: Option<UserId>,
     reanchor: bool,
+    report_index: Option<u64>,
     now: TimestampMillis,
 ) -> Vec<VaultOp> {
     let retention_until = now + VAULT_RETENTION_MS;
@@ -476,6 +513,7 @@ fn verdict_ops(
                 retention_until,
                 moderator,
                 reanchor: Some(reanchor),
+                report_index,
             })
         })
         .collect()

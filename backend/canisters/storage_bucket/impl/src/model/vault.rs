@@ -43,6 +43,12 @@ pub struct VaultRecord {
     // Every report holding this blob as evidence; the record is only released when the last
     // one lets go (see unquarantine)
     pub report_indexes: BTreeSet<u64>,
+    // The claims which have received a verdict: expiry must never destroy evidence while a
+    // claim still awaits one, and the unresolved metric keys off this rather than a
+    // record-level flag which the FIRST verdict would flip
+    pub verdicted_report_indexes: BTreeSet<u64>,
+    // A release was refused because of a legal hold; clearing the hold performs it
+    pub release_pending: bool,
 }
 
 // Records serialized before verdict_applied existed only ever had retention_until set by a
@@ -61,6 +67,10 @@ struct VaultRecordCompat {
     legal_hold: bool,
     #[serde(default)]
     report_indexes: BTreeSet<u64>,
+    #[serde(default)]
+    verdicted_report_indexes: BTreeSet<u64>,
+    #[serde(default)]
+    release_pending: bool,
 }
 
 impl From<VaultRecordCompat> for VaultRecord {
@@ -75,7 +85,20 @@ impl From<VaultRecordCompat> for VaultRecord {
             retention_until: c.retention_until,
             legal_hold: c.legal_hold,
             report_indexes: c.report_indexes,
+            verdicted_report_indexes: c.verdicted_report_indexes,
+            release_pending: c.release_pending,
         }
+    }
+}
+
+impl VaultRecord {
+    // True while any report holding this blob still awaits a verdict. Records predating
+    // per-claim tracking fall back to the record-level flag.
+    pub fn has_unresolved_claims(&self) -> bool {
+        if self.report_indexes.is_empty() || (self.verdict_applied && self.verdicted_report_indexes.is_empty()) {
+            return !self.verdict_applied;
+        }
+        self.report_indexes.iter().any(|i| !self.verdicted_report_indexes.contains(i))
     }
 }
 
@@ -176,6 +199,8 @@ impl Vault {
             verdict_applied: false,
             legal_hold: false,
             report_indexes: BTreeSet::new(),
+            verdicted_report_indexes: BTreeSet::new(),
+            release_pending: false,
         });
         record.report_indexes.insert(report_index);
     }
@@ -194,22 +219,26 @@ impl Vault {
         let Some(hash) = self.file_id_to_hash.get(&file_id).copied() else {
             return VaultOpOutcome::NotFound;
         };
-        if self.records.get(&hash).is_some_and(|r| r.legal_hold) {
-            // A legal hold blocks release; it must be explicitly cleared first (LE-requested
-            // destruction is the only operation which overrides a hold)
-            return VaultOpOutcome::Blocked;
-        }
         // One blob can be evidence for several reports (the same content posted in more than
         // one message dedupes to a single hash). A dismissal releases only its own report's
         // claim; the blob is released only when no report holds it any more - otherwise a
         // dismissal of a duplicate would destroy the evidence of a still-open report. A
         // release without a report index (legacy sender) keeps the whole-record semantics.
-        if let Some(report_index) = report_index
-            && let Some(record) = self.records.get_mut(&hash)
-        {
-            record.report_indexes.remove(&report_index);
-            if !record.report_indexes.is_empty() {
-                return VaultOpOutcome::Retained;
+        // Claim bookkeeping happens even under a legal hold - the sender never re-sends, so a
+        // claim dropped here would leak the record forever - but the hold blocks the RELEASE
+        // (LE-requested destruction is the only operation which overrides a hold): the
+        // release is recorded as pending and performed when the hold is cleared.
+        if let Some(record) = self.records.get_mut(&hash) {
+            if let Some(report_index) = report_index {
+                record.report_indexes.remove(&report_index);
+                record.verdicted_report_indexes.remove(&report_index);
+                if !record.report_indexes.is_empty() {
+                    return VaultOpOutcome::Retained;
+                }
+            }
+            if record.legal_hold {
+                record.release_pending = true;
+                return VaultOpOutcome::Blocked;
             }
         }
         for alias in self.remove_all_references(&hash) {
@@ -224,6 +253,7 @@ impl Vault {
         retention_until: TimestampMillis,
         moderator: Option<UserId>,
         reanchor: bool,
+        report_index: Option<u64>,
         now: TimestampMillis,
     ) -> VaultOpOutcome {
         let Some(record) = self.file_id_to_hash.get(&file_id).and_then(|h| self.records.get_mut(h)) else {
@@ -237,6 +267,11 @@ impl Vault {
             self.append_log(VaultLogEvent::RetentionReanchoredBy(file_id, retention_until, moderator), now);
         } else {
             record.verdict_applied = true;
+            // Resolution is per claim: the first report's verdict must not mark a sibling
+            // report's claim resolved (see has_unresolved_claims)
+            if let Some(report_index) = report_index {
+                record.verdicted_report_indexes.insert(report_index);
+            }
             self.append_log(VaultLogEvent::VerdictAppliedBy(file_id, retention_until, moderator), now);
         }
         VaultOpOutcome::Applied
@@ -247,12 +282,21 @@ impl Vault {
             return VaultOpOutcome::NotFound;
         };
         record.legal_hold = legal_hold;
+        let hash = record.hash;
+        let release = !legal_hold && record.release_pending;
         let event = if legal_hold {
             VaultLogEvent::LegalHoldSet(file_id)
         } else {
             VaultLogEvent::LegalHoldCleared(file_id)
         };
         self.append_log(event, now);
+        // A release refused because of the hold is performed now that the hold is cleared
+        if release {
+            for alias in self.remove_all_references(&hash) {
+                self.append_log(VaultLogEvent::UnquarantinedBy(alias, None), now);
+            }
+            return VaultOpOutcome::ReleasePin(hash);
+        }
         VaultOpOutcome::Applied
     }
 
@@ -317,7 +361,10 @@ impl Vault {
         let expired: Vec<(FileId, Hash)> = self
             .records
             .values()
-            .filter(|r| !r.legal_hold && r.retention_until.is_some_and(|ts| ts <= now))
+            // A claim still awaiting a verdict blocks expiry: one report's retention clock
+            // running out must never destroy the evidence of a sibling report that is still
+            // open (the unresolved metric keeps such records loudly visible meanwhile)
+            .filter(|r| !r.legal_hold && !r.has_unresolved_claims() && r.retention_until.is_some_and(|ts| ts <= now))
             .map(|r| (r.original_file_id, r.hash))
             .collect();
 
@@ -355,11 +402,11 @@ impl Vault {
             reviewers: self.reviewers.len() as u64,
             log_length: self.log.len() as u64,
             quarantine_failures: self.quarantine_failures,
-            unresolved_quarantines: self.records.values().filter(|r| !r.verdict_applied).count() as u64,
+            unresolved_quarantines: self.records.values().filter(|r| r.has_unresolved_claims()).count() as u64,
             oldest_unresolved_quarantined_at: self
                 .records
                 .values()
-                .filter(|r| !r.verdict_applied)
+                .filter(|r| r.has_unresolved_claims())
                 .map(|r| r.quarantined_at)
                 .min(),
         }
@@ -463,7 +510,7 @@ mod tests {
         let mut vault = vault_with_reviewer();
         vault.quarantine(1, [1u8; 32], "image/png".to_string(), metadata(0), 100);
         assert!(vault.authorize_view(1, reviewer(1), 0, 1, 200));
-        vault.apply_verdict(1, 999, Some(Principal::from_slice(&[9; 8]).into()), false, 300);
+        vault.apply_verdict(1, 999, Some(Principal::from_slice(&[9; 8]).into()), false, Some(0), 300);
 
         let (total, entries) = vault.log_page(0, 100, None);
         assert_eq!(total, 3);
@@ -524,11 +571,11 @@ mod tests {
         vault.quarantine(1, [1u8; 32], "image/png".to_string(), metadata(0), 100);
         vault.set_legal_hold(1, true, 200);
         assert!(matches!(vault.unquarantine(1, None, Some(0), 300), VaultOpOutcome::Blocked));
-        vault.set_legal_hold(1, false, 400);
-        assert!(matches!(
-            vault.unquarantine(1, None, Some(0), 500),
-            VaultOpOutcome::ReleasePin(_)
-        ));
+        assert!(vault.record_for_file(&1).is_some());
+        // The refused release is performed when the hold is cleared (the sender never
+        // re-sends the unquarantine op)
+        assert!(matches!(vault.set_legal_hold(1, false, 400), VaultOpOutcome::ReleasePin(_)));
+        assert!(vault.record_for_file(&1).is_none());
     }
 
     #[test]
@@ -542,7 +589,7 @@ mod tests {
         assert!(matches!(vault.unquarantine(2, None, Some(8), 200), VaultOpOutcome::Retained));
         assert!(vault.record_for_file(&1).is_some());
         assert!(matches!(
-            vault.apply_verdict(1, 999, None, false, 250),
+            vault.apply_verdict(1, 999, None, false, Some(7), 250),
             VaultOpOutcome::Applied
         ));
 
@@ -590,7 +637,7 @@ mod tests {
         let operator: UserId = Principal::from_slice(&[9; 8]).into();
 
         // An honest-unverified filing re-anchors retention but the record stays unresolved
-        vault.apply_verdict(1, 999, Some(operator), true, 300);
+        vault.apply_verdict(1, 999, Some(operator), true, Some(0), 300);
         let metrics = vault.metrics();
         assert_eq!(metrics.unresolved_quarantines, 1);
         assert_eq!(metrics.oldest_unresolved_quarantined_at, Some(100));
@@ -601,12 +648,51 @@ mod tests {
         assert!(!entries.iter().any(|e| matches!(e.event, VaultLogEvent::VerdictAppliedBy(..))));
 
         // The later verdict resolves the record and never shortens the clock
-        vault.apply_verdict(1, 500, Some(operator), false, 400);
+        vault.apply_verdict(1, 500, Some(operator), false, Some(0), 400);
         let metrics = vault.metrics();
         assert_eq!(metrics.unresolved_quarantines, 0);
         assert_eq!(metrics.oldest_unresolved_quarantined_at, None);
         let (_, entries) = vault.log_page(0, 100, None);
         assert!(matches!(&entries[2].event, VaultLogEvent::VerdictAppliedBy(1, 999, Some(u)) if *u == operator));
+    }
+
+    #[test]
+    fn claim_released_under_legal_hold_defers_the_release_to_hold_clear() {
+        let mut vault = vault_with_reviewer();
+        vault.quarantine(1, [1u8; 32], "image/png".to_string(), metadata(7), 100);
+        vault.quarantine(2, [1u8; 32], "image/png".to_string(), metadata(8), 101);
+        vault.set_legal_hold(1, true, 150);
+
+        // Claim bookkeeping proceeds under the hold; only the physical release is blocked
+        assert!(matches!(vault.unquarantine(1, None, Some(7), 200), VaultOpOutcome::Retained));
+        assert!(matches!(vault.unquarantine(2, None, Some(8), 250), VaultOpOutcome::Blocked));
+        assert!(vault.record_for_file(&1).is_some());
+
+        // Clearing the hold performs the pending release - without this, the claims are gone,
+        // nothing ever re-sends the release, and the record leaks forever
+        assert!(matches!(vault.set_legal_hold(1, false, 300), VaultOpOutcome::ReleasePin(_)));
+        assert!(vault.record_for_file(&1).is_none());
+        assert!(vault.record_for_file(&2).is_none());
+    }
+
+    #[test]
+    fn expiry_and_metrics_respect_unverdicted_sibling_claims() {
+        let mut vault = vault_with_reviewer();
+        vault.quarantine(1, [1u8; 32], "image/png".to_string(), metadata(7), 100);
+        vault.quarantine(2, [1u8; 32], "image/png".to_string(), metadata(8), 101);
+
+        // Report 7's verdict starts the clock, but report 8 still awaits one: the record must
+        // stay on the unresolved metric and must NOT expire out from under report 8
+        vault.apply_verdict(1, 999, None, false, Some(7), 200);
+        assert_eq!(vault.metrics().unresolved_quarantines, 1);
+        assert!(vault.remove_expired(10_000).is_empty());
+        assert!(vault.record_for_file(&2).is_some());
+
+        // Report 8's verdict resolves the last claim: metric clears and expiry may proceed
+        vault.apply_verdict(2, 999, None, false, Some(8), 300);
+        assert_eq!(vault.metrics().unresolved_quarantines, 0);
+        assert_eq!(vault.remove_expired(10_000).len(), 1);
+        assert!(vault.record_for_file(&1).is_none());
     }
 
     #[test]

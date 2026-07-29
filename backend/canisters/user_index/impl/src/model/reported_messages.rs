@@ -151,7 +151,15 @@ impl ReportedMessages {
         let Some(message) = self.messages.get_mut(report_index as usize) else {
             return false;
         };
-        if matches!(&message.outcome, Some(ReportOutcome::Automated(a)) if a.human_verdict.is_none()) {
+        if let Some(ReportOutcome::Automated(a)) = &mut message.outcome
+            && a.human_verdict.is_none()
+        {
+            // A FlaggedOnly outcome never alerted the moderators and cannot receive a
+            // verdict, so the assertion escalates it for human review - otherwise the
+            // protective takedown would be invisible, uncontestable and irreversible
+            if matches!(a.action, ModerationAction::FlaggedOnly) {
+                a.action = ModerationAction::EscalatedForHumanReview;
+            }
             if !message.csam_asserted_by.contains(&reporter) {
                 message.csam_asserted_by.push(reporter);
             }
