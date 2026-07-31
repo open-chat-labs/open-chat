@@ -137,8 +137,12 @@ impl User {
             chit_balance: 0,
             hide_online_status: false,
             false_csam_reports: 0,
-            accepted_terms_version: 0,
-            accepted_terms_at: 0,
+            // Registering constitutes affirmative acceptance of the current terms (the signup
+            // flow presents them), recorded atomically here: a client-side accept_terms call
+            // after registration can fail (eg. before this canister learns of the new user)
+            // and would wrongly show the new user the terms-updated notice
+            accepted_terms_version: crate::updates::accept_terms::CURRENT_TERMS_VERSION,
+            accepted_terms_at: now,
         }
     }
 

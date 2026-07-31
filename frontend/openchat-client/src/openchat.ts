@@ -1039,10 +1039,11 @@ export class OpenChat {
     }
 
     onRegisteredUser(user: CreatedUser) {
-        // Registering constitutes acceptance of the current terms, so new users never see the
-        // terms-updated notice
+        // Registering constitutes acceptance of the current terms, recorded SERVER-SIDE at
+        // user creation (an RPC from here could fail and wrongly show the new user the
+        // terms-updated notice); this local patch just keeps the store consistent until the
+        // next current_user response confirms it
         user = { ...user, acceptedTermsVersion: CURRENT_TERMS_VERSION };
-        this.acceptTerms(CURRENT_TERMS_VERSION);
         user.blobUrl = buildUserAvatarUrl(
             this.config.blobUrlPattern,
             user.userId,

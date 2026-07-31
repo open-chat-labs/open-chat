@@ -619,7 +619,9 @@
     {/if}
 {/if}
 
-{#if $currentUserStore.userId !== ANON_USER_ID && ($currentUserStore.acceptedTermsVersion ?? 0) < ($currentUserStore.currentTermsVersion ?? CURRENT_TERMS_VERSION)}
+<!-- Not shown while the suspension notice is up (parity with desktop): the notice explains
+     the account state first; the gate re-asserts once it is dismissed -->
+{#if modal.kind !== "suspended" && $currentUserStore.userId !== ANON_USER_ID && ($currentUserStore.acceptedTermsVersion ?? 0) < ($currentUserStore.currentTermsVersion ?? CURRENT_TERMS_VERSION)}
     <TermsUpdatedModal />
 {/if}
 

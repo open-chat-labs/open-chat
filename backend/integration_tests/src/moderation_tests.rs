@@ -1408,6 +1408,11 @@ fn accept_terms_records_version_and_never_downgrades() {
 
     let test_data = init_test_data(env, canister_ids, *controller);
 
+    // Registration itself records acceptance (the signup flow presents the terms), so a
+    // brand-new user never sees the terms-updated notice
+    let state = client::user_index::happy_path::current_user(env, test_data.reporter.principal, canister_ids.user_index);
+    assert_eq!(state.accepted_terms_version, state.current_terms_version);
+
     // Acceptance is clamped to the canister's current terms version: a client cannot
     // pre-accept future terms and suppress every future notice
     let accept = client::user_index::accept_terms(

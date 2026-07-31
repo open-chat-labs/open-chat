@@ -1151,7 +1151,11 @@
 
 <EditLabel />
 
-{#if $currentUserStore.userId !== ANON_USER_ID && ($currentUserStore.acceptedTermsVersion ?? 0) < ($currentUserStore.currentTermsVersion ?? CURRENT_TERMS_VERSION)}
+<!-- Not shown while the suspension notice is up: the two would stack, and the notice
+     (which also carries the contest affordance) explains the account state first. The gate
+     re-asserts as soon as the notice is dismissed - suspended users can and should still
+     accept (accept_terms is deliberately callable while suspended). -->
+{#if modal.kind !== "suspended" && $currentUserStore.userId !== ANON_USER_ID && ($currentUserStore.acceptedTermsVersion ?? 0) < ($currentUserStore.currentTermsVersion ?? CURRENT_TERMS_VERSION)}
     <Overlay>
         <TermsUpdatedModal />
     </Overlay>
