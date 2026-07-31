@@ -645,9 +645,16 @@ pub fn build_verdict_message_to_sender(reported_message: &ReportedMessage) -> Us
 
 // Sent when a Dismissed verdict reverses an automated sanction: the statement of reasons for
 // the restoration. Deliberately does not disclose whether any agency report was filed.
-pub fn build_restoration_message_to_sender(reported_message: &ReportedMessage) -> UserIndexEvent {
+pub fn build_restoration_message_to_sender(reported_message: &ReportedMessage, unsuspended: bool) -> UserIndexEvent {
+    // Only claim an unsuspension when one actually happened: a reporter-asserted takedown
+    // never suspended in the first place
+    let outcome_text = if unsuspended {
+        "The message has been restored and your account unsuspended."
+    } else {
+        "The message has been restored."
+    };
     let text = format!(
-        "The OpenChat moderation team reviewed your [message]({}) which had been removed by automated moderation, and determined that it does not break [the platform rules](https://oc.app/guidelines?section=3). The message has been restored and your account unsuspended. We apologise for the disruption.",
+        "The OpenChat moderation team reviewed your [message]({}), which had been removed, and determined that it does not break [the platform rules](https://oc.app/guidelines?section=3). {outcome_text} We apologise for the disruption.",
         build_message_link(reported_message),
     );
 

@@ -1,7 +1,7 @@
 use crate::guards::caller_is_platform_moderator;
 use crate::model::moderation;
 use crate::model::reported_messages::{
-    HumanVerdict, ModerationAction, RecordVerdictResult, build_restoration_message_to_sender,
+    HumanVerdict, ModerationAction, RecordVerdictResult, ReportOutcome, build_restoration_message_to_sender,
     build_verdict_message_to_reporter, build_verdict_message_to_sender,
 };
 use crate::{RuntimeState, mutate_state};
@@ -172,12 +172,18 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
             // report (no auto-sanction, but the message was deleted and the media vaulted):
             // its dismissal must reverse exactly the same way
             let protection_applied = was_auto_sanctioned || !reported_message.csam_asserted_by.is_empty();
-            if was_auto_sanctioned {
-                // The unsuspend is skipped if the sender has another report still keeping
-                // them sanctioned: each report's dismissal only reverses its own contribution.
-                if !moderation::has_other_active_sanction(reported_message.sender, args.report_index, now, state) {
-                    moderation::unsuspend_sender(reported_message.sender, now, state);
-                }
+            // Only reverse a suspension this report actually APPLIED: a reporter-asserted
+            // sanction never suspended, and blindly unsuspending could lift an unrelated
+            // suspension (eg. one applied manually by a moderator for something else).
+            // The unsuspend is also skipped if the sender has another report still keeping
+            // them sanctioned: each report's dismissal only reverses its own contribution.
+            let applied_suspension = matches!(&reported_message.outcome, Some(ReportOutcome::Automated(a)) if a.sanctioned);
+            let mut unsuspended = false;
+            if applied_suspension
+                && !moderation::has_other_active_sanction(reported_message.sender, args.report_index, now, state)
+            {
+                moderation::unsuspend_sender(reported_message.sender, now, state);
+                unsuspended = true;
             }
             if protection_applied {
                 // A false positive: reverse the takedown in full - restore the message,
@@ -196,7 +202,7 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                 moderation::unquarantine_blobs(&reported_message.blob_references, moderator, args.report_index, state);
                 state.push_event_to_local_user_index(
                     reported_message.sender,
-                    build_restoration_message_to_sender(&reported_message),
+                    build_restoration_message_to_sender(&reported_message, unsuspended),
                 );
             }
             // Clear any moderation flags so the message is no longer hidden in the app store build

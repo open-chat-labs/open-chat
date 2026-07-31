@@ -1,3 +1,4 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_user_index;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
@@ -26,6 +27,11 @@ fn c2c_moderation_undelete_impl(args: Args, state: &mut RuntimeState) -> UnitRes
             // Eg. the sender self-deleted before the report so the content was purged at the
             // 5-minute hard delete: the user is unsuspended but the message cannot come back
             tracing::error!(?error, message_id = %args.message_id, "Moderation restore failed");
+        })
+        .inspect(|_| {
+            // Without this, clients never learn the message changed and their cached copy
+            // keeps showing the deleted placeholder until local state is cleared
+            handle_activity_notification(state);
         })
         .map(|_| ())
         .into()

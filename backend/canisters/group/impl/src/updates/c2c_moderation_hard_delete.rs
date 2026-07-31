@@ -1,3 +1,4 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_user_index;
 use crate::timer_job_types::DeleteFileReferencesJob;
 use crate::{RuntimeState, execute_update};
@@ -30,6 +31,7 @@ fn c2c_moderation_hard_delete_impl(args: Args, state: &mut RuntimeState) -> Unit
             DeleteFileReferencesJob { files: files_to_delete }.execute();
         }
     }
+    handle_activity_notification(state);
     // Idempotent: already-hard-deleted (or never-existed) is success
     UnitResult::Success
 }
