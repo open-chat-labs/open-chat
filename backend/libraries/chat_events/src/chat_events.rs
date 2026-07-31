@@ -29,6 +29,15 @@ use types::{
     VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VideoCallType, VoteOperation,
 };
 
+// The patchable fields of a moderation-report card; each is applied when present so that
+// verdict-status, authority-report and quarantine-flip updates can be sent independently
+pub struct ModerationReportUpdates {
+    pub status: Option<ModerationReportStatus>,
+    pub authority_report: Option<AuthorityReportState>,
+    pub auto_sanctioned: Option<bool>,
+    pub reporters: Option<Vec<UserId>>,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
     chat: Chat,
@@ -884,11 +893,15 @@ impl ChatEvents {
         &mut self,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
-        status: Option<ModerationReportStatus>,
-        authority_report: Option<AuthorityReportState>,
-        auto_sanctioned: Option<bool>,
+        updates: ModerationReportUpdates,
         now: TimestampMillis,
     ) -> OCResult<()> {
+        let ModerationReportUpdates {
+            status,
+            authority_report,
+            auto_sanctioned,
+            reporters,
+        } = updates;
         match self.update_event(
             thread_root_message_index,
             message_id.into(),
@@ -915,6 +928,12 @@ impl ChatEvents {
                         && report.auto_sanctioned != auto_sanctioned
                     {
                         report.auto_sanctioned = auto_sanctioned;
+                        changed = true;
+                    }
+                    if let Some(reporters) = reporters
+                        && report.reporters != reporters
+                    {
+                        report.reporters = reporters;
                         changed = true;
                     }
                     if changed { Ok(()) } else { Err(UpdateEventError::NoChange(())) }

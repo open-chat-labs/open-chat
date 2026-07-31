@@ -21,11 +21,6 @@ use user_index_canister::c2c_report_message::{Response::*, *};
 // the report is escalated for human review regardless
 const MAX_CLASSIFICATION_ATTEMPTS: u32 = 5;
 
-// A reporter with this many dismissed CSAM assertions loses the instant-takedown path: their
-// reports still reach the moderators via the ordinary classification pipeline, but no longer
-// delete or quarantine anything before a human looks
-const FALSE_CSAM_ASSERTION_LIMIT: u32 = 2;
-
 enum ReportAction {
     Classify(u64),
     CsamAssertion(u64),
@@ -84,14 +79,22 @@ fn c2c_report_message(args: Args) -> Response {
 }
 
 fn add_report(args: &Args, state: &mut RuntimeState) -> Result<ReportAction, Response> {
-    // An assertion from a reporter with a record of dismissed (false) CSAM assertions is
-    // downgraded to an ordinary report: no pre-verdict takedown, no assertion recorded
-    let csam = args.csam
-        && state
-            .data
-            .users
-            .get_by_user_id(&args.reporter)
-            .is_none_or(|u| u.false_csam_reports < FALSE_CSAM_ASSERTION_LIMIT);
+    // A CSAM assertion is NEVER ignored or downgraded, whatever the reporter's history: the
+    // cost of suppressing a true report is unbounded while the takedown is fully reversible,
+    // rate-limited, and never suspends before a verdict. Repeat false assertions are recorded
+    // as evidence (and logged here) so that a moderator can sanction the REPORTER - crying
+    // wolf is a rules violation with a human consequence, not a reason to stop listening.
+    let csam = args.csam;
+    if csam
+        && let Some(user) = state.data.users.get_by_user_id(&args.reporter)
+        && user.false_csam_reports > 0
+    {
+        warn!(
+            reporter = %args.reporter,
+            false_csam_reports = user.false_csam_reports,
+            "CSAM assertion from a reporter with previously dismissed assertions"
+        );
+    }
 
     let add_report_args = AddReportArgs {
         chat_id: args.chat_id,
@@ -408,7 +411,13 @@ fn handle_moderation_result(
 
 // Categories which map to OpenChat T&C violations requiring human review
 fn human_review_categories() -> ModerationCategories {
-    ModerationCategories::HARASSMENT
+    // Every category except sexual/minors (which auto-sanctions above): under the updated
+    // terms adult content is prohibited too, so a reported message classified as sexual is a
+    // potential violation needing a human decision - the old "flagged only, not a violation"
+    // handling predates the prohibition. FlaggedOnly therefore remains only on legacy
+    // outcomes recorded before this change.
+    ModerationCategories::SEXUAL
+        | ModerationCategories::HARASSMENT
         | ModerationCategories::HARASSMENT_THREATENING
         | ModerationCategories::VIOLENCE
         | ModerationCategories::VIOLENCE_GRAPHIC

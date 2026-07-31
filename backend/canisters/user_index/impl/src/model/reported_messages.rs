@@ -594,8 +594,10 @@ pub fn build_message_to_reporter(reported_message: &ReportedMessage, reporter: U
                 ModerationAction::EscalatedForHumanReview => format!(
                     "You reported [this message]({link}) for breaking [the platform rules](https://oc.app/guidelines?section=3). It has been referred to the OpenChat moderation team for review."
                 ),
+                // Reachable only for legacy outcomes recorded before adult content was
+                // prohibited: reported sexual content now escalates for human review
                 ModerationAction::FlaggedOnly => format!(
-                    "You reported [this message]({link}) for breaking [the platform rules](https://oc.app/guidelines?section=3). Automated moderation classified it as adult content which does not break the platform rules, but it has been flagged accordingly."
+                    "You reported [this message]({link}) for breaking [the platform rules](https://oc.app/guidelines?section=3). Automated moderation classified it as adult content, which at the time did not break the platform rules; it was flagged accordingly."
                 ),
             }
         }

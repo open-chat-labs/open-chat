@@ -43,10 +43,12 @@
             {#if failed}
                 <p class="failed"><Translatable resourceKey={i18nKey("termsUpdated.failed")} /></p>
             {/if}
-            <Button loading={busy} disabled={busy} onClick={accept}>
-                <Translatable resourceKey={i18nKey("termsUpdated.agree")} />
-            </Button>
         </div>
+    {/snippet}
+    {#snippet footer()}
+        <Button loading={busy} disabled={busy} onClick={accept}>
+            <Translatable resourceKey={i18nKey("termsUpdated.agree")} />
+        </Button>
     {/snippet}
 </ModalContent>
 

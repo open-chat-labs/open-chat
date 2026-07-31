@@ -105,6 +105,7 @@ pub fn update_moderation_alert_status(
         status: Some(status),
         authority_report: None,
         auto_sanctioned: None,
+        reporters: None,
     };
     state.data.fire_and_forget_handler.send(
         community_id.into(),
@@ -137,6 +138,7 @@ pub fn update_moderation_alert_authority_report(
         )),
         authority_report: Some(authority_report),
         auto_sanctioned: None,
+        reporters: None,
     };
     state.data.fire_and_forget_handler.send(
         community_id.into(),
@@ -165,6 +167,7 @@ pub fn update_moderation_alert_quarantined(reported_message: &ReportedMessage, s
         )),
         authority_report: None,
         auto_sanctioned: Some(true),
+        reporters: Some(reported_message.reports.keys().copied().collect()),
     };
     state.data.fire_and_forget_handler.send(
         community_id.into(),

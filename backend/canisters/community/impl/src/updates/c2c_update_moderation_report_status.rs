@@ -24,9 +24,12 @@ fn c2c_update_moderation_report_status_impl(args: Args, state: &mut RuntimeState
     channel.chat.events.update_moderation_report(
         None,
         args.message_id,
-        args.status,
-        args.authority_report,
-        args.auto_sanctioned,
+        chat_events::ModerationReportUpdates {
+            status: args.status,
+            authority_report: args.authority_report,
+            auto_sanctioned: args.auto_sanctioned,
+            reporters: args.reporters,
+        },
         now,
     )?;
 
