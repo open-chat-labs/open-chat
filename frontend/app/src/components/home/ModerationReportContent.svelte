@@ -79,7 +79,10 @@
     let sender = $derived($allUsersStore.get(content.sender)?.username ?? content.sender);
     let reporters = $derived(content.reporters.map((r) => $allUsersStore.get(r)?.username ?? r));
 
-    let csam = $derived((content.flaggedCategories & 2) !== 0);
+    // autoSanctioned always means CSAM (classifier detection, reporter assertion, or a
+    // protective quarantine applied after classification): the flagged bits alone miss the
+    // assertion cases, and the card must show the CSAM treatment (no in-place viewing)
+    let csam = $derived((content.flaggedCategories & 2) !== 0 || content.autoSanctioned);
     // Alleged OR confirmed CSAM: a classifier-clean escalated report upheld as CSAM has no
     // flag bits, but must still never link to the content in place
     let csamish = $derived(csam || content.status.kind === "upheld_as_csam");

@@ -72,7 +72,10 @@
     );
     let sender = $derived($allUsersStore.get(content.sender)?.username ?? content.sender);
     let reporters = $derived(content.reporters.map((r) => $allUsersStore.get(r)?.username ?? r));
-    let csam = $derived((content.flaggedCategories & 2) !== 0);
+    // autoSanctioned always means CSAM (classifier detection, reporter assertion, or a
+    // protective quarantine applied after classification): the flagged bits alone miss the
+    // assertion cases, and the card must show the CSAM treatment (no in-place viewing)
+    let csam = $derived((content.flaggedCategories & 2) !== 0 || content.autoSanctioned);
     let categories = $derived(
         MODERATION_CATEGORY_NAMES.filter(([bit, _name]) => (content.flaggedCategories & bit) !== 0)
             .map(([_bit, name]) => name)
