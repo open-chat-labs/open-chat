@@ -60,6 +60,7 @@
     import { toastStore } from "../../../stores/toast";
     import { uniquePersonGate } from "../../../utils/access";
     import { isTouchDevice } from "../../../utils/devices";
+    import { clearCrashLog, formatCrashLog } from "../../../utils/errorPostmortem";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
@@ -131,6 +132,32 @@
 
     //@ts-ignore
     let version = window.OC_WEBSITE_VERSION;
+
+    // Hidden diagnostics: tapping the version number 5 times reveals the crash
+    // log recorded by errorPostmortem, so mobile users can copy & share it
+    let crashLogTaps = 0;
+    let crashLogTapTimer: number | undefined = undefined;
+    let showCrashLog = $state(false);
+    let crashLogText = $state("");
+
+    function versionTapped() {
+        window.clearTimeout(crashLogTapTimer);
+        crashLogTapTimer = window.setTimeout(() => (crashLogTaps = 0), 2000);
+        if (++crashLogTaps >= 5) {
+            crashLogTaps = 0;
+            crashLogText = formatCrashLog();
+            showCrashLog = !showCrashLog;
+        }
+    }
+
+    function copyCrashLog() {
+        navigator.clipboard.writeText(crashLogText);
+    }
+
+    function onClearCrashLog() {
+        clearCrashLog();
+        crashLogText = formatCrashLog();
+    }
 
     $effect(() => {
         setLocale(selectedLocale);
@@ -629,8 +656,17 @@
                 {/if}
                 <div class="para">
                     <Legend label={i18nKey("version")} rules={i18nKey("websiteVersion")} />
-                    <div>{version}</div>
+                    <div onclick={versionTapped}>{version}</div>
                 </div>
+                {#if showCrashLog}
+                    <div class="para">
+                        <pre class="crash-log">{crashLogText}</pre>
+                        <ButtonGroup>
+                            <Button tiny onClick={copyCrashLog}>Copy</Button>
+                            <Button tiny secondary onClick={onClearCrashLog}>Clear</Button>
+                        </ButtonGroup>
+                    </div>
+                {/if}
                 <div class="para">
                     <p class="para smallprint">
                         <Translatable resourceKey={i18nKey("clearDataCacheInfo")} />
@@ -720,6 +756,16 @@
                 cursor: pointer;
             }
         }
+    }
+
+    .crash-log {
+        max-height: 200px;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 11px;
+        color: var(--txt-light);
+        margin-bottom: $sp3;
     }
 
     .para {
