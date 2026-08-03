@@ -654,7 +654,7 @@ pub fn downgrade_suspension_to_upheld_violation(
     now: TimestampMillis,
     state: &mut RuntimeState,
 ) {
-    if has_other_active_sanction(sender, report_index, now, state) {
+    if has_other_indefinite_sanction(sender, report_index, state) {
         return;
     }
 
@@ -697,6 +697,29 @@ fn in_breach_count(sender: UserId, state: &RuntimeState) -> usize {
 // suspension), or an upheld violation whose one-day suspension is still running. A Dismissed
 // verdict on one report must only reverse that report's own contribution - it must never lift
 // a suspension imposed by a different, still-standing report.
+// True if another report (or a hash-match upload sanction) requires the sender to stay
+// suspended indefinitely, which a downgrade to the standard severity must not undo. Narrower
+// than has_other_active_sanction: another report's upheld non-CSAM violation asks for the same
+// severity being applied here, so it must not block the downgrade.
+pub fn has_other_indefinite_sanction(sender: UserId, except_report_index: u64, state: &RuntimeState) -> bool {
+    if state.data.users.has_csam_upload_sanction(&sender) {
+        return true;
+    }
+
+    state
+        .data
+        .users
+        .get_by_user_id(&sender)
+        .map(|user| {
+            user.reported_messages
+                .iter()
+                .filter(|i| **i != except_report_index)
+                .filter_map(|i| state.data.reported_messages.get(*i))
+                .any(|r| r.requires_indefinite_suspension())
+        })
+        .unwrap_or_default()
+}
+
 pub fn has_other_active_sanction(sender: UserId, except_report_index: u64, now: TimestampMillis, state: &RuntimeState) -> bool {
     // A hash-match suspension has no report, so it would otherwise be invisible here and any
     // unrelated dismissal would silently lift it

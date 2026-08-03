@@ -1409,7 +1409,21 @@ fn timed_suspension_expiry_never_lifts_a_later_csam_suspension() {
 
     let test_data = init_test_data(env, canister_ids, *controller);
 
-    // The sender is serving a one day suspension for something unrelated...
+    // The sender posts the message which the pipeline will flag, before any suspension: a
+    // suspended user cannot send
+    let message_id = random_from_u128();
+    let message_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
+    client::group::happy_path::send_text_message(
+        env,
+        &test_data.sender,
+        test_data.group_id,
+        None,
+        &message_text,
+        Some(message_id),
+    );
+    tick_many(env, 3);
+
+    // They are then suspended for a day for something unrelated...
     let suspend_response = client::user_index::suspend_user(
         env,
         test_data.moderator.principal,
@@ -1426,18 +1440,7 @@ fn timed_suspension_expiry_never_lifts_a_later_csam_suspension() {
     );
     tick_many(env, 5);
 
-    // ...when the pipeline detects CSAM from them, which suspends them indefinitely
-    let message_id = random_from_u128();
-    let message_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
-    client::group::happy_path::send_text_message(
-        env,
-        &test_data.sender,
-        test_data.group_id,
-        None,
-        &message_text,
-        Some(message_id),
-    );
-    tick_many(env, 3);
+    // ...and only then does the classification land, replacing it with an indefinite one
     env.advance_time(Duration::from_secs(10));
     mock_moderation_outcalls(env, &message_text, &[CSAM_CATEGORY], 1);
     tick_many(env, 10);
@@ -1473,7 +1476,9 @@ fn moderator_cannot_resolve_a_report_against_their_own_message() {
 
     let test_data = init_test_data(env, canister_ids, *controller);
 
-    // The moderator joins the group and posts a message which the pipeline flags as CSAM
+    // The moderator joins the group and posts a message, which another user reports. The
+    // classification comes back clean, so the report escalates for human review and nothing is
+    // done to the account - the moderator is simply the sender of a reported message.
     client::local_user_index::happy_path::join_group(
         env,
         test_data.moderator.principal,
@@ -1491,8 +1496,22 @@ fn moderator_cannot_resolve_a_report_against_their_own_message() {
         Some(message_id),
     );
     tick_many(env, 3);
+
+    let report_response = client::group::report_message(
+        env,
+        test_data.reporter.principal,
+        test_data.group_id.into(),
+        &group_canister::report_message::Args {
+            thread_root_message_index: None,
+            message_id,
+            delete: false,
+            csam: false,
+        },
+    );
+    assert!(matches!(report_response, UnitResult::Success));
+    tick_many(env, 3);
     env.advance_time(Duration::from_secs(10));
-    mock_moderation_outcalls(env, &message_text, &[CSAM_CATEGORY], 1);
+    mock_moderation_outcalls(env, &message_text, &[], 2);
     tick_many(env, 10);
 
     let reports = get_moderation_reports(env, &test_data);
@@ -1502,7 +1521,8 @@ fn moderator_cannot_resolve_a_report_against_their_own_message() {
         .expect("the moderator's message should have been reported");
     let report_index = report.report_index.expect("report should carry an index");
 
-    // Ruling on your own case would self-unsuspend, restore the content and release the vault
+    // Ruling on a case you are the subject of is refused: dismissing it would clear your own
+    // strike, restore your own content and release the vault
     let resolve_response = client::user_index::resolve_moderation_report(
         env,
         test_data.moderator.principal,
@@ -1515,11 +1535,13 @@ fn moderator_cannot_resolve_a_report_against_their_own_message() {
     );
     assert!(matches!(resolve_response, UnitResult::Error(_)), "{resolve_response:?}");
 
-    let sender_state =
-        client::user_index::happy_path::current_user(env, test_data.moderator.principal, canister_ids.user_index);
+    // ...and the report stays open for someone else to decide
+    let reports = get_moderation_reports(env, &test_data);
+    let report = reports.iter().find(|r| r.report_index == Some(report_index)).unwrap();
     assert!(
-        sender_state.suspension_details.is_some(),
-        "the moderator should still be suspended"
+        matches!(report.status, ModerationReportStatus::Pending),
+        "{:?}",
+        report.status
     );
 }
 
@@ -1534,31 +1556,46 @@ fn upheld_verdict_does_not_downgrade_while_another_sanction_stands() {
 
     let test_data = init_test_data(env, canister_ids, *controller);
 
-    // Two separate CSAM detections against the same sender, each auto-sanctioning indefinitely
-    let mut report_indexes = Vec::new();
-    for _ in 0..2 {
-        let message_id = random_from_u128();
-        let message_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
-        client::group::happy_path::send_text_message(
-            env,
-            &test_data.sender,
-            test_data.group_id,
-            None,
-            &message_text,
-            Some(message_id),
-        );
-        tick_many(env, 3);
-        env.advance_time(Duration::from_secs(10));
-        mock_moderation_outcalls(env, &message_text, &[CSAM_CATEGORY], 1);
-        tick_many(env, 10);
+    // Two separate CSAM detections against the same sender, each auto-sanctioning indefinitely.
+    // Both messages are sent before either classification lands: the first sanction suspends
+    // the sender, and a suspended user cannot send. They share a random token so that a single
+    // mocked response flags both - the broker batches pending messages into one classify
+    // request, whose `input` array carries them together.
+    let token = random_string();
+    let message_ids: Vec<_> = (0..2)
+        .map(|_| {
+            let message_id = random_from_u128();
+            client::group::happy_path::send_text_message(
+                env,
+                &test_data.sender,
+                test_data.group_id,
+                None,
+                &format!("{TEST_MESSAGE_TEXT} {token}"),
+                Some(message_id),
+            );
+            message_id
+        })
+        .collect();
+    tick_many(env, 3);
+    env.advance_time(Duration::from_secs(10));
+    mock_moderation_outcalls(env, &token, &[CSAM_CATEGORY], 1);
+    // Drain a straggler if the two were classified in separate requests rather than batched
+    tick_many(env, 3);
+    env.advance_time(Duration::from_secs(10));
+    mock_moderation_outcalls(env, &token, &[CSAM_CATEGORY], 0);
+    tick_many(env, 10);
 
-        let reports = get_moderation_reports(env, &test_data);
-        let report = reports
-            .iter()
-            .find(|r| r.message_id == message_id)
-            .expect("detection should create a report");
-        report_indexes.push(report.report_index.expect("report should carry an index"));
-    }
+    let reports = get_moderation_reports(env, &test_data);
+    let report_indexes: Vec<u64> = message_ids
+        .iter()
+        .map(|message_id| {
+            reports
+                .iter()
+                .find(|r| r.message_id == *message_id)
+                .and_then(|r| r.report_index)
+                .expect("detection should create a report with an index")
+        })
+        .collect();
 
     // Upholding one as a non-CSAM violation must not downgrade the indefinite suspension while
     // the other, still unresolved, CSAM sanction stands

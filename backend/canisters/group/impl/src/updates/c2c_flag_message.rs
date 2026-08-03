@@ -18,11 +18,19 @@ fn c2c_flag_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let categories = ModerationCategories::from_bits(args.flags).ok_or(OCErrorCode::InvalidRequest)?;
     let now = state.env.now();
 
-    state
+    // The flags are commonly already set - the detecting canister sets them locally before
+    // escalating, and the user_index re-asserts them with the deletion - which `flag_message`
+    // reports as NoChange. That must not stop the deletion below.
+    match state
         .data
         .chat
         .events
-        .flag_message(args.thread_root_message_index, args.message_id, categories, now)?;
+        .flag_message(args.thread_root_message_index, args.message_id, categories, now)
+    {
+        Ok(_) => (),
+        Err(error) if error.matches_code(OCErrorCode::NoChange) => (),
+        Err(error) => return Err(error),
+    }
 
     // The flag is set first, in the same update, so the message is never deleted-but-unflagged:
     // that window is exactly when the sender can still read the content through

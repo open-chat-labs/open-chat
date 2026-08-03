@@ -21,12 +21,13 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
     for op in args.ops {
         match op {
             VaultOp::Quarantine(q) => {
-                // A quarantine is re-sent alongside the verdict so that the two arrive in one
-                // ordered message even if the original op was lost. Re-quarantining a file
-                // already held is a no-op: the file record itself may be long gone (only the
-                // blob survives, under the vault pin), so vault_pin below would fail it.
-                if state.data.vault.record_for_file(&q.file_id).is_some() {
-                    info!(file_id = %q.file_id, "Vault: already quarantined");
+                // The blob may already be vaulted: a second report can quarantine the same
+                // blob, and a quarantine is re-sent alongside the verdict in case the original
+                // was lost. Register the claim rather than re-quarantining, since the file
+                // record itself may be long gone (only the blob survives, under the vault pin)
+                // and taking a fresh pin would fail.
+                if state.data.vault.claim_if_quarantined(q.file_id, q.metadata.report_index, now) {
+                    info!(file_id = %q.file_id, "Vault: already quarantined, claim recorded");
                 } else if let Some((hash, mime_type)) = state.data.files.vault_pin(&q.file_id) {
                     state.data.vault.quarantine(q.file_id, hash, mime_type, q.metadata, now);
                     info!(file_id = %q.file_id, "Vault: quarantined");

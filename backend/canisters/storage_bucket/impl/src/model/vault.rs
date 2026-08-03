@@ -221,6 +221,25 @@ impl Vault {
         record.report_indexes.insert(report_index);
     }
 
+    // Registers a report's evidence claim on a blob which is already vaulted, returning false
+    // if it is not. Two things arrive here: a second report quarantining the same blob (one
+    // record, two claims - the record is only released when the last claim lets go), and a
+    // quarantine re-sent alongside a verdict. Neither can go through `quarantine` itself: the
+    // file record backing the blob may be long gone, so taking a fresh vault pin would fail.
+    pub fn claim_if_quarantined(&mut self, file_id: FileId, report_index: u64, now: TimestampMillis) -> bool {
+        let Some(hash) = self.file_id_to_hash.get(&file_id).copied() else {
+            return false;
+        };
+        let Some(record) = self.records.get_mut(&hash) else {
+            return false;
+        };
+        if record.report_indexes.insert(report_index) {
+            // Log only a genuinely new claim, so this report's linkage to the blob is preserved
+            self.append_log(VaultLogEvent::Quarantined(file_id, report_index), now);
+        }
+        true
+    }
+
     pub fn record_quarantine_failure(&mut self) {
         self.quarantine_failures += 1;
     }
@@ -814,6 +833,33 @@ mod tests {
         assert!(vault.denylist_hash(elsewhere, 11));
         assert!(!vault.denylist_hash(elsewhere, 12));
         assert_eq!(vault.known_csam_report_index(&elsewhere), Some(11));
+    }
+
+    #[test]
+    fn claiming_an_already_quarantined_blob_records_the_second_report() {
+        let mut vault = vault_with_reviewer();
+        let hash = [1u8; 32];
+        vault.quarantine(1, hash, "image/png".to_string(), metadata(7), 100);
+
+        // Two messages can carry the same blob, so a second report quarantines the same file
+        // id. The claim has to be registered even though the record already exists, or
+        // dismissing the first report would destroy the second report's evidence.
+        assert!(vault.claim_if_quarantined(1, 8, 200));
+        assert!(matches!(vault.unquarantine(1, None, Some(7), 300), VaultOpOutcome::Retained));
+        assert!(vault.record_for_file(&1).is_some());
+
+        // Re-claiming for a report which already holds it is a no-op, and logs nothing further
+        let (before, _) = vault.log_page(0, 100, None);
+        assert!(vault.claim_if_quarantined(1, 8, 400));
+        let (after, _) = vault.log_page(0, 100, None);
+        assert_eq!(before, after);
+
+        // An unquarantined blob cannot be claimed
+        assert!(matches!(
+            vault.unquarantine(1, None, Some(8), 500),
+            VaultOpOutcome::ReleasePin(_)
+        ));
+        assert!(!vault.claim_if_quarantined(1, 9, 600));
     }
 
     #[test]

@@ -492,6 +492,21 @@ impl ReportedMessage {
         }
     }
 
+    // True if this report requires the sender to stay suspended INDEFINITELY: an auto-sanction
+    // still awaiting its verdict, or an upheld-as-CSAM verdict. An upheld non-CSAM violation is
+    // not included - it asks for the standard severity, so it must not block another report's
+    // verdict from downgrading to that same severity, which would strand the sender on the
+    // indefinite suspension after every report had been judged not to be CSAM.
+    pub fn requires_indefinite_suspension(&self) -> bool {
+        match &self.outcome {
+            Some(ReportOutcome::Automated(a)) => match &a.human_verdict {
+                None => self.suspension_applied_without_verdict(),
+                Some(v) => matches!(v.verdict, ModerationVerdict::UpheldAsCsam),
+            },
+            _ => false,
+        }
+    }
+
     // True while a without-verdict suspension is outstanding on this report
     pub fn suspension_applied_without_verdict(&self) -> bool {
         matches!(&self.outcome, Some(ReportOutcome::Automated(a)) if a.sanctioned && a.human_verdict.is_none())
@@ -1005,6 +1020,23 @@ mod report_status_tests {
         assert!(!with_verdict(ModerationVerdict::Upheld).keeps_sender_sanctioned(2 + DAY_IN_MS));
         assert!(!with_verdict(ModerationVerdict::Dismissed).keeps_sender_sanctioned(3));
         assert!(!base_report().keeps_sender_sanctioned(3));
+    }
+
+    #[test]
+    fn only_indefinite_sanctions_block_a_downgrade() {
+        // An unresolved auto-sanction and an upheld-as-CSAM verdict both mean an indefinite
+        // suspension, which a downgrade to the standard severity must not undo
+        assert!(with_unverdicted_outcome(true).requires_indefinite_suspension());
+        assert!(with_verdict(ModerationVerdict::UpheldAsCsam).requires_indefinite_suspension());
+
+        // An upheld non-CSAM violation asks for the same severity the downgrade applies, so it
+        // must NOT block it - otherwise resolving the last report leaves the sender stranded on
+        // the indefinite suspension even though nothing was judged to be CSAM
+        assert!(!with_verdict(ModerationVerdict::Upheld).requires_indefinite_suspension());
+        assert!(!with_verdict(ModerationVerdict::Dismissed).requires_indefinite_suspension());
+        // A reporter assertion never suspended, so it holds nothing indefinite either
+        assert!(!with_unverdicted_outcome(false).requires_indefinite_suspension());
+        assert!(!base_report().requires_indefinite_suspension());
     }
 
     #[test]
