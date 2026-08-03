@@ -28,6 +28,18 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
         .map(|u| u.user_id)
         .ok_or(OCErrorCode::InitiatorNotFound)?;
 
+    // A moderator must never rule on a case they are party to: on their own message, dismissal
+    // would self-unsuspend, restore the content and release the vault; on their own CSAM
+    // assertion, dismissal is what records the false report against the asserter
+    if let Some(report) = state.data.reported_messages.get(args.report_index) {
+        if report.sender == moderator {
+            return Err(OCErrorCode::InitiatorNotAuthorized.with_message("Cannot resolve a report against your own message"));
+        }
+        if report.csam_asserted_by.contains(&moderator) {
+            return Err(OCErrorCode::InitiatorNotAuthorized.with_message("Cannot resolve your own CSAM assertion"));
+        }
+    }
+
     let reported_message = match state.data.reported_messages.record_human_verdict(
         args.report_index,
         HumanVerdict {
@@ -58,13 +70,26 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                 // chat-canister copy is permanently removed; the vault copy persists with the
                 // retention clock started, and an authority report becomes due.
                 moderation::suspend_sender(reported_message.sender, now, state);
+                // Quarantine is re-sent with the verdict in a single ordered message: the
+                // detection-time quarantine is fire-and-forget, and a verdict which arrives
+                // at a bucket holding no record is dropped, leaving confirmed CSAM served
+                // with no retention clock. Quarantine is idempotent, so re-sending is free.
+                // Sent BEFORE the hard delete, which releases the message's file references:
+                // if the original quarantine was lost, releasing them first could destroy the
+                // evidence this verdict is meant to preserve.
+                moderation::quarantine_blobs_and_apply_verdict(
+                    args.report_index,
+                    &reported_message,
+                    ModerationCategories::SEXUAL_MINORS.bits(),
+                    moderator,
+                    state,
+                );
                 moderation::hard_delete_message(
                     reported_message.chat_id,
                     reported_message.thread_root_message_index,
                     reported_message.message_id,
                     &mut state.data.fire_and_forget_handler,
                 );
-                moderation::apply_vault_verdict(&reported_message.blob_references, moderator, args.report_index, state);
                 state
                     .data
                     .authority_reports
@@ -90,19 +115,12 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     moderator,
                     state,
                 );
-                if !reported_message.already_deleted {
-                    moderation::delete_message(
-                        reported_message.chat_id,
-                        reported_message.thread_root_message_index,
-                        reported_message.message_id,
-                        &mut state.data.fire_and_forget_handler,
-                    );
-                }
-                moderation::set_message_moderation_flags(
+                moderation::delete_and_flag_message(
                     reported_message.chat_id,
                     reported_message.thread_root_message_index,
                     reported_message.message_id,
                     ModerationCategories::SEXUAL_MINORS.bits(),
+                    reported_message.already_deleted,
                     &mut state.data.fire_and_forget_handler,
                 );
                 moderation::suspend_sender(reported_message.sender, now, state);
@@ -132,7 +150,7 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     &mut state.data.fire_and_forget_handler,
                 );
                 moderation::unquarantine_blobs(&reported_message.blob_references, moderator, args.report_index, state);
-                moderation::downgrade_suspension_to_upheld_violation(reported_message.sender, now, state);
+                moderation::downgrade_suspension_to_upheld_violation(reported_message.sender, args.report_index, now, state);
             } else {
                 if !reported_message.already_deleted {
                     moderation::delete_message(
@@ -178,12 +196,12 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
             // The unsuspend is also skipped if the sender has another report still keeping
             // them sanctioned: each report's dismissal only reverses its own contribution.
             let applied_suspension = matches!(&reported_message.outcome, Some(ReportOutcome::Automated(a)) if a.sanctioned);
-            let mut unsuspended = false;
-            if applied_suspension
-                && !moderation::has_other_active_sanction(reported_message.sender, args.report_index, now, state)
-            {
-                moderation::unsuspend_sender(reported_message.sender, now, state);
-                unsuspended = true;
+            let unsuspended = applied_suspension
+                && !moderation::has_other_active_sanction(reported_message.sender, args.report_index, now, state);
+            if unsuspended {
+                // The sender's statement of reasons is sent by the unsuspend job once the
+                // unsuspension has actually landed, so it can never claim one that failed
+                moderation::unsuspend_sender(reported_message.sender, args.report_index, now, state);
             }
             if protection_applied {
                 // A false positive: reverse the takedown in full - restore the message,
@@ -200,10 +218,14 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     &mut state.data.fire_and_forget_handler,
                 );
                 moderation::unquarantine_blobs(&reported_message.blob_references, moderator, args.report_index, state);
-                state.push_event_to_local_user_index(
-                    reported_message.sender,
-                    build_restoration_message_to_sender(&reported_message, unsuspended),
-                );
+                if !unsuspended {
+                    // Nothing to wait for: no suspension is being lifted, so the restoration
+                    // statement goes out now (the unsuspend job sends it in the other case)
+                    state.push_event_to_local_user_index(
+                        reported_message.sender,
+                        build_restoration_message_to_sender(&reported_message, false),
+                    );
+                }
             }
             // Clear any moderation flags so the message is no longer hidden in the app store build
             moderation::set_message_moderation_flags(

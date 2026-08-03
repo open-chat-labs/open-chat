@@ -1,5 +1,6 @@
 use crate::guards::caller_is_storage_index;
 use crate::model::moderation;
+use crate::model::reported_messages::build_upload_sanction_message_to_uploader;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -50,6 +51,14 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
 
         if let Some((user_id, _)) = &uploader {
             moderation::suspend_sender(*user_id, now, state);
+            // No message means no report to resolve, but this is still a solely automated
+            // decision: record it so the user can require human review (Article 22) and so an
+            // unrelated report's dismissal cannot lift it
+            state
+                .data
+                .users
+                .record_csam_upload_sanction(*user_id, m.csam_report_index, now);
+            state.push_event_to_local_user_index(*user_id, build_upload_sanction_message_to_uploader(*user_id));
         }
 
         let who = match &uploader {
@@ -57,7 +66,8 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
             None => format!("an unrecognised principal ({})", m.uploader),
         };
         let suspended = if uploader.is_some() {
-            "The user has been suspended indefinitely; if this sanction was applied in error it must be reversed manually."
+            "The user has been suspended indefinitely; if this sanction was applied in error, unsuspending the user reverses it. \
+             They have been told why, and that they can request human review."
         } else {
             "The user could not be resolved, so NO suspension was applied."
         };

@@ -8,9 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Hashes upheld as CSAM are reported to the storage index so every other bucket denylists them too; re-quarantining an already-vaulted file is a no-op ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 - `vault_log` query - a page of the vault's tamper-evident access log, readable by designated vault reviewers (chain-of-custody evidence for auditors and law enforcement) ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 
 - Evidence vault: quarantine blobs by hash so they are never publicly served and survive every deletion path, with capture metadata, retention clock, legal holds, LE-requested destruction, a hash-chained append-only access log, and a `vault_file_chunk` endpoint restricted to designated reviewers ([#9118](https://github.com/open-chat-labs/open-chat/pull/9118))
+
+### Fixed
+
+- The retention timer is no longer armed for a record which cannot yet expire, which previously left it held indefinitely once its blocking claim resolved ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 
 ## [[2.0.1857](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1857-storage_bucket)] - 2025-08-05
 

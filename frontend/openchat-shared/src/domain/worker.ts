@@ -389,6 +389,8 @@ export type WorkerRequest =
     | SetOpenAIApiKey
     | SetModerationReferralConfig
     | SetVaultReviewers
+    | SetVaultLegalHold
+    | DestroyVaultEvidence
     | VaultLog
     | VaultBuckets
     | AuthorityReports
@@ -869,6 +871,19 @@ type RecordAuthorityReportFiled = {
 type SetVaultReviewers = {
     kind: "setVaultReviewers";
     userIds: string[];
+};
+
+type SetVaultLegalHold = {
+    kind: "setVaultLegalHold";
+    reportIndex: bigint;
+    legalHold: boolean;
+    reference: string;
+};
+
+type DestroyVaultEvidence = {
+    kind: "destroyVaultEvidence";
+    reportIndex: bigint;
+    leRequestRef: string;
 };
 
 type SetModerationReferralConfig = {
@@ -2565,6 +2580,10 @@ export type WorkerResult<T> = T extends Init
     : T extends SetModerationReferralConfig
     ? boolean
     : T extends SetVaultReviewers
+    ? boolean
+    : T extends SetVaultLegalHold
+    ? boolean
+    : T extends DestroyVaultEvidence
     ? boolean
     : T extends VaultLog
     ? VaultLogResponse

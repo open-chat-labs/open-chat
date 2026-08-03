@@ -31,6 +31,8 @@ fn accept_if_valid(state: &RuntimeState) {
         | "update_diamond_membership_subscription" => state.is_caller_openchat_user(),
         "resolve_moderation_report" | "suspend_user" | "unsuspend_user" => state.is_caller_platform_moderator(),
         "record_authority_report_filed"
+        | "destroy_vault_evidence"
+        | "set_vault_legal_hold"
         | "set_diamond_membership_fees"
         | "set_internal_moderation_channel"
         | "set_vault_reviewers"

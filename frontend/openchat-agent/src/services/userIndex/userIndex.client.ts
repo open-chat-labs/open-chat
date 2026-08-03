@@ -74,6 +74,8 @@ import {
     UserIndexRecordAuthorityReportFiledArgs,
     UserIndexSetModerationReferralConfigArgs,
     UserIndexSetVaultReviewersArgs,
+    UserIndexSetVaultLegalHoldArgs,
+    UserIndexDestroyVaultEvidenceArgs,
     UserIndexSetOpenaiApiKeyArgs,
     UserIndexSetPremiumItemCostArgs,
     UserIndexSetUsernameArgs,
@@ -210,6 +212,26 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             { user_ids: userIds.map(principalStringToBytes) },
             (resp) => resp === "Success",
             UserIndexSetVaultReviewersArgs,
+            UnitResult,
+        );
+    }
+
+    setVaultLegalHold(reportIndex: bigint, legalHold: boolean, reference: string): Promise<boolean> {
+        return this.update(
+            "set_vault_legal_hold",
+            { report_index: reportIndex, legal_hold: legalHold, reference },
+            (resp) => resp === "Success",
+            UserIndexSetVaultLegalHoldArgs,
+            UnitResult,
+        );
+    }
+
+    destroyVaultEvidence(reportIndex: bigint, leRequestRef: string): Promise<boolean> {
+        return this.update(
+            "destroy_vault_evidence",
+            { report_index: reportIndex, le_request_ref: leRequestRef },
+            (resp) => resp === "Success",
+            UserIndexDestroyVaultEvidenceArgs,
             UnitResult,
         );
     }

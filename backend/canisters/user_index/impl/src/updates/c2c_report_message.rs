@@ -39,19 +39,10 @@ fn c2c_report_message(args: Args) -> Response {
             // quarantine framework - but the SUSPENSION waits for the human verdict. A
             // reporter is not a trusted classifier: an immediate suspension would let any
             // account grind others offline with false assertions. The moderation flags are
-            // set even for private chats so the deleted content is locked behind the
-            // read-gate.
+            // set even for private group chats so the deleted content is locked behind the
+            // read-gate (both are applied in one message by handle_moderation_result).
             mutate_state(|state| {
                 handle_moderation_result(report_index, ModerationCategories::SEXUAL_MINORS, false, false, state);
-                if let Some(reported_message) = state.data.reported_messages.get(report_index) {
-                    moderation::set_message_moderation_flags(
-                        reported_message.chat_id,
-                        reported_message.thread_root_message_index,
-                        reported_message.message_id,
-                        ModerationCategories::SEXUAL_MINORS.bits(),
-                        &mut state.data.fire_and_forget_handler,
-                    );
-                }
             });
             Success
         }
@@ -164,19 +155,12 @@ fn apply_csam_assertion_protection(report_index: u64, state: &mut RuntimeState) 
     };
     let report = report.clone();
     moderation::quarantine_blobs(report_index, &report, ModerationCategories::SEXUAL_MINORS.bits(), state);
-    if !report.already_deleted {
-        moderation::delete_message(
-            report.chat_id,
-            report.thread_root_message_index,
-            report.message_id,
-            &mut state.data.fire_and_forget_handler,
-        );
-    }
-    moderation::set_message_moderation_flags(
+    moderation::delete_and_flag_message(
         report.chat_id,
         report.thread_root_message_index,
         report.message_id,
         ModerationCategories::SEXUAL_MINORS.bits(),
+        report.already_deleted,
         &mut state.data.fire_and_forget_handler,
     );
     if report.moderation_channel_message_id.is_some() {
@@ -310,8 +294,9 @@ fn handle_moderation_result(
     };
 
     // Store the flags on the originating canister so the message can be hidden in the app store
-    // build (public chats only - private messages are classified but not flagged)
-    if !categories.is_empty() && is_public {
+    // build (public chats only - private messages are classified but not flagged). CSAM is
+    // flagged whatever the chat's visibility, in the same message as the deletion below.
+    if !categories.is_empty() && is_public && !is_csam {
         moderation::set_message_moderation_flags(
             chat_id,
             thread_root_message_index,
@@ -335,14 +320,16 @@ fn handle_moderation_result(
             let report = report.clone();
             moderation::quarantine_blobs(report_index, &report, categories.bits(), state);
         }
-        if !already_deleted {
-            moderation::delete_message(
-                chat_id,
-                thread_root_message_index,
-                message_id,
-                &mut state.data.fire_and_forget_handler,
-            );
-        }
+        // The read-gate flag and the deletion travel together: separately sent, a deletion
+        // landing first leaves the content readable by its sender and undeletable by anyone
+        moderation::delete_and_flag_message(
+            chat_id,
+            thread_root_message_index,
+            message_id,
+            categories.bits(),
+            already_deleted,
+            &mut state.data.fire_and_forget_handler,
+        );
         if suspend_sender {
             moderation::suspend_sender(sender, now, state);
         }

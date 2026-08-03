@@ -86,4 +86,6 @@ fn main() {
     generate_ts_method!(user_index, set_moderation_referral_config);
     generate_ts_method!(user_index, set_openai_api_key);
     generate_ts_method!(user_index, set_vault_reviewers);
+    generate_ts_method!(user_index, set_vault_legal_hold);
+    generate_ts_method!(user_index, destroy_vault_evidence);
 }

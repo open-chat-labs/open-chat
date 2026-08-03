@@ -2087,6 +2087,13 @@ export const UserIndexPlatformModeratorsSuccessResult = Type.Object({
     users: Type.Array(UserId),
 });
 
+export type UserIndexSetVaultLegalHoldArgs = Static<typeof UserIndexSetVaultLegalHoldArgs>;
+export const UserIndexSetVaultLegalHoldArgs = Type.Object({
+    report_index: Type.BigInt(),
+    legal_hold: Type.Boolean(),
+    reference: Type.String(),
+});
+
 export type UserIndexSetUserUpgradeConcurrencyArgs = Static<
     typeof UserIndexSetUserUpgradeConcurrencyArgs
 >;
@@ -2209,6 +2216,12 @@ export type UserIndexSearchArgs = Static<typeof UserIndexSearchArgs>;
 export const UserIndexSearchArgs = Type.Object({
     search_term: Type.String(),
     max_results: Type.Number(),
+});
+
+export type UserIndexDestroyVaultEvidenceArgs = Static<typeof UserIndexDestroyVaultEvidenceArgs>;
+export const UserIndexDestroyVaultEvidenceArgs = Type.Object({
+    report_index: Type.BigInt(),
+    le_request_ref: Type.String(),
 });
 
 export type UserIndexAuthorityReportsSuccessResult = Static<

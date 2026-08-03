@@ -1,3 +1,4 @@
+use crate::model::reported_messages::build_restoration_message_to_sender;
 use crate::updates::c2c_report_message::process_report;
 use crate::updates::pay_for_diamond_membership::pay_for_diamond_membership_impl;
 use crate::updates::suspend_user::suspend_user_impl;
@@ -8,9 +9,10 @@ use constants::{CHAT_LEDGER_CANISTER_ID, ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, S
 use ic_ledger_types::Tokens;
 use local_user_index_canister::{OpenChatBotMessageV2, UserIndexEvent};
 use serde::{Deserialize, Serialize};
+use tracing::{error, info};
 use types::{
     ChatId, CommunityId, DiamondMembershipFees, DiamondMembershipPlanDuration, MessageContentInitial, Milliseconds,
-    TextContent, UserId,
+    TextContent, TimestampMillis, UserId,
 };
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -50,11 +52,25 @@ pub struct SetUserSuspended {
     pub duration: Option<Milliseconds>,
     pub reason: String,
     pub suspended_by: UserId,
+    #[serde(default)]
+    pub attempt: usize,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct UnsuspendUser {
     pub user_id: UserId,
+    // Set when the job was scheduled to lift a durational suspension when it expires: the
+    // unsuspend then only applies if that same suspension is still the one in force. Without
+    // this, a suspension replaced by a later (eg. indefinite CSAM) one is still lifted when
+    // the original expiry falls due.
+    #[serde(default)]
+    pub expected_suspension_timestamp: Option<TimestampMillis>,
+    #[serde(default)]
+    pub attempt: usize,
+    // Set when a Dismissed verdict is reversing this report's sanction: the sender is told
+    // what happened once the unsuspend has actually landed, not when it was enqueued
+    #[serde(default)]
+    pub restoration_report_index: Option<u64>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -164,15 +180,29 @@ If you would like to extend your Diamond membership you will need to top up your
 
 impl Job for SetUserSuspended {
     fn execute(self) {
-        ic_cdk::futures::spawn_migratory(suspend_user(
-            self.user_id,
-            self.duration,
-            self.reason.clone(),
-            self.suspended_by,
-        ));
+        ic_cdk::futures::spawn_migratory(suspend_user(self));
 
-        async fn suspend_user(user_id: UserId, duration: Option<Milliseconds>, reason: String, suspended_by: UserId) {
-            suspend_user_impl(user_id, duration, reason, suspended_by).await;
+        // A suspension which silently fails to apply (eg. the user canister is stopped mid
+        // upgrade) leaves a sanctioned user active, so retry rather than dropping it
+        async fn suspend_user(job: SetUserSuspended) {
+            let response = suspend_user_impl(job.user_id, job.duration, job.reason.clone(), job.suspended_by).await;
+            if let user_index_canister::suspend_user::Response::InternalError(error) = response {
+                if job.attempt < 10 {
+                    mutate_state(|state| {
+                        let now = state.env.now();
+                        state.data.timer_jobs.enqueue_job(
+                            TimerJob::SetUserSuspended(SetUserSuspended {
+                                attempt: job.attempt + 1,
+                                ..job
+                            }),
+                            now + (30 * SECOND_IN_MS),
+                            now,
+                        );
+                    });
+                } else {
+                    error!(user_id = %job.user_id, ?error, "Failed to suspend user after 10 attempts");
+                }
+            }
         }
     }
 }
@@ -247,10 +277,67 @@ impl Job for SetUserSuspendedInCommunity {
 
 impl Job for UnsuspendUser {
     fn execute(self) {
-        ic_cdk::futures::spawn_migratory(unsuspend_user(self.user_id));
+        // Only lift the suspension this job was scheduled for. A durational suspension can
+        // have been replaced by a later one (eg. an indefinite CSAM suspension) before its
+        // expiry falls due, and lifting that one would silently unsuspend a sanctioned user.
+        if let Some(expected) = self.expected_suspension_timestamp {
+            let still_current = read_state(|state| {
+                state
+                    .data
+                    .users
+                    .get_by_user_id(&self.user_id)
+                    .and_then(|u| u.suspension_details.as_ref())
+                    .is_some_and(|d| d.timestamp == expected)
+            });
+            if !still_current {
+                info!(user_id = %self.user_id, "Skipping expiry of a suspension which is no longer in force");
+                return;
+            }
+        }
 
-        async fn unsuspend_user(user_id: UserId) {
-            unsuspend_user_impl(user_id).await;
+        ic_cdk::futures::spawn_migratory(unsuspend_user(self));
+
+        async fn unsuspend_user(job: UnsuspendUser) {
+            match unsuspend_user_impl(job.user_id).await {
+                user_index_canister::unsuspend_user::Response::InternalError(error) if job.attempt < 10 => {
+                    mutate_state(|state| {
+                        let now = state.env.now();
+                        state.data.timer_jobs.enqueue_job(
+                            TimerJob::UnsuspendUser(UnsuspendUser {
+                                attempt: job.attempt + 1,
+                                ..job
+                            }),
+                            now + (30 * SECOND_IN_MS),
+                            now,
+                        );
+                    });
+                    error!(user_id = %job.user_id, ?error, "Failed to unsuspend user, retrying");
+                }
+                user_index_canister::unsuspend_user::Response::InternalError(error) => {
+                    error!(user_id = %job.user_id, ?error, "Failed to unsuspend user after 10 attempts");
+                    // The message is restored either way, but the account is still suspended:
+                    // say so rather than claiming an unsuspension which did not happen
+                    notify_sender_of_restoration(job.restoration_report_index, job.user_id, false);
+                }
+                user_index_canister::unsuspend_user::Response::Success => {
+                    notify_sender_of_restoration(job.restoration_report_index, job.user_id, true)
+                }
+                // The user was not suspended after all: the restoration still happened, but
+                // claiming an unsuspension would be wrong
+                _ => notify_sender_of_restoration(job.restoration_report_index, job.user_id, false),
+            }
+        }
+
+        fn notify_sender_of_restoration(report_index: Option<u64>, user_id: UserId, unsuspended: bool) {
+            let Some(report_index) = report_index else {
+                return;
+            };
+            mutate_state(|state| {
+                if let Some(report) = state.data.reported_messages.get(report_index) {
+                    let event = build_restoration_message_to_sender(&report.clone(), unsuspended);
+                    state.push_event_to_local_user_index(user_id, event);
+                }
+            });
         }
     }
 }

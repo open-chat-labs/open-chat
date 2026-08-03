@@ -1,9 +1,11 @@
 use crate::guards::caller_is_storage_index_canister;
+use crate::model::index_event_batch::EventToSync;
 use crate::model::vault::VaultOpOutcome;
 use crate::{RuntimeState, mutate_state};
 use canister_tracing_macros::trace;
 use ic_cdk::update;
 use storage_bucket_canister::c2c_vault_sync::{Response::*, *};
+use storage_index_canister::c2c_sync_bucket::CsamHashDenylisted;
 use tracing::{error, info};
 
 #[update(guard = "caller_is_storage_index_canister")]
@@ -19,7 +21,13 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
     for op in args.ops {
         match op {
             VaultOp::Quarantine(q) => {
-                if let Some((hash, mime_type)) = state.data.files.vault_pin(&q.file_id) {
+                // A quarantine is re-sent alongside the verdict so that the two arrive in one
+                // ordered message even if the original op was lost. Re-quarantining a file
+                // already held is a no-op: the file record itself may be long gone (only the
+                // blob survives, under the vault pin), so vault_pin below would fail it.
+                if state.data.vault.record_for_file(&q.file_id).is_some() {
+                    info!(file_id = %q.file_id, "Vault: already quarantined");
+                } else if let Some((hash, mime_type)) = state.data.files.vault_pin(&q.file_id) {
                     state.data.vault.quarantine(q.file_id, hash, mime_type, q.metadata, now);
                     info!(file_id = %q.file_id, "Vault: quarantined");
                 } else {
@@ -51,18 +59,25 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
                 // should have been held was already released - the worst failure mode.
                 // Existing copies of the blob are deliberately NOT swept: every reported copy
                 // gets its own human verdict, and the denylist only gates FUTURE uploads.
-                if matches!(
-                    state.data.vault.apply_verdict(
-                        v.file_id,
-                        v.retention_until,
-                        v.moderator,
-                        v.reanchor.unwrap_or_default(),
-                        v.report_index,
-                        now
-                    ),
-                    VaultOpOutcome::NotFound
+                match state.data.vault.apply_verdict(
+                    v.file_id,
+                    v.retention_until,
+                    v.moderator,
+                    v.reanchor.unwrap_or_default(),
+                    v.report_index,
+                    now,
                 ) {
-                    error!(file_id = %v.file_id, "Vault: verdict for a file that is not quarantined");
+                    VaultOpOutcome::NotFound => {
+                        error!(file_id = %v.file_id, "Vault: verdict for a file that is not quarantined");
+                    }
+                    // Tell the index so every other bucket denylists the hash too, otherwise
+                    // the same content uploads again elsewhere and is served publicly
+                    VaultOpOutcome::AppliedDenylisted(hash, report_index) => {
+                        state
+                            .data
+                            .push_event_to_index(EventToSync::CsamHashDenylisted(CsamHashDenylisted { hash, report_index }));
+                    }
+                    _ => (),
                 }
             }
             VaultOp::SetLegalHold(l) => {
@@ -81,6 +96,13 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
             }
             VaultOp::SetReviewers(reviewers) => {
                 state.data.vault.set_reviewers(reviewers);
+            }
+            VaultOp::DenylistHash(d) => {
+                // Propagated from the bucket which applied the verdict: blocks uploads of the
+                // same content here, and stops any copy already stored here being served
+                if state.data.vault.denylist_hash(d.hash, d.report_index) {
+                    info!(report_index = d.report_index, "Vault: CSAM hash denylisted");
+                }
             }
         }
     }

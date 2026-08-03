@@ -1124,7 +1124,9 @@
                     Labs is subject. This processing involves automated decision-making; the right to
                     contest such decisions and obtain human review is described in clause B 6.5. Data
                     may be shared with the processors identified in clause B 6.3 and, where required by
-                    Applicable Law, with law enforcement authorities.
+                    Applicable Law, with law enforcement authorities. Full information about this
+                    processing, and about your rights in relation to it, is set out in our
+                    <a href="/privacy">Privacy Notice</a>.
                 </li>
                 <li>
                     If you wish to complain about any safety matter, including any moderation

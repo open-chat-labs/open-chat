@@ -1007,6 +1007,10 @@ function getAction(
             return agent.setModerationReferralConfig(payload.config);
         case "setVaultReviewers":
             return agent.setVaultReviewers(payload.userIds);
+        case "setVaultLegalHold":
+            return agent.setVaultLegalHold(payload.reportIndex, payload.legalHold, payload.reference);
+        case "destroyVaultEvidence":
+            return agent.destroyVaultEvidence(payload.reportIndex, payload.leRequestRef);
         case "vaultBuckets":
             return agent.vaultBuckets();
         case "vaultLog":

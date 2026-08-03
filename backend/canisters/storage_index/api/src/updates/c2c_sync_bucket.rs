@@ -16,6 +16,16 @@ pub struct Args {
     // forwarded to the user_index so moderators can act on the uploader
     #[serde(default)]
     pub csam_matches: Vec<CsamMatch>,
+    // Hashes this bucket denylisted when a verdict was applied; the index propagates them to
+    // every other bucket so the denylist is platform-wide rather than per-bucket
+    #[serde(default)]
+    pub csam_hashes_denylisted: Vec<CsamHashDenylisted>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CsamHashDenylisted {
+    pub hash: Hash,
+    pub report_index: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

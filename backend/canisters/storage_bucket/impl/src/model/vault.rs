@@ -165,6 +165,10 @@ impl VaultLogEvent {
 
 pub enum VaultOpOutcome {
     Applied,
+    // A verdict which newly denylisted the hash (with the report index it was denylisted
+    // under): the caller propagates it to the other buckets via the storage index, so the same
+    // content cannot simply be re-uploaded elsewhere
+    AppliedDenylisted(Hash, u64),
     // The blob is no longer referenced by the vault and its pin should be released
     ReleasePin(Hash),
     // The record was kept because other reports still hold the blob as evidence
@@ -317,10 +321,23 @@ impl Vault {
             }
             let hash = record.hash;
             let denylist_report_index = report_index.unwrap_or(record.metadata.report_index);
+            let newly_denylisted = !self.csam_hashes.contains_key(&hash);
             self.csam_hashes.entry(hash).or_insert(denylist_report_index);
             self.append_log(VaultLogEvent::VerdictAppliedBy(file_id, retention_until, moderator), now);
+            if newly_denylisted {
+                return VaultOpOutcome::AppliedDenylisted(hash, denylist_report_index);
+            }
         }
         VaultOpOutcome::Applied
+    }
+
+    // Records a hash denylisted by a verdict applied in ANOTHER bucket, so that content upheld
+    // as CSAM can never be uploaded to (or served from) this bucket either. Returns true if the
+    // hash was not already known, so the caller can avoid re-propagating it.
+    pub fn denylist_hash(&mut self, hash: Hash, report_index: u64) -> bool {
+        let newly_denylisted = !self.csam_hashes.contains_key(&hash);
+        self.csam_hashes.entry(hash).or_insert(report_index);
+        newly_denylisted
     }
 
     pub fn set_legal_hold(&mut self, file_id: FileId, legal_hold: bool, now: TimestampMillis) -> VaultOpOutcome {
@@ -394,10 +411,14 @@ impl Vault {
         }
     }
 
+    // Must apply the same eligibility filter as `remove_expired`: an expiry belonging to a
+    // record which cannot yet be removed would arm the timer, remove nothing, and then never
+    // re-arm (the next expiry is unchanged), leaving the record held indefinitely once its
+    // blocking claim resolves
     pub fn next_retention_expiry(&self) -> Option<TimestampMillis> {
         self.records
             .values()
-            .filter(|r| !r.legal_hold)
+            .filter(|r| !r.legal_hold && !r.has_unresolved_claims())
             .filter_map(|r| r.retention_until)
             .min()
     }
@@ -638,7 +659,7 @@ mod tests {
         assert!(vault.record_for_file(&1).is_some());
         assert!(matches!(
             vault.apply_verdict(1, 999, None, false, Some(7), 250),
-            VaultOpOutcome::Applied
+            VaultOpOutcome::AppliedDenylisted(..)
         ));
 
         // No UnquarantinedBy entry was logged: the blob's custody did not change
@@ -766,6 +787,49 @@ mod tests {
             VaultOpOutcome::ReleasePin(_)
         ));
         assert!(!vault.is_csam_hash(&other));
+    }
+
+    #[test]
+    fn verdict_reports_the_hash_for_cross_bucket_denylisting() {
+        let mut vault = vault_with_reviewer();
+        let hash = [1u8; 32];
+        vault.quarantine(1, hash, "image/png".to_string(), metadata(7), 100);
+
+        // The first verdict has to be propagated: the same content uploaded to any other
+        // bucket would otherwise be stored and served publicly
+        assert!(matches!(
+            vault.apply_verdict(1, 999, None, false, Some(7), 200),
+            VaultOpOutcome::AppliedDenylisted(h, 7) if h == hash
+        ));
+
+        // A second verdict on the same hash is already denylisted, so nothing to propagate
+        vault.quarantine(2, hash, "image/png".to_string(), metadata(8), 300);
+        assert!(matches!(
+            vault.apply_verdict(2, 999, None, false, Some(8), 400),
+            VaultOpOutcome::Applied
+        ));
+
+        // A hash denylisted elsewhere blocks uploads (and serving) here too, once only
+        let elsewhere = [9u8; 32];
+        assert!(vault.denylist_hash(elsewhere, 11));
+        assert!(!vault.denylist_hash(elsewhere, 12));
+        assert_eq!(vault.known_csam_report_index(&elsewhere), Some(11));
+    }
+
+    #[test]
+    fn retention_timer_rearms_once_a_blocking_claim_resolves() {
+        let mut vault = vault_with_reviewer();
+        vault.quarantine(1, [1u8; 32], "image/png".to_string(), metadata(7), 100);
+        vault.quarantine(2, [1u8; 32], "image/png".to_string(), metadata(8), 101);
+
+        // Report 7's verdict sets the clock but report 8's claim blocks expiry. The expiry must
+        // not be advertised meanwhile: the timer would fire, remove nothing, and never re-arm.
+        vault.apply_verdict(1, 999, None, false, Some(7), 200);
+        assert_eq!(vault.next_retention_expiry(), None);
+
+        // Once the blocking claim is released the record is eligible and the expiry surfaces
+        vault.unquarantine(2, None, Some(8), 300);
+        assert_eq!(vault.next_retention_expiry(), Some(999));
     }
 
     #[test]

@@ -2182,6 +2182,14 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.setVaultReviewers(userIds);
     }
 
+    setVaultLegalHold(reportIndex: bigint, legalHold: boolean, reference: string): Promise<boolean> {
+        return this._userIndexClient.setVaultLegalHold(reportIndex, legalHold, reference);
+    }
+
+    destroyVaultEvidence(reportIndex: bigint, leRequestRef: string): Promise<boolean> {
+        return this._userIndexClient.destroyVaultEvidence(reportIndex, leRequestRef);
+    }
+
     setModerationReferralConfig(
         config: { categories: { category: number; scoreThreshold: number }[] } | undefined,
     ): Promise<boolean> {

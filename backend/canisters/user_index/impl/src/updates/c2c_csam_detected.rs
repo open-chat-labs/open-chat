@@ -53,10 +53,15 @@ fn c2c_csam_detected_impl(args: Args, state: &mut RuntimeState) {
     // blobs against every deletion path, preserving evidence ahead of the sanction
     moderation::quarantine_blobs(report_index, &reported_message, categories.bits(), state);
 
-    moderation::delete_message(
+    // The flag was already set in-canister by the detecting chat canister before it escalated;
+    // re-asserting it in the same message as the deletion is idempotent and makes the read gate
+    // hold even if that write was lost
+    moderation::delete_and_flag_message(
         args.chat_id,
         args.thread_root_message_index,
         args.message_id,
+        categories.bits(),
+        false,
         &mut state.data.fire_and_forget_handler,
     );
     moderation::suspend_sender(args.sender, now, state);

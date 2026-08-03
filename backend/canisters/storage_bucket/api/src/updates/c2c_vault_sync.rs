@@ -1,6 +1,6 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{Chat, FileId, MessageId, MessageIndex, TimestampMillis, UserId};
+use types::{Chat, FileId, Hash, MessageId, MessageIndex, TimestampMillis, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Default)]
 pub struct Args {
@@ -20,6 +20,10 @@ pub enum VaultOp {
     // nothing sends vault ops in production until the moderation config is applied. Upgrade
     // storage_index with a drained queue (see the release runbook).
     SetReviewers(Vec<VaultReviewer>),
+    // A hash upheld as CSAM by a verdict applied in another bucket. The denylist has to hold
+    // platform-wide: it is keyed by content hash, and without this the same content simply
+    // uploads again to any other bucket and is served publicly.
+    DenylistHash(DenylistHashOp),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -83,6 +87,13 @@ pub struct SetLegalHoldOp {
 pub struct DestroyOp {
     pub file_id: FileId,
     pub le_request_ref: String,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct DenylistHashOp {
+    pub hash: Hash,
+    // The report whose UpheldAsCsam verdict denylisted the hash
+    pub report_index: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

@@ -289,6 +289,7 @@ import {
     type Success,
     type SwapTokensResponse,
     type TermsRoute,
+    type PrivacyRoute,
     type ThreadIdentifier,
     type ThreadPreview,
     type ThreadRead,
@@ -7415,6 +7416,22 @@ export class OpenChat {
         return this.#worker.send({ kind: "setVaultReviewers", userIds }).catch(() => false);
     }
 
+    setVaultLegalHold(
+        reportIndex: bigint,
+        legalHold: boolean,
+        reference: string,
+    ): Promise<boolean> {
+        return this.#worker
+            .send({ kind: "setVaultLegalHold", reportIndex, legalHold, reference })
+            .catch(() => false);
+    }
+
+    destroyVaultEvidence(reportIndex: bigint, leRequestRef: string): Promise<boolean> {
+        return this.#worker
+            .send({ kind: "destroyVaultEvidence", reportIndex, leRequestRef })
+            .catch(() => false);
+    }
+
     setModerationReferralConfig(
         config: { categories: { category: number; scoreThreshold: number }[] } | undefined,
     ): Promise<boolean> {
@@ -10605,6 +10622,10 @@ export class OpenChat {
 
     isTermsRoute(route: RouteParams): route is TermsRoute {
         return route.kind === "terms_route";
+    }
+
+    isPrivacyRoute(route: RouteParams): route is PrivacyRoute {
+        return route.kind === "privacy_route";
     }
 
     isFaqRoute(route: RouteParams): route is FaqRoute {

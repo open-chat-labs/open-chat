@@ -2,6 +2,7 @@ use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
+use constants::DAY_IN_MS;
 use pocket_ic::PocketIc;
 use pocket_ic::common::rest::{CanisterHttpReply, CanisterHttpResponse, MockCanisterHttpResponse};
 use serde_json::{Value, json};
@@ -1395,6 +1396,215 @@ fn media_report_dismissal_releases_the_vault() {
     // ...and the message is restored (no longer deleted)
     let message_content = get_message_content(env, &test_data.group_owner, test_data.group_id, message_id);
     assert!(matches!(message_content, MessageContent::File(_)), "{message_content:?}");
+}
+
+#[test]
+fn timed_suspension_expiry_never_lifts_a_later_csam_suspension() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    // The sender is serving a one day suspension for something unrelated...
+    let suspend_response = client::user_index::suspend_user(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::suspend_user::Args {
+            user_id: test_data.sender.user_id,
+            duration: Some(DAY_IN_MS),
+            reason: "Unrelated violation".to_string(),
+        },
+    );
+    assert!(
+        matches!(suspend_response, user_index_canister::suspend_user::Response::Success),
+        "{suspend_response:?}"
+    );
+    tick_many(env, 5);
+
+    // ...when the pipeline detects CSAM from them, which suspends them indefinitely
+    let message_id = random_from_u128();
+    let message_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
+    client::group::happy_path::send_text_message(
+        env,
+        &test_data.sender,
+        test_data.group_id,
+        None,
+        &message_text,
+        Some(message_id),
+    );
+    tick_many(env, 3);
+    env.advance_time(Duration::from_secs(10));
+    mock_moderation_outcalls(env, &message_text, &[CSAM_CATEGORY], 1);
+    tick_many(env, 10);
+
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    let suspension_details = sender_state.suspension_details.expect("sender should be suspended");
+    assert!(matches!(suspension_details.action, SuspensionAction::Delete(_)));
+
+    // The first suspension's expiry falls due. It must NOT lift the CSAM suspension which
+    // replaced it - the unsuspend job only expires the suspension it was scheduled for.
+    env.advance_time(Duration::from_millis(DAY_IN_MS + 1));
+    tick_many(env, 10);
+
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    let suspension_details = sender_state
+        .suspension_details
+        .expect("the CSAM suspension must survive the earlier suspension's expiry");
+    assert!(
+        matches!(suspension_details.action, SuspensionAction::Delete(_)),
+        "{:?}",
+        suspension_details.action
+    );
+}
+
+#[test]
+fn moderator_cannot_resolve_a_report_against_their_own_message() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    // The moderator joins the group and posts a message which the pipeline flags as CSAM
+    client::local_user_index::happy_path::join_group(
+        env,
+        test_data.moderator.principal,
+        canister_ids.local_user_index(env, test_data.group_id),
+        test_data.group_id,
+    );
+    let message_id = random_from_u128();
+    let message_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
+    client::group::happy_path::send_text_message(
+        env,
+        &test_data.moderator,
+        test_data.group_id,
+        None,
+        &message_text,
+        Some(message_id),
+    );
+    tick_many(env, 3);
+    env.advance_time(Duration::from_secs(10));
+    mock_moderation_outcalls(env, &message_text, &[CSAM_CATEGORY], 1);
+    tick_many(env, 10);
+
+    let reports = get_moderation_reports(env, &test_data);
+    let report = reports
+        .iter()
+        .find(|r| r.sender == test_data.moderator.user_id)
+        .expect("the moderator's message should have been reported");
+    let report_index = report.report_index.expect("report should carry an index");
+
+    // Ruling on your own case would self-unsuspend, restore the content and release the vault
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index,
+            verdict: ModerationVerdict::Dismissed,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Error(_)), "{resolve_response:?}");
+
+    let sender_state =
+        client::user_index::happy_path::current_user(env, test_data.moderator.principal, canister_ids.user_index);
+    assert!(
+        sender_state.suspension_details.is_some(),
+        "the moderator should still be suspended"
+    );
+}
+
+#[test]
+fn upheld_verdict_does_not_downgrade_while_another_sanction_stands() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    // Two separate CSAM detections against the same sender, each auto-sanctioning indefinitely
+    let mut report_indexes = Vec::new();
+    for _ in 0..2 {
+        let message_id = random_from_u128();
+        let message_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
+        client::group::happy_path::send_text_message(
+            env,
+            &test_data.sender,
+            test_data.group_id,
+            None,
+            &message_text,
+            Some(message_id),
+        );
+        tick_many(env, 3);
+        env.advance_time(Duration::from_secs(10));
+        mock_moderation_outcalls(env, &message_text, &[CSAM_CATEGORY], 1);
+        tick_many(env, 10);
+
+        let reports = get_moderation_reports(env, &test_data);
+        let report = reports
+            .iter()
+            .find(|r| r.message_id == message_id)
+            .expect("detection should create a report");
+        report_indexes.push(report.report_index.expect("report should carry an index"));
+    }
+
+    // Upholding one as a non-CSAM violation must not downgrade the indefinite suspension while
+    // the other, still unresolved, CSAM sanction stands
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index: report_indexes[0],
+            verdict: ModerationVerdict::Upheld,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    let suspension_details = sender_state.suspension_details.expect("sender should remain suspended");
+    assert!(
+        matches!(suspension_details.action, SuspensionAction::Delete(_)),
+        "the suspension must stay indefinite: {:?}",
+        suspension_details.action
+    );
+
+    // Resolving the second report as a non-CSAM violation too: nothing is left standing, so the
+    // downgrade to the standard severity now applies
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index: report_indexes[1],
+            verdict: ModerationVerdict::Upheld,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    let suspension_details = sender_state.suspension_details.expect("sender should remain suspended");
+    assert!(
+        matches!(suspension_details.action, SuspensionAction::Unsuspend(_)),
+        "{:?}",
+        suspension_details.action
+    );
 }
 
 #[test]

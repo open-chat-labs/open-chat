@@ -1,5 +1,6 @@
 use crate::model::moderation;
 use crate::model::reported_messages::ContestResult;
+use crate::model::user_map::ContestUploadSanctionResult;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -42,6 +43,32 @@ fn contest_moderation_sanction_impl(state: &mut RuntimeState) -> OCResult {
             // Not this report - keep looking
             ContestResult::NotFound | ContestResult::NotContestable | ContestResult::AlreadyResolved => (),
         }
+    }
+
+    // A hash-match suspension has no message and so no report to resolve, but it is still an
+    // automated decision the user can require a person to review. Lifting the suspension is
+    // the reversal, so the contest is raised as a notice in the moderation channel.
+    match state.data.users.contest_csam_upload_sanction(user_id, now) {
+        ContestUploadSanctionResult::Success(csam_report_index) => {
+            let username = state
+                .data
+                .users
+                .get_by_user_id(&user_id)
+                .map(|u| format!("@{}", u.username))
+                .unwrap_or_else(|| user_id.to_string());
+            moderation::post_moderation_notice(
+                format!(
+                    "⚖️ Human review requested\n\n\
+                     {username} ({user_id}) was suspended for trying to post content matching the hash upheld as CSAM in \
+                     report #{csam_report_index}, and has requested that a person reviews that decision. \
+                     If the sanction was wrong, unsuspend the account; there is no report to resolve."
+                ),
+                state,
+            );
+            return Ok(());
+        }
+        ContestUploadSanctionResult::AlreadyContested => saw_already_contested = true,
+        ContestUploadSanctionResult::NotFound => (),
     }
 
     if saw_already_contested {

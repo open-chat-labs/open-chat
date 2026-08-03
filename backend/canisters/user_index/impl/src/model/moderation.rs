@@ -6,7 +6,7 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use rand::RngExt;
 use storage_bucket_canister::c2c_vault_sync::VaultCaptureMetadata;
 use storage_index_canister::c2c_vault_ops::{
-    ApplyVerdictOp, Args as VaultOpsArgs, QuarantineOp, UnquarantineOp, VaultOp, VaultReviewer,
+    ApplyVerdictOp, Args as VaultOpsArgs, DestroyOp, QuarantineOp, SetLegalHoldOp, UnquarantineOp, VaultOp, VaultReviewer,
 };
 use tracing::error;
 use types::{BlobReference, Milliseconds};
@@ -222,11 +222,51 @@ pub fn delete_message(
     }
 }
 
+// Sets the read-gate flag AND deletes the message in a single message to the chat canister.
+// The two must not be sent separately: fire-and-forget sends carry no ordering guarantee, and
+// a message which is deleted while its flag is still in flight can be read by its sender
+// through `deleted_message` and undeleted - after which the flag lands on a live message.
+pub fn delete_and_flag_message(
+    chat_id: Chat,
+    thread_root_message_index: Option<MessageIndex>,
+    message_id: MessageId,
+    flags: u32,
+    already_deleted: bool,
+    fire_and_forget_handler: &mut FireAndForgetHandler,
+) {
+    set_flags_and_maybe_delete(
+        chat_id,
+        thread_root_message_index,
+        message_id,
+        flags,
+        !already_deleted,
+        fire_and_forget_handler,
+    );
+}
+
 pub fn set_message_moderation_flags(
     chat_id: Chat,
     thread_root_message_index: Option<MessageIndex>,
     message_id: MessageId,
     flags: u32,
+    fire_and_forget_handler: &mut FireAndForgetHandler,
+) {
+    set_flags_and_maybe_delete(
+        chat_id,
+        thread_root_message_index,
+        message_id,
+        flags,
+        false,
+        fire_and_forget_handler,
+    );
+}
+
+fn set_flags_and_maybe_delete(
+    chat_id: Chat,
+    thread_root_message_index: Option<MessageIndex>,
+    message_id: MessageId,
+    flags: u32,
+    delete: bool,
     fire_and_forget_handler: &mut FireAndForgetHandler,
 ) {
     match chat_id {
@@ -235,6 +275,7 @@ pub fn set_message_moderation_flags(
                 thread_root_message_index,
                 message_id,
                 flags,
+                delete,
             };
             fire_and_forget_handler.send(
                 group_id.into(),
@@ -248,6 +289,7 @@ pub fn set_message_moderation_flags(
                 thread_root_message_index,
                 message_id,
                 flags,
+                delete,
             };
             fire_and_forget_handler.send(
                 community_id.into(),
@@ -342,6 +384,7 @@ fn suspend(sender: UserId, duration: Option<u64>, reason: String, now: Timestamp
             duration,
             reason,
             suspended_by: OPENCHAT_BOT_USER_ID,
+            attempt: 0,
         }),
         now,
         now,
@@ -504,10 +547,35 @@ pub fn unquarantine_blobs(blob_references: &[BlobReference], moderator: UserId, 
     send_vault_ops(ops, state);
 }
 
-// Applies the uphold verdict to the vault: the retention clock starts and the blob is deleted
-// only when it expires (never while a legal hold is set)
-pub fn apply_vault_verdict(blob_references: &[BlobReference], moderator: UserId, report_index: u64, state: &mut RuntimeState) {
-    let ops = verdict_ops(blob_references, Some(moderator), false, Some(report_index), state.env.now());
+// Sets or clears a legal hold on a report's vaulted blobs. While held, retention expiry never
+// deletes them and a release is deferred rather than performed.
+pub fn set_vault_legal_hold(blob_references: &[BlobReference], legal_hold: bool, state: &mut RuntimeState) {
+    let ops = blob_references
+        .iter()
+        .cloned()
+        .map(|blob_reference| {
+            VaultOp::SetLegalHold(SetLegalHoldOp {
+                blob_reference,
+                legal_hold,
+            })
+        })
+        .collect();
+    send_vault_ops(ops, state);
+}
+
+// Destroys a report's vaulted blobs on a law enforcement request, overriding the retention
+// clock and any legal hold. The vault log entry survives the record.
+pub fn destroy_vault_evidence(blob_references: &[BlobReference], le_request_ref: String, state: &mut RuntimeState) {
+    let ops = blob_references
+        .iter()
+        .cloned()
+        .map(|blob_reference| {
+            VaultOp::Destroy(DestroyOp {
+                blob_reference,
+                le_request_ref: le_request_ref.clone(),
+            })
+        })
+        .collect();
     send_vault_ops(ops, state);
 }
 
@@ -560,18 +628,36 @@ pub fn sync_vault_reviewers(state: &mut RuntimeState) {
     send_vault_ops(vec![VaultOp::SetReviewers(reviewers)], state);
 }
 
-// Lifts a suspension after a Dismissed verdict on an automated sanction
-pub fn unsuspend_sender(sender: UserId, now: TimestampMillis, state: &mut RuntimeState) {
-    state
-        .data
-        .timer_jobs
-        .enqueue_job(TimerJob::UnsuspendUser(UnsuspendUser { user_id: sender }), now, now);
+// Lifts a suspension after a Dismissed verdict on an automated sanction. The sender is told
+// once the unsuspend has actually landed (the job owns the notification), so that a failed
+// reversal never produces a message claiming an unsuspension which did not happen.
+pub fn unsuspend_sender(sender: UserId, report_index: u64, now: TimestampMillis, state: &mut RuntimeState) {
+    state.data.timer_jobs.enqueue_job(
+        TimerJob::UnsuspendUser(UnsuspendUser {
+            user_id: sender,
+            expected_suspension_timestamp: None,
+            attempt: 0,
+            restoration_report_index: Some(report_index),
+        }),
+        now,
+        now,
+    );
 }
 
 // Replaces an indefinite CSAM suspension with the standard severity for an upheld (non-CSAM)
 // violation. Enqueues directly, bypassing the already-indefinitely-suspended guard in suspend()
-// since a downgrade is exactly what is intended here.
-pub fn downgrade_suspension_to_upheld_violation(sender: UserId, now: TimestampMillis, state: &mut RuntimeState) {
+// since a downgrade is exactly what is intended here - but only when no OTHER report is still
+// keeping the sender sanctioned, since this verdict may only reverse its own report's severity.
+pub fn downgrade_suspension_to_upheld_violation(
+    sender: UserId,
+    report_index: u64,
+    now: TimestampMillis,
+    state: &mut RuntimeState,
+) {
+    if has_other_active_sanction(sender, report_index, now, state) {
+        return;
+    }
+
     let (duration, reason) = if in_breach_count(sender, state) > 2 {
         (None, "Multiple violations of the platform rules".to_string())
     } else {
@@ -584,6 +670,7 @@ pub fn downgrade_suspension_to_upheld_violation(sender: UserId, now: TimestampMi
             duration,
             reason,
             suspended_by: OPENCHAT_BOT_USER_ID,
+            attempt: 0,
         }),
         now,
         now,
@@ -611,6 +698,12 @@ fn in_breach_count(sender: UserId, state: &RuntimeState) -> usize {
 // verdict on one report must only reverse that report's own contribution - it must never lift
 // a suspension imposed by a different, still-standing report.
 pub fn has_other_active_sanction(sender: UserId, except_report_index: u64, now: TimestampMillis, state: &RuntimeState) -> bool {
+    // A hash-match suspension has no report, so it would otherwise be invisible here and any
+    // unrelated dismissal would silently lift it
+    if state.data.users.has_csam_upload_sanction(&sender) {
+        return true;
+    }
+
     state
         .data
         .users

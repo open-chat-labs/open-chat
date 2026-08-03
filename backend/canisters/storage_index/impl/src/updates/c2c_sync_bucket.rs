@@ -15,6 +15,20 @@ fn c2c_sync_bucket(args: Args) -> Response {
 fn c2c_sync_bucket_impl(args: Args, state: &mut RuntimeState) -> Response {
     let bucket = state.env.caller();
 
+    // A file arriving with a hash already upheld as CSAM means this bucket has not applied the
+    // denylist - it was uploaded before the op landed, or the op was dropped. Re-push it: the
+    // bucket then refuses to serve the bytes and blocks any further upload of them.
+    let denylisted_hashes: Vec<_> = args
+        .files_added
+        .iter()
+        .filter(|f| state.data.csam_hashes.contains_key(&f.hash))
+        .map(|f| (f.hash, state.data.csam_hashes[&f.hash]))
+        .collect();
+    for (hash, report_index) in denylisted_hashes {
+        tracing::error!(%bucket, report_index, "File uploaded with a hash upheld as CSAM; re-pushing the denylist");
+        state.data.push_denylisted_hash_to_bucket(bucket, hash, report_index);
+    }
+
     let files_rejected = args
         .files_added
         .into_iter()
@@ -23,6 +37,12 @@ fn c2c_sync_bucket_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     for file in args.files_removed {
         state.data.remove_file_reference(bucket, file);
+    }
+
+    for denylisted in args.csam_hashes_denylisted {
+        state
+            .data
+            .denylist_csam_hash(bucket, denylisted.hash, denylisted.report_index);
     }
 
     if !args.csam_matches.is_empty() {

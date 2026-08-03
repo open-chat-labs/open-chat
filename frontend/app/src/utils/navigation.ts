@@ -176,6 +176,7 @@ export function parentRoute(from: RouteParams): string | null {
         case "diamond_route":
         case "guidelines_route":
         case "terms_route":
+        case "privacy_route":
         case "blog_route":
             return null;
     }

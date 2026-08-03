@@ -663,6 +663,17 @@ pub fn build_restoration_message_to_sender(reported_message: &ReportedMessage, u
     build_oc_bot_message(text, reported_message.sender)
 }
 
+// The statement of reasons for a hash-match suspension: there is no message and so no report,
+// but the user must still be told why and how to require human review. Deliberately does not
+// disclose whether any agency report was filed.
+pub fn build_upload_sanction_message_to_uploader(user_id: UserId) -> UserIndexEvent {
+    let text = "Your account has been suspended. Content you tried to upload matches content which the OpenChat moderation team has confirmed to be child sexual abuse material, which is prohibited by [the platform rules](https://oc.app/guidelines?section=3). \
+        If you believe this is wrong you can request that a person reviews the decision, using the button on the suspension notice."
+        .to_string();
+
+    build_oc_bot_message(text, user_id)
+}
+
 pub fn build_message_to_sender(reported_message: &ReportedMessage, suspended: bool) -> UserIndexEvent {
     let text = format!(
         "Your [message]({}) was reported by another user and automated moderation determined that it contained content which breaks [the platform rules](https://oc.app/guidelines?section=3). {}",

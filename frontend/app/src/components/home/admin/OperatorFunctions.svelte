@@ -61,6 +61,11 @@
     // noise out of the queue)
     let referralThresholds: Record<number, string> = $state({});
     let vaultReviewerIds = $state("");
+    let legalHoldReportIndex = $state("");
+    let legalHoldReference = $state("");
+    let destroyReportIndex = $state("");
+    let destroyRequestRef = $state("");
+    let destroyConfirmed = $state(false);
 
     const CSAM_CATEGORY_BIT = 2;
     let referralThresholdsInvalid = $derived.by(() => {
@@ -376,6 +381,63 @@
             .finally(() => removeBusy(10));
     }
 
+    // A preservation request stops the retention clock deleting the evidence; clearing the hold
+    // performs any release which was deferred while it was set
+    function setVaultLegalHold(legalHold: boolean): void {
+        error = undefined;
+        const reportIndex = parseReportIndex(legalHoldReportIndex);
+        if (reportIndex === undefined || legalHoldReference.trim() === "") {
+            error = i18nKey("A report index and a request reference are both required");
+            toastStore.showFailureToast(error);
+            return;
+        }
+        addBusy(11);
+        client
+            .setVaultLegalHold(reportIndex, legalHold, legalHoldReference.trim())
+            .then((success) => {
+                if (success) {
+                    toastStore.showSuccessToast(
+                        i18nKey(legalHold ? "Legal hold set" : "Legal hold cleared"),
+                    );
+                } else {
+                    error = i18nKey("Failed to update the legal hold");
+                    toastStore.showFailureToast(error);
+                }
+            })
+            .finally(() => removeBusy(11));
+    }
+
+    // Irreversible: destroys the evidence regardless of the retention clock or any legal hold
+    function destroyVaultEvidence(): void {
+        error = undefined;
+        const reportIndex = parseReportIndex(destroyReportIndex);
+        if (reportIndex === undefined || destroyRequestRef.trim() === "") {
+            error = i18nKey("A report index and a law enforcement reference are both required");
+            toastStore.showFailureToast(error);
+            return;
+        }
+        addBusy(12);
+        client
+            .destroyVaultEvidence(reportIndex, destroyRequestRef.trim())
+            .then((success) => {
+                if (success) {
+                    destroyConfirmed = false;
+                    destroyReportIndex = "";
+                    destroyRequestRef = "";
+                    toastStore.showSuccessToast(i18nKey("Vaulted evidence destroyed"));
+                } else {
+                    error = i18nKey("Failed to destroy the vaulted evidence");
+                    toastStore.showFailureToast(error);
+                }
+            })
+            .finally(() => removeBusy(12));
+    }
+
+    function parseReportIndex(value: string): bigint | undefined {
+        const trimmed = value.trim();
+        return /^\d+$/.test(trimmed) ? BigInt(trimmed) : undefined;
+    }
+
     function setInternalModerationChannel(): void {
         error = undefined;
         addBusy(8);
@@ -679,6 +741,72 @@
                 Apply
             </Button>
         </ButtonGroup>
+    </section>
+
+    <section class="operator-function">
+        <div class="title">Vault legal hold</div>
+        <div class="hint">
+            Preservation request: suspends the retention clock for a report's vaulted evidence, so
+            it is never deleted at expiry. Clearing the hold performs any release which was
+            deferred while it was set.
+        </div>
+        <div class="name-value">
+            <div class="label">Report index:</div>
+            <div class="value">
+                <Input bind:value={legalHoldReportIndex} />
+            </div>
+        </div>
+        <div class="name-value">
+            <div class="label">Request reference:</div>
+            <div class="value">
+                <Input bind:value={legalHoldReference} />
+            </div>
+        </div>
+        <ButtonGroup align="fill">
+            <Button
+                tiny
+                disabled={busy.has(11)}
+                loading={busy.has(11)}
+                onClick={() => setVaultLegalHold(true)}>Set hold</Button>
+            <Button
+                tiny
+                secondary
+                disabled={busy.has(11)}
+                loading={busy.has(11)}
+                onClick={() => setVaultLegalHold(false)}>Clear hold</Button>
+        </ButtonGroup>
+    </section>
+
+    <section class="operator-function">
+        <div class="title">Destroy vaulted evidence</div>
+        <div class="hint">
+            Law enforcement destruction request. Irreversible, and overrides both the retention
+            clock and any legal hold: the blobs are removed even if a message still references
+            them. The reference is recorded in the vault log, which survives the destruction.
+        </div>
+        <div class="name-value">
+            <div class="label">Report index:</div>
+            <div class="value">
+                <Input bind:value={destroyReportIndex} />
+            </div>
+        </div>
+        <div class="name-value">
+            <div class="label">LE request reference:</div>
+            <div class="value">
+                <Input bind:value={destroyRequestRef} />
+            </div>
+        </div>
+        <div class="name-value">
+            <div class="label">Request verified:</div>
+            <div class="value">
+                <Toggle small id="confirm-destroy-vault-evidence" bind:checked={destroyConfirmed} />
+            </div>
+        </div>
+        <Button
+            tiny
+            disabled={busy.has(12) || !destroyConfirmed}
+            loading={busy.has(12)}
+            onClick={destroyVaultEvidence}>Destroy</Button>
     </section>
 
     <section class="operator-function">
