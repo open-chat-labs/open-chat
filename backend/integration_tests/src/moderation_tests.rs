@@ -1562,6 +1562,7 @@ fn upheld_verdict_does_not_downgrade_while_another_sanction_stands() {
     // mocked response flags both - the broker batches pending messages into one classify
     // request, whose `input` array carries them together.
     let token = random_string();
+    let message_text = format!("{TEST_MESSAGE_TEXT} {token}");
     let message_ids: Vec<_> = (0..2)
         .map(|_| {
             let message_id = random_from_u128();
@@ -1570,7 +1571,7 @@ fn upheld_verdict_does_not_downgrade_while_another_sanction_stands() {
                 &test_data.sender,
                 test_data.group_id,
                 None,
-                &format!("{TEST_MESSAGE_TEXT} {token}"),
+                &message_text,
                 Some(message_id),
             );
             message_id
