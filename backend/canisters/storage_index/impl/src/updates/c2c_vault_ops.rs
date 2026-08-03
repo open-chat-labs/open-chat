@@ -16,6 +16,10 @@ fn c2c_vault_ops(args: Args) -> Response {
 }
 
 fn c2c_vault_ops_impl(args: Args, state: &mut RuntimeState) -> Response {
+    // The vault control plane is only ever driven by the user_index; remember its canister id
+    // so bucket-detected CSAM re-uploads can be reported back to it (see c2c_sync_bucket)
+    state.data.user_index_canister_id = Some(state.env.caller());
+
     for op in args.ops {
         match op {
             VaultOp::Quarantine(q) => {

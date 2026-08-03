@@ -699,7 +699,8 @@ export interface ForwardFileArgs {
 export type ForwardFileResponse =
     | { NotFound: null }
     | { NotAuthorized: null }
-    | { Success: FileId };
+    | { Success: FileId }
+    | { Blocked: null };
 export interface FrozenGroupInfo {
     timestamp: TimestampMillis;
     frozen_by: UserId;
@@ -1719,7 +1720,8 @@ export type UploadChunkResponse =
     | { FileAlreadyExists: null }
     | { AllowanceExceeded: null }
     | { InvalidFileId: null }
-    | { UserNotFound: null };
+    | { UserNotFound: null }
+    | { Blocked: null };
 export interface User {
     username: string;
     user_id: UserId;

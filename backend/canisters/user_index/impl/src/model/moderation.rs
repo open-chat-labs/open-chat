@@ -86,6 +86,27 @@ pub fn post_moderation_alert(alert: ModerationAlert, state: &mut RuntimeState) {
     );
 }
 
+// Posts a plain-text OC-bot notice into the internal moderation channel: for alarms which
+// have no reported message to anchor a report card to (eg. a re-upload of known CSAM content)
+pub fn post_moderation_notice(text: String, state: &mut RuntimeState) {
+    let Some((community_id, channel_id)) = state.data.internal_moderation_channel else {
+        error!("Moderation notice raised but no internal moderation channel is configured");
+        return;
+    };
+
+    let message_id: MessageId = state.env.rng().random::<u128>().into();
+    let args = community_canister::c2c_send_moderation_notice::Args {
+        channel_id,
+        message_id,
+        text,
+    };
+    state.data.fire_and_forget_handler.send(
+        community_id.into(),
+        "c2c_send_moderation_notice_msgpack".to_string(),
+        msgpack::serialize_then_unwrap(&args),
+    );
+}
+
 // Updates the status shown on the alert message in the internal moderation channel
 pub fn update_moderation_alert_status(
     reported_message: &ReportedMessage,

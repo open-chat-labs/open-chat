@@ -359,6 +359,10 @@ export class DataClient extends EventTarget {
                         onProgress?.((100 * chunksCompleted) / chunkCount);
                         return;
                     }
+                    if (chunkResponse === "blocked") {
+                        error = new Error("This file cannot be uploaded");
+                        return;
+                    }
                 } catch (e) {
                     if (attempt >= 5) {
                         error = e;
@@ -415,6 +419,7 @@ export class DataClient extends EventTarget {
 
             case "not_authorized":
             case "file_not_found":
+            case "blocked":
                 return forwardFileResponse;
         }
     }
@@ -431,7 +436,8 @@ type ForwardFileResponse =
     | AllowanceExceeded
     | StorageUserNotFound
     | { kind: "not_authorized" }
-    | { kind: "file_not_found" };
+    | { kind: "file_not_found" }
+    | { kind: "blocked" };
 
 type ForwardFileSuccess = {
     kind: "success";

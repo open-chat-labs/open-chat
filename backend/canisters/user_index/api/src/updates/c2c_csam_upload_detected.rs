@@ -1,26 +1,18 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{FileAdded, FileId, FileRejected, FileRemoved, Hash};
+use types::{CanisterId, FileId, Hash, UnitResult};
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Default)]
+// Sent by the storage index when a bucket detects a completed upload whose hash matches
+// content previously upheld as CSAM
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub files_added: Vec<FileAdded>,
-    pub files_removed: Vec<FileRemoved>,
-    #[serde(default)]
-    pub heap_memory_used: u64,
-    #[serde(default)]
-    pub stable_memory_used: u64,
-    #[serde(default)]
-    pub total_file_bytes: u64,
-    // Completed uploads whose (verified) hash matches content previously upheld as CSAM;
-    // forwarded to the user_index so moderators can act on the uploader
-    #[serde(default)]
-    pub csam_matches: Vec<CsamMatch>,
+    pub matches: Vec<CsamUploadMatch>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CsamMatch {
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct CsamUploadMatch {
     pub uploader: Principal,
+    pub bucket: CanisterId,
     pub file_id: FileId,
     pub hash: Hash,
     // The report whose UpheldAsCsam verdict denylisted the hash
@@ -42,12 +34,4 @@ pub enum CsamMatchKind {
     ExistingCopy,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success(SuccessResult),
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct SuccessResult {
-    pub files_rejected: Vec<FileRejected>,
-}
+pub type Response = UnitResult;

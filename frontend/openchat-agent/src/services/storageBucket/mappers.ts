@@ -52,6 +52,9 @@ export function uploadChunkResponse(candid: CandidUploadChunkResponse): UploadCh
     if ("Full" in candid) {
         return "full";
     }
+    if ("Blocked" in candid) {
+        return "blocked";
+    }
     throw new UnsupportedValueError(
         "Unknown Bucket.CandidUploadChunkResponse type received",
         candid,
@@ -70,6 +73,9 @@ export function forwardFileResponse(candid: CandidForwardFileResponse): ForwardF
     }
     if ("NotFound" in candid) {
         return { kind: "file_not_found" };
+    }
+    if ("Blocked" in candid) {
+        return { kind: "blocked" };
     }
     throw new UnsupportedValueError(
         "Unknown Bucket.CandidForwardFileResponse type received",

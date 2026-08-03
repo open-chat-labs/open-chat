@@ -105,6 +105,11 @@ impl RuntimeState {
         caller == self.data.group_index_canister_id
     }
 
+    pub fn is_caller_storage_index_canister(&self) -> bool {
+        let caller = self.env.caller();
+        caller == self.data.storage_index_canister_id
+    }
+
     pub fn is_caller_translations_canister(&self) -> bool {
         let caller = self.env.caller();
         caller == self.data.translations_canister_id

@@ -3619,6 +3619,7 @@ export const StorageBucketUploadChunkResponse = Type.Union([
     Type.Literal("HashMismatch"),
     Type.Literal("InvalidFileId"),
     Type.Literal("UserNotFound"),
+    Type.Literal("Blocked"),
 ]);
 
 export type StorageBucketUploadChunkArgs = Static<typeof StorageBucketUploadChunkArgs>;
@@ -3703,6 +3704,7 @@ export const StorageBucketForwardFileResponse = Type.Union([
     }),
     Type.Literal("NotAuthorized"),
     Type.Literal("NotFound"),
+    Type.Literal("Blocked"),
 ]);
 
 export type StorageBucketForwardFileArgs = Static<typeof StorageBucketForwardFileArgs>;

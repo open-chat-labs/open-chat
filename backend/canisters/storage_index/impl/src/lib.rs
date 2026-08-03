@@ -5,6 +5,7 @@ use crate::model::vault_event_batch::VaultEventBatch;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
 use constants::ICP_LEDGER_CANISTER_ID;
+use fire_and_forget_handler::FireAndForgetHandler;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -116,6 +117,12 @@ struct Data {
     pub vault_event_sync_queue: GroupedTimerJobQueue<VaultEventBatch>,
     #[serde(default, deserialize_with = "deserialize_vault_reviewers")]
     pub vault_reviewers: Vec<VaultReviewer>,
+    // Learned from the caller of c2c_vault_ops (only ever the user_index); used to report
+    // bucket-detected CSAM re-uploads back to it
+    #[serde(default)]
+    pub user_index_canister_id: Option<CanisterId>,
+    #[serde(default)]
+    pub fire_and_forget_handler: FireAndForgetHandler,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_config: CyclesDispenserConfig,
@@ -159,6 +166,8 @@ impl Data {
             bucket_event_sync_queue: GroupedTimerJobQueue::new(5, false),
             vault_event_sync_queue: default_vault_event_sync_queue(),
             vault_reviewers: Vec::new(),
+            user_index_canister_id: None,
+            fire_and_forget_handler: FireAndForgetHandler::default(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,
             cycles_dispenser_config,

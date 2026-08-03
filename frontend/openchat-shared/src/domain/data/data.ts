@@ -31,12 +31,14 @@ export type UploadChunkResponse =
     | "user_not_found"
     | "hash_mismatch"
     | "invalid_file_id"
-    | "full";
+    | "full"
+    | "blocked";
 
 export type ForwardFileResponse =
     | { kind: "success"; newFileId: bigint }
     | { kind: "not_authorized" }
-    | { kind: "file_not_found" };
+    | { kind: "file_not_found" }
+    | { kind: "blocked" };
 
 export type DeleteFileResponse = "success" | "not_authorized" | "file_not_found";
 

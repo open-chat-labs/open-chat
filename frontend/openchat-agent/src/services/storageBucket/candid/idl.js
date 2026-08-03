@@ -40,6 +40,7 @@ export const idlFactory = ({ IDL }) => {
         NotFound: IDL.Null,
         NotAuthorized: IDL.Null,
         Success: FileId,
+        Blocked: IDL.Null,
     });
     const TimestampMillis = IDL.Nat64;
     const UploadChunkArgs = IDL.Record({
@@ -102,6 +103,7 @@ export const idlFactory = ({ IDL }) => {
         AllowanceExceeded: IDL.Null,
         InvalidFileId: IDL.Null,
         UserNotFound: IDL.Null,
+        Blocked: IDL.Null,
     });
     return IDL.Service({
         vault_file_chunk: IDL.Func([VaultFileChunkArgs], [VaultFileChunkResponse], []),

@@ -5,6 +5,7 @@ pub mod add_platform_operator;
 pub mod assign_platform_moderators_group;
 pub mod award_external_achievement;
 pub mod c2c_csam_detected;
+pub mod c2c_csam_upload_detected;
 pub mod c2c_delete_user;
 pub mod c2c_local_user_index;
 pub mod c2c_moderation_referral;

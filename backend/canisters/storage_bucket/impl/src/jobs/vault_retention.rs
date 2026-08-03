@@ -34,7 +34,7 @@ fn run() {
     mutate_state(|state| {
         let now = state.env.now();
         for hash in state.data.vault.remove_expired(now) {
-            state.data.files.vault_unpin(&hash);
+            state.data.files.vault_purge(&hash);
             info!("Vault: blob removed at retention expiry");
         }
         start_job_if_required(state);

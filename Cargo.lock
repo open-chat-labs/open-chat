@@ -10832,6 +10832,7 @@ dependencies = [
  "cycles_dispenser_client",
  "cycles_minting_canister",
  "cycles_minting_canister_c2c_client",
+ "fire_and_forget_handler",
  "futures",
  "http_request",
  "human_readable",
@@ -10853,6 +10854,7 @@ dependencies = [
  "timer_job_queues",
  "tracing",
  "types",
+ "user_index_canister",
  "utils",
 ]
 

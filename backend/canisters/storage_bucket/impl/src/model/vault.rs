@@ -18,6 +18,18 @@ pub struct Vault {
     log: Vec<VaultLogEntry>,
     #[serde(default)]
     quarantine_failures: u64,
+    // Hashes whose content received an UpheldAsCsam verdict, kept forever (a resolved report
+    // can never be re-resolved, so a CSAM verdict is final): blocks public serving even after
+    // the vaulted record is released, and lets a re-upload of the same content be detected
+    // and reported. Maps to the report whose verdict denylisted the hash.
+    #[serde(default)]
+    csam_hashes: BTreeMap<Hash, u64>,
+    // (uploader, file id) pairs whose upload/forward was refused because of a denylisted
+    // hash: dedupes the report to the user_index, which would otherwise fire once per chunk
+    // (chunks upload in parallel and each one is refused) and once per retry of the same
+    // attempt. Keyed per uploader so one user's refused forward never silences another's.
+    #[serde(default)]
+    blocked_attempts: BTreeSet<(Principal, FileId)>,
     // Ephemeral read sessions: (reviewer, file_id) -> next expected chunk. Not serialized:
     // an upgrade resets sessions and reviewers restart from chunk 0 (an extra logged act,
     // never an unlogged one).
@@ -209,6 +221,37 @@ impl Vault {
         self.quarantine_failures += 1;
     }
 
+    pub fn is_csam_hash(&self, hash: &Hash) -> bool {
+        self.csam_hashes.contains_key(hash)
+    }
+
+    pub fn known_csam_report_index(&self, hash: &Hash) -> Option<u64> {
+        self.csam_hashes.get(hash).copied()
+    }
+
+    // True the first time this (uploader, file id) pair is blocked: the caller only reports
+    // the attempt to the user_index on the first sighting
+    pub fn record_blocked_attempt(&mut self, uploader: Principal, file_id: FileId) -> bool {
+        self.blocked_attempts.insert((uploader, file_id))
+    }
+
+    // One-time backfill for records verdicted before the denylist existed. Idempotent, so
+    // safe to run on every upgrade.
+    pub fn backfill_csam_hashes(&mut self) {
+        let entries: Vec<(Hash, u64)> = self
+            .records
+            .values()
+            .filter(|r| r.verdict_applied)
+            .map(|r| {
+                let report_index = r.verdicted_report_indexes.first().copied().unwrap_or(r.metadata.report_index);
+                (r.hash, report_index)
+            })
+            .collect();
+        for (hash, report_index) in entries {
+            self.csam_hashes.entry(hash).or_insert(report_index);
+        }
+    }
+
     pub fn unquarantine(
         &mut self,
         file_id: FileId,
@@ -272,6 +315,9 @@ impl Vault {
             if let Some(report_index) = report_index {
                 record.verdicted_report_indexes.insert(report_index);
             }
+            let hash = record.hash;
+            let denylist_report_index = report_index.unwrap_or(record.metadata.report_index);
+            self.csam_hashes.entry(hash).or_insert(denylist_report_index);
             self.append_log(VaultLogEvent::VerdictAppliedBy(file_id, retention_until, moderator), now);
         }
         VaultOpOutcome::Applied
@@ -402,6 +448,7 @@ impl Vault {
             reviewers: self.reviewers.len() as u64,
             log_length: self.log.len() as u64,
             quarantine_failures: self.quarantine_failures,
+            csam_hashes: self.csam_hashes.len() as u64,
             unresolved_quarantines: self.records.values().filter(|r| r.has_unresolved_claims()).count() as u64,
             oldest_unresolved_quarantined_at: self
                 .records
@@ -449,6 +496,7 @@ pub struct VaultMetrics {
     pub reviewers: u64,
     pub log_length: u64,
     pub quarantine_failures: u64,
+    pub csam_hashes: u64,
     pub unresolved_quarantines: u64,
     pub oldest_unresolved_quarantined_at: Option<TimestampMillis>,
 }
@@ -693,6 +741,55 @@ mod tests {
         assert_eq!(vault.metrics().unresolved_quarantines, 0);
         assert_eq!(vault.remove_expired(10_000).len(), 1);
         assert!(vault.record_for_file(&1).is_none());
+    }
+
+    #[test]
+    fn csam_hash_denylisted_by_verdict_and_survives_release() {
+        let mut vault = vault_with_reviewer();
+        let hash = [1u8; 32];
+        vault.quarantine(1, hash, "image/png".to_string(), metadata(7), 100);
+        assert!(!vault.is_csam_hash(&hash));
+
+        vault.apply_verdict(1, 999, None, false, Some(7), 200);
+        assert_eq!(vault.known_csam_report_index(&hash), Some(7));
+
+        // Expiry releases the record but never the denylist entry
+        assert_eq!(vault.remove_expired(10_000).len(), 1);
+        assert!(vault.record_for_file(&1).is_none());
+        assert!(vault.is_csam_hash(&hash));
+
+        // A dismissal-driven release never denylists
+        let other = [2u8; 32];
+        vault.quarantine(2, other, "image/png".to_string(), metadata(8), 300);
+        assert!(matches!(
+            vault.unquarantine(2, None, Some(8), 400),
+            VaultOpOutcome::ReleasePin(_)
+        ));
+        assert!(!vault.is_csam_hash(&other));
+    }
+
+    #[test]
+    fn blocked_attempts_report_once_per_uploader_and_file() {
+        let mut vault = vault_with_reviewer();
+        // First sighting reports; the parallel/retried chunks of the same attempt do not
+        assert!(vault.record_blocked_attempt(reviewer(1), 42));
+        assert!(!vault.record_blocked_attempt(reviewer(1), 42));
+        // A different user attempting the same file is a fresh attempt
+        assert!(vault.record_blocked_attempt(reviewer(2), 42));
+    }
+
+    #[test]
+    fn backfill_denylists_previously_verdicted_records() {
+        let mut vault = vault_with_reviewer();
+        vault.quarantine(1, [1u8; 32], "image/png".to_string(), metadata(7), 100);
+        vault.apply_verdict(1, 999, None, false, Some(7), 200);
+
+        // Simulate a record verdicted before the denylist existed
+        vault.csam_hashes.clear();
+        assert!(!vault.is_csam_hash(&[1u8; 32]));
+
+        vault.backfill_csam_hashes();
+        assert_eq!(vault.known_csam_report_index(&[1u8; 32]), Some(7));
     }
 
     #[test]

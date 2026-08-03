@@ -48,7 +48,9 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
             }
             VaultOp::ApplyVerdict(v) => {
                 // Loud on NotFound: a verdict landing on a missing record means evidence that
-                // should have been held was already released - the worst failure mode
+                // should have been held was already released - the worst failure mode.
+                // Existing copies of the blob are deliberately NOT swept: every reported copy
+                // gets its own human verdict, and the denylist only gates FUTURE uploads.
                 if matches!(
                     state.data.vault.apply_verdict(
                         v.file_id,
@@ -73,7 +75,7 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
             VaultOp::Destroy(d) => {
                 let file_id = d.file_id;
                 if let VaultOpOutcome::ReleasePin(hash) = state.data.vault.destroy(d.file_id, d.le_request_ref, now) {
-                    state.data.files.vault_unpin(&hash);
+                    state.data.files.vault_purge(&hash);
                     info!(%file_id, "Vault: destroyed on law enforcement request");
                 }
             }

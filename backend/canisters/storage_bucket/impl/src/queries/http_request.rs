@@ -51,7 +51,10 @@ fn start_streaming_file(file_id: FileId, request_headers: &[(String, String)], s
     if let Some(file) = state.data.files.get(&file_id)
         // Quarantined blobs are never served publicly. The check is hash-based, so any file
         // referencing a quarantined blob (including re-uploads of the same content) is covered.
+        // A hash whose content was upheld as CSAM stays blocked forever, even after the
+        // vaulted record itself is released.
         && !state.data.files.is_vault_pinned(&file.hash)
+        && !state.data.vault.is_csam_hash(&file.hash)
         && let Some(file_bytes) = state.data.files.blob_bytes(&file.hash)
     {
         let file_bytes_len = file_bytes.len();
@@ -145,7 +148,7 @@ fn continue_streaming_file(token: Token, state: &RuntimeState) -> StreamingCallb
 
         if let Some(bytes) = files
             .get(&file_id)
-            .filter(|f| !files.is_vault_pinned(&f.hash))
+            .filter(|f| !files.is_vault_pinned(&f.hash) && !state.data.vault.is_csam_hash(&f.hash))
             .and_then(|f| files.blob_bytes(&f.hash))
         {
             let (chunk_bytes, stream_next_chunk) = chunk_bytes(bytes, chunk_index);

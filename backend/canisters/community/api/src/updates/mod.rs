@@ -26,6 +26,7 @@ pub mod c2c_local_index;
 pub mod c2c_moderation_hard_delete;
 pub mod c2c_moderation_undelete;
 pub mod c2c_send_message;
+pub mod c2c_send_moderation_notice;
 pub mod c2c_send_moderation_report;
 pub mod c2c_set_user_suspended;
 pub mod c2c_tip_message;
