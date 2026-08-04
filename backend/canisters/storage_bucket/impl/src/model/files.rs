@@ -388,6 +388,16 @@ impl Files {
         }
     }
 
+    // Releases a vault pin AND removes the blob bytes regardless of remaining file references:
+    // at retention expiry or LE-requested destruction, a restored or re-posted message still
+    // referencing the same bytes must not resurrect public serving of the content
+    pub fn vault_purge(&mut self, hash: &Hash) {
+        if self.vault_pins.remove(hash) {
+            self.reference_counts.decr(*hash);
+        }
+        self.remove_blob(hash);
+    }
+
     pub fn is_vault_pinned(&self, hash: &Hash) -> bool {
         self.vault_pins.contains(hash)
     }

@@ -1386,6 +1386,7 @@ export class CommunityClient
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         deleteMessage: boolean,
+        csam: boolean,
     ): Promise<boolean> {
         return this.update(
             chatId.communityId,
@@ -1395,6 +1396,7 @@ export class CommunityClient
                 thread_root_message_index: threadRootMessageIndex,
                 message_id: messageId,
                 delete: deleteMessage,
+                csam,
             },
             (resp) => resp === "Success",
             CommunityReportMessageArgs,

@@ -7,17 +7,44 @@ import {
     fileInfoResponse,
     forwardFileResponse,
     uploadChunkResponse,
+    vaultFileChunkResponse,
+    vaultLogResponse,
 } from "./mappers";
 import type {
+    VaultLogResponse,
     DeleteFileResponse,
     FileInfoResponse,
     ForwardFileResponse,
     UploadChunkResponse,
+    VaultFileChunkResponse,
 } from "@shared";
 
 export class StorageBucketClient extends CandidCanisterAgent<StorageBucketService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
         super(identity, agent, canisterId, idlFactory, "StorageBucket");
+    }
+
+    // A page of the vault's tamper-evident access log, readable by designated vault reviewers
+    vaultLog(start: bigint, max: number, fileId: bigint | undefined): Promise<VaultLogResponse> {
+        return this.handleQueryResponse(
+            () =>
+                this.service.vault_log({
+                    start,
+                    max,
+                    file_id: fileId !== undefined ? [fileId] : [],
+                }),
+            vaultLogResponse,
+        );
+    }
+
+    // Fetches one chunk of a quarantined blob for an allowlisted vault reviewer. An update
+    // call by design: every fetch session is recorded in the vault's access log, and chunks
+    // after the first are served only in session order.
+    vaultFileChunk(fileId: bigint, chunkIndex: number): Promise<VaultFileChunkResponse> {
+        return this.handleResponse(
+            this.service.vault_file_chunk({ file_id: fileId, chunk_index: chunkIndex }),
+            vaultFileChunkResponse,
+        );
     }
 
     uploadChunk(

@@ -71,7 +71,10 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Partitione
                 } else if (e.event.content.kind === "moderation_report_content") {
                     userIds.add(e.event.content.sender);
                     e.event.content.reporters.forEach((r) => userIds.add(r));
-                    if (e.event.content.status.kind !== "pending") {
+                    if (
+                        e.event.content.status.kind !== "pending" &&
+                        e.event.content.status.kind !== "contested"
+                    ) {
                         userIds.add(e.event.content.status.moderator);
                     }
                 } else if (e.event.content.kind === "prize_winner_content") {

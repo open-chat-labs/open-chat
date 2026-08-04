@@ -11,6 +11,8 @@ pub struct Args {
     pub message: Message,
     pub already_deleted: bool,
     pub is_public: bool,
+    #[serde(default)]
+    pub csam: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

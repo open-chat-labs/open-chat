@@ -94,6 +94,14 @@
                     {:then { default: TermsPage }}
                         <TermsPage />
                     {/await}
+                {:else if client.isPrivacyRoute($routeStore)}
+                    {#await import("./PrivacyPage.svelte")}
+                        <div class="loading">
+                            <Loading />
+                        </div>
+                    {:then { default: PrivacyPage }}
+                        <PrivacyPage />
+                    {/await}
                 {:else if client.isFaqRoute($routeStore)}
                     {#await import("./FAQPage.svelte")}
                         <div class="loading">

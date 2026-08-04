@@ -10713,6 +10713,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
+ "msgpack",
  "serde",
  "serde_bytes",
  "ts-rs",
@@ -10742,6 +10743,7 @@ dependencies = [
  "canister_state_macros",
  "canister_tracing_macros",
  "constants",
+ "hex",
  "http_request",
  "ic-cdk 0.20.2",
  "ic-cdk-timers",
@@ -10760,6 +10762,7 @@ dependencies = [
  "storage_index_canister_c2c_client",
  "test-case",
  "test-strategy",
+ "time",
  "timer_job_queues",
  "tracing",
  "types",
@@ -10829,6 +10832,7 @@ dependencies = [
  "cycles_dispenser_client",
  "cycles_minting_canister",
  "cycles_minting_canister_c2c_client",
+ "fire_and_forget_handler",
  "futures",
  "http_request",
  "human_readable",
@@ -10850,6 +10854,7 @@ dependencies = [
  "timer_job_queues",
  "tracing",
  "types",
+ "user_index_canister",
  "utils",
 ]
 
@@ -12852,6 +12857,7 @@ dependencies = [
  "serde_json",
  "stable_memory",
  "stable_memory_map",
+ "storage_bucket_canister",
  "storage_index_canister",
  "storage_index_canister_c2c_client",
  "testing",

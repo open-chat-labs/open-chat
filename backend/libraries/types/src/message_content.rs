@@ -748,9 +748,7 @@ pub struct ReportedMessage {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ModerationReportContent {
-    // The index of the report on the user_index, used to resolve the report with a verdict.
-    // None if this alert came from the automated pipeline (eg. a CSAM detection) in which case
-    // there is nothing to resolve.
+    // The index of the report on the user_index, used to resolve the report with a verdict
     pub report_index: Option<u64>,
     pub chat_id: Chat,
     pub thread_root_message_index: Option<MessageIndex>,
@@ -760,17 +758,41 @@ pub struct ModerationReportContent {
     // Empty if the alert was triggered by the automated moderation pipeline
     pub reporters: Vec<UserId>,
     pub flagged_categories: u32,
+    // Distinguishes "the classifier found nothing" (false, no flagged categories) from "the
+    // classifier could not check this content" (true - API failure after retries): a failed
+    // classification must never present as a clean one
+    #[serde(default)]
+    #[ts(as = "Option<bool>", optional)]
+    pub classification_failed: bool,
     // True if the CSAM auto-sanction has already been applied
     pub auto_sanctioned: bool,
     pub content_excerpt: Option<String>,
+    // The message's media attachments, held in the evidence vault; viewable only by designated
+    // vault reviewers via the explicit Review affordance (no media is ever embedded in alerts)
+    #[serde(default)]
+    pub blob_references: Vec<BlobReference>,
     pub reported_at: TimestampMillis,
     pub status: ModerationReportStatus,
+    // Present on UpheldAsCsam reports: whether the authority (NCA) report is still due or has
+    // been filed, so the filing workflow lives on the report card itself
+    #[serde(default)]
+    #[ts(optional)]
+    pub authority_report: Option<AuthorityReportState>,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub enum AuthorityReportState {
+    Due { urgent: bool },
+    Filed { portal_reference: String },
 }
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ModerationReportStatus {
     Pending,
+    // The sanctioned sender has contested the automated decision - prioritise review
+    Contested,
     Upheld(ModerationReportResolution),
     UpheldAsCsam(ModerationReportResolution),
     Dismissed(ModerationReportResolution),

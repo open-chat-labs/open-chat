@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Reports which assert child sexual abuse content quarantine the media and delete the message immediately - the material is never viewed outside the quarantine framework - while the suspension waits for the human verdict ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+
+- Suspension notice from the OC bot points appeals at safety@openchatlabs.org instead of a Twitter DM ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+
 ### Fixed
 
 - Only push reaction activity in direct chats if the reaction is on one of your messages ([#9126](https://github.com/open-chat-labs/open-chat/pull/9126))

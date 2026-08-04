@@ -8,6 +8,10 @@ use types::UnitResult;
 pub struct Args {
     pub report_index: u64,
     pub verdict: ModerationVerdict,
+    // Set on UpheldAsCsam where the reviewer judges there to be an imminent threat to a child,
+    // marking the resulting authority report as urgent (the UK "immediately" reporting tier)
+    #[serde(default)]
+    pub urgent: Option<bool>,
 }
 
 #[ts_export(user_index, resolve_moderation_report)]

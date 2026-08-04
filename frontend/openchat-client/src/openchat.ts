@@ -10,6 +10,10 @@ import {
 } from "@icp-sdk/core/identity";
 import DRange from "drange";
 import {
+    type ModerationConfig,
+    type VaultLogResponse,
+    type BlobReference,
+    CURRENT_TERMS_VERSION,
     ARBITRUM_NETWORK,
     AuthProvider,
     BASE_NETWORK,
@@ -220,6 +224,7 @@ import {
     type MessageContent,
     type MessageContext,
     type ModerationVerdict,
+    type VaultFileChunkResponse,
     type MessageFilter,
     type MessageFormatter,
     type MessagePermission,
@@ -284,6 +289,7 @@ import {
     type Success,
     type SwapTokensResponse,
     type TermsRoute,
+    type PrivacyRoute,
     type ThreadIdentifier,
     type ThreadPreview,
     type ThreadRead,
@@ -1034,6 +1040,11 @@ export class OpenChat {
     }
 
     onRegisteredUser(user: CreatedUser) {
+        // Registering constitutes acceptance of the current terms, recorded SERVER-SIDE at
+        // user creation (an RPC from here could fail and wrongly show the new user the
+        // terms-updated notice); this local patch just keeps the store consistent until the
+        // next current_user response confirms it
+        user = { ...user, acceptedTermsVersion: CURRENT_TERMS_VERSION };
         user.blobUrl = buildUserAvatarUrl(
             this.config.blobUrlPattern,
             user.userId,
@@ -6051,6 +6062,21 @@ export class OpenChat {
         });
     }
 
+    acceptTerms(version: number): Promise<boolean> {
+        // The blocking notice closes only once the acceptance is recorded against the user
+        // record on the user_index: closing on a failed call would leave the session usable
+        // with no acceptance recorded - the record is the whole point of the gate
+        return this.#worker
+            .send({ kind: "acceptTerms", version })
+            .then((success) => {
+                if (success) {
+                    currentUserStore.set({ ...currentUserStore.value, acceptedTermsVersion: version });
+                }
+                return success;
+            })
+            .catch(() => false);
+    }
+
     setHideOnlineStatus(hideOnlineStatus: boolean): Promise<void> {
         return this.#worker.send({
             kind: "setHideOnlineStatus",
@@ -6328,10 +6354,31 @@ export class OpenChat {
             .catch(() => false);
     }
 
-    resolveModerationReport(reportIndex: bigint, verdict: ModerationVerdict): Promise<boolean> {
+    resolveModerationReport(
+        reportIndex: bigint,
+        verdict: ModerationVerdict,
+        urgent: boolean | undefined,
+    ): Promise<boolean> {
         return this.#worker
-            .send({ kind: "resolveModerationReport", reportIndex, verdict })
+            .send({ kind: "resolveModerationReport", reportIndex, verdict, urgent })
             .catch(() => false);
+    }
+
+    contestModerationSanction(): Promise<boolean> {
+        return this.#worker.send({ kind: "contestModerationSanction" }).catch(() => false);
+    }
+
+    // Direct blob URL for reviewing non-quarantined reported media (content still live)
+    reportedMediaUrl(ref: BlobReference): string {
+        return buildBlobUrl(this.config.blobUrlPattern, ref.canisterId, ref.blobId, "blobs");
+    }
+
+    vaultFileChunk(
+        bucketCanisterId: string,
+        fileId: bigint,
+        chunkIndex: number,
+    ): Promise<VaultFileChunkResponse> {
+        return this.#worker.send({ kind: "vaultFileChunk", bucketCanisterId, fileId, chunkIndex });
     }
 
     setCommunityModerationFlags(communityId: string, flags: number): Promise<boolean> {
@@ -7296,6 +7343,7 @@ export class OpenChat {
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         deleteMessage: boolean,
+        csam: boolean,
     ): Promise<boolean> {
         return this.#worker
             .send({
@@ -7304,6 +7352,7 @@ export class OpenChat {
                 threadRootMessageIndex,
                 messageId,
                 deleteMessage,
+                csam,
             })
             .catch(() => false);
     }
@@ -7335,6 +7384,72 @@ export class OpenChat {
 
     setOpenAIApiKey(apiKey: string | undefined): Promise<boolean> {
         return this.#worker.send({ kind: "setOpenAIApiKey", apiKey }).catch(() => false);
+    }
+
+    vaultBuckets(): Promise<string[]> {
+        return this.#worker.send({ kind: "vaultBuckets" }).catch(() => []);
+    }
+
+    vaultLog(
+        bucketCanisterId: string,
+        start: bigint,
+        max: number,
+        fileId?: bigint,
+    ): Promise<VaultLogResponse> {
+        return this.#worker.send({ kind: "vaultLog", bucketCanisterId, start, max, fileId });
+    }
+
+    moderationConfig(): Promise<ModerationConfig | undefined> {
+        return this.#worker.send({ kind: "moderationConfig" }).catch(() => undefined);
+    }
+
+    authorityReports(): Promise<string | undefined> {
+        return this.#worker.send({ kind: "authorityReports" }).catch(() => undefined);
+    }
+
+    recordAuthorityReportFiled(
+        reportIndex: bigint,
+        portalReference: string,
+        urgent: boolean,
+        unverified: boolean,
+    ): Promise<boolean> {
+        return this.#worker
+            .send({
+                kind: "recordAuthorityReportFiled",
+                reportIndex,
+                portalReference,
+                urgent,
+                unverified,
+            })
+            .catch(() => false);
+    }
+
+    setVaultReviewers(userIds: string[]): Promise<boolean> {
+        return this.#worker.send({ kind: "setVaultReviewers", userIds }).catch(() => false);
+    }
+
+    setVaultLegalHold(
+        reportIndex: bigint,
+        legalHold: boolean,
+        reference: string,
+    ): Promise<boolean> {
+        return this.#worker
+            .send({ kind: "setVaultLegalHold", reportIndex, legalHold, reference })
+            .catch(() => false);
+    }
+
+    destroyVaultEvidence(reportIndex: bigint, leRequestRef: string): Promise<boolean> {
+        return this.#worker
+            .send({ kind: "destroyVaultEvidence", reportIndex, leRequestRef })
+            .catch(() => false);
+    }
+
+    setModerationReferralConfig(
+        config: { categories: { category: number; scoreThreshold: number }[] } | undefined,
+    ): Promise<boolean> {
+        return this.#worker
+            .send({ kind: "setModerationReferralConfig", config })
+            .catch(() => false);
     }
 
     setInternalModerationChannel(
@@ -10519,6 +10634,10 @@ export class OpenChat {
 
     isTermsRoute(route: RouteParams): route is TermsRoute {
         return route.kind === "terms_route";
+    }
+
+    isPrivacyRoute(route: RouteParams): route is PrivacyRoute {
+        return route.kind === "privacy_route";
     }
 
     isFaqRoute(route: RouteParams): route is FaqRoute {

@@ -96,12 +96,20 @@ fn commit(
         .users
         .suspend_user(user_id, duration, reason.clone(), suspended_by, now);
 
-    // If the user is only suspended for a specified duration, schedule them to be unsuspended
+    // If the user is only suspended for a specified duration, schedule them to be unsuspended.
+    // The job carries this suspension's timestamp so that it expires only this suspension: by
+    // the time it fires the user can be serving a different (eg. indefinite) one.
     if let Some(ms) = duration {
-        state
-            .data
-            .timer_jobs
-            .enqueue_job(TimerJob::UnsuspendUser(UnsuspendUser { user_id }), now + ms, now);
+        state.data.timer_jobs.enqueue_job(
+            TimerJob::UnsuspendUser(UnsuspendUser {
+                user_id,
+                expected_suspension_timestamp: Some(now),
+                attempt: 0,
+                restoration_report_index: None,
+            }),
+            now + ms,
+            now,
+        );
     }
 
     state.push_event_to_local_user_index(

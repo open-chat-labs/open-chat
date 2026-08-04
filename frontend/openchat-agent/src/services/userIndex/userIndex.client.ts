@@ -1,5 +1,6 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import type {
+    ModerationConfig,
     BotDefinition,
     BotInstallationLocation,
     BotsResponse,
@@ -67,7 +68,15 @@ import {
     UserIndexSetInternalModerationChannelArgs,
     UserIndexResolveModerationReportArgs,
     UserIndexSetModerationFlagsArgs,
-    UserIndexSetOpenAiApiKeyArgs,
+    UserIndexAcceptTermsArgs,
+    UserIndexAuthorityReportsResponse,
+    UserIndexModerationConfigResponse,
+    UserIndexRecordAuthorityReportFiledArgs,
+    UserIndexSetModerationReferralConfigArgs,
+    UserIndexSetVaultReviewersArgs,
+    UserIndexSetVaultLegalHoldArgs,
+    UserIndexDestroyVaultEvidenceArgs,
+    UserIndexSetOpenaiApiKeyArgs,
     UserIndexSetPremiumItemCostArgs,
     UserIndexSetUsernameArgs,
     UserIndexSetUsernameResponse,
@@ -142,7 +151,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                 }
 
                 if (!isOffline) {
-                    const liveUser = await this.query(
+                    let liveUser = await this.query(
                         "current_user",
                         {},
                         currentUserResponse,
@@ -150,6 +159,14 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                         UserIndexCurrentUserResponse,
                     );
                     if (liveUser.kind === "created_user") {
+                        // A terms acceptance recorded while this query was in flight must not
+                        // be clobbered by the (older) response - that would re-open the
+                        // blocking terms notice and, offline, lock the user out entirely
+                        const latest = await this.chatsDb.getCachedCurrentUser();
+                        const accepted = latest?.acceptedTermsVersion;
+                        if (accepted !== undefined && (liveUser.acceptedTermsVersion ?? 0) < accepted) {
+                            liveUser = { ...liveUser, acceptedTermsVersion: accepted };
+                        }
                         this.chatsDb.setCachedCurrentUser(liveUser);
                     }
                     resolve(liveUser, true);
@@ -172,6 +189,75 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         );
     }
 
+    acceptTerms(version: number): Promise<boolean> {
+        return this.update(
+            "accept_terms",
+            { version },
+            (resp) => resp === "Success",
+            UserIndexAcceptTermsArgs,
+            UnitResult,
+        ).then((success) => {
+            if (success) {
+                // Patch the durable cache too, otherwise the next cold start resolves the
+                // stale cached record first and re-opens the blocking terms notice
+                this.chatsDb.patchCachedCurrentUser({ acceptedTermsVersion: version });
+            }
+            return success;
+        });
+    }
+
+    setVaultReviewers(userIds: string[]): Promise<boolean> {
+        return this.update(
+            "set_vault_reviewers",
+            { user_ids: userIds.map(principalStringToBytes) },
+            (resp) => resp === "Success",
+            UserIndexSetVaultReviewersArgs,
+            UnitResult,
+        );
+    }
+
+    setVaultLegalHold(reportIndex: bigint, legalHold: boolean, reference: string): Promise<boolean> {
+        return this.update(
+            "set_vault_legal_hold",
+            { report_index: reportIndex, legal_hold: legalHold, reference },
+            (resp) => resp === "Success",
+            UserIndexSetVaultLegalHoldArgs,
+            UnitResult,
+        );
+    }
+
+    destroyVaultEvidence(reportIndex: bigint, leRequestRef: string): Promise<boolean> {
+        return this.update(
+            "destroy_vault_evidence",
+            { report_index: reportIndex, le_request_ref: leRequestRef },
+            (resp) => resp === "Success",
+            UserIndexDestroyVaultEvidenceArgs,
+            UnitResult,
+        );
+    }
+
+    setModerationReferralConfig(
+        config: { categories: { category: number; scoreThreshold: number }[] } | undefined,
+    ): Promise<boolean> {
+        return this.update(
+            "set_moderation_referral_config",
+            {
+                config:
+                    config === undefined
+                        ? undefined
+                        : {
+                              categories: config.categories.map((c) => ({
+                                  category: c.category,
+                                  score_threshold: c.scoreThreshold,
+                              })),
+                          },
+            },
+            (resp) => resp === "Success",
+            UserIndexSetModerationReferralConfigArgs,
+            UnitResult,
+        );
+    }
+
     setOpenAIApiKey(apiKey: string | undefined): Promise<boolean> {
         return this.update(
             "set_openai_api_key",
@@ -179,7 +265,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                 api_key: apiKey === undefined || apiKey === "" ? undefined : apiKey,
             },
             (resp) => resp === "Success",
-            UserIndexSetOpenAiApiKeyArgs,
+            UserIndexSetOpenaiApiKeyArgs,
             UnitResult,
         );
     }
@@ -204,15 +290,92 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         );
     }
 
-    resolveModerationReport(reportIndex: bigint, verdict: ModerationVerdict): Promise<boolean> {
+    resolveModerationReport(
+        reportIndex: bigint,
+        verdict: ModerationVerdict,
+        urgent: boolean | undefined,
+    ): Promise<boolean> {
         return this.update(
             "resolve_moderation_report",
             {
                 report_index: reportIndex,
                 verdict: apiModerationVerdict(verdict),
+                urgent,
             },
             (resp) => resp === "Success",
             UserIndexResolveModerationReportArgs,
+            UnitResult,
+        );
+    }
+
+    moderationConfig(): Promise<ModerationConfig | undefined> {
+        return this.query(
+            "moderation_config",
+            {},
+            (resp) =>
+                "Success" in resp
+                    ? {
+                          openaiApiKeySet: resp.Success.openai_api_key_set,
+                          internalModerationChannel: mapOptional(
+                              resp.Success.internal_moderation_channel,
+                              (c) => ({
+                                  communityId: principalBytesToString(c.community_id),
+                                  channelId: Number(c.channel_id),
+                              }),
+                          ),
+                          referralConfig: mapOptional(
+                              resp.Success.moderation_referral_config,
+                              (r) => ({
+                                  categories: r.categories.map((c) => ({
+                                      category: c.category,
+                                      scoreThreshold: c.score_threshold,
+                                  })),
+                              }),
+                          ),
+                          vaultReviewers: resp.Success.vault_reviewers.map(principalBytesToString),
+                      }
+                    : undefined,
+            Empty,
+            UserIndexModerationConfigResponse,
+        );
+    }
+
+    authorityReports(): Promise<string | undefined> {
+        return this.query(
+            "authority_reports",
+            {},
+            (resp) => ("Success" in resp ? resp.Success.json : undefined),
+            Empty,
+            UserIndexAuthorityReportsResponse,
+        );
+    }
+
+    recordAuthorityReportFiled(
+        reportIndex: bigint,
+        portalReference: string,
+        urgent: boolean,
+        unverified: boolean,
+    ): Promise<boolean> {
+        return this.update(
+            "record_authority_report_filed",
+            {
+                report_index: reportIndex,
+                portal_reference: portalReference,
+                urgent,
+                unverified,
+            },
+            (resp) => resp === "Success",
+            UserIndexRecordAuthorityReportFiledArgs,
+            UnitResult,
+        );
+    }
+
+    contestModerationSanction(): Promise<boolean> {
+        return this.update(
+            "contest_moderation_sanction",
+            {},
+            (resp) => resp === "Success",
+            Empty,
             UnitResult,
         );
     }

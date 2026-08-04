@@ -4,12 +4,15 @@
     import CogOutline from "svelte-material-icons/CogOutline.svelte";
     import Button from "../../Button.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
+    import AuthorityReports from "./AuthorityReports.svelte";
     import OperatorFunctions from "./OperatorFunctions.svelte";
     import ReviewTranslationCorrections from "./ReviewTranslationCorrections.svelte";
+    import VaultLog from "./VaultLog.svelte";
 
-    let selectedTab: "translations" | "operator" = $state("translations");
+    let selectedTab: "translations" | "operator" | "authority" | "vaultlog" =
+        $state("translations");
 
-    function selectTab(tab: "translations" | "operator") {
+    function selectTab(tab: "translations" | "operator" | "authority" | "vaultlog") {
         selectedTab = tab;
     }
 </script>
@@ -39,7 +42,8 @@
                 role="button"
                 onclick={() => selectTab("translations")}
                 class:selected={selectedTab === "translations"}
-                class="tab">
+                class="tab"
+            >
                 Translation Corrections
             </div>
             <div
@@ -47,14 +51,37 @@
                 role="button"
                 onclick={() => selectTab("operator")}
                 class:selected={selectedTab === "operator"}
-                class="tab">
+                class="tab"
+            >
                 Operator functions
+            </div>
+            <div
+                tabindex="0"
+                role="button"
+                onclick={() => selectTab("authority")}
+                class:selected={selectedTab === "authority"}
+                class="tab"
+            >
+                Authority reports
+            </div>
+            <div
+                tabindex="0"
+                role="button"
+                onclick={() => selectTab("vaultlog")}
+                class:selected={selectedTab === "vaultlog"}
+                class="tab"
+            >
+                Vault log
             </div>
         </div>
         {#if selectedTab === "translations"}
             <ReviewTranslationCorrections />
         {:else if selectedTab === "operator"}
             <OperatorFunctions />
+        {:else if selectedTab === "authority"}
+            <AuthorityReports />
+        {:else if selectedTab === "vaultlog"}
+            <VaultLog />
         {/if}
     </div>
 {/if}

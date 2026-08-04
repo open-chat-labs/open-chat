@@ -1,9 +1,10 @@
 <script lang="ts">
-    import type {
-        DiamondMembershipFees,
-        OpenChat,
-        ResourceKey,
-        UpdateMarketMakerConfigArgs,
+    import {
+        MODERATION_CATEGORY_NAMES,
+        type DiamondMembershipFees,
+        type OpenChat,
+        type ResourceKey,
+        type UpdateMarketMakerConfigArgs,
     } from "@client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -54,7 +55,26 @@
     let openAiApiKey = $state("");
     let moderationCommunityId = $state("");
     let moderationChannelId = $state("");
+    // sexual/minors always takes the CSAM auto-sanction path so is not offered here.
+    // Empty threshold = category disabled; thresholds are per category because the right
+    // value differs between eg. sexual (catch the target content) and harassment (keep
+    // noise out of the queue)
+    let referralThresholds: Record<number, string> = $state({});
+    let vaultReviewerIds = $state("");
+    let legalHoldReportIndex = $state("");
+    let legalHoldReference = $state("");
+    let destroyReportIndex = $state("");
+    let destroyRequestRef = $state("");
+    let destroyConfirmed = $state(false);
 
+    const CSAM_CATEGORY_BIT = 2;
+    let referralThresholdsInvalid = $derived.by(() => {
+        return Object.values(referralThresholds).some((t) => {
+            if (t === "") return false;
+            const threshold = Number(t);
+            return isNaN(threshold) || threshold < 0 || threshold > 1;
+        });
+    });
     let groupUpgradeConcurrencyInvalid = $derived(isNaN(parseInt(groupUpgradeConcurrency, 0)));
     let communityUpgradeConcurrencyInvalid = $derived(
         isNaN(parseInt(communityUpgradeConcurrency, 0)),
@@ -63,7 +83,28 @@
     let exchangeIdInvalid = $derived(isNaN(parseInt(exchangeId, 0)));
     let tokenLedgerValid = $derived(tokenLedger.length > 0);
 
+    let openAiKeySet = $state(false);
+
     onMount(() => {
+        // Pre-fill the moderation config so the forms show what is actually set rather than
+        // being write-only
+        client.moderationConfig().then((config) => {
+            if (config === undefined) return;
+            openAiKeySet = config.openaiApiKeySet;
+            if (config.internalModerationChannel !== undefined) {
+                moderationCommunityId = config.internalModerationChannel.communityId;
+                moderationChannelId = config.internalModerationChannel.channelId.toString();
+            }
+            if (config.referralConfig !== undefined) {
+                referralThresholds = Object.fromEntries(
+                    config.referralConfig.categories.map((c) => [
+                        c.category,
+                        c.scoreThreshold.toString(),
+                    ]),
+                );
+            }
+            vaultReviewerIds = config.vaultReviewers.join(", ");
+        });
         client.diamondMembershipFees().then((fees) => {
             originalFees = client.toRecord(fees, (f) => f.token);
             currentFees = client.toRecord2(
@@ -291,6 +332,112 @@
             .finally(() => removeBusy(7));
     }
 
+    function setModerationReferralConfig(): void {
+        error = undefined;
+        addBusy(9);
+        const categories = Object.entries(referralThresholds)
+            .filter(([_, t]) => t !== "")
+            .map(([bit, t]) => ({ category: Number(bit), scoreThreshold: Number(t) }));
+        const config = categories.length === 0 ? undefined : { categories };
+        client
+            .setModerationReferralConfig(config)
+            .then((success) => {
+                if (success) {
+                    toastStore.showSuccessToast(
+                        i18nKey(
+                            config === undefined
+                                ? "Moderation referral disabled"
+                                : "Moderation referral config updated",
+                        ),
+                    );
+                } else {
+                    error = i18nKey("Failed to update moderation referral config");
+                    toastStore.showFailureToast(error);
+                }
+            })
+            .finally(() => removeBusy(9));
+    }
+
+    // Replaces the full reviewer set: user ids must already be platform moderators
+    function setVaultReviewers(): void {
+        error = undefined;
+        addBusy(10);
+        const userIds = vaultReviewerIds
+            .split(",")
+            .map((id) => id.trim())
+            .filter((id) => id !== "");
+        client
+            .setVaultReviewers(userIds)
+            .then((success) => {
+                if (success) {
+                    toastStore.showSuccessToast(i18nKey("Vault reviewers updated"));
+                } else {
+                    error = i18nKey(
+                        "Failed to update vault reviewers (are they all platform moderators?)",
+                    );
+                    toastStore.showFailureToast(error);
+                }
+            })
+            .finally(() => removeBusy(10));
+    }
+
+    // A preservation request stops the retention clock deleting the evidence; clearing the hold
+    // performs any release which was deferred while it was set
+    function setVaultLegalHold(legalHold: boolean): void {
+        error = undefined;
+        const reportIndex = parseReportIndex(legalHoldReportIndex);
+        if (reportIndex === undefined || legalHoldReference.trim() === "") {
+            error = i18nKey("A report index and a request reference are both required");
+            toastStore.showFailureToast(error);
+            return;
+        }
+        addBusy(11);
+        client
+            .setVaultLegalHold(reportIndex, legalHold, legalHoldReference.trim())
+            .then((success) => {
+                if (success) {
+                    toastStore.showSuccessToast(
+                        i18nKey(legalHold ? "Legal hold set" : "Legal hold cleared"),
+                    );
+                } else {
+                    error = i18nKey("Failed to update the legal hold");
+                    toastStore.showFailureToast(error);
+                }
+            })
+            .finally(() => removeBusy(11));
+    }
+
+    // Irreversible: destroys the evidence regardless of the retention clock or any legal hold
+    function destroyVaultEvidence(): void {
+        error = undefined;
+        const reportIndex = parseReportIndex(destroyReportIndex);
+        if (reportIndex === undefined || destroyRequestRef.trim() === "") {
+            error = i18nKey("A report index and a law enforcement reference are both required");
+            toastStore.showFailureToast(error);
+            return;
+        }
+        addBusy(12);
+        client
+            .destroyVaultEvidence(reportIndex, destroyRequestRef.trim())
+            .then((success) => {
+                if (success) {
+                    destroyConfirmed = false;
+                    destroyReportIndex = "";
+                    destroyRequestRef = "";
+                    toastStore.showSuccessToast(i18nKey("Vaulted evidence destroyed"));
+                } else {
+                    error = i18nKey("Failed to destroy the vaulted evidence");
+                    toastStore.showFailureToast(error);
+                }
+            })
+            .finally(() => removeBusy(12));
+    }
+
+    function parseReportIndex(value: string): bigint | undefined {
+        const trimmed = value.trim();
+        return /^\d+$/.test(trimmed) ? BigInt(trimmed) : undefined;
+    }
+
     function setInternalModerationChannel(): void {
         error = undefined;
         addBusy(8);
@@ -342,7 +489,8 @@
                 tiny
                 disabled={busy.has(0) || groupUpgradeConcurrencyInvalid}
                 loading={busy.has(0)}
-                onClick={setGroupUpgradeConcurrency}>Apply</Button>
+                onClick={setGroupUpgradeConcurrency}>Apply</Button
+            >
         </ButtonGroup>
     </section>
 
@@ -351,12 +499,14 @@
         <ButtonGroup align="fill">
             <Input
                 invalid={communityUpgradeConcurrencyInvalid}
-                bind:value={communityUpgradeConcurrency} />
+                bind:value={communityUpgradeConcurrency}
+            />
             <Button
                 tiny
                 disabled={busy.has(1) || communityUpgradeConcurrencyInvalid}
                 loading={busy.has(1)}
-                onClick={setCommunityUpgradeConcurrency}>Apply</Button>
+                onClick={setCommunityUpgradeConcurrency}>Apply</Button
+            >
         </ButtonGroup>
     </section>
 
@@ -368,7 +518,8 @@
                 tiny
                 disabled={busy.has(2) || userUpgradeConcurrencyInvalid}
                 loading={busy.has(2)}
-                onClick={setUserUpgradeConcurrency}>Apply</Button>
+                onClick={setUserUpgradeConcurrency}>Apply</Button
+            >
         </ButtonGroup>
     </section>
 
@@ -412,7 +563,8 @@
                 tiny
                 disabled={busy.has(3)}
                 loading={busy.has(3)}
-                onClick={setDiamondMembershipFees}>Apply</Button>
+                onClick={setDiamondMembershipFees}>Apply</Button
+            >
         </section>
     {/if}
 
@@ -434,7 +586,8 @@
             tiny
             disabled={busy.has(4)}
             loading={busy.has(4)}
-            onClick={stakeNeuronForSubmittingProposals}>Apply</Button>
+            onClick={stakeNeuronForSubmittingProposals}>Apply</Button
+        >
     </section>
 
     <section class="operator-function">
@@ -515,7 +668,8 @@
             tiny
             disabled={busy.has(5) || exchangeIdInvalid}
             loading={busy.has(5)}
-            onClick={updateMarketMakerConfig}>Apply</Button>
+            onClick={updateMarketMakerConfig}>Apply</Button
+        >
     </section>
 
     <section class="operator-function">
@@ -527,12 +681,15 @@
                 tiny
                 disabled={busy.has(6) || !tokenLedgerValid}
                 loading={busy.has(6)}
-                onClick={setTokenEnabled}>Apply</Button>
+                onClick={setTokenEnabled}>Apply</Button
+            >
         </ButtonGroup>
     </section>
 
     <section class="operator-function">
-        <div class="title">Set OpenAI API key (moderation)</div>
+        <div class="title">
+            Set OpenAI API key (moderation) {openAiKeySet ? "- currently set" : "- NOT SET"}
+        </div>
         <div class="name-value">
             <div class="label">API key:</div>
             <div class="value">
@@ -542,6 +699,114 @@
         <Button tiny disabled={busy.has(7)} loading={busy.has(7)} onClick={setOpenAIApiKey}>
             Apply
         </Button>
+    </section>
+
+    <section class="operator-function">
+        <div class="title">Set moderation referral config</div>
+        <div class="hint">
+            Per-category score thresholds (0-1) above which a message is referred for human
+            moderator review. Leave a category blank to disable it. All blank = referral disabled.
+        </div>
+        {#each MODERATION_CATEGORY_NAMES.filter(([bit, _]) => bit !== CSAM_CATEGORY_BIT) as [bit, name] (bit)}
+            <div class="name-value">
+                <div class="label">{name}:</div>
+                <div class="value">
+                    <Input
+                        placeholder={i18nKey("disabled")}
+                        bind:value={
+                            () => referralThresholds[bit] ?? "",
+                            (v) => (referralThresholds[bit] = v)
+                        }
+                    />
+                </div>
+            </div>
+        {/each}
+        <Button
+            tiny
+            disabled={busy.has(9) || referralThresholdsInvalid}
+            loading={busy.has(9)}
+            onClick={setModerationReferralConfig}>Apply</Button
+        >
+    </section>
+
+    <section class="operator-function">
+        <div class="title">Set vault reviewers</div>
+        <div class="hint">
+            Comma-separated user ids. Replaces the whole set; each must already be a platform
+            moderator. An empty list revokes all reviewers.
+        </div>
+        <ButtonGroup align="fill">
+            <Input bind:value={vaultReviewerIds} />
+            <Button tiny disabled={busy.has(10)} loading={busy.has(10)} onClick={setVaultReviewers}>
+                Apply
+            </Button>
+        </ButtonGroup>
+    </section>
+
+    <section class="operator-function">
+        <div class="title">Vault legal hold</div>
+        <div class="hint">
+            Preservation request: suspends the retention clock for a report's vaulted evidence, so
+            it is never deleted at expiry. Clearing the hold performs any release which was
+            deferred while it was set.
+        </div>
+        <div class="name-value">
+            <div class="label">Report index:</div>
+            <div class="value">
+                <Input bind:value={legalHoldReportIndex} />
+            </div>
+        </div>
+        <div class="name-value">
+            <div class="label">Request reference:</div>
+            <div class="value">
+                <Input bind:value={legalHoldReference} />
+            </div>
+        </div>
+        <ButtonGroup align="fill">
+            <Button
+                tiny
+                disabled={busy.has(11)}
+                loading={busy.has(11)}
+                onClick={() => setVaultLegalHold(true)}>Set hold</Button>
+            <Button
+                tiny
+                secondary
+                disabled={busy.has(11)}
+                loading={busy.has(11)}
+                onClick={() => setVaultLegalHold(false)}>Clear hold</Button>
+        </ButtonGroup>
+    </section>
+
+    <section class="operator-function">
+        <div class="title">Destroy vaulted evidence</div>
+        <div class="hint">
+            Law enforcement destruction request. Irreversible, and overrides both the retention
+            clock and any legal hold: the blobs are removed even if a message still references
+            them. The reference is recorded in the vault log, which survives the destruction.
+        </div>
+        <div class="name-value">
+            <div class="label">Report index:</div>
+            <div class="value">
+                <Input bind:value={destroyReportIndex} />
+            </div>
+        </div>
+        <div class="name-value">
+            <div class="label">LE request reference:</div>
+            <div class="value">
+                <Input bind:value={destroyRequestRef} />
+            </div>
+        </div>
+        <div class="name-value">
+            <div class="label">Request verified:</div>
+            <div class="value">
+                <Toggle small id="confirm-destroy-vault-evidence" bind:checked={destroyConfirmed} />
+            </div>
+        </div>
+        <Button
+            tiny
+            disabled={busy.has(12) || !destroyConfirmed}
+            loading={busy.has(12)}
+            onClick={destroyVaultEvidence}>Destroy</Button>
     </section>
 
     <section class="operator-function">
@@ -562,7 +827,8 @@
             tiny
             disabled={busy.has(8)}
             loading={busy.has(8)}
-            onClick={setInternalModerationChannel}>Apply</Button>
+            onClick={setInternalModerationChannel}>Apply</Button
+        >
     </section>
 
     <section class="operator-function">
@@ -629,5 +895,11 @@
     .title {
         margin-bottom: $sp3;
         @include font(bold, normal, fs-100);
+    }
+
+    .hint {
+        margin-bottom: $sp3;
+        color: var(--txt-light);
+        @include font(light, normal, fs-80);
     }
 </style>

@@ -6,6 +6,7 @@ fn main() {
     generate_candid_method!(storage_index, allocated_bucket_v2, query);
     generate_candid_method!(storage_index, can_forward, query);
     generate_candid_method!(storage_index, user, query);
+    generate_candid_method!(storage_index, vault_buckets, query);
 
     let directory = env::current_dir().unwrap().join("tsBindings/storageIndex");
     if directory.exists() {
@@ -15,6 +16,7 @@ fn main() {
     generate_ts_method!(storage_index, allocated_bucket_v2);
     generate_ts_method!(storage_index, can_forward);
     generate_ts_method!(storage_index, user);
+    generate_ts_method!(storage_index, vault_buckets);
 
     candid::export_service!();
     std::print!("{}", __export_service());

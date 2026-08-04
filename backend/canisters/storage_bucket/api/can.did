@@ -25,6 +25,7 @@ type UploadChunkResponse = variant {
     HashMismatch;
     InvalidFileId;
     UserNotFound;
+    Blocked;
 };
 
 type DeleteFileArgs = record {
@@ -65,6 +66,7 @@ type ForwardFileResponse = variant {
     Success : FileId;
     NotAuthorized;
     NotFound;
+    Blocked;
 };
 
 type FileInfoArgs = record {
@@ -100,9 +102,31 @@ type VaultFileChunkResponse = variant {
     SessionRequired;
 };
 
+type VaultLogArgs = record {
+    start : nat64;
+    max : nat32;
+    file_id : opt FileId;
+};
+type VaultLogEntry = record {
+    index : nat64;
+    timestamp : TimestampMillis;
+    hash : text;
+    prev_hash : text;
+    event : text;
+    user_id : opt UserId;
+};
+type VaultLogResponse = variant {
+    Success : record {
+        total : nat64;
+        entries : vec VaultLogEntry;
+    };
+    NotAuthorized;
+};
+
 service : {
     upload_chunk_v2 : (UploadChunkArgs) -> (UploadChunkResponse);
     vault_file_chunk : (VaultFileChunkArgs) -> (VaultFileChunkResponse);
+    vault_log : (VaultLogArgs) -> (VaultLogResponse) query;
     delete_file : (DeleteFileArgs) -> (DeleteFileResponse);
     delete_files : (DeleteFilesArgs) -> (DeleteFilesResponse);
     forward_file : (ForwardFileArgs) -> (ForwardFileResponse);

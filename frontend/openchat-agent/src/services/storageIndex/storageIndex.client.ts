@@ -2,11 +2,7 @@ import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import { idlFactory, type StorageIndexService } from "./candid/idl";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { allocatedBucketResponse, canForwardResponse, userResponse } from "./mappers";
-import type {
-    AllocatedBucketResponse,
-    CanForwardResponse,
-    StorageUserResponse,
-} from "@shared";
+import type { AllocatedBucketResponse, CanForwardResponse, StorageUserResponse } from "@shared";
 
 export class StorageIndexClient extends CandidCanisterAgent<StorageIndexService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
@@ -15,6 +11,13 @@ export class StorageIndexClient extends CandidCanisterAgent<StorageIndexService>
 
     user(): Promise<StorageUserResponse> {
         return this.handleQueryResponse(() => this.service.user({}), userResponse);
+    }
+
+    vaultBuckets(): Promise<string[]> {
+        return this.handleQueryResponse(
+            () => this.service.vault_buckets({}),
+            (resp) => resp.Success.buckets.map((b) => b.toString()),
+        );
     }
 
     allocatedBucket(

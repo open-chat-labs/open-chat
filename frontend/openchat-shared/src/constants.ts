@@ -30,3 +30,6 @@ export const ONE_WEEK = ONE_DAY * 7;
 export const ONE_MONTH = ONE_WEEK * 4;
 export const ONE_YEAR = 365 * ONE_DAY;
 export const LARGE_GROUP_THRESHOLD = 1000;
+// Bump this when the platform terms change: users whose recorded acceptance is below this
+// version are shown a blocking terms-updated notice and must affirmatively accept.
+export const CURRENT_TERMS_VERSION = 1;

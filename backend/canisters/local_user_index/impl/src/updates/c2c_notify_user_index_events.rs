@@ -334,6 +334,9 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             state.data.openai_api_key = ev.api_key.clone();
             crate::jobs::moderate_messages::start_job_if_required(state);
         }
+        UserIndexEvent::SetModerationReferralConfig(ev) => {
+            state.data.moderation_referral_config = ev.config;
+        }
     }
 }
 

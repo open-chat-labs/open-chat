@@ -1,3 +1,4 @@
+pub mod authority_reports;
 pub mod bot_installation_events;
 pub mod bot_updates;
 pub mod c2c_lookup_user;
@@ -7,6 +8,7 @@ pub mod current_user;
 pub mod diamond_membership_fees;
 pub mod explore_bots;
 pub mod external_achievements;
+pub mod moderation_config;
 pub mod platform_moderators;
 pub mod platform_moderators_group;
 pub mod platform_operators;

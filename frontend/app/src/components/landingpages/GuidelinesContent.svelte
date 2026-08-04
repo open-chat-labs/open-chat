@@ -201,19 +201,20 @@
         </p>
 
         <p>
-            While adult material is not against our platform guidelines, we feel it is important
-            that such content is clearly labelled. We ask therefore that if you would like to post
-            adult material (that complies with the content standards above) that <strong>
-                you must enable group rules and you must specify in the group rules that the group
-                contains adults only material.
-            </strong> This ensures that a user joining the group can only do so having first been informed
-            of the nature of the group and acknowledging that information.
+            <strong>
+                Adult material is not permitted on OpenChat. Pornographic or otherwise sexually
+                explicit content is against our platform rules everywhere on the platform - in
+                public and private groups and communities and in direct chats - for all users,
+                regardless of how a group is labelled or what its rules say.
+            </strong> This also applies to all other "primary priority content" as defined by the UK
+            Online Safety Act 2023: content encouraging, promoting or providing instructions for suicide,
+            deliberate self-injury, or eating disorders.
         </p>
 
         <p>
-            Please do not post adult material in a public group that has not been clearly labelled
-            in this way. This way, we can keep people safe and comfortable without undue
-            restrictions.
+            Such content will be removed, and repeat or serious breaches will lead to account
+            suspension. If your group or community previously carried adult material under the old
+            labelling guidance, you must remove that content.
         </p>
     </div>
 </CollapsibleCard>

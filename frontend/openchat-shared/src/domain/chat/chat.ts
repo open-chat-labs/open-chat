@@ -15,7 +15,7 @@ import type {
     CommunitySummary,
 } from "../community";
 import type { WalletConfig } from "../crypto";
-import { DataContentSchema, type DataContent } from "../data/data";
+import { type BlobReference, DataContentSchema, type DataContent } from "../data/data";
 import type { OCError } from "../error";
 import type { OptionUpdate } from "../optionUpdate";
 import type {
@@ -655,14 +655,21 @@ export type ModerationReportContent = {
     sender: string;
     reporters: string[];
     flaggedCategories: number;
+    classificationFailed: boolean;
+    authorityReport:
+        | { kind: "due"; urgent: boolean }
+        | { kind: "filed"; portalReference: string }
+        | undefined;
     autoSanctioned: boolean;
     contentExcerpt: string | undefined;
+    blobReferences: BlobReference[];
     reportedAt: bigint;
     status: ModerationReportStatus;
 };
 
 export type ModerationReportStatus =
     | { kind: "pending" }
+    | { kind: "contested" }
     | { kind: "upheld"; moderator: string; timestamp: bigint }
     | { kind: "upheld_as_csam"; moderator: string; timestamp: bigint }
     | { kind: "dismissed"; moderator: string; timestamp: bigint };

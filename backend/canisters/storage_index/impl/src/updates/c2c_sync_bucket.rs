@@ -4,6 +4,7 @@ use canister_tracing_macros::trace;
 use constants::ONE_GB;
 use ic_cdk::update;
 use storage_index_canister::c2c_sync_bucket::*;
+use user_index_canister::c2c_csam_upload_detected as ui_csam;
 
 #[update(guard = "caller_is_bucket")]
 #[trace]
@@ -14,6 +15,20 @@ fn c2c_sync_bucket(args: Args) -> Response {
 fn c2c_sync_bucket_impl(args: Args, state: &mut RuntimeState) -> Response {
     let bucket = state.env.caller();
 
+    // A file arriving with a hash already upheld as CSAM means this bucket has not applied the
+    // denylist - it was uploaded before the op landed, or the op was dropped. Re-push it: the
+    // bucket then refuses to serve the bytes and blocks any further upload of them.
+    let denylisted_hashes: Vec<_> = args
+        .files_added
+        .iter()
+        .filter(|f| state.data.csam_hashes.contains_key(&f.hash))
+        .map(|f| (f.hash, state.data.csam_hashes[&f.hash]))
+        .collect();
+    for (hash, report_index) in denylisted_hashes {
+        tracing::error!(%bucket, report_index, "File uploaded with a hash upheld as CSAM; re-pushing the denylist");
+        state.data.push_denylisted_hash_to_bucket(bucket, hash, report_index);
+    }
+
     let files_rejected = args
         .files_added
         .into_iter()
@@ -22,6 +37,44 @@ fn c2c_sync_bucket_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     for file in args.files_removed {
         state.data.remove_file_reference(bucket, file);
+    }
+
+    for denylisted in args.csam_hashes_denylisted {
+        state
+            .data
+            .denylist_csam_hash(bucket, denylisted.hash, denylisted.report_index);
+    }
+
+    if !args.csam_matches.is_empty() {
+        if let Some(user_index) = state.data.user_index_canister_id {
+            let forward = user_index_canister::c2c_csam_upload_detected::Args {
+                matches: args
+                    .csam_matches
+                    .into_iter()
+                    .map(|m| ui_csam::CsamUploadMatch {
+                        uploader: m.uploader,
+                        bucket,
+                        file_id: m.file_id,
+                        hash: m.hash,
+                        csam_report_index: m.csam_report_index,
+                        kind: match m.kind {
+                            CsamMatchKind::UploadAttempt => ui_csam::CsamMatchKind::UploadAttempt,
+                            CsamMatchKind::ForwardAttempt => ui_csam::CsamMatchKind::ForwardAttempt,
+                            CsamMatchKind::ExistingCopy => ui_csam::CsamMatchKind::ExistingCopy,
+                        },
+                    })
+                    .collect(),
+            };
+            state.data.fire_and_forget_handler.send(
+                user_index,
+                "c2c_csam_upload_detected_msgpack".to_string(),
+                msgpack::serialize_then_unwrap(&forward),
+            );
+        } else {
+            // Can only happen before the user_index has ever driven a vault op; loud because
+            // a dropped match means a re-upload of known CSAM content goes unreported
+            tracing::error!("CSAM upload match dropped: user_index canister id not yet known");
+        }
     }
 
     if let Some(b) = state.data.buckets.get_mut(&bucket) {

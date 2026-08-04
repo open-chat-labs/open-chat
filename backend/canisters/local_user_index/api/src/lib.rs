@@ -58,6 +58,7 @@ pub enum UserIndexEvent {
     SetPremiumItemCost(SetPremiumItemCost),
     UpdateBlockedUsernamePatterns(UpdateBlockedUsernamePatterns),
     SetOpenAIApiKey(SetOpenAIApiKey),
+    SetModerationReferralConfig(SetModerationReferralConfig),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -434,4 +435,9 @@ pub struct UpdateBlockedUsernamePatterns {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SetOpenAIApiKey {
     pub api_key: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SetModerationReferralConfig {
+    pub config: Option<types::ModerationReferralConfig>,
 }

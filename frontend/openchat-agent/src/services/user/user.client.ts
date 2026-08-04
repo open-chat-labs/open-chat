@@ -1245,6 +1245,7 @@ export class UserClient
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         deleteMessage: boolean,
+        csam: boolean,
     ): Promise<boolean> {
         return this.update(
             "report_message",
@@ -1252,6 +1253,7 @@ export class UserClient
                 them: principalStringToBytes(chatId.userId),
                 message_id: messageId,
                 delete: deleteMessage,
+                csam,
                 thread_root_message_index: threadRootMessageIndex,
             },
             isSuccess,

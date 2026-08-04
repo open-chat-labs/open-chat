@@ -72,6 +72,9 @@ impl RuntimeState {
             vault_reviewers: vault_metrics.reviewers,
             vault_log_length: vault_metrics.log_length,
             vault_quarantine_failures: vault_metrics.quarantine_failures,
+            vault_csam_hashes: vault_metrics.csam_hashes,
+            vault_unresolved_quarantines: vault_metrics.unresolved_quarantines,
+            vault_oldest_unresolved_quarantined_at: vault_metrics.oldest_unresolved_quarantined_at,
             stable_memory_sizes: memory::memory_sizes(),
         }
     }
@@ -141,6 +144,9 @@ pub struct Metrics {
     pub vault_reviewers: u64,
     pub vault_log_length: u64,
     pub vault_quarantine_failures: u64,
+    pub vault_csam_hashes: u64,
+    pub vault_unresolved_quarantines: u64,
+    pub vault_oldest_unresolved_quarantined_at: Option<TimestampMillis>,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
 }
 

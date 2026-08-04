@@ -10,6 +10,7 @@ fn main() {
     generate_candid_method!(storage_bucket, forward_file, update);
     generate_candid_method!(storage_bucket, upload_chunk_v2, update);
     generate_candid_method!(storage_bucket, vault_file_chunk, update);
+    generate_candid_method!(storage_bucket, vault_log, query);
 
     let directory = env::current_dir().unwrap().join("tsBindings/storageBucket");
     if directory.exists() {
@@ -23,6 +24,7 @@ fn main() {
     generate_ts_method!(storage_bucket, forward_file);
     generate_ts_method!(storage_bucket, upload_chunk_v2);
     generate_ts_method!(storage_bucket, vault_file_chunk);
+    generate_ts_method!(storage_bucket, vault_log);
 
     candid::export_service!();
     std::print!("{}", __export_service());

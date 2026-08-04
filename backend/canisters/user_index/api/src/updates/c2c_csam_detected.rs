@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{Chat, MessageId, MessageIndex, UnitResult, UserId};
+use types::{BlobReference, Chat, MessageId, MessageIndex, UnitResult, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -11,6 +11,9 @@ pub struct Args {
     pub sender: UserId,
     pub flags: u32,
     pub content_excerpt: Option<String>,
+    // The message's media attachments, so the evidence vault can quarantine them
+    #[serde(default)]
+    pub blob_references: Vec<BlobReference>,
 }
 
 pub type Response = UnitResult;

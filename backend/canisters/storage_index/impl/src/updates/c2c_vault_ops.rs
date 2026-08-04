@@ -16,6 +16,10 @@ fn c2c_vault_ops(args: Args) -> Response {
 }
 
 fn c2c_vault_ops_impl(args: Args, state: &mut RuntimeState) -> Response {
+    // The vault control plane is only ever driven by the user_index; remember its canister id
+    // so bucket-detected CSAM re-uploads can be reported back to it (see c2c_sync_bucket)
+    state.data.user_index_canister_id = Some(state.env.caller());
+
     for op in args.ops {
         match op {
             VaultOp::Quarantine(q) => {
@@ -29,11 +33,15 @@ fn c2c_vault_ops_impl(args: Args, state: &mut RuntimeState) -> Response {
                     }),
                 );
             }
-            VaultOp::Unquarantine(blob_reference) => {
+            VaultOp::Unquarantine(u) => {
                 push_for_blob(
                     state,
-                    &blob_reference,
-                    bucket_vault::VaultOp::Unquarantine(blob_reference.blob_id),
+                    &u.blob_reference,
+                    bucket_vault::VaultOp::Unquarantine(bucket_vault::UnquarantineOp {
+                        file_id: u.blob_reference.blob_id,
+                        moderator: u.moderator,
+                        report_index: u.report_index,
+                    }),
                 );
             }
             VaultOp::ApplyVerdict(v) => {
@@ -43,6 +51,9 @@ fn c2c_vault_ops_impl(args: Args, state: &mut RuntimeState) -> Response {
                     bucket_vault::VaultOp::ApplyVerdict(bucket_vault::ApplyVerdictOp {
                         file_id: v.blob_reference.blob_id,
                         retention_until: v.retention_until,
+                        moderator: v.moderator,
+                        reanchor: v.reanchor,
+                        report_index: v.report_index,
                     }),
                 );
             }
@@ -67,10 +78,17 @@ fn c2c_vault_ops_impl(args: Args, state: &mut RuntimeState) -> Response {
                 );
             }
             VaultOp::SetReviewers(reviewers) => {
-                state.data.vault_reviewers = reviewers.iter().copied().collect();
+                state.data.vault_reviewers = reviewers.clone();
+                let bucket_reviewers: Vec<_> = reviewers
+                    .iter()
+                    .map(|r| bucket_vault::VaultReviewer {
+                        principal: r.principal,
+                        user_id: r.user_id,
+                    })
+                    .collect();
                 let buckets: Vec<_> = state.data.buckets.iter().map(|b| b.canister_id).collect();
                 for bucket in buckets {
-                    push(state, bucket, bucket_vault::VaultOp::SetReviewers(reviewers.clone()));
+                    push(state, bucket, bucket_vault::VaultOp::SetReviewers(bucket_reviewers.clone()));
                 }
             }
         }

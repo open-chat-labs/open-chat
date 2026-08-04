@@ -135,7 +135,13 @@ import type {
     TokenExchangeRates,
     WalletConfig,
 } from "./crypto";
-import type { BlobReference, StorageStatus } from "./data/data";
+import type { ModerationConfig } from "./user/user";
+import type {
+    VaultFileChunkResponse,
+    VaultLogResponse,
+    BlobReference,
+    StorageStatus,
+} from "./data/data";
 import type { DexId } from "./dexes";
 import type { GenerateMagicLinkResponse } from "./email";
 import type {
@@ -381,8 +387,20 @@ export type WorkerRequest =
     | ImportGroupToCommunity
     | SetModerationFlags
     | SetOpenAIApiKey
+    | SetModerationReferralConfig
+    | SetVaultReviewers
+    | SetVaultLegalHold
+    | DestroyVaultEvidence
+    | VaultLog
+    | VaultBuckets
+    | AuthorityReports
+    | GetModerationConfig
+    | RecordAuthorityReportFiled
+    | AcceptTerms
     | SetInternalModerationChannel
     | ResolveModerationReport
+    | ContestModerationSanction
+    | VaultFileChunk
     | ChangeCommunityRole
     | SetCommunityIndexes
     | UpdateRegistry
@@ -817,6 +835,62 @@ type SetOpenAIApiKey = {
     apiKey: string | undefined;
 };
 
+type AcceptTerms = {
+    kind: "acceptTerms";
+    version: number;
+};
+
+type VaultBuckets = {
+    kind: "vaultBuckets";
+};
+
+type VaultLog = {
+    kind: "vaultLog";
+    bucketCanisterId: string;
+    start: bigint;
+    max: number;
+    fileId: bigint | undefined;
+};
+
+type GetModerationConfig = {
+    kind: "moderationConfig";
+};
+
+type AuthorityReports = {
+    kind: "authorityReports";
+};
+
+type RecordAuthorityReportFiled = {
+    kind: "recordAuthorityReportFiled";
+    reportIndex: bigint;
+    portalReference: string;
+    urgent: boolean;
+    unverified: boolean;
+};
+
+type SetVaultReviewers = {
+    kind: "setVaultReviewers";
+    userIds: string[];
+};
+
+type SetVaultLegalHold = {
+    kind: "setVaultLegalHold";
+    reportIndex: bigint;
+    legalHold: boolean;
+    reference: string;
+};
+
+type DestroyVaultEvidence = {
+    kind: "destroyVaultEvidence";
+    reportIndex: bigint;
+    leRequestRef: string;
+};
+
+type SetModerationReferralConfig = {
+    kind: "setModerationReferralConfig";
+    config: { categories: { category: number; scoreThreshold: number }[] } | undefined;
+};
+
 type SetInternalModerationChannel = {
     kind: "setInternalModerationChannel";
     channel: { communityId: string; channelId: number } | undefined;
@@ -826,6 +900,18 @@ type ResolveModerationReport = {
     kind: "resolveModerationReport";
     reportIndex: bigint;
     verdict: ModerationVerdict;
+    urgent: boolean | undefined;
+};
+
+type ContestModerationSanction = {
+    kind: "contestModerationSanction";
+};
+
+type VaultFileChunk = {
+    kind: "vaultFileChunk";
+    bucketCanisterId: string;
+    fileId: bigint;
+    chunkIndex: number;
 };
 
 type ImportGroupToCommunity = {
@@ -1759,6 +1845,7 @@ export type WorkerError = {
  * Worker response types
  */
 export type WorkerResponseInner =
+    | VaultFileChunkResponse
     | void
     | bigint
     | boolean
@@ -2010,6 +2097,7 @@ type ReportMessage = {
     threadRootMessageIndex: number | undefined;
     messageId: bigint;
     deleteMessage: boolean;
+    csam: boolean;
     kind: "reportMessage";
 };
 
@@ -2489,10 +2577,34 @@ export type WorkerResult<T> = T extends Init
     ? boolean
     : T extends SetOpenAIApiKey
     ? boolean
+    : T extends SetModerationReferralConfig
+    ? boolean
+    : T extends SetVaultReviewers
+    ? boolean
+    : T extends SetVaultLegalHold
+    ? boolean
+    : T extends DestroyVaultEvidence
+    ? boolean
+    : T extends VaultLog
+    ? VaultLogResponse
+    : T extends VaultBuckets
+    ? string[]
+    : T extends AuthorityReports
+    ? string | undefined
+    : T extends GetModerationConfig
+    ? ModerationConfig | undefined
+    : T extends RecordAuthorityReportFiled
+    ? boolean
+    : T extends AcceptTerms
+    ? boolean
     : T extends SetInternalModerationChannel
     ? boolean
     : T extends ResolveModerationReport
     ? boolean
+    : T extends ContestModerationSanction
+    ? boolean
+    : T extends VaultFileChunk
+    ? VaultFileChunkResponse
     : T extends CreateUserGroup
     ? CreateUserGroupResponse
     : T extends UpdateUserGroup

@@ -1,5 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use std::fmt::{Debug, Formatter};
 use ts_export::ts_export;
 use types::FileId;
 
@@ -22,7 +23,7 @@ pub enum Response {
 }
 
 #[ts_export(storage_bucket, vault_file_chunk)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize)]
 pub struct SuccessResult {
     #[serde(with = "serde_bytes")]
     pub bytes: Vec<u8>,
@@ -30,4 +31,18 @@ pub struct SuccessResult {
     pub chunk_count: u32,
     pub total_size: u64,
     pub mime_type: String,
+}
+
+// Hand-written so that tracing never formats the quarantined bytes themselves (the trace
+// buffer is served over http_request in test mode) - only the byte length
+impl Debug for SuccessResult {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SuccessResult")
+            .field("byte_length", &self.bytes.len())
+            .field("chunk_index", &self.chunk_index)
+            .field("chunk_count", &self.chunk_count)
+            .field("total_size", &self.total_size)
+            .field("mime_type", &self.mime_type)
+            .finish()
+    }
 }

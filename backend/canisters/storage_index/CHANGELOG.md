@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- The CSAM hash denylist is held platform-wide and pushed to every bucket, including newly created ones, so content upheld as CSAM cannot be re-uploaded to another bucket ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- `vault_buckets` query - the bucket canister ids, so the admin UI can address vault logs without hand-typing ids ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- Vault ops carry attribution (`moderator`), per-report release (`report_index`) and retention re-anchoring (`reanchor`); reviewer sync sends `VaultReviewer` (principal + user id) pairs for event-time attribution in the bucket access logs ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 - Vault control plane: `c2c_vault_ops` routes evidence-vault operations to the owning buckets and syncs the vault-reviewer allowlist ([#9118](https://github.com/open-chat-labs/open-chat/pull/9118))
 
 ### Changed

@@ -294,6 +294,10 @@ type Message = record {
     moderation_flags : nat32;
 };
 
+type AuthorityReportState = variant {
+    Due : record { urgent : bool };
+    Filed : record { portal_reference : text };
+};
 type ModerationReportContent = record {
     report_index : opt nat64;
     chat_id : Chat;
@@ -303,14 +307,18 @@ type ModerationReportContent = record {
     sender : UserId;
     reporters : vec UserId;
     flagged_categories : nat32;
+    classification_failed : bool;
     auto_sanctioned : bool;
     content_excerpt : opt text;
+    blob_references : vec BlobReference;
     reported_at : TimestampMillis;
     status : ModerationReportStatus;
+    authority_report : opt AuthorityReportState;
 };
 
 type ModerationReportStatus = variant {
     Pending;
+    Contested;
     Upheld : ModerationReportResolution;
     UpheldAsCsam : ModerationReportResolution;
     Dismissed : ModerationReportResolution;

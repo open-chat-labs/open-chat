@@ -17,4 +17,6 @@ pub enum Response {
     Success(FileId),
     NotAuthorized,
     NotFound,
+    // The hash matches content upheld as CSAM: the forward is refused and reported
+    Blocked,
 }

@@ -4,7 +4,7 @@ import { Type, type Static } from "@sinclair/typebox";
 export const BlobReferenceSchema = Type.Object({
     blobId: Type.BigInt(),
     canisterId: Type.String(),
-})
+});
 export type BlobReference = Static<typeof BlobReferenceSchema>;
 
 export const DataContentSchema = Type.Object({
@@ -31,12 +31,14 @@ export type UploadChunkResponse =
     | "user_not_found"
     | "hash_mismatch"
     | "invalid_file_id"
-    | "full";
+    | "full"
+    | "blocked";
 
 export type ForwardFileResponse =
     | { kind: "success"; newFileId: bigint }
     | { kind: "not_authorized" }
-    | { kind: "file_not_found" };
+    | { kind: "file_not_found" }
+    | { kind: "blocked" };
 
 export type DeleteFileResponse = "success" | "not_authorized" | "file_not_found";
 
@@ -103,3 +105,29 @@ export type ProjectedAllowance = {
     bytesUsed: bigint;
     bytesUsedAfterOperation: bigint;
 };
+
+export type VaultFileChunkResponse =
+    | {
+          kind: "success";
+          bytes: Uint8Array;
+          chunkIndex: number;
+          chunkCount: number;
+          totalSize: bigint;
+          mimeType: string;
+      }
+    | { kind: "not_authorized" }
+    | { kind: "not_found" }
+    | { kind: "session_required" };
+
+export type VaultLogEntry = {
+    index: bigint;
+    timestamp: bigint;
+    hash: string;
+    prevHash: string;
+    event: string;
+    userId: string | undefined;
+};
+
+export type VaultLogResponse =
+    | { kind: "success"; total: bigint; entries: VaultLogEntry[] }
+    | { kind: "not_authorized" };

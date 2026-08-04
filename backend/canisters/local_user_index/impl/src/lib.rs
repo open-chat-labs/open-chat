@@ -38,8 +38,8 @@ use types::{
     BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion,
     CLAIM_TYPE_DIAMOND_MEMBERSHIP, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms,
     CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
-    IdempotentEnvelope, MessageContentInitial, Milliseconds, Notification, NotificationEnvelope, ReferralType, TimestampMillis,
-    Timestamped, UserId, UserNotificationEnvelope, VerifiedCredentialGateArgs,
+    IdempotentEnvelope, MessageContentInitial, Milliseconds, ModerationReferralConfig, Notification, NotificationEnvelope,
+    ReferralType, TimestampMillis, Timestamped, UserId, UserNotificationEnvelope, VerifiedCredentialGateArgs,
 };
 use user_canister::LocalUserIndexEvent as UserEvent;
 use user_ids_set::UserIdsSet;
@@ -58,6 +58,7 @@ mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
+mod no_inline_anchor;
 mod queries;
 mod updates;
 
@@ -513,6 +514,7 @@ impl RuntimeState {
             blocked_user_pairs: self.data.blocked_users.len() as u64,
             oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
             openai_api_key_set: self.data.openai_api_key.is_some(),
+            moderation_referral_config: self.data.moderation_referral_config.clone(),
             message_moderation_queue_len: self.data.message_moderation_queue.len() as u32,
             cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
             bots: self
@@ -597,6 +599,8 @@ struct Data {
     pub premium_items: PremiumItems,
     pub blocked_username_patterns: Vec<String>,
     pub openai_api_key: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_moderation_referral_config")]
+    pub moderation_referral_config: Option<ModerationReferralConfig>,
     #[serde(default)]
     pub message_moderation_queue: ModerationQueue,
 }
@@ -634,6 +638,7 @@ impl Data {
         video_call_operators: Vec<Principal>,
         oc_secret_key_der: Vec<u8>,
         openai_api_key: Option<String>,
+        moderation_referral_config: Option<ModerationReferralConfig>,
         test_mode: bool,
     ) -> Self {
         Data {
@@ -691,6 +696,7 @@ impl Data {
             premium_items: PremiumItems::default(),
             blocked_username_patterns: Vec::new(),
             openai_api_key,
+            moderation_referral_config,
             message_moderation_queue: ModerationQueue::default(),
         }
     }
@@ -754,6 +760,7 @@ pub struct Metrics {
     pub blocked_user_pairs: u64,
     pub oc_secret_key_initialized: bool,
     pub openai_api_key_set: bool,
+    pub moderation_referral_config: Option<ModerationReferralConfig>,
     pub message_moderation_queue_len: u32,
     pub cycles_balance_check_queue_len: u32,
     pub bots: Vec<BotMetrics>,
@@ -781,4 +788,38 @@ pub struct BotMetrics {
     pub user_id: UserId,
     pub name: String,
     pub commands: Vec<String>,
+}
+
+// The referral config briefly shipped (to test envs only) as a single shared threshold;
+// accept that shape on upgrade and convert it so those envs upgrade cleanly. Inert
+// everywhere else - production never held the old shape.
+fn deserialize_moderation_referral_config<'de, D>(d: D) -> Result<Option<ModerationReferralConfig>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum Compat {
+        New(ModerationReferralConfig),
+        Old { categories: u32, score_threshold: f64 },
+    }
+
+    Ok(match Option::<Compat>::deserialize(d)? {
+        Some(Compat::New(config)) => Some(config),
+        Some(Compat::Old {
+            categories,
+            score_threshold,
+        }) => {
+            let categories = (0..32)
+                .map(|i| 1u32 << i)
+                .filter(|bit| categories & bit != 0)
+                .map(|category| types::ModerationReferralCategory {
+                    category,
+                    score_threshold,
+                })
+                .collect::<Vec<_>>();
+            (!categories.is_empty()).then_some(ModerationReferralConfig { categories })
+        }
+        None => None,
+    })
 }

@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- `set_vault_legal_hold` and `destroy_vault_evidence` (platform operator) - apply or lift a preservation hold on a report's vaulted evidence, and destroy it on a law enforcement request ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- Hash-match upload suspensions are recorded against the user, making them contestable (Article 22) and visible to the dismissal-safety check, and the uploader is told why they were suspended ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- Reports which assert child sexual abuse content quarantine the media and delete the message immediately - the material is never viewed outside the quarantine framework - while the suspension waits for the human verdict ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+
+- `accept_terms` - records the user's affirmative acceptance of the platform terms (version + timestamp), returned via `current_user` so clients can show a blocking terms-updated notice ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- `set_moderation_referral_config` (platform operator) - configures which classifier categories (other than sexual/minors) refer messages for human moderator review, with a score threshold per category ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- `c2c_moderation_referral` - a high-scoring classifier hit for a configured category creates a resolvable report and alerts the moderators; no action is taken unless a human upholds it ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- Proactive CSAM detections now create resolvable reports so the auto-sanction can be upheld, dismissed (reversing it in full), or contested by the sender ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- `contest_moderation_sanction` - the sanctioned sender can contest an automated decision, queuing it for priority human verdict ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- `set_vault_reviewers` (platform operator) - designates vault reviewers from among the platform moderators, synced to the storage buckets ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- Authority-report register with `authority_reports` query and `record_authority_report_filed` (platform operator) - the filed-report compliance evidence ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- Quarantine media in the evidence vault on CSAM detection (both pipeline and report flows), releasing or retaining it per the verdict ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+
+### Fixed
+
+- A timed suspension's expiry no longer lifts a later, unrelated suspension (eg. an indefinite CSAM suspension which replaced it) ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- An upheld (non-CSAM) verdict no longer downgrades the suspension while another report still keeps the sender sanctioned ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- Moderators can no longer resolve a report against their own message ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- The read-gate flag and the deletion of CSAM content are applied in a single message to the chat canister, so the content is never deleted-but-unflagged ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- The quarantine is re-sent with the verdict, so a verdict can no longer arrive at a bucket holding no record ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- Suspending and unsuspending a user is retried if the user canister call fails, and the sender is only told their account was unsuspended once it actually has been ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+
 ## [[2.0.2001](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2001-user_index)] - 2026-07-23
 
 ### Fixed

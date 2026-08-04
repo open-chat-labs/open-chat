@@ -5,6 +5,7 @@ use storage_index_canister::*;
 generate_query_call!(allocated_bucket_v2);
 generate_query_call!(can_forward);
 generate_query_call!(user);
+generate_query_call!(vault_buckets);
 
 // Updates
 generate_update_call!(add_bucket_canister);

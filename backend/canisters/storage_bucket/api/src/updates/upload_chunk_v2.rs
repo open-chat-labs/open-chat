@@ -35,6 +35,8 @@ pub enum Response {
     HashMismatch,
     InvalidFileId,
     UserNotFound,
+    // The hash matches content upheld as CSAM: the upload is refused and reported
+    Blocked,
 }
 
 impl Debug for Args {

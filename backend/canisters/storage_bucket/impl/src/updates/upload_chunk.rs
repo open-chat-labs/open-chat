@@ -6,6 +6,7 @@ use crate::{RuntimeState, check_cycles_balance, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use storage_bucket_canister::upload_chunk_v2::{Response::*, *};
+use storage_index_canister::c2c_sync_bucket::{CsamMatch, CsamMatchKind};
 use types::{FileRemoved, RejectedReason};
 use utils::file_id::validate_file_id;
 
@@ -25,6 +26,26 @@ fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     if !validate_file_id(file_id, state.env.canister_id()) {
         return InvalidFileId;
+    }
+
+    // Content previously upheld as CSAM can never be uploaded again: the upload is refused
+    // outright - so no message referencing it can ever be created - and the user_index is
+    // told so the uploader receives the same sanction as the original sender. Checking the
+    // declared hash is airtight: an upload only ever completes if the bytes hash to the
+    // declared value (see the HashMismatch arm below).
+    if let Some(report_index) = state.data.vault.known_csam_report_index(&args.hash) {
+        // Report once per file id: chunks upload in parallel and each is refused here, and a
+        // retry of the same attempt reuses the file id - only the first sighting is reported
+        if state.data.vault.record_blocked_attempt(user_id, file_id) {
+            state.data.push_event_to_index(EventToSync::CsamMatch(CsamMatch {
+                uploader: user_id,
+                file_id,
+                hash: args.hash,
+                csam_report_index: report_index,
+                kind: CsamMatchKind::UploadAttempt,
+            }));
+        }
+        return Blocked;
     }
 
     let mut index_sync_complete = IndexSyncComplete::No;

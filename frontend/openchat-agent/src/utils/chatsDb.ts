@@ -910,6 +910,13 @@ export class ChatsDb {
         this.getDb().then((db) => db.put("currentUser", user, this.principalString));
     }
 
+    async patchCachedCurrentUser(patch: Partial<CreatedUser>): Promise<void> {
+        const current = await this.getCachedCurrentUser();
+        if (current) {
+            (await this.getDb()).put("currentUser", { ...current, ...patch }, this.principalString);
+        }
+    }
+
     async setCurrentUserDiamondStatusInCache(
         diamondStatus: DiamondMembershipStatus,
     ): Promise<void> {
