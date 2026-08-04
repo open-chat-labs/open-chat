@@ -5824,16 +5824,28 @@ export class OpenChat {
         const promise: Promise<bigint> = new Promise((resolve) => {
             this.#refreshBalanceSemaphore
                 .execute(() => {
-                    return this.#worker
-                        .send({
-                            kind: "refreshAccountBalance",
-                            ledger,
-                            principal: user.userId,
-                        })
-                        .then((val) => {
-                            cryptoBalanceStore.setBalance(ledger, val);
-                            return val;
-                        })
+                    // Race the request against a timeout - without it, a worker request which
+                    // never responds (eg. the worker was suspended while backgrounded on mobile)
+                    // would leak a semaphore permit and leave this ledger's inflight promise
+                    // wedged for the rest of the session.
+                    return Promise.race([
+                        this.#worker
+                            .send({
+                                kind: "refreshAccountBalance",
+                                ledger,
+                                principal: user.userId,
+                            })
+                            .then((val) => {
+                                cryptoBalanceStore.setBalance(ledger, val);
+                                return val;
+                            }),
+                        new Promise<bigint>((_, reject) =>
+                            window.setTimeout(
+                                () => reject(new Error("refreshAccountBalance timed out")),
+                                20_000,
+                            ),
+                        ),
+                    ])
                         .catch(() => 0n)
                         .finally(() => this.#inflightBalanceRefreshPromises.delete(ledger));
                 })

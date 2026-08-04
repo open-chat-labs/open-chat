@@ -44,6 +44,7 @@
         routeStore,
         subscribe,
     } from "@client";
+    import { eventToError, recordError } from "@utils/errorPostmortem";
     import { navigate } from "@utils/navigation";
     import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
@@ -626,11 +627,18 @@
             return;
         }
 
-        logger?.error("Unhandled error: ", ev);
+        const err = eventToError(ev);
+        recordError("window", err);
+        logger?.error("Unhandled error: ", err);
         if (ev instanceof PromiseRejectionEvent && requiresLogout(ev.reason)) {
             client.logout();
             ev.preventDefault();
         }
+    }
+
+    function boundaryError(err: unknown) {
+        recordError("boundary", err);
+        logger?.error("Top level boundary error: ", err);
     }
 
     function resize() {
@@ -666,48 +674,62 @@
     detectNeedsSafeInset();
 </script>
 
-{#if $currentTheme.burst}
-    <div
-        class:fixed={burstFixed}
-        class="burst-wrapper"
-        style={`background-image: url(${burstUrl})`}>
-    </div>
-{/if}
-
-<Head />
-
-<ActiveCall
-    {showLandingPage}
-    onClearSelection={() => navigate(routeForScope($chatListScopeStore))}
-    bind:this={videoCallElement} />
-
-<VideoCallAccessRequests />
-
-<IncomingCall onJoinVideoCall={joinVideoCall} />
-
-<Witch background />
-
-{#if !client.isNativeApp()}
-    <InstallPrompt />
-{/if}
-
-<NotificationsBar />
-
-{#if $identityStateStore.kind === "anon" || $identityStateStore.kind === "logging_in" || $identityStateStore.kind === "registering" || $identityStateStore.kind === "logged_in" || $identityStateStore.kind === "loading_user"}
-    {#if !$isLoading || $reviewingTranslations}
-        <Router {showLandingPage} />
+<svelte:boundary onerror={boundaryError}>
+    {#if $currentTheme.burst}
+        <div
+            class:fixed={burstFixed}
+            class="burst-wrapper"
+            style={`background-image: url(${burstUrl})`}>
+        </div>
     {/if}
-{/if}
 
-{#if profileTrace}
-    <Profiler />
-{/if}
+    <Head />
 
-<UpgradeBanner />
+    <ActiveCall
+        {showLandingPage}
+        onClearSelection={() => navigate(routeForScope($chatListScopeStore))}
+        bind:this={videoCallElement} />
 
-{#if $snowing}
-    <Snow />
-{/if}
+    <VideoCallAccessRequests />
+
+    <IncomingCall onJoinVideoCall={joinVideoCall} />
+
+    <Witch background />
+
+    {#if !client.isNativeApp()}
+        <InstallPrompt />
+    {/if}
+
+    <NotificationsBar />
+
+    {#if $identityStateStore.kind === "anon" || $identityStateStore.kind === "logging_in" || $identityStateStore.kind === "registering" || $identityStateStore.kind === "logged_in" || $identityStateStore.kind === "loading_user"}
+        {#if !$isLoading || $reviewingTranslations}
+            <Router {showLandingPage} />
+        {/if}
+    {/if}
+
+    {#if profileTrace}
+        <Profiler />
+    {/if}
+
+    <UpgradeBanner />
+
+    {#if $snowing}
+        <Snow />
+    {/if}
+
+    {#snippet failed(error, reset)}
+        <div class="boundary-failed">
+            <h2>Something went wrong</h2>
+            <p>The app hit an unexpected error.</p>
+            <pre>{String(error)}</pre>
+            <div class="boundary-buttons">
+                <button onclick={reset}>Try again</button>
+                <button onclick={() => window.location.reload()}>Reload</button>
+            </div>
+        </div>
+    {/snippet}
+</svelte:boundary>
 
 <svelte:window onresize={resize} onerror={unhandledError} onorientationchange={resize} />
 
@@ -732,6 +754,39 @@
         @include mobile() {
             background-size: 800px;
             background-position: left 0 top toRem(150);
+        }
+    }
+
+    .boundary-failed {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        height: 100vh;
+        padding: 24px;
+        text-align: center;
+        color: var(--txt);
+        background-color: var(--bg);
+
+        pre {
+            max-width: 100%;
+            max-height: 40vh;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-size: 12px;
+            color: var(--txt-light);
+        }
+    }
+
+    .boundary-buttons {
+        display: flex;
+        gap: 12px;
+
+        button {
+            padding: 8px 16px;
+            cursor: pointer;
         }
     }
 </style>
