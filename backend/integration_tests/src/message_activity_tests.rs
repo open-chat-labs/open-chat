@@ -55,6 +55,40 @@ fn react_to_message_and_check_activity_feed(chat_type: ChatType) {
     check_updates(env, 0, &us, &them, MessageActivity::Reaction);
 }
 
+#[test]
+fn reacting_to_own_message_does_not_appear_in_other_users_activity_feed() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let TestData { them, us, .. } = init_test_data(env, canister_ids, *controller, ChatType::Direct);
+
+    let reaction = "😀";
+
+    // They send us a message then react to their own message
+    let their_message_id = random_from_u128();
+    client::user::happy_path::send_text_message(env, &them, us.user_id, "their message", Some(their_message_id));
+    env.tick();
+    client::user::happy_path::add_reaction(env, &them, us.user_id, reaction, their_message_id);
+    tick_many(env, 3);
+
+    // That is not activity on any message of ours, so our feed stays empty
+    let feed = client::user::happy_path::message_activity_feed(env, &us, 0);
+    assert_eq!(feed.total, 0, "{:?}", feed.events);
+
+    // But a reaction to a message we sent still reaches our feed
+    let our_message_id = random_from_u128();
+    client::user::happy_path::send_text_message(env, &us, them.user_id, "our message", Some(our_message_id));
+    env.tick();
+    client::user::happy_path::add_reaction(env, &them, us.user_id, reaction, our_message_id);
+    tick_many(env, 3);
+
+    check_updates(env, 0, &us, &them, MessageActivity::Reaction);
+}
+
 #[test_case(ChatType::Group)]
 #[test_case(ChatType::Channel)]
 fn mention_user_and_check_activity_feed(chat_type: ChatType) {
