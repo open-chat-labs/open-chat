@@ -1,5 +1,6 @@
 <script lang="ts">
     import "emoji-picker-element";
+    import type { Picker } from "emoji-picker-element";
     import type {
         EmojiClickEvent,
         SkinTone,
@@ -26,6 +27,7 @@
 
     let { mode = "message", onEmojiSelected, onSkintoneChanged, customEmojis }: Props = $props();
     let showPayGate = $state<CustomEmoji>();
+    let emojiPickerEl = $state<Picker>();
 
     function lockedCategoryCss(groupId: number, price: number) {
         return `
@@ -67,7 +69,9 @@
     }
 
     onMount(() => {
-        const emojiPicker = document.querySelector("emoji-picker");
+        // must be the bound element - document.querySelector("emoji-picker") finds the
+        // first picker in the document, which may belong to a different component
+        const emojiPicker = emojiPickerEl;
 
         if (emojiPicker && customEmojis) {
             emojiPicker.customEmoji = [...customEmojis.entries()].map(([_, emoji]) => {
@@ -94,6 +98,7 @@
 
         return () => {
             emojiPicker?.removeEventListener("emoji-click", onClick);
+            emojiPicker?.removeEventListener("skin-tone-change", skinToneChanged);
         };
     });
 
@@ -132,6 +137,7 @@
 {/if}
 
 <emoji-picker
+    bind:this={emojiPickerEl}
     class:message={mode === "message"}
     class:reaction={mode === "reaction"}
     class:thread={mode === "thread"}
