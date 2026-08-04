@@ -1,5 +1,5 @@
 use crate::canister::convert_cdk_error;
-use ic_cdk::management_canister::{self, DepositCyclesArgs};
+use ic_cdk_management_canister::{self as management_canister, DepositCyclesArgs};
 use tracing::{error, info};
 use types::{C2CError, CanisterId, Cycles};
 

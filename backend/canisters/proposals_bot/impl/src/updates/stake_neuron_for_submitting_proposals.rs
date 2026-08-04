@@ -7,7 +7,7 @@ use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use ledger_utils::compute_neuron_staking_subaccount_bytes;
 use proposals_bot_canister::stake_neuron_for_submitting_proposals::{Response::*, *};
-use rand::Rng;
+use rand::RngExt;
 use sns_governance_canister::types::manage_neuron::claim_or_refresh::{By, MemoAndController};
 use sns_governance_canister::types::manage_neuron::configure::Operation;
 use sns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command, IncreaseDissolveDelay};
@@ -86,7 +86,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
                 this_canister_id: state.env.canister_id(),
                 user_index_canister_id: state.data.user_index_canister_id,
                 ledger_canister_id: ns.ledger_canister_id(),
-                nonce: state.env.rng().r#gen(),
+                nonce: state.env.rng().random(),
                 dissolve_delay_seconds: (ns.min_dissolve_delay_to_vote() / 1000) as u32 + 1,
             })
         }

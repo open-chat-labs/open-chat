@@ -3,7 +3,7 @@ use crate::{State, read_state};
 use candid::CandidType;
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
-use ic_cdk::management_canister::CanisterInstallMode;
+use ic_cdk_management_canister::CanisterInstallMode;
 use openchat_installer_canister::CanisterType;
 use openchat_installer_canister::upgrade_canister::*;
 use types::{BuildVersion, CanisterId, CanisterWasmBytes, UpgradeChunkedCanisterWasmArgs, UpgradeChunkedCanisterWasmResponse};

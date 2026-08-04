@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal, ValidateNewMessageContentResult};
 use ic_cdk::update;
 use oc_error_codes::OCErrorCode;
-use rand::Rng;
+use rand::RngExt;
 use types::{
     BotCaller, BotMessageContext, CanisterId, Chat, ContentValidationError, DirectChatUserNotificationPayload,
     DirectMessageNotification, EventWrapper, Message, MessageContent, MessageId, MessageIndex, OgPreview, SenderContext,
@@ -156,7 +156,7 @@ pub(crate) fn handle_message_impl(
     let chat = state
         .data
         .direct_chats
-        .get_or_create(args.sender, args.sender_user_type, || state.env.rng().r#gen(), args.now);
+        .get_or_create(args.sender, args.sender_user_type, || state.env.rng().random(), args.now);
 
     let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
 
@@ -166,7 +166,7 @@ pub(crate) fn handle_message_impl(
         None
     };
 
-    let message_id = args.message_id.unwrap_or_else(|| state.env.rng().r#gen());
+    let message_id = args.message_id.unwrap_or_else(|| state.env.rng().random());
 
     let push_message_args = PushMessageArgs {
         thread_root_message_index,

@@ -1,24 +1,22 @@
 use crate::{RuntimeState, mutate_state};
-use ic_cdk::management_canister::CanisterInstallMode;
-use ic_cdk_timers::TimerId;
-use std::cell::Cell;
-use std::time::Duration;
+use ic_cdk_management_canister::CanisterInstallMode;
+use per_round_timer::PerRoundTimer;
+use std::cell::RefCell;
 use tracing::trace;
 use types::{BuildVersion, CanisterId, CanisterWasm};
 use user_index_canister::ChildCanisterType;
 use utils::canister::{CanisterToInstall, ChunkedWasmToInstall, FailedUpgrade, WasmToInstall, install, upload_wasm_in_chunks};
 
 thread_local! {
-    static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
+    static TIMER: RefCell<Option<PerRoundTimer>> = RefCell::default();
 }
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
-    if TIMER_ID.get().is_none()
+    if TIMER.with_borrow(|t| t.is_none())
         && (state.data.canisters_requiring_upgrade.count_pending() > 0
             || state.data.canisters_requiring_upgrade.count_in_progress() > 0)
     {
-        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
-        TIMER_ID.set(Some(timer_id));
+        TIMER.set(Some(PerRoundTimer::new(run)));
         trace!("'upgrade_canisters' job started");
         true
     } else {
@@ -28,13 +26,11 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 
 fn run() {
     match mutate_state(try_get_next) {
-        GetNextResult::Success(canister_to_upgrade) => ic_cdk::futures::spawn(perform_upgrade(canister_to_upgrade)),
+        GetNextResult::Success(canister_to_upgrade) => ic_cdk::futures::spawn_migratory(perform_upgrade(canister_to_upgrade)),
         GetNextResult::Continue => {}
         GetNextResult::QueueEmpty => {
-            if let Some(timer_id) = TIMER_ID.take() {
-                ic_cdk_timers::clear_timer(timer_id);
-                trace!("'upgrade_canisters' job stopped");
-            }
+            TIMER.set(None);
+            trace!("'upgrade_canisters' job stopped");
         }
     }
 }

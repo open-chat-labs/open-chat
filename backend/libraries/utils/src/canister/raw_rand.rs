@@ -1,4 +1,4 @@
-use ic_cdk::management_canister;
+use ic_cdk_management_canister as management_canister;
 
 // Get a random seed based on 'raw_rand'
 pub async fn get_random_seed() -> [u8; 32] {

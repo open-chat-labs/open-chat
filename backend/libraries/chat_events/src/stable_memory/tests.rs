@@ -22,7 +22,7 @@ use crate::{
 };
 use constants::CHAT_SYMBOL;
 use rand::rngs::StdRng;
-use rand::{Rng, RngCore, SeedableRng};
+use rand::{Rng, RngExt, SeedableRng};
 use testing::rng::deterministic::{random_from_principal, random_from_u32, random_from_u128, random_principal, random_string};
 use types::{
     EventIndex, EventWrapperInternal, MessageReport, P2PSwapCompleted, P2PSwapStatus, Proposal, ProposalDecisionStatus,
@@ -56,7 +56,7 @@ fn image_content() {
         mime_type: random_string(&mut rng),
         blob_reference: Some(BlobReferenceInternal {
             canister_id: random_principal(&mut rng),
-            blob_id: rng.r#gen(),
+            blob_id: rng.random(),
         }),
     });
     let bytes = generate_then_serialize_value(content, &mut rng);
@@ -78,11 +78,11 @@ fn video_content() {
         mime_type: random_string(&mut rng),
         image_blob_reference: Some(BlobReferenceInternal {
             canister_id: random_principal(&mut rng),
-            blob_id: rng.r#gen(),
+            blob_id: rng.random(),
         }),
         video_blob_reference: Some(BlobReferenceInternal {
             canister_id: random_principal(&mut rng),
-            blob_id: rng.r#gen(),
+            blob_id: rng.random(),
         }),
     });
     let bytes = generate_then_serialize_value(content, &mut rng);
@@ -101,10 +101,10 @@ fn audio_content() {
         mime_type: random_string(&mut rng),
         blob_reference: Some(BlobReferenceInternal {
             canister_id: random_principal(&mut rng),
-            blob_id: rng.r#gen(),
+            blob_id: rng.random(),
         }),
-        duration_ms: rng.r#gen(),
-        samples: rng.r#gen::<[u8; 32]>().to_vec(),
+        duration_ms: rng.random(),
+        samples: rng.random::<[u8; 32]>().to_vec(),
     });
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, AUDIO_CURRENT);
@@ -121,10 +121,10 @@ fn file_content() {
         name: random_string(&mut rng),
         caption: Some(random_string(&mut rng)),
         mime_type: random_string(&mut rng),
-        file_size: rng.r#gen(),
+        file_size: rng.random(),
         blob_reference: Some(BlobReferenceInternal {
             canister_id: random_principal(&mut rng),
-            blob_id: rng.r#gen(),
+            blob_id: rng.random(),
         }),
     });
     let bytes = generate_then_serialize_value(content, &mut rng);
@@ -142,14 +142,14 @@ fn poll_content() {
         config: PollConfigInternal {
             text: Some(random_string(&mut rng)),
             options: vec![random_string(&mut rng), random_string(&mut rng), random_string(&mut rng)],
-            end_date: Some(rng.r#gen()),
+            end_date: Some(rng.random()),
             anonymous: true,
             show_votes_before_end_date: true,
             allow_multiple_votes_per_user: true,
             allow_user_to_change_vote: true,
         },
         votes: [(
-            rng.r#gen(),
+            rng.random(),
             vec![random_from_principal(&mut rng), random_from_principal(&mut rng)],
         )]
         .into_iter()
@@ -172,19 +172,19 @@ fn crypto_content() {
         transfer: CompletedCryptoTransactionInternal::ICRC1(crate::icrc1::CompletedCryptoTransactionInternal {
             ledger: random_principal(&mut rng),
             token_symbol: CHAT_SYMBOL.to_string(),
-            amount: rng.r#gen(),
+            amount: rng.random(),
             from: crate::icrc1::CryptoAccountInternal::Account(AccountInternal {
                 owner: random_principal(&mut rng),
-                subaccount: Some(rng.r#gen()),
+                subaccount: Some(rng.random()),
             }),
             to: crate::icrc1::CryptoAccountInternal::Account(AccountInternal {
                 owner: random_principal(&mut rng),
-                subaccount: Some(rng.r#gen()),
+                subaccount: Some(rng.random()),
             }),
-            fee: rng.r#gen(),
+            fee: rng.random(),
             memo: Some(random_from_u128::<_, u128>(&mut rng).to_be_bytes().to_vec().into()),
-            created: rng.r#gen(),
-            block_index: rng.r#gen(),
+            created: rng.random(),
+            block_index: rng.random(),
         }),
         caption: Some(random_string(&mut rng)),
     });
@@ -201,7 +201,7 @@ fn deleted_content() {
     let mut rng = get_deterministic_rng();
     let content = MessageContentInternal::Deleted(DeletedByInternal {
         deleted_by: random_from_principal(&mut rng),
-        timestamp: rng.r#gen(),
+        timestamp: rng.random(),
     });
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, DELETED_CURRENT);
@@ -218,14 +218,14 @@ fn giphy_content() {
         caption: Some(random_string(&mut rng)),
         title: random_string(&mut rng),
         desktop: GiphyImageVariantInternal {
-            width: rng.r#gen(),
-            height: rng.r#gen(),
+            width: rng.random(),
+            height: rng.random(),
             url: random_string(&mut rng),
             mime_type: random_string(&mut rng),
         },
         mobile: GiphyImageVariantInternal {
-            width: rng.r#gen(),
-            height: rng.r#gen(),
+            width: rng.random(),
+            height: rng.random(),
             url: random_string(&mut rng),
             mime_type: random_string(&mut rng),
         },
@@ -244,26 +244,26 @@ fn governance_proposal() {
     let content = MessageContentInternal::GovernanceProposal(ProposalContentInternal {
         governance_canister_id: random_principal(&mut rng),
         proposal: Proposal::SNS(SnsProposal {
-            id: rng.r#gen(),
-            action: rng.r#gen(),
-            proposer: rng.r#gen(),
-            created: rng.r#gen(),
+            id: rng.random(),
+            action: rng.random(),
+            proposer: rng.random(),
+            created: rng.random(),
             title: random_string(&mut rng),
             summary: random_string(&mut rng),
             url: random_string(&mut rng),
             status: ProposalDecisionStatus::Executed,
             reward_status: ProposalRewardStatus::Settled,
             tally: Tally {
-                yes: rng.r#gen(),
-                no: rng.r#gen(),
-                total: rng.r#gen(),
-                timestamp: rng.r#gen(),
+                yes: rng.random(),
+                no: rng.random(),
+                total: rng.random(),
+                timestamp: rng.random(),
             },
-            deadline: rng.r#gen(),
+            deadline: rng.random(),
             payload_text_rendering: Some(random_string(&mut rng)),
-            minimum_yes_proportion_of_total: rng.r#gen(),
-            minimum_yes_proportion_of_exercised: rng.r#gen(),
-            last_updated: rng.r#gen(),
+            minimum_yes_proportion_of_total: rng.random(),
+            minimum_yes_proportion_of_exercised: rng.random(),
+            last_updated: rng.random(),
         }),
         votes: [
             (random_from_principal(&mut rng), true),
@@ -291,7 +291,7 @@ fn governance_proposal() {
 fn prize_content() {
     let mut rng = get_deterministic_rng();
     let content = MessageContentInternal::Prize(PrizeContentInternal {
-        prizes_remaining: vec![rng.r#gen(), rng.r#gen(), rng.r#gen()],
+        prizes_remaining: vec![rng.random(), rng.random(), rng.random()],
         reservations: [
             random_from_principal(&mut rng),
             random_from_principal(&mut rng),
@@ -309,16 +309,16 @@ fn prize_content() {
         transaction: CompletedCryptoTransactionInternal::NNS(crate::nns::CompletedCryptoTransactionInternal {
             ledger: random_principal(&mut rng),
             token_symbol: CHAT_SYMBOL.to_string(),
-            amount: rng.r#gen(),
-            fee: rng.r#gen(),
-            from: crate::nns::CryptoAccountInternal::Account(rng.r#gen::<[u8; 28]>().try_into().unwrap()),
-            to: crate::nns::CryptoAccountInternal::Account(rng.r#gen::<[u8; 28]>().try_into().unwrap()),
-            memo: rng.r#gen(),
-            created: rng.r#gen(),
-            transaction_hash: rng.r#gen(),
-            block_index: rng.r#gen(),
+            amount: rng.random(),
+            fee: rng.random(),
+            from: crate::nns::CryptoAccountInternal::Account(rng.random::<[u8; 28]>().try_into().unwrap()),
+            to: crate::nns::CryptoAccountInternal::Account(rng.random::<[u8; 28]>().try_into().unwrap()),
+            memo: rng.random(),
+            created: rng.random(),
+            transaction_hash: rng.random(),
+            block_index: rng.random(),
         }),
-        end_date: rng.r#gen(),
+        end_date: rng.random(),
         caption: Some(random_string(&mut rng)),
         diamond_only: true,
         lifetime_diamond_only: true,
@@ -346,9 +346,9 @@ fn prize_winner_content() {
         winner: random_from_principal(&mut rng),
         ledger: random_principal(&mut rng),
         token_symbol: random_string(&mut rng),
-        amount: rng.r#gen(),
-        fee: rng.r#gen(),
-        block_index: rng.r#gen(),
+        amount: rng.random(),
+        fee: rng.random(),
+        block_index: rng.random(),
         prize_message: random_from_u32(&mut rng),
     });
     let bytes = generate_then_serialize_value(content, &mut rng);
@@ -363,10 +363,10 @@ fn prize_winner_content() {
 fn message_reminder_created_content() {
     let mut rng = get_deterministic_rng();
     let content = MessageContentInternal::MessageReminderCreated(MessageReminderCreatedContentInternal {
-        reminder_id: rng.r#gen(),
-        remind_at: rng.r#gen(),
+        reminder_id: rng.random(),
+        remind_at: rng.random(),
         notes: Some(random_string(&mut rng)),
-        hidden: rng.r#gen(),
+        hidden: rng.random(),
     });
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, MESSAGE_REMINDER_CREATED_CURRENT);
@@ -387,7 +387,7 @@ fn message_reminder_created_content() {
 fn message_reminder_content() {
     let mut rng = get_deterministic_rng();
     let content = MessageContentInternal::MessageReminder(MessageReminderContentInternal {
-        reminder_id: rng.r#gen(),
+        reminder_id: rng.random(),
         notes: Some(random_string(&mut rng)),
     });
     let bytes = generate_then_serialize_value(content, &mut rng);
@@ -407,8 +407,8 @@ fn reported_message_content() {
     let content = MessageContentInternal::ReportedMessage(ReportedMessageInternal {
         reports: vec![MessageReport {
             reported_by: random_from_principal(&mut rng),
-            timestamp: rng.r#gen(),
-            reason_code: rng.r#gen(),
+            timestamp: rng.random(),
+            reason_code: rng.random(),
             notes: Some(random_string(&mut rng)),
         }],
     });
@@ -428,21 +428,21 @@ fn p2p_swap_content() {
     let mut rng = get_deterministic_rng();
     let symbol = random_string(&mut rng);
     let content = MessageContentInternal::P2PSwap(P2PSwapContentInternal {
-        swap_id: rng.r#gen(),
+        swap_id: rng.random(),
         token0: TokenInfo {
             symbol: CHAT_SYMBOL.to_string(),
             ledger: random_principal(&mut rng),
-            decimals: rng.r#gen(),
-            fee: rng.r#gen(),
+            decimals: rng.random(),
+            fee: rng.random(),
         },
-        token0_amount: rng.r#gen(),
+        token0_amount: rng.random(),
         token1: TokenInfo {
             symbol: symbol.clone(),
             ledger: random_principal(&mut rng),
-            decimals: rng.r#gen(),
-            fee: rng.r#gen(),
+            decimals: rng.random(),
+            fee: rng.random(),
         },
-        token1_amount: rng.r#gen(),
+        token1_amount: rng.random(),
         expires_at: rng.next_u64(),
         caption: Some(random_string(&mut rng)),
         token0_txn_in: rng.next_u64(),
@@ -509,7 +509,7 @@ fn custom_content() {
     let mut rng = get_deterministic_rng();
     let content = MessageContentInternal::Custom(CustomContentInternal {
         kind: random_string(&mut rng),
-        data: rng.r#gen::<[u8; 32]>().to_vec(),
+        data: rng.random::<[u8; 32]>().to_vec(),
     });
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, CUSTOM_CURRENT);
@@ -529,15 +529,15 @@ fn test_deserialization(bytes: &[u8]) -> MessageContentInternal {
     }
 }
 
-fn generate_then_serialize_value<R: RngCore>(content: MessageContentInternal, rng: &mut R) -> Vec<u8> {
+fn generate_then_serialize_value<R: Rng>(content: MessageContentInternal, rng: &mut R) -> Vec<u8> {
     event_to_bytes(generate_value(content, rng))
 }
 
-fn generate_value<R: RngCore>(content: MessageContentInternal, rng: &mut R) -> EventWrapperInternal<ChatEventInternal> {
+fn generate_value<R: Rng>(content: MessageContentInternal, rng: &mut R) -> EventWrapperInternal<ChatEventInternal> {
     EventWrapperInternal {
         index: random_from_u32(rng),
-        timestamp: rng.r#gen(),
-        expires_at: Some(rng.r#gen()),
+        timestamp: rng.random(),
+        expires_at: Some(rng.random()),
         event: ChatEventInternal::Message(Box::new(MessageInternal {
             message_index: random_from_u32(rng),
             message_id: random_from_u128(rng),
@@ -567,10 +567,10 @@ fn generate_value<R: RngCore>(content: MessageContentInternal, rng: &mut R) -> E
                     (random_from_principal(rng), random_from_u128(rng)),
                 ],
             )]),
-            last_edited: Some(rng.r#gen()),
+            last_edited: Some(rng.random()),
             deleted_by: Some(DeletedByInternal {
                 deleted_by: random_from_principal(rng),
-                timestamp: rng.r#gen(),
+                timestamp: rng.random(),
             }),
             thread_summary: Some(ThreadSummaryInternal {
                 participants: vec![
@@ -579,9 +579,9 @@ fn generate_value<R: RngCore>(content: MessageContentInternal, rng: &mut R) -> E
                     random_from_principal(rng),
                 ],
                 followers: [random_from_principal(rng), random_from_principal(rng)].into_iter().collect(),
-                reply_count: rng.r#gen(),
+                reply_count: rng.random(),
                 latest_event_index: random_from_u32(rng),
-                latest_event_timestamp: rng.r#gen(),
+                latest_event_timestamp: rng.random(),
             }),
             forwarded: true,
             block_level_markdown: true,

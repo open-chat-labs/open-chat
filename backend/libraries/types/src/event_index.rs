@@ -49,3 +49,23 @@ impl Display for EventIndex {
         self.0.fmt(f)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // candid 0.10.28 - 0.10.33 could not decode this: the bulk fast path added for vecs of
+    // primitives fed elements through deserializers with no `deserialize_newtype_struct`, so a
+    // `Vec` of any newtype struct failed to decode its own encoding. It traps whole endpoints
+    // rather than failing loudly in one place, so it is worth pinning here.
+    // See https://github.com/dfinity/candid/issues/752
+    #[test]
+    fn vec_survives_a_candid_round_trip() {
+        let original = vec![EventIndex::from(1), EventIndex::from(10)];
+
+        let encoded = candid::encode_one(&original).unwrap();
+        let decoded: Vec<EventIndex> = candid::decode_one(&encoded).unwrap();
+
+        assert_eq!(decoded, original);
+    }
+}

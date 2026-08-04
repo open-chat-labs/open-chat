@@ -85,11 +85,11 @@ impl<V, K: Ord> Ord for ItemWithSortKey<V, K> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::RngCore;
+    use rand::Rng;
 
     #[test]
     fn max_n_by() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         let input: Vec<_> = (0..100).map(|_| rng.next_u32()).collect();
 
@@ -105,7 +105,7 @@ mod tests {
 
     #[test]
     fn min_n_by() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         let input: Vec<_> = (0..100).map(|_| rng.next_u32()).collect();
 

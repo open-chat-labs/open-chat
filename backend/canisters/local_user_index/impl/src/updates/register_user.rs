@@ -8,7 +8,7 @@ use email_address::EmailAddress;
 use ledger_utils::default_ledger_account;
 use local_user_index_canister::ChildCanisterType;
 use local_user_index_canister::register_user::{Response::*, *};
-use rand::Rng;
+use rand::RngExt;
 use tracing::error;
 use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, MessageContentInitial, TextContent, UserId, UserType};
 use user_canister::ReferredUserRegistered;
@@ -196,7 +196,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         video_call_operators: state.data.video_call_operators.clone(),
         referred_by,
         test_mode: state.data.test_mode,
-        rng_seed: state.env.rng().r#gen(),
+        rng_seed: state.env.rng().random(),
         bot_api_gateway_canister_id: Principal::anonymous(),
     };
 

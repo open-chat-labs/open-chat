@@ -12,13 +12,15 @@ use chat_events::ChatEvents;
 use constants::OPENCHAT_BOT_USER_ID;
 use group_canister::c2c_export_group::{Args, Response};
 use group_chat_core::{GroupChatCore, GroupMembers};
+use ic_cdk::call::RejectCode;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::collections::HashMap;
 use std::time::Duration;
 use tracing::{info, trace};
 use types::{
-    Caller, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityUsersBlocked, Empty, MultiUserChat, UserId, UserType,
+    C2CError, Caller, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityUsersBlocked, Empty, MultiUserChat, UserId,
+    UserType,
 };
 
 const PAGE_SIZE: u32 = 19 * 102 * 1024; // Roughly 1.9MB (1.9 * 1024 * 1024)
@@ -29,7 +31,7 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && !state.data.groups_being_imported.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, async { run() });
         TIMER_ID.set(Some(timer_id));
         true
     } else {
@@ -43,7 +45,7 @@ fn run() {
 
     let batch = mutate_state(next_batch);
     if !batch.is_empty() {
-        ic_cdk::futures::spawn(import_groups(batch));
+        ic_cdk::futures::spawn_migratory(import_groups(batch));
     }
 }
 
@@ -85,7 +87,7 @@ async fn import_group(group: GroupToImport) {
 
                             // We set a timer to trigger an upgrade in case deserializing the group requires
                             // more instructions than are allowed in a normal update call
-                            ic_cdk_timers::set_timer(Duration::from_secs(10), move || {
+                            ic_cdk_timers::set_timer(Duration::from_secs(10), async move {
                                 trigger_upgrade_to_finalize_import(group_id)
                             });
 
@@ -95,7 +97,7 @@ async fn import_group(group: GroupToImport) {
                 }
                 Err(error) => {
                     mutate_state(|state| {
-                        if error.message().contains("violated contract") {
+                        if is_unrecoverable(&error) {
                             state.data.groups_being_imported.take(&group_id);
                         } else {
                             state
@@ -349,7 +351,7 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
         })));
     });
 
-    ic_cdk_timers::set_timer(Duration::ZERO, move || mark_import_complete(group_id, channel_id));
+    ic_cdk_timers::set_timer(Duration::ZERO, async move { mark_import_complete(group_id, channel_id) });
     info!(%group_id, attempt, "'process_channel_members' completed");
 }
 
@@ -406,6 +408,18 @@ pub(crate) fn mark_import_complete(group_id: ChatId, channel_id: ChannelId) {
     });
 
     info!(%group_id, "'mark_import_complete' completed");
+}
+
+// Whether retrying the import could ever succeed. A batch which is too large for the group to
+// reply with fails as a contract violation - the page size is fixed, so it would fail identically
+// every time and the import has to be abandoned rather than retried forever.
+//
+// Unfortunately this can only be recognised from the reject message: a contract violation reaches
+// us as a plain `CanisterError`, and the IC does not expose its fine grained error codes to
+// canisters, so the reject code alone cannot distinguish it from a transient trap. The reject code
+// is still checked so that unrelated failures can't match on the text alone.
+fn is_unrecoverable(error: &C2CError) -> bool {
+    matches!(error.reject_code(), RejectCode::CanisterError) && error.message().contains("violated contract")
 }
 
 fn trigger_upgrade_to_finalize_import(group_id: ChatId) {

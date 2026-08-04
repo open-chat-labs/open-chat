@@ -9,7 +9,7 @@ use chat_events::{
 };
 use constants::{HOUR_IN_MS, MINUTE_IN_MS};
 use ledger_utils::format_crypto_amount_with_symbol;
-use rand::Rng;
+use rand::RngExt;
 use types::{
     Achievement, Chat, ChitEvent, ChitEventType, DirectChatUserNotificationPayload, DirectMessageTipped,
     DirectReactionAddedNotification, EventIndex, MessageContentInitial, P2PSwapStatus, UserId, UserType, VideoCallPresence,
@@ -154,7 +154,7 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
             let chat = state
                 .data
                 .direct_chats
-                .get_or_create(caller_user_id, UserType::User, || state.env.rng().r#gen(), now);
+                .get_or_create(caller_user_id, UserType::User, || state.env.rng().random(), now);
 
             let last_updated_timestamp = chat.events.get_events_time_to_live().timestamp;
 
@@ -308,41 +308,41 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
             if let Ok(result) = chat.events.add_reaction::<UserEventPusher>(add_remove_reaction_args, None) {
                 let message = result.value;
 
-                if message.sender != caller_user_id
-                    && !state.data.suspended.value
-                    && !args.username.is_empty()
-                    && !chat.notifications_muted.value
-                {
-                    let notification =
-                        DirectChatUserNotificationPayload::DirectReactionAdded(DirectReactionAddedNotification {
-                            them: chat.them,
+                // They may be reacting to their own message; in that case we should not generate any activity
+                // for the other user (push notification, activity-feed event, or achievement progress).
+                if message.sender != caller_user_id {
+                    if !state.data.suspended.value && !args.username.is_empty() && !chat.notifications_muted.value {
+                        let notification =
+                            DirectChatUserNotificationPayload::DirectReactionAdded(DirectReactionAddedNotification {
+                                them: chat.them,
+                                thread_root_message_index,
+                                message_index: message.message_index,
+                                message_event_index: result.event_index,
+                                username: args.username,
+                                display_name: args.display_name,
+                                reaction: args.reaction,
+                                user_avatar_id: args.user_avatar_id,
+                            });
+
+                        state.push_notification(Some(caller_user_id), message.sender, notification);
+                    }
+
+                    state.data.push_message_activity(
+                        MessageActivityEvent {
+                            chat: Chat::Direct(caller_user_id.into()),
                             thread_root_message_index,
                             message_index: message.message_index,
-                            message_event_index: result.event_index,
-                            username: args.username,
-                            display_name: args.display_name,
-                            reaction: args.reaction,
-                            user_avatar_id: args.user_avatar_id,
-                        });
+                            message_id: message.message_id,
+                            event_index: result.event_index,
+                            activity: MessageActivity::Reaction,
+                            timestamp: now,
+                            user_id: Some(caller_user_id),
+                        },
+                        now,
+                    );
 
-                    state.push_notification(Some(caller_user_id), message.sender, notification);
+                    state.award_achievement_and_notify(Achievement::HadMessageReactedTo, now);
                 }
-
-                state.data.push_message_activity(
-                    MessageActivityEvent {
-                        chat: Chat::Direct(caller_user_id.into()),
-                        thread_root_message_index,
-                        message_index: message.message_index,
-                        message_id: message.message_id,
-                        event_index: result.event_index,
-                        activity: MessageActivity::Reaction,
-                        timestamp: now,
-                        user_id: Some(caller_user_id),
-                    },
-                    now,
-                );
-
-                state.award_achievement_and_notify(Achievement::HadMessageReactedTo, now);
             }
         } else {
             let _ = chat.events.remove_reaction(add_remove_reaction_args);

@@ -15,7 +15,7 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && !state.data.finished_proposals_to_process.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, async { run() });
         TIMER_ID.set(Some(timer_id));
         true
     } else {
@@ -37,7 +37,7 @@ fn run_impl(state: &mut RuntimeState) {
     {
         let is_nns = governance_canister_id == state.data.nns_governance_canister_id;
 
-        ic_cdk::futures::spawn(process_proposal(governance_canister_id, proposal_id, is_nns));
+        ic_cdk::futures::spawn_migratory(process_proposal(governance_canister_id, proposal_id, is_nns));
     }
     start_job_if_required(state);
 }

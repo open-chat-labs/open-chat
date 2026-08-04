@@ -1,6 +1,6 @@
 use candid::CandidType;
 use rand::Rng;
-use rand::distributions::{Distribution, Standard};
+use rand::distr::{Distribution, StandardUniform};
 use serde::de::{Error, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::{Display, Formatter};
@@ -18,7 +18,7 @@ impl MessageId {
     }
 }
 
-impl Distribution<MessageId> for Standard {
+impl Distribution<MessageId> for StandardUniform {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> MessageId {
         rng.next_u64().into()
     }

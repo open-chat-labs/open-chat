@@ -103,7 +103,7 @@ impl ChitLeaderboard {
 
 #[cfg(test)]
 mod tests {
-    use rand::RngCore;
+    use rand::Rng;
     use testing::rng::random_principal;
 
     use super::*;
@@ -155,6 +155,6 @@ mod tests {
     }
 
     fn rnd_balance() -> i32 {
-        (rand::thread_rng().next_u32() % 1000) as i32
+        (rand::rng().next_u32() % 1000) as i32
     }
 }

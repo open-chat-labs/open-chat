@@ -7,7 +7,7 @@ use constants::MEMO_PRIZE_CLAIM;
 use group_canister::c2c_claim_prize::*;
 use ledger_utils::{create_pending_transaction, process_transaction};
 use oc_error_codes::OCErrorCode;
-use rand::Rng;
+use rand::RngExt;
 use types::{
     CanisterId, CompletedCryptoTransaction, OCResult, PendingCryptoTransaction,
     PrizeClaimResponse::{self, *},
@@ -106,7 +106,7 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
         args.message_id,
         winner,
         transaction,
-        state.env.rng().r#gen(),
+        state.env.rng().random(),
         GroupEventPusher {
             now,
             rng: state.env.rng(),

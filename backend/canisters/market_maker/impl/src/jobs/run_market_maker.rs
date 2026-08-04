@@ -13,13 +13,13 @@ use types::{AggregatedOrders, C2CError, CancelOrderRequest, MakeOrderRequest, Mi
 const RUN_MARKET_MAKER_INTERVAL: Milliseconds = MINUTE_IN_MS;
 
 pub fn start_job() {
-    ic_cdk_timers::set_timer_interval(Duration::from_millis(RUN_MARKET_MAKER_INTERVAL), run);
+    ic_cdk_timers::set_timer_interval(Duration::from_millis(RUN_MARKET_MAKER_INTERVAL), || async { run() });
 }
 
 fn run() {
     let exchanges = read_state(get_active_exchanges);
     if !exchanges.is_empty() {
-        ic_cdk::futures::spawn(run_async(exchanges));
+        ic_cdk::futures::spawn_migratory(run_async(exchanges));
     }
 }
 

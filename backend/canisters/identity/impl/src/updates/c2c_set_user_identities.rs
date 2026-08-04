@@ -24,7 +24,7 @@ fn c2c_set_user_identities_impl(args: Args, state: &mut RuntimeState) -> Respons
             && let Some(email) = user.email
             && let Some(index) = state.data.user_principals.user_principal_index(&user.principal)
         {
-            ic_cdk::futures::spawn(link_email_auth_principal_to_user_identity(
+            ic_cdk::futures::spawn_migratory(link_email_auth_principal_to_user_identity(
                 sign_in_with_email_canister_id,
                 email,
                 index,

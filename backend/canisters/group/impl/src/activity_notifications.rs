@@ -4,7 +4,7 @@ use constants::{DAY_IN_MS, HOUR_IN_MS};
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_index_canister::c2c_mark_active;
 use msgpack::serialize_then_unwrap;
-use rand::RngCore;
+use rand::Rng;
 use std::collections::HashSet;
 use types::{CanisterId, IdempotentEnvelope, Milliseconds, PublicGroupActivity, TimestampMillis};
 

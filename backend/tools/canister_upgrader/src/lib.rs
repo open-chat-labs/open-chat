@@ -3,8 +3,8 @@ use canister_agent_utils::{CanisterName, build_ic_agent, get_canister_wasm};
 use ic_agent::Identity;
 use ic_utils::call::AsyncCall;
 use ic_utils::interfaces::ManagementCanister;
-use ic_utils::interfaces::management_canister::CanisterStatus;
-use ic_utils::interfaces::management_canister::builders::InstallMode;
+use ic_utils::interfaces::management_canister::CanisterStatusType;
+use ic_utils::interfaces::management_canister::builders::CanisterInstallMode;
 use sha256::sha256;
 use types::{BuildVersion, CanisterId, CanisterWasm, UpgradeCanisterWasmArgs, UpgradeChunkedCanisterWasmArgs};
 
@@ -582,13 +582,16 @@ async fn upgrade_wasm<A: CandidType + Send + Sync>(
         .expect("Failed to stop canister");
 
     loop {
+        // `call` issues a query by default; this polls for the canister to stop, so go through
+        // consensus rather than risk reading stale state from a single replica
         let (canister_status,) = management_canister
             .canister_status(canister_id)
-            .call_and_wait()
+            .as_update()
+            .call()
             .await
             .expect("Failed to call 'canister_status'");
 
-        if canister_status.status == CanisterStatus::Stopped {
+        if canister_status.status == CanisterStatusType::Stopped {
             break;
         }
         println!("Waiting for canister to stop");
@@ -598,7 +601,7 @@ async fn upgrade_wasm<A: CandidType + Send + Sync>(
     println!("Upgrading wasm for canister {canister_id}");
     match management_canister
         .install_code(canister_id, wasm_bytes)
-        .with_mode(InstallMode::Upgrade(None))
+        .with_mode(CanisterInstallMode::Upgrade(None))
         .with_arg(args)
         .call_and_wait()
         .await

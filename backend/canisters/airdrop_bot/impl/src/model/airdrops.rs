@@ -1,5 +1,5 @@
 use airdrop_bot_canister::{AirdropAlgorithm, AirdropConfig, V1Algorithm, V2Algorithm};
-use rand::RngCore;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{Chit, TimestampMillis, UserId};
@@ -90,7 +90,7 @@ impl Airdrops {
         self.next.take()
     }
 
-    pub fn execute<R: RngCore>(&mut self, users: Vec<(UserId, Chit)>, rng: &mut R) -> Option<&Airdrop> {
+    pub fn execute<R: Rng>(&mut self, users: Vec<(UserId, Chit)>, rng: &mut R) -> Option<&Airdrop> {
         let config = self.next.take()?;
 
         let outcome = match &config.algorithm {
@@ -159,7 +159,7 @@ impl Airdrops {
         self.next.as_ref()
     }
 
-    fn execute_v1<R: RngCore>(config: V1Algorithm, users: Vec<(UserId, Chit)>, rng: &mut R) -> Option<AirdropOutcome> {
+    fn execute_v1<R: Rng>(config: V1Algorithm, users: Vec<(UserId, Chit)>, rng: &mut R) -> Option<AirdropOutcome> {
         let participants = Airdrops::execute_main(config.main_chat_fund, config.main_chit_band, &users);
 
         if participants.is_empty() {
@@ -184,7 +184,7 @@ impl Airdrops {
         })
     }
 
-    fn execute_v2<R: RngCore>(config: V2Algorithm, users: Vec<(UserId, Chit)>, rng: &mut R) -> Option<AirdropOutcome> {
+    fn execute_v2<R: Rng>(config: V2Algorithm, users: Vec<(UserId, Chit)>, rng: &mut R) -> Option<AirdropOutcome> {
         let participants = Airdrops::execute_main(config.main_chat_fund, config.main_chit_band, &users);
 
         if participants.is_empty() {
@@ -248,7 +248,7 @@ impl Airdrops {
             .collect()
     }
 
-    fn execute_lottery<R: RngCore>(mut tickets: Vec<UserId>, prizes: Vec<u128>, rng: &mut R) -> Vec<(UserId, Prize)> {
+    fn execute_lottery<R: Rng>(mut tickets: Vec<UserId>, prizes: Vec<u128>, rng: &mut R) -> Vec<(UserId, Prize)> {
         let mut lottery_winners = Vec::new();
 
         for prize in prizes {
@@ -332,7 +332,7 @@ mod tests {
                 (
                     random_principal().into(),
                     Chit {
-                        balance: (rand::thread_rng().next_u32() % 110_000) as i32,
+                        balance: (rand::rng().next_u32() % 110_000) as i32,
                         streak: 0,
                     },
                 )

@@ -8,7 +8,7 @@ pub const MIN_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + 50_000_000_
 
 pub fn check_cycles_balance(top_up_canister_id: CanisterId) {
     if should_notify() {
-        ic_cdk::futures::spawn(send_low_balance_notification(top_up_canister_id));
+        ic_cdk::futures::spawn_migratory(send_low_balance_notification(top_up_canister_id));
     }
 }
 
