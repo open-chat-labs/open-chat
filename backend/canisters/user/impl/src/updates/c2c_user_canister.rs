@@ -308,8 +308,8 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
             if let Ok(result) = chat.events.add_reaction::<UserEventPusher>(add_remove_reaction_args, None) {
                 let message = result.value;
 
-                // They may be reacting to their own message, in which case there is nothing to
-                // notify this user about
+                // They may be reacting to their own message; in that case we should not generate any activity
+                // for the other user (push notification, activity-feed event, or achievement progress).
                 if message.sender != caller_user_id {
                     if !state.data.suspended.value && !args.username.is_empty() && !chat.notifications_muted.value {
                         let notification =
