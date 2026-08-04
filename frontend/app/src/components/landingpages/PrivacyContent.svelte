@@ -46,6 +46,12 @@
             of this notice.
         </li>
         <li>
+            OpenChat Labs is the contact point for this notice as a whole, including for the
+            processing OpenChat DAO controls: a decentralised autonomous organisation cannot
+            receive correspondence directly, so requests which concern the ordinary operation of
+            the OpenChat Platform are received and acted on by OpenChat Labs.
+        </li>
+        <li>
             You can contact OpenChat Labs about anything in this notice, including any request to
             exercise your rights, at <strong>safety@openchatlabs.org</strong>. That address does not
             require access to an OpenChat account.
