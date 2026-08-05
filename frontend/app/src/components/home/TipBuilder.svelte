@@ -11,6 +11,7 @@
         currentUserIdStore,
         exchangeRatesLookupStore as exchangeRatesLookup,
         lastCryptoSent,
+        LEDGER_CANISTER_ICP,
         mobileWidth,
     } from "@client";
     import { getContext, onMount } from "svelte";
@@ -186,7 +187,16 @@
 
         onClose();
     }
-    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
+    // The ledger may have been removed from the registry (eg. if it was uninstalled)
+    // in which case fall back to ICP which will always be present
+    let tokenDetails = $derived(
+        $cryptoLookup.get(ledger) ?? $cryptoLookup.get(LEDGER_CANISTER_ICP)!,
+    );
+    $effect(() => {
+        if (!$cryptoLookup.has(ledger)) {
+            ledger = LEDGER_CANISTER_ICP;
+        }
+    });
     let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
     let exchangeRate = $derived(
         to2SigFigs($exchangeRatesLookup.get(tokenDetails.symbol.toLowerCase())?.toUSD ?? 0),
