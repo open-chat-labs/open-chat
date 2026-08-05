@@ -52,6 +52,12 @@
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import { enterSend } from "../../stores/settings";
     import { snowing } from "../../stores/snow";
+    import { toastStore } from "../../stores/toast";
+    import {
+        parseLocalAiCommand,
+        routeComposerInput,
+        runLocalAiCommand,
+    } from "../../utils/localAiCommand";
     import AlertBoxModal from "../AlertBoxModal.svelte";
     import CommandBuilder from "../bots/CommandInstanceBuilder.svelte";
     import CommandSelector from "../bots/CommandSelector.svelte";
@@ -345,7 +351,13 @@
     }
 
     function triggerCommandSelector(inputContent: string | null): void {
-        const commandMatch = inputContent?.match(/^\/.*/);
+        // "/ai" is a LOCAL on-device-model command, not a bot command — routeComposerInput keeps the
+        // bot command selector hidden for it so Enter/send route it through the normal send path
+        // (sendMessage handles it).
+        const route = routeComposerInput(inputContent ?? "", {
+            editing: editingEvent !== undefined,
+        });
+        const commandMatch = route === "bot-selector" ? inputContent?.match(/^\/.*/) : undefined;
         if (commandMatch) {
             showCommandSelector = true;
             botState.prefix = commandMatch[0];
@@ -484,9 +496,26 @@
     }
 
     function sendMessage() {
-        if (showCommandSelector || messageIsEmpty) return;
+        if (messageIsEmpty) return;
 
         const txt = editor?.getMarkdown() ?? "";
+
+        // "/ai <prompt>" runs the on-device model locally instead of sending a message. Only outside
+        // edit mode — editing a message to start with /ai must still just edit it (routeComposerInput
+        // encodes that). A staged image attachment is fed to the (multimodal) model so you can ask
+        // about a picture, e.g. a receipt.
+        if (routeComposerInput(txt, { editing: editingEvent !== undefined }) === "local-ai") {
+            const prompt = parseLocalAiCommand(txt);
+            if (prompt === undefined) {
+                toastStore.showFailureToast(i18nKey("Type a prompt after /ai"));
+                return;
+            }
+            void handleLocalAiCommand(prompt);
+            afterSendMessage();
+            return;
+        }
+
+        if (showCommandSelector) return;
 
         if (!parseCommands(txt)) {
             const [text, mentioned, blockLevelMarkdown] = expandMentions(txt);
@@ -503,6 +532,33 @@
         }
 
         afterSendMessage();
+    }
+
+    // Post the prompt as the user's message (so the question is visible in-chat), run the on-device
+    // model, then post its reply as a real message marked with a robot glyph. The reply is sent by
+    // the current user because the local model has no on-chain identity of its own. A staged image
+    // is captured before the send clears it and handed to the multimodal model as vision input; the
+    // image itself is posted (as the prompt's attachment) by the normal onSendMessage path.
+    async function handleLocalAiCommand(prompt: string) {
+        const image = attachment?.kind === "image_content" ? attachment.blobData : undefined;
+        onSendMessage([prompt, [], containsMarkdown]);
+        const outcome = await runLocalAiCommand(prompt, image);
+        if (outcome.kind === "ok") {
+            const reply = outcome.reply.length > 0 ? outcome.reply : "(no output)";
+            client.sendMessageWithContent(
+                messageContext,
+                { kind: "text_content", text: `🤖 ${reply}` },
+                true,
+                [],
+                false,
+            );
+        } else if (outcome.kind === "unavailable") {
+            toastStore.showFailureToast(
+                i18nKey("On-device model unavailable — download and select a model in Settings."),
+            );
+        } else {
+            toastStore.showFailureToast(i18nKey(`On-device model error: ${outcome.error}`));
+        }
     }
 
     function afterSendMessage() {

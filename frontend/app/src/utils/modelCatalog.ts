@@ -1,4 +1,4 @@
-import type { ModelCatalog } from "openchat-shared";
+import type { ModelCatalog, ModelCatalogEntry } from "openchat-shared";
 
 // The default on-device model catalog.
 //
@@ -102,3 +102,40 @@ export const defaultModelCatalog: ModelCatalog = {
         },
     ],
 };
+
+// The practical wasm32 envelope for BROWSER inference: address space is 4 GB and llama.cpp-WASM needs
+// headroom for KV cache + compute buffers on top of the weights. Shared by both ModelManager trees
+// (and mirrored by MAX_WEB_MODEL_BYTES in webInference.ts, which enforces it at attach time).
+export const WEB_MODEL_MAX_BYTES = 2_147_483_648; // 2 GB
+
+/**
+ * Merge the remote (on-chain, owner-curated) catalog OVER the built-in default.
+ *
+ * The remote catalog is a per-id overlay, never a wholesale replacement: remote entries come first
+ * (in remote order, so the operator controls ranking) and win on id conflicts; builtin entries whose
+ * id the remote doesn't mention are appended in builtin order. A stale or partial remote catalog can
+ * therefore never shrink the chooser below the builtin floor — removing a builtin model remains a
+ * client-release concern.
+ */
+export function mergeCatalogs(
+    remote: ModelCatalogEntry[],
+    builtin: ModelCatalogEntry[],
+): ModelCatalogEntry[] {
+    const merged: ModelCatalogEntry[] = [];
+    const seen = new Set<string>();
+    for (const entry of [...remote, ...builtin]) {
+        if (seen.has(entry.id)) continue;
+        seen.add(entry.id);
+        merged.push(entry);
+    }
+    return merged;
+}
+
+/**
+ * Catalog models a BROWSER can run: a single GGUF within the ~2 GB wasm32 envelope (the mmproj
+ * vision path stays native-only). Order is preserved — catalog order is the recommendation order,
+ * so index 0 is the default suggestion.
+ */
+export function webEligibleModels(models: ModelCatalogEntry[]): ModelCatalogEntry[] {
+    return models.filter((m) => m.files.length === 1 && m.sizeBytes <= WEB_MODEL_MAX_BYTES);
+}

@@ -12,7 +12,7 @@
         type CustomModelFile,
         type DisplayModel,
     } from "@src/stores/customModels";
-    import { defaultModelCatalog } from "@utils/modelCatalog";
+    import { defaultModelCatalog, mergeCatalogs, webEligibleModels } from "@utils/modelCatalog";
     import { isNativeClient } from "@utils/onDeviceInference";
     import {
         clearWebModel,
@@ -53,16 +53,15 @@
     const client = getContext<OpenChat>("client");
     const native = isNativeClient();
 
-    // Prefer the OpenChat-hosted catalog (owner-curated on the registry, updatable without a client
-    // release); fall back to the built-in default when it's empty (not yet configured) or unreachable.
+    // The OpenChat-hosted catalog (owner-curated on the registry, updatable without a client release)
+    // is a per-id OVERLAY on the built-in default — remote entries rank first and win on id conflicts,
+    // builtin leftovers are appended — so a stale/partial remote catalog can never shrink the chooser.
     let catalogSource = $state<ModelCatalogEntry[]>(defaultModelCatalog.models);
 
     async function loadCatalog() {
         try {
             const remote = await client.modelCatalog();
-            if (remote.models.length > 0) {
-                catalogSource = remote.models;
-            }
+            catalogSource = mergeCatalogs(remote.models, defaultModelCatalog.models);
         } catch {
             // keep the built-in default (offline / not yet configured)
         }
@@ -112,9 +111,24 @@
 
     // Catalog models a BROWSER can run: a single GGUF within the ~2 GB wasm32 envelope. Catalog
     // order is the recommendation order (Gemma first = the default suggestion).
-    const WEB_MODEL_MAX = 2_147_483_648;
-    let webChoices = $derived(
-        catalogSource.filter((m) => m.files.length === 1 && m.sizeBytes <= WEB_MODEL_MAX),
+    let webChoices = $derived(webEligibleModels(catalogSource));
+
+    // The chooser list ALWAYS renders (except mid-download); when a model is active the current one
+    // is marked "Current" (matched by catalog id — disk-picked files have no id and render as an
+    // extra current row above the list instead).
+    let webActive = $derived(
+        $webModelStatus.status === "attached" ||
+            $webModelStatus.status === "loading" ||
+            $webModelStatus.status === "loaded",
+    );
+    let currentWebId = $derived(webActive ? $webModelStatus.id : undefined);
+    let webDiskAttached = $derived(webActive && $webModelStatus.id === undefined);
+    let webStatusText = $derived(
+        $webModelStatus.status === "loading"
+            ? "loading into memory…"
+            : $webModelStatus.status === "loaded"
+              ? "loaded"
+              : "attached — loads on first use",
     );
 
     async function chooseWebModel(entry: ModelCatalogEntry) {
@@ -354,22 +368,7 @@
                     )} />
             </p>
         {/if}
-        {#if $webModelStatus.status === "attached" || $webModelStatus.status === "loaded" || $webModelStatus.status === "loading"}
-            <p>
-                <Translatable
-                    resourceKey={i18nKey(
-                        `Model: ${$webModelStatus.name}` +
-                            ($webModelStatus.status === "loading"
-                                ? " (loading into memory…)"
-                                : $webModelStatus.status === "loaded"
-                                  ? " (loaded)"
-                                  : " (attached — loads on first use)"),
-                    )} />
-            </p>
-            <Button secondary small onClick={detachWebModel}>
-                <Translatable resourceKey={i18nKey("Remove model")} />
-            </Button>
-        {:else if $webModelStatus.status === "downloading"}
+        {#if $webModelStatus.status === "downloading"}
             <p>
                 <Translatable
                     resourceKey={i18nKey(
@@ -380,6 +379,22 @@
                     )} />
             </p>
         {:else}
+            {#if webDiskAttached}
+                <div class="web-choice">
+                    <div class="web-choice-info">
+                        <div class="name">
+                            <Translatable
+                                resourceKey={i18nKey(`Model: ${$webModelStatus.name}`)} />
+                            <span class="muted">
+                                <Translatable resourceKey={i18nKey(`(${webStatusText})`)} />
+                            </span>
+                        </div>
+                    </div>
+                    <Button secondary small onClick={detachWebModel}>
+                        <Translatable resourceKey={i18nKey("Remove model")} />
+                    </Button>
+                </div>
+            {/if}
             <div class="web-choices">
                 {#each webChoices as entry, i (entry.id)}
                     <div class="web-choice">
@@ -387,15 +402,39 @@
                             <div class="name">
                                 {entry.name}
                                 <span class="muted">({formatSize(entry.sizeBytes)})</span>
+                                {#if currentWebId === entry.id}
+                                    <span class="chip current">
+                                        <Translatable resourceKey={i18nKey("Current")} />
+                                    </span>
+                                {/if}
                             </div>
-                            {#if entry.description !== undefined}
+                            {#if currentWebId === entry.id}
+                                <div class="desc">
+                                    <Translatable resourceKey={i18nKey(webStatusText)} />
+                                </div>
+                            {:else if entry.description !== undefined}
                                 <div class="desc">{entry.description}</div>
                             {/if}
                         </div>
-                        <Button secondary={i !== 0} small onClick={() => chooseWebModel(entry)}>
-                            <Translatable
-                                resourceKey={i18nKey(i === 0 ? "Download & use (default)" : "Download & use")} />
-                        </Button>
+                        {#if currentWebId === entry.id}
+                            <Button secondary small onClick={detachWebModel}>
+                                <Translatable resourceKey={i18nKey("Remove model")} />
+                            </Button>
+                        {:else}
+                            <Button
+                                secondary={webActive || i !== 0}
+                                small
+                                onClick={() => chooseWebModel(entry)}>
+                                <Translatable
+                                    resourceKey={i18nKey(
+                                        webActive
+                                            ? "Use this model"
+                                            : i === 0
+                                              ? "Download & use (default)"
+                                              : "Download & use",
+                                    )} />
+                            </Button>
+                        {/if}
                     </div>
                 {/each}
             </div>
@@ -679,7 +718,8 @@
         background-color: var(--input-bg);
         color: var(--txt-light);
 
-        &.custom {
+        &.custom,
+        &.current {
             background-color: var(--accent);
             color: #fff;
         }

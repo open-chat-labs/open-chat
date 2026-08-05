@@ -36,6 +36,9 @@ type WebModelState = {
     handle?: FileSystemFileHandle;
     /** Catalog source: downloaded + cached in browser storage via wllama's ModelManager. */
     url?: string;
+    /** Catalog entry id when the model came from the catalog (lets the chooser mark it "Current");
+     *  undefined for disk-picked files, which have no catalog row. */
+    id?: string;
     name?: string;
     status: "none" | "attached" | "downloading" | "loading" | "loaded" | "error";
     error?: string;
@@ -44,8 +47,9 @@ type WebModelState = {
 
 const state: WebModelState = { status: "none" };
 
-/** UI-facing snapshot: the attached model's name + lifecycle status (+ download progress). */
+/** UI-facing snapshot: the attached model's catalog id + name + lifecycle status (+ download progress). */
 export const webModelStatus = writable<{
+    id?: string;
     name?: string;
     status: WebModelState["status"];
     error?: string;
@@ -53,7 +57,13 @@ export const webModelStatus = writable<{
 }>({ status: "none" });
 
 function publish(): void {
-    webModelStatus.set({ name: state.name, status: state.status, error: state.error, progress: state.progress });
+    webModelStatus.set({
+        id: state.id,
+        name: state.name,
+        status: state.status,
+        error: state.error,
+        progress: state.progress,
+    });
 }
 
 // ── IndexedDB persistence for the picker handle (structured-cloneable) ─────────────────────────
@@ -112,6 +122,7 @@ export async function setWebModelFile(file: File): Promise<string | undefined> {
     state.file = file;
     state.handle = undefined;
     state.url = undefined;
+    state.id = undefined; // disk files have no catalog id
     state.name = file.name;
     state.status = "attached";
     state.error = undefined;
@@ -144,6 +155,7 @@ export async function pickWebModelFromDisk(): Promise<string | undefined> {
     state.file = file;
     state.handle = handle;
     state.url = undefined;
+    state.id = undefined; // disk files have no catalog id
     state.name = file.name;
     state.status = "attached";
     state.error = undefined;
@@ -167,6 +179,7 @@ export async function useWebModelFromUrl(entry: { id: string; name: string; url:
     state.file = undefined;
     state.handle = undefined;
     state.url = entry.url;
+    state.id = entry.id;
     state.name = entry.name;
     state.status = "downloading";
     state.error = undefined;
@@ -210,6 +223,7 @@ export async function restoreWebModel(): Promise<void> {
         if (raw !== null) {
             const saved = JSON.parse(raw) as { id: string; name: string; url: string };
             state.url = saved.url;
+            state.id = saved.id;
             state.name = saved.name;
             state.status = "attached"; // wllama's cache serves the bytes on first load
             publish();
@@ -227,6 +241,7 @@ export async function restoreWebModel(): Promise<void> {
         if (q !== "granted") {
             // Permission needs a user gesture to re-request — surface as attachable, not silent.
             state.handle = handle;
+            state.id = undefined;
             state.name = handle.name;
             state.status = "none";
             publish();
@@ -236,6 +251,7 @@ export async function restoreWebModel(): Promise<void> {
         if (validate(file) !== undefined) return;
         state.file = file;
         state.handle = handle;
+        state.id = undefined; // disk files have no catalog id
         state.name = file.name;
         state.status = "attached";
         publish();
@@ -250,6 +266,7 @@ export async function clearWebModel(): Promise<void> {
     state.file = undefined;
     state.handle = undefined;
     state.url = undefined;
+    state.id = undefined;
     state.name = undefined;
     state.status = "none";
     state.error = undefined;

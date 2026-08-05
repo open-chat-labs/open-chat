@@ -20,6 +20,26 @@ export function isLocalAiCommandPrefix(input: string): boolean {
     return /^\/ai(\s|$)/i.test(input.trimStart());
 }
 
+// Which path a composer should route the current input through. This is THE routing decision — both
+// the v1 (components/home) and v2 (components_mobile/home) MessageEntry composers consult it, so the
+// two UI trees share one tested implementation and cannot drift apart:
+//  - "local-ai":     an /ai command outside edit mode — keep the bot-command selector hidden and let
+//                    sendMessage run the on-device model (bare "/ai" still routes here so the
+//                    composer can toast "Type a prompt after /ai").
+//  - "bot-selector": input starts a bot command ("/…") — open the command selector.
+//  - "send":         anything else, including an EDIT of a message that starts with "/ai" (editing
+//                    must just edit, never trigger inference).
+export type ComposerRoute = "local-ai" | "bot-selector" | "send";
+
+export function routeComposerInput(input: string, opts: { editing: boolean }): ComposerRoute {
+    if (isLocalAiCommandPrefix(input)) {
+        return opts.editing ? "send" : "local-ai";
+    }
+    // Parity with the composers' historical bot-command match (/^\/.*/ on the RAW input — leading
+    // whitespace intentionally does not open the selector).
+    return /^\//.test(input) ? "bot-selector" : "send";
+}
+
 // The prompt text of a complete "/ai <prompt>" command, or undefined when `input` is not an /ai
 // command or carries no prompt (bare "/ai").
 export function parseLocalAiCommand(input: string): string | undefined {

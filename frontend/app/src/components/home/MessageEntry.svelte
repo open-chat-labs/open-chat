@@ -47,8 +47,8 @@
     import { snowing } from "../../stores/snow";
     import { toastStore } from "../../stores/toast";
     import {
-        isLocalAiCommandPrefix,
         parseLocalAiCommand,
+        routeComposerInput,
         runLocalAiCommand,
     } from "../../utils/localAiCommand";
     import AlertBoxModal from "../AlertBoxModal.svelte";
@@ -164,14 +164,13 @@
     }
 
     function triggerCommandSelector(inputContent: string | null): void {
-        // "/ai" is a LOCAL on-device-model command, not a bot command — keep the bot command
-        // selector hidden so Enter routes it through the normal send path (sendMessage handles it).
-        if (inputContent !== null && isLocalAiCommandPrefix(inputContent)) {
-            showCommandSelector = false;
-            botState.cancel();
-            return;
-        }
-        const commandMatch = inputContent?.match(/^\/.*/);
+        // "/ai" is a LOCAL on-device-model command, not a bot command — routeComposerInput keeps the
+        // bot command selector hidden for it so Enter/send route it through the normal send path
+        // (sendMessage handles it).
+        const route = routeComposerInput(inputContent ?? "", {
+            editing: editingEvent !== undefined,
+        });
+        const commandMatch = route === "bot-selector" ? inputContent?.match(/^\/.*/) : undefined;
         if (commandMatch) {
             showCommandSelector = true;
             botState.prefix = commandMatch[0];
@@ -315,8 +314,10 @@
         const txt = editor?.getMarkdown() ?? "";
 
         // "/ai <prompt>" runs the on-device model locally instead of sending a message. Only outside
-        // edit mode — editing a message to start with /ai must still just edit it.
-        if (editingEvent === undefined && isLocalAiCommandPrefix(txt)) {
+        // edit mode — editing a message to start with /ai must still just edit it (routeComposerInput
+        // encodes that). A staged image attachment is fed to the (multimodal) model so you can ask
+        // about a picture, e.g. a receipt.
+        if (routeComposerInput(txt, { editing: editingEvent !== undefined }) === "local-ai") {
             const prompt = parseLocalAiCommand(txt);
             if (prompt === undefined) {
                 toastStore.showFailureToast(i18nKey("Type a prompt after /ai"));
