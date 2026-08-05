@@ -138,25 +138,25 @@ export function assessSuitability(input: SuitabilityInput): SuitabilityWarning[]
         );
     }
 
-    // --- Size known? (needed for disk/RAM/perf) ---
+    // --- Size known? Native downloads are strictly bounded by the declared byte count, so an
+    // unknown primary/projector size cannot be represented safely and must block Add & Download. ---
     const modelBytes = input.probe?.contentLength;
-    const sizeKnown =
-        input.probe?.ok === true && modelBytes !== undefined && modelBytes > 0;
+    const sizeKnown = input.probe?.ok === true && modelBytes !== undefined && modelBytes > 0;
 
     if (input.probe === undefined) {
         push(
-            "caution",
+            "blocker",
             "not-checked",
-            "The link hasn't been checked yet — storage and memory checks were skipped.",
+            "Check the link before downloading so its file size can be verified and bounded.",
         );
     } else if (!sizeKnown) {
         const reason = input.probe?.error;
         push(
-            "caution",
+            "blocker",
             "probe-failed",
             reason !== undefined && reason !== ""
-                ? `Couldn't verify the file (${reason}) — storage and memory checks were skipped.`
-                : "Couldn't determine the file size — storage and memory checks were skipped.",
+                ? `Couldn't verify the file (${reason}). A bounded download requires a known positive size.`
+                : "Couldn't determine a positive file size. A bounded download requires it.",
         );
     } else if (input.resources === undefined) {
         // Size is known, but we couldn't read the device's storage/memory, so the fit checks below don't
@@ -166,6 +166,28 @@ export function assessSuitability(input: SuitabilityInput): SuitabilityWarning[]
             "resources-unknown",
             "Couldn't read this device's storage and memory — the disk-space and RAM-fit checks were skipped.",
         );
+    }
+
+    if (mmproj !== "") {
+        const mmprojBytes = input.mmprojProbe?.contentLength;
+        const mmprojSizeKnown =
+            input.mmprojProbe?.ok === true && mmprojBytes !== undefined && mmprojBytes > 0;
+        if (input.mmprojProbe === undefined) {
+            push(
+                "blocker",
+                "mmproj-not-checked",
+                "Check the vision projector link before downloading so its file size can be verified and bounded.",
+            );
+        } else if (!mmprojSizeKnown) {
+            const reason = input.mmprojProbe.error;
+            push(
+                "blocker",
+                "mmproj-probe-failed",
+                reason !== undefined && reason !== ""
+                    ? `Couldn't verify the vision projector (${reason}). A bounded download requires a known positive size.`
+                    : "Couldn't determine a positive vision projector size. A bounded download requires it.",
+            );
+        }
     }
 
     // --- Disk: total download (model + mmproj) vs free space ---
@@ -214,7 +236,8 @@ export function assessSuitability(input: SuitabilityInput): SuitabilityWarning[]
     if (sizeKnown && modelBytes !== undefined) {
         const gb = modelBytes / GiB;
         const cpu = input.resources?.cpuCount;
-        const cpuHint = cpu !== undefined && cpu > 0 ? ` on ${cpu} CPU core${cpu === 1 ? "" : "s"}` : "";
+        const cpuHint =
+            cpu !== undefined && cpu > 0 ? ` on ${cpu} CPU core${cpu === 1 ? "" : "s"}` : "";
         if (gb > 5) {
             push(
                 "caution",

@@ -120,8 +120,11 @@ pub struct UpdateChatShortcutsResponse {
 #[serde(rename_all = "camelCase")]
 pub struct ModelFileSpec {
     pub url: String,
-    pub sha256: String,
+    #[serde(default)]
+    pub sha256: Option<String>,
     pub bytes: u64,
+    #[serde(default)]
+    pub filename: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
@@ -130,6 +133,46 @@ pub struct DownloadModelRequest {
     pub model_id: String,
     pub runtime: String,
     pub files: Vec<ModelFileSpec>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DownloadedFile {
+    pub url: String,
+    pub sha256: String,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DownloadModelResponse {
+    pub files: Vec<DownloadedFile>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProbeModelUrlRequest {
+    pub url: String,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProbeModelUrlResponse {
+    pub ok: bool,
+    pub status: Option<u16>,
+    pub content_length: Option<u64>,
+    pub content_type: Option<String>,
+    pub filename: String,
+    pub accepts_ranges: bool,
+    pub error: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SystemResourcesResponse {
+    pub free_disk_bytes: u64,
+    pub total_ram_bytes: u64,
+    pub available_ram_bytes: u64,
+    pub cpu_count: u32,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]

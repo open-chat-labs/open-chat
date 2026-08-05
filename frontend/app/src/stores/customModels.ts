@@ -1,4 +1,4 @@
-import type { ModelCatalogEntry, ModelModality, ModelRuntime } from "openchat-shared";
+import type { ModelCatalogEntry, ModelModality, ModelRuntime } from "@shared";
 import { get, writable } from "svelte/store";
 import { configKeys } from "../utils/config";
 
@@ -134,10 +134,7 @@ export function removeCustomModel(id: string): void {
 
 // After a (first) successful download, record the observed per-file hashes so a later re-download can be
 // integrity-checked. Matches by URL; leaves files without a reported hash untouched.
-export function recordDownloadedHashes(
-    id: string,
-    files: { url: string; sha256: string }[],
-): void {
+export function recordDownloadedHashes(id: string, files: { url: string; sha256: string }[]): void {
     if (files.length === 0) return;
     const byUrl = new Map(files.map((f) => [f.url, f.sha256]));
     persist(

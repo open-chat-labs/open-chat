@@ -485,7 +485,8 @@
     <AlertBoxModal
         onClose={() => (showDirectBotChatWarning = false)}
         title={i18nKey("bots.direct.warningTitle")}
-        warning={i18nKey("bots.direct.warning")} />
+        warning={i18nKey("bots.direct.warning")}
+    />
 {/if}
 
 {#if botState.selectedCommand && messageContextsEqual(botState.showingBuilder, messageContext)}
@@ -493,7 +494,8 @@
         {messageContext}
         onCommandSent={() => cancelCommandSelector(true)}
         onCancel={() => cancelCommandSelector(false)}
-        command={botState.selectedCommand} />
+        command={botState.selectedCommand}
+    />
 {/if}
 
 {#if showCommandSelector}
@@ -503,13 +505,15 @@
         {mode}
         onCommandSent={() => cancelCommandSelector(true)}
         onNoMatches={() => cancelCommandSelector(false)}
-        onCancel={() => cancelCommandSelector(false)} />
+        onCancel={() => cancelCommandSelector(false)}
+    />
 {/if}
 
 <div
     class="message-entry"
     class:editing={editingEvent !== undefined}
-    bind:clientHeight={messageEntryHeight}>
+    bind:clientHeight={messageEntryHeight}
+>
     {#if frozen}
         <div class="frozen">
             <Translatable resourceKey={i18nKey("chatFrozen")} />
@@ -534,7 +538,8 @@
                         : mode === "thread"
                           ? "readOnlyThread"
                           : "readOnlyChat",
-                )} />
+                )}
+            />
         </div>
     {:else if $throttleDeadline > 0}
         <ThrottleCountdown deadline={$throttleDeadline} />
@@ -558,21 +563,24 @@
                             members={$selectedChatMembersStore}
                             {onPaste}
                             onKeydown={keyDown}
-                            oninput={onInput}>
+                            oninput={onInput}
+                        >
                             {#snippet mentionPicker(args)}
                                 <MentionPicker
                                     supportsUserGroups
                                     offset={messageEntryHeight}
                                     onClose={args.onClose}
                                     onMention={args.onMention}
-                                    prefix={args.query} />
+                                    prefix={args.query}
+                                />
                             {/snippet}
                             {#snippet emojiPicker(args)}
                                 <EmojiAutocompleter
                                     offset={messageEntryHeight}
                                     onClose={args.onClose}
                                     onSelect={args.onSelect}
-                                    query={args.query} />
+                                    query={args.query}
+                                />
                             {/snippet}
                         </RichTextEditor>
                     </div>
@@ -594,7 +602,8 @@
                                 bind:percentRecorded
                                 bind:recording
                                 bind:supported={audioSupported}
-                                onAudioCaptured={onFileSelected} />
+                                onAudioCaptured={onFileSelected}
+                            />
                         </div>
                     {:else if canEnterText}
                         <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
@@ -619,7 +628,8 @@
                         {onMakeMeme}
                         {onCreatePoll}
                         {onClearAttachment}
-                        {onFileSelected} />
+                        {onFileSelected}
+                    />
                 {:else}
                     <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
                     <div class="send" onclick={sendMessage}>

@@ -139,7 +139,10 @@ mod tests {
     }
 
     fn catalog(models: Vec<ModelCatalogEntry>) -> ModelCatalog {
-        ModelCatalog { catalog_version: 1, models }
+        ModelCatalog {
+            catalog_version: 1,
+            models,
+        }
     }
 
     #[test]
@@ -230,7 +233,12 @@ mod tests {
 
     #[test]
     fn zero_bytes_file_rejected() {
-        assert!(catalog(vec![entry("m", vec![file(0)])]).validate().unwrap_err().contains("bytes must be > 0"));
+        assert!(
+            catalog(vec![entry("m", vec![file(0)])])
+                .validate()
+                .unwrap_err()
+                .contains("bytes must be > 0")
+        );
     }
 
     #[test]

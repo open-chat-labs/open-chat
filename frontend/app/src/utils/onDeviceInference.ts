@@ -3,7 +3,7 @@ import type {
     InferenceResult,
     ModelRuntime,
     OnDeviceInferenceCapability,
-} from "openchat-shared";
+} from "@shared";
 import { get } from "svelte/store";
 import { infer as nativeInfer, listLocalModels } from "tauri-plugin-oc-api";
 import { selectedModelId } from "../stores/onDeviceModels";

@@ -7,14 +7,35 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
 export type ModelFileSpec = {
     url: string;
-    sha256: string;
+    sha256?: string;
     bytes: number;
+    filename?: string;
 };
 
 export type DownloadModelRequest = {
     modelId: string;
     runtime: string;
     files: ModelFileSpec[];
+};
+
+export type DownloadedFile = { url: string; sha256: string };
+export type DownloadModelResponse = { files: DownloadedFile[] };
+
+export type ProbeModelUrlResponse = {
+    ok: boolean;
+    status?: number;
+    contentLength?: number;
+    contentType?: string;
+    filename: string;
+    acceptsRanges: boolean;
+    error?: string;
+};
+
+export type SystemResources = {
+    freeDiskBytes: number;
+    totalRamBytes: number;
+    availableRamBytes: number;
+    cpuCount: number;
 };
 
 export type LocalModel = {
@@ -47,8 +68,16 @@ export type ModelDownloadProgress = {
 };
 
 // Download (and verify) a model's files into the app's local model store. Idempotent per modelId.
-export async function downloadModel(payload: DownloadModelRequest): Promise<void> {
-    return await invoke<void>("plugin:oc|download_model", { payload });
+export async function downloadModel(payload: DownloadModelRequest): Promise<DownloadModelResponse> {
+    return await invoke<DownloadModelResponse>("plugin:oc|download_model", { payload });
+}
+
+export async function probeModelUrl(url: string): Promise<ProbeModelUrlResponse> {
+    return await invoke<ProbeModelUrlResponse>("plugin:oc|probe_model_url", { payload: { url } });
+}
+
+export async function systemResources(): Promise<SystemResources> {
+    return await invoke<SystemResources>("plugin:oc|system_resources");
 }
 
 export async function listLocalModels(): Promise<LocalModel[]> {

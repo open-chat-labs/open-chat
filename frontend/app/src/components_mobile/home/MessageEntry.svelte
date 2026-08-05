@@ -674,7 +674,8 @@
     <AlertBoxModal
         onClose={() => (showDirectBotChatWarning = false)}
         title={i18nKey("bots.direct.warningTitle")}
-        warning={i18nKey("bots.direct.warning")} />
+        warning={i18nKey("bots.direct.warning")}
+    />
 {/if}
 
 {#if botState.selectedCommand && messageContextsEqual(botState.showingBuilder, messageContext)}
@@ -682,7 +683,8 @@
         {messageContext}
         onCommandSent={() => cancelCommandSelector(true)}
         onCancel={() => cancelCommandSelector(false)}
-        command={botState.selectedCommand} />
+        command={botState.selectedCommand}
+    />
 {/if}
 
 {#if showCommandSelector}
@@ -692,7 +694,8 @@
         {mode}
         onCommandSent={() => cancelCommandSelector(true)}
         onNoMatches={() => cancelCommandSelector(false)}
-        onCancel={() => cancelCommandSelector(false)} />
+        onCancel={() => cancelCommandSelector(false)}
+    />
 {/if}
 
 {#if !$anonUserStore}
@@ -702,7 +705,8 @@
         mainAxisAlignment={"spaceBetween"}
         crossAxisAlignment={activeStream !== undefined ? "center" : "end"}
         background={ColourVars.background0}
-        padding={["zero", "md", inputTrayMode !== "closed" ? "sm" : "zero"]}>
+        padding={["zero", "md", inputTrayMode !== "closed" ? "sm" : "zero"]}
+    >
         {#if frozen}
             <div class="frozen">
                 <Translatable resourceKey={i18nKey("chatFrozen")} />
@@ -723,7 +727,8 @@
         {:else if !canSendAny}
             <div class="disabled">
                 <Translatable
-                    resourceKey={i18nKey(mode === "thread" ? "readOnlyThread" : "readOnlyChat")} />
+                    resourceKey={i18nKey(mode === "thread" ? "readOnlyThread" : "readOnlyChat")}
+                />
             </div>
         {:else if $throttleDeadline > 0}
             <ThrottleCountdown deadline={$throttleDeadline} />
@@ -736,7 +741,8 @@
                         class="message_entry_wrapper"
                         class:has_reply={!!replyingTo}
                         class:has_attachment={!!attachment}
-                        class:is_editing={editingEvent !== undefined}>
+                        class:is_editing={editingEvent !== undefined}
+                    >
                         {#if replyingTo}
                             <ReplyingTo readonly {replyingTo} {user} {onCancelReply} />
                         {/if}
@@ -747,7 +753,8 @@
                             <Row
                                 height={{ size: "1rem" }}
                                 crossAxisAlignment="center"
-                                supplementalClass="editing-title">
+                                supplementalClass="editing-title"
+                            >
                                 <BodySmall colour="textSecondary">
                                     <Translatable resourceKey={i18nKey("Editing...")} />
                                 </BodySmall>
@@ -767,12 +774,14 @@
                             overflow="visible"
                             crossAxisAlignment="center"
                             mainAxisAlignment="spaceBetween"
-                            supplementalClass="message_entry_text_box">
+                            supplementalClass="message_entry_text_box"
+                        >
                             {#if inputTrayMode !== "emoji_gif_selection"}
                                 <IconButton
                                     onclick={toggleEmojiPicker}
                                     padding={["sm", "zero", "md", "sm"]}
-                                    size={"md"}>
+                                    size={"md"}
+                                >
                                     {#snippet icon()}
                                         <StickerEmoji color={ColourVars.textPlaceholder} />
                                     {/snippet}
@@ -781,7 +790,8 @@
                                 <IconButton
                                     onclick={showKeyboard}
                                     padding={["sm", "zero", "md", "sm"]}
-                                    size={"md"}>
+                                    size={"md"}
+                                >
                                     {#snippet icon()}
                                         <Keyboard color={ColourVars.textPlaceholder} />
                                     {/snippet}
@@ -797,20 +807,23 @@
                                     {onPaste}
                                     onfocus={keyboardFocus}
                                     onKeydown={keyDown}
-                                    oninput={onInput}>
+                                    oninput={onInput}
+                                >
                                     {#snippet mentionPicker(args)}
                                         <MentionPicker
                                             supportsUserGroups
                                             offset={messageEntryHeight}
                                             onMention={args.onMention}
-                                            prefix={args.query} />
+                                            prefix={args.query}
+                                        />
                                     {/snippet}
                                     {#snippet emojiPicker(args)}
                                         <EmojiAutocompleter
                                             offset={messageEntryHeight}
                                             onClose={args.onClose}
                                             onSelect={args.onSelect}
-                                            query={args.query} />
+                                            query={args.query}
+                                        />
                                     {/snippet}
                                 </RichTextEditor>
                             </div>
@@ -819,16 +832,19 @@
                                 <Container
                                     padding={["zero", "sm", "zero", "zero"]}
                                     width={"hug"}
-                                    gap={"md"}>
+                                    gap={"md"}
+                                >
                                     <IconButton
                                         onclick={toggleAttachments}
                                         padding={["sm", "zero", "md", "zero"]}
-                                        size={"md"}>
+                                        size={"md"}
+                                    >
                                         {#snippet icon()}
                                             <div
                                                 class:open={inputTrayMode === "attachments" &&
                                                     !keyboard.visible}
-                                                class="drawer_trigger">
+                                                class="drawer_trigger"
+                                            >
                                                 <PlusCircle color={ColourVars.textPlaceholder} />
                                             </div>
                                         {/snippet}
@@ -840,10 +856,12 @@
                                                 <IconButton
                                                     onclick={onClick}
                                                     padding={["sm", "zero", "md", "zero"]}
-                                                    size={"md"}>
+                                                    size={"md"}
+                                                >
                                                     {#snippet icon()}
                                                         <Camera
-                                                            color={ColourVars.textPlaceholder} />
+                                                            color={ColourVars.textPlaceholder}
+                                                        />
                                                     {/snippet}
                                                 </IconButton>
                                             {/snippet}
@@ -868,13 +886,15 @@
                                 mimeType={audioMimeType}
                                 bind:activeStream
                                 bind:supported={audioSupported}
-                                onAudioCaptured={onFileSelected} />
+                                onAudioCaptured={onFileSelected}
+                            />
                         {:else if canEnterText}
                             <IconButton
                                 padding={"md"}
                                 mode={"primary"}
                                 size={"lg"}
-                                onclick={sendMessage}>
+                                onclick={sendMessage}
+                            >
                                 {#snippet icon(color)}
                                     <Send {color} />
                                 {/snippet}
@@ -885,7 +905,8 @@
                             padding={"md"}
                             mode={"primary"}
                             size={"lg"}
-                            onclick={sendMessage}>
+                            onclick={sendMessage}
+                        >
                             {#snippet icon(color)}
                                 <Check {color} />
                             {/snippet}
@@ -907,14 +928,16 @@
                 ? keyboard.height + (inputTrayMode === "emoji_gif_search" ? 200 : 0)
                 : 0
         }px`}
-        style:visibility={inputTrayMode !== "closed" ? "visible" : "hidden"}>
+        style:visibility={inputTrayMode !== "closed" ? "visible" : "hidden"}
+    >
         {#if inputTrayMode === "emoji_gif_selection" || inputTrayMode === "emoji_gif_search"}
             <EmojiOrGif
                 empty={textboxEmpty}
                 ctx={messageContext}
                 onEmojiSelected={insertEmoji}
                 onBackspace={backspace}
-                onClose={toggleEmojiPicker} />
+                onClose={toggleEmojiPicker}
+            />
         {/if}
 
         {#if inputTrayMode === "attachments"}
@@ -926,7 +949,8 @@
                 {onMakeMeme}
                 {onFileSelected}
                 {messageContext}
-                open={true} />
+                open={true}
+            />
         {/if}
     </div>
 {/if}

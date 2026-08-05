@@ -1,4 +1,4 @@
-import type { ModelCatalogEntry } from "openchat-shared";
+import type { ModelCatalogEntry } from "@shared";
 import { describe, expect, it } from "vitest";
 import {
     defaultModelCatalog,
@@ -147,7 +147,11 @@ function nativeOnlyEntry(id: string): ModelCatalogEntry {
 }
 
 // A small weights+projector pair, the shape every vision model ships in.
-function visionEntry(id: string, weightsBytes = 400_000_000, mmprojBytes = 100_000_000): ModelCatalogEntry {
+function visionEntry(
+    id: string,
+    weightsBytes = 400_000_000,
+    mmprojBytes = 100_000_000,
+): ModelCatalogEntry {
     return entry(id, {
         modalities: ["text", "image"],
         files: [
@@ -177,7 +181,9 @@ describe("mergeCatalogs", () => {
     it("remote wins per-id: a same-id remote entry overrides the builtin without duplicating it", () => {
         const pinned = entry("gemma-3-1b-it-q4", {
             name: "Gemma 3 1B (pinned)",
-            files: [{ url: "https://cdn.example/gemma-pinned.gguf", sha256: "ff", bytes: 806_058_240 }],
+            files: [
+                { url: "https://cdn.example/gemma-pinned.gguf", sha256: "ff", bytes: 806_058_240 },
+            ],
             sizeBytes: 806_058_240,
         });
         const merged = mergeCatalogs([pinned], defaultModelCatalog.models);
@@ -193,10 +199,7 @@ describe("mergeCatalogs", () => {
     });
 
     it("remote entries rank first, in remote order; builtin leftovers keep builtin order", () => {
-        const merged = mergeCatalogs(
-            [entry("z-new"), entry("a-new")],
-            defaultModelCatalog.models,
-        );
+        const merged = mergeCatalogs([entry("z-new"), entry("a-new")], defaultModelCatalog.models);
         expect(merged.map((m) => m.id)).toEqual(["z-new", "a-new", ...BUILTIN_IDS]);
     });
 
@@ -212,11 +215,19 @@ describe("mergeCatalogs", () => {
 
 describe("isMmprojFile / splitModelFiles", () => {
     it("classifies by the URL BASENAME, so a repo path containing 'mmproj' can't confuse it", () => {
-        expect(isMmprojFile({ url: "https://h/mmproj-SmolVLM-256M.gguf", sha256: "", bytes: 1 })).toBe(true);
-        expect(isMmprojFile({ url: "https://h/unsloth/mmproj-F16.gguf", sha256: "", bytes: 1 })).toBe(true);
+        expect(
+            isMmprojFile({ url: "https://h/mmproj-SmolVLM-256M.gguf", sha256: "", bytes: 1 }),
+        ).toBe(true);
+        expect(
+            isMmprojFile({ url: "https://h/unsloth/mmproj-F16.gguf", sha256: "", bytes: 1 }),
+        ).toBe(true);
         // "mmproj" in a directory segment must NOT make the weights look like a projector.
-        expect(isMmprojFile({ url: "https://h/mmproj-repo/gemma-3-1b.gguf", sha256: "", bytes: 1 })).toBe(false);
-        expect(isMmprojFile({ url: "https://h/gemma-3-1b.gguf?download=true", sha256: "", bytes: 1 })).toBe(false);
+        expect(
+            isMmprojFile({ url: "https://h/mmproj-repo/gemma-3-1b.gguf", sha256: "", bytes: 1 }),
+        ).toBe(false);
+        expect(
+            isMmprojFile({ url: "https://h/gemma-3-1b.gguf?download=true", sha256: "", bytes: 1 }),
+        ).toBe(false);
     });
 
     it("partitions an entry into exactly one weights file and one projector", () => {
@@ -253,9 +264,9 @@ describe("webEligibleModels", () => {
         const overBudget = visionEntry("over-budget", TWO_GB - 1000, 2000);
         expect(overBudget.files.every((f) => f.bytes <= TWO_GB)).toBe(true);
         expect(webEligibleModels([overBudget])).toEqual([]);
-        expect(webEligibleModels([visionEntry("in-budget", TWO_GB - 3000, 2000)]).map((m) => m.id)).toEqual([
-            "in-budget",
-        ]);
+        expect(
+            webEligibleModels([visionEntry("in-budget", TWO_GB - 3000, 2000)]).map((m) => m.id),
+        ).toEqual(["in-budget"]);
     });
 
     it("still excludes multi-shard weights (more than one non-projector file)", () => {

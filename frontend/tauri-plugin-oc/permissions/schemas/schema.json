@@ -319,6 +319,18 @@
           "markdownDescription": "Denies the delete_fcm_token command without any pre-configured scope."
         },
         {
+          "description": "Enables the delete_model command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-delete-model",
+          "markdownDescription": "Enables the delete_model command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the delete_model command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-delete-model",
+          "markdownDescription": "Denies the delete_model command without any pre-configured scope."
+        },
+        {
           "description": "Enables the disable_viewport_resize command without any pre-configured scope.",
           "type": "string",
           "const": "allow-disable-viewport-resize",
@@ -329,6 +341,18 @@
           "type": "string",
           "const": "deny-disable-viewport-resize",
           "markdownDescription": "Denies the disable_viewport_resize command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the download_model command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-download-model",
+          "markdownDescription": "Enables the download_model command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the download_model command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-download-model",
+          "markdownDescription": "Denies the download_model command without any pre-configured scope."
         },
         {
           "description": "Enables the download_update command without any pre-configured scope.",
@@ -403,6 +427,30 @@
           "markdownDescription": "Denies the get_server_version command without any pre-configured scope."
         },
         {
+          "description": "Enables the infer command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-infer",
+          "markdownDescription": "Enables the infer command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the infer command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-infer",
+          "markdownDescription": "Denies the infer command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the list_local_models command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-list-local-models",
+          "markdownDescription": "Enables the list_local_models command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the list_local_models command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-list-local-models",
+          "markdownDescription": "Denies the list_local_models command without any pre-configured scope."
+        },
+        {
           "description": "Enables the load_recent_media command without any pre-configured scope.",
           "type": "string",
           "const": "allow-load-recent-media",
@@ -437,6 +485,18 @@
           "type": "string",
           "const": "deny-open-url",
           "markdownDescription": "Denies the open_url command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the probe_model_url command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-probe-model-url",
+          "markdownDescription": "Enables the probe_model_url command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the probe_model_url command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-probe-model-url",
+          "markdownDescription": "Denies the probe_model_url command without any pre-configured scope."
         },
         {
           "description": "Enables the registerListener command without any pre-configured scope.",
@@ -547,6 +607,18 @@
           "markdownDescription": "Denies the svelte_ready command without any pre-configured scope."
         },
         {
+          "description": "Enables the system_resources command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-system-resources",
+          "markdownDescription": "Enables the system_resources command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the system_resources command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-system-resources",
+          "markdownDescription": "Denies the system_resources command without any pre-configured scope."
+        },
+        {
           "description": "Enables the update_chat_shortcuts command without any pre-configured scope.",
           "type": "string",
           "const": "allow-update-chat-shortcuts",
@@ -559,10 +631,10 @@
           "markdownDescription": "Denies the update_chat_shortcuts command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`\n- `allow-release-notifications`\n- `allow-minimize-app`\n- `allow-get-server-version`\n- `allow-download-update`\n- `allow-restart-app`\n- `allow-load-recent-media`\n- `allow-enable-viewport-resize`\n- `allow-disable-viewport-resize`\n- `allow-save-media`\n- `allow-update-chat-shortcuts`\n- `allow-get-pending-deep-link`\n- `allow-get-pending-notification-tap`\n- `allow-clear-all-notifications`\n- `allow-delete-fcm-token`",
+          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`\n- `allow-release-notifications`\n- `allow-minimize-app`\n- `allow-get-server-version`\n- `allow-download-update`\n- `allow-restart-app`\n- `allow-load-recent-media`\n- `allow-enable-viewport-resize`\n- `allow-disable-viewport-resize`\n- `allow-save-media`\n- `allow-update-chat-shortcuts`\n- `allow-get-pending-deep-link`\n- `allow-get-pending-notification-tap`\n- `allow-clear-all-notifications`\n- `allow-delete-fcm-token`\n- `allow-download-model`\n- `allow-probe-model-url`\n- `allow-system-resources`\n- `allow-list-local-models`\n- `allow-delete-model`\n- `allow-infer`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`\n- `allow-release-notifications`\n- `allow-minimize-app`\n- `allow-get-server-version`\n- `allow-download-update`\n- `allow-restart-app`\n- `allow-load-recent-media`\n- `allow-enable-viewport-resize`\n- `allow-disable-viewport-resize`\n- `allow-save-media`\n- `allow-update-chat-shortcuts`\n- `allow-get-pending-deep-link`\n- `allow-get-pending-notification-tap`\n- `allow-clear-all-notifications`\n- `allow-delete-fcm-token`"
+          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`\n- `allow-release-notifications`\n- `allow-minimize-app`\n- `allow-get-server-version`\n- `allow-download-update`\n- `allow-restart-app`\n- `allow-load-recent-media`\n- `allow-enable-viewport-resize`\n- `allow-disable-viewport-resize`\n- `allow-save-media`\n- `allow-update-chat-shortcuts`\n- `allow-get-pending-deep-link`\n- `allow-get-pending-notification-tap`\n- `allow-clear-all-notifications`\n- `allow-delete-fcm-token`\n- `allow-download-model`\n- `allow-probe-model-url`\n- `allow-system-resources`\n- `allow-list-local-models`\n- `allow-delete-model`\n- `allow-infer`"
         }
       ]
     }

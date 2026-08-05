@@ -37,7 +37,9 @@ const ModelCatalogWire = Type.Object({
 export const RegistryModelCatalogArgs = Type.Object({});
 export const RegistryModelCatalogResponse = Type.Object({ Success: ModelCatalogWire });
 
-export function modelCatalogResponse(value: Static<typeof RegistryModelCatalogResponse>): ModelCatalog {
+export function modelCatalogResponse(
+    value: Static<typeof RegistryModelCatalogResponse>,
+): ModelCatalog {
     const c = value.Success;
     return {
         version: c.catalog_version,

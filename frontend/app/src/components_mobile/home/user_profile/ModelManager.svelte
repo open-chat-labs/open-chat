@@ -30,8 +30,8 @@
         type UrlProbe,
     } from "@utils/modelSuitability";
     import { BodySmall, Button, Caption, Chip, Container, H2, Input, Switch } from "component-lib";
-    import type { ModelCatalogEntry, ModelModality } from "openchat-shared";
-    import type { OpenChat } from "openchat-client";
+    import type { OpenChat } from "@client";
+    import type { ModelCatalogEntry, ModelModality } from "@shared";
     import { getContext, onDestroy, onMount } from "svelte";
     import { get } from "svelte/store";
     import {
@@ -293,22 +293,32 @@
         const mmproj = addMmprojUrl.trim();
         // Only proceed against an assessment that matches the CURRENT inputs (checkFresh) — never a stale one.
         if (url === "" || !checkFresh || hasBlocker(warnings)) return;
+        const primaryBytes = primaryProbe?.contentLength;
+        if (primaryBytes === undefined || primaryBytes <= 0) {
+            addError = "Check the model link again — a positive file size is required.";
+            return;
+        }
 
         // Force deterministic on-disk names so the native runtime classifies the files correctly: the
         // language model as "model.gguf" (find_gguf) and the projector as "mmproj.gguf" (find_mmproj),
         // regardless of what the source URLs are named.
-        const files: CustomModelFile[] = [
-            { url, bytes: primaryProbe?.contentLength ?? 0, filename: "model.gguf" },
-        ];
+        const files: CustomModelFile[] = [{ url, bytes: primaryBytes, filename: "model.gguf" }];
         if (mmproj !== "") {
+            const projectorBytes = mmprojProbe?.contentLength;
+            if (projectorBytes === undefined || projectorBytes <= 0) {
+                addError =
+                    "Check the vision projector link again — a positive file size is required.";
+                return;
+            }
             files.push({
                 url: mmproj,
-                bytes: mmprojProbe?.contentLength ?? 0,
+                bytes: projectorBytes,
                 filename: "mmproj.gguf",
             });
         }
         const modalities: ModelModality[] = mmproj !== "" ? ["text", "image"] : ["text"];
-        const name = addName.trim() !== "" ? addName.trim() : fileNameFromUrl(url) || "Custom model";
+        const name =
+            addName.trim() !== "" ? addName.trim() : fileNameFromUrl(url) || "Custom model";
         const entry: CustomModelEntry = {
             id: makeCustomModelId(url),
             name,
@@ -348,14 +358,18 @@
     onDestroy(() => unlisten?.());
 </script>
 
-<SlidingPageContent title={i18nKey("On-device models")} subtitle={i18nKey("Run AI privately on your device")}>
+<SlidingPageContent
+    title={i18nKey("On-device models")}
+    subtitle={i18nKey("Run AI privately on your device")}
+>
     <Container padding={"xxl"} gap={"lg"} height={"fill"} direction={"vertical"}>
         {#if !native}
             <BodySmall>
                 <Translatable
                     resourceKey={i18nKey(
                         "Run a local model in this browser: download one below, or pick a .gguf file from your disk (up to ~2 GB — a ≤2B parameter model at Q4 works well). A disk file is read in place — nothing is uploaded or copied. One model is active at a time; choosing another replaces it. Only a model marked “reads images” can extract from a photo or a receipt.",
-                    )}></Translatable>
+                    )}
+                ></Translatable>
             </BodySmall>
             {#if $webModelStatus.status === "downloading"}
                 <BodySmall>
@@ -365,14 +379,16 @@
                                 ($webModelStatus.progress !== undefined
                                     ? `${Math.round(($webModelStatus.progress.received / Math.max(1, $webModelStatus.progress.total)) * 100)}%`
                                     : ""),
-                        )}></Translatable>
+                        )}
+                    ></Translatable>
                 </BodySmall>
             {:else if $webModelStatus.status === "verifying"}
                 <BodySmall>
                     <Translatable
                         resourceKey={i18nKey(
                             `Checking ${$webModelStatus.name} against its SHA-256…`,
-                        )}></Translatable>
+                        )}
+                    ></Translatable>
                 </BodySmall>
             {:else}
                 {#if webDiskAttached}
@@ -381,24 +397,32 @@
                             <Translatable
                                 resourceKey={i18nKey(
                                     `Model: ${$webModelStatus.name} (${webStatusText})`,
-                                )}></Translatable>
+                                )}
+                            ></Translatable>
                         </BodySmall>
-                        <Button size={"sm"} secondary onClick={detachWebModel}>
+                        <Button width={"hug"} secondary onClick={detachWebModel}>
                             <Translatable resourceKey={i18nKey("Remove model")}></Translatable>
                         </Button>
                     </Container>
                 {/if}
                 {#each webChoices as entry, i (entry.id)}
                     <Container gap={"xs"} direction={"vertical"}>
-                        <Container gap={"sm"} direction={"horizontal"} crossAxisAlignment={"center"}>
+                        <Container
+                            gap={"sm"}
+                            direction={"horizontal"}
+                            crossAxisAlignment={"center"}
+                        >
                             <BodySmall fontWeight={"bold"}>
                                 <Translatable
-                                    resourceKey={i18nKey(`${entry.name} (${formatSize(entry.sizeBytes)})`)}></Translatable>
+                                    resourceKey={i18nKey(
+                                        `${entry.name} (${formatSize(entry.sizeBytes)})`,
+                                    )}
+                                ></Translatable>
                             </BodySmall>
                             {#if entry.modalities.includes("image")}
                                 <Chip>
-                                    <Translatable
-                                        resourceKey={i18nKey("reads images")}></Translatable>
+                                    <Translatable resourceKey={i18nKey("reads images")}
+                                    ></Translatable>
                                 </Chip>
                             {/if}
                             {#if currentWebId === entry.id}
@@ -411,19 +435,21 @@
                             <Caption colour={"textSecondary"}>
                                 <Translatable resourceKey={i18nKey(webStatusText)}></Translatable>
                             </Caption>
-                            <Button size={"sm"} secondary onClick={detachWebModel}>
+                            <Button width={"hug"} secondary onClick={detachWebModel}>
                                 <Translatable resourceKey={i18nKey("Remove model")}></Translatable>
                             </Button>
                         {:else}
                             {#if entry.description !== undefined}
                                 <Caption colour={"textSecondary"}>
-                                    <Translatable resourceKey={i18nKey(entry.description)}></Translatable>
+                                    <Translatable resourceKey={i18nKey(entry.description)}
+                                    ></Translatable>
                                 </Caption>
                             {/if}
                             <Button
-                                size={"sm"}
+                                width={"hug"}
                                 secondary={webActive || i !== 0}
-                                onClick={() => chooseWebModel(entry)}>
+                                onClick={() => chooseWebModel(entry)}
+                            >
                                 <Translatable
                                     resourceKey={i18nKey(
                                         webActive
@@ -431,14 +457,16 @@
                                             : i === 0
                                               ? "Download & use (default)"
                                               : "Download & use",
-                                    )}></Translatable>
+                                    )}
+                                ></Translatable>
                             </Button>
                         {/if}
                     </Container>
                 {/each}
                 {#if hasPicker}
-                    <Button size={"sm"} secondary onClick={attachWebPicker}>
-                        <Translatable resourceKey={i18nKey("Pick a .gguf from disk (remembered)")}></Translatable>
+                    <Button width={"hug"} secondary onClick={attachWebPicker}>
+                        <Translatable resourceKey={i18nKey("Pick a .gguf from disk (remembered)")}
+                        ></Translatable>
                     </Button>
                 {/if}
                 <input class="web-model-file" type="file" accept=".gguf" onchange={attachWebFile} />
@@ -448,7 +476,8 @@
                     <Translatable
                         resourceKey={i18nKey(
                             `Model failed to load: ${$webModelStatus.error ?? "unknown error"}`,
-                        )}></Translatable>
+                        )}
+                    ></Translatable>
                 </BodySmall>
             {/if}
             {#if webError !== ""}
@@ -464,7 +493,8 @@
                 <Translatable
                     resourceKey={i18nKey(
                         "Models run entirely on your device — nothing you ask them is sent to a server. Downloads are large; use Wi-Fi.",
-                    )}></Translatable>
+                    )}
+                ></Translatable>
             </BodySmall>
 
             {#if !showAdd}
@@ -477,12 +507,14 @@
                         <Translatable
                             resourceKey={i18nKey(
                                 "Paste a direct link to a .gguf model file — opening it should start a download, not show a web page (e.g. https://huggingface.co/<org>/<repo>/resolve/main/<file>.gguf). It must be publicly downloadable; login/token-gated models won't work.",
-                            )}></Translatable>
+                            )}
+                        ></Translatable>
                     </Caption>
                     <Input bind:value={addUrl} placeholder={"Model URL (.gguf)"} />
                     <Input
                         bind:value={addMmprojUrl}
-                        placeholder={"Vision projector URL (optional — enables image input)"} />
+                        placeholder={"Vision projector URL (optional — enables image input)"}
+                    />
                     <Input bind:value={addName} placeholder={"Name (optional)"} />
                     <Container gap={"sm"} direction={"horizontal"}>
                         <Button onClick={checkModel} disabled={checking || addUrl.trim() === ""}>
@@ -511,7 +543,8 @@
                                 <Translatable
                                     resourceKey={i18nKey(
                                         "Resolve the items marked ⛔ above before this model can be added.",
-                                    )}></Translatable>
+                                    )}
+                                ></Translatable>
                             </Caption>
                         {/if}
                     {/if}
@@ -535,7 +568,9 @@
                             <Chip>{modality}</Chip>
                         {/each}
                         {#if entry.custom}
-                            <Chip><Translatable resourceKey={i18nKey("Custom")}></Translatable></Chip>
+                            <Chip
+                                ><Translatable resourceKey={i18nKey("Custom")}></Translatable></Chip
+                            >
                         {/if}
                         <Caption colour={"textSecondary"}>{formatSize(entry.sizeBytes)}</Caption>
                     </Container>
@@ -545,9 +580,14 @@
 
                     {#if downloaded}
                         <Container gap={"sm"} direction={"horizontal"}>
-                            <Button disabled={selected === entry.id} onClick={() => select(entry.id)}>
+                            <Button
+                                disabled={selected === entry.id}
+                                onClick={() => select(entry.id)}
+                            >
                                 <Translatable
-                                    resourceKey={i18nKey(selected === entry.id ? "Selected" : "Select")}
+                                    resourceKey={i18nKey(
+                                        selected === entry.id ? "Selected" : "Select",
+                                    )}
                                 ></Translatable>
                             </Button>
                             <Button secondary onClick={() => remove(entry)}>
@@ -569,7 +609,8 @@
                             {" "}
                             {#if entry.licenseUrl}
                                 <a href={entry.licenseUrl} target="_blank" rel="noopener noreferrer"
-                                    >{entry.license}</a>
+                                    >{entry.license}</a
+                                >
                             {:else}
                                 {entry.license}
                             {/if}
@@ -578,17 +619,26 @@
                             bound={false}
                             checked={accepted[entry.id] === true}
                             onChange={() =>
-                                (accepted = { ...accepted, [entry.id]: accepted[entry.id] !== true })}>
+                                (accepted = {
+                                    ...accepted,
+                                    [entry.id]: accepted[entry.id] !== true,
+                                })}
+                        >
                             <Caption>
                                 <Translatable
                                     resourceKey={i18nKey("I have read and accept the license")}
                                 ></Translatable>
                             </Caption>
                         </Switch>
-                        <Container gap={"sm"} direction={"horizontal"} crossAxisAlignment={"center"}>
+                        <Container
+                            gap={"sm"}
+                            direction={"horizontal"}
+                            crossAxisAlignment={"center"}
+                        >
                             <Button
                                 disabled={accepted[entry.id] !== true}
-                                onClick={() => download(entry)}>
+                                onClick={() => download(entry)}
+                            >
                                 <Translatable resourceKey={i18nKey("Download")}></Translatable>
                             </Button>
                         </Container>
@@ -600,7 +650,9 @@
             {/each}
 
             {#if loading}
-                <BodySmall><Translatable resourceKey={i18nKey("Loading…")}></Translatable></BodySmall>
+                <BodySmall
+                    ><Translatable resourceKey={i18nKey("Loading…")}></Translatable></BodySmall
+                >
             {/if}
         {/if}
     </Container>

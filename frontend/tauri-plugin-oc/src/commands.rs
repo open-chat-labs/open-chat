@@ -192,10 +192,27 @@ pub(crate) async fn save_media<R: Runtime>(
 pub(crate) async fn download_model<R: Runtime>(
     app: AppHandle<R>,
     payload: DownloadModelRequest,
-) -> std::result::Result<(), String> {
+) -> std::result::Result<DownloadModelResponse, String> {
     crate::model_manager::ModelManager::new(app)
         .download_model(payload)
         .await
+}
+
+#[command]
+pub(crate) async fn probe_model_url<R: Runtime>(
+    app: AppHandle<R>,
+    payload: ProbeModelUrlRequest,
+) -> std::result::Result<ProbeModelUrlResponse, String> {
+    Ok(crate::model_manager::ModelManager::new(app)
+        .probe_model_url(&payload.url)
+        .await)
+}
+
+#[command]
+pub(crate) async fn system_resources<R: Runtime>(
+    app: AppHandle<R>,
+) -> std::result::Result<SystemResourcesResponse, String> {
+    Ok(crate::model_manager::ModelManager::new(app).system_resources())
 }
 
 #[command]

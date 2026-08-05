@@ -1,4 +1,5 @@
-import type { InferenceRequest } from "openchat-shared";
+import type { InferenceRequest } from "@shared";
+import { webcrypto } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { InferResponse, LocalModel } from "tauri-plugin-oc-api";
 import { infer as nativeInfer, listLocalModels } from "tauri-plugin-oc-api";
@@ -6,7 +7,10 @@ import { selectedModelId } from "../stores/onDeviceModels";
 import { inferOnDevice, isNativeClient, onDeviceInferenceCapability } from "./onDeviceInference";
 import { clearWebModel, useWebModelFromUrl, webInfer } from "./webInference";
 
-const webRuntime = vi.hoisted(() => ({ imageSupported: true }));
+const webRuntime = vi.hoisted(() => ({
+    imageSupported: true,
+    cached: [] as { url: string; bytes: Uint8Array }[],
+}));
 
 vi.mock("@wllama/wllama", () => {
     class Wllama {
@@ -22,8 +26,13 @@ vi.mock("@wllama/wllama", () => {
     class ModelManager {
         async getModelOrDownload(source: { url: string; mmprojUrl?: string }) {
             return {
-                files: [],
-                open: async () => [],
+                files: webRuntime.cached.map((file) => ({
+                    metadata: { originalURL: file.url },
+                })),
+                open: async () =>
+                    webRuntime.cached.map(
+                        (file) => new Blob([file.bytes.slice().buffer as ArrayBuffer]),
+                    ),
                 remove: async () => {},
                 source,
             };
@@ -31,6 +40,25 @@ vi.mock("@wllama/wllama", () => {
     }
     return { Wllama, ModelManager };
 });
+
+vi.stubGlobal("crypto", webcrypto);
+if (Blob.prototype.arrayBuffer === undefined) {
+    Blob.prototype.arrayBuffer = function (this: Blob): Promise<ArrayBuffer> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as ArrayBuffer);
+            reader.onerror = () => reject(reader.error);
+            reader.readAsArrayBuffer(this);
+        });
+    };
+}
+
+async function hashOf(bytes: Uint8Array): Promise<string> {
+    const digest = await webcrypto.subtle.digest("SHA-256", bytes.slice().buffer as ArrayBuffer);
+    return Array.from(new Uint8Array(digest))
+        .map((byte) => byte.toString(16).padStart(2, "0"))
+        .join("");
+}
 
 // The native bridge is the ONLY external dependency of the facade. Stub it so no real Tauri IPC (and no
 // network / model load) is ever touched — every test is deterministic.
@@ -69,6 +97,7 @@ beforeEach(() => {
     mockListLocalModels.mockResolvedValue([]);
     selectedModelId.set("");
     setNative(false);
+    webRuntime.cached = [];
 });
 
 afterEach(() => {
@@ -392,13 +421,23 @@ describe("onDeviceInferenceCapability", () => {
 const WEB_VISION_WEIGHTS_URL = "https://host/models/smolvlm.gguf";
 const WEB_VISION_PROJECTOR_URL = "https://host/models/mmproj-smolvlm.gguf";
 
-function attachWebVisionModel(modalities: ("text" | "image")[]) {
+async function attachWebVisionModel(modalities: ("text" | "image")[]) {
+    const weights = new Uint8Array([1, 2, 3, 4]);
+    const projector = new Uint8Array([5, 6, 7]);
+    webRuntime.cached = [
+        { url: WEB_VISION_WEIGHTS_URL, bytes: weights },
+        { url: WEB_VISION_PROJECTOR_URL, bytes: projector },
+    ];
     return useWebModelFromUrl({
         id: "smolvlm-256m-instruct-q8",
         name: "SmolVLM 256M (vision)",
         files: [
-            { url: WEB_VISION_WEIGHTS_URL, sha256: "", bytes: 4 },
-            { url: WEB_VISION_PROJECTOR_URL, sha256: "", bytes: 3 },
+            { url: WEB_VISION_WEIGHTS_URL, sha256: await hashOf(weights), bytes: weights.length },
+            {
+                url: WEB_VISION_PROJECTOR_URL,
+                sha256: await hashOf(projector),
+                bytes: projector.length,
+            },
         ],
         sizeBytes: 7,
         modalities,
@@ -427,11 +466,14 @@ describe("onDeviceInferenceCapability in a browser", () => {
     });
 
     it("still reports text-only for a text model", async () => {
+        const weights = new Uint8Array([1, 2, 3, 4]);
+        const url = "https://host/models/qwen.gguf";
+        webRuntime.cached = [{ url, bytes: weights }];
         await useWebModelFromUrl({
             id: "qwen2.5-0.5b-instruct-q4",
             name: "Qwen2.5 0.5B (instruct)",
-            files: [{ url: "https://host/models/qwen.gguf", sha256: "", bytes: 4 }],
-            sizeBytes: 4,
+            files: [{ url, sha256: await hashOf(weights), bytes: weights.length }],
+            sizeBytes: weights.length,
             modalities: ["text"],
         });
         expect(onDeviceInferenceCapability().selectedModalities).toEqual(["text"]);

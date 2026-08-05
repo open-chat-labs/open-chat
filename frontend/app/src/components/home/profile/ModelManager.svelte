@@ -28,8 +28,8 @@
         type SuitabilityWarning,
         type UrlProbe,
     } from "@utils/modelSuitability";
-    import type { ModelCatalogEntry, ModelModality } from "openchat-shared";
-    import type { OpenChat } from "openchat-client";
+    import type { OpenChat } from "@client";
+    import type { ModelCatalogEntry, ModelModality } from "@shared";
     import { getContext, onDestroy, onMount } from "svelte";
     import { get } from "svelte/store";
     import {
@@ -299,22 +299,32 @@
         const mmproj = addMmprojUrl.trim();
         // Only proceed against an assessment that matches the CURRENT inputs (checkFresh) — never a stale one.
         if (url === "" || !checkFresh || hasBlocker(warnings)) return;
+        const primaryBytes = primaryProbe?.contentLength;
+        if (primaryBytes === undefined || primaryBytes <= 0) {
+            addError = "Check the model link again — a positive file size is required.";
+            return;
+        }
 
         // Force deterministic on-disk names so the native runtime classifies the files correctly: the
         // language model as "model.gguf" (find_gguf) and the projector as "mmproj.gguf" (find_mmproj),
         // regardless of what the source URLs are named.
-        const files: CustomModelFile[] = [
-            { url, bytes: primaryProbe?.contentLength ?? 0, filename: "model.gguf" },
-        ];
+        const files: CustomModelFile[] = [{ url, bytes: primaryBytes, filename: "model.gguf" }];
         if (mmproj !== "") {
+            const projectorBytes = mmprojProbe?.contentLength;
+            if (projectorBytes === undefined || projectorBytes <= 0) {
+                addError =
+                    "Check the vision projector link again — a positive file size is required.";
+                return;
+            }
             files.push({
                 url: mmproj,
-                bytes: mmprojProbe?.contentLength ?? 0,
+                bytes: projectorBytes,
                 filename: "mmproj.gguf",
             });
         }
         const modalities: ModelModality[] = mmproj !== "" ? ["text", "image"] : ["text"];
-        const name = addName.trim() !== "" ? addName.trim() : fileNameFromUrl(url) || "Custom model";
+        const name =
+            addName.trim() !== "" ? addName.trim() : fileNameFromUrl(url) || "Custom model";
         const entry: CustomModelEntry = {
             id: makeCustomModelId(url),
             name,
@@ -363,7 +373,8 @@
                 "Run a local model in this browser: download one below, or pick a .gguf file from your disk (up to ~2 GB — a ≤2B parameter model at Q4 works well). " +
                     "A disk file is read in place — nothing is uploaded or copied. One model is active at a time; choosing another replaces it. " +
                     "Only a model marked “reads images” can extract from a photo or a receipt.",
-            )} />
+            )}
+        />
     </p>
 
     <div class="web-model">
@@ -372,7 +383,8 @@
                 <Translatable
                     resourceKey={i18nKey(
                         `Previously attached: ${$webModelStatus.name} — re-attach to grant file access for this session.`,
-                    )} />
+                    )}
+                />
             </p>
         {/if}
         {#if $webModelStatus.status === "downloading"}
@@ -383,12 +395,14 @@
                             ($webModelStatus.progress !== undefined
                                 ? `${Math.round(($webModelStatus.progress.received / Math.max(1, $webModelStatus.progress.total)) * 100)}%`
                                 : ""),
-                    )} />
+                    )}
+                />
             </p>
         {:else if $webModelStatus.status === "verifying"}
             <p>
                 <Translatable
-                    resourceKey={i18nKey(`Checking ${$webModelStatus.name} against its SHA-256…`)} />
+                    resourceKey={i18nKey(`Checking ${$webModelStatus.name} against its SHA-256…`)}
+                />
             </p>
         {:else}
             <div class="web-choices">
@@ -438,7 +452,8 @@
                                 secondary={webActive || i !== 0}
                                 small
                                 fill
-                                onClick={() => chooseWebModel(entry)}>
+                                onClick={() => chooseWebModel(entry)}
+                            >
                                 <Translatable
                                     resourceKey={i18nKey(
                                         webActive
@@ -446,7 +461,8 @@
                                             : i === 0
                                               ? "Download & use (default)"
                                               : "Download & use",
-                                    )} />
+                                    )}
+                                />
                             </Button>
                         {/if}
                     </div>
@@ -455,7 +471,9 @@
             <div class="web-attach">
                 {#if hasPicker}
                     <Button secondary small onClick={attachWebPicker}>
-                        <Translatable resourceKey={i18nKey("Pick a .gguf from disk (remembered)")} />
+                        <Translatable
+                            resourceKey={i18nKey("Pick a .gguf from disk (remembered)")}
+                        />
                     </Button>
                 {/if}
                 <label class="file-label">
@@ -463,13 +481,18 @@
                         class="web-model-file"
                         type="file"
                         accept=".gguf"
-                        onchange={attachWebFile} />
+                        onchange={attachWebFile}
+                    />
                 </label>
             </div>
         {/if}
         {#if $webModelStatus.status === "error"}
             <p class="error">
-                <Translatable resourceKey={i18nKey(`Model failed to load: ${$webModelStatus.error ?? "unknown error"}`)} />
+                <Translatable
+                    resourceKey={i18nKey(
+                        `Model failed to load: ${$webModelStatus.error ?? "unknown error"}`,
+                    )}
+                />
             </p>
         {/if}
         {#if webError !== ""}
@@ -481,7 +504,8 @@
         <Translatable
             resourceKey={i18nKey(
                 "Models run entirely on your device — nothing you ask them is sent to a server. Downloads are large; use Wi-Fi.",
-            )} />
+            )}
+        />
     </p>
 
     <div class="add">
@@ -495,12 +519,14 @@
                     <Translatable
                         resourceKey={i18nKey(
                             "Paste a direct link to a .gguf model file — opening it should start a download, not show a web page (e.g. https://huggingface.co/<org>/<repo>/resolve/main/<file>.gguf). It must be publicly downloadable; login/token-gated models won't work.",
-                        )} />
+                        )}
+                    />
                 </p>
                 <Input bind:value={addUrl} placeholder={i18nKey("Model URL (.gguf)")} />
                 <Input
                     bind:value={addMmprojUrl}
-                    placeholder={i18nKey("Vision projector URL (optional — enables image input)")} />
+                    placeholder={i18nKey("Vision projector URL (optional — enables image input)")}
+                />
                 <Input bind:value={addName} placeholder={i18nKey("Name (optional)")} />
                 <div class="actions">
                     <Button small onClick={checkModel} disabled={checking || addUrl.trim() === ""}>
@@ -530,7 +556,8 @@
                             <Translatable
                                 resourceKey={i18nKey(
                                     "Resolve the items marked ⛔ above before this model can be added.",
-                                )} />
+                                )}
+                            />
                         </p>
                     {/if}
                 {/if}
@@ -569,7 +596,8 @@
                 <div class="actions">
                     <Button disabled={selected === entry.id} onClick={() => select(entry.id)} small>
                         <Translatable
-                            resourceKey={i18nKey(selected === entry.id ? "Selected" : "Select")} />
+                            resourceKey={i18nKey(selected === entry.id ? "Selected" : "Select")}
+                        />
                     </Button>
                     <Button secondary onClick={() => remove(entry)} small>
                         <Translatable resourceKey={i18nKey("Remove")} />
@@ -590,7 +618,8 @@
                     {" "}
                     {#if entry.licenseUrl}
                         <a href={entry.licenseUrl} target="_blank" rel="noopener noreferrer"
-                            >{entry.license}</a>
+                            >{entry.license}</a
+                        >
                     {:else}
                         {entry.license}
                     {/if}
@@ -601,12 +630,14 @@
                     checked={accepted[entry.id] === true}
                     onChange={() =>
                         (accepted = { ...accepted, [entry.id]: accepted[entry.id] !== true })}
-                    label={i18nKey("I have read and accept the license")} />
+                    label={i18nKey("I have read and accept the license")}
+                />
                 <div class="actions">
                     <Button
                         disabled={accepted[entry.id] !== true}
                         onClick={() => download(entry)}
-                        small>
+                        small
+                    >
                         <Translatable resourceKey={i18nKey("Download")} />
                     </Button>
                 </div>

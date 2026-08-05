@@ -113,12 +113,16 @@ jobs:
       - name: Install exact frontend lockfile
         working-directory: frontend
         run: npm ci
-      - name: Run model catalog, bridge and bootstrap security tests
+      - name: Run all local-model frontend contracts
         working-directory: frontend
         run: >-
           npm --workspace app test --
+          src/stores/customModels.spec.ts
+          src/utils/localAiCommand.spec.ts
           src/utils/modelCatalog.spec.ts
+          src/utils/modelSuitability.spec.ts
           src/utils/onDeviceInference.spec.ts
+          src/utils/webInference.spec.ts
           src/bootstrapSecurity.spec.ts
 
   real-text-inference:

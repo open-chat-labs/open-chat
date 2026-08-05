@@ -2182,7 +2182,11 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.setVaultReviewers(userIds);
     }
 
-    setVaultLegalHold(reportIndex: bigint, legalHold: boolean, reference: string): Promise<boolean> {
+    setVaultLegalHold(
+        reportIndex: bigint,
+        legalHold: boolean,
+        reference: string,
+    ): Promise<boolean> {
         return this._userIndexClient.setVaultLegalHold(reportIndex, legalHold, reference);
     }
 

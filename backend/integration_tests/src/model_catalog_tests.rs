@@ -47,9 +47,14 @@ fn owner_sets_and_reads_model_catalog_with_auth() {
         env,
         user.principal,
         canister_ids.registry,
-        &registry_canister::set_model_catalog::Args { catalog: valid_catalog() },
+        &registry_canister::set_model_catalog::Args {
+            catalog: valid_catalog(),
+        },
     );
-    assert!(matches!(resp, NotAuthorized), "non-operator expected NotAuthorized, got {resp:?}");
+    assert!(
+        matches!(resp, NotAuthorized),
+        "non-operator expected NotAuthorized, got {resp:?}"
+    );
 
     // Nothing was stored, so the query still reports the empty default.
     let registry_canister::model_catalog::Response::Success(before) = client::registry::model_catalog(
@@ -68,7 +73,9 @@ fn owner_sets_and_reads_model_catalog_with_auth() {
         env,
         user.principal,
         canister_ids.registry,
-        &registry_canister::set_model_catalog::Args { catalog: valid_catalog() },
+        &registry_canister::set_model_catalog::Args {
+            catalog: valid_catalog(),
+        },
     );
     assert!(matches!(resp, Success), "operator set expected Success, got {resp:?}");
 
@@ -81,7 +88,10 @@ fn owner_sets_and_reads_model_catalog_with_auth() {
         canister_ids.registry,
         &registry_canister::set_model_catalog::Args { catalog: bad },
     );
-    assert!(matches!(resp, InvalidCatalog(_)), "invalid catalog expected InvalidCatalog, got {resp:?}");
+    assert!(
+        matches!(resp, InvalidCatalog(_)),
+        "invalid catalog expected InvalidCatalog, got {resp:?}"
+    );
 
     // 4. The query returns exactly what the operator set — NOT the rejected invalid catalog.
     let registry_canister::model_catalog::Response::Success(cat) = client::registry::model_catalog(

@@ -21,7 +21,12 @@ const AMPLE: DeviceResources = {
 
 // A good direct .gguf, probed successfully.
 function okProbe(bytes: number, overrides: Partial<UrlProbe> = {}): UrlProbe {
-    return { ok: true, contentLength: bytes, contentType: "application/octet-stream", ...overrides };
+    return {
+        ok: true,
+        contentLength: bytes,
+        contentType: "application/octet-stream",
+        ...overrides,
+    };
 }
 
 function codes(input: SuitabilityInput): string[] {
@@ -54,15 +59,15 @@ describe("assessSuitability", () => {
     });
 
     it("always emits the trust caution", () => {
-        expect(codes({ url: "https://host/m.gguf", probe: okProbe(GiB), resources: AMPLE })).toContain(
-            "trust",
-        );
+        expect(
+            codes({ url: "https://host/m.gguf", probe: okProbe(GiB), resources: AMPLE }),
+        ).toContain("trust");
     });
 
     it("blocks a non-https URL", () => {
-        expect(blockers({ url: "http://host/m.gguf", probe: okProbe(GiB), resources: AMPLE })).toContain(
-            "not-https",
-        );
+        expect(
+            blockers({ url: "http://host/m.gguf", probe: okProbe(GiB), resources: AMPLE }),
+        ).toContain("not-https");
     });
 
     it("blocks a URL that isn't a .gguf file", () => {
@@ -106,9 +111,9 @@ describe("assessSuitability", () => {
     });
 
     it("flags text-only when no mmproj is given, but not when one is", () => {
-        expect(codes({ url: "https://host/m.gguf", probe: okProbe(GiB), resources: AMPLE })).toContain(
-            "text-only",
-        );
+        expect(
+            codes({ url: "https://host/m.gguf", probe: okProbe(GiB), resources: AMPLE }),
+        ).toContain("text-only");
         expect(
             codes({
                 url: "https://host/m.gguf",
@@ -130,7 +135,11 @@ describe("assessSuitability", () => {
 
         it("cautions when the download would leave under 2 GB free", () => {
             const res: DeviceResources = { ...AMPLE, freeDiskBytes: 5 * GiB };
-            const c = codes({ url: "https://host/m.gguf", probe: okProbe(4 * GiB), resources: res });
+            const c = codes({
+                url: "https://host/m.gguf",
+                probe: okProbe(4 * GiB),
+                resources: res,
+            });
             expect(c).toContain("disk-tight");
             expect(c).not.toContain("disk-insufficient");
         });
@@ -152,7 +161,11 @@ describe("assessSuitability", () => {
 
     describe("RAM", () => {
         it("blocks when the model is larger than total RAM", () => {
-            const res: DeviceResources = { ...AMPLE, totalRamBytes: 8 * GiB, freeDiskBytes: 500 * GiB };
+            const res: DeviceResources = {
+                ...AMPLE,
+                totalRamBytes: 8 * GiB,
+                freeDiskBytes: 500 * GiB,
+            };
             expect(
                 blockers({ url: "https://host/m.gguf", probe: okProbe(16 * GiB), resources: res }),
             ).toContain("ram-insufficient");
@@ -160,7 +173,11 @@ describe("assessSuitability", () => {
 
         it("cautions when the model uses more than 60% of RAM", () => {
             const res: DeviceResources = { ...AMPLE, totalRamBytes: 8 * GiB };
-            const c = codes({ url: "https://host/m.gguf", probe: okProbe(6 * GiB), resources: res });
+            const c = codes({
+                url: "https://host/m.gguf",
+                probe: okProbe(6 * GiB),
+                resources: res,
+            });
             expect(c).toContain("ram-tight");
             expect(c).not.toContain("ram-insufficient");
         });
@@ -184,7 +201,7 @@ describe("assessSuitability", () => {
     });
 
     describe("probe failures", () => {
-        it("cautions (not blocks) when the probe failed", () => {
+        it("blocks when the primary probe failed or has no positive size", () => {
             const input: SuitabilityInput = {
                 url: "https://host/m.gguf",
                 probe: { ok: false, error: "server returned HTTP 404" },
@@ -192,17 +209,44 @@ describe("assessSuitability", () => {
             };
             const result = assessSuitability(input);
             expect(result.map((w) => w.code)).toContain("probe-failed");
+            expect(blockers(input)).toContain("probe-failed");
             // With no size, disk/RAM/perf checks are skipped.
             expect(result.map((w) => w.code)).not.toContain("disk-insufficient");
             expect(result.map((w) => w.code)).not.toContain("perf-small");
         });
 
-        it("cautions when the link hasn't been probed at all", () => {
-            expect(codes({ url: "https://host/m.gguf", resources: AMPLE })).toContain("not-checked");
+        it("blocks when the link hasn't been probed at all", () => {
+            expect(blockers({ url: "https://host/m.gguf", resources: AMPLE })).toContain(
+                "not-checked",
+            );
+        });
+
+        it("blocks when a supplied projector has no known positive size", () => {
+            expect(
+                blockers({
+                    url: "https://host/m.gguf",
+                    mmprojUrl: "https://host/mmproj.gguf",
+                    probe: okProbe(GiB),
+                    resources: AMPLE,
+                }),
+            ).toContain("mmproj-not-checked");
+            expect(
+                blockers({
+                    url: "https://host/m.gguf",
+                    mmprojUrl: "https://host/mmproj.gguf",
+                    probe: okProbe(GiB),
+                    mmprojProbe: { ok: true, contentLength: 0 },
+                    resources: AMPLE,
+                }),
+            ).toContain("mmproj-probe-failed");
         });
 
         it("cautions (not silently skips) when the size is known but device resources are unavailable", () => {
-            const c = codes({ url: "https://host/m.gguf", probe: okProbe(30 * GiB), resources: undefined });
+            const c = codes({
+                url: "https://host/m.gguf",
+                probe: okProbe(30 * GiB),
+                resources: undefined,
+            });
             expect(c).toContain("resources-unknown");
             // Fit checks are skipped, so no disk/RAM verdicts, but the perf note still appears.
             expect(c).not.toContain("disk-insufficient");

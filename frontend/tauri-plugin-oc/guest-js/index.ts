@@ -19,12 +19,18 @@ export { enableViewportResize } from "./commands/enableViewportResize";
 export { disableViewportResize } from "./commands/disableViewportResize";
 export {
     downloadModel,
+    probeModelUrl,
+    systemResources,
     listLocalModels,
     deleteModel,
     infer,
     onModelDownloadProgress,
     type ModelFileSpec,
     type DownloadModelRequest,
+    type DownloadedFile,
+    type DownloadModelResponse,
+    type ProbeModelUrlResponse,
+    type SystemResources,
     type LocalModel,
     type InferRequest,
     type InferResponse,

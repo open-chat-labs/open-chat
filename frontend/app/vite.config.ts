@@ -199,7 +199,10 @@ export default defineConfig({
             // rather than its built dist-js output, like the sub-packages above.
             {
                 find: /^tauri-plugin-oc-api\/(.*)$/,
-                replacement: path.join(path.resolve(__dirname, "../tauri-plugin-oc/guest-js"), "$1"),
+                replacement: path.join(
+                    path.resolve(__dirname, "../tauri-plugin-oc/guest-js"),
+                    "$1",
+                ),
             },
             {
                 find: /^tauri-plugin-oc-api$/,

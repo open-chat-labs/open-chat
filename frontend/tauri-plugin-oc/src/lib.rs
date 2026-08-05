@@ -60,6 +60,8 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
         commands::save_media,
         commands::update_chat_shortcuts,
         commands::download_model,
+        commands::probe_model_url,
+        commands::system_resources,
         commands::list_local_models,
         commands::delete_model,
         commands::infer,

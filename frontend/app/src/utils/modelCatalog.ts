@@ -1,4 +1,4 @@
-import type { ModelCatalog, ModelCatalogEntry, ModelFile } from "openchat-shared";
+import type { ModelCatalog, ModelCatalogEntry, ModelFile } from "@shared";
 
 // The default on-device model catalog.
 //
@@ -25,7 +25,7 @@ export const defaultModelCatalog: ModelCatalog = {
             name: "Qwen3-VL 2B (vision) — default",
             description:
                 "Default. The most accurate model here, on text as well as images: in testing it was " +
-                "the ONLY one to read a date range correctly (\"3-8 august\" → the 3rd) and the only " +
+                'the ONLY one to read a date range correctly ("3-8 august" → the 3rd) and the only ' +
                 "one to return an amount from a photo as a number rather than text. Reads receipts. " +
                 "Apache-2.0. Costs ~1.5 GB of download and roughly 10s per image — pick Gemma 3 1B " +
                 "below if you only send text and want a smaller download.",
@@ -33,14 +33,14 @@ export const defaultModelCatalog: ModelCatalog = {
             runtime: "llama-cpp",
             files: [
                 {
-                    url: "https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/main/Qwen3VL-2B-Instruct-Q4_K_M.gguf",
+                    url: "https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/52d6c8ffea26cc873ac5ad116f8631268d7eb503/Qwen3VL-2B-Instruct-Q4_K_M.gguf",
                     sha256: "089d75c52f4b7ffc56ba998ffc50aae89fcafc755f9e7208aacca281dca6c2ae",
                     bytes: 1107409952,
                 },
                 {
                     // Vision projector (mmproj) — enables image input. Identified by the "mmproj" in
                     // its name (see isMmprojFile); wllama re-checks the GGUF header at load time.
-                    url: "https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-2B-Instruct-Q8_0.gguf",
+                    url: "https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/52d6c8ffea26cc873ac5ad116f8631268d7eb503/mmproj-Qwen3VL-2B-Instruct-Q8_0.gguf",
                     sha256: "f9a68fabba69c3b81e153367b2c7521030b0fa8bb0de400c9599c8e6725f9c82",
                     bytes: 445053216,
                 },
@@ -62,7 +62,7 @@ export const defaultModelCatalog: ModelCatalog = {
             runtime: "llama-cpp",
             files: [
                 {
-                    url: "https://huggingface.co/ggml-org/gemma-3-1b-it-GGUF/resolve/main/gemma-3-1b-it-Q4_K_M.gguf",
+                    url: "https://huggingface.co/ggml-org/gemma-3-1b-it-GGUF/resolve/f9c28bcd85737ffc5aef028638d3341d49869c27/gemma-3-1b-it-Q4_K_M.gguf",
                     sha256: "8ccc5cd1f1b3602548715ae25a66ed73fd5dc68a210412eea643eb20eb75a135",
                     bytes: 806058240,
                 },
@@ -82,7 +82,7 @@ export const defaultModelCatalog: ModelCatalog = {
             runtime: "llama-cpp",
             files: [
                 {
-                    url: "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf",
+                    url: "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/91cad51170dc346986eccefdc2dd33a9da36ead9/qwen2.5-1.5b-instruct-q4_k_m.gguf",
                     sha256: "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e",
                     bytes: 1117320736,
                 },
@@ -102,7 +102,7 @@ export const defaultModelCatalog: ModelCatalog = {
             runtime: "llama-cpp",
             files: [
                 {
-                    url: "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf",
+                    url: "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/9217f5db79a29953eb74d5343926648285ec7e67/qwen2.5-0.5b-instruct-q4_k_m.gguf",
                     sha256: "74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db",
                     bytes: 491400032,
                 },
@@ -124,20 +124,20 @@ export const defaultModelCatalog: ModelCatalog = {
             description:
                 "Reads images at a third of the default's download (~0.55 GB total, Apache-2.0) — the " +
                 "one to pick on a slow connection or a weak machine. Much less accurate: in testing " +
-                "it took the Subtotal line instead of the total, and on text it read \"3-8 august\" " +
+                'it took the Subtotal line instead of the total, and on text it read "3-8 august" ' +
                 "as an amount of 3.00. Verify every figure before relying on the output.",
             modalities: ["text", "image"],
             runtime: "llama-cpp",
             files: [
                 {
-                    url: "https://huggingface.co/ggml-org/SmolVLM-500M-Instruct-GGUF/resolve/main/SmolVLM-500M-Instruct-Q8_0.gguf",
+                    url: "https://huggingface.co/ggml-org/SmolVLM-500M-Instruct-GGUF/resolve/72e986006ef53e37cdd3f6d4241c90b0f01df376/SmolVLM-500M-Instruct-Q8_0.gguf",
                     sha256: "9d4612de6a42214499e301494a3ecc2be0abdd9de44e663bda63f1152fad1bf4",
                     bytes: 436806912,
                 },
                 {
                     // Vision projector (mmproj) — enables image input. Identified by the "mmproj" in
                     // its name (see isMmprojFile); wllama re-checks the GGUF header at load time.
-                    url: "https://huggingface.co/ggml-org/SmolVLM-500M-Instruct-GGUF/resolve/main/mmproj-SmolVLM-500M-Instruct-Q8_0.gguf",
+                    url: "https://huggingface.co/ggml-org/SmolVLM-500M-Instruct-GGUF/resolve/72e986006ef53e37cdd3f6d4241c90b0f01df376/mmproj-SmolVLM-500M-Instruct-Q8_0.gguf",
                     sha256: "d1eb8b6b23979205fdf63703ed10f788131a3f812c7b1f72e0119d5d81295150",
                     bytes: 108783360,
                 },

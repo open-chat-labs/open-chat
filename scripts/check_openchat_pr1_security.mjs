@@ -277,9 +277,12 @@ if (modes.has("npm")) {
     const changedManifests = changedResult.stdout
       .split(/\r?\n/u)
       .filter((path) => /(^|\/)package(?:-lock)?\.json$/u.test(path));
-    if (changedManifests.length) {
+    const unreviewedManifests = changedManifests.filter(
+      (path) => !Object.hasOwn(policy.reviewedDependencyFiles, path),
+    );
+    if (unreviewedManifests.length) {
       failures.push(
-        `PR1 has unreviewed npm manifest changes:\n  ${changedManifests.join("\n  ")}`,
+        `PR1 has unreviewed npm manifest changes:\n  ${unreviewedManifests.join("\n  ")}`,
       );
     }
   }

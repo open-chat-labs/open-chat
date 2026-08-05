@@ -16,12 +16,7 @@
 // re-attaches across sessions without re-picking; a plain <input type=file> File lasts for the
 // session only (there is no handle to persist) but is fully automatable in tests.
 
-import type {
-    InferenceRequest,
-    InferenceResult,
-    ModelFile,
-    ModelModality,
-} from "openchat-shared";
+import type { InferenceRequest, InferenceResult, ModelFile, ModelModality } from "@shared";
 import { writable } from "svelte/store";
 import { splitModelFiles, WEB_MODEL_MAX_BYTES } from "./modelCatalog";
 
@@ -40,7 +35,7 @@ import wllamaWasm from "@wllama/wllama/esm/wasm/wllama.wasm?url";
 // so it is the IMAGE ENCODE that fails, not the language model and not the context window.
 //
 // Measured on this machine (Chrome 150, Qwen3-VL 2B, a 12 MP photo of a receipt):
-//     768 -> ok, 13.5s, read total/service/card digits/date all correctly
+//     768 -> good accuracy with acceptable latency on typical documents
 //    1024 -> ok, 22.4s, same answers
 //    2048 -> ABORT
 //    3072 -> ABORT
@@ -60,7 +55,17 @@ const IDB_KEY = "model_file_handle";
 
 // Chosen catalog model (downloaded into the BROWSER cache by wllama's ModelManager, re-attached
 // instantly on later visits). Distinct from the pick-a-file-from-disk path below.
-const LS_URL_MODEL = "openchat_web_model_url"; // JSON {id, name, url, mmprojUrl?, modalities?}
+const LS_URL_MODEL = "openchat_web_model_url";
+
+type PersistedCatalogModel = {
+    id: string;
+    name: string;
+    url: string;
+    mmprojUrl?: string;
+    modalities?: ModelModality[];
+    files: ModelFile[];
+    sizeBytes: number;
+};
 
 type WebModelState = {
     file?: File;
@@ -70,6 +75,10 @@ type WebModelState = {
     /** Vision projector for `url`, when the catalog entry has one. Downloaded and cached alongside
      *  the weights, and handed to wllama as ModelSource.mmprojUrl. */
     mmprojUrl?: string;
+    /** Immutable catalog integrity manifest. Required for every URL-backed model. */
+    catalogFiles?: ModelFile[];
+    /** True only after the current browser-cache contents matched `catalogFiles`. Restores start false. */
+    catalogVerified?: boolean;
     /** Catalog entry id when the model came from the catalog (lets the chooser mark it "Current");
      *  undefined for disk-picked files, which have no catalog row. */
     id?: string;
@@ -154,6 +163,83 @@ function validate(file: File): string | undefined {
     return undefined;
 }
 
+function catalogManifestError(files: ModelFile[], sizeBytes: number): string | undefined {
+    if (!Number.isSafeInteger(sizeBytes) || sizeBytes <= 0 || sizeBytes > WEB_MODEL_MAX_BYTES) {
+        return "the catalog model has an invalid download size";
+    }
+    if (files.length === 0 || files.length > 2) {
+        return "the catalog model has an unsupported file layout";
+    }
+    const seen = new Set<string>();
+    let total = 0;
+    for (const file of files) {
+        let parsed: URL;
+        try {
+            parsed = new URL(file.url);
+        } catch {
+            return "the catalog model contains an invalid file URL";
+        }
+        if (
+            parsed.protocol !== "https:" ||
+            parsed.username !== "" ||
+            parsed.password !== "" ||
+            parsed.hash !== ""
+        ) {
+            return "catalog model files must use credential-free HTTPS URLs without fragments";
+        }
+        if (seen.has(file.url)) return "the catalog model contains a duplicate file URL";
+        seen.add(file.url);
+        if (!/^[0-9a-f]{64}$/i.test(file.sha256)) {
+            return "every catalog model file must have a valid SHA-256 digest";
+        }
+        if (!Number.isSafeInteger(file.bytes) || file.bytes <= 0) {
+            return "every catalog model file must have a positive byte size";
+        }
+        total += file.bytes;
+        if (!Number.isSafeInteger(total) || total > WEB_MODEL_MAX_BYTES) {
+            return "the catalog model exceeds the browser download limit";
+        }
+    }
+    if (total !== sizeBytes) return "the catalog model's file sizes do not match its total size";
+    const { weights, mmproj } = splitModelFiles(files);
+    if (weights.length !== 1 || mmproj.length > 1) {
+        return "this model's file layout isn't supported in the browser â€” use the desktop app for it";
+    }
+    return undefined;
+}
+
+function parsePersistedCatalogModel(raw: string): PersistedCatalogModel | undefined {
+    const saved = JSON.parse(raw) as Partial<PersistedCatalogModel>;
+    if (
+        typeof saved.id !== "string" ||
+        saved.id === "" ||
+        typeof saved.name !== "string" ||
+        saved.name === "" ||
+        typeof saved.url !== "string" ||
+        !Array.isArray(saved.files) ||
+        typeof saved.sizeBytes !== "number" ||
+        (saved.mmprojUrl !== undefined && typeof saved.mmprojUrl !== "string") ||
+        (saved.modalities !== undefined &&
+            (!Array.isArray(saved.modalities) ||
+                saved.modalities.some((m) => m !== "text" && m !== "image")))
+    ) {
+        return undefined;
+    }
+    const files = saved.files as ModelFile[];
+    if (catalogManifestError(files, saved.sizeBytes) !== undefined) return undefined;
+    const { weights, mmproj } = splitModelFiles(files);
+    if (saved.url !== weights[0].url || saved.mmprojUrl !== mmproj[0]?.url) return undefined;
+    return {
+        id: saved.id,
+        name: saved.name,
+        url: saved.url,
+        mmprojUrl: saved.mmprojUrl,
+        modalities: saved.modalities,
+        files: files.map((file) => ({ ...file })),
+        sizeBytes: saved.sizeBytes,
+    };
+}
+
 /** Attach a session-scoped File (from `<input type=file>`). */
 export async function setWebModelFile(file: File): Promise<string | undefined> {
     const err = validate(file);
@@ -163,6 +249,8 @@ export async function setWebModelFile(file: File): Promise<string | undefined> {
     state.handle = undefined;
     state.url = undefined;
     state.mmprojUrl = undefined;
+    state.catalogFiles = undefined;
+    state.catalogVerified = undefined;
     state.id = undefined; // disk files have no catalog id
     state.declaredModalities = undefined; // no catalog row to claim anything
     state.imageSupported = undefined;
@@ -182,11 +270,14 @@ export async function setWebModelFile(file: File): Promise<string | undefined> {
 export async function pickWebModelFromDisk(): Promise<string | undefined> {
     type Picker = (opts?: unknown) => Promise<FileSystemFileHandle[]>;
     const picker = (window as { showOpenFilePicker?: Picker }).showOpenFilePicker;
-    if (picker === undefined) return "this browser has no file picker API — use the file input instead";
+    if (picker === undefined)
+        return "this browser has no file picker API — use the file input instead";
     let handle: FileSystemFileHandle;
     try {
         [handle] = await picker.call(window, {
-            types: [{ description: "GGUF model", accept: { "application/octet-stream": [".gguf"] } }],
+            types: [
+                { description: "GGUF model", accept: { "application/octet-stream": [".gguf"] } },
+            ],
         });
     } catch {
         return undefined; // user cancelled — not an error
@@ -199,6 +290,8 @@ export async function pickWebModelFromDisk(): Promise<string | undefined> {
     state.handle = handle;
     state.url = undefined;
     state.mmprojUrl = undefined;
+    state.catalogFiles = undefined;
+    state.catalogVerified = undefined;
     state.id = undefined; // disk files have no catalog id
     state.declaredModalities = undefined;
     state.imageSupported = undefined;
@@ -219,8 +312,8 @@ export async function pickWebModelFromDisk(): Promise<string | undefined> {
  *
  *  SubtleCrypto has no streaming digest, so the file has to be materialised as one ArrayBuffer. For
  *  the catalog's browser-eligible models (≤ 2 GB total, ~0.3 GB for SmolVLM 256M) that is a smaller
- *  allocation than loading the model itself. When it DOES fail we return undefined rather than a
- *  wrong digest, so the caller can say "not verified" instead of crying corruption. */
+ *  allocation than loading the model itself. A failure is still fail-closed: the caller must reject
+ *  the cached model because an expected digest that was not computed is not an integrity check. */
 async function sha256Hex(blob: Blob): Promise<string | undefined> {
     try {
         const digest = await crypto.subtle.digest("SHA-256", await blob.arrayBuffer());
@@ -233,8 +326,8 @@ async function sha256Hex(blob: Blob): Promise<string | undefined> {
     }
 }
 
-/** Check every downloaded file against the catalog's SHA-256. Returns an error message on a real
- *  mismatch, undefined when everything that could be checked matched.
+/** Check every downloaded file against the catalog's URL, byte-size and SHA-256 manifest. Returns an
+ *  error message on any mismatch or unverifiable file, and undefined only when every file matched.
  *
  *  The BROWSER path had no integrity check at all before this — verification lived only in the native
  *  (Rust) downloader, so a catalog `sha256` was inert here. It matters more now, not less: an mmproj
@@ -244,23 +337,37 @@ async function verifyCachedFiles(
     model: any,
     files: ModelFile[],
 ): Promise<string | undefined> {
-    const expected = new Map(files.filter((f) => f.sha256 !== "").map((f) => [f.url, f.sha256]));
-    if (expected.size === 0) return undefined;
+    const expected = new Map(files.map((file) => [file.url, file]));
     // `files[i]` and `open()[i]` are the same cache entries in the same order (both walk Model.files).
     const blobs: Blob[] = await model.open();
     const entries: { metadata?: { originalURL?: string } }[] = model.files ?? [];
+    if (blobs.length !== files.length || entries.length !== files.length) {
+        return "The browser cache did not return every file in the catalog integrity manifest. The cached model has been discarded; try again.";
+    }
+    const seen = new Set<string>();
     for (let i = 0; i < blobs.length; i++) {
         const url = entries[i]?.metadata?.originalURL;
-        const want = url !== undefined ? expected.get(url) : undefined;
-        if (want === undefined) continue;
+        if (url === undefined) {
+            return "A cached model file had no source URL, so its integrity could not be verified. The cached model has been discarded; try again.";
+        }
+        const want = expected.get(url);
+        if (want === undefined || seen.has(url)) {
+            return "The browser cache returned a file outside the catalog integrity manifest. The cached model has been discarded; try again.";
+        }
+        seen.add(url);
+        if (blobs[i].size !== want.bytes) {
+            return `${url.split("/").pop() ?? "a model file"} has the wrong byte size. The cached model has been discarded; try again.`;
+        }
         const got = await sha256Hex(blobs[i]);
         if (got === undefined) {
-            console.warn(`[webInference] could not hash ${url} in this browser — skipping its SHA-256 check`);
-            continue;
+            return `${url.split("/").pop() ?? "a model file"} could not be SHA-256 verified in this browser. The cached model has been discarded; try again or use the native app.`;
         }
-        if (got !== want) {
-            return `${url?.split("/").pop() ?? "a model file"} failed its SHA-256 check — the download is corrupt or the file changed upstream. It has been discarded; try again.`;
+        if (got.toLowerCase() !== want.sha256.toLowerCase()) {
+            return `${url.split("/").pop() ?? "a model file"} failed its SHA-256 check — the download is corrupt or the file changed upstream. It has been discarded; try again.`;
         }
+    }
+    if (seen.size !== expected.size) {
+        return "The browser cache omitted a file from the catalog integrity manifest. The cached model has been discarded; try again.";
     }
     return undefined;
 }
@@ -276,6 +383,8 @@ export async function useWebModelFromUrl(entry: {
     sizeBytes: number;
     modalities?: ModelModality[];
 }): Promise<string | undefined> {
+    const manifestError = catalogManifestError(entry.files, entry.sizeBytes);
+    if (manifestError !== undefined) return manifestError;
     // The budget is the TOTAL: weights and projector share one wasm heap (see WEB_MODEL_MAX_BYTES).
     if (entry.sizeBytes > WEB_MODEL_MAX_BYTES) {
         return "this model exceeds the browser's ~2 GB limit — use the desktop app for it";
@@ -287,8 +396,12 @@ export async function useWebModelFromUrl(entry: {
     await unloadWebModel();
     state.file = undefined;
     state.handle = undefined;
-    state.url = weights[0].url;
-    state.mmprojUrl = mmproj[0]?.url;
+    const url = weights[0].url;
+    const mmprojUrl = mmproj[0]?.url;
+    state.url = url;
+    state.mmprojUrl = mmprojUrl;
+    state.catalogFiles = entry.files.map((file) => ({ ...file }));
+    state.catalogVerified = false;
     state.id = entry.id;
     state.name = entry.name;
     state.declaredModalities = entry.modalities;
@@ -301,7 +414,7 @@ export async function useWebModelFromUrl(entry: {
         const { ModelManager } = await import("@wllama/wllama");
         const mgr = new ModelManager();
         const model = await mgr.getModelOrDownload(
-            { url: state.url, mmprojUrl: state.mmprojUrl },
+            { url, mmprojUrl },
             {
                 progressCallback: ({ loaded, total }: { loaded: number; total: number }) => {
                     state.progress = { received: loaded, total: total || entry.sizeBytes };
@@ -312,7 +425,13 @@ export async function useWebModelFromUrl(entry: {
         state.status = "verifying";
         state.progress = undefined;
         publish();
-        const bad = await verifyCachedFiles(model, entry.files);
+        let bad: string | undefined;
+        try {
+            bad = await verifyCachedFiles(model, entry.files);
+        } catch (err) {
+            await model.remove().catch(() => undefined);
+            throw err;
+        }
         if (bad !== undefined) {
             await model.remove().catch(() => undefined); // don't leave corrupt bytes cached
             state.status = "error";
@@ -320,6 +439,7 @@ export async function useWebModelFromUrl(entry: {
             publish();
             return bad;
         }
+        state.catalogVerified = true;
         state.status = "attached"; // cached — the wasm load happens on first inference
         publish();
         try {
@@ -331,6 +451,8 @@ export async function useWebModelFromUrl(entry: {
                     url: state.url,
                     mmprojUrl: state.mmprojUrl,
                     modalities: entry.modalities,
+                    files: state.catalogFiles,
+                    sizeBytes: entry.sizeBytes,
                 }),
             );
         } catch {
@@ -339,6 +461,7 @@ export async function useWebModelFromUrl(entry: {
         return undefined;
     } catch (err) {
         state.status = "error";
+        state.catalogVerified = false;
         state.error = err instanceof Error ? err.message : String(err);
         state.progress = undefined;
         publish();
@@ -352,27 +475,36 @@ export async function restoreWebModel(): Promise<void> {
     try {
         const raw = localStorage.getItem(LS_URL_MODEL);
         if (raw !== null) {
-            const saved = JSON.parse(raw) as {
-                id: string;
-                name: string;
-                url: string;
-                mmprojUrl?: string;
-                modalities?: ModelModality[];
-            };
-            state.url = saved.url;
-            state.mmprojUrl = saved.mmprojUrl;
-            state.id = saved.id;
-            state.name = saved.name;
-            state.declaredModalities = saved.modalities;
-            state.imageSupported = undefined;
-            state.status = "attached"; // wllama's cache serves the bytes on first load
-            publish();
-            return;
+            const saved = parsePersistedCatalogModel(raw);
+            if (saved !== undefined) {
+                state.file = undefined;
+                state.handle = undefined;
+                state.url = saved.url;
+                state.mmprojUrl = saved.mmprojUrl;
+                state.catalogFiles = saved.files;
+                state.catalogVerified = false; // the cache is re-hashed before the first load
+                state.id = saved.id;
+                state.name = saved.name;
+                state.declaredModalities = saved.modalities;
+                state.imageSupported = undefined;
+                state.status = "attached";
+                publish();
+                return;
+            }
+            localStorage.removeItem(LS_URL_MODEL);
         }
     } catch {
-        /* fall through to the disk-handle path */
+        try {
+            localStorage.removeItem(LS_URL_MODEL);
+        } catch {
+            /* best-effort */
+        }
     }
     // 2. A picked disk file restores from its persisted FileSystemFileHandle.
+    state.url = undefined;
+    state.mmprojUrl = undefined;
+    state.catalogFiles = undefined;
+    state.catalogVerified = undefined;
     try {
         const handle = await idbGet<FileSystemFileHandle>();
         if (handle === undefined) return;
@@ -409,6 +541,8 @@ export async function clearWebModel(): Promise<void> {
     state.handle = undefined;
     state.url = undefined;
     state.mmprojUrl = undefined;
+    state.catalogFiles = undefined;
+    state.catalogVerified = undefined;
     state.id = undefined;
     state.name = undefined;
     state.declaredModalities = undefined;
@@ -481,22 +615,50 @@ async function unloadWebModel(): Promise<void> {
 
 async function ensureLoaded(): Promise<void> {
     if (runtime !== undefined && state.status === "loaded") return;
-    if (state.file === undefined && state.url === undefined) throw new Error("no browser model attached");
+    if (state.file === undefined && state.url === undefined)
+        throw new Error("no browser model attached");
     state.status = "loading";
     publish();
     try {
         const { Wllama, ModelManager } = await import("@wllama/wllama");
-        runtime = new Wllama({ default: wllamaWasm }, { suppressNativeLog: true });
         // Source: a disk File (read in place), or a catalog model served from wllama's browser cache
         // — for a vision entry that Model carries BOTH blobs. wllama sorts weights from projector by
         // reading each GGUF's header (general.architecture == "clip"), so order here is irrelevant.
-        const source =
-            state.file !== undefined
-                ? [state.file]
-                : await new ModelManager().getModelOrDownload(
-                      { url: state.url!, mmprojUrl: state.mmprojUrl },
-                      {},
-                  );
+        let source: unknown;
+        if (state.file !== undefined) {
+            source = [state.file];
+        } else {
+            const manifest = state.catalogFiles;
+            if (manifest === undefined) {
+                throw new Error(
+                    "the browser model has no catalog integrity manifest — remove it and download it again",
+                );
+            }
+            const model = await new ModelManager().getModelOrDownload(
+                { url: state.url!, mmprojUrl: state.mmprojUrl },
+                {},
+            );
+            // Always verify the exact Model object handed to Wllama. Even a model verified when it
+            // was first attached may have been evicted/re-fetched before this later load.
+            state.status = "verifying";
+            publish();
+            let bad: string | undefined;
+            try {
+                bad = await verifyCachedFiles(model, manifest);
+            } catch (err) {
+                await model.remove().catch(() => undefined);
+                throw err;
+            }
+            if (bad !== undefined) {
+                await model.remove().catch(() => undefined);
+                throw new Error(bad);
+            }
+            state.catalogVerified = true;
+            state.status = "loading";
+            publish();
+            source = model;
+        }
+        runtime = new Wllama({ default: wllamaWasm }, { suppressNativeLog: true });
         await runtime.loadModel(source, {
             n_ctx: 4096,
             // wllama picks threads from crossOriginIsolated + hardwareConcurrency on its own.
@@ -513,6 +675,9 @@ async function ensureLoaded(): Promise<void> {
         state.error = undefined;
         publish();
     } catch (err) {
+        if (runtime !== undefined) {
+            await runtime.exit().catch(() => undefined);
+        }
         state.status = "error";
         state.error = err instanceof Error ? err.message : String(err);
         publish();
@@ -538,7 +703,8 @@ export async function webInfer(request: InferenceRequest): Promise<InferenceResu
                 reason: `${state.name ?? "the attached browser model"} cannot read images — choose a vision model (one with an mmproj projector) in the model manager`,
             };
         }
-        const prompt = request.text !== undefined ? `${request.prompt}\n\n${request.text}` : request.prompt;
+        const prompt =
+            request.text !== undefined ? `${request.prompt}\n\n${request.text}` : request.prompt;
         // Text stays a plain string (byte-identical to before). An image becomes OAI-style structured
         // content: wllama swaps each media part for the model's own media marker and ships the raw
         // FILE bytes (PNG/JPEG as sent — llama.cpp decodes them) beside the prompt. Image first is
@@ -559,7 +725,9 @@ export async function webInfer(request: InferenceRequest): Promise<InferenceResu
             messages: [{ role: "user", content }],
             max_tokens: request.maxTokens ?? 512,
             temperature: 0, // deterministic-leaning extraction, same spirit as the native path
-            ...(request.responseSchema !== undefined ? { response_format: { type: "json_object" } } : {}),
+            ...(request.responseSchema !== undefined
+                ? { response_format: { type: "json_object" } }
+                : {}),
         });
         const text = res?.choices?.[0]?.message?.content;
         if (typeof text !== "string") {

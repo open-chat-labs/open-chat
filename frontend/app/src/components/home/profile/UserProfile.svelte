@@ -341,7 +341,8 @@
             role="button"
             onclick={() => (view = "global")}
             class:selected={view === "global"}
-            class="tab">
+            class="tab"
+        >
             <Translatable resourceKey={i18nKey("profile.global")} />
         </div>
         <div
@@ -349,7 +350,8 @@
             role="button"
             onclick={() => (view = "communities")}
             class:selected={view === "communities"}
-            class="tab">
+            class="tab"
+        >
             <Translatable resourceKey={i18nKey("communities.communityLabel")} />
         </div>
         <div
@@ -357,7 +359,8 @@
             role="button"
             onclick={() => (view = "chit")}
             class:selected={view === "chit"}
-            class="tab">
+            class="tab"
+        >
             <Translatable resourceKey={i18nKey("CHIT")} />
         </div>
     </div>
@@ -373,19 +376,22 @@
             <CollapsibleCard
                 onToggle={userInfoOpen.toggle}
                 open={$userInfoOpen}
-                headerText={i18nKey("userInfoHeader")}>
+                headerText={i18nKey("userInfoHeader")}
+            >
                 <div class="profile-card">
                     <UserProfileCard
                         {onBackgroundImageUpdated}
                         profile={candidateProfile}
                         {user}
-                        userProfileMode></UserProfileCard>
+                        userProfileMode
+                    ></UserProfileCard>
                 </div>
                 {#if $anonUserStore}
                     <div class="guest">
                         <p><Translatable resourceKey={i18nKey("guestUser")} /></p>
                         <Button onClick={() => client.updateIdentityState({ kind: "logging_in" })}
-                            ><Translatable resourceKey={i18nKey("login")} /></Button>
+                            ><Translatable resourceKey={i18nKey("login")} /></Button
+                        >
                     </div>
                 {:else}
                     <Legend label={i18nKey("username")} rules={i18nKey("usernameRules")} />
@@ -396,11 +402,12 @@
                         bind:username
                         bind:usernameValid
                         bind:checking={checkingUsername}
-                        bind:error={usernameError}>
+                        bind:error={usernameError}
+                    >
                         {#if usernameError !== undefined}
                             <ErrorMessage
-                                ><Translatable
-                                    resourceKey={i18nKey(usernameError)} /></ErrorMessage>
+                                ><Translatable resourceKey={i18nKey(usernameError)} /></ErrorMessage
+                            >
                         {/if}
                     </UsernameInput>
                     <Legend label={i18nKey("displayName")} rules={i18nKey("displayNameRules")} />
@@ -409,11 +416,14 @@
                         {originalDisplayName}
                         disabled={readonly}
                         bind:displayName
-                        bind:displayNameValid>
+                        bind:displayNameValid
+                    >
                         {#if displayNameError !== undefined}
                             <ErrorMessage
                                 ><Translatable
-                                    resourceKey={i18nKey(displayNameError)} /></ErrorMessage>
+                                    resourceKey={i18nKey(displayNameError)}
+                                /></ErrorMessage
+                            >
                         {/if}
                     </DisplayNameInput>
                     <Legend label={i18nKey("bio")} rules={i18nKey("supportsMarkdown")} />
@@ -423,10 +433,12 @@
                         invalid={false}
                         disabled={readonly}
                         maxlength={MAX_BIO_LENGTH}
-                        placeholder={i18nKey("enterBio")}>
+                        placeholder={i18nKey("enterBio")}
+                    >
                         {#if bioError !== undefined}
                             <ErrorMessage
-                                ><Translatable resourceKey={i18nKey(bioError)} /></ErrorMessage>
+                                ><Translatable resourceKey={i18nKey(bioError)} /></ErrorMessage
+                            >
                         {/if}
                     </TextArea>
                     <div class="full-width-btn">
@@ -434,7 +446,8 @@
                             loading={saving || checkingUsername}
                             disabled={!buttonEnabled}
                             fill
-                            small><Translatable resourceKey={i18nKey("update")} /></Button>
+                            small><Translatable resourceKey={i18nKey("update")} /></Button
+                        >
                     </div>
                 {/if}
             </CollapsibleCard>
@@ -444,14 +457,16 @@
                 <CollapsibleCard
                     onToggle={verificationSectionOpen.toggle}
                     open={$verificationSectionOpen}
-                    headerText={i18nKey("human.verification")}>
+                    headerText={i18nKey("human.verification")}
+                >
                     {#if verified}
                         <div class="verified">
                             <div class="icon">
                                 <Verified
                                     size={"large"}
                                     {verified}
-                                    tooltip={i18nKey("human.verified")} />
+                                    tooltip={i18nKey("human.verified")}
+                                />
                             </div>
                             <div class="msg">
                                 <Translatable resourceKey={i18nKey("human.already")} />
@@ -473,7 +488,8 @@
                 <CollapsibleCard
                     onToggle={accountsSectionOpen.toggle}
                     open={$accountsSectionOpen}
-                    headerText={i18nKey("identity.linkedAccounts.section")}>
+                    headerText={i18nKey("identity.linkedAccounts.section")}
+                >
                     <LinkedAuthAccounts />
                 </CollapsibleCard>
             </div>
@@ -482,7 +498,8 @@
             <CollapsibleCard
                 onToggle={appearanceSectionOpen.toggle}
                 open={$appearanceSectionOpen}
-                headerText={i18nKey("appearance")}>
+                headerText={i18nKey("appearance")}
+            >
                 <Legend label={i18nKey("preferredLanguage")} />
                 <Select bind:value={selectedLocale}>
                     {#each supportedLanguages as lang}
@@ -496,7 +513,8 @@
                         small
                         onChange={() => editmode.set(!$editmode)}
                         label={i18nKey("toggleTranslationEditMode")}
-                        checked={$editmode} />
+                        checked={$editmode}
+                    />
                 {/if}
 
                 <div class="para">
@@ -515,7 +533,8 @@
                 <CollapsibleCard
                     onToggle={referralOpen.toggle}
                     open={$referralOpen}
-                    headerText={i18nKey("referralHeader")}>
+                    headerText={i18nKey("referralHeader")}
+                >
                     <ReferUsers />
                 </CollapsibleCard>
             </div>
@@ -524,19 +543,22 @@
                 <CollapsibleCard
                     onToggle={chatsSectionOpen.toggle}
                     open={$chatsSectionOpen}
-                    headerText={i18nKey("chats")}>
+                    headerText={i18nKey("chats")}
+                >
                     <Toggle
                         id={"enter-send"}
                         small
                         onChange={() => enterSend.toggle()}
                         label={i18nKey("enterToSend")}
-                        checked={$enterSend} />
+                        checked={$enterSend}
+                    />
                     <Toggle
                         id={"dclick-reply"}
                         small
                         onChange={() => dclickReply.toggle()}
                         label={i18nKey(isTouchDevice ? "doubleTapReply" : "doubleClickReply")}
-                        checked={$dclickReply} />
+                        checked={$dclickReply}
+                    />
                     {#if notificationsSupported}
                         <Toggle
                             id={"notifications"}
@@ -546,27 +568,31 @@
                             label={$notificationStatus === "hard-denied"
                                 ? i18nKey("notificationsDisabled")
                                 : i18nKey("enableNotificationsMenu")}
-                            checked={$notificationStatus === "granted"} />
+                            checked={$notificationStatus === "granted"}
+                        />
                     {/if}
                     <Toggle
                         id={"low-bandwidth"}
                         small
                         onChange={() => lowBandwidth.toggle()}
                         label={i18nKey("lowBandwidth")}
-                        checked={$lowBandwidth} />
+                        checked={$lowBandwidth}
+                    />
                     <Toggle
                         id={"hide-blocked"}
                         small
                         onChange={() => hideMessagesFromDirectBlocked.toggle()}
                         label={i18nKey("hideBlocked")}
-                        checked={$hideMessagesFromDirectBlocked} />
+                        checked={$hideMessagesFromDirectBlocked}
+                    />
                 </CollapsibleCard>
             </div>
             <div class="video">
                 <CollapsibleCard
                     onToggle={videoSectionOpen.toggle}
                     open={$videoSectionOpen}
-                    headerText={i18nKey("profile.videoSettings")}>
+                    headerText={i18nKey("profile.videoSettings")}
+                >
                     <VideoCallSettings />
                 </CollapsibleCard>
             </div>
@@ -574,7 +600,8 @@
                 <CollapsibleCard
                     onToggle={modelsSectionOpen.toggle}
                     open={$modelsSectionOpen}
-                    headerText={i18nKey("On-device models")}>
+                    headerText={i18nKey("On-device models")}
+                >
                     <ModelManager />
                 </CollapsibleCard>
             </div>
@@ -582,7 +609,8 @@
                 <CollapsibleCard
                     onToggle={restrictedSectionOpen.toggle}
                     open={$restrictedSectionOpen}
-                    headerText={i18nKey("restrictedContent")}>
+                    headerText={i18nKey("restrictedContent")}
+                >
                     <p class="blurb">
                         <Translatable resourceKey={i18nKey("restrictedContentInfo")} />
                     </p>
@@ -591,19 +619,22 @@
                         small
                         onChange={() => toggleModerationFlag(ModerationFlags.Offensive)}
                         label={i18nKey("communities.offensive")}
-                        checked={$offensiveEnabledStore} />
+                        checked={$offensiveEnabledStore}
+                    />
                     <Toggle
                         id={"adult"}
                         small
                         onChange={() => toggleModerationFlag(ModerationFlags.Adult)}
                         label={i18nKey("communities.adult")}
-                        checked={$adultEnabledStore} />
+                        checked={$adultEnabledStore}
+                    />
                     <Toggle
                         id={"underReview"}
                         small
                         onChange={() => toggleModerationFlag(ModerationFlags.UnderReview)}
                         label={i18nKey("communities.underReview")}
-                        checked={$underReviewEnabledStore} />
+                        checked={$underReviewEnabledStore}
+                    />
                 </CollapsibleCard>
             </div>
             {#if !readonly}
@@ -611,14 +642,17 @@
                     <CollapsibleCard
                         onToggle={storageSectionOpen.toggle}
                         open={$storageSectionOpen}
-                        headerText={i18nKey("upgrade.membership")}>
+                        headerText={i18nKey("upgrade.membership")}
+                    >
                         <StorageUsage />
 
                         {#if !$isDiamondStore}
                             <ButtonGroup align={"fill"}>
                                 <Button onClick={() => publish("upgrade")} small
                                     ><Translatable
-                                        resourceKey={i18nKey("upgrade.button")} /></Button>
+                                        resourceKey={i18nKey("upgrade.button")}
+                                    /></Button
+                                >
                             </ButtonGroup>
                         {:else if $isLifetimeDiamondStore}
                             <Translatable resourceKey={i18nKey("upgrade.lifetimeMessage")} />
@@ -633,7 +667,9 @@
                                     onClick={() => publish("upgrade")}
                                     small
                                     ><Translatable
-                                        resourceKey={i18nKey("upgrade.extend")} /></Button>
+                                        resourceKey={i18nKey("upgrade.extend")}
+                                    /></Button
+                                >
                             </ButtonGroup>
                         {/if}
                     </CollapsibleCard>
@@ -643,7 +679,8 @@
                 <CollapsibleCard
                     onToggle={statsSectionOpen.toggle}
                     open={$statsSectionOpen}
-                    headerText={i18nKey("stats.userStats")}>
+                    headerText={i18nKey("stats.userStats")}
+                >
                     <Stats showReported stats={$userMetricsStore} />
                 </CollapsibleCard>
             </div>
@@ -652,7 +689,8 @@
             <CollapsibleCard
                 onToggle={advancedSectionOpen.toggle}
                 open={$advancedSectionOpen}
-                headerText={i18nKey("advanced")}>
+                headerText={i18nKey("advanced")}
+            >
                 {#if !$anonUserStore}
                     <div class="userid">
                         <Legend label={i18nKey("userId")} rules={i18nKey("alsoCanisterId")} />
@@ -683,7 +721,8 @@
                     </p>
                     <Button
                         onClick={() =>
-                            client.clearCachedData().then(() => window.location.reload())}>
+                            client.clearCachedData().then(() => window.location.reload())}
+                    >
                         <Translatable resourceKey={i18nKey("clearDataCache")} />
                     </Button>
                 </div>
@@ -704,7 +743,8 @@
                     <CollapsibleCard
                         onToggle={linkDeviceSectionOpen.toggle}
                         open={$linkDeviceSectionOpen}
-                        headerText={i18nKey("accountLinkingCode.settingsMenu.title")}>
+                        headerText={i18nKey("accountLinkingCode.settingsMenu.title")}
+                    >
                         <AccountLinkingCode />
                     </CollapsibleCard>
                 </div>
@@ -713,7 +753,8 @@
                 <CollapsibleCard
                     onToggle={deleteAccountSectionOpen.toggle}
                     open={$deleteAccountSectionOpen}
-                    headerText={i18nKey("danger.deleteAccount")}>
+                    headerText={i18nKey("danger.deleteAccount")}
+                >
                     <p class="para">
                         <Translatable resourceKey={i18nKey("danger.deleteAccountInfo")} />
                     </p>
@@ -721,7 +762,8 @@
                         danger
                         disabled={deleting}
                         loading={deleting}
-                        onClick={() => (confirmDelete = true)}>
+                        onClick={() => (confirmDelete = true)}
+                    >
                         <Translatable resourceKey={i18nKey("danger.deleteAccount")} />
                     </Button>
                 </CollapsibleCard>
@@ -733,7 +775,8 @@
         <Legend label={i18nKey("communities.communityLabel")} />
         <Select bind:value={selectedCommunityId}>
             <option disabled selected value={""}
-                ><Translatable resourceKey={i18nKey("profile.selectCommunity")} /></option>
+                ><Translatable resourceKey={i18nKey("profile.selectCommunity")} /></option
+            >
             {#each $sortedCommunitiesStore.filter((s) => s.membership?.role !== ROLE_NONE) as community}
                 <option value={community.id.communityId}>{community.name}</option>
             {/each}

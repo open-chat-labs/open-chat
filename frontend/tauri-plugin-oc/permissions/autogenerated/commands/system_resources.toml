@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-system-resources"
+description = "Enables the system_resources command without any pre-configured scope."
+commands.allow = ["system_resources"]
+
+[[permission]]
+identifier = "deny-system-resources"
+description = "Denies the system_resources command without any pre-configured scope."
+commands.deny = ["system_resources"]

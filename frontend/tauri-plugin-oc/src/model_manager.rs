@@ -1,5 +1,5 @@
 use futures_util::StreamExt;
-use reqwest::{Client, Url, header::LOCATION, redirect::Policy};
+use reqwest::{Client, Method, Url, header::LOCATION, redirect::Policy};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashSet;
@@ -12,7 +12,10 @@ use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager, Runtime};
 use tokio::sync::Semaphore;
 
-use crate::models::{DownloadModelRequest, InferRequest, InferResponse, LocalModel, ModelFileSpec};
+use crate::models::{
+    DownloadModelRequest, DownloadModelResponse, DownloadedFile, InferRequest, InferResponse,
+    LocalModel, ModelFileSpec, ProbeModelUrlResponse, SystemResourcesResponse,
+};
 
 // Generic on-device model store (design deliverable A): downloads/verifies/lists/removes user-selected
 // models under the app data dir, and dispatches inference to the native runtime. Nothing is bundled; the
@@ -226,10 +229,17 @@ fn validate_download_request(req: &DownloadModelRequest) -> Result<(), String> {
         if total > MAX_MODEL_TOTAL_BYTES {
             return Err("model exceeds the download size limit".to_string());
         }
-        if file.sha256.len() != 64 || !file.sha256.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+        if let Some(sha256) = &file.sha256
+            && (sha256.len() != 64 || !sha256.bytes().all(|byte| byte.is_ascii_hexdigit()))
+        {
             return Err("invalid model SHA-256".to_string());
         }
-        let file_name = file_name_from_url(url.as_str());
+        if let Some(filename) = &file.filename
+            && (filename.is_empty() || sanitize(filename) != *filename)
+        {
+            return Err("invalid model destination filename".to_string());
+        }
+        let file_name = model_file_name(file, &url);
         let collision_key = file_name.to_ascii_lowercase();
         if file_name == "model.bin"
             || file_name.len() > 128
@@ -315,7 +325,11 @@ async fn resolve_public_addresses(url: &Url) -> Result<Vec<SocketAddr>, String> 
     Ok(addresses)
 }
 
-async fn send_validated_download(mut url: Url) -> Result<reqwest::Response, String> {
+async fn send_validated_request(
+    mut url: Url,
+    method: Method,
+    range_probe: bool,
+) -> Result<reqwest::Response, String> {
     for redirect_count in 0..=MAX_DOWNLOAD_REDIRECTS {
         url = validate_download_url(url.as_str())?;
         let host = url
@@ -331,11 +345,11 @@ async fn send_validated_download(mut url: Url) -> Result<reqwest::Response, Stri
             .resolve_to_addrs(&host, &addresses)
             .build()
             .map_err(|e| e.to_string())?;
-        let response = client
-            .get(url.clone())
-            .send()
-            .await
-            .map_err(|e| e.to_string())?;
+        let mut request = client.request(method.clone(), url.clone());
+        if range_probe {
+            request = request.header(reqwest::header::RANGE, "bytes=0-0");
+        }
+        let response = request.send().await.map_err(|e| e.to_string())?;
         if response.status().is_redirection() {
             if redirect_count == MAX_DOWNLOAD_REDIRECTS {
                 return Err("too many model download redirects".to_string());
@@ -354,6 +368,33 @@ async fn send_validated_download(mut url: Url) -> Result<reqwest::Response, Stri
         return Ok(response);
     }
     Err("too many model download redirects".to_string())
+}
+
+async fn send_validated_download(url: Url) -> Result<reqwest::Response, String> {
+    send_validated_request(url, Method::GET, false).await
+}
+
+fn total_length_from_headers(headers: &reqwest::header::HeaderMap) -> Option<u64> {
+    if let Some(value) = headers.get(reqwest::header::CONTENT_RANGE) {
+        let value = value.to_str().ok()?;
+        let total = value.rsplit('/').next()?;
+        return (total != "*").then(|| total.parse().ok()).flatten();
+    }
+    headers
+        .get(reqwest::header::CONTENT_LENGTH)
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.parse().ok())
+}
+
+fn filename_from_disposition(headers: &reqwest::header::HeaderMap) -> Option<String> {
+    let value = headers
+        .get(reqwest::header::CONTENT_DISPOSITION)?
+        .to_str()
+        .ok()?;
+    value.split(';').find_map(|part| {
+        let value = part.trim().strip_prefix("filename=")?.trim_matches('"');
+        (!value.is_empty()).then(|| sanitize(value))
+    })
 }
 
 fn read_validated_manifest(
@@ -383,14 +424,20 @@ fn read_validated_manifest(
     }
 
     for file in &manifest.files {
-        let path = directory.join(file_name_from_url(&file.url));
+        let path = directory.join(model_file_name_from_spec(file)?);
         let metadata =
             fs::symlink_metadata(&path).map_err(|_| "model file is missing".to_string())?;
         if !metadata.file_type().is_file() || metadata.len() != file.bytes {
             return Err("model file type or size does not match its manifest".to_string());
         }
-        if verify_hashes && !verify_sha256(&path, &file.sha256)? {
-            return Err("model file integrity verification failed".to_string());
+        if verify_hashes {
+            let expected = file
+                .sha256
+                .as_deref()
+                .ok_or_else(|| "model manifest is missing a verified hash".to_string())?;
+            if !verify_sha256(&path, expected)? {
+                return Err("model file integrity verification failed".to_string());
+            }
         }
     }
     Ok(manifest)
@@ -462,14 +509,18 @@ fn selected_model_files(
     let mut model = None;
     let mut projector = None;
     for file in &manifest.files {
-        let path = directory.join(file_name_from_url(&file.url));
+        let path = directory.join(model_file_name_from_spec(file)?);
         let name = path
             .file_name()
             .and_then(|name| name.to_str())
             .unwrap_or_default()
             .to_ascii_lowercase();
+        let expected = file
+            .sha256
+            .as_deref()
+            .ok_or_else(|| "model manifest is missing a verified hash".to_string())?;
         let identity =
-            crate::inference::VerifiedFileIdentity::from_verified_sha256(path, &file.sha256)?;
+            crate::inference::VerifiedFileIdentity::from_verified_sha256(path, expected)?;
         if name.contains("mmproj") {
             if projector.replace(identity).is_some() {
                 return Err("model manifest has multiple vision projectors".to_string());
@@ -506,10 +557,14 @@ impl<R: Runtime> ModelManager<R> {
         self.models_dir().map(|p| p.join(sanitize(model_id)))
     }
 
-    // Download (and SHA-256 verify) all of a model's files, emitting "model-download-progress" events.
+    // Download and hash all model files, emitting "model-download-progress" events. Curated files
+    // provide an expected SHA-256; custom files use trust-on-first-use and receive the observed hash.
     // Files are written to a sibling staging directory and atomically promoted
     // only after every declared byte and hash has been verified.
-    pub async fn download_model(&self, req: DownloadModelRequest) -> Result<(), String> {
+    pub async fn download_model(
+        &self,
+        req: DownloadModelRequest,
+    ) -> Result<DownloadModelResponse, String> {
         validate_download_request(&req)?;
         let model_id = validate_model_id(&req.model_id)?;
         let _operation = ModelOperationGuard::acquire(&model_id)?;
@@ -546,10 +601,12 @@ impl<R: Runtime> ModelManager<R> {
         fs::create_dir(&staging_path).map_err(|e| e.to_string())?;
         let mut staging = StagingDirectory::new(staging_path.clone());
         let mut received: u64 = 0;
+        let mut downloaded = Vec::with_capacity(req.files.len());
+        let mut manifest_files = Vec::with_capacity(req.files.len());
 
         for file in &req.files {
             let source_url = validate_download_url(&file.url)?;
-            let dest = staging_path.join(file_name_from_url(source_url.as_str()));
+            let dest = staging_path.join(model_file_name(file, &source_url));
             let resp = send_validated_download(source_url).await?;
             if !resp.status().is_success() {
                 return Err(format!("download failed ({}): {}", resp.status(), file.url));
@@ -588,9 +645,18 @@ impl<R: Runtime> ModelManager<R> {
             out.sync_all().map_err(|e| e.to_string())?;
 
             let digest = hex::encode(hasher.finalize());
-            if !digest.eq_ignore_ascii_case(&file.sha256) {
+            if let Some(expected) = &file.sha256
+                && !digest.eq_ignore_ascii_case(expected)
+            {
                 return Err(format!("sha256 mismatch for {}", file.url));
             }
+            downloaded.push(DownloadedFile {
+                url: file.url.clone(),
+                sha256: digest.clone(),
+            });
+            let mut verified_file = file.clone();
+            verified_file.sha256 = Some(digest);
+            manifest_files.push(verified_file);
         }
 
         let manifest = ModelManifestV1 {
@@ -598,7 +664,7 @@ impl<R: Runtime> ModelManager<R> {
             model_id: req.model_id.clone(),
             runtime: req.runtime.clone(),
             size_bytes: total_bytes,
-            files: req.files.clone(),
+            files: manifest_files,
         };
         let manifest_path = staging_path.join("model.json");
         let mut manifest_file = fs::OpenOptions::new()
@@ -640,7 +706,84 @@ impl<R: Runtime> ModelManager<R> {
             fs::remove_dir_all(&backup_path).map_err(|e| e.to_string())?;
         }
 
-        Ok(())
+        Ok(DownloadModelResponse { files: downloaded })
+    }
+
+    // Preflight a user-supplied model URL without downloading it. The same HTTPS-only, public-DNS,
+    // redirect, proxy-bypass, and timeout policy as the real download applies here.
+    pub async fn probe_model_url(&self, value: &str) -> ProbeModelUrlResponse {
+        let mut out = ProbeModelUrlResponse {
+            filename: file_name_from_url(value),
+            ..Default::default()
+        };
+        let url = match validate_download_url(value) {
+            Ok(url) => url,
+            Err(error) => {
+                out.error = Some(error);
+                return out;
+            }
+        };
+
+        let head = send_validated_request(url.clone(), Method::HEAD, false).await;
+        let response = match head {
+            Ok(response) if response.status().is_success() => Ok(response),
+            _ => send_validated_request(url, Method::GET, true).await,
+        };
+        let response = match response {
+            Ok(response) => response,
+            Err(error) => {
+                out.error = Some(error);
+                return out;
+            }
+        };
+
+        let status = response.status();
+        out.status = Some(status.as_u16());
+        out.ok = status.is_success();
+        if !out.ok {
+            out.error = Some(format!("server returned HTTP {}", status.as_u16()));
+        }
+        let headers = response.headers();
+        out.content_length = total_length_from_headers(headers);
+        out.content_type = headers
+            .get(reqwest::header::CONTENT_TYPE)
+            .and_then(|value| value.to_str().ok())
+            .map(str::to_string);
+        out.accepts_ranges = headers
+            .get(reqwest::header::ACCEPT_RANGES)
+            .and_then(|value| value.to_str().ok())
+            .is_some_and(|value| value.eq_ignore_ascii_case("bytes"))
+            || headers.contains_key(reqwest::header::CONTENT_RANGE);
+        if let Some(filename) = filename_from_disposition(headers) {
+            out.filename = filename;
+        }
+        out
+    }
+
+    pub fn system_resources(&self) -> SystemResourcesResponse {
+        use sysinfo::{Disks, System};
+
+        let mut system = System::new();
+        system.refresh_memory();
+        let target = self.models_dir().unwrap_or_else(|| PathBuf::from("."));
+        let disks = Disks::new_with_refreshed_list();
+        let free_disk_bytes = disks
+            .list()
+            .iter()
+            .filter(|disk| target.starts_with(disk.mount_point()))
+            .max_by_key(|disk| disk.mount_point().as_os_str().len())
+            .map(|disk| disk.available_space())
+            .or_else(|| disks.list().iter().map(|disk| disk.available_space()).max())
+            .unwrap_or(0);
+
+        SystemResourcesResponse {
+            free_disk_bytes,
+            total_ram_bytes: system.total_memory(),
+            available_ram_bytes: system.available_memory(),
+            cpu_count: std::thread::available_parallelism()
+                .map(|count| count.get() as u32)
+                .unwrap_or(0),
+        }
     }
 
     pub fn list_local_models(&self) -> Result<Vec<LocalModel>, String> {
@@ -803,6 +946,18 @@ fn file_name_from_url(url: &str) -> String {
     } else {
         sanitize(name)
     }
+}
+
+fn model_file_name(file: &ModelFileSpec, parsed_url: &Url) -> String {
+    file.filename
+        .as_deref()
+        .map(sanitize)
+        .unwrap_or_else(|| file_name_from_url(parsed_url.as_str()))
+}
+
+fn model_file_name_from_spec(file: &ModelFileSpec) -> Result<String, String> {
+    let url = validate_download_url(&file.url)?;
+    Ok(model_file_name(file, &url))
 }
 
 fn verify_sha256(path: &Path, expected: &str) -> Result<bool, String> {
@@ -1143,8 +1298,11 @@ mod security_regression_tests {
     fn file(url: &str, bytes: u64) -> ModelFileSpec {
         ModelFileSpec {
             url: url.to_string(),
-            sha256: "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad".to_string(),
+            sha256: Some(
+                "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad".to_string(),
+            ),
             bytes,
+            filename: None,
         }
     }
 
@@ -1212,7 +1370,7 @@ mod security_regression_tests {
         }
 
         let mut req = download_request();
-        req.files[0].sha256 = "not-a-sha".to_string();
+        req.files[0].sha256 = Some("not-a-sha".to_string());
         assert!(validate_download_request(&req).is_err());
 
         let mut req = download_request();
@@ -1245,6 +1403,54 @@ mod security_regression_tests {
             validate_download_request(&req).is_err(),
             "reserved Windows destination was accepted"
         );
+    }
+
+    #[test]
+    fn tofu_hashes_and_filename_overrides_remain_bounded() {
+        let mut req = download_request();
+        req.files[0].sha256 = None;
+        req.files[0].filename = Some("model.gguf".to_string());
+        assert!(validate_download_request(&req).is_ok());
+
+        for filename in [
+            "../model.gguf",
+            "model/escape.gguf",
+            "con.gguf",
+            "model.bin",
+        ] {
+            let mut unsafe_req = req.clone();
+            unsafe_req.files[0].filename = Some(filename.to_string());
+            assert!(
+                validate_download_request(&unsafe_req).is_err(),
+                "accepted unsafe filename {filename:?}"
+            );
+        }
+
+        let mut collision = req.clone();
+        let mut projector = file("https://cdn.example/projector.gguf", 1);
+        projector.filename = Some("MODEL.GGUF".to_string());
+        collision.files.push(projector);
+        assert!(
+            validate_download_request(&collision).is_err(),
+            "case-insensitive custom filename collision was accepted"
+        );
+    }
+
+    #[test]
+    fn preflight_size_uses_the_range_total_not_the_partial_body() {
+        use reqwest::header::{CONTENT_LENGTH, CONTENT_RANGE, HeaderMap, HeaderValue};
+
+        let mut ranged = HeaderMap::new();
+        ranged.insert(CONTENT_RANGE, HeaderValue::from_static("bytes 0-0/1048576"));
+        ranged.insert(CONTENT_LENGTH, HeaderValue::from_static("1"));
+        assert_eq!(total_length_from_headers(&ranged), Some(1_048_576));
+
+        ranged.insert(CONTENT_RANGE, HeaderValue::from_static("bytes 0-0/*"));
+        assert_eq!(total_length_from_headers(&ranged), None);
+
+        let mut full = HeaderMap::new();
+        full.insert(CONTENT_LENGTH, HeaderValue::from_static("2048"));
+        assert_eq!(total_length_from_headers(&full), Some(2048));
     }
 
     #[test]

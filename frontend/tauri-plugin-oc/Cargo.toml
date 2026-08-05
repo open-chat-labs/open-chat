@@ -12,9 +12,10 @@ reqwest = { version = "0.12", default-features = false, features = ["json", "str
 semver = "1.0"
 sha2 = "0.10"
 hex = "0.4"
-llama-cpp-2 = { version = "0.1.150", optional = true, features = ["mtmd"] }
-minijinja = { version = "2", optional = true, features = ["macros"] }
-minijinja-contrib = { version = "2", optional = true, features = ["pycompat"] }
+sysinfo = { version = "0.33", default-features = false, features = ["system", "disk"] }
+llama-cpp-2 = { version = "=0.1.150", optional = true, features = ["mtmd"] }
+minijinja = { version = "=2.21.0", optional = true, features = ["macros"] }
+minijinja-contrib = { version = "=2.21.0", optional = true, features = ["pycompat"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tauri = { workspace = true }

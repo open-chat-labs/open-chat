@@ -1,10 +1,12 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { compileString } from "sass";
 import { describe, expect, test } from "vitest";
 
-const appRoot = process.cwd();
+const appRoot = existsSync(resolve(process.cwd(), "app", "index.html"))
+    ? resolve(process.cwd(), "app")
+    : process.cwd();
 const readAppFile = (path: string) => readFileSync(resolve(appRoot, path), "utf8");
 const indexHtml = readAppFile("index.html");
 const main = readAppFile("src/main.ts");

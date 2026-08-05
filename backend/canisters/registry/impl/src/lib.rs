@@ -12,8 +12,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use types::{
-    AirdropConfig, BuildVersion, CanisterId, Cycles, EvmContractAddress, ExchangeId, ModelCatalog, TimestampMillis,
-    Timestamped,
+    AirdropConfig, BuildVersion, CanisterId, Cycles, EvmContractAddress, ExchangeId, ModelCatalog, TimestampMillis, Timestamped,
 };
 use utils::env::Environment;
 

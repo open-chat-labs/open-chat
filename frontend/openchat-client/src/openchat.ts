@@ -6070,7 +6070,10 @@ export class OpenChat {
             .send({ kind: "acceptTerms", version })
             .then((success) => {
                 if (success) {
-                    currentUserStore.set({ ...currentUserStore.value, acceptedTermsVersion: version });
+                    currentUserStore.set({
+                        ...currentUserStore.value,
+                        acceptedTermsVersion: version,
+                    });
                 }
                 return success;
             })
