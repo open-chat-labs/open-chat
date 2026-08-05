@@ -109,8 +109,11 @@
     let webError = $state("");
     const hasPicker = typeof window !== "undefined" && "showOpenFilePicker" in window;
 
-    // Catalog models a BROWSER can run: a single GGUF within the ~2 GB wasm32 envelope. Catalog
-    // order is the recommendation order (Gemma first = the default suggestion).
+    // Catalog models a BROWSER can run: one GGUF, plus an mmproj projector for the vision entries,
+    // within the ~2 GB total envelope. Catalog order IS the recommendation order — index 0 is the
+    // default suggestion (rendered below as the primary "Download & use (default)" button), and it
+    // is a vision model because that one measured best at text as well. Nothing here hardcodes an
+    // id: reordering the catalog moves the default.
     let webChoices = $derived(webEligibleModels(catalogSource));
 
     // The chooser list ALWAYS renders (except mid-download); when a model is active the current one
@@ -131,14 +134,17 @@
               : "attached — loads on first use",
     );
 
+    // The whole entry goes down: webInference splits weights from the mmproj projector, downloads
+    // both (one progress bar over the pair) and checks each against its catalog SHA-256.
     async function chooseWebModel(entry: ModelCatalogEntry) {
         webError = "";
         webError =
             (await useWebModelFromUrl({
                 id: entry.id,
                 name: entry.name,
-                url: entry.files[0].url,
+                files: entry.files,
                 sizeBytes: entry.sizeBytes,
+                modalities: entry.modalities,
             })) ?? "";
     }
 
@@ -354,8 +360,9 @@
     <p class="blurb">
         <Translatable
             resourceKey={i18nKey(
-                "Run a local model in this browser: pick a .gguf file from your disk (up to ~2 GB — a ≤2B parameter model at Q4 works well). " +
-                    "The file is read in place — nothing is uploaded or copied. Text extraction only; image understanding needs the desktop or mobile app.",
+                "Run a local model in this browser: download one below, or pick a .gguf file from your disk (up to ~2 GB — a ≤2B parameter model at Q4 works well). " +
+                    "A disk file is read in place — nothing is uploaded or copied. One model is active at a time; choosing another replaces it. " +
+                    "Only a model marked “reads images” can extract from a photo or a receipt.",
             )} />
     </p>
 
@@ -378,52 +385,59 @@
                                 : ""),
                     )} />
             </p>
+        {:else if $webModelStatus.status === "verifying"}
+            <p>
+                <Translatable
+                    resourceKey={i18nKey(`Checking ${$webModelStatus.name} against its SHA-256…`)} />
+            </p>
         {:else}
-            {#if webDiskAttached}
-                <div class="web-choice">
-                    <div class="web-choice-info">
-                        <div class="name">
-                            <Translatable
-                                resourceKey={i18nKey(`Model: ${$webModelStatus.name}`)} />
-                            <span class="muted">
-                                <Translatable resourceKey={i18nKey(`(${webStatusText})`)} />
+            <div class="web-choices">
+                {#if webDiskAttached}
+                    <div class="web-choice">
+                        <div class="title">
+                            <span class="name">{$webModelStatus.name}</span>
+                            <span class="chip">
+                                <Translatable resourceKey={i18nKey("Current")} />
                             </span>
                         </div>
+                        <div class="desc">
+                            <Translatable resourceKey={i18nKey(webStatusText)} />
+                        </div>
+                        <Button secondary small fill onClick={detachWebModel}>
+                            <Translatable resourceKey={i18nKey("Remove model")} />
+                        </Button>
                     </div>
-                    <Button secondary small onClick={detachWebModel}>
-                        <Translatable resourceKey={i18nKey("Remove model")} />
-                    </Button>
-                </div>
-            {/if}
-            <div class="web-choices">
+                {/if}
                 {#each webChoices as entry, i (entry.id)}
                     <div class="web-choice">
-                        <div class="web-choice-info">
-                            <div class="name">
-                                {entry.name}
-                                <span class="muted">({formatSize(entry.sizeBytes)})</span>
-                                {#if currentWebId === entry.id}
-                                    <span class="chip current">
-                                        <Translatable resourceKey={i18nKey("Current")} />
-                                    </span>
-                                {/if}
-                            </div>
+                        <div class="title">
+                            <span class="name">{entry.name} ({formatSize(entry.sizeBytes)})</span>
+                            {#if entry.modalities.includes("image")}
+                                <span class="chip">
+                                    <Translatable resourceKey={i18nKey("reads images")} />
+                                </span>
+                            {/if}
                             {#if currentWebId === entry.id}
-                                <div class="desc">
-                                    <Translatable resourceKey={i18nKey(webStatusText)} />
-                                </div>
-                            {:else if entry.description !== undefined}
-                                <div class="desc">{entry.description}</div>
+                                <span class="chip">
+                                    <Translatable resourceKey={i18nKey("Current")} />
+                                </span>
                             {/if}
                         </div>
                         {#if currentWebId === entry.id}
-                            <Button secondary small onClick={detachWebModel}>
+                            <div class="desc">
+                                <Translatable resourceKey={i18nKey(webStatusText)} />
+                            </div>
+                            <Button secondary small fill onClick={detachWebModel}>
                                 <Translatable resourceKey={i18nKey("Remove model")} />
                             </Button>
                         {:else}
+                            {#if entry.description !== undefined}
+                                <div class="desc">{entry.description}</div>
+                            {/if}
                             <Button
                                 secondary={webActive || i !== 0}
                                 small
+                                fill
                                 onClick={() => chooseWebModel(entry)}>
                                 <Translatable
                                     resourceKey={i18nKey(
@@ -609,39 +623,56 @@
 {/if}
 
 <style lang="scss">
+    // Layout ported from the v2 tree (components_mobile/.../ModelManager.svelte) so the two model
+    // choosers read the same. v2 composes it from component-lib Containers; v1 has no component-lib,
+    // so the STRUCTURE is reproduced with v1 primitives and the spacing scale is matched token for
+    // token — component-lib's xs/sm/lg are 4/8/16px, which are exactly $sp2/$sp3/$sp4 here (see the
+    // `// xs` / `// sm` annotations in styles/mixins.scss).
+    //
+    // Four things define the v2 shape, all of which v1 got wrong before:
+    //   1. each entry is a VERTICAL card — title row, description, then a FULL-WIDTH button — not a
+    //      horizontal row with the button floated right (that squeezed it into a ~90px column, so
+    //      "Use this model" wrapped onto three lines);
+    //   2. the size lives INSIDE the bold title, not in a separate muted span;
+    //   3. chips sit at the RIGHT EDGE of the title row (v2's title takes width:"fill", pushing
+    //      them out), not inline after the name where they broke mid-phrase;
+    //   4. chips are neutral outlines in both states — v2 does not colour-code "Current", because
+    //      its right-edge position is what makes it scannable.
     .web-model {
         display: flex;
         flex-direction: column;
-        gap: 8px;
-        margin: 8px 0 16px;
+        gap: $sp3; // v2: Container gap "sm"
+        margin: $sp3 0 $sp4;
     }
     .web-choices {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: $sp4; // v2: the outer Container's gap "lg" between entries
     }
     .web-choice {
         display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 12px;
+        flex-direction: column;
+        gap: $sp2; // v2: per-entry Container gap "xs"
     }
-    .web-choice-info .name {
-        font-weight: 700;
+    .web-choice .title {
+        display: flex;
+        align-items: center;
+        gap: $sp3; // v2: title-row Container gap "sm", crossAxisAlignment "center"
     }
-    .web-choice-info .desc {
-        font-size: 0.85em;
-        color: var(--txt-light, inherit);
+    .web-choice .name {
+        @include font(bold, normal, fs-90);
+        flex: 1 1 auto; // v2: BodySmall width="fill" — this is what pushes the chips right
+        min-width: 0;
     }
-    .web-choice-info .muted {
-        font-weight: 400;
-        color: var(--txt-light, inherit);
+    .web-choice .desc {
+        @include font-size(fs-80);
+        color: var(--txt-light);
     }
     .web-attach {
         display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        align-items: center;
+        flex-direction: column;
+        gap: $sp3;
+        margin-top: $sp2;
     }
 
     .blurb {
@@ -688,11 +719,13 @@
         @include font-size(fs-60);
         color: var(--error);
     }
+    // The NATIVE download list was already v2-shaped (vertical card, actions on their own row); only
+    // the internal gap differed — v2 uses "sm" (8px) here, not "xs".
     .model {
         display: flex;
         flex-direction: column;
-        gap: $sp2;
-        padding: $sp3 0;
+        gap: $sp3;
+        padding: $sp4 0;
         border-bottom: 1px solid var(--bd);
         &:last-child {
             border-bottom: none;
@@ -711,15 +744,21 @@
         align-items: center;
         flex-wrap: wrap;
     }
+    // v2's component-lib <Chip> in its "default" mode: transparent fill, a 2px border in a muted
+    // colour, muted label, md radius. "Custom" keeps the accent fill (component-lib's "filled"
+    // mode) — it flags a user-supplied, unverified model, which is a warning, not a status.
     .chip {
         @include font-size(fs-60);
-        padding: 2px $sp2;
-        border-radius: var(--rd);
-        background-color: var(--input-bg);
+        white-space: nowrap; // never break "reads images" across two lines
+        flex: 0 0 auto;
+        padding: 2px $sp3;
+        border-radius: $sp3;
+        border: 2px solid var(--bd);
+        background-color: transparent;
         color: var(--txt-light);
 
-        &.custom,
-        &.current {
+        &.custom {
+            border-color: var(--accent);
             background-color: var(--accent);
             color: #fff;
         }

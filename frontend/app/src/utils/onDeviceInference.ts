@@ -8,7 +8,7 @@ import { get } from "svelte/store";
 import { infer as nativeInfer, listLocalModels } from "tauri-plugin-oc-api";
 import { selectedModelId } from "../stores/onDeviceModels";
 import { defaultModelCatalog } from "./modelCatalog";
-import { isWebInferenceReady, webInfer, webModelLabel } from "./webInference";
+import { isWebInferenceReady, webInfer, webModelLabel, webModelModalities } from "./webInference";
 
 // Generic on-device inference facade (design deliverable A). This is the seam any in-client feature calls
 // to run the user's selected model with its OWN prompt. It feature-detects the native runtime and degrades
@@ -55,8 +55,9 @@ export function inferOnDevice(request: InferenceRequest): Promise<InferenceResul
 
 async function runInference(request: InferenceRequest): Promise<InferenceResult> {
     if (!isNativeClient() || SUPPORTED_RUNTIMES.length === 0) {
-        // Browser path: a GGUF attached from a normal disk location runs via llama.cpp-WASM. Image
-        // requests (and no-model browsers) still degrade to "unavailable" exactly as before.
+        // Browser path: a GGUF (from disk or the catalog) runs via llama.cpp-WASM — text, and images
+        // too when the attached model has a vision projector. A browser with no model attached still
+        // degrades to "unavailable" exactly as before.
         if (isWebInferenceReady()) {
             return webInfer(request);
         }
@@ -127,12 +128,14 @@ export function onDeviceInferenceCapability(): OnDeviceInferenceCapability {
     // Modalities come from the catalog entry for the selected model (the native store doesn't track them).
     const entry = defaultModelCatalog.models.find((m) => m.id === selected);
     if (!isNativeClient() && isWebInferenceReady()) {
-        // Browser model attached from disk: text-only (vision needs the native mmproj path).
+        // Browser model: ask the model what it can read. This used to be hardcoded to ["text"], which
+        // made every browser look image-blind no matter what was attached — the UI gate downstream
+        // (imageUnsupportedReason) reads nothing else, so the hardcode WAS the ban on browser vision.
         return {
             available: true,
             runtimesSupported: ["llama-cpp"],
             selectedModelId: webModelLabel(),
-            selectedModalities: ["text"],
+            selectedModalities: webModelModalities(),
         };
     }
     return {

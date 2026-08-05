@@ -77,8 +77,11 @@
     // builtin leftovers are appended — so a stale/partial remote catalog can never shrink the chooser.
     let catalogSource = $state<ModelCatalogEntry[]>(defaultModelCatalog.models);
 
-    // Catalog models a BROWSER can run: a single GGUF within the ~2 GB wasm32 envelope. Catalog
-    // order is the recommendation order (Gemma first = the default suggestion).
+    // Catalog models a BROWSER can run: one GGUF, plus an mmproj projector for the vision entries,
+    // within the ~2 GB total envelope. Catalog order IS the recommendation order — index 0 is the
+    // default suggestion (rendered below as the primary "Download & use (default)" button), and it
+    // is a vision model because that one measured best at text as well. Nothing here hardcodes an
+    // id: reordering the catalog moves the default.
     let webChoices = $derived(webEligibleModels(catalogSource));
 
     // The chooser list ALWAYS renders (except mid-download); when a model is active the current one
@@ -99,14 +102,17 @@
               : "attached — loads on first use",
     );
 
+    // The whole entry goes down: webInference splits weights from the mmproj projector, downloads
+    // both (one progress bar over the pair) and checks each against its catalog SHA-256.
     async function chooseWebModel(entry: ModelCatalogEntry) {
         webError = "";
         webError =
             (await useWebModelFromUrl({
                 id: entry.id,
                 name: entry.name,
-                url: entry.files[0].url,
+                files: entry.files,
                 sizeBytes: entry.sizeBytes,
+                modalities: entry.modalities,
             })) ?? "";
     }
 
@@ -348,7 +354,7 @@
             <BodySmall>
                 <Translatable
                     resourceKey={i18nKey(
-                        "Run a local model in this browser: pick a .gguf file from your disk (up to ~2 GB — a ≤2B parameter model at Q4 works well). The file is read in place — nothing is uploaded or copied. Text extraction only; image understanding needs the desktop or mobile app.",
+                        "Run a local model in this browser: download one below, or pick a .gguf file from your disk (up to ~2 GB — a ≤2B parameter model at Q4 works well). A disk file is read in place — nothing is uploaded or copied. One model is active at a time; choosing another replaces it. Only a model marked “reads images” can extract from a photo or a receipt.",
                     )}></Translatable>
             </BodySmall>
             {#if $webModelStatus.status === "downloading"}
@@ -359,6 +365,13 @@
                                 ($webModelStatus.progress !== undefined
                                     ? `${Math.round(($webModelStatus.progress.received / Math.max(1, $webModelStatus.progress.total)) * 100)}%`
                                     : ""),
+                        )}></Translatable>
+                </BodySmall>
+            {:else if $webModelStatus.status === "verifying"}
+                <BodySmall>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            `Checking ${$webModelStatus.name} against its SHA-256…`,
                         )}></Translatable>
                 </BodySmall>
             {:else}
@@ -382,6 +395,12 @@
                                 <Translatable
                                     resourceKey={i18nKey(`${entry.name} (${formatSize(entry.sizeBytes)})`)}></Translatable>
                             </BodySmall>
+                            {#if entry.modalities.includes("image")}
+                                <Chip>
+                                    <Translatable
+                                        resourceKey={i18nKey("reads images")}></Translatable>
+                                </Chip>
+                            {/if}
                             {#if currentWebId === entry.id}
                                 <Chip>
                                     <Translatable resourceKey={i18nKey("Current")}></Translatable>

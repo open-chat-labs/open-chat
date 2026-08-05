@@ -4,6 +4,33 @@ import type { InferResponse, LocalModel } from "tauri-plugin-oc-api";
 import { infer as nativeInfer, listLocalModels } from "tauri-plugin-oc-api";
 import { selectedModelId } from "../stores/onDeviceModels";
 import { inferOnDevice, isNativeClient, onDeviceInferenceCapability } from "./onDeviceInference";
+import { clearWebModel, useWebModelFromUrl, webInfer } from "./webInference";
+
+const webRuntime = vi.hoisted(() => ({ imageSupported: true }));
+
+vi.mock("@wllama/wllama", () => {
+    class Wllama {
+        async loadModel() {}
+        supportInputModality(modality: string): boolean {
+            return modality === "image" ? webRuntime.imageSupported : false;
+        }
+        async createChatCompletion() {
+            return { choices: [{ message: { content: "ok" } }] };
+        }
+        async exit() {}
+    }
+    class ModelManager {
+        async getModelOrDownload(source: { url: string; mmprojUrl?: string }) {
+            return {
+                files: [],
+                open: async () => [],
+                remove: async () => {},
+                source,
+            };
+        }
+    }
+    return { Wllama, ModelManager };
+});
 
 // The native bridge is the ONLY external dependency of the facade. Stub it so no real Tauri IPC (and no
 // network / model load) is ever touched — every test is deterministic.
@@ -359,5 +386,62 @@ describe("onDeviceInferenceCapability", () => {
             error: "installed model metadata does not match the trusted catalog",
         });
         expect(mockInfer).not.toHaveBeenCalled();
+    });
+});
+
+const WEB_VISION_WEIGHTS_URL = "https://host/models/smolvlm.gguf";
+const WEB_VISION_PROJECTOR_URL = "https://host/models/mmproj-smolvlm.gguf";
+
+function attachWebVisionModel(modalities: ("text" | "image")[]) {
+    return useWebModelFromUrl({
+        id: "smolvlm-256m-instruct-q8",
+        name: "SmolVLM 256M (vision)",
+        files: [
+            { url: WEB_VISION_WEIGHTS_URL, sha256: "", bytes: 4 },
+            { url: WEB_VISION_PROJECTOR_URL, sha256: "", bytes: 3 },
+        ],
+        sizeBytes: 7,
+        modalities,
+    });
+}
+
+describe("onDeviceInferenceCapability in a browser", () => {
+    beforeEach(async () => {
+        await clearWebModel();
+        localStorage.clear();
+        webRuntime.imageSupported = true;
+    });
+
+    it("reports unavailable with no model attached", () => {
+        const cap = onDeviceInferenceCapability();
+        expect(cap.available).toBe(false);
+        expect(cap.selectedModalities).toEqual([]);
+    });
+
+    it("reports image support for an attached vision model", async () => {
+        await attachWebVisionModel(["text", "image"]);
+        const cap = onDeviceInferenceCapability();
+        expect(cap.available).toBe(true);
+        expect(cap.selectedModalities).toEqual(["text", "image"]);
+        expect(cap.selectedModelId).toBe("SmolVLM 256M (vision)");
+    });
+
+    it("still reports text-only for a text model", async () => {
+        await useWebModelFromUrl({
+            id: "qwen2.5-0.5b-instruct-q4",
+            name: "Qwen2.5 0.5B (instruct)",
+            files: [{ url: "https://host/models/qwen.gguf", sha256: "", bytes: 4 }],
+            sizeBytes: 4,
+            modalities: ["text"],
+        });
+        expect(onDeviceInferenceCapability().selectedModalities).toEqual(["text"]);
+    });
+
+    it("uses the loaded model's measured modalities over its catalog claim", async () => {
+        webRuntime.imageSupported = false;
+        await attachWebVisionModel(["text", "image"]);
+        expect(onDeviceInferenceCapability().selectedModalities).toEqual(["text", "image"]);
+        await webInfer({ prompt: "hi" });
+        expect(onDeviceInferenceCapability().selectedModalities).toEqual(["text"]);
     });
 });
