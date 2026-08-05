@@ -7595,6 +7595,14 @@ export class OpenChat {
                             nervousSystemLookup.set(nsMap);
                             cryptoLookup.set(cryptoMap);
 
+                            // If the last token the user sent has since been removed from the
+                            // registry (eg. its ledger was uninstalled), clear it, otherwise
+                            // anything defaulting to it (eg. tipping) will blow up
+                            const lastSent = lastCryptoSent.value;
+                            if (lastSent !== undefined && !cryptoMap.has(lastSent)) {
+                                lastCryptoSent.set(undefined);
+                            }
+
                             messageFiltersStore.set(
                                 registry.messageFilters
                                     .map((f) => {
