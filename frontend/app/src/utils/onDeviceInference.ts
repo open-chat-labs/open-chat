@@ -17,6 +17,12 @@ import { defaultModelCatalog } from "./modelCatalog";
 // `inference` cargo feature) on every platform, so the facade reports the capability as available once a
 // matching model is downloaded and selected.
 const SUPPORTED_RUNTIMES: ModelRuntime[] = ["llama-cpp"];
+const MAX_PROMPT_BYTES = 64 * 1024;
+const MAX_TEXT_BYTES = 1024 * 1024;
+const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
+const MAX_SCHEMA_BYTES = 64 * 1024;
+const MAX_OUTPUT_TOKENS = 4096;
+const encodedLength = (value: string): number => new TextEncoder().encode(value).byteLength;
 
 // On-device inference runs wherever the Tauri native bridge is present (Android, iOS and desktop) — not
 // just the mobile OS targets that `OpenChat.isNativeApp()` reports. Detect the bridge directly so the UI
@@ -34,13 +40,46 @@ export async function inferOnDevice(request: InferenceRequest): Promise<Inferenc
     if (modelId === undefined || modelId === "") {
         return { kind: "unavailable", reason: "no on-device model selected" };
     }
+    const catalogEntry = defaultModelCatalog.models.find((model) => model.id === modelId);
+    if (catalogEntry === undefined || !SUPPORTED_RUNTIMES.includes(catalogEntry.runtime)) {
+        return { kind: "unavailable", reason: "the selected model is not in the trusted catalog" };
+    }
+    if (
+        request.prompt.length === 0 ||
+        encodedLength(request.prompt) > MAX_PROMPT_BYTES ||
+        (request.text !== undefined && encodedLength(request.text) > MAX_TEXT_BYTES) ||
+        (request.image !== undefined && request.image.byteLength > MAX_IMAGE_BYTES) ||
+        (request.maxTokens !== undefined &&
+            (request.maxTokens < 1 ||
+                request.maxTokens > MAX_OUTPUT_TOKENS ||
+                !Number.isInteger(request.maxTokens)))
+    ) {
+        return { kind: "error", error: "inference request exceeds native safety limits" };
+    }
+    let responseSchema: string | undefined;
+    try {
+        responseSchema =
+            request.responseSchema === undefined
+                ? undefined
+                : JSON.stringify(request.responseSchema);
+    } catch {
+        return { kind: "error", error: "response schema is not serializable" };
+    }
+    if (responseSchema !== undefined && encodedLength(responseSchema) > MAX_SCHEMA_BYTES) {
+        return { kind: "error", error: "inference request exceeds native safety limits" };
+    }
 
     try {
         const local = (await listLocalModels()).find((m) => m.modelId === modelId);
         if (local === undefined) {
             return { kind: "unavailable", reason: "the selected model is not downloaded" };
         }
-
+        if (local.runtime !== catalogEntry.runtime || local.sizeBytes !== catalogEntry.sizeBytes) {
+            return {
+                kind: "error",
+                error: "installed model metadata does not match the trusted catalog",
+            };
+        }
         const res = await nativeInfer({
             modelId,
             runtime: local.runtime,
@@ -48,10 +87,7 @@ export async function inferOnDevice(request: InferenceRequest): Promise<Inferenc
             image: request.image !== undefined ? Array.from(request.image) : undefined,
             text: request.text,
             maxTokens: request.maxTokens,
-            responseSchema:
-                request.responseSchema !== undefined
-                    ? JSON.stringify(request.responseSchema)
-                    : undefined,
+            responseSchema,
         });
         return { kind: "ok", text: res.text };
     } catch (err) {
@@ -64,7 +100,8 @@ export function onDeviceInferenceCapability(): OnDeviceInferenceCapability {
     // Modalities come from the catalog entry for the selected model (the native store doesn't track them).
     const entry = defaultModelCatalog.models.find((m) => m.id === selected);
     return {
-        available: isNativeClient() && SUPPORTED_RUNTIMES.length > 0 && selected !== "",
+        available:
+            isNativeClient() && entry !== undefined && SUPPORTED_RUNTIMES.includes(entry.runtime),
         runtimesSupported: SUPPORTED_RUNTIMES,
         selectedModelId: selected === "" ? undefined : selected,
         selectedModalities: entry?.modalities ?? [],

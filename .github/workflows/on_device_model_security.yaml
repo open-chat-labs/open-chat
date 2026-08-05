@@ -1,0 +1,151 @@
+name: On-device model security
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - ".github/dependabot.yml"
+      - ".github/security/openchat-pr1-security-baseline.json"
+      - ".github/workflows/on_device_model_security.yaml"
+      - "Cargo.lock"
+      - "Cargo.toml"
+      - "frontend/**/package.json"
+      - "frontend/package-lock.json"
+      - "frontend/app/src/utils/modelCatalog*"
+      - "frontend/app/src/utils/onDeviceInference*"
+      - "frontend/openchat-shared/src/domain/onDeviceModel.ts"
+      - "frontend/src-tauri/**"
+      - "frontend/tauri-plugin-oc/**"
+      - "scripts/check_openchat_pr1_security.mjs"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-policy:
+    name: Dependency delta, advisories, licenses and SBOM
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "24.18.1"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install exact frontend lockfile
+        working-directory: frontend
+        run: npm ci
+      - name: Check candidate source and config formatting
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: node scripts/check_openchat_pr1_security.mjs format
+      - name: Enforce supported CI runtime and npm dependency policy
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: node scripts/check_openchat_pr1_security.mjs ci npm
+      - name: Install pinned Rust security tools
+        run: |
+          cargo install cargo-audit --locked --version 0.22.2
+          cargo install cargo-cyclonedx --locked --version 0.5.9
+      - name: Enforce RustSec delta and reviewed dependency licenses
+        run: node scripts/check_openchat_pr1_security.mjs rust licenses
+      - name: Generate local-model CycloneDX SBOM
+        env:
+          SBOM_OUTPUT: ${{ runner.temp }}/openchat-pr1-model.cdx.json
+        run: node scripts/check_openchat_pr1_security.mjs sbom
+      - name: Upload local-model SBOM
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: openchat-pr1-model-sbom
+          path: ${{ runner.temp }}/openchat-pr1-model.cdx.json
+          if-no-files-found: error
+
+  native-hermetic:
+    name: Native hermetic tests (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Install Linux desktop build prerequisites
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes build-essential libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libssl-dev patchelf libclang-dev cmake
+      - name: Run downloader, store and boundary unit tests
+        run: cargo test -p tauri-plugin-oc --lib
+      - name: Compile the shipping plugin feature set (Linux)
+        if: runner.os == 'Linux'
+        run: cargo check -p tauri-plugin-oc --features inference,store
+      - name: Compile the shipping plugin feature set (Windows)
+        if: runner.os == 'Windows'
+        env:
+          CMAKE_GENERATOR: Visual Studio 17 2022
+        run: cargo check -p tauri-plugin-oc --features inference,store
+
+  frontend-contracts:
+    name: Frontend model contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "24.18.1"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install exact frontend lockfile
+        working-directory: frontend
+        run: npm ci
+      - name: Run model catalog, bridge and bootstrap security tests
+        working-directory: frontend
+        run: >-
+          npm --workspace app test --
+          src/utils/modelCatalog.spec.ts
+          src/utils/onDeviceInference.spec.ts
+          src/bootstrapSecurity.spec.ts
+
+  real-text-inference:
+    name: Real inference with pinned 14 MB fixture
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Install Linux desktop and llama.cpp prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes build-essential libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libssl-dev patchelf libclang-dev cmake
+      - name: Download and verify immutable MIT-licensed GGUF fixture
+        env:
+          MODEL_SHA256: a439d0bbdce924ff1a32f68b7b2dd7fa0b98687f7eb6e7e55206527b446362af
+          MODEL_URL: https://huggingface.co/tensorblock/tinyllama-15M-stories-GGUF/resolve/227c5a5ad3c1a830901543cf9959c53572014a68/tinyllama-15M-stories-Q4_0.gguf
+        run: |
+          mkdir -p "$RUNNER_TEMP/openchat-model-fixture"
+          model_path="$RUNNER_TEMP/openchat-model-fixture/tinyllama-15M-stories-Q4_0.gguf"
+          curl --fail --location --proto '=https' --proto-redir '=https' --tlsv1.2 \
+            --max-filesize 13893600 "$MODEL_URL" --output "$model_path"
+          echo "$MODEL_SHA256  $model_path" | sha256sum --check --strict
+          test "$(stat --format=%s "$model_path")" = "13893600"
+          echo "OC_TEST_MODEL_GGUF=$model_path" >> "$GITHUB_ENV"
+      - name: Run an actual inference (ignored tests must be selected explicitly)
+        run: >-
+          cargo test -p tauri-plugin-oc --features inference
+          inference::tests::text_inference_smoke --
+          --ignored --exact --nocapture

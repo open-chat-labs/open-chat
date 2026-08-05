@@ -210,7 +210,9 @@ pub(crate) async fn delete_model<R: Runtime>(
     app: AppHandle<R>,
     payload: DeleteModelRequest,
 ) -> std::result::Result<(), String> {
-    crate::model_manager::ModelManager::new(app).delete_model(&payload.model_id)
+    crate::model_manager::ModelManager::new(app)
+        .delete_model(&payload.model_id)
+        .await
 }
 
 #[command]

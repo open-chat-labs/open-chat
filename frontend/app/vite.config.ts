@@ -12,6 +12,7 @@ import {
     generateCspForScripts,
     initEnv,
     sassModulesAndMixins,
+    stylesDir,
 } from "./rollup.extras.mjs";
 import { ocPackageAliases } from "./oc-package-aliases.mjs";
 
@@ -219,6 +220,9 @@ export default defineConfig({
         preprocessorOptions: {
             scss: {
                 additionalData: sassModulesAndMixins,
+                // Support both Sass APIs used by the Vite/Svelte toolchain.
+                loadPaths: [stylesDir],
+                includePaths: [stylesDir],
             },
         },
     },

@@ -22,6 +22,11 @@
     "bundle": {
         "active": true,
         "targets": "all",
+        "resources": [
+            "THIRD_PARTY_NOTICES.md",
+            "THIRD_PARTY_LICENSES/Apache-2.0.txt",
+            "THIRD_PARTY_LICENSES/MIT.txt"
+        ],
         "icon": [
             "icons/32x32.png",
             "icons/128x128.png",

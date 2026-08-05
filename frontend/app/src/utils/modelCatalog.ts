@@ -23,20 +23,20 @@ export const defaultModelCatalog: ModelCatalog = {
             files: [
                 {
                     // Language model (Q4_K_M GGUF).
-                    url: "https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/main/gemma-4-E2B-it-Q4_K_M.gguf",
-                    sha256: "9378bc471710229ef165709b62e34bfb62231420ddaf6d729e727305b5b8672d",
-                    bytes: 3106736256,
+                    url: "https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/0314792d7f1f7e229411f620751375812bb9faf2/gemma-4-E2B-it-Q4_K_M.gguf",
+                    sha256: "740185b21d22ceb83a11c3aa62ad5842ef32c70f6096d756bbee85a1e4ec34b8",
+                    bytes: 3106738272,
                 },
                 {
                     // Vision projector (mmproj) — enables image input.
-                    url: "https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/main/mmproj-F16.gguf",
+                    url: "https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/0314792d7f1f7e229411f620751375812bb9faf2/mmproj-F16.gguf",
                     sha256: "140be8d7849741f88c50757d529b84373ee8e27052cc2236855b537f4a8215fa",
                     bytes: 985654080,
                 },
             ],
-            license: "Gemma Terms of Use",
-            licenseUrl: "https://ai.google.dev/gemma/terms",
-            sizeBytes: 4092390336,
+            license: "Apache-2.0",
+            licenseUrl: "https://ai.google.dev/gemma/docs/gemma_4_license",
+            sizeBytes: 4092392352,
         },
     ],
 };

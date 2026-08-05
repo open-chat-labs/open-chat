@@ -85,6 +85,7 @@ export type PubSubEvents = {
     newGroup: undefined;
     wallet: undefined;
     profile: undefined;
+    userProfileModels: undefined;
     claimDailyChit: undefined;
     joinGroup: {
         group: MultiUserChat;

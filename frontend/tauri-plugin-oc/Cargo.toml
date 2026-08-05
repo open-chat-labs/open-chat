@@ -20,7 +20,7 @@ serde_json = { workspace = true }
 tauri = { workspace = true }
 tauri-plugin-android-fs = { workspace = true }
 thiserror = { workspace = true }
-tokio = { workspace = true, features = ["fs", "io-util"] }
+tokio = { workspace = true, features = ["fs", "io-util", "net", "sync"] }
 zip = "2.2.2"
 
 [build-dependencies]
