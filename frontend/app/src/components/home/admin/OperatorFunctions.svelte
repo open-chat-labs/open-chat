@@ -409,10 +409,23 @@
                     toastStore.showSuccessToast(
                         i18nKey(legalHold ? "Legal hold set" : "Legal hold cleared"),
                     );
-                } else {
-                    error = i18nKey("Failed to update the legal hold");
-                    toastStore.showFailureToast(error);
+                    return;
                 }
+                // Clearing a hold whose release is already pending performs that release, so
+                // the canister refuses it here and it has to be proposed instead
+                if (!legalHold) {
+                    client
+                        .proposeSetVaultLegalHold(reportIndex, false, legalHoldReference.trim())
+                        .then((proposed) =>
+                            onProposed(
+                                proposed,
+                                "clearing this legal hold (it would release the evidence)",
+                            ),
+                        );
+                    return;
+                }
+                error = i18nKey("Failed to update the legal hold");
+                toastStore.showFailureToast(error);
             })
             .finally(() => removeBusy(11));
     }
@@ -718,6 +731,11 @@
 
     <section class="operator-function">
         <div class="title">Vault legal hold</div>
+        <div class="hint">
+            Suspends the retention clock so evidence outlasts the ordinary retention period.
+            Clearing a hold on evidence whose release is already pending performs that release and
+            destroys it, so that one case is proposed for a second operator to confirm.
+        </div>
         <div class="hint">
             Preservation request: suspends the retention clock for a report's vaulted evidence, so
             it is never deleted at expiry. Clearing the hold performs any release which was deferred

@@ -237,7 +237,10 @@ export class GroupIndexClient extends SingleCanisterMsgpackAgent {
         );
     }
 
-    setGroupModerationFlags(chatId: string, flags: number): Promise<SetGroupModerationFlagsResponse> {
+    setGroupModerationFlags(
+        chatId: string,
+        flags: number,
+    ): Promise<SetGroupModerationFlagsResponse> {
         return this.update(
             "set_group_moderation_flags",
             {

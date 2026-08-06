@@ -7429,6 +7429,16 @@ export class OpenChat {
             .catch(() => false);
     }
 
+    proposeSetVaultLegalHold(
+        reportIndex: bigint,
+        legalHold: boolean,
+        reference: string,
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.#worker
+            .send({ kind: "proposeSetVaultLegalHold", reportIndex, legalHold, reference })
+            .catch(() => undefined);
+    }
+
     proposeSetVaultReviewers(userIds: string[]): Promise<ProposedProtectedAction | undefined> {
         return this.#worker
             .send({ kind: "proposeSetVaultReviewers", userIds })

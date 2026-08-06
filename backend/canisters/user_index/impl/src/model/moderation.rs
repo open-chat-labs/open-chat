@@ -533,6 +533,13 @@ fn quarantine_ops(report_index: u64, report: &ReportedMessage, flags: u32, now: 
 }
 
 pub fn unquarantine_blobs(blob_references: &[BlobReference], moderator: UserId, report_index: u64, state: &mut RuntimeState) {
+    // The bucket refuses a release while a legal hold stands and remembers it as pending, so
+    // that clearing the hold performs it. Mirror that here: clearing a hold on a report in
+    // this state destroys the evidence, so it has to go through dual authorization (#9136)
+    if state.data.reported_messages.get(report_index).is_some_and(|r| r.legal_hold) {
+        state.data.reported_messages.set_release_pending(report_index, true);
+    }
+
     let ops = blob_references
         .iter()
         .cloned()

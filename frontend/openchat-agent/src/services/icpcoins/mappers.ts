@@ -31,7 +31,7 @@ export function coinsByMarketcapResponse(
 
 type OverviewJson = Static<typeof OverviewJson>;
 export const OverviewJson = Type.Object({
-    price_usd: Type.Optional(Type.Union([Type.Number(), Type.Null()]))
+    price_usd: Type.Optional(Type.Union([Type.Number(), Type.Null()])),
 });
 
 function tryGetRate(coin: CoinWithDetails): number | undefined {

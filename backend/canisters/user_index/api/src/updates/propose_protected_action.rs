@@ -1,4 +1,6 @@
-use crate::updates::{destroy_vault_evidence, set_internal_moderation_channel, set_openai_api_key, set_vault_reviewers};
+use crate::updates::{
+    destroy_vault_evidence, set_internal_moderation_channel, set_openai_api_key, set_vault_legal_hold, set_vault_reviewers,
+};
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
@@ -15,6 +17,9 @@ pub enum ProtectedAction {
     SetVaultReviewers(set_vault_reviewers::Args),
     SetOpenAIApiKey(set_openai_api_key::Args),
     SetInternalModerationChannel(set_internal_moderation_channel::Args),
+    // Only ever proposed for the dangerous case: clearing a hold on evidence whose release is
+    // already pending performs that release, destroying it
+    SetVaultLegalHold(set_vault_legal_hold::Args),
 }
 
 impl ProtectedAction {
@@ -26,6 +31,7 @@ impl ProtectedAction {
             ProtectedAction::SetVaultReviewers(_) => "SetVaultReviewers",
             ProtectedAction::SetOpenAIApiKey(_) => "SetOpenAIApiKey",
             ProtectedAction::SetInternalModerationChannel(_) => "SetInternalModerationChannel",
+            ProtectedAction::SetVaultLegalHold(_) => "SetVaultLegalHold",
         }
     }
 
@@ -36,6 +42,13 @@ impl ProtectedAction {
                 format!(
                     "DestroyVaultEvidence(report #{}, ref: {})",
                     args.report_index, args.le_request_ref
+                )
+            }
+            ProtectedAction::SetVaultLegalHold(args) => {
+                let action = if args.legal_hold { "set" } else { "clear" };
+                format!(
+                    "SetVaultLegalHold({action} on report #{}, ref: {})",
+                    args.report_index, args.reference
                 )
             }
             ProtectedAction::SetVaultReviewers(args) => {

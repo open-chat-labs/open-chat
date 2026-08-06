@@ -393,6 +393,7 @@ export type WorkerRequest =
     | ProtectedActions
     | SetModerationReferralConfig
     | ProposeSetVaultReviewers
+    | ProposeSetVaultLegalHold
     | SetVaultLegalHold
     | ProposeDestroyVaultEvidence
     | VaultLog
@@ -884,6 +885,13 @@ type RecordAuthorityReportFiled = {
     portalReference: string;
     urgent: boolean;
     unverified: boolean;
+};
+
+type ProposeSetVaultLegalHold = {
+    kind: "proposeSetVaultLegalHold";
+    reportIndex: bigint;
+    legalHold: boolean;
+    reference: string;
 };
 
 type ProposeSetVaultReviewers = {
@@ -2605,6 +2613,8 @@ export type WorkerResult<T> = T extends Init
     : T extends SetModerationReferralConfig
     ? boolean
     : T extends ProposeSetVaultReviewers
+    ? ProposedProtectedAction | undefined
+    : T extends ProposeSetVaultLegalHold
     ? ProposedProtectedAction | undefined
     : T extends SetVaultLegalHold
     ? boolean

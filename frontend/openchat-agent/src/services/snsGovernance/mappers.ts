@@ -3,14 +3,14 @@ import type {
     ApiListProposalsResponse,
     ApiManageNeuronResponse,
     ApiNervousSystemFunction,
-    ApiSnsFunctionType
+    ApiSnsFunctionType,
 } from "./candid/idl";
 import type {
     ListNervousSystemFunctionsResponse,
     ManageNeuronResponse,
     NervousSystemFunction,
     ProposalVoteDetails,
-    SnsFunctionType
+    SnsFunctionType,
 } from "@shared";
 import { identity, optional } from "../../utils/mapping";
 import { proposalVote } from "../common/chatMappers";
@@ -34,33 +34,31 @@ export function manageNeuronResponse(candid: ApiManageNeuronResponse): ManageNeu
     throw new Error(`Unexpected ApiManageNeuronResponse type received: ${candid}`);
 }
 
-export function getProposalVoteDetails(
-    candid: ApiListProposalsResponse
-): ProposalVoteDetails {
+export function getProposalVoteDetails(candid: ApiListProposalsResponse): ProposalVoteDetails {
     const proposal = candid.proposals[0];
     if (proposal === undefined) {
         throw new Error("GetProposal returned an empty response");
     }
-        const ballots = proposal.ballots;
-        const tally = proposal.latest_tally[0]!;
-        return {
-            id: proposal.id[0]!.id,
-            ballots: ballots.map(([n, b]) => ({
-                neuronId: n,
-                vote: proposalVote(b.vote),
-                votingPower: b.voting_power,
-            })),
-            latestTally: {
-                yes: Number(tally.yes / E8S_AS_BIGINT),
-                no: Number(tally.no / E8S_AS_BIGINT),
-                total: Number(tally.total / E8S_AS_BIGINT),
-                timestamp: tally.timestamp_seconds * BigInt(1000)
-            }
-        };
+    const ballots = proposal.ballots;
+    const tally = proposal.latest_tally[0]!;
+    return {
+        id: proposal.id[0]!.id,
+        ballots: ballots.map(([n, b]) => ({
+            neuronId: n,
+            vote: proposalVote(b.vote),
+            votingPower: b.voting_power,
+        })),
+        latestTally: {
+            yes: Number(tally.yes / E8S_AS_BIGINT),
+            no: Number(tally.no / E8S_AS_BIGINT),
+            total: Number(tally.total / E8S_AS_BIGINT),
+            timestamp: tally.timestamp_seconds * BigInt(1000),
+        },
+    };
 }
 
 export function nervousSystemFunctions(
-    candid: ApiListNervousSystemFunctionsResponse
+    candid: ApiListNervousSystemFunctionsResponse,
 ): ListNervousSystemFunctionsResponse {
     return {
         reservedIds: [...candid.reserved_ids],

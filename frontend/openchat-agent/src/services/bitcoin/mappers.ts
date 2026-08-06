@@ -1,12 +1,8 @@
-import {
-    type Utxo,
-} from "@shared";
+import { type Utxo } from "@shared";
 import type { ApiGetUtxosResponse, ApiUtxo } from "./candid/idl";
 import { consolidateBytes } from "../../utils/mapping";
 
-export function getUtxosResponse(
-    candid: ApiGetUtxosResponse,
-): Utxo[] {
+export function getUtxosResponse(candid: ApiGetUtxosResponse): Utxo[] {
     return candid.utxos.map(utxo);
 }
 

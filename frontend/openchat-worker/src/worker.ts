@@ -1011,10 +1011,20 @@ function getAction(
             return agent.protectedActions();
         case "setModerationReferralConfig":
             return agent.setModerationReferralConfig(payload.config);
+        case "proposeSetVaultLegalHold":
+            return agent.proposeSetVaultLegalHold(
+                payload.reportIndex,
+                payload.legalHold,
+                payload.reference,
+            );
         case "proposeSetVaultReviewers":
             return agent.proposeSetVaultReviewers(payload.userIds);
         case "setVaultLegalHold":
-            return agent.setVaultLegalHold(payload.reportIndex, payload.legalHold, payload.reference);
+            return agent.setVaultLegalHold(
+                payload.reportIndex,
+                payload.legalHold,
+                payload.reference,
+            );
         case "proposeDestroyVaultEvidence":
             return agent.proposeDestroyVaultEvidence(payload.reportIndex, payload.leRequestRef);
         case "vaultBuckets":

@@ -1,4 +1,9 @@
-import type { CandidAllocatedBucketResponse, CandidCanForwardResponse, CandidProjectedAllowance, CandidUserResponse } from "./candid/idl";
+import type {
+    CandidAllocatedBucketResponse,
+    CandidCanForwardResponse,
+    CandidProjectedAllowance,
+    CandidUserResponse,
+} from "./candid/idl";
 import type {
     AllocatedBucketResponse,
     AllowanceExceeded,
@@ -10,7 +15,7 @@ import type {
 import { UnsupportedValueError } from "@shared";
 
 export function allocatedBucketResponse(
-    candid: CandidAllocatedBucketResponse
+    candid: CandidAllocatedBucketResponse,
 ): AllocatedBucketResponse {
     if ("Success" in candid) {
         return {
@@ -34,7 +39,7 @@ export function allocatedBucketResponse(
     }
     throw new UnsupportedValueError(
         "Unknown Index.CandidAllocatedBucketResponse type received",
-        candid
+        candid,
     );
 }
 
@@ -51,10 +56,7 @@ export function canForwardResponse(candid: CandidCanForwardResponse): CanForward
     if ("UserNotFound" in candid) {
         return userNotFound();
     }
-    throw new UnsupportedValueError(
-        "Unknown Index.CandidCanForwardResponse type received",
-        candid
-    );
+    throw new UnsupportedValueError("Unknown Index.CandidCanForwardResponse type received", candid);
 }
 
 export function userResponse(candid: CandidUserResponse): StorageUserResponse {
@@ -74,7 +76,7 @@ export function userResponse(candid: CandidUserResponse): StorageUserResponse {
 function allowanceExceeded(candid: CandidProjectedAllowance): AllowanceExceeded {
     return {
         kind: "allowance_exceeded",
-        projectedAllowance: projectedAllowance(candid)
+        projectedAllowance: projectedAllowance(candid),
     };
 }
 

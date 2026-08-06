@@ -1982,6 +1982,141 @@ fn legal_hold_blocks_destruction_of_vaulted_evidence() {
 }
 
 #[test]
+fn clearing_a_hold_which_would_release_evidence_requires_two_operators() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    // A CSAM-asserted media report quarantines the evidence immediately, so a later dismissal
+    // asks for it to be released - the state in which clearing a hold destroys evidence
+    let file_size = 1000u32;
+    let blob_reference = client::storage_index::happy_path::upload_file(
+        env,
+        test_data.sender.principal,
+        canister_ids.storage_index,
+        file_size,
+        vec![test_data.sender.canister()],
+    );
+    let message_id = random_from_u128();
+    client::group::send_message_v2(
+        env,
+        test_data.sender.principal,
+        test_data.group_id.into(),
+        &group_canister::send_message_v2::Args {
+            thread_root_message_index: None,
+            message_id,
+            content: MessageContentInitial::File(FileContent {
+                name: random_string(),
+                caption: None,
+                mime_type: "application/octet-stream".to_string(),
+                file_size,
+                blob_reference: Some(blob_reference.clone()),
+            }),
+            sender_name: test_data.sender.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            forwarding: false,
+            block_level_markdown: false,
+            rules_accepted: None,
+            message_filter_failed: None,
+            new_achievement: false,
+            og_previews: Vec::new(),
+        },
+    );
+    tick_many(env, 3);
+
+    client::group::report_message(
+        env,
+        test_data.reporter.principal,
+        test_data.group_id.into(),
+        &group_canister::report_message::Args {
+            thread_root_message_index: None,
+            message_id,
+            delete: false,
+            csam: true,
+        },
+    );
+    tick_many(env, 10);
+
+    let reports = get_moderation_reports(env, &test_data);
+    let report_index = reports[0].report_index.expect("report should carry an index");
+
+    let set_hold = |env: &mut PocketIc, legal_hold: bool| {
+        client::user_index::set_vault_legal_hold(
+            env,
+            test_data.moderator.principal,
+            canister_ids.user_index,
+            &user_index_canister::set_vault_legal_hold::Args {
+                report_index,
+                legal_hold,
+                reference: "PRESERVATION-1".to_string(),
+            },
+        )
+    };
+
+    assert!(matches!(set_hold(env, true), UnitResult::Success));
+
+    // Dismissing the report asks for the evidence to be released; the hold defers it
+    client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index,
+            verdict: ModerationVerdict::Dismissed,
+            urgent: None,
+        },
+    );
+    tick_many(env, 5);
+
+    // Clearing the hold now would PERFORM that release, destroying the evidence, so a single
+    // operator can no longer do it directly - otherwise it would be a way around the dual
+    // authorization on destruction
+    assert!(matches!(set_hold(env, false), UnitResult::Error(_)));
+
+    // It goes through propose/confirm like any other irreversible action
+    let response = client::user_index::propose_protected_action(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::propose_protected_action::Args {
+            action: ProtectedAction::SetVaultLegalHold(user_index_canister::set_vault_legal_hold::Args {
+                report_index,
+                legal_hold: false,
+                reference: "PRESERVATION-1".to_string(),
+            }),
+        },
+    );
+    let user_index_canister::propose_protected_action::Response::Success(result) = response else {
+        panic!("'propose_protected_action' error: {response:?}");
+    };
+
+    let response = client::user_index::confirm_protected_action(
+        env,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        &user_index_canister::confirm_protected_action::Args {
+            action_id: result.action_id,
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::confirm_protected_action::Response::Success),
+        "{response:?}"
+    );
+    tick_many(env, 5);
+
+    // Setting a hold, and clearing one with nothing pending, stay single-actor
+    assert!(matches!(set_hold(env, true), UnitResult::Success));
+    assert!(matches!(set_hold(env, false), UnitResult::Success));
+}
+
+#[test]
 fn a_second_proposal_of_the_same_kind_supersedes_the_first() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {

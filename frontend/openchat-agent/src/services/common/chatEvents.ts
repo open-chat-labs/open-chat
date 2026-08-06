@@ -212,7 +212,11 @@ export class CachedChatEventsReader {
                                     startIndex,
                                     ascending,
                                 ).then((resp) => {
-                                    this.chatsDb.setCachedEvents(chatId, resp, threadRootMessageIndex);
+                                    this.chatsDb.setCachedEvents(
+                                        chatId,
+                                        resp,
+                                        threadRootMessageIndex,
+                                    );
                                     resolve(resp, true);
                                 });
                             } else {
@@ -247,10 +251,11 @@ export class CachedChatEventsReader {
         latestKnownUpdate: bigint | undefined,
     ): Stream<EventsResponse<ChatEvent>> {
         return new Stream((resolve, reject) => {
-            this.chatsDb.getCachedEventsByIndex(eventIndexes, {
-                chatId,
-                threadRootMessageIndex,
-            })
+            this.chatsDb
+                .getCachedEventsByIndex(eventIndexes, {
+                    chatId,
+                    threadRootMessageIndex,
+                })
                 .then(([cachedEvents, missing, dirty]) => {
                     if (cachedEvents.events.length > 0) {
                         const complete = missing.size + dirty.size === 0;
@@ -359,7 +364,11 @@ export class CachedChatEventsReader {
                                     eventIndexRange,
                                     messageIndex,
                                 ).then((resp) => {
-                                    this.chatsDb.setCachedEvents(chatId, resp, threadRootMessageIndex);
+                                    this.chatsDb.setCachedEvents(
+                                        chatId,
+                                        resp,
+                                        threadRootMessageIndex,
+                                    );
                                     resolve(resp, true);
                                 });
                             } else {
@@ -624,4 +633,3 @@ async function chunkedChatEventsWindowFromBackend(
 
     return aggregatedResponse;
 }
-

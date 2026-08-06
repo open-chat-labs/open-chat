@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Clearing a legal hold on evidence whose release is already pending performs that release, so this case now requires dual authorization too - it was a route around the two-operator rule on destruction. Setting a hold, and clearing one with no release pending, remain single-actor ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
 - At most one proposal per protected action kind is pending at a time: an identical re-proposal is idempotent, and a different payload supersedes the pending one under a new id, so a stale screen cannot confirm a payload which was replaced ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
 - Destroying vaulted evidence is refused while a legal hold stands, rather than the destruction being reported and then silently refused by the storage bucket ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
 - Dual authorization for the irreversible platform-operator actions: destroying vaulted evidence, designating vault reviewers, setting the OpenAI API key and setting the internal moderation channel are now proposed by one operator and confirmed by a different one, with proposals expiring after 14 days and every proposal, confirmation, cancellation and expiry recorded in an append-only hash-chained log whose chain head is published in metrics ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))

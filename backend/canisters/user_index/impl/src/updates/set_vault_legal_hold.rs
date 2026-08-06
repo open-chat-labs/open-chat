@@ -18,6 +18,26 @@ fn set_vault_legal_hold(args: Args) -> Response {
 }
 
 fn set_vault_legal_hold_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    let report = state
+        .data
+        .reported_messages
+        .get(args.report_index)
+        .ok_or(OCErrorCode::MessageNotFound)?;
+
+    // Clearing a hold on evidence whose release is already pending PERFORMS that release, so
+    // this one case destroys evidence just as surely as destroy_vault_evidence does, and goes
+    // through the same dual authorization (#9136). Ordinary holds stay single-actor: they are
+    // reversible and destroy nothing.
+    if !args.legal_hold && report.release_pending {
+        return Err(OCErrorCode::InvalidRequest.with_message(
+            "Clearing this hold would immediately release the evidence - propose it as a protected action instead",
+        ));
+    }
+
+    execute(args, state)
+}
+
+pub(crate) fn execute(args: Args, state: &mut RuntimeState) -> OCResult {
     let caller = state.env.caller();
     let operator = state
         .data
@@ -48,9 +68,14 @@ fn set_vault_legal_hold_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         .set_legal_hold(args.report_index, args.legal_hold);
 
     let action = if args.legal_hold { "set" } else { "cleared" };
+    let released = if !args.legal_hold && report.release_pending {
+        " — the deferred release of the evidence has now been performed"
+    } else {
+        ""
+    };
     moderation::post_moderation_notice(
         format!(
-            "🔒 Legal hold {action} on the evidence for report #{}\n\nBy {operator}, under reference: {}",
+            "🔒 Legal hold {action} on the evidence for report #{}{released}\n\nBy {operator}, under reference: {}",
             args.report_index, args.reference
         ),
         state,

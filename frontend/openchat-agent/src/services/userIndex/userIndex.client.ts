@@ -262,6 +262,18 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         );
     }
 
+    // Only for the dangerous case: clearing a hold whose release is already pending performs
+    // that release, so the canister refuses it outside the dual-authorized flow
+    proposeSetVaultLegalHold(
+        reportIndex: bigint,
+        legalHold: boolean,
+        reference: string,
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.proposeProtectedAction({
+            SetVaultLegalHold: { report_index: reportIndex, legal_hold: legalHold, reference },
+        });
+    }
+
     proposeSetVaultReviewers(userIds: string[]): Promise<ProposedProtectedAction | undefined> {
         return this.proposeProtectedAction({
             SetVaultReviewers: { user_ids: userIds.map(principalStringToBytes) },

@@ -2179,6 +2179,14 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.acceptTerms(version);
     }
 
+    proposeSetVaultLegalHold(
+        reportIndex: bigint,
+        legalHold: boolean,
+        reference: string,
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this._userIndexClient.proposeSetVaultLegalHold(reportIndex, legalHold, reference);
+    }
+
     proposeSetVaultReviewers(userIds: string[]): Promise<ProposedProtectedAction | undefined> {
         return this._userIndexClient.proposeSetVaultReviewers(userIds);
     }
@@ -2199,7 +2207,11 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.protectedActions();
     }
 
-    setVaultLegalHold(reportIndex: bigint, legalHold: boolean, reference: string): Promise<boolean> {
+    setVaultLegalHold(
+        reportIndex: bigint,
+        legalHold: boolean,
+        reference: string,
+    ): Promise<boolean> {
         return this._userIndexClient.setVaultLegalHold(reportIndex, legalHold, reference);
     }
 
@@ -2216,7 +2228,9 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.setModerationReferralConfig(config);
     }
 
-    proposeSetOpenAIApiKey(apiKey: string | undefined): Promise<ProposedProtectedAction | undefined> {
+    proposeSetOpenAIApiKey(
+        apiKey: string | undefined,
+    ): Promise<ProposedProtectedAction | undefined> {
         if (offline()) return Promise.resolve(undefined);
 
         return this._userIndexClient.proposeSetOpenAIApiKey(apiKey);

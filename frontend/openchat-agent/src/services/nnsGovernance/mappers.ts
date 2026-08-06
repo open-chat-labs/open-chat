@@ -22,9 +22,7 @@ export function manageNeuronResponse(candid: ApiManageNeuronResponse): ManageNeu
     throw new Error(`Unexpected ApiManageNeuronResponse type received: ${candid}`);
 }
 
-export function getProposalVoteDetails(
-    candid: ApiListProposalInfoResponse
-): ProposalVoteDetails {
+export function getProposalVoteDetails(candid: ApiListProposalInfoResponse): ProposalVoteDetails {
     const proposal = candid.proposal_info[0];
     if (proposal === undefined) {
         throw new Error("GetProposal returned an empty response");
@@ -43,7 +41,7 @@ export function getProposalVoteDetails(
             yes: Number(tally.yes / E8S_AS_BIGINT),
             no: Number(tally.no / E8S_AS_BIGINT),
             total: Number(tally.total / E8S_AS_BIGINT),
-            timestamp: tally.timestamp_seconds * BigInt(1000)
-        }
+            timestamp: tally.timestamp_seconds * BigInt(1000),
+        },
     };
 }

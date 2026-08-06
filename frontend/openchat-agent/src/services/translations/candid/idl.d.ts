@@ -8,7 +8,7 @@ import {
     MarkDeployedResponse,
     CandidateTranslation,
     PendingDeploymentResponse,
-    RejectReason
+    RejectReason,
 } from "./types";
 export {
     _SERVICE as TranslationsService,
@@ -19,7 +19,7 @@ export {
     ProposedResponse as ApiProposedResponse,
     CandidateTranslation as ApiCandidateTranslation,
     PendingDeploymentResponse as ApiPendingDeploymentResponse,
-    RejectReason as ApiRejectReason
+    RejectReason as ApiRejectReason,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

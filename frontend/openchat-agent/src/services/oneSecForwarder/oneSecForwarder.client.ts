@@ -12,7 +12,11 @@ export class OneSecForwarderClient extends CandidCanisterAgent<OneSecForwarderSe
     isForwarding(evmAddress: string): Promise<boolean> {
         const args = { evm_address: evmAddress };
 
-        return this.handleQueryResponse(() => this.service.is_forwarding_address(args), identity, args);
+        return this.handleQueryResponse(
+            () => this.service.is_forwarding_address(args),
+            identity,
+            args,
+        );
     }
 
     enableForwarding(userId: string): Promise<void> {
@@ -21,14 +25,10 @@ export class OneSecForwarderClient extends CandidCanisterAgent<OneSecForwarderSe
                 ICRC: {
                     owner: Principal.fromText(userId),
                     subaccount: [] as [] | [Uint8Array],
-                }
-            }
+                },
+            },
         };
 
-        return this.handleResponse(
-            this.service.enable_forwarding(args),
-            toVoid,
-            args,
-        );
+        return this.handleResponse(this.service.enable_forwarding(args), toVoid, args);
     }
 }

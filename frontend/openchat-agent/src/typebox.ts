@@ -7746,6 +7746,9 @@ export const UserIndexProposeProtectedActionProtectedAction = Type.Union([
     Type.Object({
         SetInternalModerationChannel: UserIndexSetInternalModerationChannelArgs,
     }),
+    Type.Object({
+        SetVaultLegalHold: UserIndexSetVaultLegalHoldArgs,
+    }),
 ]);
 
 export type UserIndexProposeProtectedActionArgs = Static<
