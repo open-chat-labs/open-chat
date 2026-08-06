@@ -1,6 +1,6 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use storage_bucket_canister::c2c_vault_sync::VaultCaptureMetadata;
 use storage_bucket_canister::c2c_vault_sync::VaultReviewer;
 use types::{FileId, Hash, TimestampMillis, UserId};
@@ -13,7 +13,7 @@ use utils::hasher::hash_bytes;
 pub struct Vault {
     records: BTreeMap<Hash, VaultRecord>,
     file_id_to_hash: BTreeMap<FileId, Hash>,
-    #[serde(default, deserialize_with = "deserialize_reviewers")]
+    #[serde(default)]
     reviewers: HashMap<Principal, UserId>,
     log: Vec<VaultLogEntry>,
     #[serde(default)]
@@ -38,7 +38,6 @@ pub struct Vault {
 }
 
 #[derive(Serialize, Deserialize)]
-#[serde(from = "VaultRecordCompat")]
 pub struct VaultRecord {
     pub hash: Hash,
     pub original_file_id: FileId,
@@ -61,46 +60,6 @@ pub struct VaultRecord {
     pub verdicted_report_indexes: BTreeSet<u64>,
     // A release was refused because of a legal hold; clearing the hold performs it
     pub release_pending: bool,
-}
-
-// Records serialized before verdict_applied existed only ever had retention_until set by a
-// verdict, so infer the flag from it on deserialization
-#[derive(Deserialize)]
-struct VaultRecordCompat {
-    hash: Hash,
-    original_file_id: FileId,
-    #[serde(default)]
-    mime_type: String,
-    metadata: VaultCaptureMetadata,
-    quarantined_at: TimestampMillis,
-    retention_until: Option<TimestampMillis>,
-    #[serde(default)]
-    verdict_applied: Option<bool>,
-    legal_hold: bool,
-    #[serde(default)]
-    report_indexes: BTreeSet<u64>,
-    #[serde(default)]
-    verdicted_report_indexes: BTreeSet<u64>,
-    #[serde(default)]
-    release_pending: bool,
-}
-
-impl From<VaultRecordCompat> for VaultRecord {
-    fn from(c: VaultRecordCompat) -> Self {
-        VaultRecord {
-            hash: c.hash,
-            original_file_id: c.original_file_id,
-            mime_type: c.mime_type,
-            metadata: c.metadata,
-            quarantined_at: c.quarantined_at,
-            verdict_applied: c.verdict_applied.unwrap_or(c.retention_until.is_some()),
-            retention_until: c.retention_until,
-            legal_hold: c.legal_hold,
-            report_indexes: c.report_indexes,
-            verdicted_report_indexes: c.verdicted_report_indexes,
-            release_pending: c.release_pending,
-        }
-    }
 }
 
 impl VaultRecord {
@@ -256,23 +215,6 @@ impl Vault {
     // the attempt to the user_index on the first sighting
     pub fn record_blocked_attempt(&mut self, uploader: Principal, file_id: FileId) -> bool {
         self.blocked_attempts.insert((uploader, file_id))
-    }
-
-    // One-time backfill for records verdicted before the denylist existed. Idempotent, so
-    // safe to run on every upgrade.
-    pub fn backfill_csam_hashes(&mut self) {
-        let entries: Vec<(Hash, u64)> = self
-            .records
-            .values()
-            .filter(|r| r.verdict_applied)
-            .map(|r| {
-                let report_index = r.verdicted_report_indexes.first().copied().unwrap_or(r.metadata.report_index);
-                (r.hash, report_index)
-            })
-            .collect();
-        for (hash, report_index) in entries {
-            self.csam_hashes.entry(hash).or_insert(report_index);
-        }
     }
 
     pub fn unquarantine(
@@ -539,27 +481,6 @@ pub struct VaultMetrics {
     pub csam_hashes: u64,
     pub unresolved_quarantines: u64,
     pub oldest_unresolved_quarantined_at: Option<TimestampMillis>,
-}
-
-// The reviewer set briefly shipped (to test envs only) as a bare principal set; accept that
-// shape on upgrade as an empty map (the set is re-synced whenever the operator applies it).
-// Inert everywhere else - production never held the old shape.
-fn deserialize_reviewers<'de, D>(d: D) -> Result<HashMap<Principal, UserId>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    #[derive(Deserialize)]
-    #[serde(untagged)]
-    enum Compat {
-        New(HashMap<Principal, UserId>),
-        #[allow(dead_code)]
-        Old(HashSet<Principal>),
-    }
-
-    Ok(match Compat::deserialize(d)? {
-        Compat::New(reviewers) => reviewers,
-        Compat::Old(_) => HashMap::new(),
-    })
 }
 
 #[cfg(test)]
@@ -886,81 +807,5 @@ mod tests {
         assert!(!vault.record_blocked_attempt(reviewer(1), 42));
         // A different user attempting the same file is a fresh attempt
         assert!(vault.record_blocked_attempt(reviewer(2), 42));
-    }
-
-    #[test]
-    fn backfill_denylists_previously_verdicted_records() {
-        let mut vault = vault_with_reviewer();
-        vault.quarantine(1, [1u8; 32], "image/png".to_string(), metadata(7), 100);
-        vault.apply_verdict(1, 999, None, false, Some(7), 200);
-
-        // Simulate a record verdicted before the denylist existed
-        vault.csam_hashes.clear();
-        assert!(!vault.is_csam_hash(&[1u8; 32]));
-
-        vault.backfill_csam_hashes();
-        assert_eq!(vault.known_csam_report_index(&[1u8; 32]), Some(7));
-    }
-
-    #[test]
-    fn record_compat_infers_verdict_applied_from_retention() {
-        // The record shape from before verdict_applied existed
-        #[derive(Serialize)]
-        struct OldRecord {
-            hash: Hash,
-            original_file_id: FileId,
-            mime_type: String,
-            metadata: VaultCaptureMetadata,
-            quarantined_at: TimestampMillis,
-            retention_until: Option<TimestampMillis>,
-            legal_hold: bool,
-        }
-        let old = |retention_until| OldRecord {
-            hash: [1u8; 32],
-            original_file_id: 1,
-            mime_type: "image/png".to_string(),
-            metadata: metadata(0),
-            quarantined_at: 100,
-            retention_until,
-            legal_hold: false,
-        };
-
-        // Old records only ever had retention set by a verdict, so infer resolution from it
-        let bytes = msgpack::serialize_then_unwrap(old(Some(999)));
-        let record: VaultRecord = msgpack::deserialize_then_unwrap(&bytes);
-        assert!(record.verdict_applied);
-
-        let bytes = msgpack::serialize_then_unwrap(old(None));
-        let record: VaultRecord = msgpack::deserialize_then_unwrap(&bytes);
-        assert!(!record.verdict_applied);
-    }
-
-    #[test]
-    fn reviewer_compat_accepts_old_principal_set() {
-        #[derive(Serialize)]
-        struct OldHolder {
-            reviewers: HashSet<Principal>,
-        }
-        #[derive(Deserialize)]
-        struct Holder {
-            #[serde(default, deserialize_with = "deserialize_reviewers")]
-            reviewers: HashMap<Principal, UserId>,
-        }
-        let bytes = msgpack::serialize_then_unwrap(OldHolder {
-            reviewers: [reviewer(1)].into_iter().collect(),
-        });
-        let holder: Holder = msgpack::deserialize(bytes.as_slice()).unwrap();
-        assert!(holder.reviewers.is_empty());
-
-        #[derive(Serialize)]
-        struct NewHolder {
-            reviewers: HashMap<Principal, UserId>,
-        }
-        let user_id: UserId = Principal::from_slice(&[9; 8]).into();
-        let bytes = msgpack::serialize_then_unwrap(NewHolder {
-            reviewers: [(reviewer(1), user_id)].into_iter().collect(),
-        });
-        let holder: Holder = msgpack::deserialize(bytes.as_slice()).unwrap();
-        assert_eq!(holder.reviewers.get(&reviewer(1)), Some(&user_id));
     }
 }

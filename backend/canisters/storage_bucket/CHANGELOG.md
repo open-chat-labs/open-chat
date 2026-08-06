@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2004](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2004-storage_bucket)] - 2026-08-05
+
 ### Added
 
 - Hashes upheld as CSAM are reported to the storage index so every other bucket denylists them too ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
