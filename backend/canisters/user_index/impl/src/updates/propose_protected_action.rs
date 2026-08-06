@@ -23,11 +23,7 @@ fn propose_protected_action_impl(args: Args, state: &mut RuntimeState) -> Respon
     if let ProtectedAction::DestroyVaultEvidence(destroy) = &args.action
         && destroy.le_request_ref.trim().is_empty()
     {
-        return Response::Error(
-            OCErrorCode::InvalidRequest
-                .with_message("A law enforcement request reference is required")
-                .into(),
-        );
+        return Response::Error(OCErrorCode::InvalidRequest.with_message("A law enforcement request reference is required"));
     }
 
     let now = state.env.now();
