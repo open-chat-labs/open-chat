@@ -135,10 +135,6 @@ impl ReportedMessages {
         })
     }
 
-    pub fn pending_classification_report_indexes(&self) -> Vec<u64> {
-        self.pending_classifications.keys().copied().collect()
-    }
-
     pub fn get(&self, index: u64) -> Option<&ReportedMessage> {
         self.messages.get(index as usize)
     }
