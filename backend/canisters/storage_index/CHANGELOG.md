@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2005](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2005-storage_index)] - 2026-08-06
+
 ### Added
 
 - The CSAM hash denylist is held platform-wide and pushed to every bucket, including newly created ones, so content upheld as CSAM cannot be re-uploaded to another bucket ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))

@@ -116,7 +116,7 @@ struct Data {
     pub bucket_event_sync_queue: GroupedTimerJobQueue<BucketEventBatch>,
     #[serde(default = "default_vault_event_sync_queue")]
     pub vault_event_sync_queue: GroupedTimerJobQueue<VaultEventBatch>,
-    #[serde(default, deserialize_with = "deserialize_vault_reviewers")]
+    #[serde(default)]
     pub vault_reviewers: Vec<VaultReviewer>,
     // Every hash upheld as CSAM, learned from the bucket which applied the verdict. Held here
     // so the denylist survives as platform-wide state: it is pushed to all other buckets when
@@ -365,25 +365,4 @@ pub struct CanisterIds {
     cycles_dispenser: CanisterId,
     icp_ledger: CanisterId,
     cmc: CanisterId,
-}
-
-// The reviewer set briefly shipped (to test envs only) as a bare principal set; accept that
-// shape on upgrade as an empty list (the set is re-synced whenever the operator applies it).
-// Inert everywhere else - production never held the old shape.
-fn deserialize_vault_reviewers<'de, D>(d: D) -> Result<Vec<VaultReviewer>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    #[derive(Deserialize)]
-    #[serde(untagged)]
-    enum Compat {
-        New(Vec<VaultReviewer>),
-        #[allow(dead_code)]
-        Old(Vec<Principal>),
-    }
-
-    Ok(match Compat::deserialize(d)? {
-        Compat::New(reviewers) => reviewers,
-        Compat::Old(_) => Vec::new(),
-    })
 }
