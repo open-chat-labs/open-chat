@@ -203,6 +203,7 @@ import type {
     WithdrawBtcResponse,
     WithdrawCryptocurrencyResponse,
     VaultFileChunkResponse,
+    ProposedProtectedAction,
 } from "@shared";
 import {
     ANON_USER_ID,
@@ -2178,7 +2179,7 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.acceptTerms(version);
     }
 
-    proposeSetVaultReviewers(userIds: string[]): Promise<bigint | undefined> {
+    proposeSetVaultReviewers(userIds: string[]): Promise<ProposedProtectedAction | undefined> {
         return this._userIndexClient.proposeSetVaultReviewers(userIds);
     }
 
@@ -2205,7 +2206,7 @@ export class OpenChatAgent extends EventTarget {
     proposeDestroyVaultEvidence(
         reportIndex: bigint,
         leRequestRef: string,
-    ): Promise<bigint | undefined> {
+    ): Promise<ProposedProtectedAction | undefined> {
         return this._userIndexClient.proposeDestroyVaultEvidence(reportIndex, leRequestRef);
     }
 
@@ -2215,7 +2216,7 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.setModerationReferralConfig(config);
     }
 
-    proposeSetOpenAIApiKey(apiKey: string | undefined): Promise<bigint | undefined> {
+    proposeSetOpenAIApiKey(apiKey: string | undefined): Promise<ProposedProtectedAction | undefined> {
         if (offline()) return Promise.resolve(undefined);
 
         return this._userIndexClient.proposeSetOpenAIApiKey(apiKey);
@@ -2223,7 +2224,7 @@ export class OpenChatAgent extends EventTarget {
 
     proposeSetInternalModerationChannel(
         channel: { communityId: string; channelId: number } | undefined,
-    ): Promise<bigint | undefined> {
+    ): Promise<ProposedProtectedAction | undefined> {
         if (offline()) return Promise.resolve(undefined);
 
         return this._userIndexClient.proposeSetInternalModerationChannel(channel);

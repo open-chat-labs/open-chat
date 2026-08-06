@@ -5,7 +5,7 @@ use canister_api_macros::query;
 use serde::Serialize;
 use user_index_canister::protected_actions::{Response::*, *};
 
-#[query(guard = "caller_is_platform_operator", msgpack = true)]
+#[query(guard = "caller_is_platform_operator", candid = true, msgpack = true)]
 fn protected_actions(_args: Args) -> Response {
     read_state(|state| {
         // Pending entries expose the action SUMMARY, never the action itself, so secrets

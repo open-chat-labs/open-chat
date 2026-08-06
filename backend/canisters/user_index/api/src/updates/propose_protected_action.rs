@@ -18,6 +18,17 @@ pub enum ProtectedAction {
 }
 
 impl ProtectedAction {
+    // At most one proposal per kind can be pending: proposing another supersedes it, so the
+    // pending list always reflects the current intent rather than accumulating stale variants
+    pub fn kind(&self) -> &'static str {
+        match self {
+            ProtectedAction::DestroyVaultEvidence(_) => "DestroyVaultEvidence",
+            ProtectedAction::SetVaultReviewers(_) => "SetVaultReviewers",
+            ProtectedAction::SetOpenAIApiKey(_) => "SetOpenAIApiKey",
+            ProtectedAction::SetInternalModerationChannel(_) => "SetInternalModerationChannel",
+        }
+    }
+
     // Shown in the lifecycle log and moderation-channel notices. Never includes secrets.
     pub fn summary(&self) -> String {
         match self {
@@ -63,4 +74,7 @@ pub enum Response {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub action_id: u64,
+    // True when an identical action was already pending: nothing new was queued, and this is
+    // the id of the existing proposal
+    pub already_pending: bool,
 }

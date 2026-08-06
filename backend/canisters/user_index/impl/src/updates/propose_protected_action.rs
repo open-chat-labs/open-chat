@@ -41,14 +41,21 @@ fn propose_protected_action_impl(args: Args, state: &mut RuntimeState) -> Respon
 
     let now = state.env.now();
     let summary = args.action.summary();
-    let action_id = state.data.protected_actions.propose(args.action, caller, proposed_by, now);
+    let (action_id, already_pending) = state.data.protected_actions.propose(args.action, caller, proposed_by, now);
 
-    moderation::post_moderation_notice(
-        format!(
-            "🔐 Protected action #{action_id} proposed: {summary}\n\nBy {proposed_by} — executes only once a different platform operator confirms it"
-        ),
-        state,
-    );
+    // An identical action was already queued, so this changed nothing - don't alert the
+    // moderators a second time for the same pending decision
+    if !already_pending {
+        moderation::post_moderation_notice(
+            format!(
+                "🔐 Protected action #{action_id} proposed: {summary}\n\nBy {proposed_by} — executes only once a different platform operator confirms it"
+            ),
+            state,
+        );
+    }
 
-    Response::Success(SuccessResult { action_id })
+    Response::Success(SuccessResult {
+        action_id,
+        already_pending,
+    })
 }

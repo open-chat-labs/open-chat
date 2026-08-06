@@ -2279,6 +2279,7 @@ export type UserIndexProposeProtectedActionSuccessResult = Static<
 >;
 export const UserIndexProposeProtectedActionSuccessResult = Type.Object({
     action_id: Type.BigInt(),
+    already_pending: Type.Boolean(),
 });
 
 export type UserIndexProposeProtectedActionResponse = Static<

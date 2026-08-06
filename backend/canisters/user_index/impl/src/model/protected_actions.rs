@@ -52,6 +52,8 @@ pub enum ProtectedActionLogEvent {
     Confirmed(u64, String, UserId, UserId),
     Cancelled(u64, String, UserId),
     Expired(u64, String),
+    // A pending proposal was replaced by a newer one of the same kind
+    Superseded(u64, String, u64, UserId),
 }
 
 pub enum ConfirmOutcome {
@@ -61,15 +63,52 @@ pub enum ConfirmOutcome {
 }
 
 impl ProtectedActions {
+    // Returns the action id, and whether an identical action was ALREADY pending (in which
+    // case nothing new is queued and the existing proposal is returned). Comparison is over
+    // the encoded action rather than its summary: summaries redact secrets, so two different
+    // API keys share a summary and must never collapse into one proposal.
     pub fn propose(
         &mut self,
         action: ProtectedAction,
         proposed_by_principal: Principal,
         proposed_by: UserId,
         now: TimestampMillis,
-    ) -> u64 {
+    ) -> (u64, bool) {
         self.prune_expired(now);
+
+        let encoded = msgpack::serialize_then_unwrap(&action);
+        if let Some(existing) = self
+            .pending
+            .values()
+            .find(|p| msgpack::serialize_then_unwrap(&p.action) == encoded)
+        {
+            // Identical to what is already pending (typically a double click). Deliberately
+            // returns the original even when the proposer differs: the second operator still
+            // has to press Confirm, which is the separate deliberate act dual authorization
+            // requires, and the log records both identities
+            return (existing.id, true);
+        }
+
         let id = self.next_id;
+
+        // A different payload of the same kind supersedes the pending one, so the list always
+        // shows the current intent. The replacement takes a NEW id, so an operator confirming
+        // from a stale screen gets a clean failure rather than silently confirming a payload
+        // which was swapped underneath them. The supersession is logged either way.
+        let superseded: Vec<u64> = self
+            .pending
+            .values()
+            .filter(|p| p.action.kind() == action.kind())
+            .map(|p| p.id)
+            .collect();
+        for old_id in superseded {
+            let entry = self.pending.remove(&old_id).unwrap();
+            self.append_log(
+                ProtectedActionLogEvent::Superseded(old_id, entry.action.summary(), id, proposed_by),
+                now,
+            );
+        }
+
         self.next_id += 1;
         self.append_log(ProtectedActionLogEvent::Proposed(id, action.summary(), proposed_by), now);
         self.pending.insert(
@@ -82,7 +121,7 @@ impl ProtectedActions {
                 proposed_at: now,
             },
         );
-        id
+        (id, false)
     }
 
     pub fn confirm(
@@ -190,7 +229,7 @@ mod tests {
         let mut actions = ProtectedActions::default();
         let p1 = random_principal();
         let u1 = random_from_principal::<UserId>();
-        let id = actions.propose(destroy_action(), p1, u1, 1);
+        let (id, _) = actions.propose(destroy_action(), p1, u1, 1);
         assert!(matches!(
             actions.confirm(id, p1, u1, 2),
             ConfirmOutcome::ProposerCannotConfirm
@@ -203,7 +242,7 @@ mod tests {
     fn same_operator_cannot_confirm_under_a_new_principal() {
         let mut actions = ProtectedActions::default();
         let operator = random_from_principal::<UserId>();
-        let id = actions.propose(destroy_action(), random_principal(), operator, 1);
+        let (id, _) = actions.propose(destroy_action(), random_principal(), operator, 1);
         // Different principal, same human: still the proposer
         assert!(matches!(
             actions.confirm(id, random_principal(), operator, 2),
@@ -215,7 +254,7 @@ mod tests {
     #[test]
     fn different_operator_confirms_and_consumes() {
         let mut actions = ProtectedActions::default();
-        let id = actions.propose(destroy_action(), random_principal(), random_from_principal::<UserId>(), 1);
+        let (id, _) = actions.propose(destroy_action(), random_principal(), random_from_principal::<UserId>(), 1);
         assert!(matches!(
             actions.confirm(id, random_principal(), random_from_principal::<UserId>(), 2),
             ConfirmOutcome::Confirmed(_)
@@ -230,7 +269,7 @@ mod tests {
     #[test]
     fn expired_proposal_cannot_be_confirmed() {
         let mut actions = ProtectedActions::default();
-        let id = actions.propose(destroy_action(), random_principal(), random_from_principal::<UserId>(), 1);
+        let (id, _) = actions.propose(destroy_action(), random_principal(), random_from_principal::<UserId>(), 1);
         let after_expiry = 1 + PENDING_PROTECTED_ACTION_TTL + 1;
         assert!(matches!(
             actions.confirm(id, random_principal(), random_from_principal::<UserId>(), after_expiry),
@@ -249,15 +288,98 @@ mod tests {
         let mut actions = ProtectedActions::default();
         let p1 = random_principal();
         let u1 = random_from_principal::<UserId>();
-        let id = actions.propose(destroy_action(), p1, u1, 1);
+        let (id, _) = actions.propose(destroy_action(), p1, u1, 1);
         assert!(actions.cancel(id, u1, 2).is_some());
         assert_eq!(actions.pending().count(), 0);
     }
 
     #[test]
+    fn identical_pending_action_collapses_into_the_existing_proposal() {
+        let mut actions = ProtectedActions::default();
+        let p1 = random_principal();
+        let u1 = random_from_principal::<UserId>();
+        let (first, existed) = actions.propose(destroy_action(), p1, u1, 1);
+        assert!(!existed);
+
+        // Same proposer, and a different operator, both collapse onto the original
+        let (again, existed) = actions.propose(destroy_action(), p1, u1, 2);
+        assert!(existed);
+        assert_eq!(again, first);
+        let (from_other, existed) = actions.propose(destroy_action(), random_principal(), random_from_principal::<UserId>(), 3);
+        assert!(existed);
+        assert_eq!(from_other, first);
+
+        assert_eq!(actions.pending().count(), 1);
+        // Only the original proposal was logged
+        assert_eq!(actions.log().len(), 1);
+    }
+
+    #[test]
+    fn a_new_payload_of_the_same_kind_supersedes_the_pending_one() {
+        let mut actions = ProtectedActions::default();
+        let key = |k: &str| {
+            ProtectedAction::SetOpenAIApiKey(user_index_canister::set_openai_api_key::Args {
+                api_key: Some(k.to_string()),
+            })
+        };
+        let proposer = random_principal();
+        let (first, _) = actions.propose(key("key-one"), proposer, random_from_principal::<UserId>(), 1);
+        let (second, existed) = actions.propose(key("key-two"), proposer, random_from_principal::<UserId>(), 2);
+
+        assert!(!existed);
+        assert_ne!(first, second);
+        // Only the newer proposal survives, and it carries a new id
+        assert_eq!(actions.pending().count(), 1);
+        assert_eq!(actions.pending().next().unwrap().id, second);
+        // Confirming the superseded id fails rather than applying the swapped payload
+        assert!(matches!(
+            actions.confirm(first, random_principal(), random_from_principal::<UserId>(), 3),
+            ConfirmOutcome::NotFound
+        ));
+        // The supersession is logged (before the replacement's own Proposed entry)
+        assert!(
+            actions
+                .log()
+                .iter()
+                .any(|e| matches!(e.event, ProtectedActionLogEvent::Superseded(..)))
+        );
+    }
+
+    #[test]
+    fn actions_of_different_kinds_can_be_pending_together() {
+        let mut actions = ProtectedActions::default();
+        actions.propose(destroy_action(), random_principal(), random_from_principal::<UserId>(), 1);
+        actions.propose(
+            ProtectedAction::SetOpenAIApiKey(user_index_canister::set_openai_api_key::Args { api_key: None }),
+            random_principal(),
+            random_from_principal::<UserId>(),
+            2,
+        );
+        assert_eq!(actions.pending().count(), 2);
+    }
+
+    #[test]
+    fn actions_differing_only_in_a_redacted_secret_do_not_collapse() {
+        let mut actions = ProtectedActions::default();
+        let key = |k: &str| {
+            ProtectedAction::SetOpenAIApiKey(user_index_canister::set_openai_api_key::Args {
+                api_key: Some(k.to_string()),
+            })
+        };
+        // Both summarise as "SetOpenAIApiKey(<redacted>)", so a summary-based comparison
+        // would treat them as the same proposal and apply the wrong key. They must be seen as
+        // distinct: the second supersedes the first rather than collapsing into it
+        let (first, _) = actions.propose(key("key-one"), random_principal(), random_from_principal::<UserId>(), 1);
+        let (second, existed) = actions.propose(key("key-two"), random_principal(), random_from_principal::<UserId>(), 2);
+        assert!(!existed);
+        assert_ne!(first, second);
+        assert_eq!(actions.pending().next().unwrap().id, second);
+    }
+
+    #[test]
     fn log_chain_verifies_and_detects_tampering() {
         let mut actions = ProtectedActions::default();
-        let id = actions.propose(destroy_action(), random_principal(), random_from_principal::<UserId>(), 1);
+        let (id, _) = actions.propose(destroy_action(), random_principal(), random_from_principal::<UserId>(), 1);
         actions.confirm(id, random_principal(), random_from_principal::<UserId>(), 2);
         for pair in actions.log().windows(2) {
             assert_eq!(pair[1].prev_hash, ProtectedActions::entry_hash(&pair[0]));
@@ -271,7 +393,7 @@ mod tests {
         let action = ProtectedAction::SetOpenAIApiKey(user_index_canister::set_openai_api_key::Args {
             api_key: Some("sk-super-secret".to_string()),
         });
-        let id = actions.propose(action, random_principal(), random_from_principal::<UserId>(), 1);
+        let (id, _) = actions.propose(action, random_principal(), random_from_principal::<UserId>(), 1);
         actions.confirm(id, random_principal(), random_from_principal::<UserId>(), 2);
         let serialized = String::from_utf8_lossy(&msgpack::serialize_then_unwrap(actions.log())).to_string();
         assert!(!serialized.contains("super-secret"));

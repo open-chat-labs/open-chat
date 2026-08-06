@@ -1,6 +1,7 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import type {
     ModerationConfig,
+    ProposedProtectedAction,
     BotDefinition,
     BotInstallationLocation,
     BotsResponse,
@@ -166,7 +167,10 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                         // blocking terms notice and, offline, lock the user out entirely
                         const latest = await this.chatsDb.getCachedCurrentUser();
                         const accepted = latest?.acceptedTermsVersion;
-                        if (accepted !== undefined && (liveUser.acceptedTermsVersion ?? 0) < accepted) {
+                        if (
+                            accepted !== undefined &&
+                            (liveUser.acceptedTermsVersion ?? 0) < accepted
+                        ) {
                             liveUser = { ...liveUser, acceptedTermsVersion: accepted };
                         }
                         this.chatsDb.setCachedCurrentUser(liveUser);
@@ -212,11 +216,17 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
     // DIFFERENT platform operator confirms before anything executes.
     proposeProtectedAction(
         action: UserIndexProposeProtectedActionProtectedAction,
-    ): Promise<bigint | undefined> {
+    ): Promise<ProposedProtectedAction | undefined> {
         return this.update(
             "propose_protected_action",
             { action },
-            (resp) => ("Success" in resp ? resp.Success.action_id : undefined),
+            (resp) =>
+                "Success" in resp
+                    ? {
+                          actionId: resp.Success.action_id,
+                          alreadyPending: resp.Success.already_pending,
+                      }
+                    : undefined,
             UserIndexProposeProtectedActionArgs,
             UserIndexProposeProtectedActionResponse,
         );
@@ -252,13 +262,17 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         );
     }
 
-    proposeSetVaultReviewers(userIds: string[]): Promise<bigint | undefined> {
+    proposeSetVaultReviewers(userIds: string[]): Promise<ProposedProtectedAction | undefined> {
         return this.proposeProtectedAction({
             SetVaultReviewers: { user_ids: userIds.map(principalStringToBytes) },
         });
     }
 
-    setVaultLegalHold(reportIndex: bigint, legalHold: boolean, reference: string): Promise<boolean> {
+    setVaultLegalHold(
+        reportIndex: bigint,
+        legalHold: boolean,
+        reference: string,
+    ): Promise<boolean> {
         return this.update(
             "set_vault_legal_hold",
             { report_index: reportIndex, legal_hold: legalHold, reference },
@@ -271,7 +285,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
     proposeDestroyVaultEvidence(
         reportIndex: bigint,
         leRequestRef: string,
-    ): Promise<bigint | undefined> {
+    ): Promise<ProposedProtectedAction | undefined> {
         return this.proposeProtectedAction({
             DestroyVaultEvidence: { report_index: reportIndex, le_request_ref: leRequestRef },
         });
@@ -299,15 +313,19 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         );
     }
 
-    proposeSetOpenAIApiKey(apiKey: string | undefined): Promise<bigint | undefined> {
+    proposeSetOpenAIApiKey(
+        apiKey: string | undefined,
+    ): Promise<ProposedProtectedAction | undefined> {
         return this.proposeProtectedAction({
-            SetOpenAIApiKey: { api_key: apiKey === undefined || apiKey === "" ? undefined : apiKey },
+            SetOpenAIApiKey: {
+                api_key: apiKey === undefined || apiKey === "" ? undefined : apiKey,
+            },
         });
     }
 
     proposeSetInternalModerationChannel(
         channel: { communityId: string; channelId: number } | undefined,
-    ): Promise<bigint | undefined> {
+    ): Promise<ProposedProtectedAction | undefined> {
         return this.proposeProtectedAction({
             SetInternalModerationChannel: {
                 channel:

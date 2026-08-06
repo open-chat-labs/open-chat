@@ -234,6 +234,7 @@ import type {
     UsersArgs,
     UsersResponse,
     UserSummary,
+    ProposedProtectedAction,
 } from "./user";
 import type { Verification } from "./wallet";
 
@@ -1862,6 +1863,7 @@ export type WorkerError = {
  * Worker response types
  */
 export type WorkerResponseInner =
+    | ProposedProtectedAction
     | VaultFileChunkResponse
     | void
     | bigint
@@ -2593,7 +2595,7 @@ export type WorkerResult<T> = T extends Init
     : T extends SetCommunityIndexes
     ? boolean
     : T extends ProposeSetOpenAIApiKey
-    ? bigint | undefined
+    ? ProposedProtectedAction | undefined
     : T extends ConfirmProtectedAction
     ? boolean
     : T extends CancelProtectedAction
@@ -2603,11 +2605,11 @@ export type WorkerResult<T> = T extends Init
     : T extends SetModerationReferralConfig
     ? boolean
     : T extends ProposeSetVaultReviewers
-    ? bigint | undefined
+    ? ProposedProtectedAction | undefined
     : T extends SetVaultLegalHold
     ? boolean
     : T extends ProposeDestroyVaultEvidence
-    ? bigint | undefined
+    ? ProposedProtectedAction | undefined
     : T extends VaultLog
     ? VaultLogResponse
     : T extends VaultBuckets
@@ -2621,7 +2623,7 @@ export type WorkerResult<T> = T extends Init
     : T extends AcceptTerms
     ? boolean
     : T extends ProposeSetInternalModerationChannel
-    ? bigint | undefined
+    ? ProposedProtectedAction | undefined
     : T extends ResolveModerationReport
     ? boolean
     : T extends ContestModerationSanction

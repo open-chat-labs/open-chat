@@ -81,6 +81,7 @@ pub mod happy_path {
         let user_index_canister::propose_protected_action::Response::Success(result) = response else {
             panic!("'propose_protected_action' error: {response:?}");
         };
+        assert!(!result.already_pending, "expected a new proposal, not an existing one");
 
         let response = super::confirm_protected_action(
             env,

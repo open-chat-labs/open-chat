@@ -550,6 +550,13 @@ export type Referral = {
     status: ReferralStatus;
 };
 
+// The result of proposing a dual-authorized operator action: nothing has taken effect yet,
+// and `alreadyPending` means an identical action was already queued so this changed nothing
+export type ProposedProtectedAction = {
+    actionId: bigint;
+    alreadyPending: boolean;
+};
+
 export type ModerationConfig = {
     openaiApiKeySet: boolean;
     internalModerationChannel: { communityId: string; channelId: number } | undefined;

@@ -1982,6 +1982,77 @@ fn legal_hold_blocks_destruction_of_vaulted_evidence() {
 }
 
 #[test]
+fn a_second_proposal_of_the_same_kind_supersedes_the_first() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    let propose = |env: &mut PocketIc, key: &str| {
+        let response = client::user_index::propose_protected_action(
+            env,
+            test_data.moderator.principal,
+            canister_ids.user_index,
+            &user_index_canister::propose_protected_action::Args {
+                action: ProtectedAction::SetOpenAIApiKey(user_index_canister::set_openai_api_key::Args {
+                    api_key: Some(key.to_string()),
+                }),
+            },
+        );
+        let user_index_canister::propose_protected_action::Response::Success(result) = response else {
+            panic!("'propose_protected_action' error: {response:?}");
+        };
+        result
+    };
+
+    let first = propose(env, "key-one");
+    assert!(!first.already_pending);
+
+    // Re-proposing the identical action is idempotent - a double click must not queue a
+    // second copy
+    let repeat = propose(env, "key-one");
+    assert!(repeat.already_pending);
+    assert_eq!(repeat.action_id, first.action_id);
+
+    // A different key of the same kind supersedes it, taking a new id
+    let second = propose(env, "key-two");
+    assert!(!second.already_pending);
+    assert_ne!(second.action_id, first.action_id);
+
+    // Confirming the superseded id fails, so a stale screen cannot apply the swapped payload
+    let response = client::user_index::confirm_protected_action(
+        env,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        &user_index_canister::confirm_protected_action::Args {
+            action_id: first.action_id,
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::confirm_protected_action::Response::Error(_)),
+        "{response:?}"
+    );
+
+    // The surviving proposal still confirms normally
+    let response = client::user_index::confirm_protected_action(
+        env,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        &user_index_canister::confirm_protected_action::Args {
+            action_id: second.action_id,
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::confirm_protected_action::Response::Success),
+        "{response:?}"
+    );
+}
+
+#[test]
 fn cancelled_protected_action_cannot_be_confirmed() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {

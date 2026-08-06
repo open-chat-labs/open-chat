@@ -7,6 +7,7 @@
         type UpdateMarketMakerConfigArgs,
     } from "@client";
     import { getContext, onMount } from "svelte";
+    import type { ProposedProtectedAction } from "openchat-client";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import Button from "../../Button.svelte";
@@ -106,18 +107,22 @@
 
     // The four irreversible operator actions are dual authorized: proposing one only queues
     // it, and a DIFFERENT operator must confirm before it executes.
-    function onProposed(actionId: bigint | undefined, what: string): void {
-        if (actionId !== undefined) {
-            toastStore.showSuccessToast(
-                i18nKey(
-                    `Proposed ${what} as action #${actionId} - a different platform operator must confirm it`,
-                ),
-            );
-            refreshPendingActions();
-        } else {
+    function onProposed(proposed: ProposedProtectedAction | undefined, what: string): void {
+        if (proposed === undefined) {
             error = i18nKey(`Failed to propose ${what}`);
             toastStore.showFailureToast(error);
+            return;
         }
+        // Deliberately NOT a success toast: nothing has taken effect yet, and the previous
+        // wording read as though the change had been applied
+        toastStore.showSuccessToast(
+            i18nKey(
+                proposed.alreadyPending
+                    ? `An identical ${what} change is already pending as action #${proposed.actionId} - it still needs a different platform operator to confirm it`
+                    : `Proposed ${what} as action #${proposed.actionId} - NOT yet applied: a different platform operator must confirm it below`,
+            ),
+        );
+        refreshPendingActions();
     }
 
     function confirmProtectedAction(actionId: number): void {
@@ -393,7 +398,7 @@
         addBusy(7);
         client
             .proposeSetOpenAIApiKey(openAiApiKey === "" ? undefined : openAiApiKey)
-            .then((actionId) => onProposed(actionId, "OpenAI API key"))
+            .then((proposed) => onProposed(proposed, "OpenAI API key"))
             .finally(() => removeBusy(7));
     }
 
@@ -433,7 +438,7 @@
             .filter((id) => id !== "");
         client
             .proposeSetVaultReviewers(userIds)
-            .then((actionId) => onProposed(actionId, "vault reviewers"))
+            .then((proposed) => onProposed(proposed, "vault reviewers"))
             .finally(() => removeBusy(10));
     }
 
@@ -477,13 +482,13 @@
         addBusy(12);
         client
             .proposeDestroyVaultEvidence(reportIndex, destroyRequestRef.trim())
-            .then((actionId) => {
-                if (actionId !== undefined) {
+            .then((proposed) => {
+                if (proposed !== undefined) {
                     destroyConfirmed = false;
                     destroyReportIndex = "";
                     destroyRequestRef = "";
                 }
-                onProposed(actionId, "destruction of vaulted evidence");
+                onProposed(proposed, "destruction of vaulted evidence");
             })
             .finally(() => removeBusy(12));
     }
@@ -503,7 +508,7 @@
                 : { communityId: moderationCommunityId, channelId: channelIdNum };
         client
             .proposeSetInternalModerationChannel(channel)
-            .then((actionId) => onProposed(actionId, "internal moderation channel"))
+            .then((proposed) => onProposed(proposed, "internal moderation channel"))
             .finally(() => removeBusy(8));
     }
 
@@ -830,7 +835,9 @@
         <div class="hint">
             Destroying vaulted evidence, designating vault reviewers, setting the OpenAI API key
             and setting the moderation channel are dual authorized: one operator proposes, a
-            different operator confirms. Proposals expire after 14 days. Anyone can cancel.
+            different operator confirms. Proposing another change of the same kind replaces the
+            pending one (the replacement gets a new id), proposals expire after 14 days, and
+            anyone can cancel.
         </div>
         {#if pendingActions.length === 0}
             <div class="hint">Nothing pending.</div>

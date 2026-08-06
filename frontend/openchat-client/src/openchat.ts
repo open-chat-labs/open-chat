@@ -6070,7 +6070,10 @@ export class OpenChat {
             .send({ kind: "acceptTerms", version })
             .then((success) => {
                 if (success) {
-                    currentUserStore.set({ ...currentUserStore.value, acceptedTermsVersion: version });
+                    currentUserStore.set({
+                        ...currentUserStore.value,
+                        acceptedTermsVersion: version,
+                    });
                 }
                 return success;
             })
@@ -7382,10 +7385,10 @@ export class OpenChat {
         return hasFlag(flags, flag);
     }
 
-    proposeSetOpenAIApiKey(apiKey: string | undefined): Promise<bigint | undefined> {
-        return this.#worker
-            .send({ kind: "proposeSetOpenAIApiKey", apiKey })
-            .catch(() => undefined);
+    proposeSetOpenAIApiKey(
+        apiKey: string | undefined,
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.#worker.send({ kind: "proposeSetOpenAIApiKey", apiKey }).catch(() => undefined);
     }
 
     vaultBuckets(): Promise<string[]> {
@@ -7426,7 +7429,7 @@ export class OpenChat {
             .catch(() => false);
     }
 
-    proposeSetVaultReviewers(userIds: string[]): Promise<bigint | undefined> {
+    proposeSetVaultReviewers(userIds: string[]): Promise<ProposedProtectedAction | undefined> {
         return this.#worker
             .send({ kind: "proposeSetVaultReviewers", userIds })
             .catch(() => undefined);
@@ -7457,7 +7460,7 @@ export class OpenChat {
     proposeDestroyVaultEvidence(
         reportIndex: bigint,
         leRequestRef: string,
-    ): Promise<bigint | undefined> {
+    ): Promise<ProposedProtectedAction | undefined> {
         return this.#worker
             .send({ kind: "proposeDestroyVaultEvidence", reportIndex, leRequestRef })
             .catch(() => undefined);
@@ -7473,7 +7476,7 @@ export class OpenChat {
 
     proposeSetInternalModerationChannel(
         channel: { communityId: string; channelId: number } | undefined,
-    ): Promise<bigint | undefined> {
+    ): Promise<ProposedProtectedAction | undefined> {
         return this.#worker
             .send({ kind: "proposeSetInternalModerationChannel", channel })
             .catch(() => undefined);
