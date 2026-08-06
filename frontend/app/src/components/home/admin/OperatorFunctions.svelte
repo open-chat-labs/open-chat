@@ -85,25 +85,10 @@
     let tokenLedgerValid = $derived(tokenLedger.length > 0);
 
     let openAiKeySet = $state(false);
-    type PendingProtectedAction = {
-        id: number;
-        summary: string;
-        proposed_by: string;
-        proposed_at: number;
-        expires_at: number;
-    };
-    let pendingActions: PendingProtectedAction[] = $state([]);
-
-    function refreshPendingActions(): void {
-        client.protectedActions().then((json) => {
-            if (json === undefined) return;
-            try {
-                pendingActions = JSON.parse(json).pending ?? [];
-            } catch {
-                pendingActions = [];
-            }
-        });
-    }
+    // Current values shown alongside the proposed ones, so an operator can see what a proposal
+    // would actually change
+    let currentVaultReviewers = $state("");
+    let currentModerationChannel = $state("");
 
     // The four irreversible operator actions are dual authorized: proposing one only queues
     // it, and a DIFFERENT operator must confirm before it executes.
@@ -119,50 +104,12 @@
             i18nKey(
                 proposed.alreadyPending
                     ? `An identical ${what} change is already pending as action #${proposed.actionId} - it still needs a different platform operator to confirm it`
-                    : `Proposed ${what} as action #${proposed.actionId} - NOT yet applied: a different platform operator must confirm it below`,
+                    : `Proposed ${what} as action #${proposed.actionId} - NOT yet applied: a different platform operator must confirm it under Pending proposals`,
             ),
         );
-        refreshPendingActions();
-    }
-
-    function confirmProtectedAction(actionId: number): void {
-        error = undefined;
-        addBusy(13);
-        client
-            .confirmProtectedAction(BigInt(actionId))
-            .then((success) => {
-                if (success) {
-                    toastStore.showSuccessToast(i18nKey("Action confirmed and executed"));
-                } else {
-                    error = i18nKey(
-                        "Failed to confirm the action (a proposal cannot be confirmed by its proposer)",
-                    );
-                    toastStore.showFailureToast(error);
-                }
-                refreshPendingActions();
-            })
-            .finally(() => removeBusy(13));
-    }
-
-    function cancelProtectedAction(actionId: number): void {
-        error = undefined;
-        addBusy(14);
-        client
-            .cancelProtectedAction(BigInt(actionId))
-            .then((success) => {
-                if (success) {
-                    toastStore.showSuccessToast(i18nKey("Action cancelled"));
-                } else {
-                    error = i18nKey("Failed to cancel the action");
-                    toastStore.showFailureToast(error);
-                }
-                refreshPendingActions();
-            })
-            .finally(() => removeBusy(14));
     }
 
     onMount(() => {
-        refreshPendingActions();
         // Pre-fill the moderation config so the forms show what is actually set rather than
         // being write-only
         client.moderationConfig().then((config) => {
@@ -171,6 +118,7 @@
             if (config.internalModerationChannel !== undefined) {
                 moderationCommunityId = config.internalModerationChannel.communityId;
                 moderationChannelId = config.internalModerationChannel.channelId.toString();
+                currentModerationChannel = `${config.internalModerationChannel.communityId} / ${config.internalModerationChannel.channelId}`;
             }
             if (config.referralConfig !== undefined) {
                 referralThresholds = Object.fromEntries(
@@ -181,6 +129,7 @@
                 );
             }
             vaultReviewerIds = config.vaultReviewers.join(", ");
+            currentVaultReviewers = config.vaultReviewers.join(", ");
         });
         client.diamondMembershipFees().then((fees) => {
             originalFees = client.toRecord(fees, (f) => f.token);
@@ -740,21 +689,6 @@
     </section>
 
     <section class="operator-function">
-        <div class="title">
-            Set OpenAI API key (moderation) {openAiKeySet ? "- currently set" : "- NOT SET"}
-        </div>
-        <div class="name-value">
-            <div class="label">API key:</div>
-            <div class="value">
-                <Input bind:value={openAiApiKey} />
-            </div>
-        </div>
-        <Button tiny disabled={busy.has(7)} loading={busy.has(7)} onClick={proposeSetOpenAIApiKey}>
-            Apply
-        </Button>
-    </section>
-
-    <section class="operator-function">
         <div class="title">Set moderation referral config</div>
         <div class="hint">
             Per-category score thresholds (0-1) above which a message is referred for human
@@ -783,25 +717,11 @@
     </section>
 
     <section class="operator-function">
-        <div class="title">Set vault reviewers</div>
-        <div class="hint">
-            Comma-separated user ids. Replaces the whole set; each must already be a platform
-            moderator. An empty list revokes all reviewers.
-        </div>
-        <ButtonGroup align="fill">
-            <Input bind:value={vaultReviewerIds} />
-            <Button tiny disabled={busy.has(10)} loading={busy.has(10)} onClick={proposeSetVaultReviewers}>
-                Apply
-            </Button>
-        </ButtonGroup>
-    </section>
-
-    <section class="operator-function">
         <div class="title">Vault legal hold</div>
         <div class="hint">
             Preservation request: suspends the retention clock for a report's vaulted evidence, so
-            it is never deleted at expiry. Clearing the hold performs any release which was
-            deferred while it was set.
+            it is never deleted at expiry. Clearing the hold performs any release which was deferred
+            while it was set.
         </div>
         <div class="name-value">
             <div class="label">Report index:</div>
@@ -820,59 +740,124 @@
                 tiny
                 disabled={busy.has(11)}
                 loading={busy.has(11)}
-                onClick={() => setVaultLegalHold(true)}>Set hold</Button>
+                onClick={() => setVaultLegalHold(true)}>Set hold</Button
+            >
             <Button
                 tiny
                 secondary
                 disabled={busy.has(11)}
                 loading={busy.has(11)}
-                onClick={() => setVaultLegalHold(false)}>Clear hold</Button>
+                onClick={() => setVaultLegalHold(false)}>Clear hold</Button
+            >
         </ButtonGroup>
     </section>
 
     <section class="operator-function">
-        <div class="title">Pending protected actions</div>
-        <div class="hint">
-            Destroying vaulted evidence, designating vault reviewers, setting the OpenAI API key
-            and setting the moderation channel are dual authorized: one operator proposes, a
-            different operator confirms. Proposing another change of the same kind replaces the
-            pending one (the replacement gets a new id), proposals expire after 14 days, and
-            anyone can cancel.
-        </div>
-        {#if pendingActions.length === 0}
-            <div class="hint">Nothing pending.</div>
-        {:else}
-            {#each pendingActions as action (action.id)}
-                <div class="name-value">
-                    <div class="label">#{action.id} {action.summary}</div>
-                    <div class="value">
-                        <ButtonGroup align="fill">
-                            <Button
-                                tiny
-                                disabled={busy.has(13)}
-                                loading={busy.has(13)}
-                                onClick={() => confirmProtectedAction(action.id)}>Confirm</Button>
-                            <Button
-                                tiny
-                                secondary
-                                disabled={busy.has(14)}
-                                loading={busy.has(14)}
-                                onClick={() => cancelProtectedAction(action.id)}>Cancel</Button>
-                        </ButtonGroup>
-                    </div>
-                </div>
-            {/each}
-        {/if}
+        <ButtonGroup align="fill">
+            <h4>Pause event loop</h4>
+            <Button tiny onClick={() => client.pauseEventLoop()}>Pause</Button>
+        </ButtonGroup>
     </section>
 
     <section class="operator-function">
-        <div class="title">Propose destruction of vaulted evidence</div>
+        <ButtonGroup align="fill">
+            <h4>Resume event loop</h4>
+            <Button tiny onClick={() => client.resumeEventLoop()}>Resume</Button>
+        </ButtonGroup>
+    </section>
+
+    <section class="danger-zone-header">
+        <h4>Two-phase operator actions</h4>
         <div class="hint">
-            Law enforcement destruction request. Irreversible, so this only PROPOSES the
-            destruction: a different platform operator must confirm it above before anything is
-            destroyed. A standing legal hold blocks destruction - clear the hold first, as a
-            separate act. The reference and both operator identities are recorded in the vault
-            log, which survives the destruction.
+            Everything below is <strong>dual authorized</strong>: you propose the change, and a
+            different platform operator confirms or rejects it. Nothing here takes effect when you
+            press Propose. Pending proposals - yours and other operators' - are listed under the
+            <strong>Pending proposals</strong> tab.
+        </div>
+    </section>
+
+    <section class="operator-function danger">
+        <div class="title">OpenAI API key (moderation)</div>
+        <div class="hint">
+            Arms the classification pipeline on every local user index. Setting it starts proactive
+            detection and the reporting duties which follow from it.
+        </div>
+        <div class="comparison">
+            <div class="current">
+                <div class="col-label">Current</div>
+                <div class="col-value">{openAiKeySet ? "Set" : "Not set"}</div>
+            </div>
+            <div class="proposed">
+                <div class="col-label">Propose</div>
+                <div class="col-value">
+                    <Input bind:value={openAiApiKey} placeholder={"New key (blank to unset)"} />
+                </div>
+            </div>
+        </div>
+        <Button tiny disabled={busy.has(7)} loading={busy.has(7)} onClick={proposeSetOpenAIApiKey}>
+            Propose
+        </Button>
+    </section>
+
+    <section class="operator-function danger">
+        <div class="title">Vault reviewers</div>
+        <div class="hint">
+            Grants access to quarantined material. Comma-separated user ids; replaces the whole set;
+            each must already be a platform moderator. An empty list revokes all reviewers.
+        </div>
+        <div class="comparison">
+            <div class="current">
+                <div class="col-label">Current</div>
+                <div class="col-value">{currentVaultReviewers || "None"}</div>
+            </div>
+            <div class="proposed">
+                <div class="col-label">Propose</div>
+                <div class="col-value">
+                    <Input bind:value={vaultReviewerIds} />
+                </div>
+            </div>
+        </div>
+        <Button
+            tiny
+            disabled={busy.has(10)}
+            loading={busy.has(10)}
+            onClick={proposeSetVaultReviewers}>Propose</Button
+        >
+    </section>
+
+    <section class="operator-function danger">
+        <div class="title">Internal moderation channel</div>
+        <div class="hint">
+            Where moderation alerts - including report excerpts and context - are posted.
+        </div>
+        <div class="comparison">
+            <div class="current">
+                <div class="col-label">Current</div>
+                <div class="col-value">{currentModerationChannel || "Not set"}</div>
+            </div>
+            <div class="proposed">
+                <div class="col-label">Propose</div>
+                <div class="col-value">
+                    <Input bind:value={moderationCommunityId} placeholder={"Community id"} />
+                    <Input bind:value={moderationChannelId} placeholder={"Channel id"} />
+                </div>
+            </div>
+        </div>
+        <Button
+            tiny
+            disabled={busy.has(8)}
+            loading={busy.has(8)}
+            onClick={proposeSetInternalModerationChannel}>Propose</Button
+        >
+    </section>
+
+    <section class="operator-function danger">
+        <div class="title">Destroy vaulted evidence</div>
+        <div class="hint">
+            Law enforcement destruction request. Irreversible: the blobs are removed even if a
+            message still references them. A standing legal hold blocks destruction - clear the hold
+            first, as a separate act. The reference and both operator identities are recorded in the
+            vault log, which survives the destruction.
         </div>
         <div class="name-value">
             <div class="label">Report index:</div>
@@ -896,43 +881,8 @@
             tiny
             disabled={busy.has(12) || !destroyConfirmed}
             loading={busy.has(12)}
-            onClick={proposeDestroyVaultEvidence}>Propose</Button>
-    </section>
-
-    <section class="operator-function">
-        <div class="title">Set internal moderation channel</div>
-        <div class="name-value">
-            <div class="label">Community Id:</div>
-            <div class="value">
-                <Input bind:value={moderationCommunityId} />
-            </div>
-        </div>
-        <div class="name-value">
-            <div class="label">Channel Id:</div>
-            <div class="value">
-                <Input bind:value={moderationChannelId} />
-            </div>
-        </div>
-        <Button
-            tiny
-            disabled={busy.has(8)}
-            loading={busy.has(8)}
-            onClick={proposeSetInternalModerationChannel}>Apply</Button
+            onClick={proposeDestroyVaultEvidence}>Propose</Button
         >
-    </section>
-
-    <section class="operator-function">
-        <ButtonGroup align="fill">
-            <h4>Pause event loop</h4>
-            <Button tiny onClick={() => client.pauseEventLoop()}>Pause</Button>
-        </ButtonGroup>
-    </section>
-
-    <section class="operator-function">
-        <ButtonGroup align="fill">
-            <h4>Resume event loop</h4>
-            <Button tiny onClick={() => client.resumeEventLoop()}>Resume</Button>
-        </ButtonGroup>
     </section>
 
     {#if error}
@@ -943,6 +893,58 @@
 </div>
 
 <style lang="scss">
+    .danger-zone-header {
+        margin-top: $sp5;
+        padding: $sp4;
+        border: 1px solid var(--vote-no-color);
+        border-radius: var(--rd);
+        background-color: var(--recommended-bg);
+
+        h4 {
+            @include font(bold, normal, fs-120);
+            margin-bottom: $sp3;
+        }
+    }
+
+    .operator-function.danger {
+        border-left: 3px solid var(--vote-no-color);
+        padding-left: $sp4;
+    }
+
+    .comparison {
+        display: flex;
+        gap: $sp4;
+        margin-bottom: $sp3;
+
+        @include mobile() {
+            flex-direction: column;
+            gap: $sp3;
+        }
+
+        .current,
+        .proposed {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: $sp2;
+            min-width: 0;
+        }
+
+        .col-label {
+            @include font(medium, normal, fs-70);
+            text-transform: uppercase;
+            color: var(--txt-light);
+        }
+
+        .col-value {
+            @include font(book, normal, fs-90);
+            word-break: break-word;
+            display: flex;
+            flex-direction: column;
+            gap: $sp2;
+        }
+    }
+
     :global(.operator-function .button-group > :nth-child(2)) {
         flex: 0 0 100px;
         height: 40px;

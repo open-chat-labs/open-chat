@@ -6,13 +6,15 @@
     import SectionHeader from "../../SectionHeader.svelte";
     import AuthorityReports from "./AuthorityReports.svelte";
     import OperatorFunctions from "./OperatorFunctions.svelte";
+    import PendingProposals from "./PendingProposals.svelte";
     import ReviewTranslationCorrections from "./ReviewTranslationCorrections.svelte";
     import VaultLog from "./VaultLog.svelte";
 
-    let selectedTab: "translations" | "operator" | "authority" | "vaultlog" =
-        $state("translations");
+    type AdminTab = "translations" | "operator" | "proposals" | "authority" | "vaultlog";
 
-    function selectTab(tab: "translations" | "operator" | "authority" | "vaultlog") {
+    let selectedTab: AdminTab = $state("translations");
+
+    function selectTab(tab: AdminTab) {
         selectedTab = tab;
     }
 </script>
@@ -58,6 +60,15 @@
             <div
                 tabindex="0"
                 role="button"
+                onclick={() => selectTab("proposals")}
+                class:selected={selectedTab === "proposals"}
+                class="tab"
+            >
+                Pending proposals
+            </div>
+            <div
+                tabindex="0"
+                role="button"
                 onclick={() => selectTab("authority")}
                 class:selected={selectedTab === "authority"}
                 class="tab"
@@ -78,6 +89,8 @@
             <ReviewTranslationCorrections />
         {:else if selectedTab === "operator"}
             <OperatorFunctions />
+        {:else if selectedTab === "proposals"}
+            <PendingProposals />
         {:else if selectedTab === "authority"}
             <AuthorityReports />
         {:else if selectedTab === "vaultlog"}

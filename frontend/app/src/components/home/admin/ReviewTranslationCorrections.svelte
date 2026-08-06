@@ -191,9 +191,11 @@
                     </td>
                     <td class="proposed_by"
                         >{$allUsersStore.get(correction.proposedBy)?.username ??
-                            correction.proposedBy}</td>
+                            correction.proposedBy}</td
+                    >
                     <td class="proposed_at"
-                        >{client.toDatetimeString(new Date(Number(correction.proposedAt)))}</td>
+                        >{client.toDatetimeString(new Date(Number(correction.proposedAt)))}</td
+                    >
                     <td class="action">
                         <MenuIcon position="bottom" align="end">
                             {#snippet menuIcon()}
@@ -211,7 +213,8 @@
                                         {#snippet icon()}
                                             <EyeOutline
                                                 size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"} />
+                                                color={"var(--icon-inverted-txt)"}
+                                            />
                                         {/snippet}
                                         {#snippet text()}
                                             <span>Preview</span>
@@ -222,7 +225,8 @@
                                             {#snippet icon()}
                                                 <Translate
                                                     size={$iconSize}
-                                                    color={"var(--icon-inverted-txt)"} />
+                                                    color={"var(--icon-inverted-txt)"}
+                                                />
                                             {/snippet}
                                             {#snippet text()}
                                                 <span>Show proposed</span>
@@ -233,7 +237,8 @@
                                             {#snippet icon()}
                                                 <Translate
                                                     size={$iconSize}
-                                                    color={"var(--icon-inverted-txt)"} />
+                                                    color={"var(--icon-inverted-txt)"}
+                                                />
                                             {/snippet}
                                             {#snippet text()}
                                                 <span>Show suggestion in English</span>
@@ -244,7 +249,8 @@
                                         {#snippet icon()}
                                             <Check
                                                 size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"} />
+                                                color={"var(--icon-inverted-txt)"}
+                                            />
                                         {/snippet}
                                         {#snippet text()}
                                             <span>Approve</span>
@@ -252,22 +258,26 @@
                                     </MenuItem>
                                     <MenuItem
                                         onclick={() =>
-                                            rejectCorrection(correction, "incorrect_meaning")}>
+                                            rejectCorrection(correction, "incorrect_meaning")}
+                                    >
                                         {#snippet icon()}
                                             <Close
                                                 size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"} />
+                                                color={"var(--icon-inverted-txt)"}
+                                            />
                                         {/snippet}
                                         {#snippet text()}
                                             <span>Reject (meaning)</span>
                                         {/snippet}
                                     </MenuItem>
                                     <MenuItem
-                                        onclick={() => rejectCorrection(correction, "too_long")}>
+                                        onclick={() => rejectCorrection(correction, "too_long")}
+                                    >
                                         {#snippet icon()}
                                             <Close
                                                 size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"} />
+                                                color={"var(--icon-inverted-txt)"}
+                                            />
                                         {/snippet}
                                         {#snippet text()}
                                             <span>Reject (layout)</span>
