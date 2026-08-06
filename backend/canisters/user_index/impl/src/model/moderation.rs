@@ -565,7 +565,13 @@ pub fn set_vault_legal_hold(blob_references: &[BlobReference], legal_hold: bool,
 
 // Destroys a report's vaulted blobs on a law enforcement request, overriding the retention
 // clock and any legal hold. The vault log entry survives the record.
-pub fn destroy_vault_evidence(blob_references: &[BlobReference], le_request_ref: String, state: &mut RuntimeState) {
+pub fn destroy_vault_evidence(
+    blob_references: &[BlobReference],
+    le_request_ref: String,
+    proposed_by: UserId,
+    confirmed_by: UserId,
+    state: &mut RuntimeState,
+) {
     let ops = blob_references
         .iter()
         .cloned()
@@ -573,6 +579,8 @@ pub fn destroy_vault_evidence(blob_references: &[BlobReference], le_request_ref:
             VaultOp::Destroy(DestroyOp {
                 blob_reference,
                 le_request_ref: le_request_ref.clone(),
+                proposed_by: Some(proposed_by),
+                confirmed_by: Some(confirmed_by),
             })
         })
         .collect();

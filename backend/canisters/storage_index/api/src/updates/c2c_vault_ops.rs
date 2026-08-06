@@ -61,6 +61,12 @@ pub struct SetLegalHoldOp {
 pub struct DestroyOp {
     pub blob_reference: BlobReference,
     pub le_request_ref: String,
+    // The two operators behind the dual-authorized destruction (#9136); Option so an op from
+    // an older user_index still decodes
+    #[serde(default)]
+    pub proposed_by: Option<UserId>,
+    #[serde(default)]
+    pub confirmed_by: Option<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

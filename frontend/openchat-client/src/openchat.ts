@@ -7382,8 +7382,10 @@ export class OpenChat {
         return hasFlag(flags, flag);
     }
 
-    setOpenAIApiKey(apiKey: string | undefined): Promise<boolean> {
-        return this.#worker.send({ kind: "setOpenAIApiKey", apiKey }).catch(() => false);
+    proposeSetOpenAIApiKey(apiKey: string | undefined): Promise<bigint | undefined> {
+        return this.#worker
+            .send({ kind: "proposeSetOpenAIApiKey", apiKey })
+            .catch(() => undefined);
     }
 
     vaultBuckets(): Promise<string[]> {
@@ -7424,8 +7426,22 @@ export class OpenChat {
             .catch(() => false);
     }
 
-    setVaultReviewers(userIds: string[]): Promise<boolean> {
-        return this.#worker.send({ kind: "setVaultReviewers", userIds }).catch(() => false);
+    proposeSetVaultReviewers(userIds: string[]): Promise<bigint | undefined> {
+        return this.#worker
+            .send({ kind: "proposeSetVaultReviewers", userIds })
+            .catch(() => undefined);
+    }
+
+    confirmProtectedAction(actionId: bigint): Promise<boolean> {
+        return this.#worker.send({ kind: "confirmProtectedAction", actionId }).catch(() => false);
+    }
+
+    cancelProtectedAction(actionId: bigint): Promise<boolean> {
+        return this.#worker.send({ kind: "cancelProtectedAction", actionId }).catch(() => false);
+    }
+
+    protectedActions(): Promise<string | undefined> {
+        return this.#worker.send({ kind: "protectedActions" }).catch(() => undefined);
     }
 
     setVaultLegalHold(
@@ -7438,10 +7454,13 @@ export class OpenChat {
             .catch(() => false);
     }
 
-    destroyVaultEvidence(reportIndex: bigint, leRequestRef: string): Promise<boolean> {
+    proposeDestroyVaultEvidence(
+        reportIndex: bigint,
+        leRequestRef: string,
+    ): Promise<bigint | undefined> {
         return this.#worker
-            .send({ kind: "destroyVaultEvidence", reportIndex, leRequestRef })
-            .catch(() => false);
+            .send({ kind: "proposeDestroyVaultEvidence", reportIndex, leRequestRef })
+            .catch(() => undefined);
     }
 
     setModerationReferralConfig(
@@ -7452,12 +7471,12 @@ export class OpenChat {
             .catch(() => false);
     }
 
-    setInternalModerationChannel(
+    proposeSetInternalModerationChannel(
         channel: { communityId: string; channelId: number } | undefined,
-    ): Promise<boolean> {
+    ): Promise<bigint | undefined> {
         return this.#worker
-            .send({ kind: "setInternalModerationChannel", channel })
-            .catch(() => false);
+            .send({ kind: "proposeSetInternalModerationChannel", channel })
+            .catch(() => undefined);
     }
 
     setModerationFlags(flags: number): Promise<number> {

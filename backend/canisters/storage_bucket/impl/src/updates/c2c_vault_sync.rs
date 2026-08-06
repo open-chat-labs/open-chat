@@ -6,7 +6,7 @@ use canister_tracing_macros::trace;
 use ic_cdk::update;
 use storage_bucket_canister::c2c_vault_sync::{Response::*, *};
 use storage_index_canister::c2c_sync_bucket::CsamHashDenylisted;
-use tracing::{error, info};
+use tracing::{error, info, warn};
 
 #[update(guard = "caller_is_storage_index_canister")]
 #[trace]
@@ -90,9 +90,19 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
             }
             VaultOp::Destroy(d) => {
                 let file_id = d.file_id;
-                if let VaultOpOutcome::ReleasePin(hash) = state.data.vault.destroy(d.file_id, d.le_request_ref, now) {
-                    state.data.files.vault_purge(&hash);
-                    info!(%file_id, "Vault: destroyed on law enforcement request");
+                match state
+                    .data
+                    .vault
+                    .destroy(d.file_id, d.le_request_ref, d.proposed_by, d.confirmed_by, now)
+                {
+                    VaultOpOutcome::ReleasePin(hash) => {
+                        state.data.files.vault_purge(&hash);
+                        info!(%file_id, "Vault: destroyed on law enforcement request");
+                    }
+                    VaultOpOutcome::Blocked => {
+                        warn!(%file_id, "Vault: destruction refused - legal hold stands");
+                    }
+                    _ => {}
                 }
             }
             VaultOp::SetReviewers(reviewers) => {

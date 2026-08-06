@@ -13,6 +13,7 @@ use types::{
     ChannelId, ChatEvent, ChatId, CommunityId, EventIndex, FileContent, MessageContent, MessageContentInitial,
     ModerationReportContent, ModerationReportStatus, SuspensionAction, UnitResult,
 };
+use user_index_canister::propose_protected_action::ProtectedAction;
 use user_index_canister::resolve_moderation_report::ModerationVerdict;
 use user_index_canister::set_internal_moderation_channel::InternalModerationChannel;
 use user_index_canister::users::UserGroup;
@@ -448,15 +449,15 @@ fn escalated_media_report_upheld_as_csam_vaults_evidence() {
 
     // The moderator (also the platform operator) is designated as a vault reviewer; the
     // principal set syncs user_index -> storage_index -> buckets
-    let set_reviewers_response = client::user_index::set_vault_reviewers(
+    client::user_index::happy_path::execute_protected_action(
         env,
         test_data.moderator.principal,
+        test_data.operator2.principal,
         canister_ids.user_index,
-        &user_index_canister::set_vault_reviewers::Args {
+        ProtectedAction::SetVaultReviewers(user_index_canister::set_vault_reviewers::Args {
             user_ids: vec![test_data.moderator.user_id],
-        },
+        }),
     );
-    assert!(matches!(set_reviewers_response, UnitResult::Success));
     tick_many(env, 5);
 
     // A file message with no caption has an empty moderation input, so the report escalates
@@ -935,15 +936,15 @@ fn csam_asserted_media_report_quarantines_immediately() {
 
     let test_data = init_test_data(env, canister_ids, *controller);
 
-    let set_reviewers_response = client::user_index::set_vault_reviewers(
+    client::user_index::happy_path::execute_protected_action(
         env,
         test_data.moderator.principal,
+        test_data.operator2.principal,
         canister_ids.user_index,
-        &user_index_canister::set_vault_reviewers::Args {
+        ProtectedAction::SetVaultReviewers(user_index_canister::set_vault_reviewers::Args {
             user_ids: vec![test_data.moderator.user_id],
-        },
+        }),
     );
-    assert!(matches!(set_reviewers_response, UnitResult::Success));
     tick_many(env, 5);
 
     let file_size = 1000u32;
@@ -1128,15 +1129,15 @@ fn shared_blob_evidence_survives_dismissal_of_a_sibling_report() {
 
     let test_data = init_test_data(env, canister_ids, *controller);
 
-    let set_reviewers_response = client::user_index::set_vault_reviewers(
+    client::user_index::happy_path::execute_protected_action(
         env,
         test_data.moderator.principal,
+        test_data.operator2.principal,
         canister_ids.user_index,
-        &user_index_canister::set_vault_reviewers::Args {
+        ProtectedAction::SetVaultReviewers(user_index_canister::set_vault_reviewers::Args {
             user_ids: vec![test_data.moderator.user_id],
-        },
+        }),
     );
-    assert!(matches!(set_reviewers_response, UnitResult::Success));
     tick_many(env, 5);
 
     // The same blob carried by two messages: one vault record, two evidence claims
@@ -1280,15 +1281,15 @@ fn media_report_dismissal_releases_the_vault() {
 
     let test_data = init_test_data(env, canister_ids, *controller);
 
-    let set_reviewers_response = client::user_index::set_vault_reviewers(
+    client::user_index::happy_path::execute_protected_action(
         env,
         test_data.moderator.principal,
+        test_data.operator2.principal,
         canister_ids.user_index,
-        &user_index_canister::set_vault_reviewers::Args {
+        ProtectedAction::SetVaultReviewers(user_index_canister::set_vault_reviewers::Args {
             user_ids: vec![test_data.moderator.user_id],
-        },
+        }),
     );
-    assert!(matches!(set_reviewers_response, UnitResult::Success));
     tick_many(env, 5);
 
     let file_size = 1000u32;
@@ -1803,6 +1804,145 @@ fn get_moderation_reports(env: &PocketIc, test_data: &TestData) -> Vec<Moderatio
         .collect()
 }
 
+#[test]
+fn protected_action_cannot_be_confirmed_by_its_proposer() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    let response = client::user_index::propose_protected_action(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::propose_protected_action::Args {
+            action: ProtectedAction::SetVaultReviewers(user_index_canister::set_vault_reviewers::Args {
+                user_ids: vec![test_data.moderator.user_id],
+            }),
+        },
+    );
+    let user_index_canister::propose_protected_action::Response::Success(result) = response else {
+        panic!("'propose_protected_action' error: {response:?}");
+    };
+
+    // The proposer confirming their own proposal is the whole thing dual auth prevents
+    let response = client::user_index::confirm_protected_action(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::confirm_protected_action::Args {
+            action_id: result.action_id,
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::confirm_protected_action::Response::Error(_)),
+        "{response:?}"
+    );
+
+    // ... and the proposal survives, so a genuine second operator can still confirm it
+    let response = client::user_index::confirm_protected_action(
+        env,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        &user_index_canister::confirm_protected_action::Args {
+            action_id: result.action_id,
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::confirm_protected_action::Response::Success),
+        "{response:?}"
+    );
+}
+
+#[test]
+fn cancelled_protected_action_cannot_be_confirmed() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    let response = client::user_index::propose_protected_action(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::propose_protected_action::Args {
+            action: ProtectedAction::SetOpenAIApiKey(user_index_canister::set_openai_api_key::Args {
+                api_key: Some("should-never-be-applied".to_string()),
+            }),
+        },
+    );
+    let user_index_canister::propose_protected_action::Response::Success(result) = response else {
+        panic!("'propose_protected_action' error: {response:?}");
+    };
+
+    // Anyone can cancel - this is how a proposal made with a compromised key gets killed
+    let response = client::user_index::cancel_protected_action(
+        env,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        &user_index_canister::cancel_protected_action::Args {
+            action_id: result.action_id,
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::cancel_protected_action::Response::Success),
+        "{response:?}"
+    );
+
+    let response = client::user_index::confirm_protected_action(
+        env,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        &user_index_canister::confirm_protected_action::Args {
+            action_id: result.action_id,
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::confirm_protected_action::Response::Error(_)),
+        "{response:?}"
+    );
+}
+
+#[test]
+fn protected_action_log_chains_and_omits_secrets() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    // init_test_data already executed two protected actions, one carrying the API key
+    let user_index_canister::protected_actions::Response::Success(result) =
+        client::user_index::protected_actions(env, test_data.moderator.principal, canister_ids.user_index, &types::Empty {});
+
+    assert!(!result.json.contains("test-api-key"), "the API key must never enter the log");
+
+    let view: Value = serde_json::from_str(&result.json).unwrap();
+    let log = view["log"].as_array().unwrap();
+    assert!(log.len() >= 4, "expected propose+confirm for both config actions: {log:?}");
+
+    // Entry 0 opens the chain with the zero hash, and every later entry chains to its
+    // predecessor - the property an auditor checks against the chain head in public metrics
+    assert_eq!(log[0]["prev_hash"].as_str().unwrap(), "0".repeat(64));
+    for pair in log.windows(2) {
+        assert_eq!(pair[1]["prev_hash"], pair[0]["hash"]);
+    }
+}
+
 fn get_authority_reports(env: &PocketIc, test_data: &TestData, canister_ids: &CanisterIds) -> Value {
     let user_index_canister::authority_reports::Response::Success(result) =
         client::user_index::authority_reports(env, test_data.moderator.principal, canister_ids.user_index, &types::Empty {});
@@ -1813,6 +1953,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     // The moderator doubles as the platform operator which configures the moderation channel
     // and the API key
     let moderator = client::register_diamond_user(env, canister_ids, controller);
+    let operator2 = client::register_diamond_user(env, canister_ids, controller);
     let group_owner = client::register_diamond_user(env, canister_ids, controller);
     let sender = client::register_user(env, canister_ids);
     let reporter = client::register_user(env, canister_ids);
@@ -1833,6 +1974,14 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
             user_id: moderator.user_id,
         },
     );
+    client::user_index::add_platform_operator(
+        env,
+        controller,
+        canister_ids.user_index,
+        &user_index_canister::add_platform_operator::Args {
+            user_id: operator2.user_id,
+        },
+    );
 
     let moderation_community_id =
         client::user::happy_path::create_community(env, &moderator, &random_string(), false, vec![random_string()]);
@@ -1844,24 +1993,26 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
         random_string(),
     );
 
-    client::user_index::set_internal_moderation_channel(
+    client::user_index::happy_path::execute_protected_action(
         env,
         moderator.principal,
+        operator2.principal,
         canister_ids.user_index,
-        &user_index_canister::set_internal_moderation_channel::Args {
+        ProtectedAction::SetInternalModerationChannel(user_index_canister::set_internal_moderation_channel::Args {
             channel: Some(InternalModerationChannel {
                 community_id: moderation_community_id,
                 channel_id: moderation_channel_id,
             }),
-        },
+        }),
     );
-    client::user_index::set_openai_api_key(
+    client::user_index::happy_path::execute_protected_action(
         env,
         moderator.principal,
+        operator2.principal,
         canister_ids.user_index,
-        &user_index_canister::set_openai_api_key::Args {
+        ProtectedAction::SetOpenAIApiKey(user_index_canister::set_openai_api_key::Args {
             api_key: Some("test-api-key".to_string()),
-        },
+        }),
     );
 
     let group_id = client::user::happy_path::create_group(env, &group_owner, &random_string(), true, true);
@@ -1879,6 +2030,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
 
     TestData {
         moderator,
+        operator2,
         group_owner,
         sender,
         reporter,
@@ -1890,6 +2042,9 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
 
 struct TestData {
     moderator: User,
+    // A second platform operator: the dual-authorized actions (#9136) need a confirmer who is
+    // not the proposer
+    operator2: User,
     group_owner: User,
     sender: User,
     reporter: User,

@@ -65,7 +65,6 @@ import {
     UserIndexSetDisplayNameArgs,
     UserIndexSetDisplayNameResponse,
     UserIndexSetHideOnlineStatusArgs,
-    UserIndexSetInternalModerationChannelArgs,
     UserIndexResolveModerationReportArgs,
     UserIndexSetModerationFlagsArgs,
     UserIndexAcceptTermsArgs,
@@ -73,10 +72,12 @@ import {
     UserIndexModerationConfigResponse,
     UserIndexRecordAuthorityReportFiledArgs,
     UserIndexSetModerationReferralConfigArgs,
-    UserIndexSetVaultReviewersArgs,
+    UserIndexProposeProtectedActionArgs,
+    UserIndexProposeProtectedActionResponse,
+    UserIndexConfirmProtectedActionArgs,
+    UserIndexCancelProtectedActionArgs,
+    UserIndexProtectedActionsResponse,
     UserIndexSetVaultLegalHoldArgs,
-    UserIndexDestroyVaultEvidenceArgs,
-    UserIndexSetOpenaiApiKeyArgs,
     UserIndexSetPremiumItemCostArgs,
     UserIndexSetUsernameArgs,
     UserIndexSetUsernameResponse,
@@ -94,6 +95,7 @@ import {
     UserIndexUsersArgs,
     UserIndexUsersResponse,
 } from "../../typebox";
+import type { UserIndexProposeProtectedActionProtectedAction } from "../../typebox";
 import type { ChatsDb } from "../../utils/chatsDb";
 import { groupBy } from "../../utils/list";
 import {
@@ -206,14 +208,54 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         });
     }
 
-    setVaultReviewers(userIds: string[]): Promise<boolean> {
+    // The four irreversible operator actions are dual authorized (#9136): propose here, then a
+    // DIFFERENT platform operator confirms before anything executes.
+    proposeProtectedAction(
+        action: UserIndexProposeProtectedActionProtectedAction,
+    ): Promise<bigint | undefined> {
         return this.update(
-            "set_vault_reviewers",
-            { user_ids: userIds.map(principalStringToBytes) },
+            "propose_protected_action",
+            { action },
+            (resp) => ("Success" in resp ? resp.Success.action_id : undefined),
+            UserIndexProposeProtectedActionArgs,
+            UserIndexProposeProtectedActionResponse,
+        );
+    }
+
+    confirmProtectedAction(actionId: bigint): Promise<boolean> {
+        return this.update(
+            "confirm_protected_action",
+            { action_id: actionId },
             (resp) => resp === "Success",
-            UserIndexSetVaultReviewersArgs,
+            UserIndexConfirmProtectedActionArgs,
             UnitResult,
         );
+    }
+
+    cancelProtectedAction(actionId: bigint): Promise<boolean> {
+        return this.update(
+            "cancel_protected_action",
+            { action_id: actionId },
+            (resp) => resp === "Success",
+            UserIndexCancelProtectedActionArgs,
+            UnitResult,
+        );
+    }
+
+    protectedActions(): Promise<string> {
+        return this.query(
+            "protected_actions",
+            {},
+            (resp) => resp.Success.json,
+            Empty,
+            UserIndexProtectedActionsResponse,
+        );
+    }
+
+    proposeSetVaultReviewers(userIds: string[]): Promise<bigint | undefined> {
+        return this.proposeProtectedAction({
+            SetVaultReviewers: { user_ids: userIds.map(principalStringToBytes) },
+        });
     }
 
     setVaultLegalHold(reportIndex: bigint, legalHold: boolean, reference: string): Promise<boolean> {
@@ -226,14 +268,13 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         );
     }
 
-    destroyVaultEvidence(reportIndex: bigint, leRequestRef: string): Promise<boolean> {
-        return this.update(
-            "destroy_vault_evidence",
-            { report_index: reportIndex, le_request_ref: leRequestRef },
-            (resp) => resp === "Success",
-            UserIndexDestroyVaultEvidenceArgs,
-            UnitResult,
-        );
+    proposeDestroyVaultEvidence(
+        reportIndex: bigint,
+        leRequestRef: string,
+    ): Promise<bigint | undefined> {
+        return this.proposeProtectedAction({
+            DestroyVaultEvidence: { report_index: reportIndex, le_request_ref: leRequestRef },
+        });
     }
 
     setModerationReferralConfig(
@@ -258,24 +299,17 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         );
     }
 
-    setOpenAIApiKey(apiKey: string | undefined): Promise<boolean> {
-        return this.update(
-            "set_openai_api_key",
-            {
-                api_key: apiKey === undefined || apiKey === "" ? undefined : apiKey,
-            },
-            (resp) => resp === "Success",
-            UserIndexSetOpenaiApiKeyArgs,
-            UnitResult,
-        );
+    proposeSetOpenAIApiKey(apiKey: string | undefined): Promise<bigint | undefined> {
+        return this.proposeProtectedAction({
+            SetOpenAIApiKey: { api_key: apiKey === undefined || apiKey === "" ? undefined : apiKey },
+        });
     }
 
-    setInternalModerationChannel(
+    proposeSetInternalModerationChannel(
         channel: { communityId: string; channelId: number } | undefined,
-    ): Promise<boolean> {
-        return this.update(
-            "set_internal_moderation_channel",
-            {
+    ): Promise<bigint | undefined> {
+        return this.proposeProtectedAction({
+            SetInternalModerationChannel: {
                 channel:
                     channel === undefined
                         ? undefined
@@ -284,10 +318,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                               channel_id: toBigInt32(channel.channelId),
                           },
             },
-            (resp) => resp === "Success",
-            UserIndexSetInternalModerationChannelArgs,
-            UnitResult,
-        );
+        });
     }
 
     resolveModerationReport(

@@ -84,8 +84,80 @@
     let tokenLedgerValid = $derived(tokenLedger.length > 0);
 
     let openAiKeySet = $state(false);
+    type PendingProtectedAction = {
+        id: number;
+        summary: string;
+        proposed_by: string;
+        proposed_at: number;
+        expires_at: number;
+    };
+    let pendingActions: PendingProtectedAction[] = $state([]);
+
+    function refreshPendingActions(): void {
+        client.protectedActions().then((json) => {
+            if (json === undefined) return;
+            try {
+                pendingActions = JSON.parse(json).pending ?? [];
+            } catch {
+                pendingActions = [];
+            }
+        });
+    }
+
+    // The four irreversible operator actions are dual authorized: proposing one only queues
+    // it, and a DIFFERENT operator must confirm before it executes.
+    function onProposed(actionId: bigint | undefined, what: string): void {
+        if (actionId !== undefined) {
+            toastStore.showSuccessToast(
+                i18nKey(
+                    `Proposed ${what} as action #${actionId} - a different platform operator must confirm it`,
+                ),
+            );
+            refreshPendingActions();
+        } else {
+            error = i18nKey(`Failed to propose ${what}`);
+            toastStore.showFailureToast(error);
+        }
+    }
+
+    function confirmProtectedAction(actionId: number): void {
+        error = undefined;
+        addBusy(13);
+        client
+            .confirmProtectedAction(BigInt(actionId))
+            .then((success) => {
+                if (success) {
+                    toastStore.showSuccessToast(i18nKey("Action confirmed and executed"));
+                } else {
+                    error = i18nKey(
+                        "Failed to confirm the action (a proposal cannot be confirmed by its proposer)",
+                    );
+                    toastStore.showFailureToast(error);
+                }
+                refreshPendingActions();
+            })
+            .finally(() => removeBusy(13));
+    }
+
+    function cancelProtectedAction(actionId: number): void {
+        error = undefined;
+        addBusy(14);
+        client
+            .cancelProtectedAction(BigInt(actionId))
+            .then((success) => {
+                if (success) {
+                    toastStore.showSuccessToast(i18nKey("Action cancelled"));
+                } else {
+                    error = i18nKey("Failed to cancel the action");
+                    toastStore.showFailureToast(error);
+                }
+                refreshPendingActions();
+            })
+            .finally(() => removeBusy(14));
+    }
 
     onMount(() => {
+        refreshPendingActions();
         // Pre-fill the moderation config so the forms show what is actually set rather than
         // being write-only
         client.moderationConfig().then((config) => {
@@ -316,19 +388,12 @@
         }
     }
 
-    function setOpenAIApiKey(): void {
+    function proposeSetOpenAIApiKey(): void {
         error = undefined;
         addBusy(7);
         client
-            .setOpenAIApiKey(openAiApiKey === "" ? undefined : openAiApiKey)
-            .then((success) => {
-                if (success) {
-                    toastStore.showSuccessToast(i18nKey("OpenAI API key updated"));
-                } else {
-                    error = i18nKey("Failed to update OpenAI API key");
-                    toastStore.showFailureToast(error);
-                }
-            })
+            .proposeSetOpenAIApiKey(openAiApiKey === "" ? undefined : openAiApiKey)
+            .then((actionId) => onProposed(actionId, "OpenAI API key"))
             .finally(() => removeBusy(7));
     }
 
@@ -359,7 +424,7 @@
     }
 
     // Replaces the full reviewer set: user ids must already be platform moderators
-    function setVaultReviewers(): void {
+    function proposeSetVaultReviewers(): void {
         error = undefined;
         addBusy(10);
         const userIds = vaultReviewerIds
@@ -367,17 +432,8 @@
             .map((id) => id.trim())
             .filter((id) => id !== "");
         client
-            .setVaultReviewers(userIds)
-            .then((success) => {
-                if (success) {
-                    toastStore.showSuccessToast(i18nKey("Vault reviewers updated"));
-                } else {
-                    error = i18nKey(
-                        "Failed to update vault reviewers (are they all platform moderators?)",
-                    );
-                    toastStore.showFailureToast(error);
-                }
-            })
+            .proposeSetVaultReviewers(userIds)
+            .then((actionId) => onProposed(actionId, "vault reviewers"))
             .finally(() => removeBusy(10));
     }
 
@@ -407,8 +463,10 @@
             .finally(() => removeBusy(11));
     }
 
-    // Irreversible: destroys the evidence regardless of the retention clock or any legal hold
-    function destroyVaultEvidence(): void {
+    // Irreversible, so dual authorized: this only proposes the destruction. A DIFFERENT
+    // platform operator must confirm it below before anything is destroyed. A standing legal
+    // hold blocks destruction outright - clear the hold first, as a separate act.
+    function proposeDestroyVaultEvidence(): void {
         error = undefined;
         const reportIndex = parseReportIndex(destroyReportIndex);
         if (reportIndex === undefined || destroyRequestRef.trim() === "") {
@@ -418,17 +476,14 @@
         }
         addBusy(12);
         client
-            .destroyVaultEvidence(reportIndex, destroyRequestRef.trim())
-            .then((success) => {
-                if (success) {
+            .proposeDestroyVaultEvidence(reportIndex, destroyRequestRef.trim())
+            .then((actionId) => {
+                if (actionId !== undefined) {
                     destroyConfirmed = false;
                     destroyReportIndex = "";
                     destroyRequestRef = "";
-                    toastStore.showSuccessToast(i18nKey("Vaulted evidence destroyed"));
-                } else {
-                    error = i18nKey("Failed to destroy the vaulted evidence");
-                    toastStore.showFailureToast(error);
                 }
+                onProposed(actionId, "destruction of vaulted evidence");
             })
             .finally(() => removeBusy(12));
     }
@@ -438,7 +493,7 @@
         return /^\d+$/.test(trimmed) ? BigInt(trimmed) : undefined;
     }
 
-    function setInternalModerationChannel(): void {
+    function proposeSetInternalModerationChannel(): void {
         error = undefined;
         addBusy(8);
         const channelIdNum = parseInt(moderationChannelId, 10);
@@ -447,15 +502,8 @@
                 ? undefined
                 : { communityId: moderationCommunityId, channelId: channelIdNum };
         client
-            .setInternalModerationChannel(channel)
-            .then((success) => {
-                if (success) {
-                    toastStore.showSuccessToast(i18nKey("Internal moderation channel updated"));
-                } else {
-                    error = i18nKey("Failed to update internal moderation channel");
-                    toastStore.showFailureToast(error);
-                }
-            })
+            .proposeSetInternalModerationChannel(channel)
+            .then((actionId) => onProposed(actionId, "internal moderation channel"))
             .finally(() => removeBusy(8));
     }
 
@@ -696,7 +744,7 @@
                 <Input bind:value={openAiApiKey} />
             </div>
         </div>
-        <Button tiny disabled={busy.has(7)} loading={busy.has(7)} onClick={setOpenAIApiKey}>
+        <Button tiny disabled={busy.has(7)} loading={busy.has(7)} onClick={proposeSetOpenAIApiKey}>
             Apply
         </Button>
     </section>
@@ -737,7 +785,7 @@
         </div>
         <ButtonGroup align="fill">
             <Input bind:value={vaultReviewerIds} />
-            <Button tiny disabled={busy.has(10)} loading={busy.has(10)} onClick={setVaultReviewers}>
+            <Button tiny disabled={busy.has(10)} loading={busy.has(10)} onClick={proposeSetVaultReviewers}>
                 Apply
             </Button>
         </ButtonGroup>
@@ -778,11 +826,46 @@
     </section>
 
     <section class="operator-function">
-        <div class="title">Destroy vaulted evidence</div>
+        <div class="title">Pending protected actions</div>
         <div class="hint">
-            Law enforcement destruction request. Irreversible, and overrides both the retention
-            clock and any legal hold: the blobs are removed even if a message still references
-            them. The reference is recorded in the vault log, which survives the destruction.
+            Destroying vaulted evidence, designating vault reviewers, setting the OpenAI API key
+            and setting the moderation channel are dual authorized: one operator proposes, a
+            different operator confirms. Proposals expire after 14 days. Anyone can cancel.
+        </div>
+        {#if pendingActions.length === 0}
+            <div class="hint">Nothing pending.</div>
+        {:else}
+            {#each pendingActions as action (action.id)}
+                <div class="name-value">
+                    <div class="label">#{action.id} {action.summary}</div>
+                    <div class="value">
+                        <ButtonGroup align="fill">
+                            <Button
+                                tiny
+                                disabled={busy.has(13)}
+                                loading={busy.has(13)}
+                                onClick={() => confirmProtectedAction(action.id)}>Confirm</Button>
+                            <Button
+                                tiny
+                                secondary
+                                disabled={busy.has(14)}
+                                loading={busy.has(14)}
+                                onClick={() => cancelProtectedAction(action.id)}>Cancel</Button>
+                        </ButtonGroup>
+                    </div>
+                </div>
+            {/each}
+        {/if}
+    </section>
+
+    <section class="operator-function">
+        <div class="title">Propose destruction of vaulted evidence</div>
+        <div class="hint">
+            Law enforcement destruction request. Irreversible, so this only PROPOSES the
+            destruction: a different platform operator must confirm it above before anything is
+            destroyed. A standing legal hold blocks destruction - clear the hold first, as a
+            separate act. The reference and both operator identities are recorded in the vault
+            log, which survives the destruction.
         </div>
         <div class="name-value">
             <div class="label">Report index:</div>
@@ -806,7 +889,7 @@
             tiny
             disabled={busy.has(12) || !destroyConfirmed}
             loading={busy.has(12)}
-            onClick={destroyVaultEvidence}>Destroy</Button>
+            onClick={proposeDestroyVaultEvidence}>Propose</Button>
     </section>
 
     <section class="operator-function">
@@ -827,7 +910,7 @@
             tiny
             disabled={busy.has(8)}
             loading={busy.has(8)}
-            onClick={setInternalModerationChannel}>Apply</Button
+            onClick={proposeSetInternalModerationChannel}>Apply</Button
         >
     </section>
 

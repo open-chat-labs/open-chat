@@ -386,18 +386,21 @@ export type WorkerRequest =
     | ConvertGroupToCommunity
     | ImportGroupToCommunity
     | SetModerationFlags
-    | SetOpenAIApiKey
+    | ProposeSetOpenAIApiKey
+    | ConfirmProtectedAction
+    | CancelProtectedAction
+    | ProtectedActions
     | SetModerationReferralConfig
-    | SetVaultReviewers
+    | ProposeSetVaultReviewers
     | SetVaultLegalHold
-    | DestroyVaultEvidence
+    | ProposeDestroyVaultEvidence
     | VaultLog
     | VaultBuckets
     | AuthorityReports
     | GetModerationConfig
     | RecordAuthorityReportFiled
     | AcceptTerms
-    | SetInternalModerationChannel
+    | ProposeSetInternalModerationChannel
     | ResolveModerationReport
     | ContestModerationSanction
     | VaultFileChunk
@@ -830,9 +833,23 @@ type SetModerationFlags = {
     flags: number;
 };
 
-type SetOpenAIApiKey = {
-    kind: "setOpenAIApiKey";
+type ProposeSetOpenAIApiKey = {
+    kind: "proposeSetOpenAIApiKey";
     apiKey: string | undefined;
+};
+
+type ConfirmProtectedAction = {
+    kind: "confirmProtectedAction";
+    actionId: bigint;
+};
+
+type CancelProtectedAction = {
+    kind: "cancelProtectedAction";
+    actionId: bigint;
+};
+
+type ProtectedActions = {
+    kind: "protectedActions";
 };
 
 type AcceptTerms = {
@@ -868,8 +885,8 @@ type RecordAuthorityReportFiled = {
     unverified: boolean;
 };
 
-type SetVaultReviewers = {
-    kind: "setVaultReviewers";
+type ProposeSetVaultReviewers = {
+    kind: "proposeSetVaultReviewers";
     userIds: string[];
 };
 
@@ -880,8 +897,8 @@ type SetVaultLegalHold = {
     reference: string;
 };
 
-type DestroyVaultEvidence = {
-    kind: "destroyVaultEvidence";
+type ProposeDestroyVaultEvidence = {
+    kind: "proposeDestroyVaultEvidence";
     reportIndex: bigint;
     leRequestRef: string;
 };
@@ -891,8 +908,8 @@ type SetModerationReferralConfig = {
     config: { categories: { category: number; scoreThreshold: number }[] } | undefined;
 };
 
-type SetInternalModerationChannel = {
-    kind: "setInternalModerationChannel";
+type ProposeSetInternalModerationChannel = {
+    kind: "proposeSetInternalModerationChannel";
     channel: { communityId: string; channelId: number } | undefined;
 };
 
@@ -2575,16 +2592,22 @@ export type WorkerResult<T> = T extends Init
     ? [RegistryValue, boolean]
     : T extends SetCommunityIndexes
     ? boolean
-    : T extends SetOpenAIApiKey
+    : T extends ProposeSetOpenAIApiKey
+    ? bigint | undefined
+    : T extends ConfirmProtectedAction
     ? boolean
+    : T extends CancelProtectedAction
+    ? boolean
+    : T extends ProtectedActions
+    ? string | undefined
     : T extends SetModerationReferralConfig
     ? boolean
-    : T extends SetVaultReviewers
-    ? boolean
+    : T extends ProposeSetVaultReviewers
+    ? bigint | undefined
     : T extends SetVaultLegalHold
     ? boolean
-    : T extends DestroyVaultEvidence
-    ? boolean
+    : T extends ProposeDestroyVaultEvidence
+    ? bigint | undefined
     : T extends VaultLog
     ? VaultLogResponse
     : T extends VaultBuckets
@@ -2597,8 +2620,8 @@ export type WorkerResult<T> = T extends Init
     ? boolean
     : T extends AcceptTerms
     ? boolean
-    : T extends SetInternalModerationChannel
-    ? boolean
+    : T extends ProposeSetInternalModerationChannel
+    ? bigint | undefined
     : T extends ResolveModerationReport
     ? boolean
     : T extends ContestModerationSanction

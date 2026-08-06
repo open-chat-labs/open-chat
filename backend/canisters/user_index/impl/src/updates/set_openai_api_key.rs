@@ -1,17 +1,14 @@
-use crate::guards::caller_is_platform_operator;
-use crate::{RuntimeState, mutate_state};
-use canister_api_macros::update;
-use canister_tracing_macros::trace;
+use crate::RuntimeState;
 use local_user_index_canister::{SetOpenAIApiKey, UserIndexEvent};
-use user_index_canister::set_openai_api_key::*;
+use types::OCResult;
+use user_index_canister::set_openai_api_key::Args;
 
-#[update(guard = "caller_is_platform_operator", msgpack = true)]
-#[trace]
-fn set_openai_api_key(args: Args) -> Response {
-    mutate_state(|state| set_openai_api_key_impl(args, state))
-}
-
-fn set_openai_api_key_impl(args: Args, state: &mut RuntimeState) -> Response {
+// The detection "danger switch": setting the key arms the classification pipeline on every
+// local user index. Behind dual authorization (#9136) - reachable only via
+// propose_protected_action + confirm_protected_action by two different platform operators -
+// because activation triggers legal-duty machinery whose consequences cannot be unwound by
+// unsetting the key again.
+pub(crate) fn execute(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.openai_api_key = args.api_key.clone();
 
     state.push_event_to_all_local_user_indexes(
@@ -19,5 +16,5 @@ fn set_openai_api_key_impl(args: Args, state: &mut RuntimeState) -> Response {
         None,
     );
 
-    Response::Success
+    Ok(())
 }

@@ -30,6 +30,7 @@ fn vault_log_impl(args: Args, state: &RuntimeState) -> Response {
                     VaultLogEvent::UnquarantinedBy(_, moderator) => *moderator,
                     VaultLogEvent::VerdictAppliedBy(_, _, moderator) => *moderator,
                     VaultLogEvent::RetentionReanchoredBy(_, _, operator) => *operator,
+                    VaultLogEvent::DestroyedBy(_, _, _, confirmed_by) => *confirmed_by,
                     _ => None,
                 },
                 event: match &e.event {
@@ -47,6 +48,13 @@ fn vault_log_impl(args: Args, state: &RuntimeState) -> Response {
                     VaultLogEvent::LegalHoldCleared(file_id) => format!("Legal hold cleared on file {file_id}"),
                     VaultLogEvent::Destroyed(file_id, le_ref) => {
                         format!("Destroyed file {file_id} (law enforcement request {le_ref})")
+                    }
+                    VaultLogEvent::DestroyedBy(file_id, le_ref, proposed_by, confirmed_by) => {
+                        let by = match (proposed_by, confirmed_by) {
+                            (Some(p), Some(c)) => format!(", proposed by user {p}, confirmed by user {c}"),
+                            _ => String::new(),
+                        };
+                        format!("Destroyed file {file_id} (law enforcement request {le_ref}{by})")
                     }
                     VaultLogEvent::RetentionExpired(file_id) => {
                         format!("Retention expired for file {file_id}, deleted")

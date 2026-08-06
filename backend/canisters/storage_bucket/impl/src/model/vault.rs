@@ -101,6 +101,9 @@ pub enum VaultLogEvent {
     VerdictAppliedBy(FileId, TimestampMillis, Option<UserId>),
     // Retention clock re-anchored (eg. at filing time) without a verdict being recorded
     RetentionReanchoredBy(FileId, TimestampMillis, Option<UserId>),
+    // Dual-authorized destruction (#9136): request reference plus the proposing and
+    // confirming operators. The entry survives the record it describes.
+    DestroyedBy(FileId, String, Option<UserId>, Option<UserId>),
 }
 
 impl VaultLogEvent {
@@ -117,7 +120,8 @@ impl VaultLogEvent {
             | VaultLogEvent::ViewedBy(file_id, _, _)
             | VaultLogEvent::UnquarantinedBy(file_id, _)
             | VaultLogEvent::VerdictAppliedBy(file_id, _, _)
-            | VaultLogEvent::RetentionReanchoredBy(file_id, _, _) => *file_id,
+            | VaultLogEvent::RetentionReanchoredBy(file_id, _, _)
+            | VaultLogEvent::DestroyedBy(file_id, _, _, _) => *file_id,
         }
     }
 }
@@ -324,14 +328,29 @@ impl Vault {
         VaultOpOutcome::Applied
     }
 
-    // Permanent destruction on law enforcement request, overriding the retention clock and any
-    // legal hold. The log entry (including the request reference) survives the record.
-    pub fn destroy(&mut self, file_id: FileId, le_request_ref: String, now: TimestampMillis) -> VaultOpOutcome {
+    // Permanent destruction on law enforcement request, overriding the retention clock. A
+    // standing legal hold REFUSES destruction (#9136): clearing the hold is a separate,
+    // separately-logged act, so hold-clear + destroy is always two visible steps. The log
+    // entry (including the request reference and both operators) survives the record.
+    pub fn destroy(
+        &mut self,
+        file_id: FileId,
+        le_request_ref: String,
+        proposed_by: Option<UserId>,
+        confirmed_by: Option<UserId>,
+        now: TimestampMillis,
+    ) -> VaultOpOutcome {
         let Some(hash) = self.file_id_to_hash.get(&file_id).copied() else {
             return VaultOpOutcome::NotFound;
         };
+        if self.records.get(&hash).is_some_and(|r| r.legal_hold) {
+            return VaultOpOutcome::Blocked;
+        }
         for alias in self.remove_all_references(&hash) {
-            self.append_log(VaultLogEvent::Destroyed(alias, le_request_ref.clone()), now);
+            self.append_log(
+                VaultLogEvent::DestroyedBy(alias, le_request_ref.clone(), proposed_by, confirmed_by),
+                now,
+            );
         }
         VaultOpOutcome::ReleasePin(hash)
     }
