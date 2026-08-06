@@ -599,7 +599,7 @@ struct Data {
     pub premium_items: PremiumItems,
     pub blocked_username_patterns: Vec<String>,
     pub openai_api_key: Option<String>,
-    #[serde(default, deserialize_with = "deserialize_moderation_referral_config")]
+    #[serde(default)]
     pub moderation_referral_config: Option<ModerationReferralConfig>,
     #[serde(default)]
     pub message_moderation_queue: ModerationQueue,
@@ -788,38 +788,4 @@ pub struct BotMetrics {
     pub user_id: UserId,
     pub name: String,
     pub commands: Vec<String>,
-}
-
-// The referral config briefly shipped (to test envs only) as a single shared threshold;
-// accept that shape on upgrade and convert it so those envs upgrade cleanly. Inert
-// everywhere else - production never held the old shape.
-fn deserialize_moderation_referral_config<'de, D>(d: D) -> Result<Option<ModerationReferralConfig>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    #[derive(Deserialize)]
-    #[serde(untagged)]
-    enum Compat {
-        New(ModerationReferralConfig),
-        Old { categories: u32, score_threshold: f64 },
-    }
-
-    Ok(match Option::<Compat>::deserialize(d)? {
-        Some(Compat::New(config)) => Some(config),
-        Some(Compat::Old {
-            categories,
-            score_threshold,
-        }) => {
-            let categories = (0..32)
-                .map(|i| 1u32 << i)
-                .filter(|bit| categories & bit != 0)
-                .map(|category| types::ModerationReferralCategory {
-                    category,
-                    score_threshold,
-                })
-                .collect::<Vec<_>>();
-            (!categories.is_empty()).then_some(ModerationReferralConfig { categories })
-        }
-        None => None,
-    })
 }
