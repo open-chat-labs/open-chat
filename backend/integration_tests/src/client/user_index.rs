@@ -27,6 +27,7 @@ generate_msgpack_update_call!(pay_for_diamond_membership);
 generate_msgpack_update_call!(remove_bot);
 generate_msgpack_update_call!(contest_moderation_sanction);
 generate_msgpack_update_call!(record_authority_report_filed);
+generate_msgpack_update_call!(set_vault_legal_hold);
 generate_msgpack_update_call!(resolve_moderation_report);
 generate_msgpack_update_call!(propose_protected_action);
 generate_msgpack_update_call!(confirm_protected_action);

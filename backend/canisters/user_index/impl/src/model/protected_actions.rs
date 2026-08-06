@@ -24,13 +24,17 @@ pub struct ProtectedActions {
 pub struct PendingProtectedAction {
     pub id: u64,
     pub action: ProtectedAction,
-    // The different-principal check compares operator principals; the user id is carried for
-    // the log and notices
+    // Confirmation is rejected if EITHER matches the confirmer: the principal covers the
+    // stolen-key case, the user id covers the same operator returning under a new principal
     pub proposed_by_principal: Principal,
     pub proposed_by: UserId,
     pub proposed_at: TimestampMillis,
 }
 
+// The chain hash is taken over this struct's serialization, and the chain head is published
+// so it can be verified externally. Adding or removing a FIELD here changes the hash of every
+// historical entry and breaks verification against any previously published head - append new
+// variants to ProtectedActionLogEvent instead, which is hash-stable.
 #[derive(Serialize, Deserialize)]
 pub struct ProtectedActionLogEntry {
     pub index: u64,
@@ -92,7 +96,7 @@ impl ProtectedActions {
         let Some(entry) = self.pending.get(&id) else {
             return ConfirmOutcome::NotFound;
         };
-        if entry.proposed_by_principal == confirmer_principal {
+        if entry.proposed_by_principal == confirmer_principal || entry.proposed_by == confirmed_by {
             return ConfirmOutcome::ProposerCannotConfirm;
         }
         let entry = self.pending.remove(&id).unwrap();
@@ -192,6 +196,19 @@ mod tests {
             ConfirmOutcome::ProposerCannotConfirm
         ));
         // Still pending: the failed confirm must not consume the proposal
+        assert_eq!(actions.pending().count(), 1);
+    }
+
+    #[test]
+    fn same_operator_cannot_confirm_under_a_new_principal() {
+        let mut actions = ProtectedActions::default();
+        let operator = random_from_principal::<UserId>();
+        let id = actions.propose(destroy_action(), random_principal(), operator, 1);
+        // Different principal, same human: still the proposer
+        assert!(matches!(
+            actions.confirm(id, random_principal(), operator, 2),
+            ConfirmOutcome::ProposerCannotConfirm
+        ));
         assert_eq!(actions.pending().count(), 1);
     }
 

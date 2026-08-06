@@ -42,6 +42,10 @@ fn set_vault_legal_hold_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     }
 
     moderation::set_vault_legal_hold(&report.blob_references, args.legal_hold, state);
+    state
+        .data
+        .reported_messages
+        .set_legal_hold(args.report_index, args.legal_hold);
 
     let action = if args.legal_hold { "set" } else { "cleared" };
     moderation::post_moderation_notice(

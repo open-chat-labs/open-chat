@@ -20,10 +20,23 @@ fn propose_protected_action_impl(args: Args, state: &mut RuntimeState) -> Respon
 
     // Reject obviously invalid proposals up front; the authoritative validation runs again
     // inside the action's implementation at confirm time
-    if let ProtectedAction::DestroyVaultEvidence(destroy) = &args.action
-        && destroy.le_request_ref.trim().is_empty()
-    {
-        return Response::Error(OCErrorCode::InvalidRequest.with_message("A law enforcement request reference is required"));
+    if let ProtectedAction::DestroyVaultEvidence(destroy) = &args.action {
+        if destroy.le_request_ref.trim().is_empty() {
+            return Response::Error(
+                OCErrorCode::InvalidRequest.with_message("A law enforcement request reference is required"),
+            );
+        }
+        if state
+            .data
+            .reported_messages
+            .get(destroy.report_index)
+            .is_some_and(|r| r.legal_hold)
+        {
+            return Response::Error(
+                OCErrorCode::InvalidRequest
+                    .with_message("A legal hold stands on this evidence - clear the hold before destroying it"),
+            );
+        }
     }
 
     let now = state.env.now();

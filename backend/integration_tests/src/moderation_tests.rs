@@ -1860,6 +1860,128 @@ fn protected_action_cannot_be_confirmed_by_its_proposer() {
 }
 
 #[test]
+fn legal_hold_blocks_destruction_of_vaulted_evidence() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    // A file message with no caption escalates for human review without a classifier call,
+    // giving us a report which holds vaulted evidence
+    let file_size = 1000u32;
+    let blob_reference = client::storage_index::happy_path::upload_file(
+        env,
+        test_data.sender.principal,
+        canister_ids.storage_index,
+        file_size,
+        vec![test_data.sender.canister()],
+    );
+    let message_id = random_from_u128();
+    client::group::send_message_v2(
+        env,
+        test_data.sender.principal,
+        test_data.group_id.into(),
+        &group_canister::send_message_v2::Args {
+            thread_root_message_index: None,
+            message_id,
+            content: MessageContentInitial::File(FileContent {
+                name: random_string(),
+                caption: None,
+                mime_type: "application/octet-stream".to_string(),
+                file_size,
+                blob_reference: Some(blob_reference.clone()),
+            }),
+            sender_name: test_data.sender.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            forwarding: false,
+            block_level_markdown: false,
+            rules_accepted: None,
+            message_filter_failed: None,
+            new_achievement: false,
+            og_previews: Vec::new(),
+        },
+    );
+    tick_many(env, 3);
+
+    client::group::report_message(
+        env,
+        test_data.reporter.principal,
+        test_data.group_id.into(),
+        &group_canister::report_message::Args {
+            thread_root_message_index: None,
+            message_id,
+            delete: false,
+            csam: false,
+        },
+    );
+    tick_many(env, 10);
+
+    let reports = get_moderation_reports(env, &test_data);
+    let report_index = reports[0].report_index.expect("report should carry an index");
+
+    client::user_index::set_vault_legal_hold(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::set_vault_legal_hold::Args {
+            report_index,
+            legal_hold: true,
+            reference: "PRESERVATION-1".to_string(),
+        },
+    );
+
+    // The proposal must be refused outright. Destruction used to override the hold, so once
+    // the bucket started refusing it, moderators would have been told the evidence was
+    // destroyed while it was in fact still vaulted
+    let destroy = |le_ref: &str| user_index_canister::propose_protected_action::Args {
+        action: ProtectedAction::DestroyVaultEvidence(user_index_canister::destroy_vault_evidence::Args {
+            report_index,
+            le_request_ref: le_ref.to_string(),
+        }),
+    };
+
+    let response = client::user_index::propose_protected_action(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &destroy("DESTROY-1"),
+    );
+    assert!(
+        matches!(response, user_index_canister::propose_protected_action::Response::Error(_)),
+        "{response:?}"
+    );
+
+    // Clearing the hold - a separate, separately logged act - unblocks it
+    client::user_index::set_vault_legal_hold(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::set_vault_legal_hold::Args {
+            report_index,
+            legal_hold: false,
+            reference: "PRESERVATION-1".to_string(),
+        },
+    );
+
+    let response = client::user_index::propose_protected_action(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &destroy("DESTROY-1"),
+    );
+    assert!(
+        matches!(response, user_index_canister::propose_protected_action::Response::Success(_)),
+        "{response:?}"
+    );
+}
+
+#[test]
 fn cancelled_protected_action_cannot_be_confirmed() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {

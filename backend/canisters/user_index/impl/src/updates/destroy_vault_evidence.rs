@@ -27,6 +27,14 @@ pub(crate) fn execute(args: Args, proposed_by: UserId, confirmed_by: UserId, sta
         return Err(OCErrorCode::InvalidRequest.with_message("The report holds no vaulted evidence"));
     }
 
+    // The bucket refuses destruction while a hold stands, so refuse here too rather than
+    // reporting a destruction which will not happen. Clearing the hold is the separate,
+    // separately logged act which must come first.
+    if report.legal_hold {
+        return Err(OCErrorCode::InvalidRequest
+            .with_message("A legal hold stands on this evidence - clear the hold before destroying it"));
+    }
+
     moderation::destroy_vault_evidence(
         &report.blob_references,
         args.le_request_ref.clone(),
