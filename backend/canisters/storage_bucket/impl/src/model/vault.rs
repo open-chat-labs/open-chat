@@ -217,7 +217,6 @@ impl Vault {
         self.blocked_attempts.insert((uploader, file_id))
     }
 
-
     pub fn unquarantine(
         &mut self,
         file_id: FileId,
@@ -809,7 +808,4 @@ mod tests {
         // A different user attempting the same file is a fresh attempt
         assert!(vault.record_blocked_attempt(reviewer(2), 42));
     }
-
-
-
 }
