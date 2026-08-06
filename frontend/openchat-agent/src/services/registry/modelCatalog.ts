@@ -1,5 +1,5 @@
 import { Type, type Static } from "@sinclair/typebox";
-import type { ModelCatalog, ModelCatalogEntry, ModelModality, ModelRuntime } from "openchat-shared";
+import type { ModelCatalog, ModelCatalogEntry, ModelModality, ModelRuntime } from "@shared";
 
 // HAND-WRITTEN msgpack wire schema + mapper for the registry `model_catalog` query.
 //
