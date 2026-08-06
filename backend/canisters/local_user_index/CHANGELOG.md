@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2008](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2008-local_user_index)] - 2026-08-06
+
 ### Added
 
 - Moderation-referral config: categories scoring above the configured threshold are referred for human review via the owning chat canister ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
