@@ -36,7 +36,7 @@ fn confirm_protected_action_impl(args: Args, state: &mut RuntimeState) -> OCResu
         .get(args.action_id)
         .map(|p| p.action.clone())
         .ok_or_else(|| OCErrorCode::InvalidRequest.with_message("No pending action with that id (it may have expired)"))?;
-    crate::updates::validate_protected_action::validate_protected_action(&action, state)?;
+    crate::model::protected_actions::validate(&action, state)?;
 
     let pending = {
         let now = state.env.now();

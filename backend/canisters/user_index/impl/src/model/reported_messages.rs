@@ -362,6 +362,19 @@ impl ReportedMessages {
         }
     }
 
+    // Every held report which shares one of these blobs. Holds are per-report here but
+    // per-record in the bucket, and a blob can be evidence in several reports, so a hold
+    // placed via one report also protects the same blob wherever else it appears - any check
+    // scoped to a single report misses that
+    pub fn reports_with_hold_intersecting(&self, blob_references: &[BlobReference]) -> Vec<u64> {
+        self.messages
+            .iter()
+            .enumerate()
+            .filter(|(_, m)| m.legal_hold && m.blob_references.iter().any(|b| blob_references.contains(b)))
+            .map(|(i, _)| i as u64)
+            .collect()
+    }
+
     pub fn mark_unverified_report_filed(&mut self, report_index: u64, now: TimestampMillis) -> bool {
         if let Some(message) = self.messages.get_mut(report_index as usize)
             && message.unverified_report_filed.is_none()

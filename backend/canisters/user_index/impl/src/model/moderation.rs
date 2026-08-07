@@ -568,10 +568,13 @@ fn quarantine_ops(report_index: u64, report: &ReportedMessage, flags: u32, now: 
 
 pub fn unquarantine_blobs(blob_references: &[BlobReference], moderator: UserId, report_index: u64, state: &mut RuntimeState) {
     // The bucket refuses a release while a legal hold stands and remembers it as pending, so
-    // that clearing the hold performs it. Mirror that here: clearing a hold on a report in
-    // this state destroys the evidence, so it has to go through dual authorization (#9136)
-    if state.data.reported_messages.get(report_index).is_some_and(|r| r.legal_hold) {
-        state.data.reported_messages.set_release_pending(report_index, true);
+    // that clearing the hold performs it. Mirror that here on EVERY held report sharing one of
+    // these blobs, not just the report being released: the bucket's hold is per blob record,
+    // so when a blob is evidence in two reports, clearing a hold placed via the OTHER report
+    // is what would perform this deferred release and destroy the evidence. Marking that
+    // report release_pending is what forces its hold-clear through dual authorization (#9136)
+    for held in state.data.reported_messages.reports_with_hold_intersecting(blob_references) {
+        state.data.reported_messages.set_release_pending(held, true);
     }
 
     let ops = blob_references
@@ -606,7 +609,8 @@ pub fn set_vault_legal_hold(blob_references: &[BlobReference], legal_hold: bool,
 }
 
 // Destroys a report's vaulted blobs on a law enforcement request, overriding the retention
-// clock and any legal hold. The vault log entry survives the record.
+// clock. The bucket refuses destruction while a legal hold stands; the callers check first so
+// a refused destruction is never reported as done. The vault log entry survives the record.
 pub fn destroy_vault_evidence(
     blob_references: &[BlobReference],
     le_request_ref: String,

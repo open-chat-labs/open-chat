@@ -1,7 +1,9 @@
+use crate::RuntimeState;
 use candid::Principal;
+use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use types::{Hash, Milliseconds, TimestampMillis, UserId};
+use types::{Hash, Milliseconds, OCResult, TimestampMillis, UserId};
 use user_index_canister::propose_protected_action::ProtectedAction;
 use utils::hasher::hash_bytes;
 
@@ -203,6 +205,78 @@ impl ProtectedActions {
     pub(crate) fn entry_hash(entry: &ProtectedActionLogEntry) -> Hash {
         hash_bytes(msgpack::serialize_then_unwrap(entry))
     }
+}
+
+// Validation for the dual-authorized actions, run BOTH when an action is proposed (so the
+// proposer finds out immediately) and again when it is confirmed (state can change while a
+// proposal sits pending - a report can be resolved, a moderator removed, a hold applied).
+// Keeping it in one place is what stops the two checks drifting apart.
+pub(crate) fn validate(action: &ProtectedAction, state: &RuntimeState) -> OCResult {
+    match action {
+        ProtectedAction::DestroyVaultEvidence(args) => {
+            if args.le_request_ref.trim().is_empty() {
+                return Err(OCErrorCode::InvalidRequest.with_message("A law enforcement request reference is required"));
+            }
+            let report = state
+                .data
+                .reported_messages
+                .get(args.report_index)
+                .ok_or(OCErrorCode::MessageNotFound)?;
+            if report.blob_references.is_empty() {
+                return Err(OCErrorCode::InvalidRequest.with_message("The report holds no vaulted evidence"));
+            }
+            // Checked across ALL reports sharing these blobs, not just this one: the bucket's
+            // hold is per blob record, so a hold placed via a sibling report also blocks this
+            // destruction there - refusing here stops the confirm alert reporting a
+            // destruction the bucket will refuse
+            let held = state.data.reported_messages.reports_with_hold_intersecting(&report.blob_references);
+            if let Some(holder) = held.first() {
+                return Err(OCErrorCode::InvalidRequest.with_message(format!(
+                    "A legal hold (via report #{holder}) stands on this evidence - clear the hold before destroying it"
+                )));
+            }
+        }
+        ProtectedAction::SetVaultLegalHold(args) => {
+            if args.reference.trim().is_empty() {
+                return Err(OCErrorCode::InvalidRequest.with_message("A reference for the request is required"));
+            }
+            let report = state
+                .data
+                .reported_messages
+                .get(args.report_index)
+                .ok_or(OCErrorCode::MessageNotFound)?;
+            if report.blob_references.is_empty() {
+                return Err(OCErrorCode::InvalidRequest.with_message("The report holds no vaulted evidence"));
+            }
+        }
+        ProtectedAction::SetVaultReviewers(args) => {
+            // Checked here as well as at execution so a proposal which can never succeed is
+            // never queued in the first place
+            if let Some(user_id) = args.user_ids.iter().find(|u| !state.data.platform_moderators.contains(u)) {
+                return Err(OCErrorCode::InvalidRequest.with_message(format!("{user_id} is not a platform moderator")));
+            }
+        }
+        ProtectedAction::SetOpenAIApiKey(args) => {
+            // Unsetting is `None`; an empty or blank string is a mistake, not an instruction
+            if args.api_key.as_ref().is_some_and(|k| k.trim().is_empty()) {
+                return Err(OCErrorCode::InvalidRequest
+                    .with_message("The API key is blank - to switch detection off, propose unsetting it instead"));
+            }
+        }
+        ProtectedAction::SetInternalModerationChannel(args) => {
+            if let Some(channel) = &args.channel {
+                // The community's existence cannot be checked from here (the user_index knows
+                // nothing about communities), so this catches only structurally impossible
+                // ids. Whether the channel exists is verified by the alert failing to post,
+                // which is why the proposal shows the ids for the confirmer to check.
+                if Principal::from(channel.community_id) == Principal::anonymous() {
+                    return Err(OCErrorCode::InvalidRequest.with_message("That is not a valid community id"));
+                }
+            }
+        }
+    }
+
+    Ok(())
 }
 
 #[derive(Serialize, Debug)]

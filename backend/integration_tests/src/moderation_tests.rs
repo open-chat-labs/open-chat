@@ -2202,6 +2202,222 @@ fn clearing_a_hold_which_would_release_evidence_requires_two_operators() {
 }
 
 #[test]
+fn a_holds_protection_extends_to_sibling_reports_sharing_the_blob() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    client::user_index::happy_path::execute_protected_action(
+        env,
+        test_data.moderator.principal,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        ProtectedAction::SetVaultReviewers(user_index_canister::set_vault_reviewers::Args {
+            user_ids: vec![test_data.moderator.user_id],
+        }),
+    );
+    tick_many(env, 5);
+
+    // The same blob carried by two messages, each CSAM-reported: one vault record (where the
+    // hold lives), two reports (where the user_index tracks it). The hold checks must span
+    // that mismatch or a sibling report becomes a way around them.
+    let file_size = 1000u32;
+    let blob_reference = client::storage_index::happy_path::upload_file(
+        env,
+        test_data.sender.principal,
+        canister_ids.storage_index,
+        file_size,
+        vec![test_data.sender.canister()],
+    );
+    let mut message_ids = Vec::new();
+    for _ in 0..2 {
+        let message_id = random_from_u128();
+        let send_response = client::group::send_message_v2(
+            env,
+            test_data.sender.principal,
+            test_data.group_id.into(),
+            &group_canister::send_message_v2::Args {
+                thread_root_message_index: None,
+                message_id,
+                content: MessageContentInitial::File(FileContent {
+                    name: random_string(),
+                    caption: None,
+                    mime_type: "application/octet-stream".to_string(),
+                    file_size,
+                    blob_reference: Some(blob_reference.clone()),
+                }),
+                sender_name: test_data.sender.username(),
+                sender_display_name: None,
+                replies_to: None,
+                mentioned: Vec::new(),
+                forwarding: false,
+                block_level_markdown: false,
+                rules_accepted: None,
+                message_filter_failed: None,
+                new_achievement: false,
+                og_previews: Vec::new(),
+            },
+        );
+        assert!(
+            matches!(send_response, group_canister::send_message_v2::Response::Success(_)),
+            "{send_response:?}"
+        );
+        message_ids.push(message_id);
+    }
+    tick_many(env, 3);
+
+    for message_id in &message_ids {
+        let report_response = client::group::report_message(
+            env,
+            test_data.reporter.principal,
+            test_data.group_id.into(),
+            &group_canister::report_message::Args {
+                thread_root_message_index: None,
+                message_id: *message_id,
+                delete: false,
+                csam: true,
+            },
+        );
+        assert!(matches!(report_response, UnitResult::Success));
+        tick_many(env, 10);
+    }
+
+    let reports = get_moderation_reports(env, &test_data);
+    let report_index_for = |reports: &[ModerationReportContent], message_id| {
+        reports
+            .iter()
+            .find(|r| r.message_id == message_id)
+            .and_then(|r| r.report_index)
+            .expect("report should exist with an index")
+    };
+    let held_report = report_index_for(&reports, message_ids[0]);
+    let sibling_report = report_index_for(&reports, message_ids[1]);
+    assert_ne!(held_report, sibling_report);
+
+    let dismiss = |env: &mut PocketIc, report_index: u64| {
+        client::user_index::resolve_moderation_report(
+            env,
+            test_data.moderator.principal,
+            canister_ids.user_index,
+            &user_index_canister::resolve_moderation_report::Args {
+                report_index,
+                verdict: ModerationVerdict::Dismissed,
+                urgent: None,
+            },
+        )
+    };
+
+    // The first report is dismissed BEFORE any hold exists: its evidence claim is released,
+    // but the record survives on the sibling's claim, so nothing is deferred and nothing is
+    // marked release-pending anywhere
+    let response = dismiss(env, held_report);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    tick_many(env, 10);
+
+    // The preservation request arrives afterwards (law enforcement does not track internal
+    // verdicts) and is applied via the already-dismissed report
+    let hold_response = client::user_index::set_vault_legal_hold(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::set_vault_legal_hold::Args {
+            report_index: held_report,
+            legal_hold: true,
+            reference: "PRESERVATION-1".to_string(),
+        },
+    );
+    assert!(matches!(hold_response, UnitResult::Success), "{hold_response:?}");
+
+    // Destruction proposed via the SIBLING report must be refused: the bucket's hold is on
+    // the blob record, so it would refuse the destruction there, after the confirm alert had
+    // already reported it done
+    let destroy_response = client::user_index::propose_protected_action(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::propose_protected_action::Args {
+            action: ProtectedAction::DestroyVaultEvidence(user_index_canister::destroy_vault_evidence::Args {
+                report_index: sibling_report,
+                le_request_ref: "DESTROY-1".to_string(),
+            }),
+        },
+    );
+    assert!(
+        matches!(destroy_response, user_index_canister::propose_protected_action::Response::Error(_)),
+        "{destroy_response:?}"
+    );
+
+    // Dismissing the sibling releases the LAST evidence claim, so the bucket wants to release
+    // the record physically and the hold defers it. The release was requested via a report
+    // which holds no hold itself - the case a per-report check misses
+    let response = dismiss(env, sibling_report);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    tick_many(env, 10);
+
+    // The hold defers the release: the evidence must still be vaulted
+    let fetch_chunk = |env: &mut PocketIc| {
+        client::storage_bucket::vault_file_chunk(
+            env,
+            test_data.moderator.principal,
+            blob_reference.canister_id,
+            &storage_bucket_canister::vault_file_chunk::Args {
+                file_id: blob_reference.blob_id,
+                chunk_index: 0,
+            },
+        )
+    };
+    assert!(matches!(
+        fetch_chunk(env),
+        storage_bucket_canister::vault_file_chunk::Response::Success(_)
+    ));
+
+    // Clearing the hold would perform that deferred release, so a single operator must be
+    // refused even though the release was requested via the sibling report - this was the
+    // shared-blob route around the dual authorization on destruction
+    let clear_response = client::user_index::set_vault_legal_hold(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::set_vault_legal_hold::Args {
+            report_index: held_report,
+            legal_hold: false,
+            reference: "PRESERVATION-1".to_string(),
+        },
+    );
+    assert!(matches!(clear_response, UnitResult::Error(_)), "{clear_response:?}");
+    assert!(matches!(
+        fetch_chunk(env),
+        storage_bucket_canister::vault_file_chunk::Response::Success(_)
+    ));
+
+    // Two operators can clear it, which performs the deferred release
+    client::user_index::happy_path::execute_protected_action(
+        env,
+        test_data.moderator.principal,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        ProtectedAction::SetVaultLegalHold(user_index_canister::set_vault_legal_hold::Args {
+            report_index: held_report,
+            legal_hold: false,
+            reference: "PRESERVATION-1".to_string(),
+        }),
+    );
+    tick_many(env, 5);
+    assert!(
+        !matches!(
+            fetch_chunk(env),
+            storage_bucket_canister::vault_file_chunk::Response::Success(_)
+        ),
+        "the deferred release should have been performed when the hold was cleared"
+    );
+}
+
+#[test]
 fn protected_action_alerts_reach_operators_without_a_moderation_channel() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
