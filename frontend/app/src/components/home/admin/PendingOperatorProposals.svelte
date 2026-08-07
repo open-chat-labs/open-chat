@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { currentUserIdStore, type OpenChat, type ResourceKey } from "@client";
+    import { allUsersStore, currentUserIdStore, type OpenChat, type ResourceKey } from "@client";
     import { Body, BodySmall, Column, Row, Subtitle } from "component-lib";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -40,6 +40,7 @@
                 } catch {
                     pending = [];
                 }
+                hydrateProposers();
             })
             .finally(() => (loading = false));
     }
@@ -88,6 +89,23 @@
             });
     }
 
+    // Operators are not necessarily in the local user cache (you may share no chats with
+    // them), so pull in any proposer we do not already know. getUser populates the store,
+    // which the template reads reactively
+    function hydrateProposers(): void {
+        const missing = new Set(
+            pending.map((p) => p.proposed_by).filter((id) => !$allUsersStore.has(id)),
+        );
+        for (const userId of missing) {
+            client.getUser(userId);
+        }
+    }
+
+    function proposedBy(userId: string): string {
+        const user = $allUsersStore.get(userId);
+        return user === undefined ? userId : `@${user.username}`;
+    }
+
     function formatTimestamp(ms: number): string {
         return new Date(ms).toLocaleString();
     }
@@ -123,7 +141,9 @@
                 #{proposal.id} — {proposal.summary}
             </Body>
             <BodySmall colour="textSecondary">
-                Proposed by {proposal.proposed_by} at {formatTimestamp(proposal.proposed_at)} · expires
+                Proposed by {proposedBy(proposal.proposed_by)} at {formatTimestamp(
+                    proposal.proposed_at,
+                )} · expires
                 {formatTimestamp(proposal.expires_at)}
             </BodySmall>
             {#if isOwnProposal(proposal)}

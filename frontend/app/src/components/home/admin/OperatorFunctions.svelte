@@ -7,8 +7,10 @@
         type UpdateMarketMakerConfigArgs,
     } from "@client";
     import { Principal } from "@icp-sdk/core/principal";
-    import { getContext, onMount } from "svelte";
+    import { Body, BodySmall, ColourVars, Column, Row, Subtitle } from "component-lib";
     import type { ProposedProtectedAction } from "openchat-client";
+    import { getContext, onMount, type Snippet } from "svelte";
+    import { SvelteSet } from "svelte/reactivity";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import Button from "../../Button.svelte";
@@ -33,7 +35,7 @@
     let groupUpgradeConcurrency = $state("10");
     let communityUpgradeConcurrency = $state("10");
     let userUpgradeConcurrency = $state("10");
-    let busy: Set<number> = $state(new Set());
+    let busy = $state(new SvelteSet());
     let governanceCanisterId = $state("");
     let stake = $state("0");
 
@@ -542,6 +544,84 @@
     }
 </script>
 
+{#snippet proposedDestroyVaultView()}
+    <Column gap="md">
+        {@const labelWidth = { size: "8rem" }}
+        <Row gap="md">
+            <BodySmall width={labelWidth} colour="textSecondary" uppercase>Report index:</BodySmall>
+            <Input bind:value={destroyReportIndex} />
+        </Row>
+        <Row gap="md">
+            <BodySmall width={labelWidth} colour="textSecondary" uppercase
+                >LE request reference:</BodySmall>
+            <Input bind:value={destroyRequestRef} />
+        </Row>
+        <Row gap="md">
+            <BodySmall width={labelWidth} colour="textSecondary" uppercase
+                >Request verified:</BodySmall>
+            <Toggle small id="confirm-destroy-vault-evidence" bind:checked={destroyConfirmed} />
+        </Row>
+    </Column>
+{/snippet}
+
+{#snippet currentModerationChannelView()}
+    <Input disabled value={currentModerationChannel || "Not set"} />
+{/snippet}
+
+{#snippet proposedModerationChannelView()}
+    <Input bind:value={moderationCommunityId} placeholder={i18nKey("Community id")} />
+    <Input bind:value={moderationChannelId} placeholder={i18nKey("Channel id")} />
+{/snippet}
+
+{#snippet currentVaultReviewersView()}
+    <Input disabled value={currentVaultReviewers || "None"} />
+{/snippet}
+
+{#snippet proposedVaultReviewersView()}
+    <Input bind:value={vaultReviewerIds} placeholder={i18nKey("Comma separated reviewer Ids")} />
+{/snippet}
+
+{#snippet currentOpenAIKey()}
+    <Input disabled value={openAiKeySet ? "Set" : "Not set"} />
+{/snippet}
+
+{#snippet proposedOpenAIKey()}
+    <Input bind:value={openAiApiKey} placeholder={i18nKey("New key (blank to unset)")} />
+{/snippet}
+
+{#snippet dualSetting(
+    name: string,
+    desc: string,
+    index: number,
+    onPropose: () => void,
+    proposed: Snippet<[]>,
+    current?: Snippet<[]>,
+)}
+    <Column backgroundColor={ColourVars.background0} borderRadius="md" padding="lg" gap="lg">
+        <Column gap="xs">
+            <Subtitle>{name}</Subtitle>
+            <Body colour="textSecondary">{desc}</Body>
+        </Column>
+        {#if current}
+            <Row mainAxisAlignment="spaceBetween" gap="lg">
+                <Column gap="xs">
+                    <BodySmall colour="textSecondary" uppercase>Current</BodySmall>
+                    {@render current()}
+                </Column>
+                <Column gap="xs">
+                    <BodySmall colour="textSecondary" uppercase>Proposed</BodySmall>
+                    {@render proposed()}
+                </Column>
+            </Row>
+        {:else}
+            {@render proposed()}
+        {/if}
+        <Button disabled={busy.has(index)} loading={busy.has(index)} onClick={onPropose}>
+            Propose
+        </Button>
+    </Column>
+{/snippet}
+
 <div class="operator">
     <section class="operator-function">
         <div class="title">Set group upgrade concurrency</div>
@@ -551,8 +631,7 @@
                 tiny
                 disabled={busy.has(0) || groupUpgradeConcurrencyInvalid}
                 loading={busy.has(0)}
-                onClick={setGroupUpgradeConcurrency}>Apply</Button
-            >
+                onClick={setGroupUpgradeConcurrency}>Apply</Button>
         </ButtonGroup>
     </section>
 
@@ -561,14 +640,12 @@
         <ButtonGroup align="fill">
             <Input
                 invalid={communityUpgradeConcurrencyInvalid}
-                bind:value={communityUpgradeConcurrency}
-            />
+                bind:value={communityUpgradeConcurrency} />
             <Button
                 tiny
                 disabled={busy.has(1) || communityUpgradeConcurrencyInvalid}
                 loading={busy.has(1)}
-                onClick={setCommunityUpgradeConcurrency}>Apply</Button
-            >
+                onClick={setCommunityUpgradeConcurrency}>Apply</Button>
         </ButtonGroup>
     </section>
 
@@ -580,8 +657,7 @@
                 tiny
                 disabled={busy.has(2) || userUpgradeConcurrencyInvalid}
                 loading={busy.has(2)}
-                onClick={setUserUpgradeConcurrency}>Apply</Button
-            >
+                onClick={setUserUpgradeConcurrency}>Apply</Button>
         </ButtonGroup>
     </section>
 
@@ -625,8 +701,7 @@
                 tiny
                 disabled={busy.has(3)}
                 loading={busy.has(3)}
-                onClick={setDiamondMembershipFees}>Apply</Button
-            >
+                onClick={setDiamondMembershipFees}>Apply</Button>
         </section>
     {/if}
 
@@ -648,8 +723,7 @@
             tiny
             disabled={busy.has(4)}
             loading={busy.has(4)}
-            onClick={stakeNeuronForSubmittingProposals}>Apply</Button
-        >
+            onClick={stakeNeuronForSubmittingProposals}>Apply</Button>
     </section>
 
     <section class="operator-function">
@@ -730,8 +804,7 @@
             tiny
             disabled={busy.has(5) || exchangeIdInvalid}
             loading={busy.has(5)}
-            onClick={updateMarketMakerConfig}>Apply</Button
-        >
+            onClick={updateMarketMakerConfig}>Apply</Button>
     </section>
 
     <section class="operator-function">
@@ -743,8 +816,7 @@
                 tiny
                 disabled={busy.has(6) || !tokenLedgerValid}
                 loading={busy.has(6)}
-                onClick={setTokenEnabled}>Apply</Button
-            >
+                onClick={setTokenEnabled}>Apply</Button>
         </ButtonGroup>
     </section>
 
@@ -763,8 +835,7 @@
                         bind:value={
                             () => referralThresholds[bit] ?? "",
                             (v) => (referralThresholds[bit] = v)
-                        }
-                    />
+                        } />
                 </div>
             </div>
         {/each}
@@ -772,8 +843,7 @@
             tiny
             disabled={busy.has(9) || referralThresholdsInvalid}
             loading={busy.has(9)}
-            onClick={setModerationReferralConfig}>Apply</Button
-        >
+            onClick={setModerationReferralConfig}>Apply</Button>
     </section>
 
     <section class="operator-function">
@@ -805,15 +875,13 @@
                 tiny
                 disabled={busy.has(11)}
                 loading={busy.has(11)}
-                onClick={() => setVaultLegalHold(true)}>Set hold</Button
-            >
+                onClick={() => setVaultLegalHold(true)}>Set hold</Button>
             <Button
                 tiny
                 secondary
                 disabled={busy.has(11)}
                 loading={busy.has(11)}
-                onClick={() => setVaultLegalHold(false)}>Clear hold</Button
-            >
+                onClick={() => setVaultLegalHold(false)}>Clear hold</Button>
         </ButtonGroup>
     </section>
 
@@ -831,124 +899,60 @@
         </ButtonGroup>
     </section>
 
-    <section class="danger-zone-header">
-        <h4>Two-phase operator actions</h4>
-        <div class="hint">
-            Everything below is <strong>dual authorized</strong>: you propose the change, and a
-            different platform operator confirms or rejects it. Nothing here takes effect when you
-            press Propose. Pending proposals - yours and other operators' - are listed under the
-            <strong>Pending proposals</strong> tab.
-        </div>
-    </section>
+    <Column
+        backgroundColor="color-mix(in srgb, var(--warning), transparent 90%)"
+        borderColour={ColourVars.warning}
+        borderWidth="thin"
+        supplementalClass="danger_zone"
+        borderRadius="md"
+        padding="lg"
+        gap="xl">
+        <Column gap="md" padding={["zero", "lg"]}>
+            <Subtitle>Dual auth operator actions</Subtitle>
+            <Body fontWeight="light">
+                Everything below is <strong>dual authorized</strong>: you propose the change, and a
+                different platform operator confirms or rejects it. Nothing here takes effect when
+                you press Propose. Pending proposals - yours and other operators' - are listed under
+                the
+                <strong>Pending proposals</strong> tab.
+            </Body>
+        </Column>
 
-    <section class="operator-function danger">
-        <div class="title">OpenAI API key (moderation)</div>
-        <div class="hint">
-            Arms the classification pipeline on every local user index. Setting it starts proactive
-            detection and the reporting duties which follow from it.
-        </div>
-        <div class="comparison">
-            <div class="current">
-                <div class="col-label">Current</div>
-                <div class="col-value">{openAiKeySet ? "Set" : "Not set"}</div>
-            </div>
-            <div class="proposed">
-                <div class="col-label">Propose</div>
-                <div class="col-value">
-                    <Input bind:value={openAiApiKey} placeholder={"New key (blank to unset)"} />
-                </div>
-            </div>
-        </div>
-        <Button tiny disabled={busy.has(7)} loading={busy.has(7)} onClick={proposeSetOpenAIApiKey}>
-            Propose
-        </Button>
-    </section>
+        {@render dualSetting(
+            "OpenAI API key (moderation)",
+            "Arms the classification pipeline on every local user index. Setting it starts proactive detection and the reporting duties which follow from it.",
+            7,
+            proposeSetOpenAIApiKey,
+            proposedOpenAIKey,
+            currentOpenAIKey,
+        )}
 
-    <section class="operator-function danger">
-        <div class="title">Vault reviewers</div>
-        <div class="hint">
-            Grants access to quarantined material. Comma-separated user ids; replaces the whole set;
-            each must already be a platform moderator. An empty list revokes all reviewers.
-        </div>
-        <div class="comparison">
-            <div class="current">
-                <div class="col-label">Current</div>
-                <div class="col-value">{currentVaultReviewers || "None"}</div>
-            </div>
-            <div class="proposed">
-                <div class="col-label">Propose</div>
-                <div class="col-value">
-                    <Input bind:value={vaultReviewerIds} />
-                </div>
-            </div>
-        </div>
-        <Button
-            tiny
-            disabled={busy.has(10)}
-            loading={busy.has(10)}
-            onClick={proposeSetVaultReviewers}>Propose</Button
-        >
-    </section>
+        {@render dualSetting(
+            "Vault reviewers",
+            "Grants access to quarantined material. Comma-separated user ids; replaces the whole set; each must already be a platform moderator. An empty list revokes all reviewers.",
+            10,
+            proposeSetVaultReviewers,
+            proposedVaultReviewersView,
+            currentVaultReviewersView,
+        )}
 
-    <section class="operator-function danger">
-        <div class="title">Internal moderation channel</div>
-        <div class="hint">
-            Where moderation alerts - including report excerpts and context - are posted.
-        </div>
-        <div class="comparison">
-            <div class="current">
-                <div class="col-label">Current</div>
-                <div class="col-value">{currentModerationChannel || "Not set"}</div>
-            </div>
-            <div class="proposed">
-                <div class="col-label">Propose</div>
-                <div class="col-value">
-                    <Input bind:value={moderationCommunityId} placeholder={"Community id"} />
-                    <Input bind:value={moderationChannelId} placeholder={"Channel id"} />
-                </div>
-            </div>
-        </div>
-        <Button
-            tiny
-            disabled={busy.has(8)}
-            loading={busy.has(8)}
-            onClick={proposeSetInternalModerationChannel}>Propose</Button
-        >
-    </section>
+        {@render dualSetting(
+            "Internal moderation channel",
+            "Where moderation alerts - including report excerpts and context - are posted.",
+            8,
+            proposeSetInternalModerationChannel,
+            proposedModerationChannelView,
+            currentModerationChannelView,
+        )}
 
-    <section class="operator-function danger">
-        <div class="title">Destroy vaulted evidence</div>
-        <div class="hint">
-            Law enforcement destruction request. Irreversible: the blobs are removed even if a
-            message still references them. A standing legal hold blocks destruction - clear the hold
-            first, as a separate act. The reference and both operator identities are recorded in the
-            vault log, which survives the destruction.
-        </div>
-        <div class="name-value">
-            <div class="label">Report index:</div>
-            <div class="value">
-                <Input bind:value={destroyReportIndex} />
-            </div>
-        </div>
-        <div class="name-value">
-            <div class="label">LE request reference:</div>
-            <div class="value">
-                <Input bind:value={destroyRequestRef} />
-            </div>
-        </div>
-        <div class="name-value">
-            <div class="label">Request verified:</div>
-            <div class="value">
-                <Toggle small id="confirm-destroy-vault-evidence" bind:checked={destroyConfirmed} />
-            </div>
-        </div>
-        <Button
-            tiny
-            disabled={busy.has(12) || !destroyConfirmed}
-            loading={busy.has(12)}
-            onClick={proposeDestroyVaultEvidence}>Propose</Button
-        >
-    </section>
+        {@render dualSetting(
+            "Destroy vaulted evidence",
+            "Law enforcement destruction request. Irreversible: the blobs are removed even if a message still references them. A standing legal hold blocks destruction - clear the hold first, as a separate act. The reference and both operator identities are recorded in the vault log, which survives the destruction. ",
+            12,
+            proposeDestroyVaultEvidence,
+            proposedDestroyVaultView,
+        )}
+    </Column>
 
     {#if error}
         <ErrorMessage>
@@ -958,56 +962,8 @@
 </div>
 
 <style lang="scss">
-    .danger-zone-header {
-        margin-top: $sp5;
-        padding: $sp4;
-        border: 1px solid var(--vote-no-color);
-        border-radius: var(--rd);
-        background-color: var(--recommended-bg);
-
-        h4 {
-            @include font(bold, normal, fs-120);
-            margin-bottom: $sp3;
-        }
-    }
-
-    .operator-function.danger {
-        border-left: 3px solid var(--vote-no-color);
-        padding-left: $sp4;
-    }
-
-    .comparison {
-        display: flex;
-        gap: $sp4;
-        margin-bottom: $sp3;
-
-        @include mobile() {
-            flex-direction: column;
-            gap: $sp3;
-        }
-
-        .current,
-        .proposed {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: $sp2;
-            min-width: 0;
-        }
-
-        .col-label {
-            @include font(medium, normal, fs-70);
-            text-transform: uppercase;
-            color: var(--txt-light);
-        }
-
-        .col-value {
-            @include font(book, normal, fs-90);
-            word-break: break-word;
-            display: flex;
-            flex-direction: column;
-            gap: $sp2;
-        }
+    :global(.danger_zone .input-wrapper) {
+        width: 100%;
     }
 
     :global(.operator-function .button-group > :nth-child(2)) {

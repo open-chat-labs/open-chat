@@ -39,6 +39,7 @@
             </div>
         </SectionHeader>
         <div class="tabs">
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
             <div
                 tabindex="0"
                 role="button"
@@ -47,6 +48,7 @@
                 class="tab">
                 Translation Corrections
             </div>
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
             <div
                 tabindex="0"
                 role="button"
@@ -55,6 +57,7 @@
                 class="tab">
                 Operator functions
             </div>
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
             <div
                 tabindex="0"
                 role="button"
@@ -63,6 +66,7 @@
                 class="tab">
                 Pending operator proposals
             </div>
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
             <div
                 tabindex="0"
                 role="button"
@@ -71,6 +75,7 @@
                 class="tab">
                 Authority reports
             </div>
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
             <div
                 tabindex="0"
                 role="button"
