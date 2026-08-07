@@ -27,6 +27,8 @@ import type {
     UsersResponse,
     UserSummary,
     UserSummaryUpdate,
+    Success,
+    OCError,
 } from "@shared";
 import {
     mergeUserSummaryWithUpdates,
@@ -97,6 +99,7 @@ import {
     UserIndexUsersResponse,
 } from "../../typebox";
 import type { UserIndexProposeProtectedActionProtectedAction } from "../../typebox";
+import { unitResult } from "../common/chatMappersV2";
 import type { ChatsDb } from "../../utils/chatsDb";
 import { groupBy } from "../../utils/list";
 import {
@@ -351,11 +354,14 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         });
     }
 
+    // Returns the canister's error rather than a bare boolean: a verdict can be refused for
+    // reasons the moderator needs to see (resolving your own CSAM assertion, a report already
+    // resolved), and collapsing those to "failed" leaves them guessing
     resolveModerationReport(
         reportIndex: bigint,
         verdict: ModerationVerdict,
         urgent: boolean | undefined,
-    ): Promise<boolean> {
+    ): Promise<Success | OCError> {
         return this.update(
             "resolve_moderation_report",
             {
@@ -363,7 +369,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                 verdict: apiModerationVerdict(verdict),
                 urgent,
             },
-            (resp) => resp === "Success",
+            unitResult,
             UserIndexResolveModerationReportArgs,
             UnitResult,
         );

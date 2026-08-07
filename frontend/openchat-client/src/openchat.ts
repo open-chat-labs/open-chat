@@ -327,6 +327,8 @@ import {
     type WhitepaperRoute,
     type WithdrawBtcResponse,
     type WithdrawCryptocurrencyResponse,
+    type OCError,
+    type ProposedProtectedAction,
     isAndroidTauriApp,
     isIosTauriApp,
 } from "@shared";
@@ -6361,10 +6363,10 @@ export class OpenChat {
         reportIndex: bigint,
         verdict: ModerationVerdict,
         urgent: boolean | undefined,
-    ): Promise<boolean> {
+    ): Promise<Success | OCError> {
         return this.#worker
             .send({ kind: "resolveModerationReport", reportIndex, verdict, urgent })
-            .catch(() => false);
+            .catch(() => ({ kind: "error", code: -1, message: undefined }) as OCError);
     }
 
     contestModerationSanction(): Promise<boolean> {

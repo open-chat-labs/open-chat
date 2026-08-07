@@ -1,3 +1,5 @@
+import type { OCError } from "./error";
+import type { Success } from "./response";
 import type { JsonnableDelegationChain } from "@icp-sdk/core/identity";
 import type { AccessGateConfig, Rules, UpdatedRules, VerifiedCredentialArgs } from "./access";
 import type {
@@ -1871,6 +1873,8 @@ export type WorkerError = {
  * Worker response types
  */
 export type WorkerResponseInner =
+    | Success
+    | OCError
     | ProposedProtectedAction
     | VaultFileChunkResponse
     | void
@@ -2635,7 +2639,7 @@ export type WorkerResult<T> = T extends Init
     : T extends ProposeSetInternalModerationChannel
     ? ProposedProtectedAction | undefined
     : T extends ResolveModerationReport
-    ? boolean
+    ? Success | OCError
     : T extends ContestModerationSanction
     ? boolean
     : T extends VaultFileChunk

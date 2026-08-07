@@ -7,7 +7,7 @@
         type UpdateMarketMakerConfigArgs,
     } from "@client";
     import { Principal } from "@icp-sdk/core/principal";
-    import { Body, BodySmall, ColourVars, Column, Row, Subtitle } from "component-lib";
+    import { Body, BodySmall, ColourVars, Column, Row, Subtitle, Title } from "component-lib";
     import type { ProposedProtectedAction } from "openchat-client";
     import { getContext, onMount, type Snippet } from "svelte";
     import { SvelteSet } from "svelte/reactivity";
@@ -908,6 +908,7 @@
         padding="lg"
         gap="xl">
         <Column gap="md" padding={["zero", "lg"]}>
+            <Title fontWeight="bold">Danger Zone</Title>
             <Subtitle>Dual auth operator actions</Subtitle>
             <Body fontWeight="light">
                 Everything below is <strong>dual authorized</strong>: you propose the change, and a

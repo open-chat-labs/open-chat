@@ -204,6 +204,8 @@ import type {
     WithdrawCryptocurrencyResponse,
     VaultFileChunkResponse,
     ProposedProtectedAction,
+    Success,
+    OCError,
 } from "@shared";
 import {
     ANON_USER_ID,
@@ -2248,8 +2250,8 @@ export class OpenChatAgent extends EventTarget {
         reportIndex: bigint,
         verdict: ModerationVerdict,
         urgent: boolean | undefined,
-    ): Promise<boolean> {
-        if (offline()) return Promise.resolve(false);
+    ): Promise<Success | OCError> {
+        if (offline()) return Promise.resolve({ kind: "error", code: -1, message: undefined });
 
         return this._userIndexClient.resolveModerationReport(reportIndex, verdict, urgent);
     }

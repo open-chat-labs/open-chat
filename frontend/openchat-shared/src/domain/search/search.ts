@@ -90,7 +90,12 @@ export type SearchSuccess = {
 
 export type SearchGroupChatResponse = SearchMessagesSuccess | Failure | Offline;
 
-export type SearchDirectChatResponse = SearchMessagesSuccess | ChatNotFound | TermInvalid | OCError | Offline;
+export type SearchDirectChatResponse =
+    | SearchMessagesSuccess
+    | ChatNotFound
+    | TermInvalid
+    | OCError
+    | Offline;
 
 export type SearchMessagesSuccess = {
     kind: "success";

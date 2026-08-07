@@ -310,7 +310,11 @@
         {/if}
         {#if failed}
             <Body colour="error" fontWeight="bold">
-                <Translatable resourceKey={i18nKey("moderationReport.failed")} />
+                {#if failureReason !== undefined}
+                    {failureReason}
+                {:else}
+                    <Translatable resourceKey={i18nKey("moderationReport.failed")} />
+                {/if}
             </Body>
         {/if}
     {/if}

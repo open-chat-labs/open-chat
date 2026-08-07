@@ -28,15 +28,23 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
         .map(|u| u.user_id)
         .ok_or(OCErrorCode::InitiatorNotFound)?;
 
-    // A moderator must never rule on a case they are party to: on their own message, dismissal
-    // would self-unsuspend, restore the content and release the vault; on their own CSAM
-    // assertion, dismissal is what records the false report against the asserter
+    // A moderator must never rule on a case they are party to. On their own message that
+    // covers every verdict: dismissal would self-unsuspend, restore the content and release
+    // the vault, and upholding a report against yourself is not a workflow.
+    //
+    // On their own CSAM assertion only DISMISSAL is barred, because dismissal is the act which
+    // would have recorded a false report against the asserter - blocking it stops them clearing
+    // their own record. Upholding is left open deliberately: barring it deadlocked a reviewer
+    // who is the only one available, who is then obliged to act on what they found but unable
+    // to close the case or file the authority report (which the UI only offers after an
+    // uphold). Self-exoneration is the hazard here; self-consistency is not.
     if let Some(report) = state.data.reported_messages.get(args.report_index) {
         if report.sender == moderator {
             return Err(OCErrorCode::InitiatorNotAuthorized.with_message("Cannot resolve a report against your own message"));
         }
-        if report.csam_asserted_by.contains(&moderator) {
-            return Err(OCErrorCode::InitiatorNotAuthorized.with_message("Cannot resolve your own CSAM assertion"));
+        if matches!(args.verdict, ModerationVerdict::Dismissed) && report.csam_asserted_by.contains(&moderator) {
+            return Err(OCErrorCode::InitiatorNotAuthorized
+                .with_message("Cannot dismiss your own CSAM assertion - another moderator must review it"));
         }
     }
 

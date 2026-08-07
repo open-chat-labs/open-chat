@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- A moderator can uphold, but not dismiss, a report carrying their own CSAM assertion. Barring every verdict deadlocked a reviewer who is the only one available: obliged to act on what they found, but able neither to close the case nor reach the authority-report step. Dismissal remains barred because it is the act which would clear the false report recorded against the asserter ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
 - Operator functions alert the other platform operators directly rather than posting to the internal moderation channel: the channel is itself configured by a protected action, so alerts would otherwise be invisible until it was set up, and an operator whose key is compromised cannot redirect them away from their colleagues ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
 - Protected actions are validated when proposed as well as when confirmed, so an action which could never be applied is never queued, and a proposal which becomes invalid while pending is refused rather than executed ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
 - Clearing a legal hold on evidence whose release is already pending performs that release, so this case now requires dual authorization too - it was a route around the two-operator rule on destruction. Setting a hold, and clearing one with no release pending, remain single-actor ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))

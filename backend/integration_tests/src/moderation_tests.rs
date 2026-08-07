@@ -1468,6 +1468,90 @@ fn timed_suspension_expiry_never_lifts_a_later_csam_suspension() {
 }
 
 #[test]
+fn a_moderator_can_uphold_but_not_dismiss_their_own_csam_assertion() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    // The moderator is the one who spots the content and asserts it is CSAM. With a single
+    // available reviewer that is the normal case, not an edge case
+    client::local_user_index::happy_path::join_group(
+        env,
+        test_data.moderator.principal,
+        canister_ids.local_user_index(env, test_data.group_id),
+        test_data.group_id,
+    );
+    let message_id = random_from_u128();
+    let message_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
+    client::group::happy_path::send_text_message(
+        env,
+        &test_data.sender,
+        test_data.group_id,
+        None,
+        &message_text,
+        Some(message_id),
+    );
+    tick_many(env, 3);
+
+    client::group::report_message(
+        env,
+        test_data.moderator.principal,
+        test_data.group_id.into(),
+        &group_canister::report_message::Args {
+            thread_root_message_index: None,
+            message_id,
+            delete: false,
+            csam: true,
+        },
+    );
+    tick_many(env, 10);
+
+    let reports = get_moderation_reports(env, &test_data);
+    let report_index = reports
+        .iter()
+        .find(|r| r.sender == test_data.sender.user_id)
+        .and_then(|r| r.report_index)
+        .expect("the assertion should have created a report");
+
+    let resolve = |env: &mut PocketIc, verdict: ModerationVerdict| {
+        client::user_index::resolve_moderation_report(
+            env,
+            test_data.moderator.principal,
+            canister_ids.user_index,
+            &user_index_canister::resolve_moderation_report::Args {
+                report_index,
+                verdict,
+                urgent: None,
+            },
+        )
+    };
+
+    // Dismissing your own assertion is self-exoneration: it is the act which would otherwise
+    // record a false report against you
+    let response = resolve(env, ModerationVerdict::Dismissed);
+    assert!(matches!(response, UnitResult::Error(_)), "{response:?}");
+
+    // Upholding it is allowed. Barring this deadlocked a lone reviewer, who is obliged to act
+    // on what they found but could neither close the case nor reach the authority-report step
+    let response = resolve(env, ModerationVerdict::UpheldAsCsam);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    tick_many(env, 5);
+
+    let reports = get_moderation_reports(env, &test_data);
+    let report = reports.iter().find(|r| r.report_index == Some(report_index)).unwrap();
+    assert!(
+        !matches!(report.status, ModerationReportStatus::Pending),
+        "{:?}",
+        report.status
+    );
+}
+
+#[test]
 fn moderator_cannot_resolve_a_report_against_their_own_message() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
