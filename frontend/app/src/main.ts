@@ -14,6 +14,12 @@ import { mount } from "svelte";
 import App from "./components/App.svelte";
 import AppV2 from "./components_mobile/App.svelte";
 import { setNativeTheme, writeNativeCssVariables } from "./theme/themes";
+import { isNativeClient } from "./utils/onDeviceInference";
+import { restoreWebModel } from "./utils/webInference";
+
+// Browser build: re-attach a previously picked disk model (persisted FileSystemFileHandle) at
+// boot, so on-device propose works without first opening the Model Manager.
+if (!isNativeClient()) void restoreWebModel();
 
 // Picks the app variant once at startup. The native Android build ships
 // OC_MOBILE_LAYOUT=v2, so phones (viewport < 768px) always mount AppV2

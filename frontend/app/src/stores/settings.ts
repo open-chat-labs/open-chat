@@ -1,7 +1,4 @@
-import {
-    LocalStorageBoolStore,
-    LocalStorageStore,
-} from "@client/state/localStorageStore";
+import { LocalStorageBoolStore, LocalStorageStore } from "@client/state/localStorageStore";
 import { configKeys } from "../utils/config";
 import { isTouchDevice, mobileOperatingSystem } from "../utils/devices";
 
@@ -40,6 +37,7 @@ export const accountsSectionOpen = new LocalStorageBoolStore(
 );
 export const statsSectionOpen = new LocalStorageBoolStore(configKeys.userStatsSection, false);
 export const advancedSectionOpen = new LocalStorageBoolStore(configKeys.userAdvancedSection, false);
+export const modelsSectionOpen = new LocalStorageBoolStore(configKeys.modelsSection, false);
 export const deleteAccountSectionOpen = new LocalStorageBoolStore(
     configKeys.userDeleteAccountSection,
     false,

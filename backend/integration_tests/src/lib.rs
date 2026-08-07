@@ -34,6 +34,7 @@ mod identity_tests;
 mod join_group_tests;
 mod mentions_tests;
 mod message_activity_tests;
+mod model_catalog_tests;
 mod moderation_tests;
 mod notification_tests;
 mod online_users_tests;

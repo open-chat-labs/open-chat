@@ -52,6 +52,12 @@
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import { enterSend } from "../../stores/settings";
     import { snowing } from "../../stores/snow";
+    import { toastStore } from "../../stores/toast";
+    import {
+        parseLocalAiCommand,
+        routeComposerInput,
+        runLocalAiCommand,
+    } from "../../utils/localAiCommand";
     import AlertBoxModal from "../AlertBoxModal.svelte";
     import CommandBuilder from "../bots/CommandInstanceBuilder.svelte";
     import CommandSelector from "../bots/CommandSelector.svelte";
@@ -345,7 +351,13 @@
     }
 
     function triggerCommandSelector(inputContent: string | null): void {
-        const commandMatch = inputContent?.match(/^\/.*/);
+        // "/ai" is a LOCAL on-device-model command, not a bot command — routeComposerInput keeps the
+        // bot command selector hidden for it so Enter/send route it through the normal send path
+        // (sendMessage handles it).
+        const route = routeComposerInput(inputContent ?? "", {
+            editing: editingEvent !== undefined,
+        });
+        const commandMatch = route === "bot-selector" ? inputContent?.match(/^\/.*/) : undefined;
         if (commandMatch) {
             showCommandSelector = true;
             botState.prefix = commandMatch[0];
@@ -484,9 +496,26 @@
     }
 
     function sendMessage() {
-        if (showCommandSelector || messageIsEmpty) return;
+        if (messageIsEmpty) return;
 
         const txt = editor?.getMarkdown() ?? "";
+
+        // "/ai <prompt>" runs the on-device model locally instead of sending a message. Only outside
+        // edit mode — editing a message to start with /ai must still just edit it (routeComposerInput
+        // encodes that). A staged image attachment is fed to the (multimodal) model so you can ask
+        // about a picture, e.g. a receipt.
+        if (routeComposerInput(txt, { editing: editingEvent !== undefined }) === "local-ai") {
+            const prompt = parseLocalAiCommand(txt);
+            if (prompt === undefined) {
+                toastStore.showFailureToast(i18nKey("Type a prompt after /ai"));
+                return;
+            }
+            void handleLocalAiCommand(prompt);
+            afterSendMessage();
+            return;
+        }
+
+        if (showCommandSelector) return;
 
         if (!parseCommands(txt)) {
             const [text, mentioned, blockLevelMarkdown] = expandMentions(txt);
@@ -503,6 +532,33 @@
         }
 
         afterSendMessage();
+    }
+
+    // Post the prompt as the user's message (so the question is visible in-chat), run the on-device
+    // model, then post its reply as a real message marked with a robot glyph. The reply is sent by
+    // the current user because the local model has no on-chain identity of its own. A staged image
+    // is captured before the send clears it and handed to the multimodal model as vision input; the
+    // image itself is posted (as the prompt's attachment) by the normal onSendMessage path.
+    async function handleLocalAiCommand(prompt: string) {
+        const image = attachment?.kind === "image_content" ? attachment.blobData : undefined;
+        onSendMessage([prompt, [], containsMarkdown]);
+        const outcome = await runLocalAiCommand(prompt, image);
+        if (outcome.kind === "ok") {
+            const reply = outcome.reply.length > 0 ? outcome.reply : "(no output)";
+            client.sendMessageWithContent(
+                messageContext,
+                { kind: "text_content", text: `🤖 ${reply}` },
+                true,
+                [],
+                false,
+            );
+        } else if (outcome.kind === "unavailable") {
+            toastStore.showFailureToast(
+                i18nKey("On-device model unavailable — download and select a model in Settings."),
+            );
+        } else {
+            toastStore.showFailureToast(i18nKey(`On-device model error: ${outcome.error}`));
+        }
     }
 
     function afterSendMessage() {
@@ -618,7 +674,8 @@
     <AlertBoxModal
         onClose={() => (showDirectBotChatWarning = false)}
         title={i18nKey("bots.direct.warningTitle")}
-        warning={i18nKey("bots.direct.warning")} />
+        warning={i18nKey("bots.direct.warning")}
+    />
 {/if}
 
 {#if botState.selectedCommand && messageContextsEqual(botState.showingBuilder, messageContext)}
@@ -626,7 +683,8 @@
         {messageContext}
         onCommandSent={() => cancelCommandSelector(true)}
         onCancel={() => cancelCommandSelector(false)}
-        command={botState.selectedCommand} />
+        command={botState.selectedCommand}
+    />
 {/if}
 
 {#if showCommandSelector}
@@ -636,7 +694,8 @@
         {mode}
         onCommandSent={() => cancelCommandSelector(true)}
         onNoMatches={() => cancelCommandSelector(false)}
-        onCancel={() => cancelCommandSelector(false)} />
+        onCancel={() => cancelCommandSelector(false)}
+    />
 {/if}
 
 {#if !$anonUserStore}
@@ -646,7 +705,8 @@
         mainAxisAlignment={"spaceBetween"}
         crossAxisAlignment={activeStream !== undefined ? "center" : "end"}
         background={ColourVars.background0}
-        padding={["zero", "md", inputTrayMode !== "closed" ? "sm" : "zero"]}>
+        padding={["zero", "md", inputTrayMode !== "closed" ? "sm" : "zero"]}
+    >
         {#if frozen}
             <div class="frozen">
                 <Translatable resourceKey={i18nKey("chatFrozen")} />
@@ -667,7 +727,8 @@
         {:else if !canSendAny}
             <div class="disabled">
                 <Translatable
-                    resourceKey={i18nKey(mode === "thread" ? "readOnlyThread" : "readOnlyChat")} />
+                    resourceKey={i18nKey(mode === "thread" ? "readOnlyThread" : "readOnlyChat")}
+                />
             </div>
         {:else if $throttleDeadline > 0}
             <ThrottleCountdown deadline={$throttleDeadline} />
@@ -680,7 +741,8 @@
                         class="message_entry_wrapper"
                         class:has_reply={!!replyingTo}
                         class:has_attachment={!!attachment}
-                        class:is_editing={editingEvent !== undefined}>
+                        class:is_editing={editingEvent !== undefined}
+                    >
                         {#if replyingTo}
                             <ReplyingTo readonly {replyingTo} {user} {onCancelReply} />
                         {/if}
@@ -691,7 +753,8 @@
                             <Row
                                 height={{ size: "1rem" }}
                                 crossAxisAlignment="center"
-                                supplementalClass="editing-title">
+                                supplementalClass="editing-title"
+                            >
                                 <BodySmall colour="textSecondary">
                                     <Translatable resourceKey={i18nKey("Editing...")} />
                                 </BodySmall>
@@ -711,12 +774,14 @@
                             overflow="visible"
                             crossAxisAlignment="center"
                             mainAxisAlignment="spaceBetween"
-                            supplementalClass="message_entry_text_box">
+                            supplementalClass="message_entry_text_box"
+                        >
                             {#if inputTrayMode !== "emoji_gif_selection"}
                                 <IconButton
                                     onclick={toggleEmojiPicker}
                                     padding={["sm", "zero", "md", "sm"]}
-                                    size={"md"}>
+                                    size={"md"}
+                                >
                                     {#snippet icon()}
                                         <StickerEmoji color={ColourVars.textPlaceholder} />
                                     {/snippet}
@@ -725,7 +790,8 @@
                                 <IconButton
                                     onclick={showKeyboard}
                                     padding={["sm", "zero", "md", "sm"]}
-                                    size={"md"}>
+                                    size={"md"}
+                                >
                                     {#snippet icon()}
                                         <Keyboard color={ColourVars.textPlaceholder} />
                                     {/snippet}
@@ -741,20 +807,23 @@
                                     {onPaste}
                                     onfocus={keyboardFocus}
                                     onKeydown={keyDown}
-                                    oninput={onInput}>
+                                    oninput={onInput}
+                                >
                                     {#snippet mentionPicker(args)}
                                         <MentionPicker
                                             supportsUserGroups
                                             offset={messageEntryHeight}
                                             onMention={args.onMention}
-                                            prefix={args.query} />
+                                            prefix={args.query}
+                                        />
                                     {/snippet}
                                     {#snippet emojiPicker(args)}
                                         <EmojiAutocompleter
                                             offset={messageEntryHeight}
                                             onClose={args.onClose}
                                             onSelect={args.onSelect}
-                                            query={args.query} />
+                                            query={args.query}
+                                        />
                                     {/snippet}
                                 </RichTextEditor>
                             </div>
@@ -763,16 +832,19 @@
                                 <Container
                                     padding={["zero", "sm", "zero", "zero"]}
                                     width={"hug"}
-                                    gap={"md"}>
+                                    gap={"md"}
+                                >
                                     <IconButton
                                         onclick={toggleAttachments}
                                         padding={["sm", "zero", "md", "zero"]}
-                                        size={"md"}>
+                                        size={"md"}
+                                    >
                                         {#snippet icon()}
                                             <div
                                                 class:open={inputTrayMode === "attachments" &&
                                                     !keyboard.visible}
-                                                class="drawer_trigger">
+                                                class="drawer_trigger"
+                                            >
                                                 <PlusCircle color={ColourVars.textPlaceholder} />
                                             </div>
                                         {/snippet}
@@ -784,10 +856,12 @@
                                                 <IconButton
                                                     onclick={onClick}
                                                     padding={["sm", "zero", "md", "zero"]}
-                                                    size={"md"}>
+                                                    size={"md"}
+                                                >
                                                     {#snippet icon()}
                                                         <Camera
-                                                            color={ColourVars.textPlaceholder} />
+                                                            color={ColourVars.textPlaceholder}
+                                                        />
                                                     {/snippet}
                                                 </IconButton>
                                             {/snippet}
@@ -812,13 +886,15 @@
                                 mimeType={audioMimeType}
                                 bind:activeStream
                                 bind:supported={audioSupported}
-                                onAudioCaptured={onFileSelected} />
+                                onAudioCaptured={onFileSelected}
+                            />
                         {:else if canEnterText}
                             <IconButton
                                 padding={"md"}
                                 mode={"primary"}
                                 size={"lg"}
-                                onclick={sendMessage}>
+                                onclick={sendMessage}
+                            >
                                 {#snippet icon(color)}
                                     <Send {color} />
                                 {/snippet}
@@ -829,7 +905,8 @@
                             padding={"md"}
                             mode={"primary"}
                             size={"lg"}
-                            onclick={sendMessage}>
+                            onclick={sendMessage}
+                        >
                             {#snippet icon(color)}
                                 <Check {color} />
                             {/snippet}
@@ -851,14 +928,16 @@
                 ? keyboard.height + (inputTrayMode === "emoji_gif_search" ? 200 : 0)
                 : 0
         }px`}
-        style:visibility={inputTrayMode !== "closed" ? "visible" : "hidden"}>
+        style:visibility={inputTrayMode !== "closed" ? "visible" : "hidden"}
+    >
         {#if inputTrayMode === "emoji_gif_selection" || inputTrayMode === "emoji_gif_search"}
             <EmojiOrGif
                 empty={textboxEmpty}
                 ctx={messageContext}
                 onEmojiSelected={insertEmoji}
                 onBackspace={backspace}
-                onClose={toggleEmojiPicker} />
+                onClose={toggleEmojiPicker}
+            />
         {/if}
 
         {#if inputTrayMode === "attachments"}
@@ -870,7 +949,8 @@
                 {onMakeMeme}
                 {onFileSelected}
                 {messageContext}
-                open={true} />
+                open={true}
+            />
         {/if}
     </div>
 {/if}

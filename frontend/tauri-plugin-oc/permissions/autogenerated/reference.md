@@ -26,6 +26,12 @@ Default permissions for the plugin
 - `allow-get-pending-notification-tap`
 - `allow-clear-all-notifications`
 - `allow-delete-fcm-token`
+- `allow-download-model`
+- `allow-probe-model-url`
+- `allow-system-resources`
+- `allow-list-local-models`
+- `allow-delete-model`
+- `allow-infer`
 
 ## Permission Table
 
@@ -91,6 +97,32 @@ Denies the delete_fcm_token command without any pre-configured scope.
 <tr>
 <td>
 
+`oc:allow-delete-model`
+
+</td>
+<td>
+
+Enables the delete_model command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-delete-model`
+
+</td>
+<td>
+
+Denies the delete_model command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
 `oc:allow-disable-viewport-resize`
 
 </td>
@@ -110,6 +142,32 @@ Enables the disable_viewport_resize command without any pre-configured scope.
 <td>
 
 Denies the disable_viewport_resize command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-download-model`
+
+</td>
+<td>
+
+Enables the download_model command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-download-model`
+
+</td>
+<td>
+
+Denies the download_model command without any pre-configured scope.
 
 </td>
 </tr>
@@ -273,6 +331,58 @@ Denies the get_server_version command without any pre-configured scope.
 <tr>
 <td>
 
+`oc:allow-infer`
+
+</td>
+<td>
+
+Enables the infer command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-infer`
+
+</td>
+<td>
+
+Denies the infer command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-list-local-models`
+
+</td>
+<td>
+
+Enables the list_local_models command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-list-local-models`
+
+</td>
+<td>
+
+Denies the list_local_models command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
 `oc:allow-load-recent-media`
 
 </td>
@@ -344,6 +454,32 @@ Enables the open_url command without any pre-configured scope.
 <td>
 
 Denies the open_url command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-probe-model-url`
+
+</td>
+<td>
+
+Enables the probe_model_url command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-probe-model-url`
+
+</td>
+<td>
+
+Denies the probe_model_url command without any pre-configured scope.
 
 </td>
 </tr>
@@ -578,6 +714,32 @@ Enables the svelte_ready command without any pre-configured scope.
 <td>
 
 Denies the svelte_ready command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-system-resources`
+
+</td>
+<td>
+
+Enables the system_resources command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-system-resources`
+
+</td>
+<td>
+
+Denies the system_resources command without any pre-configured scope.
 
 </td>
 </tr>

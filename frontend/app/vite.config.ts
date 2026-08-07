@@ -12,6 +12,7 @@ import {
     generateCspForScripts,
     initEnv,
     sassModulesAndMixins,
+    stylesDir,
 } from "./rollup.extras.mjs";
 import { ocPackageAliases } from "./oc-package-aliases.mjs";
 
@@ -78,6 +79,10 @@ function ocWorkerPlugin(): Plugin {
                     (fileName === "worker.js" || fileName === "worker.js.map") &&
                     fs.existsSync(filePath)
                 ) {
+                    // This middleware writes the response itself, so `server.headers` does not
+                    // apply. Preserve cross-origin isolation for the browser inference worker.
+                    res.setHeader("Cross-Origin-Embedder-Policy", "credentialless");
+                    res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
                     res.setHeader(
                         "Content-Type",
                         fileName.endsWith(".map") ? "application/json" : "text/javascript",
@@ -194,7 +199,10 @@ export default defineConfig({
             // rather than its built dist-js output, like the sub-packages above.
             {
                 find: /^tauri-plugin-oc-api\/(.*)$/,
-                replacement: path.join(path.resolve(__dirname, "../tauri-plugin-oc/guest-js"), "$1"),
+                replacement: path.join(
+                    path.resolve(__dirname, "../tauri-plugin-oc/guest-js"),
+                    "$1",
+                ),
             },
             {
                 find: /^tauri-plugin-oc-api$/,
@@ -219,6 +227,9 @@ export default defineConfig({
         preprocessorOptions: {
             scss: {
                 additionalData: sassModulesAndMixins,
+                // Support both Sass APIs used by the Vite/Svelte toolchain.
+                loadPaths: [stylesDir],
+                includePaths: [stylesDir],
             },
         },
     },

@@ -1,5 +1,7 @@
 export const configKeys = {
     locale: "openchat_locale",
+    selectedModelId: "openchat_selected_model_id",
+    customModels: "openchat_custom_models",
     profile: "openchat_profile",
     primeCacheLimit: "openchat_prime_cache_limit",
     primeCacheBatchSize: "openchat_prime_cache_batch_size",
@@ -56,4 +58,5 @@ export const configKeys = {
     hideTokenBalances: "openchat_hide_token_balances",
     linkDeviceSection: "link_account_with_native_app",
     chatListFilter: "openchat_chat_list_filter",
+    modelsSection: "openchat_models_section",
 };

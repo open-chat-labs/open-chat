@@ -115,3 +115,101 @@ pub struct UpdateChatShortcutsRequest {
 pub struct UpdateChatShortcutsResponse {
     pub count: usize,
 }
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ModelFileSpec {
+    pub url: String,
+    #[serde(default)]
+    pub sha256: Option<String>,
+    pub bytes: u64,
+    #[serde(default)]
+    pub filename: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DownloadModelRequest {
+    pub model_id: String,
+    pub runtime: String,
+    pub files: Vec<ModelFileSpec>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DownloadedFile {
+    pub url: String,
+    pub sha256: String,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DownloadModelResponse {
+    pub files: Vec<DownloadedFile>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProbeModelUrlRequest {
+    pub url: String,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProbeModelUrlResponse {
+    pub ok: bool,
+    pub status: Option<u16>,
+    pub content_length: Option<u64>,
+    pub content_type: Option<String>,
+    pub filename: String,
+    pub accepts_ranges: bool,
+    pub error: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SystemResourcesResponse {
+    pub free_disk_bytes: u64,
+    pub total_ram_bytes: u64,
+    pub available_ram_bytes: u64,
+    pub cpu_count: u32,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LocalModel {
+    pub model_id: String,
+    pub runtime: String,
+    pub size_bytes: u64,
+    pub path: String,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeleteModelRequest {
+    pub model_id: String,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InferRequest {
+    pub model_id: String,
+    pub runtime: String,
+    pub prompt: String,
+    #[serde(default)]
+    pub image: Option<Vec<u8>>,
+    #[serde(default)]
+    pub text: Option<String>,
+    #[serde(default)]
+    pub max_tokens: Option<u32>,
+    // A JSON Schema (serialised) the output must conform to. Best-effort: constrains generation via a
+    // grammar when the runtime supports it.
+    #[serde(default)]
+    pub response_schema: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InferResponse {
+    pub text: String,
+}

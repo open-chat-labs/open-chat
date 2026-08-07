@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-probe-model-url"
+description = "Enables the probe_model_url command without any pre-configured scope."
+commands.allow = ["probe_model_url"]
+
+[[permission]]
+identifier = "deny-probe-model-url"
+description = "Denies the probe_model_url command without any pre-configured scope."
+commands.deny = ["probe_model_url"]

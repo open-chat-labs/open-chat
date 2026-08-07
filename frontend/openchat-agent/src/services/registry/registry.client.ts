@@ -1,7 +1,12 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
-import type { DexId, RegistryUpdatesResponse } from "@shared";
+import type { DexId, ModelCatalog, RegistryUpdatesResponse } from "@shared";
 import { SingleCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 import { updatesResponse } from "./mappers";
+import {
+    RegistryModelCatalogArgs,
+    RegistryModelCatalogResponse,
+    modelCatalogResponse,
+} from "./modelCatalog";
 import { mapOptional, principalStringToBytes } from "../../utils/mapping";
 import {
     RegistryAddMessageFilterArgs,
@@ -37,6 +42,16 @@ export class RegistryClient extends SingleCanisterMsgpackAgent {
             (resp) => updatesResponse(resp, this.blobUrlPattern, this.canisterId),
             RegistryUpdatesArgs,
             TRegistryUpdatesResponse,
+        );
+    }
+
+    modelCatalog(): Promise<ModelCatalog> {
+        return this.query(
+            "model_catalog",
+            {},
+            modelCatalogResponse,
+            RegistryModelCatalogArgs,
+            RegistryModelCatalogResponse,
         );
     }
 

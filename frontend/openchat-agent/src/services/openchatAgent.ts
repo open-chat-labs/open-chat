@@ -2182,7 +2182,11 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.setVaultReviewers(userIds);
     }
 
-    setVaultLegalHold(reportIndex: bigint, legalHold: boolean, reference: string): Promise<boolean> {
+    setVaultLegalHold(
+        reportIndex: bigint,
+        legalHold: boolean,
+        reference: string,
+    ): Promise<boolean> {
         return this._userIndexClient.setVaultLegalHold(reportIndex, legalHold, reference);
     }
 
@@ -3801,6 +3805,10 @@ export class OpenChatAgent extends EventTarget {
 
     addRemoveSwapProvider(swapProvider: DexId, add: boolean): Promise<boolean> {
         return this._registryClient.addRemoveSwapProvider(swapProvider, add);
+    }
+
+    modelCatalog() {
+        return this._registryClient.modelCatalog();
     }
 
     addMessageFilter(regex: string): Promise<boolean> {

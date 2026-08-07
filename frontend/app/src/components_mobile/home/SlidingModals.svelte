@@ -105,6 +105,7 @@
     import ChatsAndVideo from "./user_profile/ChatsAndVideo.svelte";
     import ChitRewards from "./user_profile/ChitRewards.svelte";
     import ClearCache from "./user_profile/ClearCache.svelte";
+    import ModelManager from "./user_profile/ModelManager.svelte";
     import CommunitySettings from "./user_profile/CommunitySettings.svelte";
     import DeleteAccount from "./user_profile/DeleteAccount.svelte";
     import Share from "./user_profile/Share.svelte";
@@ -225,6 +226,7 @@
         | { kind: "user_profile_chit" }
         | { kind: "user_profile_delete_account" }
         | { kind: "user_profile_cache_management" }
+        | { kind: "user_profile_models" }
         | { kind: "app_settings" }
         | { kind: "upgrade_diamond" }
         | { kind: "update_bot" }
@@ -336,7 +338,9 @@
                         pop();
                         portalState.close();
                     }
-                } catch { /* ignore */ }
+                } catch {
+                    /* ignore */
+                }
             }).catch(console.error);
         }
 
@@ -563,6 +567,7 @@
             subscribe("userProfileCacheManagement", () =>
                 push({ kind: "user_profile_cache_management" }),
             ),
+            subscribe("userProfileModels", () => push({ kind: "user_profile_models" })),
             subscribe("userProfileAbout", () => push({ kind: "user_profile_about" })),
             subscribe("closeModalPage", pop),
             subscribe("closeModalStack", popStack),
@@ -605,6 +610,8 @@
             <Appearance />
         {:else if page.kind === "user_profile_cache_management"}
             <ClearCache />
+        {:else if page.kind === "user_profile_models"}
+            <ModelManager />
         {:else if page.kind === "user_profile_verify"}
             <Verify />
         {:else if page.kind === "user_profile_bot_config"}
@@ -709,19 +716,22 @@
             <BotDetailsPage
                 bot={page.bot}
                 collection={page.collection}
-                grantedPermissions={page.grantedPermissions} />
+                grantedPermissions={page.grantedPermissions}
+            />
         {:else if page.kind === "install_bot"}
             <BotInstaller
                 bot={page.bot}
                 collection={page.collection}
-                installedWithPermissions={page.installedWithPermissions} />
+                installedWithPermissions={page.installedWithPermissions}
+            />
         {:else if page.kind === "show_pinned"}
             <PinnedMessages chat={page.chat} pinned={page.pinned} />
         {:else if page.kind === "show_video_call_participants"}
             <ActiveCallParticipants
                 chatId={page.chatId}
                 messageId={page.messageId}
-                isOwner={page.isOwner} />
+                isOwner={page.isOwner}
+            />
         {:else if page.kind === "proposal_filters"}
             <ProposalGroupFilters selectedChat={page.chat} />
         {:else if page.kind === "upgrade_diamond"}
@@ -738,7 +748,8 @@
             <P2PSwapContentBuilder
                 fromLedger={page.fromLedger}
                 messageContext={page.ctx}
-                onClose={pop} />
+                onClose={pop}
+            />
         {:else if page.kind === "evaluate_community_access_gate"}
             <AccessGatesEvaluator
                 gates={communityPreviewState.gatesToEvaluate}
@@ -749,7 +760,8 @@
                 onSuccess={(res) => {
                     communityPreviewState.doJoinCommunity(client, res);
                     pop();
-                }} />
+                }}
+            />
         {:else if page.kind === "evaluate_group_access_gate"}
             <AccessGatesEvaluator
                 gates={groupPreviewState.gatesToEvaluate}
@@ -760,7 +772,8 @@
                 onSuccess={(res) => {
                     groupPreviewState.doJoinGroup(client, res);
                     pop();
-                }} />
+                }}
+            />
         {:else if page.kind === "architecture"}
             <Architecture />
         {/if}

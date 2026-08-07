@@ -780,6 +780,9 @@ function getAction(
         case "addRemoveSwapProvider":
             return agent.addRemoveSwapProvider(payload.swapProvider, payload.add);
 
+        case "modelCatalog":
+            return agent.modelCatalog();
+
         case "addMessageFilter":
             return agent.addMessageFilter(payload.regex);
 
@@ -1008,7 +1011,11 @@ function getAction(
         case "setVaultReviewers":
             return agent.setVaultReviewers(payload.userIds);
         case "setVaultLegalHold":
-            return agent.setVaultLegalHold(payload.reportIndex, payload.legalHold, payload.reference);
+            return agent.setVaultLegalHold(
+                payload.reportIndex,
+                payload.legalHold,
+                payload.reference,
+            );
         case "destroyVaultEvidence":
             return agent.destroyVaultEvidence(payload.reportIndex, payload.leRequestRef);
         case "vaultBuckets":

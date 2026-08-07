@@ -8,9 +8,11 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 export const __dirname = dirname(__filename);
 
-// Sass relevant files & directives
-export const mixins = path.join(__dirname, "src", "styles", "mixins.scss");
-export const sassModulesAndMixins = `@use 'sass:math'; @use 'sass:map'; @use '${mixins}' as *;`;
+// Sass relevant files & directives. Resolve the bare `mixins` module through an explicit load path;
+// Dart Sass does not support absolute Windows paths in `@use`, even after slash normalization.
+export const stylesDir = path.join(__dirname, "src", "styles").replace(/\\/g, "/");
+export const mixins = `${stylesDir}/mixins.scss`;
+export const sassModulesAndMixins = "@use 'sass:math'; @use 'sass:map'; @use 'mixins' as *;";
 
 // Generates content security policy (CSP) hash for the provided entry
 function generateCspHashValue(text) {
@@ -34,7 +36,8 @@ export function generateCspForScripts(inlineScripts, development) {
         object-src 'none';
         base-uri 'self';
         form-action 'self';${production ? "\nupgrade-insecure-requests;" : ""}
-        script-src 'self' https://www.instagram.com https://scripts.wobbl3.com/ https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(" ")} ${development ? "http://localhost:* http://127.0.0.1:*" : ""};
+        worker-src 'self' blob:;
+        script-src 'self' 'wasm-unsafe-eval' https://www.instagram.com https://scripts.wobbl3.com/ https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(" ")} ${development ? "http://localhost:* http://127.0.0.1:*" : ""};
         connect-src 'self'${development ? " ws: http:" : ""}${production || isNative ? " wss: https:" : ""}${isNative ? " ipc: http://ipc.localhost http://asset.localhost asset: *" : ""};`;
 
     return csp;

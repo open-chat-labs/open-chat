@@ -21,6 +21,12 @@ const COMMANDS: &[&str] = &[
     "get_pending_notification_tap",
     "clear_all_notifications",
     "delete_fcm_token",
+    "download_model",
+    "probe_model_url",
+    "system_resources",
+    "list_local_models",
+    "delete_model",
+    "infer",
 ];
 
 fn main() {

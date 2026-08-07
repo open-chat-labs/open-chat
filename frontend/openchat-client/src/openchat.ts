@@ -6070,7 +6070,10 @@ export class OpenChat {
             .send({ kind: "acceptTerms", version })
             .then((success) => {
                 if (success) {
-                    currentUserStore.set({ ...currentUserStore.value, acceptedTermsVersion: version });
+                    currentUserStore.set({
+                        ...currentUserStore.value,
+                        acceptedTermsVersion: version,
+                    });
                 }
                 return success;
             })
@@ -6324,6 +6327,10 @@ export class OpenChat {
         }
 
         return this.#worker.send({ kind: "addMessageFilter", regex });
+    }
+
+    modelCatalog() {
+        return this.#worker.send({ kind: "modelCatalog" });
     }
 
     removeMessageFilter(id: bigint): Promise<boolean> {

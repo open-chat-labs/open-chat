@@ -26,3 +26,6 @@ url = { workspace = true }
 
 [features]
 store = ["tauri-plugin-oc/store"]
+# Enables the on-device inference runtime in the bundled app (llama.cpp via the plugin). Off by default so
+# normal/dev builds stay fast; the shipping build turns it on (e.g. `cargo tauri build --features inference`).
+inference = ["tauri-plugin-oc/inference"]

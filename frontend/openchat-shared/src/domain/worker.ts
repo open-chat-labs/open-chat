@@ -1,5 +1,6 @@
 import type { JsonnableDelegationChain } from "@icp-sdk/core/identity";
 import type { AccessGateConfig, Rules, UpdatedRules, VerifiedCredentialArgs } from "./access";
+import type { ModelCatalog } from "./onDeviceModel";
 import type {
     CkbtcMinterDepositInfo,
     CkbtcMinterWithdrawalInfo,
@@ -335,6 +336,7 @@ export type WorkerRequest =
     | AddHotGroupExclusion
     | RemoveHotGroupExclusion
     | AddRemoveSwapProvider
+    | ModelCatalogRequest
     | AddMessageFilter
     | RemoveMessageFilter
     | SetAirdropConfig
@@ -1527,6 +1529,10 @@ type AddRemoveSwapProvider = {
     kind: "addRemoveSwapProvider";
 };
 
+type ModelCatalogRequest = {
+    kind: "modelCatalog";
+};
+
 type AddMessageFilter = {
     regex: string;
     kind: "addMessageFilter";
@@ -1919,6 +1925,7 @@ export type WorkerResponseInner =
     | DeleteFrozenGroupResponse
     | AddHotGroupExclusion
     | RemoveHotGroupExclusion
+    | ModelCatalog
     | AddMessageFilter
     | RemoveMessageFilter
     | SuspendUserResponse
@@ -2477,6 +2484,8 @@ export type WorkerResult<T> = T extends Init
     ? RemoveHotGroupExclusionResponse
     : T extends AddRemoveSwapProvider
     ? boolean
+    : T extends ModelCatalogRequest
+    ? ModelCatalog
     : T extends AddMessageFilter
     ? boolean
     : T extends RemoveMessageFilter
