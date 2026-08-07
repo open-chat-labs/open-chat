@@ -3,12 +3,12 @@
         MODERATION_CATEGORY_NAMES,
         type DiamondMembershipFees,
         type OpenChat,
+        type ProposedProtectedAction,
         type ResourceKey,
         type UpdateMarketMakerConfigArgs,
     } from "@client";
     import { Principal } from "@icp-sdk/core/principal";
     import { Body, BodySmall, ColourVars, Column, Row, Subtitle, Title } from "component-lib";
-    import type { ProposedProtectedAction } from "openchat-client";
     import { getContext, onMount, type Snippet } from "svelte";
     import { SvelteSet } from "svelte/reactivity";
     import { i18nKey } from "../../../i18n/i18n";
