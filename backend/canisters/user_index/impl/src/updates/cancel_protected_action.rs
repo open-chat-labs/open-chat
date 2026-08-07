@@ -29,7 +29,7 @@ fn cancel_protected_action_impl(args: Args, state: &mut RuntimeState) -> OCResul
 
     moderation::notify_other_platform_operators(
         format!(
-            "🚫 Protected action #{} cancelled: {}\n\nProposed by {}, cancelled by {cancelled_by}",
+            "🚫 Protected action #{} cancelled: {}\n\nProposed by @UserId({}), cancelled by @UserId({cancelled_by})",
             args.action_id,
             cancelled.action.summary(),
             cancelled.proposed_by

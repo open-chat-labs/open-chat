@@ -32,7 +32,7 @@ fn propose_protected_action_impl(args: Args, state: &mut RuntimeState) -> Respon
     if !already_pending {
         moderation::notify_other_platform_operators(
             format!(
-                "🔐 Protected action #{action_id} proposed: {summary}\n\nBy {proposed_by} — executes only once a different platform operator confirms it"
+                "🔐 Protected action #{action_id} proposed: {summary}\n\nBy @UserId({proposed_by}) — executes only once a different platform operator confirms it"
             ),
             state,
         );

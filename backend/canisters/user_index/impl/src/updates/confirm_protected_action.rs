@@ -74,7 +74,7 @@ fn confirm_protected_action_impl(args: Args, state: &mut RuntimeState) -> OCResu
         Ok(()) => {
             moderation::notify_other_platform_operators(
                 format!(
-                    "✅ Protected action #{} confirmed and executed: {summary}\n\nProposed by {proposed_by}, confirmed by {confirmed_by}",
+                    "✅ Protected action #{} confirmed and executed: {summary}\n\nProposed by @UserId({proposed_by}), confirmed by @UserId({confirmed_by})",
                     args.action_id
                 ),
                 state,
