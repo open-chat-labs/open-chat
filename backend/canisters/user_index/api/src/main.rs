@@ -77,15 +77,15 @@ fn main() {
     // Moderation (these entries were lost in the moderation-stack merges; typebox.ts kept the
     // stale output because bindings are committed rather than regenerated in CI)
     generate_ts_method!(user_index, authority_reports);
+    generate_ts_method!(user_index, protected_actions);
+    generate_ts_method!(user_index, propose_protected_action);
+    generate_ts_method!(user_index, confirm_protected_action);
+    generate_ts_method!(user_index, cancel_protected_action);
     generate_ts_method!(user_index, moderation_config);
     generate_ts_method!(user_index, contest_moderation_sanction);
     generate_ts_method!(user_index, record_authority_report_filed);
     generate_ts_method!(user_index, resolve_moderation_report);
-    generate_ts_method!(user_index, set_internal_moderation_channel);
     generate_ts_method!(user_index, accept_terms);
     generate_ts_method!(user_index, set_moderation_referral_config);
-    generate_ts_method!(user_index, set_openai_api_key);
-    generate_ts_method!(user_index, set_vault_reviewers);
     generate_ts_method!(user_index, set_vault_legal_hold);
-    generate_ts_method!(user_index, destroy_vault_evidence);
 }

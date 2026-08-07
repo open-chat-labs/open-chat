@@ -327,6 +327,8 @@ import {
     type WhitepaperRoute,
     type WithdrawBtcResponse,
     type WithdrawCryptocurrencyResponse,
+    type OCError,
+    type ProposedProtectedAction,
     isAndroidTauriApp,
     isIosTauriApp,
 } from "@shared";
@@ -6070,7 +6072,10 @@ export class OpenChat {
             .send({ kind: "acceptTerms", version })
             .then((success) => {
                 if (success) {
-                    currentUserStore.set({ ...currentUserStore.value, acceptedTermsVersion: version });
+                    currentUserStore.set({
+                        ...currentUserStore.value,
+                        acceptedTermsVersion: version,
+                    });
                 }
                 return success;
             })
@@ -6358,10 +6363,10 @@ export class OpenChat {
         reportIndex: bigint,
         verdict: ModerationVerdict,
         urgent: boolean | undefined,
-    ): Promise<boolean> {
+    ): Promise<Success | OCError> {
         return this.#worker
             .send({ kind: "resolveModerationReport", reportIndex, verdict, urgent })
-            .catch(() => false);
+            .catch(() => ({ kind: "error", code: -1, message: undefined }) as OCError);
     }
 
     contestModerationSanction(): Promise<boolean> {
@@ -7382,8 +7387,10 @@ export class OpenChat {
         return hasFlag(flags, flag);
     }
 
-    setOpenAIApiKey(apiKey: string | undefined): Promise<boolean> {
-        return this.#worker.send({ kind: "setOpenAIApiKey", apiKey }).catch(() => false);
+    proposeSetOpenAIApiKey(
+        apiKey: string | undefined,
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.#worker.send({ kind: "proposeSetOpenAIApiKey", apiKey }).catch(() => undefined);
     }
 
     vaultBuckets(): Promise<string[]> {
@@ -7424,8 +7431,36 @@ export class OpenChat {
             .catch(() => false);
     }
 
-    setVaultReviewers(userIds: string[]): Promise<boolean> {
-        return this.#worker.send({ kind: "setVaultReviewers", userIds }).catch(() => false);
+    proposeSetVaultLegalHold(
+        reportIndex: bigint,
+        legalHold: boolean,
+        reference: string,
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.#worker
+            .send({ kind: "proposeSetVaultLegalHold", reportIndex, legalHold, reference })
+            .catch(() => undefined);
+    }
+
+    proposeSetVaultReviewers(userIds: string[]): Promise<ProposedProtectedAction | undefined> {
+        return this.#worker
+            .send({ kind: "proposeSetVaultReviewers", userIds })
+            .catch(() => undefined);
+    }
+
+    confirmProtectedAction(actionId: bigint): Promise<Success | OCError> {
+        return this.#worker
+            .send({ kind: "confirmProtectedAction", actionId })
+            .catch(() => ({ kind: "error", code: -1, message: undefined }) as OCError);
+    }
+
+    cancelProtectedAction(actionId: bigint): Promise<Success | OCError> {
+        return this.#worker
+            .send({ kind: "cancelProtectedAction", actionId })
+            .catch(() => ({ kind: "error", code: -1, message: undefined }) as OCError);
+    }
+
+    protectedActions(): Promise<string | undefined> {
+        return this.#worker.send({ kind: "protectedActions" }).catch(() => undefined);
     }
 
     setVaultLegalHold(
@@ -7438,10 +7473,13 @@ export class OpenChat {
             .catch(() => false);
     }
 
-    destroyVaultEvidence(reportIndex: bigint, leRequestRef: string): Promise<boolean> {
+    proposeDestroyVaultEvidence(
+        reportIndex: bigint,
+        leRequestRef: string,
+    ): Promise<ProposedProtectedAction | undefined> {
         return this.#worker
-            .send({ kind: "destroyVaultEvidence", reportIndex, leRequestRef })
-            .catch(() => false);
+            .send({ kind: "proposeDestroyVaultEvidence", reportIndex, leRequestRef })
+            .catch(() => undefined);
     }
 
     setModerationReferralConfig(
@@ -7452,12 +7490,12 @@ export class OpenChat {
             .catch(() => false);
     }
 
-    setInternalModerationChannel(
+    proposeSetInternalModerationChannel(
         channel: { communityId: string; channelId: number } | undefined,
-    ): Promise<boolean> {
+    ): Promise<ProposedProtectedAction | undefined> {
         return this.#worker
-            .send({ kind: "setInternalModerationChannel", channel })
-            .catch(() => false);
+            .send({ kind: "proposeSetInternalModerationChannel", channel })
+            .catch(() => undefined);
     }
 
     setModerationFlags(flags: number): Promise<number> {

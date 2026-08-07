@@ -3,10 +3,14 @@
         MODERATION_CATEGORY_NAMES,
         type DiamondMembershipFees,
         type OpenChat,
+        type ProposedProtectedAction,
         type ResourceKey,
         type UpdateMarketMakerConfigArgs,
     } from "@client";
-    import { getContext, onMount } from "svelte";
+    import { Principal } from "@icp-sdk/core/principal";
+    import { Body, BodySmall, ColourVars, Column, Row, Subtitle, Title } from "component-lib";
+    import { getContext, onMount, type Snippet } from "svelte";
+    import { SvelteSet } from "svelte/reactivity";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import Button from "../../Button.svelte";
@@ -31,7 +35,7 @@
     let groupUpgradeConcurrency = $state("10");
     let communityUpgradeConcurrency = $state("10");
     let userUpgradeConcurrency = $state("10");
-    let busy: Set<number> = $state(new Set());
+    let busy = $state(new SvelteSet<number>());
     let governanceCanisterId = $state("");
     let stake = $state("0");
 
@@ -65,7 +69,6 @@
     let legalHoldReference = $state("");
     let destroyReportIndex = $state("");
     let destroyRequestRef = $state("");
-    let destroyConfirmed = $state(false);
 
     const CSAM_CATEGORY_BIT = 2;
     let referralThresholdsInvalid = $derived.by(() => {
@@ -84,6 +87,29 @@
     let tokenLedgerValid = $derived(tokenLedger.length > 0);
 
     let openAiKeySet = $state(false);
+    // Current values shown alongside the proposed ones, so an operator can see what a proposal
+    // would actually change
+    let currentVaultReviewers = $state("");
+    let currentModerationChannel = $state("");
+
+    // The four irreversible operator actions are dual authorized: proposing one only queues
+    // it, and a DIFFERENT operator must confirm before it executes.
+    function onProposed(proposed: ProposedProtectedAction | undefined, what: string): void {
+        if (proposed === undefined) {
+            error = i18nKey(`Failed to propose ${what}`);
+            toastStore.showFailureToast(error);
+            return;
+        }
+        // Deliberately NOT a success toast: nothing has taken effect yet, and the previous
+        // wording read as though the change had been applied
+        toastStore.showSuccessToast(
+            i18nKey(
+                proposed.alreadyPending
+                    ? `An identical ${what} change is already pending as action #${proposed.actionId} - it still needs a different platform operator to confirm it`
+                    : `Proposed ${what} as action #${proposed.actionId} - NOT yet applied: a different platform operator must confirm it under Pending proposals`,
+            ),
+        );
+    }
 
     onMount(() => {
         // Pre-fill the moderation config so the forms show what is actually set rather than
@@ -94,6 +120,7 @@
             if (config.internalModerationChannel !== undefined) {
                 moderationCommunityId = config.internalModerationChannel.communityId;
                 moderationChannelId = config.internalModerationChannel.channelId.toString();
+                currentModerationChannel = `${config.internalModerationChannel.communityId} / ${config.internalModerationChannel.channelId}`;
             }
             if (config.referralConfig !== undefined) {
                 referralThresholds = Object.fromEntries(
@@ -104,6 +131,7 @@
                 );
             }
             vaultReviewerIds = config.vaultReviewers.join(", ");
+            currentVaultReviewers = config.vaultReviewers.join(", ");
         });
         client.diamondMembershipFees().then((fees) => {
             originalFees = client.toRecord(fees, (f) => f.token);
@@ -316,19 +344,12 @@
         }
     }
 
-    function setOpenAIApiKey(): void {
+    function proposeSetOpenAIApiKey(): void {
         error = undefined;
         addBusy(7);
         client
-            .setOpenAIApiKey(openAiApiKey === "" ? undefined : openAiApiKey)
-            .then((success) => {
-                if (success) {
-                    toastStore.showSuccessToast(i18nKey("OpenAI API key updated"));
-                } else {
-                    error = i18nKey("Failed to update OpenAI API key");
-                    toastStore.showFailureToast(error);
-                }
-            })
+            .proposeSetOpenAIApiKey(openAiApiKey === "" ? undefined : openAiApiKey)
+            .then((proposed) => onProposed(proposed, "OpenAI API key"))
             .finally(() => removeBusy(7));
     }
 
@@ -359,25 +380,22 @@
     }
 
     // Replaces the full reviewer set: user ids must already be platform moderators
-    function setVaultReviewers(): void {
+    function proposeSetVaultReviewers(): void {
         error = undefined;
-        addBusy(10);
         const userIds = vaultReviewerIds
             .split(",")
             .map((id) => id.trim())
             .filter((id) => id !== "");
+        const invalid = userIds.find((id) => !isValidPrincipal(id));
+        if (invalid !== undefined) {
+            error = i18nKey(`"${invalid}" is not a valid user id`);
+            toastStore.showFailureToast(error);
+            return;
+        }
+        addBusy(10);
         client
-            .setVaultReviewers(userIds)
-            .then((success) => {
-                if (success) {
-                    toastStore.showSuccessToast(i18nKey("Vault reviewers updated"));
-                } else {
-                    error = i18nKey(
-                        "Failed to update vault reviewers (are they all platform moderators?)",
-                    );
-                    toastStore.showFailureToast(error);
-                }
-            })
+            .proposeSetVaultReviewers(userIds)
+            .then((proposed) => onProposed(proposed, "vault reviewers"))
             .finally(() => removeBusy(10));
     }
 
@@ -399,16 +417,32 @@
                     toastStore.showSuccessToast(
                         i18nKey(legalHold ? "Legal hold set" : "Legal hold cleared"),
                     );
-                } else {
-                    error = i18nKey("Failed to update the legal hold");
-                    toastStore.showFailureToast(error);
+                    return;
                 }
+                // Clearing a hold whose release is already pending performs that release, so
+                // the canister refuses it here and it has to be proposed instead. The propose
+                // runs its own validation, so a clear which failed for another reason (a bad
+                // report index, say) surfaces that failure here rather than being swallowed
+                if (!legalHold) {
+                    return client
+                        .proposeSetVaultLegalHold(reportIndex, false, legalHoldReference.trim())
+                        .then((proposed) =>
+                            onProposed(
+                                proposed,
+                                "clearing this legal hold (it would release the evidence)",
+                            ),
+                        );
+                }
+                error = i18nKey("Failed to update the legal hold");
+                toastStore.showFailureToast(error);
             })
             .finally(() => removeBusy(11));
     }
 
-    // Irreversible: destroys the evidence regardless of the retention clock or any legal hold
-    function destroyVaultEvidence(): void {
+    // Irreversible, so dual authorized: this only proposes the destruction. A DIFFERENT
+    // platform operator must confirm it below before anything is destroyed. A standing legal
+    // hold blocks destruction outright - clear the hold first, as a separate act.
+    function proposeDestroyVaultEvidence(): void {
         error = undefined;
         const reportIndex = parseReportIndex(destroyReportIndex);
         if (reportIndex === undefined || destroyRequestRef.trim() === "") {
@@ -418,19 +452,24 @@
         }
         addBusy(12);
         client
-            .destroyVaultEvidence(reportIndex, destroyRequestRef.trim())
-            .then((success) => {
-                if (success) {
-                    destroyConfirmed = false;
+            .proposeDestroyVaultEvidence(reportIndex, destroyRequestRef.trim())
+            .then((proposed) => {
+                if (proposed !== undefined) {
                     destroyReportIndex = "";
                     destroyRequestRef = "";
-                    toastStore.showSuccessToast(i18nKey("Vaulted evidence destroyed"));
-                } else {
-                    error = i18nKey("Failed to destroy the vaulted evidence");
-                    toastStore.showFailureToast(error);
                 }
+                onProposed(proposed, "destruction of vaulted evidence");
             })
             .finally(() => removeBusy(12));
+    }
+
+    function isValidPrincipal(value: string): boolean {
+        try {
+            Principal.fromText(value);
+            return true;
+        } catch {
+            return false;
+        }
     }
 
     function parseReportIndex(value: string): bigint | undefined {
@@ -438,24 +477,48 @@
         return /^\d+$/.test(trimmed) ? BigInt(trimmed) : undefined;
     }
 
-    function setInternalModerationChannel(): void {
+    function proposeSetInternalModerationChannel(): void {
         error = undefined;
+        const communityId = moderationCommunityId.trim();
+        const channelId = moderationChannelId.trim();
+
+        // Both blank is the deliberate "switch alerts off" case. Anything else must be a
+        // complete, well-formed pair: partial or malformed input previously fell through to
+        // `undefined`, silently proposing to unset the channel
+        let channel: { communityId: string; channelId: number } | undefined;
+        if (communityId !== "" || channelId !== "") {
+            if (communityId === "" || channelId === "") {
+                error = i18nKey(
+                    "A community id and a channel id are both required (leave both blank to unset the channel)",
+                );
+                toastStore.showFailureToast(error);
+                return;
+            }
+            if (!isValidPrincipal(communityId)) {
+                error = i18nKey("That is not a valid community id");
+                toastStore.showFailureToast(error);
+                return;
+            }
+            const channelIdNum = Number(channelId);
+            if (!/^\d+$/.test(channelId) || !Number.isSafeInteger(channelIdNum)) {
+                error = i18nKey("The channel id must be a whole number");
+                toastStore.showFailureToast(error);
+                return;
+            }
+            channel = { communityId, channelId: channelIdNum };
+        }
+
         addBusy(8);
-        const channelIdNum = parseInt(moderationChannelId, 10);
-        const channel =
-            moderationCommunityId === "" || isNaN(channelIdNum)
-                ? undefined
-                : { communityId: moderationCommunityId, channelId: channelIdNum };
         client
-            .setInternalModerationChannel(channel)
-            .then((success) => {
-                if (success) {
-                    toastStore.showSuccessToast(i18nKey("Internal moderation channel updated"));
-                } else {
-                    error = i18nKey("Failed to update internal moderation channel");
-                    toastStore.showFailureToast(error);
-                }
-            })
+            .proposeSetInternalModerationChannel(channel)
+            .then((proposed) =>
+                onProposed(
+                    proposed,
+                    channel === undefined
+                        ? "unsetting the internal moderation channel"
+                        : "internal moderation channel",
+                ),
+            )
             .finally(() => removeBusy(8));
     }
 
@@ -480,6 +543,79 @@
     }
 </script>
 
+{#snippet proposedDestroyVaultView()}
+    <Column gap="md">
+        {@const labelWidth = { size: "8rem" }}
+        <Row gap="md">
+            <BodySmall width={labelWidth} colour="textSecondary" uppercase>Report index:</BodySmall>
+            <Input bind:value={destroyReportIndex} />
+        </Row>
+        <Row gap="md">
+            <BodySmall width={labelWidth} colour="textSecondary" uppercase
+                >LE request reference:</BodySmall>
+            <Input bind:value={destroyRequestRef} />
+        </Row>
+    </Column>
+{/snippet}
+
+{#snippet currentModerationChannelView()}
+    <Input disabled value={currentModerationChannel || "Not set"} />
+{/snippet}
+
+{#snippet proposedModerationChannelView()}
+    <Input bind:value={moderationCommunityId} placeholder={i18nKey("Community id")} />
+    <Input bind:value={moderationChannelId} placeholder={i18nKey("Channel id")} />
+{/snippet}
+
+{#snippet currentVaultReviewersView()}
+    <Input disabled value={currentVaultReviewers || "None"} />
+{/snippet}
+
+{#snippet proposedVaultReviewersView()}
+    <Input bind:value={vaultReviewerIds} placeholder={i18nKey("Comma separated reviewer Ids")} />
+{/snippet}
+
+{#snippet currentOpenAIKey()}
+    <Input disabled value={openAiKeySet ? "Set" : "Not set"} />
+{/snippet}
+
+{#snippet proposedOpenAIKey()}
+    <Input bind:value={openAiApiKey} placeholder={i18nKey("New key (blank to unset)")} />
+{/snippet}
+
+{#snippet dualSetting(
+    name: string,
+    desc: string,
+    index: number,
+    onPropose: () => void,
+    proposed: Snippet<[]>,
+    current?: Snippet<[]>,
+)}
+    <Column backgroundColor={ColourVars.background0} borderRadius="md" padding="lg" gap="lg">
+        <Column gap="xs">
+            <Subtitle>{name}</Subtitle>
+            <Body colour="textSecondary">{desc}</Body>
+        </Column>
+        {#if current}
+            <Row mainAxisAlignment="spaceBetween" gap="lg">
+                <Column gap="xs">
+                    <BodySmall colour="textSecondary" uppercase>Current</BodySmall>
+                    {@render current()}
+                </Column>
+                <Column gap="xs">
+                    <BodySmall colour="textSecondary" uppercase>Proposed</BodySmall>
+                    {@render proposed()}
+                </Column>
+            </Row>
+        {:else}
+            {@render proposed()}
+        {/if}
+        <Button disabled={busy.has(index)} loading={busy.has(index)} onClick={onPropose}>
+            Propose
+        </Button>
+    </Column>
+{/snippet}
+
 <div class="operator">
     <section class="operator-function">
         <div class="title">Set group upgrade concurrency</div>
@@ -489,8 +625,7 @@
                 tiny
                 disabled={busy.has(0) || groupUpgradeConcurrencyInvalid}
                 loading={busy.has(0)}
-                onClick={setGroupUpgradeConcurrency}>Apply</Button
-            >
+                onClick={setGroupUpgradeConcurrency}>Apply</Button>
         </ButtonGroup>
     </section>
 
@@ -499,14 +634,12 @@
         <ButtonGroup align="fill">
             <Input
                 invalid={communityUpgradeConcurrencyInvalid}
-                bind:value={communityUpgradeConcurrency}
-            />
+                bind:value={communityUpgradeConcurrency} />
             <Button
                 tiny
                 disabled={busy.has(1) || communityUpgradeConcurrencyInvalid}
                 loading={busy.has(1)}
-                onClick={setCommunityUpgradeConcurrency}>Apply</Button
-            >
+                onClick={setCommunityUpgradeConcurrency}>Apply</Button>
         </ButtonGroup>
     </section>
 
@@ -518,8 +651,7 @@
                 tiny
                 disabled={busy.has(2) || userUpgradeConcurrencyInvalid}
                 loading={busy.has(2)}
-                onClick={setUserUpgradeConcurrency}>Apply</Button
-            >
+                onClick={setUserUpgradeConcurrency}>Apply</Button>
         </ButtonGroup>
     </section>
 
@@ -563,8 +695,7 @@
                 tiny
                 disabled={busy.has(3)}
                 loading={busy.has(3)}
-                onClick={setDiamondMembershipFees}>Apply</Button
-            >
+                onClick={setDiamondMembershipFees}>Apply</Button>
         </section>
     {/if}
 
@@ -586,8 +717,7 @@
             tiny
             disabled={busy.has(4)}
             loading={busy.has(4)}
-            onClick={stakeNeuronForSubmittingProposals}>Apply</Button
-        >
+            onClick={stakeNeuronForSubmittingProposals}>Apply</Button>
     </section>
 
     <section class="operator-function">
@@ -668,8 +798,7 @@
             tiny
             disabled={busy.has(5) || exchangeIdInvalid}
             loading={busy.has(5)}
-            onClick={updateMarketMakerConfig}>Apply</Button
-        >
+            onClick={updateMarketMakerConfig}>Apply</Button>
     </section>
 
     <section class="operator-function">
@@ -681,24 +810,8 @@
                 tiny
                 disabled={busy.has(6) || !tokenLedgerValid}
                 loading={busy.has(6)}
-                onClick={setTokenEnabled}>Apply</Button
-            >
+                onClick={setTokenEnabled}>Apply</Button>
         </ButtonGroup>
-    </section>
-
-    <section class="operator-function">
-        <div class="title">
-            Set OpenAI API key (moderation) {openAiKeySet ? "- currently set" : "- NOT SET"}
-        </div>
-        <div class="name-value">
-            <div class="label">API key:</div>
-            <div class="value">
-                <Input bind:value={openAiApiKey} />
-            </div>
-        </div>
-        <Button tiny disabled={busy.has(7)} loading={busy.has(7)} onClick={setOpenAIApiKey}>
-            Apply
-        </Button>
     </section>
 
     <section class="operator-function">
@@ -716,8 +829,7 @@
                         bind:value={
                             () => referralThresholds[bit] ?? "",
                             (v) => (referralThresholds[bit] = v)
-                        }
-                    />
+                        } />
                 </div>
             </div>
         {/each}
@@ -725,30 +837,20 @@
             tiny
             disabled={busy.has(9) || referralThresholdsInvalid}
             loading={busy.has(9)}
-            onClick={setModerationReferralConfig}>Apply</Button
-        >
-    </section>
-
-    <section class="operator-function">
-        <div class="title">Set vault reviewers</div>
-        <div class="hint">
-            Comma-separated user ids. Replaces the whole set; each must already be a platform
-            moderator. An empty list revokes all reviewers.
-        </div>
-        <ButtonGroup align="fill">
-            <Input bind:value={vaultReviewerIds} />
-            <Button tiny disabled={busy.has(10)} loading={busy.has(10)} onClick={setVaultReviewers}>
-                Apply
-            </Button>
-        </ButtonGroup>
+            onClick={setModerationReferralConfig}>Apply</Button>
     </section>
 
     <section class="operator-function">
         <div class="title">Vault legal hold</div>
         <div class="hint">
+            Suspends the retention clock so evidence outlasts the ordinary retention period.
+            Clearing a hold on evidence whose release is already pending performs that release and
+            destroys it, so that one case is proposed for a second operator to confirm.
+        </div>
+        <div class="hint">
             Preservation request: suspends the retention clock for a report's vaulted evidence, so
-            it is never deleted at expiry. Clearing the hold performs any release which was
-            deferred while it was set.
+            it is never deleted at expiry. Clearing the hold performs any release which was deferred
+            while it was set.
         </div>
         <div class="name-value">
             <div class="label">Report index:</div>
@@ -778,60 +880,6 @@
     </section>
 
     <section class="operator-function">
-        <div class="title">Destroy vaulted evidence</div>
-        <div class="hint">
-            Law enforcement destruction request. Irreversible, and overrides both the retention
-            clock and any legal hold: the blobs are removed even if a message still references
-            them. The reference is recorded in the vault log, which survives the destruction.
-        </div>
-        <div class="name-value">
-            <div class="label">Report index:</div>
-            <div class="value">
-                <Input bind:value={destroyReportIndex} />
-            </div>
-        </div>
-        <div class="name-value">
-            <div class="label">LE request reference:</div>
-            <div class="value">
-                <Input bind:value={destroyRequestRef} />
-            </div>
-        </div>
-        <div class="name-value">
-            <div class="label">Request verified:</div>
-            <div class="value">
-                <Toggle small id="confirm-destroy-vault-evidence" bind:checked={destroyConfirmed} />
-            </div>
-        </div>
-        <Button
-            tiny
-            disabled={busy.has(12) || !destroyConfirmed}
-            loading={busy.has(12)}
-            onClick={destroyVaultEvidence}>Destroy</Button>
-    </section>
-
-    <section class="operator-function">
-        <div class="title">Set internal moderation channel</div>
-        <div class="name-value">
-            <div class="label">Community Id:</div>
-            <div class="value">
-                <Input bind:value={moderationCommunityId} />
-            </div>
-        </div>
-        <div class="name-value">
-            <div class="label">Channel Id:</div>
-            <div class="value">
-                <Input bind:value={moderationChannelId} />
-            </div>
-        </div>
-        <Button
-            tiny
-            disabled={busy.has(8)}
-            loading={busy.has(8)}
-            onClick={setInternalModerationChannel}>Apply</Button
-        >
-    </section>
-
-    <section class="operator-function">
         <ButtonGroup align="fill">
             <h4>Pause event loop</h4>
             <Button tiny onClick={() => client.pauseEventLoop()}>Pause</Button>
@@ -845,6 +893,62 @@
         </ButtonGroup>
     </section>
 
+    <Column
+        backgroundColor="color-mix(in srgb, var(--warning), transparent 90%)"
+        borderColour={ColourVars.warning}
+        borderWidth="thin"
+        supplementalClass="danger_zone"
+        borderRadius="md"
+        padding="lg"
+        gap="xl">
+        <Column gap="md" padding={["zero", "lg"]}>
+            <Title fontWeight="bold">Danger Zone</Title>
+            <Subtitle>Dual auth operator actions</Subtitle>
+            <Body fontWeight="light">
+                Everything below is <strong>dual authorized</strong>: you propose the change, and a
+                different platform operator confirms or rejects it. Nothing here takes effect when
+                you press Propose. Pending proposals - yours and other operators' - are listed under
+                the
+                <strong>Pending proposals</strong> tab.
+            </Body>
+        </Column>
+
+        {@render dualSetting(
+            "OpenAI API key (moderation)",
+            "Arms the classification pipeline on every local user index. Setting it starts proactive detection and the reporting duties which follow from it.",
+            7,
+            proposeSetOpenAIApiKey,
+            proposedOpenAIKey,
+            currentOpenAIKey,
+        )}
+
+        {@render dualSetting(
+            "Vault reviewers",
+            "Grants access to quarantined material. Comma-separated user ids; replaces the whole set; each must already be a platform moderator. An empty list revokes all reviewers.",
+            10,
+            proposeSetVaultReviewers,
+            proposedVaultReviewersView,
+            currentVaultReviewersView,
+        )}
+
+        {@render dualSetting(
+            "Internal moderation channel",
+            "Where moderation alerts - including report excerpts and context - are posted.",
+            8,
+            proposeSetInternalModerationChannel,
+            proposedModerationChannelView,
+            currentModerationChannelView,
+        )}
+
+        {@render dualSetting(
+            "Destroy vaulted evidence",
+            "Law enforcement destruction request. Irreversible: the blobs are removed even if a message still references them. A standing legal hold blocks destruction - clear the hold first, as a separate act. The reference and both operator identities are recorded in the vault log, which survives the destruction. ",
+            12,
+            proposeDestroyVaultEvidence,
+            proposedDestroyVaultView,
+        )}
+    </Column>
+
     {#if error}
         <ErrorMessage>
             <Translatable resourceKey={error} />
@@ -853,6 +957,10 @@
 </div>
 
 <style lang="scss">
+    :global(.danger_zone .input-wrapper) {
+        width: 100%;
+    }
+
     :global(.operator-function .button-group > :nth-child(2)) {
         flex: 0 0 100px;
         height: 40px;

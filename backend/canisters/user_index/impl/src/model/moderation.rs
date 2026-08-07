@@ -3,6 +3,7 @@ use crate::model::reported_messages::ReportedMessage;
 use crate::timer_job_types::{SetUserSuspended, TimerJob, UnsuspendUser};
 use constants::{DAY_IN_MS, OPENCHAT_BOT_USER_ID};
 use fire_and_forget_handler::FireAndForgetHandler;
+use local_user_index_canister::{OpenChatBotMessageV2, UserIndexEvent};
 use rand::RngExt;
 use storage_bucket_canister::c2c_vault_sync::VaultCaptureMetadata;
 use storage_index_canister::c2c_vault_ops::{
@@ -11,8 +12,8 @@ use storage_index_canister::c2c_vault_ops::{
 use tracing::error;
 use types::{BlobReference, Milliseconds};
 use types::{
-    CanisterId, ChannelId, Chat, MessageId, MessageIndex, ModerationCategories, ModerationReportContent,
-    ModerationReportStatus, SuspensionDuration, TimestampMillis, UserId,
+    CanisterId, ChannelId, Chat, MessageContentInitial, MessageId, MessageIndex, ModerationCategories, ModerationReportContent,
+    ModerationReportStatus, SuspensionDuration, TextContent, TimestampMillis, UserId,
 };
 
 const MAX_EXCERPT_LENGTH: usize = 500;
@@ -88,6 +89,39 @@ pub fn post_moderation_alert(alert: ModerationAlert, state: &mut RuntimeState) {
 
 // Posts a plain-text OC-bot notice into the internal moderation channel: for alarms which
 // have no reported message to anchor a report card to (eg. a re-upload of known CSAM content)
+// Operator functions alert the OTHER platform operators directly, rather than posting to the
+// internal moderation channel. Four reasons: they are peer oversight, so the audience is the
+// operators rather than the moderators; the channel is itself configured by an operator
+// function, so relying on it means the alerts are invisible until (and unless) it has been
+// set up; delivery is via the retried event queue rather than fire-and-forget; and the
+// operator set is DAO-governed (add_platform_operator is proposal-only), so an operator whose
+// key is compromised cannot redirect these messages away from their colleagues.
+//
+// The acting operator is skipped - they know what they just did, and excluding them keeps the
+// message unambiguously "one of your colleagues did this".
+pub fn notify_other_platform_operators(text: String, state: &mut RuntimeState) {
+    let caller = state.env.caller();
+    let acting = state.data.users.get_by_principal(&caller).map(|u| u.user_id);
+    let operators: Vec<UserId> = state
+        .data
+        .platform_operators
+        .iter()
+        .copied()
+        .filter(|u| Some(*u) != acting)
+        .collect();
+    for user_id in operators {
+        state.push_event_to_local_user_index(
+            user_id,
+            UserIndexEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
+                user_id,
+                thread_root_message_id: None,
+                content: MessageContentInitial::Text(TextContent { text: text.clone() }),
+                mentioned: Vec::new(),
+            })),
+        );
+    }
+}
+
 pub fn post_moderation_notice(text: String, state: &mut RuntimeState) {
     let Some((community_id, channel_id)) = state.data.internal_moderation_channel else {
         error!("Moderation notice raised but no internal moderation channel is configured");
@@ -533,6 +567,16 @@ fn quarantine_ops(report_index: u64, report: &ReportedMessage, flags: u32, now: 
 }
 
 pub fn unquarantine_blobs(blob_references: &[BlobReference], moderator: UserId, report_index: u64, state: &mut RuntimeState) {
+    // The bucket refuses a release while a legal hold stands and remembers it as pending, so
+    // that clearing the hold performs it. Mirror that here on EVERY held report sharing one of
+    // these blobs, not just the report being released: the bucket's hold is per blob record,
+    // so when a blob is evidence in two reports, clearing a hold placed via the OTHER report
+    // is what would perform this deferred release and destroy the evidence. Marking that
+    // report release_pending is what forces its hold-clear through dual authorization (#9136)
+    for held in state.data.reported_messages.reports_with_hold_intersecting(blob_references) {
+        state.data.reported_messages.set_release_pending(held, true);
+    }
+
     let ops = blob_references
         .iter()
         .cloned()
@@ -549,7 +593,7 @@ pub fn unquarantine_blobs(blob_references: &[BlobReference], moderator: UserId, 
 
 // Sets or clears a legal hold on a report's vaulted blobs. While held, retention expiry never
 // deletes them and a release is deferred rather than performed.
-pub fn set_vault_legal_hold(blob_references: &[BlobReference], legal_hold: bool, state: &mut RuntimeState) {
+pub fn set_vault_legal_hold(blob_references: &[BlobReference], legal_hold: bool, reference: String, state: &mut RuntimeState) {
     let ops = blob_references
         .iter()
         .cloned()
@@ -557,6 +601,7 @@ pub fn set_vault_legal_hold(blob_references: &[BlobReference], legal_hold: bool,
             VaultOp::SetLegalHold(SetLegalHoldOp {
                 blob_reference,
                 legal_hold,
+                reference: Some(reference.clone()),
             })
         })
         .collect();
@@ -564,8 +609,15 @@ pub fn set_vault_legal_hold(blob_references: &[BlobReference], legal_hold: bool,
 }
 
 // Destroys a report's vaulted blobs on a law enforcement request, overriding the retention
-// clock and any legal hold. The vault log entry survives the record.
-pub fn destroy_vault_evidence(blob_references: &[BlobReference], le_request_ref: String, state: &mut RuntimeState) {
+// clock. The bucket refuses destruction while a legal hold stands; the callers check first so
+// a refused destruction is never reported as done. The vault log entry survives the record.
+pub fn destroy_vault_evidence(
+    blob_references: &[BlobReference],
+    le_request_ref: String,
+    proposed_by: UserId,
+    confirmed_by: UserId,
+    state: &mut RuntimeState,
+) {
     let ops = blob_references
         .iter()
         .cloned()
@@ -573,6 +625,8 @@ pub fn destroy_vault_evidence(blob_references: &[BlobReference], le_request_ref:
             VaultOp::Destroy(DestroyOp {
                 blob_reference,
                 le_request_ref: le_request_ref.clone(),
+                proposed_by: Some(proposed_by),
+                confirmed_by: Some(confirmed_by),
             })
         })
         .collect();

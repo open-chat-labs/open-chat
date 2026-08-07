@@ -2274,6 +2274,33 @@ export const UserIndexUnsuspendUserResponse = Type.Union([
     }),
 ]);
 
+export type UserIndexProposeProtectedActionSuccessResult = Static<
+    typeof UserIndexProposeProtectedActionSuccessResult
+>;
+export const UserIndexProposeProtectedActionSuccessResult = Type.Object({
+    action_id: Type.BigInt(),
+    already_pending: Type.Boolean(),
+});
+
+export type UserIndexProposeProtectedActionResponse = Static<
+    typeof UserIndexProposeProtectedActionResponse
+>;
+export const UserIndexProposeProtectedActionResponse = Type.Union([
+    Type.Object({
+        Success: UserIndexProposeProtectedActionSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
+export type UserIndexConfirmProtectedActionArgs = Static<
+    typeof UserIndexConfirmProtectedActionArgs
+>;
+export const UserIndexConfirmProtectedActionArgs = Type.Object({
+    action_id: Type.BigInt(),
+});
+
 export type UserIndexUsersUserGroup = Static<typeof UserIndexUsersUserGroup>;
 export const UserIndexUsersUserGroup = Type.Object({
     users: Type.Array(UserId),
@@ -2317,6 +2344,18 @@ export type UserIndexSubmitProofOfUniquePersonhoodArgs = Static<
 export const UserIndexSubmitProofOfUniquePersonhoodArgs = Type.Object({
     user_ii_principal: TSPrincipal,
     credential_jwt: Type.String(),
+});
+
+export type UserIndexProtectedActionsSuccessResult = Static<
+    typeof UserIndexProtectedActionsSuccessResult
+>;
+export const UserIndexProtectedActionsSuccessResult = Type.Object({
+    json: Type.String(),
+});
+
+export type UserIndexProtectedActionsResponse = Static<typeof UserIndexProtectedActionsResponse>;
+export const UserIndexProtectedActionsResponse = Type.Object({
+    Success: UserIndexProtectedActionsSuccessResult,
 });
 
 export type UserIndexChitLeaderboardChitUserBalance = Static<
@@ -2443,6 +2482,11 @@ export const UserIndexUpdateBlockedUsernamePatternsArgs = Type.Object({
 export type UserIndexRegisterBotSuccessResult = Static<typeof UserIndexRegisterBotSuccessResult>;
 export const UserIndexRegisterBotSuccessResult = Type.Object({
     bot_id: UserId,
+});
+
+export type UserIndexCancelProtectedActionArgs = Static<typeof UserIndexCancelProtectedActionArgs>;
+export const UserIndexCancelProtectedActionArgs = Type.Object({
+    action_id: Type.BigInt(),
 });
 
 export type UserIndexReportedMessagesArgs = Static<typeof UserIndexReportedMessagesArgs>;
@@ -7685,6 +7729,34 @@ export const RegistryUpdatesResponse = Type.Union([
     }),
     Type.Literal("SuccessNoUpdates"),
 ]);
+
+export type UserIndexProposeProtectedActionProtectedAction = Static<
+    typeof UserIndexProposeProtectedActionProtectedAction
+>;
+export const UserIndexProposeProtectedActionProtectedAction = Type.Union([
+    Type.Object({
+        DestroyVaultEvidence: UserIndexDestroyVaultEvidenceArgs,
+    }),
+    Type.Object({
+        SetVaultReviewers: UserIndexSetVaultReviewersArgs,
+    }),
+    Type.Object({
+        SetOpenAIApiKey: UserIndexSetOpenaiApiKeyArgs,
+    }),
+    Type.Object({
+        SetInternalModerationChannel: UserIndexSetInternalModerationChannelArgs,
+    }),
+    Type.Object({
+        SetVaultLegalHold: UserIndexSetVaultLegalHoldArgs,
+    }),
+]);
+
+export type UserIndexProposeProtectedActionArgs = Static<
+    typeof UserIndexProposeProtectedActionArgs
+>;
+export const UserIndexProposeProtectedActionArgs = Type.Object({
+    action: UserIndexProposeProtectedActionProtectedAction,
+});
 
 export type UserIndexBotInstallationEventsBotInstallationEvent = Static<
     typeof UserIndexBotInstallationEventsBotInstallationEvent

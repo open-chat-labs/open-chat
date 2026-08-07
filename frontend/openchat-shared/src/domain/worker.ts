@@ -1,3 +1,5 @@
+import type { OCError } from "./error";
+import type { Success } from "./response";
 import type { JsonnableDelegationChain } from "@icp-sdk/core/identity";
 import type { AccessGateConfig, Rules, UpdatedRules, VerifiedCredentialArgs } from "./access";
 import type {
@@ -234,6 +236,7 @@ import type {
     UsersArgs,
     UsersResponse,
     UserSummary,
+    ProposedProtectedAction,
 } from "./user";
 import type { Verification } from "./wallet";
 
@@ -386,18 +389,22 @@ export type WorkerRequest =
     | ConvertGroupToCommunity
     | ImportGroupToCommunity
     | SetModerationFlags
-    | SetOpenAIApiKey
+    | ProposeSetOpenAIApiKey
+    | ConfirmProtectedAction
+    | CancelProtectedAction
+    | ProtectedActions
     | SetModerationReferralConfig
-    | SetVaultReviewers
+    | ProposeSetVaultReviewers
+    | ProposeSetVaultLegalHold
     | SetVaultLegalHold
-    | DestroyVaultEvidence
+    | ProposeDestroyVaultEvidence
     | VaultLog
     | VaultBuckets
     | AuthorityReports
     | GetModerationConfig
     | RecordAuthorityReportFiled
     | AcceptTerms
-    | SetInternalModerationChannel
+    | ProposeSetInternalModerationChannel
     | ResolveModerationReport
     | ContestModerationSanction
     | VaultFileChunk
@@ -830,9 +837,23 @@ type SetModerationFlags = {
     flags: number;
 };
 
-type SetOpenAIApiKey = {
-    kind: "setOpenAIApiKey";
+type ProposeSetOpenAIApiKey = {
+    kind: "proposeSetOpenAIApiKey";
     apiKey: string | undefined;
+};
+
+type ConfirmProtectedAction = {
+    kind: "confirmProtectedAction";
+    actionId: bigint;
+};
+
+type CancelProtectedAction = {
+    kind: "cancelProtectedAction";
+    actionId: bigint;
+};
+
+type ProtectedActions = {
+    kind: "protectedActions";
 };
 
 type AcceptTerms = {
@@ -868,8 +889,15 @@ type RecordAuthorityReportFiled = {
     unverified: boolean;
 };
 
-type SetVaultReviewers = {
-    kind: "setVaultReviewers";
+type ProposeSetVaultLegalHold = {
+    kind: "proposeSetVaultLegalHold";
+    reportIndex: bigint;
+    legalHold: boolean;
+    reference: string;
+};
+
+type ProposeSetVaultReviewers = {
+    kind: "proposeSetVaultReviewers";
     userIds: string[];
 };
 
@@ -880,8 +908,8 @@ type SetVaultLegalHold = {
     reference: string;
 };
 
-type DestroyVaultEvidence = {
-    kind: "destroyVaultEvidence";
+type ProposeDestroyVaultEvidence = {
+    kind: "proposeDestroyVaultEvidence";
     reportIndex: bigint;
     leRequestRef: string;
 };
@@ -891,8 +919,8 @@ type SetModerationReferralConfig = {
     config: { categories: { category: number; scoreThreshold: number }[] } | undefined;
 };
 
-type SetInternalModerationChannel = {
-    kind: "setInternalModerationChannel";
+type ProposeSetInternalModerationChannel = {
+    kind: "proposeSetInternalModerationChannel";
     channel: { communityId: string; channelId: number } | undefined;
 };
 
@@ -1845,6 +1873,9 @@ export type WorkerError = {
  * Worker response types
  */
 export type WorkerResponseInner =
+    | Success
+    | OCError
+    | ProposedProtectedAction
     | VaultFileChunkResponse
     | void
     | bigint
@@ -2575,16 +2606,24 @@ export type WorkerResult<T> = T extends Init
     ? [RegistryValue, boolean]
     : T extends SetCommunityIndexes
     ? boolean
-    : T extends SetOpenAIApiKey
-    ? boolean
+    : T extends ProposeSetOpenAIApiKey
+    ? ProposedProtectedAction | undefined
+    : T extends ConfirmProtectedAction
+    ? Success | OCError
+    : T extends CancelProtectedAction
+    ? Success | OCError
+    : T extends ProtectedActions
+    ? string | undefined
     : T extends SetModerationReferralConfig
     ? boolean
-    : T extends SetVaultReviewers
-    ? boolean
+    : T extends ProposeSetVaultReviewers
+    ? ProposedProtectedAction | undefined
+    : T extends ProposeSetVaultLegalHold
+    ? ProposedProtectedAction | undefined
     : T extends SetVaultLegalHold
     ? boolean
-    : T extends DestroyVaultEvidence
-    ? boolean
+    : T extends ProposeDestroyVaultEvidence
+    ? ProposedProtectedAction | undefined
     : T extends VaultLog
     ? VaultLogResponse
     : T extends VaultBuckets
@@ -2597,10 +2636,10 @@ export type WorkerResult<T> = T extends Init
     ? boolean
     : T extends AcceptTerms
     ? boolean
-    : T extends SetInternalModerationChannel
-    ? boolean
+    : T extends ProposeSetInternalModerationChannel
+    ? ProposedProtectedAction | undefined
     : T extends ResolveModerationReport
-    ? boolean
+    ? Success | OCError
     : T extends ContestModerationSanction
     ? boolean
     : T extends VaultFileChunk

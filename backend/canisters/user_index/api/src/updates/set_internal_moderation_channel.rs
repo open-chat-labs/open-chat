@@ -3,7 +3,7 @@ use ts_export::ts_export;
 use types::{ChannelId, CommunityId, UnitResult};
 
 #[ts_export(user_index, set_internal_moderation_channel)]
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
     pub channel: Option<InternalModerationChannel>,
 }
