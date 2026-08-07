@@ -18,11 +18,20 @@ fn set_vault_legal_hold(args: Args) -> Response {
 }
 
 fn set_vault_legal_hold_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    let caller = state.data.users.get_by_principal(&state.env.caller()).map(|u| u.user_id);
     let report = state
         .data
         .reported_messages
         .get(args.report_index)
         .ok_or(OCErrorCode::MessageNotFound)?;
+
+    // Never on a report against your own message: clearing a hold restarts the retention clock
+    // towards deletion, so the subject of the report could steer the evidence about themselves
+    // towards expiry
+    if caller.is_some_and(|c| c == report.sender) {
+        return Err(OCErrorCode::InitiatorNotAuthorized
+            .with_message("Cannot change the legal hold on a report against your own message"));
+    }
 
     // Clearing a hold on evidence whose release is already pending PERFORMS that release, so
     // this one case destroys evidence just as surely as destroy_vault_evidence does, and goes

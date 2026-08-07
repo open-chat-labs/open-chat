@@ -19,7 +19,7 @@ fn propose_protected_action_impl(args: Args, state: &mut RuntimeState) -> Respon
     };
 
     // Same validation the confirmation will run, so an impossible proposal is never queued
-    if let Err(error) = crate::model::protected_actions::validate(&args.action, state) {
+    if let Err(error) = crate::model::protected_actions::validate(&args.action, proposed_by, state) {
         return Response::Error(error);
     }
 

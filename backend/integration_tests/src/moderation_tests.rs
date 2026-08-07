@@ -1468,7 +1468,7 @@ fn timed_suspension_expiry_never_lifts_a_later_csam_suspension() {
 }
 
 #[test]
-fn a_moderator_can_uphold_but_not_dismiss_their_own_csam_assertion() {
+fn a_moderator_can_resolve_their_own_csam_assertion_only_by_upholding_it_as_csam() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -1536,8 +1536,15 @@ fn a_moderator_can_uphold_but_not_dismiss_their_own_csam_assertion() {
     let response = resolve(env, ModerationVerdict::Dismissed);
     assert!(matches!(response, UnitResult::Error(_)), "{response:?}");
 
-    // Upholding it is allowed. Barring this deadlocked a lone reviewer, who is obliged to act
-    // on what they found but could neither close the case nor reach the authority-report step
+    // Downgrading it to an ordinary violation is the burial path: it would close the case
+    // forever (making the false-report record unreachable), release the vaulted evidence and
+    // skip the authority report, while still punishing the sender
+    let response = resolve(env, ModerationVerdict::Upheld);
+    assert!(matches!(response, UnitResult::Error(_)), "{response:?}");
+
+    // Upholding it AS CSAM is allowed: the maximum-scrutiny path, which nothing can be buried
+    // by taking. Barring this deadlocked a lone reviewer, who is obliged to act on what they
+    // found but could neither close the case nor reach the authority-report step
     let response = resolve(env, ModerationVerdict::UpheldAsCsam);
     assert!(matches!(response, UnitResult::Success), "{response:?}");
     tick_many(env, 5);
@@ -1621,6 +1628,56 @@ fn moderator_cannot_resolve_a_report_against_their_own_message() {
     );
     assert!(matches!(resolve_response, UnitResult::Error(_)), "{resolve_response:?}");
 
+    // Every OTHER surface which acts on a report must refuse them too. The verdict is only one
+    // of the levers: dual authorization is a two-person rule, not a conflict-of-interest rule,
+    // so being the report's subject has to be checked wherever the report is acted on.
+
+    // Recording the authority report as filed would satisfy the due queue and suppress the
+    // statutory filing about themselves
+    let filed_response = client::user_index::record_authority_report_filed(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::record_authority_report_filed::Args {
+            report_index,
+            portal_reference: "SELF-FILED-1".to_string(),
+            urgent: false,
+            unverified: false,
+        },
+    );
+    assert!(matches!(filed_response, UnitResult::Error(_)), "{filed_response:?}");
+
+    // Changing the legal hold would let them steer their own evidence towards expiry
+    let hold_response = client::user_index::set_vault_legal_hold(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::set_vault_legal_hold::Args {
+            report_index,
+            legal_hold: true,
+            reference: "PRESERVATION-SELF".to_string(),
+        },
+    );
+    assert!(matches!(hold_response, UnitResult::Error(_)), "{hold_response:?}");
+
+    // Destruction is dual authorized, but a second operator's confirmation is not a substitute
+    // for not being the party: the proposal is refused at proposal time
+    let destroy_response = client::user_index::propose_protected_action(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::propose_protected_action::Args {
+            action: ProtectedAction::DestroyVaultEvidence(user_index_canister::destroy_vault_evidence::Args {
+                report_index,
+                le_request_ref: "DESTROY-SELF".to_string(),
+            }),
+        },
+    );
+    assert!(
+        matches!(destroy_response, user_index_canister::propose_protected_action::Response::Error(_)),
+        "{destroy_response:?}"
+    );
+
     // ...and the report stays open for someone else to decide
     let reports = get_moderation_reports(env, &test_data);
     let report = reports.iter().find(|r| r.report_index == Some(report_index)).unwrap();
@@ -1628,6 +1685,75 @@ fn moderator_cannot_resolve_a_report_against_their_own_message() {
         matches!(report.status, ModerationReportStatus::Pending),
         "{:?}",
         report.status
+    );
+}
+
+#[test]
+fn a_moderator_cannot_unsuspend_themselves() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    // Suspending is moderator-gated, so the second actor needs that role as well
+    client::user_index::add_platform_moderator(
+        env,
+        *controller,
+        canister_ids.user_index,
+        &user_index_canister::add_platform_moderator::Args {
+            user_id: test_data.operator2.user_id,
+        },
+    );
+    tick_many(env, 3);
+
+    // Suspension does not strip moderator status, so a suspended moderator still passes the
+    // platform-moderator guard on unsuspend_user. Without a self-check, the subject of an
+    // upheld report could simply reverse the sanction it imposed.
+    let suspend_response = client::user_index::suspend_user(
+        env,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        &user_index_canister::suspend_user::Args {
+            user_id: test_data.moderator.user_id,
+            duration: Some(DAY_IN_MS),
+            reason: "Upheld violation".to_string(),
+        },
+    );
+    assert!(
+        matches!(suspend_response, user_index_canister::suspend_user::Response::Success),
+        "{suspend_response:?}"
+    );
+    tick_many(env, 5);
+
+    let response = client::user_index::unsuspend_user(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::unsuspend_user::Args {
+            user_id: test_data.moderator.user_id,
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::unsuspend_user::Response::Error(_)),
+        "{response:?}"
+    );
+
+    // Another moderator can, which is what keeps a genuine mistake correctable
+    let response = client::user_index::unsuspend_user(
+        env,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        &user_index_canister::unsuspend_user::Args {
+            user_id: test_data.moderator.user_id,
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::unsuspend_user::Response::Success),
+        "{response:?}"
     );
 }
 

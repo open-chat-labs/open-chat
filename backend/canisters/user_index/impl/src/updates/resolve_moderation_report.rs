@@ -32,19 +32,24 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
     // covers every verdict: dismissal would self-unsuspend, restore the content and release
     // the vault, and upholding a report against yourself is not a workflow.
     //
-    // On their own CSAM assertion only DISMISSAL is barred, because dismissal is the act which
-    // would have recorded a false report against the asserter - blocking it stops them clearing
-    // their own record. Upholding is left open deliberately: barring it deadlocked a reviewer
-    // who is the only one available, who is then obliged to act on what they found but unable
-    // to close the case or file the authority report (which the UI only offers after an
-    // uphold). Self-exoneration is the hazard here; self-consistency is not.
+    // On their own CSAM assertion the ONLY verdict left open is UpheldAsCsam - the
+    // maximum-scrutiny path (evidence retained in the vault, authority report due), so nothing
+    // can be buried by taking it, and barring it deadlocked a reviewer who is the only one
+    // available: obliged to act on what they found but unable to close the case or file the
+    // authority report (which the UI only offers after an uphold).
+    //
+    // Dismissed is barred because dismissal is the judgment which records a false report
+    // against the asserter, and that judgment must be independent. Plain Upheld is barred
+    // because it is the burial path: it closes the case forever (so the Dismissed branch - the
+    // only place a false report is ever recorded - becomes unreachable), releases the vaulted
+    // evidence, and skips every escalation, while still punishing the sender.
     if let Some(report) = state.data.reported_messages.get(args.report_index) {
         if report.sender == moderator {
             return Err(OCErrorCode::InitiatorNotAuthorized.with_message("Cannot resolve a report against your own message"));
         }
-        if matches!(args.verdict, ModerationVerdict::Dismissed) && report.csam_asserted_by.contains(&moderator) {
+        if !matches!(args.verdict, ModerationVerdict::UpheldAsCsam) && report.csam_asserted_by.contains(&moderator) {
             return Err(OCErrorCode::InitiatorNotAuthorized
-                .with_message("Cannot dismiss your own CSAM assertion - another moderator must review it"));
+                .with_message("Cannot resolve your own CSAM assertion, except by upholding it as CSAM - another moderator must review it"));
         }
     }
 

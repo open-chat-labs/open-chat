@@ -36,7 +36,9 @@ fn confirm_protected_action_impl(args: Args, state: &mut RuntimeState) -> OCResu
         .get(args.action_id)
         .map(|p| p.action.clone())
         .ok_or_else(|| OCErrorCode::InvalidRequest.with_message("No pending action with that id (it may have expired)"))?;
-    crate::model::protected_actions::validate(&action, state)?;
+    // Validated against the CONFIRMER: the proposer was checked when they proposed, and this
+    // stops the report's own subject rubber-stamping a colleague's proposal about themselves
+    crate::model::protected_actions::validate(&action, confirmed_by, state)?;
 
     let pending = {
         let now = state.env.now();

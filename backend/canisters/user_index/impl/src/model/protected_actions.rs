@@ -211,7 +211,13 @@ impl ProtectedActions {
 // proposer finds out immediately) and again when it is confirmed (state can change while a
 // proposal sits pending - a report can be resolved, a moderator removed, a hold applied).
 // Keeping it in one place is what stops the two checks drifting apart.
-pub(crate) fn validate(action: &ProtectedAction, state: &RuntimeState) -> OCResult {
+//
+// `actor` is the operator proposing or confirming. Dual authorization is a two-person rule,
+// which is not the same as a conflict-of-interest rule: it stops one key acting alone, but
+// says nothing about whether the operator is the SUBJECT of the report they are acting on.
+// Running this check on both sides means neither the proposer nor the confirmer can be the
+// party whose own evidence is being destroyed or unheld.
+pub(crate) fn validate(action: &ProtectedAction, actor: UserId, state: &RuntimeState) -> OCResult {
     match action {
         ProtectedAction::DestroyVaultEvidence(args) => {
             if args.le_request_ref.trim().is_empty() {
@@ -222,6 +228,10 @@ pub(crate) fn validate(action: &ProtectedAction, state: &RuntimeState) -> OCResu
                 .reported_messages
                 .get(args.report_index)
                 .ok_or(OCErrorCode::MessageNotFound)?;
+            if report.sender == actor {
+                return Err(OCErrorCode::InitiatorNotAuthorized
+                    .with_message("Cannot destroy the evidence for a report against your own message"));
+            }
             if report.blob_references.is_empty() {
                 return Err(OCErrorCode::InvalidRequest.with_message("The report holds no vaulted evidence"));
             }
@@ -245,6 +255,10 @@ pub(crate) fn validate(action: &ProtectedAction, state: &RuntimeState) -> OCResu
                 .reported_messages
                 .get(args.report_index)
                 .ok_or(OCErrorCode::MessageNotFound)?;
+            if report.sender == actor {
+                return Err(OCErrorCode::InitiatorNotAuthorized
+                    .with_message("Cannot change the legal hold on a report against your own message"));
+            }
             if report.blob_references.is_empty() {
                 return Err(OCErrorCode::InvalidRequest.with_message("The report holds no vaulted evidence"));
             }
