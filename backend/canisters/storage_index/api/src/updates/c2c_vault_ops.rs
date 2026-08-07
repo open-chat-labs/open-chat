@@ -55,6 +55,11 @@ pub struct ApplyVerdictOp {
 pub struct SetLegalHoldOp {
     pub blob_reference: BlobReference,
     pub legal_hold: bool,
+    // The preservation request the hold was applied under; recorded in the bucket's vault log
+    // so the chain of custody shows WHY the evidence was held, not merely that it was.
+    // Option so an op from an older user_index still decodes.
+    #[serde(default)]
+    pub reference: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

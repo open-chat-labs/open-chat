@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Legal hold ops carry the preservation request reference through to the owning bucket ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
+
+### Changed
+
 - Vault destruction ops carry the proposing and confirming operators so the bucket can record both in its access log ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
 
 ## [[2.0.2005](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2005-storage_index)] - 2026-08-06

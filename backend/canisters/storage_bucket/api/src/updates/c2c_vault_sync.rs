@@ -81,6 +81,10 @@ pub struct ApplyVerdictOp {
 pub struct SetLegalHoldOp {
     pub file_id: FileId,
     pub legal_hold: bool,
+    // The preservation request the hold was applied under, carried into the vault log.
+    // Option so an op from an older storage_index still decodes.
+    #[serde(default)]
+    pub reference: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

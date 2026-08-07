@@ -590,7 +590,7 @@ pub fn unquarantine_blobs(blob_references: &[BlobReference], moderator: UserId, 
 
 // Sets or clears a legal hold on a report's vaulted blobs. While held, retention expiry never
 // deletes them and a release is deferred rather than performed.
-pub fn set_vault_legal_hold(blob_references: &[BlobReference], legal_hold: bool, state: &mut RuntimeState) {
+pub fn set_vault_legal_hold(blob_references: &[BlobReference], legal_hold: bool, reference: String, state: &mut RuntimeState) {
     let ops = blob_references
         .iter()
         .cloned()
@@ -598,6 +598,7 @@ pub fn set_vault_legal_hold(blob_references: &[BlobReference], legal_hold: bool,
             VaultOp::SetLegalHold(SetLegalHoldOp {
                 blob_reference,
                 legal_hold,
+                reference: Some(reference.clone()),
             })
         })
         .collect();

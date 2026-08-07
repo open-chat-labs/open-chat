@@ -83,7 +83,9 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
             }
             VaultOp::SetLegalHold(l) => {
                 // Clearing a hold can perform a release that the hold previously refused
-                if let VaultOpOutcome::ReleasePin(hash) = state.data.vault.set_legal_hold(l.file_id, l.legal_hold, now) {
+                if let VaultOpOutcome::ReleasePin(hash) =
+                    state.data.vault.set_legal_hold(l.file_id, l.legal_hold, l.reference, now)
+                {
                     state.data.files.vault_unpin(&hash);
                     info!(file_id = %l.file_id, "Vault: unquarantined on legal-hold clear");
                 }

@@ -46,6 +46,12 @@ fn vault_log_impl(args: Args, state: &RuntimeState) -> Response {
                     }
                     VaultLogEvent::LegalHoldSet(file_id) => format!("Legal hold set on file {file_id}"),
                     VaultLogEvent::LegalHoldCleared(file_id) => format!("Legal hold cleared on file {file_id}"),
+                    VaultLogEvent::LegalHoldSetUnder(file_id, reference) => {
+                        format!("Legal hold set on file {file_id} under reference {reference}")
+                    }
+                    VaultLogEvent::LegalHoldClearedUnder(file_id, reference) => {
+                        format!("Legal hold cleared on file {file_id} under reference {reference}")
+                    }
                     VaultLogEvent::Destroyed(file_id, le_ref) => {
                         format!("Destroyed file {file_id} (law enforcement request {le_ref})")
                     }

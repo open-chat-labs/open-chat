@@ -61,7 +61,7 @@ pub(crate) fn execute(args: Args, state: &mut RuntimeState) -> OCResult {
         return Err(OCErrorCode::InvalidRequest.with_message("The report holds no vaulted evidence"));
     }
 
-    moderation::set_vault_legal_hold(&report.blob_references, args.legal_hold, state);
+    moderation::set_vault_legal_hold(&report.blob_references, args.legal_hold, args.reference.clone(), state);
     state
         .data
         .reported_messages
