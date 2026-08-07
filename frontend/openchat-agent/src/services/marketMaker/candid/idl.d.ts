@@ -1,5 +1,9 @@
 import type { IDL } from "@icp-sdk/core/candid";
-import { _SERVICE, UpdateConfigArgs, UpdateConfigResponse } from "./types";
+import {
+    _SERVICE,
+    UpdateConfigArgs,
+    UpdateConfigResponse,
+} from "./types";
 export {
     _SERVICE as MarketMakerService,
     UpdateConfigArgs as ApiUpdateConfigArgs,

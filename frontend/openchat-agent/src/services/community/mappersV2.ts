@@ -221,22 +221,19 @@ export function communitySummaryUpdates(
         id: { kind: "community", communityId },
         public: value.is_public,
         permissions: mapOptional(value.permissions, communityPermissions),
-        channelsUpdated:
-            value.channels_updated?.map((c) => communityChannelUpdates(c, communityId)) ?? [],
+        channelsUpdated: value.channels_updated?.map((c) => communityChannelUpdates(c, communityId)) ?? [],
         metrics: mapOptional(value.metrics, chatMetrics),
         gateConfig: optionUpdateV2(value.gate_config, accessGateConfig),
         name: value.name,
         description: value.description,
         lastUpdated: value.last_updated,
-        channelsRemoved:
-            value.channels_removed?.map((c) => ({
-                kind: "channel",
-                communityId,
-                channelId: Number(toBigInt32(c)),
-            })) ?? [],
+        channelsRemoved: value.channels_removed?.map((c) => ({
+            kind: "channel",
+            communityId,
+            channelId: Number(toBigInt32(c)),
+        })) ?? [],
         avatarId: optionUpdateV2(value.avatar_id, identity),
-        channelsAdded:
-            value.channels_added?.map((c) => communityChannelSummary(c, communityId)) ?? [],
+        channelsAdded: value.channels_added?.map((c) => communityChannelSummary(c, communityId)) ?? [],
         membership: mapOptional(value.membership, communityMembershipUpdates),
         frozen: optionUpdateV2(value.frozen, (_) => true),
         latestEventIndex: value.latest_event_index,
@@ -413,16 +410,13 @@ export function communityDetailsUpdatesResponse(
         if ("Success" in value) {
             return {
                 kind: "success",
-                membersAddedOrUpdated:
-                    value.Success.members_added_or_updated?.map((m) => ({
-                        role: memberRole(m.role),
-                        userId: principalBytesToString(m.user_id),
-                        displayName: m.display_name,
-                        lapsed: m.lapsed ?? false,
-                    })) ?? [],
-                membersRemoved: new Set(
-                    value.Success.members_removed?.map(principalBytesToString) ?? [],
-                ),
+                membersAddedOrUpdated: value.Success.members_added_or_updated?.map((m) => ({
+                    role: memberRole(m.role),
+                    userId: principalBytesToString(m.user_id),
+                    displayName: m.display_name,
+                    lapsed: m.lapsed ?? false,
+                })) ?? [],
+                membersRemoved: new Set(value.Success.members_removed?.map(principalBytesToString) ?? []),
                 blockedUsersAdded: new Set(
                     value.Success.blocked_users_added?.map(principalBytesToString) ?? [],
                 ),
@@ -435,17 +429,13 @@ export function communityDetailsUpdatesResponse(
                     (invited_users) => new Set(invited_users.map(principalBytesToString)),
                 ),
                 lastUpdated: value.Success.timestamp,
-                userGroups:
-                    value.Success.user_groups?.map(userGroupDetails).map(([_, g]) => g) ?? [],
+                userGroups: value.Success.user_groups?.map(userGroupDetails).map(([_, g]) => g) ?? [],
                 userGroupsDeleted: new Set(value.Success.user_groups_deleted),
                 referralsRemoved: new Set(
                     value.Success.referrals_removed?.map(principalBytesToString) ?? [],
                 ),
-                referralsAdded: new Set(
-                    value.Success.referrals_added?.map(principalBytesToString) ?? [],
-                ),
-                botsAddedOrUpdated:
-                    value.Success.bots_added_or_updated?.map(installedBotDetails) ?? [],
+                referralsAdded: new Set(value.Success.referrals_added?.map(principalBytesToString) ?? []),
+                botsAddedOrUpdated: value.Success.bots_added_or_updated?.map(installedBotDetails) ?? [],
                 botsRemoved: new Set(value.Success.bots_removed?.map(principalBytesToString) ?? []),
             };
         } else if ("SuccessNoUpdates" in value) {

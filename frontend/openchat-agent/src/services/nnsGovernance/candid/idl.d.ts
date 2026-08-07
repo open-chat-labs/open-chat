@@ -1,6 +1,10 @@
 import type { IDL } from "@icp-sdk/core/candid";
 
-import { _SERVICE, ListProposalInfoResponse, ManageNeuronResponse } from "./types";
+import {
+    _SERVICE,
+    ListProposalInfoResponse,
+    ManageNeuronResponse,
+} from "./types";
 export {
     _SERVICE as NnsGovernanceService,
     ListProposalInfoResponse as ApiListProposalInfoResponse,

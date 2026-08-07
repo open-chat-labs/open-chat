@@ -189,7 +189,7 @@ export class AnonUserClient implements IChatEventsReader<DirectChatIdentifier> {
         _threadRootMessageIndex: number | undefined,
         _messageIndex: number,
         _latestKnownUpdate: bigint | undefined,
-        _maxEvents: number,
+        _maxEvents: number
     ): Promise<EventsResponse<ChatEvent>> {
         throw new AnonymousOperationError();
     }

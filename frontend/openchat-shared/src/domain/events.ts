@@ -24,7 +24,7 @@ export class MessagesReadFromServer extends CustomEvent<{
         chatId: ChatIdentifier,
         readByMeUpTo: number | undefined,
         threadsRead: ThreadRead[],
-        dateReadPinned: bigint | undefined,
+        dateReadPinned: bigint | undefined
     ) {
         super("openchat_event", {
             detail: {

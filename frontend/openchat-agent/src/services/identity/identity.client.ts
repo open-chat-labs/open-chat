@@ -181,9 +181,7 @@ export class IdentityClient extends SingleCanisterMsgpackAgent {
         );
     }
 
-    getAuthenticationPrincipals(
-        currentAuthPrincipal: string,
-    ): Promise<AuthenticationPrincipalsResponse> {
+    getAuthenticationPrincipals(currentAuthPrincipal: string): Promise<AuthenticationPrincipalsResponse> {
         return this.query(
             "auth_principals",
             {},

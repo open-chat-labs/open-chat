@@ -3,7 +3,7 @@ import type { UpdateMarketMakerConfigResponse } from "@shared";
 import { UnsupportedValueError } from "@shared";
 
 export function updateConfigResponse(
-    candid: ApiUpdateConfigResponse,
+    candid: ApiUpdateConfigResponse
 ): UpdateMarketMakerConfigResponse {
     if ("Success" in candid) {
         return "success";

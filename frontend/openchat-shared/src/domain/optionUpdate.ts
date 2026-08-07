@@ -27,6 +27,6 @@ export function updateFromOptions<T>(
     return original === updated
         ? undefined
         : updated === undefined
-          ? "set_to_none"
-          : { value: updated };
+        ? "set_to_none"
+        : { value: updated };
 }

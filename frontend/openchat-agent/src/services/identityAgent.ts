@@ -82,9 +82,7 @@ export class IdentityAgent {
         return createIdentityResponse.kind;
     }
 
-    async getOpenChatIdentity(
-        sessionKey: SignIdentity,
-    ): Promise<{ identity: DelegationIdentity; signInProofJwt: string } | undefined> {
+    async getOpenChatIdentity(sessionKey: SignIdentity): Promise<{ identity: DelegationIdentity, signInProofJwt: string } | undefined> {
         const sessionKeyDer = toDer(sessionKey);
         const prepareDelegationResponse = await this._identityClient.prepareDelegation(
             sessionKeyDer,
@@ -103,7 +101,7 @@ export class IdentityAgent {
                 return {
                     identity,
                     signInProofJwt: prepareDelegationResponse.proofJwt,
-                };
+                }
             }
         }
         return undefined;
@@ -137,9 +135,7 @@ export class IdentityAgent {
         return this._identityClient.deleteUser();
     }
 
-    getAuthenticationPrincipals(
-        currentAuthPrincipal: string,
-    ): Promise<AuthenticationPrincipalsResponse> {
+    getAuthenticationPrincipals(currentAuthPrincipal: string): Promise<AuthenticationPrincipalsResponse> {
         return this._identityClient.getAuthenticationPrincipals(currentAuthPrincipal);
     }
 

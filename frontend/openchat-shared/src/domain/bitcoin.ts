@@ -15,9 +15,9 @@ export type WithdrawBtcResponse = Success | OCError;
 export type CkbtcMinterDepositInfo = {
     minConfirmations: number;
     depositFee: bigint;
-};
+}
 
 export type CkbtcMinterWithdrawalInfo = {
     minWithdrawalAmount: bigint;
     feeEstimate: bigint;
-};
+}

@@ -12,11 +12,7 @@ export class LedgerIndexClient extends CandidCanisterAgent<LedgerIndexService> {
         super(identity, agent, undefined, idlFactory, "LedgerIndex");
     }
 
-    getAccountTransactions(
-        ledgerIndex: string,
-        accountPrincipal: string,
-        fromId?: bigint,
-    ): Promise<AccountTransactionResult> {
+    getAccountTransactions(ledgerIndex: string, accountPrincipal: string, fromId?: bigint): Promise<AccountTransactionResult> {
         return this.handleQueryResponse(
             () =>
                 this.service.get_account_transactions.withOptions({ canisterId: ledgerIndex })({
