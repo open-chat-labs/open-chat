@@ -411,7 +411,7 @@ export async function useWebModelFromUrl(entry: {
     state.progress = { received: 0, total: entry.sizeBytes };
     publish();
     try {
-        const { ModelManager } = await import("@wllama/wllama");
+        const { ModelManager } = await import("@wllama/wllama/esm/index.js");
         const mgr = new ModelManager();
         const model = await mgr.getModelOrDownload(
             { url, mmprojUrl },
@@ -620,7 +620,7 @@ async function ensureLoaded(): Promise<void> {
     state.status = "loading";
     publish();
     try {
-        const { Wllama, ModelManager } = await import("@wllama/wllama");
+        const { Wllama, ModelManager } = await import("@wllama/wllama/esm/index.js");
         // Source: a disk File (read in place), or a catalog model served from wllama's browser cache
         // — for a vision entry that Model carries BOTH blobs. wllama sorts weights from projector by
         // reading each GGUF's header (general.architecture == "clip"), so order here is irrelevant.

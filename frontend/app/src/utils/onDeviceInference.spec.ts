@@ -12,7 +12,7 @@ const webRuntime = vi.hoisted(() => ({
     cached: [] as { url: string; bytes: Uint8Array }[],
 }));
 
-vi.mock("@wllama/wllama", () => {
+vi.mock("@wllama/wllama/esm/index.js", () => {
     class Wllama {
         async loadModel() {}
         supportInputModality(modality: string): boolean {

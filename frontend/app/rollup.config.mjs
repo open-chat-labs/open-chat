@@ -20,6 +20,7 @@ import styles from "rollup-styles";
 import { sveltePreprocess } from "svelte-preprocess";
 import { sourcemapNewline } from "../sourcemapNewline.mjs";
 import { androidBundlePlugin } from "./rollup-plugin-android-bundle.mjs";
+import { wasmUrlAsset } from "./rollup-plugin-wasm-url.mjs";
 import {
     __dirname,
     copyFile,
@@ -140,6 +141,7 @@ export default {
 
         styles({ mode: "inject", plugins: [autoprefixer()] }),
 
+        wasmUrlAsset(),
         resolve({
             preferBuiltins: false,
             browser: true,

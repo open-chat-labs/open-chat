@@ -40,7 +40,7 @@ const wl = vi.hoisted(() => ({
     cached: [] as { url: string; bytes: Uint8Array }[],
 }));
 
-vi.mock("@wllama/wllama", () => {
+vi.mock("@wllama/wllama/esm/index.js", () => {
     class Wllama {
         async loadModel(source: unknown, params?: Record<string, unknown>) {
             wl.loadedSource = source;
