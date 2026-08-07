@@ -69,7 +69,6 @@
     let legalHoldReference = $state("");
     let destroyReportIndex = $state("");
     let destroyRequestRef = $state("");
-    let destroyConfirmed = $state(false);
 
     const CSAM_CATEGORY_BIT = 2;
     let referralThresholdsInvalid = $derived.by(() => {
@@ -456,7 +455,6 @@
             .proposeDestroyVaultEvidence(reportIndex, destroyRequestRef.trim())
             .then((proposed) => {
                 if (proposed !== undefined) {
-                    destroyConfirmed = false;
                     destroyReportIndex = "";
                     destroyRequestRef = "";
                 }
@@ -556,11 +554,6 @@
             <BodySmall width={labelWidth} colour="textSecondary" uppercase
                 >LE request reference:</BodySmall>
             <Input bind:value={destroyRequestRef} />
-        </Row>
-        <Row gap="md">
-            <BodySmall width={labelWidth} colour="textSecondary" uppercase
-                >Request verified:</BodySmall>
-            <Toggle small id="confirm-destroy-vault-evidence" bind:checked={destroyConfirmed} />
         </Row>
     </Column>
 {/snippet}
