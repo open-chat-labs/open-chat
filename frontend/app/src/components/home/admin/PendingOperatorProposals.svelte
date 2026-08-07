@@ -1,5 +1,6 @@
 <script lang="ts">
     import { currentUserIdStore, type OpenChat, type ResourceKey } from "@client";
+    import { Body, BodySmall, Column, Row, Subtitle } from "component-lib";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
@@ -98,49 +99,50 @@
     }
 </script>
 
-<div class="pending">
-    <div class="intro">
-        These changes have been proposed by one platform operator and take effect only when a
-        <strong>different</strong> operator confirms them. Anyone can reject. Proposals expire automatically
-        after 14 days.
-    </div>
+<Column gap="lg" padding="lg">
+    <Row gap="lg">
+        <Subtitle>
+            These sensitive operations have been proposed by one platform operator and take effect
+            only when a
+            <strong>different</strong> operator confirms them. Anyone can reject. Proposals expire automatically
+            after 14 days.
+        </Subtitle>
 
-    <ButtonGroup align="start">
-        <Button tiny secondary onClick={refresh} disabled={loading} {loading}>Refresh</Button>
-    </ButtonGroup>
+        <ButtonGroup align="start">
+            <Button secondary onClick={refresh} disabled={loading} {loading}>Refresh</Button>
+        </ButtonGroup>
+    </Row>
 
     {#if !loading && pending.length === 0}
-        <div class="empty">Nothing is awaiting confirmation.</div>
+        <Body colour="textSecondary">Nothing is awaiting confirmation</Body>
     {/if}
 
     {#each pending as proposal (proposal.id)}
-        <section class="proposal">
-            <div class="summary">#{proposal.id} — {proposal.summary}</div>
-            <div class="meta">
+        <Column padding="lg" borderRadius="lg" borderWidth="thick" gap="md">
+            <Body>
+                #{proposal.id} — {proposal.summary}
+            </Body>
+            <BodySmall colour="textSecondary">
                 Proposed by {proposal.proposed_by} at {formatTimestamp(proposal.proposed_at)} · expires
                 {formatTimestamp(proposal.expires_at)}
-            </div>
+            </BodySmall>
             {#if isOwnProposal(proposal)}
-                <div class="own">
+                <Body fontWeight="bold" colour="warning">
                     You proposed this, so you cannot confirm it — another platform operator must.
-                </div>
+                </Body>
             {/if}
             <ButtonGroup align="fill">
                 <Button
-                    tiny
                     disabled={busy.has(proposal.id) || isOwnProposal(proposal)}
                     loading={busy.has(proposal.id)}
-                    onClick={() => confirm(proposal.id)}>Confirm</Button
-                >
+                    onClick={() => confirm(proposal.id)}>Confirm</Button>
                 <Button
-                    tiny
                     secondary
                     disabled={busy.has(proposal.id)}
                     loading={busy.has(proposal.id)}
-                    onClick={() => reject(proposal.id)}>Reject</Button
-                >
+                    onClick={() => reject(proposal.id)}>Reject</Button>
             </ButtonGroup>
-        </section>
+        </Column>
     {/each}
 
     {#if error}
@@ -148,49 +150,4 @@
             <Translatable resourceKey={error} />
         </ErrorMessage>
     {/if}
-</div>
-
-<style lang="scss">
-    .pending {
-        display: flex;
-        flex-direction: column;
-        gap: $sp4;
-        padding: 0 $sp4 $sp4 $sp4;
-        overflow: auto;
-    }
-
-    .intro {
-        @include font(book, normal, fs-90);
-        color: var(--txt-light);
-    }
-
-    .empty {
-        @include font(book, normal, fs-90);
-        color: var(--txt-light);
-        font-style: italic;
-    }
-
-    .proposal {
-        display: flex;
-        flex-direction: column;
-        gap: $sp3;
-        padding: $sp4;
-        border: 1px solid var(--bd);
-        border-radius: var(--rd);
-    }
-
-    .summary {
-        @include font(medium, normal, fs-100);
-        word-break: break-word;
-    }
-
-    .meta {
-        @include font(book, normal, fs-80);
-        color: var(--txt-light);
-    }
-
-    .own {
-        @include font(book, normal, fs-80);
-        color: var(--warn);
-    }
-</style>
+</Column>

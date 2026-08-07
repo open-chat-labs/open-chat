@@ -6,7 +6,7 @@
     import SectionHeader from "../../SectionHeader.svelte";
     import AuthorityReports from "./AuthorityReports.svelte";
     import OperatorFunctions from "./OperatorFunctions.svelte";
-    import PendingProposals from "./PendingProposals.svelte";
+    import PendingOperatorProposals from "./PendingOperatorProposals.svelte";
     import ReviewTranslationCorrections from "./ReviewTranslationCorrections.svelte";
     import VaultLog from "./VaultLog.svelte";
 
@@ -44,8 +44,7 @@
                 role="button"
                 onclick={() => selectTab("translations")}
                 class:selected={selectedTab === "translations"}
-                class="tab"
-            >
+                class="tab">
                 Translation Corrections
             </div>
             <div
@@ -53,8 +52,7 @@
                 role="button"
                 onclick={() => selectTab("operator")}
                 class:selected={selectedTab === "operator"}
-                class="tab"
-            >
+                class="tab">
                 Operator functions
             </div>
             <div
@@ -62,17 +60,15 @@
                 role="button"
                 onclick={() => selectTab("proposals")}
                 class:selected={selectedTab === "proposals"}
-                class="tab"
-            >
-                Pending proposals
+                class="tab">
+                Pending operator proposals
             </div>
             <div
                 tabindex="0"
                 role="button"
                 onclick={() => selectTab("authority")}
                 class:selected={selectedTab === "authority"}
-                class="tab"
-            >
+                class="tab">
                 Authority reports
             </div>
             <div
@@ -80,8 +76,7 @@
                 role="button"
                 onclick={() => selectTab("vaultlog")}
                 class:selected={selectedTab === "vaultlog"}
-                class="tab"
-            >
+                class="tab">
                 Vault log
             </div>
         </div>
@@ -90,7 +85,7 @@
         {:else if selectedTab === "operator"}
             <OperatorFunctions />
         {:else if selectedTab === "proposals"}
-            <PendingProposals />
+            <PendingOperatorProposals />
         {:else if selectedTab === "authority"}
             <AuthorityReports />
         {:else if selectedTab === "vaultlog"}

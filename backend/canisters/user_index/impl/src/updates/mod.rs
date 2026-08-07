@@ -52,4 +52,5 @@ pub mod update_diamond_membership_subscription;
 pub mod upgrade_local_user_index_canister_wasm;
 pub mod upgrade_user_canister_wasm;
 pub mod upload_wasm_chunk;
+pub(crate) mod validate_protected_action;
 pub mod wallet_receive;

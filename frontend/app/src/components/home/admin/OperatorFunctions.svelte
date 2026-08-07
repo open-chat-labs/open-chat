@@ -6,6 +6,7 @@
         type ResourceKey,
         type UpdateMarketMakerConfigArgs,
     } from "@client";
+    import { Principal } from "@icp-sdk/core/principal";
     import { getContext, onMount } from "svelte";
     import type { ProposedProtectedAction } from "openchat-client";
     import { i18nKey } from "../../../i18n/i18n";
@@ -380,11 +381,17 @@
     // Replaces the full reviewer set: user ids must already be platform moderators
     function proposeSetVaultReviewers(): void {
         error = undefined;
-        addBusy(10);
         const userIds = vaultReviewerIds
             .split(",")
             .map((id) => id.trim())
             .filter((id) => id !== "");
+        const invalid = userIds.find((id) => !isValidPrincipal(id));
+        if (invalid !== undefined) {
+            error = i18nKey(`"${invalid}" is not a valid user id`);
+            toastStore.showFailureToast(error);
+            return;
+        }
+        addBusy(10);
         client
             .proposeSetVaultReviewers(userIds)
             .then((proposed) => onProposed(proposed, "vault reviewers"))
@@ -455,6 +462,15 @@
             .finally(() => removeBusy(12));
     }
 
+    function isValidPrincipal(value: string): boolean {
+        try {
+            Principal.fromText(value);
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
     function parseReportIndex(value: string): bigint | undefined {
         const trimmed = value.trim();
         return /^\d+$/.test(trimmed) ? BigInt(trimmed) : undefined;
@@ -462,15 +478,46 @@
 
     function proposeSetInternalModerationChannel(): void {
         error = undefined;
+        const communityId = moderationCommunityId.trim();
+        const channelId = moderationChannelId.trim();
+
+        // Both blank is the deliberate "switch alerts off" case. Anything else must be a
+        // complete, well-formed pair: partial or malformed input previously fell through to
+        // `undefined`, silently proposing to unset the channel
+        let channel: { communityId: string; channelId: number } | undefined;
+        if (communityId !== "" || channelId !== "") {
+            if (communityId === "" || channelId === "") {
+                error = i18nKey(
+                    "A community id and a channel id are both required (leave both blank to unset the channel)",
+                );
+                toastStore.showFailureToast(error);
+                return;
+            }
+            if (!isValidPrincipal(communityId)) {
+                error = i18nKey("That is not a valid community id");
+                toastStore.showFailureToast(error);
+                return;
+            }
+            const channelIdNum = Number(channelId);
+            if (!/^\d+$/.test(channelId) || !Number.isSafeInteger(channelIdNum)) {
+                error = i18nKey("The channel id must be a whole number");
+                toastStore.showFailureToast(error);
+                return;
+            }
+            channel = { communityId, channelId: channelIdNum };
+        }
+
         addBusy(8);
-        const channelIdNum = parseInt(moderationChannelId, 10);
-        const channel =
-            moderationCommunityId === "" || isNaN(channelIdNum)
-                ? undefined
-                : { communityId: moderationCommunityId, channelId: channelIdNum };
         client
             .proposeSetInternalModerationChannel(channel)
-            .then((proposed) => onProposed(proposed, "internal moderation channel"))
+            .then((proposed) =>
+                onProposed(
+                    proposed,
+                    channel === undefined
+                        ? "unsetting the internal moderation channel"
+                        : "internal moderation channel",
+                ),
+            )
             .finally(() => removeBusy(8));
     }
 

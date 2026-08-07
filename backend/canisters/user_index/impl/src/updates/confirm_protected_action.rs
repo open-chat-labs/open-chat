@@ -28,6 +28,16 @@ fn confirm_protected_action_impl(args: Args, state: &mut RuntimeState) -> OCResu
     // evidence was released between propose and confirm) the failure is posted to the
     // moderation channel and the action must be re-proposed - a consumed proposal never
     // lingers in an ambiguous half-executed state
+    // Validated before the proposal is consumed: a transient failure (a hold applied and
+    // later cleared, say) must leave the proposal standing rather than destroying it
+    let action = state
+        .data
+        .protected_actions
+        .get(args.action_id)
+        .map(|p| p.action.clone())
+        .ok_or_else(|| OCErrorCode::InvalidRequest.with_message("No pending action with that id (it may have expired)"))?;
+    crate::updates::validate_protected_action::validate_protected_action(&action, state)?;
+
     let pending = {
         let now = state.env.now();
         match state

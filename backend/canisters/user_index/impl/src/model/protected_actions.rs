@@ -156,6 +156,10 @@ impl ProtectedActions {
         Some(entry)
     }
 
+    pub fn get(&self, id: u64) -> Option<&PendingProtectedAction> {
+        self.pending.get(&id)
+    }
+
     pub fn pending(&self) -> impl Iterator<Item = &PendingProtectedAction> {
         self.pending.values()
     }

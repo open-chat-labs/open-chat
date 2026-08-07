@@ -2117,6 +2117,85 @@ fn clearing_a_hold_which_would_release_evidence_requires_two_operators() {
 }
 
 #[test]
+fn invalid_protected_actions_are_rejected_at_proposal_time() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    let propose = |env: &mut PocketIc, action: ProtectedAction| {
+        client::user_index::propose_protected_action(
+            env,
+            test_data.moderator.principal,
+            canister_ids.user_index,
+            &user_index_canister::propose_protected_action::Args { action },
+        )
+    };
+
+    // A blank API key is a mistake, not an instruction to switch detection off
+    let response = propose(
+        env,
+        ProtectedAction::SetOpenAIApiKey(user_index_canister::set_openai_api_key::Args {
+            api_key: Some("   ".to_string()),
+        }),
+    );
+    assert!(
+        matches!(response, user_index_canister::propose_protected_action::Response::Error(_)),
+        "{response:?}"
+    );
+
+    // A reviewer who is not a platform moderator can never be applied, so the proposal must
+    // not be queued in the first place
+    let response = propose(
+        env,
+        ProtectedAction::SetVaultReviewers(user_index_canister::set_vault_reviewers::Args {
+            user_ids: vec![test_data.sender.user_id],
+        }),
+    );
+    assert!(
+        matches!(response, user_index_canister::propose_protected_action::Response::Error(_)),
+        "{response:?}"
+    );
+
+    // Destroying evidence for a report which does not exist
+    let response = propose(
+        env,
+        ProtectedAction::DestroyVaultEvidence(user_index_canister::destroy_vault_evidence::Args {
+            report_index: 9999,
+            le_request_ref: "REF-1".to_string(),
+        }),
+    );
+    assert!(
+        matches!(response, user_index_canister::propose_protected_action::Response::Error(_)),
+        "{response:?}"
+    );
+
+    // A hold with no reference
+    let response = propose(
+        env,
+        ProtectedAction::SetVaultLegalHold(user_index_canister::set_vault_legal_hold::Args {
+            report_index: 0,
+            legal_hold: true,
+            reference: "  ".to_string(),
+        }),
+    );
+    assert!(
+        matches!(response, user_index_canister::propose_protected_action::Response::Error(_)),
+        "{response:?}"
+    );
+
+    // Nothing invalid made it into the queue
+    let user_index_canister::protected_actions::Response::Success(result) =
+        client::user_index::protected_actions(env, test_data.moderator.principal, canister_ids.user_index, &types::Empty {});
+    let view: Value = serde_json::from_str(&result.json).unwrap();
+    assert!(view["pending"].as_array().unwrap().is_empty(), "{}", result.json);
+}
+
+#[test]
 fn a_second_proposal_of_the_same_kind_supersedes_the_first() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
