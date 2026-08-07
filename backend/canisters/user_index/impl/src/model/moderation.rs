@@ -3,6 +3,7 @@ use crate::model::reported_messages::ReportedMessage;
 use crate::timer_job_types::{SetUserSuspended, TimerJob, UnsuspendUser};
 use constants::{DAY_IN_MS, OPENCHAT_BOT_USER_ID};
 use fire_and_forget_handler::FireAndForgetHandler;
+use local_user_index_canister::{OpenChatBotMessageV2, UserIndexEvent};
 use rand::RngExt;
 use storage_bucket_canister::c2c_vault_sync::VaultCaptureMetadata;
 use storage_index_canister::c2c_vault_ops::{
@@ -11,8 +12,8 @@ use storage_index_canister::c2c_vault_ops::{
 use tracing::error;
 use types::{BlobReference, Milliseconds};
 use types::{
-    CanisterId, ChannelId, Chat, MessageId, MessageIndex, ModerationCategories, ModerationReportContent,
-    ModerationReportStatus, SuspensionDuration, TimestampMillis, UserId,
+    CanisterId, ChannelId, Chat, MessageContentInitial, MessageId, MessageIndex, ModerationCategories, ModerationReportContent,
+    ModerationReportStatus, SuspensionDuration, TextContent, TimestampMillis, UserId,
 };
 
 const MAX_EXCERPT_LENGTH: usize = 500;
@@ -88,6 +89,27 @@ pub fn post_moderation_alert(alert: ModerationAlert, state: &mut RuntimeState) {
 
 // Posts a plain-text OC-bot notice into the internal moderation channel: for alarms which
 // have no reported message to anchor a report card to (eg. a re-upload of known CSAM content)
+// Protected-action alerts go direct to every platform operator rather than to the internal
+// moderation channel. Three reasons: the operators are exactly the people who can confirm,
+// reject or raise the alarm; the channel is itself configured BY a protected action, so
+// relying on it means the alerts are invisible until (and unless) it has been set up; and the
+// operator set is DAO-governed (add_platform_operator is proposal-only), so an operator whose
+// key is compromised cannot redirect these messages away from their colleagues.
+pub fn notify_platform_operators(text: String, state: &mut RuntimeState) {
+    let operators: Vec<UserId> = state.data.platform_operators.iter().copied().collect();
+    for user_id in operators {
+        state.push_event_to_local_user_index(
+            user_id,
+            UserIndexEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
+                user_id,
+                thread_root_message_id: None,
+                content: MessageContentInitial::Text(TextContent { text: text.clone() }),
+                mentioned: Vec::new(),
+            })),
+        );
+    }
+}
+
 pub fn post_moderation_notice(text: String, state: &mut RuntimeState) {
     let Some((community_id, channel_id)) = state.data.internal_moderation_channel else {
         error!("Moderation notice raised but no internal moderation channel is configured");

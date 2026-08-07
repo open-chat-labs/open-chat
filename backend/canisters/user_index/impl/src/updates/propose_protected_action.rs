@@ -30,7 +30,7 @@ fn propose_protected_action_impl(args: Args, state: &mut RuntimeState) -> Respon
     // An identical action was already queued, so this changed nothing - don't alert the
     // moderators a second time for the same pending decision
     if !already_pending {
-        moderation::post_moderation_notice(
+        moderation::notify_platform_operators(
             format!(
                 "🔐 Protected action #{action_id} proposed: {summary}\n\nBy {proposed_by} — executes only once a different platform operator confirms it"
             ),

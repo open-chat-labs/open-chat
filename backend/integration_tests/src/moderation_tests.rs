@@ -3,6 +3,7 @@ use crate::utils::{now_millis, tick_many};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use constants::DAY_IN_MS;
+use constants::OPENCHAT_BOT_USER_ID;
 use pocket_ic::PocketIc;
 use pocket_ic::common::rest::{CanisterHttpReply, CanisterHttpResponse, MockCanisterHttpResponse};
 use serde_json::{Value, json};
@@ -2114,6 +2115,83 @@ fn clearing_a_hold_which_would_release_evidence_requires_two_operators() {
     // Setting a hold, and clearing one with nothing pending, stay single-actor
     assert!(matches!(set_hold(env, true), UnitResult::Success));
     assert!(matches!(set_hold(env, false), UnitResult::Success));
+}
+
+#[test]
+fn protected_action_alerts_reach_operators_without_a_moderation_channel() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    // Unset the moderation channel, which is where alerts used to go. Setting the channel is
+    // itself a protected action, so if alerts depended on it they would be invisible exactly
+    // when the platform is least configured - and unmissable alerts are what makes "anyone can
+    // reject a proposal" a real defence
+    client::user_index::happy_path::execute_protected_action(
+        env,
+        test_data.moderator.principal,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        ProtectedAction::SetInternalModerationChannel(user_index_canister::set_internal_moderation_channel::Args {
+            channel: None,
+        }),
+    );
+    tick_many(env, 5);
+
+    let events_before = client::user::happy_path::events(
+        env,
+        &test_data.operator2,
+        OPENCHAT_BOT_USER_ID,
+        EventIndex::default(),
+        true,
+        1000,
+        1000,
+    )
+    .events
+    .len();
+
+    let response = client::user_index::propose_protected_action(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::propose_protected_action::Args {
+            action: ProtectedAction::SetVaultReviewers(user_index_canister::set_vault_reviewers::Args {
+                user_ids: vec![test_data.moderator.user_id],
+            }),
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::propose_protected_action::Response::Success(_)),
+        "{response:?}"
+    );
+    tick_many(env, 10);
+
+    // The OTHER operator - the one who has to confirm or reject - is told directly
+    let events = client::user::happy_path::events(
+        env,
+        &test_data.operator2,
+        OPENCHAT_BOT_USER_ID,
+        EventIndex::default(),
+        true,
+        1000,
+        1000,
+    )
+    .events;
+    assert!(events.len() > events_before, "expected a new OpenChat bot message");
+
+    let alerted = events.iter().any(|e| match &e.event {
+        ChatEvent::Message(m) => match &m.content {
+            MessageContent::Text(t) => t.text.contains("Protected action") && t.text.contains("proposed"),
+            _ => false,
+        },
+        _ => false,
+    });
+    assert!(alerted, "the proposal alert did not reach the operator");
 }
 
 #[test]
