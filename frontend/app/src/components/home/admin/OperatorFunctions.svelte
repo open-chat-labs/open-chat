@@ -35,7 +35,7 @@
     let groupUpgradeConcurrency = $state("10");
     let communityUpgradeConcurrency = $state("10");
     let userUpgradeConcurrency = $state("10");
-    let busy = $state(new SvelteSet());
+    let busy = $state(new SvelteSet<number>());
     let governanceCanisterId = $state("");
     let stake = $state("0");
 
@@ -421,9 +421,11 @@
                     return;
                 }
                 // Clearing a hold whose release is already pending performs that release, so
-                // the canister refuses it here and it has to be proposed instead
+                // the canister refuses it here and it has to be proposed instead. The propose
+                // runs its own validation, so a clear which failed for another reason (a bad
+                // report index, say) surfaces that failure here rather than being swallowed
                 if (!legalHold) {
-                    client
+                    return client
                         .proposeSetVaultLegalHold(reportIndex, false, legalHoldReference.trim())
                         .then((proposed) =>
                             onProposed(
@@ -431,7 +433,6 @@
                                 "clearing this legal hold (it would release the evidence)",
                             ),
                         );
-                    return;
                 }
                 error = i18nKey("Failed to update the legal hold");
                 toastStore.showFailureToast(error);

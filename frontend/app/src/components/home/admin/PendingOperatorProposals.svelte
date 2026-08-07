@@ -28,6 +28,7 @@
 
     function refresh(): void {
         loading = true;
+        error = undefined;
         client
             .protectedActions()
             .then((json) => {
@@ -42,6 +43,7 @@
                 }
                 hydrateProposers();
             })
+            .catch(() => (error = i18nKey("Failed to load the pending proposals")))
             .finally(() => (loading = false));
     }
 

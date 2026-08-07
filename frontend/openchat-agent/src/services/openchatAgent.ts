@@ -2186,10 +2186,14 @@ export class OpenChatAgent extends EventTarget {
         legalHold: boolean,
         reference: string,
     ): Promise<ProposedProtectedAction | undefined> {
+        if (offline()) return Promise.resolve(undefined);
+
         return this._userIndexClient.proposeSetVaultLegalHold(reportIndex, legalHold, reference);
     }
 
     proposeSetVaultReviewers(userIds: string[]): Promise<ProposedProtectedAction | undefined> {
+        if (offline()) return Promise.resolve(undefined);
+
         return this._userIndexClient.proposeSetVaultReviewers(userIds);
     }
 
@@ -2221,6 +2225,8 @@ export class OpenChatAgent extends EventTarget {
         reportIndex: bigint,
         leRequestRef: string,
     ): Promise<ProposedProtectedAction | undefined> {
+        if (offline()) return Promise.resolve(undefined);
+
         return this._userIndexClient.proposeDestroyVaultEvidence(reportIndex, leRequestRef);
     }
 
