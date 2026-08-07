@@ -1674,7 +1674,10 @@ fn moderator_cannot_resolve_a_report_against_their_own_message() {
         },
     );
     assert!(
-        matches!(destroy_response, user_index_canister::propose_protected_action::Response::Error(_)),
+        matches!(
+            destroy_response,
+            user_index_canister::propose_protected_action::Response::Error(_)
+        ),
         "{destroy_response:?}"
     );
 
@@ -2474,7 +2477,10 @@ fn a_holds_protection_extends_to_sibling_reports_sharing_the_blob() {
         },
     );
     assert!(
-        matches!(destroy_response, user_index_canister::propose_protected_action::Response::Error(_)),
+        matches!(
+            destroy_response,
+            user_index_canister::propose_protected_action::Response::Error(_)
+        ),
         "{destroy_response:?}"
     );
 

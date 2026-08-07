@@ -32,7 +32,10 @@ pub(crate) fn execute(args: Args, proposed_by: UserId, confirmed_by: UserId, sta
     // blobs (the bucket's hold is per blob record, so a sibling report's hold blocks this
     // destruction just as surely). Clearing the hold is the separate, separately logged act
     // which must come first.
-    let held = state.data.reported_messages.reports_with_hold_intersecting(&report.blob_references);
+    let held = state
+        .data
+        .reported_messages
+        .reports_with_hold_intersecting(&report.blob_references);
     if let Some(holder) = held.first() {
         return Err(OCErrorCode::InvalidRequest.with_message(format!(
             "A legal hold (via report #{holder}) stands on this evidence - clear the hold before destroying it"

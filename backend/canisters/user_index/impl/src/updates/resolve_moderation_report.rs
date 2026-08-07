@@ -48,8 +48,9 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
             return Err(OCErrorCode::InitiatorNotAuthorized.with_message("Cannot resolve a report against your own message"));
         }
         if !matches!(args.verdict, ModerationVerdict::UpheldAsCsam) && report.csam_asserted_by.contains(&moderator) {
-            return Err(OCErrorCode::InitiatorNotAuthorized
-                .with_message("Cannot resolve your own CSAM assertion, except by upholding it as CSAM - another moderator must review it"));
+            return Err(OCErrorCode::InitiatorNotAuthorized.with_message(
+                "Cannot resolve your own CSAM assertion, except by upholding it as CSAM - another moderator must review it",
+            ));
         }
     }
 

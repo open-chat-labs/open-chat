@@ -239,7 +239,10 @@ pub(crate) fn validate(action: &ProtectedAction, actor: UserId, state: &RuntimeS
             // hold is per blob record, so a hold placed via a sibling report also blocks this
             // destruction there - refusing here stops the confirm alert reporting a
             // destruction the bucket will refuse
-            let held = state.data.reported_messages.reports_with_hold_intersecting(&report.blob_references);
+            let held = state
+                .data
+                .reported_messages
+                .reports_with_hold_intersecting(&report.blob_references);
             if let Some(holder) = held.first() {
                 return Err(OCErrorCode::InvalidRequest.with_message(format!(
                     "A legal hold (via report #{holder}) stands on this evidence - clear the hold before destroying it"
