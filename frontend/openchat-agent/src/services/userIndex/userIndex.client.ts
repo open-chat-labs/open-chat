@@ -235,21 +235,25 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         );
     }
 
-    confirmProtectedAction(actionId: bigint): Promise<boolean> {
+    // Returns the canister's error rather than a bare boolean: a confirmation is re-validated
+    // at confirm time and can be refused for reasons the operator needs to see (a legal hold
+    // now stands on the evidence, the report is against their own message), and collapsing
+    // those to "failed" leaves them guessing
+    confirmProtectedAction(actionId: bigint): Promise<Success | OCError> {
         return this.update(
             "confirm_protected_action",
             { action_id: actionId },
-            (resp) => resp === "Success",
+            unitResult,
             UserIndexConfirmProtectedActionArgs,
             UnitResult,
         );
     }
 
-    cancelProtectedAction(actionId: bigint): Promise<boolean> {
+    cancelProtectedAction(actionId: bigint): Promise<Success | OCError> {
         return this.update(
             "cancel_protected_action",
             { action_id: actionId },
-            (resp) => resp === "Success",
+            unitResult,
             UserIndexCancelProtectedActionArgs,
             UnitResult,
         );

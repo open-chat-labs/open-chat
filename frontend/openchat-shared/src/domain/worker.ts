@@ -2609,9 +2609,9 @@ export type WorkerResult<T> = T extends Init
     : T extends ProposeSetOpenAIApiKey
     ? ProposedProtectedAction | undefined
     : T extends ConfirmProtectedAction
-    ? boolean
+    ? Success | OCError
     : T extends CancelProtectedAction
-    ? boolean
+    ? Success | OCError
     : T extends ProtectedActions
     ? string | undefined
     : T extends SetModerationReferralConfig

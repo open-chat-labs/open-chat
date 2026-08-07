@@ -7447,12 +7447,16 @@ export class OpenChat {
             .catch(() => undefined);
     }
 
-    confirmProtectedAction(actionId: bigint): Promise<boolean> {
-        return this.#worker.send({ kind: "confirmProtectedAction", actionId }).catch(() => false);
+    confirmProtectedAction(actionId: bigint): Promise<Success | OCError> {
+        return this.#worker
+            .send({ kind: "confirmProtectedAction", actionId })
+            .catch(() => ({ kind: "error", code: -1, message: undefined }) as OCError);
     }
 
-    cancelProtectedAction(actionId: bigint): Promise<boolean> {
-        return this.#worker.send({ kind: "cancelProtectedAction", actionId }).catch(() => false);
+    cancelProtectedAction(actionId: bigint): Promise<Success | OCError> {
+        return this.#worker
+            .send({ kind: "cancelProtectedAction", actionId })
+            .catch(() => ({ kind: "error", code: -1, message: undefined }) as OCError);
     }
 
     protectedActions(): Promise<string | undefined> {

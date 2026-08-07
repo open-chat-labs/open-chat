@@ -2197,14 +2197,14 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.proposeSetVaultReviewers(userIds);
     }
 
-    confirmProtectedAction(actionId: bigint): Promise<boolean> {
-        if (offline()) return Promise.resolve(false);
+    confirmProtectedAction(actionId: bigint): Promise<Success | OCError> {
+        if (offline()) return Promise.resolve({ kind: "error", code: -1, message: undefined });
 
         return this._userIndexClient.confirmProtectedAction(actionId);
     }
 
-    cancelProtectedAction(actionId: bigint): Promise<boolean> {
-        if (offline()) return Promise.resolve(false);
+    cancelProtectedAction(actionId: bigint): Promise<Success | OCError> {
+        if (offline()) return Promise.resolve({ kind: "error", code: -1, message: undefined });
 
         return this._userIndexClient.cancelProtectedAction(actionId);
     }

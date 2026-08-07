@@ -53,12 +53,16 @@
         busy = new Set(busy);
         client
             .confirmProtectedAction(BigInt(id))
-            .then((success) => {
-                if (success) {
+            .then((result) => {
+                if (result.kind === "success") {
                     toastStore.showSuccessToast(i18nKey("Proposal confirmed and applied"));
                 } else {
+                    // The confirmation is re-validated by the canister, which says WHY it was
+                    // refused (a legal hold now stands, the report is against your own
+                    // message); only fall back to guesswork when it says nothing
                     error = i18nKey(
-                        "Failed to confirm the proposal - it may have been superseded, cancelled or expired",
+                        result.message ??
+                            "Failed to confirm the proposal - it may have been superseded, cancelled or expired",
                     );
                     toastStore.showFailureToast(error);
                 }
@@ -76,11 +80,11 @@
         busy = new Set(busy);
         client
             .cancelProtectedAction(BigInt(id))
-            .then((success) => {
-                if (success) {
+            .then((result) => {
+                if (result.kind === "success") {
                     toastStore.showSuccessToast(i18nKey("Proposal rejected"));
                 } else {
-                    error = i18nKey("Failed to reject the proposal");
+                    error = i18nKey(result.message ?? "Failed to reject the proposal");
                     toastStore.showFailureToast(error);
                 }
                 refresh();
