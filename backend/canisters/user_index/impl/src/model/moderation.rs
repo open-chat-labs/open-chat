@@ -89,14 +89,26 @@ pub fn post_moderation_alert(alert: ModerationAlert, state: &mut RuntimeState) {
 
 // Posts a plain-text OC-bot notice into the internal moderation channel: for alarms which
 // have no reported message to anchor a report card to (eg. a re-upload of known CSAM content)
-// Protected-action alerts go direct to every platform operator rather than to the internal
-// moderation channel. Three reasons: the operators are exactly the people who can confirm,
-// reject or raise the alarm; the channel is itself configured BY a protected action, so
-// relying on it means the alerts are invisible until (and unless) it has been set up; and the
+// Operator functions alert the OTHER platform operators directly, rather than posting to the
+// internal moderation channel. Four reasons: they are peer oversight, so the audience is the
+// operators rather than the moderators; the channel is itself configured by an operator
+// function, so relying on it means the alerts are invisible until (and unless) it has been
+// set up; delivery is via the retried event queue rather than fire-and-forget; and the
 // operator set is DAO-governed (add_platform_operator is proposal-only), so an operator whose
 // key is compromised cannot redirect these messages away from their colleagues.
-pub fn notify_platform_operators(text: String, state: &mut RuntimeState) {
-    let operators: Vec<UserId> = state.data.platform_operators.iter().copied().collect();
+//
+// The acting operator is skipped - they know what they just did, and excluding them keeps the
+// message unambiguously "one of your colleagues did this".
+pub fn notify_other_platform_operators(text: String, state: &mut RuntimeState) {
+    let caller = state.env.caller();
+    let acting = state.data.users.get_by_principal(&caller).map(|u| u.user_id);
+    let operators: Vec<UserId> = state
+        .data
+        .platform_operators
+        .iter()
+        .copied()
+        .filter(|u| Some(*u) != acting)
+        .collect();
     for user_id in operators {
         state.push_event_to_local_user_index(
             user_id,

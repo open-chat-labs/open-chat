@@ -43,13 +43,8 @@ pub(crate) fn execute(args: Args, proposed_by: UserId, confirmed_by: UserId, sta
         state,
     );
 
-    moderation::post_moderation_notice(
-        format!(
-            "🗑️ Vaulted evidence for report #{} destroyed on law enforcement request\n\nProposed by {proposed_by}, confirmed by {confirmed_by}, under reference: {}",
-            args.report_index, args.le_request_ref
-        ),
-        state,
-    );
+    // No notice here: this is only ever reached through a confirmed protected action, whose
+    // own alert already names the report, the reference and both operators
 
     Ok(())
 }

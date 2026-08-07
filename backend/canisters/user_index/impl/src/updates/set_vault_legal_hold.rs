@@ -73,7 +73,7 @@ pub(crate) fn execute(args: Args, state: &mut RuntimeState) -> OCResult {
     } else {
         ""
     };
-    moderation::post_moderation_notice(
+    moderation::notify_other_platform_operators(
         format!(
             "🔒 Legal hold {action} on the evidence for report #{}{released}\n\nBy {operator}, under reference: {}",
             args.report_index, args.reference

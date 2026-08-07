@@ -27,7 +27,7 @@ fn cancel_protected_action_impl(args: Args, state: &mut RuntimeState) -> OCResul
         return Err(OCErrorCode::InvalidRequest.with_message("No pending action with that id (it may have expired)"));
     };
 
-    moderation::notify_platform_operators(
+    moderation::notify_other_platform_operators(
         format!(
             "🚫 Protected action #{} cancelled: {}\n\nProposed by {}, cancelled by {cancelled_by}",
             args.action_id,

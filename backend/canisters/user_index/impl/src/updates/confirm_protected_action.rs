@@ -72,7 +72,7 @@ fn confirm_protected_action_impl(args: Args, state: &mut RuntimeState) -> OCResu
 
     match &result {
         Ok(()) => {
-            moderation::notify_platform_operators(
+            moderation::notify_other_platform_operators(
                 format!(
                     "✅ Protected action #{} confirmed and executed: {summary}\n\nProposed by {proposed_by}, confirmed by {confirmed_by}",
                     args.action_id
@@ -83,7 +83,7 @@ fn confirm_protected_action_impl(args: Args, state: &mut RuntimeState) -> OCResu
         Err(error) => {
             // The proposal was consumed by the confirm; record the failure where moderators
             // can see it so the action can be re-proposed
-            moderation::notify_platform_operators(
+            moderation::notify_other_platform_operators(
                 format!(
                     "⚠️ Protected action #{} confirmed but failed to execute: {summary}\n\nError: {error:?}. Re-propose if still required",
                     args.action_id
