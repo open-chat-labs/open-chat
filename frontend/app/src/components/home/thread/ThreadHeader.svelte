@@ -33,7 +33,7 @@
 
     interface Props {
         chatSummary: ChatSummary;
-        rootEvent: EventWrapper<Message>;
+        rootEvent: EventWrapper<Message> | undefined;
         threadRootMessageIndex: number;
         onCloseThread: (id: ChatIdentifier) => void;
     }
