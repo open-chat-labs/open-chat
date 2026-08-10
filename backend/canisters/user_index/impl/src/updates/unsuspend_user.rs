@@ -3,17 +3,34 @@ use crate::timer_job_types::{SetUserSuspendedInCommunity, SetUserSuspendedInGrou
 use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use oc_error_codes::OCErrorCode;
 use types::{ChatId, CommunityId, UserId};
 use user_index_canister::unsuspend_user::{Response::*, *};
 
 #[update(guard = "caller_is_platform_moderator", msgpack = true)]
 #[trace]
 async fn unsuspend_user(args: Args) -> Response {
+    // A moderator must never lift a sanction imposed on themselves. Suspension does not strip
+    // moderator status, so without this the subject of an upheld report against their own
+    // message can simply undo the sanction one call later - the resolve-time party check would
+    // stop them returning the verdict, but not reversing its effect.
+    if read_state(|state| caller_is(&args.user_id, state)) {
+        return Error(OCErrorCode::InitiatorNotAuthorized.with_message("Cannot unsuspend yourself"));
+    }
+
     match read_state(|state| state.data.users.is_user_suspended(&args.user_id)) {
         Some(true) => unsuspend_user_impl(args.user_id).await,
         Some(false) => UserNotSuspended,
         None => UserNotFound,
     }
+}
+
+fn caller_is(user_id: &UserId, state: &RuntimeState) -> bool {
+    state
+        .data
+        .users
+        .get_by_principal(&state.env.caller())
+        .is_some_and(|u| u.user_id == *user_id)
 }
 
 pub(crate) async fn unsuspend_user_impl(user_id: UserId) -> Response {

@@ -30,14 +30,16 @@ fn accept_if_valid(state: &RuntimeState) {
         | "update_bot"
         | "update_diamond_membership_subscription" => state.is_caller_openchat_user(),
         "resolve_moderation_report" | "suspend_user" | "unsuspend_user" => state.is_caller_platform_moderator(),
-        "record_authority_report_filed"
-        | "destroy_vault_evidence"
+        // The dual-authorized actions (destroy_vault_evidence, set_vault_reviewers,
+        // set_openai_api_key, set_internal_moderation_channel) are no longer callable
+        // directly - they are reachable only through this propose/confirm pair
+        "propose_protected_action"
+        | "confirm_protected_action"
+        | "cancel_protected_action"
+        | "record_authority_report_filed"
         | "set_vault_legal_hold"
         | "set_diamond_membership_fees"
-        | "set_internal_moderation_channel"
-        | "set_vault_reviewers"
         | "set_moderation_referral_config"
-        | "set_openai_api_key"
         | "set_premium_item_cost"
         | "set_user_upgrade_concurrency"
         | "update_blocked_username_patterns" => state.is_caller_platform_operator(),

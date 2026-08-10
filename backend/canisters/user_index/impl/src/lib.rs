@@ -1,6 +1,7 @@
 use crate::model::group_index_event_batch::GroupIndexEventBatch;
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::premium_items::{PremiumItemMetrics, PremiumItems};
+use crate::model::protected_actions::{ProtectedActionMetrics, ProtectedActions};
 use crate::model::storage_index_user_config_batch::StorageIndexUserConfigBatch;
 use crate::model::storage_index_users_to_remove_batch::StorageIndexUsersToRemoveBatch;
 use crate::model::streak_insurance_logs::StreakInsuranceLogs;
@@ -269,6 +270,7 @@ impl RuntimeState {
             pending_users_to_sync_to_storage_index: self.data.storage_index_user_sync_queue.len(),
             reporting_metrics: self.data.reported_messages.metrics(),
             authority_report_metrics: self.data.authority_reports.metrics(),
+            protected_action_metrics: self.data.protected_actions.metrics(),
             vault_reviewers: self.data.vault_reviewers.len() as u32,
             openai_api_key_set: self.data.openai_api_key.is_some(),
             internal_moderation_channel_set: self.data.internal_moderation_channel.is_some(),
@@ -393,6 +395,8 @@ struct Data {
     pub authority_reports: AuthorityReports,
     #[serde(default)]
     pub vault_reviewers: HashSet<UserId>,
+    #[serde(default)]
+    pub protected_actions: ProtectedActions,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub rng_seed: [u8; 32],
@@ -486,6 +490,7 @@ impl Data {
             reported_messages: ReportedMessages::default(),
             authority_reports: AuthorityReports::default(),
             vault_reviewers: HashSet::new(),
+            protected_actions: ProtectedActions::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             rng_seed: [0; 32],
             diamond_membership_fees: DiamondMembershipFees::default(),
@@ -603,6 +608,7 @@ impl Default for Data {
             reported_messages: ReportedMessages::default(),
             authority_reports: AuthorityReports::default(),
             vault_reviewers: HashSet::new(),
+            protected_actions: ProtectedActions::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             nns_8_year_neuron: None,
             rng_seed: [0; 32],
@@ -661,6 +667,7 @@ pub struct Metrics {
     pub reporting_metrics: ReportingMetrics,
     pub authority_report_metrics: AuthorityReportMetrics,
     pub vault_reviewers: u32,
+    pub protected_action_metrics: ProtectedActionMetrics,
     pub openai_api_key_set: bool,
     pub internal_moderation_channel_set: bool,
     pub moderation_referral_config_set: bool,

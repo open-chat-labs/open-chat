@@ -81,12 +81,22 @@ pub struct ApplyVerdictOp {
 pub struct SetLegalHoldOp {
     pub file_id: FileId,
     pub legal_hold: bool,
+    // The preservation request the hold was applied under, carried into the vault log.
+    // Option so an op from an older storage_index still decodes.
+    #[serde(default)]
+    pub reference: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DestroyOp {
     pub file_id: FileId,
     pub le_request_ref: String,
+    // The two operators behind the dual-authorized destruction (#9136); Option so an op from
+    // an older storage_index still decodes
+    #[serde(default)]
+    pub proposed_by: Option<UserId>,
+    #[serde(default)]
+    pub confirmed_by: Option<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

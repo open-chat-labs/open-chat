@@ -32,6 +32,9 @@
 
     let busy = $state(false);
     let failed = $state(false);
+    // The canister explains WHY a verdict was refused (your own assertion, already
+    // resolved); showing "failed" alone leaves the moderator guessing
+    let failureReason: string | undefined = $state(undefined);
     let resolved = $state(false);
     let urgent = $state(false);
     let showViewer = $state(false);
@@ -118,16 +121,18 @@
 
         busy = true;
         failed = false;
+        failureReason = undefined;
         client
             .resolveModerationReport(
                 content.reportIndex,
                 verdict,
                 verdict === "upheld_as_csam" ? urgent : undefined,
             )
-            .then((success) => {
+            .then((result) => {
                 busy = false;
-                resolved = success;
-                failed = !success;
+                resolved = result.kind === "success";
+                failed = result.kind !== "success";
+                failureReason = result.kind === "error" ? result.message : undefined;
             });
     }
 </script>
@@ -484,7 +489,11 @@
 
     {#if failed}
         <Body colour="error">
-            <Translatable resourceKey={i18nKey("moderationReport.failed")} />
+            {#if failureReason !== undefined}
+                {failureReason}
+            {:else}
+                <Translatable resourceKey={i18nKey("moderationReport.failed")} />
+            {/if}
         </Body>
     {/if}
 </Column>
