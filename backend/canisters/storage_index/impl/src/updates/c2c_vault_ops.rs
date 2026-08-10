@@ -64,6 +64,7 @@ fn c2c_vault_ops_impl(args: Args, state: &mut RuntimeState) -> Response {
                     bucket_vault::VaultOp::SetLegalHold(bucket_vault::SetLegalHoldOp {
                         file_id: l.blob_reference.blob_id,
                         legal_hold: l.legal_hold,
+                        reference: l.reference,
                     }),
                 );
             }
@@ -74,6 +75,8 @@ fn c2c_vault_ops_impl(args: Args, state: &mut RuntimeState) -> Response {
                     bucket_vault::VaultOp::Destroy(bucket_vault::DestroyOp {
                         file_id: d.blob_reference.blob_id,
                         le_request_ref: d.le_request_ref,
+                        proposed_by: d.proposed_by,
+                        confirmed_by: d.confirmed_by,
                     }),
                 );
             }

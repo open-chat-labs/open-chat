@@ -101,6 +101,13 @@ pub enum VaultLogEvent {
     VerdictAppliedBy(FileId, TimestampMillis, Option<UserId>),
     // Retention clock re-anchored (eg. at filing time) without a verdict being recorded
     RetentionReanchoredBy(FileId, TimestampMillis, Option<UserId>),
+    // Dual-authorized destruction (#9136): request reference plus the proposing and
+    // confirming operators. The entry survives the record it describes.
+    DestroyedBy(FileId, String, Option<UserId>, Option<UserId>),
+    // Legal hold set or cleared, carrying the preservation request it was applied under, so
+    // the chain of custody shows why the evidence was held rather than only that it was
+    LegalHoldSetUnder(FileId, String),
+    LegalHoldClearedUnder(FileId, String),
 }
 
 impl VaultLogEvent {
@@ -117,7 +124,10 @@ impl VaultLogEvent {
             | VaultLogEvent::ViewedBy(file_id, _, _)
             | VaultLogEvent::UnquarantinedBy(file_id, _)
             | VaultLogEvent::VerdictAppliedBy(file_id, _, _)
-            | VaultLogEvent::RetentionReanchoredBy(file_id, _, _) => *file_id,
+            | VaultLogEvent::RetentionReanchoredBy(file_id, _, _)
+            | VaultLogEvent::DestroyedBy(file_id, _, _, _)
+            | VaultLogEvent::LegalHoldSetUnder(file_id, _)
+            | VaultLogEvent::LegalHoldClearedUnder(file_id, _) => *file_id,
         }
     }
 }
@@ -301,17 +311,25 @@ impl Vault {
         newly_denylisted
     }
 
-    pub fn set_legal_hold(&mut self, file_id: FileId, legal_hold: bool, now: TimestampMillis) -> VaultOpOutcome {
+    pub fn set_legal_hold(
+        &mut self,
+        file_id: FileId,
+        legal_hold: bool,
+        reference: Option<String>,
+        now: TimestampMillis,
+    ) -> VaultOpOutcome {
         let Some(record) = self.file_id_to_hash.get(&file_id).and_then(|h| self.records.get_mut(h)) else {
             return VaultOpOutcome::NotFound;
         };
         record.legal_hold = legal_hold;
         let hash = record.hash;
         let release = !legal_hold && record.release_pending;
-        let event = if legal_hold {
-            VaultLogEvent::LegalHoldSet(file_id)
-        } else {
-            VaultLogEvent::LegalHoldCleared(file_id)
+        let event = match (legal_hold, reference) {
+            (true, Some(reference)) => VaultLogEvent::LegalHoldSetUnder(file_id, reference),
+            (false, Some(reference)) => VaultLogEvent::LegalHoldClearedUnder(file_id, reference),
+            // Only ops from an older user_index arrive without a reference
+            (true, None) => VaultLogEvent::LegalHoldSet(file_id),
+            (false, None) => VaultLogEvent::LegalHoldCleared(file_id),
         };
         self.append_log(event, now);
         // A release refused because of the hold is performed now that the hold is cleared
@@ -324,14 +342,29 @@ impl Vault {
         VaultOpOutcome::Applied
     }
 
-    // Permanent destruction on law enforcement request, overriding the retention clock and any
-    // legal hold. The log entry (including the request reference) survives the record.
-    pub fn destroy(&mut self, file_id: FileId, le_request_ref: String, now: TimestampMillis) -> VaultOpOutcome {
+    // Permanent destruction on law enforcement request, overriding the retention clock. A
+    // standing legal hold REFUSES destruction (#9136): clearing the hold is a separate,
+    // separately-logged act, so hold-clear + destroy is always two visible steps. The log
+    // entry (including the request reference and both operators) survives the record.
+    pub fn destroy(
+        &mut self,
+        file_id: FileId,
+        le_request_ref: String,
+        proposed_by: Option<UserId>,
+        confirmed_by: Option<UserId>,
+        now: TimestampMillis,
+    ) -> VaultOpOutcome {
         let Some(hash) = self.file_id_to_hash.get(&file_id).copied() else {
             return VaultOpOutcome::NotFound;
         };
+        if self.records.get(&hash).is_some_and(|r| r.legal_hold) {
+            return VaultOpOutcome::Blocked;
+        }
         for alias in self.remove_all_references(&hash) {
-            self.append_log(VaultLogEvent::Destroyed(alias, le_request_ref.clone()), now);
+            self.append_log(
+                VaultLogEvent::DestroyedBy(alias, le_request_ref.clone(), proposed_by, confirmed_by),
+                now,
+            );
         }
         VaultOpOutcome::ReleasePin(hash)
     }
@@ -515,6 +548,27 @@ mod tests {
     }
 
     #[test]
+    fn legal_hold_records_its_preservation_reference_in_the_log() {
+        let mut vault = vault_with_reviewer();
+        vault.quarantine(1, [1u8; 32], "image/png".to_string(), metadata(7), 100);
+
+        vault.set_legal_hold(1, true, Some("POLICE-REF-99".to_string()), 200);
+        vault.set_legal_hold(1, false, Some("POLICE-REF-99".to_string()), 300);
+
+        // The reference is the audit-relevant part: a hold exists because something external
+        // demanded preservation, and the log must show what
+        let (_, entries) = vault.log_page(0, 100, None);
+        let set = entries
+            .iter()
+            .any(|e| matches!(&e.event, VaultLogEvent::LegalHoldSetUnder(_, r) if r == "POLICE-REF-99"));
+        let cleared = entries
+            .iter()
+            .any(|e| matches!(&e.event, VaultLogEvent::LegalHoldClearedUnder(_, r) if r == "POLICE-REF-99"));
+        assert!(set, "the hold reference is missing from the log");
+        assert!(cleared, "the release reference is missing from the log");
+    }
+
+    #[test]
     fn log_is_hash_chained_and_verifiable() {
         let mut vault = vault_with_reviewer();
         vault.quarantine(1, [1u8; 32], "image/png".to_string(), metadata(0), 100);
@@ -578,12 +632,15 @@ mod tests {
     fn legal_hold_blocks_release() {
         let mut vault = vault_with_reviewer();
         vault.quarantine(1, [1u8; 32], "image/png".to_string(), metadata(0), 100);
-        vault.set_legal_hold(1, true, 200);
+        vault.set_legal_hold(1, true, Some("REF-1".to_string()), 200);
         assert!(matches!(vault.unquarantine(1, None, Some(0), 300), VaultOpOutcome::Blocked));
         assert!(vault.record_for_file(&1).is_some());
         // The refused release is performed when the hold is cleared (the sender never
         // re-sends the unquarantine op)
-        assert!(matches!(vault.set_legal_hold(1, false, 400), VaultOpOutcome::ReleasePin(_)));
+        assert!(matches!(
+            vault.set_legal_hold(1, false, Some("REF-1".to_string()), 400),
+            VaultOpOutcome::ReleasePin(_)
+        ));
         assert!(vault.record_for_file(&1).is_none());
     }
 
@@ -670,7 +727,7 @@ mod tests {
         let mut vault = vault_with_reviewer();
         vault.quarantine(1, [1u8; 32], "image/png".to_string(), metadata(7), 100);
         vault.quarantine(2, [1u8; 32], "image/png".to_string(), metadata(8), 101);
-        vault.set_legal_hold(1, true, 150);
+        vault.set_legal_hold(1, true, Some("REF-1".to_string()), 150);
 
         // Claim bookkeeping proceeds under the hold; only the physical release is blocked
         assert!(matches!(vault.unquarantine(1, None, Some(7), 200), VaultOpOutcome::Retained));
@@ -679,7 +736,10 @@ mod tests {
 
         // Clearing the hold performs the pending release - without this, the claims are gone,
         // nothing ever re-sends the release, and the record leaks forever
-        assert!(matches!(vault.set_legal_hold(1, false, 300), VaultOpOutcome::ReleasePin(_)));
+        assert!(matches!(
+            vault.set_legal_hold(1, false, Some("REF-1".to_string()), 300),
+            VaultOpOutcome::ReleasePin(_)
+        ));
         assert!(vault.record_for_file(&1).is_none());
         assert!(vault.record_for_file(&2).is_none());
     }

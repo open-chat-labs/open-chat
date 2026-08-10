@@ -203,6 +203,9 @@ import type {
     WithdrawBtcResponse,
     WithdrawCryptocurrencyResponse,
     VaultFileChunkResponse,
+    ProposedProtectedAction,
+    Success,
+    OCError,
 } from "@shared";
 import {
     ANON_USER_ID,
@@ -2178,16 +2181,53 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.acceptTerms(version);
     }
 
-    setVaultReviewers(userIds: string[]): Promise<boolean> {
-        return this._userIndexClient.setVaultReviewers(userIds);
+    proposeSetVaultLegalHold(
+        reportIndex: bigint,
+        legalHold: boolean,
+        reference: string,
+    ): Promise<ProposedProtectedAction | undefined> {
+        if (offline()) return Promise.resolve(undefined);
+
+        return this._userIndexClient.proposeSetVaultLegalHold(reportIndex, legalHold, reference);
     }
 
-    setVaultLegalHold(reportIndex: bigint, legalHold: boolean, reference: string): Promise<boolean> {
+    proposeSetVaultReviewers(userIds: string[]): Promise<ProposedProtectedAction | undefined> {
+        if (offline()) return Promise.resolve(undefined);
+
+        return this._userIndexClient.proposeSetVaultReviewers(userIds);
+    }
+
+    confirmProtectedAction(actionId: bigint): Promise<Success | OCError> {
+        if (offline()) return Promise.resolve({ kind: "error", code: -1, message: undefined });
+
+        return this._userIndexClient.confirmProtectedAction(actionId);
+    }
+
+    cancelProtectedAction(actionId: bigint): Promise<Success | OCError> {
+        if (offline()) return Promise.resolve({ kind: "error", code: -1, message: undefined });
+
+        return this._userIndexClient.cancelProtectedAction(actionId);
+    }
+
+    protectedActions(): Promise<string> {
+        return this._userIndexClient.protectedActions();
+    }
+
+    setVaultLegalHold(
+        reportIndex: bigint,
+        legalHold: boolean,
+        reference: string,
+    ): Promise<boolean> {
         return this._userIndexClient.setVaultLegalHold(reportIndex, legalHold, reference);
     }
 
-    destroyVaultEvidence(reportIndex: bigint, leRequestRef: string): Promise<boolean> {
-        return this._userIndexClient.destroyVaultEvidence(reportIndex, leRequestRef);
+    proposeDestroyVaultEvidence(
+        reportIndex: bigint,
+        leRequestRef: string,
+    ): Promise<ProposedProtectedAction | undefined> {
+        if (offline()) return Promise.resolve(undefined);
+
+        return this._userIndexClient.proposeDestroyVaultEvidence(reportIndex, leRequestRef);
     }
 
     setModerationReferralConfig(
@@ -2196,26 +2236,28 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.setModerationReferralConfig(config);
     }
 
-    setOpenAIApiKey(apiKey: string | undefined): Promise<boolean> {
-        if (offline()) return Promise.resolve(false);
+    proposeSetOpenAIApiKey(
+        apiKey: string | undefined,
+    ): Promise<ProposedProtectedAction | undefined> {
+        if (offline()) return Promise.resolve(undefined);
 
-        return this._userIndexClient.setOpenAIApiKey(apiKey);
+        return this._userIndexClient.proposeSetOpenAIApiKey(apiKey);
     }
 
-    setInternalModerationChannel(
+    proposeSetInternalModerationChannel(
         channel: { communityId: string; channelId: number } | undefined,
-    ): Promise<boolean> {
-        if (offline()) return Promise.resolve(false);
+    ): Promise<ProposedProtectedAction | undefined> {
+        if (offline()) return Promise.resolve(undefined);
 
-        return this._userIndexClient.setInternalModerationChannel(channel);
+        return this._userIndexClient.proposeSetInternalModerationChannel(channel);
     }
 
     resolveModerationReport(
         reportIndex: bigint,
         verdict: ModerationVerdict,
         urgent: boolean | undefined,
-    ): Promise<boolean> {
-        if (offline()) return Promise.resolve(false);
+    ): Promise<Success | OCError> {
+        if (offline()) return Promise.resolve({ kind: "error", code: -1, message: undefined });
 
         return this._userIndexClient.resolveModerationReport(reportIndex, verdict, urgent);
     }

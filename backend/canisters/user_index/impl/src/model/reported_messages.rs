@@ -73,6 +73,8 @@ impl ReportedMessages {
                 detection: DetectionSource::UserReport,
                 contested: None,
                 unverified_report_filed: None,
+                legal_hold: false,
+                release_pending: false,
                 csam_asserted_by: if args.csam { vec![args.reporter] } else { Vec::new() },
             });
             AddReportResult::New(new_index as u64)
@@ -284,6 +286,8 @@ impl ReportedMessages {
                 detection: DetectionSource::Proactive,
                 contested: None,
                 unverified_report_filed: None,
+                legal_hold: false,
+                release_pending: false,
                 csam_asserted_by: Vec::new(),
             });
             Some((new_index as u64, true))
@@ -340,6 +344,35 @@ impl ReportedMessages {
         }
         message.contested = Some(now);
         ContestResult::Success(Box::new(message.clone()))
+    }
+
+    pub fn set_legal_hold(&mut self, report_index: u64, legal_hold: bool) {
+        if let Some(message) = self.messages.get_mut(report_index as usize) {
+            message.legal_hold = legal_hold;
+            // Clearing the hold performs any deferred release, so nothing stays pending
+            if !legal_hold {
+                message.release_pending = false;
+            }
+        }
+    }
+
+    pub fn set_release_pending(&mut self, report_index: u64, release_pending: bool) {
+        if let Some(message) = self.messages.get_mut(report_index as usize) {
+            message.release_pending = release_pending;
+        }
+    }
+
+    // Every held report which shares one of these blobs. Holds are per-report here but
+    // per-record in the bucket, and a blob can be evidence in several reports, so a hold
+    // placed via one report also protects the same blob wherever else it appears - any check
+    // scoped to a single report misses that
+    pub fn reports_with_hold_intersecting(&self, blob_references: &[BlobReference]) -> Vec<u64> {
+        self.messages
+            .iter()
+            .enumerate()
+            .filter(|(_, m)| m.legal_hold && m.blob_references.iter().any(|b| blob_references.contains(b)))
+            .map(|(i, _)| i as u64)
+            .collect()
     }
 
     pub fn mark_unverified_report_filed(&mut self, report_index: u64, now: TimestampMillis) -> bool {
@@ -459,6 +492,14 @@ pub struct ReportedMessage {
     // valve); the verdict remains open and is resolved by a reviewer
     #[serde(default)]
     pub unverified_report_filed: Option<TimestampMillis>,
+    // Mirrors the legal hold held bucket-side, so destruction can be refused here rather than
+    // silently refused at the bucket after moderators were told the evidence was destroyed
+    #[serde(default)]
+    pub legal_hold: bool,
+    // Mirrors the bucket's release_pending: a release was refused because of the hold, so
+    // clearing the hold would perform it and destroy the evidence
+    #[serde(default)]
+    pub release_pending: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -914,6 +955,8 @@ mod report_status_tests {
             detection: DetectionSource::Proactive,
             contested: None,
             unverified_report_filed: None,
+            legal_hold: false,
+            release_pending: false,
             csam_asserted_by: Vec::new(),
         }
     }

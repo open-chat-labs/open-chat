@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- The vault log records the preservation request a legal hold was applied or cleared under, so the chain of custody shows why evidence was held rather than only that it was ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
+- A standing legal hold now blocks destruction of vaulted evidence rather than being overridden by it - clearing the hold is a separate, separately logged act ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
+- The vault log records both the proposing and the confirming operator for a dual-authorized destruction ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
+
 ## [[2.0.2004](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2004-storage_bucket)] - 2026-08-05
 
 ### Added

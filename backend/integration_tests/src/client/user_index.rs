@@ -4,6 +4,7 @@ use user_index_canister::*;
 // Queries
 generate_msgpack_query_call!(check_username);
 generate_msgpack_query_call!(moderation_config);
+generate_msgpack_query_call!(protected_actions);
 generate_msgpack_query_call!(current_user);
 generate_msgpack_query_call!(search);
 generate_msgpack_query_call!(platform_moderators);
@@ -26,12 +27,13 @@ generate_msgpack_update_call!(pay_for_diamond_membership);
 generate_msgpack_update_call!(remove_bot);
 generate_msgpack_update_call!(contest_moderation_sanction);
 generate_msgpack_update_call!(record_authority_report_filed);
+generate_msgpack_update_call!(set_vault_legal_hold);
 generate_msgpack_update_call!(resolve_moderation_report);
-generate_msgpack_update_call!(set_internal_moderation_channel);
+generate_msgpack_update_call!(propose_protected_action);
+generate_msgpack_update_call!(confirm_protected_action);
+generate_msgpack_update_call!(cancel_protected_action);
 generate_msgpack_update_call!(accept_terms);
 generate_msgpack_update_call!(set_moderation_referral_config);
-generate_msgpack_update_call!(set_vault_reviewers);
-generate_msgpack_update_call!(set_openai_api_key);
 generate_update_call!(remove_platform_moderator);
 generate_msgpack_update_call!(set_display_name);
 generate_msgpack_update_call!(set_premium_item_cost);
@@ -60,6 +62,40 @@ pub mod happy_path {
     };
     use user_index_canister::ChildCanisterType;
     use user_index_canister::users::UserGroup;
+
+    // Dual-authorized operator actions (#9136): propose with one operator, confirm with a
+    // different one. Both principals must be platform operators.
+    pub fn execute_protected_action(
+        env: &mut PocketIc,
+        proposer: Principal,
+        confirmer: Principal,
+        canister_id: CanisterId,
+        action: user_index_canister::propose_protected_action::ProtectedAction,
+    ) {
+        let response = super::propose_protected_action(
+            env,
+            proposer,
+            canister_id,
+            &user_index_canister::propose_protected_action::Args { action },
+        );
+        let user_index_canister::propose_protected_action::Response::Success(result) = response else {
+            panic!("'propose_protected_action' error: {response:?}");
+        };
+        assert!(!result.already_pending, "expected a new proposal, not an existing one");
+
+        let response = super::confirm_protected_action(
+            env,
+            confirmer,
+            canister_id,
+            &user_index_canister::confirm_protected_action::Args {
+                action_id: result.action_id,
+            },
+        );
+        assert!(
+            matches!(response, user_index_canister::confirm_protected_action::Response::Success),
+            "'confirm_protected_action' error: {response:?}"
+        );
+    }
 
     pub fn current_user(
         env: &PocketIc,

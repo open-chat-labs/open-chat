@@ -1,6 +1,7 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import type {
     ModerationConfig,
+    ProposedProtectedAction,
     BotDefinition,
     BotInstallationLocation,
     BotsResponse,
@@ -26,6 +27,8 @@ import type {
     UsersResponse,
     UserSummary,
     UserSummaryUpdate,
+    Success,
+    OCError,
 } from "@shared";
 import {
     mergeUserSummaryWithUpdates,
@@ -65,7 +68,6 @@ import {
     UserIndexSetDisplayNameArgs,
     UserIndexSetDisplayNameResponse,
     UserIndexSetHideOnlineStatusArgs,
-    UserIndexSetInternalModerationChannelArgs,
     UserIndexResolveModerationReportArgs,
     UserIndexSetModerationFlagsArgs,
     UserIndexAcceptTermsArgs,
@@ -73,10 +75,12 @@ import {
     UserIndexModerationConfigResponse,
     UserIndexRecordAuthorityReportFiledArgs,
     UserIndexSetModerationReferralConfigArgs,
-    UserIndexSetVaultReviewersArgs,
+    UserIndexProposeProtectedActionArgs,
+    UserIndexProposeProtectedActionResponse,
+    UserIndexConfirmProtectedActionArgs,
+    UserIndexCancelProtectedActionArgs,
+    UserIndexProtectedActionsResponse,
     UserIndexSetVaultLegalHoldArgs,
-    UserIndexDestroyVaultEvidenceArgs,
-    UserIndexSetOpenaiApiKeyArgs,
     UserIndexSetPremiumItemCostArgs,
     UserIndexSetUsernameArgs,
     UserIndexSetUsernameResponse,
@@ -94,6 +98,8 @@ import {
     UserIndexUsersArgs,
     UserIndexUsersResponse,
 } from "../../typebox";
+import type { UserIndexProposeProtectedActionProtectedAction } from "../../typebox";
+import { unitResult } from "../common/chatMappersV2";
 import type { ChatsDb } from "../../utils/chatsDb";
 import { groupBy } from "../../utils/list";
 import {
@@ -164,7 +170,10 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                         // blocking terms notice and, offline, lock the user out entirely
                         const latest = await this.chatsDb.getCachedCurrentUser();
                         const accepted = latest?.acceptedTermsVersion;
-                        if (accepted !== undefined && (liveUser.acceptedTermsVersion ?? 0) < accepted) {
+                        if (
+                            accepted !== undefined &&
+                            (liveUser.acceptedTermsVersion ?? 0) < accepted
+                        ) {
                             liveUser = { ...liveUser, acceptedTermsVersion: accepted };
                         }
                         this.chatsDb.setCachedCurrentUser(liveUser);
@@ -206,17 +215,83 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         });
     }
 
-    setVaultReviewers(userIds: string[]): Promise<boolean> {
+    // The four irreversible operator actions are dual authorized (#9136): propose here, then a
+    // DIFFERENT platform operator confirms before anything executes.
+    proposeProtectedAction(
+        action: UserIndexProposeProtectedActionProtectedAction,
+    ): Promise<ProposedProtectedAction | undefined> {
         return this.update(
-            "set_vault_reviewers",
-            { user_ids: userIds.map(principalStringToBytes) },
-            (resp) => resp === "Success",
-            UserIndexSetVaultReviewersArgs,
+            "propose_protected_action",
+            { action },
+            (resp) =>
+                "Success" in resp
+                    ? {
+                          actionId: resp.Success.action_id,
+                          alreadyPending: resp.Success.already_pending,
+                      }
+                    : undefined,
+            UserIndexProposeProtectedActionArgs,
+            UserIndexProposeProtectedActionResponse,
+        );
+    }
+
+    // Returns the canister's error rather than a bare boolean: a confirmation is re-validated
+    // at confirm time and can be refused for reasons the operator needs to see (a legal hold
+    // now stands on the evidence, the report is against their own message), and collapsing
+    // those to "failed" leaves them guessing
+    confirmProtectedAction(actionId: bigint): Promise<Success | OCError> {
+        return this.update(
+            "confirm_protected_action",
+            { action_id: actionId },
+            unitResult,
+            UserIndexConfirmProtectedActionArgs,
             UnitResult,
         );
     }
 
-    setVaultLegalHold(reportIndex: bigint, legalHold: boolean, reference: string): Promise<boolean> {
+    cancelProtectedAction(actionId: bigint): Promise<Success | OCError> {
+        return this.update(
+            "cancel_protected_action",
+            { action_id: actionId },
+            unitResult,
+            UserIndexCancelProtectedActionArgs,
+            UnitResult,
+        );
+    }
+
+    protectedActions(): Promise<string> {
+        return this.query(
+            "protected_actions",
+            {},
+            (resp) => resp.Success.json,
+            Empty,
+            UserIndexProtectedActionsResponse,
+        );
+    }
+
+    // Only for the dangerous case: clearing a hold whose release is already pending performs
+    // that release, so the canister refuses it outside the dual-authorized flow
+    proposeSetVaultLegalHold(
+        reportIndex: bigint,
+        legalHold: boolean,
+        reference: string,
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.proposeProtectedAction({
+            SetVaultLegalHold: { report_index: reportIndex, legal_hold: legalHold, reference },
+        });
+    }
+
+    proposeSetVaultReviewers(userIds: string[]): Promise<ProposedProtectedAction | undefined> {
+        return this.proposeProtectedAction({
+            SetVaultReviewers: { user_ids: userIds.map(principalStringToBytes) },
+        });
+    }
+
+    setVaultLegalHold(
+        reportIndex: bigint,
+        legalHold: boolean,
+        reference: string,
+    ): Promise<boolean> {
         return this.update(
             "set_vault_legal_hold",
             { report_index: reportIndex, legal_hold: legalHold, reference },
@@ -226,14 +301,13 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         );
     }
 
-    destroyVaultEvidence(reportIndex: bigint, leRequestRef: string): Promise<boolean> {
-        return this.update(
-            "destroy_vault_evidence",
-            { report_index: reportIndex, le_request_ref: leRequestRef },
-            (resp) => resp === "Success",
-            UserIndexDestroyVaultEvidenceArgs,
-            UnitResult,
-        );
+    proposeDestroyVaultEvidence(
+        reportIndex: bigint,
+        leRequestRef: string,
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.proposeProtectedAction({
+            DestroyVaultEvidence: { report_index: reportIndex, le_request_ref: leRequestRef },
+        });
     }
 
     setModerationReferralConfig(
@@ -258,24 +332,21 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         );
     }
 
-    setOpenAIApiKey(apiKey: string | undefined): Promise<boolean> {
-        return this.update(
-            "set_openai_api_key",
-            {
+    proposeSetOpenAIApiKey(
+        apiKey: string | undefined,
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.proposeProtectedAction({
+            SetOpenAIApiKey: {
                 api_key: apiKey === undefined || apiKey === "" ? undefined : apiKey,
             },
-            (resp) => resp === "Success",
-            UserIndexSetOpenaiApiKeyArgs,
-            UnitResult,
-        );
+        });
     }
 
-    setInternalModerationChannel(
+    proposeSetInternalModerationChannel(
         channel: { communityId: string; channelId: number } | undefined,
-    ): Promise<boolean> {
-        return this.update(
-            "set_internal_moderation_channel",
-            {
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.proposeProtectedAction({
+            SetInternalModerationChannel: {
                 channel:
                     channel === undefined
                         ? undefined
@@ -284,17 +355,17 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                               channel_id: toBigInt32(channel.channelId),
                           },
             },
-            (resp) => resp === "Success",
-            UserIndexSetInternalModerationChannelArgs,
-            UnitResult,
-        );
+        });
     }
 
+    // Returns the canister's error rather than a bare boolean: a verdict can be refused for
+    // reasons the moderator needs to see (resolving your own CSAM assertion, a report already
+    // resolved), and collapsing those to "failed" leaves them guessing
     resolveModerationReport(
         reportIndex: bigint,
         verdict: ModerationVerdict,
         urgent: boolean | undefined,
-    ): Promise<boolean> {
+    ): Promise<Success | OCError> {
         return this.update(
             "resolve_moderation_report",
             {
@@ -302,7 +373,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                 verdict: apiModerationVerdict(verdict),
                 urgent,
             },
-            (resp) => resp === "Success",
+            unitResult,
             UserIndexResolveModerationReportArgs,
             UnitResult,
         );

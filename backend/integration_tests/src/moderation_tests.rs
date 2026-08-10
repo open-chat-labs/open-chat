@@ -3,6 +3,7 @@ use crate::utils::{now_millis, tick_many};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use constants::DAY_IN_MS;
+use constants::OPENCHAT_BOT_USER_ID;
 use pocket_ic::PocketIc;
 use pocket_ic::common::rest::{CanisterHttpReply, CanisterHttpResponse, MockCanisterHttpResponse};
 use serde_json::{Value, json};
@@ -13,6 +14,7 @@ use types::{
     ChannelId, ChatEvent, ChatId, CommunityId, EventIndex, FileContent, MessageContent, MessageContentInitial,
     ModerationReportContent, ModerationReportStatus, SuspensionAction, UnitResult,
 };
+use user_index_canister::propose_protected_action::ProtectedAction;
 use user_index_canister::resolve_moderation_report::ModerationVerdict;
 use user_index_canister::set_internal_moderation_channel::InternalModerationChannel;
 use user_index_canister::users::UserGroup;
@@ -448,15 +450,15 @@ fn escalated_media_report_upheld_as_csam_vaults_evidence() {
 
     // The moderator (also the platform operator) is designated as a vault reviewer; the
     // principal set syncs user_index -> storage_index -> buckets
-    let set_reviewers_response = client::user_index::set_vault_reviewers(
+    client::user_index::happy_path::execute_protected_action(
         env,
         test_data.moderator.principal,
+        test_data.operator2.principal,
         canister_ids.user_index,
-        &user_index_canister::set_vault_reviewers::Args {
+        ProtectedAction::SetVaultReviewers(user_index_canister::set_vault_reviewers::Args {
             user_ids: vec![test_data.moderator.user_id],
-        },
+        }),
     );
-    assert!(matches!(set_reviewers_response, UnitResult::Success));
     tick_many(env, 5);
 
     // A file message with no caption has an empty moderation input, so the report escalates
@@ -935,15 +937,15 @@ fn csam_asserted_media_report_quarantines_immediately() {
 
     let test_data = init_test_data(env, canister_ids, *controller);
 
-    let set_reviewers_response = client::user_index::set_vault_reviewers(
+    client::user_index::happy_path::execute_protected_action(
         env,
         test_data.moderator.principal,
+        test_data.operator2.principal,
         canister_ids.user_index,
-        &user_index_canister::set_vault_reviewers::Args {
+        ProtectedAction::SetVaultReviewers(user_index_canister::set_vault_reviewers::Args {
             user_ids: vec![test_data.moderator.user_id],
-        },
+        }),
     );
-    assert!(matches!(set_reviewers_response, UnitResult::Success));
     tick_many(env, 5);
 
     let file_size = 1000u32;
@@ -1128,15 +1130,15 @@ fn shared_blob_evidence_survives_dismissal_of_a_sibling_report() {
 
     let test_data = init_test_data(env, canister_ids, *controller);
 
-    let set_reviewers_response = client::user_index::set_vault_reviewers(
+    client::user_index::happy_path::execute_protected_action(
         env,
         test_data.moderator.principal,
+        test_data.operator2.principal,
         canister_ids.user_index,
-        &user_index_canister::set_vault_reviewers::Args {
+        ProtectedAction::SetVaultReviewers(user_index_canister::set_vault_reviewers::Args {
             user_ids: vec![test_data.moderator.user_id],
-        },
+        }),
     );
-    assert!(matches!(set_reviewers_response, UnitResult::Success));
     tick_many(env, 5);
 
     // The same blob carried by two messages: one vault record, two evidence claims
@@ -1280,15 +1282,15 @@ fn media_report_dismissal_releases_the_vault() {
 
     let test_data = init_test_data(env, canister_ids, *controller);
 
-    let set_reviewers_response = client::user_index::set_vault_reviewers(
+    client::user_index::happy_path::execute_protected_action(
         env,
         test_data.moderator.principal,
+        test_data.operator2.principal,
         canister_ids.user_index,
-        &user_index_canister::set_vault_reviewers::Args {
+        ProtectedAction::SetVaultReviewers(user_index_canister::set_vault_reviewers::Args {
             user_ids: vec![test_data.moderator.user_id],
-        },
+        }),
     );
-    assert!(matches!(set_reviewers_response, UnitResult::Success));
     tick_many(env, 5);
 
     let file_size = 1000u32;
@@ -1466,6 +1468,97 @@ fn timed_suspension_expiry_never_lifts_a_later_csam_suspension() {
 }
 
 #[test]
+fn a_moderator_can_resolve_their_own_csam_assertion_only_by_upholding_it_as_csam() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    // The moderator is the one who spots the content and asserts it is CSAM. With a single
+    // available reviewer that is the normal case, not an edge case
+    client::local_user_index::happy_path::join_group(
+        env,
+        test_data.moderator.principal,
+        canister_ids.local_user_index(env, test_data.group_id),
+        test_data.group_id,
+    );
+    let message_id = random_from_u128();
+    let message_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
+    client::group::happy_path::send_text_message(
+        env,
+        &test_data.sender,
+        test_data.group_id,
+        None,
+        &message_text,
+        Some(message_id),
+    );
+    tick_many(env, 3);
+
+    client::group::report_message(
+        env,
+        test_data.moderator.principal,
+        test_data.group_id.into(),
+        &group_canister::report_message::Args {
+            thread_root_message_index: None,
+            message_id,
+            delete: false,
+            csam: true,
+        },
+    );
+    tick_many(env, 10);
+
+    let reports = get_moderation_reports(env, &test_data);
+    let report_index = reports
+        .iter()
+        .find(|r| r.sender == test_data.sender.user_id)
+        .and_then(|r| r.report_index)
+        .expect("the assertion should have created a report");
+
+    let resolve = |env: &mut PocketIc, verdict: ModerationVerdict| {
+        client::user_index::resolve_moderation_report(
+            env,
+            test_data.moderator.principal,
+            canister_ids.user_index,
+            &user_index_canister::resolve_moderation_report::Args {
+                report_index,
+                verdict,
+                urgent: None,
+            },
+        )
+    };
+
+    // Dismissing your own assertion is self-exoneration: it is the act which would otherwise
+    // record a false report against you
+    let response = resolve(env, ModerationVerdict::Dismissed);
+    assert!(matches!(response, UnitResult::Error(_)), "{response:?}");
+
+    // Downgrading it to an ordinary violation is the burial path: it would close the case
+    // forever (making the false-report record unreachable), release the vaulted evidence and
+    // skip the authority report, while still punishing the sender
+    let response = resolve(env, ModerationVerdict::Upheld);
+    assert!(matches!(response, UnitResult::Error(_)), "{response:?}");
+
+    // Upholding it AS CSAM is allowed: the maximum-scrutiny path, which nothing can be buried
+    // by taking. Barring this deadlocked a lone reviewer, who is obliged to act on what they
+    // found but could neither close the case nor reach the authority-report step
+    let response = resolve(env, ModerationVerdict::UpheldAsCsam);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    tick_many(env, 5);
+
+    let reports = get_moderation_reports(env, &test_data);
+    let report = reports.iter().find(|r| r.report_index == Some(report_index)).unwrap();
+    assert!(
+        !matches!(report.status, ModerationReportStatus::Pending),
+        "{:?}",
+        report.status
+    );
+}
+
+#[test]
 fn moderator_cannot_resolve_a_report_against_their_own_message() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -1535,6 +1628,59 @@ fn moderator_cannot_resolve_a_report_against_their_own_message() {
     );
     assert!(matches!(resolve_response, UnitResult::Error(_)), "{resolve_response:?}");
 
+    // Every OTHER surface which acts on a report must refuse them too. The verdict is only one
+    // of the levers: dual authorization is a two-person rule, not a conflict-of-interest rule,
+    // so being the report's subject has to be checked wherever the report is acted on.
+
+    // Recording the authority report as filed would satisfy the due queue and suppress the
+    // statutory filing about themselves
+    let filed_response = client::user_index::record_authority_report_filed(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::record_authority_report_filed::Args {
+            report_index,
+            portal_reference: "SELF-FILED-1".to_string(),
+            urgent: false,
+            unverified: false,
+        },
+    );
+    assert!(matches!(filed_response, UnitResult::Error(_)), "{filed_response:?}");
+
+    // Changing the legal hold would let them steer their own evidence towards expiry
+    let hold_response = client::user_index::set_vault_legal_hold(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::set_vault_legal_hold::Args {
+            report_index,
+            legal_hold: true,
+            reference: "PRESERVATION-SELF".to_string(),
+        },
+    );
+    assert!(matches!(hold_response, UnitResult::Error(_)), "{hold_response:?}");
+
+    // Destruction is dual authorized, but a second operator's confirmation is not a substitute
+    // for not being the party: the proposal is refused at proposal time
+    let destroy_response = client::user_index::propose_protected_action(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::propose_protected_action::Args {
+            action: ProtectedAction::DestroyVaultEvidence(user_index_canister::destroy_vault_evidence::Args {
+                report_index,
+                le_request_ref: "DESTROY-SELF".to_string(),
+            }),
+        },
+    );
+    assert!(
+        matches!(
+            destroy_response,
+            user_index_canister::propose_protected_action::Response::Error(_)
+        ),
+        "{destroy_response:?}"
+    );
+
     // ...and the report stays open for someone else to decide
     let reports = get_moderation_reports(env, &test_data);
     let report = reports.iter().find(|r| r.report_index == Some(report_index)).unwrap();
@@ -1542,6 +1688,75 @@ fn moderator_cannot_resolve_a_report_against_their_own_message() {
         matches!(report.status, ModerationReportStatus::Pending),
         "{:?}",
         report.status
+    );
+}
+
+#[test]
+fn a_moderator_cannot_unsuspend_themselves() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    // Suspending is moderator-gated, so the second actor needs that role as well
+    client::user_index::add_platform_moderator(
+        env,
+        *controller,
+        canister_ids.user_index,
+        &user_index_canister::add_platform_moderator::Args {
+            user_id: test_data.operator2.user_id,
+        },
+    );
+    tick_many(env, 3);
+
+    // Suspension does not strip moderator status, so a suspended moderator still passes the
+    // platform-moderator guard on unsuspend_user. Without a self-check, the subject of an
+    // upheld report could simply reverse the sanction it imposed.
+    let suspend_response = client::user_index::suspend_user(
+        env,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        &user_index_canister::suspend_user::Args {
+            user_id: test_data.moderator.user_id,
+            duration: Some(DAY_IN_MS),
+            reason: "Upheld violation".to_string(),
+        },
+    );
+    assert!(
+        matches!(suspend_response, user_index_canister::suspend_user::Response::Success),
+        "{suspend_response:?}"
+    );
+    tick_many(env, 5);
+
+    let response = client::user_index::unsuspend_user(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::unsuspend_user::Args {
+            user_id: test_data.moderator.user_id,
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::unsuspend_user::Response::Error(_)),
+        "{response:?}"
+    );
+
+    // Another moderator can, which is what keeps a genuine mistake correctable
+    let response = client::user_index::unsuspend_user(
+        env,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        &user_index_canister::unsuspend_user::Args {
+            user_id: test_data.moderator.user_id,
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::unsuspend_user::Response::Success),
+        "{response:?}"
     );
 }
 
@@ -1803,6 +2018,848 @@ fn get_moderation_reports(env: &PocketIc, test_data: &TestData) -> Vec<Moderatio
         .collect()
 }
 
+#[test]
+fn protected_action_cannot_be_confirmed_by_its_proposer() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    let response = client::user_index::propose_protected_action(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::propose_protected_action::Args {
+            action: ProtectedAction::SetVaultReviewers(user_index_canister::set_vault_reviewers::Args {
+                user_ids: vec![test_data.moderator.user_id],
+            }),
+        },
+    );
+    let user_index_canister::propose_protected_action::Response::Success(result) = response else {
+        panic!("'propose_protected_action' error: {response:?}");
+    };
+
+    // The proposer confirming their own proposal is the whole thing dual auth prevents
+    let response = client::user_index::confirm_protected_action(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::confirm_protected_action::Args {
+            action_id: result.action_id,
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::confirm_protected_action::Response::Error(_)),
+        "{response:?}"
+    );
+
+    // ... and the proposal survives, so a genuine second operator can still confirm it
+    let response = client::user_index::confirm_protected_action(
+        env,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        &user_index_canister::confirm_protected_action::Args {
+            action_id: result.action_id,
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::confirm_protected_action::Response::Success),
+        "{response:?}"
+    );
+}
+
+#[test]
+fn legal_hold_blocks_destruction_of_vaulted_evidence() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    // A file message with no caption escalates for human review without a classifier call,
+    // giving us a report which holds vaulted evidence
+    let file_size = 1000u32;
+    let blob_reference = client::storage_index::happy_path::upload_file(
+        env,
+        test_data.sender.principal,
+        canister_ids.storage_index,
+        file_size,
+        vec![test_data.sender.canister()],
+    );
+    let message_id = random_from_u128();
+    client::group::send_message_v2(
+        env,
+        test_data.sender.principal,
+        test_data.group_id.into(),
+        &group_canister::send_message_v2::Args {
+            thread_root_message_index: None,
+            message_id,
+            content: MessageContentInitial::File(FileContent {
+                name: random_string(),
+                caption: None,
+                mime_type: "application/octet-stream".to_string(),
+                file_size,
+                blob_reference: Some(blob_reference.clone()),
+            }),
+            sender_name: test_data.sender.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            forwarding: false,
+            block_level_markdown: false,
+            rules_accepted: None,
+            message_filter_failed: None,
+            new_achievement: false,
+            og_previews: Vec::new(),
+        },
+    );
+    tick_many(env, 3);
+
+    client::group::report_message(
+        env,
+        test_data.reporter.principal,
+        test_data.group_id.into(),
+        &group_canister::report_message::Args {
+            thread_root_message_index: None,
+            message_id,
+            delete: false,
+            csam: false,
+        },
+    );
+    tick_many(env, 10);
+
+    let reports = get_moderation_reports(env, &test_data);
+    let report_index = reports[0].report_index.expect("report should carry an index");
+
+    client::user_index::set_vault_legal_hold(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::set_vault_legal_hold::Args {
+            report_index,
+            legal_hold: true,
+            reference: "PRESERVATION-1".to_string(),
+        },
+    );
+
+    // The proposal must be refused outright. Destruction used to override the hold, so once
+    // the bucket started refusing it, moderators would have been told the evidence was
+    // destroyed while it was in fact still vaulted
+    let destroy = |le_ref: &str| user_index_canister::propose_protected_action::Args {
+        action: ProtectedAction::DestroyVaultEvidence(user_index_canister::destroy_vault_evidence::Args {
+            report_index,
+            le_request_ref: le_ref.to_string(),
+        }),
+    };
+
+    let response = client::user_index::propose_protected_action(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &destroy("DESTROY-1"),
+    );
+    assert!(
+        matches!(response, user_index_canister::propose_protected_action::Response::Error(_)),
+        "{response:?}"
+    );
+
+    // Clearing the hold - a separate, separately logged act - unblocks it
+    client::user_index::set_vault_legal_hold(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::set_vault_legal_hold::Args {
+            report_index,
+            legal_hold: false,
+            reference: "PRESERVATION-1".to_string(),
+        },
+    );
+
+    let response = client::user_index::propose_protected_action(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &destroy("DESTROY-1"),
+    );
+    assert!(
+        matches!(response, user_index_canister::propose_protected_action::Response::Success(_)),
+        "{response:?}"
+    );
+}
+
+#[test]
+fn clearing_a_hold_which_would_release_evidence_requires_two_operators() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    // A CSAM-asserted media report quarantines the evidence immediately, so a later dismissal
+    // asks for it to be released - the state in which clearing a hold destroys evidence
+    let file_size = 1000u32;
+    let blob_reference = client::storage_index::happy_path::upload_file(
+        env,
+        test_data.sender.principal,
+        canister_ids.storage_index,
+        file_size,
+        vec![test_data.sender.canister()],
+    );
+    let message_id = random_from_u128();
+    client::group::send_message_v2(
+        env,
+        test_data.sender.principal,
+        test_data.group_id.into(),
+        &group_canister::send_message_v2::Args {
+            thread_root_message_index: None,
+            message_id,
+            content: MessageContentInitial::File(FileContent {
+                name: random_string(),
+                caption: None,
+                mime_type: "application/octet-stream".to_string(),
+                file_size,
+                blob_reference: Some(blob_reference.clone()),
+            }),
+            sender_name: test_data.sender.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            forwarding: false,
+            block_level_markdown: false,
+            rules_accepted: None,
+            message_filter_failed: None,
+            new_achievement: false,
+            og_previews: Vec::new(),
+        },
+    );
+    tick_many(env, 3);
+
+    client::group::report_message(
+        env,
+        test_data.reporter.principal,
+        test_data.group_id.into(),
+        &group_canister::report_message::Args {
+            thread_root_message_index: None,
+            message_id,
+            delete: false,
+            csam: true,
+        },
+    );
+    tick_many(env, 10);
+
+    let reports = get_moderation_reports(env, &test_data);
+    let report_index = reports[0].report_index.expect("report should carry an index");
+
+    let set_hold = |env: &mut PocketIc, legal_hold: bool| {
+        client::user_index::set_vault_legal_hold(
+            env,
+            test_data.moderator.principal,
+            canister_ids.user_index,
+            &user_index_canister::set_vault_legal_hold::Args {
+                report_index,
+                legal_hold,
+                reference: "PRESERVATION-1".to_string(),
+            },
+        )
+    };
+
+    assert!(matches!(set_hold(env, true), UnitResult::Success));
+
+    // Dismissing the report asks for the evidence to be released; the hold defers it
+    client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index,
+            verdict: ModerationVerdict::Dismissed,
+            urgent: None,
+        },
+    );
+    tick_many(env, 5);
+
+    // Clearing the hold now would PERFORM that release, destroying the evidence, so a single
+    // operator can no longer do it directly - otherwise it would be a way around the dual
+    // authorization on destruction
+    assert!(matches!(set_hold(env, false), UnitResult::Error(_)));
+
+    // It goes through propose/confirm like any other irreversible action
+    let response = client::user_index::propose_protected_action(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::propose_protected_action::Args {
+            action: ProtectedAction::SetVaultLegalHold(user_index_canister::set_vault_legal_hold::Args {
+                report_index,
+                legal_hold: false,
+                reference: "PRESERVATION-1".to_string(),
+            }),
+        },
+    );
+    let user_index_canister::propose_protected_action::Response::Success(result) = response else {
+        panic!("'propose_protected_action' error: {response:?}");
+    };
+
+    let response = client::user_index::confirm_protected_action(
+        env,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        &user_index_canister::confirm_protected_action::Args {
+            action_id: result.action_id,
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::confirm_protected_action::Response::Success),
+        "{response:?}"
+    );
+    tick_many(env, 5);
+
+    // Setting a hold, and clearing one with nothing pending, stay single-actor
+    assert!(matches!(set_hold(env, true), UnitResult::Success));
+    assert!(matches!(set_hold(env, false), UnitResult::Success));
+}
+
+#[test]
+fn a_holds_protection_extends_to_sibling_reports_sharing_the_blob() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    client::user_index::happy_path::execute_protected_action(
+        env,
+        test_data.moderator.principal,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        ProtectedAction::SetVaultReviewers(user_index_canister::set_vault_reviewers::Args {
+            user_ids: vec![test_data.moderator.user_id],
+        }),
+    );
+    tick_many(env, 5);
+
+    // The same blob carried by two messages, each CSAM-reported: one vault record (where the
+    // hold lives), two reports (where the user_index tracks it). The hold checks must span
+    // that mismatch or a sibling report becomes a way around them.
+    let file_size = 1000u32;
+    let blob_reference = client::storage_index::happy_path::upload_file(
+        env,
+        test_data.sender.principal,
+        canister_ids.storage_index,
+        file_size,
+        vec![test_data.sender.canister()],
+    );
+    let mut message_ids = Vec::new();
+    for _ in 0..2 {
+        let message_id = random_from_u128();
+        let send_response = client::group::send_message_v2(
+            env,
+            test_data.sender.principal,
+            test_data.group_id.into(),
+            &group_canister::send_message_v2::Args {
+                thread_root_message_index: None,
+                message_id,
+                content: MessageContentInitial::File(FileContent {
+                    name: random_string(),
+                    caption: None,
+                    mime_type: "application/octet-stream".to_string(),
+                    file_size,
+                    blob_reference: Some(blob_reference.clone()),
+                }),
+                sender_name: test_data.sender.username(),
+                sender_display_name: None,
+                replies_to: None,
+                mentioned: Vec::new(),
+                forwarding: false,
+                block_level_markdown: false,
+                rules_accepted: None,
+                message_filter_failed: None,
+                new_achievement: false,
+                og_previews: Vec::new(),
+            },
+        );
+        assert!(
+            matches!(send_response, group_canister::send_message_v2::Response::Success(_)),
+            "{send_response:?}"
+        );
+        message_ids.push(message_id);
+    }
+    tick_many(env, 3);
+
+    for message_id in &message_ids {
+        let report_response = client::group::report_message(
+            env,
+            test_data.reporter.principal,
+            test_data.group_id.into(),
+            &group_canister::report_message::Args {
+                thread_root_message_index: None,
+                message_id: *message_id,
+                delete: false,
+                csam: true,
+            },
+        );
+        assert!(matches!(report_response, UnitResult::Success));
+        tick_many(env, 10);
+    }
+
+    let reports = get_moderation_reports(env, &test_data);
+    let report_index_for = |reports: &[ModerationReportContent], message_id| {
+        reports
+            .iter()
+            .find(|r| r.message_id == message_id)
+            .and_then(|r| r.report_index)
+            .expect("report should exist with an index")
+    };
+    let held_report = report_index_for(&reports, message_ids[0]);
+    let sibling_report = report_index_for(&reports, message_ids[1]);
+    assert_ne!(held_report, sibling_report);
+
+    let dismiss = |env: &mut PocketIc, report_index: u64| {
+        client::user_index::resolve_moderation_report(
+            env,
+            test_data.moderator.principal,
+            canister_ids.user_index,
+            &user_index_canister::resolve_moderation_report::Args {
+                report_index,
+                verdict: ModerationVerdict::Dismissed,
+                urgent: None,
+            },
+        )
+    };
+
+    // The first report is dismissed BEFORE any hold exists: its evidence claim is released,
+    // but the record survives on the sibling's claim, so nothing is deferred and nothing is
+    // marked release-pending anywhere
+    let response = dismiss(env, held_report);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    tick_many(env, 10);
+
+    // The preservation request arrives afterwards (law enforcement does not track internal
+    // verdicts) and is applied via the already-dismissed report
+    let hold_response = client::user_index::set_vault_legal_hold(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::set_vault_legal_hold::Args {
+            report_index: held_report,
+            legal_hold: true,
+            reference: "PRESERVATION-1".to_string(),
+        },
+    );
+    assert!(matches!(hold_response, UnitResult::Success), "{hold_response:?}");
+
+    // Destruction proposed via the SIBLING report must be refused: the bucket's hold is on
+    // the blob record, so it would refuse the destruction there, after the confirm alert had
+    // already reported it done
+    let destroy_response = client::user_index::propose_protected_action(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::propose_protected_action::Args {
+            action: ProtectedAction::DestroyVaultEvidence(user_index_canister::destroy_vault_evidence::Args {
+                report_index: sibling_report,
+                le_request_ref: "DESTROY-1".to_string(),
+            }),
+        },
+    );
+    assert!(
+        matches!(
+            destroy_response,
+            user_index_canister::propose_protected_action::Response::Error(_)
+        ),
+        "{destroy_response:?}"
+    );
+
+    // Dismissing the sibling releases the LAST evidence claim, so the bucket wants to release
+    // the record physically and the hold defers it. The release was requested via a report
+    // which holds no hold itself - the case a per-report check misses
+    let response = dismiss(env, sibling_report);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    tick_many(env, 10);
+
+    // The hold defers the release: the evidence must still be vaulted
+    let fetch_chunk = |env: &mut PocketIc| {
+        client::storage_bucket::vault_file_chunk(
+            env,
+            test_data.moderator.principal,
+            blob_reference.canister_id,
+            &storage_bucket_canister::vault_file_chunk::Args {
+                file_id: blob_reference.blob_id,
+                chunk_index: 0,
+            },
+        )
+    };
+    assert!(matches!(
+        fetch_chunk(env),
+        storage_bucket_canister::vault_file_chunk::Response::Success(_)
+    ));
+
+    // Clearing the hold would perform that deferred release, so a single operator must be
+    // refused even though the release was requested via the sibling report - this was the
+    // shared-blob route around the dual authorization on destruction
+    let clear_response = client::user_index::set_vault_legal_hold(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::set_vault_legal_hold::Args {
+            report_index: held_report,
+            legal_hold: false,
+            reference: "PRESERVATION-1".to_string(),
+        },
+    );
+    assert!(matches!(clear_response, UnitResult::Error(_)), "{clear_response:?}");
+    assert!(matches!(
+        fetch_chunk(env),
+        storage_bucket_canister::vault_file_chunk::Response::Success(_)
+    ));
+
+    // Two operators can clear it, which performs the deferred release
+    client::user_index::happy_path::execute_protected_action(
+        env,
+        test_data.moderator.principal,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        ProtectedAction::SetVaultLegalHold(user_index_canister::set_vault_legal_hold::Args {
+            report_index: held_report,
+            legal_hold: false,
+            reference: "PRESERVATION-1".to_string(),
+        }),
+    );
+    tick_many(env, 5);
+    assert!(
+        !matches!(
+            fetch_chunk(env),
+            storage_bucket_canister::vault_file_chunk::Response::Success(_)
+        ),
+        "the deferred release should have been performed when the hold was cleared"
+    );
+}
+
+#[test]
+fn protected_action_alerts_reach_operators_without_a_moderation_channel() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    // Unset the moderation channel, which is where alerts used to go. Setting the channel is
+    // itself a protected action, so if alerts depended on it they would be invisible exactly
+    // when the platform is least configured - and unmissable alerts are what makes "anyone can
+    // reject a proposal" a real defence
+    client::user_index::happy_path::execute_protected_action(
+        env,
+        test_data.moderator.principal,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        ProtectedAction::SetInternalModerationChannel(user_index_canister::set_internal_moderation_channel::Args {
+            channel: None,
+        }),
+    );
+    tick_many(env, 5);
+
+    let events_before = client::user::happy_path::events(
+        env,
+        &test_data.operator2,
+        OPENCHAT_BOT_USER_ID,
+        EventIndex::default(),
+        true,
+        1000,
+        1000,
+    )
+    .events
+    .len();
+
+    let response = client::user_index::propose_protected_action(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::propose_protected_action::Args {
+            action: ProtectedAction::SetVaultReviewers(user_index_canister::set_vault_reviewers::Args {
+                user_ids: vec![test_data.moderator.user_id],
+            }),
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::propose_protected_action::Response::Success(_)),
+        "{response:?}"
+    );
+    tick_many(env, 10);
+
+    // The OTHER operator - the one who has to confirm or reject - is told directly
+    let events = client::user::happy_path::events(
+        env,
+        &test_data.operator2,
+        OPENCHAT_BOT_USER_ID,
+        EventIndex::default(),
+        true,
+        1000,
+        1000,
+    )
+    .events;
+    assert!(events.len() > events_before, "expected a new OpenChat bot message");
+
+    let alerted = events.iter().any(|e| match &e.event {
+        ChatEvent::Message(m) => match &m.content {
+            MessageContent::Text(t) => t.text.contains("Protected action") && t.text.contains("proposed"),
+            _ => false,
+        },
+        _ => false,
+    });
+    assert!(alerted, "the proposal alert did not reach the operator");
+}
+
+#[test]
+fn invalid_protected_actions_are_rejected_at_proposal_time() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    let propose = |env: &mut PocketIc, action: ProtectedAction| {
+        client::user_index::propose_protected_action(
+            env,
+            test_data.moderator.principal,
+            canister_ids.user_index,
+            &user_index_canister::propose_protected_action::Args { action },
+        )
+    };
+
+    // A blank API key is a mistake, not an instruction to switch detection off
+    let response = propose(
+        env,
+        ProtectedAction::SetOpenAIApiKey(user_index_canister::set_openai_api_key::Args {
+            api_key: Some("   ".to_string()),
+        }),
+    );
+    assert!(
+        matches!(response, user_index_canister::propose_protected_action::Response::Error(_)),
+        "{response:?}"
+    );
+
+    // A reviewer who is not a platform moderator can never be applied, so the proposal must
+    // not be queued in the first place
+    let response = propose(
+        env,
+        ProtectedAction::SetVaultReviewers(user_index_canister::set_vault_reviewers::Args {
+            user_ids: vec![test_data.sender.user_id],
+        }),
+    );
+    assert!(
+        matches!(response, user_index_canister::propose_protected_action::Response::Error(_)),
+        "{response:?}"
+    );
+
+    // Destroying evidence for a report which does not exist
+    let response = propose(
+        env,
+        ProtectedAction::DestroyVaultEvidence(user_index_canister::destroy_vault_evidence::Args {
+            report_index: 9999,
+            le_request_ref: "REF-1".to_string(),
+        }),
+    );
+    assert!(
+        matches!(response, user_index_canister::propose_protected_action::Response::Error(_)),
+        "{response:?}"
+    );
+
+    // A hold with no reference
+    let response = propose(
+        env,
+        ProtectedAction::SetVaultLegalHold(user_index_canister::set_vault_legal_hold::Args {
+            report_index: 0,
+            legal_hold: true,
+            reference: "  ".to_string(),
+        }),
+    );
+    assert!(
+        matches!(response, user_index_canister::propose_protected_action::Response::Error(_)),
+        "{response:?}"
+    );
+
+    // Nothing invalid made it into the queue
+    let user_index_canister::protected_actions::Response::Success(result) =
+        client::user_index::protected_actions(env, test_data.moderator.principal, canister_ids.user_index, &types::Empty {});
+    let view: Value = serde_json::from_str(&result.json).unwrap();
+    assert!(view["pending"].as_array().unwrap().is_empty(), "{}", result.json);
+}
+
+#[test]
+fn a_second_proposal_of_the_same_kind_supersedes_the_first() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    let propose = |env: &mut PocketIc, key: &str| {
+        let response = client::user_index::propose_protected_action(
+            env,
+            test_data.moderator.principal,
+            canister_ids.user_index,
+            &user_index_canister::propose_protected_action::Args {
+                action: ProtectedAction::SetOpenAIApiKey(user_index_canister::set_openai_api_key::Args {
+                    api_key: Some(key.to_string()),
+                }),
+            },
+        );
+        let user_index_canister::propose_protected_action::Response::Success(result) = response else {
+            panic!("'propose_protected_action' error: {response:?}");
+        };
+        result
+    };
+
+    let first = propose(env, "key-one");
+    assert!(!first.already_pending);
+
+    // Re-proposing the identical action is idempotent - a double click must not queue a
+    // second copy
+    let repeat = propose(env, "key-one");
+    assert!(repeat.already_pending);
+    assert_eq!(repeat.action_id, first.action_id);
+
+    // A different key of the same kind supersedes it, taking a new id
+    let second = propose(env, "key-two");
+    assert!(!second.already_pending);
+    assert_ne!(second.action_id, first.action_id);
+
+    // Confirming the superseded id fails, so a stale screen cannot apply the swapped payload
+    let response = client::user_index::confirm_protected_action(
+        env,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        &user_index_canister::confirm_protected_action::Args {
+            action_id: first.action_id,
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::confirm_protected_action::Response::Error(_)),
+        "{response:?}"
+    );
+
+    // The surviving proposal still confirms normally
+    let response = client::user_index::confirm_protected_action(
+        env,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        &user_index_canister::confirm_protected_action::Args {
+            action_id: second.action_id,
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::confirm_protected_action::Response::Success),
+        "{response:?}"
+    );
+}
+
+#[test]
+fn cancelled_protected_action_cannot_be_confirmed() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    let response = client::user_index::propose_protected_action(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::propose_protected_action::Args {
+            action: ProtectedAction::SetOpenAIApiKey(user_index_canister::set_openai_api_key::Args {
+                api_key: Some("should-never-be-applied".to_string()),
+            }),
+        },
+    );
+    let user_index_canister::propose_protected_action::Response::Success(result) = response else {
+        panic!("'propose_protected_action' error: {response:?}");
+    };
+
+    // Anyone can cancel - this is how a proposal made with a compromised key gets killed
+    let response = client::user_index::cancel_protected_action(
+        env,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        &user_index_canister::cancel_protected_action::Args {
+            action_id: result.action_id,
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::cancel_protected_action::Response::Success),
+        "{response:?}"
+    );
+
+    let response = client::user_index::confirm_protected_action(
+        env,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        &user_index_canister::confirm_protected_action::Args {
+            action_id: result.action_id,
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::confirm_protected_action::Response::Error(_)),
+        "{response:?}"
+    );
+}
+
+#[test]
+fn protected_action_log_chains_and_omits_secrets() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    // init_test_data already executed two protected actions, one carrying the API key
+    let user_index_canister::protected_actions::Response::Success(result) =
+        client::user_index::protected_actions(env, test_data.moderator.principal, canister_ids.user_index, &types::Empty {});
+
+    assert!(!result.json.contains("test-api-key"), "the API key must never enter the log");
+
+    let view: Value = serde_json::from_str(&result.json).unwrap();
+    let log = view["log"].as_array().unwrap();
+    assert!(log.len() >= 4, "expected propose+confirm for both config actions: {log:?}");
+
+    // Entry 0 opens the chain with the zero hash, and every later entry chains to its
+    // predecessor - the property an auditor checks against the chain head in public metrics
+    assert_eq!(log[0]["prev_hash"].as_str().unwrap(), "0".repeat(64));
+    for pair in log.windows(2) {
+        assert_eq!(pair[1]["prev_hash"], pair[0]["hash"]);
+    }
+}
+
 fn get_authority_reports(env: &PocketIc, test_data: &TestData, canister_ids: &CanisterIds) -> Value {
     let user_index_canister::authority_reports::Response::Success(result) =
         client::user_index::authority_reports(env, test_data.moderator.principal, canister_ids.user_index, &types::Empty {});
@@ -1813,6 +2870,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     // The moderator doubles as the platform operator which configures the moderation channel
     // and the API key
     let moderator = client::register_diamond_user(env, canister_ids, controller);
+    let operator2 = client::register_diamond_user(env, canister_ids, controller);
     let group_owner = client::register_diamond_user(env, canister_ids, controller);
     let sender = client::register_user(env, canister_ids);
     let reporter = client::register_user(env, canister_ids);
@@ -1833,6 +2891,14 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
             user_id: moderator.user_id,
         },
     );
+    client::user_index::add_platform_operator(
+        env,
+        controller,
+        canister_ids.user_index,
+        &user_index_canister::add_platform_operator::Args {
+            user_id: operator2.user_id,
+        },
+    );
 
     let moderation_community_id =
         client::user::happy_path::create_community(env, &moderator, &random_string(), false, vec![random_string()]);
@@ -1844,24 +2910,26 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
         random_string(),
     );
 
-    client::user_index::set_internal_moderation_channel(
+    client::user_index::happy_path::execute_protected_action(
         env,
         moderator.principal,
+        operator2.principal,
         canister_ids.user_index,
-        &user_index_canister::set_internal_moderation_channel::Args {
+        ProtectedAction::SetInternalModerationChannel(user_index_canister::set_internal_moderation_channel::Args {
             channel: Some(InternalModerationChannel {
                 community_id: moderation_community_id,
                 channel_id: moderation_channel_id,
             }),
-        },
+        }),
     );
-    client::user_index::set_openai_api_key(
+    client::user_index::happy_path::execute_protected_action(
         env,
         moderator.principal,
+        operator2.principal,
         canister_ids.user_index,
-        &user_index_canister::set_openai_api_key::Args {
+        ProtectedAction::SetOpenAIApiKey(user_index_canister::set_openai_api_key::Args {
             api_key: Some("test-api-key".to_string()),
-        },
+        }),
     );
 
     let group_id = client::user::happy_path::create_group(env, &group_owner, &random_string(), true, true);
@@ -1879,6 +2947,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
 
     TestData {
         moderator,
+        operator2,
         group_owner,
         sender,
         reporter,
@@ -1890,6 +2959,9 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
 
 struct TestData {
     moderator: User,
+    // A second platform operator: the dual-authorized actions (#9136) need a confirmer who is
+    // not the proposer
+    operator2: User,
     group_owner: User,
     sender: User,
     reporter: User,

@@ -7,7 +7,7 @@ use types::{UnitResult, UserId};
 // platform moderators and OpenChat Labs' designated, trained personnel. Grantable only by a
 // platform operator; every listed user must be a current platform moderator.
 #[ts_export(user_index, set_vault_reviewers)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
     pub user_ids: Vec<UserId>,
 }
