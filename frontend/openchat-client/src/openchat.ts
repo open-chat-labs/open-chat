@@ -2731,6 +2731,12 @@ export class OpenChat {
     ): Promise<EventsResponse<ChatEvent>> {
         if (!isSuccessfulEventsResponse(resp)) return resp;
 
+        // NB. the clear and the add must not be separated by an await, otherwise the UI
+        // renders against an empty event store for the duration of the gap, and anything
+        // derived from it (e.g. the thread panel's root event) transiently disappears.
+        // Equally the clear must not be deferred until after an await, or events written
+        // by anything else during that await (later chunks of this same stream, rtc /
+        // confirmed messages) get wiped by it.
         if (!keepCurrentEvents) {
             serverEventsStore.set([]);
             // The expired ranges are part of the contiguity baseline
@@ -2741,14 +2747,14 @@ export class OpenChat {
             expiredServerEventRanges.set(new DRange());
         }
 
-        await this.#updateUserStoreFromEvents(resp.events);
-
         this.#addServerEventsToStores(
             chat.id,
             resp.events,
             threadRootMessageIndex,
             resp.expiredEventRanges,
         );
+
+        await this.#updateUserStoreFromEvents(resp.events);
 
         if (!get(offlineStore)) {
             makeRtcConnections(
