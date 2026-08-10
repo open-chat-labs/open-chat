@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2009](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2009-storage_bucket)] - 2026-08-10
+
 ### Changed
 
 - The vault log records the preservation request a legal hold was applied or cleared under, so the chain of custody shows why evidence was held rather than only that it was ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
