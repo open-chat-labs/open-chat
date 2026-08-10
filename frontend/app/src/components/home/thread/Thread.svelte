@@ -53,7 +53,9 @@
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        rootEvent: EventWrapper<Message>;
+        // this can transiently become undefined if the event window is replaced
+        // while the thread panel is mounted
+        rootEvent: EventWrapper<Message> | undefined;
         chat: ChatSummary;
         onCloseThread: (id: ChatIdentifier) => void;
     }
@@ -347,7 +349,7 @@
 <DropTarget {chat} mode={"thread"} {onFileSelected}>
     <ThreadHeader {threadRootMessageIndex} {onCloseThread} {rootEvent} chatSummary={chat} />
 
-    {#if loading}
+    {#if loading || rootEvent === undefined}
         <Loading />
     {:else}
         <ChatEventList
@@ -417,7 +419,7 @@
         </ChatEventList>
     {/if}
 
-    {#if !readonly}
+    {#if !readonly && rootEvent !== undefined}
         <Footer
             {chat}
             {attachment}
