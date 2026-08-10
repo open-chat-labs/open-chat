@@ -80,7 +80,7 @@
 
     let threadRootMessageIndex = $derived(rootEvent?.event?.messageIndex ?? 0);
     let messageContext = $derived({ chatId: chat.id, threadRootMessageIndex });
-    let threadRootMessage = $derived(rootEvent.event);
+    let threadRootMessage = $derived(rootEvent?.event);
     let blocked = $derived(
         chat.kind === "direct_chat" && $selectedChatBlockedUsersStore.has(chat.them.userId),
     );
@@ -91,7 +91,9 @@
     let canSendAny = $derived(client.canSendMessage(chat.id, "thread"));
     let canReact = $derived(client.canReactToMessages(chat.id));
     let atRoot = $derived($threadEventsStore.length === 0 || $threadEventsStore[0]?.index === 0);
-    let events = $derived(atRoot ? [rootEvent, ...$threadEventsStore] : $threadEventsStore);
+    let events = $derived(
+        atRoot && rootEvent !== undefined ? [rootEvent, ...$threadEventsStore] : $threadEventsStore,
+    );
     let timeline = $derived(
         client.groupEvents(
             [...events].reverse(),
@@ -102,7 +104,7 @@
     );
     let items = $derived(flattenTimeline(timeline));
     let readonly = $derived(client.isChatReadOnly(chat.id));
-    let thread = $derived(rootEvent.event.thread);
+    let thread = $derived(rootEvent?.event.thread);
     let loading = $derived(!initialised && $threadEventsStore.length === 0 && thread !== undefined);
     let isFollowedByMe = $derived(
         $threadsFollowedByMeStore.get(chat.id)?.has(threadRootMessageIndex) ?? false,
@@ -382,7 +384,7 @@
                         accepted={isAccepted($unconfirmedStore, evt)}
                         confirmed={isConfirmed($unconfirmedStore, evt)}
                         failed={isFailed($failedMessagesStore, evt)}
-                        readByMe={evt.event.messageId === rootEvent.event.messageId ||
+                        readByMe={evt.event.messageId === rootEvent?.event.messageId ||
                             !isFollowedByMe ||
                             isReadByMe($messagesRead, evt)}
                         observer={messageObserver}
@@ -391,8 +393,8 @@
                         {readonly}
                         {threadRootMessage}
                         pinned={false}
-                        supportsEdit={evt.event.messageId !== rootEvent.event.messageId}
-                        supportsReply={evt.event.messageId !== rootEvent.event.messageId}
+                        supportsEdit={evt.event.messageId !== rootEvent?.event.messageId}
+                        supportsReply={evt.event.messageId !== rootEvent?.event.messageId}
                         canPin={client.canPinMessages(chat.id)}
                         canBlockUsers={client.canBlockUsers(chat.id)}
                         canDelete={client.canDeleteOtherUsersMessages(chat.id)}

@@ -2731,6 +2731,12 @@ export class OpenChat {
     ): Promise<EventsResponse<ChatEvent>> {
         if (!isSuccessfulEventsResponse(resp)) return resp;
 
+        await this.#updateUserStoreFromEvents(resp.events);
+
+        // NB. this must happen *after* any await and immediately before the new events are
+        // added, otherwise the UI renders against an empty event store for the duration of
+        // the gap, and anything derived from it (e.g. the thread panel's root event) will
+        // transiently disappear.
         if (!keepCurrentEvents) {
             serverEventsStore.set([]);
             // The expired ranges are part of the contiguity baseline
@@ -2740,8 +2746,6 @@ export class OpenChat {
             // store empty.
             expiredServerEventRanges.set(new DRange());
         }
-
-        await this.#updateUserStoreFromEvents(resp.events);
 
         this.#addServerEventsToStores(
             chat.id,
