@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2010](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2010-storage_index)] - 2026-08-10
+
 ### Changed
 
 - Legal hold ops carry the preservation request reference through to the owning bucket ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
