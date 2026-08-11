@@ -196,8 +196,8 @@
         Since April 2026, UK law requires providers to report detected CSEA content to the National
         Crime Agency. When our moderators confirm such content, a report is filed, including the
         content and the account data we hold. We hold very little — OpenChat's architecture means we
-        have no names, no email addresses, no phone numbers and no IP addresses — and our reports
-        say exactly that. But we will comply with this duty fully.
+        have no names, no identity documents, no phone numbers and no IP addresses on account
+        records — and our reports say exactly that. But we will comply with this duty fully.
     </p>
 
     <h3>What comes later</h3>

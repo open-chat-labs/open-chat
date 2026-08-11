@@ -22,6 +22,7 @@
     import Blog from "svelte-material-icons/PostOutline.svelte";
     import Road from "svelte-material-icons/RoadVariant.svelte";
     import Security from "svelte-material-icons/Security.svelte";
+    import Privacy from "svelte-material-icons/ShieldAccount.svelte";
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Menu from "../../Menu.svelte";
@@ -124,6 +125,14 @@
         {/snippet}
         {#snippet text()}
             Guidelines
+        {/snippet}
+    </MenuItem>
+    <MenuItem onclick={() => navigate("/privacy")}>
+        {#snippet icon()}
+            <Privacy size={$iconSize} color={"var(--icon-inverted-txt)"} />
+        {/snippet}
+        {#snippet text()}
+            Privacy
         {/snippet}
     </MenuItem>
     <MenuItem href="https://tokenterminal.com/terminal/projects/openchat">

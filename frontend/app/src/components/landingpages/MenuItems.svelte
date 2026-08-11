@@ -22,28 +22,43 @@
         </div>
         <div class="menu-item">
             <Link selected={$locationStore === "/features"} mode={"menu"} path="features"
-                >Features</Link>
+                >Features</Link
+            >
         </div>
         <div class="menu-item">
             <Link selected={$locationStore === "/roadmap"} mode={"menu"} path="roadmap"
-                >Roadmap</Link>
+                >Roadmap</Link
+            >
         </div>
         <div class="menu-item">
             <Link selected={$locationStore === "/whitepaper"} mode={"menu"} path="whitepaper"
-                >Whitepaper</Link>
+                >Whitepaper</Link
+            >
         </div>
         <div class="menu-item">
             <Link selected={$locationStore === "/architecture"} mode={"menu"} path="architecture"
-                >Architecture</Link>
+                >Architecture</Link
+            >
         </div>
         {#if showBlog}
             <div class="menu-item">
                 <Link selected={$locationStore.startsWith("/blog")} mode={"menu"} path="blog"
-                    >Blog</Link>
+                    >Blog</Link
+                >
             </div>
         {/if}
         <div class="menu-item">
             <Link selected={$locationStore.startsWith("/faq")} mode={"menu"} path="faq">FAQs</Link>
+        </div>
+        <div class="menu-item">
+            <Link selected={$locationStore.startsWith("/terms")} mode={"menu"} path="terms"
+                >Terms</Link
+            >
+        </div>
+        <div class="menu-item">
+            <Link selected={$locationStore.startsWith("/privacy")} mode={"menu"} path="privacy"
+                >Privacy</Link
+            >
         </div>
         {#if $identityStateStore.kind === "logged_in"}
             <Link onLinkClicked={() => client.logout()} mode={"menu"}>Logout</Link>

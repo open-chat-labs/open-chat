@@ -1226,8 +1226,9 @@
     },
     "termsUpdated": {
         "title": "Our terms have changed",
-        "info": "We have updated the OpenChat terms of service, including new rules about prohibited content and how moderation works. Please review the updated terms. By selecting \"I agree\" you accept the updated terms.",
+        "info": "We have updated the OpenChat terms of service, including new rules about prohibited content and how moderation works, and published a new privacy notice. Please review the updated terms. By selecting \"I agree\" you accept the updated terms.",
         "link": "Read the updated terms",
+        "privacyLink": "Read the privacy notice",
         "agree": "I agree",
         "failed": "Something went wrong recording your acceptance. Please check your connection and try again."
     },

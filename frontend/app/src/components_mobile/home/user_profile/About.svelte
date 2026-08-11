@@ -27,7 +27,8 @@
 {#snippet menuitem(label: string, onclick: OnClick)}
     <Container
         onClick={onclick.kind === "action" ? onclick.action : () => goTo(onclick.url)}
-        crossAxisAlignment={"center"}>
+        crossAxisAlignment={"center"}
+    >
         <Body fontWeight={"bold"}>{label}</Body>
         <ChevronRight color={ColourVars.primary} />
     </Container>
@@ -39,11 +40,13 @@
         height={"fill"}
         gap={"xs"}
         crossAxisAlignment={"center"}
-        direction={"vertical"}>
+        direction={"vertical"}
+    >
         <Logo size={"huge"} />
         <Overview align={"center"} colour={"primary"}>OpenChat</Overview>
         <BodySmall fontWeight={"bold"} align={"center"} colour={"textSecondary"}
-            >Android / {version}</BodySmall>
+            >Android / {version}</BodySmall
+        >
         <div class="line"></div>
         <Container direction={"vertical"} gap={"xl"}>
             {@render menuitem("Architecture", {
@@ -58,7 +61,9 @@
                 kind: "route",
                 url: "https://tokenterminal.com/explorer/projects/openchat",
             })}
+            {@render menuitem("Privacy", { kind: "route", url: "/privacy" })}
             {@render menuitem("Roadmap", { kind: "route", url: "/roadmap" })}
+            {@render menuitem("Terms", { kind: "route", url: "/terms" })}
             {@render menuitem("Whitepaper", { kind: "route", url: "/whitepaper" })}
         </Container>
     </Container>
