@@ -10,6 +10,10 @@ import {
 } from "@icp-sdk/core/identity";
 import DRange from "drange";
 import {
+    type ModerationConfig,
+    type VaultLogResponse,
+    type BlobReference,
+    CURRENT_TERMS_VERSION,
     ARBITRUM_NETWORK,
     AuthProvider,
     BASE_NETWORK,
@@ -25,6 +29,7 @@ import {
     LEDGER_CANISTER_CHAT,
     LazyFile,
     MessageContextMap,
+    ModerationFlags,
     NoMeetingToJoin,
     ONE_DAY,
     ONE_HOUR,
@@ -218,6 +223,8 @@ import {
     type MessageActivitySummary,
     type MessageContent,
     type MessageContext,
+    type ModerationVerdict,
+    type VaultFileChunkResponse,
     type MessageFilter,
     type MessageFormatter,
     type MessagePermission,
@@ -282,6 +289,7 @@ import {
     type Success,
     type SwapTokensResponse,
     type TermsRoute,
+    type PrivacyRoute,
     type ThreadIdentifier,
     type ThreadPreview,
     type ThreadRead,
@@ -319,6 +327,8 @@ import {
     type WhitepaperRoute,
     type WithdrawBtcResponse,
     type WithdrawCryptocurrencyResponse,
+    type OCError,
+    type ProposedProtectedAction,
     isAndroidTauriApp,
     isIosTauriApp,
 } from "@shared";
@@ -466,6 +476,12 @@ import {
     createAndroidWebAuthnPasskeyIdentity,
 } from "./utils/androidWebAuthn";
 import { dataToBlobUrl } from "./utils/blob";
+import {
+    appStoreBuild,
+    chatRestricted,
+    communityRestricted,
+    moderationFlagsRestricted,
+} from "./utils/restrictedContent";
 import {
     activeUserIdFromEvent,
     applyTranslation,
@@ -1026,6 +1042,11 @@ export class OpenChat {
     }
 
     onRegisteredUser(user: CreatedUser) {
+        // Registering constitutes acceptance of the current terms, recorded SERVER-SIDE at
+        // user creation (an RPC from here could fail and wrongly show the new user the
+        // terms-updated notice); this local patch just keeps the store consistent until the
+        // next current_user response confirms it
+        user = { ...user, acceptedTermsVersion: CURRENT_TERMS_VERSION };
         user.blobUrl = buildUserAvatarUrl(
             this.config.blobUrlPattern,
             user.userId,
@@ -1304,6 +1325,10 @@ export class OpenChat {
                 return this.#worker
                     .send({ kind: "getPublicGroupSummary", chatId })
                     .then((resp) => {
+                        if (resp.kind === "success" && chatRestricted(resp.group)) {
+                            publish("restrictedContent");
+                            return CommonResponses.failure();
+                        }
                         if (resp.kind === "success" && !resp.group.frozen) {
                             localUpdates.addGroupPreview(resp.group);
                             return CommonResponses.success();
@@ -1318,8 +1343,20 @@ export class OpenChat {
             case "channel":
                 return this.#worker
                     .send({ kind: "getChannelSummary", chatId })
-                    .then((resp) => {
+                    .then(async (resp) => {
                         if (resp.kind === "channel") {
+                            // Channels inherit their parent community's restriction, and for a
+                            // non-member the community may not be in the store yet
+                            if (appStoreBuild) {
+                                const community = await this.getCommunitySummary({
+                                    kind: "community",
+                                    communityId: chatId.communityId,
+                                });
+                                if (community !== undefined && communityRestricted(community)) {
+                                    publish("restrictedContent");
+                                    return CommonResponses.failure();
+                                }
+                            }
                             localUpdates.addGroupPreview(resp);
                             return CommonResponses.success();
                         }
@@ -2694,6 +2731,12 @@ export class OpenChat {
     ): Promise<EventsResponse<ChatEvent>> {
         if (!isSuccessfulEventsResponse(resp)) return resp;
 
+        // NB. the clear and the add must not be separated by an await, otherwise the UI
+        // renders against an empty event store for the duration of the gap, and anything
+        // derived from it (e.g. the thread panel's root event) transiently disappears.
+        // Equally the clear must not be deferred until after an await, or events written
+        // by anything else during that await (later chunks of this same stream, rtc /
+        // confirmed messages) get wiped by it.
         if (!keepCurrentEvents) {
             serverEventsStore.set([]);
             // The expired ranges are part of the contiguity baseline
@@ -2704,14 +2747,14 @@ export class OpenChat {
             expiredServerEventRanges.set(new DRange());
         }
 
-        await this.#updateUserStoreFromEvents(resp.events);
-
         this.#addServerEventsToStores(
             chat.id,
             resp.events,
             threadRootMessageIndex,
             resp.expiredEventRanges,
         );
+
+        await this.#updateUserStoreFromEvents(resp.events);
 
         if (!get(offlineStore)) {
             makeRtcConnections(
@@ -2935,6 +2978,11 @@ export class OpenChat {
         let chat = chatSummariesStore.value.get(chatId);
         const scope = chatListScopeStore.value;
         let autojoin = false;
+
+        if (chat !== undefined && chatRestricted(chat)) {
+            publish("restrictedContent");
+            return;
+        }
         this.#proposalTalliesPoller?.stop();
         this.#proposalTalliesPoller = undefined;
 
@@ -5306,7 +5354,7 @@ export class OpenChat {
             .then((res) => {
                 console.log("register user response: ", res);
                 if (res.kind === "success") {
-                    gaTrack("registered_user", "registration", res.userId);
+                    gaTrack("registered_user", "registration");
                     if (this.#referralCode !== undefined) {
                         gaTrack("registered_user_with_referral_code", "registration");
                     }
@@ -5639,6 +5687,7 @@ export class OpenChat {
                 kind: "getRecommendedGroups",
                 exclusions: [...exclusions],
             })
+            .then((groups) => (appStoreBuild ? groups.filter((g) => !chatRestricted(g)) : groups))
             .catch(() => []);
     }
 
@@ -5646,7 +5695,9 @@ export class OpenChat {
         return this.#worker.send({
             kind: "searchGroups",
             searchTerm,
-            flags: moderationFlagsEnabledStore.value,
+            flags: appStoreBuild
+                ? moderationFlagsEnabledStore.value & ModerationFlags.UnderReview
+                : moderationFlagsEnabledStore.value,
             maxResults,
         });
     }
@@ -5675,14 +5726,23 @@ export class OpenChat {
         flags: number,
         languages: string[],
     ): Promise<ExploreCommunitiesResponse> {
-        return this.#worker.send({
-            kind: "exploreCommunities",
-            searchTerm,
-            pageIndex,
-            pageSize,
-            flags,
-            languages,
-        });
+        return this.#worker
+            .send({
+                kind: "exploreCommunities",
+                searchTerm,
+                pageIndex,
+                pageSize,
+                flags: appStoreBuild ? flags & ModerationFlags.UnderReview : flags,
+                languages,
+            })
+            .then((response) => {
+                if (appStoreBuild && response.kind === "success") {
+                    response.matches = response.matches.filter(
+                        (m) => !moderationFlagsRestricted(m.flags),
+                    );
+                }
+                return response;
+            });
     }
 
     exploreChannels(
@@ -5783,16 +5843,28 @@ export class OpenChat {
         const promise: Promise<bigint> = new Promise((resolve) => {
             this.#refreshBalanceSemaphore
                 .execute(() => {
-                    return this.#worker
-                        .send({
-                            kind: "refreshAccountBalance",
-                            ledger,
-                            principal: user.userId,
-                        })
-                        .then((val) => {
-                            cryptoBalanceStore.setBalance(ledger, val);
-                            return val;
-                        })
+                    // Race the request against a timeout - without it, a worker request which
+                    // never responds (eg. the worker was suspended while backgrounded on mobile)
+                    // would leak a semaphore permit and leave this ledger's inflight promise
+                    // wedged for the rest of the session.
+                    return Promise.race([
+                        this.#worker
+                            .send({
+                                kind: "refreshAccountBalance",
+                                ledger,
+                                principal: user.userId,
+                            })
+                            .then((val) => {
+                                cryptoBalanceStore.setBalance(ledger, val);
+                                return val;
+                            }),
+                        new Promise<bigint>((_, reject) =>
+                            window.setTimeout(
+                                () => reject(new Error("refreshAccountBalance timed out")),
+                                20_000,
+                            ),
+                        ),
+                    ])
                         .catch(() => 0n)
                         .finally(() => this.#inflightBalanceRefreshPromises.delete(ledger));
                 })
@@ -5996,6 +6068,24 @@ export class OpenChat {
             }
             return resp;
         });
+    }
+
+    acceptTerms(version: number): Promise<boolean> {
+        // The blocking notice closes only once the acceptance is recorded against the user
+        // record on the user_index: closing on a failed call would leave the session usable
+        // with no acceptance recorded - the record is the whole point of the gate
+        return this.#worker
+            .send({ kind: "acceptTerms", version })
+            .then((success) => {
+                if (success) {
+                    currentUserStore.set({
+                        ...currentUserStore.value,
+                        acceptedTermsVersion: version,
+                    });
+                }
+                return success;
+            })
+            .catch(() => false);
     }
 
     setHideOnlineStatus(hideOnlineStatus: boolean): Promise<void> {
@@ -6273,6 +6363,33 @@ export class OpenChat {
                 return resp === "success";
             })
             .catch(() => false);
+    }
+
+    resolveModerationReport(
+        reportIndex: bigint,
+        verdict: ModerationVerdict,
+        urgent: boolean | undefined,
+    ): Promise<Success | OCError> {
+        return this.#worker
+            .send({ kind: "resolveModerationReport", reportIndex, verdict, urgent })
+            .catch(() => ({ kind: "error", code: -1, message: undefined }) as OCError);
+    }
+
+    contestModerationSanction(): Promise<boolean> {
+        return this.#worker.send({ kind: "contestModerationSanction" }).catch(() => false);
+    }
+
+    // Direct blob URL for reviewing non-quarantined reported media (content still live)
+    reportedMediaUrl(ref: BlobReference): string {
+        return buildBlobUrl(this.config.blobUrlPattern, ref.canisterId, ref.blobId, "blobs");
+    }
+
+    vaultFileChunk(
+        bucketCanisterId: string,
+        fileId: bigint,
+        chunkIndex: number,
+    ): Promise<VaultFileChunkResponse> {
+        return this.#worker.send({ kind: "vaultFileChunk", bucketCanisterId, fileId, chunkIndex });
     }
 
     setCommunityModerationFlags(communityId: string, flags: number): Promise<boolean> {
@@ -7237,6 +7354,7 @@ export class OpenChat {
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         deleteMessage: boolean,
+        csam: boolean,
     ): Promise<boolean> {
         return this.#worker
             .send({
@@ -7245,6 +7363,7 @@ export class OpenChat {
                 threadRootMessageIndex,
                 messageId,
                 deleteMessage,
+                csam,
             })
             .catch(() => false);
     }
@@ -7272,6 +7391,117 @@ export class OpenChat {
 
     hasModerationFlag(flags: number, flag: ModerationFlag): boolean {
         return hasFlag(flags, flag);
+    }
+
+    proposeSetOpenAIApiKey(
+        apiKey: string | undefined,
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.#worker.send({ kind: "proposeSetOpenAIApiKey", apiKey }).catch(() => undefined);
+    }
+
+    vaultBuckets(): Promise<string[]> {
+        return this.#worker.send({ kind: "vaultBuckets" }).catch(() => []);
+    }
+
+    vaultLog(
+        bucketCanisterId: string,
+        start: bigint,
+        max: number,
+        fileId?: bigint,
+    ): Promise<VaultLogResponse> {
+        return this.#worker.send({ kind: "vaultLog", bucketCanisterId, start, max, fileId });
+    }
+
+    moderationConfig(): Promise<ModerationConfig | undefined> {
+        return this.#worker.send({ kind: "moderationConfig" }).catch(() => undefined);
+    }
+
+    authorityReports(): Promise<string | undefined> {
+        return this.#worker.send({ kind: "authorityReports" }).catch(() => undefined);
+    }
+
+    recordAuthorityReportFiled(
+        reportIndex: bigint,
+        portalReference: string,
+        urgent: boolean,
+        unverified: boolean,
+    ): Promise<boolean> {
+        return this.#worker
+            .send({
+                kind: "recordAuthorityReportFiled",
+                reportIndex,
+                portalReference,
+                urgent,
+                unverified,
+            })
+            .catch(() => false);
+    }
+
+    proposeSetVaultLegalHold(
+        reportIndex: bigint,
+        legalHold: boolean,
+        reference: string,
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.#worker
+            .send({ kind: "proposeSetVaultLegalHold", reportIndex, legalHold, reference })
+            .catch(() => undefined);
+    }
+
+    proposeSetVaultReviewers(userIds: string[]): Promise<ProposedProtectedAction | undefined> {
+        return this.#worker
+            .send({ kind: "proposeSetVaultReviewers", userIds })
+            .catch(() => undefined);
+    }
+
+    confirmProtectedAction(actionId: bigint): Promise<Success | OCError> {
+        return this.#worker
+            .send({ kind: "confirmProtectedAction", actionId })
+            .catch(() => ({ kind: "error", code: -1, message: undefined }) as OCError);
+    }
+
+    cancelProtectedAction(actionId: bigint): Promise<Success | OCError> {
+        return this.#worker
+            .send({ kind: "cancelProtectedAction", actionId })
+            .catch(() => ({ kind: "error", code: -1, message: undefined }) as OCError);
+    }
+
+    protectedActions(): Promise<string | undefined> {
+        return this.#worker.send({ kind: "protectedActions" }).catch(() => undefined);
+    }
+
+    setVaultLegalHold(
+        reportIndex: bigint,
+        legalHold: boolean,
+        reference: string,
+    ): Promise<boolean> {
+        return this.#worker
+            .send({ kind: "setVaultLegalHold", reportIndex, legalHold, reference })
+            .catch(() => false);
+    }
+
+    proposeDestroyVaultEvidence(
+        reportIndex: bigint,
+        leRequestRef: string,
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.#worker
+            .send({ kind: "proposeDestroyVaultEvidence", reportIndex, leRequestRef })
+            .catch(() => undefined);
+    }
+
+    setModerationReferralConfig(
+        config: { categories: { category: number; scoreThreshold: number }[] } | undefined,
+    ): Promise<boolean> {
+        return this.#worker
+            .send({ kind: "setModerationReferralConfig", config })
+            .catch(() => false);
+    }
+
+    proposeSetInternalModerationChannel(
+        channel: { communityId: string; channelId: number } | undefined,
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.#worker
+            .send({ kind: "proposeSetInternalModerationChannel", channel })
+            .catch(() => undefined);
     }
 
     setModerationFlags(flags: number): Promise<number> {
@@ -7408,6 +7638,14 @@ export class OpenChat {
 
                             nervousSystemLookup.set(nsMap);
                             cryptoLookup.set(cryptoMap);
+
+                            // If the last token the user sent has since been removed from the
+                            // registry (eg. its ledger was uninstalled), clear it, otherwise
+                            // anything defaulting to it (eg. tipping) will blow up
+                            const lastSent = lastCryptoSent.value;
+                            if (lastSent !== undefined && !cryptoMap.has(lastSent)) {
+                                lastCryptoSent.set(undefined);
+                            }
 
                             messageFiltersStore.set(
                                 registry.messageFilters
@@ -8642,6 +8880,10 @@ export class OpenChat {
     async setSelectedCommunity(id: CommunityIdentifier): Promise<boolean> {
         let community = communitiesStore.value.get(id);
         let preview = false;
+        if (community !== undefined && communityRestricted(community)) {
+            publish("restrictedContent");
+            return false;
+        }
         if (community === undefined) {
             // if we don't have the community it means we're not a member and we need to look it up
             if (querystringCodeStore.value) {
@@ -8658,6 +8900,10 @@ export class OpenChat {
                 communityId: id.communityId,
             });
             if ("id" in resp) {
+                if (communityRestricted(resp)) {
+                    publish("restrictedContent");
+                    return false;
+                }
                 // Make the community appear at the top of the list
                 resp.membership.index = nextCommunityIndexStore.value;
                 community = resp;
@@ -10440,6 +10686,10 @@ export class OpenChat {
 
     isTermsRoute(route: RouteParams): route is TermsRoute {
         return route.kind === "terms_route";
+    }
+
+    isPrivacyRoute(route: RouteParams): route is PrivacyRoute {
+        return route.kind === "privacy_route";
     }
 
     isFaqRoute(route: RouteParams): route is FaqRoute {

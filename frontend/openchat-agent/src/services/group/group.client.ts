@@ -670,10 +670,7 @@ export class GroupClient
             chatId.groupId,
             "messages_by_message_index",
             args,
-            (resp) =>
-                mapResult(resp, (value) =>
-                    getMessagesSuccess(value, chatId, this.chatsDb),
-                ),
+            (resp) => mapResult(resp, (value) => getMessagesSuccess(value, chatId, this.chatsDb)),
             GroupMessagesByMessageIndexArgs,
             GroupMessagesByMessageIndexResponse,
         );
@@ -937,6 +934,7 @@ export class GroupClient
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         deleteMessage: boolean,
+        csam: boolean,
     ): Promise<boolean> {
         return this.update(
             groupId,
@@ -945,6 +943,7 @@ export class GroupClient
                 thread_root_message_index: threadRootMessageIndex,
                 message_id: messageId,
                 delete: deleteMessage,
+                csam,
             },
             isSuccess,
             GroupReportMessageArgs,

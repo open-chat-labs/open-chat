@@ -3,7 +3,7 @@ use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
-use rand::Rng;
+use rand::RngExt;
 use types::{CanisterId, OCResult, UserId};
 use user_canister::update_chat_settings::*;
 use user_canister::{SetEventsTtl, UserCanisterEvent};
@@ -25,7 +25,7 @@ async fn update_chat_settings_impl(args: Args) -> OCResult {
             state
                 .data
                 .direct_chats
-                .get_or_create(args.user_id, user.user_type, || state.env.rng().r#gen(), now);
+                .get_or_create(args.user_id, user.user_type, || state.env.rng().random(), now);
         });
     }
 

@@ -13,6 +13,7 @@
     import MessageContentInitial from "./MessageContentInitial.svelte";
     import MessageReminderContent from "./MessageReminderContent.svelte";
     import MessageReminderCreatedContent from "./MessageReminderCreatedContent.svelte";
+    import ModerationReportContent from "./ModerationReportContent.svelte";
     import P2PSwapContent from "./P2PSwapContent.svelte";
     import PlaceholderContent from "./PlaceholderContent.svelte";
     import PollContent from "./PollContent.svelte";
@@ -171,6 +172,8 @@
     <MessageReminderContent {content} />
 {:else if content.kind === "reported_message_content"}
     <ReportedMessageContent {content} />
+{:else if content.kind === "moderation_report_content"}
+    <ModerationReportContent {content} />
 {:else if content.kind === "meme_fighter_content"}
     <ImageContent {me} {title} {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
 {:else if content.kind === "user_referral_card"}

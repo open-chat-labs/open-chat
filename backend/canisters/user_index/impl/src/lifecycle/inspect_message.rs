@@ -10,7 +10,11 @@ fn accept_if_valid(state: &RuntimeState) {
     let method_name = ic_cdk::api::msg_method_name().trim_end_matches("_msgpack").to_string();
 
     let is_valid = match method_name.as_str() {
-        "claim_daily_chit"
+        // Deliberately callable while suspended: contesting an automated sanction is the
+        // GDPR Art 22 human-intervention safeguard, and the caller is suspended by definition
+        "contest_moderation_sanction"
+        | "accept_terms"
+        | "claim_daily_chit"
         | "create_canister"
         | "delete_user"
         | "mark_as_online"
@@ -25,8 +29,17 @@ fn accept_if_valid(state: &RuntimeState) {
         | "submit_proof_of_unique_personhood"
         | "update_bot"
         | "update_diamond_membership_subscription" => state.is_caller_openchat_user(),
-        "suspend_user" | "unsuspend_user" => state.is_caller_platform_moderator(),
-        "set_diamond_membership_fees"
+        "resolve_moderation_report" | "suspend_user" | "unsuspend_user" => state.is_caller_platform_moderator(),
+        // The dual-authorized actions (destroy_vault_evidence, set_vault_reviewers,
+        // set_openai_api_key, set_internal_moderation_channel) are no longer callable
+        // directly - they are reachable only through this propose/confirm pair
+        "propose_protected_action"
+        | "confirm_protected_action"
+        | "cancel_protected_action"
+        | "record_authority_report_filed"
+        | "set_vault_legal_hold"
+        | "set_diamond_membership_fees"
+        | "set_moderation_referral_config"
         | "set_premium_item_cost"
         | "set_user_upgrade_concurrency"
         | "update_blocked_username_patterns" => state.is_caller_platform_operator(),
@@ -44,7 +57,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "register_external_achievement"
         | "publish_bot"
         | "suspected_bots" => state.is_caller_governance_principal(),
-        "award_external_achievement" | "modclub_callback" => true,
+        "award_external_achievement" => true,
         "remove_bot" => state.is_caller_governance_principal() || state.is_caller_openchat_user(),
         _ => false,
     };

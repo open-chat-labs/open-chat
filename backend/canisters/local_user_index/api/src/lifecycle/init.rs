@@ -1,6 +1,6 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{BuildVersion, CanisterId};
+use types::{BuildVersion, CanisterId, ModerationReferralConfig};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -22,5 +22,7 @@ pub struct Args {
     pub rng_seed: [u8; 32],
     pub ic_root_key: Vec<u8>,
     pub openai_api_key: Option<String>,
+    #[serde(default)]
+    pub moderation_referral_config: Option<ModerationReferralConfig>,
     pub test_mode: bool,
 }

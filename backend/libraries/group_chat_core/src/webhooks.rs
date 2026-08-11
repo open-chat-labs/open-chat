@@ -1,5 +1,5 @@
 use candid::Principal;
-use rand::{Rng, rngs::StdRng};
+use rand::{RngExt, rngs::StdRng};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use types::{Document, OptionUpdate, TimestampMillis, UserId};
@@ -100,11 +100,11 @@ impl Webhooks {
     }
 
     fn generate_random_id(rng: &mut StdRng) -> UserId {
-        Principal::from_slice(&rng.r#gen::<[u8; 8]>()).into()
+        Principal::from_slice(&rng.random::<[u8; 8]>()).into()
     }
 
     fn generate_secret(rng: &mut StdRng) -> String {
-        let secret_bytes = rng.r#gen::<[u8; 16]>();
+        let secret_bytes = rng.random::<[u8; 16]>();
         hex::encode(secret_bytes)
     }
 }

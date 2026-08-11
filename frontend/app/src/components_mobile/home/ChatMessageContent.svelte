@@ -6,6 +6,7 @@
     import BotPlaceholderContent from "./BotPlaceholderContent.svelte";
     import CryptoContent from "./CryptoContent.svelte";
     import DeletedContent from "./DeletedContent.svelte";
+    import ModerationReportContent from "./ModerationReportContent.svelte";
     import FileContent from "./FileContent.svelte";
     import GiphyContent from "./GiphyContent.svelte";
     import ImageContent from "./ImageContent.svelte";
@@ -14,6 +15,7 @@
     import MessageReminderCreatedContent from "./MessageReminderCreatedContent.svelte";
     import P2PSwapContent from "./P2PSwapContent.svelte";
     import PlaceholderContent from "./PlaceholderContent.svelte";
+    import RestrictedMessageContent from "./RestrictedMessageContent.svelte";
     import PollContent from "./PollContent.svelte";
     import PrizeContent from "./PrizeContent.svelte";
     import PrizeWinnerContent from "./PrizeWinnerContent.svelte";
@@ -84,7 +86,9 @@
     }: Props = $props();
 </script>
 
-{#if content.kind === "text_content"}
+{#if content.kind === "restricted_content"}
+    <RestrictedMessageContent />
+{:else if content.kind === "text_content"}
     <TextContent
         {me}
         {edited}
@@ -187,6 +191,8 @@
     <MessageReminderCreatedContent {content} />
 {:else if content.kind === "message_reminder_content"}
     <MessageReminderContent {content} />
+{:else if content.kind === "moderation_report_content"}
+    <ModerationReportContent {content} />
 {:else if content.kind === "reported_message_content"}
     <ReportedMessageContent {content} />
 {:else if content.kind === "meme_fighter_content"}

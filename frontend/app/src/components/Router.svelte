@@ -69,6 +69,12 @@
             () => (route = LandingPage),
         );
         page(
+            "/privacy",
+            parsePathParams(() => ({ kind: "privacy_route", scope: { kind: "none" } })),
+            track,
+            () => (route = LandingPage),
+        );
+        page(
             "/faq",
             parsePathParams(() => ({ kind: "faq_route", scope: { kind: "none" } })),
             track,

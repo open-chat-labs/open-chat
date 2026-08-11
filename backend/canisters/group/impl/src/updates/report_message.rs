@@ -62,6 +62,7 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> OCResult<(c2c_report_mes
                 message,
                 already_deleted: args.delete,
                 is_public: state.data.chat.is_public.value,
+                csam: args.csam,
             },
             state.data.group_index_canister_id,
         ));

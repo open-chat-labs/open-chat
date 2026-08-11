@@ -22,6 +22,9 @@
     import {
         allUsersStore,
         anonUserStore,
+        ANON_USER_ID,
+        CURRENT_TERMS_VERSION,
+        currentUserStore,
         chatIdentifiersEqual,
         chatListScopeStore,
         chatsInitialisedStore,
@@ -54,6 +57,7 @@
     import OfflineFooter from "../OfflineFooter.svelte";
     import OnboardModal from "../onboard/OnboardModal.svelte";
     import SuspendedModal from "../SuspendedModal.svelte";
+    import TermsUpdatedModal from "../TermsUpdatedModal.svelte";
     import Toast from "../Toast.svelte";
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
     import AnonFooter from "./AnonFooter.svelte";
@@ -116,7 +120,8 @@
         | { kind: "no_access" }
         | { kind: "hall_of_fame" }
         | { kind: "make_proposal"; chat: MultiUserChat; nervousSystem: NervousSystemDetails }
-        | { kind: "not_found" };
+        | { kind: "not_found" }
+        | { kind: "restricted_content" };
 
     let modal: ModalType = $state({ kind: "none" });
     let confirmActionEvent: ConfirmActionEvent | undefined = $state();
@@ -142,6 +147,7 @@
             subscribe("remoteVideoCallEnded", remoteVideoCallEnded),
             subscribe("notification", (n) => client.notificationReceived(n)),
             subscribe("noAccess", () => (modal = { kind: "no_access" })),
+            subscribe("restrictedContent", () => (modal = { kind: "restricted_content" })),
             subscribe("notFound", () => (modal = { kind: "not_found" })),
             subscribe("copyUrl", copyUrl),
             subscribe("suspendUser", suspendUser),
@@ -550,7 +556,8 @@
             inGlobalContext={showProfileCard.inGlobalContext}
             chatButton={showProfileCard.chatButton}
             onOpenDirectChat={chatWithFromProfileCard}
-            onClose={() => (showProfileCard = undefined)} />
+            onClose={() => (showProfileCard = undefined)}
+        />
     {/if}
 {/if}
 
@@ -580,7 +587,8 @@
             ? confirmActionEvent.doubleCheck
             : undefined}
         message={confirmMessage}
-        action={onConfirmAction} />
+        action={onConfirmAction}
+    />
 {/if}
 
 <Toast />
@@ -596,12 +604,25 @@
         <VerifyHumanity onClose={closeModal} onSuccess={closeModal} />
     {:else if modal.kind === "no_access"}
         <NoAccess onClose={closeNoAccess} />
+    {:else if modal.kind === "restricted_content"}
+        <NoAccess
+            onClose={closeNoAccess}
+            titleKey={"appStore.notAvailableTitle"}
+            textKey={"appStore.notAvailable"}
+        />
     {:else if modal.kind === "make_proposal"}
         <MakeProposalModal
             selectedMultiUserChat={modal.chat}
             nervousSystem={modal.nervousSystem}
-            onClose={closeModal} />
+            onClose={closeModal}
+        />
     {/if}
+{/if}
+
+<!-- Not shown while the suspension notice is up (parity with desktop): the notice explains
+     the account state first; the gate re-asserts once it is dismissed -->
+{#if modal.kind !== "suspended" && $currentUserStore.userId !== ANON_USER_ID && ($currentUserStore.acceptedTermsVersion ?? 0) < ($currentUserStore.currentTermsVersion ?? CURRENT_TERMS_VERSION)}
+    <TermsUpdatedModal />
 {/if}
 
 {#if $rulesAcceptanceStore !== undefined}
@@ -611,13 +632,15 @@
         <SetPinNumberModal
             onPinSet={onPinNumberComplete}
             onClose={() => (forgotPin = false)}
-            type={{ kind: "forgot", while: { kind: "enter" } }} />
+            type={{ kind: "forgot", while: { kind: "enter" } }}
+        />
     </Sheet>
 {:else if $pinNumberResolverStore !== undefined}
     <PinNumberModal
         onClose={onPinNumberClose}
         onComplete={onPinNumberComplete}
-        onForgot={onForgotPin} />
+        onForgot={onForgotPin}
+    />
 {/if}
 
 {#if $chitPopup && !$disableChit}

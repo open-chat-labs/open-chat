@@ -285,6 +285,10 @@ type CurrentUserCommon = DataContent & {
     maxStreak: number;
     backgroundId?: bigint;
     hideOnlineStatus: boolean;
+    // Absent on summaries from the user canister (only the user_index holds it), so updates
+    // spread over a CreatedUser without clobbering the known value
+    acceptedTermsVersion?: number;
+    currentTermsVersion?: number;
 };
 
 export type CurrentUserSummary = CurrentUserCommon & {
@@ -319,6 +323,9 @@ export function anonymousUser(): CreatedUser {
         streak: 0,
         maxStreak: 0,
         hideOnlineStatus: false,
+        // The anonymous user never sees the terms-updated notice; acceptance is captured when
+        // an account is registered or next used
+        acceptedTermsVersion: Number.MAX_SAFE_INTEGER,
     };
 }
 
@@ -541,4 +548,18 @@ export type ReferralStatus = "registered" | "diamond" | "unique_person" | "lifet
 export type Referral = {
     userId: string;
     status: ReferralStatus;
+};
+
+// The result of proposing a dual-authorized operator action: nothing has taken effect yet,
+// and `alreadyPending` means an identical action was already queued so this changed nothing
+export type ProposedProtectedAction = {
+    actionId: bigint;
+    alreadyPending: boolean;
+};
+
+export type ModerationConfig = {
+    openaiApiKeySet: boolean;
+    internalModerationChannel: { communityId: string; channelId: number } | undefined;
+    referralConfig: { categories: { category: number; scoreThreshold: number }[] } | undefined;
+    vaultReviewers: string[];
 };

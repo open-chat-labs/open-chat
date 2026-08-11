@@ -15,7 +15,7 @@ import type {
     CommunitySummary,
 } from "../community";
 import type { WalletConfig } from "../crypto";
-import { DataContentSchema, type DataContent } from "../data/data";
+import { type BlobReference, DataContentSchema, type DataContent } from "../data/data";
 import type { OCError } from "../error";
 import type { OptionUpdate } from "../optionUpdate";
 import type {
@@ -92,6 +92,8 @@ export type MessageContent =
     | AudioContent
     | DeletedContent
     | BlockedContent
+    | ModerationReportContent
+    | RestrictedContent
     | PlaceholderContent
     | BotPlaceholderContent
     | PollContent
@@ -643,6 +645,55 @@ export const BlockedContentSchema = Type.Object({
 });
 export type BlockedContent = Static<typeof BlockedContentSchema>;
 
+export type ModerationReportContent = {
+    kind: "moderation_report_content";
+    reportIndex: bigint | undefined;
+    chatId: ChatIdentifier;
+    threadRootMessageIndex: number | undefined;
+    messageIndex: number;
+    messageId: bigint;
+    sender: string;
+    reporters: string[];
+    flaggedCategories: number;
+    classificationFailed: boolean;
+    authorityReport:
+        | { kind: "due"; urgent: boolean }
+        | { kind: "filed"; portalReference: string }
+        | undefined;
+    autoSanctioned: boolean;
+    contentExcerpt: string | undefined;
+    blobReferences: BlobReference[];
+    reportedAt: bigint;
+    status: ModerationReportStatus;
+};
+
+export type ModerationReportStatus =
+    | { kind: "pending" }
+    | { kind: "contested" }
+    | { kind: "upheld"; moderator: string; timestamp: bigint }
+    | { kind: "upheld_as_csam"; moderator: string; timestamp: bigint }
+    | { kind: "dismissed"; moderator: string; timestamp: bigint };
+
+export type ModerationVerdict = "upheld" | "upheld_as_csam" | "dismissed";
+
+// Mirrors the category bits of `ModerationCategories` in the rust backend
+export const MODERATION_CATEGORY_NAMES: [number, string][] = [
+    [1, "sexual"],
+    [2, "sexual/minors"],
+    [4, "violence"],
+    [8, "violence/graphic"],
+    [16, "harassment"],
+    [32, "harassment/threatening"],
+    [64, "self-harm"],
+    [128, "illicit"],
+];
+
+// Synthesised client-side in the app store build for messages with moderation flags
+export const RestrictedContentSchema = Type.Object({
+    kind: Type.Literal("restricted_content"),
+});
+export type RestrictedContent = Static<typeof RestrictedContentSchema>;
+
 export const PollConfigSchema = Type.Object({
     allowMultipleVotesPerUser: Type.Boolean(),
     allowUserToChangeVote: Type.Boolean(),
@@ -773,6 +824,7 @@ export type RehydratedReplyContext = {
     edited: boolean;
     isThreadRoot: boolean;
     sourceContext: MessageContext;
+    moderationFlags?: number;
 };
 
 export type EnhancedReplyContext = RehydratedReplyContext & {

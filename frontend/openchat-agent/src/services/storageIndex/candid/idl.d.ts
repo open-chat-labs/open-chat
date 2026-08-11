@@ -5,6 +5,7 @@ import {
     CanForwardResponse,
     ProjectedAllowance,
     UserResponse,
+    VaultBucketsResponse,
 } from "./types";
 export {
     _SERVICE as StorageIndexService,
@@ -12,6 +13,7 @@ export {
     CanForwardResponse as CandidCanForwardResponse,
     ProjectedAllowance as CandidProjectedAllowance,
     UserResponse as CandidUserResponse,
+    VaultBucketsResponse as CandidVaultBucketsResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

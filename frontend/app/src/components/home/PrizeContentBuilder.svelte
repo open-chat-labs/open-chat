@@ -327,10 +327,9 @@
     }
 
     function onAnyUserChecked() {
-        anyUser = true;
         diamondType = "none";
-        streakOnly = false;
-        chitOnly = false;
+        minStreak = 0;
+        minChitEarned = 0;
     }
 
     function onStreakChanged() {

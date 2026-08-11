@@ -328,6 +328,8 @@ export function currentUserResponse(value: UserIndexCurrentUserResponse): Curren
             streak: r.streak,
             maxStreak: r.max_streak,
             hideOnlineStatus: r.hide_online_status ?? false,
+            acceptedTermsVersion: r.accepted_terms_version ?? 0,
+            currentTermsVersion: r.current_terms_version,
         };
     }
 

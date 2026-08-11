@@ -29,6 +29,10 @@ pub struct InitArgs {
     pub email_sender_public_key_pem: String,
     // Only use this for testing
     pub salt: Option<[u8; 32]>,
+    // Only use this for testing. `rsa` derives a different key from a given seed depending on the
+    // word size of the target, so a test which needs to sign as this canister has to supply the
+    // key rather than deriving its own copy from the salt.
+    pub rsa_private_key_pem: Option<String>,
     pub whitelisted_principals: Vec<Principal>,
 }
 

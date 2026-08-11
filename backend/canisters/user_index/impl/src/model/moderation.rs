@@ -1,0 +1,796 @@
+use crate::RuntimeState;
+use crate::model::reported_messages::ReportedMessage;
+use crate::timer_job_types::{SetUserSuspended, TimerJob, UnsuspendUser};
+use constants::{DAY_IN_MS, OPENCHAT_BOT_USER_ID};
+use fire_and_forget_handler::FireAndForgetHandler;
+use local_user_index_canister::{OpenChatBotMessageV2, UserIndexEvent};
+use rand::RngExt;
+use storage_bucket_canister::c2c_vault_sync::VaultCaptureMetadata;
+use storage_index_canister::c2c_vault_ops::{
+    ApplyVerdictOp, Args as VaultOpsArgs, DestroyOp, QuarantineOp, SetLegalHoldOp, UnquarantineOp, VaultOp, VaultReviewer,
+};
+use tracing::error;
+use types::{BlobReference, Milliseconds};
+use types::{
+    CanisterId, ChannelId, Chat, MessageContentInitial, MessageId, MessageIndex, ModerationCategories, ModerationReportContent,
+    ModerationReportStatus, SuspensionDuration, TextContent, TimestampMillis, UserId,
+};
+
+const MAX_EXCERPT_LENGTH: usize = 500;
+
+pub struct ModerationAlert {
+    // None if this alert came from the automated pipeline, in which case there is no report to
+    // resolve and the alert is a record only
+    pub report_index: Option<u64>,
+    pub chat_id: Chat,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_index: MessageIndex,
+    pub message_id: MessageId,
+    pub sender: UserId,
+    // Empty if the alert was triggered by the automated moderation pipeline rather than a report
+    pub reporters: Vec<UserId>,
+    pub categories: ModerationCategories,
+    pub classification_failed: bool,
+    pub auto_sanctioned: bool,
+    pub content_excerpt: Option<String>,
+    pub blob_references: Vec<BlobReference>,
+    pub timestamp: TimestampMillis,
+}
+
+// Posts an alert into the internal moderation channel as the OpenChat bot
+pub fn post_moderation_alert(alert: ModerationAlert, state: &mut RuntimeState) {
+    let Some((community_id, channel_id)) = state.data.internal_moderation_channel else {
+        error!("Content requires moderator review but no internal moderation channel is configured");
+        return;
+    };
+
+    let channel_message_id: MessageId = state.env.rng().random::<u128>().into();
+
+    let report = ModerationReportContent {
+        report_index: alert.report_index,
+        chat_id: alert.chat_id,
+        thread_root_message_index: alert.thread_root_message_index,
+        message_index: alert.message_index,
+        message_id: alert.message_id,
+        sender: alert.sender,
+        reporters: alert.reporters,
+        flagged_categories: alert.categories.bits(),
+        classification_failed: alert.classification_failed,
+        auto_sanctioned: alert.auto_sanctioned,
+        content_excerpt: alert
+            .content_excerpt
+            .as_ref()
+            .filter(|e| !e.trim().is_empty())
+            .map(|e| e.chars().take(MAX_EXCERPT_LENGTH).collect()),
+        blob_references: alert.blob_references,
+        reported_at: alert.timestamp,
+        status: ModerationReportStatus::Pending,
+        authority_report: None,
+    };
+
+    if let Some(report_index) = alert.report_index {
+        state
+            .data
+            .reported_messages
+            .set_moderation_channel_message_id(report_index, channel_message_id);
+    }
+
+    let args = community_canister::c2c_send_moderation_report::Args {
+        channel_id,
+        message_id: channel_message_id,
+        report,
+    };
+    state.data.fire_and_forget_handler.send(
+        community_id.into(),
+        "c2c_send_moderation_report_msgpack".to_string(),
+        msgpack::serialize_then_unwrap(&args),
+    );
+}
+
+// Posts a plain-text OC-bot notice into the internal moderation channel: for alarms which
+// have no reported message to anchor a report card to (eg. a re-upload of known CSAM content)
+// Operator functions alert the OTHER platform operators directly, rather than posting to the
+// internal moderation channel. Four reasons: they are peer oversight, so the audience is the
+// operators rather than the moderators; the channel is itself configured by an operator
+// function, so relying on it means the alerts are invisible until (and unless) it has been
+// set up; delivery is via the retried event queue rather than fire-and-forget; and the
+// operator set is DAO-governed (add_platform_operator is proposal-only), so an operator whose
+// key is compromised cannot redirect these messages away from their colleagues.
+//
+// The acting operator is skipped - they know what they just did, and excluding them keeps the
+// message unambiguously "one of your colleagues did this".
+pub fn notify_other_platform_operators(text: String, state: &mut RuntimeState) {
+    let caller = state.env.caller();
+    let acting = state.data.users.get_by_principal(&caller).map(|u| u.user_id);
+    let operators: Vec<UserId> = state
+        .data
+        .platform_operators
+        .iter()
+        .copied()
+        .filter(|u| Some(*u) != acting)
+        .collect();
+    for user_id in operators {
+        state.push_event_to_local_user_index(
+            user_id,
+            UserIndexEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
+                user_id,
+                thread_root_message_id: None,
+                content: MessageContentInitial::Text(TextContent { text: text.clone() }),
+                mentioned: Vec::new(),
+            })),
+        );
+    }
+}
+
+pub fn post_moderation_notice(text: String, state: &mut RuntimeState) {
+    let Some((community_id, channel_id)) = state.data.internal_moderation_channel else {
+        error!("Moderation notice raised but no internal moderation channel is configured");
+        return;
+    };
+
+    let message_id: MessageId = state.env.rng().random::<u128>().into();
+    let args = community_canister::c2c_send_moderation_notice::Args {
+        channel_id,
+        message_id,
+        text,
+    };
+    state.data.fire_and_forget_handler.send(
+        community_id.into(),
+        "c2c_send_moderation_notice_msgpack".to_string(),
+        msgpack::serialize_then_unwrap(&args),
+    );
+}
+
+// Updates the status shown on the alert message in the internal moderation channel
+pub fn update_moderation_alert_status(
+    reported_message: &ReportedMessage,
+    status: ModerationReportStatus,
+    state: &mut RuntimeState,
+) {
+    let Some((community_id, channel_id)) = state.data.internal_moderation_channel else {
+        return;
+    };
+    let Some(message_id) = reported_message.moderation_channel_message_id else {
+        return;
+    };
+
+    let args = community_canister::c2c_update_moderation_report_status::Args {
+        channel_id,
+        message_id,
+        status: Some(status),
+        authority_report: None,
+        auto_sanctioned: None,
+        reporters: None,
+    };
+    state.data.fire_and_forget_handler.send(
+        community_id.into(),
+        "c2c_update_moderation_report_status_msgpack".to_string(),
+        msgpack::serialize_then_unwrap(&args),
+    );
+}
+
+// Updates the authority-report (NCA filing) state shown on the alert message: Due when an
+// UpheldAsCsam verdict creates the obligation, Filed once the portal reference is recorded
+pub fn update_moderation_alert_authority_report(
+    reported_message: &ReportedMessage,
+    authority_report: types::AuthorityReportState,
+    state: &mut RuntimeState,
+) {
+    let Some((community_id, channel_id)) = state.data.internal_moderation_channel else {
+        return;
+    };
+    let Some(message_id) = reported_message.moderation_channel_message_id else {
+        return;
+    };
+
+    // The current status is always included (never None): a not-yet-upgraded community can
+    // then still decode the update, merely dropping the unknown authority_report field
+    let args = community_canister::c2c_update_moderation_report_status::Args {
+        channel_id,
+        message_id,
+        status: Some(crate::model::reported_messages::ReportedMessages::report_status(
+            reported_message,
+        )),
+        authority_report: Some(authority_report),
+        auto_sanctioned: None,
+        reporters: None,
+    };
+    state.data.fire_and_forget_handler.send(
+        community_id.into(),
+        "c2c_update_moderation_report_status_msgpack".to_string(),
+        msgpack::serialize_then_unwrap(&args),
+    );
+}
+
+// Flips an existing alert card to the quarantined (vault) review path: sent when a CSAM
+// assertion applies protective quarantine to a report whose alert was posted before the media
+// was vaulted - the card's direct blob fetch would otherwise dead-end on the vault pin,
+// leaving the moderator unable to complete the review gate
+pub fn update_moderation_alert_quarantined(reported_message: &ReportedMessage, state: &mut RuntimeState) {
+    let Some((community_id, channel_id)) = state.data.internal_moderation_channel else {
+        return;
+    };
+    let Some(message_id) = reported_message.moderation_channel_message_id else {
+        return;
+    };
+
+    let args = community_canister::c2c_update_moderation_report_status::Args {
+        channel_id,
+        message_id,
+        status: Some(crate::model::reported_messages::ReportedMessages::report_status(
+            reported_message,
+        )),
+        authority_report: None,
+        auto_sanctioned: Some(true),
+        reporters: Some(reported_message.reports.keys().copied().collect()),
+    };
+    state.data.fire_and_forget_handler.send(
+        community_id.into(),
+        "c2c_update_moderation_report_status_msgpack".to_string(),
+        msgpack::serialize_then_unwrap(&args),
+    );
+}
+
+pub fn delete_message(
+    chat_id: Chat,
+    thread_root_message_index: Option<MessageIndex>,
+    message_id: MessageId,
+    fire_and_forget_handler: &mut FireAndForgetHandler,
+) {
+    match chat_id {
+        Chat::Group(group_id) => delete_group_message(
+            group_id.into(),
+            thread_root_message_index,
+            message_id,
+            fire_and_forget_handler,
+        ),
+        Chat::Channel(community_id, channel_id) => delete_channel_message(
+            community_id.into(),
+            channel_id,
+            thread_root_message_index,
+            message_id,
+            fire_and_forget_handler,
+        ),
+        // Don't delete messages from direct chats - the reporter can delete it themselves
+        Chat::Direct(_) => (),
+    }
+}
+
+// Sets the read-gate flag AND deletes the message in a single message to the chat canister.
+// The two must not be sent separately: fire-and-forget sends carry no ordering guarantee, and
+// a message which is deleted while its flag is still in flight can be read by its sender
+// through `deleted_message` and undeleted - after which the flag lands on a live message.
+pub fn delete_and_flag_message(
+    chat_id: Chat,
+    thread_root_message_index: Option<MessageIndex>,
+    message_id: MessageId,
+    flags: u32,
+    already_deleted: bool,
+    fire_and_forget_handler: &mut FireAndForgetHandler,
+) {
+    set_flags_and_maybe_delete(
+        chat_id,
+        thread_root_message_index,
+        message_id,
+        flags,
+        !already_deleted,
+        fire_and_forget_handler,
+    );
+}
+
+pub fn set_message_moderation_flags(
+    chat_id: Chat,
+    thread_root_message_index: Option<MessageIndex>,
+    message_id: MessageId,
+    flags: u32,
+    fire_and_forget_handler: &mut FireAndForgetHandler,
+) {
+    set_flags_and_maybe_delete(
+        chat_id,
+        thread_root_message_index,
+        message_id,
+        flags,
+        false,
+        fire_and_forget_handler,
+    );
+}
+
+fn set_flags_and_maybe_delete(
+    chat_id: Chat,
+    thread_root_message_index: Option<MessageIndex>,
+    message_id: MessageId,
+    flags: u32,
+    delete: bool,
+    fire_and_forget_handler: &mut FireAndForgetHandler,
+) {
+    match chat_id {
+        Chat::Group(group_id) => {
+            let args = group_canister::c2c_flag_message::Args {
+                thread_root_message_index,
+                message_id,
+                flags,
+                delete,
+            };
+            fire_and_forget_handler.send(
+                group_id.into(),
+                "c2c_flag_message_msgpack".to_string(),
+                msgpack::serialize_then_unwrap(&args),
+            );
+        }
+        Chat::Channel(community_id, channel_id) => {
+            let args = community_canister::c2c_flag_message::Args {
+                channel_id,
+                thread_root_message_index,
+                message_id,
+                flags,
+                delete,
+            };
+            fire_and_forget_handler.send(
+                community_id.into(),
+                "c2c_flag_message_msgpack".to_string(),
+                msgpack::serialize_then_unwrap(&args),
+            );
+        }
+        Chat::Direct(_) => {}
+    }
+}
+
+fn delete_channel_message(
+    canister_id: CanisterId,
+    channel_id: ChannelId,
+    thread_root_message_index: Option<MessageIndex>,
+    message_id: MessageId,
+    fire_and_forget_handler: &mut FireAndForgetHandler,
+) {
+    let args = community_canister::delete_messages::Args {
+        channel_id,
+        thread_root_message_index,
+        message_ids: vec![message_id],
+        as_platform_moderator: Some(true),
+        new_achievement: false,
+    };
+    fire_and_forget_handler.send(
+        canister_id,
+        "delete_messages_msgpack".to_string(),
+        msgpack::serialize_then_unwrap(&args),
+    );
+}
+
+fn delete_group_message(
+    canister_id: CanisterId,
+    thread_root_message_index: Option<MessageIndex>,
+    message_id: MessageId,
+    fire_and_forget_handler: &mut FireAndForgetHandler,
+) {
+    let args = group_canister::delete_messages::Args {
+        thread_root_message_index,
+        message_ids: vec![message_id],
+        as_platform_moderator: Some(true),
+        new_achievement: false,
+    };
+    fire_and_forget_handler.send(
+        canister_id,
+        "delete_messages_msgpack".to_string(),
+        msgpack::serialize_then_unwrap(&args),
+    );
+}
+
+// Suspends the sender of CSAM indefinitely
+pub fn suspend_sender(sender: UserId, now: TimestampMillis, state: &mut RuntimeState) {
+    suspend(
+        sender,
+        None,
+        "The message depicts, promotes or attempts to normalize child sexual abuse".to_string(),
+        now,
+        state,
+    );
+}
+
+// Suspends the sender of a message which a platform moderator has judged to break the platform
+// rules: for a day, or indefinitely for repeat offenders
+pub fn suspend_sender_for_upheld_violation(sender: UserId, now: TimestampMillis, state: &mut RuntimeState) {
+    let (duration, reason) = if in_breach_count(sender, state) > 2 {
+        (None, "Multiple violations of the platform rules".to_string())
+    } else {
+        (Some(DAY_IN_MS), "Violation of platform rules".to_string())
+    };
+
+    suspend(sender, duration, reason, now, state);
+}
+
+fn suspend(sender: UserId, duration: Option<u64>, reason: String, now: TimestampMillis, state: &mut RuntimeState) {
+    let Some(user) = state.data.users.get_by_user_id(&sender) else {
+        error!(%sender, "Cannot suspend message sender, user not found");
+        return;
+    };
+
+    if user
+        .suspension_details
+        .as_ref()
+        .is_some_and(|d| matches!(d.duration, SuspensionDuration::Indefinitely))
+    {
+        return;
+    }
+
+    state.data.timer_jobs.enqueue_job(
+        TimerJob::SetUserSuspended(SetUserSuspended {
+            user_id: sender,
+            duration,
+            reason,
+            suspended_by: OPENCHAT_BOT_USER_ID,
+            attempt: 0,
+        }),
+        now,
+        now,
+    );
+}
+
+// Restores a message after a Dismissed verdict on an automated sanction (receiver implemented
+// in the group/community canisters). Direct chats are never deleted by moderation, so there is
+// nothing to restore.
+pub fn undelete_message(
+    chat_id: Chat,
+    thread_root_message_index: Option<MessageIndex>,
+    message_id: MessageId,
+    fire_and_forget_handler: &mut FireAndForgetHandler,
+) {
+    match chat_id {
+        Chat::Group(group_id) => {
+            let args = group_canister::c2c_moderation_undelete::Args {
+                thread_root_message_index,
+                message_id,
+            };
+            fire_and_forget_handler.send(
+                group_id.into(),
+                "c2c_moderation_undelete_msgpack".to_string(),
+                msgpack::serialize_then_unwrap(&args),
+            );
+        }
+        Chat::Channel(community_id, channel_id) => {
+            let args = community_canister::c2c_moderation_undelete::Args {
+                channel_id,
+                thread_root_message_index,
+                message_id,
+            };
+            fire_and_forget_handler.send(
+                community_id.into(),
+                "c2c_moderation_undelete_msgpack".to_string(),
+                msgpack::serialize_then_unwrap(&args),
+            );
+        }
+        Chat::Direct(_) => (),
+    }
+}
+
+// Permanently removes the chat-canister copy after an Upheld verdict (receiver implemented in
+// the group/community canisters). For CSAM the vault copy persists under the retention regime.
+pub fn hard_delete_message(
+    chat_id: Chat,
+    thread_root_message_index: Option<MessageIndex>,
+    message_id: MessageId,
+    fire_and_forget_handler: &mut FireAndForgetHandler,
+) {
+    match chat_id {
+        Chat::Group(group_id) => {
+            let args = group_canister::c2c_moderation_hard_delete::Args {
+                thread_root_message_index,
+                message_id,
+            };
+            fire_and_forget_handler.send(
+                group_id.into(),
+                "c2c_moderation_hard_delete_msgpack".to_string(),
+                msgpack::serialize_then_unwrap(&args),
+            );
+        }
+        Chat::Channel(community_id, channel_id) => {
+            let args = community_canister::c2c_moderation_hard_delete::Args {
+                channel_id,
+                thread_root_message_index,
+                message_id,
+            };
+            fire_and_forget_handler.send(
+                community_id.into(),
+                "c2c_moderation_hard_delete_msgpack".to_string(),
+                msgpack::serialize_then_unwrap(&args),
+            );
+        }
+        Chat::Direct(_) => (),
+    }
+}
+
+// Retention for vaulted evidence: 1 year, initially anchored at the verdict and re-anchored
+// at filing time when the authority filing is recorded - the statutory duty (18 U.S.C.
+// 2258A(h), reg 8 SI 2026/268) runs 1 year FROM THE REPORT BEING SENT, which is always after
+// the verdict, so the verdict-time clock alone would expire early by the filing lag
+const VAULT_RETENTION_MS: Milliseconds = 365 * DAY_IN_MS;
+
+fn send_vault_ops(ops: Vec<VaultOp>, state: &mut RuntimeState) {
+    if ops.is_empty() {
+        return;
+    }
+    let args = VaultOpsArgs { ops };
+    state.data.fire_and_forget_handler.send(
+        state.data.storage_index_canister_id,
+        "c2c_vault_ops".to_string(),
+        candid::encode_one(&args).unwrap(),
+    );
+}
+
+// Quarantines the report's media in the evidence vault: blocks public serving, pins the blobs
+// against deletion, and captures chain-of-custody metadata
+pub fn quarantine_blobs(report_index: u64, report: &ReportedMessage, flags: u32, state: &mut RuntimeState) {
+    let ops = quarantine_ops(report_index, report, flags, state.env.now());
+    send_vault_ops(ops, state);
+}
+
+// Quarantine plus the uphold verdict in a single message, so the bucket processes them in
+// order: separate fire-and-forget sends carry no ordering guarantee, and a verdict arriving
+// before its quarantine would be dropped, leaving the blob retained with no retention clock
+pub fn quarantine_blobs_and_apply_verdict(
+    report_index: u64,
+    report: &ReportedMessage,
+    flags: u32,
+    moderator: UserId,
+    state: &mut RuntimeState,
+) {
+    let now = state.env.now();
+    let mut ops = quarantine_ops(report_index, report, flags, now);
+    ops.extend(verdict_ops(
+        &report.blob_references,
+        Some(moderator),
+        false,
+        Some(report_index),
+        now,
+    ));
+    send_vault_ops(ops, state);
+}
+
+fn quarantine_ops(report_index: u64, report: &ReportedMessage, flags: u32, now: TimestampMillis) -> Vec<VaultOp> {
+    report
+        .blob_references
+        .iter()
+        .map(|blob_reference| {
+            VaultOp::Quarantine(QuarantineOp {
+                blob_reference: blob_reference.clone(),
+                metadata: VaultCaptureMetadata {
+                    report_index,
+                    chat: report.chat_id,
+                    message_index: report.message_index,
+                    message_id: report.message_id,
+                    sender: report.sender,
+                    detection_timestamp: now,
+                    classifier_categories: flags,
+                },
+            })
+        })
+        .collect()
+}
+
+pub fn unquarantine_blobs(blob_references: &[BlobReference], moderator: UserId, report_index: u64, state: &mut RuntimeState) {
+    // The bucket refuses a release while a legal hold stands and remembers it as pending, so
+    // that clearing the hold performs it. Mirror that here on EVERY held report sharing one of
+    // these blobs, not just the report being released: the bucket's hold is per blob record,
+    // so when a blob is evidence in two reports, clearing a hold placed via the OTHER report
+    // is what would perform this deferred release and destroy the evidence. Marking that
+    // report release_pending is what forces its hold-clear through dual authorization (#9136)
+    for held in state.data.reported_messages.reports_with_hold_intersecting(blob_references) {
+        state.data.reported_messages.set_release_pending(held, true);
+    }
+
+    let ops = blob_references
+        .iter()
+        .cloned()
+        .map(|blob_reference| {
+            VaultOp::Unquarantine(UnquarantineOp {
+                blob_reference,
+                moderator: Some(moderator),
+                report_index: Some(report_index),
+            })
+        })
+        .collect();
+    send_vault_ops(ops, state);
+}
+
+// Sets or clears a legal hold on a report's vaulted blobs. While held, retention expiry never
+// deletes them and a release is deferred rather than performed.
+pub fn set_vault_legal_hold(blob_references: &[BlobReference], legal_hold: bool, reference: String, state: &mut RuntimeState) {
+    let ops = blob_references
+        .iter()
+        .cloned()
+        .map(|blob_reference| {
+            VaultOp::SetLegalHold(SetLegalHoldOp {
+                blob_reference,
+                legal_hold,
+                reference: Some(reference.clone()),
+            })
+        })
+        .collect();
+    send_vault_ops(ops, state);
+}
+
+// Destroys a report's vaulted blobs on a law enforcement request, overriding the retention
+// clock. The bucket refuses destruction while a legal hold stands; the callers check first so
+// a refused destruction is never reported as done. The vault log entry survives the record.
+pub fn destroy_vault_evidence(
+    blob_references: &[BlobReference],
+    le_request_ref: String,
+    proposed_by: UserId,
+    confirmed_by: UserId,
+    state: &mut RuntimeState,
+) {
+    let ops = blob_references
+        .iter()
+        .cloned()
+        .map(|blob_reference| {
+            VaultOp::Destroy(DestroyOp {
+                blob_reference,
+                le_request_ref: le_request_ref.clone(),
+                proposed_by: Some(proposed_by),
+                confirmed_by: Some(confirmed_by),
+            })
+        })
+        .collect();
+    send_vault_ops(ops, state);
+}
+
+// Re-anchors the retention clock at filing time without recording a verdict: the record stays
+// unresolved (an honest-unverified filing still needs a reviewer) and the vault log shows a
+// re-anchor rather than a second verdict. The operator is Option: an unattributed re-anchor
+// is better than a retention clock that expires early because the op was dropped.
+pub fn reanchor_vault_retention(blob_references: &[BlobReference], operator: Option<UserId>, state: &mut RuntimeState) {
+    let ops = verdict_ops(blob_references, operator, true, None, state.env.now());
+    send_vault_ops(ops, state);
+}
+
+fn verdict_ops(
+    blob_references: &[BlobReference],
+    moderator: Option<UserId>,
+    reanchor: bool,
+    report_index: Option<u64>,
+    now: TimestampMillis,
+) -> Vec<VaultOp> {
+    let retention_until = now + VAULT_RETENTION_MS;
+    blob_references
+        .iter()
+        .cloned()
+        .map(|blob_reference| {
+            VaultOp::ApplyVerdict(ApplyVerdictOp {
+                blob_reference,
+                retention_until,
+                moderator,
+                reanchor: Some(reanchor),
+                report_index,
+            })
+        })
+        .collect()
+}
+
+// Pushes the current vault-reviewer principal set to the storage buckets (via the storage
+// index). Called on any change to the reviewer set, and on moderator-revocation cascade.
+pub fn sync_vault_reviewers(state: &mut RuntimeState) {
+    let reviewers = state
+        .data
+        .vault_reviewers
+        .iter()
+        .filter_map(|user_id| {
+            state.data.users.get_by_user_id(user_id).map(|u| VaultReviewer {
+                principal: u.principal,
+                user_id: *user_id,
+            })
+        })
+        .collect();
+    send_vault_ops(vec![VaultOp::SetReviewers(reviewers)], state);
+}
+
+// Lifts a suspension after a Dismissed verdict on an automated sanction. The sender is told
+// once the unsuspend has actually landed (the job owns the notification), so that a failed
+// reversal never produces a message claiming an unsuspension which did not happen.
+pub fn unsuspend_sender(sender: UserId, report_index: u64, now: TimestampMillis, state: &mut RuntimeState) {
+    state.data.timer_jobs.enqueue_job(
+        TimerJob::UnsuspendUser(UnsuspendUser {
+            user_id: sender,
+            expected_suspension_timestamp: None,
+            attempt: 0,
+            restoration_report_index: Some(report_index),
+        }),
+        now,
+        now,
+    );
+}
+
+// Replaces an indefinite CSAM suspension with the standard severity for an upheld (non-CSAM)
+// violation. Enqueues directly, bypassing the already-indefinitely-suspended guard in suspend()
+// since a downgrade is exactly what is intended here - but only when no OTHER report is still
+// keeping the sender sanctioned, since this verdict may only reverse its own report's severity.
+pub fn downgrade_suspension_to_upheld_violation(
+    sender: UserId,
+    report_index: u64,
+    now: TimestampMillis,
+    state: &mut RuntimeState,
+) {
+    if has_other_indefinite_sanction(sender, report_index, state) {
+        return;
+    }
+
+    let (duration, reason) = if in_breach_count(sender, state) > 2 {
+        (None, "Multiple violations of the platform rules".to_string())
+    } else {
+        (Some(DAY_IN_MS), "Violation of platform rules".to_string())
+    };
+
+    state.data.timer_jobs.enqueue_job(
+        TimerJob::SetUserSuspended(SetUserSuspended {
+            user_id: sender,
+            duration,
+            reason,
+            suspended_by: OPENCHAT_BOT_USER_ID,
+            attempt: 0,
+        }),
+        now,
+        now,
+    );
+}
+
+fn in_breach_count(sender: UserId, state: &RuntimeState) -> usize {
+    state
+        .data
+        .users
+        .get_by_user_id(&sender)
+        .map(|user| {
+            user.reported_messages
+                .iter()
+                .filter_map(|i| state.data.reported_messages.get(*i))
+                .filter(|r| r.in_breach())
+                .count()
+        })
+        .unwrap_or_default()
+}
+
+// True if another report besides `except_report_index` justifies keeping the sender
+// suspended: an unresolved automated sanction, an upheld-as-CSAM verdict (indefinite
+// suspension), or an upheld violation whose one-day suspension is still running. A Dismissed
+// verdict on one report must only reverse that report's own contribution - it must never lift
+// a suspension imposed by a different, still-standing report.
+// True if another report (or a hash-match upload sanction) requires the sender to stay
+// suspended indefinitely, which a downgrade to the standard severity must not undo. Narrower
+// than has_other_active_sanction: another report's upheld non-CSAM violation asks for the same
+// severity being applied here, so it must not block the downgrade.
+pub fn has_other_indefinite_sanction(sender: UserId, except_report_index: u64, state: &RuntimeState) -> bool {
+    if state.data.users.has_csam_upload_sanction(&sender) {
+        return true;
+    }
+
+    state
+        .data
+        .users
+        .get_by_user_id(&sender)
+        .map(|user| {
+            user.reported_messages
+                .iter()
+                .filter(|i| **i != except_report_index)
+                .filter_map(|i| state.data.reported_messages.get(*i))
+                .any(|r| r.requires_indefinite_suspension())
+        })
+        .unwrap_or_default()
+}
+
+pub fn has_other_active_sanction(sender: UserId, except_report_index: u64, now: TimestampMillis, state: &RuntimeState) -> bool {
+    // A hash-match suspension has no report, so it would otherwise be invisible here and any
+    // unrelated dismissal would silently lift it
+    if state.data.users.has_csam_upload_sanction(&sender) {
+        return true;
+    }
+
+    state
+        .data
+        .users
+        .get_by_user_id(&sender)
+        .map(|user| {
+            user.reported_messages
+                .iter()
+                .filter(|i| **i != except_report_index)
+                .filter_map(|i| state.data.reported_messages.get(*i))
+                .any(|r| r.keeps_sender_sanctioned(now))
+        })
+        .unwrap_or_default()
+}

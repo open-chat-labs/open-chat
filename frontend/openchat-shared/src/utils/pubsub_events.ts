@@ -160,6 +160,7 @@ export type PubSubEvents = {
     remoteVideoCallEnded: bigint;
     notification: Notification;
     noAccess: undefined;
+    restrictedContent: undefined;
     notFound: undefined;
     showFailureToast: {
         resourceKey: ResourceKey | Readable<ResourceKey | undefined>;

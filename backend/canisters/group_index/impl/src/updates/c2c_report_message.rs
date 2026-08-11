@@ -16,6 +16,7 @@ async fn c2c_report_message(args: Args) -> Response {
         message: args.message,
         already_deleted: args.already_deleted,
         is_public: args.is_public,
+        csam: args.csam,
     };
 
     match user_index_canister_c2c_client::c2c_report_message(user_index_canister_id, &c2c_args).await {

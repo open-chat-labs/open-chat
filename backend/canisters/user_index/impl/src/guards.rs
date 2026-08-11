@@ -48,6 +48,14 @@ pub fn caller_is_group_index() -> Result<(), String> {
     }
 }
 
+pub fn caller_is_storage_index() -> Result<(), String> {
+    if read_state(|state| state.is_caller_storage_index_canister()) {
+        Ok(())
+    } else {
+        Err("Caller is not the storage index canister".to_string())
+    }
+}
+
 pub fn caller_is_platform_moderator() -> Result<(), String> {
     if read_state(|state| state.is_caller_platform_moderator()) {
         Ok(())
@@ -61,14 +69,6 @@ pub fn caller_is_platform_operator() -> Result<(), String> {
         Ok(())
     } else {
         Err("Caller is not a platform operator".to_string())
-    }
-}
-
-pub fn caller_is_modclub() -> Result<(), String> {
-    if read_state(|state| state.is_caller_modclub()) {
-        Ok(())
-    } else {
-        Err("Caller is not modclub".to_string())
     }
 }
 

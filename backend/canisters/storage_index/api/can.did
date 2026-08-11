@@ -53,7 +53,14 @@ type UserRecord = record {
     bytes_used : nat64;
 };
 
+type VaultBucketsResponse = variant {
+    Success : record {
+        buckets : vec CanisterId;
+    };
+};
+
 service : {
+    vault_buckets : (record {}) -> (VaultBucketsResponse) query;
     allocated_bucket_v2 : (AllocatedBucketArgs) -> (AllocatedBucketResponse) query;
     can_forward : (CanForwardArgs) -> (CanForwardResponse) query;
     user : (UserArgs) -> (UserResponse) query;

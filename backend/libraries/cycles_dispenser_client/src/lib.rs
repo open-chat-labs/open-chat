@@ -54,7 +54,7 @@ pub fn start(config: Config) {
 
     CONFIG.set(Some(config));
 
-    let timer_id = ic_cdk_timers::set_timer_interval(Duration::from_millis(interval), run_once);
+    let timer_id = ic_cdk_timers::set_timer_interval(Duration::from_millis(interval), || async { run_once() });
 
     if let Some(previous) = TIMER_ID.replace(Some(timer_id)) {
         ic_cdk_timers::clear_timer(previous);
@@ -79,7 +79,7 @@ fn run_once() {
         let cycles_balance = ic_cdk::api::canister_cycle_balance();
 
         if cycles_balance < min_cycles_balance {
-            ic_cdk::futures::spawn(request_top_up(cycles_balance, cycles_dispenser_canister_id))
+            ic_cdk::futures::spawn_migratory(request_top_up(cycles_balance, cycles_dispenser_canister_id))
         }
     }
 }

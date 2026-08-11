@@ -98,7 +98,7 @@ fn execute_operation(members: &mut GroupMembers, op: Operation, timestamp: Times
         }
         Operation::ChangeRole { user_index, role } => {
             let user_id = get(&members.member_ids, user_index);
-            let _ = members.change_role(user_id, role, timestamp);
+            let _ = members.change_role(user_id, None, role, timestamp);
         }
         Operation::ToggleMuteNotifications {
             user_index,

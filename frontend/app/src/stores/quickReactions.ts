@@ -53,7 +53,13 @@ function initQuickReactions() {
     }
 
     function loadSkintoneAndQuickReactions() {
-        return emojiDb.getPreferredSkinTone().then(loadQuickReactions);
+        return emojiDb
+            .getPreferredSkinTone()
+            .then(loadQuickReactions)
+            .catch((e) => {
+                console.log(e);
+                return [] as string[];
+            });
     }
 
     const { subscribe, set } = writable<string[]>([]);

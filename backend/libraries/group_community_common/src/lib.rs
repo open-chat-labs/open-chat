@@ -2,6 +2,7 @@ mod achievements;
 mod expiring_member_actions;
 mod expiring_members;
 mod member;
+pub mod openai_moderation;
 mod payment_locks;
 mod payment_receipts;
 mod pending_payments_queue;

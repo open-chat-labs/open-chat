@@ -1,17 +1,20 @@
 use crate::model::bucket_event_batch::{BucketEventBatch, EventToSync};
 use crate::model::buckets::{BucketRecord, Buckets};
 use crate::model::files::Files;
+use crate::model::vault_event_batch::VaultEventBatch;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
 use constants::ICP_LEDGER_CANISTER_ID;
+use fire_and_forget_handler::FireAndForgetHandler;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
+use storage_index_canister::c2c_vault_ops::VaultReviewer;
 use storage_index_canister::init::CyclesDispenserConfig;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, Cycles, FileAdded, FileRejected, FileRejectedReason, FileRemoved, TimestampMillis,
-    Timestamped,
+    BuildVersion, CanisterId, CanisterWasm, Cycles, FileAdded, FileRejected, FileRejectedReason, FileRemoved, Hash,
+    TimestampMillis, Timestamped,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
@@ -86,6 +89,7 @@ impl RuntimeState {
             total_file_bytes: file_metrics.total_file_bytes,
             active_buckets: self.data.buckets.iter_active_buckets().map(|b| b.into()).collect(),
             full_buckets: self.data.buckets.iter_full_buckets().map(|b| b.into()).collect(),
+            csam_hashes_denylisted: self.data.csam_hashes.len() as u64,
             bucket_upgrades_pending: bucket_upgrade_metrics.pending,
             bucket_upgrades_in_progress: bucket_upgrade_metrics.in_progress,
             bucket_upgrades_failed: bucket_upgrade_metrics.failed,
@@ -110,6 +114,21 @@ struct Data {
     pub files: Files,
     pub buckets: Buckets,
     pub bucket_event_sync_queue: GroupedTimerJobQueue<BucketEventBatch>,
+    #[serde(default = "default_vault_event_sync_queue")]
+    pub vault_event_sync_queue: GroupedTimerJobQueue<VaultEventBatch>,
+    #[serde(default)]
+    pub vault_reviewers: Vec<VaultReviewer>,
+    // Every hash upheld as CSAM, learned from the bucket which applied the verdict. Held here
+    // so the denylist survives as platform-wide state: it is pushed to all other buckets when
+    // it changes, and to each new bucket when it is created.
+    #[serde(default)]
+    pub csam_hashes: BTreeMap<Hash, u64>,
+    // Learned from the caller of c2c_vault_ops (only ever the user_index); used to report
+    // bucket-detected CSAM re-uploads back to it
+    #[serde(default)]
+    pub user_index_canister_id: Option<CanisterId>,
+    #[serde(default)]
+    pub fire_and_forget_handler: FireAndForgetHandler,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_config: CyclesDispenserConfig,
@@ -119,6 +138,10 @@ struct Data {
     pub cycles_minting_canister_id: CanisterId,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
+}
+
+fn default_vault_event_sync_queue() -> GroupedTimerJobQueue<VaultEventBatch> {
+    GroupedTimerJobQueue::new(5, false)
 }
 
 fn icp_ledger_canister_id() -> CanisterId {
@@ -147,6 +170,11 @@ impl Data {
             files: Files::default(),
             buckets: Buckets::default(),
             bucket_event_sync_queue: GroupedTimerJobQueue::new(5, false),
+            vault_event_sync_queue: default_vault_event_sync_queue(),
+            vault_reviewers: Vec::new(),
+            csam_hashes: BTreeMap::new(),
+            user_index_canister_id: None,
+            fire_and_forget_handler: FireAndForgetHandler::default(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,
             cycles_dispenser_config,
@@ -224,7 +252,62 @@ impl Data {
             bucket.canister_id,
             self.users.keys().map(|p| EventToSync::UserAdded(*p)).collect(),
         );
+        if !self.vault_reviewers.is_empty() {
+            self.vault_event_sync_queue.push(
+                bucket.canister_id,
+                storage_bucket_canister::c2c_vault_sync::VaultOp::SetReviewers(
+                    self.vault_reviewers
+                        .iter()
+                        .map(|r| storage_bucket_canister::c2c_vault_sync::VaultReviewer {
+                            principal: r.principal,
+                            user_id: r.user_id,
+                        })
+                        .collect(),
+                ),
+            );
+        }
+        // A new bucket starts with the full CSAM denylist, otherwise upheld content could be
+        // uploaded to it and served
+        for (hash, report_index) in self.csam_hashes.iter() {
+            self.vault_event_sync_queue.push(
+                bucket.canister_id,
+                storage_bucket_canister::c2c_vault_sync::VaultOp::DenylistHash(
+                    storage_bucket_canister::c2c_vault_sync::DenylistHashOp {
+                        hash: *hash,
+                        report_index: *report_index,
+                    },
+                ),
+            );
+        }
         self.buckets.add_bucket(bucket);
+    }
+
+    // Records a hash denylisted by a verdict applied in `source_bucket` and pushes it to every
+    // other bucket. The denylist is keyed by content hash and has to hold platform-wide: the
+    // verdict only ever reaches the bucket holding the evidence copy, so without this a
+    // re-upload to any other bucket is stored and served publicly.
+    pub fn denylist_csam_hash(&mut self, source_bucket: CanisterId, hash: Hash, report_index: u64) {
+        if self.csam_hashes.insert(hash, report_index).is_some() {
+            return;
+        }
+        let buckets: Vec<_> = self
+            .buckets
+            .iter()
+            .map(|b| b.canister_id)
+            .filter(|c| *c != source_bucket)
+            .collect();
+        for bucket in buckets {
+            self.push_denylisted_hash_to_bucket(bucket, hash, report_index);
+        }
+    }
+
+    pub fn push_denylisted_hash_to_bucket(&mut self, bucket: CanisterId, hash: Hash, report_index: u64) {
+        self.vault_event_sync_queue.push(
+            bucket,
+            storage_bucket_canister::c2c_vault_sync::VaultOp::DenylistHash(
+                storage_bucket_canister::c2c_vault_sync::DenylistHashOp { hash, report_index },
+            ),
+        );
     }
 }
 
@@ -253,6 +336,8 @@ pub struct Metrics {
     pub total_file_bytes: u64,
     pub active_buckets: Vec<BucketMetrics>,
     pub full_buckets: Vec<BucketMetrics>,
+    // Hashes upheld as CSAM and denylisted platform-wide
+    pub csam_hashes_denylisted: u64,
     pub bucket_upgrades_pending: u64,
     pub bucket_upgrades_in_progress: u64,
     pub bucket_upgrades_failed: Vec<FailedUpgradeCount>,

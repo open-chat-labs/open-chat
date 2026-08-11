@@ -1,4 +1,4 @@
-use super::user::SuspensionDetails;
+use super::user::{CsamUploadSanction, SuspensionDetails};
 use crate::DiamondMembershipUserMetrics;
 use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use crate::model::user::User;
@@ -651,6 +651,9 @@ impl UserMap {
             };
             info!(%user_id, ?suspension_details, "User suspended");
             user.suspension_details = Some(suspension_details);
+            // Bump date_updated so that clients already tracking this user receive the
+            // suspended flag on their next poll of the `users` endpoint
+            user.date_updated = now;
             self.suspended_or_unsuspended_users.insert((now, user_id));
             true
         } else {
@@ -658,10 +661,46 @@ impl UserMap {
         }
     }
 
+    // Records the suspension applied when a user tried to post content matching a hash upheld
+    // as CSAM. There is no message, so no report: this is what the contest path acts on.
+    pub fn record_csam_upload_sanction(&mut self, user_id: UserId, csam_report_index: u64, now: TimestampMillis) {
+        if let Some(user) = self.users.get_mut(&user_id) {
+            user.csam_upload_sanction = Some(CsamUploadSanction {
+                timestamp: now,
+                csam_report_index,
+                contested: None,
+            });
+        }
+    }
+
+    // Marks a hash-match sanction as contested (the Article 22 request for human review).
+    // Returns the sanction if this call registered the contest.
+    pub fn contest_csam_upload_sanction(&mut self, user_id: UserId, now: TimestampMillis) -> ContestUploadSanctionResult {
+        let Some(user) = self.users.get_mut(&user_id) else {
+            return ContestUploadSanctionResult::NotFound;
+        };
+        let Some(sanction) = user.csam_upload_sanction.as_mut() else {
+            return ContestUploadSanctionResult::NotFound;
+        };
+        if sanction.contested.is_some() {
+            return ContestUploadSanctionResult::AlreadyContested;
+        }
+        sanction.contested = Some(now);
+        ContestUploadSanctionResult::Success(sanction.csam_report_index)
+    }
+
+    pub fn has_csam_upload_sanction(&self, user_id: &UserId) -> bool {
+        self.users.get(user_id).is_some_and(|u| u.csam_upload_sanction.is_some())
+    }
+
     pub fn unsuspend_user(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
         if let Some(user) = self.users.get_mut(&user_id) {
             info!(%user_id, "User unsuspended");
             user.suspension_details = None;
+            // Lifting the suspension IS the human decision on a hash-match sanction (there is
+            // no report to resolve), so the record is cleared with it
+            user.csam_upload_sanction = None;
+            user.date_updated = now;
             self.suspended_or_unsuspended_users.insert((now, user_id));
             true
         } else {
@@ -758,6 +797,25 @@ impl UserMap {
             *map.entry(key).or_default() += 1;
         }
         map
+    }
+
+    pub fn record_false_csam_report(&mut self, user_id: UserId) {
+        if let Some(user) = self.users.get_mut(&user_id) {
+            user.false_csam_reports = user.false_csam_reports.saturating_add(1);
+        }
+    }
+
+    pub fn accept_terms(&mut self, caller: &Principal, version: u32, now: TimestampMillis) -> bool {
+        if let Some(user) = self.principal_to_user_id.get(caller).and_then(|u| self.users.get_mut(u)) {
+            // Never downgrade: an out-of-date client cannot roll the accepted version back
+            if version > user.accepted_terms_version {
+                user.accepted_terms_version = version;
+                user.accepted_terms_at = now;
+            }
+            true
+        } else {
+            false
+        }
     }
 
     pub fn set_moderation_flags_enabled(&mut self, caller: &Principal, moderation_flags_enabled: u32) -> bool {
@@ -962,6 +1020,13 @@ pub enum BotUpdate {
     Added(UserId),
     Updated(UserId),
     Removed(UserId),
+}
+
+pub enum ContestUploadSanctionResult {
+    // Carries the report whose verdict denylisted the matched hash
+    Success(u64),
+    AlreadyContested,
+    NotFound,
 }
 
 #[cfg(test)]

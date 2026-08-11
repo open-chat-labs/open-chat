@@ -29,7 +29,7 @@ pub fn validate_file_id(file_id: FileId, bucket: CanisterId) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::RngCore;
+    use rand::Rng;
 
     #[test]
     fn validate_file_id() {
@@ -37,7 +37,7 @@ mod tests {
         let bucket2 = CanisterId::from_text("6jemw-paaaa-aaaaf-ab2ea-cai").unwrap();
         let owner = Principal::anonymous();
 
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         for _ in 0..10 {
             let hash = hash_bytes(rng.next_u64().to_be_bytes());

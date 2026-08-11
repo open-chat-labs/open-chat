@@ -2,7 +2,7 @@ use super::members::CommunityMembers;
 use chat_events::Reader;
 use group_chat_core::{GroupChatCore, GroupMemberInternal};
 use oc_error_codes::OCErrorCode;
-use rand::Rng;
+use rand::RngExt;
 use rand::rngs::StdRng;
 use search::weighted::*;
 use serde::{Deserialize, Serialize};
@@ -53,7 +53,7 @@ impl Channels {
                         created_by_user_type,
                         default_channel_rules.clone(),
                         is_community_public,
-                        rng.r#gen(),
+                        rng.random(),
                         now,
                     ),
                 )

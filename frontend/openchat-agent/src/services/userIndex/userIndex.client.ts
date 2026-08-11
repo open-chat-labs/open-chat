@@ -1,5 +1,7 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import type {
+    ModerationConfig,
+    ProposedProtectedAction,
     BotDefinition,
     BotInstallationLocation,
     BotsResponse,
@@ -14,6 +16,7 @@ import type {
     PayForDiamondMembershipResponse,
     PremiumItem,
     SetDisplayNameResponse,
+    ModerationVerdict,
     SetUsernameResponse,
     SetUserUpgradeConcurrencyResponse,
     SubmitProofOfUniquePersonhoodResponse,
@@ -24,11 +27,14 @@ import type {
     UsersResponse,
     UserSummary,
     UserSummaryUpdate,
+    Success,
+    OCError,
 } from "@shared";
 import {
     mergeUserSummaryWithUpdates,
     offline,
     Stream,
+    toBigInt32,
     userSummaryFromCurrentUserSummary,
 } from "@shared";
 import {
@@ -62,7 +68,19 @@ import {
     UserIndexSetDisplayNameArgs,
     UserIndexSetDisplayNameResponse,
     UserIndexSetHideOnlineStatusArgs,
+    UserIndexResolveModerationReportArgs,
     UserIndexSetModerationFlagsArgs,
+    UserIndexAcceptTermsArgs,
+    UserIndexAuthorityReportsResponse,
+    UserIndexModerationConfigResponse,
+    UserIndexRecordAuthorityReportFiledArgs,
+    UserIndexSetModerationReferralConfigArgs,
+    UserIndexProposeProtectedActionArgs,
+    UserIndexProposeProtectedActionResponse,
+    UserIndexConfirmProtectedActionArgs,
+    UserIndexCancelProtectedActionArgs,
+    UserIndexProtectedActionsResponse,
+    UserIndexSetVaultLegalHoldArgs,
     UserIndexSetPremiumItemCostArgs,
     UserIndexSetUsernameArgs,
     UserIndexSetUsernameResponse,
@@ -80,6 +98,8 @@ import {
     UserIndexUsersArgs,
     UserIndexUsersResponse,
 } from "../../typebox";
+import type { UserIndexProposeProtectedActionProtectedAction } from "../../typebox";
+import { unitResult } from "../common/chatMappersV2";
 import type { ChatsDb } from "../../utils/chatsDb";
 import { groupBy } from "../../utils/list";
 import {
@@ -137,7 +157,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                 }
 
                 if (!isOffline) {
-                    const liveUser = await this.query(
+                    let liveUser = await this.query(
                         "current_user",
                         {},
                         currentUserResponse,
@@ -145,6 +165,17 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                         UserIndexCurrentUserResponse,
                     );
                     if (liveUser.kind === "created_user") {
+                        // A terms acceptance recorded while this query was in flight must not
+                        // be clobbered by the (older) response - that would re-open the
+                        // blocking terms notice and, offline, lock the user out entirely
+                        const latest = await this.chatsDb.getCachedCurrentUser();
+                        const accepted = latest?.acceptedTermsVersion;
+                        if (
+                            accepted !== undefined &&
+                            (liveUser.acceptedTermsVersion ?? 0) < accepted
+                        ) {
+                            liveUser = { ...liveUser, acceptedTermsVersion: accepted };
+                        }
                         this.chatsDb.setCachedCurrentUser(liveUser);
                     }
                     resolve(liveUser, true);
@@ -164,6 +195,259 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             (_) => true,
             UserIndexSetModerationFlagsArgs,
             SuccessOnly,
+        );
+    }
+
+    acceptTerms(version: number): Promise<boolean> {
+        return this.update(
+            "accept_terms",
+            { version },
+            (resp) => resp === "Success",
+            UserIndexAcceptTermsArgs,
+            UnitResult,
+        ).then((success) => {
+            if (success) {
+                // Patch the durable cache too, otherwise the next cold start resolves the
+                // stale cached record first and re-opens the blocking terms notice
+                this.chatsDb.patchCachedCurrentUser({ acceptedTermsVersion: version });
+            }
+            return success;
+        });
+    }
+
+    // The four irreversible operator actions are dual authorized (#9136): propose here, then a
+    // DIFFERENT platform operator confirms before anything executes.
+    proposeProtectedAction(
+        action: UserIndexProposeProtectedActionProtectedAction,
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.update(
+            "propose_protected_action",
+            { action },
+            (resp) =>
+                "Success" in resp
+                    ? {
+                          actionId: resp.Success.action_id,
+                          alreadyPending: resp.Success.already_pending,
+                      }
+                    : undefined,
+            UserIndexProposeProtectedActionArgs,
+            UserIndexProposeProtectedActionResponse,
+        );
+    }
+
+    // Returns the canister's error rather than a bare boolean: a confirmation is re-validated
+    // at confirm time and can be refused for reasons the operator needs to see (a legal hold
+    // now stands on the evidence, the report is against their own message), and collapsing
+    // those to "failed" leaves them guessing
+    confirmProtectedAction(actionId: bigint): Promise<Success | OCError> {
+        return this.update(
+            "confirm_protected_action",
+            { action_id: actionId },
+            unitResult,
+            UserIndexConfirmProtectedActionArgs,
+            UnitResult,
+        );
+    }
+
+    cancelProtectedAction(actionId: bigint): Promise<Success | OCError> {
+        return this.update(
+            "cancel_protected_action",
+            { action_id: actionId },
+            unitResult,
+            UserIndexCancelProtectedActionArgs,
+            UnitResult,
+        );
+    }
+
+    protectedActions(): Promise<string> {
+        return this.query(
+            "protected_actions",
+            {},
+            (resp) => resp.Success.json,
+            Empty,
+            UserIndexProtectedActionsResponse,
+        );
+    }
+
+    // Only for the dangerous case: clearing a hold whose release is already pending performs
+    // that release, so the canister refuses it outside the dual-authorized flow
+    proposeSetVaultLegalHold(
+        reportIndex: bigint,
+        legalHold: boolean,
+        reference: string,
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.proposeProtectedAction({
+            SetVaultLegalHold: { report_index: reportIndex, legal_hold: legalHold, reference },
+        });
+    }
+
+    proposeSetVaultReviewers(userIds: string[]): Promise<ProposedProtectedAction | undefined> {
+        return this.proposeProtectedAction({
+            SetVaultReviewers: { user_ids: userIds.map(principalStringToBytes) },
+        });
+    }
+
+    setVaultLegalHold(
+        reportIndex: bigint,
+        legalHold: boolean,
+        reference: string,
+    ): Promise<boolean> {
+        return this.update(
+            "set_vault_legal_hold",
+            { report_index: reportIndex, legal_hold: legalHold, reference },
+            (resp) => resp === "Success",
+            UserIndexSetVaultLegalHoldArgs,
+            UnitResult,
+        );
+    }
+
+    proposeDestroyVaultEvidence(
+        reportIndex: bigint,
+        leRequestRef: string,
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.proposeProtectedAction({
+            DestroyVaultEvidence: { report_index: reportIndex, le_request_ref: leRequestRef },
+        });
+    }
+
+    setModerationReferralConfig(
+        config: { categories: { category: number; scoreThreshold: number }[] } | undefined,
+    ): Promise<boolean> {
+        return this.update(
+            "set_moderation_referral_config",
+            {
+                config:
+                    config === undefined
+                        ? undefined
+                        : {
+                              categories: config.categories.map((c) => ({
+                                  category: c.category,
+                                  score_threshold: c.scoreThreshold,
+                              })),
+                          },
+            },
+            (resp) => resp === "Success",
+            UserIndexSetModerationReferralConfigArgs,
+            UnitResult,
+        );
+    }
+
+    proposeSetOpenAIApiKey(
+        apiKey: string | undefined,
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.proposeProtectedAction({
+            SetOpenAIApiKey: {
+                api_key: apiKey === undefined || apiKey === "" ? undefined : apiKey,
+            },
+        });
+    }
+
+    proposeSetInternalModerationChannel(
+        channel: { communityId: string; channelId: number } | undefined,
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.proposeProtectedAction({
+            SetInternalModerationChannel: {
+                channel:
+                    channel === undefined
+                        ? undefined
+                        : {
+                              community_id: principalStringToBytes(channel.communityId),
+                              channel_id: toBigInt32(channel.channelId),
+                          },
+            },
+        });
+    }
+
+    // Returns the canister's error rather than a bare boolean: a verdict can be refused for
+    // reasons the moderator needs to see (resolving your own CSAM assertion, a report already
+    // resolved), and collapsing those to "failed" leaves them guessing
+    resolveModerationReport(
+        reportIndex: bigint,
+        verdict: ModerationVerdict,
+        urgent: boolean | undefined,
+    ): Promise<Success | OCError> {
+        return this.update(
+            "resolve_moderation_report",
+            {
+                report_index: reportIndex,
+                verdict: apiModerationVerdict(verdict),
+                urgent,
+            },
+            unitResult,
+            UserIndexResolveModerationReportArgs,
+            UnitResult,
+        );
+    }
+
+    moderationConfig(): Promise<ModerationConfig | undefined> {
+        return this.query(
+            "moderation_config",
+            {},
+            (resp) =>
+                "Success" in resp
+                    ? {
+                          openaiApiKeySet: resp.Success.openai_api_key_set,
+                          internalModerationChannel: mapOptional(
+                              resp.Success.internal_moderation_channel,
+                              (c) => ({
+                                  communityId: principalBytesToString(c.community_id),
+                                  channelId: Number(c.channel_id),
+                              }),
+                          ),
+                          referralConfig: mapOptional(
+                              resp.Success.moderation_referral_config,
+                              (r) => ({
+                                  categories: r.categories.map((c) => ({
+                                      category: c.category,
+                                      scoreThreshold: c.score_threshold,
+                                  })),
+                              }),
+                          ),
+                          vaultReviewers: resp.Success.vault_reviewers.map(principalBytesToString),
+                      }
+                    : undefined,
+            Empty,
+            UserIndexModerationConfigResponse,
+        );
+    }
+
+    authorityReports(): Promise<string | undefined> {
+        return this.query(
+            "authority_reports",
+            {},
+            (resp) => ("Success" in resp ? resp.Success.json : undefined),
+            Empty,
+            UserIndexAuthorityReportsResponse,
+        );
+    }
+
+    recordAuthorityReportFiled(
+        reportIndex: bigint,
+        portalReference: string,
+        urgent: boolean,
+        unverified: boolean,
+    ): Promise<boolean> {
+        return this.update(
+            "record_authority_report_filed",
+            {
+                report_index: reportIndex,
+                portal_reference: portalReference,
+                urgent,
+                unverified,
+            },
+            (resp) => resp === "Success",
+            UserIndexRecordAuthorityReportFiledArgs,
+            UnitResult,
+        );
+    }
+
+    contestModerationSanction(): Promise<boolean> {
+        return this.update(
+            "contest_moderation_sanction",
+            {},
+            (resp) => resp === "Success",
+            Empty,
+            UnitResult,
         );
     }
 
@@ -758,5 +1042,16 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             UserIndexUpdateBlockedUsernamePatternsArgs,
             UnitResult,
         );
+    }
+}
+
+function apiModerationVerdict(verdict: ModerationVerdict): "Upheld" | "UpheldAsCsam" | "Dismissed" {
+    switch (verdict) {
+        case "upheld":
+            return "Upheld";
+        case "upheld_as_csam":
+            return "UpheldAsCsam";
+        case "dismissed":
+            return "Dismissed";
     }
 }

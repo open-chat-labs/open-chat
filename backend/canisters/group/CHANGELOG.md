@@ -6,8 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Add `c2c_moderation_undelete` and `c2c_moderation_hard_delete` so verdicts can restore or permanently remove auto-sanctioned messages ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- Quarantined messages (CSAM-flagged, deleted by moderation) are viewable by no one and cannot be user-restored while the report is unresolved ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- Include blob references when escalating CSAM detections, for evidence-vault quarantine ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+
 ### Added
 
+- Reports which assert child sexual abuse content quarantine the media and delete the message immediately - the material is never viewed outside the quarantine framework - while the suspension waits for the human verdict ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+
+- Escalate classifier moderation referrals to the user_index (via the group_index) for human review ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- Add `c2c_flag_message` endpoint so user_index can flag reported messages ([#9092](https://github.com/open-chat-labs/open-chat/pull/9092))
+- Notify user_index of CSAM detections for auto-sanction and escalation ([#9093](https://github.com/open-chat-labs/open-chat/pull/9093))
+- Queue public messages for classification via the local_user_index and store the returned moderation flags ([#9091](https://github.com/open-chat-labs/open-chat/pull/9091))
 - Expose `moderation_flags` in public group summary ([#9089](https://github.com/open-chat-labs/open-chat/pull/9089))
 - Add per-message moderation flags, exposed as `moderation_flags` on messages ([#9090](https://github.com/open-chat-labs/open-chat/pull/9090))
 
@@ -17,6 +29,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- `c2c_flag_message` can delete the message in the same update, so moderation takedowns can never leave content deleted-but-unflagged; flags which are already set no longer prevent that deletion ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- `c2c_moderation_hard_delete` deletes a message which was not already soft-deleted rather than reporting success while the content is still live ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- Prevent members from demoting others more senior than themselves ([#9115](https://github.com/open-chat-labs/open-chat/pull/9115))
 - Lock against a user having two gate payments in progress concurrently ([#9080](https://github.com/open-chat-labs/open-chat/pull/9080))
 - Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
 

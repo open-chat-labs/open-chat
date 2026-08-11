@@ -5,7 +5,7 @@ use group_community_common::{Member, MemberUpdate, Members};
 use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use principal_to_user_id_map::PrincipalToUserIdMap;
-use rand::RngCore;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::StableMemoryMap;
 use std::collections::btree_map::Entry::Vacant;
@@ -226,6 +226,12 @@ impl CommunityMembers {
             .get(&target_user_id)
             .ok_or(OCErrorCode::TargetUserNotInCommunity)?;
 
+        // The initiator must be the same or senior to the target's current role, otherwise eg. an
+        // admin could demote an owner
+        if !initiator.role.is_same_or_senior(member.role) {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
+        }
+
         // It is not possible to change the role of the last owner
         if member.role.is_owner() && self.owners.len() <= 1 {
             return Err(OCErrorCode::CannotChangeRoleOfLastOwner.into());
@@ -287,7 +293,7 @@ impl CommunityMembers {
         result
     }
 
-    pub fn create_user_group<R: RngCore>(
+    pub fn create_user_group<R: Rng>(
         &mut self,
         name: String,
         mut users: Vec<UserId>,

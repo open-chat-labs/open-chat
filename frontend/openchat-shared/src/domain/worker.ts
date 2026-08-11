@@ -1,3 +1,5 @@
+import type { OCError } from "./error";
+import type { Success } from "./response";
 import type { JsonnableDelegationChain } from "@icp-sdk/core/identity";
 import type { AccessGateConfig, Rules, UpdatedRules, VerifiedCredentialArgs } from "./access";
 import type {
@@ -70,6 +72,7 @@ import type {
     RemoveMemberResponse,
     ResetInviteCodeResponse,
     SendMessageResponse,
+    ModerationVerdict,
     SetCommunityModerationFlagsResponse,
     SetGroupModerationFlagsResponse,
     SetGroupUpgradeConcurrencyResponse,
@@ -134,7 +137,13 @@ import type {
     TokenExchangeRates,
     WalletConfig,
 } from "./crypto";
-import type { BlobReference, StorageStatus } from "./data/data";
+import type { ModerationConfig } from "./user/user";
+import type {
+    VaultFileChunkResponse,
+    VaultLogResponse,
+    BlobReference,
+    StorageStatus,
+} from "./data/data";
 import type { DexId } from "./dexes";
 import type { GenerateMagicLinkResponse } from "./email";
 import type {
@@ -227,6 +236,7 @@ import type {
     UsersArgs,
     UsersResponse,
     UserSummary,
+    ProposedProtectedAction,
 } from "./user";
 import type { Verification } from "./wallet";
 
@@ -379,6 +389,25 @@ export type WorkerRequest =
     | ConvertGroupToCommunity
     | ImportGroupToCommunity
     | SetModerationFlags
+    | ProposeSetOpenAIApiKey
+    | ConfirmProtectedAction
+    | CancelProtectedAction
+    | ProtectedActions
+    | SetModerationReferralConfig
+    | ProposeSetVaultReviewers
+    | ProposeSetVaultLegalHold
+    | SetVaultLegalHold
+    | ProposeDestroyVaultEvidence
+    | VaultLog
+    | VaultBuckets
+    | AuthorityReports
+    | GetModerationConfig
+    | RecordAuthorityReportFiled
+    | AcceptTerms
+    | ProposeSetInternalModerationChannel
+    | ResolveModerationReport
+    | ContestModerationSanction
+    | VaultFileChunk
     | ChangeCommunityRole
     | SetCommunityIndexes
     | UpdateRegistry
@@ -806,6 +835,111 @@ type SetCommunityIndexes = {
 type SetModerationFlags = {
     kind: "setModerationFlags";
     flags: number;
+};
+
+type ProposeSetOpenAIApiKey = {
+    kind: "proposeSetOpenAIApiKey";
+    apiKey: string | undefined;
+};
+
+type ConfirmProtectedAction = {
+    kind: "confirmProtectedAction";
+    actionId: bigint;
+};
+
+type CancelProtectedAction = {
+    kind: "cancelProtectedAction";
+    actionId: bigint;
+};
+
+type ProtectedActions = {
+    kind: "protectedActions";
+};
+
+type AcceptTerms = {
+    kind: "acceptTerms";
+    version: number;
+};
+
+type VaultBuckets = {
+    kind: "vaultBuckets";
+};
+
+type VaultLog = {
+    kind: "vaultLog";
+    bucketCanisterId: string;
+    start: bigint;
+    max: number;
+    fileId: bigint | undefined;
+};
+
+type GetModerationConfig = {
+    kind: "moderationConfig";
+};
+
+type AuthorityReports = {
+    kind: "authorityReports";
+};
+
+type RecordAuthorityReportFiled = {
+    kind: "recordAuthorityReportFiled";
+    reportIndex: bigint;
+    portalReference: string;
+    urgent: boolean;
+    unverified: boolean;
+};
+
+type ProposeSetVaultLegalHold = {
+    kind: "proposeSetVaultLegalHold";
+    reportIndex: bigint;
+    legalHold: boolean;
+    reference: string;
+};
+
+type ProposeSetVaultReviewers = {
+    kind: "proposeSetVaultReviewers";
+    userIds: string[];
+};
+
+type SetVaultLegalHold = {
+    kind: "setVaultLegalHold";
+    reportIndex: bigint;
+    legalHold: boolean;
+    reference: string;
+};
+
+type ProposeDestroyVaultEvidence = {
+    kind: "proposeDestroyVaultEvidence";
+    reportIndex: bigint;
+    leRequestRef: string;
+};
+
+type SetModerationReferralConfig = {
+    kind: "setModerationReferralConfig";
+    config: { categories: { category: number; scoreThreshold: number }[] } | undefined;
+};
+
+type ProposeSetInternalModerationChannel = {
+    kind: "proposeSetInternalModerationChannel";
+    channel: { communityId: string; channelId: number } | undefined;
+};
+
+type ResolveModerationReport = {
+    kind: "resolveModerationReport";
+    reportIndex: bigint;
+    verdict: ModerationVerdict;
+    urgent: boolean | undefined;
+};
+
+type ContestModerationSanction = {
+    kind: "contestModerationSanction";
+};
+
+type VaultFileChunk = {
+    kind: "vaultFileChunk";
+    bucketCanisterId: string;
+    fileId: bigint;
+    chunkIndex: number;
 };
 
 type ImportGroupToCommunity = {
@@ -1739,6 +1873,10 @@ export type WorkerError = {
  * Worker response types
  */
 export type WorkerResponseInner =
+    | Success
+    | OCError
+    | ProposedProtectedAction
+    | VaultFileChunkResponse
     | void
     | bigint
     | boolean
@@ -1990,6 +2128,7 @@ type ReportMessage = {
     threadRootMessageIndex: number | undefined;
     messageId: bigint;
     deleteMessage: boolean;
+    csam: boolean;
     kind: "reportMessage";
 };
 
@@ -2467,6 +2606,44 @@ export type WorkerResult<T> = T extends Init
     ? [RegistryValue, boolean]
     : T extends SetCommunityIndexes
     ? boolean
+    : T extends ProposeSetOpenAIApiKey
+    ? ProposedProtectedAction | undefined
+    : T extends ConfirmProtectedAction
+    ? Success | OCError
+    : T extends CancelProtectedAction
+    ? Success | OCError
+    : T extends ProtectedActions
+    ? string | undefined
+    : T extends SetModerationReferralConfig
+    ? boolean
+    : T extends ProposeSetVaultReviewers
+    ? ProposedProtectedAction | undefined
+    : T extends ProposeSetVaultLegalHold
+    ? ProposedProtectedAction | undefined
+    : T extends SetVaultLegalHold
+    ? boolean
+    : T extends ProposeDestroyVaultEvidence
+    ? ProposedProtectedAction | undefined
+    : T extends VaultLog
+    ? VaultLogResponse
+    : T extends VaultBuckets
+    ? string[]
+    : T extends AuthorityReports
+    ? string | undefined
+    : T extends GetModerationConfig
+    ? ModerationConfig | undefined
+    : T extends RecordAuthorityReportFiled
+    ? boolean
+    : T extends AcceptTerms
+    ? boolean
+    : T extends ProposeSetInternalModerationChannel
+    ? ProposedProtectedAction | undefined
+    : T extends ResolveModerationReport
+    ? Success | OCError
+    : T extends ContestModerationSanction
+    ? boolean
+    : T extends VaultFileChunk
+    ? VaultFileChunkResponse
     : T extends CreateUserGroup
     ? CreateUserGroupResponse
     : T extends UpdateUserGroup

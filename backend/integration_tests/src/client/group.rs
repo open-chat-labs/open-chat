@@ -5,6 +5,7 @@ use ic_stable_structures::memory_manager::MemoryId;
 pub const CHAT_EVENTS_MEMORY_ID: MemoryId = MemoryId::new(3);
 
 // Queries
+generate_msgpack_query_call!(deleted_message);
 generate_msgpack_query_call!(events);
 generate_msgpack_query_call!(events_by_index);
 generate_msgpack_query_call!(events_window);
@@ -33,6 +34,7 @@ generate_msgpack_update_call!(pin_message_v2);
 generate_msgpack_update_call!(register_poll_vote);
 generate_msgpack_update_call!(register_webhook);
 generate_msgpack_update_call!(remove_participant);
+generate_msgpack_update_call!(report_message);
 generate_msgpack_update_call!(remove_reaction);
 generate_msgpack_update_call!(send_message_v2);
 generate_update_call!(start_video_call_v2);

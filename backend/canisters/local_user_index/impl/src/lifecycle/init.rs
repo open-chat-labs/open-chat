@@ -35,10 +35,12 @@ fn init(args: Args) {
         args.video_call_operators,
         args.oc_secret_key_der,
         args.openai_api_key,
+        args.moderation_referral_config,
         args.test_mode,
     );
 
     init_state(env, data, args.wasm_version);
 
+    crate::no_inline_anchor::anchor();
     info!(version = %args.wasm_version, "Initialization complete");
 }

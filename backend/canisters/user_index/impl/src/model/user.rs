@@ -75,6 +75,28 @@ pub struct User {
     pub chit_balance: i32,
     #[serde(rename = "ho", default, skip_serializing_if = "is_default")]
     pub hide_online_status: bool,
+    #[serde(rename = "fcr", default, skip_serializing_if = "is_default")]
+    pub false_csam_reports: u32,
+    #[serde(rename = "tv", default, skip_serializing_if = "is_default")]
+    pub accepted_terms_version: u32,
+    #[serde(rename = "ta", default, skip_serializing_if = "is_default")]
+    pub accepted_terms_at: TimestampMillis,
+    // Set when the user was suspended for trying to upload or forward content whose hash
+    // matches a previous UpheldAsCsam verdict. There is no message and so no report to
+    // resolve, but the suspension is still a solely automated decision: this record is what
+    // makes it contestable, and what stops an unrelated report's dismissal lifting it.
+    #[serde(rename = "cus", default, skip_serializing_if = "Option::is_none")]
+    pub csam_upload_sanction: Option<CsamUploadSanction>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct CsamUploadSanction {
+    pub timestamp: TimestampMillis,
+    // The report whose verdict denylisted the hash which was matched
+    pub csam_report_index: u64,
+    // Set when the user asks for the automated decision to be reviewed by a human
+    #[serde(default)]
+    pub contested: Option<TimestampMillis>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]
@@ -130,6 +152,14 @@ impl User {
             total_chit_earned: 0,
             chit_balance: 0,
             hide_online_status: false,
+            false_csam_reports: 0,
+            // Registering constitutes affirmative acceptance of the current terms (the signup
+            // flow presents them), recorded atomically here: a client-side accept_terms call
+            // after registration can fail (eg. before this canister learns of the new user)
+            // and would wrongly show the new user the terms-updated notice
+            accepted_terms_version: crate::updates::accept_terms::CURRENT_TERMS_VERSION,
+            accepted_terms_at: now,
+            csam_upload_sanction: None,
         }
     }
 
@@ -267,6 +297,10 @@ impl Default for User {
             total_chit_earned: 0,
             chit_balance: 0,
             hide_online_status: false,
+            false_csam_reports: 0,
+            accepted_terms_version: 0,
+            accepted_terms_at: 0,
+            csam_upload_sanction: None,
         }
     }
 }

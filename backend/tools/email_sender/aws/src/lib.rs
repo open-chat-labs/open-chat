@@ -3,10 +3,10 @@ use async_trait::async_trait;
 use email_magic_links::SignedMagicLink;
 use email_sender_core::EmailSender;
 use http::HeaderMap;
-use ic_cdk::api::management_canister::http_request::{
-    CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse, TransformArgs, TransformContext, TransformFunc,
-};
 use ic_cdk::query;
+use ic_cdk_management_canister::{
+    HttpHeader, HttpMethod, HttpRequestArgs, HttpRequestResult, TransformArgs, TransformContext, TransformFunc,
+};
 use time::OffsetDateTime;
 use time::format_description::BorrowedFormatItem;
 use time::macros::format_description;
@@ -30,7 +30,7 @@ impl AwsEmailSender {
         }
     }
 
-    fn build_args(&self, magic_link: SignedMagicLink, now_millis: u64) -> CanisterHttpRequestArgument {
+    fn build_args(&self, magic_link: SignedMagicLink, now_millis: u64) -> HttpRequestArgs {
         let datetime = OffsetDateTime::from_unix_timestamp_nanos(now_millis as i128 * 1_000_000).unwrap();
 
         let host = self.function_url.trim_start_matches("https://");
@@ -66,16 +66,21 @@ impl AwsEmailSender {
             })
             .collect();
 
-        CanisterHttpRequestArgument {
+        HttpRequestArgs {
             url,
             max_response_bytes: Some(5 * 1024), // 5KB
             method: HttpMethod::POST,
             headers,
             body: Some(body.as_bytes().to_vec()),
             transform: Some(TransformContext {
-                function: TransformFunc::new(ic_cdk::id(), "aws_email_sender_transform_http_response".to_string()),
+                function: TransformFunc::new(
+                    ic_cdk::api::canister_self(),
+                    "aws_email_sender_transform_http_response".to_string(),
+                ),
                 context: Vec::new(),
             }),
+            // `None` keeps the default behaviour of the request being made by all nodes in the subnet
+            is_replicated: None,
         }
     }
 }
@@ -85,11 +90,11 @@ impl EmailSender for AwsEmailSender {
     async fn send(&self, magic_link: SignedMagicLink, now_millis: u64) -> Result<(), String> {
         let args = self.build_args(magic_link, now_millis);
 
-        let resp = ic_cdk::api::management_canister::http_request::http_request(args, 1_000_000_000)
+        let resp = ic_cdk_management_canister::http_request(&args)
             .await
             .map_err(|e| format!("{e:?}"))?;
 
-        if u32::try_from(resp.clone().0.status.0).unwrap() == 200u32 {
+        if u32::try_from(resp.status.0.clone()).unwrap() == 200u32 {
             Ok(())
         } else {
             Err(format!("Response code: {resp:?}"))
@@ -98,8 +103,8 @@ impl EmailSender for AwsEmailSender {
 }
 
 #[query(name = "aws_email_sender_transform_http_response")]
-fn transform_http_response(args: TransformArgs) -> HttpResponse {
-    HttpResponse {
+fn transform_http_response(args: TransformArgs) -> HttpRequestResult {
+    HttpRequestResult {
         status: args.response.status,
         ..Default::default()
     }

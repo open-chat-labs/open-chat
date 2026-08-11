@@ -1,1583 +1,1669 @@
-import type { Principal } from '@icp-sdk/core/principal';
-import type { ActorMethod } from '@icp-sdk/core/agent';
-import type { IDL } from '@icp-sdk/core/candid';
+import type { Principal } from "@icp-sdk/core/principal";
+import type { ActorMethod } from "@icp-sdk/core/agent";
+import type { IDL } from "@icp-sdk/core/candid";
 
-export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
-export type AccessGate = { 'UniquePerson' : null } |
-  { 'VerifiedCredential' : VerifiedCredentialGate } |
-  { 'ReferredByMember' : null } |
-  { 'TotalChitEarned' : ChitEarnedGate } |
-  { 'SnsNeuron' : SnsNeuronGate } |
-  { 'Locked' : null } |
-  { 'TokenBalance' : TokenBalanceGate } |
-  {
-    'Composite' : { 'and' : boolean, 'inner' : Array<AccessGateNonComposite> }
-  } |
-  { 'DiamondMember' : null } |
-  { 'Payment' : PaymentGate } |
-  { 'LifetimeDiamondMember' : null };
-export interface AccessGateConfig {
-  'gate' : AccessGate,
-  'expiry' : [] | [Milliseconds],
+export interface AcceptSwapSuccess {
+    token1_txn_in: bigint;
 }
-export type AccessGateConfigUpdate = { 'NoChange' : null } |
-  { 'SetToNone' : null } |
-  { 'SetToSome' : AccessGateConfig };
-export type AccessGateNonComposite = { 'UniquePerson' : null } |
-  { 'VerifiedCredential' : VerifiedCredentialGate } |
-  { 'ReferredByMember' : null } |
-  { 'TotalChitEarned' : ChitEarnedGate } |
-  { 'SnsNeuron' : SnsNeuronGate } |
-  { 'Locked' : null } |
-  { 'TokenBalance' : TokenBalanceGate } |
-  { 'DiamondMember' : null } |
-  { 'Payment' : PaymentGate } |
-  { 'LifetimeDiamondMember' : null };
-export type AccessGateUpdate = { 'NoChange' : null } |
-  { 'SetToNone' : null } |
-  { 'SetToSome' : AccessGate };
-export type AccessTokenType = { 'JoinVideoCall' : null } |
-  { 'StartVideoCallV2' : { 'call_type' : VideoCallType } } |
-  { 'MarkVideoCallAsEnded' : null };
+export type AccessGate =
+    | { UniquePerson: null }
+    | { VerifiedCredential: VerifiedCredentialGate }
+    | { ReferredByMember: null }
+    | { TotalChitEarned: ChitEarnedGate }
+    | { SnsNeuron: SnsNeuronGate }
+    | { Locked: null }
+    | { TokenBalance: TokenBalanceGate }
+    | {
+          Composite: { and: boolean; inner: Array<AccessGateNonComposite> };
+      }
+    | { DiamondMember: null }
+    | { Payment: PaymentGate }
+    | { LifetimeDiamondMember: null };
+export interface AccessGateConfig {
+    gate: AccessGate;
+    expiry: [] | [Milliseconds];
+}
+export type AccessGateConfigUpdate =
+    | { NoChange: null }
+    | { SetToNone: null }
+    | { SetToSome: AccessGateConfig };
+export type AccessGateNonComposite =
+    | { UniquePerson: null }
+    | { VerifiedCredential: VerifiedCredentialGate }
+    | { ReferredByMember: null }
+    | { TotalChitEarned: ChitEarnedGate }
+    | { SnsNeuron: SnsNeuronGate }
+    | { Locked: null }
+    | { TokenBalance: TokenBalanceGate }
+    | { DiamondMember: null }
+    | { Payment: PaymentGate }
+    | { LifetimeDiamondMember: null };
+export type AccessGateUpdate = { NoChange: null } | { SetToNone: null } | { SetToSome: AccessGate };
+export type AccessTokenType =
+    | { JoinVideoCall: null }
+    | { StartVideoCallV2: { call_type: VideoCallType } }
+    | { MarkVideoCallAsEnded: null };
 export type AccessorId = Principal;
 export interface Account {
-  'owner' : Principal,
-  'subaccount' : [] | [Subaccount],
+    owner: Principal;
+    subaccount: [] | [Subaccount];
 }
 export type AccountIdentifier = Uint8Array | number[];
-export type Achievement = { 'Referred20thUser' : null } |
-  { 'ChangedTheme' : null } |
-  { 'FavouritedChat' : null } |
-  { 'HadMessageReactedTo' : null } |
-  { 'PinnedChat' : null } |
-  { 'VotedOnPoll' : null } |
-  { 'JoinedCommunity' : null } |
-  { 'SetCommunityDisplayName' : null } |
-  { 'JoinedGroup' : null } |
-  { 'StartedCall' : null } |
-  { 'TippedMessage' : null } |
-  { 'Streak100' : null } |
-  { 'Streak365' : null } |
-  { 'SentGiphy' : null } |
-  { 'Streak14' : null } |
-  { 'Streak30' : null } |
-  { 'HadMessageTipped' : null } |
-  { 'SwappedFromWallet' : null } |
-  { 'SentReminder' : null } |
-  { 'EditedMessage' : null } |
-  { 'ReactedToMessage' : null } |
-  { 'Referred3rdUser' : null } |
-  { 'UpgradedToDiamond' : null } |
-  { 'ReceivedDirectMessage' : null } |
-  { 'AcceptedP2PSwapOffer' : null } |
-  { 'JoinedCall' : null } |
-  { 'SetDisplayName' : null } |
-  { 'SentImage' : null } |
-  { 'ForwardedMessage' : null } |
-  { 'SentPrize' : null } |
-  { 'FollowedThread' : null } |
-  { 'SetBio' : null } |
-  { 'SetPin' : null } |
-  { 'SentP2PSwapOffer' : null } |
-  { 'QuoteReplied' : null } |
-  { 'Referred50thUser' : null } |
-  { 'SentCrypto' : null } |
-  { 'ProvedUniquePersonhood' : null } |
-  { 'Streak3' : null } |
-  { 'Streak7' : null } |
-  { 'UpgradedToGoldDiamond' : null } |
-  { 'Referred1stUser' : null } |
-  { 'ReceivedCrypto' : null } |
-  { 'Referred10thUser' : null } |
-  { 'RepliedInThread' : null } |
-  { 'SentFile' : null } |
-  { 'DeletedMessage' : null } |
-  { 'SentDirectMessage' : null } |
-  { 'SentMeme' : null } |
-  { 'SentPoll' : null } |
-  { 'SentAudio' : null } |
-  { 'SentText' : null } |
-  { 'SetAvatar' : null } |
-  { 'SentVideo' : null };
+export type Achievement =
+    | { Referred20thUser: null }
+    | { ChangedTheme: null }
+    | { FavouritedChat: null }
+    | { HadMessageReactedTo: null }
+    | { PinnedChat: null }
+    | { VotedOnPoll: null }
+    | { JoinedCommunity: null }
+    | { SetCommunityDisplayName: null }
+    | { JoinedGroup: null }
+    | { StartedCall: null }
+    | { TippedMessage: null }
+    | { Streak100: null }
+    | { Streak365: null }
+    | { SentGiphy: null }
+    | { Streak14: null }
+    | { Streak30: null }
+    | { HadMessageTipped: null }
+    | { SwappedFromWallet: null }
+    | { SentReminder: null }
+    | { EditedMessage: null }
+    | { ReactedToMessage: null }
+    | { Referred3rdUser: null }
+    | { UpgradedToDiamond: null }
+    | { ReceivedDirectMessage: null }
+    | { AcceptedP2PSwapOffer: null }
+    | { JoinedCall: null }
+    | { SetDisplayName: null }
+    | { SentImage: null }
+    | { ForwardedMessage: null }
+    | { SentPrize: null }
+    | { FollowedThread: null }
+    | { SetBio: null }
+    | { SetPin: null }
+    | { SentP2PSwapOffer: null }
+    | { QuoteReplied: null }
+    | { Referred50thUser: null }
+    | { SentCrypto: null }
+    | { ProvedUniquePersonhood: null }
+    | { Streak3: null }
+    | { Streak7: null }
+    | { UpgradedToGoldDiamond: null }
+    | { Referred1stUser: null }
+    | { ReceivedCrypto: null }
+    | { Referred10thUser: null }
+    | { RepliedInThread: null }
+    | { SentFile: null }
+    | { DeletedMessage: null }
+    | { SentDirectMessage: null }
+    | { SentMeme: null }
+    | { SentPoll: null }
+    | { SentAudio: null }
+    | { SentText: null }
+    | { SetAvatar: null }
+    | { SentVideo: null };
 export interface AddedToChannelNotification {
-  'channel_id' : ChannelId,
-  'community_id' : CommunityId,
-  'added_by_name' : string,
-  'added_by' : UserId,
-  'channel_name' : string,
-  'community_avatar_id' : [] | [bigint],
-  'added_by_display_name' : [] | [string],
-  'community_name' : string,
-  'channel_avatar_id' : [] | [bigint],
+    channel_id: ChannelId;
+    community_id: CommunityId;
+    added_by_name: string;
+    added_by: UserId;
+    channel_name: string;
+    community_avatar_id: [] | [bigint];
+    added_by_display_name: [] | [string];
+    community_name: string;
+    channel_avatar_id: [] | [bigint];
 }
 export interface AllocatedBucketArgs {
-  'file_hash' : Hash,
-  'file_size' : bigint,
-  'file_id_seed' : [] | [bigint],
+    file_hash: Hash;
+    file_size: bigint;
+    file_id_seed: [] | [bigint];
 }
-export type AllocatedBucketResponse = {
-    'Success' : AllocatedBucketSuccessResult
-  } |
-  { 'AllowanceExceeded' : ProjectedAllowance } |
-  { 'UserNotFound' : null } |
-  { 'BucketUnavailable' : null };
+export type AllocatedBucketResponse =
+    | {
+          Success: AllocatedBucketSuccessResult;
+      }
+    | { AllowanceExceeded: ProjectedAllowance }
+    | { UserNotFound: null }
+    | { BucketUnavailable: null };
 export interface AllocatedBucketSuccessResult {
-  'byte_limit' : bigint,
-  'canister_id' : CanisterId,
-  'bytes_used_after_upload' : bigint,
-  'bytes_used' : bigint,
-  'projected_allowance' : ProjectedAllowance,
-  'chunk_size' : number,
-  'file_id' : FileId,
+    byte_limit: bigint;
+    canister_id: CanisterId;
+    bytes_used_after_upload: bigint;
+    bytes_used: bigint;
+    projected_allowance: ProjectedAllowance;
+    chunk_size: number;
+    file_id: FileId;
 }
 export interface AudioContent {
-  'mime_type' : string,
-  'blob_reference' : [] | [BlobReference],
-  'samples' : [] | [Uint8Array | number[]],
-  'caption' : [] | [string],
-  'duration_ms' : [] | [Milliseconds],
+    mime_type: string;
+    blob_reference: [] | [BlobReference];
+    samples: [] | [Uint8Array | number[]];
+    caption: [] | [string];
+    duration_ms: [] | [Milliseconds];
 }
 export interface AvatarChanged {
-  'changed_by' : UserId,
-  'previous_avatar' : [] | [bigint],
-  'new_avatar' : [] | [bigint],
+    changed_by: UserId;
+    previous_avatar: [] | [bigint];
+    new_avatar: [] | [bigint];
 }
 export interface BannerChanged {
-  'new_banner' : [] | [bigint],
-  'changed_by' : UserId,
-  'previous_banner' : [] | [bigint],
+    new_banner: [] | [bigint];
+    changed_by: UserId;
+    previous_banner: [] | [bigint];
 }
 export interface BlobReference {
-  'blob_id' : bigint,
-  'canister_id' : CanisterId,
+    blob_id: bigint;
+    canister_id: CanisterId;
 }
 export type BlockIndex = bigint;
-export interface BotAdded { 'added_by' : UserId, 'user_id' : UserId }
+export interface BotAdded {
+    added_by: UserId;
+    user_id: UserId;
+}
 export interface BotCommand {
-  'initiator' : UserId,
-  'args' : Array<BotCommandArg>,
-  'meta' : [] | [BotCommandMeta],
-  'name' : string,
+    initiator: UserId;
+    args: Array<BotCommandArg>;
+    meta: [] | [BotCommandMeta];
+    name: string;
 }
-export interface BotCommandArg { 'value' : BotCommandArgValue, 'name' : string }
-export type BotCommandArgValue = { 'User' : UserId } |
-  { 'String' : string } |
-  { 'Boolean' : boolean } |
-  { 'DateTime' : TimestampMillis } |
-  { 'Decimal' : number } |
-  { 'Integer' : bigint };
+export interface BotCommandArg {
+    value: BotCommandArgValue;
+    name: string;
+}
+export type BotCommandArgValue =
+    | { User: UserId }
+    | { String: string }
+    | { Boolean: boolean }
+    | { DateTime: TimestampMillis }
+    | { Decimal: number }
+    | { Integer: bigint };
 export interface BotCommandDefinition {
-  'permissions' : BotPermissions,
-  'default_role' : [] | [GroupRole],
-  'name' : string,
-  'description' : [] | [string],
-  'direct_messages' : [] | [boolean],
-  'placeholder' : [] | [string],
-  'params' : Array<BotCommandParam>,
+    permissions: BotPermissions;
+    default_role: [] | [GroupRole];
+    name: string;
+    description: [] | [string];
+    direct_messages: [] | [boolean];
+    placeholder: [] | [string];
+    params: Array<BotCommandParam>;
 }
-export interface BotCommandMeta { 'timezone' : string, 'language' : string }
+export interface BotCommandMeta {
+    timezone: string;
+    language: string;
+}
 export interface BotCommandParam {
-  'name' : string,
-  'description' : [] | [string],
-  'required' : boolean,
-  'placeholder' : [] | [string],
-  'param_type' : BotCommandParamType,
+    name: string;
+    description: [] | [string];
+    required: boolean;
+    placeholder: [] | [string];
+    param_type: BotCommandParamType;
 }
-export type BotCommandParamType = { 'UserParam' : null } |
-  { 'StringParam' : StringParam } |
-  { 'DateTimeParam' : DateTimeParam } |
-  { 'IntegerParam' : IntegerParam } |
-  { 'DecimalParam' : DecimalParam } |
-  { 'BooleanParam' : null };
+export type BotCommandParamType =
+    | { UserParam: null }
+    | { StringParam: StringParam }
+    | { DateTimeParam: DateTimeParam }
+    | { IntegerParam: IntegerParam }
+    | { DecimalParam: DecimalParam }
+    | { BooleanParam: null };
 export interface BotConfig {
-  'can_be_added_to_groups' : boolean,
-  'is_oc_controlled' : boolean,
-  'supports_direct_messages' : boolean,
+    can_be_added_to_groups: boolean;
+    is_oc_controlled: boolean;
+    supports_direct_messages: boolean;
 }
-export type BotDataEncoding = { 'MsgPack' : null } |
-  { 'Json' : null } |
-  { 'Candid' : null };
-export interface BotGroupConfig { 'permissions' : BotPermissions }
-export type BotInstallationLocation = { 'Group' : CanisterId } |
-  { 'User' : UserId } |
-  { 'Community' : CanisterId };
-export type BotInstallationLocationType = { 'Group' : null } |
-  { 'User' : null } |
-  { 'Community' : null };
+export type BotDataEncoding = { MsgPack: null } | { Json: null } | { Candid: null };
+export interface BotGroupConfig {
+    permissions: BotPermissions;
+}
+export type BotInstallationLocation =
+    | { Group: CanisterId }
+    | { User: UserId }
+    | { Community: CanisterId };
+export type BotInstallationLocationType = { Group: null } | { User: null } | { Community: null };
 export interface BotMessageContext {
-  'command' : [] | [BotCommand],
-  'finalised' : boolean,
+    command: [] | [BotCommand];
+    finalised: boolean;
 }
 export interface BotPermissions {
-  'chat' : number,
-  'community' : number,
-  'message' : number,
+    chat: number;
+    community: number;
+    message: number;
 }
-export interface BotRemoved { 'user_id' : UserId, 'removed_by' : UserId }
-export interface BotUpdated { 'updated_by' : UserId, 'user_id' : UserId }
+export interface BotRemoved {
+    user_id: UserId;
+    removed_by: UserId;
+}
+export interface BotUpdated {
+    updated_by: UserId;
+    user_id: UserId;
+}
 export interface BuildVersion {
-  'major' : number,
-  'minor' : number,
-  'patch' : number,
+    major: number;
+    minor: number;
+    patch: number;
 }
 export interface CallParticipant {
-  'user_id' : UserId,
-  'joined' : TimestampMillis,
+    user_id: UserId;
+    joined: TimestampMillis;
 }
-export interface CanForwardArgs { 'file_hash' : Hash, 'file_size' : bigint }
-export type CanForwardResponse = { 'Success' : ProjectedAllowance } |
-  { 'AllowanceExceeded' : ProjectedAllowance } |
-  { 'UserNotFound' : null };
+export interface CanForwardArgs {
+    file_hash: Hash;
+    file_size: bigint;
+}
+export type CanForwardResponse =
+    | { Success: ProjectedAllowance }
+    | { AllowanceExceeded: ProjectedAllowance }
+    | { UserNotFound: null };
 export type CanisterId = Principal;
 export interface CanisterWasm {
-  'compressed' : boolean,
-  'version' : BuildVersion,
-  'module' : Uint8Array | number[],
+    compressed: boolean;
+    version: BuildVersion;
+    module: Uint8Array | number[];
 }
 export type ChannelId = number;
 export interface ChannelMatch {
-  'id' : ChannelId,
-  'is_public' : boolean,
-  'gate_config' : [] | [AccessGateConfig],
-  'subtype' : [] | [GroupSubtype],
-  'name' : string,
-  'description' : string,
-  'avatar_id' : [] | [bigint],
-  'member_count' : number,
+    id: ChannelId;
+    is_public: boolean;
+    gate_config: [] | [AccessGateConfig];
+    subtype: [] | [GroupSubtype];
+    name: string;
+    description: string;
+    avatar_id: [] | [bigint];
+    member_count: number;
 }
 export interface ChannelMessageNotification {
-  'channel_id' : ChannelId,
-  'community_id' : CommunityId,
-  'image_url' : [] | [string],
-  'sender_display_name' : [] | [string],
-  'sender' : UserId,
-  'channel_name' : string,
-  'community_avatar_id' : [] | [bigint],
-  'community_name' : string,
-  'sender_name' : string,
-  'message_text' : [] | [string],
-  'message_type' : string,
-  'event_index' : EventIndex,
-  'thread_root_message_index' : [] | [MessageIndex],
-  'channel_avatar_id' : [] | [bigint],
-  'crypto_transfer' : [] | [NotificationCryptoTransferDetails],
-  'message_index' : MessageIndex,
+    channel_id: ChannelId;
+    community_id: CommunityId;
+    image_url: [] | [string];
+    sender_display_name: [] | [string];
+    sender: UserId;
+    channel_name: string;
+    community_avatar_id: [] | [bigint];
+    community_name: string;
+    sender_name: string;
+    message_text: [] | [string];
+    message_type: string;
+    event_index: EventIndex;
+    thread_root_message_index: [] | [MessageIndex];
+    channel_avatar_id: [] | [bigint];
+    crypto_transfer: [] | [NotificationCryptoTransferDetails];
+    message_index: MessageIndex;
 }
 export interface ChannelMessageTippedNotification {
-  'tip' : string,
-  'channel_id' : ChannelId,
-  'tipped_by_display_name' : [] | [string],
-  'community_id' : CommunityId,
-  'message_event_index' : EventIndex,
-  'channel_name' : string,
-  'tipped_by' : UserId,
-  'community_avatar_id' : [] | [bigint],
-  'community_name' : string,
-  'tipped_by_name' : string,
-  'thread_root_message_index' : [] | [MessageIndex],
-  'channel_avatar_id' : [] | [bigint],
-  'message_index' : MessageIndex,
+    tip: string;
+    channel_id: ChannelId;
+    tipped_by_display_name: [] | [string];
+    community_id: CommunityId;
+    message_event_index: EventIndex;
+    channel_name: string;
+    tipped_by: UserId;
+    community_avatar_id: [] | [bigint];
+    community_name: string;
+    tipped_by_name: string;
+    thread_root_message_index: [] | [MessageIndex];
+    channel_avatar_id: [] | [bigint];
+    message_index: MessageIndex;
 }
 export interface ChannelReactionAddedNotification {
-  'channel_id' : ChannelId,
-  'community_id' : CommunityId,
-  'added_by_name' : string,
-  'message_event_index' : EventIndex,
-  'added_by' : UserId,
-  'channel_name' : string,
-  'community_avatar_id' : [] | [bigint],
-  'added_by_display_name' : [] | [string],
-  'community_name' : string,
-  'thread_root_message_index' : [] | [MessageIndex],
-  'channel_avatar_id' : [] | [bigint],
-  'reaction' : Reaction,
-  'message_index' : MessageIndex,
+    channel_id: ChannelId;
+    community_id: CommunityId;
+    added_by_name: string;
+    message_event_index: EventIndex;
+    added_by: UserId;
+    channel_name: string;
+    community_avatar_id: [] | [bigint];
+    added_by_display_name: [] | [string];
+    community_name: string;
+    thread_root_message_index: [] | [MessageIndex];
+    channel_avatar_id: [] | [bigint];
+    reaction: Reaction;
+    message_index: MessageIndex;
 }
-export type Chat = { 'Group' : ChatId } |
-  { 'Channel' : [CommunityId, ChannelId] } |
-  { 'Direct' : ChatId };
-export type ChatEvent = { 'Empty' : null } |
-  { 'ParticipantJoined' : ParticipantJoined } |
-  { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
-  { 'GroupChatCreated' : GroupChatCreated } |
-  { 'MessagePinned' : MessagePinned } |
-  { 'UsersInvited' : UsersInvited } |
-  { 'UsersBlocked' : UsersBlocked } |
-  { 'MessageUnpinned' : MessageUnpinned } |
-  { 'FailedToDeserialize' : null } |
-  { 'ParticipantsRemoved' : ParticipantsRemoved } |
-  { 'BotUpdated' : BotUpdated } |
-  { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
-  { 'Message' : Message } |
-  { 'PermissionsChanged' : PermissionsChanged } |
-  { 'MembersAddedToDefaultChannel' : MembersAddedToDefaultChannel } |
-  { 'ChatFrozen' : GroupFrozen } |
-  { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
-  { 'HistoryDeleted' : HistoryDeleted } |
-  { 'UsersUnblocked' : UsersUnblocked } |
-  { 'ChatUnfrozen' : GroupUnfrozen } |
-  { 'ExternalUrlUpdated' : ExternalUrlUpdated } |
-  { 'ParticipantLeft' : ParticipantLeft } |
-  { 'GroupRulesChanged' : GroupRulesChanged } |
-  { 'BotRemoved' : BotRemoved } |
-  { 'GroupNameChanged' : GroupNameChanged } |
-  { 'GroupGateUpdated' : GroupGateUpdated } |
-  { 'RoleChanged' : RoleChanged } |
-  { 'EventsTimeToLiveUpdated' : EventsTimeToLiveUpdated } |
-  { 'BotAdded' : BotAdded } |
-  { 'DirectChatCreated' : DirectChatCreated } |
-  { 'AvatarChanged' : AvatarChanged } |
-  { 'ParticipantsAdded' : ParticipantsAdded };
-export type ChatEventType = { 'NameChanged' : null } |
-  { 'MessageVideoCall' : null } |
-  { 'DisappearingMessagesUpdated' : null } |
-  { 'GateUpdated' : null } |
-  { 'MessageP2pSwapCancelled' : null } |
-  { 'MessagePinned' : null } |
-  { 'UsersInvited' : null } |
-  { 'UsersBlocked' : null } |
-  { 'MessageUnpinned' : null } |
-  { 'MessageOther' : null } |
-  { 'BotUpdated' : null } |
-  { 'MessageP2pSwapCompleted' : null } |
-  { 'MessagePollVote' : null } |
-  { 'Message' : null } |
-  { 'PermissionsChanged' : null } |
-  { 'HistoryDeleted' : null } |
-  {
-    /**
-     * Membership category
-     */
-    'MembersJoined' : null
-  } |
-  { 'MessagePollEnded' : null } |
-  { 'UsersUnblocked' : null } |
-  { 'Unfrozen' : null } |
-  { 'VisibilityChanged' : null } |
-  { 'RulesChanged' : null } |
-  { 'DescriptionChanged' : null } |
-  { 'MessagePrizeClaim' : null } |
-  { 'ExternalUrlUpdated' : null } |
-  { 'InviteCodeChanged' : null } |
-  { 'MessageDeleted' : null } |
-  { 'BotRemoved' : null } |
-  { 'MessageReaction' : null } |
-  { 'MembersLeft' : null } |
-  { 'MessageUndeleted' : null } |
-  { 'RoleChanged' : null } |
-  { 'BotAdded' : null } |
-  {
-    /**
-     * Details category
-     */
-    'Created' : null
-  } |
-  { 'MessageTipped' : null } |
-  { 'Frozen' : null } |
-  { 'MessageEdited' : null } |
-  { 'AvatarChanged' : null };
+export type Chat = { Group: ChatId } | { Channel: [CommunityId, ChannelId] } | { Direct: ChatId };
+export type ChatEvent =
+    | { Empty: null }
+    | { ParticipantJoined: ParticipantJoined }
+    | { GroupDescriptionChanged: GroupDescriptionChanged }
+    | { GroupChatCreated: GroupChatCreated }
+    | { MessagePinned: MessagePinned }
+    | { UsersInvited: UsersInvited }
+    | { UsersBlocked: UsersBlocked }
+    | { MessageUnpinned: MessageUnpinned }
+    | { FailedToDeserialize: null }
+    | { ParticipantsRemoved: ParticipantsRemoved }
+    | { BotUpdated: BotUpdated }
+    | { GroupVisibilityChanged: GroupVisibilityChanged }
+    | { Message: Message }
+    | { PermissionsChanged: PermissionsChanged }
+    | { MembersAddedToDefaultChannel: MembersAddedToDefaultChannel }
+    | { ChatFrozen: GroupFrozen }
+    | { GroupInviteCodeChanged: GroupInviteCodeChanged }
+    | { HistoryDeleted: HistoryDeleted }
+    | { UsersUnblocked: UsersUnblocked }
+    | { ChatUnfrozen: GroupUnfrozen }
+    | { ExternalUrlUpdated: ExternalUrlUpdated }
+    | { ParticipantLeft: ParticipantLeft }
+    | { GroupRulesChanged: GroupRulesChanged }
+    | { BotRemoved: BotRemoved }
+    | { GroupNameChanged: GroupNameChanged }
+    | { GroupGateUpdated: GroupGateUpdated }
+    | { RoleChanged: RoleChanged }
+    | { EventsTimeToLiveUpdated: EventsTimeToLiveUpdated }
+    | { BotAdded: BotAdded }
+    | { DirectChatCreated: DirectChatCreated }
+    | { AvatarChanged: AvatarChanged }
+    | { ParticipantsAdded: ParticipantsAdded };
+export type ChatEventType =
+    | { NameChanged: null }
+    | { MessageVideoCall: null }
+    | { DisappearingMessagesUpdated: null }
+    | { GateUpdated: null }
+    | { MessageP2pSwapCancelled: null }
+    | { MessagePinned: null }
+    | { UsersInvited: null }
+    | { UsersBlocked: null }
+    | { MessageUnpinned: null }
+    | { MessageOther: null }
+    | { BotUpdated: null }
+    | { MessageP2pSwapCompleted: null }
+    | { MessagePollVote: null }
+    | { Message: null }
+    | { PermissionsChanged: null }
+    | { HistoryDeleted: null }
+    | {
+          /**
+           * Membership category
+           */
+          MembersJoined: null;
+      }
+    | { MessagePollEnded: null }
+    | { UsersUnblocked: null }
+    | { Unfrozen: null }
+    | { VisibilityChanged: null }
+    | { RulesChanged: null }
+    | { DescriptionChanged: null }
+    | { MessagePrizeClaim: null }
+    | { ExternalUrlUpdated: null }
+    | { InviteCodeChanged: null }
+    | { MessageDeleted: null }
+    | { BotRemoved: null }
+    | { MessageReaction: null }
+    | { MembersLeft: null }
+    | { MessageUndeleted: null }
+    | { RoleChanged: null }
+    | { BotAdded: null }
+    | {
+          /**
+           * Details category
+           */
+          Created: null;
+      }
+    | { MessageTipped: null }
+    | { Frozen: null }
+    | { MessageEdited: null }
+    | { AvatarChanged: null };
 export interface ChatEventWrapper {
-  'event' : ChatEvent,
-  'timestamp' : TimestampMillis,
-  'index' : EventIndex,
-  'expires_at' : [] | [TimestampMillis],
+    event: ChatEvent;
+    timestamp: TimestampMillis;
+    index: EventIndex;
+    expires_at: [] | [TimestampMillis];
 }
 export type ChatId = CanisterId;
-export interface Chit { 'streak' : number, 'balance' : number }
-export interface ChitEarned {
-  'timestamp' : TimestampMillis,
-  'amount' : number,
-  'reason' : ChitEarnedReason,
+export interface Chit {
+    streak: number;
+    balance: number;
 }
-export interface ChitEarnedGate { 'min_chit_earned' : number }
-export type ChitEarnedReason = { 'DailyClaim' : null } |
-  { 'Achievement' : Achievement } |
-  { 'ExternalAchievement' : string } |
-  { 'MemeContestWinner' : null } |
-  { 'Referral' : ReferralStatus };
-export type CommunityEventType = { 'MemberJoined' : null } |
-  { 'NameChanged' : null } |
-  { 'GateUpdated' : null } |
-  { 'BannerChanged' : null } |
-  { 'PrimaryLanguageChanged' : null } |
-  { 'MessagePinned' : null } |
-  { 'UsersInvited' : null } |
-  { 'UsersBlocked' : null } |
-  { 'MessageUnpinned' : null } |
-  { 'BotUpdated' : null } |
-  { 'ChannelCreated' : null } |
-  { 'ChannelDeleted' : null } |
-  { 'PermissionsChanged' : null } |
-  { 'EventsTTLUpdated' : null } |
-  { 'MemberLeft' : null } |
-  { 'UsersUnblocked' : null } |
-  { 'Unfrozen' : null } |
-  { 'VisibilityChanged' : null } |
-  { 'RulesChanged' : null } |
-  { 'DescriptionChanged' : null } |
-  { 'MembersRemoved' : null } |
-  { 'InviteCodeChanged' : null } |
-  { 'GroupImported' : null } |
-  { 'BotRemoved' : null } |
-  { 'RoleChanged' : null } |
-  { 'BotAdded' : null } |
-  { 'Created' : null } |
-  { 'Frozen' : null } |
-  { 'AvatarChanged' : null };
+export interface ChitEarned {
+    timestamp: TimestampMillis;
+    amount: number;
+    reason: ChitEarnedReason;
+}
+export interface ChitEarnedGate {
+    min_chit_earned: number;
+}
+export type ChitEarnedReason =
+    | { DailyClaim: null }
+    | { Achievement: Achievement }
+    | { ExternalAchievement: string }
+    | { MemeContestWinner: null }
+    | { Referral: ReferralStatus };
+export type CommunityEventType =
+    | { MemberJoined: null }
+    | { NameChanged: null }
+    | { GateUpdated: null }
+    | { BannerChanged: null }
+    | { PrimaryLanguageChanged: null }
+    | { MessagePinned: null }
+    | { UsersInvited: null }
+    | { UsersBlocked: null }
+    | { MessageUnpinned: null }
+    | { BotUpdated: null }
+    | { ChannelCreated: null }
+    | { ChannelDeleted: null }
+    | { PermissionsChanged: null }
+    | { EventsTTLUpdated: null }
+    | { MemberLeft: null }
+    | { UsersUnblocked: null }
+    | { Unfrozen: null }
+    | { VisibilityChanged: null }
+    | { RulesChanged: null }
+    | { DescriptionChanged: null }
+    | { MembersRemoved: null }
+    | { InviteCodeChanged: null }
+    | { GroupImported: null }
+    | { BotRemoved: null }
+    | { RoleChanged: null }
+    | { BotAdded: null }
+    | { Created: null }
+    | { Frozen: null }
+    | { AvatarChanged: null };
 export type CommunityId = CanisterId;
 export interface CommunityMatch {
-  'id' : CommunityId,
-  'gate_config' : [] | [AccessGateConfig],
-  'verified' : boolean,
-  'channel_count' : number,
-  'name' : string,
-  'description' : string,
-  'moderation_flags' : number,
-  'score' : number,
-  'avatar_id' : [] | [bigint],
-  'banner_id' : [] | [bigint],
-  'member_count' : number,
-  'primary_language' : string,
+    id: CommunityId;
+    gate_config: [] | [AccessGateConfig];
+    verified: boolean;
+    channel_count: number;
+    name: string;
+    description: string;
+    moderation_flags: number;
+    score: number;
+    avatar_id: [] | [bigint];
+    banner_id: [] | [bigint];
+    member_count: number;
+    primary_language: string;
 }
 export interface CommunityMember {
-  'role' : CommunityRole,
-  'lapsed' : boolean,
-  'referred_by' : [] | [UserId],
-  'user_id' : UserId,
-  'display_name' : [] | [string],
-  'date_added' : TimestampMillis,
+    role: CommunityRole;
+    lapsed: boolean;
+    referred_by: [] | [UserId];
+    user_id: UserId;
+    display_name: [] | [string];
+    date_added: TimestampMillis;
 }
-export type CommunityPermission = { 'RemoveMembers' : null } |
-  { 'CreatePublicChannel' : null } |
-  { 'InviteUsers' : null } |
-  { 'ManageUserGroups' : null } |
-  { 'UpdateDetails' : null } |
-  { 'CreatePrivateChannel' : null } |
-  { 'ChangeRoles' : null };
-export type CommunityPermissionRole = { 'Owners' : null } |
-  { 'Admins' : null } |
-  { 'Members' : null };
+export type CommunityPermission =
+    | { RemoveMembers: null }
+    | { CreatePublicChannel: null }
+    | { InviteUsers: null }
+    | { ManageUserGroups: null }
+    | { UpdateDetails: null }
+    | { CreatePrivateChannel: null }
+    | { ChangeRoles: null };
+export type CommunityPermissionRole = { Owners: null } | { Admins: null } | { Members: null };
 export interface CommunityPermissions {
-  'create_public_channel' : CommunityPermissionRole,
-  'manage_user_groups' : CommunityPermissionRole,
-  'update_details' : CommunityPermissionRole,
-  'remove_members' : CommunityPermissionRole,
-  'invite_users' : CommunityPermissionRole,
-  'change_roles' : CommunityPermissionRole,
-  'create_private_channel' : CommunityPermissionRole,
+    create_public_channel: CommunityPermissionRole;
+    manage_user_groups: CommunityPermissionRole;
+    update_details: CommunityPermissionRole;
+    remove_members: CommunityPermissionRole;
+    invite_users: CommunityPermissionRole;
+    change_roles: CommunityPermissionRole;
+    create_private_channel: CommunityPermissionRole;
 }
-export type CommunityRole = { 'Member' : null } |
-  { 'Admin' : null } |
-  { 'Owner' : null };
-export type CompletedCryptoTransaction = {
-    'NNS' : NnsCompletedCryptoTransaction
-  } |
-  { 'ICRC1' : Icrc1CompletedCryptoTransaction } |
-  { 'ICRC2' : Icrc2CompletedCryptoTransaction };
+export type CommunityRole = { Member: null } | { Admin: null } | { Owner: null };
+export type CompletedCryptoTransaction =
+    | {
+          NNS: NnsCompletedCryptoTransaction;
+      }
+    | { ICRC1: Icrc1CompletedCryptoTransaction }
+    | { ICRC2: Icrc2CompletedCryptoTransaction };
 export interface CryptoContent {
-  'recipient' : UserId,
-  'caption' : [] | [string],
-  'transfer' : CryptoTransaction,
+    recipient: UserId;
+    caption: [] | [string];
+    transfer: CryptoTransaction;
 }
-export type CryptoTransaction = { 'Failed' : FailedCryptoTransaction } |
-  { 'Completed' : CompletedCryptoTransaction } |
-  { 'Pending' : PendingCryptoTransaction };
-export type Cryptocurrency = { 'InternetComputer' : null } |
-  { 'CHAT' : null } |
-  { 'SNS1' : null } |
-  { 'KINIC' : null } |
-  { 'CKBTC' : null } |
-  { 'Other' : string };
+export type CryptoTransaction =
+    | { Failed: FailedCryptoTransaction }
+    | { Completed: CompletedCryptoTransaction }
+    | { Pending: PendingCryptoTransaction };
+export type Cryptocurrency =
+    | { InternetComputer: null }
+    | { CHAT: null }
+    | { SNS1: null }
+    | { KINIC: null }
+    | { CKBTC: null }
+    | { Other: string };
 export interface CurrentUserSummary {
-  'streak' : number,
-  'max_streak' : number,
-  'username' : string,
-  'total_chit_earned' : number,
-  'profile_background_id' : [] | [bigint],
-  'is_platform_operator' : boolean,
-  'diamond_membership_status' : DiamondMembershipStatusFull,
-  'is_unique_person' : boolean,
-  'hide_online_status' : boolean,
-  'user_id' : UserId,
-  'is_bot' : boolean,
-  'display_name' : [] | [string],
-  'avatar_id' : [] | [bigint],
-  'moderation_flags_enabled' : number,
-  'chit_balance' : number,
-  'is_suspected_bot' : boolean,
-  'suspension_details' : [] | [SuspensionDetails],
-  'is_platform_moderator' : boolean,
-  'diamond_membership_details' : [] | [DiamondMembershipDetails],
+    streak: number;
+    max_streak: number;
+    username: string;
+    total_chit_earned: number;
+    profile_background_id: [] | [bigint];
+    is_platform_operator: boolean;
+    diamond_membership_status: DiamondMembershipStatusFull;
+    is_unique_person: boolean;
+    hide_online_status: boolean;
+    user_id: UserId;
+    is_bot: boolean;
+    display_name: [] | [string];
+    avatar_id: [] | [bigint];
+    moderation_flags_enabled: number;
+    chit_balance: number;
+    is_suspected_bot: boolean;
+    suspension_details: [] | [SuspensionDetails];
+    is_platform_moderator: boolean;
+    diamond_membership_details: [] | [DiamondMembershipDetails];
 }
 export interface CustomMessageContent {
-  'data' : Uint8Array | number[],
-  'kind' : string,
+    data: Uint8Array | number[];
+    kind: string;
 }
 export interface CustomPermission {
-  'subtype' : string,
-  'role' : PermissionRole,
+    subtype: string;
+    role: PermissionRole;
 }
 export type Cycles = bigint;
 export interface CyclesRegistrationFee {
-  'recipient' : Principal,
-  'valid_until' : TimestampMillis,
-  'amount' : Cycles,
+    recipient: Principal;
+    valid_until: TimestampMillis;
+    amount: Cycles;
 }
-export interface DateTimeParam { 'future_only' : boolean }
+export interface DateTimeParam {
+    future_only: boolean;
+}
 export interface DecimalParam {
-  'max_value' : number,
-  'min_value' : number,
-  'choices' : Array<DecimalParamChoice>,
+    max_value: number;
+    min_value: number;
+    choices: Array<DecimalParamChoice>;
 }
-export interface DecimalParamChoice { 'value' : number, 'name' : string }
+export interface DecimalParamChoice {
+    value: number;
+    name: string;
+}
 export interface DeletedContent {
-  'timestamp' : TimestampMillis,
-  'deleted_by' : UserId,
+    timestamp: TimestampMillis;
+    deleted_by: UserId;
 }
 export interface DiamondMembershipDetails {
-  'pay_in_chat' : boolean,
-  'subscription' : DiamondMembershipSubscription,
-  'expires_at' : TimestampMillis,
+    pay_in_chat: boolean;
+    subscription: DiamondMembershipSubscription;
+    expires_at: TimestampMillis;
 }
-export type DiamondMembershipPlanDuration = { 'OneYear' : null } |
-  { 'Lifetime' : null } |
-  { 'ThreeMonths' : null } |
-  { 'OneMonth' : null };
-export type DiamondMembershipStatus = { 'Inactive' : null } |
-  { 'Lifetime' : null } |
-  { 'Active' : null };
-export type DiamondMembershipStatusFull = { 'Inactive' : null } |
-  { 'Lifetime' : null } |
-  { 'Active' : DiamondMembershipDetails };
-export type DiamondMembershipSubscription = { 'OneYear' : null } |
-  { 'ThreeMonths' : null } |
-  { 'Disabled' : null } |
-  { 'OneMonth' : null };
+export type DiamondMembershipPlanDuration =
+    | { OneYear: null }
+    | { Lifetime: null }
+    | { ThreeMonths: null }
+    | { OneMonth: null };
+export type DiamondMembershipStatus = { Inactive: null } | { Lifetime: null } | { Active: null };
+export type DiamondMembershipStatusFull =
+    | { Inactive: null }
+    | { Lifetime: null }
+    | { Active: DiamondMembershipDetails };
+export type DiamondMembershipSubscription =
+    | { OneYear: null }
+    | { ThreeMonths: null }
+    | { Disabled: null }
+    | { OneMonth: null };
 export type DirectChatCreated = {};
 export interface DirectMessageNotification {
-  'image_url' : [] | [string],
-  'sender_display_name' : [] | [string],
-  'sender_avatar_id' : [] | [bigint],
-  'sender' : UserId,
-  'sender_name' : string,
-  'message_text' : [] | [string],
-  'message_type' : string,
-  'event_index' : EventIndex,
-  'thread_root_message_index' : [] | [MessageIndex],
-  'crypto_transfer' : [] | [NotificationCryptoTransferDetails],
-  'message_index' : MessageIndex,
+    image_url: [] | [string];
+    sender_display_name: [] | [string];
+    sender_avatar_id: [] | [bigint];
+    sender: UserId;
+    sender_name: string;
+    message_text: [] | [string];
+    message_type: string;
+    event_index: EventIndex;
+    thread_root_message_index: [] | [MessageIndex];
+    crypto_transfer: [] | [NotificationCryptoTransferDetails];
+    message_index: MessageIndex;
 }
 export interface DirectMessageTippedNotification {
-  'tip' : string,
-  'username' : string,
-  'message_event_index' : EventIndex,
-  'them' : UserId,
-  'display_name' : [] | [string],
-  'user_avatar_id' : [] | [bigint],
-  'thread_root_message_index' : [] | [MessageIndex],
-  'message_index' : MessageIndex,
+    tip: string;
+    username: string;
+    message_event_index: EventIndex;
+    them: UserId;
+    display_name: [] | [string];
+    user_avatar_id: [] | [bigint];
+    thread_root_message_index: [] | [MessageIndex];
+    message_index: MessageIndex;
 }
 export interface DirectReactionAddedNotification {
-  'username' : string,
-  'message_event_index' : EventIndex,
-  'them' : UserId,
-  'display_name' : [] | [string],
-  'user_avatar_id' : [] | [bigint],
-  'thread_root_message_index' : [] | [MessageIndex],
-  'reaction' : Reaction,
-  'message_index' : MessageIndex,
+    username: string;
+    message_event_index: EventIndex;
+    them: UserId;
+    display_name: [] | [string];
+    user_avatar_id: [] | [bigint];
+    thread_root_message_index: [] | [MessageIndex];
+    reaction: Reaction;
+    message_index: MessageIndex;
 }
 export interface Document {
-  'id' : bigint,
-  'data' : Uint8Array | number[],
-  'mime_type' : string,
+    id: bigint;
+    data: Uint8Array | number[];
+    mime_type: string;
 }
-export type DocumentIdUpdate = { 'NoChange' : null } |
-  { 'SetToNone' : null } |
-  { 'SetToSome' : bigint };
-export type DocumentUpdate = { 'NoChange' : null } |
-  { 'SetToNone' : null } |
-  { 'SetToSome' : Document };
+export type DocumentIdUpdate = { NoChange: null } | { SetToNone: null } | { SetToSome: bigint };
+export type DocumentUpdate = { NoChange: null } | { SetToNone: null } | { SetToSome: Document };
 /**
  * Number of nanoseconds between two [Timestamp]s.
  */
 export type Duration = bigint;
 export type EmptyArgs = {};
 export interface EncryptedContent {
-  'encrypted_data' : Uint8Array | number[],
-  'public_key' : Uint8Array | number[],
-  'encrypted_message_key' : Uint8Array | number[],
-  'content_type' : EncryptedMessageContentType,
-  'version' : number,
+    encrypted_data: Uint8Array | number[];
+    public_key: Uint8Array | number[];
+    encrypted_message_key: Uint8Array | number[];
+    content_type: EncryptedMessageContentType;
+    version: number;
 }
-export type EncryptedMessageContentType = { 'Giphy' : null } |
-  { 'File' : null } |
-  { 'Text' : null } |
-  { 'Image' : null } |
-  { 'Custom' : string } |
-  { 'Audio' : null } |
-  { 'Crypto' : null } |
-  { 'Video' : null };
+export type EncryptedMessageContentType =
+    | { Giphy: null }
+    | { File: null }
+    | { Text: null }
+    | { Image: null }
+    | { Custom: string }
+    | { Audio: null }
+    | { Crypto: null }
+    | { Video: null };
 export type EventIndex = number;
 export interface EventsSuccessResult {
-  'expired_message_ranges' : Array<[MessageIndex, MessageIndex]>,
-  'chat_last_updated' : TimestampMillis,
-  'events' : Array<ChatEventWrapper>,
-  'latest_event_index' : number,
-  'unauthorized' : Uint32Array | number[],
-  'expired_event_ranges' : Array<[EventIndex, EventIndex]>,
+    expired_message_ranges: Array<[MessageIndex, MessageIndex]>;
+    chat_last_updated: TimestampMillis;
+    events: Array<ChatEventWrapper>;
+    latest_event_index: number;
+    unauthorized: Uint32Array | number[];
+    expired_event_ranges: Array<[EventIndex, EventIndex]>;
 }
-export type EventsTimeToLiveUpdate = { 'NoChange' : null } |
-  { 'SetToNone' : null } |
-  { 'SetToSome' : Milliseconds };
+export type EventsTimeToLiveUpdate =
+    | { NoChange: null }
+    | { SetToNone: null }
+    | { SetToSome: Milliseconds };
 export interface EventsTimeToLiveUpdated {
-  'new_ttl' : [] | [Milliseconds],
-  'updated_by' : UserId,
+    new_ttl: [] | [Milliseconds];
+    updated_by: UserId;
 }
-export type ExchangeId = { 'ICPSwap' : null };
+export type ExchangeId = { ICPSwap: null };
 export interface ExternalUrlUpdated {
-  'new_url' : [] | [string],
-  'updated_by' : UserId,
+    new_url: [] | [string];
+    updated_by: UserId;
 }
-export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
-  { 'ICRC1' : Icrc1FailedCryptoTransaction } |
-  { 'ICRC2' : Icrc2FailedCryptoTransaction };
+export type FailedCryptoTransaction =
+    | { NNS: NnsFailedCryptoTransaction }
+    | { ICRC1: Icrc1FailedCryptoTransaction }
+    | { ICRC2: Icrc2FailedCryptoTransaction };
 export interface FieldTooLongResult {
-  'length_provided' : number,
-  'max_length' : number,
+    length_provided: number;
+    max_length: number;
 }
 export interface FieldTooShortResult {
-  'length_provided' : number,
-  'min_length' : number,
+    length_provided: number;
+    min_length: number;
 }
 export interface FileContent {
-  'name' : string,
-  'mime_type' : string,
-  'file_size' : number,
-  'blob_reference' : [] | [BlobReference],
-  'caption' : [] | [string],
+    name: string;
+    mime_type: string;
+    file_size: number;
+    blob_reference: [] | [BlobReference];
+    caption: [] | [string];
 }
 export type FileId = bigint;
 export interface FrozenGroupInfo {
-  'timestamp' : TimestampMillis,
-  'frozen_by' : UserId,
-  'reason' : [] | [string],
+    timestamp: TimestampMillis;
+    frozen_by: UserId;
+    reason: [] | [string];
 }
-export type FrozenGroupUpdate = { 'NoChange' : null } |
-  { 'SetToNone' : null } |
-  { 'SetToSome' : FrozenGroupInfo };
-export type GateCheckFailedReason = { 'NotLifetimeDiamondMember' : null } |
-  { 'NotReferredByMember' : null } |
-  { 'NotDiamondMember' : null } |
-  { 'PaymentFailed' : ICRC2_TransferFromError } |
-  { 'InsufficientBalance' : bigint } |
-  { 'NoSnsNeuronsFound' : null } |
-  { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
-  { 'Locked' : null } |
-  { 'NoUniquePersonProof' : null } |
-  { 'FailedVerifiedCredentialCheck' : string } |
-  { 'NoSnsNeuronsWithRequiredStakeFound' : null };
-export type GetIndexPrincipalError = {
-    /**
-     * Any error not covered by the above variants.
-     */
-    'GenericError' : { 'description' : string, 'error_code' : bigint }
-  } |
-  { 'IndexPrincipalNotSet' : null };
+export type FrozenGroupUpdate =
+    | { NoChange: null }
+    | { SetToNone: null }
+    | { SetToSome: FrozenGroupInfo };
+export type GateCheckFailedReason =
+    | { NotLifetimeDiamondMember: null }
+    | { NotReferredByMember: null }
+    | { NotDiamondMember: null }
+    | { PaymentFailed: ICRC2_TransferFromError }
+    | { InsufficientBalance: bigint }
+    | { NoSnsNeuronsFound: null }
+    | { NoSnsNeuronsWithRequiredDissolveDelayFound: null }
+    | { Locked: null }
+    | { NoUniquePersonProof: null }
+    | { FailedVerifiedCredentialCheck: string }
+    | { NoSnsNeuronsWithRequiredStakeFound: null };
+export type GetIndexPrincipalError =
+    | {
+          /**
+           * Any error not covered by the above variants.
+           */
+          GenericError: { description: string; error_code: bigint };
+      }
+    | { IndexPrincipalNotSet: null };
 export interface GiphyContent {
-  'title' : string,
-  'desktop' : GiphyImageVariant,
-  'caption' : [] | [string],
-  'mobile' : GiphyImageVariant,
+    title: string;
+    desktop: GiphyImageVariant;
+    caption: [] | [string];
+    mobile: GiphyImageVariant;
 }
 export interface GiphyImageVariant {
-  'url' : string,
-  'height' : number,
-  'mime_type' : string,
-  'width' : number,
+    url: string;
+    height: number;
+    mime_type: string;
+    width: number;
 }
 export interface GovernanceProposalsSubtype {
-  'is_nns' : boolean,
-  'governance_canister_id' : CanisterId,
+    is_nns: boolean;
+    governance_canister_id: CanisterId;
 }
 export interface GroupCanisterThreadDetails {
-  'root_message_index' : MessageIndex,
-  'last_updated' : TimestampMillis,
-  'latest_event' : EventIndex,
-  'latest_message' : MessageIndex,
+    root_message_index: MessageIndex;
+    last_updated: TimestampMillis;
+    latest_event: EventIndex;
+    latest_message: MessageIndex;
 }
 export interface GroupChatCreated {
-  'name' : string,
-  'description' : string,
-  'created_by' : UserId,
+    name: string;
+    description: string;
+    created_by: UserId;
 }
 export interface GroupDescriptionChanged {
-  'new_description' : string,
-  'previous_description' : string,
-  'changed_by' : UserId,
+    new_description: string;
+    previous_description: string;
+    changed_by: UserId;
 }
-export interface GroupFrozen { 'frozen_by' : UserId, 'reason' : [] | [string] }
+export interface GroupFrozen {
+    frozen_by: UserId;
+    reason: [] | [string];
+}
 export interface GroupGateUpdated {
-  'updated_by' : UserId,
-  'new_gate_config' : [] | [AccessGateConfig],
+    updated_by: UserId;
+    new_gate_config: [] | [AccessGateConfig];
 }
-export type GroupInviteCodeChange = { 'Enabled' : null } |
-  { 'Disabled' : null } |
-  { 'Reset' : null };
+export type GroupInviteCodeChange = { Enabled: null } | { Disabled: null } | { Reset: null };
 export interface GroupInviteCodeChanged {
-  'changed_by' : UserId,
-  'change' : GroupInviteCodeChange,
+    changed_by: UserId;
+    change: GroupInviteCodeChange;
 }
 export interface GroupMatch {
-  'id' : ChatId,
-  'verified' : boolean,
-  'subtype' : [] | [GroupSubtype],
-  'gate' : [] | [AccessGate],
-  'name' : string,
-  'description' : string,
-  'avatar_id' : [] | [bigint],
-  'member_count' : number,
+    id: ChatId;
+    verified: boolean;
+    subtype: [] | [GroupSubtype];
+    gate: [] | [AccessGate];
+    name: string;
+    description: string;
+    avatar_id: [] | [bigint];
+    member_count: number;
 }
 export interface GroupMessageNotification {
-  'image_url' : [] | [string],
-  'group_avatar_id' : [] | [bigint],
-  'sender_display_name' : [] | [string],
-  'sender' : UserId,
-  'sender_name' : string,
-  'message_text' : [] | [string],
-  'message_type' : string,
-  'chat_id' : ChatId,
-  'event_index' : EventIndex,
-  'thread_root_message_index' : [] | [MessageIndex],
-  'group_name' : string,
-  'crypto_transfer' : [] | [NotificationCryptoTransferDetails],
-  'message_index' : MessageIndex,
+    image_url: [] | [string];
+    group_avatar_id: [] | [bigint];
+    sender_display_name: [] | [string];
+    sender: UserId;
+    sender_name: string;
+    message_text: [] | [string];
+    message_type: string;
+    chat_id: ChatId;
+    event_index: EventIndex;
+    thread_root_message_index: [] | [MessageIndex];
+    group_name: string;
+    crypto_transfer: [] | [NotificationCryptoTransferDetails];
+    message_index: MessageIndex;
 }
 export interface GroupMessageTippedNotification {
-  'tip' : string,
-  'tipped_by_display_name' : [] | [string],
-  'group_avatar_id' : [] | [bigint],
-  'message_event_index' : EventIndex,
-  'tipped_by' : UserId,
-  'tipped_by_name' : string,
-  'chat_id' : ChatId,
-  'thread_root_message_index' : [] | [MessageIndex],
-  'group_name' : string,
-  'message_index' : MessageIndex,
+    tip: string;
+    tipped_by_display_name: [] | [string];
+    group_avatar_id: [] | [bigint];
+    message_event_index: EventIndex;
+    tipped_by: UserId;
+    tipped_by_name: string;
+    chat_id: ChatId;
+    thread_root_message_index: [] | [MessageIndex];
+    group_name: string;
+    message_index: MessageIndex;
 }
 export interface GroupNameChanged {
-  'changed_by' : UserId,
-  'new_name' : string,
-  'previous_name' : string,
+    changed_by: UserId;
+    new_name: string;
+    previous_name: string;
 }
-export type GroupPermission = { 'StartVideoCall' : null } |
-  { 'ReadMessages' : null } |
-  { 'DeleteMessages' : null } |
-  { 'RemoveMembers' : null } |
-  { 'UpdateGroup' : null } |
-  { 'ReactToMessages' : null } |
-  { 'AddMembers' : null } |
-  { 'InviteUsers' : null } |
-  { 'MentionAllMembers' : null } |
-  { 'ReadMembership' : null } |
-  { 'ReadChatDetails' : null } |
-  { 'PinMessages' : null } |
-  { 'ChangeRoles' : null };
+export type GroupPermission =
+    | { StartVideoCall: null }
+    | { ReadMessages: null }
+    | { DeleteMessages: null }
+    | { RemoveMembers: null }
+    | { UpdateGroup: null }
+    | { ReactToMessages: null }
+    | { AddMembers: null }
+    | { InviteUsers: null }
+    | { MentionAllMembers: null }
+    | { ReadMembership: null }
+    | { ReadChatDetails: null }
+    | { PinMessages: null }
+    | { ChangeRoles: null };
 export interface GroupPermissions {
-  'mention_all_members' : PermissionRole,
-  'delete_messages' : PermissionRole,
-  'remove_members' : PermissionRole,
-  'update_group' : PermissionRole,
-  'message_permissions' : MessagePermissions,
-  'invite_users' : PermissionRole,
-  'thread_permissions' : [] | [MessagePermissions],
-  'change_roles' : PermissionRole,
-  'start_video_call' : PermissionRole,
-  'add_members' : PermissionRole,
-  'pin_messages' : PermissionRole,
-  'react_to_messages' : PermissionRole,
+    mention_all_members: PermissionRole;
+    delete_messages: PermissionRole;
+    remove_members: PermissionRole;
+    update_group: PermissionRole;
+    message_permissions: MessagePermissions;
+    invite_users: PermissionRole;
+    thread_permissions: [] | [MessagePermissions];
+    change_roles: PermissionRole;
+    start_video_call: PermissionRole;
+    add_members: PermissionRole;
+    pin_messages: PermissionRole;
+    react_to_messages: PermissionRole;
 }
 export interface GroupReactionAddedNotification {
-  'added_by_name' : string,
-  'group_avatar_id' : [] | [bigint],
-  'message_event_index' : EventIndex,
-  'added_by' : UserId,
-  'added_by_display_name' : [] | [string],
-  'chat_id' : ChatId,
-  'thread_root_message_index' : [] | [MessageIndex],
-  'group_name' : string,
-  'reaction' : Reaction,
-  'message_index' : MessageIndex,
+    added_by_name: string;
+    group_avatar_id: [] | [bigint];
+    message_event_index: EventIndex;
+    added_by: UserId;
+    added_by_display_name: [] | [string];
+    chat_id: ChatId;
+    thread_root_message_index: [] | [MessageIndex];
+    group_name: string;
+    reaction: Reaction;
+    message_index: MessageIndex;
 }
-export interface GroupReplyContext { 'event_index' : EventIndex }
-export type GroupRole = { 'Participant' : null } |
-  { 'Admin' : null } |
-  { 'Moderator' : null } |
-  { 'Owner' : null };
+export interface GroupReplyContext {
+    event_index: EventIndex;
+}
+export type GroupRole =
+    | { Participant: null }
+    | { Admin: null }
+    | { Moderator: null }
+    | { Owner: null };
 export interface GroupRulesChanged {
-  'changed_by' : UserId,
-  'enabled' : boolean,
-  'prev_enabled' : boolean,
+    changed_by: UserId;
+    enabled: boolean;
+    prev_enabled: boolean;
 }
 export type GroupSubtype = {
-    'GovernanceProposals' : GovernanceProposalsSubtype
-  };
-export type GroupSubtypeUpdate = { 'NoChange' : null } |
-  { 'SetToNone' : null } |
-  { 'SetToSome' : GroupSubtype };
-export interface GroupUnfrozen { 'unfrozen_by' : UserId }
+    GovernanceProposals: GovernanceProposalsSubtype;
+};
+export type GroupSubtypeUpdate =
+    | { NoChange: null }
+    | { SetToNone: null }
+    | { SetToSome: GroupSubtype };
+export interface GroupUnfrozen {
+    unfrozen_by: UserId;
+}
 export interface GroupVisibilityChanged {
-  'changed_by' : UserId,
-  'public' : [] | [boolean],
-  'messages_visible_to_non_members' : [] | [boolean],
+    changed_by: UserId;
+    public: [] | [boolean];
+    messages_visible_to_non_members: [] | [boolean];
 }
 export type Hash = Uint8Array | number[];
 export interface HistoryDeleted {
-  'before' : TimestampMillis,
-  'deleted_by' : UserId,
+    before: TimestampMillis;
+    deleted_by: UserId;
 }
 export type ICP = Tokens;
 export interface ICPRegistrationFee {
-  'recipient' : AccountIdentifier,
-  'valid_until' : TimestampMillis,
-  'amount' : ICP,
+    recipient: AccountIdentifier;
+    valid_until: TimestampMillis;
+    amount: ICP;
 }
 export interface ICRC1_TransferArgs {
-  'to' : Account,
-  'fee' : [] | [bigint],
-  'memo' : [] | [Uint8Array | number[]],
-  'from_subaccount' : [] | [Subaccount],
-  'created_at_time' : [] | [Timestamp],
-  'amount' : bigint,
+    to: Account;
+    fee: [] | [bigint];
+    memo: [] | [Uint8Array | number[]];
+    from_subaccount: [] | [Subaccount];
+    created_at_time: [] | [Timestamp];
+    amount: bigint;
 }
-export type ICRC1_TransferError = {
-    'GenericError' : { 'message' : string, 'error_code' : bigint }
-  } |
-  { 'TemporarilyUnavailable' : null } |
-  { 'BadBurn' : { 'min_burn_amount' : bigint } } |
-  { 'Duplicate' : { 'duplicate_of' : bigint } } |
-  { 'BadFee' : { 'expected_fee' : bigint } } |
-  { 'CreatedInFuture' : { 'ledger_time' : Timestamp } } |
-  { 'TooOld' : null } |
-  { 'InsufficientFunds' : { 'balance' : bigint } };
+export type ICRC1_TransferError =
+    | {
+          GenericError: { message: string; error_code: bigint };
+      }
+    | { TemporarilyUnavailable: null }
+    | { BadBurn: { min_burn_amount: bigint } }
+    | { Duplicate: { duplicate_of: bigint } }
+    | { BadFee: { expected_fee: bigint } }
+    | { CreatedInFuture: { ledger_time: Timestamp } }
+    | { TooOld: null }
+    | { InsufficientFunds: { balance: bigint } };
 export interface ICRC2_ApproveArgs {
-  'fee' : [] | [bigint],
-  'memo' : [] | [Uint8Array | number[]],
-  'from_subaccount' : [] | [Uint8Array | number[]],
-  'created_at_time' : [] | [bigint],
-  'amount' : bigint,
-  'expected_allowance' : [] | [bigint],
-  'expires_at' : [] | [bigint],
-  'spender' : Account,
+    fee: [] | [bigint];
+    memo: [] | [Uint8Array | number[]];
+    from_subaccount: [] | [Uint8Array | number[]];
+    created_at_time: [] | [bigint];
+    amount: bigint;
+    expected_allowance: [] | [bigint];
+    expires_at: [] | [bigint];
+    spender: Account;
 }
-export type ICRC2_ApproveError = {
-    'GenericError' : { 'message' : string, 'error_code' : bigint }
-  } |
-  { 'TemporarilyUnavailable' : null } |
-  { 'Duplicate' : { 'duplicate_of' : bigint } } |
-  { 'BadFee' : { 'expected_fee' : bigint } } |
-  { 'AllowanceChanged' : { 'current_allowance' : bigint } } |
-  { 'CreatedInFuture' : { 'ledger_time' : bigint } } |
-  { 'TooOld' : null } |
-  { 'Expired' : { 'ledger_time' : bigint } } |
-  { 'InsufficientFunds' : { 'balance' : bigint } };
+export type ICRC2_ApproveError =
+    | {
+          GenericError: { message: string; error_code: bigint };
+      }
+    | { TemporarilyUnavailable: null }
+    | { Duplicate: { duplicate_of: bigint } }
+    | { BadFee: { expected_fee: bigint } }
+    | { AllowanceChanged: { current_allowance: bigint } }
+    | { CreatedInFuture: { ledger_time: bigint } }
+    | { TooOld: null }
+    | { Expired: { ledger_time: bigint } }
+    | { InsufficientFunds: { balance: bigint } };
 export interface ICRC2_TransferFromArgs {
-  'to' : Account,
-  'fee' : [] | [bigint],
-  'spender_subaccount' : [] | [Uint8Array | number[]],
-  'from' : Account,
-  'memo' : [] | [Uint8Array | number[]],
-  'created_at_time' : [] | [bigint],
-  'amount' : bigint,
+    to: Account;
+    fee: [] | [bigint];
+    spender_subaccount: [] | [Uint8Array | number[]];
+    from: Account;
+    memo: [] | [Uint8Array | number[]];
+    created_at_time: [] | [bigint];
+    amount: bigint;
 }
-export type ICRC2_TransferFromError = {
-    'GenericError' : { 'message' : string, 'error_code' : bigint }
-  } |
-  { 'TemporarilyUnavailable' : null } |
-  { 'InsufficientAllowance' : { 'allowance' : bigint } } |
-  { 'BadBurn' : { 'min_burn_amount' : bigint } } |
-  { 'Duplicate' : { 'duplicate_of' : bigint } } |
-  { 'BadFee' : { 'expected_fee' : bigint } } |
-  { 'CreatedInFuture' : { 'ledger_time' : bigint } } |
-  { 'TooOld' : null } |
-  { 'InsufficientFunds' : { 'balance' : bigint } };
+export type ICRC2_TransferFromError =
+    | {
+          GenericError: { message: string; error_code: bigint };
+      }
+    | { TemporarilyUnavailable: null }
+    | { InsufficientAllowance: { allowance: bigint } }
+    | { BadBurn: { min_burn_amount: bigint } }
+    | { Duplicate: { duplicate_of: bigint } }
+    | { BadFee: { expected_fee: bigint } }
+    | { CreatedInFuture: { ledger_time: bigint } }
+    | { TooOld: null }
+    | { InsufficientFunds: { balance: bigint } };
 export interface Icrc1Account {
-  'owner' : Principal,
-  'subaccount' : [] | [Uint8Array | number[]],
+    owner: Principal;
+    subaccount: [] | [Uint8Array | number[]];
 }
-export type Icrc1AccountOrMint = { 'Mint' : null } |
-  { 'Account' : Icrc1Account };
+export type Icrc1AccountOrMint = { Mint: null } | { Account: Icrc1Account };
 export interface Icrc1CompletedCryptoTransaction {
-  'to' : Icrc1AccountOrMint,
-  'fee' : bigint,
-  'created' : TimestampNanos,
-  'block_index' : BlockIndex,
-  'token_symbol' : string,
-  'from' : Icrc1AccountOrMint,
-  'memo' : [] | [Memo],
-  'ledger' : CanisterId,
-  'amount' : bigint,
+    to: Icrc1AccountOrMint;
+    fee: bigint;
+    created: TimestampNanos;
+    block_index: BlockIndex;
+    token_symbol: string;
+    from: Icrc1AccountOrMint;
+    memo: [] | [Memo];
+    ledger: CanisterId;
+    amount: bigint;
 }
 export interface Icrc1FailedCryptoTransaction {
-  'to' : Icrc1AccountOrMint,
-  'fee' : bigint,
-  'created' : TimestampNanos,
-  'token_symbol' : string,
-  'from' : Icrc1AccountOrMint,
-  'memo' : [] | [Memo],
-  'error_message' : string,
-  'ledger' : CanisterId,
-  'amount' : bigint,
+    to: Icrc1AccountOrMint;
+    fee: bigint;
+    created: TimestampNanos;
+    token_symbol: string;
+    from: Icrc1AccountOrMint;
+    memo: [] | [Memo];
+    error_message: string;
+    ledger: CanisterId;
+    amount: bigint;
 }
 export interface Icrc1PendingCryptoTransaction {
-  'to' : Icrc1Account,
-  'fee' : bigint,
-  'created' : TimestampNanos,
-  'token_symbol' : string,
-  'memo' : [] | [Memo],
-  'ledger' : CanisterId,
-  'amount' : bigint,
+    to: Icrc1Account;
+    fee: bigint;
+    created: TimestampNanos;
+    token_symbol: string;
+    memo: [] | [Memo];
+    ledger: CanisterId;
+    amount: bigint;
 }
 export interface Icrc2CompletedCryptoTransaction {
-  'to' : Icrc1AccountOrMint,
-  'fee' : bigint,
-  'created' : TimestampNanos,
-  'block_index' : BlockIndex,
-  'token_symbol' : string,
-  'from' : Icrc1AccountOrMint,
-  'memo' : [] | [Memo],
-  'ledger' : CanisterId,
-  'amount' : bigint,
-  'spender' : UserId,
+    to: Icrc1AccountOrMint;
+    fee: bigint;
+    created: TimestampNanos;
+    block_index: BlockIndex;
+    token_symbol: string;
+    from: Icrc1AccountOrMint;
+    memo: [] | [Memo];
+    ledger: CanisterId;
+    amount: bigint;
+    spender: UserId;
 }
 export interface Icrc2FailedCryptoTransaction {
-  'to' : Icrc1AccountOrMint,
-  'fee' : bigint,
-  'created' : TimestampNanos,
-  'token_symbol' : string,
-  'from' : Icrc1AccountOrMint,
-  'memo' : [] | [Memo],
-  'error_message' : string,
-  'ledger' : CanisterId,
-  'amount' : bigint,
-  'spender' : UserId,
+    to: Icrc1AccountOrMint;
+    fee: bigint;
+    created: TimestampNanos;
+    token_symbol: string;
+    from: Icrc1AccountOrMint;
+    memo: [] | [Memo];
+    error_message: string;
+    ledger: CanisterId;
+    amount: bigint;
+    spender: UserId;
 }
 export interface Icrc2PendingCryptoTransaction {
-  'to' : Icrc1Account,
-  'fee' : bigint,
-  'created' : TimestampNanos,
-  'token_symbol' : string,
-  'from' : Icrc1Account,
-  'memo' : [] | [Memo],
-  'ledger' : CanisterId,
-  'amount' : bigint,
+    to: Icrc1Account;
+    fee: bigint;
+    created: TimestampNanos;
+    token_symbol: string;
+    from: Icrc1Account;
+    memo: [] | [Memo];
+    ledger: CanisterId;
+    amount: bigint;
 }
 export interface ImageContent {
-  'height' : number,
-  'mime_type' : string,
-  'blob_reference' : [] | [BlobReference],
-  'thumbnail_data' : string,
-  'caption' : [] | [string],
-  'width' : number,
+    height: number;
+    mime_type: string;
+    blob_reference: [] | [BlobReference];
+    thumbnail_data: string;
+    caption: [] | [string];
+    width: number;
 }
 export interface IndexedNotification {
-  'value' : NotificationEnvelope,
-  'index' : bigint,
+    value: NotificationEnvelope;
+    index: bigint;
 }
 export interface InstalledBotDetails {
-  'autonomous_permissions' : [] | [BotPermissions],
-  'permissions' : BotPermissions,
-  'added_by' : UserId,
-  'user_id' : UserId,
+    autonomous_permissions: [] | [BotPermissions];
+    permissions: BotPermissions;
+    added_by: UserId;
+    user_id: UserId;
 }
 export interface IntegerParam {
-  'max_value' : bigint,
-  'min_value' : bigint,
-  'choices' : Array<IntegerParamChoice>,
+    max_value: bigint;
+    min_value: bigint;
+    choices: Array<IntegerParamChoice>;
 }
-export interface IntegerParamChoice { 'value' : bigint, 'name' : string }
-export type InvalidPollReason = { 'DuplicateOptions' : null } |
-  { 'TooFewOptions' : number } |
-  { 'TooManyOptions' : number } |
-  { 'OptionTooLong' : number } |
-  { 'EndDateInThePast' : null } |
-  { 'PollsNotValidForDirectChats' : null };
-export interface MembersAddedToDefaultChannel { 'count' : number }
+export interface IntegerParamChoice {
+    value: bigint;
+    name: string;
+}
+export type InvalidPollReason =
+    | { DuplicateOptions: null }
+    | { TooFewOptions: number }
+    | { TooManyOptions: number }
+    | { OptionTooLong: number }
+    | { EndDateInThePast: null }
+    | { PollsNotValidForDirectChats: null };
+export interface MembersAddedToDefaultChannel {
+    count: number;
+}
 export type Memo = Uint8Array | number[];
 export interface Mention {
-  'message_id' : MessageId,
-  'event_index' : EventIndex,
-  'thread_root_message_index' : [] | [MessageIndex],
-  'message_index' : MessageIndex,
+    message_id: MessageId;
+    event_index: EventIndex;
+    thread_root_message_index: [] | [MessageIndex];
+    message_index: MessageIndex;
 }
 export interface Message {
-  'forwarded' : boolean,
-  'content' : MessageContent,
-  'edited' : boolean,
-  'block_level_markdown' : boolean,
-  'tips' : Array<[CanisterId, Array<[UserId, bigint]>]>,
-  'sender' : UserId,
-  'thread_summary' : [] | [ThreadSummary],
-  'sender_context' : [] | [SenderContext],
-  'message_id' : MessageId,
-  'replies_to' : [] | [ReplyContext],
-  'reactions' : Array<[string, Array<UserId>]>,
-  'message_index' : MessageIndex,
+    forwarded: boolean;
+    content: MessageContent;
+    edited: boolean;
+    block_level_markdown: boolean;
+    tips: Array<[CanisterId, Array<[UserId, bigint]>]>;
+    sender: UserId;
+    thread_summary: [] | [ThreadSummary];
+    sender_context: [] | [SenderContext];
+    message_id: MessageId;
+    replies_to: [] | [ReplyContext];
+    reactions: Array<[string, Array<UserId>]>;
+    message_index: MessageIndex;
 }
-export type MessageContent = { 'VideoCall' : VideoCallContent } |
-  { 'ReportedMessage' : ReportedMessage } |
-  { 'Encrypted' : EncryptedContent } |
-  { 'Giphy' : GiphyContent } |
-  { 'File' : FileContent } |
-  { 'Poll' : PollContent } |
-  { 'Text' : TextContent } |
-  { 'P2PSwap' : P2PSwapContent } |
-  { 'Image' : ImageContent } |
-  { 'Prize' : PrizeContent } |
-  { 'Custom' : CustomMessageContent } |
-  { 'GovernanceProposal' : ProposalContent } |
-  { 'PrizeWinner' : PrizeWinnerContent } |
-  { 'Audio' : AudioContent } |
-  { 'Crypto' : CryptoContent } |
-  { 'Video' : VideoContent } |
-  { 'Deleted' : DeletedContent } |
-  { 'MessageReminderCreated' : MessageReminderCreated } |
-  { 'MessageReminder' : MessageReminder };
-export type MessageContentInitial = { 'Encrypted' : EncryptedContent } |
-  { 'Giphy' : GiphyContent } |
-  { 'File' : FileContent } |
-  { 'Poll' : PollContent } |
-  { 'Text' : TextContent } |
-  { 'P2PSwap' : P2PSwapContentInitial } |
-  { 'Image' : ImageContent } |
-  { 'Prize' : PrizeContentInitial } |
-  { 'Custom' : CustomMessageContent } |
-  { 'GovernanceProposal' : ProposalContent } |
-  { 'Audio' : AudioContent } |
-  { 'Crypto' : CryptoContent } |
-  { 'Video' : VideoContent } |
-  { 'Deleted' : DeletedContent } |
-  { 'MessageReminderCreated' : MessageReminderCreated } |
-  { 'MessageReminder' : MessageReminder };
+export type MessageContent =
+    | { VideoCall: VideoCallContent }
+    | { ReportedMessage: ReportedMessage }
+    | { Encrypted: EncryptedContent }
+    | { Giphy: GiphyContent }
+    | { File: FileContent }
+    | { Poll: PollContent }
+    | { Text: TextContent }
+    | { P2PSwap: P2PSwapContent }
+    | { Image: ImageContent }
+    | { Prize: PrizeContent }
+    | { Custom: CustomMessageContent }
+    | { GovernanceProposal: ProposalContent }
+    | { PrizeWinner: PrizeWinnerContent }
+    | { Audio: AudioContent }
+    | { Crypto: CryptoContent }
+    | { Video: VideoContent }
+    | { Deleted: DeletedContent }
+    | { MessageReminderCreated: MessageReminderCreated }
+    | { MessageReminder: MessageReminder };
+export type MessageContentInitial =
+    | { Encrypted: EncryptedContent }
+    | { Giphy: GiphyContent }
+    | { File: FileContent }
+    | { Poll: PollContent }
+    | { Text: TextContent }
+    | { P2PSwap: P2PSwapContentInitial }
+    | { Image: ImageContent }
+    | { Prize: PrizeContentInitial }
+    | { Custom: CustomMessageContent }
+    | { GovernanceProposal: ProposalContent }
+    | { Audio: AudioContent }
+    | { Crypto: CryptoContent }
+    | { Video: VideoContent }
+    | { Deleted: DeletedContent }
+    | { MessageReminderCreated: MessageReminderCreated }
+    | { MessageReminder: MessageReminder };
 export interface MessageEventWrapper {
-  'event' : Message,
-  'timestamp' : TimestampMillis,
-  'index' : EventIndex,
-  'expires_at' : [] | [TimestampMillis],
+    event: Message;
+    timestamp: TimestampMillis;
+    index: EventIndex;
+    expires_at: [] | [TimestampMillis];
 }
 export type MessageId = bigint;
 export type MessageIndex = number;
 export interface MessageIndexRange {
-  'end' : MessageIndex,
-  'start' : MessageIndex,
+    end: MessageIndex;
+    start: MessageIndex;
 }
 export interface MessageMatch {
-  'score' : number,
-  'message_index' : MessageIndex,
+    score: number;
+    message_index: MessageIndex;
 }
-export type MessagePermission = { 'VideoCall' : null } |
-  { 'Giphy' : null } |
-  { 'File' : null } |
-  { 'Poll' : null } |
-  { 'Text' : null } |
-  { 'Image' : null } |
-  { 'Prize' : null } |
-  { 'P2pSwap' : null } |
-  { 'Audio' : null } |
-  { 'Crypto' : null } |
-  { 'Video' : null };
+export type MessagePermission =
+    | { VideoCall: null }
+    | { Giphy: null }
+    | { File: null }
+    | { Poll: null }
+    | { Text: null }
+    | { Image: null }
+    | { Prize: null }
+    | { P2pSwap: null }
+    | { Audio: null }
+    | { Crypto: null }
+    | { Video: null };
 export interface MessagePermissions {
-  'audio' : [] | [PermissionRole],
-  'video' : [] | [PermissionRole],
-  'video_call' : [] | [PermissionRole],
-  'custom' : Array<CustomPermission>,
-  'file' : [] | [PermissionRole],
-  'poll' : [] | [PermissionRole],
-  'text' : [] | [PermissionRole],
-  'crypto' : [] | [PermissionRole],
-  'giphy' : [] | [PermissionRole],
-  'default' : PermissionRole,
-  'image' : [] | [PermissionRole],
-  'prize' : [] | [PermissionRole],
-  'p2p_swap' : [] | [PermissionRole],
+    audio: [] | [PermissionRole];
+    video: [] | [PermissionRole];
+    video_call: [] | [PermissionRole];
+    custom: Array<CustomPermission>;
+    file: [] | [PermissionRole];
+    poll: [] | [PermissionRole];
+    text: [] | [PermissionRole];
+    crypto: [] | [PermissionRole];
+    giphy: [] | [PermissionRole];
+    default: PermissionRole;
+    image: [] | [PermissionRole];
+    prize: [] | [PermissionRole];
+    p2p_swap: [] | [PermissionRole];
 }
 export interface MessagePinned {
-  'pinned_by' : UserId,
-  'message_index' : MessageIndex,
+    pinned_by: UserId;
+    message_index: MessageIndex;
 }
 export interface MessageReminder {
-  'notes' : [] | [string],
-  'reminder_id' : bigint,
+    notes: [] | [string];
+    reminder_id: bigint;
 }
 export interface MessageReminderCreated {
-  'hidden' : boolean,
-  'notes' : [] | [string],
-  'remind_at' : TimestampMillis,
-  'reminder_id' : bigint,
+    hidden: boolean;
+    notes: [] | [string];
+    remind_at: TimestampMillis;
+    reminder_id: bigint;
 }
 export interface MessageReport {
-  'notes' : [] | [string],
-  'timestamp' : TimestampMillis,
-  'reported_by' : UserId,
-  'reason_code' : number,
+    notes: [] | [string];
+    timestamp: TimestampMillis;
+    reported_by: UserId;
+    reason_code: number;
 }
 export interface MessageUnpinned {
-  'due_to_message_deleted' : boolean,
-  'unpinned_by' : UserId,
-  'message_index' : MessageIndex,
+    due_to_message_deleted: boolean;
+    unpinned_by: UserId;
+    message_index: MessageIndex;
 }
 export interface MessagesSuccessResult {
-  'messages' : Array<MessageEventWrapper>,
-  'chat_last_updated' : TimestampMillis,
-  'latest_event_index' : EventIndex,
+    messages: Array<MessageEventWrapper>;
+    chat_last_updated: TimestampMillis;
+    latest_event_index: EventIndex;
 }
 export type Milliseconds = bigint;
-export type MultiUserChat = { 'Group' : ChatId } |
-  { 'Channel' : [CommunityId, ChannelId] };
+export type MultiUserChat = { Group: ChatId } | { Channel: [CommunityId, ChannelId] };
 export interface NnsCompletedCryptoTransaction {
-  'to' : NnsCryptoAccount,
-  'fee' : Tokens,
-  'created' : TimestampNanos,
-  'transaction_hash' : TransactionHash,
-  'block_index' : BlockIndex,
-  'token_symbol' : string,
-  'from' : NnsCryptoAccount,
-  'memo' : bigint,
-  'ledger' : CanisterId,
-  'amount' : Tokens,
+    to: NnsCryptoAccount;
+    fee: Tokens;
+    created: TimestampNanos;
+    transaction_hash: TransactionHash;
+    block_index: BlockIndex;
+    token_symbol: string;
+    from: NnsCryptoAccount;
+    memo: bigint;
+    ledger: CanisterId;
+    amount: Tokens;
 }
-export type NnsCryptoAccount = { 'Mint' : null } |
-  { 'Account' : AccountIdentifier };
+export type NnsCryptoAccount = { Mint: null } | { Account: AccountIdentifier };
 export interface NnsFailedCryptoTransaction {
-  'to' : NnsCryptoAccount,
-  'fee' : Tokens,
-  'created' : TimestampNanos,
-  'transaction_hash' : TransactionHash,
-  'token_symbol' : string,
-  'from' : NnsCryptoAccount,
-  'memo' : bigint,
-  'error_message' : string,
-  'ledger' : CanisterId,
-  'amount' : Tokens,
+    to: NnsCryptoAccount;
+    fee: Tokens;
+    created: TimestampNanos;
+    transaction_hash: TransactionHash;
+    token_symbol: string;
+    from: NnsCryptoAccount;
+    memo: bigint;
+    error_message: string;
+    ledger: CanisterId;
+    amount: Tokens;
 }
 export type NnsNeuronId = bigint;
 export interface NnsPendingCryptoTransaction {
-  'to' : NnsUserOrAccount,
-  'fee' : [] | [Tokens],
-  'created' : TimestampNanos,
-  'token_symbol' : string,
-  'memo' : [] | [bigint],
-  'ledger' : CanisterId,
-  'amount' : Tokens,
+    to: NnsUserOrAccount;
+    fee: [] | [Tokens];
+    created: TimestampNanos;
+    token_symbol: string;
+    memo: [] | [bigint];
+    ledger: CanisterId;
+    amount: Tokens;
 }
 export interface NnsProposal {
-  'id' : ProposalId,
-  'url' : string,
-  'status' : ProposalDecisionStatus,
-  'payload_text_rendering' : [] | [string],
-  'tally' : Tally,
-  'title' : string,
-  'created' : TimestampMillis,
-  'topic' : number,
-  'last_updated' : TimestampMillis,
-  'deadline' : TimestampMillis,
-  'reward_status' : ProposalRewardStatus,
-  'summary' : string,
-  'proposer' : NnsNeuronId,
+    id: ProposalId;
+    url: string;
+    status: ProposalDecisionStatus;
+    payload_text_rendering: [] | [string];
+    tally: Tally;
+    title: string;
+    created: TimestampMillis;
+    topic: number;
+    last_updated: TimestampMillis;
+    deadline: TimestampMillis;
+    reward_status: ProposalRewardStatus;
+    summary: string;
+    proposer: NnsNeuronId;
 }
-export type NnsUserOrAccount = { 'User' : UserId } |
-  { 'Account' : AccountIdentifier };
-export type Notification = {
-    'GroupReactionAdded' : GroupReactionAddedNotification
-  } |
-  { 'ChannelMessageTipped' : ChannelMessageTippedNotification } |
-  { 'DirectMessageTipped' : DirectMessageTippedNotification } |
-  { 'DirectMessage' : DirectMessageNotification } |
-  { 'ChannelReactionAdded' : ChannelReactionAddedNotification } |
-  { 'DirectReactionAdded' : DirectReactionAddedNotification } |
-  { 'GroupMessage' : GroupMessageNotification } |
-  { 'GroupMessageTipped' : GroupMessageTippedNotification } |
-  { 'AddedToChannel' : AddedToChannelNotification } |
-  { 'ChannelMessage' : ChannelMessageNotification };
+export type NnsUserOrAccount = { User: UserId } | { Account: AccountIdentifier };
+export type Notification =
+    | {
+          GroupReactionAdded: GroupReactionAddedNotification;
+      }
+    | { ChannelMessageTipped: ChannelMessageTippedNotification }
+    | { DirectMessageTipped: DirectMessageTippedNotification }
+    | { DirectMessage: DirectMessageNotification }
+    | { ChannelReactionAdded: ChannelReactionAddedNotification }
+    | { DirectReactionAdded: DirectReactionAddedNotification }
+    | { GroupMessage: GroupMessageNotification }
+    | { GroupMessageTipped: GroupMessageTippedNotification }
+    | { AddedToChannel: AddedToChannelNotification }
+    | { ChannelMessage: ChannelMessageNotification };
 export interface NotificationCryptoTransferDetails {
-  'recipient' : UserId,
-  'ledger' : CanisterId,
-  'recipient_username' : [] | [string],
-  'amount' : bigint,
-  'symbol' : string,
+    recipient: UserId;
+    ledger: CanisterId;
+    recipient_username: [] | [string];
+    amount: bigint;
+    symbol: string;
 }
 export interface NotificationEnvelope {
-  'notification_bytes' : Uint8Array | number[],
-  'recipients' : Array<UserId>,
-  'timestamp' : TimestampMillis,
+    notification_bytes: Uint8Array | number[];
+    recipients: Array<UserId>;
+    timestamp: TimestampMillis;
 }
 export type OCError = [number, [] | [string]];
 export interface OptionalCommunityPermissions {
-  'create_public_channel' : [] | [CommunityPermissionRole],
-  'manage_user_groups' : [] | [CommunityPermissionRole],
-  'update_details' : [] | [CommunityPermissionRole],
-  'remove_members' : [] | [CommunityPermissionRole],
-  'invite_users' : [] | [CommunityPermissionRole],
-  'change_roles' : [] | [CommunityPermissionRole],
-  'create_private_channel' : [] | [CommunityPermissionRole],
+    create_public_channel: [] | [CommunityPermissionRole];
+    manage_user_groups: [] | [CommunityPermissionRole];
+    update_details: [] | [CommunityPermissionRole];
+    remove_members: [] | [CommunityPermissionRole];
+    invite_users: [] | [CommunityPermissionRole];
+    change_roles: [] | [CommunityPermissionRole];
+    create_private_channel: [] | [CommunityPermissionRole];
 }
 export interface OptionalGroupPermissions {
-  'mention_all_members' : [] | [PermissionRole],
-  'delete_messages' : [] | [PermissionRole],
-  'remove_members' : [] | [PermissionRole],
-  'update_group' : [] | [PermissionRole],
-  'message_permissions' : [] | [OptionalMessagePermissions],
-  'invite_users' : [] | [PermissionRole],
-  'thread_permissions' : OptionalMessagePermissionsUpdate,
-  'change_roles' : [] | [PermissionRole],
-  'start_video_call' : [] | [PermissionRole],
-  'add_members' : [] | [PermissionRole],
-  'pin_messages' : [] | [PermissionRole],
-  'react_to_messages' : [] | [PermissionRole],
+    mention_all_members: [] | [PermissionRole];
+    delete_messages: [] | [PermissionRole];
+    remove_members: [] | [PermissionRole];
+    update_group: [] | [PermissionRole];
+    message_permissions: [] | [OptionalMessagePermissions];
+    invite_users: [] | [PermissionRole];
+    thread_permissions: OptionalMessagePermissionsUpdate;
+    change_roles: [] | [PermissionRole];
+    start_video_call: [] | [PermissionRole];
+    add_members: [] | [PermissionRole];
+    pin_messages: [] | [PermissionRole];
+    react_to_messages: [] | [PermissionRole];
 }
 export interface OptionalMessagePermissions {
-  'custom_updated' : Array<CustomPermission>,
-  'audio' : PermissionRoleUpdate,
-  'video' : PermissionRoleUpdate,
-  'video_call' : PermissionRoleUpdate,
-  'file' : PermissionRoleUpdate,
-  'poll' : PermissionRoleUpdate,
-  'text' : PermissionRoleUpdate,
-  'crypto' : PermissionRoleUpdate,
-  'giphy' : PermissionRoleUpdate,
-  'custom_deleted' : Array<string>,
-  'default' : [] | [PermissionRole],
-  'image' : PermissionRoleUpdate,
-  'prize' : PermissionRoleUpdate,
-  'p2p_swap' : PermissionRoleUpdate,
+    custom_updated: Array<CustomPermission>;
+    audio: PermissionRoleUpdate;
+    video: PermissionRoleUpdate;
+    video_call: PermissionRoleUpdate;
+    file: PermissionRoleUpdate;
+    poll: PermissionRoleUpdate;
+    text: PermissionRoleUpdate;
+    crypto: PermissionRoleUpdate;
+    giphy: PermissionRoleUpdate;
+    custom_deleted: Array<string>;
+    default: [] | [PermissionRole];
+    image: PermissionRoleUpdate;
+    prize: PermissionRoleUpdate;
+    p2p_swap: PermissionRoleUpdate;
 }
-export type OptionalMessagePermissionsUpdate = { 'NoChange' : null } |
-  { 'SetToNone' : null } |
-  { 'SetToSome' : OptionalMessagePermissions };
+export type OptionalMessagePermissionsUpdate =
+    | { NoChange: null }
+    | { SetToNone: null }
+    | { SetToSome: OptionalMessagePermissions };
 export interface P2PSwapAccepted {
-  'accepted_by' : UserId,
-  'token1_txn_in' : bigint,
+    accepted_by: UserId;
+    token1_txn_in: bigint;
 }
-export interface P2PSwapCancelled { 'token0_txn_out' : [] | [bigint] }
+export interface P2PSwapCancelled {
+    token0_txn_out: [] | [bigint];
+}
 export interface P2PSwapCompleted {
-  'accepted_by' : UserId,
-  'token1_txn_out' : bigint,
-  'token0_txn_out' : bigint,
-  'token1_txn_in' : bigint,
+    accepted_by: UserId;
+    token1_txn_out: bigint;
+    token0_txn_out: bigint;
+    token1_txn_in: bigint;
 }
 export interface P2PSwapContent {
-  'status' : P2PSwapStatus,
-  'token0_txn_in' : bigint,
-  'swap_id' : number,
-  'token0_amount' : bigint,
-  'token0' : TokenInfo,
-  'token1' : TokenInfo,
-  'caption' : [] | [string],
-  'token1_amount' : bigint,
-  'expires_at' : TimestampMillis,
+    status: P2PSwapStatus;
+    token0_txn_in: bigint;
+    swap_id: number;
+    token0_amount: bigint;
+    token0: TokenInfo;
+    token1: TokenInfo;
+    caption: [] | [string];
+    token1_amount: bigint;
+    expires_at: TimestampMillis;
 }
 export interface P2PSwapContentInitial {
-  'token0_amount' : bigint,
-  'token0' : TokenInfo,
-  'token1' : TokenInfo,
-  'caption' : [] | [string],
-  'token1_amount' : bigint,
-  'expires_in' : Milliseconds,
+    token0_amount: bigint;
+    token0: TokenInfo;
+    token1: TokenInfo;
+    caption: [] | [string];
+    token1_amount: bigint;
+    expires_in: Milliseconds;
 }
 export type P2PSwapExpired = P2PSwapCancelled;
-export interface P2PSwapReserved { 'reserved_by' : UserId }
-export type P2PSwapStatus = { 'Reserved' : P2PSwapReserved } |
-  { 'Open' : null } |
-  { 'Accepted' : P2PSwapAccepted } |
-  { 'Cancelled' : P2PSwapCancelled } |
-  { 'Completed' : P2PSwapCompleted } |
-  { 'Expired' : P2PSwapExpired };
+export interface P2PSwapReserved {
+    reserved_by: UserId;
+}
+export type P2PSwapStatus =
+    | { Reserved: P2PSwapReserved }
+    | { Open: null }
+    | { Accepted: P2PSwapAccepted }
+    | { Cancelled: P2PSwapCancelled }
+    | { Completed: P2PSwapCompleted }
+    | { Expired: P2PSwapExpired };
 export interface Participant {
-  'role' : GroupRole,
-  'lapsed' : boolean,
-  'user_id' : UserId,
-  'date_added' : TimestampMillis,
+    role: GroupRole;
+    lapsed: boolean;
+    user_id: UserId;
+    date_added: TimestampMillis;
 }
 export interface ParticipantJoined {
-  'user_id' : UserId,
-  'invited_by' : [] | [UserId],
+    user_id: UserId;
+    invited_by: [] | [UserId];
 }
-export interface ParticipantLeft { 'user_id' : UserId }
+export interface ParticipantLeft {
+    user_id: UserId;
+}
 export interface ParticipantsAdded {
-  'user_ids' : Array<UserId>,
-  'unblocked' : Array<UserId>,
-  'added_by' : UserId,
+    user_ids: Array<UserId>;
+    unblocked: Array<UserId>;
+    added_by: UserId;
 }
 export interface ParticipantsRemoved {
-  'user_ids' : Array<UserId>,
-  'removed_by' : UserId,
+    user_ids: Array<UserId>;
+    removed_by: UserId;
 }
 export interface PaymentGate {
-  'fee' : bigint,
-  'ledger_canister_id' : CanisterId,
-  'amount' : bigint,
+    fee: bigint;
+    ledger_canister_id: CanisterId;
+    amount: bigint;
 }
-export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
-  { 'ICRC1' : Icrc1PendingCryptoTransaction } |
-  { 'ICRC2' : Icrc2PendingCryptoTransaction };
-export type PermissionRole = { 'None' : null } |
-  { 'Moderators' : null } |
-  { 'Owner' : null } |
-  { 'Admins' : null } |
-  { 'Members' : null };
-export type PermissionRoleUpdate = { 'NoChange' : null } |
-  { 'SetToNone' : null } |
-  { 'SetToSome' : PermissionRole };
+export type PendingCryptoTransaction =
+    | { NNS: NnsPendingCryptoTransaction }
+    | { ICRC1: Icrc1PendingCryptoTransaction }
+    | { ICRC2: Icrc2PendingCryptoTransaction };
+export type PermissionRole =
+    | { None: null }
+    | { Moderators: null }
+    | { Owner: null }
+    | { Admins: null }
+    | { Members: null };
+export type PermissionRoleUpdate =
+    | { NoChange: null }
+    | { SetToNone: null }
+    | { SetToSome: PermissionRole };
 export interface PermissionsChanged {
-  'changed_by' : UserId,
-  'old_permissions_v2' : GroupPermissions,
-  'new_permissions_v2' : GroupPermissions,
+    changed_by: UserId;
+    old_permissions_v2: GroupPermissions;
+    new_permissions_v2: GroupPermissions;
 }
-export type PinnedMessageUpdate = { 'NoChange' : null } |
-  { 'SetToNone' : null } |
-  { 'SetToSome' : MessageIndex };
+export type PinnedMessageUpdate =
+    | { NoChange: null }
+    | { SetToNone: null }
+    | { SetToSome: MessageIndex };
 export interface PollConfig {
-  'allow_multiple_votes_per_user' : boolean,
-  'text' : [] | [string],
-  'show_votes_before_end_date' : boolean,
-  'end_date' : [] | [TimestampMillis],
-  'anonymous' : boolean,
-  'allow_user_to_change_vote' : boolean,
-  'options' : Array<string>,
+    allow_multiple_votes_per_user: boolean;
+    text: [] | [string];
+    show_votes_before_end_date: boolean;
+    end_date: [] | [TimestampMillis];
+    anonymous: boolean;
+    allow_user_to_change_vote: boolean;
+    options: Array<string>;
 }
 export interface PollContent {
-  'votes' : PollVotes,
-  'ended' : boolean,
-  'config' : PollConfig,
+    votes: PollVotes;
+    ended: boolean;
+    config: PollConfig;
 }
 export interface PollVotes {
-  'total' : TotalPollVotes,
-  'user' : Uint32Array | number[],
+    total: TotalPollVotes;
+    user: Uint32Array | number[];
 }
 export interface PrizeContent {
-  'min_chit_earned' : number,
-  'winner_count' : number,
-  'streak_only' : number,
-  'requires_captcha' : boolean,
-  'token_symbol' : string,
-  'lifetime_diamond_only' : boolean,
-  'end_date' : TimestampMillis,
-  'prizes_remaining' : number,
-  'ledger' : CanisterId,
-  'prizes_pending' : number,
-  'caption' : [] | [string],
-  'diamond_only' : boolean,
-  'unique_person_only' : boolean,
-  'winners' : Array<UserId>,
-  'user_is_winner' : boolean,
+    min_chit_earned: number;
+    winner_count: number;
+    streak_only: number;
+    requires_captcha: boolean;
+    token_symbol: string;
+    lifetime_diamond_only: boolean;
+    end_date: TimestampMillis;
+    prizes_remaining: number;
+    ledger: CanisterId;
+    prizes_pending: number;
+    caption: [] | [string];
+    diamond_only: boolean;
+    unique_person_only: boolean;
+    winners: Array<UserId>;
+    user_is_winner: boolean;
 }
 export interface PrizeContentInitial {
-  'prizes_v2' : Array<bigint>,
-  'streak_only' : number,
-  'requires_captcha' : boolean,
-  'lifetime_diamond_only' : boolean,
-  'end_date' : TimestampMillis,
-  'caption' : [] | [string],
-  'transfer' : CryptoTransaction,
-  'diamond_only' : boolean,
-  'unique_person_only' : boolean,
+    prizes_v2: Array<bigint>;
+    streak_only: number;
+    requires_captcha: boolean;
+    lifetime_diamond_only: boolean;
+    end_date: TimestampMillis;
+    caption: [] | [string];
+    transfer: CryptoTransaction;
+    diamond_only: boolean;
+    unique_person_only: boolean;
 }
 export interface PrizeWinnerContent {
-  'transaction' : CompletedCryptoTransaction,
-  'winner' : UserId,
-  'prize_message' : MessageIndex,
+    transaction: CompletedCryptoTransaction;
+    winner: UserId;
+    prize_message: MessageIndex;
 }
 export interface ProjectedAllowance {
-  'bytes_used_after_operation' : bigint,
-  'byte_limit' : bigint,
-  'bytes_used_after_upload' : bigint,
-  'bytes_used' : bigint,
+    bytes_used_after_operation: bigint;
+    byte_limit: bigint;
+    bytes_used_after_upload: bigint;
+    bytes_used: bigint;
 }
-export type Proposal = { 'NNS' : NnsProposal } |
-  { 'SNS' : SnsProposal };
+export type Proposal = { NNS: NnsProposal } | { SNS: SnsProposal };
 export interface ProposalContent {
-  'my_vote' : [] | [boolean],
-  'governance_canister_id' : CanisterId,
-  'proposal' : Proposal,
+    my_vote: [] | [boolean];
+    governance_canister_id: CanisterId;
+    proposal: Proposal;
 }
-export type ProposalDecisionStatus = { 'Failed' : null } |
-  { 'Open' : null } |
-  { 'Rejected' : null } |
-  { 'Executed' : null } |
-  { 'Adopted' : null } |
-  { 'Unspecified' : null };
+export type ProposalDecisionStatus =
+    | { Failed: null }
+    | { Open: null }
+    | { Rejected: null }
+    | { Executed: null }
+    | { Adopted: null }
+    | { Unspecified: null };
 export type ProposalId = bigint;
-export type ProposalRewardStatus = { 'ReadyToSettle' : null } |
-  { 'AcceptVotes' : null } |
-  { 'Unspecified' : null } |
-  { 'Settled' : null };
+export type ProposalRewardStatus =
+    | { ReadyToSettle: null }
+    | { AcceptVotes: null }
+    | { Unspecified: null }
+    | { Settled: null };
 export interface PublicGroupSummary {
-  'is_public' : boolean,
-  'gate_config' : [] | [AccessGateConfig],
-  'subtype' : [] | [GroupSubtype],
-  'name' : string,
-  'wasm_version' : BuildVersion,
-  'latest_message_index' : [] | [MessageIndex],
-  'description' : string,
-  'events_ttl' : [] | [Milliseconds],
-  'last_updated' : TimestampMillis,
-  'avatar_id' : [] | [bigint],
-  'messages_visible_to_non_members' : boolean,
-  'local_user_index_canister_id' : CanisterId,
-  'frozen' : [] | [FrozenGroupInfo],
-  'latest_event_index' : EventIndex,
-  'history_visible_to_new_joiners' : boolean,
-  'chat_id' : ChatId,
-  'events_ttl_last_updated' : TimestampMillis,
-  'participant_count' : number,
-  'latest_message' : [] | [MessageEventWrapper],
+    is_public: boolean;
+    gate_config: [] | [AccessGateConfig];
+    subtype: [] | [GroupSubtype];
+    name: string;
+    wasm_version: BuildVersion;
+    latest_message_index: [] | [MessageIndex];
+    description: string;
+    events_ttl: [] | [Milliseconds];
+    last_updated: TimestampMillis;
+    avatar_id: [] | [bigint];
+    messages_visible_to_non_members: boolean;
+    local_user_index_canister_id: CanisterId;
+    frozen: [] | [FrozenGroupInfo];
+    latest_event_index: EventIndex;
+    history_visible_to_new_joiners: boolean;
+    chat_id: ChatId;
+    events_ttl_last_updated: TimestampMillis;
+    participant_count: number;
+    latest_message: [] | [MessageEventWrapper];
 }
 export interface PushEventResult {
-  'timestamp' : TimestampMillis,
-  'index' : EventIndex,
-  'expires_at' : [] | [TimestampMillis],
+    timestamp: TimestampMillis;
+    index: EventIndex;
+    expires_at: [] | [TimestampMillis];
 }
 export type Reaction = string;
-export type ReferralStatus = { 'Diamond' : null } |
-  { 'UniquePerson' : null } |
-  { 'LifetimeDiamond' : null } |
-  { 'Registered' : null };
-export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
-  { 'Cycles' : CyclesRegistrationFee };
+export type ReferralStatus =
+    | { Diamond: null }
+    | { UniquePerson: null }
+    | { LifetimeDiamond: null }
+    | { Registered: null };
+export type RegistrationFee = { ICP: ICPRegistrationFee } | { Cycles: CyclesRegistrationFee };
 export interface ReplyContext {
-  'chat_if_other' : [] | [[Chat, [] | [MessageIndex]]],
-  'event_index' : EventIndex,
+    chat_if_other: [] | [[Chat, [] | [MessageIndex]]];
+    event_index: EventIndex;
 }
 export interface ReportedMessage {
-  'count' : number,
-  'reports' : Array<MessageReport>,
+    count: number;
+    reports: Array<MessageReport>;
 }
-export type ReserveP2PSwapResult = { 'Success' : ReserveP2PSwapSuccess } |
-  { 'SwapNotFound' : null } |
-  { 'Failure' : P2PSwapStatus };
+export type ReserveP2PSwapResult =
+    | { Success: ReserveP2PSwapSuccess }
+    | { SwapNotFound: null }
+    | { Failure: P2PSwapStatus };
 export interface ReserveP2PSwapSuccess {
-  'created' : TimestampMillis,
-  'content' : P2PSwapContent,
-  'created_by' : UserId,
+    created: TimestampMillis;
+    content: P2PSwapContent;
+    created_by: UserId;
 }
 export interface RoleChanged {
-  'user_ids' : Array<UserId>,
-  'changed_by' : UserId,
-  'old_role' : GroupRole,
-  'new_role' : GroupRole,
+    user_ids: Array<UserId>;
+    changed_by: UserId;
+    old_role: GroupRole;
+    new_role: GroupRole;
 }
-export interface Rules { 'text' : string, 'enabled' : boolean }
+export interface Rules {
+    text: string;
+    enabled: boolean;
+}
 export interface SelectedGroupUpdates {
-  'blocked_users_removed' : Array<UserId>,
-  'bots_removed' : Array<UserId>,
-  'pinned_messages_removed' : Uint32Array | number[],
-  'invited_users' : [] | [Array<UserId>],
-  'webhooks' : [] | [Array<WebhookDetails>],
-  'last_updated' : TimestampMillis,
-  'members_added_or_updated' : Array<Participant>,
-  'bots_added_or_updated' : Array<InstalledBotDetails>,
-  'pinned_messages_added' : Uint32Array | number[],
-  'chat_rules' : [] | [VersionedRules],
-  'members_removed' : Array<UserId>,
-  'timestamp' : TimestampMillis,
-  'latest_event_index' : EventIndex,
-  'blocked_users_added' : Array<UserId>,
+    blocked_users_removed: Array<UserId>;
+    bots_removed: Array<UserId>;
+    pinned_messages_removed: Uint32Array | number[];
+    invited_users: [] | [Array<UserId>];
+    webhooks: [] | [Array<WebhookDetails>];
+    last_updated: TimestampMillis;
+    members_added_or_updated: Array<Participant>;
+    bots_added_or_updated: Array<InstalledBotDetails>;
+    pinned_messages_added: Uint32Array | number[];
+    chat_rules: [] | [VersionedRules];
+    members_removed: Array<UserId>;
+    timestamp: TimestampMillis;
+    latest_event_index: EventIndex;
+    blocked_users_added: Array<UserId>;
 }
-export type SenderContext = { 'Bot' : BotMessageContext } |
-  { 'Webhook' : null };
+export type SenderContext = { Bot: BotMessageContext } | { Webhook: null };
 export interface SnsNeuronGate {
-  'min_stake_e8s' : [] | [bigint],
-  'min_dissolve_delay' : [] | [Milliseconds],
-  'governance_canister_id' : CanisterId,
+    min_stake_e8s: [] | [bigint];
+    min_dissolve_delay: [] | [Milliseconds];
+    governance_canister_id: CanisterId;
 }
 export type SnsNeuronId = Uint8Array | number[];
 export interface SnsProposal {
-  'id' : ProposalId,
-  'url' : string,
-  'status' : ProposalDecisionStatus,
-  'payload_text_rendering' : [] | [string],
-  'tally' : Tally,
-  'title' : string,
-  'created' : TimestampMillis,
-  'action' : bigint,
-  'minimum_yes_proportion_of_total' : number,
-  'last_updated' : TimestampMillis,
-  'deadline' : TimestampMillis,
-  'reward_status' : ProposalRewardStatus,
-  'summary' : string,
-  'proposer' : SnsNeuronId,
-  'minimum_yes_proportion_of_exercised' : number,
+    id: ProposalId;
+    url: string;
+    status: ProposalDecisionStatus;
+    payload_text_rendering: [] | [string];
+    tally: Tally;
+    title: string;
+    created: TimestampMillis;
+    action: bigint;
+    minimum_yes_proportion_of_total: number;
+    last_updated: TimestampMillis;
+    deadline: TimestampMillis;
+    reward_status: ProposalRewardStatus;
+    summary: string;
+    proposer: SnsNeuronId;
+    minimum_yes_proportion_of_exercised: number;
 }
 export interface StringParam {
-  'min_length' : number,
-  'multi_line' : boolean,
-  'max_length' : number,
-  'choices' : Array<StringParamChoice>,
+    min_length: number;
+    multi_line: boolean;
+    max_length: number;
+    choices: Array<StringParamChoice>;
 }
-export interface StringParamChoice { 'value' : string, 'name' : string }
+export interface StringParamChoice {
+    value: string;
+    name: string;
+}
 export type Subaccount = Uint8Array | number[];
 export interface Subscription {
-  'value' : SubscriptionInfo,
-  'last_active' : TimestampMillis,
+    value: SubscriptionInfo;
+    last_active: TimestampMillis;
 }
 export interface SubscriptionInfo {
-  'endpoint' : string,
-  'keys' : SubscriptionKeys,
+    endpoint: string;
+    keys: SubscriptionKeys;
 }
-export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
-export type SuspensionAction = { 'Unsuspend' : TimestampMillis } |
-  { 'Delete' : TimestampMillis };
+export interface SubscriptionKeys {
+    auth: string;
+    p256dh: string;
+}
+export type SuspensionAction = { Unsuspend: TimestampMillis } | { Delete: TimestampMillis };
 export interface SuspensionDetails {
-  'action' : SuspensionAction,
-  'suspended_by' : UserId,
-  'reason' : string,
+    action: SuspensionAction;
+    suspended_by: UserId;
+    reason: string;
 }
-export type SwapStatusError = { 'Reserved' : SwapStatusErrorReserved } |
-  { 'Accepted' : SwapStatusErrorAccepted } |
-  { 'Cancelled' : SwapStatusErrorCancelled } |
-  { 'Completed' : SwapStatusErrorCompleted } |
-  { 'Expired' : SwapStatusErrorExpired };
+export type SwapStatusError =
+    | { Reserved: SwapStatusErrorReserved }
+    | { Accepted: SwapStatusErrorAccepted }
+    | { Cancelled: SwapStatusErrorCancelled }
+    | { Completed: SwapStatusErrorCompleted }
+    | { Expired: SwapStatusErrorExpired };
 export interface SwapStatusErrorAccepted {
-  'accepted_by' : UserId,
-  'token1_txn_in' : bigint,
+    accepted_by: UserId;
+    token1_txn_in: bigint;
 }
-export interface SwapStatusErrorCancelled { 'token0_txn_out' : [] | [bigint] }
+export interface SwapStatusErrorCancelled {
+    token0_txn_out: [] | [bigint];
+}
 export interface SwapStatusErrorCompleted {
-  'accepted_by' : UserId,
-  'token1_txn_out' : bigint,
-  'token0_txn_out' : bigint,
-  'token1_txn_in' : bigint,
+    accepted_by: UserId;
+    token1_txn_out: bigint;
+    token0_txn_out: bigint;
+    token1_txn_in: bigint;
 }
-export interface SwapStatusErrorExpired { 'token0_txn_out' : [] | [bigint] }
-export interface SwapStatusErrorReserved { 'reserved_by' : UserId }
+export interface SwapStatusErrorExpired {
+    token0_txn_out: [] | [bigint];
+}
+export interface SwapStatusErrorReserved {
+    reserved_by: UserId;
+}
 export interface Tally {
-  'no' : bigint,
-  'yes' : bigint,
-  'total' : bigint,
-  'timestamp' : TimestampMillis,
+    no: bigint;
+    yes: bigint;
+    total: bigint;
+    timestamp: TimestampMillis;
 }
-export interface TextContent { 'text' : string }
-export type TextUpdate = { 'NoChange' : null } |
-  { 'SetToNone' : null } |
-  { 'SetToSome' : string };
+export interface TextContent {
+    text: string;
+}
+export type TextUpdate = { NoChange: null } | { SetToNone: null } | { SetToSome: string };
 export interface ThreadPreview {
-  'latest_replies' : Array<MessageEventWrapper>,
-  'total_replies' : number,
-  'root_message' : MessageEventWrapper,
+    latest_replies: Array<MessageEventWrapper>;
+    total_replies: number;
+    root_message: MessageEventWrapper;
 }
 export interface ThreadSummary {
-  'latest_event_timestamp' : TimestampMillis,
-  'participant_ids' : Array<UserId>,
-  'reply_count' : number,
-  'latest_event_index' : EventIndex,
-  'followed_by_me' : boolean,
+    latest_event_timestamp: TimestampMillis;
+    participant_ids: Array<UserId>;
+    reply_count: number;
+    latest_event_index: EventIndex;
+    followed_by_me: boolean;
 }
 export interface ThreadSyncDetails {
-  'root_message_index' : MessageIndex,
-  'last_updated' : TimestampMillis,
-  'read_up_to' : [] | [MessageIndex],
-  'latest_event' : [] | [EventIndex],
-  'latest_message' : [] | [MessageIndex],
+    root_message_index: MessageIndex;
+    last_updated: TimestampMillis;
+    read_up_to: [] | [MessageIndex];
+    latest_event: [] | [EventIndex];
+    latest_message: [] | [MessageIndex];
 }
 /**
  * Number of nanoseconds since the UNIX epoch in UTC timezone.
@@ -1585,167 +1671,172 @@ export interface ThreadSyncDetails {
 export type Timestamp = bigint;
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
-export type TimestampUpdate = { 'NoChange' : null } |
-  { 'SetToNone' : null } |
-  { 'SetToSome' : TimestampMillis };
+export type TimestampUpdate =
+    | { NoChange: null }
+    | { SetToNone: null }
+    | { SetToSome: TimestampMillis };
 export interface TokenBalanceGate {
-  'min_balance' : bigint,
-  'ledger_canister_id' : CanisterId,
+    min_balance: bigint;
+    ledger_canister_id: CanisterId;
 }
 export interface TokenInfo {
-  'fee' : bigint,
-  'decimals' : number,
-  'ledger' : CanisterId,
-  'symbol' : string,
+    fee: bigint;
+    decimals: number;
+    ledger: CanisterId;
+    symbol: string;
 }
-export interface Tokens { 'e8s' : bigint }
-export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
-  { 'Visible' : Array<[number, Array<UserId>]> } |
-  { 'Hidden' : number };
+export interface Tokens {
+    e8s: bigint;
+}
+export type TotalPollVotes =
+    | { Anonymous: Array<[number, number]> }
+    | { Visible: Array<[number, Array<UserId>]> }
+    | { Hidden: number };
 export type TransactionHash = Uint8Array | number[];
 export interface UpdatedRules {
-  'new_version' : boolean,
-  'text' : string,
-  'enabled' : boolean,
+    new_version: boolean;
+    text: string;
+    enabled: boolean;
 }
-export interface User { 'username' : string, 'user_id' : UserId }
+export interface User {
+    username: string;
+    user_id: UserId;
+}
 export type UserArgs = {};
 export interface UserGroup {
-  'members' : number,
-  'name' : string,
-  'user_group_id' : number,
+    members: number;
+    name: string;
+    user_group_id: number;
 }
 export type UserId = CanisterId;
-export interface UserRecord { 'byte_limit' : bigint, 'bytes_used' : bigint }
-export type UserResponse = { 'Success' : UserRecord } |
-  { 'UserNotFound' : null };
+export interface UserRecord {
+    byte_limit: bigint;
+    bytes_used: bigint;
+}
+export type UserResponse = { Success: UserRecord } | { UserNotFound: null };
 export interface UserSummary {
-  'streak' : number,
-  'max_streak' : number,
-  'username' : string,
-  'total_chit_earned' : number,
-  'diamond_member' : boolean,
-  'diamond_membership_status' : DiamondMembershipStatus,
-  'is_unique_person' : boolean,
-  'hide_online_status' : boolean,
-  'user_id' : UserId,
-  'is_bot' : boolean,
-  'display_name' : [] | [string],
-  'avatar_id' : [] | [bigint],
-  'chit_balance' : number,
-  'suspended' : boolean,
+    streak: number;
+    max_streak: number;
+    username: string;
+    total_chit_earned: number;
+    diamond_member: boolean;
+    diamond_membership_status: DiamondMembershipStatus;
+    is_unique_person: boolean;
+    hide_online_status: boolean;
+    user_id: UserId;
+    is_bot: boolean;
+    display_name: [] | [string];
+    avatar_id: [] | [bigint];
+    chit_balance: number;
+    suspended: boolean;
 }
 export interface UserSummaryStable {
-  'username' : string,
-  'profile_background_id' : [] | [bigint],
-  'diamond_membership_status' : DiamondMembershipStatus,
-  'is_unique_person' : boolean,
-  'hide_online_status' : boolean,
-  'is_bot' : boolean,
-  'display_name' : [] | [string],
-  'avatar_id' : [] | [bigint],
-  'suspended' : boolean,
+    username: string;
+    profile_background_id: [] | [bigint];
+    diamond_membership_status: DiamondMembershipStatus;
+    is_unique_person: boolean;
+    hide_online_status: boolean;
+    is_bot: boolean;
+    display_name: [] | [string];
+    avatar_id: [] | [bigint];
+    suspended: boolean;
 }
 export interface UserSummaryV2 {
-  'stable' : [] | [UserSummaryStable],
-  'user_id' : UserId,
-  'volatile' : [] | [UserSummaryVolatile],
+    stable: [] | [UserSummaryStable];
+    user_id: UserId;
+    volatile: [] | [UserSummaryVolatile];
 }
 export interface UserSummaryVolatile {
-  'streak' : number,
-  'max_streak' : number,
-  'total_chit_earned' : number,
-  'chit_balance' : number,
+    streak: number;
+    max_streak: number;
+    total_chit_earned: number;
+    chit_balance: number;
 }
 export interface UsersBlocked {
-  'user_ids' : Array<UserId>,
-  'blocked_by' : UserId,
+    user_ids: Array<UserId>;
+    blocked_by: UserId;
 }
 export interface UsersInvited {
-  'user_ids' : Array<UserId>,
-  'invited_by' : UserId,
+    user_ids: Array<UserId>;
+    invited_by: UserId;
 }
 export interface UsersUnblocked {
-  'user_ids' : Array<UserId>,
-  'unblocked_by' : UserId,
+    user_ids: Array<UserId>;
+    unblocked_by: UserId;
 }
-export type Value = { 'Int' : bigint } |
-  { 'Nat' : bigint } |
-  { 'Blob' : Uint8Array | number[] } |
-  { 'Text' : string };
+export type Value =
+    | { Int: bigint }
+    | { Nat: bigint }
+    | { Blob: Uint8Array | number[] }
+    | { Text: string };
 export interface VerifiedCredentialGate {
-  'credential_arguments' : Array<
-    [string, { 'Int' : number } | { 'String' : string }]
-  >,
-  'issuer_origin' : string,
-  'issuer_canister_id' : CanisterId,
-  'credential_name' : string,
-  'credential_type' : string,
+    credential_arguments: Array<[string, { Int: number } | { String: string }]>;
+    issuer_origin: string;
+    issuer_canister_id: CanisterId;
+    credential_name: string;
+    credential_type: string;
 }
 export interface VerifiedCredentialGateArgs {
-  'credential_jwt' : string,
-  'ii_origin' : string,
-  'credential_jwts' : Array<string>,
-  'user_ii_principal' : Principal,
+    credential_jwt: string;
+    ii_origin: string;
+    credential_jwts: Array<string>;
+    user_ii_principal: Principal;
 }
 export type Version = number;
 export interface VersionedRules {
-  'text' : string,
-  'version' : Version,
-  'enabled' : boolean,
+    text: string;
+    version: Version;
+    enabled: boolean;
 }
 export interface VideoCall {
-  'started' : TimestampMillis,
-  'message_id' : MessageId,
-  'event_index' : EventIndex,
-  'started_by' : UserId,
-  'joined_by_current_user' : boolean,
-  'call_type' : VideoCallType,
-  'message_index' : MessageIndex,
+    started: TimestampMillis;
+    message_id: MessageId;
+    event_index: EventIndex;
+    started_by: UserId;
+    joined_by_current_user: boolean;
+    call_type: VideoCallType;
+    message_index: MessageIndex;
 }
 export interface VideoCallContent {
-  'participants' : Array<CallParticipant>,
-  'ended' : [] | [TimestampMillis],
-  'hidden_participants' : number,
-  'call_type' : VideoCallType,
+    participants: Array<CallParticipant>;
+    ended: [] | [TimestampMillis];
+    hidden_participants: number;
+    call_type: VideoCallType;
 }
-export interface VideoCallContentInitial { 'initiator' : UserId }
+export interface VideoCallContentInitial {
+    initiator: UserId;
+}
 export interface VideoCallParticipants {
-  'participants' : Array<CallParticipant>,
-  'hidden' : Array<CallParticipant>,
-  'last_updated' : TimestampMillis,
+    participants: Array<CallParticipant>;
+    hidden: Array<CallParticipant>;
+    last_updated: TimestampMillis;
 }
-export type VideoCallPresence = { 'Default' : null } |
-  { 'Hidden' : null } |
-  { 'Owner' : null };
-export type VideoCallType = { 'Default' : null } |
-  { 'Broadcast' : null };
-export type VideoCallUpdates = { 'NoChange' : null } |
-  { 'SetToNone' : null } |
-  { 'SetToSome' : VideoCall };
+export type VideoCallPresence = { Default: null } | { Hidden: null } | { Owner: null };
+export type VideoCallType = { Default: null } | { Broadcast: null };
+export type VideoCallUpdates = { NoChange: null } | { SetToNone: null } | { SetToSome: VideoCall };
 export interface VideoContent {
-  'height' : number,
-  'image_blob_reference' : [] | [BlobReference],
-  'video_blob_reference' : [] | [BlobReference],
-  'mime_type' : string,
-  'thumbnail_data' : string,
-  'caption' : [] | [string],
-  'width' : number,
+    height: number;
+    image_blob_reference: [] | [BlobReference];
+    video_blob_reference: [] | [BlobReference];
+    mime_type: string;
+    thumbnail_data: string;
+    caption: [] | [string];
+    width: number;
 }
-export type VoteOperation = { 'RegisterVote' : null } |
-  { 'DeleteVote' : null };
+export type VoteOperation = { RegisterVote: null } | { DeleteVote: null };
 export interface WebhookDetails {
-  'id' : UserId,
-  'name' : string,
-  'avatar_id' : [] | [bigint],
+    id: UserId;
+    name: string;
+    avatar_id: [] | [bigint];
 }
+export type VaultBucketsResponse = {
+    Success: { buckets: Array<Principal> };
+};
 export interface _SERVICE {
-  'allocated_bucket_v2' : ActorMethod<
-    [AllocatedBucketArgs],
-    AllocatedBucketResponse
-  >,
-  'can_forward' : ActorMethod<[CanForwardArgs], CanForwardResponse>,
-  'user' : ActorMethod<[UserArgs], UserResponse>,
+    allocated_bucket_v2: ActorMethod<[AllocatedBucketArgs], AllocatedBucketResponse>;
+    can_forward: ActorMethod<[CanForwardArgs], CanForwardResponse>;
+    user: ActorMethod<[UserArgs], UserResponse>;
+    vault_buckets: ActorMethod<[{}], VaultBucketsResponse>;
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

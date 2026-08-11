@@ -35,11 +35,15 @@
         "report.threat",
         "report.child",
         "report.nonConsensual",
+        "report.sexual",
         "report.selfHarm",
         "report.violence",
         "report.scam",
     ];
 
+    // Index 1 is "child sexual content": the report is treated like a classifier detection
+    // and the auto-sanction applies immediately, so it gets an explicit warning
+    let csam = $derived(selectedReasonIndex === 1);
     let valid = $derived(selectedReasonIndex > -1);
 
     function createReport() {
@@ -49,7 +53,13 @@
 
     function report() {
         client
-            .reportMessage(chatId, threadRootMessageIndex, messageId, canDelete && deleteMessage)
+            .reportMessage(
+                chatId,
+                threadRootMessageIndex,
+                messageId,
+                canDelete && deleteMessage,
+                csam,
+            )
             .then((success) => {
                 if (success) {
                     toastStore.showSuccessToast(i18nKey("report.success"));
@@ -75,23 +85,31 @@
                     <Select bind:value={selectedReasonIndex}>
                         {#each reasons as reason, i}
                             <option disabled={i === 0} value={i - 1}
-                                ><Translatable resourceKey={i18nKey(reason)} /></option>
+                                ><Translatable resourceKey={i18nKey(reason)} /></option
+                            >
                         {/each}
                     </Select>
                 </div>
+                {#if csam}
+                    <div class="csam-warning">
+                        <Translatable resourceKey={i18nKey("report.csamWarning")} />
+                    </div>
+                {/if}
                 {#if canDelete}
                     <div class="delete">
                         <Checkbox
                             id={"delete_message"}
                             label={i18nKey("report.deleteMessage")}
-                            bind:checked={deleteMessage} />
+                            bind:checked={deleteMessage}
+                        />
                     </div>
                 {/if}
                 <div class="advice">
                     <Markdown
                         text={$_("report.advice", {
                             values: { rules: "https://oc.app/guidelines?section=3" },
-                        })} />
+                        })}
+                    />
                 </div>
             </span>
         {/snippet}
@@ -99,14 +117,16 @@
             <span>
                 <ButtonGroup>
                     <Button secondary small={!$mobileWidth} tiny={$mobileWidth} onClick={onClose}
-                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                        ><Translatable resourceKey={i18nKey("cancel")} /></Button
+                    >
                     <Button
                         disabled={busy || !valid}
                         loading={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
                         onClick={createReport}
-                        ><Translatable resourceKey={i18nKey("report.menu")} /></Button>
+                        ><Translatable resourceKey={i18nKey("report.menu")} /></Button
+                    >
                 </ButtonGroup>
             </span>
         {/snippet}
@@ -114,6 +134,15 @@
 </Overlay>
 
 <style lang="scss">
+    .csam-warning {
+        margin-bottom: $sp4;
+        padding: $sp3;
+        border: 1px solid var(--error);
+        border-radius: $sp2;
+        color: var(--error);
+        @include font(book, normal, fs-80);
+    }
+
     .header {
         display: flex;
         gap: $sp3;

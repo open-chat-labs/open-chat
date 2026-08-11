@@ -1,9 +1,9 @@
 use crate::guards::caller_is_platform_moderator;
 use crate::{RuntimeState, read_state};
-use ic_cdk::query;
+use canister_api_macros::query;
 use user_index_canister::reported_messages::{Response::*, *};
 
-#[query(guard = "caller_is_platform_moderator")]
+#[query(guard = "caller_is_platform_moderator", candid = true, msgpack = true)]
 fn reported_messages(args: Args) -> Response {
     read_state(|state| reported_messages_impl(args, state))
 }

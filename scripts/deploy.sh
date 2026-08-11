@@ -28,12 +28,13 @@ then
     ./scripts/download-all-canister-wasms.sh $WASM_SRC || exit 1
 fi
 
-if [ ! -e ./wasms/event_store.wasm.gz ]
-then
-  ./scripts/download-canister-wasm-dfx.sh event_store || exit 1
-  ./scripts/download-canister-wasm-dfx.sh sign_in_with_ethereum || exit 1
-  ./scripts/download-canister-wasm-dfx.sh sign_in_with_solana || exit 1
-fi
+for EXTERNAL_CANISTER in event_store sign_in_with_ethereum sign_in_with_solana
+do
+  if [ ! -e ./wasms/$EXTERNAL_CANISTER.wasm.gz ]
+  then
+    ./scripts/download-canister-wasm-dfx.sh $EXTERNAL_CANISTER || exit 1
+  fi
+done
 
 OPENCHAT_INSTALLER_CANISTER_ID=$(dfx canister --network $NETWORK id openchat_installer)
 USER_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id user_index)
@@ -96,6 +97,6 @@ cargo run \
   --nns-cmc $NNS_CMC_CANISTER_ID \
   --nns-sns-wasm $NNS_SNS_WASM_CANISTER_ID \
   --nns-index $NNS_INDEX_CANISTER_ID \
-  --website $WEBSITE_CANISTER_ID \
+  --website $WEBSITE_CANISTER_ID || exit 1
 
 echo "Canisters installed"

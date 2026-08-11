@@ -6,6 +6,8 @@
     import BotPlaceholderContent from "./BotPlaceholderContent.svelte";
     import CryptoContent from "./CryptoContent.svelte";
     import DeletedContent from "./DeletedContent.svelte";
+    import ModerationReportContent from "./ModerationReportContent.svelte";
+    import RestrictedMessageContent from "./RestrictedMessageContent.svelte";
     import FileContent from "./FileContent.svelte";
     import GiphyContent from "./GiphyContent.svelte";
     import ImageContent from "./ImageContent.svelte";
@@ -111,6 +113,8 @@
     <FileContent {edited} {me} {content} {blockLevelMarkdown} />
 {:else if content.kind === "deleted_content"}
     <DeletedContent {content} {undeleting} />
+{:else if content.kind === "restricted_content"}
+    <RestrictedMessageContent />
 {:else if content.kind === "blocked_content"}
     <BlockedContent />
 {:else if content.kind === "crypto_content"}
@@ -149,6 +153,8 @@
     <MessageReminderCreatedContent {content} />
 {:else if content.kind === "message_reminder_content"}
     <MessageReminderContent {content} />
+{:else if content.kind === "moderation_report_content"}
+    <ModerationReportContent {content} />
 {:else if content.kind === "reported_message_content"}
     <ReportedMessageContent {content} />
 {:else if content.kind === "meme_fighter_content"}

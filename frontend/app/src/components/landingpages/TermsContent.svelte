@@ -348,6 +348,7 @@
                             to these Terms and all related obligations, including as regards any
                             age, residency, legal capacity, competency and all other requirements;
                         </li>
+                        <li>you are at least 13 years of age;</li>
                         <li>
                             you are not a citizen or resident of, or a legal entity in any country
                             or territory which appears on the sanctions lists of the Office of
@@ -950,6 +951,10 @@
                         <li>do anything that is unlawful;</li>
                         <li>communicate any illegal content or activity;</li>
                         <li>be defamatory, obscene, offensive, hateful or inflammatory;</li>
+                        <li>
+                            contain pornographic or otherwise sexually explicit material (see clause
+                            B 6.2);
+                        </li>
                         <li>bully, harass, insult or intimidate; or</li>
                         <li>otherwise breach our Content Standards.</li>
                     </ul>
@@ -1050,6 +1055,99 @@
                 </li>
             </ul>
         </li>
+
+        <li>
+            <h3>Safety, moderation and reporting</h3>
+            <ul class="custom_list" style={"--prefix: '6.'"}>
+                <li>
+                    Moderation, enforcement and other safety functions for the OpenChat Platform,
+                    including reporting to authorities, are performed on our behalf by
+                    <a href="https://openchatlabs.org" target="_blank" rel="noreferrer noopener"
+                        >OpenChat Labs Ltd</a
+                    >, a company registered in England and Wales with company number 14871398 ("<strong
+                        >OpenChat Labs</strong
+                    >").
+                </li>
+                <li>
+                    Pornographic content, and all other content falling within the categories of
+                    "primary priority content" under the UK Online Safety Act 2023 (pornographic
+                    content, and content which encourages, promotes or provides instructions for
+                    suicide, deliberate self-injury or eating disorders), is prohibited on all parts
+                    of the OpenChat Platform for all users. This applies in public and private
+                    Groups, Channels and direct chats alike, and regardless of any labelling or
+                    rules applied to a Group or Community. Such content will be removed and account
+                    action may be taken in accordance with these Terms.
+                </li>
+                <li>
+                    Messages sent to public Groups and Channels (including text and media) are
+                    subject to automated classification for safety purposes. This classification is
+                    performed using third-party processors (currently OpenAI; specialist providers,
+                    such as services which match images against databases of known child sexual
+                    abuse material, may be added). Private messages are never proactively scanned;
+                    the content of a private message is classified only if a recipient reports it.
+                </li>
+                <li>
+                    Where suspected child sexual exploitation or abuse ("<strong>CSEA</strong>")
+                    content is detected, the content is removed immediately and the sending account
+                    is suspended pending review by a human moderator. Where any other prohibited
+                    content is detected, it is referred to a human moderator and action is taken
+                    only if the moderator upholds the referral. Any notice of sanction will state
+                    the grounds for the decision.
+                </li>
+                <li>
+                    If action is taken against your account by an automated system, you have the
+                    right to contest that decision and have it reviewed by a human moderator. The
+                    means to contest is provided with the sanction notice and remains available
+                    while an account is suspended. If the decision is not upheld, it is reversed:
+                    restorable content is restored and the suspension is lifted.
+                </li>
+                <li>
+                    We report detected CSEA content, together with associated account data, to the
+                    relevant authorities (including the UK National Crime Agency and/or the US
+                    National Center for Missing and Exploited Children) as required by Applicable
+                    Law.
+                </li>
+                <li>
+                    Where suspected CSEA content is detected, a copy is preserved as evidence in
+                    access-restricted storage for the period required by Applicable Law (typically
+                    one year from any report to an authority, or longer where a legal preservation
+                    request applies), after which it is deleted. This evidence-preservation regime
+                    is separate from, and does not change, the ordinary deletion behaviour of the
+                    OpenChat Platform for all other content.
+                </li>
+                <li>
+                    For the purposes of data protection law,
+                    <a href="https://openchatlabs.org" target="_blank" rel="noreferrer noopener"
+                        >OpenChat Labs</a
+                    >
+                    is the controller in respect of the processing described in this clause B 6. The
+                    legal basis for this processing is compliance with legal obligations to which
+                    OpenChat Labs is subject. This processing involves automated decision-making;
+                    the right to contest such decisions and obtain human review is described in
+                    clause B 6.5. Data may be shared with the processors identified in clause B 6.3
+                    and, where required by Applicable Law, with law enforcement authorities. Full
+                    information about this processing, and about your rights in relation to it, is
+                    set out in our
+                    <a href="/privacy">Privacy Notice</a>.
+                </li>
+                <li>
+                    If you wish to complain about any safety matter, including any moderation
+                    decision, you may do so via the help channel in the OpenChat Community
+                    (accessible via the OpenChat Platform) or by emailing
+                    <strong>safety@openchatlabs.org</strong> (which does not require access to an OpenChat
+                    account). Complaints will be acknowledged and investigated within a reasonable time.
+                </li>
+                <li>
+                    Our published standards against child sexual abuse and exploitation are
+                    available at
+                    <a
+                        href="https://openchatlabs.org/csae"
+                        target="_blank"
+                        rel="noreferrer noopener">https://openchatlabs.org/csae</a
+                    >.
+                </li>
+            </ul>
+        </li>
     </ul>
 
     <HashLinkTarget {onCopyUrl} id="3">
@@ -1133,8 +1231,8 @@
                     <p>By using the OpenChat Wallet, you covenant, represent and warrant that:</p>
                     <ul class="custom_list" style={"--prefix: '2.2.'"}>
                         <li>
-                            you shall allow your OpenChat Wallet to be used in connection with any
-                            activities that are prohibited by Applicable Law;
+                            you shall not allow your OpenChat Wallet to be used in connection with
+                            any activities that are prohibited by Applicable Law;
                         </li>
                         <li>
                             you shall not use your OpenChat Wallet to store, send, or receive
@@ -1142,10 +1240,10 @@
                         </li>
                         <li>
                             you are the legal and rightful owner of all Cryptoassets in your
-                            OpenChat Wallet, and that the sources of such Crptoassets are legal, and
-                            you will not transfer or trade through the OpenChat Platform anything
-                            other than Cryptoassets that have been legally obtained by you and that
-                            belong to you; and
+                            OpenChat Wallet, and that the sources of such Cryptoassets are legal,
+                            and you will not transfer or trade through the OpenChat Platform
+                            anything other than Cryptoassets that have been legally obtained by you
+                            and that belong to you; and
                         </li>
                         <li>
                             you shall notify us without undue delay of any unauthorised use and / or
@@ -1394,7 +1492,7 @@
     </ul>
 
     <HashLinkTarget {onCopyUrl} id="6">
-        <h2>Section F: Additional terms for Diamnond membership holders</h2>
+        <h2>Section F: Additional terms for Diamond membership holders</h2>
     </HashLinkTarget>
     <ul class="custom_list bold" style={"--prefix: 'F'; --suffix: ''"}>
         <li>
@@ -1973,11 +2071,17 @@
             consent.
         </li>
         <li>
-            share content that glorifies, promotes, or normalises suicide or other acts of physical
-            self-harm. This includes content that encourages others to cut, burn, or starve
-            themselves, as well as content that normalizes eating disorders, such as anorexia and
-            bulimia. Self-harm acts or threats used as a form of emotional manipulation or coercion
-            are also prohibited.
+            contain pornographic or otherwise sexually explicit material. Such material is
+            prohibited on all parts of the OpenChat Platform for all users, in public and private
+            Groups, Channels and direct chats alike, and regardless of any labelling or rules
+            applied to a Group or Community.
+        </li>
+        <li>
+            share content that glorifies, promotes, normalises, or provides instructions for suicide
+            or other acts of physical self-harm. This includes content that encourages others to
+            cut, burn, or starve themselves, as well as content that normalizes eating disorders,
+            such as anorexia and bulimia. Self-harm acts or threats used as a form of emotional
+            manipulation or coercion are also prohibited.
         </li>
         <li>
             share real media depicting gore, excessive violence, or animal harm, especially with the
@@ -2000,7 +2104,8 @@
         <strong
             >PLEASE NOTE THAT THE BELOW REPRESENTS FEATURES OF CHAT AS AT THE CURRENT DATE OF THESE
             TERMS. HOWEVER, THERE MAY BE LEGAL, REGULATORY OR COMMERCIAL REASONS WHY CHAT FEATURE
-            MAY IN THE FUTURE CHANGE FROM THE BELOW.</strong>
+            MAY IN THE FUTURE CHANGE FROM THE BELOW.</strong
+        >
     </p>
     <p>CHAT gives CHAT holders the following rights:</p>
     <p>CHAT may be:</p>

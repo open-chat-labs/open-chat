@@ -2,6 +2,8 @@
 import { HttpAgent, type Identity } from "@icp-sdk/core/agent";
 import type { Principal } from "@icp-sdk/core/principal";
 import type {
+    ModerationConfig,
+    VaultLogResponse,
     AcceptP2PSwapResponse,
     AcceptedRules,
     AccessGateConfig,
@@ -141,6 +143,7 @@ import type {
     SearchGroupChatResponse,
     SendMessageResponse,
     SetBioResponse,
+    ModerationVerdict,
     SetCommunityModerationFlagsResponse,
     SetGroupModerationFlagsResponse,
     SetDisplayNameResponse,
@@ -199,6 +202,10 @@ import type {
     WalletConfig,
     WithdrawBtcResponse,
     WithdrawCryptocurrencyResponse,
+    VaultFileChunkResponse,
+    ProposedProtectedAction,
+    Success,
+    OCError,
 } from "@shared";
 import {
     ANON_USER_ID,
@@ -289,10 +296,12 @@ import { TranslationsClient } from "./translations/translations.client";
 import { AnonUserClient } from "./user/anonUser.client";
 import { UserClient } from "./user/user.client";
 import { UserIndexClient } from "./userIndex/userIndex.client";
+import { StorageBucketClient } from "./storageBucket/storageBucket.client";
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
     private _userIndexClient: UserIndexClient;
+    private _storageBucketClients: Map<string, StorageBucketClient> = new Map();
     private _onlineClient: OnlineClient;
     private _groupIndexClient: GroupIndexClient;
     private _userClient: UserClient | AnonUserClient;
@@ -1084,7 +1093,10 @@ export class OpenChatAgent extends EventTarget {
             if (ev.event.kind === "message" && ev.event.content.kind === "text_content") {
                 for (const preview of extractMessagePreviews(ev.event.content.text)) {
                     result.insert(
-                        { chatId: preview.chatId, threadRootMessageIndex: preview.threadRootMessageIndex },
+                        {
+                            chatId: preview.chatId,
+                            threadRootMessageIndex: preview.threadRootMessageIndex,
+                        },
                         preview.messageIndex,
                     );
                 }
@@ -1103,7 +1115,12 @@ export class OpenChatAgent extends EventTarget {
         const mapped = await contextMap.asyncMap((ctx, idxs) => {
             const uniqueIdxs = [...new Set(idxs)];
             return this._chatEventsReader
-                .messagesByMessageIndex(ctx.chatId, ctx.threadRootMessageIndex, uniqueIdxs, undefined)
+                .messagesByMessageIndex(
+                    ctx.chatId,
+                    ctx.threadRootMessageIndex,
+                    uniqueIdxs,
+                    undefined,
+                )
                 .aggregate(mergeEventStreamResponses, emptyEventsResponse())
                 .toPromise()
                 .then((resp) => this.messagesFromEventsResponse(ctx, resp));
@@ -1145,6 +1162,7 @@ export class OpenChatAgent extends EventTarget {
                         edited: msg.edited,
                         isThreadRoot: msg.thread !== undefined,
                         sourceContext: messageContext,
+                        moderationFlags: msg.moderationFlags,
                     };
                 } else {
                     this._logger.log(
@@ -1169,7 +1187,7 @@ export class OpenChatAgent extends EventTarget {
                     const msg = messages.find(
                         (me) => me.event.messageIndex === preview.messageIndex,
                     )?.event;
-                    if(msg) {
+                    if (msg) {
                         messagePreviews.push({
                             url: preview.url,
                             chatId: preview.chatId,
@@ -1308,7 +1326,13 @@ export class OpenChatAgent extends EventTarget {
             ),
             this.resolveMissingMessagePreviews([message]),
         ]);
-        return this.rehydrateEvent(message, chatId, missing, missingPreviews, threadRootMessageIndex);
+        return this.rehydrateEvent(
+            message,
+            chatId,
+            missing,
+            missingPreviews,
+            threadRootMessageIndex,
+        );
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
@@ -2151,6 +2175,150 @@ export class OpenChatAgent extends EventTarget {
 
     getCurrentUser(): Stream<CurrentUserResponse> {
         return this._userIndexClient.getCurrentUser();
+    }
+
+    acceptTerms(version: number): Promise<boolean> {
+        return this._userIndexClient.acceptTerms(version);
+    }
+
+    proposeSetVaultLegalHold(
+        reportIndex: bigint,
+        legalHold: boolean,
+        reference: string,
+    ): Promise<ProposedProtectedAction | undefined> {
+        if (offline()) return Promise.resolve(undefined);
+
+        return this._userIndexClient.proposeSetVaultLegalHold(reportIndex, legalHold, reference);
+    }
+
+    proposeSetVaultReviewers(userIds: string[]): Promise<ProposedProtectedAction | undefined> {
+        if (offline()) return Promise.resolve(undefined);
+
+        return this._userIndexClient.proposeSetVaultReviewers(userIds);
+    }
+
+    confirmProtectedAction(actionId: bigint): Promise<Success | OCError> {
+        if (offline()) return Promise.resolve({ kind: "error", code: -1, message: undefined });
+
+        return this._userIndexClient.confirmProtectedAction(actionId);
+    }
+
+    cancelProtectedAction(actionId: bigint): Promise<Success | OCError> {
+        if (offline()) return Promise.resolve({ kind: "error", code: -1, message: undefined });
+
+        return this._userIndexClient.cancelProtectedAction(actionId);
+    }
+
+    protectedActions(): Promise<string> {
+        return this._userIndexClient.protectedActions();
+    }
+
+    setVaultLegalHold(
+        reportIndex: bigint,
+        legalHold: boolean,
+        reference: string,
+    ): Promise<boolean> {
+        return this._userIndexClient.setVaultLegalHold(reportIndex, legalHold, reference);
+    }
+
+    proposeDestroyVaultEvidence(
+        reportIndex: bigint,
+        leRequestRef: string,
+    ): Promise<ProposedProtectedAction | undefined> {
+        if (offline()) return Promise.resolve(undefined);
+
+        return this._userIndexClient.proposeDestroyVaultEvidence(reportIndex, leRequestRef);
+    }
+
+    setModerationReferralConfig(
+        config: { categories: { category: number; scoreThreshold: number }[] } | undefined,
+    ): Promise<boolean> {
+        return this._userIndexClient.setModerationReferralConfig(config);
+    }
+
+    proposeSetOpenAIApiKey(
+        apiKey: string | undefined,
+    ): Promise<ProposedProtectedAction | undefined> {
+        if (offline()) return Promise.resolve(undefined);
+
+        return this._userIndexClient.proposeSetOpenAIApiKey(apiKey);
+    }
+
+    proposeSetInternalModerationChannel(
+        channel: { communityId: string; channelId: number } | undefined,
+    ): Promise<ProposedProtectedAction | undefined> {
+        if (offline()) return Promise.resolve(undefined);
+
+        return this._userIndexClient.proposeSetInternalModerationChannel(channel);
+    }
+
+    resolveModerationReport(
+        reportIndex: bigint,
+        verdict: ModerationVerdict,
+        urgent: boolean | undefined,
+    ): Promise<Success | OCError> {
+        if (offline()) return Promise.resolve({ kind: "error", code: -1, message: undefined });
+
+        return this._userIndexClient.resolveModerationReport(reportIndex, verdict, urgent);
+    }
+
+    contestModerationSanction(): Promise<boolean> {
+        if (offline()) return Promise.resolve(false);
+
+        return this._userIndexClient.contestModerationSanction();
+    }
+
+    vaultBuckets(): Promise<string[]> {
+        return this._dataClient.vaultBuckets();
+    }
+
+    vaultLog(
+        bucketCanisterId: string,
+        start: bigint,
+        max: number,
+        fileId: bigint | undefined,
+    ): Promise<VaultLogResponse> {
+        let bucketClient = this._storageBucketClients.get(bucketCanisterId);
+        if (bucketClient === undefined) {
+            bucketClient = new StorageBucketClient(this.identity, this._agent, bucketCanisterId);
+            this._storageBucketClients.set(bucketCanisterId, bucketClient);
+        }
+        return bucketClient.vaultLog(start, max, fileId);
+    }
+
+    moderationConfig(): Promise<ModerationConfig | undefined> {
+        return this._userIndexClient.moderationConfig();
+    }
+
+    authorityReports(): Promise<string | undefined> {
+        return this._userIndexClient.authorityReports();
+    }
+
+    recordAuthorityReportFiled(
+        reportIndex: bigint,
+        portalReference: string,
+        urgent: boolean,
+        unverified: boolean,
+    ): Promise<boolean> {
+        return this._userIndexClient.recordAuthorityReportFiled(
+            reportIndex,
+            portalReference,
+            urgent,
+            unverified,
+        );
+    }
+
+    vaultFileChunk(
+        bucketCanisterId: string,
+        fileId: bigint,
+        chunkIndex: number,
+    ): Promise<VaultFileChunkResponse> {
+        let bucketClient = this._storageBucketClients.get(bucketCanisterId);
+        if (bucketClient === undefined) {
+            bucketClient = new StorageBucketClient(this.identity, this._agent, bucketCanisterId);
+            this._storageBucketClients.set(bucketCanisterId, bucketClient);
+        }
+        return bucketClient.vaultFileChunk(fileId, chunkIndex);
     }
 
     setModerationFlags(flags: number): Promise<boolean> {
@@ -3235,7 +3403,10 @@ export class OpenChatAgent extends EventTarget {
         return this._groupIndexClient.setCommunityModerationFlags(communityId, flags);
     }
 
-    setGroupModerationFlags(chatId: string, flags: number): Promise<SetGroupModerationFlagsResponse> {
+    setGroupModerationFlags(
+        chatId: string,
+        flags: number,
+    ): Promise<SetGroupModerationFlagsResponse> {
         if (offline()) return Promise.resolve("offline");
 
         return this._groupIndexClient.setGroupModerationFlags(chatId, flags);
@@ -3506,6 +3677,7 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         deleteMessage: boolean,
+        csam: boolean,
     ): Promise<boolean> {
         if (offline()) return Promise.resolve(false);
 
@@ -3515,6 +3687,7 @@ export class OpenChatAgent extends EventTarget {
                 threadRootMessageIndex,
                 messageId,
                 deleteMessage,
+                csam,
             );
         } else if (chatId.kind === "group_chat") {
             return this._groupClient.reportMessage(
@@ -3522,6 +3695,7 @@ export class OpenChatAgent extends EventTarget {
                 threadRootMessageIndex,
                 messageId,
                 deleteMessage,
+                csam,
             );
         } else {
             return this.userClient.reportMessage(
@@ -3529,6 +3703,7 @@ export class OpenChatAgent extends EventTarget {
                 threadRootMessageIndex,
                 messageId,
                 deleteMessage,
+                csam,
             );
         }
     }

@@ -10,6 +10,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
 
+## [[2.0.2009](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2009-storage_bucket)] - 2026-08-10
+
+### Changed
+
+- The vault log records the preservation request a legal hold was applied or cleared under, so the chain of custody shows why evidence was held rather than only that it was ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
+- A standing legal hold now blocks destruction of vaulted evidence rather than being overridden by it - clearing the hold is a separate, separately logged act ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
+- The vault log records both the proposing and the confirming operator for a dual-authorized destruction ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
+
+## [[2.0.2004](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2004-storage_bucket)] - 2026-08-05
+
+### Added
+
+- Hashes upheld as CSAM are reported to the storage index so every other bucket denylists them too ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- A quarantine op for a blob which is already vaulted registers the report's evidence claim rather than failing, so a second report holding the same blob keeps it alive ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- `vault_log` query - a page of the vault's tamper-evident access log, readable by designated vault reviewers (chain-of-custody evidence for auditors and law enforcement) ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+
+- Evidence vault: quarantine blobs by hash so they are never publicly served and survive every deletion path, with capture metadata, retention clock, legal holds, LE-requested destruction, a hash-chained append-only access log, and a `vault_file_chunk` endpoint restricted to designated reviewers ([#9118](https://github.com/open-chat-labs/open-chat/pull/9118))
+
+### Fixed
+
+- The retention timer is no longer armed for a record which cannot yet expire, which previously left it held indefinitely once its blocking claim resolved ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+
 ## [[2.0.1857](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1857-storage_bucket)] - 2025-08-05
 
 ### Fixed

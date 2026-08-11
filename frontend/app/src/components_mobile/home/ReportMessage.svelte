@@ -40,11 +40,15 @@
         "report.threat",
         "report.child",
         "report.nonConsensual",
+        "report.sexual",
         "report.selfHarm",
         "report.violence",
         "report.scam",
     ];
 
+    // "child sexual content": the report is treated like a classifier detection and the
+    // auto-sanction applies immediately, so it gets an explicit warning
+    let csam = $derived(selectedReason === "report.child");
     let valid = $derived(selectedReason !== undefined);
 
     function createReport() {
@@ -54,7 +58,13 @@
 
     function report() {
         client
-            .reportMessage(chatId, threadRootMessageIndex, messageId, canDelete && deleteMessage)
+            .reportMessage(
+                chatId,
+                threadRootMessageIndex,
+                messageId,
+                canDelete && deleteMessage,
+                csam,
+            )
             .then((success) => {
                 if (success) {
                     toastStore.showSuccessToast(i18nKey("report.success"));
@@ -70,14 +80,16 @@
         <Row crossAxisAlignment={"center"} gap={"sm"}>
             <Flag size={$iconSize} color={"var(--error)"} />
             <Subtitle fontWeight={"bold"}
-                ><Translatable resourceKey={i18nKey("report.title")} /></Subtitle>
+                ><Translatable resourceKey={i18nKey("report.title")} /></Subtitle
+            >
         </Row>
         <Column gap={"lg"}>
             <Select
                 error={selectedReason === undefined}
                 placeholder={"Select a reason for your report"}
                 onSelect={(reason) => (selectedReason = reason)}
-                value={selectedReason}>
+                value={selectedReason}
+            >
                 {#snippet subtext()}
                     <Translatable resourceKey={i18nKey("Select a reason for your report")} />
                 {/snippet}
@@ -90,28 +102,37 @@
                         height={{ size: "100%" }}
                         supplementalClass={"reason_options"}
                         padding={"lg"}
-                        gap={"lg"}>
+                        gap={"lg"}
+                    >
                         {#each reasons as reason}
                             <Option
                                 padding={"xs"}
                                 selected={false}
                                 value={reason}
-                                onClick={onSelect}>
+                                onClick={onSelect}
+                            >
                                 <Translatable resourceKey={i18nKey(reason)} />
                             </Option>
                         {/each}
                     </Column>
                 {/snippet}
             </Select>
+            {#if csam}
+                <BodySmall colour={"error"}>
+                    <Translatable resourceKey={i18nKey("report.csamWarning")} />
+                </BodySmall>
+            {/if}
             {#if canDelete}
                 <Setting
                     toggle={() => (deleteMessage = !deleteMessage)}
-                    info={"As well as reporting this message, you can also choose whether or not to delete it by toggling this setting."}>
+                    info={"As well as reporting this message, you can also choose whether or not to delete it by toggling this setting."}
+                >
                     <Switch
                         onChange={() => (deleteMessage = !deleteMessage)}
                         width={"fill"}
                         reverse
-                        checked={deleteMessage}>
+                        checked={deleteMessage}
+                    >
                         <Translatable resourceKey={i18nKey("Delete message")} />
                     </Switch>
                 </Setting>
@@ -121,14 +142,17 @@
                 <Markdown
                     text={$_("report.advice", {
                         values: { rules: "https://oc.app/guidelines?section=3" },
-                    })} />
+                    })}
+                />
             </BodySmall>
         </Column>
         <Column gap={"md"}>
             <Button disabled={!valid} loading={busy} onClick={createReport}
-                ><Translatable resourceKey={i18nKey("report.menu")} /></Button>
+                ><Translatable resourceKey={i18nKey("report.menu")} /></Button
+            >
             <Button secondary onClick={onClose}
-                ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                ><Translatable resourceKey={i18nKey("cancel")} /></Button
+            >
         </Column>
     </Column>
 </Sheet>

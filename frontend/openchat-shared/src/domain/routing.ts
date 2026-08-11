@@ -17,6 +17,7 @@ export type LandingPageRoute =
     | FaqRoute
     | GuidelinesRoute
     | TermsRoute
+    | PrivacyRoute
     | DiamondRoute;
 
 export type RouteType = RouteParams["kind"];
@@ -54,6 +55,7 @@ export type FaqRoute = NoScope & { kind: "faq_route" };
 export type DiamondRoute = NoScope & { kind: "diamond_route" };
 export type GuidelinesRoute = NoScope & { kind: "guidelines_route" };
 export type TermsRoute = NoScope & { kind: "terms_route" };
+export type PrivacyRoute = NoScope & { kind: "privacy_route" };
 
 export type HomeRoute = Scoped & {
     kind: "home_route";

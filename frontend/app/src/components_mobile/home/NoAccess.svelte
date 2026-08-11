@@ -7,19 +7,21 @@
 
     interface Props {
         onClose: () => void;
+        titleKey?: string;
+        textKey?: string;
     }
 
-    let { onClose }: Props = $props();
+    let { onClose, titleKey = "noAccess", textKey = "noAccessText" }: Props = $props();
 </script>
 
 <Sheet onDismiss={onClose}>
     <Column gap={"xl"} padding={"xl"}>
         <H2 colour={"primary"}>
-            <Translatable resourceKey={i18nKey("noAccess")} />
+            <Translatable resourceKey={i18nKey(titleKey)} />
         </H2>
 
         <Body colour={"textSecondary"}>
-            <Markdown text={$_("noAccessText")} />
+            <Markdown text={$_(textKey)} />
         </Body>
 
         <Row mainAxisAlignment={"end"}>

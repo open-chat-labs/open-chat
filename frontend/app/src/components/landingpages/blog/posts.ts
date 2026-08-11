@@ -9,6 +9,7 @@ import Chit from "./Chit.svelte";
 import ICFootprint from "./ICFootprint.svelte";
 import SignIn from "./SignIn.svelte";
 import AccessGateExpiry from "./AccessGateExpiry.svelte";
+import TrustAndSafety from "./TrustAndSafety.svelte";
 
 export type BlogPostInfo = {
     slug: string;
@@ -19,6 +20,13 @@ export type BlogPostInfo = {
 };
 
 export const postsBySlug: Record<string, BlogPostInfo> = {
+    trust_and_safety: {
+        slug: "trust_and_safety",
+        title: "Trust and safety: what is changing and why",
+        author: "@julian_jelfs",
+        date: new Date(2026, 6, 26),
+        component: TrustAndSafety,
+    },
     access_gate_expiry: {
         slug: "access_gate_expiry",
         title: "Access gate expiry",

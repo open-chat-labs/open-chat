@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use chat_events::EditMessageArgs;
 use community_canister::edit_message::*;
 use oc_error_codes::OCErrorCode;
-use types::{Achievement, OCResult};
+use types::{Achievement, EventIndex, OCResult};
 
 #[update(msgpack = true)]
 #[trace]
@@ -46,6 +46,23 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     if args.new_achievement {
         state.notify_user_of_achievement(sender, Achievement::EditedMessage, now);
+    }
+
+    // Re-classify the edited content
+    if state.data.is_public.value
+        && let Some(channel) = state.data.channels.get(&args.channel_id)
+        && channel.chat.is_public.value
+        && let Some((message, _)) =
+            channel
+                .chat
+                .events
+                .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
+        && message.deleted_by.is_none()
+    {
+        let input = message.content.moderation_input();
+        if !input.is_empty() {
+            state.queue_message_for_moderation(args.channel_id, args.thread_root_message_index, args.message_id, input);
+        }
     }
 
     state.push_bot_notification(result.bot_notification);

@@ -8,8 +8,9 @@ use chat_events::ChatEventInternal;
 use constants::OPENCHAT_BOT_USER_ID;
 use group_canister::LocalIndexEvent;
 use group_canister::c2c_local_index::*;
+use msgpack::serialize_then_unwrap;
 use std::cell::LazyCell;
-use types::{GroupNameChanged, TimestampMillis, Timestamped};
+use types::{EventIndex, GroupNameChanged, ModerationCategories, TimestampMillis, Timestamped};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -51,6 +52,74 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
         }
         LocalIndexEvent::VerifiedChanged(ev) => {
             state.data.verified = Timestamped::new(ev.verified, **now);
+        }
+        LocalIndexEvent::MessageClassified(ev) => {
+            // An empty result still calls flag_message so that stale flags are cleared if a
+            // previously flagged message has been edited to something clean
+            if let Some(categories) = ModerationCategories::from_bits(ev.flags)
+                && {
+                    let flag_result =
+                        state
+                            .data
+                            .chat
+                            .events
+                            .flag_message(ev.thread_root_message_index, ev.message_id, categories, **now);
+                    // NoChange must still dispatch: a message can score above a referral
+                    // threshold without altering the stored flag bits (the API flagged
+                    // nothing, so the bits stay 0), and a referral must not depend on them
+                    flag_result.is_ok() || flag_result.is_err_and(|e| e.matches_code(oc_error_codes::OCErrorCode::NoChange))
+                }
+            {
+                let is_csam = categories.contains(ModerationCategories::SEXUAL_MINORS);
+                let moderation_referral = ModerationCategories::from_bits(ev.moderation_referral_flags).unwrap_or_default();
+                if (is_csam || !moderation_referral.is_empty())
+                    && let Some((message, _)) = state.data.chat.events.message_internal(
+                        EventIndex::default(),
+                        ev.thread_root_message_index,
+                        ev.message_id.into(),
+                    )
+                {
+                    if is_csam {
+                        // Notify the user_index (via the group_index) which applies the CSAM
+                        // auto-sanction: delete the message, suspend the sender, and post an
+                        // alert to the internal moderation channel
+                        let args = group_index_canister::c2c_csam_detected::Args {
+                            channel_id: None,
+                            thread_root_message_index: ev.thread_root_message_index,
+                            message_index: message.message_index,
+                            message_id: ev.message_id,
+                            sender: message.sender,
+                            flags: categories.bits(),
+                            content_excerpt: message.content.moderation_input().text,
+                            blob_references: message.content.blob_references(),
+                        };
+                        state.data.fire_and_forget_handler.send(
+                            state.data.group_index_canister_id,
+                            "c2c_csam_detected_msgpack".to_string(),
+                            serialize_then_unwrap(&args),
+                        );
+                    } else {
+                        // Refer for human review as a suspected ToS violation: the user_index
+                        // creates a resolvable report and a moderator decides; no automatic
+                        // action is taken against the message or the sender
+                        let args = group_index_canister::c2c_moderation_referral::Args {
+                            channel_id: None,
+                            thread_root_message_index: ev.thread_root_message_index,
+                            message_index: message.message_index,
+                            message_id: ev.message_id,
+                            sender: message.sender,
+                            flags: moderation_referral.bits(),
+                            content_excerpt: message.content.moderation_input().text,
+                            blob_references: message.content.blob_references(),
+                        };
+                        state.data.fire_and_forget_handler.send(
+                            state.data.group_index_canister_id,
+                            "c2c_moderation_referral_msgpack".to_string(),
+                            serialize_then_unwrap(&args),
+                        );
+                    }
+                }
+            }
         }
         LocalIndexEvent::ModerationFlagsChanged(ev) => {
             state.data.moderation_flags = Timestamped::new(ev.flags, **now);

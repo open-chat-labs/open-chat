@@ -1,13 +1,5 @@
 <script lang="ts">
     import {
-        Body,
-        ColourVars,
-        Container,
-        type SizeMode,
-        type BorderRadiusSize,
-        type Radius,
-    } from "component-lib";
-    import {
         chatIdentifiersEqual,
         chatListScopeStore,
         currentUserIdStore,
@@ -22,9 +14,17 @@
         type SenderContext,
         type UserSummary,
     } from "@client";
-    import { navigate } from "@utils/navigation";
-    import { getContext, type Snippet } from "svelte";
     import Typing from "@shared_components/Typing.svelte";
+    import { navigate } from "@utils/navigation";
+    import {
+        Body,
+        ColourVars,
+        Container,
+        type BorderRadiusSize,
+        type Radius,
+        type SizeMode,
+    } from "component-lib";
+    import { getContext, type Snippet } from "svelte";
     import Badges from "../profile/Badges.svelte";
     import BotBadge from "../profile/BotBadge.svelte";
     import RoleIcon from "../profile/RoleIcon.svelte";
@@ -102,6 +102,7 @@
             $selectedChatWebhooksStore,
         ),
     );
+    let placeholderContent = $derived(msg.deleted || msg.content.kind === "restricted_content");
     let isProposal = $derived(msg.content.kind === "proposal_content");
     let isPrize = $derived(msg.content.kind === "prize_content");
     // let hasReactions = $derived(msg.reactions.length > 0);
@@ -113,7 +114,7 @@
         if (failed) {
             return ColourVars.error;
         }
-        if (msg.deleted) {
+        if (placeholderContent) {
             return "transparent";
         }
         if (me) {
@@ -143,7 +144,7 @@
 
     // Show only for deleted messages!
     let borderColour = $derived.by(() => {
-        if (!msg.deleted) return "transparent";
+        if (!placeholderContent) return "transparent";
         return ColourVars.background2;
     });
 
@@ -193,7 +194,7 @@
     overflow={"auto"}
     direction={"vertical"}
     background={backgroundColour}
-    borderWidth={msg.deleted ? "thick" : "zero"}
+    borderWidth={placeholderContent ? "thick" : "zero"}
     {borderRadius}
     {borderColour}>
     {#if showHeader}
@@ -240,7 +241,7 @@
             {/if}
         </Container>
     {/if}
-    {#if !msg.deleted && msg.repliesTo !== undefined}
+    {#if !placeholderContent && msg.repliesTo !== undefined}
         {@const reply =
             msg.repliesTo.kind === "rehydrated_reply_context" ? msg.repliesTo : undefined}
         <Container
@@ -257,7 +258,7 @@
     <div class="message_bubble_content" bind:clientWidth={contentWidth}>
         {@render messageContent?.(me)}
     </div>
-    {#if !msg.deleted}
+    {#if !placeholderContent}
         <MessageMetadata
             {failed}
             deleted={msg.deleted}

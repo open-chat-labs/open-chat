@@ -83,6 +83,8 @@ import type {
     ProposalContent,
     Reaction,
     ReplyContext,
+    ModerationReportContent,
+    ModerationReportStatus,
     ReportedMessageContent,
     SearchGroupChatResponse,
     SendMessageResponse,
@@ -178,6 +180,8 @@ import type {
     BotMessageContext as TBotMessageContext,
     CallParticipant as TCallParticipant,
     Chat as TChat,
+    ModerationReportContent as TModerationReportContent,
+    ModerationReportStatus as TModerationReportStatus,
     ChatEvent as TChatEvent,
     ChatMetrics as TChatMetrics,
     CommunityCanisterChannelSummary as TCommunityCanisterChannelSummary,
@@ -706,6 +710,9 @@ export function messageContent(value: TMessageContent, sender: string): MessageC
     if ("ReportedMessage" in value) {
         return reportedMessage(value.ReportedMessage);
     }
+    if ("ModerationReport" in value) {
+        return moderationReportContent(value.ModerationReport);
+    }
     if ("P2PSwap" in value) {
         return p2pSwapContent(value.P2PSwap);
     }
@@ -718,6 +725,74 @@ export function messageContent(value: TMessageContent, sender: string): MessageC
         };
     }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", value);
+}
+
+function moderationReportContent(value: TModerationReportContent): ModerationReportContent {
+    return {
+        kind: "moderation_report_content",
+        reportIndex: value.report_index,
+        chatId: chatIdentifierFromApi(value.chat_id),
+        threadRootMessageIndex: value.thread_root_message_index,
+        messageIndex: value.message_index,
+        messageId: toBigInt64(value.message_id),
+        sender: principalBytesToString(value.sender),
+        reporters: value.reporters.map(principalBytesToString),
+        flaggedCategories: value.flagged_categories,
+        classificationFailed: value.classification_failed ?? false,
+        authorityReport: mapOptional(value.authority_report, (a) =>
+            "Due" in a
+                ? ({ kind: "due", urgent: a.Due.urgent } as const)
+                : ({ kind: "filed", portalReference: a.Filed.portal_reference } as const),
+        ),
+        autoSanctioned: value.auto_sanctioned,
+        contentExcerpt: value.content_excerpt,
+        blobReferences: value.blob_references.map(blobReference),
+        reportedAt: value.reported_at,
+        status: moderationReportStatus(value.status),
+    };
+}
+
+function moderationReportStatus(value: TModerationReportStatus): ModerationReportStatus {
+    if (value === "Pending") {
+        return { kind: "pending" };
+    }
+    if (value === "Contested") {
+        return { kind: "contested" };
+    }
+    if ("Upheld" in value) {
+        return {
+            kind: "upheld",
+            moderator: principalBytesToString(value.Upheld.moderator),
+            timestamp: value.Upheld.timestamp,
+        };
+    }
+    if ("UpheldAsCsam" in value) {
+        return {
+            kind: "upheld_as_csam",
+            moderator: principalBytesToString(value.UpheldAsCsam.moderator),
+            timestamp: value.UpheldAsCsam.timestamp,
+        };
+    }
+    return {
+        kind: "dismissed",
+        moderator: principalBytesToString(value.Dismissed.moderator),
+        timestamp: value.Dismissed.timestamp,
+    };
+}
+
+function chatIdentifierFromApi(chatId: TChat): ChatIdentifier {
+    if ("Direct" in chatId) {
+        return { kind: "direct_chat", userId: principalBytesToString(chatId.Direct) };
+    }
+    if ("Group" in chatId) {
+        return { kind: "group_chat", groupId: principalBytesToString(chatId.Group) };
+    }
+    const [communityId, channelId] = chatId.Channel;
+    return {
+        kind: "channel",
+        communityId: principalBytesToString(communityId),
+        channelId: Number(toBigInt32(channelId)),
+    };
 }
 
 function reportedMessage(value: TReportedMessage): ReportedMessageContent {
@@ -1283,30 +1358,11 @@ function replyContext(value: TReplyContext): ReplyContext {
 }
 
 function replySourceContext([chatId, maybeThreadRoot]: [TChat, number | null]): MessageContext {
-    if ("Direct" in chatId) {
-        return {
-            chatId: { kind: "direct_chat", userId: principalBytesToString(chatId.Direct) },
-            threadRootMessageIndex: undefined,
-        };
-    }
-    if ("Group" in chatId) {
-        return {
-            chatId: { kind: "group_chat", groupId: principalBytesToString(chatId.Group) },
-            threadRootMessageIndex: mapOptional(maybeThreadRoot, identity),
-        };
-    }
-    if ("Channel" in chatId) {
-        const [communityId, channelId] = chatId.Channel;
-        return {
-            chatId: {
-                kind: "channel",
-                communityId: principalBytesToString(communityId),
-                channelId: Number(toBigInt32(channelId)),
-            },
-            threadRootMessageIndex: mapOptional(maybeThreadRoot, identity),
-        };
-    }
-    throw new UnsupportedValueError("Unexpected ApiMultiUserChat type received", chatId);
+    return {
+        chatId: chatIdentifierFromApi(chatId),
+        threadRootMessageIndex:
+            "Direct" in chatId ? undefined : mapOptional(maybeThreadRoot, identity),
+    };
 }
 
 function reactions(value: [string, ApiPrincipal[]][]): Reaction[] {
@@ -1594,8 +1650,10 @@ export function apiMessageContent(domain: MessageContent): TMessageContentInitia
         case "message_reminder_content":
         case "message_reminder_created_content":
         case "reported_message_content":
+        case "moderation_report_content":
         case "p2p_swap_content":
         case "encrypted_content":
+        case "restricted_content":
             throw new Error(`Incorrectly attempting to send {domain.kind} content to the server`);
     }
 }

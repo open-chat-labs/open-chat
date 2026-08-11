@@ -6,13 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
-### Changed
-
-- Switch some endpoints over to using common response types ([#8450](https://github.com/open-chat-labs/open-chat/pull/8450))
-
 ### Fixed
 
 - Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
+
+## [[2.0.2010](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2010-storage_index)] - 2026-08-10
+
+### Changed
+
+- Legal hold ops carry the preservation request reference through to the owning bucket ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
+
+### Changed
+
+- Vault destruction ops carry the proposing and confirming operators so the bucket can record both in its access log ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
+
+## [[2.0.2005](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2005-storage_index)] - 2026-08-06
+
+### Added
+
+- The CSAM hash denylist is held platform-wide and pushed to every bucket, including newly created ones, so content upheld as CSAM cannot be re-uploaded to another bucket ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- `vault_buckets` query - the bucket canister ids, so the admin UI can address vault logs without hand-typing ids ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- Vault ops carry attribution (`moderator`), per-report release (`report_index`) and retention re-anchoring (`reanchor`); reviewer sync sends `VaultReviewer` (principal + user id) pairs for event-time attribution in the bucket access logs ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- Vault control plane: `c2c_vault_ops` routes evidence-vault operations to the owning buckets and syncs the vault-reviewer allowlist ([#9118](https://github.com/open-chat-labs/open-chat/pull/9118))
+
+### Changed
+
+- Switch some endpoints over to using common response types ([#8450](https://github.com/open-chat-labs/open-chat/pull/8450))
 
 ## [[2.0.1856](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1856-storage_index)] - 2025-08-05
 

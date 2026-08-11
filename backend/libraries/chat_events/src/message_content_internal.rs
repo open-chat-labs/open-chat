@@ -15,10 +15,10 @@ use types::{
     FileContentEventPayload, GiphyContent, GiphyImageVariant, GovernanceProposalContentEventPayload, ImageContent,
     ImageOrVideoContentEventPayload, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE, MessageContent, MessageContentEventPayload,
     MessageContentInitial, MessageContentType, MessageIndex, MessageReminderContent, MessageReminderContentEventPayload,
-    MessageReminderCreatedContent, MessageReport, Milliseconds, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted,
-    P2PSwapContent, P2PSwapContentEventPayload, P2PSwapContentInitial, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus,
-    PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload, PollVotes, PrizeContent,
-    PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal,
+    MessageReminderCreatedContent, MessageReport, Milliseconds, ModerationInput, ModerationReportContent, P2PSwapAccepted,
+    P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapContentEventPayload, P2PSwapContentInitial, P2PSwapExpired,
+    P2PSwapReserved, P2PSwapStatus, PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload, PollVotes,
+    PrizeContent, PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal,
     ProposalContent, RegisterVoteResult, ReportedMessage, ReportedMessageContentEventPayload, TextContent,
     TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos, TokenInfo, TotalVotes, TransactionHash, UserId,
     UserType, VideoCallContent, VideoCallPresence, VideoCallType, VideoContent, VoteOperation, is_default,
@@ -56,6 +56,8 @@ pub enum MessageContentInternal {
     MessageReminder(MessageReminderContentInternal),
     #[serde(rename = "rm")]
     ReportedMessage(ReportedMessageInternal),
+    #[serde(rename = "modr")]
+    ModerationReport(Box<ModerationReportContent>),
     #[serde(rename = "p2p")]
     P2PSwap(P2PSwapContentInternal),
     #[serde(rename = "vc")]
@@ -200,6 +202,7 @@ impl MessageContentInternal {
             MessageContentInternal::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r.hydrate(my_user_id)),
             MessageContentInternal::MessageReminder(r) => MessageContent::MessageReminder(r.hydrate(my_user_id)),
             MessageContentInternal::ReportedMessage(r) => MessageContent::ReportedMessage(r.hydrate(my_user_id)),
+            MessageContentInternal::ModerationReport(r) => MessageContent::ModerationReport(*r.clone()),
             MessageContentInternal::P2PSwap(p) => MessageContent::P2PSwap(p.hydrate(my_user_id)),
             MessageContentInternal::VideoCall(c) => MessageContent::VideoCall(c.hydrate()),
             MessageContentInternal::Encrypted(e) => MessageContent::Encrypted(e.hydrate(my_user_id)),
@@ -225,10 +228,49 @@ impl MessageContentInternal {
             MessageContentInternal::PrizeWinner(_)
             | MessageContentInternal::Deleted(_)
             | MessageContentInternal::ReportedMessage(_)
+            | MessageContentInternal::ModerationReport(_)
             | MessageContentInternal::VideoCall(_)
             | MessageContentInternal::Encrypted(_)
             | MessageContentInternal::Custom(_) => None,
         }
+    }
+
+    pub fn moderation_input(&self) -> ModerationInput {
+        let mut input = ModerationInput {
+            text: self.text().map(|t| t.to_string()),
+            image_urls: Vec::new(),
+        };
+
+        match self {
+            MessageContentInternal::Image(i) => {
+                if let Some(br) = &i.blob_reference {
+                    input.image_urls.push(BlobReference::from(br.clone()).url());
+                }
+            }
+            MessageContentInternal::Video(v) => {
+                if let Some(br) = &v.image_blob_reference {
+                    input.image_urls.push(BlobReference::from(br.clone()).url());
+                }
+            }
+            MessageContentInternal::Giphy(g) => {
+                if let Some(variant) = [&g.desktop, &g.mobile]
+                    .into_iter()
+                    .find(|v| v.mime_type.starts_with("image/"))
+                {
+                    input.image_urls.push(variant.url.clone());
+                }
+            }
+            MessageContentInternal::Poll(p) => {
+                let mut text = input.text.unwrap_or_default();
+                for option in p.config.options.iter() {
+                    text.push_str(&format!("\n- {option}"));
+                }
+                input.text = Some(text);
+            }
+            _ => {}
+        }
+
+        input
     }
 
     pub fn text_length(&self) -> u32 {
@@ -273,6 +315,7 @@ impl MessageContentInternal {
             | MessageContentInternal::MessageReminderCreated(_)
             | MessageContentInternal::MessageReminder(_)
             | MessageContentInternal::ReportedMessage(_)
+            | MessageContentInternal::ModerationReport(_)
             | MessageContentInternal::P2PSwap(_)
             | MessageContentInternal::VideoCall(_)
             | MessageContentInternal::Encrypted(_)
@@ -351,6 +394,7 @@ impl MessageContentInternal {
                     notes_length: option_string_length(&c.notes),
                 })
             }
+            MessageContentInternal::ModerationReport(_) => MessageContentEventPayload::Empty,
             MessageContentInternal::ReportedMessage(c) => {
                 MessageContentEventPayload::ReportedMessage(ReportedMessageContentEventPayload {
                     reason: c.reports.first().map(|r| r.reason_code).unwrap_or_default(),
@@ -453,7 +497,8 @@ impl From<&MessageContentInternal> for Document {
             MessageContentInternal::Custom(c) => {
                 document.add_field(&c.kind);
             }
-            MessageContentInternal::ReportedMessage(_)
+            MessageContentInternal::ModerationReport(_)
+            | MessageContentInternal::ReportedMessage(_)
             | MessageContentInternal::Deleted(_)
             | MessageContentInternal::VideoCall(_)
             | MessageContentInternal::Encrypted(_) => {}
@@ -2070,6 +2115,7 @@ impl From<&MessageContentInternal> for MessageContentType {
             MessageContentInternal::MessageReminderCreated(_) => MessageContentType::MessageReminderCreated,
             MessageContentInternal::MessageReminder(_) => MessageContentType::MessageReminder,
             MessageContentInternal::ReportedMessage(_) => MessageContentType::ReportedMessage,
+            MessageContentInternal::ModerationReport(_) => MessageContentType::ModerationReport,
             MessageContentInternal::P2PSwap(_) => MessageContentType::P2PSwap,
             MessageContentInternal::VideoCall(_) => MessageContentType::VideoCall,
             MessageContentInternal::Encrypted(e) => e.content_type.clone().into(),

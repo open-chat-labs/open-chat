@@ -70,12 +70,12 @@
     {/snippet}
     <div class:modal class="body">
         <p>
-            OpenChat is not owned by anyone and does not operate in any particular jurisdiction and
-            so our rules simply revolve around protecting the service and protecting the users. Ask
-            yourself - does my post threaten the existence of the system itself (e.g. would it be
-            considered illegal in most jurisdictions)? Or is my post harmful to other users (e.g.
-            does it promote a scam or invite harassment). These are the high level principles that
-            will be applied to moderation.
+            OpenChat is governed by its DAO, and our rules revolve around protecting the service and
+            protecting the users, as well as meeting the legal obligations that apply to a messaging
+            platform (see the <a href={getUrl("/terms")}>terms</a> for details). Ask yourself - does my
+            post threaten the existence of the system itself (e.g. would it be considered illegal in most
+            jurisdictions)? Or is my post harmful to other users (e.g. does it promote a scam or invite
+            harassment). These are the high level principles that will be applied to moderation.
         </p>
 
         <p>
@@ -101,8 +101,8 @@
     <div class:modal class="body">
         <ul class="list">
             <li>
-                <strong>Do not threaten to harm another individual or group of people.</strong> This
-                includes direct, indirect, and suggestive threats.
+                <strong>Do not threaten to harm another individual or group of people.</strong> This includes
+                direct, indirect, and suggestive threats.
             </li>
             <li>
                 <strong>
@@ -134,7 +134,8 @@
             </li>
             <li>
                 <strong
-                    >Do not use OpenChat to promote, coordinate, or execute financial scams.</strong>
+                    >Do not use OpenChat to promote, coordinate, or execute financial scams.</strong
+                >
                 Promoting a particular crypto token or NFT does not break this rule in general.
             </li>
             <li>
@@ -201,19 +202,22 @@
         </p>
 
         <p>
-            While adult material is not against our platform guidelines, we feel it is important
-            that such content is clearly labelled. We ask therefore that if you would like to post
-            adult material (that complies with the content standards above) that <strong>
-                you must enable group rules and you must specify in the group rules that the group
-                contains adults only material.
-            </strong> This ensures that a user joining the group can only do so having first been informed
-            of the nature of the group and acknowledging that information.
+            <strong>
+                Adult material is not permitted on OpenChat. Pornographic or otherwise sexually
+                explicit content is against our platform rules everywhere on the platform - in
+                public and private groups and communities and in direct chats - for all users,
+                regardless of how a group is labelled or what its rules say.
+            </strong> This also applies to all other "primary priority content" as defined by the UK Online
+            Safety Act 2023: content encouraging, promoting or providing instructions for suicide, deliberate
+            self-injury, or eating disorders.
         </p>
 
         <p>
-            Please do not post adult material in a public group that has not been clearly labelled
-            in this way. This way, we can keep people safe and comfortable without undue
-            restrictions.
+            Such content will be removed, and repeat or serious breaches will lead to account
+            suspension. If your group or community previously carried adult material under the old
+            labelling guidance, you must remove that content. Owners of previously adult-labelled
+            communities will be notified when the updated terms take effect and will have 28 days to
+            remove such content or close the community.
         </p>
     </div>
 </CollapsibleCard>
@@ -239,6 +243,13 @@
         </p>
 
         <p>The message content will then be referred to the platform moderators for review.</p>
+
+        <p>
+            In addition, content sent to public groups and channels is subject to automated
+            classification for the most serious categories of harmful content, with human review and
+            a right to contest any automated decision, as described in the
+            <a href={getUrl("/terms")}>terms</a>.
+        </p>
 
         <p>
             The platform moderators will refer to the platform content standards and group rules and
@@ -279,9 +290,9 @@
             An alternative view is that content moderation should only be done via SNS proposal. Our
             view is that an SNS proposal is designed to (agree to) <em>change the system</em> in some
             way. Moderation does not require a change to the system. It merely requires the use of existing
-            tools and mechanisms. The exact nature of those tools and mechanisms should of course be
-            under the control of the SNS and managed by SNS proposal. For example, it would be appropriate
-            to make a proposal to change these guidelines or to appoint a new platform moderator.
+            tools and mechanisms. The exact nature of those tools and mechanisms should of course be under
+            the control of the SNS and managed by SNS proposal. For example, it would be appropriate to
+            make a proposal to change these guidelines or to appoint a new platform moderator.
         </p>
 
         <p>

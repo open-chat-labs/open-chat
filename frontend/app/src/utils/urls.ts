@@ -54,6 +54,7 @@ const scrollingRoutes: RouteType[] = [
     "blog_route",
     "guidelines_route",
     "terms_route",
+    "privacy_route",
     "faq_route",
     "diamond_route",
 ];

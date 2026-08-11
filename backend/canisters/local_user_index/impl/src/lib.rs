@@ -2,6 +2,7 @@ use crate::model::community_event_batch::CommunityEventBatch;
 use crate::model::group_event_batch::GroupEventBatch;
 use crate::model::local_community_map::LocalCommunityMap;
 use crate::model::local_group_map::LocalGroupMap;
+use crate::model::moderation_queue::ModerationQueue;
 use crate::model::premium_items::PremiumItems;
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use crate::model::user_event_batch::UserEventBatch;
@@ -24,7 +25,7 @@ use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
 use p256_key_pair::P256KeyPair;
 use proof_of_unique_personhood::verify_proof_of_unique_personhood;
-use rand::RngCore;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::UserIdsKeyPrefix;
@@ -37,8 +38,8 @@ use types::{
     BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion,
     CLAIM_TYPE_DIAMOND_MEMBERSHIP, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms,
     CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
-    IdempotentEnvelope, MessageContentInitial, Milliseconds, Notification, NotificationEnvelope, ReferralType, TimestampMillis,
-    Timestamped, UserId, UserNotificationEnvelope, VerifiedCredentialGateArgs,
+    IdempotentEnvelope, MessageContentInitial, Milliseconds, ModerationReferralConfig, Notification, NotificationEnvelope,
+    ReferralType, TimestampMillis, Timestamped, UserId, UserNotificationEnvelope, VerifiedCredentialGateArgs,
 };
 use user_canister::LocalUserIndexEvent as UserEvent;
 use user_ids_set::UserIdsSet;
@@ -57,6 +58,7 @@ mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
+mod no_inline_anchor;
 mod queries;
 mod updates;
 
@@ -512,6 +514,8 @@ impl RuntimeState {
             blocked_user_pairs: self.data.blocked_users.len() as u64,
             oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
             openai_api_key_set: self.data.openai_api_key.is_some(),
+            moderation_referral_config: self.data.moderation_referral_config.clone(),
+            message_moderation_queue_len: self.data.message_moderation_queue.len() as u32,
             cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
             bots: self
                 .data
@@ -595,6 +599,10 @@ struct Data {
     pub premium_items: PremiumItems,
     pub blocked_username_patterns: Vec<String>,
     pub openai_api_key: Option<String>,
+    #[serde(default)]
+    pub moderation_referral_config: Option<ModerationReferralConfig>,
+    #[serde(default)]
+    pub message_moderation_queue: ModerationQueue,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -630,6 +638,7 @@ impl Data {
         video_call_operators: Vec<Principal>,
         oc_secret_key_der: Vec<u8>,
         openai_api_key: Option<String>,
+        moderation_referral_config: Option<ModerationReferralConfig>,
         test_mode: bool,
     ) -> Self {
         Data {
@@ -687,6 +696,8 @@ impl Data {
             premium_items: PremiumItems::default(),
             blocked_username_patterns: Vec::new(),
             openai_api_key,
+            moderation_referral_config,
+            message_moderation_queue: ModerationQueue::default(),
         }
     }
 }
@@ -749,6 +760,8 @@ pub struct Metrics {
     pub blocked_user_pairs: u64,
     pub oc_secret_key_initialized: bool,
     pub openai_api_key_set: bool,
+    pub moderation_referral_config: Option<ModerationReferralConfig>,
+    pub message_moderation_queue_len: u32,
     pub cycles_balance_check_queue_len: u32,
     pub bots: Vec<BotMetrics>,
     pub blocked_username_patterns: Vec<String>,

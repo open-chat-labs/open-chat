@@ -27,6 +27,12 @@ async fn remove_platform_moderator(args: Args) -> Response {
 fn commit(user_id: UserId, state: &mut RuntimeState) {
     state.data.platform_moderators.remove(&user_id);
 
+    // Two-authority cascade: revoking the DAO-granted moderator role also revokes the
+    // OC-Labs-granted vault_reviewer designation, which is constrained to the moderator pool
+    if state.data.vault_reviewers.remove(&user_id) {
+        crate::model::moderation::sync_vault_reviewers(state);
+    }
+
     state.push_event_to_all_local_user_indexes(
         UserIndexEvent::PlatformModeratorStatusChanged(PlatformModeratorStatusChanged {
             user_id,

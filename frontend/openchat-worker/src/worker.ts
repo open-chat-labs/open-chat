@@ -473,10 +473,18 @@ function getAction(
             return agent.leaveGroup(payload.chatId);
 
         case "joinGroup":
-            return agent.joinGroup(payload.chatId, payload.credentialArgs, payload.compositeGateIndex);
+            return agent.joinGroup(
+                payload.chatId,
+                payload.credentialArgs,
+                payload.compositeGateIndex,
+            );
 
         case "joinCommunity":
-            return agent.joinCommunity(payload.id, payload.credentialArgs, payload.compositeGateIndex);
+            return agent.joinCommunity(
+                payload.id,
+                payload.credentialArgs,
+                payload.compositeGateIndex,
+            );
 
         case "updateGroup":
             return agent.updateGroup(
@@ -873,6 +881,7 @@ function getAction(
                 payload.threadRootMessageIndex,
                 payload.messageId,
                 payload.deleteMessage,
+                payload.csam,
             );
 
         case "approveTransfer":
@@ -991,6 +1000,74 @@ function getAction(
 
         case "setModerationFlags":
             return agent.setModerationFlags(payload.flags);
+
+        case "proposeSetOpenAIApiKey":
+            return agent.proposeSetOpenAIApiKey(payload.apiKey);
+        case "confirmProtectedAction":
+            return agent.confirmProtectedAction(payload.actionId);
+        case "cancelProtectedAction":
+            return agent.cancelProtectedAction(payload.actionId);
+        case "protectedActions":
+            return agent.protectedActions();
+        case "setModerationReferralConfig":
+            return agent.setModerationReferralConfig(payload.config);
+        case "proposeSetVaultLegalHold":
+            return agent.proposeSetVaultLegalHold(
+                payload.reportIndex,
+                payload.legalHold,
+                payload.reference,
+            );
+        case "proposeSetVaultReviewers":
+            return agent.proposeSetVaultReviewers(payload.userIds);
+        case "setVaultLegalHold":
+            return agent.setVaultLegalHold(
+                payload.reportIndex,
+                payload.legalHold,
+                payload.reference,
+            );
+        case "proposeDestroyVaultEvidence":
+            return agent.proposeDestroyVaultEvidence(payload.reportIndex, payload.leRequestRef);
+        case "vaultBuckets":
+            return agent.vaultBuckets();
+        case "vaultLog":
+            return agent.vaultLog(
+                payload.bucketCanisterId,
+                payload.start,
+                payload.max,
+                payload.fileId,
+            );
+        case "moderationConfig":
+            return agent.moderationConfig();
+        case "authorityReports":
+            return agent.authorityReports();
+        case "recordAuthorityReportFiled":
+            return agent.recordAuthorityReportFiled(
+                payload.reportIndex,
+                payload.portalReference,
+                payload.urgent,
+                payload.unverified,
+            );
+        case "acceptTerms":
+            return agent.acceptTerms(payload.version);
+
+        case "proposeSetInternalModerationChannel":
+            return agent.proposeSetInternalModerationChannel(payload.channel);
+        case "resolveModerationReport":
+            return agent.resolveModerationReport(
+                payload.reportIndex,
+                payload.verdict,
+                payload.urgent,
+            );
+
+        case "contestModerationSanction":
+            return agent.contestModerationSanction();
+
+        case "vaultFileChunk":
+            return agent.vaultFileChunk(
+                payload.bucketCanisterId,
+                payload.fileId,
+                payload.chunkIndex,
+            );
 
         case "updateRegistry":
             return agent.getRegistry();

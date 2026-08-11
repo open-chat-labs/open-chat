@@ -425,6 +425,7 @@ export class CachedChatEventsReader {
                             : resp,
                         true,
                     );
+                    return;
                 }
                 resolve(
                     {

@@ -36,6 +36,8 @@
         chatSummariesListStore,
         chatSummariesStore,
         communitiesStore,
+        ANON_USER_ID,
+        CURRENT_TERMS_VERSION,
         currentUserStore,
         defaultChatRules,
         dimensionsHeight,
@@ -88,6 +90,7 @@
     import SuspendedModal from "../SuspendedModal.svelte";
     import Toast from "../Toast.svelte";
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
+    import TermsUpdatedModal from "../TermsUpdatedModal.svelte";
     import GateCheckFailed from "./access/AccessGateCheckFailed.svelte";
     import AccessGateEvaluator from "./access/AccessGateEvaluator.svelte";
     import AnonFooter from "./AnonFooter.svelte";
@@ -1013,7 +1016,8 @@
             chatButton={showProfileCard.chatButton}
             alignTo={showProfileCard.alignTo}
             onOpenDirectChat={chatWithFromProfileCard}
-            onClose={() => (showProfileCard = undefined)} />
+            onClose={() => (showProfileCard = undefined)}
+        />
     {/if}
 {/if}
 
@@ -1039,7 +1043,8 @@
             ? confirmActionEvent.doubleCheck
             : undefined}
         message={confirmMessage}
-        action={onConfirmAction} />
+        action={onConfirmAction}
+    />
 {/if}
 
 <Toast />
@@ -1055,7 +1060,8 @@
             modal.kind !== "registering" &&
             modal.kind !== "make_proposal"}
         alignLeft={modal.kind === "select_chat"}
-        onClose={closeModal}>
+        onClose={closeModal}
+    >
         {#if modal.kind === "select_chat"}
             <SelectChatModal onClose={onCloseSelectChat} onSelect={onSelectChat} />
         {:else if modal.kind === "suspended"}
@@ -1070,12 +1076,14 @@
             <WebhookModal
                 chatId={$selectedChatIdStore}
                 mode={{ kind: "register" }}
-                onClose={closeModal} />
+                onClose={closeModal}
+            />
         {:else if modal.kind === "update_webhook" && ($selectedChatIdStore?.kind === "group_chat" || $selectedChatIdStore?.kind === "channel")}
             <WebhookModal
                 chatId={$selectedChatIdStore}
                 mode={{ kind: "update", webhook: modal.webhook }}
-                onClose={closeModal} />
+                onClose={closeModal}
+            />
         {:else if modal.kind === "no_access"}
             <NoAccess onClose={closeNoAccess} />
         {:else if modal.kind === "not_found"}
@@ -1086,32 +1094,38 @@
             <AccessGateEvaluator
                 gates={modal.gates}
                 onClose={closeModal}
-                onSuccess={accessGatesEvaluated} />
+                onSuccess={accessGatesEvaluated}
+            />
         {:else if modal.kind === "new_group"}
             <CreateOrUpdateGroup
                 embeddedContent={modal.embeddedContent}
                 bind:candidateGroup={modal.candidate}
-                onClose={closeModal} />
+                onClose={closeModal}
+            />
         {:else if modal.kind === "edit_community"}
             <EditCommunity
                 originalRules={modal.communityRules}
                 original={modal.community}
-                onClose={closeModal} />
+                onClose={closeModal}
+            />
         {:else if modal.kind === "wallet"}
             <AccountsModal onClose={closeModal} />
         {:else if modal.kind === "hall_of_fame"}
             <HallOfFame
                 onStreak={() => (modal = { kind: "claim_daily_chit" })}
-                onClose={closeModal} />
+                onClose={closeModal}
+            />
         {:else if modal.kind === "make_proposal"}
             <MakeProposalModal
                 selectedMultiUserChat={modal.chat}
                 nervousSystem={modal.nervousSystem}
-                onClose={closeModal} />
+                onClose={closeModal}
+            />
         {:else if modal.kind === "logging_in" || modal.kind === "registering"}
             <OnboardModal
                 step={modal.kind === "registering" ? "sign_up" : "select_mode"}
-                onClose={closeModal} />
+                onClose={closeModal}
+            />
         {:else if modal.kind === "claim_daily_chit"}
             <DailyChitModal onLeaderboard={leaderboard} onClose={closeModal} />
         {:else if modal.kind === "verify_humanity"}
@@ -1129,12 +1143,23 @@
         left={"0"}
         opacity={"0.05"}
         skew={"5deg"}
-        viewBox={`0 0 361 ${bgClip}`} />
+        viewBox={`0 0 361 ${bgClip}`}
+    />
 {/if}
 
 <Convert bind:group={convertGroup} />
 
 <EditLabel />
+
+<!-- Not shown while the suspension notice is up: the two would stack, and the notice
+     (which also carries the contest affordance) explains the account state first. The gate
+     re-asserts as soon as the notice is dismissed - suspended users can and should still
+     accept (accept_terms is deliberately callable while suspended). -->
+{#if modal.kind !== "suspended" && $currentUserStore.userId !== ANON_USER_ID && ($currentUserStore.acceptedTermsVersion ?? 0) < ($currentUserStore.currentTermsVersion ?? CURRENT_TERMS_VERSION)}
+    <Overlay>
+        <TermsUpdatedModal />
+    </Overlay>
+{/if}
 
 {#if $rulesAcceptanceStore !== undefined}
     <AcceptRulesModal />
@@ -1143,14 +1168,16 @@
         <SetPinNumberModal
             onPinSet={onPinNumberComplete}
             onClose={() => (forgotPin = false)}
-            type={{ kind: "forgot", while: { kind: "enter" } }} />
+            type={{ kind: "forgot", while: { kind: "enter" } }}
+        />
     </Overlay>
 {:else if $pinNumberResolverStore !== undefined}
     <Overlay>
         <PinNumberModal
             onClose={onPinNumberClose}
             onComplete={onPinNumberComplete}
-            onForgot={onForgotPin} />
+            onForgot={onForgotPin}
+        />
     </Overlay>
 {/if}
 

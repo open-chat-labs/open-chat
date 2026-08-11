@@ -116,6 +116,7 @@
      *   measured heights survive the index shift (rebuilt into `heightMap`).
      */
     import { mobileOperatingSystem } from "@utils/devices";
+    import { recordError } from "@utils/errorPostmortem";
     import { flushSync, onMount, tick, untrack } from "svelte";
     import { vclDebug } from "./vclDebug";
     import {
@@ -1792,11 +1793,13 @@
                  with it — an aborted flush leaves the DOM permanently out of sync
                  with the window state -->
             <svelte:boundary
-                onerror={(e) =>
+                onerror={(e) => {
+                    recordError("chat-row", e);
                     vclDebug.log("!row-render-error", {
                         key: item.key,
                         err: String(e).slice(0, 200),
-                    })}>
+                    });
+                }}>
                 {@render row(item, absIdx)}
                 {#snippet failed()}
                     <div class="vcl-row-error"></div>

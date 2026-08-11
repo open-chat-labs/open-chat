@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
+
+## [[2.0.2008](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2008-local_user_index)] - 2026-08-06
+
+### Added
+
+- Moderation-referral config: categories scoring above the configured threshold are referred for human review via the owning chat canister ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+
+## [[2.0.2000](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2000-local_user_index)] - 2026-07-22
+
 ### Added
 
 - Forward `GroupModerationFlagsChanged` events from group_index to groups ([#9089](https://github.com/open-chat-labs/open-chat/pull/9089))
@@ -14,11 +26,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Classify public group and community messages via the OpenAI Moderation API, batching requests across all local canisters ([#9091](https://github.com/open-chat-labs/open-chat/pull/9091))
 - Pass in `expected_claim_type` when verifying JWT claims ([#9102](https://github.com/open-chat-labs/open-chat/pull/9102))
 
 ### Fixed
 
-- Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
+- Drop pooled canisters the LocalUserIndex doesn't control instead of re-pooling them forever ([#9113](https://github.com/open-chat-labs/open-chat/pull/9113))
 
 ## [[2.0.1987](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1987-local_user_index)] - 2026-05-29
 

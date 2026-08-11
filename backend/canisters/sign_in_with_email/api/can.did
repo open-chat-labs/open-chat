@@ -51,7 +51,7 @@ type HandleMagicLinkResponse = variant {
   LinkExpired;
   LinkInvalid : text;
 };
-type InitArgs = record { salt : opt blob; email_sender_public_key_pem : text; whitelisted_principals: vec principal };
+type InitArgs = record { salt : opt blob; rsa_private_key_pem : opt text; email_sender_public_key_pem : text; whitelisted_principals: vec principal };
 type SignedDelegation = record { signature : blob; delegation : Delegation };
 type UpgradeArgs = record {
   email_sender_public_key_pem : opt text;

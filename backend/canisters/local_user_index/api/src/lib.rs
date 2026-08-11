@@ -7,11 +7,11 @@ use std::collections::HashMap;
 use types::nns::CryptoAmount;
 use types::{
     AutonomousConfig, BotCommandDefinition, BotDataEncoding, BotDefinition, BotDefinitionUpdate, BotInstallationLocation,
-    BotSubscriptions, BuildVersion, CanisterId, ChannelLatestMessageIndex, ChannelUserNotificationPayload, ChatId, CommunityId,
-    CyclesTopUp, DiamondMembershipPlanDuration, GroupChatUserNotificationPayload, MessageContentInitial, MessageId,
-    MessageIndex, Notification, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis, UniquePersonProof,
-    UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
-    UserNotificationPayload, UserType, is_default,
+    BotSubscriptions, BuildVersion, CanisterId, ChannelLatestMessageIndex, ChannelUserNotificationPayload, ChatId,
+    ClassifyMessageRequest, CommunityId, CyclesTopUp, DiamondMembershipPlanDuration, GroupChatUserNotificationPayload,
+    MessageContentInitial, MessageId, MessageIndex, Notification, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration,
+    TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim,
+    UserCanisterStreakInsurancePayment, UserId, UserNotificationPayload, UserType, is_default,
 };
 
 mod lifecycle;
@@ -58,6 +58,7 @@ pub enum UserIndexEvent {
     SetPremiumItemCost(SetPremiumItemCost),
     UpdateBlockedUsernamePatterns(UpdateBlockedUsernamePatterns),
     SetOpenAIApiKey(SetOpenAIApiKey),
+    SetModerationReferralConfig(SetModerationReferralConfig),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -78,6 +79,7 @@ pub enum GroupOrCommunityEvent<T = UserNotificationPayload> {
     MarkActivityForUser(TimestampMillis, UserId),
     EventStoreEvent(Event),
     Notification(Box<Notification<T>>),
+    MessageClassifyRequest(Box<ClassifyMessageRequest>),
 }
 
 pub type GroupEvent = GroupOrCommunityEvent<GroupChatUserNotificationPayload>;
@@ -433,4 +435,9 @@ pub struct UpdateBlockedUsernamePatterns {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SetOpenAIApiKey {
     pub api_key: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SetModerationReferralConfig {
+    pub config: Option<types::ModerationReferralConfig>,
 }

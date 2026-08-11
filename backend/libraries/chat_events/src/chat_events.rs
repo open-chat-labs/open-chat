@@ -17,16 +17,26 @@ use std::mem;
 use std::ops::DerefMut;
 use tracing::error;
 use types::{
-    BlobReference, BotChatEvent, BotNotification, CallParticipant, CanisterId, Chat, ChatEvent, ChatEventCategory,
-    ChatEventType, ChatType, CompletedCryptoTransaction, DiamondMembershipStatus, DirectChatCreated, EventContext, EventIndex,
-    EventMetaData, EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated,
-    GroupFrozen, GroupUnfrozen, HydratedMention, Mention, Message, MessageEditedEventPayload, MessageEventPayload, MessageId,
-    MessageIndex, MessageMatch, MessageTippedEventPayload, Milliseconds, ModerationCategories, MultiUserChat, OCResult,
-    OgPreview, OptionUpdate, P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus,
-    PendingCryptoTransaction, PollVotes, ProposalRewardStatus, ProposalUpdate, Reaction, ReactionAddedEventPayload,
-    RegisterVoteResult, ReserveP2PSwapSuccess, SenderContext, Tally, TimestampMillis, TimestampNanos, Timestamped, Tips,
-    UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VideoCallType, VoteOperation,
+    AuthorityReportState, BlobReference, BotChatEvent, BotNotification, CallParticipant, CanisterId, Chat, ChatEvent,
+    ChatEventCategory, ChatEventType, ChatType, CompletedCryptoTransaction, DiamondMembershipStatus, DirectChatCreated,
+    EventContext, EventIndex, EventMetaData, EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated,
+    GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, HydratedMention, Mention, Message,
+    MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageTippedEventPayload,
+    Milliseconds, ModerationCategories, ModerationReportStatus, MultiUserChat, OCResult, OgPreview, OptionUpdate,
+    P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction,
+    PollVotes, ProposalRewardStatus, ProposalUpdate, Reaction, ReactionAddedEventPayload, RegisterVoteResult,
+    ReserveP2PSwapSuccess, SenderContext, Tally, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall,
+    VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VideoCallType, VoteOperation,
 };
+
+// The patchable fields of a moderation-report card; each is applied when present so that
+// verdict-status, authority-report and quarantine-flip updates can be sent independently
+pub struct ModerationReportUpdates {
+    pub status: Option<ModerationReportStatus>,
+    pub authority_report: Option<AuthorityReportState>,
+    pub auto_sanctioned: Option<bool>,
+    pub reporters: Option<Vec<UserId>>,
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
@@ -476,6 +486,41 @@ impl ChatEvents {
         }
     }
 
+    // Restores a message deleted by automated moderation, after a Dismissed verdict on the
+    // report. Bypasses member permission checks (the caller is the user_index) by acting as
+    // the original deleter.
+    pub fn moderation_undelete(
+        &mut self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        now: TimestampMillis,
+    ) -> OCResult<Option<BotNotification>> {
+        let deleted_by = self
+            .events_reader(EventIndex::default(), thread_root_message_index, None)
+            .and_then(|reader| reader.message_internal(message_id.into()))
+            .and_then(|message| message.deleted_by.as_ref().map(|db| db.deleted_by))
+            .ok_or(OCErrorCode::MessageNotFound)?;
+
+        // A moderation restore means the allegation was dismissed: clear the CSAM flag first,
+        // since the flag alone is what locks quarantined content (making the read/undelete
+        // gates unconditional closes the hole where a self-deleting sender was exempt)
+        let _ = self.flag_message(
+            thread_root_message_index,
+            message_id,
+            types::ModerationCategories::default(),
+            now,
+        );
+
+        self.undelete_message(DeleteUndeleteMessageArgs {
+            caller: deleted_by,
+            is_admin: false,
+            min_visible_event_index: EventIndex::default(),
+            thread_root_message_index,
+            message_id,
+            now,
+        })
+    }
+
     fn undelete_message(&mut self, args: DeleteUndeleteMessageArgs) -> OCResult<Option<BotNotification>> {
         match self.update_message(
             args.thread_root_message_index,
@@ -521,6 +566,13 @@ impl ChatEvents {
         let Some(deleted_by) = message.deleted_by.as_ref().map(|db| db.deleted_by) else {
             return Err(UpdateEventError::NoChange(OCErrorCode::NoChange));
         };
+
+        // Quarantined messages (CSAM-flagged) cannot be restored by anyone - including a
+        // sender who self-deleted before the detection. The moderation Dismissed-verdict path
+        // clears the flag before restoring, so it alone passes this gate.
+        if message.moderation_flags & types::ModerationCategories::SEXUAL_MINORS.bits() != 0 {
+            return Err(UpdateEventError::NoChange(OCErrorCode::InitiatorNotAuthorized));
+        }
 
         if deleted_by == args.caller || (args.is_admin && message.sender != deleted_by) {
             match message.content {
@@ -832,6 +884,65 @@ impl ChatEvents {
             },
         ) {
             Ok(result) => Ok(result.event_index),
+            Err(UpdateEventError::NoChange(_)) => Err(OCErrorCode::NoChange.into()),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::MessageNotFound.into()),
+        }
+    }
+
+    pub fn update_moderation_report(
+        &mut self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        updates: ModerationReportUpdates,
+        now: TimestampMillis,
+    ) -> OCResult<()> {
+        let ModerationReportUpdates {
+            status,
+            authority_report,
+            auto_sanctioned,
+            reporters,
+        } = updates;
+        match self.update_event(
+            thread_root_message_index,
+            message_id.into(),
+            EventIndex::default(),
+            Some(now),
+            |event| {
+                if let ChatEventInternal::Message(m) = &mut event.event
+                    && let MessageContentInternal::ModerationReport(report) = &mut m.content
+                {
+                    let mut changed = false;
+                    if let Some(status) = status
+                        && report.status != status
+                    {
+                        report.status = status;
+                        changed = true;
+                    }
+                    if let Some(authority_report) = authority_report
+                        && report.authority_report.as_ref() != Some(&authority_report)
+                    {
+                        report.authority_report = Some(authority_report);
+                        changed = true;
+                    }
+                    if let Some(auto_sanctioned) = auto_sanctioned
+                        && report.auto_sanctioned != auto_sanctioned
+                    {
+                        report.auto_sanctioned = auto_sanctioned;
+                        changed = true;
+                    }
+                    if let Some(reporters) = reporters
+                        && report.reporters != reporters
+                    {
+                        report.reporters = reporters;
+                        changed = true;
+                    }
+                    if changed { Ok(()) } else { Err(UpdateEventError::NoChange(())) }
+                } else {
+                    Err(UpdateEventError::NotFound)
+                }
+            },
+        ) {
+            Ok(_) => Ok(()),
             Err(UpdateEventError::NoChange(_)) => Err(OCErrorCode::NoChange.into()),
             Err(UpdateEventError::NotFound) => Err(OCErrorCode::MessageNotFound.into()),
         }
