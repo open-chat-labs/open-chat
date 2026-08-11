@@ -4,7 +4,21 @@ use std::fmt::Debug;
 use tracing::Level;
 
 pub use canister_client_macros::*;
-use types::C2CError;
+use types::{C2CError, C2CRetryPolicy};
+
+// Serializing our own args, or deserializing the callee's response, will fail the same way however
+// many times we retry - either the caller and callee disagree on the types, or one of them has a
+// bug. Neither is fixable without a deploy, so these must not go back on a retry queue. This
+// mirrors how the CDK's own `CandidDecodeFailed` is treated by `C2CError::from_cdk_error`.
+fn encoding_error(canister_id: Principal, method_name: &str, description: &str, error: impl Debug) -> C2CError {
+    C2CError::new_with_retry_policy(
+        canister_id,
+        method_name,
+        RejectCode::CanisterError,
+        format!("{description}: {error:?}"),
+        C2CRetryPolicy::DoNotRetry,
+    )
+}
 
 pub async fn make_c2c_call<A, R, S, D, SError: Debug, DError: Debug>(
     canister_id: Principal,
@@ -18,25 +32,11 @@ where
     S: Fn(A) -> Result<Vec<u8>, SError>,
     D: Fn(&[u8]) -> Result<R, DError>,
 {
-    let payload_bytes = serializer(args).map_err(|e| {
-        C2CError::new(
-            canister_id,
-            method_name,
-            RejectCode::CanisterError,
-            format!("Serialization error: {e:?}"),
-        )
-    })?;
+    let payload_bytes = serializer(args).map_err(|e| encoding_error(canister_id, method_name, "Serialization error", e))?;
 
     let response_bytes = make_c2c_call_raw(canister_id, method_name, &payload_bytes, 0, timeout_seconds).await?;
 
-    deserializer(&response_bytes).map_err(|e| {
-        C2CError::new(
-            canister_id,
-            method_name,
-            RejectCode::CanisterError,
-            format!("Deserialization error: {e:?}"),
-        )
-    })
+    deserializer(&response_bytes).map_err(|e| encoding_error(canister_id, method_name, "Deserialization error", e))
 }
 
 pub async fn make_c2c_call_with_payment<A, R, S, D, SError: Debug, DError: Debug>(
@@ -51,25 +51,11 @@ where
     S: Fn(A) -> Result<Vec<u8>, SError>,
     D: Fn(&[u8]) -> Result<R, DError>,
 {
-    let payload_bytes = serializer(args).map_err(|e| {
-        C2CError::new(
-            canister_id,
-            method_name,
-            RejectCode::CanisterError,
-            format!("Serialization error: {e:?}"),
-        )
-    })?;
+    let payload_bytes = serializer(args).map_err(|e| encoding_error(canister_id, method_name, "Serialization error", e))?;
 
     let response_bytes = make_c2c_call_raw(canister_id, method_name, &payload_bytes, cycles, None).await?;
 
-    deserializer(&response_bytes).map_err(|e| {
-        C2CError::new(
-            canister_id,
-            method_name,
-            RejectCode::CanisterError,
-            format!("Deserialization error: {e:?}"),
-        )
-    })
+    deserializer(&response_bytes).map_err(|e| encoding_error(canister_id, method_name, "Deserialization error", e))
 }
 
 pub async fn make_c2c_call_raw(

@@ -52,10 +52,15 @@ pub fn delay_if_should_retry_failed_c2c_call(error: &C2CError) -> Option<Millise
     }
 }
 
+// A canister which has been uninstalled still exists, so the call is not rejected with
+// `DestinationInvalid` - it fails with `CanisterError`, which we otherwise cannot tell apart from
+// the callee trapping. The `IC0537` code identifies it, but the IC does not expose the fine grained
+// error codes to canisters, so it is only ever in the reject message at the replica's discretion.
+// The reject text itself is "...contains no Wasm module.", so match on that too.
 pub fn is_target_canister_uninstalled_or_deleted(reject_code: RejectCode, message: &str) -> bool {
     match reject_code {
         RejectCode::DestinationInvalid => true,
-        RejectCode::CanisterError if message.contains("IC0537") => true,
+        RejectCode::CanisterError => message.contains("IC0537") || message.contains("no Wasm module"),
         _ => false,
     }
 }
@@ -89,6 +94,41 @@ pub fn convert_cdk_error(canister_id: CanisterId, method_name: &'static str, err
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // The reject text as the replica actually sends it, captured in
+    // `frontend/openchat-agent/src/services/error.spec.ts`. The `IC0537` code sits in a separate
+    // field which only the frontend sees, so a canister has nothing but this text to go on.
+    const NO_WASM_MODULE_REJECT_MESSAGE: &str = "...contains no Wasm module.";
+
+    #[test]
+    fn uninstalled_target_is_detected_without_the_ic_error_code() {
+        assert!(is_target_canister_uninstalled_or_deleted(
+            RejectCode::CanisterError,
+            NO_WASM_MODULE_REJECT_MESSAGE
+        ));
+        // Still detected if a replica does include the code
+        assert!(is_target_canister_uninstalled_or_deleted(
+            RejectCode::CanisterError,
+            "IC0537: whatever"
+        ));
+    }
+
+    #[test]
+    fn deleted_target_is_detected_from_the_reject_code_alone() {
+        assert!(is_target_canister_uninstalled_or_deleted(RejectCode::DestinationInvalid, ""));
+    }
+
+    #[test]
+    fn a_trapping_target_is_not_mistaken_for_an_uninstalled_one() {
+        assert!(!is_target_canister_uninstalled_or_deleted(
+            RejectCode::CanisterError,
+            "trapped explicitly: something went wrong"
+        ));
+        assert!(!is_target_canister_uninstalled_or_deleted(
+            RejectCode::SysTransient,
+            "Canister x is out of cycles"
+        ));
+    }
 
     // Which policy a given failure maps to is covered by the tests alongside
     // `C2CRetryPolicy::from_cdk_error` in the `types` crate

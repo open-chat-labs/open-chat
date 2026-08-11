@@ -1,4 +1,4 @@
-use crate::TimerJobItemGroup;
+use crate::{MAX_CONSECUTIVE_FAILURES, TimerJobItemGroup, should_retry_after_failure};
 use per_round_timer::PerRoundTimer;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::btree_map::Entry::{Occupied, Vacant};
@@ -8,6 +8,7 @@ use std::ops::DerefMut;
 use std::rc::Rc;
 use std::sync::Mutex;
 use std::time::Duration;
+use tracing::error;
 use types::Milliseconds;
 
 // Use this to process events where events are grouped into batches based on their key.
@@ -37,6 +38,7 @@ impl<T: TimerJobItemGroup> GroupedTimerJobQueue<T> {
                 in_progress: BTreeSet::new(),
                 max_concurrency,
                 defer_processing,
+                consecutive_failures: BTreeMap::new(),
                 timer: None,
             })),
             phantom: PhantomData,
@@ -93,6 +95,9 @@ struct GroupedTimerJobQueueInner<S: Clone, K: Clone + Ord, I> {
     in_progress: BTreeSet<K>,
     max_concurrency: usize,
     defer_processing: bool,
+    // Counted per key, so one broken callee cannot cause another's items to be dropped
+    #[serde(default = "BTreeMap::new", skip_serializing_if = "BTreeMap::is_empty")]
+    consecutive_failures: BTreeMap<K, u32>,
     #[serde(skip)]
     timer: Option<PerRoundTimer>,
 }
@@ -204,15 +209,27 @@ where
         let result = batch.process().await;
         let retry = matches!(result, Err(Some(_)));
         let key = batch.key();
+        let items = batch.into_items();
 
         self.within_lock(|i| {
             i.in_progress.remove(&key);
             if retry {
-                let queue = i.items_map.entry(key.clone()).or_default();
-                // Prepend the items to the front of the queue such that ordering is maintained
-                for item in batch.into_items().into_iter().rev() {
-                    queue.push_front(item);
+                if should_retry_after_failure(i.consecutive_failures.entry(key.clone()).or_default()) {
+                    let queue = i.items_map.entry(key.clone()).or_default();
+                    // Prepend the items to the front of the queue such that ordering is maintained
+                    for item in items.into_iter().rev() {
+                        queue.push_front(item);
+                    }
+                } else {
+                    i.consecutive_failures.remove(&key);
+                    error!(
+                        dropped = items.len(),
+                        attempts = MAX_CONSECUTIVE_FAILURES,
+                        "Dropping queued items after too many consecutive failures"
+                    );
                 }
+            } else {
+                i.consecutive_failures.remove(&key);
             }
             // If there are still any items in the map for this key, re-add it to the queue
             if i.items_map.contains_key(&key) {
@@ -302,4 +319,42 @@ macro_rules! grouped_timer_job_batch {
             }
         }
     };
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // `GroupedTimerJobQueueInner` as it was before `consecutive_failures` was added
+    #[derive(Serialize)]
+    struct LegacyInner {
+        state: (),
+        queue: VecDeque<u32>,
+        items_map: BTreeMap<u32, VecDeque<u32>>,
+        in_progress: BTreeSet<u32>,
+        max_concurrency: usize,
+        defer_processing: bool,
+    }
+
+    // These queues are held in canister state, so state written by the previous build has to keep
+    // deserializing across the upgrade which adds the field
+    #[test]
+    fn state_written_before_the_failure_count_was_added_still_deserializes() {
+        let bytes = msgpack::serialize_then_unwrap(LegacyInner {
+            state: (),
+            queue: VecDeque::from(vec![7]),
+            items_map: BTreeMap::from([(7, VecDeque::from(vec![1, 2]))]),
+            in_progress: BTreeSet::new(),
+            max_concurrency: 5,
+            defer_processing: false,
+        });
+
+        let inner: GroupedTimerJobQueueInner<(), u32, u32> = msgpack::deserialize_then_unwrap(&bytes);
+
+        assert_eq!(inner.queue, VecDeque::from(vec![7]));
+        assert_eq!(inner.items_map.get(&7).unwrap(), &VecDeque::from(vec![1, 2]));
+        assert_eq!(inner.max_concurrency, 5);
+        // Items already queued start with a full set of attempts rather than being dropped
+        assert!(inner.consecutive_failures.is_empty());
+    }
 }

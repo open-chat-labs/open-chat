@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
+- Drop queued events after 50 consecutive failures rather than retrying a permanently broken callee forever ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
 
 ## [[2.0.1954](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1954-notifications_index)] - 2026-01-14
 

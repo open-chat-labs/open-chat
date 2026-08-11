@@ -1,4 +1,4 @@
-use crate::TimerJobItem;
+use crate::{MAX_CONSECUTIVE_FAILURES, TimerJobItem, should_retry_after_failure};
 use per_round_timer::PerRoundTimer;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::VecDeque;
@@ -6,6 +6,7 @@ use std::ops::DerefMut;
 use std::rc::Rc;
 use std::sync::Mutex;
 use std::time::Duration;
+use tracing::error;
 use types::Milliseconds;
 
 pub struct TimerJobQueue<T> {
@@ -20,6 +21,7 @@ impl<T> TimerJobQueue<T> {
                 in_progress: 0,
                 max_concurrency,
                 defer_processing,
+                consecutive_failures: 0,
                 timer: None,
             })),
         }
@@ -69,8 +71,16 @@ struct TimerJobQueueInner<T> {
     in_progress: usize,
     max_concurrency: usize,
     defer_processing: bool,
+    // Unlike the grouped queue there is no key to count against here, so this counts failures
+    // across the queue as a whole - any success resets it
+    #[serde(default, skip_serializing_if = "is_zero")]
+    consecutive_failures: u32,
     #[serde(skip)]
     timer: Option<PerRoundTimer>,
+}
+
+fn is_zero(value: &u32) -> bool {
+    *value == 0
 }
 
 impl<T> TimerJobQueue<T>
@@ -156,7 +166,16 @@ where
 
         self.within_lock(|i| {
             if retry {
-                i.queue.push_front(item);
+                if should_retry_after_failure(&mut i.consecutive_failures) {
+                    i.queue.push_front(item);
+                } else {
+                    error!(
+                        attempts = MAX_CONSECUTIVE_FAILURES,
+                        "Dropping queued item after too many consecutive failures"
+                    );
+                }
+            } else {
+                i.consecutive_failures = 0;
             }
             i.in_progress = i.in_progress.saturating_sub(1);
         });
@@ -186,5 +205,39 @@ impl<'de, T: Deserialize<'de> + TimerJobItem + 'static> Deserialize<'de> for Tim
         };
         value.set_timer_if_required(0);
         Ok(value)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // `TimerJobQueueInner` as it was before `consecutive_failures` was added
+    #[derive(Serialize)]
+    struct LegacyInner {
+        queue: VecDeque<u32>,
+        in_progress: usize,
+        max_concurrency: usize,
+        defer_processing: bool,
+    }
+
+    // These queues are held in canister state, so state written by the previous build has to keep
+    // deserializing across the upgrade which adds the field
+    #[test]
+    fn state_written_before_the_failure_count_was_added_still_deserializes() {
+        let bytes = msgpack::serialize_then_unwrap(LegacyInner {
+            queue: VecDeque::from(vec![1, 2, 3]),
+            in_progress: 0,
+            max_concurrency: 10,
+            defer_processing: true,
+        });
+
+        let inner: TimerJobQueueInner<u32> = msgpack::deserialize_then_unwrap(&bytes);
+
+        assert_eq!(inner.queue, VecDeque::from(vec![1, 2, 3]));
+        assert_eq!(inner.max_concurrency, 10);
+        assert!(inner.defer_processing);
+        // Items already queued start with a full set of attempts rather than being dropped
+        assert_eq!(inner.consecutive_failures, 0);
     }
 }
