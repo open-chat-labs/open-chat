@@ -44,7 +44,11 @@
         routeStore,
         subscribe,
     } from "@client";
-    import { eventToError, recordError } from "@utils/errorPostmortem";
+    import {
+        eventToError,
+        isIdbConnectionClosingError,
+        recordError,
+    } from "@utils/errorPostmortem";
     import { navigate } from "@utils/navigation";
     import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
@@ -628,6 +632,10 @@
         }
 
         const err = eventToError(ev);
+        if (isIdbConnectionClosingError(err)) {
+            ev.preventDefault();
+            return;
+        }
         recordError("window", err);
         logger?.error("Unhandled error: ", err);
         if (ev instanceof PromiseRejectionEvent && requiresLogout(ev.reason)) {
