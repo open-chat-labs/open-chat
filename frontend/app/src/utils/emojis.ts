@@ -25,24 +25,32 @@ export function summaryToSelectedEmoji(match: EmojiSummary): SelectedEmoji {
 }
 
 export function searchAllEmojis(query: string) {
-    return emojiDatabase.getPreferredSkinTone().then((tone) => {
-        return emojiDatabase.getEmojiBySearchQuery(query!).then((m) => {
-            const native: NativeEmojiSummary[] = (m as NativeEmoji[])
-                .filter((m) => m.version < 14)
-                .map((match) => {
-                    const unicode =
-                        match.skins?.find((s) => s.tone === tone)?.unicode ?? match.unicode;
-                    return {
-                        kind: "native" as const,
-                        unicode,
-                        code: match.shortcodes
-                            ? match.shortcodes[match.shortcodes.length - 1]
-                            : match.annotation,
-                    };
-                });
-            return [...searchCustomEmojis(query), ...native];
+    return emojiDatabase
+        .getPreferredSkinTone()
+        .then((tone) => {
+            return emojiDatabase.getEmojiBySearchQuery(query!).then((m) => {
+                const native: NativeEmojiSummary[] = (m as NativeEmoji[])
+                    .filter((m) => m.version < 14)
+                    .map((match) => {
+                        const unicode =
+                            match.skins?.find((s) => s.tone === tone)?.unicode ?? match.unicode;
+                        return {
+                            kind: "native" as const,
+                            unicode,
+                            code: match.shortcodes
+                                ? match.shortcodes[match.shortcodes.length - 1]
+                                : match.annotation,
+                        };
+                    });
+                return [...searchCustomEmojis(query), ...native];
+            });
+        })
+        .catch((err) => {
+            // the emoji database can transiently fail if the browser has closed the
+            // IndexedDB connection (eg. Android backgrounding the app)
+            console.error("Emoji search failed: ", err);
+            return searchCustomEmojis(query);
         });
-    });
 }
 
 export function searchCustomEmojis(query: string): CustomEmojiSummary[] {

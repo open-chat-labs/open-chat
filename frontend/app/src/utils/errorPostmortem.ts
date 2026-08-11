@@ -60,3 +60,15 @@ export function eventToError(ev: Event): unknown {
     if (ev instanceof ErrorEvent) return ev.error ?? ev.message;
     return ev;
 }
+
+// Chrome on Android closes IndexedDB connections when the app is backgrounded.
+// Any in-flight cache operation (most commonly the emoji database's fire-and-forget
+// background update check) then rejects with this error. The connection is re-opened
+// on next use so nothing is actually broken - keep these out of the crash log.
+export function isIdbConnectionClosingError(err: unknown): boolean {
+    return (
+        err instanceof DOMException &&
+        err.name === "InvalidStateError" &&
+        err.message.includes("database connection is closing")
+    );
+}
