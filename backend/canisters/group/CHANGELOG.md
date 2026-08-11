@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `c2c_moderation_hard_delete` deletes a message which was not already soft-deleted rather than reporting success while the content is still live ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 - Prevent members from demoting others more senior than themselves ([#9115](https://github.com/open-chat-labs/open-chat/pull/9115))
 - Lock against a user having two gate payments in progress concurrently ([#9080](https://github.com/open-chat-labs/open-chat/pull/9080))
+- Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
 
 ## [[2.0.1989](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1989-group)] - 2026-06-18
 

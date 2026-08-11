@@ -229,7 +229,7 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
                     .nervous_systems
                     .mark_sync_complete(&governance_canister_id, false, now);
 
-                if delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message()).is_none() {
+                if delay_if_should_retry_failed_c2c_call(&error).is_none() {
                     state.data.nervous_systems.mark_disabled(&governance_canister_id);
                 }
             });

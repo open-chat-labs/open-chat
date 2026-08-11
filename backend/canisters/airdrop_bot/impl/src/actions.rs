@@ -77,7 +77,7 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) -> Resul
     {
         Ok(community_canister::local_user_index::Response::Success(canister_id)) => canister_id,
         Err(error) => {
-            let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message());
+            let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(&error);
             return Err(delay_if_should_retry);
         }
     };
@@ -235,7 +235,7 @@ async fn handle_main_message_action(action: AirdropMessage) -> Result<(), Option
             Err(None)
         }
         Err(error) => {
-            let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message());
+            let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(&error);
             error!(?args, ?error, "Failed to send DM");
             Err(delay_if_should_retry)
         }
@@ -301,7 +301,7 @@ async fn handle_lottery_message_action(action: AirdropMessage) -> Result<(), Opt
         }
         Err(error) => {
             error!(?args, ?error, "Failed to send lottery message");
-            let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message());
+            let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(&error);
             Err(delay_if_should_retry)
         }
     }

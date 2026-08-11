@@ -55,10 +55,7 @@ impl FireAndForgetHandler {
                 calls.in_progress.retain(|id| *id != call.id);
 
                 match result {
-                    Err(error)
-                        if delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message()).is_some()
-                            && call.attempt < 50 =>
-                    {
+                    Err(error) if delay_if_should_retry_failed_c2c_call(&error).is_some() && call.attempt < 50 => {
                         call.attempt += 1;
                         let now = canister_time::now_millis();
                         let due = now + (u64::from(call.attempt) * SECOND_IN_MS);

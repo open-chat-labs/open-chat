@@ -10,12 +10,10 @@ pub async fn delete_files(blob_references: Vec<BlobReference>) -> Vec<BlobRefere
 
         match storage_bucket_canister_c2c_client::delete_files(canister_id, &args).await {
             Ok(_) => Ok(()),
-            Err(error) if delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message()).is_some() => {
-                Err(blob_ids
-                    .into_iter()
-                    .map(|blob_id| BlobReference { canister_id, blob_id })
-                    .collect())
-            }
+            Err(error) if delay_if_should_retry_failed_c2c_call(&error).is_some() => Err(blob_ids
+                .into_iter()
+                .map(|blob_id| BlobReference { canister_id, blob_id })
+                .collect()),
             Err(_) => Err(Vec::new()),
         }
     }

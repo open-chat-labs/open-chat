@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
+
 ## [[2.0.2009](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2009-storage_bucket)] - 2026-08-10
 
 ### Changed

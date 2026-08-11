@@ -1,10 +1,24 @@
 use candid::Principal;
-use ic_cdk::call::{CallFailed, RejectCode};
+use ic_cdk::call::RejectCode;
 use std::fmt::Debug;
 use tracing::Level;
 
 pub use canister_client_macros::*;
-use types::C2CError;
+use types::{C2CError, C2CRetryPolicy};
+
+// Serializing our own args, or deserializing the callee's response, will fail the same way however
+// many times we retry - either the caller and callee disagree on the types, or one of them has a
+// bug. Neither is fixable without a deploy, so these must not go back on a retry queue. This
+// mirrors how the CDK's own `CandidDecodeFailed` is treated by `C2CError::from_cdk_error`.
+fn encoding_error(canister_id: Principal, method_name: &str, description: &str, error: impl Debug) -> C2CError {
+    C2CError::new_with_retry_policy(
+        canister_id,
+        method_name,
+        RejectCode::CanisterError,
+        format!("{description}: {error:?}"),
+        C2CRetryPolicy::DoNotRetry,
+    )
+}
 
 pub async fn make_c2c_call<A, R, S, D, SError: Debug, DError: Debug>(
     canister_id: Principal,
@@ -18,25 +32,11 @@ where
     S: Fn(A) -> Result<Vec<u8>, SError>,
     D: Fn(&[u8]) -> Result<R, DError>,
 {
-    let payload_bytes = serializer(args).map_err(|e| {
-        C2CError::new(
-            canister_id,
-            method_name,
-            RejectCode::CanisterError,
-            format!("Serialization error: {e:?}"),
-        )
-    })?;
+    let payload_bytes = serializer(args).map_err(|e| encoding_error(canister_id, method_name, "Serialization error", e))?;
 
     let response_bytes = make_c2c_call_raw(canister_id, method_name, &payload_bytes, 0, timeout_seconds).await?;
 
-    deserializer(&response_bytes).map_err(|e| {
-        C2CError::new(
-            canister_id,
-            method_name,
-            RejectCode::CanisterError,
-            format!("Deserialization error: {e:?}"),
-        )
-    })
+    deserializer(&response_bytes).map_err(|e| encoding_error(canister_id, method_name, "Deserialization error", e))
 }
 
 pub async fn make_c2c_call_with_payment<A, R, S, D, SError: Debug, DError: Debug>(
@@ -51,25 +51,11 @@ where
     S: Fn(A) -> Result<Vec<u8>, SError>,
     D: Fn(&[u8]) -> Result<R, DError>,
 {
-    let payload_bytes = serializer(args).map_err(|e| {
-        C2CError::new(
-            canister_id,
-            method_name,
-            RejectCode::CanisterError,
-            format!("Serialization error: {e:?}"),
-        )
-    })?;
+    let payload_bytes = serializer(args).map_err(|e| encoding_error(canister_id, method_name, "Serialization error", e))?;
 
     let response_bytes = make_c2c_call_raw(canister_id, method_name, &payload_bytes, cycles, None).await?;
 
-    deserializer(&response_bytes).map_err(|e| {
-        C2CError::new(
-            canister_id,
-            method_name,
-            RejectCode::CanisterError,
-            format!("Deserialization error: {e:?}"),
-        )
-    })
+    deserializer(&response_bytes).map_err(|e| encoding_error(canister_id, method_name, "Deserialization error", e))
 }
 
 pub async fn make_c2c_call_raw(
@@ -99,16 +85,19 @@ pub async fn make_c2c_call_raw(
             Ok(response_bytes.into_bytes())
         }
         Err(error) => {
-            let (error_code, error_message) = match error {
-                CallFailed::InsufficientLiquidCycleBalance(cb) => (RejectCode::SysTransient, cb.to_string()),
-                CallFailed::CallPerformFailed(f) => (RejectCode::SysUnknown, f.to_string()),
-                CallFailed::CallRejected(r) => (
-                    r.reject_code().unwrap_or(RejectCode::SysUnknown),
-                    r.reject_message().to_string(),
-                ),
-            };
-            tracing::error!(method_name, %canister_id, ?error_code, error_message, "Error calling c2c");
-            Err(C2CError::new(canister_id, method_name, error_code, error_message))
+            // Convert via `C2CError::from_cdk_error` rather than flattening the error here, so that
+            // the retry policy is derived from the CDK's own view of the failure. Eg. a callee which
+            // is out of cycles is just another `SysTransient` reject once flattened, and retrying
+            // that every round burns our own cycles until someone tops the callee up.
+            let error = C2CError::from_cdk_error(canister_id, method_name, error.into());
+            tracing::error!(
+                method_name,
+                %canister_id,
+                error_code = ?error.reject_code(),
+                error_message = error.message(),
+                "Error calling c2c"
+            );
+            Err(error)
         }
     }
 }
