@@ -1,5 +1,5 @@
 use candid::Principal;
-use ic_cdk::call::{CallFailed, RejectCode};
+use ic_cdk::call::RejectCode;
 use std::fmt::Debug;
 use tracing::Level;
 
@@ -99,16 +99,19 @@ pub async fn make_c2c_call_raw(
             Ok(response_bytes.into_bytes())
         }
         Err(error) => {
-            let (error_code, error_message) = match error {
-                CallFailed::InsufficientLiquidCycleBalance(cb) => (RejectCode::SysTransient, cb.to_string()),
-                CallFailed::CallPerformFailed(f) => (RejectCode::SysUnknown, f.to_string()),
-                CallFailed::CallRejected(r) => (
-                    r.reject_code().unwrap_or(RejectCode::SysUnknown),
-                    r.reject_message().to_string(),
-                ),
-            };
-            tracing::error!(method_name, %canister_id, ?error_code, error_message, "Error calling c2c");
-            Err(C2CError::new(canister_id, method_name, error_code, error_message))
+            // Convert via `C2CError::from_cdk_error` rather than flattening the error here, so that
+            // the retry policy is derived from the CDK's own view of the failure. Eg. a callee which
+            // is out of cycles is just another `SysTransient` reject once flattened, and retrying
+            // that every round burns our own cycles until someone tops the callee up.
+            let error = C2CError::from_cdk_error(canister_id, method_name, error.into());
+            tracing::error!(
+                method_name,
+                %canister_id,
+                error_code = ?error.reject_code(),
+                error_message = error.message(),
+                "Error calling c2c"
+            );
+            Err(error)
         }
     }
 }
