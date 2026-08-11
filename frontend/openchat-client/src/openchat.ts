@@ -5348,7 +5348,7 @@ export class OpenChat {
             .then((res) => {
                 console.log("register user response: ", res);
                 if (res.kind === "success") {
-                    gaTrack("registered_user", "registration", res.userId);
+                    gaTrack("registered_user", "registration");
                     if (this.#referralCode !== undefined) {
                         gaTrack("registered_user_with_referral_code", "registration");
                     }

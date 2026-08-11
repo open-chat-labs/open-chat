@@ -47,9 +47,9 @@
         </li>
         <li>
             OpenChat Labs is the contact point for this notice as a whole, including for the
-            processing OpenChat DAO controls: a decentralised autonomous organisation cannot
-            receive correspondence directly, so requests which concern the ordinary operation of
-            the OpenChat Platform are received and acted on by OpenChat Labs.
+            processing OpenChat DAO controls: a decentralised autonomous organisation cannot receive
+            correspondence directly, so requests which concern the ordinary operation of the
+            OpenChat Platform are received and acted on by OpenChat Labs.
         </li>
         <li>
             You can contact OpenChat Labs about anything in this notice, including any request to
@@ -66,29 +66,38 @@
 
     <ul class="custom_list" style={"--prefix: '2.'"}>
         <li>
-            <strong>Account identifiers.</strong> When you register, an Internet Identity principal
-            and an OpenChat user identifier are associated with your account, together with the
-            username, and any display name and profile image you choose. These identifiers are
-            pseudonymous: they are not linked by us to your legal identity.
+            <strong>Account identifiers.</strong> When you register, a principal derived from your chosen
+            sign-in method (such as Internet Identity, a passkey, an email sign-in or a supported crypto
+            wallet) and an OpenChat user identifier are associated with your account, together with the
+            username, and any display name and profile image you choose. These identifiers are pseudonymous:
+            we do not require your legal name or identity documents.
         </li>
         <li>
-            <strong>Content you send.</strong> Messages, media and reactions you send, and the
-            groups, communities and channels you belong to.
+            <strong>Sign-in data.</strong> If you use email sign-in, or add an email address for account
+            recovery, that address is used to send you sign-in links and to link your sign-in method to
+            your account. Our sign-in canister stores it only in salted-hashed form, and it is passed
+            to our email delivery provider in order to send you the link. If you sign in with a crypto
+            wallet, the sign-in canisters process your wallet address.
         </li>
         <li>
-            <strong>Account activity.</strong> Records needed to operate the Platform, such as
-            Diamond membership status and payments, wallet transactions you initiate, referrals,
-            achievements, activity streaks and the version of the Terms you have accepted and when.
+            <strong>Content you send.</strong> Messages, media and reactions you send, and the groups,
+            communities and channels you belong to.
         </li>
         <li>
-            <strong>Safety records.</strong> Where content is reported or detected, a moderation
-            record is created. This is described in section 5.
+            <strong>Account activity.</strong> Records needed to operate the Platform, such as Diamond
+            membership status and payments, wallet transactions you initiate, referrals, achievements,
+            activity streaks and the version of the Terms you have accepted and when.
         </li>
         <li>
-            <strong>What we do not collect.</strong> By design, the OpenChat Platform does not
-            collect IP addresses, email addresses or phone numbers, and the canisters which run the
-            Platform never receive them. This is architectural rather than a policy choice: we
-            cannot produce this data, including in response to a lawful request from an authority.
+            <strong>Safety records.</strong> Where content is reported or detected, a moderation record
+            is created. This is described in section 5.
+        </li>
+        <li>
+            <strong>What we do not collect.</strong> We do not collect phone numbers, legal names or identity
+            documents. The canisters which hold your account and messages do not receive or record IP
+            addresses. Like any internet service, the infrastructure and services which deliver the Platform
+            (see sections 3 and 6) see network data such as IP addresses when your device connects to
+            them, but no OpenChat account record contains one, and we cannot produce data we do not hold.
         </li>
     </ul>
 </div>
@@ -106,8 +115,8 @@
         </li>
         <li>
             Content posted to public groups, communities and channels is publicly readable by
-            anyone, including people who do not have an OpenChat account, and may be copied,
-            indexed or retained by third parties beyond our control.
+            anyone, including people who do not have an OpenChat account, and may be copied, indexed
+            or retained by third parties beyond our control.
         </li>
         <li>
             Messages are not end-to-end encrypted. Message content is held in the canisters which
@@ -130,21 +139,24 @@
 
     <ul class="custom_list" style={"--prefix: '4.'"}>
         <li>
-            <strong>To provide the Platform</strong> - delivering your messages, maintaining your
-            account, groups and memberships, and processing Diamond membership and wallet
-            operations you initiate. Legal basis: performance of our contract with you (Article
-            6(1)(b) UK GDPR).
+            <strong>To provide the Platform</strong> - delivering your messages, maintaining your account,
+            groups and memberships, and processing Diamond membership and wallet operations you initiate.
+            Legal basis: performance of our contract with you (Article 6(1)(b) UK GDPR).
         </li>
         <li>
-            <strong>To keep the Platform working and secure</strong> - preventing abuse, spam and
-            attacks on the service. Legal basis: our legitimate interests in the security and
-            integrity of the Platform (Article 6(1)(f)).
+            <strong>To keep the Platform working and secure</strong> - preventing abuse, spam and attacks
+            on the service. Legal basis: our legitimate interests in the security and integrity of the
+            Platform (Article 6(1)(f)).
         </li>
         <li>
-            <strong>To meet our safety obligations</strong> - the moderation, evidence preservation
-            and authority reporting described in section 5. Legal basis: compliance with legal
-            obligations to which OpenChat Labs is subject (Article 6(1)(c)), including the UK Online
-            Safety Act 2023.
+            <strong>To understand usage and fix problems</strong> - website analytics and error reporting,
+            as described in section 6. Legal basis: our legitimate interests in operating and improving
+            the Platform (Article 6(1)(f)).
+        </li>
+        <li>
+            <strong>To meet our safety obligations</strong> - the moderation, evidence preservation and
+            authority reporting described in section 5. Legal basis: compliance with legal obligations
+            to which OpenChat Labs is subject (Article 6(1)(c)), including the UK Online Safety Act 2023.
         </li>
     </ul>
 </div>
@@ -156,56 +168,53 @@
 
     <ul class="custom_list" style={"--prefix: '5.'"}>
         <li>
-            <strong>Classification.</strong> Messages sent to public groups and channels, including
-            text and media, are automatically classified for safety purposes. Private messages are
-            never proactively scanned; the content of a private message is classified only if a
-            recipient reports it. What is sent to the classification provider is the message text
-            and the addresses of any attached media - no account identifiers, chat identifiers or
-            message identifiers are sent.
+            <strong>Classification.</strong> Messages sent to public groups and channels, including text
+            and media, are subject to automated classification for safety purposes. Private messages are
+            never proactively scanned; the content of a private message is classified only if a recipient
+            reports it. What is sent to the classification provider is the message content - the text
+            and the addresses of any attached media; we do not attach account, chat or message identifiers
+            to the request.
         </li>
         <li>
-            <strong>The logic involved.</strong> The classifier returns a set of content categories
-            and a confidence score for each. Where content is classified as child sexual abuse
-            material, it is removed immediately and the sending account is suspended, before any
-            human sees it, and the case is then put to a human moderator. Where content is
-            classified in any other prohibited category above a configured confidence threshold, it
-            is referred to a human moderator and nothing happens to the content or the account
-            unless that moderator upholds the referral. A moderator can uphold a case, uphold it as
-            child sexual abuse material, or dismiss it.
+            <strong>The logic involved.</strong> The classifier returns a set of content categories and
+            a confidence score for each. Where content is classified as child sexual abuse material, it
+            is removed immediately and the sending account is suspended, before any human sees it, and
+            the case is then put to a human moderator. Where content is classified in any other prohibited
+            category above a configured confidence threshold, it is referred to a human moderator and
+            no sanction is applied to the content or the account unless that moderator upholds the referral.
+            A moderator can uphold a case, uphold it as child sexual abuse material, or dismiss it.
         </li>
         <li>
-            <strong>Consequences.</strong> The consequences of an upheld case are removal of the
-            content and suspension of the account - for a fixed period, or indefinitely for child
-            sexual abuse material or repeated violations. A dismissed case is reversed in full: the
-            content is restored, the suspension is lifted, and you are told the decision and why.
+            <strong>Consequences.</strong> The consequences of an upheld case are removal of the content
+            and suspension of the account - for a fixed period, or indefinitely for child sexual abuse
+            material or repeated violations. A dismissed case is reversed in full: the content is restored,
+            the suspension is lifted, and you are told the decision and why.
         </li>
         <li>
-            <strong>Your right to human review.</strong> Where a decision affecting your account was
-            made by an automated system, you have the right under Article 22 UK GDPR not to be
-            subject to it: you may contest it and require that a person reviews it. The means to do
-            so is provided with the sanction notice and remains available while your account is
-            suspended.
+            <strong>Your right to human review.</strong> Where a decision affecting your account was made
+            by an automated system, you have the right under Article 22 UK GDPR not to be subject to it:
+            you may contest it and require that a person reviews it. The means to do so is provided with
+            the sanction notice and remains available while your account is suspended.
         </li>
         <li>
-            <strong>Criminal offence data.</strong> Moderation necessarily involves processing data
-            relating to suspected criminal offences. OpenChat Labs processes this under Article 10
-            UK GDPR and the substantial public interest conditions in Schedule 1 to the Data
-            Protection Act 2018, in particular the prevention and detection of unlawful acts and the
-            protection of children.
+            <strong>Criminal offence data.</strong> Moderation necessarily involves processing data relating
+            to suspected criminal offences. OpenChat Labs processes this under Article 10 UK GDPR and
+            the substantial public interest conditions in Schedule 1 to the Data Protection Act 2018,
+            in particular the prevention and detection of unlawful acts and the protection of children.
         </li>
         <li>
-            <strong>Evidence preservation.</strong> Where suspected child sexual abuse material is
-            detected, a copy of the media is preserved as evidence in access-restricted storage.
-            Access to it is limited to a small number of specifically designated reviewers, every
-            access is recorded in a tamper-evident log which identifies the reviewer, and the
-            recorded content is never served publicly.
+            <strong>Evidence preservation.</strong> Where suspected child sexual abuse material is detected,
+            a copy of the media is preserved as evidence in access-restricted storage. Access to it is
+            limited to a small number of specifically designated reviewers, every access is recorded in
+            a tamper-evident log which identifies the reviewer, and the recorded content is never served
+            publicly.
         </li>
         <li>
-            <strong>Moderation records.</strong> A record of each case is kept: the content
-            concerned, the identifiers of the sender and of anyone who reported it, what the
-            classifier returned, what a moderator decided and when, whether the decision was
-            contested, and whether a report was made to an authority. Reports which turn out to
-            have been false are recorded against the person who made them.
+            <strong>Moderation records.</strong> A record of each case is kept: the identifiers of the
+            sender and of anyone who reported it, an excerpt of any text concerned, what the classifier
+            returned, what a moderator decided and when, whether the decision was contested, and whether
+            a report was made to an authority. Reports asserting child sexual abuse material which a moderator
+            dismisses are recorded against the person who made them.
         </li>
     </ul>
 </div>
@@ -217,31 +226,52 @@
 
     <ul class="custom_list" style={"--prefix: '6.'"}>
         <li>
-            <strong>Other users.</strong> Anyone in a group, community or channel you post to; and,
-            for public spaces, the general public.
+            <strong>Other users.</strong> Anyone in a group, community or channel you post to; and, for
+            public spaces, the general public.
         </li>
         <li>
             <strong>Internet Computer node providers</strong>, who host the replicated canister
             state as described in section 3.
         </li>
         <li>
-            <strong>Safety processors.</strong> Content classification is currently performed by
-            OpenAI. Specialist providers, such as services which match images against databases of
-            known child sexual abuse material, may be added.
+            <strong>Safety processors.</strong> Content classification is currently performed by OpenAI.
+            Specialist providers, such as services which match images against databases of known child
+            sexual abuse material, may be added.
         </li>
         <li>
-            <strong>Authorities.</strong> Detected child sexual exploitation and abuse content,
-            together with associated account data, is reported to the relevant authorities,
-            including the UK National Crime Agency and, where applicable, the US National Center for
-            Missing and Exploited Children, as required by law. We may also disclose data in
-            response to a lawful request, so far as we hold it - see section 2 for what we do not
-            hold.
+            <strong>Feature service providers.</strong> Some features are delivered using third-party
+            services, which receive the data needed to provide the feature, together with network data
+            such as your IP address. In particular: video and voice calls are provided by a specialist
+            video-calling service, which receives your username and the call's audio and video; message
+            translation, when you request it, sends the message text to a translation service (currently
+            Google Translate); GIF search sends your search terms to the GIF provider; sign-in emails
+            are delivered via our email provider; push notifications are delivered through your device
+            platform's notification service, which processes the notification content in order to display
+            it; connecting a crypto wallet involves the relevant wallet and blockchain services; establishing
+            calls and direct-chat connections uses connection-relay services; and we use an IP-geolocation
+            service to determine your approximate country in order to apply regional restrictions.
         </li>
         <li>
-            <strong>International transfers.</strong> Internet Computer nodes and our safety
-            processors are located in a number of countries, including the United States. Where
-            data leaves the UK, transfers are made under the safeguards required by data protection
-            law, such as the UK International Data Transfer Agreement or Addendum.
+            <strong>Analytics and error reporting.</strong> The OpenChat website uses analytics and error-reporting
+            services (currently Google Analytics and Rollbar), which receive usage and technical data,
+            including IP addresses.
+        </li>
+        <li>
+            <strong>Bots.</strong> If you interact with a third-party bot, your command and your OpenChat
+            user identifier are sent to that bot's operator.
+        </li>
+        <li>
+            <strong>Authorities.</strong> Detected child sexual exploitation and abuse content, together
+            with associated account data, is reported to the relevant authorities, including the UK National
+            Crime Agency and, where applicable, the US National Center for Missing and Exploited Children,
+            as required by law. We may also disclose data in response to a lawful request, so far as we
+            hold it - see section 2 for what we do not hold.
+        </li>
+        <li>
+            <strong>International transfers.</strong> Internet Computer nodes and the service providers
+            described above are located in a number of countries, including the United States. Where data
+            leaves the UK, transfers are made under the safeguards required by data protection law, such
+            as the UK International Data Transfer Agreement or Addendum.
         </li>
     </ul>
 </div>

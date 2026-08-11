@@ -57,7 +57,8 @@
                 <Translatable
                     resourceKey={i18nKey(
                         $canExtendDiamondStore ? "upgrade.extend" : "upgrade.diamond",
-                    )} />
+                    )}
+                />
             {/snippet}
         </MenuItem>
         <MenuItem separator />
@@ -124,6 +125,14 @@
         {/snippet}
         {#snippet text()}
             Guidelines
+        {/snippet}
+    </MenuItem>
+    <MenuItem onclick={() => navigate("/privacy")}>
+        {#snippet icon()}
+            <Security size={$iconSize} color={"var(--icon-inverted-txt)"} />
+        {/snippet}
+        {#snippet text()}
+            Privacy
         {/snippet}
     </MenuItem>
     <MenuItem href="https://tokenterminal.com/terminal/projects/openchat">
