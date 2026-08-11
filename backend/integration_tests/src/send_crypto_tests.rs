@@ -98,8 +98,10 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool, icrc2: bool)
     assert_eq!(user2_balance, amount);
 
     if with_c2c_error {
-        env.advance_time(Duration::from_secs(10));
+        // Start the canister before advancing the time, else the retry falls due while it is still
+        // stopped and is spent on another failure
         start_canister(env, user2.local_user_index, user2.canister());
+        env.advance_time(Duration::from_secs(10));
         tick_many(env, 3);
     }
 
