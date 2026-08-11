@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2011](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2011-user_index)] - 2026-08-10
+
 ### Added
 
 - Dual authorization for the irreversible platform-operator actions: destroying vaulted evidence, designating vault reviewers, setting the OpenAI API key and setting the internal moderation channel are now proposed by one operator and confirmed by a different one, with proposals expiring after 14 days and every proposal, confirmation, cancellation and expiry recorded in an append-only hash-chained log whose chain head is published in metrics ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
