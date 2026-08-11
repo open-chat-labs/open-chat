@@ -149,7 +149,7 @@
             Platform (Article 6(1)(f)).
         </li>
         <li>
-            <strong>To understand usage and fix problems</strong> - website analytics and error reporting,
+            <strong>To understand usage and fix problems</strong> - usage analytics and error reporting,
             as described in section 6. Legal basis: our legitimate interests in operating and improving
             the Platform (Article 6(1)(f)).
         </li>
@@ -252,9 +252,10 @@
             service to determine your approximate country in order to apply regional restrictions.
         </li>
         <li>
-            <strong>Analytics and error reporting.</strong> The OpenChat website uses analytics and error-reporting
-            services (currently Google Analytics and Rollbar), which receive usage and technical data,
-            including IP addresses.
+            <strong>Analytics and error reporting.</strong> The OpenChat Platform uses an analytics service
+            running on the Internet Computer (Usergeek), which receives pseudonymous usage events, and
+            the website uses an error-reporting service (currently Rollbar), which receives technical
+            data about errors, including IP addresses.
         </li>
         <li>
             <strong>Bots.</strong> If you interact with a third-party bot, your command and your OpenChat

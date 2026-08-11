@@ -279,6 +279,14 @@ export default {
         html({
             template: ({ files }) => {
                 const jsEntryFile = files.js.find((f) => f.isEntry).fileName;
+                // Google Analytics is disabled: GA4 sets cookies which would
+                // require a consent banner under PECR, and cookieless consent
+                // mode yields almost no usable data. To re-enable, set
+                // gaEnabled to true AND add https://www.googletagmanager.com/
+                // back to script-src in rollup.extras.mjs, then revisit the
+                // analytics wording in the privacy policy (PrivacyContent.svelte
+                // sections 4 and 6) and the cookie-consent question.
+                const gaEnabled = false;
                 // Google Tag Manager + gtag is production-only: gated on the build
                 // env, never included otherwise. gtag stays defined as a no-op
                 // dataLayer push in non-production builds so page-view calls
@@ -287,8 +295,9 @@ export default {
                 // page is governed by this meta CSP (the canister only sets a
                 // `frame-ancestors` header), which has no `'unsafe-inline'`, so an
                 // un-hashed inline script would be blocked.
-                const analyticsBody = production
-                    ? `window.dataLayer = window.dataLayer || [];
+                const analyticsBody =
+                    production && gaEnabled
+                        ? `window.dataLayer = window.dataLayer || [];
                     function gtag(){dataLayer.push(arguments);}
                     gtag('js', new Date());
                     gtag('config', 'G-7P9R6CJLNR');
@@ -301,7 +310,7 @@ export default {
                     j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                     'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
                     })(window,document,'script','dataLayer','GTM-WQD48GK2');`
-                    : `window.dataLayer = window.dataLayer || [];
+                        : `window.dataLayer = window.dataLayer || [];
                     function gtag(){dataLayer.push(arguments);}`;
 
                 const inlineScripts = [
@@ -311,9 +320,10 @@ export default {
                 ];
                 const csp = generateCspForScripts(inlineScripts);
 
-                const analyticsNoscript = production
-                    ? `<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WQD48GK2" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>`
-                    : "";
+                const analyticsNoscript =
+                    production && gaEnabled
+                        ? `<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WQD48GK2" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>`
+                        : "";
 
                 // TODO this is a duplicate of the index.html file, we should
                 // have only one source for our index html.
