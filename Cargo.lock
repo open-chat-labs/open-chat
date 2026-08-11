@@ -11797,10 +11797,8 @@ version = "0.1.0"
 dependencies = [
  "futures",
  "ic-cdk 0.20.2",
- "msgpack",
  "per_round_timer",
  "serde",
- "tracing",
  "types",
 ]
 

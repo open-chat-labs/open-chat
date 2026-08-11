@@ -8,8 +8,4 @@ futures = { workspace = true }
 ic-cdk = { workspace = true }
 per_round_timer = { path = "../per_round_timer" }
 serde = { workspace = true }
-tracing = { workspace = true }
 types = { path = "../types" }
-
-[dev-dependencies]
-msgpack = { path = "../msgpack" }
