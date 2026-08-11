@@ -1080,11 +1080,11 @@
                 </li>
                 <li>
                     Messages sent to public Groups and Channels (including text and media) are
-                    automatically classified for safety purposes. This classification is performed
-                    using third-party processors (currently OpenAI; specialist providers, such as
-                    services which match images against databases of known child sexual abuse
-                    material, may be added). Private messages are never proactively scanned; the
-                    content of a private message is classified only if a recipient reports it.
+                    subject to automated classification for safety purposes. This classification is
+                    performed using third-party processors (currently OpenAI; specialist providers,
+                    such as services which match images against databases of known child sexual
+                    abuse material, may be added). Private messages are never proactively scanned;
+                    the content of a private message is classified only if a recipient reports it.
                 </li>
                 <li>
                     Where suspected child sexual exploitation or abuse ("<strong>CSEA</strong>")
@@ -1119,13 +1119,15 @@
                     For the purposes of data protection law,
                     <a href="https://openchatlabs.org" target="_blank" rel="noreferrer noopener"
                         >OpenChat Labs</a
-                    > is the controller in respect of the processing described in this clause B 6. The
-                    legal basis for this processing is compliance with legal obligations to which OpenChat
-                    Labs is subject. This processing involves automated decision-making; the right to
-                    contest such decisions and obtain human review is described in clause B 6.5. Data
-                    may be shared with the processors identified in clause B 6.3 and, where required by
-                    Applicable Law, with law enforcement authorities. Full information about this
-                    processing, and about your rights in relation to it, is set out in our
+                    >
+                    is the controller in respect of the processing described in this clause B 6. The
+                    legal basis for this processing is compliance with legal obligations to which
+                    OpenChat Labs is subject. This processing involves automated decision-making;
+                    the right to contest such decisions and obtain human review is described in
+                    clause B 6.5. Data may be shared with the processors identified in clause B 6.3
+                    and, where required by Applicable Law, with law enforcement authorities. Full
+                    information about this processing, and about your rights in relation to it, is
+                    set out in our
                     <a href="/privacy">Privacy Notice</a>.
                 </li>
                 <li>
@@ -1229,8 +1231,8 @@
                     <p>By using the OpenChat Wallet, you covenant, represent and warrant that:</p>
                     <ul class="custom_list" style={"--prefix: '2.2.'"}>
                         <li>
-                            you shall allow your OpenChat Wallet to be used in connection with any
-                            activities that are prohibited by Applicable Law;
+                            you shall not allow your OpenChat Wallet to be used in connection with
+                            any activities that are prohibited by Applicable Law;
                         </li>
                         <li>
                             you shall not use your OpenChat Wallet to store, send, or receive
@@ -1238,10 +1240,10 @@
                         </li>
                         <li>
                             you are the legal and rightful owner of all Cryptoassets in your
-                            OpenChat Wallet, and that the sources of such Crptoassets are legal, and
-                            you will not transfer or trade through the OpenChat Platform anything
-                            other than Cryptoassets that have been legally obtained by you and that
-                            belong to you; and
+                            OpenChat Wallet, and that the sources of such Cryptoassets are legal,
+                            and you will not transfer or trade through the OpenChat Platform
+                            anything other than Cryptoassets that have been legally obtained by you
+                            and that belong to you; and
                         </li>
                         <li>
                             you shall notify us without undue delay of any unauthorised use and / or
@@ -1490,7 +1492,7 @@
     </ul>
 
     <HashLinkTarget {onCopyUrl} id="6">
-        <h2>Section F: Additional terms for Diamnond membership holders</h2>
+        <h2>Section F: Additional terms for Diamond membership holders</h2>
     </HashLinkTarget>
     <ul class="custom_list bold" style={"--prefix: 'F'; --suffix: ''"}>
         <li>

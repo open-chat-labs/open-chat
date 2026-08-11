@@ -40,8 +40,15 @@
                 <Translatable resourceKey={i18nKey("termsUpdated.link")} />
             </a>
         </Body>
+        <Body>
+            <a href="/privacy" target="_blank" rel="noreferrer noopener">
+                <Translatable resourceKey={i18nKey("termsUpdated.privacyLink")} />
+            </a>
+        </Body>
         {#if failed}
-            <Body colour={"error"}><Translatable resourceKey={i18nKey("termsUpdated.failed")} /></Body>
+            <Body colour={"error"}
+                ><Translatable resourceKey={i18nKey("termsUpdated.failed")} /></Body
+            >
         {/if}
         <Button loading={busy} disabled={busy} onClick={accept}>
             <Translatable resourceKey={i18nKey("termsUpdated.agree")} />
