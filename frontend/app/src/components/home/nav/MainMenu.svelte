@@ -22,6 +22,7 @@
     import Blog from "svelte-material-icons/PostOutline.svelte";
     import Road from "svelte-material-icons/RoadVariant.svelte";
     import Security from "svelte-material-icons/Security.svelte";
+    import Privacy from "svelte-material-icons/ShieldAccount.svelte";
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Menu from "../../Menu.svelte";
@@ -57,8 +58,7 @@
                 <Translatable
                     resourceKey={i18nKey(
                         $canExtendDiamondStore ? "upgrade.extend" : "upgrade.diamond",
-                    )}
-                />
+                    )} />
             {/snippet}
         </MenuItem>
         <MenuItem separator />
@@ -129,7 +129,7 @@
     </MenuItem>
     <MenuItem onclick={() => navigate("/privacy")}>
         {#snippet icon()}
-            <Security size={$iconSize} color={"var(--icon-inverted-txt)"} />
+            <Privacy size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
         {#snippet text()}
             Privacy
