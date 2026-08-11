@@ -16,6 +16,9 @@ pub enum C2CRetryPolicy {
     DoNotRetry,
     // The failure was transient and an immediate retry may succeed
     RetryImmediately,
+    // The callee should be back shortly (eg. it is stopped because it is being upgraded), so retry
+    // soon, but not so soon that we spin while we wait for it
+    RetryAfterShortDelay,
     // The failure may resolve, but not straight away (eg. the callee needs topping up with cycles),
     // so retrying immediately would just burn our own cycles
     RetryAfterDelay,
@@ -42,7 +45,9 @@ impl C2CRetryPolicy {
 
         if permanent {
             C2CRetryPolicy::DoNotRetry
-        } else if callee_is_stopped(error) || (error.is_immediately_retryable() && !maybe_callee_out_of_cycles(error)) {
+        } else if callee_is_stopped(error) {
+            C2CRetryPolicy::RetryAfterShortDelay
+        } else if error.is_immediately_retryable() && !maybe_callee_out_of_cycles(error) {
             C2CRetryPolicy::RetryImmediately
         } else {
             C2CRetryPolicy::RetryAfterDelay
@@ -65,6 +70,9 @@ impl C2CRetryPolicy {
 // that would stall event delivery to a canister every time it is upgraded. Reading the reject
 // message is fair game here in a way that reading an IC error code out of it is not - this is the
 // replica's own text for the rejection, not a code the IC only ever sends to the frontend.
+//
+// Note this is deliberately not `RetryImmediately` - an upgrade takes long enough that retrying
+// every round until it finishes would just spin against a canister we know to be unavailable.
 fn callee_is_stopped(error: &CdkError) -> bool {
     matches!(error, CdkError::CallRejected(rejected)
         if matches!(rejected.reject_code(), Ok(RejectCode::CanisterError))
@@ -220,13 +228,13 @@ mod tests {
     // event delivery to a canister every time it is upgraded. The message is verbatim what the
     // replica sent when an integration test stopped a canister mid conversation.
     #[test]
-    fn a_stopped_callee_is_retried_immediately() {
+    fn a_stopped_callee_is_retried_after_a_short_delay() {
         let stopped = CdkError::CallRejected(CallRejected::with_rejection(
             RejectCode::CanisterError as u32,
             "Canister mzsit-hx777-77775-qaaba-cai is stopped".to_string(),
         ));
 
-        assert_eq!(C2CRetryPolicy::from_cdk_error(&stopped), C2CRetryPolicy::RetryImmediately);
+        assert_eq!(C2CRetryPolicy::from_cdk_error(&stopped), C2CRetryPolicy::RetryAfterShortDelay);
     }
 
     #[test]

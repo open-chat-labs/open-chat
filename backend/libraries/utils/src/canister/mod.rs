@@ -19,7 +19,7 @@ mod update_settings;
 
 pub use canisters_requiring_upgrade::*;
 pub use chunk_store::*;
-use constants::MINUTE_IN_MS;
+use constants::{MINUTE_IN_MS, SECOND_IN_MS};
 pub use create::*;
 pub use delete::*;
 pub use deposit_cycles::*;
@@ -48,6 +48,7 @@ pub fn delay_if_should_retry_failed_c2c_call(error: &C2CError) -> Option<Millise
     match error.retry_policy() {
         C2CRetryPolicy::DoNotRetry => None,
         C2CRetryPolicy::RetryImmediately => Some(0),
+        C2CRetryPolicy::RetryAfterShortDelay => Some(10 * SECOND_IN_MS),
         C2CRetryPolicy::RetryAfterDelay => Some(5 * MINUTE_IN_MS),
     }
 }
@@ -145,6 +146,10 @@ mod tests {
         assert_eq!(
             delay_if_should_retry_failed_c2c_call(&error(C2CRetryPolicy::RetryImmediately)),
             Some(0)
+        );
+        assert_eq!(
+            delay_if_should_retry_failed_c2c_call(&error(C2CRetryPolicy::RetryAfterShortDelay)),
+            Some(10 * SECOND_IN_MS)
         );
         assert_eq!(
             delay_if_should_retry_failed_c2c_call(&error(C2CRetryPolicy::RetryAfterDelay)),
