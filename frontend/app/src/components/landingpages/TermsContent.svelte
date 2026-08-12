@@ -1079,12 +1079,13 @@
                     action may be taken in accordance with these Terms.
                 </li>
                 <li>
-                    Messages sent to public Groups and Channels (including text and media) are
-                    subject to automated classification for safety purposes. This classification is
-                    performed using third-party processors (currently OpenAI; specialist providers,
-                    such as services which match images against databases of known child sexual
-                    abuse material, may be added). Private messages are never proactively scanned;
-                    the content of a private message is classified only if a recipient reports it.
+                    Messages sent to public Groups and Channels are subject to automated
+                    classification for safety purposes. Message text is classified using
+                    third-party processors (currently OpenAI). Message media is not sent to
+                    general-purpose classifiers; it may be checked against databases of known
+                    child sexual abuse material maintained by specialist child-safety
+                    organisations. Private messages are never proactively scanned; the content
+                    of a private message is checked only if a recipient reports it.
                 </li>
                 <li>
                     Where suspected child sexual exploitation or abuse ("<strong>CSEA</strong>")
