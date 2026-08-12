@@ -234,9 +234,9 @@
             state as described in section 3.
         </li>
         <li>
-            <strong>Safety processors.</strong> Content classification is currently performed by OpenAI.
-            Specialist providers, such as services which match images against databases of known child
-            sexual abuse material, may be added.
+            <strong>Safety processors.</strong> Text classification is currently performed by OpenAI;
+            message media is not sent to OpenAI. Specialist providers, such as services which match
+            images against databases of known child sexual abuse material, may be added.
         </li>
         <li>
             <strong>Feature service providers.</strong> Some features are delivered using third-party
