@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Never send message media to the OpenAI moderation API - classification is text-only; image CSAM detection is handled by hash matching against specialist child-safety databases ([#9149](https://github.com/open-chat-labs/open-chat/issues/9149))
+- Never send message media to the OpenAI moderation API - classification is text-only ([#9149](https://github.com/open-chat-labs/open-chat/issues/9149))
 
 ### Fixed
 

@@ -14,10 +14,9 @@ thread_local! {
 
 const INTERVAL: Duration = Duration::from_secs(10);
 const MAX_BACKOFF: Duration = Duration::from_secs(300);
-// Text inputs from all sources are classified in a single call to the moderation API
+// Every queued input is text (media is never classified - #9149), so a whole batch is one call
+// to the moderation API
 const BATCH_SIZE: usize = 32;
-// Image-bearing messages are classified individually, so cap the number of outcalls per batch
-const MAX_IMAGE_INPUTS_PER_BATCH: usize = 5;
 const MAX_ATTEMPTS: u8 = 3;
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
@@ -52,42 +51,24 @@ pub fn run() {
 
 fn next_batch(state: &mut RuntimeState) -> Option<(String, Option<ModerationReferralConfig>, Vec<QueueItem>)> {
     let api_key = state.data.openai_api_key.clone()?;
-    let batch = state
-        .data
-        .message_moderation_queue
-        .next_batch(BATCH_SIZE, MAX_IMAGE_INPUTS_PER_BATCH);
+    let batch = state.data.message_moderation_queue.next_batch(BATCH_SIZE);
     (!batch.is_empty()).then_some((api_key, state.data.moderation_referral_config.clone(), batch))
 }
 
 async fn process_batch(api_key: String, moderation_referral_config: Option<ModerationReferralConfig>, batch: Vec<QueueItem>) {
-    let mut classified: Vec<(QueueItem, Classification)> = Vec::new();
-    let mut failed: Vec<QueueItem> = Vec::new();
+    let texts: Vec<String> = batch
+        .iter()
+        .map(|i| i.entry.input.text.clone().unwrap_or_default())
+        .collect();
 
-    let (image_items, text_items): (Vec<_>, Vec<_>) = batch.into_iter().partition(|i| !i.entry.input.image_urls.is_empty());
-
-    if !text_items.is_empty() {
-        let texts: Vec<String> = text_items
-            .iter()
-            .map(|i| i.entry.input.text.clone().unwrap_or_default())
-            .collect();
+    let (classified, failed): (Vec<(QueueItem, Classification)>, Vec<QueueItem>) =
         match openai_moderation::classify_text_batch(&api_key, &texts, moderation_referral_config.as_ref()).await {
-            Ok(results) => classified.extend(text_items.into_iter().zip(results)),
+            Ok(results) => (batch.into_iter().zip(results).collect(), Vec::new()),
             Err(error) => {
                 error!(?error, "Failed to classify messages for moderation");
-                failed.extend(text_items);
+                (Vec::new(), batch)
             }
-        }
-    }
-
-    for item in image_items {
-        match openai_moderation::classify_input(&api_key, &item.entry.input, moderation_referral_config.as_ref()).await {
-            Ok(classification) => classified.push((item, classification)),
-            Err(error) => {
-                error!(?error, "Failed to classify message for moderation");
-                failed.push(item);
-            }
-        }
-    }
+        };
 
     if classified.is_empty() && !failed.is_empty() {
         CONSECUTIVE_FAILURES.set(CONSECUTIVE_FAILURES.get().saturating_add(1));

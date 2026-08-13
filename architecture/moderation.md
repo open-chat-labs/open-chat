@@ -101,8 +101,8 @@ sequenceDiagram
     G-)L: ClassifyMessageRequest (batched event sync)
     Note over L: per-source fair queue<br/>dedup by message id, caps 2k/source, 20k total
     loop timer, every 10s (backs off to 5 min while failing)
-        L->>L: next_batch - 32 msgs round-robin, max 5 with images
-        L->>O: one HTTPS outcall for all texts, images per-message
+        L->>L: next_batch - 32 msgs round-robin
+        L->>O: one HTTPS outcall for the whole batch (text only)
         O-->>L: flagged categories per input
         L-)G: MessageClassified (batched event sync)
         G->>G: flag_message (empty result clears stale flags)
@@ -123,12 +123,14 @@ sequenceDiagram
   no consensus or transform needed. Acceptable because a bad result either hides a message in the
   app-store build or triggers a CSAM sanction that always alerts a human and is reversible. Cycles
   are charged at the replicated rate and the excess refunded.
-- **Text vs images** — texts for a whole batch (from many chats) go in one call; each
-  image-bearing message is classified separately (text and images in separate calls). The message
-  result is the union of category bits; if *any* part fails (e.g. an unreachable blob URL), the
-  whole message is treated as failed and retried, so a transient image error can't silently skip
-  image classification. A text batch whose response has fewer results than inputs is also treated
-  as failed and retried.
+- **Text only** — texts for a whole batch (from many chats) go in one call. Message media is
+  never sent to OpenAI, in any form, including by URL (#9149): OpenAI's usage policies prohibit
+  media which may include CSAM, and the moderation model's sexual/minors category is text-only
+  for images so it could detect nothing anyway; image CSAM detection belongs to the
+  hash-matching tier (specialist child-safety providers). A message with no classifiable text is
+  never queued (and an entry queued by a pre-#9149 sender is discarded at pop rather than
+  "classified" without an API call). A batch whose response has fewer results than inputs is
+  treated as failed and retried.
 - **Resilience** — queue capped at 2k per source / 20k total (drop-oldest, logged), with queued
   text truncated to 4000 chars at enqueue to bound memory; 3 attempts per message; the job is
   non-reentrant (one batch in flight at a time) and its interval backs off exponentially (10s →
@@ -311,12 +313,11 @@ PR).
   by the version being upgraded *from*: bumping to N registers `.withMigration(N-1, …)`. If
   another PR bumps the version, take the next free number — two PRs claiming the same version
   means the second deploy's migration never runs.
-- **Costs and rate limits** — one OpenAI call per subnet per tick for all queued texts (≤32
-  messages across all chats) plus one per image-bearing message (≤5 per tick); report-path calls
-  only for messages the pipeline hasn't already classified. With ~a dozen local indexes the
-  fleet's worst-case OpenAI request rate is ~13 × 6/min for texts — comfortably inside org rate
-  limits and predictable. Single-replica outcalls keep cycle costs at 1/13th of a replicated
-  call.
+- **Costs and rate limits** — one OpenAI call per subnet per tick for the whole queued batch
+  (≤32 messages across all chats, text only); report-path calls only for messages the pipeline
+  hasn't already classified. With ~a dozen local indexes the fleet's worst-case OpenAI request
+  rate is ~13 × 6/min — comfortably inside org rate limits and predictable. Single-replica
+  outcalls keep cycle costs at 1/13th of a replicated call.
 - **Observability** — dropped queue entries, rate-limited reporters, unknown OpenAI categories and
   missing users at suspension time are all logged with `warn`/`error`; each local index exposes
   its broker queue length in metrics (`message_moderation_queue_len`), and reporting metrics

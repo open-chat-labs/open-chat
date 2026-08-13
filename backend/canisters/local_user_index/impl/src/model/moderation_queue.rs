@@ -49,7 +49,8 @@ pub struct QueueItem {
 
 enum Pop {
     Item(Box<QueueItem>),
-    ImageSkipped,
+    // Popped but discarded (nothing classifiable) - progress was made, but there is no item
+    Dropped,
     SourceEmpty,
 }
 
@@ -65,6 +66,13 @@ impl ModerationQueue {
     pub fn enqueue(&mut self, source: CanisterId, is_group: bool, request: ClassifyMessageRequest) {
         let key = (request.channel_id, request.message_id);
         let mut input = request.input;
+        if input.is_empty() {
+            // Only text is classified, so there is nothing to queue - and if an edit removed the
+            // text of an already-queued message, the stale queued text must not be classified in
+            // its place
+            self.remove(source, key);
+            return;
+        }
         if let Some(text) = input.text.as_mut()
             && let Some((index, _)) = text.char_indices().nth(MAX_TEXT_CHARS)
         {
@@ -90,9 +98,8 @@ impl ModerationQueue {
         );
     }
 
-    pub fn next_batch(&mut self, max_items: usize, max_image_items: usize) -> Vec<QueueItem> {
+    pub fn next_batch(&mut self, max_items: usize) -> Vec<QueueItem> {
         let mut batch = Vec::new();
-        let mut image_items = 0;
 
         loop {
             let mut source_ids: Vec<CanisterId> = self.sources.keys().copied().collect();
@@ -110,16 +117,17 @@ impl ModerationQueue {
                 if batch.len() >= max_items {
                     return batch;
                 }
-                match self.pop(source, image_items < max_image_items) {
+                match self.pop(source) {
                     Pop::Item(item) => {
-                        if !item.entry.input.image_urls.is_empty() {
-                            image_items += 1;
-                        }
                         batch.push(*item);
                         popped_any = true;
                         self.cursor = Some(source);
                     }
-                    Pop::ImageSkipped | Pop::SourceEmpty => {}
+                    Pop::Dropped => {
+                        popped_any = true;
+                        self.cursor = Some(source);
+                    }
+                    Pop::SourceEmpty => {}
                 }
             }
 
@@ -131,19 +139,14 @@ impl ModerationQueue {
         batch
     }
 
-    fn pop(&mut self, source: CanisterId, allow_image: bool) -> Pop {
+    fn pop(&mut self, source: CanisterId) -> Pop {
         let popped = {
             let Some(queue) = self.sources.get_mut(&source) else {
                 return Pop::SourceEmpty;
             };
-            let Some(&key) = queue.order.front() else {
+            let Some(key) = queue.order.pop_front() else {
                 return Pop::SourceEmpty;
             };
-            let is_image = queue.entries.get(&key).is_some_and(|e| !e.input.image_urls.is_empty());
-            if is_image && !allow_image {
-                return Pop::ImageSkipped;
-            }
-            queue.order.pop_front();
             queue.entries.remove(&key).map(|entry| QueueItem {
                 source,
                 is_group: queue.is_group,
@@ -161,7 +164,30 @@ impl ModerationQueue {
         if self.sources.get(&source).is_some_and(|q| q.order.is_empty()) {
             self.sources.remove(&source);
         }
+        // An entry queued by a pre-#9149 sender may carry media without text; only text is
+        // classified, so it is discarded rather than "classified" without an API call
+        if item.entry.input.is_empty() {
+            return Pop::Dropped;
+        }
         Pop::Item(Box::new(item))
+    }
+
+    // Removes a queued entry, eg. when an edit leaves a queued message with nothing classifiable
+    fn remove(&mut self, source: CanisterId, key: Key) {
+        let removed = self
+            .sources
+            .get_mut(&source)
+            .is_some_and(|queue| queue.entries.remove(&key).is_some() && {
+                queue.order.retain(|k| *k != key);
+                true
+            });
+
+        if removed {
+            self.total = self.total.saturating_sub(1);
+            if self.sources.get(&source).is_some_and(|q| q.order.is_empty()) {
+                self.sources.remove(&source);
+            }
+        }
     }
 
     fn insert(&mut self, source: CanisterId, is_group: bool, key: Key, entry: Entry, skip_if_present: bool) {

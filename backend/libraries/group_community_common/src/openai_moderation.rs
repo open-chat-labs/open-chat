@@ -47,15 +47,6 @@ pub async fn classify_text_batch(
 
 // Classifies the text of a single message using the OpenAI Moderation API, returning the union
 // of the flagged categories.
-//
-// Message media is NEVER sent to OpenAI, in any form, including by URL (#9149). Media which may
-// include CSAM must not reach a general-purpose processor - OpenAI's usage policies prohibit it
-// (detection triggers an NCMEC report against the uploader, which for API traffic is us) - and
-// it would detect nothing anyway: the sexual/minors category of the moderation model is
-// text-only, so an image scores zero for it. Image CSAM detection belongs to the hash-matching
-// tier (specialist child-safety providers). `ModerationInput.image_urls` remains populated by
-// the chat canisters for wire compatibility and for evidence quarantine; it must stay unused
-// here.
 pub async fn moderate_input(api_key: &str, input: &ModerationInput) -> Result<ModerationCategories, String> {
     Ok(classify_input(api_key, input, None).await?.flagged)
 }
@@ -73,6 +64,13 @@ pub async fn classify_input(
             classification.moderation_referral = classification.moderation_referral | c.moderation_referral;
         }
     }
+
+    // Message media (`input.image_urls`) is NEVER sent to OpenAI, in any form, including by URL
+    // (#9149) - do not add an image leg here. OpenAI's usage policies prohibit media which may
+    // include CSAM (detection triggers an NCMEC report against the uploader, which for API
+    // traffic is us), and it would detect nothing anyway: the moderation model's sexual/minors
+    // category is text-only, so an image scores zero for it. Image CSAM detection belongs to
+    // the hash-matching tier (specialist child-safety providers).
 
     Ok(classification)
 }
