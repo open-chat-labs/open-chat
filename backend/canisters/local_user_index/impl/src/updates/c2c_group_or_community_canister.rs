@@ -73,11 +73,19 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 // Nothing classifiable (eg. an edit removed the text): dequeue any stale queued
                 // content so it is never classified in the current content's place, and reply
                 // with an empty classification immediately so that flags left by the earlier
-                // content are cleared (flags of 0 clears them - see MessageClassified)
+                // content are cleared (flags of 0 clears them - see MessageClassified). If the
+                // earlier content is in an in-flight batch rather than the queue, mark it
+                // superseded so its result is discarded instead of re-applying stale flags
+                // after this clear.
                 state
                     .data
                     .message_moderation_queue
                     .remove(caller, request.channel_id, request.message_id);
+                state.data.message_moderation_queue.mark_superseded_if_in_flight(
+                    caller,
+                    request.channel_id,
+                    request.message_id,
+                );
                 let result = MessageClassified {
                     channel_id: request.channel_id,
                     thread_root_message_index: request.thread_root_message_index,

@@ -51,7 +51,13 @@ pub fn run() {
 
 fn next_batch(state: &mut RuntimeState) -> Option<(String, Option<ModerationReferralConfig>, Vec<QueueItem>)> {
     let api_key = state.data.openai_api_key.clone()?;
-    let batch = state.data.message_moderation_queue.next_batch(BATCH_SIZE);
+    let (batch, unclassifiable) = state.data.message_moderation_queue.next_batch(BATCH_SIZE);
+    // Media-only entries queued by pre-#9149 senders get an empty classification without an
+    // API call, so that stale flags from earlier content are still cleared
+    let now = state.env.now();
+    for item in unclassifiable {
+        push_classification(item, Classification::default(), now, state);
+    }
     (!batch.is_empty()).then_some((api_key, state.data.moderation_referral_config.clone(), batch))
 }
 
@@ -76,26 +82,45 @@ async fn process_batch(api_key: String, moderation_referral_config: Option<Moder
     mutate_state(|state| {
         let now = state.env.now();
         for (item, classification) in classified {
-            let result = MessageClassified {
-                channel_id: item.channel_id,
-                thread_root_message_index: item.entry.thread_root_message_index,
-                message_id: item.message_id,
-                flags: classification.flagged.bits(),
-                moderation_referral_flags: classification.moderation_referral.bits(),
-            };
-            if item.is_group {
-                state.push_event_to_group(item.source, GroupEvent::MessageClassified(result), now);
-            } else {
-                state.push_event_to_community(item.source, CommunityEvent::MessageClassified(result), now);
+            // A key superseded while in flight (an edit removed all classifiable content) has
+            // already been sent an empty classification: pushing this result would re-apply
+            // flags derived from the removed content, with nothing following to clear them
+            if state
+                .data
+                .message_moderation_queue
+                .finish_in_flight(item.source, item.channel_id, item.message_id)
+            {
+                continue;
             }
+            push_classification(item, classification, now, state);
         }
         for mut item in failed {
+            let superseded =
+                state
+                    .data
+                    .message_moderation_queue
+                    .finish_in_flight(item.source, item.channel_id, item.message_id);
             item.entry.attempts += 1;
-            if item.entry.attempts < MAX_ATTEMPTS {
+            if !superseded && item.entry.attempts < MAX_ATTEMPTS {
                 state.data.message_moderation_queue.requeue(item);
             }
         }
         TIMER_ID.set(None);
         start_job_if_required(state);
     });
+}
+
+fn push_classification(item: QueueItem, classification: Classification, now: u64, state: &mut RuntimeState) {
+    let result = MessageClassified {
+        channel_id: item.channel_id,
+        thread_root_message_index: item.entry.thread_root_message_index,
+        message_id: item.message_id,
+        flags: classification.flagged.bits(),
+        moderation_referral_flags: classification.moderation_referral.bits(),
+    };
+    if item.is_group {
+        state.push_event_to_group(item.source, GroupEvent::MessageClassified(result), now);
+    } else {
+        state.push_event_to_community(item.source, CommunityEvent::MessageClassified(result), now);
+    }
 }
