@@ -6,16 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2015](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2015-user)] - 2026-08-13
+
 ### Changed
 
 - Reports which assert child sexual abuse content quarantine the media and delete the message immediately - the material is never viewed outside the quarantine framework - while the suspension waits for the human verdict ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
-
 - Suspension notice from the OC bot points appeals at safety@openchatlabs.org instead of a Twitter DM ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 
 ### Fixed
 
 - Only push reaction activity in direct chats if the reaction is on one of your messages ([#9126](https://github.com/open-chat-labs/open-chat/pull/9126))
-- Enforce Diamond membership server-side when initiating a P2P swap
+- Enforce Diamond membership server-side when initiating a P2P swap ([#9098](https://github.com/open-chat-labs/open-chat/pull/9098))
 - Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
 
 ## [[2.0.1990-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1990-user)] - 2026-07-07
