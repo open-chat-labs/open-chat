@@ -45,13 +45,17 @@ pub async fn classify_text_batch(
     }
 }
 
-// Classifies the text and any images of a single message using the OpenAI Moderation API,
-// returning the union of the flagged categories.
+// Classifies the text of a single message using the OpenAI Moderation API, returning the union
+// of the flagged categories.
 //
-// The text and the images are classified in separate calls rather than as one combined
-// multi-modal input. If either call fails (eg. a transient error, or a blob url the API cannot
-// reach) the whole item fails so that the caller retries it; re-classifying a part which
-// already succeeded is harmless because flagging is idempotent.
+// Message media is NEVER sent to OpenAI, in any form, including by URL (#9149). Media which may
+// include CSAM must not reach a general-purpose processor - OpenAI's usage policies prohibit it
+// (detection triggers an NCMEC report against the uploader, which for API traffic is us) - and
+// it would detect nothing anyway: the sexual/minors category of the moderation model is
+// text-only, so an image scores zero for it. Image CSAM detection belongs to the hash-matching
+// tier (specialist child-safety providers). `ModerationInput.image_urls` remains populated by
+// the chat canisters for wire compatibility and for evidence quarantine; it must stay unused
+// here.
 pub async fn moderate_input(api_key: &str, input: &ModerationInput) -> Result<ModerationCategories, String> {
     Ok(classify_input(api_key, input, None).await?.flagged)
 }
@@ -65,18 +69,6 @@ pub async fn classify_input(
 
     if let Some(text) = input.text.as_ref().filter(|t| !t.trim().is_empty()) {
         for c in call_moderation_api(api_key, serde_json::json!([text]), moderation_referral).await? {
-            classification.flagged = classification.flagged | c.flagged;
-            classification.moderation_referral = classification.moderation_referral | c.moderation_referral;
-        }
-    }
-
-    if !input.image_urls.is_empty() {
-        let parts: Vec<_> = input
-            .image_urls
-            .iter()
-            .map(|url| serde_json::json!({ "type": "image_url", "image_url": { "url": url } }))
-            .collect();
-        for c in call_moderation_api(api_key, serde_json::Value::Array(parts), moderation_referral).await? {
             classification.flagged = classification.flagged | c.flagged;
             classification.moderation_referral = classification.moderation_referral | c.moderation_referral;
         }
