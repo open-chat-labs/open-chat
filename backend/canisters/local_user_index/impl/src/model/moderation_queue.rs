@@ -63,21 +63,19 @@ impl ModerationQueue {
         self.total == 0
     }
 
+    // Empty inputs never reach here - the caller handles them (dequeue + immediate empty
+    // classification, see c2c_group_or_community_canister)
     pub fn enqueue(&mut self, source: CanisterId, is_group: bool, request: ClassifyMessageRequest) {
         let key = (request.channel_id, request.message_id);
         let mut input = request.input;
-        if input.is_empty() {
-            // Only text is classified, so there is nothing to queue - and if an edit removed the
-            // text of an already-queued message, the stale queued text must not be classified in
-            // its place
-            self.remove(source, key);
-            return;
-        }
         if let Some(text) = input.text.as_mut()
             && let Some((index, _)) = text.char_indices().nth(MAX_TEXT_CHARS)
         {
             text.truncate(index);
         }
+        // Never read (only text is classified); cleared so a full queue holds no URL heap,
+        // matching the MAX_TEXT_CHARS memory-bounding intent
+        input.image_urls = Vec::new();
         let entry = Entry {
             thread_root_message_index: request.thread_root_message_index,
             input,
@@ -173,7 +171,8 @@ impl ModerationQueue {
     }
 
     // Removes a queued entry, eg. when an edit leaves a queued message with nothing classifiable
-    fn remove(&mut self, source: CanisterId, key: Key) {
+    pub fn remove(&mut self, source: CanisterId, channel_id: Option<ChannelId>, message_id: MessageId) {
+        let key = (channel_id, message_id);
         let removed = self
             .sources
             .get_mut(&source)

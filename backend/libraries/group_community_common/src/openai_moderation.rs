@@ -67,10 +67,12 @@ pub async fn classify_input(
 
     // Message media (`input.image_urls`) is NEVER sent to OpenAI, in any form, including by URL
     // (#9149) - do not add an image leg here. OpenAI's usage policies prohibit media which may
-    // include CSAM (detection triggers an NCMEC report against the uploader, which for API
-    // traffic is us), and it would detect nothing anyway: the moderation model's sexual/minors
-    // category is text-only, so an image scores zero for it. Image CSAM detection belongs to
-    // the hash-matching tier (specialist child-safety providers).
+    // include CSAM; detection triggers an NCMEC report against the uploader, which for API
+    // traffic is us. For CSAM the leg also had no detection value (the moderation model's
+    // sexual/minors category is text-only) - that belongs to the hash-matching tier. The cost
+    // is real for the other categories: images are no longer scored for sexual/violence, so
+    // adult imagery is not auto-hidden in app-store builds. Accepted (pornography is now
+    // prohibited platform-wide by the terms) pending a dedicated image-moderation provider.
 
     Ok(classification)
 }

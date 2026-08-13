@@ -1,5 +1,5 @@
 use crate::guards::{caller_is_local_community_canister, caller_is_local_group_canister};
-use crate::{RuntimeState, mutate_state};
+use crate::{CommunityEvent, GroupEvent, RuntimeState, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_time::now_millis;
@@ -7,7 +7,7 @@ use canister_tracing_macros::trace;
 use local_user_index_canister::GroupOrCommunityEvent;
 use local_user_index_canister::c2c_group_canister::*;
 use std::cell::LazyCell;
-use types::{BotEvent, BotLifecycleEvent, Notification, TimestampMillis};
+use types::{BotEvent, BotLifecycleEvent, MessageClassified, Notification, TimestampMillis};
 use user_index_canister::BotInstalled;
 
 #[update(guard = "caller_is_local_group_canister", msgpack = true)]
@@ -69,8 +69,31 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         }
         GroupOrCommunityEvent::EventStoreEvent(event) => state.data.event_store_client.push(event),
         GroupOrCommunityEvent::MessageClassifyRequest(request) => {
-            state.data.message_moderation_queue.enqueue(caller, is_group, *request);
-            crate::jobs::moderate_messages::start_job_if_required(state);
+            if request.input.is_empty() {
+                // Nothing classifiable (eg. an edit removed the text): dequeue any stale queued
+                // content so it is never classified in the current content's place, and reply
+                // with an empty classification immediately so that flags left by the earlier
+                // content are cleared (flags of 0 clears them - see MessageClassified)
+                state
+                    .data
+                    .message_moderation_queue
+                    .remove(caller, request.channel_id, request.message_id);
+                let result = MessageClassified {
+                    channel_id: request.channel_id,
+                    thread_root_message_index: request.thread_root_message_index,
+                    message_id: request.message_id,
+                    flags: 0,
+                    moderation_referral_flags: 0,
+                };
+                if is_group {
+                    state.push_event_to_group(caller, GroupEvent::MessageClassified(result), **now);
+                } else {
+                    state.push_event_to_community(caller, CommunityEvent::MessageClassified(result), **now);
+                }
+            } else {
+                state.data.message_moderation_queue.enqueue(caller, is_group, *request);
+                crate::jobs::moderate_messages::start_job_if_required(state);
+            }
         }
         GroupOrCommunityEvent::Notification(mut notification) => {
             if let Notification::Bot(bot_notification) = &mut *notification

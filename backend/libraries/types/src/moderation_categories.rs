@@ -49,8 +49,9 @@ impl std::ops::BitOr for ModerationCategories {
 }
 
 // Content to be classified by the moderation API. Only the text is ever classified - media is
-// never sent to the API (see openai_moderation.rs). image_urls carries the media references for
-// evidence quarantine and stays populated for wire compatibility.
+// never sent to the API (see openai_moderation.rs). image_urls is retained for wire
+// compatibility and is deliberately unread (evidence quarantine uses the message content's
+// blob references, not this field); the local index clears it at enqueue to bound queue memory.
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct ModerationInput {
     pub text: Option<String>,

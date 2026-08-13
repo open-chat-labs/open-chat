@@ -125,11 +125,15 @@ sequenceDiagram
   are charged at the replicated rate and the excess refunded.
 - **Text only** — texts for a whole batch (from many chats) go in one call. Message media is
   never sent to OpenAI, in any form, including by URL (#9149): OpenAI's usage policies prohibit
-  media which may include CSAM, and the moderation model's sexual/minors category is text-only
-  for images so it could detect nothing anyway; image CSAM detection belongs to the
-  hash-matching tier (specialist child-safety providers). A message with no classifiable text is
-  never queued (and an entry queued by a pre-#9149 sender is discarded at pop rather than
-  "classified" without an API call). A batch whose response has fewer results than inputs is
+  media which may include CSAM. For CSAM the image leg also had no detection value (the
+  moderation model's sexual/minors category is text-only) — that belongs to the hash-matching
+  tier. The cost is real for the other categories: images are no longer scored for
+  sexual/violence, so adult imagery is not auto-hidden in app-store builds — accepted
+  (pornography is now prohibited platform-wide by the terms) pending a dedicated
+  image-moderation provider. An empty classify request (eg. an edit removed the text) makes the
+  local index dequeue the earlier content and reply with an empty classification immediately, so
+  stale flags clear; an image-only entry queued by a pre-#9149 sender is discarded at pop rather
+  than "classified" without an API call. A batch whose response has fewer results than inputs is
   treated as failed and retried.
 - **Resilience** — queue capped at 2k per source / 20k total (drop-oldest, logged), with queued
   text truncated to 4000 chars at enqueue to bound memory; 3 attempts per message; the job is

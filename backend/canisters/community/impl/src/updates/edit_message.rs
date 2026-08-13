@@ -59,10 +59,11 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                 .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
         && message.deleted_by.is_none()
     {
+        // Sent even when there is nothing classifiable: an empty request makes the local index
+        // dequeue the earlier content and reply with an empty classification, clearing any
+        // stale flags left by text this edit removed
         let input = message.content.moderation_input();
-        if !input.is_empty() {
-            state.queue_message_for_moderation(args.channel_id, args.thread_root_message_index, args.message_id, input);
-        }
+        state.queue_message_for_moderation(args.channel_id, args.thread_root_message_index, args.message_id, input);
     }
 
     state.push_bot_notification(result.bot_notification);
