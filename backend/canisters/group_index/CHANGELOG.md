@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Defer the moderation-flag back-fill to a timer: pushing to the local-index event queue makes an inter-canister call, which is forbidden during post-upgrade and failed the 2.0.2017 upgrade ([#9155](https://github.com/open-chat-labs/open-chat/pull/9155))
+
 ### Added
 
 - Forward the CSAM assertion flag on reports so quarantine and deletion apply immediately (the suspension waits for the human verdict) ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
