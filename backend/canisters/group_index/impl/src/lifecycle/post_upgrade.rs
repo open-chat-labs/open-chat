@@ -1,13 +1,11 @@
+use crate::Data;
 use crate::lifecycle::init_state;
 use crate::memory::get_upgrades_memory;
-use crate::{Data, mutate_state};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use group_index_canister::post_upgrade::Args;
 use ic_cdk::post_upgrade;
-use local_user_index_canister::{GroupIndexEvent as LocalIndexEvent, ModerationFlagsChanged};
 use stable_memory::get_reader;
-use std::time::Duration;
 use tracing::info;
 use utils::cycles::init_cycles_dispenser_client;
 use utils::env::canister::CanisterEnv;
@@ -26,35 +24,6 @@ fn post_upgrade(args: Args) {
     let env = Box::new(CanisterEnv::new(data.rng_seed));
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);
     init_state(env, data, args.wasm_version);
-
-    // One-off: sync existing moderation flags to the community canisters. Deferred to a
-    // zero-delay timer because pushing to the local-index event queue flushes it synchronously,
-    // and the resulting inter-canister call is forbidden while still in init mode - this trap
-    // failed the 2.0.2017 upgrade. (The prod-test rehearsal passed because it had no flagged
-    // communities, so the loop body never ran: rehearsing this path requires at least one.)
-    ic_cdk_timers::set_timer(Duration::ZERO, async {
-        mutate_state(|state| {
-            let flagged: Vec<_> = state
-                .data
-                .public_communities
-                .iter()
-                .filter(|c| !c.moderation_flags().is_empty())
-                .map(|c| (c.id(), c.moderation_flags().bits()))
-                .collect();
-
-            let now = state.env.now();
-            for (community_id, flags) in flagged {
-                state.push_community_event_to_local_index(
-                    community_id,
-                    LocalIndexEvent::CommunityModerationFlagsChanged(ModerationFlagsChanged {
-                        canister_id: community_id.into(),
-                        flags,
-                    }),
-                    now,
-                );
-            }
-        })
-    });
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");
