@@ -6,16 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
-### Changed
-
-- Add `c2c_moderation_undelete` and `c2c_moderation_hard_delete` so verdicts can restore or permanently remove auto-sanctioned messages ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
-- Quarantined messages (CSAM-flagged, deleted by moderation) are viewable by no one and cannot be user-restored while the report is unresolved ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
-- Include blob references when escalating CSAM detections, for evidence-vault quarantine ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+## [[2.0.2013](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2013-community)] - 2026-08-12
 
 ### Added
 
 - Reports which assert child sexual abuse content quarantine the media and delete the message immediately - the material is never viewed outside the quarantine framework - while the suspension waits for the human verdict ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
-
 - Escalate classifier moderation referrals to the user_index (via the group_index) for human review ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 - Post moderation alerts as a structured `ModerationReport` message type and support status updates ([#9095](https://github.com/open-chat-labs/open-chat/pull/9095))
 - Add `c2c_send_moderation_report` endpoint for posting escalations into the internal moderation channel ([#9092](https://github.com/open-chat-labs/open-chat/pull/9092))
@@ -27,6 +22,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Add `c2c_moderation_undelete` and `c2c_moderation_hard_delete` so verdicts can restore or permanently remove auto-sanctioned messages ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- Quarantined messages (CSAM-flagged, deleted by moderation) are viewable by no one and cannot be user-restored while the report is unresolved ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- Include blob references when escalating CSAM detections, for evidence-vault quarantine ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 - Suspend "verified user" (unique person) gating - the gate is ignored, filtered out of composite gates so an OR gate requires another branch ([#9061](https://github.com/open-chat-labs/open-chat/pull/9061))
 
 ### Fixed
