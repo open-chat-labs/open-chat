@@ -56,10 +56,7 @@ fn next_batch(state: &mut RuntimeState) -> Option<(String, Option<ModerationRefe
 }
 
 async fn process_batch(api_key: String, moderation_referral_config: Option<ModerationReferralConfig>, batch: Vec<QueueItem>) {
-    let texts: Vec<String> = batch
-        .iter()
-        .map(|i| i.entry.input.text.clone().unwrap_or_default())
-        .collect();
+    let texts: Vec<String> = batch.iter().map(|i| i.entry.input.text.clone().unwrap_or_default()).collect();
 
     let (classified, failed): (Vec<(QueueItem, Classification)>, Vec<QueueItem>) =
         match openai_moderation::classify_text_batch(&api_key, &texts, moderation_referral_config.as_ref()).await {

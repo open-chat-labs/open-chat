@@ -173,13 +173,12 @@ impl ModerationQueue {
     // Removes a queued entry, eg. when an edit leaves a queued message with nothing classifiable
     pub fn remove(&mut self, source: CanisterId, channel_id: Option<ChannelId>, message_id: MessageId) {
         let key = (channel_id, message_id);
-        let removed = self
-            .sources
-            .get_mut(&source)
-            .is_some_and(|queue| queue.entries.remove(&key).is_some() && {
+        let removed = self.sources.get_mut(&source).is_some_and(|queue| {
+            queue.entries.remove(&key).is_some() && {
                 queue.order.retain(|k| *k != key);
                 true
-            });
+            }
+        });
 
         if removed {
             self.total = self.total.saturating_sub(1);
