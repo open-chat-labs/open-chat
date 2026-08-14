@@ -58,6 +58,7 @@ pub enum MediaScanBlobOutcome {
     Unscannable,
 }
 
+#[ts_export::ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MediaScanMatch {
     pub provider: MediaScanProvider,
@@ -70,6 +71,7 @@ pub struct MediaScanMatch {
     pub match_id: Option<String>,
 }
 
+#[ts_export::ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum MediaScanProvider {
     PhotoDna,

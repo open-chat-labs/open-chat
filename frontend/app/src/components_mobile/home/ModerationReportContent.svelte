@@ -79,6 +79,15 @@
     // protective quarantine applied after classification): the flagged bits alone miss the
     // assertion cases, and the card must show the CSAM treatment (no in-place viewing)
     let csam = $derived((content.flaggedCategories & 2) !== 0 || content.autoSanctioned);
+    // Non-empty when the detection was a media hash match rather than the text classifier
+    let hashMatchLine = $derived(
+        content.mediaMatches
+            .map(
+                (m) =>
+                    `${m.provider}${m.matchId !== undefined ? ` record ${m.matchId}` : ""} (distance ${m.matchDistance})`,
+            )
+            .join("; "),
+    );
     let categories = $derived(
         MODERATION_CATEGORY_NAMES.filter(([bit, _name]) => (content.flaggedCategories & bit) !== 0)
             .map(([_bit, name]) => name)
@@ -196,6 +205,12 @@
                 {:else}
                     <Translatable resourceKey={i18nKey("moderationReport.autoSanctioned")} />
                 {/if}
+            </Body>
+        {/if}
+        {#if content.mediaMatches.length > 0}
+            <Body colour="textSecondary">
+                <Translatable resourceKey={i18nKey("moderationReport.hashMatched")} />
+                {hashMatchLine}
             </Body>
         {/if}
     </Column>

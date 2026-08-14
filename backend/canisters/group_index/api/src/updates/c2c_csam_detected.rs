@@ -15,6 +15,9 @@ pub struct Args {
     // The message's media attachments, so the evidence vault can quarantine them
     #[serde(default)]
     pub blob_references: Vec<BlobReference>,
+    // Present when the detection was a media hash match rather than the text classifier
+    #[serde(default)]
+    pub media_matches: Vec<types::MediaScanMatch>,
 }
 
 pub type Response = UnitResult;

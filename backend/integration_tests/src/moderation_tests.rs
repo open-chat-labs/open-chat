@@ -2101,6 +2101,11 @@ fn media_scan_match_triggers_auto_sanction() {
     assert!(report.auto_sanctioned);
     assert!(report.reporters.is_empty());
     report.report_index.expect("proactive detection should carry a report index");
+    // The report carries the hash-match provenance: which provider matched, and the provider's
+    // record id for the authority report
+    assert_eq!(report.media_matches.len(), 1);
+    assert_eq!(report.media_matches[0].match_id.as_deref(), Some("7469692"));
+    assert_eq!(report.media_matches[0].blob_id, blob_reference.blob_id);
 
     // The quarantine read-gate holds: not even the group owner can view the deleted content
     let deleted_message_response = client::group::deleted_message(

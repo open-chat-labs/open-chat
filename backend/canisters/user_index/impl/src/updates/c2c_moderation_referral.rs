@@ -37,6 +37,7 @@ fn c2c_moderation_referral_impl(args: Args, state: &mut RuntimeState) {
             sender: args.sender,
             flags: categories.bits(),
             blob_references: args.blob_references.clone(),
+            media_matches: Vec::new(),
             timestamp: now,
         })
     else {
@@ -66,6 +67,7 @@ fn c2c_moderation_referral_impl(args: Args, state: &mut RuntimeState) {
             // The content is still live (not quarantined), so the Review affordance fetches
             // it from its ordinary blob url
             blob_references: args.blob_references.clone(),
+            media_matches: Vec::new(),
             timestamp: now,
         },
         state,

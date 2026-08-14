@@ -801,6 +801,10 @@ pub struct ModerationReportContent {
     // vault reviewers via the explicit Review affordance (no media is ever embedded in alerts)
     #[serde(default)]
     pub blob_references: Vec<BlobReference>,
+    // Present when the detection was a media hash match rather than the text classifier: the
+    // provider's record details, retained as the audit trail and for the authority report
+    #[serde(default)]
+    pub media_matches: Vec<crate::MediaScanMatch>,
     pub reported_at: TimestampMillis,
     pub status: ModerationReportStatus,
     // Present on UpheldAsCsam reports: whether the authority (NCA) report is still due or has

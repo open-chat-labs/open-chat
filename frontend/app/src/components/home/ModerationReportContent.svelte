@@ -86,6 +86,15 @@
     // protective quarantine applied after classification): the flagged bits alone miss the
     // assertion cases, and the card must show the CSAM treatment (no in-place viewing)
     let csam = $derived((content.flaggedCategories & 2) !== 0 || content.autoSanctioned);
+    // Non-empty when the detection was a media hash match rather than the text classifier
+    let hashMatchLine = $derived(
+        content.mediaMatches
+            .map(
+                (m) =>
+                    `${m.provider}${m.matchId !== undefined ? ` record ${m.matchId}` : ""} (distance ${m.matchDistance})`,
+            )
+            .join("; "),
+    );
     // Alleged OR confirmed CSAM: a classifier-clean escalated report upheld as CSAM has no
     // flag bits, but must still never link to the content in place
     let csamish = $derived(csam || content.status.kind === "upheld_as_csam");
@@ -462,6 +471,14 @@
     {@const status = content.status.kind}
     <!-- report -->
     {@render reportCard()}
+    {#if content.mediaMatches.length > 0}
+        <Row gap="sm" wrap padding="lg" borderRadius="md" backgroundColor={ColourVars.background1}>
+            <Body width="hug">
+                <Translatable resourceKey={i18nKey("moderationReport.hashMatched")} />
+                {hashMatchLine}
+            </Body>
+        </Row>
+    {/if}
     {@render statusLine()}
 
     {#if status === "upheld" || status === "upheld_as_csam" || status === "dismissed"}

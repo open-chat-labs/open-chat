@@ -92,6 +92,7 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
                             flags: categories.bits(),
                             content_excerpt: message.content.moderation_input().text,
                             blob_references: message.content.blob_references(),
+                            media_matches: Vec::new(),
                         };
                         state.data.fire_and_forget_handler.send(
                             state.data.group_index_canister_id,
@@ -165,6 +166,7 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
                     flags: ModerationCategories::SEXUAL_MINORS.bits(),
                     content_excerpt,
                     blob_references,
+                    media_matches: ev.matches,
                 };
                 state.data.fire_and_forget_handler.send(
                     state.data.group_index_canister_id,
