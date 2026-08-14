@@ -2100,7 +2100,7 @@ fn media_scan_match_triggers_auto_sanction() {
         .expect("the match should create a moderation report");
     assert!(report.auto_sanctioned);
     assert!(report.reporters.is_empty());
-    report.report_index.expect("proactive detection should carry a report index");
+    let report_index = report.report_index.expect("proactive detection should carry a report index");
     // The report carries the hash-match provenance: which provider matched, and the provider's
     // record id for the authority report
     assert_eq!(report.media_matches.len(), 1);
@@ -2136,6 +2136,27 @@ fn media_scan_match_triggers_auto_sanction() {
         matches!(chunk_response, storage_bucket_canister::vault_file_chunk::Response::Success(_)),
         "{chunk_response:?}"
     );
+
+    // A Dismissed verdict reverses the takedown in full: the sender is unsuspended and the
+    // image message is restored for everyone
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index,
+            verdict: ModerationVerdict::Dismissed,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    assert!(sender_state.suspension_details.is_none(), "sender should be unsuspended");
+
+    let message_content = get_message_content(env, &test_data.group_owner, test_data.group_id, message_id);
+    assert!(matches!(message_content, MessageContent::Image(_)), "{message_content:?}");
 }
 
 #[test]
