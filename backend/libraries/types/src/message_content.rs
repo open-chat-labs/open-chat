@@ -244,6 +244,36 @@ impl MessageContent {
         input
     }
 
+    // The media which the scanning pipeline hashes: still images only. Image content always;
+    // File content when its declared mime type is an image (uploading an image as a file
+    // attachment must not dodge the scan). Video is excluded until keyframe extraction exists,
+    // and Giphy variants are third-party URLs, not OpenChat blobs.
+    pub fn scannable_blobs(&self) -> Vec<crate::MediaScanBlob> {
+        match self {
+            MessageContent::Image(i) => i
+                .blob_reference
+                .clone()
+                .map(|blob_reference| crate::MediaScanBlob {
+                    blob_reference,
+                    mime_type: i.mime_type.clone(),
+                    frame_index: None,
+                })
+                .into_iter()
+                .collect(),
+            MessageContent::File(f) if f.mime_type.starts_with("image/") => f
+                .blob_reference
+                .clone()
+                .map(|blob_reference| crate::MediaScanBlob {
+                    blob_reference,
+                    mime_type: f.mime_type.clone(),
+                    frame_index: None,
+                })
+                .into_iter()
+                .collect(),
+            _ => Vec::new(),
+        }
+    }
+
     pub fn notification_text(&self, mentioned: &[User], user_groups_mentioned: &[(u32, String)]) -> Option<String> {
         let mut text = self.text()?.to_string();
 

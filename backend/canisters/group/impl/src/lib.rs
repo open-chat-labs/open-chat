@@ -182,6 +182,27 @@ impl RuntimeState {
         });
     }
 
+    // Asks the local_user_index to have the message's media scanned against known-CSAM hash
+    // lists; a match arrives back as a `MediaScanMatched` event. Only ever called for
+    // messages in public chats.
+    pub fn queue_media_for_scanning(
+        &mut self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        blobs: Vec<types::MediaScanBlob>,
+    ) {
+        self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
+            created_at: self.env.now(),
+            idempotency_id: self.env.rng().next_u64(),
+            value: local_user_index_canister::GroupEvent::MediaScanRequest(Box::new(types::MediaScanRequest {
+                channel_id: None,
+                thread_root_message_index,
+                message_id,
+                blobs,
+            })),
+        });
+    }
+
     pub fn queue_access_gate_payments(&mut self, payment: GatePayment) {
         for payment in calculate_gate_payments(payment, self.data.chat.members.owners()) {
             self.data.pending_payments_queue.push(payment);

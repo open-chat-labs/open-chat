@@ -66,6 +66,7 @@ fn confirm_protected_action_impl(args: Args, state: &mut RuntimeState) -> OCResu
         }
         ProtectedAction::SetVaultReviewers(reviewer_args) => crate::updates::set_vault_reviewers::execute(reviewer_args, state),
         ProtectedAction::SetOpenAIApiKey(key_args) => crate::updates::set_openai_api_key::execute(key_args, state),
+        ProtectedAction::SetMediaScanConfig(config_args) => crate::updates::set_media_scan_config::execute(config_args, state),
         ProtectedAction::SetVaultLegalHold(hold_args) => crate::updates::set_vault_legal_hold::execute(hold_args, state),
         ProtectedAction::SetInternalModerationChannel(channel_args) => {
             crate::updates::set_internal_moderation_channel::execute(channel_args, state)

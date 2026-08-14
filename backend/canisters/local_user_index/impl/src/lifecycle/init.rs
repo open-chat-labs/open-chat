@@ -36,6 +36,7 @@ fn init(args: Args) {
         args.oc_secret_key_der,
         args.openai_api_key,
         args.moderation_referral_config,
+        args.media_scan_config,
         args.test_mode,
     );
 

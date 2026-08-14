@@ -33,8 +33,8 @@ use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use timer_job_queues::BatchedTimerJobQueue;
 use types::{
-    BuildVersion, CanisterId, ChannelId, ChatId, ChildCanisterWasms, CommunityId, Cycles, DiamondMembershipFees, Milliseconds,
-    ModerationReferralConfig, TimestampMillis, Timestamped, UserId, UserType,
+    BuildVersion, CanisterId, ChannelId, ChatId, ChildCanisterWasms, CommunityId, Cycles, DiamondMembershipFees,
+    MediaScanConfig, Milliseconds, ModerationReferralConfig, TimestampMillis, Timestamped, UserId, UserType,
 };
 use user_ids_set::UserIdsSet;
 use user_index_canister::ChildCanisterType;
@@ -278,6 +278,8 @@ impl RuntimeState {
             // thresholds must not be readable by people tuning content to sit under them.
             // Operators read the full config via the guarded moderation_config query.
             moderation_referral_config_set: self.data.moderation_referral_config.is_some(),
+            media_scanning_enabled: self.data.media_scan_config.enabled,
+            media_scanners: self.data.media_scan_config.scanners.len() as u32,
             moderation_referral_categories: self
                 .data
                 .moderation_referral_config
@@ -422,6 +424,8 @@ struct Data {
     #[serde(default)]
     pub moderation_referral_config: Option<ModerationReferralConfig>,
     #[serde(default)]
+    pub media_scan_config: MediaScanConfig,
+    #[serde(default)]
     pub internal_moderation_channel: Option<(CommunityId, ChannelId)>,
 }
 
@@ -511,6 +515,7 @@ impl Data {
             blocked_username_patterns: Vec::new(),
             openai_api_key: None,
             moderation_referral_config: None,
+            media_scan_config: MediaScanConfig::default(),
             internal_moderation_channel: None,
         };
 
@@ -630,6 +635,7 @@ impl Default for Data {
             blocked_username_patterns: Vec::new(),
             openai_api_key: None,
             moderation_referral_config: None,
+            media_scan_config: MediaScanConfig::default(),
             internal_moderation_channel: None,
         }
     }
@@ -672,6 +678,8 @@ pub struct Metrics {
     pub internal_moderation_channel_set: bool,
     pub moderation_referral_config_set: bool,
     pub moderation_referral_categories: u32,
+    pub media_scanning_enabled: bool,
+    pub media_scanners: u32,
     pub oc_public_key: String,
     pub empty_users: usize,
     pub deleted_users: usize,

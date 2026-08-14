@@ -1,5 +1,6 @@
 use crate::updates::{
-    destroy_vault_evidence, set_internal_moderation_channel, set_openai_api_key, set_vault_legal_hold, set_vault_reviewers,
+    destroy_vault_evidence, set_internal_moderation_channel, set_media_scan_config, set_openai_api_key, set_vault_legal_hold,
+    set_vault_reviewers,
 };
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
@@ -16,6 +17,7 @@ pub enum ProtectedAction {
     DestroyVaultEvidence(destroy_vault_evidence::Args),
     SetVaultReviewers(set_vault_reviewers::Args),
     SetOpenAIApiKey(set_openai_api_key::Args),
+    SetMediaScanConfig(set_media_scan_config::Args),
     SetInternalModerationChannel(set_internal_moderation_channel::Args),
     // Only ever proposed for the dangerous case: clearing a hold on evidence whose release is
     // already pending performs that release, destroying it
@@ -30,6 +32,7 @@ impl ProtectedAction {
             ProtectedAction::DestroyVaultEvidence(_) => "DestroyVaultEvidence",
             ProtectedAction::SetVaultReviewers(_) => "SetVaultReviewers",
             ProtectedAction::SetOpenAIApiKey(_) => "SetOpenAIApiKey",
+            ProtectedAction::SetMediaScanConfig(_) => "SetMediaScanConfig",
             ProtectedAction::SetInternalModerationChannel(_) => "SetInternalModerationChannel",
             ProtectedAction::SetVaultLegalHold(_) => "SetVaultLegalHold",
         }
@@ -61,6 +64,14 @@ impl ProtectedAction {
                 } else {
                     "SetOpenAIApiKey(None)".to_string()
                 }
+            }
+            ProtectedAction::SetMediaScanConfig(args) => {
+                let scanners: Vec<String> = args.config.scanners.iter().map(|p| p.to_string()).collect();
+                format!(
+                    "SetMediaScanConfig(enabled: {}, scanners: [{}])",
+                    args.config.enabled,
+                    scanners.join(", ")
+                )
             }
             ProtectedAction::SetInternalModerationChannel(args) => match &args.channel {
                 Some(c) => format!("SetInternalModerationChannel({}/{})", c.community_id, c.channel_id),

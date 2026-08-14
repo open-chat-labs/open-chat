@@ -277,6 +277,36 @@ impl MessageContentInternal {
         self.text().map(|t| t.len() as u32).unwrap_or_default()
     }
 
+    // The media which the scanning pipeline hashes: still images only. Image content always;
+    // File content when its declared mime type is an image (uploading an image as a file
+    // attachment must not dodge the scan). Video is excluded until keyframe extraction exists,
+    // and Giphy variants are third-party URLs, not OpenChat blobs.
+    pub fn scannable_blobs(&self) -> Vec<types::MediaScanBlob> {
+        match self {
+            MessageContentInternal::Image(i) => i
+                .blob_reference
+                .clone()
+                .map(|br| types::MediaScanBlob {
+                    blob_reference: br.into(),
+                    mime_type: i.mime_type.clone(),
+                    frame_index: None,
+                })
+                .into_iter()
+                .collect(),
+            MessageContentInternal::File(f) if f.mime_type.starts_with("image/") => f
+                .blob_reference
+                .clone()
+                .map(|br| types::MediaScanBlob {
+                    blob_reference: br.into(),
+                    mime_type: f.mime_type.clone(),
+                    frame_index: None,
+                })
+                .into_iter()
+                .collect(),
+            _ => Vec::new(),
+        }
+    }
+
     pub fn blob_references(&self) -> Vec<BlobReference> {
         let mut references = Vec::new();
 

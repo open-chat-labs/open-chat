@@ -119,6 +119,59 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
                 }
             }
         }
+        LocalIndexEvent::MediaScanMatched(ev) => {
+            // The same escalation as classifier-detected CSAM: flag the message (which locks
+            // the content behind the read/undelete gate) and notify the user_index via the
+            // group_index, which quarantines the blobs, deletes the message, suspends the
+            // sender and posts an alert to the internal moderation channel
+            if let Some(channel_id) = ev.channel_id
+                && let Some(channel) = state.data.channels.get_mut(&channel_id)
+                && let Some((message_index, sender, content_excerpt, blob_references)) = channel
+                    .chat
+                    .events
+                    .message_internal(EventIndex::default(), ev.thread_root_message_index, ev.message_id.into())
+                    .map(|(message, _)| {
+                        (
+                            message.message_index,
+                            message.sender,
+                            message.content.moderation_input().text,
+                            message.content.blob_references(),
+                        )
+                    })
+                // Escalate only if a matched blob is still referenced by the current content:
+                // an edit inside the scan window replaced the media, and the edit was
+                // re-scanned
+                && ev
+                    .matches
+                    .iter()
+                    .any(|m| blob_references.iter().any(|br| br.blob_id == m.blob_id))
+                && {
+                    let flag_result = channel.chat.events.flag_message(
+                        ev.thread_root_message_index,
+                        ev.message_id,
+                        ModerationCategories::SEXUAL_MINORS,
+                        **now,
+                    );
+                    flag_result.is_ok() || flag_result.is_err_and(|e| e.matches_code(oc_error_codes::OCErrorCode::NoChange))
+                }
+            {
+                let args = group_index_canister::c2c_csam_detected::Args {
+                    channel_id: Some(channel_id),
+                    thread_root_message_index: ev.thread_root_message_index,
+                    message_index,
+                    message_id: ev.message_id,
+                    sender,
+                    flags: ModerationCategories::SEXUAL_MINORS.bits(),
+                    content_excerpt,
+                    blob_references,
+                };
+                state.data.fire_and_forget_handler.send(
+                    state.data.group_index_canister_id,
+                    "c2c_csam_detected_msgpack".to_string(),
+                    serialize_then_unwrap(&args),
+                );
+            }
+        }
         LocalIndexEvent::ModerationFlagsChanged(ev) => {
             state.data.moderation_flags = Timestamped::new(ev.flags, **now);
         }

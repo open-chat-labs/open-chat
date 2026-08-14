@@ -2,6 +2,7 @@ use crate::model::community_event_batch::CommunityEventBatch;
 use crate::model::group_event_batch::GroupEventBatch;
 use crate::model::local_community_map::LocalCommunityMap;
 use crate::model::local_group_map::LocalGroupMap;
+use crate::model::media_scan_job_log::MediaScanJobLog;
 use crate::model::moderation_queue::ModerationQueue;
 use crate::model::premium_items::PremiumItems;
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
@@ -38,8 +39,9 @@ use types::{
     BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion,
     CLAIM_TYPE_DIAMOND_MEMBERSHIP, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms,
     CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
-    IdempotentEnvelope, MessageContentInitial, Milliseconds, ModerationReferralConfig, Notification, NotificationEnvelope,
-    ReferralType, TimestampMillis, Timestamped, UserId, UserNotificationEnvelope, VerifiedCredentialGateArgs,
+    IdempotentEnvelope, MediaScanConfig, MessageContentInitial, Milliseconds, ModerationReferralConfig, Notification,
+    NotificationEnvelope, ReferralType, TimestampMillis, Timestamped, UserId, UserNotificationEnvelope,
+    VerifiedCredentialGateArgs,
 };
 use user_canister::LocalUserIndexEvent as UserEvent;
 use user_ids_set::UserIdsSet;
@@ -181,6 +183,11 @@ impl RuntimeState {
     pub fn is_caller_notification_pusher(&self) -> bool {
         let caller = self.env.caller();
         self.data.notification_pushers.contains(&caller)
+    }
+
+    pub fn is_caller_media_scanner(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.media_scan_config.scanners.contains(&caller)
     }
 
     pub fn is_caller_openchat_user(&self) -> bool {
@@ -516,6 +523,9 @@ impl RuntimeState {
             openai_api_key_set: self.data.openai_api_key.is_some(),
             moderation_referral_config: self.data.moderation_referral_config.clone(),
             message_moderation_queue_len: self.data.message_moderation_queue.len() as u32,
+            media_scanning_enabled: self.data.media_scan_config.enabled,
+            media_scan_job_log_len: self.data.media_scan_job_log.len() as u32,
+            media_scan_latest_job_index: self.data.media_scan_job_log.latest_job_index(),
             cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
             bots: self
                 .data
@@ -603,6 +613,10 @@ struct Data {
     pub moderation_referral_config: Option<ModerationReferralConfig>,
     #[serde(default)]
     pub message_moderation_queue: ModerationQueue,
+    #[serde(default)]
+    pub media_scan_config: MediaScanConfig,
+    #[serde(default)]
+    pub media_scan_job_log: MediaScanJobLog,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -639,6 +653,7 @@ impl Data {
         oc_secret_key_der: Vec<u8>,
         openai_api_key: Option<String>,
         moderation_referral_config: Option<ModerationReferralConfig>,
+        media_scan_config: MediaScanConfig,
         test_mode: bool,
     ) -> Self {
         Data {
@@ -698,6 +713,8 @@ impl Data {
             openai_api_key,
             moderation_referral_config,
             message_moderation_queue: ModerationQueue::default(),
+            media_scan_config,
+            media_scan_job_log: MediaScanJobLog::default(),
         }
     }
 }
@@ -762,6 +779,9 @@ pub struct Metrics {
     pub openai_api_key_set: bool,
     pub moderation_referral_config: Option<ModerationReferralConfig>,
     pub message_moderation_queue_len: u32,
+    pub media_scanning_enabled: bool,
+    pub media_scan_job_log_len: u32,
+    pub media_scan_latest_job_index: u64,
     pub cycles_balance_check_queue_len: u32,
     pub bots: Vec<BotMetrics>,
     pub blocked_username_patterns: Vec<String>,

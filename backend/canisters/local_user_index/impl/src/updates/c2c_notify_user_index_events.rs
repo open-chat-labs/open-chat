@@ -337,6 +337,9 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         UserIndexEvent::SetModerationReferralConfig(ev) => {
             state.data.moderation_referral_config = ev.config;
         }
+        UserIndexEvent::SetMediaScanConfig(config) => {
+            state.data.media_scan_config = config;
+        }
     }
 }
 
