@@ -48,8 +48,10 @@ impl std::ops::BitOr for ModerationCategories {
     }
 }
 
-// Content to be classified by the moderation API. Image-bearing inputs are classified
-// individually (the text and the images in separate calls); plain text inputs can be batched.
+// Content to be classified by the moderation API. Only the text is ever classified - media is
+// never sent to the API (see openai_moderation.rs). image_urls is retained for wire
+// compatibility and is deliberately unread (evidence quarantine uses the message content's
+// blob references, not this field); the local index clears it at enqueue to bound queue memory.
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct ModerationInput {
     pub text: Option<String>,
@@ -57,8 +59,10 @@ pub struct ModerationInput {
 }
 
 impl ModerationInput {
+    // "Empty" means nothing classifiable: only text is classified, so input carrying media but
+    // no text is empty
     pub fn is_empty(&self) -> bool {
-        self.text.as_ref().is_none_or(|t| t.trim().is_empty()) && self.image_urls.is_empty()
+        self.text.as_ref().is_none_or(|t| t.trim().is_empty())
     }
 }
 

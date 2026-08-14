@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Never send message media to the OpenAI moderation API - classification is text-only ([#9149](https://github.com/open-chat-labs/open-chat/issues/9149))
+
 ### Fixed
 
 - Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
