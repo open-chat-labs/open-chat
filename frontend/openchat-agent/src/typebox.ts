@@ -557,6 +557,9 @@ export const PinNumberSettings = Type.Object({
     attempts_blocked_until: Type.Optional(Type.BigInt()),
 });
 
+export type MediaScanProvider = Static<typeof MediaScanProvider>;
+export const MediaScanProvider = Type.Literal("PhotoDna");
+
 export type VideoCallPresence = Static<typeof VideoCallPresence>;
 export const VideoCallPresence = Type.Union([
     Type.Literal("Default"),
@@ -658,6 +661,16 @@ export const GroupRole = Type.Union([
     Type.Literal("Moderator"),
     Type.Literal("Participant"),
 ]);
+
+export type MediaScanMatch = Static<typeof MediaScanMatch>;
+export const MediaScanMatch = Type.Object({
+    provider: MediaScanProvider,
+    blob_id: Type.BigInt(),
+    source: Type.String(),
+    violations: Type.Array(Type.String()),
+    match_distance: Type.BigInt(),
+    match_id: Type.Optional(Type.String()),
+});
 
 export type ChannelId = Static<typeof ChannelId>;
 export const ChannelId = Type.BigInt();
@@ -5303,6 +5316,12 @@ export const CommunityVisibilityChanged = Type.Object({
     changed_by: UserId,
 });
 
+export type MediaScanConfig = Static<typeof MediaScanConfig>;
+export const MediaScanConfig = Type.Object({
+    enabled: Type.Boolean(),
+    scanners: Type.Array(TSPrincipal),
+});
+
 export type CustomContent = Static<typeof CustomContent>;
 export const CustomContent = Type.Object({
     kind: Type.String(),
@@ -6369,6 +6388,11 @@ export const UserIndexExploreBotsArgs = Type.Object({
     exclude_installed: Type.Boolean(),
 });
 
+export type UserIndexSetMediaScanConfigArgs = Static<typeof UserIndexSetMediaScanConfigArgs>;
+export const UserIndexSetMediaScanConfigArgs = Type.Object({
+    config: MediaScanConfig,
+});
+
 export type UserIndexChitLeaderboardSuccessResult = Static<
     typeof UserIndexChitLeaderboardSuccessResult
 >;
@@ -6400,6 +6424,7 @@ export const UserIndexModerationConfigSuccessResult = Type.Object({
     internal_moderation_channel: Type.Optional(UserIndexModerationConfigInternalModerationChannel),
     moderation_referral_config: Type.Optional(ModerationReferralConfig),
     vault_reviewers: Type.Array(UserId),
+    media_scan_config: MediaScanConfig,
 });
 
 export type UserIndexModerationConfigResponse = Static<typeof UserIndexModerationConfigResponse>;
@@ -7584,6 +7609,7 @@ export const ModerationReportContent = Type.Object({
     auto_sanctioned: Type.Boolean(),
     content_excerpt: Type.Optional(Type.String()),
     blob_references: Type.Array(BlobReference),
+    media_matches: Type.Array(MediaScanMatch),
     reported_at: Type.BigInt(),
     status: ModerationReportStatus,
     authority_report: Type.Optional(AuthorityReportState),
@@ -7742,6 +7768,9 @@ export const UserIndexProposeProtectedActionProtectedAction = Type.Union([
     }),
     Type.Object({
         SetOpenAIApiKey: UserIndexSetOpenaiApiKeyArgs,
+    }),
+    Type.Object({
+        SetMediaScanConfig: UserIndexSetMediaScanConfigArgs,
     }),
     Type.Object({
         SetInternalModerationChannel: UserIndexSetInternalModerationChannelArgs,

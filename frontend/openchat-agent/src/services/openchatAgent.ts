@@ -2197,6 +2197,15 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.proposeSetVaultReviewers(userIds);
     }
 
+    proposeSetMediaScanConfig(
+        enabled: boolean,
+        scanners: string[],
+    ): Promise<ProposedProtectedAction | undefined> {
+        if (offline()) return Promise.resolve(undefined);
+
+        return this._userIndexClient.proposeSetMediaScanConfig(enabled, scanners);
+    }
+
     confirmProtectedAction(actionId: bigint): Promise<Success | OCError> {
         if (offline()) return Promise.resolve({ kind: "error", code: -1, message: undefined });
 

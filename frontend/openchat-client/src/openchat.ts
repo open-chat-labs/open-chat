@@ -7453,6 +7453,15 @@ export class OpenChat {
             .catch(() => undefined);
     }
 
+    proposeSetMediaScanConfig(
+        enabled: boolean,
+        scanners: string[],
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.#worker
+            .send({ kind: "proposeSetMediaScanConfig", enabled, scanners })
+            .catch(() => undefined);
+    }
+
     confirmProtectedAction(actionId: bigint): Promise<Success | OCError> {
         return this.#worker
             .send({ kind: "confirmProtectedAction", actionId })

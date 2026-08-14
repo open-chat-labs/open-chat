@@ -281,6 +281,17 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         });
     }
 
+    proposeSetMediaScanConfig(
+        enabled: boolean,
+        scanners: string[],
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.proposeProtectedAction({
+            SetMediaScanConfig: {
+                config: { enabled, scanners: scanners.map(principalStringToBytes) },
+            },
+        });
+    }
+
     proposeSetVaultReviewers(userIds: string[]): Promise<ProposedProtectedAction | undefined> {
         return this.proposeProtectedAction({
             SetVaultReviewers: { user_ids: userIds.map(principalStringToBytes) },
@@ -404,6 +415,9 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                               }),
                           ),
                           vaultReviewers: resp.Success.vault_reviewers.map(principalBytesToString),
+                          mediaScanEnabled: resp.Success.media_scan_config.enabled,
+                          mediaScanners:
+                              resp.Success.media_scan_config.scanners.map(principalBytesToString),
                       }
                     : undefined,
             Empty,

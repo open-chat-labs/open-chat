@@ -1019,6 +1019,8 @@ function getAction(
             );
         case "proposeSetVaultReviewers":
             return agent.proposeSetVaultReviewers(payload.userIds);
+        case "proposeSetMediaScanConfig":
+            return agent.proposeSetMediaScanConfig(payload.enabled, payload.scanners);
         case "setVaultLegalHold":
             return agent.setVaultLegalHold(
                 payload.reportIndex,

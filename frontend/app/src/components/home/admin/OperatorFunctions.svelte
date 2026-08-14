@@ -87,6 +87,9 @@
     let tokenLedgerValid = $derived(tokenLedger.length > 0);
 
     let openAiKeySet = $state(false);
+    let mediaScanEnabled = $state(false);
+    let mediaScanScanners = $state("");
+    let currentMediaScan = $state("");
     // Current values shown alongside the proposed ones, so an operator can see what a proposal
     // would actually change
     let currentVaultReviewers = $state("");
@@ -132,6 +135,11 @@
             }
             vaultReviewerIds = config.vaultReviewers.join(", ");
             currentVaultReviewers = config.vaultReviewers.join(", ");
+            mediaScanEnabled = config.mediaScanEnabled;
+            mediaScanScanners = config.mediaScanners.join(", ");
+            currentMediaScan = `${config.mediaScanEnabled ? "Enabled" : "Disabled"} (${
+                config.mediaScanners.length === 0 ? "no scanners" : config.mediaScanners.join(", ")
+            })`;
         });
         client.diamondMembershipFees().then((fees) => {
             originalFees = client.toRecord(fees, (f) => f.token);
@@ -379,6 +387,25 @@
             .finally(() => removeBusy(9));
     }
 
+    function proposeSetMediaScanConfig(): void {
+        error = undefined;
+        const scanners = mediaScanScanners
+            .split(",")
+            .map((id) => id.trim())
+            .filter((id) => id !== "");
+        const invalid = scanners.find((id) => !isValidPrincipal(id));
+        if (invalid !== undefined) {
+            error = i18nKey(`"${invalid}" is not a valid principal`);
+            toastStore.showFailureToast(error);
+            return;
+        }
+        addBusy(13);
+        client
+            .proposeSetMediaScanConfig(mediaScanEnabled, scanners)
+            .then((proposed) => onProposed(proposed, "media scan config"))
+            .finally(() => removeBusy(13));
+    }
+
     // Replaces the full reviewer set: user ids must already be platform moderators
     function proposeSetVaultReviewers(): void {
         error = undefined;
@@ -577,6 +604,15 @@
 
 {#snippet currentOpenAIKey()}
     <Input disabled value={openAiKeySet ? "Set" : "Not set"} />
+{/snippet}
+
+{#snippet currentMediaScanView()}
+    <Input disabled value={currentMediaScan || "Disabled (no scanners)"} />
+{/snippet}
+
+{#snippet proposedMediaScanView()}
+    <Toggle small id="media-scan-enabled" bind:checked={mediaScanEnabled} />
+    <Input bind:value={mediaScanScanners} placeholder={i18nKey("Comma separated scanner principals")} />
 {/snippet}
 
 {#snippet proposedOpenAIKey()}
@@ -920,6 +956,15 @@
             proposeSetOpenAIApiKey,
             proposedOpenAIKey,
             currentOpenAIKey,
+        )}
+
+        {@render dualSetting(
+            "Media scanning (known-CSAM hash matching)",
+            "Arms the media scan pipeline on every local user index and registers the worker principals allowed to collect scan jobs and submit verdicts. The toggle is the kill switch: while disabled, scan requests are dropped. Enabling requires at least one scanner principal.",
+            13,
+            proposeSetMediaScanConfig,
+            proposedMediaScanView,
+            currentMediaScanView,
         )}
 
         {@render dualSetting(
