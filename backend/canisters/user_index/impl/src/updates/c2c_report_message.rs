@@ -204,8 +204,9 @@ pub(crate) async fn process_report(report_index: u64) {
     };
 
     let result = if input.is_empty() {
-        // There is nothing the API can classify, but the report may still be valid for a reason
-        // the API cannot evaluate, so it continues with no flagged categories
+        // There is nothing the API can classify (only text is classified, and this content has
+        // none), but the report may still be valid for a reason the API cannot evaluate, so it
+        // continues with no flagged categories
         Ok(ModerationCategories::default())
     } else if let Some(api_key) = api_key {
         openai_moderation::moderate_input(&api_key, &input).await
@@ -220,8 +221,8 @@ pub(crate) async fn process_report(report_index: u64) {
             let Some(attempts) = state.data.reported_messages.record_classification_failure(report_index) else {
                 return;
             };
-            // A 4xx response is permanent (eg. an image URL the API cannot fetch because the
-            // blob was deleted): retrying cannot succeed, so hand straight to the moderators.
+            // A 4xx response is permanent (eg. an input the API rejects as malformed): retrying
+            // cannot succeed, so hand straight to the moderators.
             // 429 is rate limiting, which is transient and worth the backoff.
             let permanent = error.contains("status 4") && !error.contains("status 429");
             if !permanent && attempts < MAX_CLASSIFICATION_ATTEMPTS {

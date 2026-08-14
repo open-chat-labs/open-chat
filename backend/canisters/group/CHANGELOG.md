@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Always send a classification request on edit, even when nothing is classifiable, so that stale moderation flags are cleared when an edit removes a message's text ([#9154](https://github.com/open-chat-labs/open-chat/pull/9154))
+
 ## [[2.0.2014](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2014-group)] - 2026-08-12
 
 ### Added

@@ -45,13 +45,8 @@ pub async fn classify_text_batch(
     }
 }
 
-// Classifies the text and any images of a single message using the OpenAI Moderation API,
-// returning the union of the flagged categories.
-//
-// The text and the images are classified in separate calls rather than as one combined
-// multi-modal input. If either call fails (eg. a transient error, or a blob url the API cannot
-// reach) the whole item fails so that the caller retries it; re-classifying a part which
-// already succeeded is harmless because flagging is idempotent.
+// Classifies the text of a single message using the OpenAI Moderation API, returning the union
+// of the flagged categories.
 pub async fn moderate_input(api_key: &str, input: &ModerationInput) -> Result<ModerationCategories, String> {
     Ok(classify_input(api_key, input, None).await?.flagged)
 }
@@ -70,17 +65,14 @@ pub async fn classify_input(
         }
     }
 
-    if !input.image_urls.is_empty() {
-        let parts: Vec<_> = input
-            .image_urls
-            .iter()
-            .map(|url| serde_json::json!({ "type": "image_url", "image_url": { "url": url } }))
-            .collect();
-        for c in call_moderation_api(api_key, serde_json::Value::Array(parts), moderation_referral).await? {
-            classification.flagged = classification.flagged | c.flagged;
-            classification.moderation_referral = classification.moderation_referral | c.moderation_referral;
-        }
-    }
+    // Message media (`input.image_urls`) is NEVER sent to OpenAI, in any form, including by URL
+    // (#9149) - do not add an image leg here. OpenAI's usage policies prohibit media which may
+    // include CSAM; detection triggers an NCMEC report against the uploader, which for API
+    // traffic is us. For CSAM the leg also had no detection value (the moderation model's
+    // sexual/minors category is text-only) - that belongs to the hash-matching tier. The cost
+    // is real for the other categories: images are no longer scored for sexual/violence, so
+    // adult imagery is not auto-hidden in app-store builds. Accepted (pornography is now
+    // prohibited platform-wide by the terms) pending a dedicated image-moderation provider.
 
     Ok(classification)
 }

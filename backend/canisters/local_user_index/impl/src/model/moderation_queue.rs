@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, VecDeque, btree_map};
+use std::collections::{BTreeMap, BTreeSet, VecDeque, btree_map};
 use tracing::warn;
 use types::{CanisterId, ChannelId, ClassifyMessageRequest, MessageId, MessageIndex, ModerationInput};
 
@@ -23,6 +23,16 @@ pub struct ModerationQueue {
     sources: BTreeMap<CanisterId, SourceQueue>,
     cursor: Option<CanisterId>,
     total: usize,
+    // Keys currently in an in-flight classification batch. Runtime-only: an upgrade kills the
+    // in-flight batch (the spawned future is dropped), so both sets start empty afterwards.
+    #[serde(skip)]
+    in_flight: BTreeSet<(CanisterId, Key)>,
+    // In-flight keys whose content was superseded by an edit with nothing classifiable: an
+    // empty classification has already been sent for them, so the in-flight result must be
+    // discarded (pushing it would re-apply flags derived from the removed content) and a
+    // failure must not requeue the stale content
+    #[serde(skip)]
+    superseded: BTreeSet<(CanisterId, Key)>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -49,7 +59,9 @@ pub struct QueueItem {
 
 enum Pop {
     Item(Box<QueueItem>),
-    ImageSkipped,
+    // Popped but not classifiable (a media-only entry queued by a pre-#9149 sender): the item
+    // is returned so the caller can send an empty classification, clearing any stale flags
+    Unclassifiable(Box<QueueItem>),
     SourceEmpty,
 }
 
@@ -62,6 +74,8 @@ impl ModerationQueue {
         self.total == 0
     }
 
+    // Empty inputs never reach here - the caller handles them (dequeue + immediate empty
+    // classification, see c2c_group_or_community_canister)
     pub fn enqueue(&mut self, source: CanisterId, is_group: bool, request: ClassifyMessageRequest) {
         let key = (request.channel_id, request.message_id);
         let mut input = request.input;
@@ -70,6 +84,9 @@ impl ModerationQueue {
         {
             text.truncate(index);
         }
+        // Never read (only text is classified); cleared so a full queue holds no URL heap,
+        // matching the MAX_TEXT_CHARS memory-bounding intent
+        input.image_urls = Vec::new();
         let entry = Entry {
             thread_root_message_index: request.thread_root_message_index,
             input,
@@ -90,9 +107,11 @@ impl ModerationQueue {
         );
     }
 
-    pub fn next_batch(&mut self, max_items: usize, max_image_items: usize) -> Vec<QueueItem> {
+    // Returns the items to classify, plus any unclassifiable items (media-only entries queued
+    // by pre-#9149 senders) for which the caller must send an empty classification
+    pub fn next_batch(&mut self, max_items: usize) -> (Vec<QueueItem>, Vec<QueueItem>) {
         let mut batch = Vec::new();
-        let mut image_items = 0;
+        let mut unclassifiable = Vec::new();
 
         loop {
             let mut source_ids: Vec<CanisterId> = self.sources.keys().copied().collect();
@@ -108,18 +127,21 @@ impl ModerationQueue {
             let mut popped_any = false;
             for source in source_ids {
                 if batch.len() >= max_items {
-                    return batch;
+                    return (batch, unclassifiable);
                 }
-                match self.pop(source, image_items < max_image_items) {
+                match self.pop(source) {
                     Pop::Item(item) => {
-                        if !item.entry.input.image_urls.is_empty() {
-                            image_items += 1;
-                        }
+                        self.in_flight.insert((item.source, (item.channel_id, item.message_id)));
                         batch.push(*item);
                         popped_any = true;
                         self.cursor = Some(source);
                     }
-                    Pop::ImageSkipped | Pop::SourceEmpty => {}
+                    Pop::Unclassifiable(item) => {
+                        unclassifiable.push(*item);
+                        popped_any = true;
+                        self.cursor = Some(source);
+                    }
+                    Pop::SourceEmpty => {}
                 }
             }
 
@@ -128,22 +150,17 @@ impl ModerationQueue {
             }
         }
 
-        batch
+        (batch, unclassifiable)
     }
 
-    fn pop(&mut self, source: CanisterId, allow_image: bool) -> Pop {
+    fn pop(&mut self, source: CanisterId) -> Pop {
         let popped = {
             let Some(queue) = self.sources.get_mut(&source) else {
                 return Pop::SourceEmpty;
             };
-            let Some(&key) = queue.order.front() else {
+            let Some(key) = queue.order.pop_front() else {
                 return Pop::SourceEmpty;
             };
-            let is_image = queue.entries.get(&key).is_some_and(|e| !e.input.image_urls.is_empty());
-            if is_image && !allow_image {
-                return Pop::ImageSkipped;
-            }
-            queue.order.pop_front();
             queue.entries.remove(&key).map(|entry| QueueItem {
                 source,
                 is_group: queue.is_group,
@@ -161,7 +178,55 @@ impl ModerationQueue {
         if self.sources.get(&source).is_some_and(|q| q.order.is_empty()) {
             self.sources.remove(&source);
         }
+        if item.entry.input.is_empty() {
+            return Pop::Unclassifiable(Box::new(item));
+        }
         Pop::Item(Box::new(item))
+    }
+
+    // Marks an in-flight key as superseded by content with nothing classifiable. Returns true
+    // if the key was in flight (the caller has already sent the empty classification; the
+    // in-flight result will be discarded when its batch completes).
+    pub fn mark_superseded_if_in_flight(
+        &mut self,
+        source: CanisterId,
+        channel_id: Option<ChannelId>,
+        message_id: MessageId,
+    ) -> bool {
+        let key = (source, (channel_id, message_id));
+        if self.in_flight.contains(&key) {
+            self.superseded.insert(key);
+            true
+        } else {
+            false
+        }
+    }
+
+    // Completes an item's in-flight tracking when its batch finishes. Returns true if the item
+    // was superseded while in flight, in which case its result must be discarded (an empty
+    // classification has already been sent) and a failure must not requeue it.
+    pub fn finish_in_flight(&mut self, source: CanisterId, channel_id: Option<ChannelId>, message_id: MessageId) -> bool {
+        let key = (source, (channel_id, message_id));
+        self.in_flight.remove(&key);
+        self.superseded.remove(&key)
+    }
+
+    // Removes a queued entry, eg. when an edit leaves a queued message with nothing classifiable
+    pub fn remove(&mut self, source: CanisterId, channel_id: Option<ChannelId>, message_id: MessageId) {
+        let key = (channel_id, message_id);
+        let removed = self.sources.get_mut(&source).is_some_and(|queue| {
+            queue.entries.remove(&key).is_some() && {
+                queue.order.retain(|k| *k != key);
+                true
+            }
+        });
+
+        if removed {
+            self.total = self.total.saturating_sub(1);
+            if self.sources.get(&source).is_some_and(|q| q.order.is_empty()) {
+                self.sources.remove(&source);
+            }
+        }
     }
 
     fn insert(&mut self, source: CanisterId, is_group: bool, key: Key, entry: Entry, skip_if_present: bool) {
