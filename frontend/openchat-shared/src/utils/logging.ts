@@ -9,6 +9,7 @@ import { offline } from "./network";
 import { NOOP } from "../constants";
 import { AnonymousOperationError } from "../domain";
 import type { LogLevel } from "../domain/logging";
+import { requiresLogout } from "./error";
 
 let rollbar: Rollbar | undefined;
 
@@ -22,6 +23,12 @@ export function inititaliseLogger(apikey: string, version: string, env: string):
             environment: env,
             enabled: env === "production",
             captureUnhandledRejections: true,
+            // Noise with no fix on our side: opaque cross-origin "Script error." (injected
+            // scripts, extensions), and Chrome extension messaging failures
+            ignoredMessages: [
+                "Script error.",
+                "Could not establish connection. Receiving end does not exist.",
+            ],
             payload: {
                 environment: env,
                 client: {
@@ -36,7 +43,15 @@ export function inititaliseLogger(apikey: string, version: string, env: string):
     }
     return {
         error(message: unknown, error: unknown, ...optionalParams: unknown[]): void {
-            if (error instanceof AnonymousOperationError) return;
+            // Checked by name as well as instanceof: errors which crossed the worker boundary
+            // have lost their prototype and only the name survives
+            if (
+                error instanceof AnonymousOperationError ||
+                (error instanceof Error && error.name === "AnonymousOperationError") ||
+                requiresLogout(error)
+            ) {
+                return;
+            }
 
             console.error(message as string, error, optionalParams);
             if (!offline()) {
