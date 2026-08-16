@@ -45,11 +45,13 @@ function isExpectedSessionError(error: unknown): boolean {
     return error.name === "AnonymousOperationError" || requiresLogout(error);
 }
 
-// Network weather as seen from the client: a 5xx from the gateway, or a fetch that never got a
+// Network weather as seen from the client: a gateway 502/503/504, or a fetch that never got a
 // response at all. The client retries or surfaces these contextually and server-side monitoring
-// owns the underlying incidents, so per-occurrence client reports are pure noise.
+// owns the underlying incidents, so per-occurrence client reports are pure noise. 500 is NOT
+// included: replica rejections (including canister traps) map to HttpError 500 here, and those
+// are exactly the signal this filter must keep.
 function isTransientNetworkError(error: unknown): boolean {
-    if (error instanceof HttpError && error.code >= 500) return true;
+    if (error instanceof HttpError && error.code >= 502 && error.code <= 504) return true;
     return (
         error instanceof Error &&
         error.name === "TypeError" &&
