@@ -23,6 +23,12 @@ export function inititaliseLogger(apikey: string, version: string, env: string):
             environment: env,
             enabled: env === "production",
             captureUnhandledRejections: true,
+            // Noise with no fix on our side: opaque cross-origin "Script error." (injected
+            // scripts, extensions), and Chrome extension messaging failures
+            ignoredMessages: [
+                "Script error.",
+                "Could not establish connection. Receiving end does not exist.",
+            ],
             payload: {
                 environment: env,
                 client: {
