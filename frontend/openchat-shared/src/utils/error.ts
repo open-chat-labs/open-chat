@@ -37,10 +37,32 @@ function isDeadLedgerError(error: unknown): boolean {
     );
 }
 
-// Decide whether a failed worker request should be reported to our error tracker. A tolerated
-// kind is silenced only for the expected dead-ledger errors above; every other failure - a
-// boundary error, a decode error, a code bug - is still reported so real regressions stay visible.
+// The session ending underneath an in-flight request is expected: the user logged out or their
+// delegation expired and the app redirects to login. Every request racing that teardown fails
+// with one of these, so reporting them buries real regressions under per-kind noise.
+function isExpectedSessionError(error: unknown): boolean {
+    if (error == null || typeof error !== "object" || !("name" in error)) return false;
+    return error.name === "AnonymousOperationError" || requiresLogout(error);
+}
+
+// Network weather as seen from the client: a 5xx from the gateway, or a fetch that never got a
+// response at all. The client retries or surfaces these contextually and server-side monitoring
+// owns the underlying incidents, so per-occurrence client reports are pure noise.
+function isTransientNetworkError(error: unknown): boolean {
+    if (error instanceof HttpError && error.code >= 500) return true;
+    return (
+        error instanceof Error &&
+        error.name === "TypeError" &&
+        /failed to fetch|networkerror|load failed|network connection was lost/i.test(error.message)
+    );
+}
+
+// Decide whether a failed worker request should be reported to our error tracker. Expected
+// failures (session teardown, network weather, and dead-ledger errors for tolerated kinds) are
+// silenced; every other failure - a decode error, a code bug - is still reported so real
+// regressions stay visible.
 export function shouldReportWorkerError(kind: string, error: unknown): boolean {
+    if (isExpectedSessionError(error) || isTransientNetworkError(error)) return false;
     return !(callerToleratedErrorKinds.has(kind) && isDeadLedgerError(error));
 }
 
