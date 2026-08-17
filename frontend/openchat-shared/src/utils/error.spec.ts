@@ -28,8 +28,7 @@ describe("shouldReportWorkerError", () => {
     });
 
     test("still reports non-dead-ledger failures for a tolerated kind", () => {
-        // a boundary/other error on balance refresh is a real signal, not an expected dead ledger
-        expect(shouldReportWorkerError("refreshAccountBalance", boundary)).toBe(true);
+        // a replica rejection with an unexpected code is a real signal, not an expected dead ledger
         expect(shouldReportWorkerError("refreshAccountBalance", rejection("IC0503"))).toBe(true);
         expect(shouldReportWorkerError("refreshAccountBalance", new TypeError("boom"))).toBe(true);
     });
@@ -51,9 +50,45 @@ describe("shouldReportWorkerError", () => {
         expect(shouldReportWorkerError("refreshAccountBalance", unavailable)).toBe(false);
     });
 
-    test("reports everything for kinds that are not tolerated", () => {
+    test("reports dead-ledger errors for kinds that are not tolerated", () => {
         expect(shouldReportWorkerError("getUpdates", frozen)).toBe(true);
         expect(shouldReportWorkerError("sendMessage", noWasm)).toBe(true);
+    });
+
+    // The session ending underneath in-flight requests is expected (logout / delegation expiry):
+    // every racing request fails and none of them is a signal. Matched by name, since these
+    // often arrive with their prototype stripped.
+    test("silences expected session errors for every kind", () => {
+        expect(shouldReportWorkerError("chatEvents", { name: "AnonymousOperationError" })).toBe(
+            false,
+        );
+        expect(shouldReportWorkerError("getUsers", { name: SESSION_EXPIRY_ERROR_NAME })).toBe(
+            false,
+        );
+        expect(shouldReportWorkerError("getBots", { name: INVALID_DELEGATION_ERROR_NAME })).toBe(
+            false,
+        );
+    });
+
+    test("silences gateway errors and failed fetches for every kind", () => {
+        expect(shouldReportWorkerError("chatEvents", boundary)).toBe(false);
+        expect(
+            shouldReportWorkerError(
+                "getUsers",
+                new HttpError(504, new Error("Gateway timeout")),
+            ),
+        ).toBe(false);
+        expect(shouldReportWorkerError("getBots", new TypeError("Failed to fetch"))).toBe(false);
+        expect(shouldReportWorkerError("getBots", new TypeError("Load failed"))).toBe(false);
+    });
+
+    // A replica rejection maps to HttpError 500 here - canister traps included - and must
+    // still be reported: only genuine gateway codes count as network weather
+    test("still reports replica-rejection 500s", () => {
+        expect(shouldReportWorkerError("sendMessage", rejection("IC0503"))).toBe(true);
+        expect(
+            shouldReportWorkerError("chatEvents", new HttpError(500, new Error("canister trap"))),
+        ).toBe(true);
     });
 });
 

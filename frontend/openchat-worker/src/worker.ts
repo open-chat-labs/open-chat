@@ -153,7 +153,10 @@ function handleAgentEvent(ev: Event): void {
 const sendError = (kind: string, correlationId: number, payload?: unknown) => {
     return (error: unknown) => {
         if (shouldReportWorkerError(kind, error)) {
-            logger.error("WORKER: error caused by payload: ", kind, error, payload);
+            // The error must be the logger's second argument: that is the slot the logger's own
+            // filtering inspects and the value Rollbar fingerprints on. Passing `kind` there
+            // (as previously) named every item after the request kind and bypassed filtering.
+            logger.error(`WORKER: request failed: ${kind}`, error, payload);
         } else {
             logger.debug("WORKER: expected request failure (not reported): ", kind, error);
         }
@@ -223,11 +226,13 @@ function sendEvent(msg: Omit<WorkerEvent, "kind">): void {
 }
 
 self.addEventListener("error", (err: ErrorEvent) => {
-    logger.error("WORKER: unhandled error: ", err);
+    // The underlying error, not the event: the event serialises to nothing useful and dodges
+    // the logger's filtering
+    logger.error("WORKER: unhandled error: ", err.error ?? err.message);
 });
 
 self.addEventListener("unhandledrejection", (err: PromiseRejectionEvent) => {
-    logger.error("WORKER: unhandled promise rejection: ", err);
+    logger.error("WORKER: unhandled promise rejection: ", err.reason ?? err);
 });
 
 self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) => {
