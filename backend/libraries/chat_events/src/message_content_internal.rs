@@ -293,7 +293,7 @@ impl MessageContentInternal {
                 })
                 .into_iter()
                 .collect(),
-            MessageContentInternal::File(f) if f.mime_type.starts_with("image/") => f
+            MessageContentInternal::File(f) if types::is_image_mime_type(&f.mime_type) => f
                 .blob_reference
                 .clone()
                 .map(|br| types::MediaScanBlob {

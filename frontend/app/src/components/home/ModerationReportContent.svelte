@@ -86,9 +86,11 @@
     // protective quarantine applied after classification): the flagged bits alone miss the
     // assertion cases, and the card must show the CSAM treatment (no in-place viewing)
     let csam = $derived((content.flaggedCategories & 2) !== 0 || content.autoSanctioned);
-    // Non-empty when the detection was a media hash match rather than the text classifier
+    // Non-empty when the detection was a media hash match rather than the text classifier.
+    // Report content restored from the IndexedDB cache can pre-date the field entirely.
+    let mediaMatches = $derived(content.mediaMatches ?? []);
     let hashMatchLine = $derived(
-        content.mediaMatches
+        mediaMatches
             .map(
                 (m) =>
                     `${m.provider}${m.matchId !== undefined ? ` record ${m.matchId}` : ""} (distance ${m.matchDistance})`,
@@ -471,7 +473,7 @@
     {@const status = content.status.kind}
     <!-- report -->
     {@render reportCard()}
-    {#if content.mediaMatches.length > 0}
+    {#if mediaMatches.length > 0}
         <Row gap="sm" wrap padding="lg" borderRadius="md" backgroundColor={ColourVars.background1}>
             <Body width="hug">
                 <Translatable resourceKey={i18nKey("moderationReport.hashMatched")} />

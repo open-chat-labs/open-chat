@@ -267,6 +267,7 @@ impl ReportedMessages {
             } else {
                 message.outcome = Some(outcome);
                 message.blob_references = args.blob_references;
+                message.media_matches = args.media_matches;
                 self.pending_classifications.remove(&(index as u64));
                 Some((index as u64, false))
             }

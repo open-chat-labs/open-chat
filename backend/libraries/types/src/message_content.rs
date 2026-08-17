@@ -260,7 +260,7 @@ impl MessageContent {
                 })
                 .into_iter()
                 .collect(),
-            MessageContent::File(f) if f.mime_type.starts_with("image/") => f
+            MessageContent::File(f) if is_image_mime_type(&f.mime_type) => f
                 .blob_reference
                 .clone()
                 .map(|blob_reference| crate::MediaScanBlob {
@@ -959,4 +959,11 @@ pub struct OgPreview {
     pub title: String,
     pub description: String,
     pub image: Option<OgPreviewImage>,
+}
+
+// The mime type is client-supplied, so the comparison must be case-insensitive: an uppercased
+// "IMAGE/JPEG" must not dodge the scan predicate. The worker trusts the decoder, not this
+// declaration - this only decides what gets queued.
+pub fn is_image_mime_type(mime_type: &str) -> bool {
+    mime_type.get(..6).is_some_and(|prefix| prefix.eq_ignore_ascii_case("image/"))
 }

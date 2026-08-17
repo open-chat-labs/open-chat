@@ -47,20 +47,16 @@ impl MediaScanJobLog {
         self.latest_job_index
     }
 
+    // Indexes are monotonic but NOT dense: per-source eviction removes entries from the middle
+    // of the log, so positions must be found by search rather than offset arithmetic
     pub fn iter(&self, from_job_index: u64) -> impl Iterator<Item = &MediaScanJob> {
-        let start = self
-            .jobs
-            .front()
-            .map_or(0, |f| from_job_index.saturating_sub(f.job_index) as usize);
-        self.jobs.range(start.min(self.jobs.len())..)
+        let start = self.jobs.partition_point(|j| j.job_index < from_job_index);
+        self.jobs.range(start..)
     }
 
     pub fn get(&self, job_index: u64) -> Option<&MediaScanJob> {
-        let front_index = self.jobs.front()?.job_index;
-        if job_index < front_index {
-            return None;
-        }
-        self.jobs.get((job_index - front_index) as usize)
+        let position = self.jobs.partition_point(|j| j.job_index < job_index);
+        self.jobs.get(position).filter(|j| j.job_index == job_index)
     }
 
     pub fn prune(&mut self, up_to_job_index: u64) -> u32 {
