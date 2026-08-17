@@ -89,8 +89,14 @@ export class RtcConnectionsManager {
             this._peer.on("disconnected", () => {
                 console.debug("RTC: peer lost connection will try to reconnect");
 
-                if (this._peer && !this._peer.destroyed) {
-                    this._peer.reconnect();
+                // reconnect() throws if the peer has already re-established the connection
+                // by the time this handler runs
+                if (this._peer && !this._peer.destroyed && this._peer.disconnected) {
+                    try {
+                        this._peer.reconnect();
+                    } catch (err) {
+                        console.debug("RTC: peer reconnect failed: ", err);
+                    }
                 }
             });
 

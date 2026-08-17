@@ -7,11 +7,26 @@ export type Logger = {
 import Rollbar, { type LogArgument } from "rollbar";
 import { offline } from "./network";
 import { NOOP } from "../constants";
-import { AnonymousOperationError } from "../domain";
 import type { LogLevel } from "../domain/logging";
-import { requiresLogout } from "./error";
+import { shouldReportError, shouldReportMessage } from "./error";
 
 let rollbar: Rollbar | undefined;
+
+// Pull the strings Rollbar would fingerprint on out of a payload: exception class/message for
+// trace items (including chained causes), the body for plain message items
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rollbarPayloadMessages(payload: any): string[] {
+    const body = payload?.body;
+    const traces = body?.trace_chain ?? (body?.trace ? [body.trace] : []);
+    const messages: string[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const trace of traces as any[]) {
+        if (typeof trace?.exception?.class === "string") messages.push(trace.exception.class);
+        if (typeof trace?.exception?.message === "string") messages.push(trace.exception.message);
+    }
+    if (typeof body?.message?.body === "string") messages.push(body.message.body);
+    return messages;
+}
 
 export function inititaliseLogger(apikey: string, version: string, env: string): Logger {
     if (env === "production") {
@@ -29,6 +44,11 @@ export function inititaliseLogger(apikey: string, version: string, env: string):
                 "Script error.",
                 "Could not establish connection. Receiving end does not exist.",
             ],
+            // captureUncaught / captureUnhandledRejections bypass our logger, so uncaught
+            // items get the same noise filtering at the transport layer. Logger-reported items
+            // (isUncaught false) already passed shouldReportError and are not re-filtered here.
+            checkIgnore: (isUncaught, _args, payload) =>
+                isUncaught && rollbarPayloadMessages(payload).some((m) => !shouldReportMessage(m)),
             payload: {
                 environment: env,
                 client: {
@@ -43,13 +63,8 @@ export function inititaliseLogger(apikey: string, version: string, env: string):
     }
     return {
         error(message: unknown, error: unknown, ...optionalParams: unknown[]): void {
-            // Checked by name as well as instanceof: errors which crossed the worker boundary
-            // have lost their prototype and only the name survives
-            if (
-                error instanceof AnonymousOperationError ||
-                (error instanceof Error && error.name === "AnonymousOperationError") ||
-                requiresLogout(error)
-            ) {
+            if (!shouldReportError(error)) {
+                console.debug("Expected failure (not reported): ", message, error);
                 return;
             }
 

@@ -50,12 +50,95 @@ function isExpectedSessionError(error: unknown): boolean {
 // owns the underlying incidents, so per-occurrence client reports are pure noise. 500 is NOT
 // included: replica rejections (including canister traps) map to HttpError 500 here, and those
 // are exactly the signal this filter must keep.
+// "error decoding response body" is the Tauri (reqwest) equivalent of a fetch dying mid-body.
+const NETWORK_NOISE_PATTERN =
+    /failed to fetch|networkerror|load failed|network connection was lost|error decoding response body/i;
+
 function isTransientNetworkError(error: unknown): boolean {
-    if (error instanceof HttpError && error.code >= 502 && error.code <= 504) return true;
-    return (
-        error instanceof Error &&
-        error.name === "TypeError" &&
-        /failed to fetch|networkerror|load failed|network connection was lost/i.test(error.message)
+    if (typeof error === "string") return NETWORK_NOISE_PATTERN.test(error);
+    // Structural checks rather than instanceof: errors which crossed the worker boundary
+    // arrive as plain objects where only name/message/code survive
+    const name = errorName(error);
+    if (name === "HttpError") {
+        const code = Number((error as { code?: unknown }).code);
+        if (code >= 502 && code <= 504) return true;
+    }
+    // Only for the browser's own TypeError: our code also throws Errors whose text happens to
+    // start "Failed to fetch ...", and those must stay reportable. The reqwest string is exempt
+    // because it only ever originates from the Tauri native fetch layer.
+    const message = errorMessage(error);
+    if (/error decoding response body/i.test(message)) return true;
+    return name === "TypeError" && NETWORK_NOISE_PATTERN.test(message);
+}
+
+// Failures produced by the client's environment rather than our code: corrupt or exhausted
+// browser storage, permission prompts the user declined or let time out, and the browser
+// failing to fetch its own service worker script. Nothing to fix per-occurrence.
+const ENVIRONMENT_NOISE_PATTERNS: RegExp[] = [
+    /internal error opening backing store/i,
+    /file_error_no_space/i,
+    /failed to read large indexeddb value/i,
+    /failed to write blobs/i,
+    /database connection is closing/i,
+    /connection is closing because of: io error/i,
+    /denied permission to use service worker/i,
+    // WebAuthn's blanket NotAllowedError: the user dismissed the passkey prompt or it timed out
+    /operation either timed out or was not allowed/i,
+    /failed to (update|register) a serviceworker/i,
+];
+
+function errorName(error: unknown): string {
+    if (error == null || typeof error !== "object" || !("name" in error)) return "";
+    return typeof error.name === "string" ? error.name : "";
+}
+
+function errorMessage(error: unknown): string {
+    if (typeof error === "string") return error;
+    if (error == null || typeof error !== "object" || !("message" in error)) return "";
+    return typeof error.message === "string" ? error.message : "";
+}
+
+function isEnvironmentNoise(error: unknown): boolean {
+    const name = errorName(error);
+    // AbortError is always a deliberate cancellation (navigation, stream teardown);
+    // QuotaExceededError is the client's disk, not our code
+    if (name === "AbortError" || name === "QuotaExceededError") return true;
+    return ENVIRONMENT_NOISE_PATTERNS.some((p) => p.test(errorMessage(error)));
+}
+
+// Events requests race membership changes: a user who has left, lapsed or been blocked keeps
+// requesting events until local state catches up, and the server answers with a NotAuthorized
+// code (100-106) which `assertSuccessfulEventsResponse` turns into a thrown Error embedding the
+// response JSON. Expected client state, not a defect.
+function isExpectedAccessError(error: unknown): boolean {
+    const match = errorMessage(error).match(/"code":(\d+)/);
+    if (match == null) return false;
+    const code = Number(match[1]);
+    return code >= ErrorCode.InitiatorNotFound && code <= ErrorCode.InitiatorBlocked;
+}
+
+// Central filter applied by the logger before anything reaches Rollbar: expected session
+// teardown, network weather, client-environment failures and membership races are dropped;
+// everything else is reported.
+export function shouldReportError(error: unknown): boolean {
+    return !(
+        isExpectedSessionError(error) ||
+        isTransientNetworkError(error) ||
+        isEnvironmentNoise(error) ||
+        isExpectedAccessError(error)
+    );
+}
+
+// Message-level version of the same filter, for Rollbar's checkIgnore hook where only the
+// payload strings (exception class / message) are available - i.e. errors captured by
+// captureUncaught / captureUnhandledRejections which bypass our logger entirely.
+export function shouldReportMessage(message: string): boolean {
+    return !(
+        message === "AbortError" ||
+        message === "QuotaExceededError" ||
+        NETWORK_NOISE_PATTERN.test(message) ||
+        ENVIRONMENT_NOISE_PATTERNS.some((p) => p.test(message)) ||
+        isExpectedAccessError(message)
     );
 }
 
@@ -64,7 +147,7 @@ function isTransientNetworkError(error: unknown): boolean {
 // silenced; every other failure - a decode error, a code bug - is still reported so real
 // regressions stay visible.
 export function shouldReportWorkerError(kind: string, error: unknown): boolean {
-    if (isExpectedSessionError(error) || isTransientNetworkError(error)) return false;
+    if (!shouldReportError(error)) return false;
     return !(callerToleratedErrorKinds.has(kind) && isDeadLedgerError(error));
 }
 

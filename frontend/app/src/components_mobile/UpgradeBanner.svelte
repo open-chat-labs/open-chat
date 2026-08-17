@@ -54,7 +54,13 @@
             })
             .catch((err) => {
                 errorCount += 1;
-                client.logError(`Unable to load server version ${errorCount} times`, err);
+                // Individual failures are network weather; only a sustained streak is worth a
+                // report, and only one per streak
+                if (errorCount === 10) {
+                    client.logError(`Unable to load server version ${errorCount} times`, err);
+                } else {
+                    client.logMessage(`Unable to load server version ${errorCount} times`, err);
+                }
                 return clientVersion;
             });
     }
