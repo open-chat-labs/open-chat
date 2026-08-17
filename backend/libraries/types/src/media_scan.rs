@@ -85,4 +85,9 @@ pub struct MediaScanMatched {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
     pub matches: Vec<MediaScanMatch>,
+    // The full references of the matched blobs, taken from the scan job. The owning canister
+    // must not derive these from the message's current content: an edit inside the scan window
+    // may have replaced the media, and the quarantine has to cover what was actually matched.
+    #[serde(default)]
+    pub matched_blob_references: Vec<BlobReference>,
 }

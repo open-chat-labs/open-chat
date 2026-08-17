@@ -58,8 +58,9 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         // dequeue the earlier content and reply with an empty classification, clearing any
         // stale flags left by text this edit removed
         let input = message.content.moderation_input();
-        // Unlike classification there is no empty-request "clear" for media: verdicts only act
-        // on a match, and a match only escalates while the matched blob is still referenced
+        // Unlike classification there is no empty-request "clear" for media: verdicts only
+        // ever act on a match, and a match escalates regardless of later edits (the matched
+        // content was posted publicly; editing it away does not void the report)
         let blobs = message.content.scannable_blobs();
         state.queue_message_for_moderation(args.thread_root_message_index, args.message_id, input);
         if !blobs.is_empty() {

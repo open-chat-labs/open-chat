@@ -245,9 +245,11 @@ impl MessageContent {
     }
 
     // The media which the scanning pipeline hashes: still images only. Image content always;
-    // File content when its declared mime type is an image (uploading an image as a file
-    // attachment must not dodge the scan). Video is excluded until keyframe extraction exists,
-    // and Giphy variants are third-party URLs, not OpenChat blobs.
+    // File content regardless of its declared mime type (the declaration is client-supplied
+    // and must not gate the scan - the worker's decoder decides what is actually an image,
+    // reporting everything else Unscannable); the Video inline thumbnail, which is itself a
+    // still image rendered in the chat (keyframes of the video stream await extraction in v2).
+    // Giphy variants are third-party URLs, not OpenChat blobs.
     pub fn scannable_blobs(&self) -> Vec<crate::MediaScanBlob> {
         match self {
             MessageContent::Image(i) => i
@@ -260,12 +262,22 @@ impl MessageContent {
                 })
                 .into_iter()
                 .collect(),
-            MessageContent::File(f) if is_image_mime_type(&f.mime_type) => f
+            MessageContent::File(f) => f
                 .blob_reference
                 .clone()
                 .map(|blob_reference| crate::MediaScanBlob {
                     blob_reference,
                     mime_type: f.mime_type.clone(),
+                    frame_index: None,
+                })
+                .into_iter()
+                .collect(),
+            MessageContent::Video(v) => v
+                .image_blob_reference
+                .clone()
+                .map(|blob_reference| crate::MediaScanBlob {
+                    blob_reference,
+                    mime_type: "image/*".to_string(),
                     frame_index: None,
                 })
                 .into_iter()
@@ -959,11 +971,4 @@ pub struct OgPreview {
     pub title: String,
     pub description: String,
     pub image: Option<OgPreviewImage>,
-}
-
-// The mime type is client-supplied, so the comparison must be case-insensitive: an uppercased
-// "IMAGE/JPEG" must not dodge the scan predicate. The worker trusts the decoder, not this
-// declaration - this only decides what gets queued.
-pub fn is_image_mime_type(mime_type: &str) -> bool {
-    mime_type.get(..6).is_some_and(|prefix| prefix.eq_ignore_ascii_case("image/"))
 }

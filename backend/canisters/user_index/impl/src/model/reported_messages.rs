@@ -263,6 +263,11 @@ impl ReportedMessages {
         if let Some(&index) = self.lookup.get(&key) {
             let message = self.messages.get_mut(index).unwrap();
             if message.outcome.is_some() {
+                // The sanction must not re-apply, but hash-match provenance arriving after a
+                // classifier-first detection still belongs on the report's audit trail
+                if !args.media_matches.is_empty() && message.media_matches.is_empty() {
+                    message.media_matches = args.media_matches;
+                }
                 None
             } else {
                 message.outcome = Some(outcome);

@@ -14,11 +14,19 @@ fn submit_media_scan_verdicts(args: Args) -> Response {
 
 fn submit_media_scan_verdicts_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
+    // The ack watermark is clamped to the highest job index a verdict was actually submitted
+    // for, so a buggy client acking `latest_job_index` cannot prune jobs it never processed
+    let max_verdict_index = args.verdicts.iter().map(|v| v.job_index).max();
     for verdict in args.verdicts {
         route_matches(verdict, now, state);
     }
     // Pruned after routing: routing needs the job entries to resolve each verdict's source
-    state.data.media_scan_job_log.prune(args.up_to_job_index);
+    if let Some(max_verdict_index) = max_verdict_index {
+        state
+            .data
+            .media_scan_job_log
+            .prune(args.up_to_job_index.min(max_verdict_index));
+    }
     Success
 }
 
@@ -47,11 +55,19 @@ fn route_matches(verdict: MediaScanVerdict, now: u64, state: &mut RuntimeState) 
         return;
     }
 
+    let matched_blob_references = job
+        .request
+        .blobs
+        .iter()
+        .filter(|b| matches.iter().any(|m| m.blob_id == b.blob_reference.blob_id))
+        .map(|b| b.blob_reference.clone())
+        .collect();
     let result = MediaScanMatched {
         channel_id: job.request.channel_id,
         thread_root_message_index: job.request.thread_root_message_index,
         message_id: job.request.message_id,
         matches,
+        matched_blob_references,
     };
     let source = job.source;
     if job.is_group {

@@ -16,7 +16,8 @@ pub enum Response {
 pub struct SuccessResult {
     // The batch is size-capped, so `jobs` may end before `latest_job_index`. The worker must
     // only ever ack (`submit_media_scan_verdicts.up_to_job_index`) job indexes it has actually
-    // processed - acking `latest_job_index` would prune jobs it never saw.
+    // processed; the canister additionally clamps the ack to the highest job index a verdict
+    // was submitted for.
     pub jobs: Vec<MediaScanJob>,
     pub latest_job_index: u64,
     pub timestamp: TimestampMillis,

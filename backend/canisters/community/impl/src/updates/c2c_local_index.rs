@@ -52,10 +52,23 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
         }
         LocalIndexEvent::MessageClassified(ev) => {
             // An empty result still calls flag_message so that stale flags are cleared if a
-            // previously flagged message has been edited to something clean
+            // previously flagged message has been edited to something clean.
+            // A media-scan-set SEXUAL_MINORS flag is sticky here: the scan verdict and this
+            // classification race for the same message, and a clean text result overwriting
+            // the flag word must not unlock hash-matched content. Only moderation-report
+            // resolution reverses that flag.
             if let Some(channel_id) = ev.channel_id
-                && let Some(categories) = ModerationCategories::from_bits(ev.flags)
                 && let Some(channel) = state.data.channels.get_mut(&channel_id)
+                && let Some(categories) = ModerationCategories::from_bits(ev.flags).map(|c| {
+                    c | channel
+                        .chat
+                        .events
+                        .message_internal(EventIndex::default(), ev.thread_root_message_index, ev.message_id.into())
+                        .map_or(ModerationCategories::default(), |(m, _)| {
+                            ModerationCategories::from_bits(m.moderation_flags & ModerationCategories::SEXUAL_MINORS.bits())
+                                .unwrap_or_default()
+                        })
+                })
                 && {
                     let flag_result =
                         channel
@@ -124,10 +137,14 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
             // The same escalation as classifier-detected CSAM: flag the message (which locks
             // the content behind the read/undelete gate) and notify the user_index via the
             // group_index, which quarantines the blobs, deletes the message, suspends the
-            // sender and posts an alert to the internal moderation channel
+            // sender and posts an alert to the internal moderation channel.
+            // The escalation stands even if an edit inside the scan window replaced the
+            // matched media: the content was posted publicly and hash-matched a known-CSAM
+            // corpus, and editing it away must not void the report trail or the sanction
+            // (the edited content is re-scanned separately)
             if let Some(channel_id) = ev.channel_id
                 && let Some(channel) = state.data.channels.get_mut(&channel_id)
-                && let Some((message_index, sender, content_excerpt, blob_references)) = channel
+                && let Some((message_index, sender, content_excerpt, mut blob_references, existing_flags)) = channel
                     .chat
                     .events
                     .message_internal(EventIndex::default(), ev.thread_root_message_index, ev.message_id.into())
@@ -137,25 +154,29 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
                             message.sender,
                             message.content.moderation_input().text,
                             message.content.blob_references(),
+                            message.moderation_flags,
                         )
                     })
-                // Escalate only if a matched blob is still referenced by the current content:
-                // an edit inside the scan window replaced the media, and the edit was
-                // re-scanned
-                && ev
-                    .matches
-                    .iter()
-                    .any(|m| blob_references.iter().any(|br| br.blob_id == m.blob_id))
                 && {
-                    let flag_result = channel.chat.events.flag_message(
-                        ev.thread_root_message_index,
-                        ev.message_id,
-                        ModerationCategories::SEXUAL_MINORS,
-                        **now,
-                    );
+                    // Merged rather than overwritten so that classifier-set category bits on
+                    // the same message survive
+                    let categories = ModerationCategories::from_bits(existing_flags).unwrap_or_default()
+                        | ModerationCategories::SEXUAL_MINORS;
+                    let flag_result =
+                        channel
+                            .chat
+                            .events
+                            .flag_message(ev.thread_root_message_index, ev.message_id, categories, **now);
                     flag_result.is_ok() || flag_result.is_err_and(|e| e.matches_code(oc_error_codes::OCErrorCode::NoChange))
                 }
             {
+                // The report must cover the blobs which were actually matched, not just the
+                // message's current content - an edit may have replaced them
+                for matched in &ev.matched_blob_references {
+                    if !blob_references.iter().any(|br| br.blob_id == matched.blob_id) {
+                        blob_references.push(matched.clone());
+                    }
+                }
                 let args = group_index_canister::c2c_csam_detected::Args {
                     channel_id: Some(channel_id),
                     thread_root_message_index: ev.thread_root_message_index,
