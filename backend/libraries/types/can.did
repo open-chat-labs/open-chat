@@ -298,6 +298,20 @@ type AuthorityReportState = variant {
     Due : record { urgent : bool };
     Filed : record { portal_reference : text };
 };
+
+type MediaScanProvider = variant {
+    PhotoDna;
+};
+
+type MediaScanMatch = record {
+    provider : MediaScanProvider;
+    blob_id : nat;
+    source : text;
+    violations : vec text;
+    match_distance : int64;
+    match_id : opt text;
+};
+
 type ModerationReportContent = record {
     report_index : opt nat64;
     chat_id : Chat;
@@ -311,6 +325,7 @@ type ModerationReportContent = record {
     auto_sanctioned : bool;
     content_excerpt : opt text;
     blob_references : vec BlobReference;
+    media_matches : vec MediaScanMatch;
     reported_at : TimestampMillis;
     status : ModerationReportStatus;
     authority_report : opt AuthorityReportState;

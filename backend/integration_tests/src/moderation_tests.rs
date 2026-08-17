@@ -2031,13 +2031,7 @@ fn media_scan_match_triggers_auto_sanction() {
         vec![test_data.sender.canister()],
     );
     let message_id = random_from_u128();
-    send_image_message(
-        env,
-        &test_data.sender,
-        test_data.group_id,
-        message_id,
-        blob_reference.clone(),
-    );
+    send_image_message(env, &test_data.sender, test_data.group_id, message_id, blob_reference.clone());
     tick_many(env, 3);
 
     // The scan job reaches the local index via the event sync queue; the worker polls for it
@@ -2133,7 +2127,10 @@ fn media_scan_match_triggers_auto_sanction() {
         },
     );
     assert!(
-        matches!(chunk_response, storage_bucket_canister::vault_file_chunk::Response::Success(_)),
+        matches!(
+            chunk_response,
+            storage_bucket_canister::vault_file_chunk::Response::Success(_)
+        ),
         "{chunk_response:?}"
     );
 
@@ -2213,7 +2210,10 @@ fn media_scan_scope_and_kill_switch() {
         &local_user_index_canister::media_scan_jobs::Args { from_job_index: 0 },
     );
     assert!(
-        !jobs_result.jobs.iter().any(|j| j.request.message_id == message_while_disabled),
+        !jobs_result
+            .jobs
+            .iter()
+            .any(|j| j.request.message_id == message_while_disabled),
         "no job should be queued while media scanning is disabled"
     );
 
