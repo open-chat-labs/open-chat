@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Relay pending-quarantine blocked-attempt matches to the user_index ([#9163](https://github.com/open-chat-labs/open-chat/pull/9163))
+- Relay pending-quarantine blocked-attempt matches to the user_index ([#9162](https://github.com/open-chat-labs/open-chat/pull/9162))
 
 ### Fixed
 

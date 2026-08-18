@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Create a first-class resolvable moderation report, with an authority-report register entry, for every blocked attempt to re-post CSAM content: immediately due for adjudicated content, mirroring the original report's verdict for content pending review ([#9163](https://github.com/open-chat-labs/open-chat/pull/9163))
+- Create a first-class resolvable moderation report, with an authority-report register entry, for every blocked attempt to re-post CSAM content: immediately due for adjudicated content, mirroring the original report's verdict for content pending review ([#9162](https://github.com/open-chat-labs/open-chat/pull/9162))
 
 - Add the `SetMediaScanConfig` protected action (dual-authorized) to register media scanner principals and enable media scanning across local user indexes ([#9161](https://github.com/open-chat-labs/open-chat/pull/9161))
 - Record media hash-match provenance (provider, source, match distance, match id) on CSAM reports and moderation alerts ([#9161](https://github.com/open-chat-labs/open-chat/pull/9161))

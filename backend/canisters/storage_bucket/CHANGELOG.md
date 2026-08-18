@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Block and report attempts to upload or forward content which is quarantined pending a verdict, mirroring the post-verdict denylist ([#9163](https://github.com/open-chat-labs/open-chat/pull/9163))
+- Block and report attempts to upload or forward content which is quarantined pending a verdict, mirroring the post-verdict denylist ([#9162](https://github.com/open-chat-labs/open-chat/pull/9162))
 
 ### Fixed
 
