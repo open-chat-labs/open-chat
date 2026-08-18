@@ -711,7 +711,6 @@ impl UserMap {
         self.users.get(user_id).is_some_and(|u| u.csam_upload_sanction.is_some())
     }
 
-
     pub fn unsuspend_user(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
         if let Some(user) = self.users.get_mut(&user_id) {
             info!(%user_id, "User unsuspended");

@@ -124,13 +124,14 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
                             moderation::downgrade_suspension_to_upheld_violation(*user_id, attempt_report_index, now, state);
                         }
                         Some(ModerationVerdict::Dismissed) => {
-                            // The content was already cleared: reverse the sanction right away
-                            if state
+                            // The content was already cleared: reverse the sanction right away.
+                            // The clear is a side effect, not just a test, so it must not
+                            // become a match guard.
+                            let cleared = state
                                 .data
                                 .users
-                                .clear_csam_upload_sanction_if_for_report(user_id, m.csam_report_index)
-                                && !moderation::has_other_active_sanction(*user_id, attempt_report_index, now, state)
-                            {
+                                .clear_csam_upload_sanction_if_for_report(user_id, m.csam_report_index);
+                            if cleared && !moderation::has_other_active_sanction(*user_id, attempt_report_index, now, state) {
                                 moderation::unsuspend_sender(*user_id, attempt_report_index, now, state);
                             }
                         }
