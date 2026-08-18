@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Block and report attempts to upload or forward content which is quarantined pending a verdict, mirroring the post-verdict denylist ([#9163](https://github.com/open-chat-labs/open-chat/pull/9163))
+
 ### Fixed
 
 - Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))

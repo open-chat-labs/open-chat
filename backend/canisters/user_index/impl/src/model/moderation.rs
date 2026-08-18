@@ -36,6 +36,9 @@ pub struct ModerationAlert {
     pub blob_references: Vec<BlobReference>,
     // Present when the detection was a media hash match rather than the text classifier
     pub media_matches: Vec<types::MediaScanMatch>,
+    // Set when the report is born already owing an authority report (a blocked attempt on
+    // adjudicated content) - the card shows it without waiting for a status update
+    pub authority_report: Option<types::AuthorityReportState>,
     pub timestamp: TimestampMillis,
 }
 
@@ -68,7 +71,7 @@ pub fn post_moderation_alert(alert: ModerationAlert, state: &mut RuntimeState) {
         media_matches: alert.media_matches,
         reported_at: alert.timestamp,
         status: ModerationReportStatus::Pending,
-        authority_report: None,
+        authority_report: alert.authority_report,
     };
 
     if let Some(report_index) = alert.report_index {

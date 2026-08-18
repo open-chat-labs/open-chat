@@ -48,6 +48,24 @@ fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
         return Blocked;
     }
 
+    // Content quarantined pending a verdict is refused the same way: the bucket will not
+    // serve it, so handing out a fresh reference would only create a message nobody can view
+    // while the re-share attempt itself went unrecorded. Reported against the pending report.
+    if state.data.files.is_vault_pinned(&args.hash) {
+        if let Some(report_index) = state.data.vault.pinned_report_index(&args.hash)
+            && state.data.vault.record_blocked_attempt(user_id, file_id)
+        {
+            state.data.push_event_to_index(EventToSync::CsamMatch(CsamMatch {
+                uploader: user_id,
+                file_id,
+                hash: args.hash,
+                csam_report_index: report_index,
+                kind: CsamMatchKind::PendingQuarantineAttempt,
+            }));
+        }
+        return Blocked;
+    }
+
     let mut index_sync_complete = IndexSyncComplete::No;
     let mut status = None;
     if let Some(status) = user.file_status(&file_id) {

@@ -185,6 +185,7 @@ fn apply_csam_assertion_protection(report_index: u64, state: &mut RuntimeState) 
                 content_excerpt: None,
                 blob_references: report.blob_references.clone(),
                 media_matches: Vec::new(),
+                authority_report: None,
                 timestamp: state.env.now(),
             },
             state,
@@ -379,6 +380,7 @@ fn handle_moderation_result(
                 // fetches it - via the vault when quarantined, else from its ordinary blob url
                 blob_references,
                 media_matches: Vec::new(),
+                authority_report: None,
                 timestamp: now,
             },
             state,

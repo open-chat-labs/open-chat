@@ -60,6 +60,7 @@ fn c2c_sync_bucket_impl(args: Args, state: &mut RuntimeState) -> Response {
                         kind: match m.kind {
                             CsamMatchKind::UploadAttempt => ui_csam::CsamMatchKind::UploadAttempt,
                             CsamMatchKind::ForwardAttempt => ui_csam::CsamMatchKind::ForwardAttempt,
+                            CsamMatchKind::PendingQuarantineAttempt => ui_csam::CsamMatchKind::PendingQuarantineAttempt,
                             CsamMatchKind::ExistingCopy => ui_csam::CsamMatchKind::ExistingCopy,
                         },
                     })

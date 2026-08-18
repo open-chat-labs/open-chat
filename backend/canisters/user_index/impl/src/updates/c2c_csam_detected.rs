@@ -83,6 +83,7 @@ fn c2c_csam_detected_impl(args: Args, state: &mut RuntimeState) {
             blob_references: reported_message.blob_references,
             media_matches: args.media_matches,
             timestamp: now,
+            authority_report: None,
         },
         state,
     );

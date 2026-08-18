@@ -221,6 +221,16 @@ impl Vault {
         self.csam_hashes.get(hash).copied()
     }
 
+    // The report holding this hash quarantined while its verdict is pending, if any:
+    // pre-verdict re-posts are blocked and reported against that report, mirroring the
+    // post-verdict denylist above. Callers gate on `files.is_vault_pinned` - the record
+    // alone also covers the released-under-legal-hold state, which must stay blocked too.
+    pub fn pinned_report_index(&self, hash: &Hash) -> Option<u64> {
+        self.records
+            .get(hash)
+            .map(|r| r.report_indexes.iter().next().copied().unwrap_or(r.metadata.report_index))
+    }
+
     // True the first time this (uploader, file id) pair is blocked: the caller only reports
     // the attempt to the user_index on the first sighting
     pub fn record_blocked_attempt(&mut self, uploader: Principal, file_id: FileId) -> bool {

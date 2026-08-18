@@ -272,5 +272,51 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
     };
     moderation::update_moderation_alert_status(&reported_message, status, state);
 
+    // Blocked re-post attempts recorded against this report mirror its verdict (the attempt
+    // reports were created by c2c_csam_upload_detected while this report was pending)
+    let mirrored = state.data.reported_messages.mirror_verdict_to_attempt_reports(
+        args.report_index,
+        HumanVerdict {
+            verdict: args.verdict,
+            moderator,
+            timestamp: now,
+        },
+    );
+    for (attempt_index, attempt_report) in mirrored {
+        match args.verdict {
+            ModerationVerdict::UpheldAsCsam => {
+                // The content is now confirmed CSAM: each blocked attempt is a fresh offence
+                // owing its own authority report (hash-only filing)
+                state
+                    .data
+                    .authority_reports
+                    .push_due(attempt_index, args.urgent.unwrap_or_default(), now);
+                moderation::update_moderation_alert_authority_report(
+                    &attempt_report,
+                    types::AuthorityReportState::Due {
+                        urgent: args.urgent.unwrap_or_default(),
+                    },
+                    state,
+                );
+            }
+            ModerationVerdict::Upheld => {
+                // A violation but not CSAM: the attempter's indefinite suspension downgrades
+                // to the standard severity, mirroring the sender's treatment
+                moderation::downgrade_suspension_to_upheld_violation(attempt_report.sender, attempt_index, now, state);
+            }
+            ModerationVerdict::Dismissed => {
+                // The allegation was wrong, so the attempt sanction lifts with it - guarded on
+                // the sanction still pointing at this report, and on no other report keeping
+                // the attempter sanctioned
+                if state.data.users.csam_upload_sanction_report_index(&attempt_report.sender) == Some(args.report_index)
+                    && !moderation::has_other_active_sanction(attempt_report.sender, attempt_index, now, state)
+                {
+                    moderation::unsuspend_sender(attempt_report.sender, attempt_index, now, state);
+                }
+            }
+        }
+        moderation::update_moderation_alert_status(&attempt_report, status, state);
+    }
+
     Ok(())
 }
