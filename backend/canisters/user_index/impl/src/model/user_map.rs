@@ -673,6 +673,24 @@ impl UserMap {
         }
     }
 
+    // Clears the hash-match sanction if it was recorded against the given report: called when
+    // that report resolves, so the sanction's contribution ends with it and the record stops
+    // short-circuiting the "other sanction" helpers for unrelated decisions. Returns true if
+    // a sanction was cleared.
+    pub fn clear_csam_upload_sanction_if_for_report(&mut self, user_id: &UserId, report_index: u64) -> bool {
+        if let Some(user) = self.users.get_mut(user_id)
+            && user
+                .csam_upload_sanction
+                .as_ref()
+                .is_some_and(|s| s.csam_report_index == report_index)
+        {
+            user.csam_upload_sanction = None;
+            true
+        } else {
+            false
+        }
+    }
+
     // Marks a hash-match sanction as contested (the Article 22 request for human review).
     // Returns the sanction if this call registered the contest.
     pub fn contest_csam_upload_sanction(&mut self, user_id: UserId, now: TimestampMillis) -> ContestUploadSanctionResult {

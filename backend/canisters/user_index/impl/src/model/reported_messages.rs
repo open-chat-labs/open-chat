@@ -19,6 +19,9 @@ const ATTEMPT_RETRY_WINDOW: types::Milliseconds = 10 * constants::MINUTE_IN_MS;
 // Beyond this many attempt reports per (offender, content), further attempts tally instead:
 // a suspended user must not be able to mint unlimited reports and register rows
 const MAX_ATTEMPT_REPORTS_PER_OFFENDER: usize = 5;
+// Repeat timestamps recorded per attempt report; beyond this only the counter grows, so a
+// scripted uploader cannot grow stable memory without bound
+const MAX_RECORDED_REPEAT_ATTEMPTS: usize = 100;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct ReportedMessages {
@@ -86,6 +89,7 @@ impl ReportedMessages {
                 csam_asserted_by: if args.csam { vec![args.reporter] } else { Vec::new() },
                 blocked_attempt_report_indexes: Vec::new(),
                 repeat_attempts: Vec::new(),
+                unrecorded_repeat_attempts: 0,
             });
             AddReportResult::New(new_index as u64)
         }
@@ -182,7 +186,7 @@ impl ReportedMessages {
             let prior_attempts: usize = existing
                 .iter()
                 .filter_map(|i| self.messages.get(*i as usize))
-                .map(|m| 1 + m.repeat_attempts.len())
+                .map(|m| 1 + m.repeat_attempts.len() + m.unrecorded_repeat_attempts as usize)
                 .sum();
             let latest = self.messages.get_mut(latest_index as usize).unwrap();
             let last_activity = latest
@@ -192,7 +196,11 @@ impl ReportedMessages {
                 .or(latest.automated_timestamp())
                 .unwrap_or_default();
             if now.saturating_sub(last_activity) < ATTEMPT_RETRY_WINDOW || existing.len() >= MAX_ATTEMPT_REPORTS_PER_OFFENDER {
-                latest.repeat_attempts.push(now);
+                if latest.repeat_attempts.len() < MAX_RECORDED_REPEAT_ATTEMPTS {
+                    latest.repeat_attempts.push(now);
+                } else {
+                    latest.unrecorded_repeat_attempts = latest.unrecorded_repeat_attempts.saturating_add(1);
+                }
                 return Some(AddBlockedAttemptResult::Repeat {
                     attempt_report_index: latest_index,
                     total_attempts: (prior_attempts + 1) as u32,
@@ -233,6 +241,7 @@ impl ReportedMessages {
             release_pending: false,
             blocked_attempt_report_indexes: Vec::new(),
             repeat_attempts: Vec::new(),
+            unrecorded_repeat_attempts: 0,
         };
         let new_index = self.messages.len() as u64;
         self.messages.push(entry);
@@ -428,6 +437,7 @@ impl ReportedMessages {
                 csam_asserted_by: Vec::new(),
                 blocked_attempt_report_indexes: Vec::new(),
                 repeat_attempts: Vec::new(),
+                unrecorded_repeat_attempts: 0,
             });
             Some((new_index as u64, true))
         }
@@ -648,12 +658,13 @@ pub struct ReportedMessage {
     // mirror this report's resolution (see resolve_moderation_report)
     #[serde(default)]
     pub blocked_attempt_report_indexes: Vec<u64>,
-    // On a blocked-attempt report: timestamps of further attempts by the same user on the
-    // same content. One report per (offender, content) - a repeat is tallied here (for the
-    // authority filing) rather than opening a fresh report, which a suspended user could
-    // otherwise mint at will
+    // On a blocked-attempt report: timestamps of further attempts inside the retry window or
+    // beyond the per-offender report cap, tallied here (for the authority filing) rather than
+    // opening a fresh report. Capped; `unrecorded_repeat_attempts` counts the excess.
     #[serde(default)]
     pub repeat_attempts: Vec<TimestampMillis>,
+    #[serde(default)]
+    pub unrecorded_repeat_attempts: u32,
 }
 
 pub enum AddBlockedAttemptResult {
@@ -1171,6 +1182,7 @@ mod report_status_tests {
             csam_asserted_by: Vec::new(),
             blocked_attempt_report_indexes: Vec::new(),
             repeat_attempts: Vec::new(),
+            unrecorded_repeat_attempts: 0,
         }
     }
 

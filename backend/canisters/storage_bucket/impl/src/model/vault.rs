@@ -223,12 +223,15 @@ impl Vault {
 
     // The report holding this hash quarantined while its verdict is pending, if any:
     // pre-verdict re-posts are blocked and reported against that report, mirroring the
-    // post-verdict denylist above. Callers gate on `files.is_vault_pinned` - the record
-    // alone also covers the released-under-legal-hold state, which must stay blocked too.
+    // post-verdict denylist above. Only an ACTIVE claim anchors an attempt report - a record
+    // whose claims were all released but whose pin survives under a legal hold is already
+    // adjudicated, so the caller still refuses the upload (the pin gates serving) but must
+    // not sanction anyone against a resolved report. The newest claim is the anchor: the
+    // report which most recently pinned this content.
     pub fn pinned_report_index(&self, hash: &Hash) -> Option<u64> {
         self.records
             .get(hash)
-            .map(|r| r.report_indexes.iter().next().copied().unwrap_or(r.metadata.report_index))
+            .and_then(|r| r.report_indexes.iter().next_back().copied())
     }
 
     // True the first time this (uploader, file id) pair is blocked: the caller only reports

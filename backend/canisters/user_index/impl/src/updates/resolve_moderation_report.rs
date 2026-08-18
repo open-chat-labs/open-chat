@@ -315,15 +315,26 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
             }
             ModerationVerdict::Upheld => {
                 // A violation but not CSAM: the attempter's indefinite suspension downgrades
-                // to the standard severity, mirroring the sender's treatment
+                // to the standard severity, mirroring the sender's treatment. The hash-match
+                // sanction record is cleared FIRST - it belongs to the report being resolved,
+                // and while present it short-circuits the indefinite-sanction check that
+                // would otherwise block the downgrade
+                state
+                    .data
+                    .users
+                    .clear_csam_upload_sanction_if_for_report(&attempt_report.sender, args.report_index);
                 moderation::downgrade_suspension_to_upheld_violation(attempt_report.sender, attempt_index, now, state);
                 state.push_event_to_local_user_index(attempt_report.sender, build_verdict_message_to_sender(&attempt_report));
             }
             ModerationVerdict::Dismissed => {
-                // The allegation was wrong, so the attempt sanction lifts with it - guarded on
-                // the sanction still pointing at this report, and on no other report keeping
-                // the attempter sanctioned
-                if state.data.users.csam_upload_sanction_report_index(&attempt_report.sender) == Some(args.report_index)
+                // The allegation was wrong, so the attempt sanction lifts with it. Clearing
+                // the record (only when it points at THIS report) must happen before the
+                // other-active-sanction check, which short-circuits on the record's presence;
+                // anything else still sanctioning the attempter then keeps them suspended.
+                if state
+                    .data
+                    .users
+                    .clear_csam_upload_sanction_if_for_report(&attempt_report.sender, args.report_index)
                     && !moderation::has_other_active_sanction(attempt_report.sender, attempt_index, now, state)
                 {
                     moderation::unsuspend_sender(attempt_report.sender, attempt_index, now, state);

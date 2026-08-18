@@ -1,11 +1,12 @@
 use crate::guards::caller_is_storage_index;
 use crate::model::moderation;
-use crate::model::reported_messages::{AddBlockedAttemptResult, build_upload_sanction_message_to_uploader};
+use crate::model::reported_messages::{AddBlockedAttemptResult, ReportedMessages, build_upload_sanction_message_to_uploader};
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use tracing::warn;
 use user_index_canister::c2c_csam_upload_detected::*;
+use user_index_canister::resolve_moderation_report::ModerationVerdict;
 
 // A storage bucket refused an attempt to upload or forward content whose hash matches
 // either a previous UpheldAsCsam verdict (a KNOWING attempt to post confirmed CSAM) or a
@@ -53,7 +54,8 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
         };
         let verdict_pending = matches!(m.kind, CsamMatchKind::PendingQuarantineAttempt);
 
-        if let Some((user_id, _)) = &uploader {
+        if let Some((user_id, username)) = &uploader {
+            let who = format!("@{username} ({user_id})");
             moderation::suspend_sender(*user_id, now, state);
             // Recorded so the user can require human review (Article 22) and so an unrelated
             // report's dismissal cannot lift it; tied to the ORIGINAL report - for a pending
@@ -62,8 +64,6 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
                 .data
                 .users
                 .record_csam_upload_sanction(*user_id, m.csam_report_index, now);
-            state
-                .push_event_to_local_user_index(*user_id, build_upload_sanction_message_to_uploader(*user_id, verdict_pending));
 
             // Each blocked attempt is a fresh offence and owes its own authority (NCA)
             // report, so it gets its own first-class report anchored to the original report's
@@ -80,9 +80,13 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
                     attempt_report_index,
                     total_attempts,
                 }) => {
+                    state.push_event_to_local_user_index(
+                        *user_id,
+                        build_upload_sanction_message_to_uploader(*user_id, verdict_pending),
+                    );
                     let text = format!(
                         "🚨 Repeat attempt to {action} content {status_phrase} in report #{} \
-                         (attempt {total_attempts} by this user; recorded on attempt report #{attempt_report_index}). \
+                         ({who}, attempt {total_attempts}; recorded on attempt report #{attempt_report_index}). \
                          The attempt was blocked and no message was created.",
                         m.csam_report_index
                     );
@@ -92,11 +96,45 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
                     attempt_report_index,
                     report: attempt_report,
                 }) => {
-                    if !verdict_pending {
-                        // The content was already adjudicated CSAM; the only new fact is the
-                        // attempter, so the authority report is due immediately (hash-only
-                        // filing - the NCA matches the hash server-side, nobody re-views it)
-                        state.data.authority_reports.push_due(attempt_report_index, false, now);
+                    // The report is registered on the attempter like any other, so the
+                    // sanction helpers (strike counts, other-active-sanction checks, contest)
+                    // can see it
+                    state.data.users.push_reported_message(*user_id, attempt_report_index);
+
+                    // The side effects derive from the report's ACTUAL state, not the bucket's
+                    // match kind: this call is async, so the original report can resolve (or a
+                    // legal hold can change the picture) before the event lands
+                    let inherited = attempt_report.human_verdict().map(|v| v.verdict);
+                    state.push_event_to_local_user_index(
+                        *user_id,
+                        build_upload_sanction_message_to_uploader(*user_id, inherited.is_none()),
+                    );
+                    match inherited {
+                        Some(ModerationVerdict::UpheldAsCsam) => {
+                            // Adjudicated content: the attempt's authority report is due
+                            // immediately (hash-only filing - the NCA matches the hash
+                            // server-side, nobody re-views the content)
+                            state.data.authority_reports.push_due(attempt_report_index, false, now);
+                        }
+                        Some(ModerationVerdict::Upheld) => {
+                            state
+                                .data
+                                .users
+                                .clear_csam_upload_sanction_if_for_report(user_id, m.csam_report_index);
+                            moderation::downgrade_suspension_to_upheld_violation(*user_id, attempt_report_index, now, state);
+                        }
+                        Some(ModerationVerdict::Dismissed) => {
+                            // The content was already cleared: reverse the sanction right away
+                            if state
+                                .data
+                                .users
+                                .clear_csam_upload_sanction_if_for_report(user_id, m.csam_report_index)
+                                && !moderation::has_other_active_sanction(*user_id, attempt_report_index, now, state)
+                            {
+                                moderation::unsuspend_sender(*user_id, attempt_report_index, now, state);
+                            }
+                        }
+                        None => {}
                     }
                     moderation::post_moderation_alert(
                         moderation::ModerationAlert {
@@ -116,22 +154,30 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
                             )),
                             blob_references: attempt_report.blob_references.clone(),
                             media_matches: attempt_report.media_matches.clone(),
-                            authority_report: (!verdict_pending).then_some(types::AuthorityReportState::Due { urgent: false }),
-                            status: attempt_report
-                                .human_verdict()
-                                .map_or(types::ModerationReportStatus::Pending, |v| {
-                                    types::ModerationReportStatus::UpheldAsCsam(types::ModerationReportResolution {
-                                        moderator: v.moderator,
-                                        timestamp: v.timestamp,
-                                    })
-                                }),
+                            authority_report: matches!(inherited, Some(ModerationVerdict::UpheldAsCsam))
+                                .then_some(types::AuthorityReportState::Due { urgent: false }),
+                            status: ReportedMessages::report_status(&attempt_report),
                             timestamp: now,
                         },
                         state,
                     );
                 }
-                // Unknown original report index (legacy denylist entry with no report)
-                None => {}
+                None => {
+                    // Unknown original report index (legacy denylist entry with no report):
+                    // no report to anchor, but the attempt and sanction must still be visible
+                    state.push_event_to_local_user_index(
+                        *user_id,
+                        build_upload_sanction_message_to_uploader(*user_id, verdict_pending),
+                    );
+                    let text = format!(
+                        "🚨 Attempt to post blocked content\n\n\
+                         {who} tried to {action} content {status_phrase} in report #{}. \
+                         The attempt was blocked and no message was created. The user has been suspended indefinitely; \
+                         if this sanction was applied in error, unsuspending the user reverses it.",
+                        m.csam_report_index
+                    );
+                    moderation::post_moderation_notice(text, state);
+                }
             }
         } else {
             // No resolvable user means no sanction and no report to anchor: fall back to a

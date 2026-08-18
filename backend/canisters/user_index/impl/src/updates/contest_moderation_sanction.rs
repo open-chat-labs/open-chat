@@ -56,12 +56,29 @@ fn contest_moderation_sanction_impl(state: &mut RuntimeState) -> OCResult {
                 .get_by_user_id(&user_id)
                 .map(|u| format!("@{}", u.username))
                 .unwrap_or_else(|| user_id.to_string());
+            // The wording tracks the linked report's state: pre-verdict the content is only
+            // suspected, and resolving that report is what settles the attempt sanction too
+            let (content_state, resolution_hint) = if state
+                .data
+                .reported_messages
+                .get(csam_report_index)
+                .is_some_and(|r| r.human_verdict().is_none())
+            {
+                (
+                    "quarantined pending review",
+                    "Resolving that report settles this sanction with it; if the sanction was wrong, unsuspending the account reverses it.",
+                )
+            } else {
+                (
+                    "upheld as CSAM",
+                    "If the sanction was wrong, unsuspend the account to reverse it.",
+                )
+            };
             moderation::post_moderation_notice(
                 format!(
                     "⚖️ Human review requested\n\n\
-                     {username} ({user_id}) was suspended for trying to post content matching the hash upheld as CSAM in \
-                     report #{csam_report_index}, and has requested that a person reviews that decision. \
-                     If the sanction was wrong, unsuspend the account; there is no report to resolve."
+                     {username} ({user_id}) was suspended for trying to post content matching the hash {content_state} in \
+                     report #{csam_report_index}, and has requested that a person reviews that decision. {resolution_hint}"
                 ),
                 state,
             );
