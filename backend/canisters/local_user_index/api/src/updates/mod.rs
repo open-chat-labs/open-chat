@@ -41,5 +41,6 @@ pub mod push_events;
 pub mod register_user;
 pub mod reinstate_missed_daily_claims;
 pub mod remove_notifications;
+pub mod submit_media_scan_verdicts;
 pub mod uninstall_bot;
 pub mod withdraw_from_icpswap;

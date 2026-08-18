@@ -562,4 +562,6 @@ export type ModerationConfig = {
     internalModerationChannel: { communityId: string; channelId: number } | undefined;
     referralConfig: { categories: { category: number; scoreThreshold: number }[] } | undefined;
     vaultReviewers: string[];
+    mediaScanEnabled: boolean;
+    mediaScanners: string[];
 };

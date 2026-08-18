@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add the `SetMediaScanConfig` protected action (dual-authorized) to register media scanner principals and enable media scanning across local user indexes ([#9161](https://github.com/open-chat-labs/open-chat/pull/9161))
+- Record media hash-match provenance (provider, source, match distance, match id) on CSAM reports and moderation alerts ([#9161](https://github.com/open-chat-labs/open-chat/pull/9161))
+- Post a notice to the internal moderation channel when a local index reports the media scan pipeline stalled, and when it recovers ([#9161](https://github.com/open-chat-labs/open-chat/pull/9161))
+- Refuse to enable media scanning while the internal moderation channel is unconfigured - detections would sanction and record reports but every alert surface would be dark ([#9161](https://github.com/open-chat-labs/open-chat/pull/9161))
+
 ### Changed
 
 - Never send message media to the OpenAI moderation API - classification is text-only ([#9149](https://github.com/open-chat-labs/open-chat/issues/9149))

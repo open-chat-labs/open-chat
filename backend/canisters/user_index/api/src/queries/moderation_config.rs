@@ -20,6 +20,7 @@ pub struct SuccessResult {
     pub internal_moderation_channel: Option<InternalModerationChannel>,
     pub moderation_referral_config: Option<ModerationReferralConfig>,
     pub vault_reviewers: Vec<UserId>,
+    pub media_scan_config: types::MediaScanConfig,
 }
 
 #[ts_export(user_index, moderation_config)]

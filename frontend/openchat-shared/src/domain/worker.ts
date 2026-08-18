@@ -395,6 +395,7 @@ export type WorkerRequest =
     | ProtectedActions
     | SetModerationReferralConfig
     | ProposeSetVaultReviewers
+    | ProposeSetMediaScanConfig
     | ProposeSetVaultLegalHold
     | SetVaultLegalHold
     | ProposeDestroyVaultEvidence
@@ -899,6 +900,12 @@ type ProposeSetVaultLegalHold = {
 type ProposeSetVaultReviewers = {
     kind: "proposeSetVaultReviewers";
     userIds: string[];
+};
+
+type ProposeSetMediaScanConfig = {
+    kind: "proposeSetMediaScanConfig";
+    enabled: boolean;
+    scanners: string[];
 };
 
 type SetVaultLegalHold = {
@@ -2617,6 +2624,8 @@ export type WorkerResult<T> = T extends Init
     : T extends SetModerationReferralConfig
     ? boolean
     : T extends ProposeSetVaultReviewers
+    ? ProposedProtectedAction | undefined
+    : T extends ProposeSetMediaScanConfig
     ? ProposedProtectedAction | undefined
     : T extends ProposeSetVaultLegalHold
     ? ProposedProtectedAction | undefined

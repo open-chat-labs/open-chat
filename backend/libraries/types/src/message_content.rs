@@ -244,6 +244,48 @@ impl MessageContent {
         input
     }
 
+    // The media which the scanning pipeline hashes: still images only. Image content always;
+    // File content regardless of its declared mime type (the declaration is client-supplied
+    // and must not gate the scan - the worker's decoder decides what is actually an image,
+    // reporting everything else Unscannable); the Video inline thumbnail, which is itself a
+    // still image rendered in the chat (keyframes of the video stream await extraction in v2).
+    // Giphy variants are third-party URLs, not OpenChat blobs.
+    pub fn scannable_blobs(&self) -> Vec<crate::MediaScanBlob> {
+        match self {
+            MessageContent::Image(i) => i
+                .blob_reference
+                .clone()
+                .map(|blob_reference| crate::MediaScanBlob {
+                    blob_reference,
+                    mime_type: i.mime_type.clone(),
+                    frame_index: None,
+                })
+                .into_iter()
+                .collect(),
+            MessageContent::File(f) => f
+                .blob_reference
+                .clone()
+                .map(|blob_reference| crate::MediaScanBlob {
+                    blob_reference,
+                    mime_type: f.mime_type.clone(),
+                    frame_index: None,
+                })
+                .into_iter()
+                .collect(),
+            MessageContent::Video(v) => v
+                .image_blob_reference
+                .clone()
+                .map(|blob_reference| crate::MediaScanBlob {
+                    blob_reference,
+                    mime_type: "image/*".to_string(),
+                    frame_index: None,
+                })
+                .into_iter()
+                .collect(),
+            _ => Vec::new(),
+        }
+    }
+
     pub fn notification_text(&self, mentioned: &[User], user_groups_mentioned: &[(u32, String)]) -> Option<String> {
         let mut text = self.text()?.to_string();
 
@@ -771,6 +813,10 @@ pub struct ModerationReportContent {
     // vault reviewers via the explicit Review affordance (no media is ever embedded in alerts)
     #[serde(default)]
     pub blob_references: Vec<BlobReference>,
+    // Present when the detection was a media hash match rather than the text classifier: the
+    // provider's record details, retained as the audit trail and for the authority report
+    #[serde(default)]
+    pub media_matches: Vec<crate::MediaScanMatch>,
     pub reported_at: TimestampMillis,
     pub status: ModerationReportStatus,
     // Present on UpheldAsCsam reports: whether the authority (NCA) report is still due or has

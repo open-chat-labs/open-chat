@@ -747,6 +747,14 @@ function moderationReportContent(value: TModerationReportContent): ModerationRep
         autoSanctioned: value.auto_sanctioned,
         contentExcerpt: value.content_excerpt,
         blobReferences: value.blob_references.map(blobReference),
+        mediaMatches: (value.media_matches ?? []).map((m) => ({
+            provider: m.provider === "PhotoDna" ? "PhotoDNA" : String(m.provider),
+            blobId: m.blob_id,
+            source: m.source,
+            violations: m.violations,
+            matchDistance: m.match_distance,
+            matchId: m.match_id,
+        })),
         reportedAt: value.reported_at,
         status: moderationReportStatus(value.status),
     };

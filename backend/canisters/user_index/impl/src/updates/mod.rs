@@ -35,6 +35,7 @@ pub mod set_display_name;
 pub mod set_hide_online_status;
 pub(crate) mod set_internal_moderation_channel;
 pub mod set_max_concurrent_user_canister_upgrades;
+pub(crate) mod set_media_scan_config;
 pub mod set_moderation_flags;
 pub mod set_moderation_referral_config;
 pub(crate) mod set_openai_api_key;

@@ -9,10 +9,11 @@ use pocket_ic::common::rest::{CanisterHttpReply, CanisterHttpResponse, MockCanis
 use serde_json::{Value, json};
 use std::ops::Deref;
 use std::time::Duration;
-use testing::rng::{random_from_u128, random_string};
+use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
-    ChannelId, ChatEvent, ChatId, CommunityId, EventIndex, FileContent, MessageContent, MessageContentInitial,
-    ModerationReportContent, ModerationReportStatus, SuspensionAction, UnitResult,
+    BlobReference, ChannelId, ChatEvent, ChatId, CommunityId, EventIndex, FileContent, ImageContent, MediaScanBlobOutcome,
+    MediaScanConfig, MediaScanMatch, MediaScanProvider, MediaScanVerdict, MessageContent, MessageContentInitial,
+    ModerationReportContent, ModerationReportStatus, SuspensionAction, ThumbnailData, UnitResult,
 };
 use user_index_canister::propose_protected_action::ProtectedAction;
 use user_index_canister::resolve_moderation_report::ModerationVerdict;
@@ -1982,6 +1983,377 @@ fn mock_moderation_outcalls(
     }
 
     handled
+}
+
+#[test]
+fn media_scan_match_triggers_auto_sanction() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    let scanner = random_principal();
+    client::user_index::happy_path::execute_protected_action(
+        env,
+        test_data.moderator.principal,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        ProtectedAction::SetMediaScanConfig(user_index_canister::set_media_scan_config::Args {
+            config: MediaScanConfig {
+                enabled: true,
+                scanners: vec![scanner],
+            },
+        }),
+    );
+    client::user_index::happy_path::execute_protected_action(
+        env,
+        test_data.moderator.principal,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        ProtectedAction::SetVaultReviewers(user_index_canister::set_vault_reviewers::Args {
+            user_ids: vec![test_data.moderator.user_id],
+        }),
+    );
+    tick_many(env, 5);
+
+    // A caption-less image: `moderation_input` is empty for it (no text), so this is the exact
+    // case the media enqueue must catch as a sibling of the classification gate rather than
+    // nested inside it
+    let blob_reference = client::storage_index::happy_path::upload_file(
+        env,
+        test_data.sender.principal,
+        canister_ids.storage_index,
+        1000,
+        vec![test_data.sender.canister()],
+    );
+    let message_id = random_from_u128();
+    send_image_message(env, &test_data.sender, test_data.group_id, message_id, blob_reference.clone());
+    tick_many(env, 3);
+
+    // The scan job reaches the local index via the event sync queue; the worker polls for it
+    let local_user_index = canister_ids.local_user_index(env, test_data.group_id);
+    let local_user_index_canister::media_scan_jobs::Response::Success(jobs_result) = client::local_user_index::media_scan_jobs(
+        env,
+        scanner,
+        local_user_index,
+        &local_user_index_canister::media_scan_jobs::Args { from_job_index: 0 },
+    );
+    let job = jobs_result
+        .jobs
+        .iter()
+        .find(|j| j.request.message_id == message_id)
+        .expect("a scan job should be queued for the image message");
+    assert_eq!(job.request.blobs.len(), 1);
+    assert_eq!(job.request.blobs[0].blob_reference.blob_id, blob_reference.blob_id);
+    assert_eq!(job.request.blobs[0].mime_type, "image/jpeg");
+
+    // The worker reports a match against the known-CSAM hash list. The escalation is the same
+    // as classifier-detected CSAM: message deleted and read-gated, blobs quarantined in the
+    // vault, sender suspended, resolvable report + alert posted
+    let submit_response = client::local_user_index::submit_media_scan_verdicts(
+        env,
+        scanner,
+        local_user_index,
+        &local_user_index_canister::submit_media_scan_verdicts::Args {
+            verdicts: vec![MediaScanVerdict {
+                job_index: job.job_index,
+                message_id,
+                outcomes: vec![MediaScanBlobOutcome::Match(MediaScanMatch {
+                    provider: MediaScanProvider::PhotoDna,
+                    blob_id: blob_reference.blob_id,
+                    source: "Test".to_string(),
+                    violations: vec!["A1".to_string()],
+                    match_distance: 181,
+                    match_id: Some("7469692".to_string()),
+                })],
+            }],
+            up_to_job_index: job.job_index,
+        },
+    );
+    assert!(matches!(
+        submit_response,
+        local_user_index_canister::submit_media_scan_verdicts::Response::Success
+    ));
+    tick_many(env, 10);
+
+    let message_content = get_message_content(env, &test_data.group_owner, test_data.group_id, message_id);
+    assert!(matches!(message_content, MessageContent::Deleted(_)), "{message_content:?}");
+
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    let suspension_details = sender_state.suspension_details.expect("sender should be suspended");
+    assert!(matches!(suspension_details.action, SuspensionAction::Delete(_)));
+
+    let reports = get_moderation_reports(env, &test_data);
+    let report = reports
+        .iter()
+        .find(|r| r.sender == test_data.sender.user_id)
+        .expect("the match should create a moderation report");
+    assert!(report.auto_sanctioned);
+    assert!(report.reporters.is_empty());
+    let report_index = report.report_index.expect("proactive detection should carry a report index");
+    // The report carries the hash-match provenance: which provider matched, and the provider's
+    // record id for the authority report
+    assert_eq!(report.media_matches.len(), 1);
+    assert_eq!(report.media_matches[0].match_id.as_deref(), Some("7469692"));
+    assert_eq!(report.media_matches[0].blob_id, blob_reference.blob_id);
+
+    // The quarantine read-gate holds: not even the group owner can view the deleted content
+    let deleted_message_response = client::group::deleted_message(
+        env,
+        test_data.group_owner.principal,
+        test_data.group_id.into(),
+        &group_canister::deleted_message::Args {
+            thread_root_message_index: None,
+            message_id,
+        },
+    );
+    assert!(
+        matches!(deleted_message_response, group_canister::deleted_message::Response::Error(_)),
+        "{deleted_message_response:?}"
+    );
+
+    // The media is vaulted: the designated reviewer can fetch it
+    let chunk_response = client::storage_bucket::vault_file_chunk(
+        env,
+        test_data.moderator.principal,
+        blob_reference.canister_id,
+        &storage_bucket_canister::vault_file_chunk::Args {
+            file_id: blob_reference.blob_id,
+            chunk_index: 0,
+        },
+    );
+    assert!(
+        matches!(
+            chunk_response,
+            storage_bucket_canister::vault_file_chunk::Response::Success(_)
+        ),
+        "{chunk_response:?}"
+    );
+
+    // A Dismissed verdict reverses the takedown in full: the sender is unsuspended and the
+    // image message is restored for everyone
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index,
+            verdict: ModerationVerdict::Dismissed,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    assert!(sender_state.suspension_details.is_none(), "sender should be unsuspended");
+
+    let message_content = get_message_content(env, &test_data.group_owner, test_data.group_id, message_id);
+    assert!(matches!(message_content, MessageContent::Image(_)), "{message_content:?}");
+}
+
+#[test]
+fn media_scan_scope_and_kill_switch() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    let scanner = random_principal();
+
+    // Disabled: requests are dropped at the local index rather than queued. Scanners are
+    // still registered so the log can be inspected while disabled.
+    client::user_index::happy_path::execute_protected_action(
+        env,
+        test_data.moderator.principal,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        ProtectedAction::SetMediaScanConfig(user_index_canister::set_media_scan_config::Args {
+            config: MediaScanConfig {
+                enabled: false,
+                scanners: vec![scanner],
+            },
+        }),
+    );
+    tick_many(env, 5);
+
+    let local_user_index = canister_ids.local_user_index(env, test_data.group_id);
+    let blob_while_disabled = client::storage_index::happy_path::upload_file(
+        env,
+        test_data.sender.principal,
+        canister_ids.storage_index,
+        1000,
+        vec![test_data.sender.canister()],
+    );
+    let message_while_disabled = random_from_u128();
+    send_image_message(
+        env,
+        &test_data.sender,
+        test_data.group_id,
+        message_while_disabled,
+        blob_while_disabled,
+    );
+    tick_many(env, 3);
+
+    let local_user_index_canister::media_scan_jobs::Response::Success(jobs_result) = client::local_user_index::media_scan_jobs(
+        env,
+        scanner,
+        local_user_index,
+        &local_user_index_canister::media_scan_jobs::Args { from_job_index: 0 },
+    );
+    assert!(
+        !jobs_result
+            .jobs
+            .iter()
+            .any(|j| j.request.message_id == message_while_disabled),
+        "no job should be queued while media scanning is disabled"
+    );
+
+    client::user_index::happy_path::execute_protected_action(
+        env,
+        test_data.moderator.principal,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        ProtectedAction::SetMediaScanConfig(user_index_canister::set_media_scan_config::Args {
+            config: MediaScanConfig {
+                enabled: true,
+                scanners: vec![scanner],
+            },
+        }),
+    );
+    tick_many(env, 5);
+
+    // Media in a private group must never enter the queue: the gate is at the enqueue site
+    let private_group_id = client::user::happy_path::create_group(env, &test_data.group_owner, &random_string(), false, true);
+    let private_blob = client::storage_index::happy_path::upload_file(
+        env,
+        test_data.group_owner.principal,
+        canister_ids.storage_index,
+        1000,
+        vec![test_data.group_owner.canister()],
+    );
+    let private_message_id = random_from_u128();
+    send_image_message(
+        env,
+        &test_data.group_owner,
+        private_group_id,
+        private_message_id,
+        private_blob,
+    );
+
+    let public_blob = client::storage_index::happy_path::upload_file(
+        env,
+        test_data.sender.principal,
+        canister_ids.storage_index,
+        1000,
+        vec![test_data.sender.canister()],
+    );
+    let public_message_id = random_from_u128();
+    send_image_message(env, &test_data.sender, test_data.group_id, public_message_id, public_blob);
+    tick_many(env, 3);
+
+    let private_local_user_index = canister_ids.local_user_index(env, private_group_id);
+    let local_user_index_canister::media_scan_jobs::Response::Success(private_jobs) = client::local_user_index::media_scan_jobs(
+        env,
+        scanner,
+        private_local_user_index,
+        &local_user_index_canister::media_scan_jobs::Args { from_job_index: 0 },
+    );
+    assert!(
+        !private_jobs.jobs.iter().any(|j| j.request.message_id == private_message_id),
+        "media in a private group must never be queued for scanning"
+    );
+
+    let local_user_index_canister::media_scan_jobs::Response::Success(jobs_result) = client::local_user_index::media_scan_jobs(
+        env,
+        scanner,
+        local_user_index,
+        &local_user_index_canister::media_scan_jobs::Args { from_job_index: 0 },
+    );
+    let job = jobs_result
+        .jobs
+        .iter()
+        .find(|j| j.request.message_id == public_message_id)
+        .expect("a scan job should be queued for the public image message");
+
+    // A clean verdict acks the job and takes no action against the message or the sender
+    let submit_response = client::local_user_index::submit_media_scan_verdicts(
+        env,
+        scanner,
+        local_user_index,
+        &local_user_index_canister::submit_media_scan_verdicts::Args {
+            verdicts: vec![MediaScanVerdict {
+                job_index: job.job_index,
+                message_id: public_message_id,
+                outcomes: vec![MediaScanBlobOutcome::Clean],
+            }],
+            up_to_job_index: job.job_index,
+        },
+    );
+    assert!(matches!(
+        submit_response,
+        local_user_index_canister::submit_media_scan_verdicts::Response::Success
+    ));
+    tick_many(env, 10);
+
+    let message_content = get_message_content(env, &test_data.group_owner, test_data.group_id, public_message_id);
+    assert!(matches!(message_content, MessageContent::Image(_)), "{message_content:?}");
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    assert!(sender_state.suspension_details.is_none(), "a clean verdict must not sanction");
+
+    // The watermark pruned the acked job
+    let local_user_index_canister::media_scan_jobs::Response::Success(jobs_after) = client::local_user_index::media_scan_jobs(
+        env,
+        scanner,
+        local_user_index,
+        &local_user_index_canister::media_scan_jobs::Args { from_job_index: 0 },
+    );
+    assert!(
+        !jobs_after.jobs.iter().any(|j| j.job_index <= job.job_index),
+        "acked jobs should be pruned from the log"
+    );
+}
+
+fn send_image_message(env: &mut PocketIc, sender: &User, group_id: ChatId, message_id: types::MessageId, blob: BlobReference) {
+    let send_response = client::group::send_message_v2(
+        env,
+        sender.principal,
+        group_id.into(),
+        &group_canister::send_message_v2::Args {
+            thread_root_message_index: None,
+            message_id,
+            content: MessageContentInitial::Image(ImageContent {
+                width: 100,
+                height: 100,
+                thumbnail_data: ThumbnailData("data:image/jpeg;base64,".to_string()),
+                caption: None,
+                mime_type: "image/jpeg".to_string(),
+                blob_reference: Some(blob),
+            }),
+            sender_name: sender.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            forwarding: false,
+            block_level_markdown: false,
+            rules_accepted: None,
+            message_filter_failed: None,
+            new_achievement: false,
+            og_previews: Vec::new(),
+        },
+    );
+    assert!(
+        matches!(send_response, group_canister::send_message_v2::Response::Success(_)),
+        "{send_response:?}"
+    );
 }
 
 fn get_message_content(env: &PocketIc, reader: &User, group_id: ChatId, message_id: types::MessageId) -> MessageContent {

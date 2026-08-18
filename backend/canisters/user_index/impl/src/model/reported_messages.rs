@@ -71,6 +71,7 @@ impl ReportedMessages {
                 moderation_channel_message_id: None,
                 blob_references: Vec::new(),
                 detection: DetectionSource::UserReport,
+                media_matches: Vec::new(),
                 contested: None,
                 unverified_report_filed: None,
                 legal_hold: false,
@@ -262,10 +263,16 @@ impl ReportedMessages {
         if let Some(&index) = self.lookup.get(&key) {
             let message = self.messages.get_mut(index).unwrap();
             if message.outcome.is_some() {
+                // The sanction must not re-apply, but hash-match provenance arriving after a
+                // classifier-first detection still belongs on the report's audit trail
+                if !args.media_matches.is_empty() && message.media_matches.is_empty() {
+                    message.media_matches = args.media_matches;
+                }
                 None
             } else {
                 message.outcome = Some(outcome);
                 message.blob_references = args.blob_references;
+                message.media_matches = args.media_matches;
                 self.pending_classifications.remove(&(index as u64));
                 Some((index as u64, false))
             }
@@ -284,6 +291,7 @@ impl ReportedMessages {
                 moderation_channel_message_id: None,
                 blob_references: args.blob_references,
                 detection: DetectionSource::Proactive,
+                media_matches: args.media_matches,
                 contested: None,
                 unverified_report_filed: None,
                 legal_hold: false,
@@ -434,6 +442,7 @@ pub struct AddProactiveDetectionArgs {
     pub sender: UserId,
     pub flags: u32,
     pub blob_references: Vec<BlobReference>,
+    pub media_matches: Vec<types::MediaScanMatch>,
     pub timestamp: TimestampMillis,
 }
 
@@ -479,6 +488,10 @@ pub struct ReportedMessage {
     pub blob_references: Vec<BlobReference>,
     #[serde(default)]
     pub detection: DetectionSource,
+    // Present when the detection was a media hash match: the provider's record details,
+    // retained as the audit trail and referenced by the authority report
+    #[serde(default)]
+    pub media_matches: Vec<types::MediaScanMatch>,
     // The reporters who asserted CSAM (triggering immediate quarantine + deletion): if the
     // report is later dismissed those assertions were false, and are recorded against exactly
     // the users who made them
@@ -953,6 +966,7 @@ mod report_status_tests {
             moderation_channel_message_id: None,
             blob_references: Vec::new(),
             detection: DetectionSource::Proactive,
+            media_matches: Vec::new(),
             contested: None,
             unverified_report_filed: None,
             legal_hold: false,

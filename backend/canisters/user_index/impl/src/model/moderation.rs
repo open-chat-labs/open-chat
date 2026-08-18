@@ -34,6 +34,8 @@ pub struct ModerationAlert {
     pub auto_sanctioned: bool,
     pub content_excerpt: Option<String>,
     pub blob_references: Vec<BlobReference>,
+    // Present when the detection was a media hash match rather than the text classifier
+    pub media_matches: Vec<types::MediaScanMatch>,
     pub timestamp: TimestampMillis,
 }
 
@@ -63,6 +65,7 @@ pub fn post_moderation_alert(alert: ModerationAlert, state: &mut RuntimeState) {
             .filter(|e| !e.trim().is_empty())
             .map(|e| e.chars().take(MAX_EXCERPT_LENGTH).collect()),
         blob_references: alert.blob_references,
+        media_matches: alert.media_matches,
         reported_at: alert.timestamp,
         status: ModerationReportStatus::Pending,
         authority_report: None,
