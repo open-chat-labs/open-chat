@@ -50,12 +50,106 @@ function isExpectedSessionError(error: unknown): boolean {
 // owns the underlying incidents, so per-occurrence client reports are pure noise. 500 is NOT
 // included: replica rejections (including canister traps) map to HttpError 500 here, and those
 // are exactly the signal this filter must keep.
+// "error decoding response body" is the Tauri (reqwest) equivalent of a fetch dying mid-body.
+const NETWORK_NOISE_PATTERN =
+    /failed to fetch|networkerror|load failed|network connection was lost|error decoding response body/i;
+
+const REQWEST_NOISE_PATTERN = /error decoding response body/i;
+
 function isTransientNetworkError(error: unknown): boolean {
-    if (error instanceof HttpError && error.code >= 502 && error.code <= 504) return true;
-    return (
-        error instanceof Error &&
-        error.name === "TypeError" &&
-        /failed to fetch|networkerror|load failed|network connection was lost/i.test(error.message)
+    // Structural checks rather than instanceof: errors which crossed the worker boundary
+    // arrive as plain objects where only name/message/code survive
+    const name = errorName(error);
+    if (name === "HttpError") {
+        const code = Number((error as { code?: unknown }).code);
+        if (code >= 502 && code <= 504) return true;
+    }
+    const message = errorMessage(error);
+    // Exempt from the TypeError rule below because it only ever originates from the Tauri
+    // native fetch layer
+    if (REQWEST_NOISE_PATTERN.test(message)) return true;
+    // Only for the browser's own TypeError: our code also throws Errors whose text happens to
+    // start "Failed to fetch ...", and those must stay reportable. A bare string carries no
+    // name, so it can never satisfy this and is reported like any other unrecognised failure.
+    return name === "TypeError" && NETWORK_NOISE_PATTERN.test(message);
+}
+
+// Failures produced by the client's environment rather than our code: corrupt or exhausted
+// browser storage, permission prompts the user declined or let time out, and the browser
+// failing to fetch its own service worker script. Nothing to fix per-occurrence.
+const ENVIRONMENT_NOISE_PATTERNS: RegExp[] = [
+    /internal error opening backing store/i,
+    /file_error_no_space/i,
+    /failed to read large indexeddb value/i,
+    /failed to write blobs/i,
+    /database connection is closing/i,
+    /connection is closing because of: io error/i,
+    /denied permission to use service worker/i,
+    // WebAuthn's blanket NotAllowedError: the user dismissed the passkey prompt or it timed out
+    /operation either timed out or was not allowed/i,
+    /failed to (update|register) a serviceworker/i,
+];
+
+function errorName(error: unknown): string {
+    if (error == null || typeof error !== "object" || !("name" in error)) return "";
+    return typeof error.name === "string" ? error.name : "";
+}
+
+function errorMessage(error: unknown): string {
+    if (typeof error === "string") return error;
+    if (error == null || typeof error !== "object" || !("message" in error)) return "";
+    return typeof error.message === "string" ? error.message : "";
+}
+
+function isEnvironmentNoise(error: unknown): boolean {
+    const name = errorName(error);
+    // AbortError is always a deliberate cancellation (navigation, stream teardown);
+    // QuotaExceededError is the client's disk, not our code
+    if (name === "AbortError" || name === "QuotaExceededError") return true;
+    return ENVIRONMENT_NOISE_PATTERNS.some((p) => p.test(errorMessage(error)));
+}
+
+// Events requests race membership changes: a user who has left, lapsed or been blocked keeps
+// requesting events until local state catches up, and the server answers with a NotAuthorized
+// code (100-106) which `assertSuccessfulEventsResponse` turns into a thrown Error embedding the
+// response JSON. Expected client state, not a defect.
+// Deliberately scoped to that one message: a NotAuthorized code reaching us from anywhere else -
+// a mutation, say - means our local view of the user's permissions is wrong, which is a defect.
+const EVENTS_RESPONSE_ERROR_PREFIX = "Events response error:";
+function isExpectedAccessError(error: unknown): boolean {
+    const message = errorMessage(error);
+    if (!message.startsWith(EVENTS_RESPONSE_ERROR_PREFIX)) return false;
+    const match = message.match(/"code":(\d+)/);
+    if (match == null) return false;
+    const code = Number(match[1]);
+    return code >= ErrorCode.InitiatorNotFound && code <= ErrorCode.InitiatorBlocked;
+}
+
+// Central filter applied by the logger before anything reaches Rollbar: expected session
+// teardown, network weather, client-environment failures and membership races are dropped;
+// everything else is reported.
+export function shouldReportError(error: unknown): boolean {
+    return !(
+        isExpectedSessionError(error) ||
+        isTransientNetworkError(error) ||
+        isEnvironmentNoise(error) ||
+        isExpectedAccessError(error)
+    );
+}
+
+// Message-level version of the same filter, for Rollbar's checkIgnore hook where only the
+// payload strings are available - i.e. errors captured by captureUncaught /
+// captureUnhandledRejections which bypass our logger entirely. Takes the exception class and
+// message as a pair so the name-dependent rules above (notably TypeError-only network matching)
+// behave identically on this path; `name` is empty for payloads that carry no exception.
+export function shouldReportMessage(name: string, message: string): boolean {
+    return !(
+        name === "AbortError" ||
+        name === "QuotaExceededError" ||
+        (name === "TypeError" && NETWORK_NOISE_PATTERN.test(message)) ||
+        REQWEST_NOISE_PATTERN.test(message) ||
+        ENVIRONMENT_NOISE_PATTERNS.some((p) => p.test(message)) ||
+        isExpectedAccessError(message)
     );
 }
 
@@ -64,7 +158,7 @@ function isTransientNetworkError(error: unknown): boolean {
 // silenced; every other failure - a decode error, a code bug - is still reported so real
 // regressions stay visible.
 export function shouldReportWorkerError(kind: string, error: unknown): boolean {
-    if (isExpectedSessionError(error) || isTransientNetworkError(error)) return false;
+    if (!shouldReportError(error)) return false;
     return !(callerToleratedErrorKinds.has(kind) && isDeadLedgerError(error));
 }
 
