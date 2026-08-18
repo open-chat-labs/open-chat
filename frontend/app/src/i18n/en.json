@@ -1159,6 +1159,7 @@
         "csam": "CSAM",
         "reportedMessage": "Reported message",
         "autoSanctioned": "Auto-sanction applied: message deleted and sender suspended",
+        "hashMatched": "Detected by media hash match:",
         "sender": "Sender",
         "reporters": "Reported by",
         "pipeline": "Detected by automated moderation",

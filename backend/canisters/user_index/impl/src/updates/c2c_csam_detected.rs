@@ -34,6 +34,7 @@ fn c2c_csam_detected_impl(args: Args, state: &mut RuntimeState) {
             sender: args.sender,
             flags: categories.bits(),
             blob_references: args.blob_references,
+            media_matches: args.media_matches.clone(),
             timestamp: now,
         })
     else {
@@ -80,6 +81,7 @@ fn c2c_csam_detected_impl(args: Args, state: &mut RuntimeState) {
             auto_sanctioned: true,
             content_excerpt: args.content_excerpt,
             blob_references: reported_message.blob_references,
+            media_matches: args.media_matches,
             timestamp: now,
         },
         state,

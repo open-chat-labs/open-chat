@@ -280,6 +280,16 @@ pub(crate) fn validate(action: &ProtectedAction, actor: UserId, state: &RuntimeS
                     .with_message("The API key is blank - to switch detection off, propose unsetting it instead"));
             }
         }
+        ProtectedAction::SetMediaScanConfig(args) => {
+            // Enabling with no scanner registered would queue jobs nothing can consume
+            if args.config.enabled && args.config.scanners.is_empty() {
+                return Err(OCErrorCode::InvalidRequest
+                    .with_message("Media scanning cannot be enabled without at least one scanner principal"));
+            }
+            if args.config.scanners.iter().any(|p| *p == Principal::anonymous()) {
+                return Err(OCErrorCode::InvalidRequest.with_message("The anonymous principal cannot be a scanner"));
+            }
+        }
         ProtectedAction::SetInternalModerationChannel(args) => {
             if let Some(channel) = &args.channel {
                 // The community's existence cannot be checked from here (the user_index knows

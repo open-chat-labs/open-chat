@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Relay media hash-match provenance on `c2c_csam_detected` to the user_index ([#9161](https://github.com/open-chat-labs/open-chat/pull/9161))
+
 ### Removed
 
 - Remove the one-off moderation-flag back-fill now that it has run on prod in the 2.0.2018 release ([#9156](https://github.com/open-chat-labs/open-chat/pull/9156))

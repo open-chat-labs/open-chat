@@ -103,6 +103,13 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 crate::jobs::moderate_messages::start_job_if_required(state);
             }
         }
+        GroupOrCommunityEvent::MediaScanRequest(request) => {
+            // The kill switch: while media scanning is not enabled, requests are dropped
+            // rather than queued so the log cannot accumulate jobs no worker will consume
+            if state.data.media_scan_config.enabled {
+                state.data.media_scan_job_log.push(caller, is_group, *request, **now);
+            }
+        }
         GroupOrCommunityEvent::Notification(mut notification) => {
             if let Notification::Bot(bot_notification) = &mut *notification
                 && let BotEvent::Lifecycle(BotLifecycleEvent::Installed(event)) = &bot_notification.event

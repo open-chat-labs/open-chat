@@ -1,6 +1,6 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{BuildVersion, CanisterId, ModerationReferralConfig};
+use types::{BuildVersion, CanisterId, MediaScanConfig, ModerationReferralConfig};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -24,5 +24,7 @@ pub struct Args {
     pub openai_api_key: Option<String>,
     #[serde(default)]
     pub moderation_referral_config: Option<ModerationReferralConfig>,
+    #[serde(default)]
+    pub media_scan_config: MediaScanConfig,
     pub test_mode: bool,
 }

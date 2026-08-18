@@ -16,6 +16,7 @@ fn moderation_config(_args: Args) -> Response {
             }),
             moderation_referral_config: state.data.moderation_referral_config.clone(),
             vault_reviewers: state.data.vault_reviewers.iter().copied().collect(),
+            media_scan_config: state.data.media_scan_config.clone(),
         })
     })
 }

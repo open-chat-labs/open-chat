@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Queue media posted to public channels of public communities for hash scanning and escalate scan matches via the existing CSAM detection path ([#9161](https://github.com/open-chat-labs/open-chat/pull/9161))
+
 ### Changed
 
 - Always send a classification request on edit, even when nothing is classifiable, so that stale moderation flags are cleared when an edit removes a message's text ([#9154](https://github.com/open-chat-labs/open-chat/pull/9154))

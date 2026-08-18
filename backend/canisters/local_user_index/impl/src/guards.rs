@@ -72,6 +72,14 @@ pub fn caller_is_notification_pusher() -> Result<(), String> {
     }
 }
 
+pub fn caller_is_media_scanner() -> Result<(), String> {
+    if read_state(|state| state.is_caller_media_scanner()) {
+        Ok(())
+    } else {
+        Err("Caller is not a media scanner".to_string())
+    }
+}
+
 pub fn caller_is_openchat_user() -> Result<(), String> {
     if read_state(|state| state.is_caller_openchat_user()) {
         Ok(())

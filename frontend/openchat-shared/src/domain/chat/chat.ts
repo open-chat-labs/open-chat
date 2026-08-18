@@ -663,8 +663,20 @@ export type ModerationReportContent = {
     autoSanctioned: boolean;
     contentExcerpt: string | undefined;
     blobReferences: BlobReference[];
+    // Present when the detection was a media hash match rather than the text classifier.
+    // Optional because report content restored from the IndexedDB cache can pre-date the field.
+    mediaMatches?: MediaScanMatch[];
     reportedAt: bigint;
     status: ModerationReportStatus;
+};
+
+export type MediaScanMatch = {
+    provider: string;
+    blobId: bigint;
+    source: string;
+    violations: string[];
+    matchDistance: bigint;
+    matchId: string | undefined;
 };
 
 export type ModerationReportStatus =
