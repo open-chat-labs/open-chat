@@ -2322,6 +2322,389 @@ fn media_scan_scope_and_kill_switch() {
     );
 }
 
+// ---------------------------------------------------------------------------
+// Blocked re-post attempts
+// (backend/docs/moderation-state-machine-invariants.md: I3, I6, I8, I9, I13, I14, I16)
+// ---------------------------------------------------------------------------
+
+// Configures media scanning + vault reviewers, uploads `file` as the sender, posts it to the
+// public group and submits a scanner match verdict, producing a PENDING hash-match report
+// with the blob quarantined. Returns the report index.
+fn establish_pending_hash_match_report(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    test_data: &TestData,
+    scanner: Principal,
+    file: &[u8],
+) -> u64 {
+    client::user_index::happy_path::execute_protected_action(
+        env,
+        test_data.moderator.principal,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        ProtectedAction::SetMediaScanConfig(user_index_canister::set_media_scan_config::Args {
+            config: MediaScanConfig {
+                enabled: true,
+                scanners: vec![scanner],
+            },
+        }),
+    );
+    client::user_index::happy_path::execute_protected_action(
+        env,
+        test_data.moderator.principal,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        ProtectedAction::SetVaultReviewers(user_index_canister::set_vault_reviewers::Args {
+            user_ids: vec![test_data.moderator.user_id],
+        }),
+    );
+    tick_many(env, 5);
+
+    let bucket =
+        client::storage_index::happy_path::allocated_bucket(env, test_data.sender.principal, canister_ids.storage_index, file);
+    client::storage_bucket::happy_path::upload_file(
+        env,
+        test_data.sender.principal,
+        bucket.canister_id,
+        bucket.file_id,
+        file.to_vec(),
+        vec![test_data.sender.canister()],
+        None,
+    );
+    let blob_reference = BlobReference {
+        canister_id: bucket.canister_id,
+        blob_id: bucket.file_id,
+    };
+    let message_id = random_from_u128();
+    send_image_message(env, &test_data.sender, test_data.group_id, message_id, blob_reference.clone());
+    tick_many(env, 3);
+
+    let local_user_index = canister_ids.local_user_index(env, test_data.group_id);
+    let local_user_index_canister::media_scan_jobs::Response::Success(jobs_result) = client::local_user_index::media_scan_jobs(
+        env,
+        scanner,
+        local_user_index,
+        &local_user_index_canister::media_scan_jobs::Args { from_job_index: 0 },
+    );
+    let job = jobs_result
+        .jobs
+        .iter()
+        .find(|j| j.request.message_id == message_id)
+        .expect("a scan job should be queued for the image message");
+    client::local_user_index::submit_media_scan_verdicts(
+        env,
+        scanner,
+        local_user_index,
+        &local_user_index_canister::submit_media_scan_verdicts::Args {
+            verdicts: vec![MediaScanVerdict {
+                job_index: job.job_index,
+                message_id,
+                outcomes: vec![MediaScanBlobOutcome::Match(MediaScanMatch {
+                    provider: MediaScanProvider::PhotoDna,
+                    blob_id: blob_reference.blob_id,
+                    source: "Test".to_string(),
+                    violations: vec!["A1".to_string()],
+                    match_distance: 181,
+                    match_id: Some("7469692".to_string()),
+                })],
+            }],
+            up_to_job_index: job.job_index,
+        },
+    );
+    tick_many(env, 10);
+
+    get_moderation_reports(env, test_data)
+        .iter()
+        .find(|r| r.sender == test_data.sender.user_id)
+        .and_then(|r| r.report_index)
+        .expect("the match should create a moderation report")
+}
+
+// Attempts to upload `file` as `uploader`, asserting the bucket refuses it (I13), then ticks
+// so the blocked-attempt event reaches the user_index
+fn attempt_blocked_upload(env: &mut PocketIc, canister_ids: &CanisterIds, uploader: &User, file: &[u8]) {
+    use utils::hasher::hash_bytes;
+    // A random seed per attempt, as the real client sends: the file id is derived from it, and
+    // the bucket's own retry dedup is keyed per (uploader, file id) - reusing an id models a
+    // client retry (deduped at the bucket), a fresh seed models a fresh human attempt
+    let storage_index_canister::allocated_bucket_v2::Response::Success(bucket) = client::storage_index::allocated_bucket_v2(
+        env,
+        uploader.principal,
+        canister_ids.storage_index,
+        &storage_index_canister::allocated_bucket_v2::Args {
+            file_hash: hash_bytes(file),
+            file_size: file.len() as u64,
+            file_id_seed: Some(random_from_u128()),
+        },
+    ) else {
+        panic!("allocation should succeed");
+    };
+    let response = client::storage_bucket::upload_chunk_v2(
+        env,
+        uploader.principal,
+        bucket.canister_id,
+        &storage_bucket_canister::upload_chunk_v2::Args {
+            file_id: bucket.file_id,
+            hash: hash_bytes(file),
+            mime_type: "image/jpeg".to_string(),
+            accessors: vec![uploader.canister()],
+            chunk_index: 0,
+            chunk_size: file.len() as u32,
+            total_size: file.len() as u64,
+            bytes: file.to_vec(),
+            expiry: None,
+        },
+    );
+    assert!(
+        matches!(response, storage_bucket_canister::upload_chunk_v2::Response::Blocked),
+        "{response:?}"
+    );
+    tick_many(env, 10);
+}
+
+fn random_file() -> Vec<u8> {
+    // Random content so pooled test envs never collide on vault/denylist state from an
+    // earlier test run of the same bytes
+    random_from_u128::<u128>().to_be_bytes().repeat(64).to_vec()
+}
+
+fn attempt_reports_for(env: &PocketIc, test_data: &TestData, attempter: &User) -> Vec<ModerationReportContent> {
+    get_moderation_reports(env, test_data)
+        .into_iter()
+        .filter(|r| r.sender == attempter.user_id)
+        .collect()
+}
+
+fn moderation_notices(env: &PocketIc, test_data: &TestData) -> Vec<String> {
+    let events = client::community::happy_path::events(
+        env,
+        &test_data.moderator,
+        test_data.moderation_community_id,
+        test_data.moderation_channel_id,
+        EventIndex::from(0),
+        true,
+        100,
+        200,
+    );
+    events
+        .events
+        .into_iter()
+        .filter_map(|e| if let ChatEvent::Message(m) = e.event { Some(*m) } else { None })
+        .filter_map(|m| if let MessageContent::Text(t) = m.content { Some(t.text) } else { None })
+        .collect()
+}
+
+fn authority_due_indexes(env: &PocketIc, test_data: &TestData, canister_ids: &CanisterIds) -> Vec<u64> {
+    get_authority_reports(env, test_data, canister_ids)["due"]
+        .as_array()
+        .map(|rows| rows.iter().filter_map(|r| r["report_index"].as_u64()).collect())
+        .unwrap_or_default()
+}
+
+// I13/I14 (block + visible report), I8 (not directly resolvable), I3 (dismissal of the
+// original lifts the attempter's provisional sanction)
+#[test]
+fn blocked_reupload_of_pending_content_reports_and_dismissal_reverses() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let file = random_file();
+    let original_report_index = establish_pending_hash_match_report(env, canister_ids, &test_data, random_principal(), &file);
+
+    // The reporter user doubles as the attempter: re-uploading the quarantined bytes is
+    // refused at the bucket and they are provisionally suspended
+    attempt_blocked_upload(env, canister_ids, &test_data.reporter, &file);
+
+    let attempter_state =
+        client::user_index::happy_path::current_user(env, test_data.reporter.principal, canister_ids.user_index);
+    assert!(attempter_state.suspension_details.is_some(), "attempter should be suspended");
+
+    let attempt_reports = attempt_reports_for(env, &test_data, &test_data.reporter);
+    assert_eq!(attempt_reports.len(), 1, "the blocked attempt should create its own report");
+    let attempt_report = &attempt_reports[0];
+    let attempt_report_index = attempt_report.report_index.expect("attempt report should carry an index");
+    assert!(
+        matches!(attempt_report.status, ModerationReportStatus::Pending),
+        "{:?}",
+        attempt_report.status
+    );
+    assert!(
+        attempt_report
+            .content_excerpt
+            .as_deref()
+            .is_some_and(|e| e.contains("quarantined pending review")),
+        "{:?}",
+        attempt_report.content_excerpt
+    );
+    // Pre-verdict: nothing is NCA-due yet (I16)
+    assert!(!authority_due_indexes(env, &test_data, canister_ids).contains(&attempt_report_index));
+
+    // I8: an attempt report is never resolved directly - it mirrors its original
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index: attempt_report_index,
+            verdict: ModerationVerdict::Dismissed,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Error(_)), "{resolve_response:?}");
+
+    // Dismissing the ORIGINAL lifts everything: sender unsuspended, attempter unsuspended
+    // (the exact path that was a dead branch before I3 was written down), attempt card
+    // resolved as Dismissed
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index: original_report_index,
+            verdict: ModerationVerdict::Dismissed,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    assert!(sender_state.suspension_details.is_none(), "sender should be unsuspended");
+    let attempter_state =
+        client::user_index::happy_path::current_user(env, test_data.reporter.principal, canister_ids.user_index);
+    assert!(
+        attempter_state.suspension_details.is_none(),
+        "attempter should be unsuspended"
+    );
+
+    let attempt_reports = attempt_reports_for(env, &test_data, &test_data.reporter);
+    assert!(
+        matches!(attempt_reports[0].status, ModerationReportStatus::Dismissed(_)),
+        "{:?}",
+        attempt_reports[0].status
+    );
+}
+
+// I16 (uphold mirrors to attempt reports and registers each as NCA-due) and I9 (an attempt
+// against already-adjudicated content is born resolved with its own register entry)
+#[test]
+fn upheld_original_registers_attempts_and_post_verdict_attempts_born_resolved() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let file = random_file();
+    let original_report_index = establish_pending_hash_match_report(env, canister_ids, &test_data, random_principal(), &file);
+
+    attempt_blocked_upload(env, canister_ids, &test_data.reporter, &file);
+    let attempt_report_index = attempt_reports_for(env, &test_data, &test_data.reporter)[0]
+        .report_index
+        .expect("attempt report should carry an index");
+
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index: original_report_index,
+            verdict: ModerationVerdict::UpheldAsCsam,
+            urgent: Some(false),
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+
+    // The mirror resolves the attempt report and registers it as its own NCA entry
+    let due = authority_due_indexes(env, &test_data, canister_ids);
+    assert!(due.contains(&original_report_index), "{due:?}");
+    assert!(due.contains(&attempt_report_index), "{due:?}");
+    let attempt_reports = attempt_reports_for(env, &test_data, &test_data.reporter);
+    assert!(
+        matches!(attempt_reports[0].status, ModerationReportStatus::UpheldAsCsam(_)),
+        "{:?}",
+        attempt_reports[0].status
+    );
+    let attempter_state =
+        client::user_index::happy_path::current_user(env, test_data.reporter.principal, canister_ids.user_index);
+    assert!(
+        attempter_state.suspension_details.is_some(),
+        "attempter remains suspended after uphold"
+    );
+
+    // A fresh attempt on the now-adjudicated content: refused at the (denylisted) bucket,
+    // report born resolved with its own immediate register entry
+    attempt_blocked_upload(env, canister_ids, &test_data.group_owner, &file);
+
+    let born_resolved = attempt_reports_for(env, &test_data, &test_data.group_owner);
+    assert_eq!(born_resolved.len(), 1);
+    let born_index = born_resolved[0].report_index.expect("born-resolved attempt report index");
+    assert!(
+        matches!(born_resolved[0].status, ModerationReportStatus::UpheldAsCsam(_)),
+        "{:?}",
+        born_resolved[0].status
+    );
+    assert!(authority_due_indexes(env, &test_data, canister_ids).contains(&born_index));
+    let attempter_state =
+        client::user_index::happy_path::current_user(env, test_data.group_owner.principal, canister_ids.user_index);
+    assert!(
+        attempter_state.suspension_details.is_some(),
+        "post-verdict attempter should be suspended"
+    );
+}
+
+// I6: a retry inside the window tallies (visible as a notice, no new report); a fresh attempt
+// outside the window is a fresh offence with its own report
+#[test]
+fn repeat_attempts_tally_inside_window_and_report_outside_it() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let file = random_file();
+    establish_pending_hash_match_report(env, canister_ids, &test_data, random_principal(), &file);
+
+    attempt_blocked_upload(env, canister_ids, &test_data.reporter, &file);
+    assert_eq!(attempt_reports_for(env, &test_data, &test_data.reporter).len(), 1);
+
+    // Same attempter again immediately: inside the retry window, so no new report - but the
+    // attempt is still visible as a channel notice (I14)
+    attempt_blocked_upload(env, canister_ids, &test_data.reporter, &file);
+    assert_eq!(
+        attempt_reports_for(env, &test_data, &test_data.reporter).len(),
+        1,
+        "a retry inside the window must not create a second report"
+    );
+    assert!(
+        moderation_notices(env, &test_data)
+            .iter()
+            .any(|t| t.contains("Repeat attempt")),
+        "the tallied retry must be visible as a notice"
+    );
+
+    // Outside the retry window the same act is a fresh offence with its own report
+    env.advance_time(Duration::from_secs(11 * 60));
+    tick_many(env, 3);
+    attempt_blocked_upload(env, canister_ids, &test_data.reporter, &file);
+    assert_eq!(
+        attempt_reports_for(env, &test_data, &test_data.reporter).len(),
+        2,
+        "an attempt outside the retry window is a fresh offence record"
+    );
+}
+
 fn send_image_message(env: &mut PocketIc, sender: &User, group_id: ChatId, message_id: types::MessageId, blob: BlobReference) {
     let send_response = client::group::send_message_v2(
         env,
