@@ -1466,6 +1466,9 @@ fn timed_suspension_expiry_never_lifts_a_later_csam_suspension() {
         "{:?}",
         suspension_details.action
     );
+
+    // A day was added to the clock: this env must not go back to the pool
+    wrapper.discard();
 }
 
 #[test]
@@ -2730,6 +2733,9 @@ fn repeat_attempts_tally_inside_window_and_report_outside_it() {
         2,
         "an attempt outside the retry window is a fresh offence record"
     );
+
+    // 11 minutes were added to the clock: this env must not go back to the pool
+    wrapper.discard();
 }
 
 // I15: the declared-hash gate cannot be bypassed in either direction - declaring the
@@ -3133,6 +3139,9 @@ fn stalled_scan_pipeline_alerts_and_recovers() {
             .any(|t| t.contains("Media scan pipeline recovered")),
         "recovery must post the all-clear"
     );
+
+    // 31 minutes were added to the clock: this env must not go back to the pool
+    wrapper.discard();
 }
 
 // I3 (an unrelated report's dismissal never lifts an attempt sanction) and the full lifecycle
