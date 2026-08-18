@@ -1,6 +1,6 @@
 use crate::guards::caller_is_storage_index;
 use crate::model::moderation;
-use crate::model::reported_messages::build_upload_sanction_message_to_uploader;
+use crate::model::reported_messages::{AddBlockedAttemptResult, build_upload_sanction_message_to_uploader};
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -65,54 +65,73 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
             state
                 .push_event_to_local_user_index(*user_id, build_upload_sanction_message_to_uploader(*user_id, verdict_pending));
 
-            // Each blocked attempt is an offence in its own right and owes its own authority
-            // (NCA) report, so it gets a first-class resolvable report - not just a channel
-            // notice. Anchored to the original report's evidence; None when this attempter
-            // already has an attempt report for that content (a retry is not a new offence
-            // record) or the original report index is unknown.
-            if let Some((attempt_report_index, attempt_report)) =
-                state
-                    .data
-                    .reported_messages
-                    .add_blocked_attempt_report(m.csam_report_index, *user_id, now)
+            // Each blocked attempt is a fresh offence and owes its own authority (NCA)
+            // report, so it gets its own first-class report anchored to the original report's
+            // evidence. Guards in add_blocked_attempt_report keep that honest: attempts
+            // within the client-retry window, or beyond the per-offender report cap, tally
+            // onto the latest report (still available to the authority filing) and surface
+            // as a notice instead.
+            match state
+                .data
+                .reported_messages
+                .add_blocked_attempt_report(m.csam_report_index, *user_id, now)
             {
-                if !verdict_pending {
-                    // The content was already adjudicated CSAM; the only new fact is the
-                    // attempter, so the authority report is due immediately (hash-only filing
-                    // - the NCA matches the hash on their side, nobody re-views the content)
-                    state.data.authority_reports.push_due(attempt_report_index, false, now);
+                Some(AddBlockedAttemptResult::Repeat {
+                    attempt_report_index,
+                    total_attempts,
+                }) => {
+                    let text = format!(
+                        "🚨 Repeat attempt to {action} content {status_phrase} in report #{} \
+                         (attempt {total_attempts} by this user; recorded on attempt report #{attempt_report_index}). \
+                         The attempt was blocked and no message was created.",
+                        m.csam_report_index
+                    );
+                    moderation::post_moderation_notice(text, state);
                 }
-                moderation::post_moderation_alert(
-                    moderation::ModerationAlert {
-                        report_index: Some(attempt_report_index),
-                        chat_id: attempt_report.chat_id,
-                        thread_root_message_index: attempt_report.thread_root_message_index,
-                        message_index: attempt_report.message_index,
-                        message_id: attempt_report.message_id,
-                        sender: *user_id,
-                        reporters: Vec::new(),
-                        categories: types::ModerationCategories::SEXUAL_MINORS,
-                        classification_failed: false,
-                        auto_sanctioned: true,
-                        content_excerpt: Some(format!(
-                            "[blocked attempt to {action} content {status_phrase} in report #{}]",
-                            m.csam_report_index
-                        )),
-                        blob_references: attempt_report.blob_references.clone(),
-                        media_matches: attempt_report.media_matches.clone(),
-                        authority_report: (!verdict_pending).then_some(types::AuthorityReportState::Due { urgent: false }),
-                        status: attempt_report
-                            .human_verdict()
-                            .map_or(types::ModerationReportStatus::Pending, |v| {
-                                types::ModerationReportStatus::UpheldAsCsam(types::ModerationReportResolution {
-                                    moderator: v.moderator,
-                                    timestamp: v.timestamp,
-                                })
-                            }),
-                        timestamp: now,
-                    },
-                    state,
-                );
+                Some(AddBlockedAttemptResult::New {
+                    attempt_report_index,
+                    report: attempt_report,
+                }) => {
+                    if !verdict_pending {
+                        // The content was already adjudicated CSAM; the only new fact is the
+                        // attempter, so the authority report is due immediately (hash-only
+                        // filing - the NCA matches the hash server-side, nobody re-views it)
+                        state.data.authority_reports.push_due(attempt_report_index, false, now);
+                    }
+                    moderation::post_moderation_alert(
+                        moderation::ModerationAlert {
+                            report_index: Some(attempt_report_index),
+                            chat_id: attempt_report.chat_id,
+                            thread_root_message_index: attempt_report.thread_root_message_index,
+                            message_index: attempt_report.message_index,
+                            message_id: attempt_report.message_id,
+                            sender: *user_id,
+                            reporters: Vec::new(),
+                            categories: types::ModerationCategories::SEXUAL_MINORS,
+                            classification_failed: false,
+                            auto_sanctioned: true,
+                            content_excerpt: Some(format!(
+                                "[blocked attempt to {action} content {status_phrase} in report #{}]",
+                                m.csam_report_index
+                            )),
+                            blob_references: attempt_report.blob_references.clone(),
+                            media_matches: attempt_report.media_matches.clone(),
+                            authority_report: (!verdict_pending).then_some(types::AuthorityReportState::Due { urgent: false }),
+                            status: attempt_report
+                                .human_verdict()
+                                .map_or(types::ModerationReportStatus::Pending, |v| {
+                                    types::ModerationReportStatus::UpheldAsCsam(types::ModerationReportResolution {
+                                        moderator: v.moderator,
+                                        timestamp: v.timestamp,
+                                    })
+                                }),
+                            timestamp: now,
+                        },
+                        state,
+                    );
+                }
+                // Unknown original report index (legacy denylist entry with no report)
+                None => {}
             }
         } else {
             // No resolvable user means no sanction and no report to anchor: fall back to a

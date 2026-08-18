@@ -13,6 +13,13 @@ use user_index_canister::resolve_moderation_report::ModerationVerdict;
 // one user cannot mass-report to trigger unbounded OpenAI calls and flood the moderation channel
 const MAX_NEW_REPORTS_PER_HOUR: usize = 10;
 
+// Blocked re-post attempts inside this window tally onto the latest attempt report rather
+// than opening a new one: a client's automatic retries are one human act, not several offences
+const ATTEMPT_RETRY_WINDOW: types::Milliseconds = 10 * constants::MINUTE_IN_MS;
+// Beyond this many attempt reports per (offender, content), further attempts tally instead:
+// a suspended user must not be able to mint unlimited reports and register rows
+const MAX_ATTEMPT_REPORTS_PER_OFFENDER: usize = 5;
+
 #[derive(Serialize, Deserialize, Default)]
 pub struct ReportedMessages {
     messages: Vec<ReportedMessage>,
@@ -78,6 +85,7 @@ impl ReportedMessages {
                 release_pending: false,
                 csam_asserted_by: if args.csam { vec![args.reporter] } else { Vec::new() },
                 blocked_attempt_report_indexes: Vec::new(),
+                repeat_attempts: Vec::new(),
             });
             AddReportResult::New(new_index as u64)
         }
@@ -153,15 +161,45 @@ impl ReportedMessages {
         original_report_index: u64,
         uploader: UserId,
         now: TimestampMillis,
-    ) -> Option<(u64, Box<ReportedMessage>)> {
-        let original = self.messages.get(original_report_index as usize)?;
-        if original
+    ) -> Option<AddBlockedAttemptResult> {
+        let existing_indexes = self
+            .messages
+            .get(original_report_index as usize)?
             .blocked_attempt_report_indexes
+            .clone();
+        // Each attempt is a fresh offence and normally gets its own report (and its own
+        // authority register entry). Two guards keep that honest under adversarial or flaky
+        // clients: attempts inside the retry window tally onto the latest report (a client's
+        // automatic retries are one human act, not several offences), and attempts beyond
+        // the per-offender cap tally rather than letting a suspended user mint unlimited
+        // register rows - the tally itself remains available to the authority filing.
+        let existing: Vec<u64> = existing_indexes
             .iter()
-            .any(|i| self.messages.get(*i as usize).is_some_and(|m| m.sender == uploader))
-        {
-            return None;
+            .filter(|i| self.messages.get(**i as usize).is_some_and(|m| m.sender == uploader))
+            .copied()
+            .collect();
+        if let Some(&latest_index) = existing.last() {
+            let prior_attempts: usize = existing
+                .iter()
+                .filter_map(|i| self.messages.get(*i as usize))
+                .map(|m| 1 + m.repeat_attempts.len())
+                .sum();
+            let latest = self.messages.get_mut(latest_index as usize).unwrap();
+            let last_activity = latest
+                .repeat_attempts
+                .last()
+                .copied()
+                .or(latest.automated_timestamp())
+                .unwrap_or_default();
+            if now.saturating_sub(last_activity) < ATTEMPT_RETRY_WINDOW || existing.len() >= MAX_ATTEMPT_REPORTS_PER_OFFENDER {
+                latest.repeat_attempts.push(now);
+                return Some(AddBlockedAttemptResult::Repeat {
+                    attempt_report_index: latest_index,
+                    total_attempts: (prior_attempts + 1) as u32,
+                });
+            }
         }
+        let original = self.messages.get(original_report_index as usize)?;
         // A post-verdict attempt is born resolved, inheriting the original's content verdict
         // (that moderator's adjudication of the content covers the attempt; the only open
         // question is attribution, handled by the contest/unsuspend path). A pre-verdict
@@ -194,13 +232,17 @@ impl ReportedMessages {
             legal_hold: false,
             release_pending: false,
             blocked_attempt_report_indexes: Vec::new(),
+            repeat_attempts: Vec::new(),
         };
         let new_index = self.messages.len() as u64;
         self.messages.push(entry);
         self.messages[original_report_index as usize]
             .blocked_attempt_report_indexes
             .push(new_index);
-        Some((new_index, Box::new(self.messages[new_index as usize].clone())))
+        Some(AddBlockedAttemptResult::New {
+            attempt_report_index: new_index,
+            report: Box::new(self.messages[new_index as usize].clone()),
+        })
     }
 
     // Mirrors the original report's human verdict onto its unresolved blocked-attempt
@@ -385,6 +427,7 @@ impl ReportedMessages {
                 release_pending: false,
                 csam_asserted_by: Vec::new(),
                 blocked_attempt_report_indexes: Vec::new(),
+                repeat_attempts: Vec::new(),
             });
             Some((new_index as u64, true))
         }
@@ -605,6 +648,23 @@ pub struct ReportedMessage {
     // mirror this report's resolution (see resolve_moderation_report)
     #[serde(default)]
     pub blocked_attempt_report_indexes: Vec<u64>,
+    // On a blocked-attempt report: timestamps of further attempts by the same user on the
+    // same content. One report per (offender, content) - a repeat is tallied here (for the
+    // authority filing) rather than opening a fresh report, which a suspended user could
+    // otherwise mint at will
+    #[serde(default)]
+    pub repeat_attempts: Vec<TimestampMillis>,
+}
+
+pub enum AddBlockedAttemptResult {
+    New {
+        attempt_report_index: u64,
+        report: Box<ReportedMessage>,
+    },
+    Repeat {
+        attempt_report_index: u64,
+        total_attempts: u32,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -621,6 +681,13 @@ pub enum DetectionSource {
 }
 
 impl ReportedMessage {
+    pub fn automated_timestamp(&self) -> Option<TimestampMillis> {
+        match &self.outcome {
+            Some(ReportOutcome::Automated(a)) => Some(a.timestamp),
+            _ => None,
+        }
+    }
+
     pub fn human_verdict(&self) -> Option<&HumanVerdict> {
         match &self.outcome {
             Some(ReportOutcome::Automated(a)) => a.human_verdict.as_ref(),
