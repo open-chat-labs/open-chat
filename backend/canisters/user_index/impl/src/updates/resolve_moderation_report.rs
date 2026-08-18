@@ -44,6 +44,19 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
     // only place a false report is ever recorded - becomes unreachable), releases the vaulted
     // evidence, and skips every escalation, while still punishing the sender.
     if let Some(report) = state.data.reported_messages.get(args.report_index) {
+        // A blocked-attempt report is never resolved directly: a pre-verdict attempt resolves
+        // by mirroring its original report's verdict, and for a post-verdict attempt the only
+        // reviewable question is attribution, which is the contest/unsuspend path. Resolving
+        // one here would also fire the message-restoration side effects at the ORIGINAL
+        // message coordinates the attempt report borrows.
+        if matches!(
+            report.detection,
+            crate::model::reported_messages::DetectionSource::BlockedAttempt { .. }
+        ) {
+            return Err(OCErrorCode::InvalidRequest.with_message(
+                "Blocked-attempt reports resolve with their original report; use unsuspend to reverse the sanction",
+            ));
+        }
         if report.sender == moderator {
             return Err(OCErrorCode::InitiatorNotAuthorized.with_message("Cannot resolve a report against your own message"));
         }
@@ -298,11 +311,13 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     },
                     state,
                 );
+                state.push_event_to_local_user_index(attempt_report.sender, build_verdict_message_to_sender(&attempt_report));
             }
             ModerationVerdict::Upheld => {
                 // A violation but not CSAM: the attempter's indefinite suspension downgrades
                 // to the standard severity, mirroring the sender's treatment
                 moderation::downgrade_suspension_to_upheld_violation(attempt_report.sender, attempt_index, now, state);
+                state.push_event_to_local_user_index(attempt_report.sender, build_verdict_message_to_sender(&attempt_report));
             }
             ModerationVerdict::Dismissed => {
                 // The allegation was wrong, so the attempt sanction lifts with it - guarded on

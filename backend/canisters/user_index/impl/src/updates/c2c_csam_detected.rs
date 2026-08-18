@@ -84,6 +84,7 @@ fn c2c_csam_detected_impl(args: Args, state: &mut RuntimeState) {
             media_matches: args.media_matches,
             timestamp: now,
             authority_report: None,
+            status: types::ModerationReportStatus::Pending,
         },
         state,
     );

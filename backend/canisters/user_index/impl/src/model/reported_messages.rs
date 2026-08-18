@@ -162,6 +162,11 @@ impl ReportedMessages {
         {
             return None;
         }
+        // A post-verdict attempt is born resolved, inheriting the original's content verdict
+        // (that moderator's adjudication of the content covers the attempt; the only open
+        // question is attribution, handled by the contest/unsuspend path). A pre-verdict
+        // attempt is born pending and resolves by mirroring the original's eventual verdict.
+        let inherited_verdict = original.human_verdict().cloned();
         let entry = ReportedMessage {
             chat_id: original.chat_id,
             thread_root_message_index: original.thread_root_message_index,
@@ -177,7 +182,7 @@ impl ReportedMessages {
                 action: ModerationAction::AutoSanctioned,
                 sanctioned: true,
                 classification_failed: false,
-                human_verdict: None,
+                human_verdict: inherited_verdict,
             })),
             moderation_channel_message_id: None,
             blob_references: original.blob_references.clone(),
@@ -616,6 +621,13 @@ pub enum DetectionSource {
 }
 
 impl ReportedMessage {
+    pub fn human_verdict(&self) -> Option<&HumanVerdict> {
+        match &self.outcome {
+            Some(ReportOutcome::Automated(a)) => a.human_verdict.as_ref(),
+            _ => None,
+        }
+    }
+
     // True if this report justifies keeping its sender suspended at `now`: an unresolved
     // automated sanction, an upheld-as-CSAM verdict (indefinite suspension), or an upheld
     // violation whose one-day suspension is still running
@@ -794,6 +806,15 @@ pub fn build_verdict_message_to_reporter(
 }
 
 pub fn build_verdict_message_to_sender(reported_message: &ReportedMessage) -> UserIndexEvent {
+    // A blocked attempt has no message: the verdict confirms the content the user tried to
+    // post, so only the sanction status is communicated
+    if matches!(reported_message.detection, DetectionSource::BlockedAttempt { .. }) {
+        let text = "The OpenChat moderation team reviewed the content you had tried to post, which had been blocked, and confirmed \
+            that it breaks [the platform rules](https://oc.app/guidelines?section=3). Your account remains suspended. \
+            If you believe this is wrong you can request that a person reviews the decision, using the button on the suspension notice."
+            .to_string();
+        return build_oc_bot_message(text, reported_message.sender);
+    }
     let text = format!(
         "Your [message]({}) was reported by another user and the OpenChat moderation team confirmed that it broke [the platform rules](https://oc.app/guidelines?section=3). {}",
         build_message_link(reported_message),

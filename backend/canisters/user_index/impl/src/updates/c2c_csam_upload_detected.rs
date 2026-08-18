@@ -101,6 +101,14 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
                         blob_references: attempt_report.blob_references.clone(),
                         media_matches: attempt_report.media_matches.clone(),
                         authority_report: (!verdict_pending).then_some(types::AuthorityReportState::Due { urgent: false }),
+                        status: attempt_report
+                            .human_verdict()
+                            .map_or(types::ModerationReportStatus::Pending, |v| {
+                                types::ModerationReportStatus::UpheldAsCsam(types::ModerationReportResolution {
+                                    moderator: v.moderator,
+                                    timestamp: v.timestamp,
+                                })
+                            }),
                         timestamp: now,
                     },
                     state,
