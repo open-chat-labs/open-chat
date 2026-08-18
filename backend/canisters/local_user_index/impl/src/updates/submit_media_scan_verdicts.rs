@@ -14,6 +14,10 @@ fn submit_media_scan_verdicts(args: Args) -> Response {
 
 fn submit_media_scan_verdicts_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
+    if state.data.media_scan_job_log.record_verdict_activity(now) {
+        // Ends a previously alerted stall - post the all-clear to the moderation channel
+        state.push_event_to_user_index(crate::UserIndexEvent::MediaScanRecovered, now);
+    }
     // The ack watermark is clamped to the highest job index a verdict was actually submitted
     // for, so a buggy client acking `latest_job_index` cannot prune jobs it never processed
     let max_verdict_index = args.verdicts.iter().map(|v| v.job_index).max();
@@ -25,7 +29,7 @@ fn submit_media_scan_verdicts_impl(args: Args, state: &mut RuntimeState) -> Resp
         state
             .data
             .media_scan_job_log
-            .prune(args.up_to_job_index.min(max_verdict_index));
+            .prune(args.up_to_job_index.min(max_verdict_index), now);
     }
     Success
 }

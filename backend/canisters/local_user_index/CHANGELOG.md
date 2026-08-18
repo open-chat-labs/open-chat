@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add the media scan job log plus worker-facing `media_scan_jobs` and `submit_media_scan_verdicts` endpoints, gated on the media scan config set by the user_index ([#9161](https://github.com/open-chat-labs/open-chat/pull/9161))
+- Detect a stalled media scan pipeline (jobs queued but no verdicts arriving) and raise it in the internal moderation channel via the user_index, with an all-clear on recovery ([#9161](https://github.com/open-chat-labs/open-chat/pull/9161))
 
 ### Changed
 

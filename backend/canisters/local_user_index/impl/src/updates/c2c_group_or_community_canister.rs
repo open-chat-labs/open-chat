@@ -107,7 +107,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             // The kill switch: while media scanning is not enabled, requests are dropped
             // rather than queued so the log cannot accumulate jobs no worker will consume
             if state.data.media_scan_config.enabled {
-                state.data.media_scan_job_log.push(caller, is_group, *request);
+                state.data.media_scan_job_log.push(caller, is_group, *request, **now);
             }
         }
         GroupOrCommunityEvent::Notification(mut notification) => {

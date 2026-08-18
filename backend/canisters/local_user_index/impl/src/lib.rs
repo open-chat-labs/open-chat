@@ -526,6 +526,8 @@ impl RuntimeState {
             media_scanning_enabled: self.data.media_scan_config.enabled,
             media_scan_job_log_len: self.data.media_scan_job_log.len() as u32,
             media_scan_latest_job_index: self.data.media_scan_job_log.latest_job_index(),
+            media_scan_last_verdict_at: self.data.media_scan_job_log.last_verdict_at(),
+            media_scan_jobs_dropped: self.data.media_scan_job_log.dropped(),
             cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
             bots: self
                 .data
@@ -782,6 +784,8 @@ pub struct Metrics {
     pub media_scanning_enabled: bool,
     pub media_scan_job_log_len: u32,
     pub media_scan_latest_job_index: u64,
+    pub media_scan_last_verdict_at: TimestampMillis,
+    pub media_scan_jobs_dropped: u64,
     pub cycles_balance_check_queue_len: u32,
     pub bots: Vec<BotMetrics>,
     pub blocked_username_patterns: Vec<String>,
