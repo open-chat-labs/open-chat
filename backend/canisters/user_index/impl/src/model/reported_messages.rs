@@ -1169,6 +1169,8 @@ mod report_status_tests {
             legal_hold: false,
             release_pending: false,
             csam_asserted_by: Vec::new(),
+            blocked_attempt_report_indexes: Vec::new(),
+            repeat_attempts: Vec::new(),
         }
     }
 
