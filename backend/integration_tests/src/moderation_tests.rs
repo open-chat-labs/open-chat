@@ -2423,16 +2423,40 @@ fn establish_pending_hash_match_report(
 // Attempts to upload `file` as `uploader`, asserting the bucket refuses it (I13), then ticks
 // so the blocked-attempt event reaches the user_index
 fn attempt_blocked_upload(env: &mut PocketIc, canister_ids: &CanisterIds, uploader: &User, file: &[u8]) {
+    upload_expecting(env, canister_ids, uploader, file, |r| {
+        matches!(r, storage_bucket_canister::upload_chunk_v2::Response::Blocked)
+    });
+}
+
+// Uploads `file` (single chunk) as `uploader` with a random file_id_seed - as the real client
+// sends - and asserts the response. The seed matters: the file id derives from it, and the
+// bucket's retry dedup is keyed per (uploader, file id), so a fresh seed models a fresh human
+// attempt while a reused id models a client retry.
+fn upload_expecting(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    uploader: &User,
+    file: &[u8],
+    expected: fn(&storage_bucket_canister::upload_chunk_v2::Response) -> bool,
+) {
     use utils::hasher::hash_bytes;
-    // A random seed per attempt, as the real client sends: the file id is derived from it, and
-    // the bucket's own retry dedup is keyed per (uploader, file id) - reusing an id models a
-    // client retry (deduped at the bucket), a fresh seed models a fresh human attempt
+    upload_declaring_hash_expecting(env, canister_ids, uploader, file, hash_bytes(file), expected);
+}
+
+fn upload_declaring_hash_expecting(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    uploader: &User,
+    file: &[u8],
+    declared_hash: [u8; 32],
+    expected: fn(&storage_bucket_canister::upload_chunk_v2::Response) -> bool,
+) {
     let storage_index_canister::allocated_bucket_v2::Response::Success(bucket) = client::storage_index::allocated_bucket_v2(
         env,
         uploader.principal,
         canister_ids.storage_index,
         &storage_index_canister::allocated_bucket_v2::Args {
-            file_hash: hash_bytes(file),
+            file_hash: declared_hash,
             file_size: file.len() as u64,
             file_id_seed: Some(random_from_u128()),
         },
@@ -2445,7 +2469,7 @@ fn attempt_blocked_upload(env: &mut PocketIc, canister_ids: &CanisterIds, upload
         bucket.canister_id,
         &storage_bucket_canister::upload_chunk_v2::Args {
             file_id: bucket.file_id,
-            hash: hash_bytes(file),
+            hash: declared_hash,
             mime_type: "image/jpeg".to_string(),
             accessors: vec![uploader.canister()],
             chunk_index: 0,
@@ -2455,10 +2479,7 @@ fn attempt_blocked_upload(env: &mut PocketIc, canister_ids: &CanisterIds, upload
             expiry: None,
         },
     );
-    assert!(
-        matches!(response, storage_bucket_canister::upload_chunk_v2::Response::Blocked),
-        "{response:?}"
-    );
+    assert!(expected(&response), "{response:?}");
     tick_many(env, 10);
 }
 
@@ -2588,6 +2609,12 @@ fn blocked_reupload_of_pending_content_reports_and_dismissal_reverses() {
         "{:?}",
         attempt_reports[0].status
     );
+
+    // I12: dismissal never arms the denylist and releases the pin, so the same bytes upload
+    // freely again
+    upload_expecting(env, canister_ids, &test_data.reporter, &file, |r| {
+        matches!(r, storage_bucket_canister::upload_chunk_v2::Response::Success)
+    });
 }
 
 // I16 (uphold mirrors to attempt reports and registers each as NCA-due) and I9 (an attempt
@@ -2702,6 +2729,539 @@ fn repeat_attempts_tally_inside_window_and_report_outside_it() {
         attempt_reports_for(env, &test_data, &test_data.reporter).len(),
         2,
         "an attempt outside the retry window is a fresh offence record"
+    );
+}
+
+// I15: the declared-hash gate cannot be bypassed in either direction - declaring the
+// quarantined hash with different bytes is refused outright, and declaring a fake hash for
+// the quarantined bytes fails the completion check so the file never exists
+#[test]
+fn spoofed_hashes_cannot_bypass_the_upload_gate() {
+    use utils::hasher::hash_bytes;
+
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let file = random_file();
+    establish_pending_hash_match_report(env, canister_ids, &test_data, random_principal(), &file);
+
+    // Different bytes declaring the quarantined hash: refused before any byte is stored
+    let other_file = random_file();
+    upload_declaring_hash_expecting(env, canister_ids, &test_data.reporter, &other_file, hash_bytes(&file), |r| {
+        matches!(r, storage_bucket_canister::upload_chunk_v2::Response::Blocked)
+    });
+
+    // The quarantined bytes declaring an innocent hash: accepted past the gate but the
+    // completion check rejects the lie, so no file (and no reference) ever exists
+    upload_declaring_hash_expecting(env, canister_ids, &test_data.reporter, &file, hash_bytes(&other_file), |r| {
+        matches!(r, storage_bucket_canister::upload_chunk_v2::Response::HashMismatch)
+    });
+}
+
+// I17: the moderation flag word merges across the racing detectors - a clean text
+// classification landing after a scan match must not unlock hash-matched content, and
+// classifier-set bits survive a scan match on the same message
+#[test]
+fn flag_word_merges_across_detector_race() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let scanner = random_principal();
+    let file = random_file();
+
+    // A captioned image queues BOTH pipelines: the text classify outcall is left pending
+    // while the scan match lands first
+    let caption = format!("{TEST_MESSAGE_TEXT} {}", random_string());
+    let message_id = {
+        // establish_pending_hash_match_report posts caption-less; inline the captioned variant
+        client::user_index::happy_path::execute_protected_action(
+            env,
+            test_data.moderator.principal,
+            test_data.operator2.principal,
+            canister_ids.user_index,
+            ProtectedAction::SetMediaScanConfig(user_index_canister::set_media_scan_config::Args {
+                config: MediaScanConfig {
+                    enabled: true,
+                    scanners: vec![scanner],
+                },
+            }),
+        );
+        client::user_index::happy_path::execute_protected_action(
+            env,
+            test_data.moderator.principal,
+            test_data.operator2.principal,
+            canister_ids.user_index,
+            ProtectedAction::SetVaultReviewers(user_index_canister::set_vault_reviewers::Args {
+                user_ids: vec![test_data.moderator.user_id],
+            }),
+        );
+        tick_many(env, 5);
+        let bucket = client::storage_index::happy_path::allocated_bucket(
+            env,
+            test_data.sender.principal,
+            canister_ids.storage_index,
+            &file,
+        );
+        client::storage_bucket::happy_path::upload_file(
+            env,
+            test_data.sender.principal,
+            bucket.canister_id,
+            bucket.file_id,
+            file.clone(),
+            vec![test_data.sender.canister()],
+            None,
+        );
+        let blob_reference = BlobReference {
+            canister_id: bucket.canister_id,
+            blob_id: bucket.file_id,
+        };
+        let message_id = random_from_u128();
+        send_captioned_image_message(
+            env,
+            &test_data.sender,
+            test_data.group_id,
+            message_id,
+            blob_reference.clone(),
+            &caption,
+        );
+        tick_many(env, 3);
+
+        let local_user_index = canister_ids.local_user_index(env, test_data.group_id);
+        let local_user_index_canister::media_scan_jobs::Response::Success(jobs_result) =
+            client::local_user_index::media_scan_jobs(
+                env,
+                scanner,
+                local_user_index,
+                &local_user_index_canister::media_scan_jobs::Args { from_job_index: 0 },
+            );
+        let job = jobs_result
+            .jobs
+            .iter()
+            .find(|j| j.request.message_id == message_id)
+            .expect("a scan job should be queued");
+        client::local_user_index::submit_media_scan_verdicts(
+            env,
+            scanner,
+            local_user_index,
+            &local_user_index_canister::submit_media_scan_verdicts::Args {
+                verdicts: vec![MediaScanVerdict {
+                    job_index: job.job_index,
+                    message_id,
+                    outcomes: vec![MediaScanBlobOutcome::Match(MediaScanMatch {
+                        provider: MediaScanProvider::PhotoDna,
+                        blob_id: blob_reference.blob_id,
+                        source: "Test".to_string(),
+                        violations: vec!["A1".to_string()],
+                        match_distance: 181,
+                        match_id: None,
+                    })],
+                }],
+                up_to_job_index: job.job_index,
+            },
+        );
+        tick_many(env, 10);
+
+        // Scan escalation applied: message deleted + read-gated
+        let deleted = client::group::deleted_message(
+            env,
+            test_data.group_owner.principal,
+            test_data.group_id.into(),
+            &group_canister::deleted_message::Args {
+                thread_root_message_index: None,
+                message_id,
+            },
+        );
+        assert!(
+            matches!(deleted, group_canister::deleted_message::Response::Error(_)),
+            "{deleted:?}"
+        );
+        message_id
+    };
+
+    // Now the racing CLEAN classification lands - it must not unlock the content
+    env.advance_time(Duration::from_secs(10));
+    mock_moderation_outcalls(env, &caption, &[], 1);
+    tick_many(env, 10);
+
+    let events = client::group::happy_path::events(
+        env,
+        &test_data.group_owner,
+        test_data.group_id,
+        EventIndex::from(0),
+        true,
+        100,
+        200,
+    );
+    let message = events
+        .events
+        .into_iter()
+        .filter_map(|e| if let ChatEvent::Message(m) = e.event { Some(*m) } else { None })
+        .find(|m| m.message_id == message_id)
+        .expect("message should exist");
+    assert!(matches!(message.content, MessageContent::Deleted(_)), "{:?}", message.content);
+    assert_ne!(
+        message.moderation_flags & 2,
+        0,
+        "the scan-set CSAM flag must survive a clean classification"
+    );
+    let still_gated = client::group::deleted_message(
+        env,
+        test_data.group_owner.principal,
+        test_data.group_id.into(),
+        &group_canister::deleted_message::Args {
+            thread_root_message_index: None,
+            message_id,
+        },
+    );
+    assert!(
+        matches!(still_gated, group_canister::deleted_message::Response::Error(_)),
+        "{still_gated:?}"
+    );
+}
+
+// I18/I19/I20: a redelivered verdict is a no-op, and an over-claiming ack cannot prune jobs
+// which never received a verdict
+#[test]
+fn verdict_redelivery_noops_and_ack_is_clamped() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let scanner = random_principal();
+    let file = random_file();
+    establish_pending_hash_match_report(env, canister_ids, &test_data, scanner, &file);
+    let local_user_index = canister_ids.local_user_index(env, test_data.group_id);
+
+    // Redelivery: the job was pruned by the first submission, so the duplicate is ignored and
+    // no second report or sanction appears
+    let reports_before = get_moderation_reports(env, &test_data).len();
+    let local_user_index_canister::media_scan_jobs::Response::Success(latest) = client::local_user_index::media_scan_jobs(
+        env,
+        scanner,
+        local_user_index,
+        &local_user_index_canister::media_scan_jobs::Args { from_job_index: 0 },
+    );
+    client::local_user_index::submit_media_scan_verdicts(
+        env,
+        scanner,
+        local_user_index,
+        &local_user_index_canister::submit_media_scan_verdicts::Args {
+            verdicts: vec![MediaScanVerdict {
+                job_index: 1,
+                message_id: random_from_u128(),
+                outcomes: vec![MediaScanBlobOutcome::Clean],
+            }],
+            up_to_job_index: latest.latest_job_index,
+        },
+    );
+    tick_many(env, 5);
+    assert_eq!(get_moderation_reports(env, &test_data).len(), reports_before);
+
+    // Ack clamp: two new jobs (posted by the group owner - the original sender is suspended
+    // by the auto-sanction); a verdict for only the first, acking beyond the second, must
+    // not prune the second
+    for _ in 0..2 {
+        let f = random_file();
+        let bucket = client::storage_index::happy_path::allocated_bucket(
+            env,
+            test_data.group_owner.principal,
+            canister_ids.storage_index,
+            &f,
+        );
+        client::storage_bucket::happy_path::upload_file(
+            env,
+            test_data.group_owner.principal,
+            bucket.canister_id,
+            bucket.file_id,
+            f.to_vec(),
+            vec![test_data.group_owner.canister()],
+            None,
+        );
+        send_image_message(
+            env,
+            &test_data.group_owner,
+            test_data.group_id,
+            random_from_u128(),
+            BlobReference {
+                canister_id: bucket.canister_id,
+                blob_id: bucket.file_id,
+            },
+        );
+    }
+    tick_many(env, 5);
+    let local_user_index_canister::media_scan_jobs::Response::Success(jobs) = client::local_user_index::media_scan_jobs(
+        env,
+        scanner,
+        local_user_index,
+        &local_user_index_canister::media_scan_jobs::Args { from_job_index: 0 },
+    );
+    assert!(jobs.jobs.len() >= 2, "two fresh jobs expected, got {}", jobs.jobs.len());
+    let first = &jobs.jobs[jobs.jobs.len() - 2];
+    let second_index = jobs.jobs.last().unwrap().job_index;
+    client::local_user_index::submit_media_scan_verdicts(
+        env,
+        scanner,
+        local_user_index,
+        &local_user_index_canister::submit_media_scan_verdicts::Args {
+            verdicts: vec![MediaScanVerdict {
+                job_index: first.job_index,
+                message_id: first.request.message_id,
+                outcomes: vec![MediaScanBlobOutcome::Clean],
+            }],
+            // Over-claim: ack everything including the job we never scanned
+            up_to_job_index: second_index,
+        },
+    );
+    let local_user_index_canister::media_scan_jobs::Response::Success(remaining) = client::local_user_index::media_scan_jobs(
+        env,
+        scanner,
+        local_user_index,
+        &local_user_index_canister::media_scan_jobs::Args { from_job_index: 0 },
+    );
+    assert!(
+        remaining.jobs.iter().any(|j| j.job_index == second_index),
+        "the unscanned job must survive an over-claiming ack"
+    );
+}
+
+// I20: a stalled pipeline (jobs queued, no verdicts) raises a moderation-channel alert, and
+// the first verdict after it posts the all-clear
+#[test]
+fn stalled_scan_pipeline_alerts_and_recovers() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let scanner = random_principal();
+    client::user_index::happy_path::execute_protected_action(
+        env,
+        test_data.moderator.principal,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        ProtectedAction::SetMediaScanConfig(user_index_canister::set_media_scan_config::Args {
+            config: MediaScanConfig {
+                enabled: true,
+                scanners: vec![scanner],
+            },
+        }),
+    );
+    tick_many(env, 5);
+
+    let file = random_file();
+    let bucket =
+        client::storage_index::happy_path::allocated_bucket(env, test_data.sender.principal, canister_ids.storage_index, &file);
+    client::storage_bucket::happy_path::upload_file(
+        env,
+        test_data.sender.principal,
+        bucket.canister_id,
+        bucket.file_id,
+        file.clone(),
+        vec![test_data.sender.canister()],
+        None,
+    );
+    let message_id = random_from_u128();
+    send_image_message(
+        env,
+        &test_data.sender,
+        test_data.group_id,
+        message_id,
+        BlobReference {
+            canister_id: bucket.canister_id,
+            blob_id: bucket.file_id,
+        },
+    );
+    tick_many(env, 3);
+
+    // No worker consumes the job: past the stall threshold the local index raises the alarm
+    env.advance_time(Duration::from_secs(31 * 60));
+    tick_many(env, 10);
+    assert!(
+        moderation_notices(env, &test_data)
+            .iter()
+            .any(|t| t.contains("Media scan pipeline stalled")),
+        "a stalled pipeline must alert the moderation channel"
+    );
+
+    // The first verdict afterwards posts the all-clear
+    let local_user_index = canister_ids.local_user_index(env, test_data.group_id);
+    let local_user_index_canister::media_scan_jobs::Response::Success(jobs) = client::local_user_index::media_scan_jobs(
+        env,
+        scanner,
+        local_user_index,
+        &local_user_index_canister::media_scan_jobs::Args { from_job_index: 0 },
+    );
+    let job = jobs
+        .jobs
+        .iter()
+        .find(|j| j.request.message_id == message_id)
+        .expect("the stalled job should still be queued");
+    client::local_user_index::submit_media_scan_verdicts(
+        env,
+        scanner,
+        local_user_index,
+        &local_user_index_canister::submit_media_scan_verdicts::Args {
+            verdicts: vec![MediaScanVerdict {
+                job_index: job.job_index,
+                message_id,
+                outcomes: vec![MediaScanBlobOutcome::Clean],
+            }],
+            up_to_job_index: job.job_index,
+        },
+    );
+    tick_many(env, 10);
+    assert!(
+        moderation_notices(env, &test_data)
+            .iter()
+            .any(|t| t.contains("Media scan pipeline recovered")),
+        "recovery must post the all-clear"
+    );
+}
+
+// I3 (an unrelated report's dismissal never lifts an attempt sanction) and the full lifecycle
+// closure: only the linked report's dismissal does
+#[test]
+fn unrelated_dismissal_never_lifts_an_attempt_sanction() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    // The attempter first earns their own unrelated CSAM report (classifier-detected text)
+    let unrelated_message_id = random_from_u128();
+    let unrelated_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
+    client::group::happy_path::send_text_message(
+        env,
+        &test_data.reporter,
+        test_data.group_id,
+        None,
+        &unrelated_text,
+        Some(unrelated_message_id),
+    );
+    tick_many(env, 3);
+    env.advance_time(Duration::from_secs(10));
+    mock_moderation_outcalls(env, &unrelated_text, &[CSAM_CATEGORY], 1);
+    tick_many(env, 10);
+    let unrelated_report_index = get_moderation_reports(env, &test_data)
+        .iter()
+        .find(|r| r.sender == test_data.reporter.user_id)
+        .and_then(|r| r.report_index)
+        .expect("the classifier detection should create a report");
+
+    // Then a blocked attempt on someone else's pending content
+    let file = random_file();
+    let original_report_index = establish_pending_hash_match_report(env, canister_ids, &test_data, random_principal(), &file);
+    attempt_blocked_upload(env, canister_ids, &test_data.reporter, &file);
+
+    // Dismissing the UNRELATED report must not lift the attempt sanction
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index: unrelated_report_index,
+            verdict: ModerationVerdict::Dismissed,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+    let attempter_state =
+        client::user_index::happy_path::current_user(env, test_data.reporter.principal, canister_ids.user_index);
+    assert!(
+        attempter_state.suspension_details.is_some(),
+        "an unrelated dismissal must not lift the attempt sanction"
+    );
+
+    // The attempter can contest the automated sanction (Article 22)
+    let contest_response = client::user_index::contest_moderation_sanction(
+        env,
+        test_data.reporter.principal,
+        canister_ids.user_index,
+        &types::Empty {},
+    );
+    assert!(matches!(contest_response, UnitResult::Success), "{contest_response:?}");
+
+    // Only the LINKED report's dismissal lifts it
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index: original_report_index,
+            verdict: ModerationVerdict::Dismissed,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+    let attempter_state =
+        client::user_index::happy_path::current_user(env, test_data.reporter.principal, canister_ids.user_index);
+    assert!(
+        attempter_state.suspension_details.is_none(),
+        "the linked report's dismissal lifts the attempt sanction"
+    );
+}
+
+fn send_captioned_image_message(
+    env: &mut PocketIc,
+    sender: &User,
+    group_id: ChatId,
+    message_id: types::MessageId,
+    blob: BlobReference,
+    caption: &str,
+) {
+    let send_response = client::group::send_message_v2(
+        env,
+        sender.principal,
+        group_id.into(),
+        &group_canister::send_message_v2::Args {
+            thread_root_message_index: None,
+            message_id,
+            content: MessageContentInitial::Image(ImageContent {
+                width: 100,
+                height: 100,
+                thumbnail_data: ThumbnailData("data:image/jpeg;base64,".to_string()),
+                caption: Some(caption.to_string()),
+                mime_type: "image/jpeg".to_string(),
+                blob_reference: Some(blob),
+            }),
+            sender_name: sender.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            forwarding: false,
+            block_level_markdown: false,
+            rules_accepted: None,
+            message_filter_failed: None,
+            new_achievement: false,
+            og_previews: Vec::new(),
+        },
+    );
+    assert!(
+        matches!(send_response, group_canister::send_message_v2::Response::Success(_)),
+        "{send_response:?}"
     );
 }
 
