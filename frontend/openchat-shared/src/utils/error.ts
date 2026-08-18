@@ -54,8 +54,9 @@ function isExpectedSessionError(error: unknown): boolean {
 const NETWORK_NOISE_PATTERN =
     /failed to fetch|networkerror|load failed|network connection was lost|error decoding response body/i;
 
+const REQWEST_NOISE_PATTERN = /error decoding response body/i;
+
 function isTransientNetworkError(error: unknown): boolean {
-    if (typeof error === "string") return NETWORK_NOISE_PATTERN.test(error);
     // Structural checks rather than instanceof: errors which crossed the worker boundary
     // arrive as plain objects where only name/message/code survive
     const name = errorName(error);
@@ -63,11 +64,13 @@ function isTransientNetworkError(error: unknown): boolean {
         const code = Number((error as { code?: unknown }).code);
         if (code >= 502 && code <= 504) return true;
     }
-    // Only for the browser's own TypeError: our code also throws Errors whose text happens to
-    // start "Failed to fetch ...", and those must stay reportable. The reqwest string is exempt
-    // because it only ever originates from the Tauri native fetch layer.
     const message = errorMessage(error);
-    if (/error decoding response body/i.test(message)) return true;
+    // Exempt from the TypeError rule below because it only ever originates from the Tauri
+    // native fetch layer
+    if (REQWEST_NOISE_PATTERN.test(message)) return true;
+    // Only for the browser's own TypeError: our code also throws Errors whose text happens to
+    // start "Failed to fetch ...", and those must stay reportable. A bare string carries no
+    // name, so it can never satisfy this and is reported like any other unrecognised failure.
     return name === "TypeError" && NETWORK_NOISE_PATTERN.test(message);
 }
 
@@ -110,8 +113,13 @@ function isEnvironmentNoise(error: unknown): boolean {
 // requesting events until local state catches up, and the server answers with a NotAuthorized
 // code (100-106) which `assertSuccessfulEventsResponse` turns into a thrown Error embedding the
 // response JSON. Expected client state, not a defect.
+// Deliberately scoped to that one message: a NotAuthorized code reaching us from anywhere else -
+// a mutation, say - means our local view of the user's permissions is wrong, which is a defect.
+const EVENTS_RESPONSE_ERROR_PREFIX = "Events response error:";
 function isExpectedAccessError(error: unknown): boolean {
-    const match = errorMessage(error).match(/"code":(\d+)/);
+    const message = errorMessage(error);
+    if (!message.startsWith(EVENTS_RESPONSE_ERROR_PREFIX)) return false;
+    const match = message.match(/"code":(\d+)/);
     if (match == null) return false;
     const code = Number(match[1]);
     return code >= ErrorCode.InitiatorNotFound && code <= ErrorCode.InitiatorBlocked;
@@ -130,13 +138,16 @@ export function shouldReportError(error: unknown): boolean {
 }
 
 // Message-level version of the same filter, for Rollbar's checkIgnore hook where only the
-// payload strings (exception class / message) are available - i.e. errors captured by
-// captureUncaught / captureUnhandledRejections which bypass our logger entirely.
-export function shouldReportMessage(message: string): boolean {
+// payload strings are available - i.e. errors captured by captureUncaught /
+// captureUnhandledRejections which bypass our logger entirely. Takes the exception class and
+// message as a pair so the name-dependent rules above (notably TypeError-only network matching)
+// behave identically on this path; `name` is empty for payloads that carry no exception.
+export function shouldReportMessage(name: string, message: string): boolean {
     return !(
-        message === "AbortError" ||
-        message === "QuotaExceededError" ||
-        NETWORK_NOISE_PATTERN.test(message) ||
+        name === "AbortError" ||
+        name === "QuotaExceededError" ||
+        (name === "TypeError" && NETWORK_NOISE_PATTERN.test(message)) ||
+        REQWEST_NOISE_PATTERN.test(message) ||
         ENVIRONMENT_NOISE_PATTERNS.some((p) => p.test(message)) ||
         isExpectedAccessError(message)
     );

@@ -12,20 +12,24 @@ import { shouldReportError, shouldReportMessage } from "./error";
 
 let rollbar: Rollbar | undefined;
 
-// Pull the strings Rollbar would fingerprint on out of a payload: exception class/message for
-// trace items (including chained causes), the body for plain message items
+// Pull the strings Rollbar would fingerprint on out of a payload: the exception class/message of
+// the primary error for trace items, the body for plain message items. Only the primary error is
+// inspected - `trace_chain[0]`, with any causes following it - because a real failure wrapped
+// around an expected cause is still a real failure and must be reported.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function rollbarPayloadMessages(payload: any): string[] {
+function rollbarPayloadError(payload: any): { name: string; message: string } {
     const body = payload?.body;
-    const traces = body?.trace_chain ?? (body?.trace ? [body.trace] : []);
-    const messages: string[] = [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    for (const trace of traces as any[]) {
-        if (typeof trace?.exception?.class === "string") messages.push(trace.exception.class);
-        if (typeof trace?.exception?.message === "string") messages.push(trace.exception.message);
+    const exception = (body?.trace_chain?.[0] ?? body?.trace)?.exception;
+    if (exception != null) {
+        return {
+            name: typeof exception.class === "string" ? exception.class : "",
+            message: typeof exception.message === "string" ? exception.message : "",
+        };
     }
-    if (typeof body?.message?.body === "string") messages.push(body.message.body);
-    return messages;
+    return {
+        name: "",
+        message: typeof body?.message?.body === "string" ? body.message.body : "",
+    };
 }
 
 export function inititaliseLogger(apikey: string, version: string, env: string): Logger {
@@ -47,8 +51,11 @@ export function inititaliseLogger(apikey: string, version: string, env: string):
             // captureUncaught / captureUnhandledRejections bypass our logger, so uncaught
             // items get the same noise filtering at the transport layer. Logger-reported items
             // (isUncaught false) already passed shouldReportError and are not re-filtered here.
-            checkIgnore: (isUncaught, _args, payload) =>
-                isUncaught && rollbarPayloadMessages(payload).some((m) => !shouldReportMessage(m)),
+            checkIgnore: (isUncaught, _args, payload) => {
+                if (!isUncaught) return false;
+                const { name, message } = rollbarPayloadError(payload);
+                return !shouldReportMessage(name, message);
+            },
             payload: {
                 environment: env,
                 client: {
