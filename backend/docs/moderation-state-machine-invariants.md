@@ -93,6 +93,19 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
   (`record_human_verdict` → `AlreadyResolved`). A moderator may not resolve a report they
   are party to (own message: all verdicts barred; own CSAM assertion: only UpheldAsCsam
   permitted). `FlaggedOnly` outcomes cannot receive a verdict until escalated.
+- **I8b — Attempt indexes are rejected by every evidence-affecting entry point.** An attempt
+  report aliases the ORIGINAL report's blob references while carrying the attempter's
+  `sender` and its own (virgin) `release_pending`, so any guard evaluated against the
+  targeted report reads the wrong values. `set_vault_legal_hold` and evidence destruction
+  (propose-time validation AND execute) reject BlockedAttempt indexes outright - most
+  critically, the dual-authorization gate on release-performing hold clears reads
+  `release_pending` and would otherwise be bypassable with a single operator.
+  `record_authority_report_filed` accepts them (attempt rows are real register rows) but its
+  conflict guard covers BOTH subjects: the attempter and the original report's sender.
+  The consumer classes audited for attempt-report reachability are now three: consumers of
+  `user.reported_messages`, consumers of report-index arguments, and the resolve/contest
+  surfaces. Any NEW entry point taking a report index must decide its BlockedAttempt
+  behavior explicitly.
 - **I8a — Attempt reports are never contestable as reports.** `mark_contested` refuses
   BlockedAttempt reports: a Contested attempt card would be unactionable (I8) and would
   short-circuit the contest loop before the hash-match sanction contest - the attempter's
@@ -157,7 +170,11 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
   state (denylisted, or released) so that a pre-verdict sighting can never suppress the
   reporting of a post-verdict attempt on the same stable file id (forwards) - INCLUDING
   dedup-shared file ids the vault never tracked, resolved against the Files model at every
-  hash transition (`clear_sightings_sharing_hash`). The sighting
+  hash transition (`clear_sightings_sharing_hash`). ONE exception to the trace rule: a pin
+  retained only by a legal hold has no active claim and its refusals are visible only in the
+  bucket log - a hold is a rare, operator-created state and no report can honestly anchor
+  the attempt. Notices are throttled per (report, OFFENDER): one offender's flood must not
+  consume another offender's only named trace. The sighting
   set is BOUNDED (oldest evicted; a re-report is tolerated per I18), and notices are
   throttled per anchor report with a suppressed-attempt tally - unsanctioned attempts are
   free to generate, so neither the channel nor a bot-DM stream may scale with them (the
@@ -185,6 +202,11 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
 
 ### Async delivery
 
+- **I19a — Wire enums are append-only.** rmp-serde encodes unit variants by index: inserting
+  a variant mid-enum renumbers everything after it, and an old receiver then silently decodes
+  a NEW variant as a different existing one rather than failing. New variants go at the end,
+  where an old receiver fails to decode and the fire-and-forget drops - the failure mode the
+  deploy-order rules are designed around.
 - **I19 — Every cross-canister edge is at-least-once or fail-visible.** Retried edges ride
   idempotency-checked event queues. Fire-and-forget edges (`c2c_csam_detected`,
   quarantine/vault ops, alert cards) drop permanently on decode/method errors — the system
@@ -249,3 +271,5 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
 | I10 (strikes) | attempt reports never escalate an Upheld downgrade to indefinite |
 | I8a (contest) | attempter's contest falls through to the sanction path and posts the notice; attempt card never Contested; contest survives a repeat re-record |
 | I14/I16 (shared ids) | a dedup-shared file id blocked pre-verdict is still reported when forwarded post-verdict |
+| I8b (vault ops) | legal-hold and destruction entry points reject attempt report indexes |
+| I14 (per-offender throttle) | two offenders against one pin each get a named notice |

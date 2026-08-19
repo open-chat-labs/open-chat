@@ -286,6 +286,14 @@ impl Vault {
         self.blocked_attempts_order.retain(|(_, id)| !ids.contains(id));
     }
 
+    // Pre-bound state (or any divergence) has sightings in the set with no order queue, which
+    // the eviction can never touch: rebuilt on upgrade so the bound applies to legacy entries
+    pub fn rebuild_blocked_attempt_order(&mut self) {
+        if self.blocked_attempts_order.len() != self.blocked_attempts.len() {
+            self.blocked_attempts_order = self.blocked_attempts.iter().cloned().collect();
+        }
+    }
+
     pub fn clear_blocked_attempts_for_hash(&mut self, hash: &Hash) {
         let ids: std::collections::BTreeSet<FileId> = self
             .file_id_to_hash

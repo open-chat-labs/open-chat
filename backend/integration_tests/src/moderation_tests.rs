@@ -2633,6 +2633,58 @@ fn blocked_reupload_of_pending_content_reports_and_dismissal_reverses() {
     });
 }
 
+// I8b: evidence-affecting entry points reject attempt report indexes - the attempt report
+// aliases the original's blob references with a different sender and a virgin
+// release_pending, so every guard would read the wrong report
+#[test]
+fn vault_ops_reject_attempt_report_indexes() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let file = random_file();
+    establish_pending_hash_match_report(env, canister_ids, &test_data, random_principal(), &file);
+    attempt_blocked_upload(env, canister_ids, &test_data.reporter, &file);
+    let attempt_report_index = attempt_reports_for(env, &test_data, &test_data.reporter)[0]
+        .report_index
+        .expect("attempt report index");
+
+    let hold_response = client::user_index::set_vault_legal_hold(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::set_vault_legal_hold::Args {
+            report_index: attempt_report_index,
+            legal_hold: true,
+            reference: "TEST-REF-1".to_string(),
+        },
+    );
+    assert!(matches!(hold_response, UnitResult::Error(_)), "{hold_response:?}");
+
+    let destroy_response = client::user_index::propose_protected_action(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::propose_protected_action::Args {
+            action: ProtectedAction::DestroyVaultEvidence(user_index_canister::destroy_vault_evidence::Args {
+                report_index: attempt_report_index,
+                le_request_ref: "TEST-REF-2".to_string(),
+            }),
+        },
+    );
+    assert!(
+        matches!(
+            destroy_response,
+            user_index_canister::propose_protected_action::Response::Error(_)
+        ),
+        "{destroy_response:?}"
+    );
+}
+
 // I16 (uphold mirrors to attempt reports and registers each as NCA-due) and I9 (an attempt
 // against already-adjudicated content is born resolved with its own register entry)
 #[test]
@@ -3766,6 +3818,15 @@ fn unsanctioned_attempt_notices_are_throttled() {
     let attempter_state =
         client::user_index::happy_path::current_user(env, test_data.group_owner.principal, canister_ids.user_index);
     assert!(attempter_state.suspension_details.is_none());
+
+    // A DIFFERENT offender's first attempt gets its own named notice: the throttle is per
+    // (report, offender), so one offender's flood cannot hide another (I14)
+    attempt_blocked_upload(env, canister_ids, &test_data.moderator, &file);
+    let notices = moderation_notices(env, &test_data)
+        .iter()
+        .filter(|t| t.contains("Blocked re-post of content under review"))
+        .count();
+    assert_eq!(notices, 2, "each offender gets a named notice");
 }
 
 // I10 (strikes): attempt reports never count towards the repeat-offender escalation - an

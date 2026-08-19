@@ -25,6 +25,18 @@ fn set_vault_legal_hold_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         .get(args.report_index)
         .ok_or(OCErrorCode::MessageNotFound)?;
 
+    // Vault operations never accept an attempt report index (I8): it aliases the ORIGINAL
+    // report's blob references while carrying the attempter's sender and its own (virgin)
+    // release_pending, so every guard below would be evaluated against the wrong report -
+    // including the dual-authorization gate on release-performing hold clears
+    if matches!(
+        report.detection,
+        crate::model::reported_messages::DetectionSource::BlockedAttempt { .. }
+    ) {
+        return Err(OCErrorCode::InvalidRequest
+            .with_message("Legal holds are managed on the original report, not a blocked-attempt report"));
+    }
+
     // Never on a report against your own message: clearing a hold restarts the retention clock
     // towards deletion, so the subject of the report could steer the evidence about themselves
     // towards expiry

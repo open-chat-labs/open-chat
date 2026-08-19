@@ -69,7 +69,7 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
                  The user could not be resolved, so NO suspension was applied.",
                 m.uploader, m.csam_report_index
             );
-            moderation::post_throttled_blocked_attempt_notice(m.csam_report_index, text, now, state);
+            moderation::post_throttled_blocked_attempt_notice(m.csam_report_index, m.uploader, text, now, state);
             continue;
         };
         let who = format!("@{username} ({user_id})");
@@ -101,7 +101,7 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
                      sanctioned and reported.",
                     m.csam_report_index
                 );
-                moderation::post_throttled_blocked_attempt_notice(m.csam_report_index, text, now, state);
+                moderation::post_throttled_blocked_attempt_notice(m.csam_report_index, m.uploader, text, now, state);
                 continue;
             }
         }
@@ -187,7 +187,7 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
                     anchor_state_phrase(verdict),
                     m.csam_report_index
                 );
-                moderation::post_throttled_blocked_attempt_notice(attempt_report_index, text, now, state);
+                moderation::post_throttled_blocked_attempt_notice(attempt_report_index, m.uploader, text, now, state);
             }
             None => {
                 // Unknown original report index (legacy denylist entry with no report): only
@@ -208,7 +208,7 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
                      if this sanction was applied in error, unsuspending the user reverses it.",
                     m.csam_report_index
                 );
-                moderation::post_throttled_blocked_attempt_notice(m.csam_report_index, text, now, state);
+                moderation::post_throttled_blocked_attempt_notice(m.csam_report_index, m.uploader, text, now, state);
             }
         }
     }
@@ -236,21 +236,25 @@ fn apply_attempt_sanction(
         }
         Some(ModerationVerdict::Upheld) => {
             // A violation but not CSAM: the standard severity, like the original sender's.
-            // No hash-match sanction record - it would wrongly read as an indefinite
-            // sanction to every other-sanction check.
-            moderation::suspend_sender(user_id, now, state);
+            // The downgrade enqueues its own (one-day) suspension - a preceding
+            // suspend_sender would race it with an indefinite, CSAM-worded one (I21) and
+            // whichever write landed last would win. No hash-match sanction record either -
+            // it would wrongly read as an indefinite sanction to every other-sanction check.
             moderation::downgrade_suspension_to_upheld_violation(user_id, attempt_report_index, now, state);
         }
         Some(ModerationVerdict::Dismissed) => {
-            // The content was cleared: no sanction, and any stale record from an earlier
-            // attempt against this report lifts. The clear is unconditional; the unsuspend
-            // decision rests on the other-sanction check alone (I1/I2 - the record may
-            // already have been cleared or overwritten, and that must not strand the user).
-            state
+            // The content was cleared: no sanction is applied, and a stale record from an
+            // EARLIER attempt against this report lifts. Unlike the resolve-time mirror, the
+            // unsuspend here requires the clear to have actually removed such a record: this
+            // path applied no suspension of its own, so without one to reverse it must not
+            // touch the user's suspension state at all - has_other_active_sanction cannot
+            // see manual moderator suspensions (I1/I2). Overwritten-record cases are the
+            // mirror's job at resolution time, not this arm's.
+            let cleared = state
                 .data
                 .users
                 .clear_csam_upload_sanction_if_for_report(&user_id, original_report_index);
-            if !moderation::has_other_active_sanction(user_id, attempt_report_index, now, state) {
+            if cleared && !moderation::has_other_active_sanction(user_id, attempt_report_index, now, state) {
                 moderation::unsuspend_sender(user_id, attempt_report_index, now, state);
             }
         }

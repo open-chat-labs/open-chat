@@ -138,9 +138,21 @@ pub fn notify_other_platform_operators(text: String, state: &mut RuntimeState) {
 // generate (an assertion-pinned hash can be "attempted" endlessly with fresh file ids), so
 // per-attempt notices would let anyone flood the moderation channel. The attempts stay
 // counted (I14): the next posted notice carries the suppressed tally.
-pub fn post_throttled_blocked_attempt_notice(report_index: u64, text: String, now: TimestampMillis, state: &mut RuntimeState) {
+pub fn post_throttled_blocked_attempt_notice(
+    report_index: u64,
+    uploader: candid::Principal,
+    text: String,
+    now: TimestampMillis,
+    state: &mut RuntimeState,
+) {
     const NOTICE_THROTTLE: types::Milliseconds = constants::HOUR_IN_MS;
-    let entry = state.data.blocked_attempt_notice_throttle.entry(report_index).or_default();
+    // Keyed per (report, uploader): one offender's flood must not consume another offender's
+    // only notice - I14 requires a trace naming each offender
+    let entry = state
+        .data
+        .blocked_attempt_notice_throttle
+        .entry((report_index, uploader))
+        .or_default();
     if now.saturating_sub(entry.0) >= NOTICE_THROTTLE {
         let suppressed = entry.1;
         *entry = (now, 0);

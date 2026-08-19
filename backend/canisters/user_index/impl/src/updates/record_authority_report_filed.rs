@@ -28,6 +28,18 @@ fn record_authority_report_filed_impl(args: Args, state: &mut RuntimeState) -> O
         return Err(OCErrorCode::InitiatorNotAuthorized
             .with_message("Cannot record the authority report filing for a report against your own message"));
     }
+    // An attempt row's filing equally concerns the ORIGINAL report's sender: the subject of
+    // the underlying content must not record it either (I8)
+    if let crate::model::reported_messages::DetectionSource::BlockedAttempt { original_report_index } = report.detection
+        && state
+            .data
+            .reported_messages
+            .get(original_report_index)
+            .is_some_and(|original| caller.is_some_and(|c| c == original.sender))
+    {
+        return Err(OCErrorCode::InitiatorNotAuthorized
+            .with_message("Cannot record the authority report filing for an attempt on your own reported content"));
+    }
 
     state.data.authority_reports.record_filed(
         args.report_index,

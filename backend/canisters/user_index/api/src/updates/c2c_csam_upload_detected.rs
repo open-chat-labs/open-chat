@@ -27,15 +27,19 @@ pub enum CsamMatchKind {
     // warranting the same sanction as the original sender
     UploadAttempt,
     ForwardAttempt,
-    // A refused attempt to re-post content while it sits vault-pinned awaiting a verdict.
-    // The same hash-match signal which provisionally sanctioned the original sender, so the
-    // attempt receives the same provisional treatment, tied to the pending report
-    PendingQuarantineAttempt,
     // Inert default kept for decode compatibility with events sent before the kind field
     // existed. Verdicts are never applied retrospectively to existing copies - every
     // reported copy gets its own human verdict - so this kind triggers no action.
     #[default]
     ExistingCopy,
+    // A refused attempt to re-post content while it sits vault-pinned awaiting a verdict.
+    // The same hash-match signal which provisionally sanctioned the original sender, so the
+    // attempt receives the same provisional treatment, tied to the pending report.
+    // APPENDED after ExistingCopy: rmp-serde encodes unit variants by index, so inserting
+    // mid-enum re-numbers later variants on the wire - new variants go at the END, always,
+    // so an old receiver fails to decode (and the fire-and-forget drops) rather than
+    // silently misreading a real variant as a different one.
+    PendingQuarantineAttempt,
 }
 
 pub type Response = UnitResult;
