@@ -147,13 +147,31 @@ pub fn post_throttled_blocked_attempt_notice(
 ) {
     const NOTICE_THROTTLE: types::Milliseconds = constants::HOUR_IN_MS;
     const MAX_THROTTLE_ENTRIES: usize = 10_000;
-    // Bounded: entries older than the window are inert (their next notice posts immediately
-    // anyway), so they are dropped once the map grows past the cap
+    // Bounded HARD: dropping inert (out-of-window) entries first is free, but 10k distinct
+    // in-window keys are possible, so the oldest are evicted until under the cap - an evicted
+    // key's next notice posts immediately, which only errs towards visibility
     if state.data.blocked_attempt_notice_throttle.len() > MAX_THROTTLE_ENTRIES {
         state
             .data
             .blocked_attempt_notice_throttle
             .retain(|_, (last, _)| now.saturating_sub(*last) < NOTICE_THROTTLE);
+        let excess = state
+            .data
+            .blocked_attempt_notice_throttle
+            .len()
+            .saturating_sub(MAX_THROTTLE_ENTRIES);
+        if excess > 0 {
+            let mut by_age: Vec<((u64, candid::Principal), TimestampMillis)> = state
+                .data
+                .blocked_attempt_notice_throttle
+                .iter()
+                .map(|(k, (last, _))| (*k, *last))
+                .collect();
+            by_age.sort_by_key(|(_, last)| *last);
+            for (key, _) in by_age.into_iter().take(excess) {
+                state.data.blocked_attempt_notice_throttle.remove(&key);
+            }
+        }
     }
     // Keyed per (report, uploader): one offender's flood must not consume another offender's
     // only notice - I14 requires a trace naming each offender
@@ -435,6 +453,18 @@ pub fn suspend_sender(sender: UserId, now: TimestampMillis, state: &mut RuntimeS
         sender,
         None,
         "The message depicts, promotes or attempts to normalize child sexual abuse".to_string(),
+        now,
+        state,
+    );
+}
+
+// The provisional suspension for a PRE-VERDICT blocked attempt: the reason the user sees on
+// the suspension notice must not assert confirmed CSAM about content still under review (I21)
+pub fn suspend_attempter_pending_review(user_id: UserId, now: TimestampMillis, state: &mut RuntimeState) {
+    suspend(
+        user_id,
+        None,
+        "Content you attempted to post matches content under review as suspected child sexual abuse material".to_string(),
         now,
         state,
     );
@@ -834,6 +864,25 @@ pub fn has_other_indefinite_sanction(sender: UserId, except_report_index: u64, s
 // True when the suspension currently in force was applied by the automated pipeline. The
 // reversal paths may only lift what automation applied: has_other_active_sanction cannot see
 // manual moderator suspensions, so without this check a dismissal could lift one (I1/I2)
+// True when a suspension is in force which automation did NOT apply: the automated paths
+// must neither replace nor downgrade it (I1a)
+pub fn has_manual_suspension(user_id: UserId, state: &RuntimeState) -> bool {
+    state
+        .data
+        .users
+        .get_by_user_id(&user_id)
+        .and_then(|u| u.suspension_details.as_ref())
+        .is_some_and(|d| d.suspended_by != OPENCHAT_BOT_USER_ID)
+}
+
+pub fn is_suspended(user_id: UserId, state: &RuntimeState) -> bool {
+    state
+        .data
+        .users
+        .get_by_user_id(&user_id)
+        .is_some_and(|u| u.suspension_details.is_some())
+}
+
 pub fn suspension_is_automated(user_id: UserId, state: &RuntimeState) -> bool {
     state
         .data

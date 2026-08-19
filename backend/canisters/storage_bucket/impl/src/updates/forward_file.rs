@@ -28,7 +28,7 @@ fn forward_file_impl(args: Args, state: &mut RuntimeState) -> Response {
         && let Some(report_index) = state.data.vault.known_csam_report_index(&file.hash)
     {
         // Report once per file id: a retry of the same refused forward is not a fresh attempt
-        if state.data.vault.record_blocked_attempt(caller, args.file_id) {
+        if state.data.vault.record_blocked_attempt(caller, args.file_id, file.hash) {
             state.data.push_event_to_index(EventToSync::CsamMatch(CsamMatch {
                 uploader: caller,
                 file_id: args.file_id,
@@ -45,7 +45,7 @@ fn forward_file_impl(args: Args, state: &mut RuntimeState) -> Response {
         && state.data.files.is_vault_pinned(&file.hash)
     {
         if let Some(report_index) = state.data.vault.pinned_report_index(&file.hash)
-            && state.data.vault.record_blocked_attempt(caller, args.file_id)
+            && state.data.vault.record_blocked_attempt(caller, args.file_id, file.hash)
         {
             state.data.push_event_to_index(EventToSync::CsamMatch(CsamMatch {
                 uploader: caller,

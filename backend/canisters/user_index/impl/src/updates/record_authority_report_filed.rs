@@ -28,6 +28,18 @@ fn record_authority_report_filed_impl(args: Args, state: &mut RuntimeState) -> O
         return Err(OCErrorCode::InitiatorNotAuthorized
             .with_message("Cannot record the authority report filing for a report against your own message"));
     }
+    // The urgency-valve (unverified) filing leaves the verdict open for a reviewer to
+    // resolve - which is impossible on an attempt report (I8), so the valve must anchor the
+    // ORIGINAL report
+    if args.unverified
+        && matches!(
+            report.detection,
+            crate::model::reported_messages::DetectionSource::BlockedAttempt { .. }
+        )
+    {
+        return Err(OCErrorCode::InvalidRequest
+            .with_message("An unverified filing anchors the original report, not a blocked-attempt report"));
+    }
     // An attempt row's filing equally concerns the ORIGINAL report's sender: the subject of
     // the underlying content must not record it either (I8)
     if let crate::model::reported_messages::DetectionSource::BlockedAttempt { original_report_index } = report.detection

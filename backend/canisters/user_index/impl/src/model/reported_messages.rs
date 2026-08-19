@@ -933,16 +933,21 @@ pub fn build_verdict_message_to_reporter(
     build_oc_bot_message(text, reporter)
 }
 
+// The verdict message for a blocked-attempt report: no message exists, so only the content
+// finding and the ACTUAL sanction state are communicated (I5/I21 - "remains suspended" is
+// only said when true; a moderator may have manually unsuspended in the interim, or a
+// downgrade may have declined)
+pub fn build_attempt_verdict_message(reported_message: &ReportedMessage, still_suspended: bool) -> UserIndexEvent {
+    let suspension_text = if still_suspended { " Your account remains suspended." } else { "" };
+    let text = format!(
+        "The OpenChat moderation team reviewed the content you had tried to post, which had been blocked, and confirmed \
+        that it breaks [the platform rules](https://oc.app/guidelines?section=3).{suspension_text} \
+        If you believe this is wrong you can request that a person reviews the decision, using the button on the suspension notice."
+    );
+    build_oc_bot_message(text, reported_message.sender)
+}
+
 pub fn build_verdict_message_to_sender(reported_message: &ReportedMessage) -> UserIndexEvent {
-    // A blocked attempt has no message: the verdict confirms the content the user tried to
-    // post, so only the sanction status is communicated
-    if matches!(reported_message.detection, DetectionSource::BlockedAttempt { .. }) {
-        let text = "The OpenChat moderation team reviewed the content you had tried to post, which had been blocked, and confirmed \
-            that it breaks [the platform rules](https://oc.app/guidelines?section=3). Your account remains suspended. \
-            If you believe this is wrong you can request that a person reviews the decision, using the button on the suspension notice."
-            .to_string();
-        return build_oc_bot_message(text, reported_message.sender);
-    }
     let text = format!(
         "Your [message]({}) was reported by another user and the OpenChat moderation team confirmed that it broke [the platform rules](https://oc.app/guidelines?section=3). {}",
         build_message_link(reported_message),

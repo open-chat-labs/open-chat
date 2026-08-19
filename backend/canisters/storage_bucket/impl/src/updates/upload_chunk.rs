@@ -36,7 +36,7 @@ fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(report_index) = state.data.vault.known_csam_report_index(&args.hash) {
         // Report once per file id: chunks upload in parallel and each is refused here, and a
         // retry of the same attempt reuses the file id - only the first sighting is reported
-        if state.data.vault.record_blocked_attempt(user_id, file_id) {
+        if state.data.vault.record_blocked_attempt(user_id, file_id, args.hash) {
             state.data.push_event_to_index(EventToSync::CsamMatch(CsamMatch {
                 uploader: user_id,
                 file_id,
@@ -55,7 +55,7 @@ fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
     // without reporting or sanctioning anyone against the already-resolved report.
     if state.data.files.is_vault_pinned(&args.hash) {
         if let Some(report_index) = state.data.vault.pinned_report_index(&args.hash)
-            && state.data.vault.record_blocked_attempt(user_id, file_id)
+            && state.data.vault.record_blocked_attempt(user_id, file_id, args.hash)
         {
             state.data.push_event_to_index(EventToSync::CsamMatch(CsamMatch {
                 uploader: user_id,

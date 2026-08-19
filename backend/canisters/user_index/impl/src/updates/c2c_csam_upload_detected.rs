@@ -229,8 +229,17 @@ fn apply_attempt_sanction(
     match verdict {
         None | Some(ModerationVerdict::UpheldAsCsam) => {
             // Pending: the provisional sanction, tied to the original report so its
-            // resolution governs it (I3). Confirmed: the same sanction, now verdict-backed.
-            moderation::suspend_sender(user_id, now, state);
+            // resolution governs it (I3) and worded as SUSPECTED (I21). Confirmed: the same
+            // sanction, verdict-backed and worded as confirmed. A manual moderator
+            // suspension is never replaced (I1a) - the record still links the sanction so
+            // the report's resolution can settle it.
+            if !moderation::has_manual_suspension(user_id, state) {
+                if verdict.is_none() {
+                    moderation::suspend_attempter_pending_review(user_id, now, state);
+                } else {
+                    moderation::suspend_sender(user_id, now, state);
+                }
+            }
             state
                 .data
                 .users
@@ -243,7 +252,12 @@ fn apply_attempt_sanction(
             // suspend_sender would race it with an indefinite, CSAM-worded one (I21) and
             // whichever write landed last would win. No hash-match sanction record either -
             // it would wrongly read as an indefinite sanction to every other-sanction check.
-            moderation::downgrade_suspension_to_upheld_violation(user_id, attempt_report_index, now, state)
+            // A manual moderator suspension is never downgraded (I1a).
+            if moderation::has_manual_suspension(user_id, state) {
+                false
+            } else {
+                moderation::downgrade_suspension_to_upheld_violation(user_id, attempt_report_index, now, state)
+            }
         }
         Some(ModerationVerdict::Dismissed) => {
             // The content was cleared: no sanction is applied, and a stale record from an

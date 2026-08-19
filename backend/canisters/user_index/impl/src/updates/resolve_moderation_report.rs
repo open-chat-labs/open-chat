@@ -1,8 +1,8 @@
 use crate::guards::caller_is_platform_moderator;
 use crate::model::moderation;
 use crate::model::reported_messages::{
-    HumanVerdict, ModerationAction, RecordVerdictResult, ReportOutcome, build_restoration_message_to_sender,
-    build_verdict_message_to_reporter, build_verdict_message_to_sender,
+    HumanVerdict, ModerationAction, RecordVerdictResult, ReportOutcome, build_attempt_verdict_message,
+    build_restoration_message_to_sender, build_verdict_message_to_reporter, build_verdict_message_to_sender,
 };
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
@@ -322,9 +322,10 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     state,
                 );
                 if first_for_sender {
+                    let still_suspended = moderation::is_suspended(attempt_report.sender, state);
                     state.push_event_to_local_user_index(
                         attempt_report.sender,
-                        build_verdict_message_to_sender(&attempt_report),
+                        build_attempt_verdict_message(&attempt_report, still_suspended),
                     );
                 }
             }
@@ -339,11 +340,20 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     .users
                     .clear_csam_upload_sanction_if_for_report(&attempt_report.sender, args.report_index);
                 if first_for_sender {
-                    let _ =
-                        moderation::downgrade_suspension_to_upheld_violation(attempt_report.sender, attempt_index, now, state);
+                    // A manual moderator suspension is never downgraded to the 1-day bot
+                    // suspension (I1a) - downgrade only what automation applied
+                    if !moderation::has_manual_suspension(attempt_report.sender, state) {
+                        let _ = moderation::downgrade_suspension_to_upheld_violation(
+                            attempt_report.sender,
+                            attempt_index,
+                            now,
+                            state,
+                        );
+                    }
+                    let still_suspended = moderation::is_suspended(attempt_report.sender, state);
                     state.push_event_to_local_user_index(
                         attempt_report.sender,
-                        build_verdict_message_to_sender(&attempt_report),
+                        build_attempt_verdict_message(&attempt_report, still_suspended),
                     );
                 }
             }

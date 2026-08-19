@@ -92,6 +92,12 @@ fn contest_moderation_sanction_impl(state: &mut RuntimeState) -> OCResult {
     // while unresolved attempt reports still hold the user suspended - they must always have
     // an Article 22 channel (I8a). The contest is recorded on the newest such report and
     // raised as a notice; the card never flips to Contested (it offers no verdict actions).
+    // ONLY when no channel is already open: a standing contest (report or sanction record)
+    // means review was already requested, and re-contesting here would mint an unthrottled
+    // notice per call.
+    if saw_already_contested {
+        return Err(OCErrorCode::NoChange.with_message("Already contested"));
+    }
     let report_indexes: Vec<u64> = state
         .data
         .users

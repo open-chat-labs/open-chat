@@ -48,9 +48,13 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
 
 ### Suspension
 
-- **I1a — Reversal lifts only automated suspensions.** Every automated unsuspend path checks
-  `suspension_is_automated` (suspended_by == OpenChat Bot): `has_other_active_sanction`
-  cannot see manual moderator suspensions, so without this a dismissal could lift one.
+- **I1a — Automation never lifts, replaces, or downgrades a manual suspension.** Every
+  automated unsuspend path checks `suspension_is_automated`, and every automated SUSPEND or
+  DOWNGRADE path checks `has_manual_suspension` first: `has_other_active_sanction` cannot
+  see manual moderator suspensions, so without these a dismissal could lift one, an attempt
+  could replace one with a bot suspension, or an Upheld mirror could downgrade an indefinite
+  manual suspension to a 1-day bot one. This applies to every arm - Dismissed, Upheld, and
+  the initial sanction alike.
 - **I1 — Attribution.** Every suspension is attributable to at least one holder: an
   unresolved sanctioned report (`suspension_applied_without_verdict`), an upheld verdict
   (indefinite for UpheldAsCsam, one day for Upheld — `keeps_sender_sanctioned`), a hash-match
@@ -173,7 +177,9 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
   an unverified reporter assertion, which deliberately does not suspend the reported sender
   and so must not suspend third parties either - those attempts are blocked and surfaced as
   a throttled notice only. The anchor is the FIRST-ARRIVED claim (`claim_order`, explicit,
-  because report indexes are creation order not claim order).
+  because report indexes are creation order not claim order). The pre-verdict provisional
+  suspension is WORDED as suspected content under review (I21) - the confirmed-CSAM reason
+  string is reserved for verdict-backed sanctions.
 - **I14 — No silent attempts.** Every blocked attempt leaves a moderator-visible trace: a
   report card (new attempt report), a repeat notice naming the offender (tallied attempt),
   or a plain notice (unresolvable uploader / unknown original report / reporter-asserted
@@ -267,8 +273,9 @@ field must be added here with its answer:
 |---|---|---|
 | `VaultRecord.claim_order` | lazily at next claim (`seed_legacy_claim_order`) | by claims |
 | `Vault.blocked_attempts(_order)` | rebuilt in post_upgrade | `MAX_BLOCKED_ATTEMPT_SIGHTINGS`, oldest evicted |
+| `Vault.blocked_attempt_hashes` | n/a (legacy sightings = final post-verdict, never need clearing) | evicted with the set |
 | `Vault.csam_hashes` | n/a | permanent BY DESIGN (verdicts are final) |
-| `Data.blocked_attempt_notice_throttle` | n/a (default) | capped; inert entries dropped past `MAX_THROTTLE_ENTRIES` |
+| `Data.blocked_attempt_notice_throttle` | n/a (default) | HARD cap: inert entries dropped first, then oldest evicted |
 | `ReportedMessage.blocked_attempt_report_indexes` | n/a (default) | `MAX_ATTEMPT_REPORTS_PER_OFFENDER` per offender |
 | `ReportedMessage.repeat_attempts` | n/a (default) | `MAX_RECORDED_REPEAT_ATTEMPTS` + overflow counter |
 | `MediaScanJobLog.*` | n/a (default) | `TOTAL_CAP` / `PER_SOURCE_CAP`; scalars |
@@ -303,4 +310,5 @@ field must be added here with its answer:
 | I14 (per-offender throttle) | two offenders against one pin each get a named notice |
 | I8a (last resort) | attempter with cleared/overwritten record can still contest; notice posted |
 | I6 (fixed window) | attempts spaced inside a sliding-but-not-fixed window mint new reports |
-| I1a | dismissal never lifts a manual moderator suspension |
+| I1a | dismissal never lifts a manual moderator suspension; Upheld never downgrades one; an attempt never replaces one |
+| I14 (refused-upload ids) | same file id re-attempted post-verdict still reports (sightings self-describe their hash) |

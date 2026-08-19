@@ -3324,6 +3324,15 @@ fn unrelated_dismissal_never_lifts_an_attempt_sanction() {
         matches!(second_contest, UnitResult::Error(_)),
         "the preserved contest must make a second contest a no-op: {second_contest:?}"
     );
+    tick_many(env, 3);
+    assert_eq!(
+        moderation_notices(env, &test_data)
+            .iter()
+            .filter(|t| t.contains("Human review requested"))
+            .count(),
+        1,
+        "a standing contest must not mint further notices via the last-resort path"
+    );
 
     // Only the LINKED report's dismissal lifts it
     let resolve_response = client::user_index::resolve_moderation_report(
@@ -3973,6 +3982,148 @@ fn dismissal_never_lifts_a_manual_suspension() {
         .suspension_details
         .expect("the manual suspension must survive the dismissal");
     assert_eq!(suspension_details.reason, "unrelated harassment");
+}
+
+// I1a: an Upheld (not CSAM) verdict must not downgrade a manual moderator suspension to
+// the 1-day bot suspension
+#[test]
+fn upheld_never_downgrades_a_manual_suspension() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let file = random_file();
+    let original_report_index = establish_pending_hash_match_report(env, canister_ids, &test_data, random_principal(), &file);
+
+    let suspend_response = client::user_index::suspend_user(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::suspend_user::Args {
+            user_id: test_data.reporter.user_id,
+            duration: None,
+            reason: "unrelated harassment".to_string(),
+        },
+    );
+    assert!(
+        matches!(suspend_response, user_index_canister::suspend_user::Response::Success),
+        "{suspend_response:?}"
+    );
+    tick_many(env, 5);
+
+    attempt_blocked_upload(env, canister_ids, &test_data.reporter, &file);
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index: original_report_index,
+            verdict: ModerationVerdict::Upheld,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+
+    let attempter_state =
+        client::user_index::happy_path::current_user(env, test_data.reporter.principal, canister_ids.user_index);
+    let suspension_details = attempter_state
+        .suspension_details
+        .expect("the manual suspension must survive the Upheld mirror");
+    assert_eq!(
+        suspension_details.reason, "unrelated harassment",
+        "the manual suspension must not be replaced or downgraded"
+    );
+}
+
+// I14 (refused-upload file ids): a pre-verdict sighting must not silence the deliberate
+// post-verdict re-upload of the SAME file id - sightings self-describe their hash and are
+// cleared on the denylist transition
+#[test]
+fn post_verdict_reupload_of_same_file_id_is_still_reported() {
+    use utils::hasher::hash_bytes;
+
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let file = random_file();
+    let original_report_index = establish_pending_hash_match_report(env, canister_ids, &test_data, random_principal(), &file);
+
+    // Allocate ONCE and keep the file id: the retry after the verdict reuses it exactly
+    let storage_index_canister::allocated_bucket_v2::Response::Success(bucket) = client::storage_index::allocated_bucket_v2(
+        env,
+        test_data.reporter.principal,
+        canister_ids.storage_index,
+        &storage_index_canister::allocated_bucket_v2::Args {
+            file_hash: hash_bytes(&file),
+            file_size: file.len() as u64,
+            file_id_seed: Some(random_from_u128()),
+        },
+    ) else {
+        panic!("allocation should succeed");
+    };
+    let upload = |env: &mut PocketIc| {
+        client::storage_bucket::upload_chunk_v2(
+            env,
+            test_data.reporter.principal,
+            bucket.canister_id,
+            &storage_bucket_canister::upload_chunk_v2::Args {
+                file_id: bucket.file_id,
+                hash: hash_bytes(&file),
+                mime_type: "image/jpeg".to_string(),
+                accessors: vec![test_data.reporter.canister()],
+                chunk_index: 0,
+                chunk_size: file.len() as u32,
+                total_size: file.len() as u64,
+                bytes: file.clone(),
+                expiry: None,
+            },
+        )
+    };
+    let response = upload(env);
+    assert!(
+        matches!(response, storage_bucket_canister::upload_chunk_v2::Response::Blocked),
+        "{response:?}"
+    );
+    tick_many(env, 10);
+    assert_eq!(attempt_reports_for(env, &test_data, &test_data.reporter).len(), 1);
+
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index: original_report_index,
+            verdict: ModerationVerdict::UpheldAsCsam,
+            urgent: Some(false),
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+
+    // The SAME file id again, now against the denylist: must be visible, not silenced by the
+    // pre-verdict sighting
+    let response = upload(env);
+    assert!(
+        matches!(response, storage_bucket_canister::upload_chunk_v2::Response::Blocked),
+        "{response:?}"
+    );
+    tick_many(env, 10);
+    assert!(
+        moderation_notices(env, &test_data)
+            .iter()
+            .any(|t| t.contains("Repeat attempt") && t.contains("upheld as CSAM")),
+        "the post-verdict re-upload of the same file id must be reported"
+    );
 }
 
 fn send_captioned_image_message(

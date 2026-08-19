@@ -33,6 +33,13 @@ pub struct Vault {
     // evicted first; an evicted sighting re-reports, which downstream tolerates (I18).
     #[serde(default)]
     blocked_attempts: BTreeSet<(Principal, FileId)>,
+    // The hash each sighting was refused for: clearing on a hash's adjudication transition
+    // must find sightings whose file ids exist NOWHERE else (a refused upload's id is neither
+    // quarantined nor stored). Parallel to the set (whose serialized type predates this and
+    // cannot change); legacy entries without a hash are post-verdict denylist sightings whose
+    // transitions are final, so never needing the clear.
+    #[serde(default)]
+    blocked_attempt_hashes: BTreeMap<(Principal, FileId), Hash>,
     #[serde(default)]
     blocked_attempts_order: std::collections::VecDeque<(Principal, FileId)>,
     // Ephemeral read sessions: (reviewer, file_id) -> next expected chunk. Not serialized:
@@ -268,13 +275,15 @@ impl Vault {
 
     // True the first time this (uploader, file id) pair is blocked: the caller only reports
     // the attempt to the user_index on the first sighting
-    pub fn record_blocked_attempt(&mut self, uploader: Principal, file_id: FileId) -> bool {
+    pub fn record_blocked_attempt(&mut self, uploader: Principal, file_id: FileId, hash: Hash) -> bool {
         const MAX_BLOCKED_ATTEMPT_SIGHTINGS: usize = 10_000;
         if self.blocked_attempts.insert((uploader, file_id)) {
+            self.blocked_attempt_hashes.insert((uploader, file_id), hash);
             self.blocked_attempts_order.push_back((uploader, file_id));
             while self.blocked_attempts_order.len() > MAX_BLOCKED_ATTEMPT_SIGHTINGS {
                 if let Some(evicted) = self.blocked_attempts_order.pop_front() {
                     self.blocked_attempts.remove(&evicted);
+                    self.blocked_attempt_hashes.remove(&evicted);
                 }
             }
             true
@@ -287,17 +296,6 @@ impl Vault {
     // changes adjudication state (denylisted, or released): a forward's file id is stable, so
     // without this a pre-verdict blocked forward would consume the only sighting and the
     // deliberate POST-verdict forward of the same file would go unreported (I14/I16).
-    // The file ids currently in the sighting set: the caller (which can see the Files model)
-    // resolves which of them share the given hash via dedup, something this model cannot see
-    pub fn blocked_attempt_file_ids(&self) -> Vec<FileId> {
-        self.blocked_attempts.iter().map(|(_, id)| *id).collect()
-    }
-
-    pub fn clear_blocked_attempts_for_file_ids(&mut self, ids: &std::collections::BTreeSet<FileId>) {
-        self.blocked_attempts.retain(|(_, id)| !ids.contains(id));
-        self.blocked_attempts_order.retain(|(_, id)| !ids.contains(id));
-    }
-
     // Pre-bound state (or any divergence) has sightings in the set with no order queue, which
     // the eviction can never touch: rebuilt on upgrade so the bound applies to legacy entries
     pub fn rebuild_blocked_attempt_order(&mut self) {
@@ -307,14 +305,21 @@ impl Vault {
     }
 
     pub fn clear_blocked_attempts_for_hash(&mut self, hash: &Hash) {
-        let ids: std::collections::BTreeSet<FileId> = self
-            .file_id_to_hash
+        // Sightings self-describe their hash, so the clear finds every one - including
+        // refused-upload file ids which exist in no other structure (I14). Legacy entries
+        // without a recorded hash are post-verdict denylist sightings; their transitions are
+        // final and never need clearing.
+        let keys: Vec<(Principal, FileId)> = self
+            .blocked_attempt_hashes
             .iter()
             .filter(|(_, h)| *h == hash)
-            .map(|(id, _)| *id)
+            .map(|(k, _)| *k)
             .collect();
-        self.blocked_attempts.retain(|(_, file_id)| !ids.contains(file_id));
-        self.blocked_attempts_order.retain(|(_, file_id)| !ids.contains(file_id));
+        for key in &keys {
+            self.blocked_attempts.remove(key);
+            self.blocked_attempt_hashes.remove(key);
+        }
+        self.blocked_attempts_order.retain(|k| !keys.contains(k));
     }
 
     pub fn unquarantine(
@@ -964,11 +969,16 @@ mod tests {
     #[test]
     fn blocked_attempts_report_once_per_uploader_and_file() {
         let mut vault = vault_with_reviewer();
+        let hash = [5u8; 32];
         // First sighting reports; the parallel/retried chunks of the same attempt do not
-        assert!(vault.record_blocked_attempt(reviewer(1), 42));
-        assert!(!vault.record_blocked_attempt(reviewer(1), 42));
+        assert!(vault.record_blocked_attempt(reviewer(1), 42, hash));
+        assert!(!vault.record_blocked_attempt(reviewer(1), 42, hash));
         // A different user attempting the same file is a fresh attempt
-        assert!(vault.record_blocked_attempt(reviewer(2), 42));
+        assert!(vault.record_blocked_attempt(reviewer(2), 42, hash));
+        // A hash transition clears every sighting for it - including file ids which exist in
+        // no other structure (refused uploads) - so post-verdict attempts re-report (I14)
+        vault.clear_blocked_attempts_for_hash(&hash);
+        assert!(vault.record_blocked_attempt(reviewer(1), 42, hash));
     }
 
     #[test]
