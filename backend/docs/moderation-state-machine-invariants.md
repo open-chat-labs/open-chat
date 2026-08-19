@@ -107,6 +107,9 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
   `release_pending` and would otherwise be bypassable with a single operator.
   `record_authority_report_filed` accepts them (attempt rows are real register rows) but its
   conflict guard covers BOTH subjects: the attempter and the original report's sender.
+  Filing an attempt row re-anchors retention through the original's aliased blob references -
+  deliberate: the attempt is its own offence, and the retention clock only ever extends
+  (`apply_verdict` takes the max), never shortens.
   The consumer classes audited for attempt-report reachability are now three: consumers of
   `user.reported_messages`, consumers of report-index arguments, and the resolve/contest
   surfaces. Any NEW entry point taking a report index must decide its BlockedAttempt
