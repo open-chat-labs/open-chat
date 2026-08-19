@@ -70,6 +70,7 @@ fn c2c_moderation_referral_impl(args: Args, state: &mut RuntimeState) {
             media_matches: Vec::new(),
             timestamp: now,
             authority_report: None,
+            is_blocked_attempt: false,
             status: types::ModerationReportStatus::Pending,
         },
         state,

@@ -327,16 +327,18 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                 state.push_event_to_local_user_index(attempt_report.sender, build_verdict_message_to_sender(&attempt_report));
             }
             ModerationVerdict::Dismissed => {
-                // The allegation was wrong, so the attempt sanction lifts with it. Clearing
-                // the record (only when it points at THIS report) must happen before the
-                // other-active-sanction check, which short-circuits on the record's presence;
-                // anything else still sanctioning the attempter then keeps them suspended.
-                if state
+                // The allegation was wrong, so the attempt sanction lifts with it. The clear
+                // (only when the record points at THIS report) must happen before the
+                // other-active-sanction check, which short-circuits on the record's presence -
+                // but it is NOT a precondition for the unsuspend: the single-slot record may
+                // have been overwritten by a later attempt or already cleared, and that must
+                // not strand an attempter whose every report is now resolved (I1/I2). The
+                // decision rests on the other-sanction check alone.
+                state
                     .data
                     .users
-                    .clear_csam_upload_sanction_if_for_report(&attempt_report.sender, args.report_index)
-                    && !moderation::has_other_active_sanction(attempt_report.sender, attempt_index, now, state)
-                {
+                    .clear_csam_upload_sanction_if_for_report(&attempt_report.sender, args.report_index);
+                if !moderation::has_other_active_sanction(attempt_report.sender, attempt_index, now, state) {
                     moderation::unsuspend_sender(attempt_report.sender, attempt_index, now, state);
                 }
             }

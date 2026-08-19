@@ -2340,6 +2340,18 @@ fn establish_pending_hash_match_report(
     scanner: Principal,
     file: &[u8],
 ) -> u64 {
+    establish_pending_hash_match_report_from(env, canister_ids, test_data, scanner, file, None).1
+}
+
+// As above, but posting as `poster` (default: the sender); returns the blob reference too
+fn establish_pending_hash_match_report_from(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    test_data: &TestData,
+    scanner: Principal,
+    file: &[u8],
+    poster: Option<&User>,
+) -> (BlobReference, u64) {
     client::user_index::happy_path::execute_protected_action(
         env,
         test_data.moderator.principal,
@@ -2363,15 +2375,15 @@ fn establish_pending_hash_match_report(
     );
     tick_many(env, 5);
 
-    let bucket =
-        client::storage_index::happy_path::allocated_bucket(env, test_data.sender.principal, canister_ids.storage_index, file);
+    let poster = poster.unwrap_or(&test_data.sender);
+    let bucket = client::storage_index::happy_path::allocated_bucket(env, poster.principal, canister_ids.storage_index, file);
     client::storage_bucket::happy_path::upload_file(
         env,
-        test_data.sender.principal,
+        poster.principal,
         bucket.canister_id,
         bucket.file_id,
         file.to_vec(),
-        vec![test_data.sender.canister()],
+        vec![poster.canister()],
         None,
     );
     let blob_reference = BlobReference {
@@ -2379,7 +2391,7 @@ fn establish_pending_hash_match_report(
         blob_id: bucket.file_id,
     };
     let message_id = random_from_u128();
-    send_image_message(env, &test_data.sender, test_data.group_id, message_id, blob_reference.clone());
+    send_image_message(env, poster, test_data.group_id, message_id, blob_reference.clone());
     tick_many(env, 3);
 
     let local_user_index = canister_ids.local_user_index(env, test_data.group_id);
@@ -2416,11 +2428,12 @@ fn establish_pending_hash_match_report(
     );
     tick_many(env, 10);
 
-    get_moderation_reports(env, test_data)
+    let report_index = get_moderation_reports(env, test_data)
         .iter()
-        .find(|r| r.sender == test_data.sender.user_id)
+        .find(|r| r.sender == poster.user_id && !r.is_blocked_attempt)
         .and_then(|r| r.report_index)
-        .expect("the match should create a moderation report")
+        .expect("the match should create a moderation report");
+    (blob_reference, report_index)
 }
 
 // Attempts to upload `file` as `uploader`, asserting the bucket refuses it (I13), then ticks
@@ -2495,7 +2508,7 @@ fn random_file() -> Vec<u8> {
 fn attempt_reports_for(env: &PocketIc, test_data: &TestData, attempter: &User) -> Vec<ModerationReportContent> {
     get_moderation_reports(env, test_data)
         .into_iter()
-        .filter(|r| r.sender == attempter.user_id)
+        .filter(|r| r.sender == attempter.user_id && r.is_blocked_attempt)
         .collect()
 }
 
@@ -3230,6 +3243,277 @@ fn unrelated_dismissal_never_lifts_an_attempt_sanction() {
     assert!(
         attempter_state.suspension_details.is_none(),
         "the linked report's dismissal lifts the attempt sanction"
+    );
+}
+
+// I13 (provenance): a pin created by an unverified reporter assertion blocks third-party
+// re-uploads WITHOUT sanctioning or reporting them - the assertion does not suspend the
+// reported sender, so it must not suspend anyone else either
+#[test]
+fn reporter_asserted_pin_blocks_without_sanction() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let file = random_file();
+
+    // The sender posts an image; the reporter asserts CSAM against it: protective quarantine
+    // pins the blob but deliberately does not suspend the sender
+    let bucket =
+        client::storage_index::happy_path::allocated_bucket(env, test_data.sender.principal, canister_ids.storage_index, &file);
+    client::storage_bucket::happy_path::upload_file(
+        env,
+        test_data.sender.principal,
+        bucket.canister_id,
+        bucket.file_id,
+        file.clone(),
+        vec![test_data.sender.canister()],
+        None,
+    );
+    let message_id = random_from_u128();
+    send_image_message(
+        env,
+        &test_data.sender,
+        test_data.group_id,
+        message_id,
+        BlobReference {
+            canister_id: bucket.canister_id,
+            blob_id: bucket.file_id,
+        },
+    );
+    tick_many(env, 3);
+    client::group::report_message(
+        env,
+        test_data.reporter.principal,
+        test_data.group_id.into(),
+        &group_canister::report_message::Args {
+            thread_root_message_index: None,
+            message_id,
+            delete: false,
+            csam: true,
+        },
+    );
+    tick_many(env, 10);
+
+    // A third party re-uploads the same bytes: blocked, but neither sanctioned nor reported
+    attempt_blocked_upload(env, canister_ids, &test_data.group_owner, &file);
+
+    let attempter_state =
+        client::user_index::happy_path::current_user(env, test_data.group_owner.principal, canister_ids.user_index);
+    assert!(
+        attempter_state.suspension_details.is_none(),
+        "a reporter-asserted pin must not suspend third parties"
+    );
+    assert!(
+        attempt_reports_for(env, &test_data, &test_data.group_owner).is_empty(),
+        "no attempt report may anchor to an unverified assertion"
+    );
+    assert!(
+        moderation_notices(env, &test_data)
+            .iter()
+            .any(|t| t.contains("No sanction was applied")),
+        "the blocked attempt must still be visible as a notice"
+    );
+}
+
+// I9 (repeats): a tallied repeat derives its consequences from the attempt report's state -
+// after the original is upheld, the repeat notice says so and no duplicate report appears
+#[test]
+fn repeat_after_uphold_is_state_derived() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let file = random_file();
+    let original_report_index = establish_pending_hash_match_report(env, canister_ids, &test_data, random_principal(), &file);
+
+    attempt_blocked_upload(env, canister_ids, &test_data.reporter, &file);
+    assert_eq!(attempt_reports_for(env, &test_data, &test_data.reporter).len(), 1);
+
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index: original_report_index,
+            verdict: ModerationVerdict::UpheldAsCsam,
+            urgent: Some(false),
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+
+    // Within the retry window: tallied onto the (now resolved) attempt report, with the
+    // notice reflecting the CURRENT adjudication state, and the attempter stays suspended
+    attempt_blocked_upload(env, canister_ids, &test_data.reporter, &file);
+    assert_eq!(
+        attempt_reports_for(env, &test_data, &test_data.reporter).len(),
+        1,
+        "a repeat must not mint a second report"
+    );
+    assert!(
+        moderation_notices(env, &test_data)
+            .iter()
+            .any(|t| t.contains("Repeat attempt") && t.contains("upheld as CSAM")),
+        "the repeat notice must reflect the resolved state"
+    );
+    let attempter_state =
+        client::user_index::happy_path::current_user(env, test_data.reporter.principal, canister_ids.user_index);
+    assert!(
+        attempter_state.suspension_details.is_some(),
+        "the verdict-backed sanction stands"
+    );
+}
+
+// I1/I2: the single-slot sanction record can be overwritten by a second attempt; resolving
+// every linked report must still fully unsuspend, in either order
+#[test]
+fn overwritten_sanction_record_never_strands_the_attempter() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let scanner = random_principal();
+    let file1 = random_file();
+    let file2 = random_file();
+    let (_, r1) = establish_pending_hash_match_report_from(env, canister_ids, &test_data, scanner, &file1, None);
+    let (_, r2) =
+        establish_pending_hash_match_report_from(env, canister_ids, &test_data, scanner, &file2, Some(&test_data.group_owner));
+
+    // Two attempts by the same user against different pending reports: the second overwrites
+    // the sanction record's report linkage
+    attempt_blocked_upload(env, canister_ids, &test_data.reporter, &file1);
+    attempt_blocked_upload(env, canister_ids, &test_data.reporter, &file2);
+    assert_eq!(attempt_reports_for(env, &test_data, &test_data.reporter).len(), 2);
+
+    // Dismissing the SECOND (the one the record points at) must keep the attempter suspended:
+    // the first attempt report is still pending
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index: r2,
+            verdict: ModerationVerdict::Dismissed,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+    let attempter_state =
+        client::user_index::happy_path::current_user(env, test_data.reporter.principal, canister_ids.user_index);
+    assert!(
+        attempter_state.suspension_details.is_some(),
+        "the still-pending first attempt report must keep the attempter suspended"
+    );
+
+    // Dismissing the FIRST - whose record pointer was overwritten - must now fully unsuspend:
+    // the cleared/overwritten record is not a precondition for the reversal
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index: r1,
+            verdict: ModerationVerdict::Dismissed,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+    let attempter_state =
+        client::user_index::happy_path::current_user(env, test_data.reporter.principal, canister_ids.user_index);
+    assert!(
+        attempter_state.suspension_details.is_none(),
+        "every linked report is resolved: the attempter must be unsuspended"
+    );
+}
+
+// I14/I16 (forward dedupe): a forward's file id is stable, so the pre-verdict sighting must
+// not suppress the visibility of the deliberate post-verdict forward of the same file
+#[test]
+fn post_verdict_forward_is_still_reported() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let file = random_file();
+    let (blob_reference, original_report_index) =
+        establish_pending_hash_match_report_from(env, canister_ids, &test_data, random_principal(), &file, None);
+
+    // Pre-verdict forward: blocked and reported as an attempt
+    let forward_response = client::storage_bucket::forward_file(
+        env,
+        test_data.reporter.principal,
+        blob_reference.canister_id,
+        &storage_bucket_canister::forward_file::Args {
+            file_id: blob_reference.blob_id,
+            accessors: vec![test_data.reporter.canister()],
+        },
+    );
+    assert!(
+        matches!(forward_response, storage_bucket_canister::forward_file::Response::Blocked),
+        "{forward_response:?}"
+    );
+    tick_many(env, 10);
+    assert_eq!(attempt_reports_for(env, &test_data, &test_data.reporter).len(), 1);
+
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index: original_report_index,
+            verdict: ModerationVerdict::UpheldAsCsam,
+            urgent: Some(false),
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+    let notices_before = moderation_notices(env, &test_data)
+        .iter()
+        .filter(|t| t.contains("Repeat attempt"))
+        .count();
+
+    // Post-verdict forward of the SAME file id: the denylist transition cleared the sighting,
+    // so this deliberate offence is visible (tallied with the resolved state), not silent
+    let forward_response = client::storage_bucket::forward_file(
+        env,
+        test_data.reporter.principal,
+        blob_reference.canister_id,
+        &storage_bucket_canister::forward_file::Args {
+            file_id: blob_reference.blob_id,
+            accessors: vec![test_data.reporter.canister()],
+        },
+    );
+    assert!(
+        matches!(forward_response, storage_bucket_canister::forward_file::Response::Blocked),
+        "{forward_response:?}"
+    );
+    tick_many(env, 10);
+    let notices_after = moderation_notices(env, &test_data)
+        .iter()
+        .filter(|t| t.contains("Repeat attempt"))
+        .count();
+    assert!(
+        notices_after > notices_before,
+        "the post-verdict forward must be visible, not silenced by the pre-verdict sighting"
     );
 }
 

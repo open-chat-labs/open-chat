@@ -226,18 +226,32 @@ impl Vault {
     // post-verdict denylist above. Only an ACTIVE claim anchors an attempt report - a record
     // whose claims were all released but whose pin survives under a legal hold is already
     // adjudicated, so the caller still refuses the upload (the pin gates serving) but must
-    // not sanction anyone against a resolved report. The newest claim is the anchor: the
-    // report which most recently pinned this content.
+    // not sanction anyone against a resolved report. The OLDEST claim is the anchor: the
+    // first quarantiner is the strongest claim (machine detections pin at send time, so when
+    // one exists it is almost always first), and anchoring newer would let a later frivolous
+    // assertion on the same blob dilute the attempt's disposition (I13).
     pub fn pinned_report_index(&self, hash: &Hash) -> Option<u64> {
-        self.records
-            .get(hash)
-            .and_then(|r| r.report_indexes.iter().next_back().copied())
+        self.records.get(hash).and_then(|r| r.report_indexes.iter().next().copied())
     }
 
     // True the first time this (uploader, file id) pair is blocked: the caller only reports
     // the attempt to the user_index on the first sighting
     pub fn record_blocked_attempt(&mut self, uploader: Principal, file_id: FileId) -> bool {
         self.blocked_attempts.insert((uploader, file_id))
+    }
+
+    // Forgets the blocked-attempt sightings for a hash's file ids. Called when the hash
+    // changes adjudication state (denylisted, or released): a forward's file id is stable, so
+    // without this a pre-verdict blocked forward would consume the only sighting and the
+    // deliberate POST-verdict forward of the same file would go unreported (I14/I16).
+    pub fn clear_blocked_attempts_for_hash(&mut self, hash: &Hash) {
+        let ids: std::collections::BTreeSet<FileId> = self
+            .file_id_to_hash
+            .iter()
+            .filter(|(_, h)| *h == hash)
+            .map(|(id, _)| *id)
+            .collect();
+        self.blocked_attempts.retain(|(_, file_id)| !ids.contains(file_id));
     }
 
     pub fn unquarantine(
@@ -307,6 +321,11 @@ impl Vault {
             let denylist_report_index = report_index.unwrap_or(record.metadata.report_index);
             let newly_denylisted = !self.csam_hashes.contains_key(&hash);
             self.csam_hashes.entry(hash).or_insert(denylist_report_index);
+            if newly_denylisted {
+                // The hash's adjudication state changed: pre-verdict blocked-attempt
+                // sightings must not suppress reporting of post-verdict attempts (I14)
+                self.clear_blocked_attempts_for_hash(&hash);
+            }
             self.append_log(VaultLogEvent::VerdictAppliedBy(file_id, retention_until, moderator), now);
             if newly_denylisted {
                 return VaultOpOutcome::AppliedDenylisted(hash, denylist_report_index);
@@ -321,6 +340,9 @@ impl Vault {
     pub fn denylist_hash(&mut self, hash: Hash, report_index: u64) -> bool {
         let newly_denylisted = !self.csam_hashes.contains_key(&hash);
         self.csam_hashes.entry(hash).or_insert(report_index);
+        if newly_denylisted {
+            self.clear_blocked_attempts_for_hash(&hash);
+        }
         newly_denylisted
     }
 
@@ -491,6 +513,9 @@ impl Vault {
     // is released for all sibling files referencing the same blob at once
     fn remove_all_references(&mut self, hash: &Hash) -> Vec<FileId> {
         self.records.remove(hash);
+        // Sightings recorded against the released quarantine must not suppress reporting if
+        // this hash is ever quarantined again
+        self.clear_blocked_attempts_for_hash(hash);
         let aliases: Vec<FileId> = self
             .file_id_to_hash
             .iter()

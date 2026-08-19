@@ -62,10 +62,15 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
   at exactly three points, or the user is unsuspendable forever:
   1. `unsuspend_user` (manual/human decision — clears unconditionally);
   2. `clear_csam_upload_sanction_if_for_report` when the report it points at resolves
-     (mirror arms of `resolve_moderation_report`, born-resolved arms of
+     (mirror arms of `resolve_moderation_report`, state-derived arms of
      `c2c_csam_upload_detected`) — and this clearing must happen BEFORE the
      other-sanction helpers are consulted, or they self-defeat;
   3. never anywhere else.
+
+  The clear is never a PRECONDITION for the reversal decision: the record is a single slot,
+  so a later attempt against a different report overwrites it, and an attempter whose every
+  report is resolved must still unsuspend. The reversal decision rests on
+  `has_other_active_sanction` alone, after the clear.
 - **I4 — Expiry lifts only its own suspension.** A scheduled durational unsuspend applies
   only if the suspension in force is the one it was scheduled for
   (`UnsuspendUser.expected_suspension_timestamp` guard).
@@ -99,7 +104,9 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
   entry, card status, sanction handling, uploader wording) derive from the attempt report's
   actual state at processing time (`human_verdict()`), never from the transport's snapshot
   of the world (the bucket's match kind) — the c2c hop is async and the original can
-  resolve in flight.
+  resolve in flight. This applies to EVERY arm which sanctions, tallied repeats included: a
+  repeat against an attempt report whose mirror already resolved it must never resurrect
+  the reversed sanction (the mirror runs once and would never clear it again).
 - **I10 — Universal registration.** Every report, including BlockedAttempt, is registered on
   its sender via `push_reported_message`, so `in_breach_count` (strike system),
   `has_other_active_sanction`, `has_other_indefinite_sanction` and contest see all of them.
@@ -115,17 +122,25 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
 - **I12 — Denylist arms only on verdict.** `csam_hashes` is populated exclusively by
   `apply_verdict` (UpheldAsCsam). Quarantine alone never denylists; dismissal never
   populates it; an armed entry is permanent (the verdict is terminal).
-- **I13 — Pinned/denylisted content is inert.** The bucket serves neither
-  (`http_request` 404s both) and refuses new references to either: `upload_chunk_v2` and
-  `forward_file` refuse denylisted hashes (reported against the denylist's report index)
-  and vault-pinned hashes (reported against the NEWEST ACTIVE claim via
-  `pinned_report_index`). A pin retained only by a legal hold has no active claim: the
-  upload is still refused (no dead references) but nobody is sanctioned or reported against
-  a resolved case.
+- **I13 — Pinned/denylisted content is inert, and only machine-backed pins sanction.** The
+  bucket serves neither (`http_request` 404s both) and refuses new references to either:
+  `upload_chunk_v2` and `forward_file` refuse denylisted hashes (reported against the
+  denylist's report index) and vault-pinned hashes (reported against the OLDEST ACTIVE claim
+  via `pinned_report_index` - the first quarantiner is the strongest claim, and a later
+  frivolous assertion on the same blob must not dilute the anchor). A pin retained only by a
+  legal hold has no active claim: the upload is still refused (no dead references) but
+  nobody is sanctioned or reported against a resolved case. Pre-verdict attempt SANCTIONS
+  additionally require the anchor report to be machine-detected
+  (`DetectionSource::Proactive`): a pin created by an unverified reporter assertion
+  deliberately does not suspend the reported sender, so it must not suspend third parties
+  either - those attempts are blocked and surfaced as a notice only.
 - **I14 — No silent attempts.** Every blocked attempt leaves a moderator-visible trace: a
   report card (new attempt report), a repeat notice naming the offender (tallied attempt),
-  or a plain notice (unresolvable uploader / unknown original report). Every attempt is
-  COUNTED even when not individually recorded.
+  or a plain notice (unresolvable uploader / unknown original report / reporter-asserted
+  pin). Every attempt is COUNTED even when not individually recorded. The bucket's
+  per-`(uploader, file id)` sighting dedup is cleared when a hash changes adjudication
+  state (denylisted, or released) so that a pre-verdict sighting can never suppress the
+  reporting of a post-verdict attempt on the same stable file id (forwards).
 - **I15 — Hash checks are spoof-proof.** Refusing on the DECLARED hash at upload is sound
   because an upload only completes if the bytes hash to the declared value
   (`PutChunkResult::HashMismatch` rejects the file).
@@ -181,6 +196,11 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
   still escalates (matched blob refs travel on `MediaScanMatched`), but a message deleted
   before the verdict lands drops the verdict entirely (lookup miss).
 - Attempt reports borrow the original's message coordinates; safety depends entirely on I8.
+- Attempts during the pending window of a reporter-asserted quarantine that is LATER upheld
+  are not retro-reported as offences (only blocked + noticed at the time): the attempters
+  were not provably knowing, and the denylist covers everything after the verdict.
+- Blocked-attempt report cards carry `is_blocked_attempt` so the client hides verdict
+  actions (I8); pre-upgrade clients show the buttons and receive the canister's rejection.
 
 ## 5. Test matrix (invariant → scenarios; drives the next step)
 
@@ -197,3 +217,7 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
 | I17 | scan flag survives clean classification; classifier bits survive scan flag |
 | I19/I20 | verdict redelivery no-ops; ack clamp; stall alert fires + all-clear |
 | I21 | uploader/contest/restoration texts per state |
+| I13 (provenance) | reporter-asserted pin: third-party re-upload blocked WITHOUT sanction or report |
+| I9 (repeats) | repeat after linked resolution never resurrects the sanction |
+| I1/I2 (record overwrite) | attempts against two pending reports; both dismissals in either order fully unsuspend |
+| I14/I16 (forward dedupe) | pre-verdict blocked forward, uphold, post-verdict forward still reported + registered |

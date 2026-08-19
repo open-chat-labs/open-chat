@@ -326,6 +326,7 @@ type ModerationReportContent = record {
     content_excerpt : opt text;
     blob_references : vec BlobReference;
     media_matches : vec MediaScanMatch;
+    is_blocked_attempt : bool;
     reported_at : TimestampMillis;
     status : ModerationReportStatus;
     authority_report : opt AuthorityReportState;

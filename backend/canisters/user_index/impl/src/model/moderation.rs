@@ -39,6 +39,8 @@ pub struct ModerationAlert {
     // Set when the report is born already owing an authority report (a blocked attempt on
     // adjudicated content) - the card shows it without waiting for a status update
     pub authority_report: Option<types::AuthorityReportState>,
+    // True for blocked-attempt reports: the card must not offer verdict actions (I8)
+    pub is_blocked_attempt: bool,
     // Pending for ordinary reports; a blocked attempt on adjudicated content is born resolved
     // and its card must not invite a verdict
     pub status: ModerationReportStatus,
@@ -72,6 +74,7 @@ pub fn post_moderation_alert(alert: ModerationAlert, state: &mut RuntimeState) {
             .map(|e| e.chars().take(MAX_EXCERPT_LENGTH).collect()),
         blob_references: alert.blob_references,
         media_matches: alert.media_matches,
+        is_blocked_attempt: alert.is_blocked_attempt,
         reported_at: alert.timestamp,
         status: alert.status,
         authority_report: alert.authority_report,

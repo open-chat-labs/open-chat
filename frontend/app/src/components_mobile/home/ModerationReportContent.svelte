@@ -113,6 +113,7 @@
     let canResolve = $derived(
         $platformModeratorStore &&
             content.reportIndex !== undefined &&
+            !content.isBlockedAttempt &&
             (content.status.kind === "pending" || content.status.kind === "contested"),
     );
 
