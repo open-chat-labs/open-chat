@@ -79,16 +79,18 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
         // suspend the reported sender, so it must not suspend third parties either - otherwise
         // any account could grind arbitrary uploaders of a common image offline by asserting
         // CSAM against one copy of it.
-        // Machine-backed = the automated pipeline actually applied a suspension
-        // (suspension_applied_without_verdict), NOT the detection source: a machine detection
-        // collapsing into an existing user report fills the outcome but leaves the detection
-        // as UserReport, and must still count.
+        // Machine-backed = the automated pipeline actually applied a suspension. That is the
+        // `sanctioned` flag on the automated outcome ALONE: it is recorded once at detection
+        // time and never cleared, i.e. true provenance. Neither the detection source (a
+        // machine detection collapsing into a user report leaves it UserReport) nor the
+        // verdict's presence (the anchor can resolve while this event is in flight - I9) may
+        // enter the predicate.
         if matches!(m.kind, CsamMatchKind::PendingQuarantineAttempt) {
             let machine_detected = state
                 .data
                 .reported_messages
                 .get(m.csam_report_index)
-                .is_some_and(|o| o.suspension_applied_without_verdict());
+                .is_some_and(|o| o.machine_sanction_applied());
             if !machine_detected {
                 let text = format!(
                     "🚨 Blocked re-post of content under review\n\n\
@@ -125,10 +127,8 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
                 let inherited = attempt_report.human_verdict().map(|v| v.verdict);
                 apply_attempt_sanction(user_id, m.csam_report_index, attempt_report_index, inherited, now, state);
                 if !matches!(inherited, Some(ModerationVerdict::Dismissed)) {
-                    state.push_event_to_local_user_index(
-                        user_id,
-                        build_upload_sanction_message_to_uploader(user_id, inherited.is_none()),
-                    );
+                    state
+                        .push_event_to_local_user_index(user_id, build_upload_sanction_message_to_uploader(user_id, inherited));
                 }
                 if matches!(inherited, Some(ModerationVerdict::UpheldAsCsam)) {
                     // Adjudicated content: the attempt's authority report is due immediately
@@ -197,7 +197,10 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
                     .data
                     .users
                     .record_csam_upload_sanction(user_id, m.csam_report_index, now);
-                state.push_event_to_local_user_index(user_id, build_upload_sanction_message_to_uploader(user_id, false));
+                state.push_event_to_local_user_index(
+                    user_id,
+                    build_upload_sanction_message_to_uploader(user_id, Some(ModerationVerdict::UpheldAsCsam)),
+                );
                 let text = format!(
                     "🚨 Attempt to post blocked content\n\n\
                      {who} tried to {action} content upheld as CSAM in report #{}. \

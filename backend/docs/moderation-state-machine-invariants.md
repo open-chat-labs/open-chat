@@ -93,6 +93,11 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
   (`record_human_verdict` → `AlreadyResolved`). A moderator may not resolve a report they
   are party to (own message: all verdicts barred; own CSAM assertion: only UpheldAsCsam
   permitted). `FlaggedOnly` outcomes cannot receive a verdict until escalated.
+- **I8a — Attempt reports are never contestable as reports.** `mark_contested` refuses
+  BlockedAttempt reports: a Contested attempt card would be unactionable (I8) and would
+  short-circuit the contest loop before the hash-match sanction contest - the attempter's
+  actual Article 22 channel, which posts the moderator notice. A standing contest on the
+  sanction record survives a repeat attempt re-recording it (same report index).
 - **I8 — Attempt reports are never directly resolvable.** `resolve_moderation_report`
   rejects `DetectionSource::BlockedAttempt`. Pre-verdict attempts resolve ONLY by mirroring
   their original's verdict (`mirror_verdict_to_attempt_reports`, which skips
@@ -134,9 +139,12 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
   legal hold has no active claim: the upload is still refused (no dead references) but
   nobody is sanctioned or reported against a resolved case. Pre-verdict attempt SANCTIONS
   additionally require the anchor report to be machine-BACKED, judged by
-  `suspension_applied_without_verdict()` - NOT by `DetectionSource`, because a machine
-  detection collapsing into an existing user report fills the outcome but leaves the
-  detection as UserReport. A pin whose anchor carries no machine-applied sanction came from
+  `machine_sanction_applied()` - the automated outcome's `sanctioned` flag ALONE, which is
+  recorded once at detection and never cleared, i.e. true provenance. Neither
+  `DetectionSource` (overwritten when a machine detection collapses into a user report) nor
+  verdict presence (flips when the anchor resolves while the attempt event is in flight -
+  I9) may enter the predicate: provenance is an immutable fact about the pin's origin and
+  must be read from a recorded fact, never reconstructed from mutable state. A pin whose anchor carries no machine-applied sanction came from
   an unverified reporter assertion, which deliberately does not suspend the reported sender
   and so must not suspend third parties either - those attempts are blocked and surfaced as
   a throttled notice only. The anchor is the FIRST-ARRIVED claim (`claim_order`, explicit,
@@ -147,7 +155,9 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
   pin). Every attempt is COUNTED even when not individually recorded. The bucket's
   per-`(uploader, file id)` sighting dedup is cleared when a hash changes adjudication
   state (denylisted, or released) so that a pre-verdict sighting can never suppress the
-  reporting of a post-verdict attempt on the same stable file id (forwards). The sighting
+  reporting of a post-verdict attempt on the same stable file id (forwards) - INCLUDING
+  dedup-shared file ids the vault never tracked, resolved against the Files model at every
+  hash transition (`clear_sightings_sharing_hash`). The sighting
   set is BOUNDED (oldest evicted; a re-report is tolerated per I18), and notices are
   throttled per anchor report with a suppressed-attempt tally - unsanctioned attempts are
   free to generate, so neither the channel nor a bot-DM stream may scale with them (the
@@ -237,3 +247,5 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
 | I13 (claim order) | assertion claim on an older report never displaces a machine anchor |
 | I14 (throttle) | repeated unsanctioned attempts produce one notice, not one per attempt |
 | I10 (strikes) | attempt reports never escalate an Upheld downgrade to indefinite |
+| I8a (contest) | attempter's contest falls through to the sanction path and posts the notice; attempt card never Contested; contest survives a repeat re-record |
+| I14/I16 (shared ids) | a dedup-shared file id blocked pre-verdict is still reported when forwarded post-verdict |

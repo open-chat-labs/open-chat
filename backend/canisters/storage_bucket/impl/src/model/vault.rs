@@ -275,6 +275,17 @@ impl Vault {
     // changes adjudication state (denylisted, or released): a forward's file id is stable, so
     // without this a pre-verdict blocked forward would consume the only sighting and the
     // deliberate POST-verdict forward of the same file would go unreported (I14/I16).
+    // The file ids currently in the sighting set: the caller (which can see the Files model)
+    // resolves which of them share the given hash via dedup, something this model cannot see
+    pub fn blocked_attempt_file_ids(&self) -> Vec<FileId> {
+        self.blocked_attempts.iter().map(|(_, id)| *id).collect()
+    }
+
+    pub fn clear_blocked_attempts_for_file_ids(&mut self, ids: &std::collections::BTreeSet<FileId>) {
+        self.blocked_attempts.retain(|(_, id)| !ids.contains(id));
+        self.blocked_attempts_order.retain(|(_, id)| !ids.contains(id));
+    }
+
     pub fn clear_blocked_attempts_for_hash(&mut self, hash: &Hash) {
         let ids: std::collections::BTreeSet<FileId> = self
             .file_id_to_hash

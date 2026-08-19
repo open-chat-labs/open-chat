@@ -14,6 +14,24 @@ fn c2c_vault_sync(args: Args) -> Response {
     mutate_state(|state| c2c_vault_sync_impl(args, state))
 }
 
+// Vault-internal clearing only covers file ids the vault itself tracked (quarantined
+// aliases). Dedup can hand OTHER users file ids for the same hash which were never
+// quarantined - a blocked forward of such an id records a sighting which must also be
+// cleared when the hash changes adjudication state, or the deliberate post-verdict forward
+// of that same id goes unreported (I14/I16).
+fn clear_sightings_sharing_hash(state: &mut RuntimeState, hash: &types::Hash) {
+    let ids: std::collections::BTreeSet<_> = state
+        .data
+        .vault
+        .blocked_attempt_file_ids()
+        .into_iter()
+        .filter(|id| state.data.files.get(id).is_some_and(|f| f.hash == *hash))
+        .collect();
+    if !ids.is_empty() {
+        state.data.vault.clear_blocked_attempts_for_file_ids(&ids);
+    }
+}
+
 fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
     let mut quarantine_failures = Vec::new();
@@ -44,6 +62,7 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
                 match state.data.vault.unquarantine(u.file_id, u.moderator, u.report_index, now) {
                     VaultOpOutcome::ReleasePin(hash) => {
                         state.data.files.vault_unpin(&hash);
+                        clear_sightings_sharing_hash(state, &hash);
                         info!(%file_id, "Vault: unquarantined");
                     }
                     VaultOpOutcome::Retained => {
@@ -74,6 +93,7 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
                     // Tell the index so every other bucket denylists the hash too, otherwise
                     // the same content uploads again elsewhere and is served publicly
                     VaultOpOutcome::AppliedDenylisted(hash, report_index) => {
+                        clear_sightings_sharing_hash(state, &hash);
                         state
                             .data
                             .push_event_to_index(EventToSync::CsamHashDenylisted(CsamHashDenylisted { hash, report_index }));
@@ -87,6 +107,7 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
                     state.data.vault.set_legal_hold(l.file_id, l.legal_hold, l.reference, now)
                 {
                     state.data.files.vault_unpin(&hash);
+                    clear_sightings_sharing_hash(state, &hash);
                     info!(file_id = %l.file_id, "Vault: unquarantined on legal-hold clear");
                 }
             }
@@ -114,6 +135,7 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
                 // Propagated from the bucket which applied the verdict: blocks uploads of the
                 // same content here, and stops any copy already stored here being served
                 if state.data.vault.denylist_hash(d.hash, d.report_index) {
+                    clear_sightings_sharing_hash(state, &d.hash);
                     info!(report_index = d.report_index, "Vault: CSAM hash denylisted");
                 }
             }

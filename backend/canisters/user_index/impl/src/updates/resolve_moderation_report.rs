@@ -295,7 +295,12 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
             timestamp: now,
         },
     );
+    // Sanction side effects run once per ATTEMPTER: one offender can hold several attempt
+    // reports on this original, and per-report unsuspends/downgrades/messages would duplicate
+    // (the register row and card update remain per report, as intended)
+    let mut senders_handled = std::collections::BTreeSet::new();
     for (attempt_index, attempt_report) in mirrored {
+        let first_for_sender = senders_handled.insert(attempt_report.sender);
         match args.verdict {
             ModerationVerdict::UpheldAsCsam => {
                 // The content is now confirmed CSAM: each blocked attempt is a fresh offence
@@ -311,7 +316,12 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     },
                     state,
                 );
-                state.push_event_to_local_user_index(attempt_report.sender, build_verdict_message_to_sender(&attempt_report));
+                if first_for_sender {
+                    state.push_event_to_local_user_index(
+                        attempt_report.sender,
+                        build_verdict_message_to_sender(&attempt_report),
+                    );
+                }
             }
             ModerationVerdict::Upheld => {
                 // A violation but not CSAM: the attempter's indefinite suspension downgrades
@@ -323,8 +333,13 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     .data
                     .users
                     .clear_csam_upload_sanction_if_for_report(&attempt_report.sender, args.report_index);
-                moderation::downgrade_suspension_to_upheld_violation(attempt_report.sender, attempt_index, now, state);
-                state.push_event_to_local_user_index(attempt_report.sender, build_verdict_message_to_sender(&attempt_report));
+                if first_for_sender {
+                    moderation::downgrade_suspension_to_upheld_violation(attempt_report.sender, attempt_index, now, state);
+                    state.push_event_to_local_user_index(
+                        attempt_report.sender,
+                        build_verdict_message_to_sender(&attempt_report),
+                    );
+                }
             }
             ModerationVerdict::Dismissed => {
                 // The allegation was wrong, so the attempt sanction lifts with it. The clear
@@ -338,11 +353,12 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     .data
                     .users
                     .clear_csam_upload_sanction_if_for_report(&attempt_report.sender, args.report_index);
-                if !moderation::has_other_active_sanction(attempt_report.sender, attempt_index, now, state) {
+                if first_for_sender && !moderation::has_other_active_sanction(attempt_report.sender, attempt_index, now, state)
+                {
                     // The unsuspend job sends the statement of reasons once the unsuspension
                     // actually lands (I5)
                     moderation::unsuspend_sender(attempt_report.sender, attempt_index, now, state);
-                } else {
+                } else if first_for_sender {
                     // Still suspended by something else: the attempter is told the content was
                     // cleared without any claim of an unsuspension (I21)
                     state.push_event_to_local_user_index(

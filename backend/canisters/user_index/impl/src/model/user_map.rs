@@ -665,10 +665,17 @@ impl UserMap {
     // as CSAM. There is no message, so no report: this is what the contest path acts on.
     pub fn record_csam_upload_sanction(&mut self, user_id: UserId, csam_report_index: u64, now: TimestampMillis) {
         if let Some(user) = self.users.get_mut(&user_id) {
+            // A repeat attempt re-records the sanction; a standing Article 22 contest against
+            // the SAME report must survive it, or the user can be made to contest forever
+            let contested = user
+                .csam_upload_sanction
+                .as_ref()
+                .filter(|s| s.csam_report_index == csam_report_index)
+                .and_then(|s| s.contested);
             user.csam_upload_sanction = Some(CsamUploadSanction {
                 timestamp: now,
                 csam_report_index,
-                contested: None,
+                contested,
             });
         }
     }

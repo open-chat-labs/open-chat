@@ -3216,7 +3216,10 @@ fn unrelated_dismissal_never_lifts_an_attempt_sanction() {
         "an unrelated dismissal must not lift the attempt sanction"
     );
 
-    // The attempter can contest the automated sanction (Article 22)
+    // The attempter can contest the automated sanction (Article 22). The contest must fall
+    // through to the hash-match sanction path (the attempt report is not contestable as a
+    // report - I8a): the moderator notice is posted with pre-verdict wording, and the
+    // attempt card stays out of the Contested state
     let contest_response = client::user_index::contest_moderation_sanction(
         env,
         test_data.reporter.principal,
@@ -3224,6 +3227,32 @@ fn unrelated_dismissal_never_lifts_an_attempt_sanction() {
         &types::Empty {},
     );
     assert!(matches!(contest_response, UnitResult::Success), "{contest_response:?}");
+    tick_many(env, 5);
+    assert!(
+        moderation_notices(env, &test_data)
+            .iter()
+            .any(|t| t.contains("Human review requested") && t.contains("quarantined pending review")),
+        "the contest must post the moderator notice via the sanction path"
+    );
+    assert!(
+        attempt_reports_for(env, &test_data, &test_data.reporter)
+            .iter()
+            .all(|r| !matches!(r.status, ModerationReportStatus::Contested)),
+        "an attempt report must never enter the Contested state"
+    );
+
+    // A repeat attempt re-records the sanction; the standing contest must survive it
+    attempt_blocked_upload(env, canister_ids, &test_data.reporter, &file);
+    let second_contest = client::user_index::contest_moderation_sanction(
+        env,
+        test_data.reporter.principal,
+        canister_ids.user_index,
+        &types::Empty {},
+    );
+    assert!(
+        matches!(second_contest, UnitResult::Error(_)),
+        "the preserved contest must make a second contest a no-op: {second_contest:?}"
+    );
 
     // Only the LINKED report's dismissal lifts it
     let resolve_response = client::user_index::resolve_moderation_report(
@@ -3454,16 +3483,35 @@ fn post_verdict_forward_is_still_reported() {
 
     let test_data = init_test_data(env, canister_ids, *controller);
     let file = random_file();
-    let (blob_reference, original_report_index) =
+
+    // The reporter uploads their OWN copy of the bytes first: dedup shares the blob, and
+    // their file id is one the vault never tracks - the sighting-clearing must still find it
+    let reporter_bucket = client::storage_index::happy_path::allocated_bucket(
+        env,
+        test_data.reporter.principal,
+        canister_ids.storage_index,
+        &file,
+    );
+    client::storage_bucket::happy_path::upload_file(
+        env,
+        test_data.reporter.principal,
+        reporter_bucket.canister_id,
+        reporter_bucket.file_id,
+        file.clone(),
+        vec![test_data.reporter.canister()],
+        None,
+    );
+
+    let (_, original_report_index) =
         establish_pending_hash_match_report_from(env, canister_ids, &test_data, random_principal(), &file, None);
 
-    // Pre-verdict forward: blocked and reported as an attempt
+    // Pre-verdict forward of the dedup-shared copy: blocked and reported as an attempt
     let forward_response = client::storage_bucket::forward_file(
         env,
         test_data.reporter.principal,
-        blob_reference.canister_id,
+        reporter_bucket.canister_id,
         &storage_bucket_canister::forward_file::Args {
-            file_id: blob_reference.blob_id,
+            file_id: reporter_bucket.file_id,
             accessors: vec![test_data.reporter.canister()],
         },
     );
@@ -3491,14 +3539,15 @@ fn post_verdict_forward_is_still_reported() {
         .filter(|t| t.contains("Repeat attempt"))
         .count();
 
-    // Post-verdict forward of the SAME file id: the denylist transition cleared the sighting,
-    // so this deliberate offence is visible (tallied with the resolved state), not silent
+    // Post-verdict forward of the SAME dedup-shared file id: the denylist transition cleared
+    // the sighting (via the Files model - the vault never saw this id), so this deliberate
+    // offence is visible (tallied with the resolved state), not silent
     let forward_response = client::storage_bucket::forward_file(
         env,
         test_data.reporter.principal,
-        blob_reference.canister_id,
+        reporter_bucket.canister_id,
         &storage_bucket_canister::forward_file::Args {
-            file_id: blob_reference.blob_id,
+            file_id: reporter_bucket.file_id,
             accessors: vec![test_data.reporter.canister()],
         },
     );

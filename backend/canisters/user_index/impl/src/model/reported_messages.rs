@@ -479,6 +479,13 @@ impl ReportedMessages {
         if message.sender != caller {
             return ContestResult::NotFound;
         }
+        // A blocked-attempt report is never resolved directly (I8), so contesting it would
+        // flip its card to Contested with no moderator able to act and no channel notice.
+        // The attempter's Article 22 channel is the hash-match sanction contest, which the
+        // caller's loop falls through to.
+        if matches!(message.detection, DetectionSource::BlockedAttempt { .. }) {
+            return ContestResult::NotContestable;
+        }
         let Some(ReportOutcome::Automated(outcome)) = &message.outcome else {
             return ContestResult::NotContestable;
         };
@@ -741,6 +748,13 @@ impl ReportedMessage {
     }
 
     // True while a without-verdict suspension is outstanding on this report
+    // The machine pipeline applied a suspension at detection time. Recorded once, never
+    // cleared: true PROVENANCE, unlike the detection source (overwritten by collapse into a
+    // user report) or verdict presence (flips when the report resolves) - see I13.
+    pub fn machine_sanction_applied(&self) -> bool {
+        matches!(&self.outcome, Some(ReportOutcome::Automated(a)) if a.sanctioned)
+    }
+
     pub fn suspension_applied_without_verdict(&self) -> bool {
         matches!(&self.outcome, Some(ReportOutcome::Automated(a)) if a.sanctioned && a.human_verdict.is_none())
     }
@@ -942,15 +956,23 @@ pub fn build_restoration_message_to_sender(reported_message: &ReportedMessage, u
 // The statement of reasons for a hash-match suspension: there is no message and so no report,
 // but the user must still be told why and how to require human review. Deliberately does not
 // disclose whether any agency report was filed.
-pub fn build_upload_sanction_message_to_uploader(user_id: UserId, verdict_pending: bool) -> UserIndexEvent {
-    // Pre-verdict the content is suspected, not confirmed - the wording must not overstate
-    // the adjudication status, and the suspension reverses if the review clears the content
-    let text = if verdict_pending {
-        "Your account has been suspended. Content you tried to upload matches content which has been detected as suspected child sexual abuse material, which is prohibited by [the platform rules](https://oc.app/guidelines?section=3), and is currently under review by the OpenChat moderation team. If the review clears the content, this suspension will be reversed. \
+pub fn build_upload_sanction_message_to_uploader(user_id: UserId, anchor_verdict: Option<ModerationVerdict>) -> UserIndexEvent {
+    // The wording must track the anchor's adjudication state exactly (I21): pre-verdict the
+    // content is suspected, not confirmed; an Upheld (not CSAM) verdict must not be described
+    // as confirmed CSAM; Dismissed never reaches this builder (no sanction is applied).
+    let text = match anchor_verdict {
+        None => {
+            "Your account has been suspended. Content you tried to upload matches content which has been detected as suspected child sexual abuse material, which is prohibited by [the platform rules](https://oc.app/guidelines?section=3), and is currently under review by the OpenChat moderation team. If the review clears the content, this suspension will be reversed. \
         If you believe this is wrong you can request that a person reviews the decision, using the button on the suspension notice."
-    } else {
-        "Your account has been suspended. Content you tried to upload matches content which the OpenChat moderation team has confirmed to be child sexual abuse material, which is prohibited by [the platform rules](https://oc.app/guidelines?section=3). \
+        }
+        Some(ModerationVerdict::UpheldAsCsam) => {
+            "Your account has been suspended. Content you tried to upload matches content which the OpenChat moderation team has confirmed to be child sexual abuse material, which is prohibited by [the platform rules](https://oc.app/guidelines?section=3). \
         If you believe this is wrong you can request that a person reviews the decision, using the button on the suspension notice."
+        }
+        Some(ModerationVerdict::Upheld) | Some(ModerationVerdict::Dismissed) => {
+            "Your account has been temporarily suspended. Content you tried to upload matches content which the OpenChat moderation team found to break [the platform rules](https://oc.app/guidelines?section=3). \
+        If you believe this is wrong you can request that a person reviews the decision, using the button on the suspension notice."
+        }
     }
     .to_string();
 
