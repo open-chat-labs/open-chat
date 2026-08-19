@@ -108,10 +108,13 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
   repeat against an attempt report whose mirror already resolved it must never resurrect
   the reversed sanction (the mirror runs once and would never clear it again).
 - **I10 — Universal registration.** Every report, including BlockedAttempt, is registered on
-  its sender via `push_reported_message`, so `in_breach_count` (strike system),
-  `has_other_active_sanction`, `has_other_indefinite_sanction` and contest see all of them.
-  (I3's short-circuit is thus belt-and-braces for the record's own linked report, not the
-  only visibility mechanism.)
+  its sender via `push_reported_message`, so `has_other_active_sanction`,
+  `has_other_indefinite_sanction` and contest see all of them. (I3's short-circuit is thus
+  belt-and-braces for the record's own linked report, not the only visibility mechanism.)
+  EXCEPT strikes: `in_breach` is always false for BlockedAttempt reports - several can
+  describe attempts on one piece of content, and counting them would escalate an eventual
+  non-CSAM Upheld to the repeat-offender permanent ban for an attempter whose content's
+  sender gets a day.
 
 ### Vault and storage
 
@@ -130,17 +133,26 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
   frivolous assertion on the same blob must not dilute the anchor). A pin retained only by a
   legal hold has no active claim: the upload is still refused (no dead references) but
   nobody is sanctioned or reported against a resolved case. Pre-verdict attempt SANCTIONS
-  additionally require the anchor report to be machine-detected
-  (`DetectionSource::Proactive`): a pin created by an unverified reporter assertion
-  deliberately does not suspend the reported sender, so it must not suspend third parties
-  either - those attempts are blocked and surfaced as a notice only.
+  additionally require the anchor report to be machine-BACKED, judged by
+  `suspension_applied_without_verdict()` - NOT by `DetectionSource`, because a machine
+  detection collapsing into an existing user report fills the outcome but leaves the
+  detection as UserReport. A pin whose anchor carries no machine-applied sanction came from
+  an unverified reporter assertion, which deliberately does not suspend the reported sender
+  and so must not suspend third parties either - those attempts are blocked and surfaced as
+  a throttled notice only. The anchor is the FIRST-ARRIVED claim (`claim_order`, explicit,
+  because report indexes are creation order not claim order).
 - **I14 — No silent attempts.** Every blocked attempt leaves a moderator-visible trace: a
   report card (new attempt report), a repeat notice naming the offender (tallied attempt),
   or a plain notice (unresolvable uploader / unknown original report / reporter-asserted
   pin). Every attempt is COUNTED even when not individually recorded. The bucket's
   per-`(uploader, file id)` sighting dedup is cleared when a hash changes adjudication
   state (denylisted, or released) so that a pre-verdict sighting can never suppress the
-  reporting of a post-verdict attempt on the same stable file id (forwards).
+  reporting of a post-verdict attempt on the same stable file id (forwards). The sighting
+  set is BOUNDED (oldest evicted; a re-report is tolerated per I18), and notices are
+  throttled per anchor report with a suppressed-attempt tally - unsanctioned attempts are
+  free to generate, so neither the channel nor a bot-DM stream may scale with them (the
+  repeat arm sends no per-attempt DM at all: the first attempt informed the uploader and
+  their sanction state has not changed).
 - **I15 — Hash checks are spoof-proof.** Refusing on the DECLARED hash at upload is sound
   because an upload only completes if the bytes hash to the declared value
   (`PutChunkResult::HashMismatch` rejects the file).
@@ -221,3 +233,7 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
 | I9 (repeats) | repeat after linked resolution never resurrects the sanction |
 | I1/I2 (record overwrite) | attempts against two pending reports; both dismissals in either order fully unsuspend |
 | I14/I16 (forward dedupe) | pre-verdict blocked forward, uphold, post-verdict forward still reported + registered |
+| I13 (machine-backed predicate) | machine detection collapsed into a user report still sanctions attempts |
+| I13 (claim order) | assertion claim on an older report never displaces a machine anchor |
+| I14 (throttle) | repeated unsanctioned attempts produce one notice, not one per attempt |
+| I10 (strikes) | attempt reports never escalate an Upheld downgrade to indefinite |

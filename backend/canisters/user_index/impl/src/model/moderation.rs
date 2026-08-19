@@ -134,6 +134,27 @@ pub fn notify_other_platform_operators(text: String, state: &mut RuntimeState) {
     }
 }
 
+// Rate-limits blocked-attempt notices per anchor report. Unsanctioned attempts are free to
+// generate (an assertion-pinned hash can be "attempted" endlessly with fresh file ids), so
+// per-attempt notices would let anyone flood the moderation channel. The attempts stay
+// counted (I14): the next posted notice carries the suppressed tally.
+pub fn post_throttled_blocked_attempt_notice(report_index: u64, text: String, now: TimestampMillis, state: &mut RuntimeState) {
+    const NOTICE_THROTTLE: types::Milliseconds = constants::HOUR_IN_MS;
+    let entry = state.data.blocked_attempt_notice_throttle.entry(report_index).or_default();
+    if now.saturating_sub(entry.0) >= NOTICE_THROTTLE {
+        let suppressed = entry.1;
+        *entry = (now, 0);
+        let text = if suppressed > 0 {
+            format!("{text}\n\n({suppressed} further attempts were tallied since the previous notice.)")
+        } else {
+            text
+        };
+        post_moderation_notice(text, state);
+    } else {
+        entry.1 = entry.1.saturating_add(1);
+    }
+}
+
 pub fn post_moderation_notice(text: String, state: &mut RuntimeState) {
     let Some((community_id, channel_id)) = state.data.internal_moderation_channel else {
         error!("Moderation notice raised but no internal moderation channel is configured");

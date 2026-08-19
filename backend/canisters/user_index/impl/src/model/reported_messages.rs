@@ -754,6 +754,13 @@ impl ReportedMessage {
 
     // True if this message was judged to have broken the platform rules
     pub fn in_breach(&self) -> bool {
+        // Blocked-attempt reports never count as strikes: several can describe attempts on
+        // ONE piece of content, so counting them would escalate an eventual non-CSAM Upheld
+        // to the repeat-offender permanent ban for an attempter whose content's sender gets
+        // a day (I10)
+        if matches!(self.detection, DetectionSource::BlockedAttempt { .. }) {
+            return false;
+        }
         match &self.outcome {
             Some(ReportOutcome::Modclub(o)) => o.approved < o.rejected,
             // A human verdict always overrides the automated action, so a Dismissed false
@@ -906,12 +913,15 @@ pub fn build_verdict_message_to_sender(reported_message: &ReportedMessage) -> Us
 // the restoration. Deliberately does not disclose whether any agency report was filed.
 pub fn build_restoration_message_to_sender(reported_message: &ReportedMessage, unsuspended: bool) -> UserIndexEvent {
     // A blocked attempt never had a message, so there is nothing to restore - only the
-    // sanction is being reversed
+    // sanction may be reversed, and an unsuspension is claimed only when one actually
+    // happened (I5)
     if matches!(reported_message.detection, DetectionSource::BlockedAttempt { .. }) {
-        let text = "The OpenChat moderation team reviewed the content you had tried to post, which had been blocked, and determined \
-            that it does not break [the platform rules](https://oc.app/guidelines?section=3). Your account has been unsuspended. \
+        let outcome_text = if unsuspended { " Your account has been unsuspended." } else { "" };
+        let text = format!(
+            "The OpenChat moderation team reviewed the content you had tried to post, which had been blocked, and determined \
+            that it does not break [the platform rules](https://oc.app/guidelines?section=3).{outcome_text} \
             We apologise for the disruption."
-            .to_string();
+        );
         return build_oc_bot_message(text, reported_message.sender);
     }
     // Only claim an unsuspension when one actually happened: a reporter-asserted takedown

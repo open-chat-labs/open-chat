@@ -3517,6 +3517,261 @@ fn post_verdict_forward_is_still_reported() {
     );
 }
 
+// I13 (machine-backed predicate): a machine detection which collapsed into an existing user
+// report leaves detection == UserReport but applied a real suspension - attempts on its pin
+// must still be sanctioned and reported
+#[test]
+fn machine_detection_in_user_report_still_sanctions_attempts() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let scanner = random_principal();
+    let file = random_file();
+
+    // Configure scanning, post the image, then have the reporter file a PLAIN report (no
+    // assertion) BEFORE the scan verdict arrives: the detection then collapses into the
+    // existing user report
+    client::user_index::happy_path::execute_protected_action(
+        env,
+        test_data.moderator.principal,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        ProtectedAction::SetMediaScanConfig(user_index_canister::set_media_scan_config::Args {
+            config: MediaScanConfig {
+                enabled: true,
+                scanners: vec![scanner],
+            },
+        }),
+    );
+    client::user_index::happy_path::execute_protected_action(
+        env,
+        test_data.moderator.principal,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        ProtectedAction::SetVaultReviewers(user_index_canister::set_vault_reviewers::Args {
+            user_ids: vec![test_data.moderator.user_id],
+        }),
+    );
+    tick_many(env, 5);
+
+    let bucket =
+        client::storage_index::happy_path::allocated_bucket(env, test_data.sender.principal, canister_ids.storage_index, &file);
+    client::storage_bucket::happy_path::upload_file(
+        env,
+        test_data.sender.principal,
+        bucket.canister_id,
+        bucket.file_id,
+        file.clone(),
+        vec![test_data.sender.canister()],
+        None,
+    );
+    let blob_reference = BlobReference {
+        canister_id: bucket.canister_id,
+        blob_id: bucket.file_id,
+    };
+    let message_id = random_from_u128();
+    // Captioned: the report's classification then needs the (deliberately unmocked) API
+    // call, so the report's outcome stays open for the scan detection to collapse into. A
+    // caption-less image is "classified" empty immediately, which would record an outcome
+    // first and make the detection a no-op per I18.
+    let caption = format!("{TEST_MESSAGE_TEXT} {}", random_string());
+    send_captioned_image_message(
+        env,
+        &test_data.sender,
+        test_data.group_id,
+        message_id,
+        blob_reference.clone(),
+        &caption,
+    );
+    tick_many(env, 3);
+
+    client::group::report_message(
+        env,
+        test_data.reporter.principal,
+        test_data.group_id.into(),
+        &group_canister::report_message::Args {
+            thread_root_message_index: None,
+            message_id,
+            delete: false,
+            csam: false,
+        },
+    );
+    tick_many(env, 5);
+
+    let local_user_index = canister_ids.local_user_index(env, test_data.group_id);
+    let local_user_index_canister::media_scan_jobs::Response::Success(jobs_result) = client::local_user_index::media_scan_jobs(
+        env,
+        scanner,
+        local_user_index,
+        &local_user_index_canister::media_scan_jobs::Args { from_job_index: 0 },
+    );
+    let job = jobs_result
+        .jobs
+        .iter()
+        .find(|j| j.request.message_id == message_id)
+        .expect("scan job");
+    client::local_user_index::submit_media_scan_verdicts(
+        env,
+        scanner,
+        local_user_index,
+        &local_user_index_canister::submit_media_scan_verdicts::Args {
+            verdicts: vec![MediaScanVerdict {
+                job_index: job.job_index,
+                message_id,
+                outcomes: vec![MediaScanBlobOutcome::Match(MediaScanMatch {
+                    provider: MediaScanProvider::PhotoDna,
+                    blob_id: blob_reference.blob_id,
+                    source: "Test".to_string(),
+                    violations: vec!["A1".to_string()],
+                    match_distance: 181,
+                    match_id: None,
+                })],
+            }],
+            up_to_job_index: job.job_index,
+        },
+    );
+    tick_many(env, 10);
+
+    // The machine detection collapsed into the user report and suspended the sender
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    assert!(
+        sender_state.suspension_details.is_some(),
+        "the machine detection should suspend the sender"
+    );
+
+    // A third-party attempt on the pin must be sanctioned and reported, despite the anchor's
+    // detection source reading UserReport
+    attempt_blocked_upload(env, canister_ids, &test_data.group_owner, &file);
+    let attempter_state =
+        client::user_index::happy_path::current_user(env, test_data.group_owner.principal, canister_ids.user_index);
+    assert!(
+        attempter_state.suspension_details.is_some(),
+        "a machine-backed pin must sanction attempts even inside a user report"
+    );
+    assert_eq!(attempt_reports_for(env, &test_data, &test_data.group_owner).len(), 1);
+}
+
+// I14 (throttle): repeated unsanctioned attempts against an assertion pin produce one notice
+// inside the throttle window, not one per attempt
+#[test]
+fn unsanctioned_attempt_notices_are_throttled() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let file = random_file();
+
+    let bucket =
+        client::storage_index::happy_path::allocated_bucket(env, test_data.sender.principal, canister_ids.storage_index, &file);
+    client::storage_bucket::happy_path::upload_file(
+        env,
+        test_data.sender.principal,
+        bucket.canister_id,
+        bucket.file_id,
+        file.clone(),
+        vec![test_data.sender.canister()],
+        None,
+    );
+    let message_id = random_from_u128();
+    send_image_message(
+        env,
+        &test_data.sender,
+        test_data.group_id,
+        message_id,
+        BlobReference {
+            canister_id: bucket.canister_id,
+            blob_id: bucket.file_id,
+        },
+    );
+    tick_many(env, 3);
+    client::group::report_message(
+        env,
+        test_data.reporter.principal,
+        test_data.group_id.into(),
+        &group_canister::report_message::Args {
+            thread_root_message_index: None,
+            message_id,
+            delete: false,
+            csam: true,
+        },
+    );
+    tick_many(env, 10);
+
+    for _ in 0..3 {
+        attempt_blocked_upload(env, canister_ids, &test_data.group_owner, &file);
+    }
+    let notices = moderation_notices(env, &test_data)
+        .iter()
+        .filter(|t| t.contains("Blocked re-post of content under review"))
+        .count();
+    assert_eq!(notices, 1, "one notice inside the throttle window, however many attempts");
+    let attempter_state =
+        client::user_index::happy_path::current_user(env, test_data.group_owner.principal, canister_ids.user_index);
+    assert!(attempter_state.suspension_details.is_none());
+}
+
+// I10 (strikes): attempt reports never count towards the repeat-offender escalation - an
+// Upheld (not CSAM) original downgrades the attempter to the standard one-day severity even
+// after several attempt reports
+#[test]
+fn attempt_reports_never_escalate_an_upheld_downgrade() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let file = random_file();
+    let original_report_index = establish_pending_hash_match_report(env, canister_ids, &test_data, random_principal(), &file);
+
+    // Three attempt reports for the same content (outside the retry window each time)
+    attempt_blocked_upload(env, canister_ids, &test_data.reporter, &file);
+    for _ in 0..2 {
+        env.advance_time(Duration::from_secs(11 * 60));
+        tick_many(env, 2);
+        attempt_blocked_upload(env, canister_ids, &test_data.reporter, &file);
+    }
+    assert_eq!(attempt_reports_for(env, &test_data, &test_data.reporter).len(), 3);
+
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index: original_report_index,
+            verdict: ModerationVerdict::Upheld,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+
+    let attempter_state =
+        client::user_index::happy_path::current_user(env, test_data.reporter.principal, canister_ids.user_index);
+    let suspension_details = attempter_state
+        .suspension_details
+        .expect("the downgraded standard suspension should be in force");
+    assert!(
+        matches!(suspension_details.action, SuspensionAction::Unsuspend(_)),
+        "attempt reports must not escalate the downgrade to indefinite: {:?}",
+        suspension_details.action
+    );
+
+    // 22 minutes were added to the clock: this env must not go back to the pool
+    wrapper.discard();
+}
+
 fn send_captioned_image_message(
     env: &mut PocketIc,
     sender: &User,

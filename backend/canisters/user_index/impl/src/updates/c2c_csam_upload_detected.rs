@@ -1,8 +1,6 @@
 use crate::guards::caller_is_storage_index;
 use crate::model::moderation;
-use crate::model::reported_messages::{
-    AddBlockedAttemptResult, DetectionSource, ReportedMessages, build_upload_sanction_message_to_uploader,
-};
+use crate::model::reported_messages::{AddBlockedAttemptResult, ReportedMessages, build_upload_sanction_message_to_uploader};
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -71,22 +69,26 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
                  The user could not be resolved, so NO suspension was applied.",
                 m.uploader, m.csam_report_index
             );
-            moderation::post_moderation_notice(text, state);
+            moderation::post_throttled_blocked_attempt_notice(m.csam_report_index, text, now, state);
             continue;
         };
         let who = format!("@{username} ({user_id})");
 
-        // Provenance gate (I13): a pre-verdict pin whose anchor report is not machine-detected
+        // Provenance gate (I13): a pre-verdict pin whose anchor report is not machine-backed
         // came from an unverified reporter assertion. That assertion deliberately does not
         // suspend the reported sender, so it must not suspend third parties either - otherwise
         // any account could grind arbitrary uploaders of a common image offline by asserting
         // CSAM against one copy of it.
+        // Machine-backed = the automated pipeline actually applied a suspension
+        // (suspension_applied_without_verdict), NOT the detection source: a machine detection
+        // collapsing into an existing user report fills the outcome but leaves the detection
+        // as UserReport, and must still count.
         if matches!(m.kind, CsamMatchKind::PendingQuarantineAttempt) {
             let machine_detected = state
                 .data
                 .reported_messages
                 .get(m.csam_report_index)
-                .is_some_and(|o| matches!(o.detection, DetectionSource::Proactive));
+                .is_some_and(|o| o.suspension_applied_without_verdict());
             if !machine_detected {
                 let text = format!(
                     "🚨 Blocked re-post of content under review\n\n\
@@ -97,7 +99,7 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
                      sanctioned and reported.",
                     m.csam_report_index
                 );
-                moderation::post_moderation_notice(text, state);
+                moderation::post_throttled_blocked_attempt_notice(m.csam_report_index, text, now, state);
                 continue;
             }
         }
@@ -175,12 +177,9 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
                     .get(attempt_report_index)
                     .and_then(|r| r.human_verdict().map(|v| v.verdict));
                 apply_attempt_sanction(user_id, m.csam_report_index, attempt_report_index, verdict, now, state);
-                if !matches!(verdict, Some(ModerationVerdict::Dismissed)) {
-                    state.push_event_to_local_user_index(
-                        user_id,
-                        build_upload_sanction_message_to_uploader(user_id, verdict.is_none()),
-                    );
-                }
+                // No fresh message to the uploader: their sanction state is unchanged since
+                // the first attempt informed them, and a per-attempt DM would let a scripted
+                // uploader generate unbounded bot messages
                 let text = format!(
                     "🚨 Repeat attempt to {action} content {} in report #{} \
                      ({who}, attempt {total_attempts}; recorded on attempt report #{attempt_report_index}). \
@@ -188,7 +187,7 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
                     anchor_state_phrase(verdict),
                     m.csam_report_index
                 );
-                moderation::post_moderation_notice(text, state);
+                moderation::post_throttled_blocked_attempt_notice(attempt_report_index, text, now, state);
             }
             None => {
                 // Unknown original report index (legacy denylist entry with no report): only
@@ -206,7 +205,7 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
                      if this sanction was applied in error, unsuspending the user reverses it.",
                     m.csam_report_index
                 );
-                moderation::post_moderation_notice(text, state);
+                moderation::post_throttled_blocked_attempt_notice(m.csam_report_index, text, now, state);
             }
         }
     }

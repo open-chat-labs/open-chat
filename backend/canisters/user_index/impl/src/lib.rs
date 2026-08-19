@@ -427,6 +427,9 @@ struct Data {
     pub media_scan_config: MediaScanConfig,
     #[serde(default)]
     pub internal_moderation_channel: Option<(CommunityId, ChannelId)>,
+    // Per-report notice throttle for blocked re-post attempts: (last posted, suppressed count)
+    #[serde(default)]
+    pub blocked_attempt_notice_throttle: HashMap<u64, (TimestampMillis, u32)>,
 }
 
 impl Data {
@@ -517,6 +520,7 @@ impl Data {
             moderation_referral_config: None,
             media_scan_config: MediaScanConfig::default(),
             internal_moderation_channel: None,
+            blocked_attempt_notice_throttle: HashMap::new(),
         };
 
         // Register the ProposalsBot
@@ -637,6 +641,7 @@ impl Default for Data {
             moderation_referral_config: None,
             media_scan_config: MediaScanConfig::default(),
             internal_moderation_channel: None,
+            blocked_attempt_notice_throttle: HashMap::new(),
         }
     }
 }
