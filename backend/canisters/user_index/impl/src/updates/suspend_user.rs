@@ -1,9 +1,12 @@
 use crate::guards::caller_is_platform_moderator;
+use crate::model::moderation;
 use crate::timer_job_types::{SetUserSuspendedInCommunity, SetUserSuspendedInGroup, TimerJob, UnsuspendUser};
 use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::OPENCHAT_BOT_USER_ID;
 use local_user_index_canister::{UserIndexEvent, UserSuspended};
+use tracing::info;
 use types::{ChatId, CommunityId, Milliseconds, SuspensionDuration, UserId};
 use user_index_canister::suspend_user::{Response::*, *};
 
@@ -65,6 +68,17 @@ fn commit(
     state: &mut RuntimeState,
 ) {
     let now = state.env.now();
+
+    // I1a, re-checked at the write rather than only where the job was enqueued: the two are
+    // separated by the timer tick and the c2c call above, and a manual suspension applied in
+    // that gap must not be overwritten by an automated one. Safe to abandon the suspension
+    // here: `c2c_set_user_suspended(true)` is idempotent and the user is already suspended,
+    // so the user canister and this one still agree.
+    if suspended_by == OPENCHAT_BOT_USER_ID && !moderation::automated_suspension_applies(user_id, duration, state) {
+        info!(%user_id, "Skipping automated suspension: it would not escalate the one already in force");
+        return;
+    }
+
     for group in groups {
         state.data.timer_jobs.enqueue_job(
             TimerJob::SetUserSuspendedInGroup(SetUserSuspendedInGroup {

@@ -63,6 +63,21 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
   the check. The guard lives in the primitive precisely because call-site application kept
   missing sites (mirror vs sender arms, rounds 7-9): a rule that must be remembered at every
   call site will eventually be forgotten at one.
+
+  The primitives only ENQUEUE; the write lands in a timer job, after a c2c call to the user
+  canister. An enqueue-time check alone is therefore a check-then-act across an await, so the
+  rule is evaluated TWICE - the second time at the write, where nothing can intervene after
+  it: `suspend_user::commit` re-tests `automated_suspension_applies` (the same predicate
+  `suspend()` uses, shared so the two cannot drift) and abandons the suspension if a manual
+  one arrived meanwhile; `UnsuspendUser::execute` re-tests `suspension_is_automated` for the
+  moderation-driven reversal, alongside the I4 timestamp guard it already applies to the
+  expiry case. Abandoning an automated suspension at commit is consistent because
+  `c2c_set_user_suspended(true)` is idempotent and the user is suspended either way. Two
+  residues are accepted: the DM was already sent from the enqueue-time truth, so a user who
+  wins this race is told they were suspended for the attempt when the suspension actually
+  standing is the moderator's (they ARE suspended, so this understates rather than invents -
+  I21); and the automated unsuspend's re-check still precedes its own c2c, leaving a
+  one-call window that cannot be closed on that side without desyncing the user canister.
 - **I1 — Attribution.** Every suspension is attributable to at least one holder: an
   unresolved sanctioned report (`suspension_applied_without_verdict`), an upheld verdict
   (indefinite for UpheldAsCsam, one day for Upheld — `keeps_sender_sanctioned`), a hash-match
@@ -321,5 +336,5 @@ field must be added here with its answer:
 | I14 (per-offender throttle) | two offenders against one pin each get a named notice |
 | I8a (last resort) | attempter with cleared/overwritten record can still contest; notice posted |
 | I6 (fixed window) | attempts spaced inside a sliding-but-not-fixed window mint new reports |
-| I1a | dismissal never lifts a manual moderator suspension; Upheld never downgrades one; an attempt never replaces one |
+| I1a | dismissal never lifts a manual moderator suspension; Upheld never downgrades one; an attempt never replaces one; an attempt DOES escalate a timed one to indefinite |
 | I14 (refused-upload ids) | same file id re-attempted post-verdict still reports (sightings self-describe their hash) |

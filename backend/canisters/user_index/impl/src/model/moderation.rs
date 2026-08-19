@@ -490,16 +490,13 @@ pub fn suspend_sender_for_upheld_violation(sender: UserId, now: TimestampMillis,
 // the suspension was enqueued, so callers never claim a sanction which was not applied
 // (I5/I21).
 fn suspend(sender: UserId, duration: Option<u64>, reason: String, now: TimestampMillis, state: &mut RuntimeState) -> bool {
-    let Some(user) = state.data.users.get_by_user_id(&sender) else {
+    if state.data.users.get_by_user_id(&sender).is_none() {
         error!(%sender, "Cannot suspend message sender, user not found");
         return false;
     };
 
-    if let Some(details) = user.suspension_details.as_ref() {
-        let escalates = duration.is_none() && !matches!(details.duration, SuspensionDuration::Indefinitely);
-        if !escalates {
-            return false;
-        }
+    if !automated_suspension_applies(sender, duration, state) {
+        return false;
     }
 
     state.data.timer_jobs.enqueue_job(
@@ -514,6 +511,28 @@ fn suspend(sender: UserId, duration: Option<u64>, reason: String, now: Timestamp
         now,
     );
     true
+}
+
+// The I1a escalation rule as a predicate: an automated suspension may be applied over one
+// already in force ONLY when it strictly escalates it (indefinite over timed), never
+// laterally or downwards, whoever imposed the existing one.
+//
+// Evaluated TWICE: once when the job is enqueued (`suspend`, so the caller's messaging can
+// track what was applied - I5) and again when it commits (`suspend_user::commit`). The write
+// lands after an inter-canister call to the user canister, so an enqueue-time check on its
+// own is a check-then-act across an await: a manual suspension applied in the gap would be
+// silently overwritten by the automated one, taking its reason and its attribution with it,
+// and leaving it liftable by a later dismissal - exactly the I1a failure, through the one
+// door the primitive cannot close by itself.
+pub fn automated_suspension_applies(user_id: UserId, duration: Option<u64>, state: &RuntimeState) -> bool {
+    let Some(user) = state.data.users.get_by_user_id(&user_id) else {
+        return false;
+    };
+
+    match user.suspension_details.as_ref() {
+        None => true,
+        Some(details) => duration.is_none() && !matches!(details.duration, SuspensionDuration::Indefinitely),
+    }
 }
 
 // Restores a message after a Dismissed verdict on an automated sanction (receiver implemented

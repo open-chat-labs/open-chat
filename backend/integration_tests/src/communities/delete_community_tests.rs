@@ -101,10 +101,11 @@ fn user_canister_notified_of_community_deleted() {
 
     env.advance_time(Duration::from_secs(2 * 60));
     // The past-cutoff attempt must fully resolve (rejected, and dropped by the 10 minute
-    // check) while user3's canister is still stopped: a single tick can leave the call in
-    // flight, and starting the canister then lets it be processed against the RUNNING
-    // canister and succeed - a race which extra due timers on the subnet make likely
-    tick_many(env, 3);
+    // check) while user3's canister is still stopped. The push job re-arms a zero-delay
+    // timer while anything is pending, and one cross-subnet round trip (timer fires, call
+    // travels out, rejects at the stopped canister, reply travels back, requeue check drops
+    // it) spans several ticks - 3 was still losing the race in CI, so give it plenty
+    tick_many(env, 10);
     start_canister(env, user3.local_user_index, user3.user_id.into());
     env.tick();
 

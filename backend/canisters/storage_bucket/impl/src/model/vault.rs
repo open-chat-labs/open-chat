@@ -313,7 +313,11 @@ impl Vault {
         // refused-upload file ids which exist in no other structure (I14). Legacy entries
         // without a recorded hash are post-verdict denylist sightings; their transitions are
         // final and never need clearing.
-        let keys: Vec<(Principal, FileId)> = self
+        // A set, not a Vec: both this and the order queue are bounded at
+        // MAX_BLOCKED_ATTEMPT_SIGHTINGS, and every sighting can share one hash (refused
+        // uploads pick a fresh file id each time, so they are cheap to generate), which would
+        // make a linear `contains` inside the retain quadratic in a single message.
+        let keys: BTreeSet<(Principal, FileId)> = self
             .blocked_attempt_hashes
             .iter()
             .filter(|(_, h)| *h == hash)

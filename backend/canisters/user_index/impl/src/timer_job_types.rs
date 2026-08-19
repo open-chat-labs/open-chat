@@ -1,3 +1,4 @@
+use crate::model::moderation;
 use crate::model::reported_messages::build_restoration_message_to_sender;
 use crate::updates::c2c_report_message::process_report;
 use crate::updates::pay_for_diamond_membership::pay_for_diamond_membership_impl;
@@ -293,6 +294,14 @@ impl Job for UnsuspendUser {
                 info!(user_id = %self.user_id, "Skipping expiry of a suspension which is no longer in force");
                 return;
             }
+        } else if !read_state(|state| moderation::suspension_is_automated(self.user_id, state)) {
+            // A moderation-driven reversal (no expiry timestamp) may only lift what automation
+            // applied. Re-checked here as well as in `unsuspend_sender`: the two are separated
+            // by the timer tick, and a manual suspension imposed in that gap must survive
+            // (I1a). The user is told no unsuspension happened, because none did (I5).
+            info!(user_id = %self.user_id, "Skipping automated unsuspend: a manual suspension is in force");
+            notify_sender_of_restoration(self.restoration_report_index, self.user_id, false);
+            return;
         }
 
         ic_cdk::futures::spawn_migratory(unsuspend_user(self));

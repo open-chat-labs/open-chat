@@ -4040,6 +4040,69 @@ fn upheld_never_downgrades_a_manual_suspension() {
     );
 }
 
+// I1a, the other half of the rule: automation may STRICTLY ESCALATE. A timed manual
+// suspension must not shield a user from the indefinite CSAM sanction - only a lateral or
+// weakening replacement is forbidden. Without this the offender is free when the day expires.
+#[test]
+fn attempt_escalates_a_timed_manual_suspension_to_indefinite() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let file = random_file();
+    establish_pending_hash_match_report(env, canister_ids, &test_data, random_principal(), &file);
+
+    // A moderator suspends the (future) attempter for a DAY, for something unrelated
+    let suspend_response = client::user_index::suspend_user(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::suspend_user::Args {
+            user_id: test_data.reporter.user_id,
+            duration: Some(DAY_IN_MS),
+            reason: "unrelated harassment".to_string(),
+        },
+    );
+    assert!(
+        matches!(suspend_response, user_index_canister::suspend_user::Response::Success),
+        "{suspend_response:?}"
+    );
+    tick_many(env, 5);
+
+    let before = client::user_index::happy_path::current_user(env, test_data.reporter.principal, canister_ids.user_index)
+        .suspension_details
+        .expect("the manual suspension must be in force");
+    assert!(
+        matches!(before.action, SuspensionAction::Unsuspend(_)),
+        "the manual suspension should be timed: {:?}",
+        before.action
+    );
+
+    attempt_blocked_upload(env, canister_ids, &test_data.reporter, &file);
+    tick_many(env, 10);
+
+    let after = client::user_index::happy_path::current_user(env, test_data.reporter.principal, canister_ids.user_index)
+        .suspension_details
+        .expect("the attempter must still be suspended");
+    assert!(
+        matches!(after.action, SuspensionAction::Delete(_)),
+        "the timed manual suspension must have been escalated to an indefinite one: {:?}",
+        after.action
+    );
+    assert_eq!(
+        after.reason, "Content you attempted to post matches content under review as suspected child sexual abuse material",
+        "the escalated suspension must carry the pre-verdict (suspected, not confirmed) reason - I21"
+    );
+    assert_eq!(
+        after.suspended_by, OPENCHAT_BOT_USER_ID,
+        "the escalated suspension is the automated one"
+    );
+}
+
 // I14 (refused-upload file ids): a pre-verdict sighting must not silence the deliberate
 // post-verdict re-upload of the SAME file id - sightings self-describe their hash and are
 // cleared on the denylist transition
