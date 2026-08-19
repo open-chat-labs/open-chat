@@ -2799,7 +2799,26 @@ fn repeat_attempts_tally_inside_window_and_report_outside_it() {
         "an attempt outside the retry window is a fresh offence record"
     );
 
-    // 11 minutes were added to the clock: this env must not go back to the pool
+    // The window is FIXED from the latest report's creation, not sliding from the last
+    // tallied attempt: paced attempts cannot stay inside it forever (I6)
+    env.advance_time(Duration::from_secs(9 * 60));
+    tick_many(env, 2);
+    attempt_blocked_upload(env, canister_ids, &test_data.reporter, &file);
+    assert_eq!(
+        attempt_reports_for(env, &test_data, &test_data.reporter).len(),
+        2,
+        "9 minutes after the latest report is inside its window: tallied"
+    );
+    env.advance_time(Duration::from_secs(9 * 60));
+    tick_many(env, 2);
+    attempt_blocked_upload(env, canister_ids, &test_data.reporter, &file);
+    assert_eq!(
+        attempt_reports_for(env, &test_data, &test_data.reporter).len(),
+        3,
+        "18 minutes after the latest report is outside its FIXED window even though only 9 minutes passed since the last tallied attempt"
+    );
+
+    // 29 minutes were added to the clock: this env must not go back to the pool
     wrapper.discard();
 }
 
@@ -3500,6 +3519,24 @@ fn overwritten_sanction_record_never_strands_the_attempter() {
         "the still-pending first attempt report must keep the attempter suspended"
     );
 
+    // I8a last resort: the sanction record is gone (cleared with R2) but the user is still
+    // suspended by the pending first attempt report - the contest must still land and post
+    // the moderator notice
+    let contest_response = client::user_index::contest_moderation_sanction(
+        env,
+        test_data.reporter.principal,
+        canister_ids.user_index,
+        &types::Empty {},
+    );
+    assert!(matches!(contest_response, UnitResult::Success), "{contest_response:?}");
+    tick_many(env, 5);
+    assert!(
+        moderation_notices(env, &test_data)
+            .iter()
+            .any(|t| t.contains("Human review requested") && t.contains("attempt report #")),
+        "the last-resort contest must post the moderator notice"
+    );
+
     // Dismissing the FIRST - whose record pointer was overwritten - must now fully unsuspend:
     // the cleared/overwritten record is not a precondition for the reversal
     let resolve_response = client::user_index::resolve_moderation_report(
@@ -3880,6 +3917,62 @@ fn attempt_reports_never_escalate_an_upheld_downgrade() {
 
     // 22 minutes were added to the clock: this env must not go back to the pool
     wrapper.discard();
+}
+
+// I1a: a manual moderator suspension is invisible to the sanction machinery and must
+// survive the dismissal of any report - including via the attempt-report mirror
+#[test]
+fn dismissal_never_lifts_a_manual_suspension() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let file = random_file();
+    let original_report_index = establish_pending_hash_match_report(env, canister_ids, &test_data, random_principal(), &file);
+
+    // A moderator manually suspends the (future) attempter for something unrelated
+    let suspend_response = client::user_index::suspend_user(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::suspend_user::Args {
+            user_id: test_data.reporter.user_id,
+            duration: None,
+            reason: "unrelated harassment".to_string(),
+        },
+    );
+    assert!(
+        matches!(suspend_response, user_index_canister::suspend_user::Response::Success),
+        "{suspend_response:?}"
+    );
+    tick_many(env, 5);
+
+    // The suspended user can still hit the storage path (documented weakness) and records an
+    // attempt; the original's dismissal must NOT lift the manual suspension
+    attempt_blocked_upload(env, canister_ids, &test_data.reporter, &file);
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index: original_report_index,
+            verdict: ModerationVerdict::Dismissed,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+
+    let attempter_state =
+        client::user_index::happy_path::current_user(env, test_data.reporter.principal, canister_ids.user_index);
+    let suspension_details = attempter_state
+        .suspension_details
+        .expect("the manual suspension must survive the dismissal");
+    assert_eq!(suspension_details.reason, "unrelated harassment");
 }
 
 fn send_captioned_image_message(

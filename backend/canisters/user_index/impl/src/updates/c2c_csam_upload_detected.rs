@@ -125,8 +125,9 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
                 state.data.users.push_reported_message(user_id, attempt_report_index);
 
                 let inherited = attempt_report.human_verdict().map(|v| v.verdict);
-                apply_attempt_sanction(user_id, m.csam_report_index, attempt_report_index, inherited, now, state);
-                if !matches!(inherited, Some(ModerationVerdict::Dismissed)) {
+                let sanction_applied =
+                    apply_attempt_sanction(user_id, m.csam_report_index, attempt_report_index, inherited, now, state);
+                if sanction_applied {
                     state
                         .push_event_to_local_user_index(user_id, build_upload_sanction_message_to_uploader(user_id, inherited));
                 }
@@ -147,7 +148,7 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
                         reporters: Vec::new(),
                         categories: types::ModerationCategories::SEXUAL_MINORS,
                         classification_failed: false,
-                        auto_sanctioned: !matches!(inherited, Some(ModerationVerdict::Dismissed)),
+                        auto_sanctioned: sanction_applied,
                         content_excerpt: Some(format!(
                             "[blocked attempt to {action} content {} in report #{}]",
                             anchor_state_phrase(inherited),
@@ -176,7 +177,7 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
                     .reported_messages
                     .get(attempt_report_index)
                     .and_then(|r| r.human_verdict().map(|v| v.verdict));
-                apply_attempt_sanction(user_id, m.csam_report_index, attempt_report_index, verdict, now, state);
+                let _ = apply_attempt_sanction(user_id, m.csam_report_index, attempt_report_index, verdict, now, state);
                 // No fresh message to the uploader: their sanction state is unchanged since
                 // the first attempt informed them, and a per-attempt DM would let a scripted
                 // uploader generate unbounded bot messages
@@ -215,7 +216,8 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
 }
 
 // The sanction consequences appropriate to the anchor's adjudication state at processing
-// time (I9). `None` = still pending review.
+// time (I9). `None` = still pending review. Returns true when a sanction was actually
+// applied by this flow - the caller's uploader DM and card must reflect reality (I5/I21).
 fn apply_attempt_sanction(
     user_id: UserId,
     original_report_index: u64,
@@ -223,7 +225,7 @@ fn apply_attempt_sanction(
     verdict: Option<ModerationVerdict>,
     now: types::TimestampMillis,
     state: &mut RuntimeState,
-) {
+) -> bool {
     match verdict {
         None | Some(ModerationVerdict::UpheldAsCsam) => {
             // Pending: the provisional sanction, tied to the original report so its
@@ -233,6 +235,7 @@ fn apply_attempt_sanction(
                 .data
                 .users
                 .record_csam_upload_sanction(user_id, original_report_index, now);
+            true
         }
         Some(ModerationVerdict::Upheld) => {
             // A violation but not CSAM: the standard severity, like the original sender's.
@@ -240,7 +243,7 @@ fn apply_attempt_sanction(
             // suspend_sender would race it with an indefinite, CSAM-worded one (I21) and
             // whichever write landed last would win. No hash-match sanction record either -
             // it would wrongly read as an indefinite sanction to every other-sanction check.
-            moderation::downgrade_suspension_to_upheld_violation(user_id, attempt_report_index, now, state);
+            moderation::downgrade_suspension_to_upheld_violation(user_id, attempt_report_index, now, state)
         }
         Some(ModerationVerdict::Dismissed) => {
             // The content was cleared: no sanction is applied, and a stale record from an
@@ -254,9 +257,13 @@ fn apply_attempt_sanction(
                 .data
                 .users
                 .clear_csam_upload_sanction_if_for_report(&user_id, original_report_index);
-            if cleared && !moderation::has_other_active_sanction(user_id, attempt_report_index, now, state) {
+            if cleared
+                && moderation::suspension_is_automated(user_id, state)
+                && !moderation::has_other_active_sanction(user_id, attempt_report_index, now, state)
+            {
                 moderation::unsuspend_sender(user_id, attempt_report_index, now, state);
             }
+            false
         }
     }
 }

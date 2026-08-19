@@ -88,6 +88,52 @@ fn contest_moderation_sanction_impl(state: &mut RuntimeState) -> OCResult {
         ContestUploadSanctionResult::NotFound => (),
     }
 
+    // Last resort: the single-slot sanction record may have been cleared or overwritten
+    // while unresolved attempt reports still hold the user suspended - they must always have
+    // an Article 22 channel (I8a). The contest is recorded on the newest such report and
+    // raised as a notice; the card never flips to Contested (it offers no verdict actions).
+    let report_indexes: Vec<u64> = state
+        .data
+        .users
+        .get_by_principal(&state.env.caller())
+        .map(|u| u.reported_messages.iter().rev().copied().collect())
+        .unwrap_or_default();
+    for report_index in report_indexes {
+        match state
+            .data
+            .reported_messages
+            .contest_unresolved_attempt(report_index, user_id, now)
+        {
+            ContestResult::Success(report) => {
+                let username = state
+                    .data
+                    .users
+                    .get_by_user_id(&user_id)
+                    .map(|u| format!("@{}", u.username))
+                    .unwrap_or_else(|| user_id.to_string());
+                let original = match report.detection {
+                    crate::model::reported_messages::DetectionSource::BlockedAttempt { original_report_index } => {
+                        original_report_index
+                    }
+                    _ => report_index,
+                };
+                moderation::post_moderation_notice(
+                    format!(
+                        "⚖️ Human review requested\n\n\
+                         {username} ({user_id}) was suspended for attempting to re-post content under review \
+                         (attempt report #{report_index}, content report #{original}), and has requested that a \
+                         person reviews that decision. Resolving report #{original} settles this sanction with it; \
+                         if the sanction was wrong, unsuspending the account reverses it."
+                    ),
+                    state,
+                );
+                return Ok(());
+            }
+            ContestResult::AlreadyContested => saw_already_contested = true,
+            _ => (),
+        }
+    }
+
     if saw_already_contested {
         Err(OCErrorCode::NoChange.with_message("Already contested"))
     } else {

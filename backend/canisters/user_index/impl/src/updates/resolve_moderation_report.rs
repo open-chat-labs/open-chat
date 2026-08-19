@@ -177,7 +177,12 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     &mut state.data.fire_and_forget_handler,
                 );
                 moderation::unquarantine_blobs(&reported_message.blob_references, moderator, args.report_index, state);
-                moderation::downgrade_suspension_to_upheld_violation(reported_message.sender, args.report_index, now, state);
+                let _ = moderation::downgrade_suspension_to_upheld_violation(
+                    reported_message.sender,
+                    args.report_index,
+                    now,
+                    state,
+                );
             } else {
                 if !reported_message.already_deleted {
                     moderation::delete_message(
@@ -334,7 +339,8 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     .users
                     .clear_csam_upload_sanction_if_for_report(&attempt_report.sender, args.report_index);
                 if first_for_sender {
-                    moderation::downgrade_suspension_to_upheld_violation(attempt_report.sender, attempt_index, now, state);
+                    let _ =
+                        moderation::downgrade_suspension_to_upheld_violation(attempt_report.sender, attempt_index, now, state);
                     state.push_event_to_local_user_index(
                         attempt_report.sender,
                         build_verdict_message_to_sender(&attempt_report),
@@ -353,7 +359,13 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     .data
                     .users
                     .clear_csam_upload_sanction_if_for_report(&attempt_report.sender, args.report_index);
-                if first_for_sender && !moderation::has_other_active_sanction(attempt_report.sender, attempt_index, now, state)
+                // Only an AUTOMATED suspension may be lifted here: a manual moderator
+                // suspension is invisible to has_other_active_sanction and must survive (the
+                // overwritten-record case still unsuspends, since automation applied that
+                // suspension too)
+                if first_for_sender
+                    && moderation::suspension_is_automated(attempt_report.sender, state)
+                    && !moderation::has_other_active_sanction(attempt_report.sender, attempt_index, now, state)
                 {
                     // The unsuspend job sends the statement of reasons once the unsuspension
                     // actually lands (I5)

@@ -189,12 +189,11 @@ impl ReportedMessages {
                 .map(|m| 1 + m.repeat_attempts.len() + m.unrecorded_repeat_attempts as usize)
                 .sum();
             let latest = self.messages.get_mut(latest_index as usize).unwrap();
-            let last_activity = latest
-                .repeat_attempts
-                .last()
-                .copied()
-                .or(latest.automated_timestamp())
-                .unwrap_or_default();
+            // Measured from the latest attempt REPORT's creation, not the last tallied
+            // attempt: a sliding window would let an offender re-attempting every few
+            // minutes stay inside it forever, minting one offence record in total (I6 scopes
+            // the window to "a client's automatic retries", which follow creation closely)
+            let last_activity = latest.automated_timestamp().unwrap_or_default();
             if now.saturating_sub(last_activity) < ATTEMPT_RETRY_WINDOW || existing.len() >= MAX_ATTEMPT_REPORTS_PER_OFFENDER {
                 if latest.repeat_attempts.len() < MAX_RECORDED_REPEAT_ATTEMPTS {
                     latest.repeat_attempts.push(now);
@@ -226,6 +225,11 @@ impl ReportedMessages {
                 timestamp: now,
                 flagged_categories: types::ModerationCategories::SEXUAL_MINORS.bits(),
                 action: ModerationAction::AutoSanctioned,
+                // Set even for a born-Dismissed attempt (whose caller applies no sanction):
+                // every consumer (keeps_sender_sanctioned, requires_indefinite_suspension,
+                // in_breach, machine_sanction_applied) reads it together with the verdict or
+                // the BlockedAttempt detection and none misreads that state - and attempt
+                // indexes never reach vault claims
                 sanctioned: true,
                 classification_failed: false,
                 human_verdict: inherited_verdict,
@@ -470,6 +474,31 @@ impl ReportedMessages {
         if let Some(message) = self.messages.get_mut(report_index as usize) {
             message.blob_references = blob_references;
         }
+    }
+
+    // The last-resort Article 22 channel for an attempter whose single-slot hash-match
+    // sanction record was cleared or overwritten while attempt reports still hold them
+    // suspended (I8a): records the contest on the attempt report WITHOUT flipping its card
+    // to Contested (the card offers no verdict actions), so the caller can raise the
+    // moderator notice instead
+    pub fn contest_unresolved_attempt(&mut self, report_index: u64, caller: UserId, now: TimestampMillis) -> ContestResult {
+        let Some(message) = self.messages.get_mut(report_index as usize) else {
+            return ContestResult::NotFound;
+        };
+        if message.sender != caller {
+            return ContestResult::NotFound;
+        }
+        let DetectionSource::BlockedAttempt { .. } = message.detection else {
+            return ContestResult::NotFound;
+        };
+        if message.human_verdict().is_some() {
+            return ContestResult::AlreadyResolved;
+        }
+        if message.contested.is_some() {
+            return ContestResult::AlreadyContested;
+        }
+        message.contested = Some(now);
+        ContestResult::Success(Box::new(message.clone()))
     }
 
     pub fn mark_contested(&mut self, report_index: u64, caller: UserId, now: TimestampMillis) -> ContestResult {

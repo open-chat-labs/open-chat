@@ -48,6 +48,9 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
 
 ### Suspension
 
+- **I1a — Reversal lifts only automated suspensions.** Every automated unsuspend path checks
+  `suspension_is_automated` (suspended_by == OpenChat Bot): `has_other_active_sanction`
+  cannot see manual moderator suspensions, so without this a dismissal could lift one.
 - **I1 — Attribution.** Every suspension is attributable to at least one holder: an
   unresolved sanctioned report (`suspension_applied_without_verdict`), an upheld verdict
   (indefinite for UpheldAsCsam, one day for Upheld — `keeps_sender_sanctioned`), a hash-match
@@ -85,7 +88,9 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
   message_index)`; concurrent detections collapse into it (`add_proactive_detection` returns
   the existing outcome, sanctions do not re-apply — one report, one sanction). BlockedAttempt
   reports are keyed per `(original_report, attempter)` instead: a fresh report per attempt,
-  EXCEPT attempts within `ATTEMPT_RETRY_WINDOW` (client retries are one human act) or beyond
+  EXCEPT attempts within `ATTEMPT_RETRY_WINDOW` of the latest attempt REPORT's creation
+  (client retries are one human act; the window is FIXED, not sliding - a sliding window
+  would let an offender attempting every few minutes mint one offence record forever) or beyond
   `MAX_ATTEMPT_REPORTS_PER_OFFENDER` (a suspended user must not mint unbounded register
   rows), which tally onto the offender's latest attempt report (`repeat_attempts` capped at
   `MAX_RECORDED_REPEAT_ATTEMPTS` + overflow counter — the COUNT is never lost, see I14).
@@ -106,11 +111,15 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
   `user.reported_messages`, consumers of report-index arguments, and the resolve/contest
   surfaces. Any NEW entry point taking a report index must decide its BlockedAttempt
   behavior explicitly.
-- **I8a — Attempt reports are never contestable as reports.** `mark_contested` refuses
-  BlockedAttempt reports: a Contested attempt card would be unactionable (I8) and would
-  short-circuit the contest loop before the hash-match sanction contest - the attempter's
-  actual Article 22 channel, which posts the moderator notice. A standing contest on the
-  sanction record survives a repeat attempt re-recording it (same report index).
+- **I8a — Attempt reports are never contestable as reports, but attempters always have an
+  Article 22 channel.** `mark_contested` refuses BlockedAttempt reports: a Contested attempt
+  card would be unactionable (I8) and would short-circuit the contest loop before the
+  hash-match sanction contest - the attempter's primary Article 22 channel, which posts the
+  moderator notice. A standing contest on the sanction record survives a repeat attempt
+  re-recording it (same report index). LAST RESORT: the record is a single slot and can be
+  cleared or overwritten while unresolved attempt reports still hold the user suspended -
+  the contest then lands on the newest such report (contested recorded WITHOUT flipping the
+  card) and raises the notice, so no suspended attempter is ever without a review channel.
 - **I8 — Attempt reports are never directly resolvable.** `resolve_moderation_report`
   rejects `DetectionSource::BlockedAttempt`. Pre-verdict attempts resolve ONLY by mirroring
   their original's verdict (`mirror_verdict_to_attempt_reports`, which skips
@@ -246,6 +255,22 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
 - Blocked-attempt report cards carry `is_blocked_attempt` so the client hides verdict
   actions (I8); pre-upgrade clients show the buttons and receive the canister's rejection.
 
+## 4a. New-state checklist (seeding and bounds)
+
+Every field this feature added, audited for upgrade seeding and growth bounds - any NEW
+field must be added here with its answer:
+
+| Field | Seeded on upgrade | Bounded |
+|---|---|---|
+| `VaultRecord.claim_order` | lazily at next claim (`seed_legacy_claim_order`) | by claims |
+| `Vault.blocked_attempts(_order)` | rebuilt in post_upgrade | `MAX_BLOCKED_ATTEMPT_SIGHTINGS`, oldest evicted |
+| `Vault.csam_hashes` | n/a | permanent BY DESIGN (verdicts are final) |
+| `Data.blocked_attempt_notice_throttle` | n/a (default) | capped; inert entries dropped past `MAX_THROTTLE_ENTRIES` |
+| `ReportedMessage.blocked_attempt_report_indexes` | n/a (default) | `MAX_ATTEMPT_REPORTS_PER_OFFENDER` per offender |
+| `ReportedMessage.repeat_attempts` | n/a (default) | `MAX_RECORDED_REPEAT_ATTEMPTS` + overflow counter |
+| `MediaScanJobLog.*` | n/a (default) | `TOTAL_CAP` / `PER_SOURCE_CAP`; scalars |
+| `CsamUploadSanction.contested` | n/a | single slot; preserved across same-report re-records |
+
 ## 5. Test matrix (invariant → scenarios; drives the next step)
 
 | Invariant | Scenarios to assert |
@@ -273,3 +298,6 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
 | I14/I16 (shared ids) | a dedup-shared file id blocked pre-verdict is still reported when forwarded post-verdict |
 | I8b (vault ops) | legal-hold and destruction entry points reject attempt report indexes |
 | I14 (per-offender throttle) | two offenders against one pin each get a named notice |
+| I8a (last resort) | attempter with cleared/overwritten record can still contest; notice posted |
+| I6 (fixed window) | attempts spaced inside a sliding-but-not-fixed window mint new reports |
+| I1a | dismissal never lifts a manual moderator suspension |

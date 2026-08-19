@@ -146,6 +146,15 @@ pub fn post_throttled_blocked_attempt_notice(
     state: &mut RuntimeState,
 ) {
     const NOTICE_THROTTLE: types::Milliseconds = constants::HOUR_IN_MS;
+    const MAX_THROTTLE_ENTRIES: usize = 10_000;
+    // Bounded: entries older than the window are inert (their next notice posts immediately
+    // anyway), so they are dropped once the map grows past the cap
+    if state.data.blocked_attempt_notice_throttle.len() > MAX_THROTTLE_ENTRIES {
+        state
+            .data
+            .blocked_attempt_notice_throttle
+            .retain(|_, (last, _)| now.saturating_sub(*last) < NOTICE_THROTTLE);
+    }
     // Keyed per (report, uploader): one offender's flood must not consume another offender's
     // only notice - I14 requires a trace naming each offender
     let entry = state
@@ -747,14 +756,16 @@ pub fn unsuspend_sender(sender: UserId, report_index: u64, now: TimestampMillis,
 // violation. Enqueues directly, bypassing the already-indefinitely-suspended guard in suspend()
 // since a downgrade is exactly what is intended here - but only when no OTHER report is still
 // keeping the sender sanctioned, since this verdict may only reverse its own report's severity.
+// Returns true if the downgrade was applied; false when another indefinite sanction stands
+// (callers must not then tell the user a temporary suspension was applied - I5/I21)
 pub fn downgrade_suspension_to_upheld_violation(
     sender: UserId,
     report_index: u64,
     now: TimestampMillis,
     state: &mut RuntimeState,
-) {
+) -> bool {
     if has_other_indefinite_sanction(sender, report_index, state) {
-        return;
+        return false;
     }
 
     let (duration, reason) = if in_breach_count(sender, state) > 2 {
@@ -774,6 +785,7 @@ pub fn downgrade_suspension_to_upheld_violation(
         now,
         now,
     );
+    true
 }
 
 fn in_breach_count(sender: UserId, state: &RuntimeState) -> usize {
@@ -817,6 +829,18 @@ pub fn has_other_indefinite_sanction(sender: UserId, except_report_index: u64, s
                 .any(|r| r.requires_indefinite_suspension())
         })
         .unwrap_or_default()
+}
+
+// True when the suspension currently in force was applied by the automated pipeline. The
+// reversal paths may only lift what automation applied: has_other_active_sanction cannot see
+// manual moderator suspensions, so without this check a dismissal could lift one (I1/I2)
+pub fn suspension_is_automated(user_id: UserId, state: &RuntimeState) -> bool {
+    state
+        .data
+        .users
+        .get_by_user_id(&user_id)
+        .and_then(|u| u.suspension_details.as_ref())
+        .is_some_and(|d| d.suspended_by == OPENCHAT_BOT_USER_ID)
 }
 
 pub fn has_other_active_sanction(sender: UserId, except_report_index: u64, now: TimestampMillis, state: &RuntimeState) -> bool {

@@ -157,6 +157,16 @@ pub enum VaultOpOutcome {
     NotFound,
 }
 
+// Records serialized before claim_order existed have claims with no recorded order: seeded
+// from index order (the best available approximation - machine detections usually pinned
+// first and have lower indexes) BEFORE any new claim is pushed, or the first post-upgrade
+// claim would become the anchor and a fresh assertion could displace a machine anchor (I13)
+fn seed_legacy_claim_order(record: &mut VaultRecord) {
+    if record.claim_order.is_empty() && !record.report_indexes.is_empty() {
+        record.claim_order = record.report_indexes.iter().copied().collect();
+    }
+}
+
 impl Vault {
     pub fn set_reviewers(&mut self, reviewers: Vec<VaultReviewer>) {
         self.reviewers = reviewers.into_iter().map(|r| (r.principal, r.user_id)).collect();
@@ -198,6 +208,7 @@ impl Vault {
             release_pending: false,
             claim_order: Vec::new(),
         });
+        seed_legacy_claim_order(record);
         if record.report_indexes.insert(report_index) {
             record.claim_order.push(report_index);
         }
@@ -215,6 +226,7 @@ impl Vault {
         let Some(record) = self.records.get_mut(&hash) else {
             return false;
         };
+        seed_legacy_claim_order(record);
         if record.report_indexes.insert(report_index) {
             record.claim_order.push(report_index);
             // Log only a genuinely new claim, so this report's linkage to the blob is preserved
