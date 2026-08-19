@@ -447,12 +447,15 @@ fn delete_group_message(
     );
 }
 
-// Suspends the sender of CSAM indefinitely
-pub fn suspend_sender(sender: UserId, now: TimestampMillis, state: &mut RuntimeState) -> bool {
+// Suspends the sender of CSAM indefinitely. `caused_by_report` = the report whose DETECTION
+// caused this (the sanction then evaporates if the report is resolved before the suspension
+// commits, I1b); None when the sanction is verdict-backed and must survive resolution.
+pub fn suspend_sender(sender: UserId, caused_by_report: Option<u64>, now: TimestampMillis, state: &mut RuntimeState) -> bool {
     suspend(
         sender,
         None,
         "The message depicts, promotes or attempts to normalize child sexual abuse".to_string(),
+        caused_by_report,
         now,
         state,
     )
@@ -460,11 +463,17 @@ pub fn suspend_sender(sender: UserId, now: TimestampMillis, state: &mut RuntimeS
 
 // The provisional suspension for a PRE-VERDICT blocked attempt: the reason the user sees on
 // the suspension notice must not assert confirmed CSAM about content still under review (I21)
-pub fn suspend_attempter_pending_review(user_id: UserId, now: TimestampMillis, state: &mut RuntimeState) -> bool {
+pub fn suspend_attempter_pending_review(
+    user_id: UserId,
+    attempt_report_index: u64,
+    now: TimestampMillis,
+    state: &mut RuntimeState,
+) -> bool {
     suspend(
         user_id,
         None,
         "Content you attempted to post matches content under review as suspected child sexual abuse material".to_string(),
+        Some(attempt_report_index),
         now,
         state,
     )
@@ -479,7 +488,8 @@ pub fn suspend_sender_for_upheld_violation(sender: UserId, now: TimestampMillis,
         (Some(DAY_IN_MS), "Violation of platform rules".to_string())
     };
 
-    suspend(sender, duration, reason, now, state)
+    // Verdict-backed: survives its report being resolved (it IS the resolution's sanction)
+    suspend(sender, duration, reason, None, now, state)
 }
 
 // I1a lives HERE, in the primitive, not at call sites: automation may only STRICTLY ESCALATE
@@ -489,7 +499,14 @@ pub fn suspend_sender_for_upheld_violation(sender: UserId, now: TimestampMillis,
 // lifts the escalated suspension is itself a human moderator's dismissal). Returns whether
 // the suspension was enqueued, so callers never claim a sanction which was not applied
 // (I5/I21).
-fn suspend(sender: UserId, duration: Option<u64>, reason: String, now: TimestampMillis, state: &mut RuntimeState) -> bool {
+fn suspend(
+    sender: UserId,
+    duration: Option<u64>,
+    reason: String,
+    caused_by_report: Option<u64>,
+    now: TimestampMillis,
+    state: &mut RuntimeState,
+) -> bool {
     if state.data.users.get_by_user_id(&sender).is_none() {
         error!(%sender, "Cannot suspend message sender, user not found");
         return false;
@@ -506,6 +523,8 @@ fn suspend(sender: UserId, duration: Option<u64>, reason: String, now: Timestamp
             reason,
             suspended_by: OPENCHAT_BOT_USER_ID,
             attempt: 0,
+            downgrade: false,
+            caused_by_report,
         }),
         now,
         now,
@@ -848,6 +867,11 @@ pub fn downgrade_suspension_to_upheld_violation(
             reason,
             suspended_by: OPENCHAT_BOT_USER_ID,
             attempt: 0,
+            // This IS the deliberate replacement of an indefinite suspension with a lesser
+            // one, so the commit-time re-check applies the manual-suspension rule only.
+            // Verdict-backed, so it survives its report being resolved (I1b)
+            downgrade: true,
+            caused_by_report: None,
         }),
         now,
         now,

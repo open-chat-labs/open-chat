@@ -1,3 +1,4 @@
+use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
 use crate::{CanisterIds, TestEnv, User, client};
@@ -4548,6 +4549,136 @@ fn claim_release_with_retained_pin_clears_sightings() {
         2,
         "the attempt after the partial release must re-report against the remaining claim"
     );
+}
+
+// I1b: the detection suspension commits only after a c2c round trip (retried while the
+// user canister is stopped); an Upheld verdict landing in that gap must not be overwritten
+// back to indefinite when the stale detection job finally commits
+#[test]
+fn in_flight_detection_suspension_never_overwrites_an_upheld_downgrade() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    let message_id = random_from_u128();
+    let message_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
+    client::group::happy_path::send_text_message(
+        env,
+        &test_data.sender,
+        test_data.group_id,
+        None,
+        &message_text,
+        Some(message_id),
+    );
+    tick_many(env, 3);
+
+    // Stop the sender's user canister so the detection suspension cannot commit and sits in
+    // its retry loop
+    stop_canister(env, test_data.sender.local_user_index, test_data.sender.canister());
+
+    env.advance_time(Duration::from_secs(10));
+    mock_moderation_outcalls(env, &message_text, &[CSAM_CATEGORY], 1);
+    tick_many(env, 10);
+
+    let reports = get_moderation_reports(env, &test_data);
+    let report_index = reports[0].report_index.expect("proactive detection should carry an index");
+
+    // The verdict lands while the detection suspension is still in flight
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index,
+            verdict: ModerationVerdict::Upheld,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 5);
+
+    // Let both the stale detection job and the downgrade retry against the running canister
+    start_canister(env, test_data.sender.local_user_index, test_data.sender.canister());
+    for _ in 0..12 {
+        env.advance_time(Duration::from_secs(31));
+        tick_many(env, 5);
+    }
+
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    let suspension_details = sender_state.suspension_details.expect("sender should remain suspended");
+    assert!(
+        matches!(suspension_details.action, SuspensionAction::Unsuspend(_)),
+        "the stale detection suspension must not overwrite the downgrade: {:?}",
+        suspension_details.action
+    );
+    wrapper.discard();
+}
+
+// I1b: a Dismissed verdict landing while the detection suspension is in flight must leave
+// the user unsuspended - the stale job must not suspend a user whose report was cleared
+#[test]
+fn in_flight_detection_suspension_never_lands_after_a_dismissal() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+
+    let message_id = random_from_u128();
+    let message_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
+    client::group::happy_path::send_text_message(
+        env,
+        &test_data.sender,
+        test_data.group_id,
+        None,
+        &message_text,
+        Some(message_id),
+    );
+    tick_many(env, 3);
+
+    stop_canister(env, test_data.sender.local_user_index, test_data.sender.canister());
+
+    env.advance_time(Duration::from_secs(10));
+    mock_moderation_outcalls(env, &message_text, &[CSAM_CATEGORY], 1);
+    tick_many(env, 10);
+
+    let reports = get_moderation_reports(env, &test_data);
+    let report_index = reports[0].report_index.expect("proactive detection should carry an index");
+
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index,
+            verdict: ModerationVerdict::Dismissed,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 5);
+
+    start_canister(env, test_data.sender.local_user_index, test_data.sender.canister());
+    for _ in 0..12 {
+        env.advance_time(Duration::from_secs(31));
+        tick_many(env, 5);
+    }
+
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    assert!(
+        sender_state.suspension_details.is_none(),
+        "the stale detection suspension must not land after the dismissal: {:?}",
+        sender_state.suspension_details
+    );
+    wrapper.discard();
 }
 
 fn send_captioned_image_message(

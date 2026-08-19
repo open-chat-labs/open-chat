@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Automated moderation never lifts, downgrades or laterally replaces a manual moderator suspension; it may only escalate a timed one to indefinite. Enforced in the suspension primitives and re-checked when the suspension is written ([#9162](https://github.com/open-chat-labs/open-chat/pull/9162))
+- A human verdict supersedes an in-flight detection suspension: automated suspension jobs record the report which caused them and refuse to commit once it is resolved ([#9162](https://github.com/open-chat-labs/open-chat/pull/9162))
 - Never send message media to the OpenAI moderation API - classification is text-only ([#9149](https://github.com/open-chat-labs/open-chat/issues/9149))
 
 ### Fixed

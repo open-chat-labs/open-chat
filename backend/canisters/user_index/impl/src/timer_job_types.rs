@@ -55,6 +55,19 @@ pub struct SetUserSuspended {
     pub suspended_by: UserId,
     #[serde(default)]
     pub attempt: usize,
+    // Set by `downgrade_suspension_to_upheld_violation`, the one automated path which
+    // deliberately REPLACES an indefinite suspension with a lesser one. The commit-time I1a
+    // re-check then only has to confirm no MANUAL suspension arrived meanwhile: a downgrade
+    // by definition fails the escalation rule the other automated paths are held to.
+    #[serde(default)]
+    pub downgrade: bool,
+    // The report whose DETECTION caused this suspension, when the sanction must evaporate
+    // under any human verdict on that report: the commit re-check refuses to apply once the
+    // report is resolved, because the verdict arms are the sole authority for post-verdict
+    // sanctions (I1b). None for verdict-aligned suspensions (upheld-violation, downgrade,
+    // verdict-backed attempt sanctions), which must survive their report being resolved.
+    #[serde(default)]
+    pub caused_by_report: Option<u64>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -186,7 +199,15 @@ impl Job for SetUserSuspended {
         // A suspension which silently fails to apply (eg. the user canister is stopped mid
         // upgrade) leaves a sanctioned user active, so retry rather than dropping it
         async fn suspend_user(job: SetUserSuspended) {
-            let response = suspend_user_impl(job.user_id, job.duration, job.reason.clone(), job.suspended_by).await;
+            let response = suspend_user_impl(
+                job.user_id,
+                job.duration,
+                job.reason.clone(),
+                job.suspended_by,
+                job.downgrade,
+                job.caused_by_report,
+            )
+            .await;
             if let user_index_canister::suspend_user::Response::InternalError(error) = response {
                 if job.attempt < 10 {
                     mutate_state(|state| {

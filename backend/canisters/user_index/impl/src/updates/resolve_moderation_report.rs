@@ -96,7 +96,7 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                 // the call is a no-op since the sender is already indefinitely suspended. The
                 // chat-canister copy is permanently removed; the vault copy persists with the
                 // retention clock started, and an authority report becomes due.
-                moderation::suspend_sender(reported_message.sender, now, state);
+                moderation::suspend_sender(reported_message.sender, None, now, state);
                 // Quarantine is re-sent with the verdict in a single ordered message: the
                 // detection-time quarantine is fire-and-forget, and a verdict which arrives
                 // at a bucket holding no record is dropped, leaving confirmed CSAM served
@@ -150,7 +150,7 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     reported_message.already_deleted,
                     &mut state.data.fire_and_forget_handler,
                 );
-                moderation::suspend_sender(reported_message.sender, now, state);
+                moderation::suspend_sender(reported_message.sender, None, now, state);
                 state
                     .data
                     .authority_reports

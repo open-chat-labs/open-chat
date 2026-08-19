@@ -336,7 +336,7 @@ fn handle_moderation_result(
             &mut state.data.fire_and_forget_handler,
         );
         if suspend_sender {
-            moderation::suspend_sender(sender, now, state);
+            moderation::suspend_sender(sender, Some(report_index), now, state);
         }
     }
 

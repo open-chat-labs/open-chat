@@ -195,7 +195,7 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
                 // reachable for post-verdict kinds, where the sanction stands on the verdict.
                 // The primitive refuses to replace a manual suspension (I1a), and the DM and
                 // notice track what actually happened (I5/I21).
-                let applied = moderation::suspend_sender(user_id, now, state);
+                let applied = moderation::suspend_sender(user_id, None, now, state);
                 state
                     .data
                     .users
@@ -243,9 +243,12 @@ fn apply_attempt_sanction(
             // which is what the caller's messaging and card must reflect (I5/I21). The
             // record still links the sanction so the report's resolution can settle it.
             let applied = if verdict.is_none() {
-                moderation::suspend_attempter_pending_review(user_id, now, state)
+                // Detection-caused: evaporates if the attempt report is resolved (via the
+                // verdict mirror) before this commits (I1b)
+                moderation::suspend_attempter_pending_review(user_id, attempt_report_index, now, state)
             } else {
-                moderation::suspend_sender(user_id, now, state)
+                // Verdict-backed (the anchor is already upheld): survives resolution
+                moderation::suspend_sender(user_id, None, now, state)
             };
             state
                 .data

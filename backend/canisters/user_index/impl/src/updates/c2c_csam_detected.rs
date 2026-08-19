@@ -65,7 +65,7 @@ fn c2c_csam_detected_impl(args: Args, state: &mut RuntimeState) {
         false,
         &mut state.data.fire_and_forget_handler,
     );
-    moderation::suspend_sender(args.sender, now, state);
+    moderation::suspend_sender(args.sender, Some(report_index), now, state);
 
     moderation::post_moderation_alert(
         ModerationAlert {

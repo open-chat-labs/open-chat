@@ -64,6 +64,20 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
   missing sites (mirror vs sender arms, rounds 7-9): a rule that must be remembered at every
   call site will eventually be forgotten at one.
 
+- **I1b — A human verdict supersedes any in-flight detection sanction.** An automated
+  suspension commits only after a c2c round trip to the user canister (with up to ten
+  30-second retries if that canister is stopped), so a verdict can land in the gap.
+  Detection-caused suspension jobs record the report which caused them
+  (`caused_by_report`), and the commit re-check refuses to apply once that report carries a
+  human verdict: the verdict arms are the sole authority for post-verdict sanctions, and
+  they already applied whatever the verdict calls for. Verdict-backed suspensions (the
+  upheld-violation suspension, the downgrade, sanctions for attempts against
+  already-upheld content) carry no causing report and survive resolution - they ARE the
+  resolution. Without this, a delayed detection suspension overwrites the verdict's
+  downgrade back to indefinite, or indefinitely suspends a user whose report was just
+  dismissed. (Surfaced as a CI-only flake: the downgrade tests failed whenever the
+  detection job's commit happened to interleave after the verdict.)
+
   The primitives only ENQUEUE; the write lands in a timer job, after a c2c call to the user
   canister. An enqueue-time check alone is therefore a check-then-act across an await, so the
   rule is evaluated TWICE - the second time at the write, where nothing can intervene after
