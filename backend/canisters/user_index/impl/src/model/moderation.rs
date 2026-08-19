@@ -448,52 +448,58 @@ fn delete_group_message(
 }
 
 // Suspends the sender of CSAM indefinitely
-pub fn suspend_sender(sender: UserId, now: TimestampMillis, state: &mut RuntimeState) {
+pub fn suspend_sender(sender: UserId, now: TimestampMillis, state: &mut RuntimeState) -> bool {
     suspend(
         sender,
         None,
         "The message depicts, promotes or attempts to normalize child sexual abuse".to_string(),
         now,
         state,
-    );
+    )
 }
 
 // The provisional suspension for a PRE-VERDICT blocked attempt: the reason the user sees on
 // the suspension notice must not assert confirmed CSAM about content still under review (I21)
-pub fn suspend_attempter_pending_review(user_id: UserId, now: TimestampMillis, state: &mut RuntimeState) {
+pub fn suspend_attempter_pending_review(user_id: UserId, now: TimestampMillis, state: &mut RuntimeState) -> bool {
     suspend(
         user_id,
         None,
         "Content you attempted to post matches content under review as suspected child sexual abuse material".to_string(),
         now,
         state,
-    );
+    )
 }
 
 // Suspends the sender of a message which a platform moderator has judged to break the platform
 // rules: for a day, or indefinitely for repeat offenders
-pub fn suspend_sender_for_upheld_violation(sender: UserId, now: TimestampMillis, state: &mut RuntimeState) {
+pub fn suspend_sender_for_upheld_violation(sender: UserId, now: TimestampMillis, state: &mut RuntimeState) -> bool {
     let (duration, reason) = if in_breach_count(sender, state) > 2 {
         (None, "Multiple violations of the platform rules".to_string())
     } else {
         (Some(DAY_IN_MS), "Violation of platform rules".to_string())
     };
 
-    suspend(sender, duration, reason, now, state);
+    suspend(sender, duration, reason, now, state)
 }
 
-fn suspend(sender: UserId, duration: Option<u64>, reason: String, now: TimestampMillis, state: &mut RuntimeState) {
+// I1a lives HERE, in the primitive, not at call sites: automation may only STRICTLY ESCALATE
+// an existing suspension - an indefinite one over a timed one - and never lifts, matches, or
+// downgrades one (a timed manual suspension must not shield a user from the indefinite CSAM
+// sanction, but nothing automated ever weakens what a human imposed; the only path that later
+// lifts the escalated suspension is itself a human moderator's dismissal). Returns whether
+// the suspension was enqueued, so callers never claim a sanction which was not applied
+// (I5/I21).
+fn suspend(sender: UserId, duration: Option<u64>, reason: String, now: TimestampMillis, state: &mut RuntimeState) -> bool {
     let Some(user) = state.data.users.get_by_user_id(&sender) else {
         error!(%sender, "Cannot suspend message sender, user not found");
-        return;
+        return false;
     };
 
-    if user
-        .suspension_details
-        .as_ref()
-        .is_some_and(|d| matches!(d.duration, SuspensionDuration::Indefinitely))
-    {
-        return;
+    if let Some(details) = user.suspension_details.as_ref() {
+        let escalates = duration.is_none() && !matches!(details.duration, SuspensionDuration::Indefinitely);
+        if !escalates {
+            return false;
+        }
     }
 
     state.data.timer_jobs.enqueue_job(
@@ -507,6 +513,7 @@ fn suspend(sender: UserId, duration: Option<u64>, reason: String, now: Timestamp
         now,
         now,
     );
+    true
 }
 
 // Restores a message after a Dismissed verdict on an automated sanction (receiver implemented
@@ -769,7 +776,12 @@ pub fn sync_vault_reviewers(state: &mut RuntimeState) {
 // Lifts a suspension after a Dismissed verdict on an automated sanction. The sender is told
 // once the unsuspend has actually landed (the job owns the notification), so that a failed
 // reversal never produces a message claiming an unsuspension which did not happen.
-pub fn unsuspend_sender(sender: UserId, report_index: u64, now: TimestampMillis, state: &mut RuntimeState) {
+// I1a in the primitive: automation only lifts what automation applied. Returns whether the
+// unsuspend was enqueued, so callers' messaging tracks reality (I5).
+pub fn unsuspend_sender(sender: UserId, report_index: u64, now: TimestampMillis, state: &mut RuntimeState) -> bool {
+    if !suspension_is_automated(sender, state) {
+        return false;
+    }
     state.data.timer_jobs.enqueue_job(
         TimerJob::UnsuspendUser(UnsuspendUser {
             user_id: sender,
@@ -780,6 +792,7 @@ pub fn unsuspend_sender(sender: UserId, report_index: u64, now: TimestampMillis,
         now,
         now,
     );
+    true
 }
 
 // Replaces an indefinite CSAM suspension with the standard severity for an upheld (non-CSAM)
@@ -795,6 +808,11 @@ pub fn downgrade_suspension_to_upheld_violation(
     state: &mut RuntimeState,
 ) -> bool {
     if has_other_indefinite_sanction(sender, report_index, state) {
+        return false;
+    }
+    // I1a in the primitive: a manual moderator suspension is never downgraded to the bot's
+    // standard severity, whichever call site asks
+    if has_manual_suspension(sender, state) {
         return false;
     }
 

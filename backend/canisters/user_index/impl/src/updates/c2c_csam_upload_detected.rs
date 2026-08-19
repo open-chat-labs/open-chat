@@ -192,21 +192,29 @@ fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
             }
             None => {
                 // Unknown original report index (legacy denylist entry with no report): only
-                // reachable for post-verdict kinds, where the sanction stands on the verdict
-                moderation::suspend_sender(user_id, now, state);
+                // reachable for post-verdict kinds, where the sanction stands on the verdict.
+                // The primitive refuses to replace a manual suspension (I1a), and the DM and
+                // notice track what actually happened (I5/I21).
+                let applied = moderation::suspend_sender(user_id, now, state);
                 state
                     .data
                     .users
                     .record_csam_upload_sanction(user_id, m.csam_report_index, now);
-                state.push_event_to_local_user_index(
-                    user_id,
-                    build_upload_sanction_message_to_uploader(user_id, Some(ModerationVerdict::UpheldAsCsam)),
-                );
+                if applied {
+                    state.push_event_to_local_user_index(
+                        user_id,
+                        build_upload_sanction_message_to_uploader(user_id, Some(ModerationVerdict::UpheldAsCsam)),
+                    );
+                }
+                let suspension_text = if applied {
+                    "The user has been suspended indefinitely; if this sanction was applied in error, unsuspending the user reverses it."
+                } else {
+                    "The user already carries a suspension which was left in place."
+                };
                 let text = format!(
                     "🚨 Attempt to post blocked content\n\n\
                      {who} tried to {action} content upheld as CSAM in report #{}. \
-                     The attempt was blocked and no message was created. The user has been suspended indefinitely; \
-                     if this sanction was applied in error, unsuspending the user reverses it.",
+                     The attempt was blocked and no message was created. {suspension_text}",
                     m.csam_report_index
                 );
                 moderation::post_throttled_blocked_attempt_notice(m.csam_report_index, m.uploader, text, now, state);
@@ -230,21 +238,20 @@ fn apply_attempt_sanction(
         None | Some(ModerationVerdict::UpheldAsCsam) => {
             // Pending: the provisional sanction, tied to the original report so its
             // resolution governs it (I3) and worded as SUSPECTED (I21). Confirmed: the same
-            // sanction, verdict-backed and worded as confirmed. A manual moderator
-            // suspension is never replaced (I1a) - the record still links the sanction so
-            // the report's resolution can settle it.
-            if !moderation::has_manual_suspension(user_id, state) {
-                if verdict.is_none() {
-                    moderation::suspend_attempter_pending_review(user_id, now, state);
-                } else {
-                    moderation::suspend_sender(user_id, now, state);
-                }
-            }
+            // sanction, verdict-backed and worded as confirmed. The primitive refuses to
+            // replace a manual moderator suspension (I1a) and returns whether it applied -
+            // which is what the caller's messaging and card must reflect (I5/I21). The
+            // record still links the sanction so the report's resolution can settle it.
+            let applied = if verdict.is_none() {
+                moderation::suspend_attempter_pending_review(user_id, now, state)
+            } else {
+                moderation::suspend_sender(user_id, now, state)
+            };
             state
                 .data
                 .users
                 .record_csam_upload_sanction(user_id, original_report_index, now);
-            true
+            applied
         }
         Some(ModerationVerdict::Upheld) => {
             // A violation but not CSAM: the standard severity, like the original sender's.
@@ -252,12 +259,8 @@ fn apply_attempt_sanction(
             // suspend_sender would race it with an indefinite, CSAM-worded one (I21) and
             // whichever write landed last would win. No hash-match sanction record either -
             // it would wrongly read as an indefinite sanction to every other-sanction check.
-            // A manual moderator suspension is never downgraded (I1a).
-            if moderation::has_manual_suspension(user_id, state) {
-                false
-            } else {
-                moderation::downgrade_suspension_to_upheld_violation(user_id, attempt_report_index, now, state)
-            }
+            // The primitive refuses to downgrade a manual suspension (I1a).
+            moderation::downgrade_suspension_to_upheld_violation(user_id, attempt_report_index, now, state)
         }
         Some(ModerationVerdict::Dismissed) => {
             // The content was cleared: no sanction is applied, and a stale record from an
@@ -271,11 +274,9 @@ fn apply_attempt_sanction(
                 .data
                 .users
                 .clear_csam_upload_sanction_if_for_report(&user_id, original_report_index);
-            if cleared
-                && moderation::suspension_is_automated(user_id, state)
-                && !moderation::has_other_active_sanction(user_id, attempt_report_index, now, state)
-            {
-                moderation::unsuspend_sender(user_id, attempt_report_index, now, state);
+            if cleared && !moderation::has_other_active_sanction(user_id, attempt_report_index, now, state) {
+                // The primitive refuses to lift a manual suspension (I1a)
+                let _ = moderation::unsuspend_sender(user_id, attempt_report_index, now, state);
             }
             false
         }

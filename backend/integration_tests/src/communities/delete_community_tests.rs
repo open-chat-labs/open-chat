@@ -81,7 +81,10 @@ fn user_canister_notified_of_community_deleted() {
 
     env.advance_time(Duration::from_secs(9 * 60));
 
-    env.tick();
+    // Same race as below: the 9-minute retry to user3's stopped canister must fully resolve
+    // (rejected) before user3 is eventually started, or the in-flight call gets delivered to
+    // the running canister and succeeds
+    tick_many(env, 3);
 
     start_canister(env, user2.local_user_index, user2.user_id.into());
 

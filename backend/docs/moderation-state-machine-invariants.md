@@ -48,13 +48,21 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
 
 ### Suspension
 
-- **I1a — Automation never lifts, replaces, or downgrades a manual suspension.** Every
-  automated unsuspend path checks `suspension_is_automated`, and every automated SUSPEND or
-  DOWNGRADE path checks `has_manual_suspension` first: `has_other_active_sanction` cannot
-  see manual moderator suspensions, so without these a dismissal could lift one, an attempt
-  could replace one with a bot suspension, or an Upheld mirror could downgrade an indefinite
-  manual suspension to a 1-day bot one. This applies to every arm - Dismissed, Upheld, and
-  the initial sanction alike.
+- **I1a — Automation never lifts, downgrades, or laterally replaces a manual suspension -
+  enforced IN THE PRIMITIVES.** `unsuspend_sender()` and
+  `downgrade_suspension_to_upheld_violation()` refuse to touch a manual suspension outright.
+  `suspend()` refuses unless the new suspension STRICTLY ESCALATES the existing one
+  (indefinite over timed, regardless of who imposed the timed one): a 1-day manual
+  suspension must not shield a user from the indefinite CSAM sanction, but automation never
+  matches or weakens what a human imposed. The escalation's one residue is accepted
+  deliberately: if the report is later dismissed, the automated unsuspension does not
+  restore the displaced timed remainder - and that is safe because a dismissal is itself a
+  human moderator's act, with the restoration notice in front of them, so a human is in the
+  loop at exactly the moment the residue could matter. All primitives return whether they
+  acted; call sites use the returned truth for their messaging (I5) and never re-implement
+  the check. The guard lives in the primitive precisely because call-site application kept
+  missing sites (mirror vs sender arms, rounds 7-9): a rule that must be remembered at every
+  call site will eventually be forgotten at one.
 - **I1 — Attribution.** Every suspension is attributable to at least one holder: an
   unresolved sanctioned report (`suspension_applied_without_verdict`), an upheld verdict
   (indefinite for UpheldAsCsam, one day for Upheld — `keeps_sender_sanctioned`), a hash-match
@@ -186,9 +194,12 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
   pin). Every attempt is COUNTED even when not individually recorded. The bucket's
   per-`(uploader, file id)` sighting dedup is cleared when a hash changes adjudication
   state (denylisted, or released) so that a pre-verdict sighting can never suppress the
-  reporting of a post-verdict attempt on the same stable file id (forwards) - INCLUDING
-  dedup-shared file ids the vault never tracked, resolved against the Files model at every
-  hash transition (`clear_sightings_sharing_hash`). ONE exception to the trace rule: a pin
+  reporting of a post-verdict attempt on the same stable file id (forwards). Sightings
+  self-describe their hash (`blocked_attempt_hashes`), so the clear
+  (`clear_blocked_attempts_for_hash`) finds every one - including refused-upload file ids
+  which exist in no other structure - at every hash transition: denylist arming (local and
+  propagated), release, LE destruction, and a claim release while siblings retain the pin
+  (the anchor changed). ONE exception to the trace rule: a pin
   retained only by a legal hold has no active claim and its refusals are visible only in the
   bucket log - a hold is a rare, operator-created state and no report can honestly anchor
   the attempt. Notices are throttled per (report, OFFENDER): one offender's flood must not

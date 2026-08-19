@@ -228,13 +228,13 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
             // The unsuspend is also skipped if the sender has another report still keeping
             // them sanctioned: each report's dismissal only reverses its own contribution.
             let applied_suspension = matches!(&reported_message.outcome, Some(ReportOutcome::Automated(a)) if a.sanctioned);
+            // The primitive refuses to lift a manual moderator suspension (I1a) and returns
+            // whether the unsuspend was actually enqueued - `unsuspended` is the truth the
+            // messaging below relies on. The job sends the statement of reasons once the
+            // unsuspension has actually landed, so it can never claim one that failed.
             let unsuspended = applied_suspension
-                && !moderation::has_other_active_sanction(reported_message.sender, args.report_index, now, state);
-            if unsuspended {
-                // The sender's statement of reasons is sent by the unsuspend job once the
-                // unsuspension has actually landed, so it can never claim one that failed
-                moderation::unsuspend_sender(reported_message.sender, args.report_index, now, state);
-            }
+                && !moderation::has_other_active_sanction(reported_message.sender, args.report_index, now, state)
+                && moderation::unsuspend_sender(reported_message.sender, args.report_index, now, state);
             if protection_applied {
                 // A false positive: reverse the takedown in full - restore the message,
                 // release the vault, clear the flags. (If an authority report was already
@@ -340,16 +340,9 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     .users
                     .clear_csam_upload_sanction_if_for_report(&attempt_report.sender, args.report_index);
                 if first_for_sender {
-                    // A manual moderator suspension is never downgraded to the 1-day bot
-                    // suspension (I1a) - downgrade only what automation applied
-                    if !moderation::has_manual_suspension(attempt_report.sender, state) {
-                        let _ = moderation::downgrade_suspension_to_upheld_violation(
-                            attempt_report.sender,
-                            attempt_index,
-                            now,
-                            state,
-                        );
-                    }
+                    // The primitive refuses to downgrade a manual suspension (I1a)
+                    let _ =
+                        moderation::downgrade_suspension_to_upheld_violation(attempt_report.sender, attempt_index, now, state);
                     let still_suspended = moderation::is_suspended(attempt_report.sender, state);
                     state.push_event_to_local_user_index(
                         attempt_report.sender,
@@ -369,24 +362,19 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     .data
                     .users
                     .clear_csam_upload_sanction_if_for_report(&attempt_report.sender, args.report_index);
-                // Only an AUTOMATED suspension may be lifted here: a manual moderator
-                // suspension is invisible to has_other_active_sanction and must survive (the
-                // overwritten-record case still unsuspends, since automation applied that
-                // suspension too)
-                if first_for_sender
-                    && moderation::suspension_is_automated(attempt_report.sender, state)
-                    && !moderation::has_other_active_sanction(attempt_report.sender, attempt_index, now, state)
-                {
-                    // The unsuspend job sends the statement of reasons once the unsuspension
-                    // actually lands (I5)
-                    moderation::unsuspend_sender(attempt_report.sender, attempt_index, now, state);
-                } else if first_for_sender {
-                    // Still suspended by something else: the attempter is told the content was
-                    // cleared without any claim of an unsuspension (I21)
-                    state.push_event_to_local_user_index(
-                        attempt_report.sender,
-                        build_restoration_message_to_sender(&attempt_report, false),
-                    );
+                // The primitive refuses to lift manual suspensions (I1a) and returns the
+                // truth; when nothing was lifted the attempter is told the content was
+                // cleared without any claim of an unsuspension (I21) - the unsuspend job
+                // sends the statement of reasons in the other case (I5)
+                if first_for_sender {
+                    let unsuspended = !moderation::has_other_active_sanction(attempt_report.sender, attempt_index, now, state)
+                        && moderation::unsuspend_sender(attempt_report.sender, attempt_index, now, state);
+                    if !unsuspended {
+                        state.push_event_to_local_user_index(
+                            attempt_report.sender,
+                            build_restoration_message_to_sender(&attempt_report, false),
+                        );
+                    }
                 }
             }
         }

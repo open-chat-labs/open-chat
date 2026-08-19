@@ -4126,6 +4126,367 @@ fn post_verdict_reupload_of_same_file_id_is_still_reported() {
     );
 }
 
+// I1a in the primitives, sender side: dismissing the machine report must not lift a manual
+// suspension a moderator placed on the SENDER after detection (rounds 8-9: the attempter arm
+// was guarded, the sender arm was not - the guard now lives in unsuspend_sender itself)
+#[test]
+fn sender_dismissal_never_lifts_a_manual_suspension() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let file = random_file();
+    let report_index = establish_pending_hash_match_report(env, canister_ids, &test_data, random_principal(), &file);
+
+    // Replace the automated suspension with a manual one for something unrelated
+    client::user_index::unsuspend_user(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::unsuspend_user::Args {
+            user_id: test_data.sender.user_id,
+        },
+    );
+    tick_many(env, 5);
+    let suspend_response = client::user_index::suspend_user(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::suspend_user::Args {
+            user_id: test_data.sender.user_id,
+            duration: None,
+            reason: "unrelated harassment".to_string(),
+        },
+    );
+    assert!(
+        matches!(suspend_response, user_index_canister::suspend_user::Response::Success),
+        "{suspend_response:?}"
+    );
+    tick_many(env, 5);
+
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index,
+            verdict: ModerationVerdict::Dismissed,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    let suspension_details = sender_state
+        .suspension_details
+        .expect("the manual suspension on the sender must survive the dismissal");
+    assert_eq!(suspension_details.reason, "unrelated harassment");
+}
+
+// I1a in the primitives, sender side: an Upheld (not CSAM) verdict must not downgrade a
+// manual indefinite suspension on the SENDER to the 1-day bot suspension
+#[test]
+fn sender_upheld_never_downgrades_a_manual_suspension() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let file = random_file();
+    let report_index = establish_pending_hash_match_report(env, canister_ids, &test_data, random_principal(), &file);
+
+    client::user_index::unsuspend_user(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::unsuspend_user::Args {
+            user_id: test_data.sender.user_id,
+        },
+    );
+    tick_many(env, 5);
+    let suspend_response = client::user_index::suspend_user(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::suspend_user::Args {
+            user_id: test_data.sender.user_id,
+            duration: None,
+            reason: "unrelated harassment".to_string(),
+        },
+    );
+    assert!(
+        matches!(suspend_response, user_index_canister::suspend_user::Response::Success),
+        "{suspend_response:?}"
+    );
+    tick_many(env, 5);
+
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index,
+            verdict: ModerationVerdict::Upheld,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+
+    let sender_state = client::user_index::happy_path::current_user(env, test_data.sender.principal, canister_ids.user_index);
+    let suspension_details = sender_state
+        .suspension_details
+        .expect("the manual suspension on the sender must survive the upheld verdict");
+    assert_eq!(
+        suspension_details.reason, "unrelated harassment",
+        "the downgrade must not replace the manual suspension"
+    );
+}
+
+// I8a: a suspended attempter whose attempt reports are ALL resolved (and whose sanction
+// record was cleared by an unrelated dismissal) must still have a working contest channel
+#[test]
+fn resolved_attempt_reports_remain_contestable() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let scanner = random_principal();
+    let file1 = random_file();
+    let file2 = random_file();
+    let (_, r1) = establish_pending_hash_match_report_from(env, canister_ids, &test_data, scanner, &file1, None);
+    let (_, r2) =
+        establish_pending_hash_match_report_from(env, canister_ids, &test_data, scanner, &file2, Some(&test_data.group_owner));
+
+    attempt_blocked_upload(env, canister_ids, &test_data.reporter, &file1);
+    attempt_blocked_upload(env, canister_ids, &test_data.reporter, &file2);
+    assert_eq!(attempt_reports_for(env, &test_data, &test_data.reporter).len(), 2);
+
+    // Upholding R1 as CSAM resolves its attempt report and hardens the attempter's suspension
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index: r1,
+            verdict: ModerationVerdict::UpheldAsCsam,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+
+    // Dismissing R2 resolves the second attempt report and clears the sanction record (which
+    // pointed at R2), but the upheld first attempt keeps the user suspended
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index: r2,
+            verdict: ModerationVerdict::Dismissed,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+
+    let attempter_state =
+        client::user_index::happy_path::current_user(env, test_data.reporter.principal, canister_ids.user_index);
+    assert!(
+        attempter_state.suspension_details.is_some(),
+        "the upheld attempt must keep the attempter suspended"
+    );
+
+    // Every report is resolved and the record is gone - the contest must still land
+    let contest_response = client::user_index::contest_moderation_sanction(
+        env,
+        test_data.reporter.principal,
+        canister_ids.user_index,
+        &types::Empty {},
+    );
+    assert!(matches!(contest_response, UnitResult::Success), "{contest_response:?}");
+    tick_many(env, 5);
+    assert!(
+        moderation_notices(env, &test_data)
+            .iter()
+            .any(|t| t.contains("Human review requested") && t.contains("attribution")),
+        "the resolved-attempt contest must post the attribution-focused moderator notice"
+    );
+}
+
+// I14: releasing ONE claim while siblings retain the pin is a hash transition too - the
+// sightings anchored to the released report must clear so the next attempt re-reports
+// against a remaining claim instead of being silenced as a repeat
+#[test]
+fn claim_release_with_retained_pin_clears_sightings() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let scanner = random_principal();
+    let file = random_file();
+
+    // Two independent uploads of the same bytes BEFORE any verdict (once the first verdict
+    // lands, the pin refuses further uploads of the hash): dedup shares the blob and the
+    // vault ends up holding two claims on the one hash
+    client::user_index::happy_path::execute_protected_action(
+        env,
+        test_data.moderator.principal,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        ProtectedAction::SetMediaScanConfig(user_index_canister::set_media_scan_config::Args {
+            config: MediaScanConfig {
+                enabled: true,
+                scanners: vec![scanner],
+            },
+        }),
+    );
+    client::user_index::happy_path::execute_protected_action(
+        env,
+        test_data.moderator.principal,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        ProtectedAction::SetVaultReviewers(user_index_canister::set_vault_reviewers::Args {
+            user_ids: vec![test_data.moderator.user_id],
+        }),
+    );
+    tick_many(env, 5);
+
+    let mut message_ids = Vec::new();
+    let mut blob_ids = Vec::new();
+    for poster in [&test_data.sender, &test_data.group_owner] {
+        let bucket =
+            client::storage_index::happy_path::allocated_bucket(env, poster.principal, canister_ids.storage_index, &file);
+        client::storage_bucket::happy_path::upload_file(
+            env,
+            poster.principal,
+            bucket.canister_id,
+            bucket.file_id,
+            file.to_vec(),
+            vec![poster.canister()],
+            None,
+        );
+        let message_id = random_from_u128();
+        send_image_message(
+            env,
+            poster,
+            test_data.group_id,
+            message_id,
+            BlobReference {
+                canister_id: bucket.canister_id,
+                blob_id: bucket.file_id,
+            },
+        );
+        message_ids.push(message_id);
+        blob_ids.push(bucket.file_id);
+        tick_many(env, 3);
+    }
+
+    let local_user_index = canister_ids.local_user_index(env, test_data.group_id);
+    let local_user_index_canister::media_scan_jobs::Response::Success(jobs_result) = client::local_user_index::media_scan_jobs(
+        env,
+        scanner,
+        local_user_index,
+        &local_user_index_canister::media_scan_jobs::Args { from_job_index: 0 },
+    );
+    let verdicts: Vec<_> = message_ids
+        .iter()
+        .zip(blob_ids.iter())
+        .map(|(message_id, blob_id)| {
+            let job = jobs_result
+                .jobs
+                .iter()
+                .find(|j| j.request.message_id == *message_id)
+                .expect("a scan job should be queued for each image message");
+            MediaScanVerdict {
+                job_index: job.job_index,
+                message_id: *message_id,
+                outcomes: vec![MediaScanBlobOutcome::Match(MediaScanMatch {
+                    provider: MediaScanProvider::PhotoDna,
+                    blob_id: *blob_id,
+                    source: "Test".to_string(),
+                    violations: vec!["A1".to_string()],
+                    match_distance: 181,
+                    match_id: Some("7469692".to_string()),
+                })],
+            }
+        })
+        .collect();
+    let up_to_job_index = verdicts.iter().map(|v| v.job_index).max().unwrap();
+    let submit_response = client::local_user_index::submit_media_scan_verdicts(
+        env,
+        scanner,
+        local_user_index,
+        &local_user_index_canister::submit_media_scan_verdicts::Args {
+            verdicts,
+            up_to_job_index,
+        },
+    );
+    assert!(matches!(
+        submit_response,
+        local_user_index_canister::submit_media_scan_verdicts::Response::Success
+    ));
+    tick_many(env, 10);
+
+    let reports = get_moderation_reports(env, &test_data);
+    let report_for = |user_id| {
+        reports
+            .iter()
+            .find(|r| r.sender == user_id && !r.is_blocked_attempt)
+            .and_then(|r| r.report_index)
+            .expect("each poster's match should create a moderation report")
+    };
+    let r1 = report_for(test_data.sender.user_id);
+    let r2 = report_for(test_data.group_owner.user_id);
+    assert_ne!(r1, r2);
+
+    // An attempt lands against the first-arrived claim
+    attempt_blocked_upload(env, canister_ids, &test_data.reporter, &file);
+    let attempts = attempt_reports_for(env, &test_data, &test_data.reporter);
+    assert_eq!(attempts.len(), 1);
+
+    // Dismissing R1 releases its claim but R2 retains the pin
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index: r1,
+            verdict: ModerationVerdict::Dismissed,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+
+    // The next attempt must produce a NEW attempt report anchored to the remaining claim,
+    // not vanish into the stale sighting's repeat tally
+    attempt_blocked_upload(env, canister_ids, &test_data.reporter, &file);
+    let attempts = attempt_reports_for(env, &test_data, &test_data.reporter);
+    assert_eq!(
+        attempts.len(),
+        2,
+        "the attempt after the partial release must re-report against the remaining claim"
+    );
+}
+
 fn send_captioned_image_message(
     env: &mut PocketIc,
     sender: &User,

@@ -491,9 +491,11 @@ impl ReportedMessages {
         let DetectionSource::BlockedAttempt { .. } = message.detection else {
             return ContestResult::NotFound;
         };
-        if message.human_verdict().is_some() {
-            return ContestResult::AlreadyResolved;
-        }
+        // A RESOLVED attempt report is contestable here too: it can be the only thing
+        // keeping the user suspended (e.g. an UpheldAsCsam verdict inherited by mirroring)
+        // after the sanction record was cleared or overwritten - without this, a suspended
+        // attempter could be left with no Article 22 channel at all (I8a). The verdict on
+        // the CONTENT was human; what the notice invites review of is the attribution.
         if message.contested.is_some() {
             return ContestResult::AlreadyContested;
         }

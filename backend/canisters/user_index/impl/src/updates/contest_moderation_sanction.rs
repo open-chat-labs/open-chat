@@ -123,13 +123,22 @@ fn contest_moderation_sanction_impl(state: &mut RuntimeState) -> OCResult {
                     }
                     _ => report_index,
                 };
+                let resolution_hint = if report.human_verdict().is_some() {
+                    "The content verdict was made by a moderator; this contest concerns the attribution of the \
+                     attempt. If the sanction is wrong, unsuspending the account reverses it."
+                        .to_string()
+                } else {
+                    format!(
+                        "Resolving report #{original} settles this sanction with it; if the sanction was wrong, \
+                         unsuspending the account reverses it."
+                    )
+                };
                 moderation::post_moderation_notice(
                     format!(
                         "⚖️ Human review requested\n\n\
                          {username} ({user_id}) was suspended for attempting to re-post content under review \
                          (attempt report #{report_index}, content report #{original}), and has requested that a \
-                         person reviews that decision. Resolving report #{original} settles this sanction with it; \
-                         if the sanction was wrong, unsuspending the account reverses it."
+                         person reviews that decision. {resolution_hint}"
                     ),
                     state,
                 );

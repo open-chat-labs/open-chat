@@ -183,6 +183,10 @@ impl Vault {
         self.reviewers.contains_key(principal)
     }
 
+    pub fn hash_for_file(&self, file_id: &FileId) -> Option<Hash> {
+        self.file_id_to_hash.get(file_id).copied()
+    }
+
     pub fn record_for_file(&self, file_id: &FileId) -> Option<&VaultRecord> {
         self.file_id_to_hash.get(file_id).and_then(|h| self.records.get(h))
     }

@@ -48,6 +48,13 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
                         info!(%file_id, "Vault: unquarantined");
                     }
                     VaultOpOutcome::Retained => {
+                        // A claim released even though siblings retain the pin: sightings
+                        // anchored to the released report are stale, and the next attempt
+                        // must re-report against a remaining claim rather than be silenced
+                        // (I14) - the anchor changed, which is a hash transition too
+                        if let Some(hash) = state.data.vault.hash_for_file(&file_id) {
+                            state.data.vault.clear_blocked_attempts_for_hash(&hash);
+                        }
                         info!(%file_id, "Vault: release deferred, other reports still hold the blob");
                     }
                     VaultOpOutcome::Blocked => {
