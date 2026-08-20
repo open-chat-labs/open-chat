@@ -1916,7 +1916,6 @@
     "termsUpdated": {
         "agree": "Zgadzam się",
         "failed": "Coś poszło nie tak podczas zapisywania Twojej akceptacji. Sprawdź połączenie i spróbuj ponownie.",
-        "info": "Zaktualizowaliśmy warunki korzystania z OpenChat, w tym nowe zasady dotyczące zabronionych treści oraz sposobu działania moderacji. Zapoznaj się z zaktualizowanymi warunkami. Wybierając \"Zgadzam się\", akceptujesz zaktualizowane warunki.",
         "link": "Przeczytaj zaktualizowane warunki",
         "title": "Nasze warunki uległy zmianie"
     },

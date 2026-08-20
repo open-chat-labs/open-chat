@@ -1916,7 +1916,6 @@
     "termsUpdated": {
         "agree": "J'accepte",
         "failed": "Une erreur s'est produite lors de l'enregistrement de votre acceptation. Veuillez vérifier votre connexion et réessayer.",
-        "info": "Nous avons mis à jour les conditions d'utilisation d'OpenChat, notamment les nouvelles règles relatives aux contenus interdits et au fonctionnement de la modération. Veuillez prendre connaissance des conditions mises à jour. En sélectionnant \"J'accepte\", vous acceptez les conditions mises à jour.",
         "link": "Lire les conditions mises à jour",
         "title": "Nos conditions ont changé"
     },

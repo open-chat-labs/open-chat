@@ -1916,7 +1916,6 @@
     "termsUpdated": {
         "agree": "Acepto",
         "failed": "Se produjo un error al registrar su aceptación. Compruebe su conexión e inténtelo de nuevo.",
-        "info": "Hemos actualizado los términos del servicio de OpenChat, incluidas nuevas reglas sobre el contenido prohibido y sobre cómo funciona la moderación. Revise los términos actualizados. Al seleccionar \"Acepto\" acepta los términos actualizados.",
         "link": "Leer los términos actualizados",
         "title": "Nuestros términos han cambiado"
     },

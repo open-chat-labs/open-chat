@@ -1916,7 +1916,6 @@
     "termsUpdated": {
         "agree": "Ich stimme zu",
         "failed": "Beim Erfassen Ihrer Zustimmung ist etwas schiefgelaufen. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
-        "info": "Wir haben die Nutzungsbedingungen von OpenChat aktualisiert, einschließlich neuer Regeln zu verbotenen Inhalten und zur Funktionsweise der Moderation. Bitte lesen Sie die aktualisierten Bedingungen. Mit der Auswahl von \"Ich stimme zu\" akzeptieren Sie die aktualisierten Bedingungen.",
         "link": "Aktualisierte Bedingungen lesen",
         "title": "Unsere Bedingungen haben sich geändert"
     },

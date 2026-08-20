@@ -1916,7 +1916,6 @@
     "termsUpdated": {
         "agree": "Tôi đồng ý",
         "failed": "Đã xảy ra lỗi khi ghi nhận sự chấp thuận của bạn. Vui lòng kiểm tra kết nối và thử lại.",
-        "info": "Chúng tôi đã cập nhật điều khoản dịch vụ của OpenChat, bao gồm các quy tắc mới về nội dung bị cấm và cách thức kiểm duyệt hoạt động. Vui lòng xem lại các điều khoản đã cập nhật. Khi chọn \"Tôi đồng ý\", bạn chấp nhận các điều khoản đã cập nhật.",
         "link": "Đọc các điều khoản đã cập nhật",
         "title": "Điều khoản của chúng tôi đã thay đổi"
     },
