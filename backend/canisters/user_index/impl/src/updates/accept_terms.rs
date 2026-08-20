@@ -30,3 +30,34 @@ fn accept_terms_impl(args: Args, state: &mut RuntimeState) -> Response {
         Response::Error(OCErrorCode::InitiatorNotFound.into())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // The frontend holds its own copy of this constant (it labels the terms text and acts
+    // as a fallback when the server value is absent); the two must move in lockstep or the
+    // terms-updated notice either never fires (backend behind) or loops forever (frontend
+    // behind). Parses the frontend source so a half-bump fails CI.
+    #[test]
+    fn terms_version_matches_frontend() {
+        let path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../frontend/openchat-shared/src/constants.ts"
+        );
+        let src = std::fs::read_to_string(path).unwrap();
+        let line = src
+            .lines()
+            .find(|l| l.contains("CURRENT_TERMS_VERSION"))
+            .expect("CURRENT_TERMS_VERSION not found in frontend constants.ts");
+        let frontend_version: u32 = line
+            .split('=')
+            .nth(1)
+            .unwrap()
+            .trim()
+            .trim_end_matches(';')
+            .parse()
+            .expect("failed to parse frontend CURRENT_TERMS_VERSION");
+        assert_eq!(frontend_version, CURRENT_TERMS_VERSION);
+    }
+}
