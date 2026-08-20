@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2030](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2030-user_index)] - 2026-08-20
+
 ### Added
 
 - Create a first-class resolvable moderation report, with an authority-report register entry, for every blocked attempt to re-post CSAM content: immediately due for adjudicated content, mirroring the original report's verdict for content pending review ([#9162](https://github.com/open-chat-labs/open-chat/pull/9162))
