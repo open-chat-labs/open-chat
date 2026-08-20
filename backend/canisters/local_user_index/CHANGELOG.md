@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2033](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2033-local_user_index)] - 2026-08-20
+
 ### Added
 
 - Add the media scan job log plus worker-facing `media_scan_jobs` and `submit_media_scan_verdicts` endpoints, gated on the media scan config set by the user_index ([#9161](https://github.com/open-chat-labs/open-chat/pull/9161))
