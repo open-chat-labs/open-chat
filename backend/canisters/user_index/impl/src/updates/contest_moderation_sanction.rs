@@ -56,12 +56,29 @@ fn contest_moderation_sanction_impl(state: &mut RuntimeState) -> OCResult {
                 .get_by_user_id(&user_id)
                 .map(|u| format!("@{}", u.username))
                 .unwrap_or_else(|| user_id.to_string());
+            // The wording tracks the linked report's state: pre-verdict the content is only
+            // suspected, and resolving that report is what settles the attempt sanction too
+            let (content_state, resolution_hint) = if state
+                .data
+                .reported_messages
+                .get(csam_report_index)
+                .is_some_and(|r| r.human_verdict().is_none())
+            {
+                (
+                    "quarantined pending review",
+                    "Resolving that report settles this sanction with it; if the sanction was wrong, unsuspending the account reverses it.",
+                )
+            } else {
+                (
+                    "upheld as CSAM",
+                    "If the sanction was wrong, unsuspend the account to reverse it.",
+                )
+            };
             moderation::post_moderation_notice(
                 format!(
                     "⚖️ Human review requested\n\n\
-                     {username} ({user_id}) was suspended for trying to post content matching the hash upheld as CSAM in \
-                     report #{csam_report_index}, and has requested that a person reviews that decision. \
-                     If the sanction was wrong, unsuspend the account; there is no report to resolve."
+                     {username} ({user_id}) was suspended for trying to post content matching the hash {content_state} in \
+                     report #{csam_report_index}, and has requested that a person reviews that decision. {resolution_hint}"
                 ),
                 state,
             );
@@ -69,6 +86,67 @@ fn contest_moderation_sanction_impl(state: &mut RuntimeState) -> OCResult {
         }
         ContestUploadSanctionResult::AlreadyContested => saw_already_contested = true,
         ContestUploadSanctionResult::NotFound => (),
+    }
+
+    // Last resort: the single-slot sanction record may have been cleared or overwritten
+    // while unresolved attempt reports still hold the user suspended - they must always have
+    // an Article 22 channel (I8a). The contest is recorded on the newest such report and
+    // raised as a notice; the card never flips to Contested (it offers no verdict actions).
+    // ONLY when no channel is already open: a standing contest (report or sanction record)
+    // means review was already requested, and re-contesting here would mint an unthrottled
+    // notice per call.
+    if saw_already_contested {
+        return Err(OCErrorCode::NoChange.with_message("Already contested"));
+    }
+    let report_indexes: Vec<u64> = state
+        .data
+        .users
+        .get_by_principal(&state.env.caller())
+        .map(|u| u.reported_messages.iter().rev().copied().collect())
+        .unwrap_or_default();
+    for report_index in report_indexes {
+        match state
+            .data
+            .reported_messages
+            .contest_unresolved_attempt(report_index, user_id, now)
+        {
+            ContestResult::Success(report) => {
+                let username = state
+                    .data
+                    .users
+                    .get_by_user_id(&user_id)
+                    .map(|u| format!("@{}", u.username))
+                    .unwrap_or_else(|| user_id.to_string());
+                let original = match report.detection {
+                    crate::model::reported_messages::DetectionSource::BlockedAttempt { original_report_index } => {
+                        original_report_index
+                    }
+                    _ => report_index,
+                };
+                let resolution_hint = if report.human_verdict().is_some() {
+                    "The content verdict was made by a moderator; this contest concerns the attribution of the \
+                     attempt. If the sanction is wrong, unsuspending the account reverses it."
+                        .to_string()
+                } else {
+                    format!(
+                        "Resolving report #{original} settles this sanction with it; if the sanction was wrong, \
+                         unsuspending the account reverses it."
+                    )
+                };
+                moderation::post_moderation_notice(
+                    format!(
+                        "⚖️ Human review requested\n\n\
+                         {username} ({user_id}) was suspended for attempting to re-post content under review \
+                         (attempt report #{report_index}, content report #{original}), and has requested that a \
+                         person reviews that decision. {resolution_hint}"
+                    ),
+                    state,
+                );
+                return Ok(());
+            }
+            ContestResult::AlreadyContested => saw_already_contested = true,
+            _ => (),
+        }
     }
 
     if saw_already_contested {

@@ -23,6 +23,15 @@ pub(crate) fn execute(args: Args, proposed_by: UserId, confirmed_by: UserId, sta
         .cloned()
         .ok_or(OCErrorCode::MessageNotFound)?;
 
+    // Defense in depth alongside the propose-time validation: an attempt report aliases the
+    // ORIGINAL report's blob references with a different sender (I8)
+    if matches!(
+        report.detection,
+        crate::model::reported_messages::DetectionSource::BlockedAttempt { .. }
+    ) {
+        return Err(OCErrorCode::InvalidRequest
+            .with_message("Evidence is destroyed via the original report, not a blocked-attempt report"));
+    }
     if report.blob_references.is_empty() {
         return Err(OCErrorCode::InvalidRequest.with_message("The report holds no vaulted evidence"));
     }

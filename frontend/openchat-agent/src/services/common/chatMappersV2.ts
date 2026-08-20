@@ -739,6 +739,7 @@ function moderationReportContent(value: TModerationReportContent): ModerationRep
         reporters: value.reporters.map(principalBytesToString),
         flaggedCategories: value.flagged_categories,
         classificationFailed: value.classification_failed ?? false,
+        isBlockedAttempt: value.is_blocked_attempt ?? false,
         authorityReport: mapOptional(value.authority_report, (a) =>
             "Due" in a
                 ? ({ kind: "due", urgent: a.Due.urgent } as const)

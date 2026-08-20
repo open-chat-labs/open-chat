@@ -666,6 +666,9 @@ export type ModerationReportContent = {
     // Present when the detection was a media hash match rather than the text classifier.
     // Optional because report content restored from the IndexedDB cache can pre-date the field.
     mediaMatches?: MediaScanMatch[];
+    // True for a blocked re-post attempt report: it resolves with its original report and
+    // must not offer verdict actions. Optional for cached pre-upgrade content.
+    isBlockedAttempt?: boolean;
     reportedAt: bigint;
     status: ModerationReportStatus;
 };

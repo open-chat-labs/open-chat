@@ -65,7 +65,7 @@ fn c2c_csam_detected_impl(args: Args, state: &mut RuntimeState) {
         false,
         &mut state.data.fire_and_forget_handler,
     );
-    moderation::suspend_sender(args.sender, now, state);
+    moderation::suspend_sender(args.sender, Some(report_index), now, state);
 
     moderation::post_moderation_alert(
         ModerationAlert {
@@ -83,6 +83,9 @@ fn c2c_csam_detected_impl(args: Args, state: &mut RuntimeState) {
             blob_references: reported_message.blob_references,
             media_matches: args.media_matches,
             timestamp: now,
+            authority_report: None,
+            is_blocked_attempt: false,
+            status: types::ModerationReportStatus::Pending,
         },
         state,
     );

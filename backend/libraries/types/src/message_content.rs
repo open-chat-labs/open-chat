@@ -817,6 +817,12 @@ pub struct ModerationReportContent {
     // provider's record details, retained as the audit trail and for the authority report
     #[serde(default)]
     pub media_matches: Vec<crate::MediaScanMatch>,
+    // True for a report of a blocked re-post attempt: no message of its own exists and it is
+    // never resolved directly (it mirrors its original report), so the card must not offer
+    // verdict actions
+    #[serde(default)]
+    #[ts(as = "Option<bool>", optional)]
+    pub is_blocked_attempt: bool,
     pub reported_at: TimestampMillis,
     pub status: ModerationReportStatus,
     // Present on UpheldAsCsam reports: whether the authority (NCA) report is still due or has

@@ -44,9 +44,17 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
                 match state.data.vault.unquarantine(u.file_id, u.moderator, u.report_index, now) {
                     VaultOpOutcome::ReleasePin(hash) => {
                         state.data.files.vault_unpin(&hash);
+                        state.data.vault.clear_blocked_attempts_for_hash(&hash);
                         info!(%file_id, "Vault: unquarantined");
                     }
                     VaultOpOutcome::Retained => {
+                        // A claim released even though siblings retain the pin: sightings
+                        // anchored to the released report are stale, and the next attempt
+                        // must re-report against a remaining claim rather than be silenced
+                        // (I14) - the anchor changed, which is a hash transition too
+                        if let Some(hash) = state.data.vault.hash_for_file(&file_id) {
+                            state.data.vault.clear_blocked_attempts_for_hash(&hash);
+                        }
                         info!(%file_id, "Vault: release deferred, other reports still hold the blob");
                     }
                     VaultOpOutcome::Blocked => {
@@ -74,6 +82,7 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
                     // Tell the index so every other bucket denylists the hash too, otherwise
                     // the same content uploads again elsewhere and is served publicly
                     VaultOpOutcome::AppliedDenylisted(hash, report_index) => {
+                        state.data.vault.clear_blocked_attempts_for_hash(&hash);
                         state
                             .data
                             .push_event_to_index(EventToSync::CsamHashDenylisted(CsamHashDenylisted { hash, report_index }));
@@ -87,6 +96,7 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
                     state.data.vault.set_legal_hold(l.file_id, l.legal_hold, l.reference, now)
                 {
                     state.data.files.vault_unpin(&hash);
+                    state.data.vault.clear_blocked_attempts_for_hash(&hash);
                     info!(file_id = %l.file_id, "Vault: unquarantined on legal-hold clear");
                 }
             }
@@ -99,6 +109,7 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
                 {
                     VaultOpOutcome::ReleasePin(hash) => {
                         state.data.files.vault_purge(&hash);
+                        state.data.vault.clear_blocked_attempts_for_hash(&hash);
                         info!(%file_id, "Vault: destroyed on law enforcement request");
                     }
                     VaultOpOutcome::Blocked => {
@@ -114,6 +125,7 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
                 // Propagated from the bucket which applied the verdict: blocks uploads of the
                 // same content here, and stops any copy already stored here being served
                 if state.data.vault.denylist_hash(d.hash, d.report_index) {
+                    state.data.vault.clear_blocked_attempts_for_hash(&d.hash);
                     info!(report_index = d.report_index, "Vault: CSAM hash denylisted");
                 }
             }
