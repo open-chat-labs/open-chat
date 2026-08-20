@@ -1,7 +1,9 @@
+import { vi } from "vitest";
 import {
     classifyUrl,
     extractEnabledLinks,
     extractMessagePreviews,
+    fetchOgPreviews,
     MAX_LINK_PREVIEWS,
 } from "./linkPreviews";
 
@@ -176,5 +178,76 @@ describe("extractEnabledLinks", () => {
     test("deduplicates URLs", () => {
         const result = extractEnabledLinks("https://example.com https://example.com");
         expect(result).toHaveLength(1);
+    });
+});
+
+describe("fetchOgPreviews", () => {
+    const proxyUrl = "https://preview.test";
+    let imagesCreated = 0;
+
+    beforeEach(() => {
+        imagesCreated = 0;
+        class FakeImage {
+            onload: (() => void) | null = null;
+            onerror: (() => void) | null = null;
+            naturalWidth = 800;
+            naturalHeight = 600;
+            constructor() {
+                imagesCreated++;
+            }
+            set src(value: string) {
+                if (value !== "") {
+                    setTimeout(() => this.onload?.(), 0);
+                }
+            }
+        }
+        vi.stubGlobal("Image", FakeImage);
+        vi.stubGlobal("fetch", (input: string) => {
+            const target = new URL(input).searchParams.get("url");
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(ogResponses[target ?? ""]),
+            });
+        });
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
+    const ogResponses: Record<string, unknown> = {
+        "https://with-dimensions.test": {
+            title: "With dimensions",
+            description: "desc",
+            image: "https://with-dimensions.test/img.png",
+            imageAlt: "alt text",
+            imageWidth: 1200,
+            imageHeight: 630,
+        },
+        "https://without-dimensions.test": {
+            title: "Without dimensions",
+            description: "desc",
+            image: "https://without-dimensions.test/img.png",
+        },
+    };
+
+    test("uses the camelCase dimensions from the service without measuring the image", async () => {
+        const [preview] = await fetchOgPreviews(["https://with-dimensions.test"], proxyUrl);
+        expect(preview.image).toEqual({
+            url: "https://with-dimensions.test/img.png",
+            width: 1200,
+            height: 630,
+        });
+        expect(imagesCreated).toBe(0);
+    });
+
+    test("falls back to measuring the image when the service sends no dimensions", async () => {
+        const [preview] = await fetchOgPreviews(["https://without-dimensions.test"], proxyUrl);
+        expect(preview.image).toEqual({
+            url: "https://without-dimensions.test/img.png",
+            width: 800,
+            height: 600,
+        });
+        expect(imagesCreated).toBe(1);
     });
 });

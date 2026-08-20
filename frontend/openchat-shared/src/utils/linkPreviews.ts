@@ -18,9 +18,9 @@ export type OgData = {
     title?: string;
     description?: string;
     image?: string;
-    image_alt?: string;
-    image_width?: number;
-    image_height?: number;
+    imageAlt?: string;
+    imageWidth?: number;
+    imageHeight?: number;
 };
 
 const ogPromiseCache = new Map<string, Promise<OgData | null>>();
@@ -191,9 +191,12 @@ async function fetchSinglePreview(url: string, proxyUrl: string): Promise<OgPrev
     };
 
     if (data.image) {
-        let width = data.image_width;
-        let height = data.image_height;
+        let width = data.imageWidth;
+        let height = data.imageHeight;
         if (width === undefined || height === undefined) {
+            // The preview service only reports dimensions when the source page
+            // provides og:image:width/height, so fall back to measuring in the
+            // browser - otherwise GenericPreview drops the image altogether.
             const dims = await getImageDimensions(data.image);
             width = dims?.width;
             height = dims?.height;
