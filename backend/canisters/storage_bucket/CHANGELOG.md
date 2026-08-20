@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2032](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2032-storage_bucket)] - 2026-08-20
+
+### Added
+
+- Block and report attempts to upload or forward content which is quarantined pending a verdict, mirroring the post-verdict denylist ([#9162](https://github.com/open-chat-labs/open-chat/pull/9162))
+
 ### Fixed
 
 - Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))

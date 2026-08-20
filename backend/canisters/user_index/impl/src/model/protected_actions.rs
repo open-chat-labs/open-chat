@@ -1,4 +1,5 @@
 use crate::RuntimeState;
+use crate::model::reported_messages::DetectionSource;
 use candid::Principal;
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
@@ -228,6 +229,10 @@ pub(crate) fn validate(action: &ProtectedAction, actor: UserId, state: &RuntimeS
                 .reported_messages
                 .get(args.report_index)
                 .ok_or(OCErrorCode::MessageNotFound)?;
+            if matches!(report.detection, DetectionSource::BlockedAttempt { .. }) {
+                return Err(OCErrorCode::InvalidRequest
+                    .with_message("Evidence is destroyed via the original report, not a blocked-attempt report"));
+            }
             if report.sender == actor {
                 return Err(OCErrorCode::InitiatorNotAuthorized
                     .with_message("Cannot destroy the evidence for a report against your own message"));
@@ -258,6 +263,10 @@ pub(crate) fn validate(action: &ProtectedAction, actor: UserId, state: &RuntimeS
                 .reported_messages
                 .get(args.report_index)
                 .ok_or(OCErrorCode::MessageNotFound)?;
+            if matches!(report.detection, DetectionSource::BlockedAttempt { .. }) {
+                return Err(OCErrorCode::InvalidRequest
+                    .with_message("Legal holds are managed on the original report, not a blocked-attempt report"));
+            }
             if report.sender == actor {
                 return Err(OCErrorCode::InitiatorNotAuthorized
                     .with_message("Cannot change the legal hold on a report against your own message"));

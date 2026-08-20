@@ -28,8 +28,20 @@ pub struct Vault {
     // hash: dedupes the report to the user_index, which would otherwise fire once per chunk
     // (chunks upload in parallel and each one is refused) and once per retry of the same
     // attempt. Keyed per uploader so one user's refused forward never silences another's.
+    // Best-effort and BOUNDED: refused uploads use client-chosen file ids which are never
+    // stored, so without a cap a scripted uploader grows this forever. Oldest sightings are
+    // evicted first; an evicted sighting re-reports, which downstream tolerates (I18).
     #[serde(default)]
     blocked_attempts: BTreeSet<(Principal, FileId)>,
+    // The hash each sighting was refused for: clearing on a hash's adjudication transition
+    // must find sightings whose file ids exist NOWHERE else (a refused upload's id is neither
+    // quarantined nor stored). Parallel to the set (whose serialized type predates this and
+    // cannot change); legacy entries without a hash are post-verdict denylist sightings whose
+    // transitions are final, so never needing the clear.
+    #[serde(default)]
+    blocked_attempt_hashes: BTreeMap<(Principal, FileId), Hash>,
+    #[serde(default)]
+    blocked_attempts_order: std::collections::VecDeque<(Principal, FileId)>,
     // Ephemeral read sessions: (reviewer, file_id) -> next expected chunk. Not serialized:
     // an upgrade resets sessions and reviewers restart from chunk 0 (an extra logged act,
     // never an unlogged one).
@@ -60,6 +72,11 @@ pub struct VaultRecord {
     pub verdicted_report_indexes: BTreeSet<u64>,
     // A release was refused because of a legal hold; clearing the hold performs it
     pub release_pending: bool,
+    // Claim ARRIVAL order (report indexes are creation order, not claim order: an assertion
+    // on an old report can claim a blob which a newer machine detection pinned first). The
+    // first entry anchors blocked attempts. Legacy records fall back to the lowest index.
+    #[serde(default)]
+    pub claim_order: Vec<u64>,
 }
 
 impl VaultRecord {
@@ -147,6 +164,16 @@ pub enum VaultOpOutcome {
     NotFound,
 }
 
+// Records serialized before claim_order existed have claims with no recorded order: seeded
+// from index order (the best available approximation - machine detections usually pinned
+// first and have lower indexes) BEFORE any new claim is pushed, or the first post-upgrade
+// claim would become the anchor and a fresh assertion could displace a machine anchor (I13)
+fn seed_legacy_claim_order(record: &mut VaultRecord) {
+    if record.claim_order.is_empty() && !record.report_indexes.is_empty() {
+        record.claim_order = record.report_indexes.iter().copied().collect();
+    }
+}
+
 impl Vault {
     pub fn set_reviewers(&mut self, reviewers: Vec<VaultReviewer>) {
         self.reviewers = reviewers.into_iter().map(|r| (r.principal, r.user_id)).collect();
@@ -154,6 +181,10 @@ impl Vault {
 
     pub fn is_reviewer(&self, principal: &Principal) -> bool {
         self.reviewers.contains_key(principal)
+    }
+
+    pub fn hash_for_file(&self, file_id: &FileId) -> Option<Hash> {
+        self.file_id_to_hash.get(file_id).copied()
     }
 
     pub fn record_for_file(&self, file_id: &FileId) -> Option<&VaultRecord> {
@@ -186,8 +217,12 @@ impl Vault {
             report_indexes: BTreeSet::new(),
             verdicted_report_indexes: BTreeSet::new(),
             release_pending: false,
+            claim_order: Vec::new(),
         });
-        record.report_indexes.insert(report_index);
+        seed_legacy_claim_order(record);
+        if record.report_indexes.insert(report_index) {
+            record.claim_order.push(report_index);
+        }
     }
 
     // Registers a report's evidence claim on a blob which is already vaulted, returning false
@@ -202,7 +237,9 @@ impl Vault {
         let Some(record) = self.records.get_mut(&hash) else {
             return false;
         };
+        seed_legacy_claim_order(record);
         if record.report_indexes.insert(report_index) {
+            record.claim_order.push(report_index);
             // Log only a genuinely new claim, so this report's linkage to the blob is preserved
             self.append_log(VaultLogEvent::Quarantined(file_id, report_index), now);
         }
@@ -221,10 +258,76 @@ impl Vault {
         self.csam_hashes.get(hash).copied()
     }
 
+    // The report holding this hash quarantined while its verdict is pending, if any:
+    // pre-verdict re-posts are blocked and reported against that report, mirroring the
+    // post-verdict denylist above. Only an ACTIVE claim anchors an attempt report - a record
+    // whose claims were all released but whose pin survives under a legal hold is already
+    // adjudicated, so the caller still refuses the upload (the pin gates serving) but must
+    // not sanction anyone against a resolved report. The FIRST-ARRIVED claim is the anchor:
+    // the first quarantiner is the strongest claim (machine detections pin at send time), and
+    // report indexes are creation order not claim order, so the explicit claim_order decides -
+    // a later frivolous assertion on the same blob must not dilute the attempt's disposition
+    // (I13). Legacy records without claim_order fall back to the lowest index.
+    pub fn pinned_report_index(&self, hash: &Hash) -> Option<u64> {
+        self.records.get(hash).and_then(|r| {
+            r.claim_order
+                .first()
+                .copied()
+                .or_else(|| r.report_indexes.iter().next().copied())
+        })
+    }
+
     // True the first time this (uploader, file id) pair is blocked: the caller only reports
     // the attempt to the user_index on the first sighting
-    pub fn record_blocked_attempt(&mut self, uploader: Principal, file_id: FileId) -> bool {
-        self.blocked_attempts.insert((uploader, file_id))
+    pub fn record_blocked_attempt(&mut self, uploader: Principal, file_id: FileId, hash: Hash) -> bool {
+        const MAX_BLOCKED_ATTEMPT_SIGHTINGS: usize = 10_000;
+        if self.blocked_attempts.insert((uploader, file_id)) {
+            self.blocked_attempt_hashes.insert((uploader, file_id), hash);
+            self.blocked_attempts_order.push_back((uploader, file_id));
+            while self.blocked_attempts_order.len() > MAX_BLOCKED_ATTEMPT_SIGHTINGS {
+                if let Some(evicted) = self.blocked_attempts_order.pop_front() {
+                    self.blocked_attempts.remove(&evicted);
+                    self.blocked_attempt_hashes.remove(&evicted);
+                }
+            }
+            true
+        } else {
+            false
+        }
+    }
+
+    // Forgets the blocked-attempt sightings for a hash's file ids. Called when the hash
+    // changes adjudication state (denylisted, or released): a forward's file id is stable, so
+    // without this a pre-verdict blocked forward would consume the only sighting and the
+    // deliberate POST-verdict forward of the same file would go unreported (I14/I16).
+    // Pre-bound state (or any divergence) has sightings in the set with no order queue, which
+    // the eviction can never touch: rebuilt on upgrade so the bound applies to legacy entries
+    pub fn rebuild_blocked_attempt_order(&mut self) {
+        if self.blocked_attempts_order.len() != self.blocked_attempts.len() {
+            self.blocked_attempts_order = self.blocked_attempts.iter().cloned().collect();
+        }
+    }
+
+    pub fn clear_blocked_attempts_for_hash(&mut self, hash: &Hash) {
+        // Sightings self-describe their hash, so the clear finds every one - including
+        // refused-upload file ids which exist in no other structure (I14). Legacy entries
+        // without a recorded hash are post-verdict denylist sightings; their transitions are
+        // final and never need clearing.
+        // A set, not a Vec: both this and the order queue are bounded at
+        // MAX_BLOCKED_ATTEMPT_SIGHTINGS, and every sighting can share one hash (refused
+        // uploads pick a fresh file id each time, so they are cheap to generate), which would
+        // make a linear `contains` inside the retain quadratic in a single message.
+        let keys: BTreeSet<(Principal, FileId)> = self
+            .blocked_attempt_hashes
+            .iter()
+            .filter(|(_, h)| *h == hash)
+            .map(|(k, _)| *k)
+            .collect();
+        for key in &keys {
+            self.blocked_attempts.remove(key);
+            self.blocked_attempt_hashes.remove(key);
+        }
+        self.blocked_attempts_order.retain(|k| !keys.contains(k));
     }
 
     pub fn unquarantine(
@@ -249,6 +352,7 @@ impl Vault {
         if let Some(record) = self.records.get_mut(&hash) {
             if let Some(report_index) = report_index {
                 record.report_indexes.remove(&report_index);
+                record.claim_order.retain(|i| *i != report_index);
                 record.verdicted_report_indexes.remove(&report_index);
                 if !record.report_indexes.is_empty() {
                     return VaultOpOutcome::Retained;
@@ -294,6 +398,11 @@ impl Vault {
             let denylist_report_index = report_index.unwrap_or(record.metadata.report_index);
             let newly_denylisted = !self.csam_hashes.contains_key(&hash);
             self.csam_hashes.entry(hash).or_insert(denylist_report_index);
+            if newly_denylisted {
+                // The hash's adjudication state changed: pre-verdict blocked-attempt
+                // sightings must not suppress reporting of post-verdict attempts (I14)
+                self.clear_blocked_attempts_for_hash(&hash);
+            }
             self.append_log(VaultLogEvent::VerdictAppliedBy(file_id, retention_until, moderator), now);
             if newly_denylisted {
                 return VaultOpOutcome::AppliedDenylisted(hash, denylist_report_index);
@@ -308,6 +417,9 @@ impl Vault {
     pub fn denylist_hash(&mut self, hash: Hash, report_index: u64) -> bool {
         let newly_denylisted = !self.csam_hashes.contains_key(&hash);
         self.csam_hashes.entry(hash).or_insert(report_index);
+        if newly_denylisted {
+            self.clear_blocked_attempts_for_hash(&hash);
+        }
         newly_denylisted
     }
 
@@ -478,6 +590,9 @@ impl Vault {
     // is released for all sibling files referencing the same blob at once
     fn remove_all_references(&mut self, hash: &Hash) -> Vec<FileId> {
         self.records.remove(hash);
+        // Sightings recorded against the released quarantine must not suppress reporting if
+        // this hash is ever quarantined again
+        self.clear_blocked_attempts_for_hash(hash);
         let aliases: Vec<FileId> = self
             .file_id_to_hash
             .iter()
@@ -862,10 +977,30 @@ mod tests {
     #[test]
     fn blocked_attempts_report_once_per_uploader_and_file() {
         let mut vault = vault_with_reviewer();
+        let hash = [5u8; 32];
         // First sighting reports; the parallel/retried chunks of the same attempt do not
-        assert!(vault.record_blocked_attempt(reviewer(1), 42));
-        assert!(!vault.record_blocked_attempt(reviewer(1), 42));
+        assert!(vault.record_blocked_attempt(reviewer(1), 42, hash));
+        assert!(!vault.record_blocked_attempt(reviewer(1), 42, hash));
         // A different user attempting the same file is a fresh attempt
-        assert!(vault.record_blocked_attempt(reviewer(2), 42));
+        assert!(vault.record_blocked_attempt(reviewer(2), 42, hash));
+        // A hash transition clears every sighting for it - including file ids which exist in
+        // no other structure (refused uploads) - so post-verdict attempts re-report (I14)
+        vault.clear_blocked_attempts_for_hash(&hash);
+        assert!(vault.record_blocked_attempt(reviewer(1), 42, hash));
+    }
+
+    #[test]
+    fn attempt_anchor_is_first_arrived_claim() {
+        let mut vault = vault_with_reviewer();
+        let hash = [1u8; 32];
+        // The machine detection (report #7) pins the hash first; an assertion made later on an
+        // OLDER report (#3, lower index) claims it afterwards. The anchor must stay #7 (I13):
+        // report indexes are creation order, not claim order.
+        vault.quarantine(1, hash, "image/png".to_string(), metadata(7), 100);
+        assert!(vault.claim_if_quarantined(1, 3, 200));
+        assert_eq!(vault.pinned_report_index(&hash), Some(7));
+        // Releasing the machine claim promotes the next-arrived claim
+        vault.unquarantine(1, None, Some(7), 300);
+        assert_eq!(vault.pinned_report_index(&hash), Some(3));
     }
 }

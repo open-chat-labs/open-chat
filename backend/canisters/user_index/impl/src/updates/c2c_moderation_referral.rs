@@ -69,6 +69,9 @@ fn c2c_moderation_referral_impl(args: Args, state: &mut RuntimeState) {
             blob_references: args.blob_references.clone(),
             media_matches: Vec::new(),
             timestamp: now,
+            authority_report: None,
+            is_blocked_attempt: false,
+            status: types::ModerationReportStatus::Pending,
         },
         state,
     );

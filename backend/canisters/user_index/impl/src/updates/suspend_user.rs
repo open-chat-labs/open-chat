@@ -1,9 +1,12 @@
 use crate::guards::caller_is_platform_moderator;
+use crate::model::moderation;
 use crate::timer_job_types::{SetUserSuspendedInCommunity, SetUserSuspendedInGroup, TimerJob, UnsuspendUser};
 use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::OPENCHAT_BOT_USER_ID;
 use local_user_index_canister::{UserIndexEvent, UserSuspended};
+use tracing::info;
 use types::{ChatId, CommunityId, Milliseconds, SuspensionDuration, UserId};
 use user_index_canister::suspend_user::{Response::*, *};
 
@@ -15,7 +18,8 @@ async fn suspend_user(args: Args) -> Response {
         Ok(ok) => ok,
     };
 
-    suspend_user_impl(args.user_id, args.duration, args.reason, suspended_by).await
+    // A moderator's own action, never a downgrade of one
+    suspend_user_impl(args.user_id, args.duration, args.reason, suspended_by, false, None).await
 }
 
 pub(crate) async fn suspend_user_impl(
@@ -23,6 +27,8 @@ pub(crate) async fn suspend_user_impl(
     duration: Option<Milliseconds>,
     reason: String,
     suspended_by: UserId,
+    downgrade: bool,
+    caused_by_report: Option<u64>,
 ) -> Response {
     let c2c_args = user_canister::c2c_set_user_suspended::Args { suspended: true };
     match user_canister_c2c_client::c2c_set_user_suspended(user_id.into(), &c2c_args).await {
@@ -35,6 +41,8 @@ pub(crate) async fn suspend_user_impl(
                     result.groups,
                     result.communities,
                     suspended_by,
+                    downgrade,
+                    caused_by_report,
                     state,
                 )
             });
@@ -55,6 +63,7 @@ fn prepare(user_id: &UserId, state: &RuntimeState) -> Result<UserId, Response> {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn commit(
     user_id: UserId,
     duration: Option<Milliseconds>,
@@ -62,9 +71,47 @@ fn commit(
     groups: Vec<ChatId>,
     communities: Vec<CommunityId>,
     suspended_by: UserId,
+    downgrade: bool,
+    caused_by_report: Option<u64>,
     state: &mut RuntimeState,
 ) {
     let now = state.env.now();
+
+    // I1a, re-checked at the write rather than only where the job was enqueued: the two are
+    // separated by the timer tick and the c2c call above, and a manual suspension applied in
+    // that gap must not be overwritten by an automated one. Safe to abandon the suspension
+    // here: `c2c_set_user_suspended(true)` is idempotent and the user is already suspended,
+    // so the user canister and this one still agree.
+    //
+    // A downgrade is the one automated path which deliberately replaces an indefinite
+    // suspension with a lesser one, so it fails the escalation rule by design: all it must
+    // re-confirm is that the suspension it is about to replace is not a manual one.
+    if suspended_by == OPENCHAT_BOT_USER_ID {
+        // I1b: a human verdict recorded while this job was in flight supersedes it - the
+        // verdict arms are the sole authority for post-verdict sanctions. Without this, a
+        // detection suspension delayed by the c2c round trip (or its 30s retries) commits
+        // AFTER the verdict's downgrade or unsuspension and silently overwrites it.
+        if let Some(report_index) = caused_by_report
+            && state
+                .data
+                .reported_messages
+                .get(report_index)
+                .is_some_and(|r| r.human_verdict().is_some())
+        {
+            info!(%user_id, report_index, "Skipping automated suspension: its report was resolved while it was in flight");
+            return;
+        }
+        let permitted = if downgrade {
+            !moderation::has_manual_suspension(user_id, state)
+        } else {
+            moderation::automated_suspension_applies(user_id, duration, state)
+        };
+        if !permitted {
+            info!(%user_id, downgrade, "Skipping automated suspension: a manual or stronger suspension is in force");
+            return;
+        }
+    }
+
     for group in groups {
         state.data.timer_jobs.enqueue_job(
             TimerJob::SetUserSuspendedInGroup(SetUserSuspendedInGroup {

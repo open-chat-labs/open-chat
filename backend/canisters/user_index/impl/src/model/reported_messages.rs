@@ -13,6 +13,16 @@ use user_index_canister::resolve_moderation_report::ModerationVerdict;
 // one user cannot mass-report to trigger unbounded OpenAI calls and flood the moderation channel
 const MAX_NEW_REPORTS_PER_HOUR: usize = 10;
 
+// Blocked re-post attempts inside this window tally onto the latest attempt report rather
+// than opening a new one: a client's automatic retries are one human act, not several offences
+const ATTEMPT_RETRY_WINDOW: types::Milliseconds = 10 * constants::MINUTE_IN_MS;
+// Beyond this many attempt reports per (offender, content), further attempts tally instead:
+// a suspended user must not be able to mint unlimited reports and register rows
+const MAX_ATTEMPT_REPORTS_PER_OFFENDER: usize = 5;
+// Repeat timestamps recorded per attempt report; beyond this only the counter grows, so a
+// scripted uploader cannot grow stable memory without bound
+const MAX_RECORDED_REPEAT_ATTEMPTS: usize = 100;
+
 #[derive(Serialize, Deserialize, Default)]
 pub struct ReportedMessages {
     messages: Vec<ReportedMessage>,
@@ -77,6 +87,9 @@ impl ReportedMessages {
                 legal_hold: false,
                 release_pending: false,
                 csam_asserted_by: if args.csam { vec![args.reporter] } else { Vec::new() },
+                blocked_attempt_report_indexes: Vec::new(),
+                repeat_attempts: Vec::new(),
+                unrecorded_repeat_attempts: 0,
             });
             AddReportResult::New(new_index as u64)
         }
@@ -140,6 +153,135 @@ impl ReportedMessages {
 
     pub fn get(&self, index: u64) -> Option<&ReportedMessage> {
         self.messages.get(index as usize)
+    }
+
+    // Creates a first-class report for a blocked attempt to re-post another report's content.
+    // No message exists (the attempt was refused at the bucket), so the report anchors to the
+    // original report's evidence and its verdict mirrors the original's resolution. One
+    // report per (original report, attempter): a retried attempt is not a fresh offence
+    // record. Returns the created report.
+    pub fn add_blocked_attempt_report(
+        &mut self,
+        original_report_index: u64,
+        uploader: UserId,
+        now: TimestampMillis,
+    ) -> Option<AddBlockedAttemptResult> {
+        let existing_indexes = self
+            .messages
+            .get(original_report_index as usize)?
+            .blocked_attempt_report_indexes
+            .clone();
+        // Each attempt is a fresh offence and normally gets its own report (and its own
+        // authority register entry). Two guards keep that honest under adversarial or flaky
+        // clients: attempts inside the retry window tally onto the latest report (a client's
+        // automatic retries are one human act, not several offences), and attempts beyond
+        // the per-offender cap tally rather than letting a suspended user mint unlimited
+        // register rows - the tally itself remains available to the authority filing.
+        let existing: Vec<u64> = existing_indexes
+            .iter()
+            .filter(|i| self.messages.get(**i as usize).is_some_and(|m| m.sender == uploader))
+            .copied()
+            .collect();
+        if let Some(&latest_index) = existing.last() {
+            let prior_attempts: usize = existing
+                .iter()
+                .filter_map(|i| self.messages.get(*i as usize))
+                .map(|m| 1 + m.repeat_attempts.len() + m.unrecorded_repeat_attempts as usize)
+                .sum();
+            let latest = self.messages.get_mut(latest_index as usize).unwrap();
+            // Measured from the latest attempt REPORT's creation, not the last tallied
+            // attempt: a sliding window would let an offender re-attempting every few
+            // minutes stay inside it forever, minting one offence record in total (I6 scopes
+            // the window to "a client's automatic retries", which follow creation closely)
+            let last_activity = latest.automated_timestamp().unwrap_or_default();
+            if now.saturating_sub(last_activity) < ATTEMPT_RETRY_WINDOW || existing.len() >= MAX_ATTEMPT_REPORTS_PER_OFFENDER {
+                if latest.repeat_attempts.len() < MAX_RECORDED_REPEAT_ATTEMPTS {
+                    latest.repeat_attempts.push(now);
+                } else {
+                    latest.unrecorded_repeat_attempts = latest.unrecorded_repeat_attempts.saturating_add(1);
+                }
+                return Some(AddBlockedAttemptResult::Repeat {
+                    attempt_report_index: latest_index,
+                    total_attempts: (prior_attempts + 1) as u32,
+                });
+            }
+        }
+        let original = self.messages.get(original_report_index as usize)?;
+        // A post-verdict attempt is born resolved, inheriting the original's content verdict
+        // (that moderator's adjudication of the content covers the attempt; the only open
+        // question is attribution, handled by the contest/unsuspend path). A pre-verdict
+        // attempt is born pending and resolves by mirroring the original's eventual verdict.
+        let inherited_verdict = original.human_verdict().cloned();
+        let entry = ReportedMessage {
+            chat_id: original.chat_id,
+            thread_root_message_index: original.thread_root_message_index,
+            message_index: original.message_index,
+            message_id: original.message_id,
+            sender: uploader,
+            // No message was ever created - there is nothing to delete or restore
+            already_deleted: true,
+            reports: HashMap::new(),
+            outcome: Some(ReportOutcome::Automated(AutomatedOutcome {
+                timestamp: now,
+                flagged_categories: types::ModerationCategories::SEXUAL_MINORS.bits(),
+                action: ModerationAction::AutoSanctioned,
+                // Set even for a born-Dismissed attempt (whose caller applies no sanction):
+                // every consumer (keeps_sender_sanctioned, requires_indefinite_suspension,
+                // in_breach, machine_sanction_applied) reads it together with the verdict or
+                // the BlockedAttempt detection and none misreads that state - and attempt
+                // indexes never reach vault claims
+                sanctioned: true,
+                classification_failed: false,
+                human_verdict: inherited_verdict,
+            })),
+            moderation_channel_message_id: None,
+            blob_references: original.blob_references.clone(),
+            detection: DetectionSource::BlockedAttempt { original_report_index },
+            media_matches: original.media_matches.clone(),
+            csam_asserted_by: Vec::new(),
+            contested: None,
+            unverified_report_filed: None,
+            legal_hold: false,
+            release_pending: false,
+            blocked_attempt_report_indexes: Vec::new(),
+            repeat_attempts: Vec::new(),
+            unrecorded_repeat_attempts: 0,
+        };
+        let new_index = self.messages.len() as u64;
+        self.messages.push(entry);
+        self.messages[original_report_index as usize]
+            .blocked_attempt_report_indexes
+            .push(new_index);
+        Some(AddBlockedAttemptResult::New {
+            attempt_report_index: new_index,
+            report: Box::new(self.messages[new_index as usize].clone()),
+        })
+    }
+
+    // Mirrors the original report's human verdict onto its unresolved blocked-attempt
+    // reports, returning the resolved reports so the caller applies the side effects
+    // (authority register, suspension changes, alert card updates)
+    pub fn mirror_verdict_to_attempt_reports(
+        &mut self,
+        original_report_index: u64,
+        human_verdict: HumanVerdict,
+    ) -> Vec<(u64, Box<ReportedMessage>)> {
+        let indexes = self
+            .messages
+            .get(original_report_index as usize)
+            .map(|m| m.blocked_attempt_report_indexes.clone())
+            .unwrap_or_default();
+        let mut resolved = Vec::new();
+        for index in indexes {
+            if let Some(message) = self.messages.get_mut(index as usize)
+                && let Some(ReportOutcome::Automated(a)) = &mut message.outcome
+                && a.human_verdict.is_none()
+            {
+                a.human_verdict = Some(human_verdict.clone());
+                resolved.push((index, Box::new(message.clone())));
+            }
+        }
+        resolved
     }
 
     // Registers a CSAM assertion against a report that already has an automated outcome,
@@ -297,6 +439,9 @@ impl ReportedMessages {
                 legal_hold: false,
                 release_pending: false,
                 csam_asserted_by: Vec::new(),
+                blocked_attempt_report_indexes: Vec::new(),
+                repeat_attempts: Vec::new(),
+                unrecorded_repeat_attempts: 0,
             });
             Some((new_index as u64, true))
         }
@@ -331,12 +476,46 @@ impl ReportedMessages {
         }
     }
 
+    // The last-resort Article 22 channel for an attempter whose single-slot hash-match
+    // sanction record was cleared or overwritten while attempt reports still hold them
+    // suspended (I8a): records the contest on the attempt report WITHOUT flipping its card
+    // to Contested (the card offers no verdict actions), so the caller can raise the
+    // moderator notice instead
+    pub fn contest_unresolved_attempt(&mut self, report_index: u64, caller: UserId, now: TimestampMillis) -> ContestResult {
+        let Some(message) = self.messages.get_mut(report_index as usize) else {
+            return ContestResult::NotFound;
+        };
+        if message.sender != caller {
+            return ContestResult::NotFound;
+        }
+        let DetectionSource::BlockedAttempt { .. } = message.detection else {
+            return ContestResult::NotFound;
+        };
+        // A RESOLVED attempt report is contestable here too: it can be the only thing
+        // keeping the user suspended (e.g. an UpheldAsCsam verdict inherited by mirroring)
+        // after the sanction record was cleared or overwritten - without this, a suspended
+        // attempter could be left with no Article 22 channel at all (I8a). The verdict on
+        // the CONTENT was human; what the notice invites review of is the attribution.
+        if message.contested.is_some() {
+            return ContestResult::AlreadyContested;
+        }
+        message.contested = Some(now);
+        ContestResult::Success(Box::new(message.clone()))
+    }
+
     pub fn mark_contested(&mut self, report_index: u64, caller: UserId, now: TimestampMillis) -> ContestResult {
         let Some(message) = self.messages.get_mut(report_index as usize) else {
             return ContestResult::NotFound;
         };
         if message.sender != caller {
             return ContestResult::NotFound;
+        }
+        // A blocked-attempt report is never resolved directly (I8), so contesting it would
+        // flip its card to Contested with no moderator able to act and no channel notice.
+        // The attempter's Article 22 channel is the hash-match sanction contest, which the
+        // caller's loop falls through to.
+        if matches!(message.detection, DetectionSource::BlockedAttempt { .. }) {
+            return ContestResult::NotContestable;
         }
         let Some(ReportOutcome::Automated(outcome)) = &message.outcome else {
             return ContestResult::NotContestable;
@@ -513,6 +692,28 @@ pub struct ReportedMessage {
     // clearing the hold would perform it and destroy the evidence
     #[serde(default)]
     pub release_pending: bool,
+    // Reports created for blocked attempts to re-post this report's content: their verdicts
+    // mirror this report's resolution (see resolve_moderation_report)
+    #[serde(default)]
+    pub blocked_attempt_report_indexes: Vec<u64>,
+    // On a blocked-attempt report: timestamps of further attempts inside the retry window or
+    // beyond the per-offender report cap, tallied here (for the authority filing) rather than
+    // opening a fresh report. Capped; `unrecorded_repeat_attempts` counts the excess.
+    #[serde(default)]
+    pub repeat_attempts: Vec<TimestampMillis>,
+    #[serde(default)]
+    pub unrecorded_repeat_attempts: u32,
+}
+
+pub enum AddBlockedAttemptResult {
+    New {
+        attempt_report_index: u64,
+        report: Box<ReportedMessage>,
+    },
+    Repeat {
+        attempt_report_index: u64,
+        total_attempts: u32,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -520,9 +721,29 @@ pub enum DetectionSource {
     #[default]
     UserReport,
     Proactive,
+    // A storage bucket refused an attempt to re-post content belonging to another report
+    // (post-verdict denylist hit or pre-verdict quarantine hit). No message exists; the
+    // report anchors to the original report's evidence and mirrors its verdict.
+    BlockedAttempt {
+        original_report_index: u64,
+    },
 }
 
 impl ReportedMessage {
+    pub fn automated_timestamp(&self) -> Option<TimestampMillis> {
+        match &self.outcome {
+            Some(ReportOutcome::Automated(a)) => Some(a.timestamp),
+            _ => None,
+        }
+    }
+
+    pub fn human_verdict(&self) -> Option<&HumanVerdict> {
+        match &self.outcome {
+            Some(ReportOutcome::Automated(a)) => a.human_verdict.as_ref(),
+            _ => None,
+        }
+    }
+
     // True if this report justifies keeping its sender suspended at `now`: an unresolved
     // automated sanction, an upheld-as-CSAM verdict (indefinite suspension), or an upheld
     // violation whose one-day suspension is still running
@@ -558,6 +779,13 @@ impl ReportedMessage {
     }
 
     // True while a without-verdict suspension is outstanding on this report
+    // The machine pipeline applied a suspension at detection time. Recorded once, never
+    // cleared: true PROVENANCE, unlike the detection source (overwritten by collapse into a
+    // user report) or verdict presence (flips when the report resolves) - see I13.
+    pub fn machine_sanction_applied(&self) -> bool {
+        matches!(&self.outcome, Some(ReportOutcome::Automated(a)) if a.sanctioned)
+    }
+
     pub fn suspension_applied_without_verdict(&self) -> bool {
         matches!(&self.outcome, Some(ReportOutcome::Automated(a)) if a.sanctioned && a.human_verdict.is_none())
     }
@@ -571,6 +799,13 @@ impl ReportedMessage {
 
     // True if this message was judged to have broken the platform rules
     pub fn in_breach(&self) -> bool {
+        // Blocked-attempt reports never count as strikes: several can describe attempts on
+        // ONE piece of content, so counting them would escalate an eventual non-CSAM Upheld
+        // to the repeat-offender permanent ban for an attempter whose content's sender gets
+        // a day (I10)
+        if matches!(self.detection, DetectionSource::BlockedAttempt { .. }) {
+            return false;
+        }
         match &self.outcome {
             Some(ReportOutcome::Modclub(o)) => o.approved < o.rejected,
             // A human verdict always overrides the automated action, so a Dismissed false
@@ -700,6 +935,20 @@ pub fn build_verdict_message_to_reporter(
     build_oc_bot_message(text, reporter)
 }
 
+// The verdict message for a blocked-attempt report: no message exists, so only the content
+// finding and the ACTUAL sanction state are communicated (I5/I21 - "remains suspended" is
+// only said when true; a moderator may have manually unsuspended in the interim, or a
+// downgrade may have declined)
+pub fn build_attempt_verdict_message(reported_message: &ReportedMessage, still_suspended: bool) -> UserIndexEvent {
+    let suspension_text = if still_suspended { " Your account remains suspended." } else { "" };
+    let text = format!(
+        "The OpenChat moderation team reviewed the content you had tried to post, which had been blocked, and confirmed \
+        that it breaks [the platform rules](https://oc.app/guidelines?section=3).{suspension_text} \
+        If you believe this is wrong you can request that a person reviews the decision, using the button on the suspension notice."
+    );
+    build_oc_bot_message(text, reported_message.sender)
+}
+
 pub fn build_verdict_message_to_sender(reported_message: &ReportedMessage) -> UserIndexEvent {
     let text = format!(
         "Your [message]({}) was reported by another user and the OpenChat moderation team confirmed that it broke [the platform rules](https://oc.app/guidelines?section=3). {}",
@@ -713,6 +962,18 @@ pub fn build_verdict_message_to_sender(reported_message: &ReportedMessage) -> Us
 // Sent when a Dismissed verdict reverses an automated sanction: the statement of reasons for
 // the restoration. Deliberately does not disclose whether any agency report was filed.
 pub fn build_restoration_message_to_sender(reported_message: &ReportedMessage, unsuspended: bool) -> UserIndexEvent {
+    // A blocked attempt never had a message, so there is nothing to restore - only the
+    // sanction may be reversed, and an unsuspension is claimed only when one actually
+    // happened (I5)
+    if matches!(reported_message.detection, DetectionSource::BlockedAttempt { .. }) {
+        let outcome_text = if unsuspended { " Your account has been unsuspended." } else { "" };
+        let text = format!(
+            "The OpenChat moderation team reviewed the content you had tried to post, which had been blocked, and determined \
+            that it does not break [the platform rules](https://oc.app/guidelines?section=3).{outcome_text} \
+            We apologise for the disruption."
+        );
+        return build_oc_bot_message(text, reported_message.sender);
+    }
     // Only claim an unsuspension when one actually happened: a reporter-asserted takedown
     // never suspended in the first place
     let outcome_text = if unsuspended {
@@ -731,10 +992,25 @@ pub fn build_restoration_message_to_sender(reported_message: &ReportedMessage, u
 // The statement of reasons for a hash-match suspension: there is no message and so no report,
 // but the user must still be told why and how to require human review. Deliberately does not
 // disclose whether any agency report was filed.
-pub fn build_upload_sanction_message_to_uploader(user_id: UserId) -> UserIndexEvent {
-    let text = "Your account has been suspended. Content you tried to upload matches content which the OpenChat moderation team has confirmed to be child sexual abuse material, which is prohibited by [the platform rules](https://oc.app/guidelines?section=3). \
+pub fn build_upload_sanction_message_to_uploader(user_id: UserId, anchor_verdict: Option<ModerationVerdict>) -> UserIndexEvent {
+    // The wording must track the anchor's adjudication state exactly (I21): pre-verdict the
+    // content is suspected, not confirmed; an Upheld (not CSAM) verdict must not be described
+    // as confirmed CSAM; Dismissed never reaches this builder (no sanction is applied).
+    let text = match anchor_verdict {
+        None => {
+            "Your account has been suspended. Content you tried to upload matches content which has been detected as suspected child sexual abuse material, which is prohibited by [the platform rules](https://oc.app/guidelines?section=3), and is currently under review by the OpenChat moderation team. If the review clears the content, this suspension will be reversed. \
         If you believe this is wrong you can request that a person reviews the decision, using the button on the suspension notice."
-        .to_string();
+        }
+        Some(ModerationVerdict::UpheldAsCsam) => {
+            "Your account has been suspended. Content you tried to upload matches content which the OpenChat moderation team has confirmed to be child sexual abuse material, which is prohibited by [the platform rules](https://oc.app/guidelines?section=3). \
+        If you believe this is wrong you can request that a person reviews the decision, using the button on the suspension notice."
+        }
+        Some(ModerationVerdict::Upheld) | Some(ModerationVerdict::Dismissed) => {
+            "Your account has been temporarily suspended. Content you tried to upload matches content which the OpenChat moderation team found to break [the platform rules](https://oc.app/guidelines?section=3). \
+        If you believe this is wrong you can request that a person reviews the decision, using the button on the suspension notice."
+        }
+    }
+    .to_string();
 
     build_oc_bot_message(text, user_id)
 }
@@ -972,6 +1248,9 @@ mod report_status_tests {
             legal_hold: false,
             release_pending: false,
             csam_asserted_by: Vec::new(),
+            blocked_attempt_report_indexes: Vec::new(),
+            repeat_attempts: Vec::new(),
+            unrecorded_repeat_attempts: 0,
         }
     }
 
