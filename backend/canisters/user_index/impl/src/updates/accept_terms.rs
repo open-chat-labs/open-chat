@@ -7,7 +7,7 @@ use user_index_canister::accept_terms::*;
 // Bump alongside the frontend CURRENT_TERMS_VERSION whenever the terms change. Acceptance is
 // clamped to this so a client cannot pre-accept future terms (eg. u32::MAX) and suppress
 // every future notice.
-pub const CURRENT_TERMS_VERSION: u32 = 1;
+pub const CURRENT_TERMS_VERSION: u32 = 2;
 
 // Records the user's acceptance of the platform terms (an affirmative click on the
 // terms-updated notice). The version and timestamp are kept as evidence of acceptance.
