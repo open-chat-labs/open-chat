@@ -1916,9 +1916,9 @@
     "termsUpdated": {
         "agree": "Tôi đồng ý",
         "failed": "Đã xảy ra lỗi khi ghi nhận sự chấp thuận của bạn. Vui lòng kiểm tra kết nối và thử lại.",
-        "info": "Chúng tôi đã cập nhật điều khoản dịch vụ của OpenChat, bao gồm các quy tắc mới về nội dung bị cấm và cách thức kiểm duyệt hoạt động. Vui lòng xem lại các điều khoản đã cập nhật. Khi chọn \"Tôi đồng ý\", bạn chấp nhận các điều khoản đã cập nhật.",
         "link": "Đọc các điều khoản đã cập nhật",
-        "title": "Điều khoản của chúng tôi đã thay đổi"
+        "title": "Điều khoản của chúng tôi đã thay đổi",
+        "info": "Chúng tôi đã cập nhật điều khoản dịch vụ và thông báo quyền riêng tư của OpenChat để mô tả cách các tệp phương tiện đăng trong các nhóm và kênh công khai được đối chiếu với cơ sở dữ liệu về tài liệu xâm hại tình dục trẻ em đã biết: OpenChat sử dụng công nghệ PhotoDNA được Microsoft cấp phép, chỉ một dấu vân tay kỹ thuật số không thể đảo ngược của tệp phương tiện được chia sẻ với dịch vụ đối chiếu, không có gì được lưu giữ khi không trùng khớp, và nội dung được giữ lại để xem xét kiểm duyệt hoặc theo nghĩa vụ báo cáo pháp lý không thể bị xóa trong thời gian các nghĩa vụ đó còn hiệu lực. Vui lòng xem lại các điều khoản đã cập nhật. Khi chọn \"Tôi đồng ý\", bạn chấp nhận các điều khoản đã cập nhật."
     },
     "theInternetComputer": "Internet Computer",
     "theme": {
