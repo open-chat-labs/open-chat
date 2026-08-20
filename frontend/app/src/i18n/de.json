@@ -1917,7 +1917,8 @@
         "agree": "Ich stimme zu",
         "failed": "Beim Erfassen Ihrer Zustimmung ist etwas schiefgelaufen. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
         "link": "Aktualisierte Bedingungen lesen",
-        "title": "Unsere Bedingungen haben sich geändert"
+        "title": "Unsere Bedingungen haben sich geändert",
+        "info": "Wir haben die OpenChat-Nutzungsbedingungen und die Datenschutzerklärung aktualisiert, um zu beschreiben, wie in öffentlichen Gruppen und Kanälen gepostete Medien mit Datenbanken bekannten Materials über sexuellen Kindesmissbrauch abgeglichen werden: OpenChat verwendet die von Microsoft lizenzierte PhotoDNA-Technologie, es wird nur ein nicht umkehrbarer digitaler Fingerabdruck der Medien an den Abgleichdienst übermittelt, bei fehlender Übereinstimmung wird nichts gespeichert, und Inhalte, die für die Moderationsprüfung oder gesetzliche Meldepflichten aufbewahrt werden, können nicht gelöscht werden, solange diese Pflichten bestehen. Bitte lesen Sie die aktualisierten Bedingungen. Mit \"Ich stimme zu\" akzeptieren Sie die aktualisierten Bedingungen."
     },
     "theInternetComputer": "Der Internet-Computer",
     "theme": {

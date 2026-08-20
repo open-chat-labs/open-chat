@@ -1917,7 +1917,8 @@
         "agree": "J'accepte",
         "failed": "Une erreur s'est produite lors de l'enregistrement de votre acceptation. Veuillez vérifier votre connexion et réessayer.",
         "link": "Lire les conditions mises à jour",
-        "title": "Nos conditions ont changé"
+        "title": "Nos conditions ont changé",
+        "info": "Nous avons mis à jour les conditions d'utilisation et l'avis de confidentialité d'OpenChat afin de décrire comment les médias publiés dans les groupes et canaux publics sont comparés aux bases de données de contenus connus d'abus sexuels sur mineurs : OpenChat utilise la technologie PhotoDNA sous licence de Microsoft, seule une empreinte numérique irréversible du média est partagée avec le service de comparaison, rien n'est conservé lorsque le média ne correspond pas, et le contenu conservé pour examen de modération ou pour des obligations légales de signalement ne peut pas être supprimé tant que ces obligations s'appliquent. Veuillez consulter les conditions mises à jour. En sélectionnant \"J'accepte\", vous acceptez les conditions mises à jour."
     },
     "theInternetComputer": "L'ordinateur Internet",
     "theme": {

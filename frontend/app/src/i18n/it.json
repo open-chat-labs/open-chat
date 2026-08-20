@@ -1917,7 +1917,8 @@
         "agree": "Accetto",
         "failed": "Si è verificato un problema durante la registrazione della tua accettazione. Controlla la connessione e riprova.",
         "link": "Leggi i termini aggiornati",
-        "title": "I nostri termini sono cambiati"
+        "title": "I nostri termini sono cambiati",
+        "info": "Abbiamo aggiornato i termini di servizio e l'informativa sulla privacy di OpenChat per descrivere come i contenuti multimediali pubblicati in gruppi e canali pubblici vengono confrontati con i database di materiale noto di abusi sessuali su minori: OpenChat utilizza la tecnologia PhotoDNA concessa in licenza da Microsoft, con il servizio di confronto viene condivisa solo un'impronta digitale irreversibile del contenuto, non viene conservato nulla in assenza di corrispondenza, e i contenuti trattenuti per la revisione di moderazione o per obblighi legali di segnalazione non possono essere eliminati finché tali obblighi restano in vigore. Ti invitiamo a leggere i termini aggiornati. Selezionando \"Accetto\" accetti i termini aggiornati."
     },
     "theInternetComputer": "Internet Computer",
     "theme": {
