@@ -84,9 +84,7 @@ async fn process_batch(api_key: String, moderation_referral_config: Option<Moder
 
     // Owed pacing delay for the tokens this batch spends, consumed by next_interval
     let estimated_tokens: usize = texts.iter().map(|t| t.len() / 4).sum();
-    PACE_DELAY.set(Duration::from_secs(
-        (estimated_tokens / PACE_TOKENS_PER_SECOND) as u64,
-    ));
+    PACE_DELAY.set(Duration::from_secs((estimated_tokens / PACE_TOKENS_PER_SECOND) as u64));
 
     // `charge_attempt` is false for throttles and outages: they say nothing about the batch,
     // so the messages are requeued unpenalised (bounded by queue age instead)
