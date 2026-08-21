@@ -125,6 +125,19 @@
             !content.isBlockedAttempt &&
             (content.status.kind === "pending" || content.status.kind === "contested"),
     );
+    // The manual-filing checklist opens in its own tab so the moderator can keep the
+    // report card open while working through it
+    let checklistUrl = $derived.by(() => {
+        const params = new URLSearchParams();
+        if (content.reportIndex !== undefined) {
+            params.set("report", content.reportIndex.toString());
+        }
+        params.set("origin", mediaMatches.length > 0 ? "hash" : "manual");
+        if (content.authorityReport?.kind === "due" && content.authorityReport.urgent) {
+            params.set("urgent", "true");
+        }
+        return `/csea-reporting?${params}`;
+    });
     let hasMedia = $derived(content.blobReferences.length > 0);
     let needsMediaReview = $derived(hasMedia && !mediaReviewed);
 
@@ -461,6 +474,9 @@
                         <Translatable resourceKey={i18nKey("moderationReport.recordFiling")} />
                     </Button>
                 {/if}
+                <a class="checklist-link" href={checklistUrl} target="_blank" rel="noreferrer">
+                    <Translatable resourceKey={i18nKey("moderationReport.filingChecklist")} />
+                </a>
             {:else}
                 <Body width="hug">
                     <Translatable resourceKey={i18nKey("moderationReport.ncaFiled")} />: {authorityReport.portalReference}
@@ -565,6 +581,11 @@
         border-left: $sp1 solid var(--error);
         font-style: italic;
         white-space: pre-wrap;
+    }
+    .checklist-link {
+        color: var(--secondary);
+        text-decoration: underline;
+        white-space: nowrap;
     }
     .link {
         color: var(--secondary);

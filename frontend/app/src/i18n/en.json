@@ -1196,6 +1196,7 @@
         "ncaDueUrgent": "URGENT: imminent threat - phone the NCA/999 first, then file via the portal",
         "ncaFiled": "Authority report filed",
         "recordFiling": "Record filing",
+        "filingChecklist": "Manual filing checklist",
         "filingReference": "Portal reference (URN)",
         "filingSubmit": "Record",
         "classifierClean": "The classifier found no violation - review the reporter's complaint on its merits",
