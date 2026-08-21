@@ -99,7 +99,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                     state.push_event_to_community(caller, CommunityEvent::MessageClassified(result), **now);
                 }
             } else {
-                state.data.message_moderation_queue.enqueue(caller, is_group, *request);
+                state.data.message_moderation_queue.enqueue(caller, is_group, *request, **now);
                 crate::jobs::moderate_messages::start_job_if_required(state);
             }
         }

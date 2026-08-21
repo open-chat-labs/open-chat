@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Harden the message-classification job against API throttling: rate-limit and outage rejections no longer count towards the drop-after-3-attempts limit (queue residency is bounded at 24h instead), the API's Retry-After is honoured, error bodies are logged so throttle and quota failures are distinguishable, and batches are token-capped and paced to stay under the moderation model's tokens-per-minute limit while a deep queue drains ([#9176](https://github.com/open-chat-labs/open-chat/pull/9176))
+
 ## [[2.0.2033](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2033-local_user_index)] - 2026-08-20
 
 ### Added

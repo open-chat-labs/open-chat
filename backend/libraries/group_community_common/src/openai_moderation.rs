@@ -22,26 +22,57 @@ pub struct Classification {
 // for each input text in order.
 pub async fn moderate_text_batch(api_key: &str, texts: &[String]) -> Result<Vec<ModerationCategories>, String> {
     Ok(classify_text_batch(api_key, texts, None)
-        .await?
+        .await
+        .map_err(|error| error.to_string())?
         .into_iter()
         .map(|c| c.flagged)
         .collect())
+}
+
+// Distinguishes failures which say something about the inputs from failures which only say
+// something about the moment: a throttle or outage rejection carries no information about the
+// batch, so callers should retry it without penalising the messages, while a 4xx rejection is
+// deterministic and retrying the same inputs will fail the same way.
+pub enum ModerationApiError {
+    Retryable {
+        message: String,
+        retry_after: Option<std::time::Duration>,
+    },
+    Rejected {
+        message: String,
+    },
+}
+
+impl std::fmt::Display for ModerationApiError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ModerationApiError::Retryable { message, .. } | ModerationApiError::Rejected { message } => f.write_str(message),
+        }
+    }
+}
+
+// The interesting part of an error body is at the front (error type + message); cap what we log
+fn truncated_body(body: &[u8]) -> String {
+    let text = String::from_utf8_lossy(body);
+    text.chars().take(500).collect()
 }
 
 pub async fn classify_text_batch(
     api_key: &str,
     texts: &[String],
     moderation_referral: Option<&ModerationReferralConfig>,
-) -> Result<Vec<Classification>, String> {
+) -> Result<Vec<Classification>, ModerationApiError> {
     let results = call_moderation_api(api_key, serde_json::json!(texts), moderation_referral).await?;
     if results.len() == texts.len() {
         Ok(results)
     } else {
-        Err(format!(
-            "OpenAI Moderation API returned {} results for {} inputs",
-            results.len(),
-            texts.len()
-        ))
+        Err(ModerationApiError::Rejected {
+            message: format!(
+                "OpenAI Moderation API returned {} results for {} inputs",
+                results.len(),
+                texts.len()
+            ),
+        })
     }
 }
 
@@ -59,7 +90,10 @@ pub async fn classify_input(
     let mut classification = Classification::default();
 
     if let Some(text) = input.text.as_ref().filter(|t| !t.trim().is_empty()) {
-        for c in call_moderation_api(api_key, serde_json::json!([text]), moderation_referral).await? {
+        for c in call_moderation_api(api_key, serde_json::json!([text]), moderation_referral)
+            .await
+            .map_err(|error| error.to_string())?
+        {
             classification.flagged = classification.flagged | c.flagged;
             classification.moderation_referral = classification.moderation_referral | c.moderation_referral;
         }
@@ -81,7 +115,7 @@ async fn call_moderation_api(
     api_key: &str,
     input: serde_json::Value,
     moderation_referral: Option<&ModerationReferralConfig>,
-) -> Result<Vec<Classification>, String> {
+) -> Result<Vec<Classification>, ModerationApiError> {
     let body = serde_json::json!({
         "model": MODEL,
         "input": input,
@@ -123,16 +157,40 @@ async fn call_moderation_api(
         .with_arg(&args)
         .with_cycles(cycles)
         .await
-        .map_err(|error| format!("HTTPS outcall failed: {error:?}"))?
+        .map_err(|error| ModerationApiError::Retryable {
+            message: format!("HTTPS outcall failed: {error:?}"),
+            retry_after: None,
+        })?
         .candid()
-        .map_err(|error| format!("Failed to decode response: {error:?}"))?;
+        .map_err(|error| ModerationApiError::Retryable {
+            message: format!("Failed to decode response: {error:?}"),
+            retry_after: None,
+        })?;
 
-    if response.status != 200u32 {
-        return Err(format!("OpenAI Moderation API returned status {}", response.status));
+    let status = u32::try_from(response.status.clone().0).unwrap_or_default();
+    if status != 200 {
+        let message = format!(
+            "OpenAI Moderation API returned status {status}: {}",
+            truncated_body(&response.body)
+        );
+        // 429s and server errors say nothing about the inputs; anything else 4xx-shaped is a
+        // deterministic rejection of the request
+        return if status == 429 || status >= 500 {
+            let retry_after = response
+                .headers
+                .iter()
+                .find(|h| h.name.eq_ignore_ascii_case("retry-after"))
+                .and_then(|h| h.value.trim().parse::<u64>().ok())
+                .map(std::time::Duration::from_secs);
+            Err(ModerationApiError::Retryable { message, retry_after })
+        } else {
+            Err(ModerationApiError::Rejected { message })
+        };
     }
 
-    extract_classifications(&response.body, moderation_referral)
-        .ok_or("Failed to parse OpenAI Moderation API response".to_string())
+    extract_classifications(&response.body, moderation_referral).ok_or(ModerationApiError::Rejected {
+        message: "Failed to parse OpenAI Moderation API response".to_string(),
+    })
 }
 
 fn extract_classifications(body: &[u8], moderation_referral: Option<&ModerationReferralConfig>) -> Option<Vec<Classification>> {
