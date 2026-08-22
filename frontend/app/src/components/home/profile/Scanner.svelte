@@ -35,12 +35,13 @@
     });
 
     export function scan() {
-        import("jsqr-es6")
-            .then((m) => {
-                jsQR = m.default;
-                return navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-            })
+        navigator.mediaDevices
+            .getUserMedia({ video: { facingMode: "environment" } })
             .then((s) => {
+                if (destroyed) {
+                    s.getTracks().forEach((t) => t.stop());
+                    return;
+                }
                 console.debug("QR: camera stream obtained");
                 stream = new MediaStream(s.getVideoTracks());
                 const video = document.createElement("video");
@@ -52,10 +53,14 @@
                     .play()
                     .then(() => {
                         console.debug("QR: video play promise resolved");
+                        return import("jsqr-es6");
+                    })
+                    .then((m) => {
+                        jsQR = m.default;
                         requestAnimationFrame(() => checkResult(video));
                     })
                     .catch((err) => {
-                        console.debug("QR: error playing video", err);
+                        console.debug("QR: error playing video or loading decoder", err);
                     });
             })
             .catch((err) => {
