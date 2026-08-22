@@ -628,7 +628,7 @@
                     gap={"xxs"}
                     minWidth={"6rem"}
                     direction={"vertical"}>
-                    {#if panDirection}
+                    {#if panDirection && panFactor > 0}
                         <div
                             class={`pan-action ${panDirection}`}
                             class:active={panFactor >= 1}
