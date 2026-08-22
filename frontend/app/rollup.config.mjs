@@ -124,6 +124,12 @@ export default {
                 },
                 { find: "@dfinity/agent", replacement: "@icp-sdk/core/agent" },
                 { find: "@dfinity/auth-client", replacement: "@icp-sdk/auth/client" },
+                // svelte-i18n pulls in a ~250 KB Intl.getCanonicalLocales polyfill;
+                // every runtime we target has it natively.
+                {
+                    find: "@formatjs/intl-getcanonicallocales",
+                    replacement: path.resolve(__dirname, "src/utils/intlGetCanonicalLocales.ts"),
+                },
                 { find: "@src", replacement: path.resolve(__dirname, "src") },
                 { find: "@actions", replacement: path.resolve(__dirname, "src/actions") },
                 { find: "@i18n", replacement: path.resolve(__dirname, "src/i18n") },
@@ -278,7 +284,14 @@ export default {
 
         html({
             template: ({ files }) => {
-                const jsEntryFile = files.js.find((f) => f.isEntry).fileName;
+                const jsEntry = files.js.find((f) => f.isEntry);
+                const jsEntryFile = jsEntry.fileName;
+                // The entry is a tiny facade that statically imports the real
+                // main-*.js and vendor-*.js chunks; preload them so the browser
+                // doesn't spend a round trip discovering them from the facade.
+                const modulePreloads = jsEntry.imports
+                    .map((f) => `<link rel="modulepreload" href="/${f}" />`)
+                    .join("");
                 // Google Analytics is disabled: GA4 sets cookies which would
                 // require a consent banner under PECR, and cookieless consent
                 // mode yields almost no usable data. To re-enable, set
@@ -359,6 +372,7 @@ export default {
                                     href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Bebas+Neue&family=Manrope:wght@400;500;700&family=Roboto:wght@200;300;400;700&display=swap"
                                     rel="stylesheet"
                                 />
+                                ${modulePreloads}
                                 <script type="module" defer src="/${jsEntryFile}"></script>
                                 ${inlineScripts.map((s) => `<script>${s}</script>`).join("")}
                             </head>
