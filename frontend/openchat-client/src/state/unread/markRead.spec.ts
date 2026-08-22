@@ -338,7 +338,11 @@ describe("mark messages read", () => {
             fresh.tracker.markReadUpTo({ chatId: fresh.chats[2].id }, 50);
             expect(after).toEqual(fresh.tracker.combinedUnreadCountForChats(fresh.chats));
             expect(after.chats).toEqual({ muted: 80, unmuted: 158, mentions: false });
-            console.log(`markRead.spec: per-chat evaluations for 51 marks over 300 chats: ${evaluations}`);
+            // one evaluation per changed chat per recompute (was 51 x 300 before the per-chat cache)
+            expect(evaluations).toEqual(51);
+            console.log(
+                `markRead.spec: per-chat evaluations for 51 marks over 300 chats: ${evaluations}`,
+            );
         });
 
         test("a new chat object or a server sync is re-evaluated", () => {

@@ -987,8 +987,14 @@ describe("unread count stores", () => {
 
         const after = get(globalUnreadCountStore);
         expect(after.chats).toEqual({ muted: 0, unmuted: 1100, mentions: false });
+        // only the changed chat is re-evaluated per publish (was 50 x 1100 before the per-chat cache)
+        expect(evaluations).toEqual(50);
         messagesRead.markMessageRead({ chatId: target.id }, 100, undefined);
-        expect(get(globalUnreadCountStore).chats).toEqual({ muted: 0, unmuted: 1099, mentions: false });
+        expect(get(globalUnreadCountStore).chats).toEqual({
+            muted: 0,
+            unmuted: 1099,
+            mentions: false,
+        });
         unsub();
         console.log(
             `appStores.spec: 50 marks over 1100 chats: ${evaluations} per-chat evaluations, ${publishes} publishes, ${ms.toFixed(1)}ms`,
