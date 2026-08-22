@@ -7,8 +7,8 @@ export function createMapStore<K, V>(store: Writable<Map<K, V>>) {
 
     return {
         subscribe: (subscriber: Subscriber<Map<K, V>>, invalidate?: () => void) => store.subscribe(subscriber, invalidate),
-        get: storeValue.get,
-        has: storeValue.has,
+        get: (key: K) => storeValue.get(key),
+        has: (key: K) => storeValue.has(key),
         size: () => storeValue.size,
         set: store.set,
         insert: (key: K, value: V) => {
