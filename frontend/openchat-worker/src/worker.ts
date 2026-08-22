@@ -283,6 +283,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     console.debug("anon: init worker", principal, response.kind !== "success");
 
                     logger.debug("WORKER: constructing agent instance");
+                    agent?.dispose();
                     agent = new OpenChatAgent(id, authPrincipalString ?? "", config);
                     agent.addEventListener("openchat_event", handleAgentEvent);
                     return response;
@@ -298,6 +299,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 correlationId,
                 createOpenChatIdentity(payload.webAuthnCredentialId).then((resp) => {
                     const id = typeof resp !== "string" ? resp : new AnonymousIdentity();
+                    agent?.dispose();
                     agent = new OpenChatAgent(id, authPrincipalString ?? "", config);
                     agent.addEventListener("openchat_event", handleAgentEvent);
                     return typeof resp !== "string"
@@ -317,7 +319,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 payload,
                 kind,
                 correlationId,
-                ocIdentityStorage.remove().then((_) => (agent = undefined)),
+                ocIdentityStorage.remove().then((_) => {
+                    agent?.dispose();
+                    agent = undefined;
+                }),
             );
             return;
         }
@@ -329,7 +334,16 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
         }
 
         if (!agent) {
+            // Reject rather than drop the request, otherwise the caller's promise would never settle.
+            // Not routed via sendError since this is expected around login/logout and should not be reported.
             logger.debug("WORKER: agent does not exist: ", msg.data);
+            const error = new Error(`Worker has no agent to handle request: ${kind}`);
+            postMessage({
+                kind: "worker_error",
+                requestKind: kind,
+                correlationId,
+                error: JSON.stringify(error, Object.getOwnPropertyNames(error)),
+            });
             return;
         }
 
