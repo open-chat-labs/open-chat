@@ -41,7 +41,9 @@ export class SafeMap<K, V> {
     #isPrimitive: boolean;
     #serialise: (key: K) => Primitive;
     #deserialise: (key: Primitive) => K;
-    #map: MapLike<Primitive, V>;
+    // the original key is stored alongside the value so that iteration never
+    // needs to deserialise it
+    #map: Map<Primitive, [K, V]>;
 
     #newMap<A>(): SafeMap<K, A> {
         return this.#isPrimitive
@@ -57,7 +59,12 @@ export class SafeMap<K, V> {
         this.#isPrimitive = serialiser === undefined && deserialiser === undefined;
         this.#serialise = serialiser ?? defaultSerialiser;
         this.#deserialise = deserialiser ?? defaultDeserialiser;
-        this.#map = map ?? new Map<Primitive, V>();
+        this.#map = new Map<Primitive, [K, V]>();
+        if (map !== undefined) {
+            for (const [k, v] of map.entries()) {
+                this.#map.set(k, [this.#deserialise(k), v]);
+            }
+        }
     }
 
     [Symbol.iterator](): Iterator<[K, V]> {
@@ -115,26 +122,35 @@ export class SafeMap<K, V> {
     }
 
     values(): IterableIterator<V> {
-        return this.#map.values();
+        const it = this.#map.values();
+        return {
+            [Symbol.iterator]() {
+                return this;
+            },
+            next(): IteratorResult<V> {
+                const result = it.next();
+                if (result.done) return { done: true, value: undefined };
+                return { done: false, value: result.value[1] };
+            },
+        };
     }
 
     keys(): IterableIterator<K> {
-        const entryIter = this[Symbol.iterator]();
+        const it = this.#map.values();
         return {
             [Symbol.iterator]() {
                 return this;
             },
             next(): IteratorResult<K> {
-                const { done, value } = entryIter.next();
-                if (done) return { done, value: undefined };
-                return { done: false, value: value[0] };
+                const result = it.next();
+                if (result.done) return { done: true, value: undefined };
+                return { done: false, value: result.value[0] };
             },
         };
     }
 
     entries(): IterableIterator<[K, V]> {
-        const deserialise = (s: Primitive) => this.#deserialise(s);
-        const it = this.#map.entries();
+        const it = this.#map.values();
         return {
             [Symbol.iterator]() {
                 return this;
@@ -142,9 +158,8 @@ export class SafeMap<K, V> {
             next(): IteratorResult<[K, V]> {
                 const result = it.next();
                 if (result.done) return { done: true, value: undefined };
-                const [serialisedKey, value] = result.value;
-                const originalKey = deserialise(serialisedKey);
-                return { done: false, value: [originalKey, value] };
+                const [key, value] = result.value;
+                return { done: false, value: [key, value] };
             },
         };
     }
@@ -155,14 +170,14 @@ export class SafeMap<K, V> {
     }
 
     forEach(callbackfn: (value: V, key: K, map: SafeMap<K, V>) => void): void {
-        for (const [k, value] of this.#map.entries()) {
-            callbackfn(value, this.#deserialise(k), this);
+        for (const [key, value] of this.#map.values()) {
+            callbackfn(value, key, this);
         }
     }
 
     get(key: K): V | undefined {
         if (this.#map.size === 0) return undefined;
-        return this.#map.get(this.#serialise(key));
+        return this.#map.get(this.#serialise(key))?.[1];
     }
 
     has(key: K): boolean {
@@ -171,7 +186,7 @@ export class SafeMap<K, V> {
     }
 
     set(key: K, value: V): this {
-        this.#map.set(this.#serialise(key), value);
+        this.#map.set(this.#serialise(key), [key, value]);
         return this;
     }
 
@@ -180,7 +195,11 @@ export class SafeMap<K, V> {
     }
 
     toMap(): MapLike<Primitive, V> {
-        return this.#map;
+        const map = new Map<Primitive, V>();
+        for (const [k, [, v]] of this.#map.entries()) {
+            map.set(k, v);
+        }
+        return map;
     }
 
     static fromEntries<K, V>(
@@ -196,6 +215,62 @@ export class SafeMap<K, V> {
     }
 }
 
+// Hand-rolled key codecs: much cheaper than JSON.stringify/parse and injective
+// across identifier kinds (ids are principals / numbers so never contain "|")
+export function chatIdentifierToKey(id: ChatIdentifier): string {
+    switch (id.kind) {
+        case "direct_chat":
+            return "d|" + id.userId;
+        case "group_chat":
+            return "g|" + id.groupId;
+        case "channel":
+            return "c|" + id.communityId + "|" + id.channelId;
+        default:
+            throw new Error(`Unknown chat identifier kind: ${JSON.stringify(id)}`);
+    }
+}
+
+export function chatIdentifierFromKey(key: string): ChatIdentifier {
+    switch (key[0]) {
+        case "d":
+            return { kind: "direct_chat", userId: key.slice(2) };
+        case "g":
+            return { kind: "group_chat", groupId: key.slice(2) };
+        case "c": {
+            const i = key.lastIndexOf("|");
+            return {
+                kind: "channel",
+                communityId: key.slice(2, i),
+                channelId: Number(key.slice(i + 1)),
+            };
+        }
+        default:
+            throw new Error(`Invalid chat identifier key: ${key}`);
+    }
+}
+
+export function messageContextToKey(ctx: MessageContext): string {
+    return chatIdentifierToKey(ctx.chatId) + "|" + (ctx.threadRootMessageIndex ?? "");
+}
+
+export function messageContextFromKey(key: string): MessageContext {
+    const i = key.lastIndexOf("|");
+    const chatId = chatIdentifierFromKey(key.slice(0, i));
+    const thread = key.slice(i + 1);
+    return thread === "" ? { chatId } : { chatId, threadRootMessageIndex: Number(thread) };
+}
+
+export function chatListScopeToKey(scope: ChatListScope): string {
+    return scope.kind === "community" ? "community|" + scope.id.communityId : scope.kind;
+}
+
+export function chatListScopeFromKey(key: string): ChatListScope {
+    if (key.startsWith("community|")) {
+        return { kind: "community", id: { kind: "community", communityId: key.slice(10) } };
+    }
+    return { kind: key as Exclude<ChatListScope, { kind: "community" }>["kind"] };
+}
+
 // This is a bit weird
 export class GlobalMap<V> extends SafeMap<"global", V> {
     constructor(_map?: Map<"global", V>) {
@@ -209,11 +284,7 @@ export class GlobalMap<V> extends SafeMap<"global", V> {
 
 export class ChatMap<V> extends SafeMap<ChatIdentifier, V> {
     constructor(_map?: Map<string, V>) {
-        super(
-            (k) => JSON.stringify(k),
-            (k) => JSON.parse(String(k)) as ChatIdentifier,
-            _map,
-        );
+        super((k) => chatIdentifierToKey(k), (k) => chatIdentifierFromKey(String(k)), _map);
     }
 
     static fromList<T extends { id: ChatIdentifier }>(things: T[]): ChatMap<T> {
@@ -234,11 +305,7 @@ export class ChatMap<V> extends SafeMap<ChatIdentifier, V> {
 
 export class MessageContextMap<V> extends SafeMap<MessageContext, V> {
     constructor(_map?: Map<string, V>) {
-        super(
-            (k) => JSON.stringify(k),
-            (k) => JSON.parse(String(k)) as MessageContext,
-            _map,
-        );
+        super((k) => messageContextToKey(k), (k) => messageContextFromKey(String(k)), _map);
     }
 
     static fromMap<V>(map: Map<string, V>): MessageContextMap<V> {
@@ -248,11 +315,7 @@ export class MessageContextMap<V> extends SafeMap<MessageContext, V> {
 
 export class ChatListScopeMap<V> extends SafeMap<ChatListScope, V> {
     constructor(_map?: Map<string, V>) {
-        super(
-            (k) => JSON.stringify(k),
-            (k) => JSON.parse(String(k)) as ChatListScope,
-            _map,
-        );
+        super((k) => chatListScopeToKey(k), (k) => chatListScopeFromKey(String(k)), _map);
     }
 }
 
