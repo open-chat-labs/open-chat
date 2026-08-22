@@ -144,7 +144,9 @@ function createCryptoBalanceStore() {
         subscribe: (sub: Subscriber<Map<LedgerCanister, bigint>>, invalidate?: () => void) =>
             store.subscribe(sub, invalidate),
         setBalance(ledger: string, balance: bigint) {
-            store.update((s) => s.set(ledger, balance));
+            if (store.value.get(ledger) !== balance) {
+                store.update((s) => s.set(ledger, balance));
+            }
             cryptoBalancesLastUpdated.set(ledger, Date.now());
         },
         valueIfUpdatedRecently(ledger: string): bigint | undefined {
