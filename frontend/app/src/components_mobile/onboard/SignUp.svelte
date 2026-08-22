@@ -20,7 +20,6 @@
     import { _ } from "svelte-i18n";
     import ErrorMessage from "../ErrorMessage.svelte";
     import FindUser from "../FindUser.svelte";
-    import TermsContent from "../TermsContent.svelte";
     import Translatable from "../Translatable.svelte";
     import UsernameInput from "../UsernameInput.svelte";
     import UserPill from "../UserPill.svelte";
@@ -48,9 +47,15 @@
     let passkeyCreated = $state(false);
     let termsAccepted = $state(false);
 
+    let TermsContent: typeof import("../TermsContent.svelte").default | undefined =
+        $state(undefined);
+
     function onShowGuidelines() {
         showGuidelines = true;
         client.gaTrack("show_guidelines_clicked", "registration");
+        if (TermsContent === undefined) {
+            import("../TermsContent.svelte").then((m) => (TermsContent = m.default));
+        }
     }
     function onCloseGuidelines() {
         showGuidelines = false;
@@ -173,8 +178,10 @@
     <Sheet onDismiss={onCloseGuidelines}>
         <Container gap={"lg"} direction={"vertical"} padding={"xl"}>
             <Subtitle>OpenChat Terms</Subtitle>
-            <TermsContent />
-            <Button onClick={onCloseGuidelines}>
+            {#if TermsContent}
+                <TermsContent />
+            {/if}
+            <Button onClick={onCloseGuidelines} disabled={TermsContent === undefined}>
                 <Translatable resourceKey={i18nKey("register.agree")} />
             </Button>
         </Container>

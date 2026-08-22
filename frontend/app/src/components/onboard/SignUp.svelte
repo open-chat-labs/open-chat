@@ -16,7 +16,6 @@
     import ErrorMessage from "../ErrorMessage.svelte";
     import FindUser from "../FindUser.svelte";
     import Input from "../Input.svelte";
-    import TermsContent from "../landingpages/TermsContent.svelte";
     import Legend from "../Legend.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
@@ -46,9 +45,15 @@
     let createdUser: CreatedUser | undefined = undefined;
     let passkeyCreated = $state(false);
 
+    let TermsContent: typeof import("../landingpages/TermsContent.svelte").default | undefined =
+        $state(undefined);
+
     function onShowGuidelines() {
         showGuidelines = true;
         client.gaTrack("show_guidelines_clicked", "registration");
+        if (TermsContent === undefined) {
+            import("../landingpages/TermsContent.svelte").then((m) => (TermsContent = m.default));
+        }
     }
     function onCloseGuidelines() {
         showGuidelines = false;
@@ -177,12 +182,18 @@
             {/snippet}
             {#snippet body()}
                 <span class="guidelines-modal">
-                    <TermsContent />
+                    {#if TermsContent}
+                        <TermsContent />
+                    {/if}
                 </span>
             {/snippet}
             {#snippet footer(onClose)}
                 <span>
-                    <Button onClick={() => onClose?.()} small={!$mobileWidth} tiny={$mobileWidth}>
+                    <Button
+                        onClick={() => onClose?.()}
+                        disabled={TermsContent === undefined}
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}>
                         <Translatable resourceKey={i18nKey("register.agree")} />
                     </Button>
                 </span>
