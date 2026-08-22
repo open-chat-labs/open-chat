@@ -36,6 +36,26 @@ export class MessageLocalUpdates {
     proposalTally?: Tally;
     lastUpdated: number = 0;
     ogPreviews?: OgPreview[];
+
+    isEmpty(): boolean {
+        return (
+            this.deleted === undefined &&
+            this.editedContent === undefined &&
+            this.cancelledReminder === undefined &&
+            this.undeletedContent === undefined &&
+            this.revealedContent === undefined &&
+            this.prizeClaimed === undefined &&
+            this.p2pSwapStatus === undefined &&
+            this.reactions.length === 0 &&
+            this.pollVotes.length === 0 &&
+            this.threadSummary === undefined &&
+            this.tips.size === 0 &&
+            this.hiddenMessageRevealed === undefined &&
+            this.blockLevelMarkdown === undefined &&
+            this.proposalTally === undefined &&
+            this.ogPreviews === undefined
+        );
+    }
 }
 
 export const messageLocalUpdates = writable<MessageMap<MessageLocalUpdates>>(
