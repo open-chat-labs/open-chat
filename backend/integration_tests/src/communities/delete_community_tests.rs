@@ -7,7 +7,7 @@ use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_string;
-use types::CommunityId;
+use types::{CommunityId, HttpRequest};
 
 #[test]
 fn delete_community_succeeds() {
@@ -81,10 +81,11 @@ fn user_canister_notified_of_community_deleted() {
 
     env.advance_time(Duration::from_secs(9 * 60));
 
-    // Same race as below: the 9-minute retry to user3's stopped canister must fully resolve
-    // (rejected) before user3 is eventually started, or the in-flight call gets delivered to
-    // the running canister and succeeds
-    tick_many(env, 3);
+    // The 9-minute retry to user2's stopped canister must fully resolve (rejected) before
+    // user2 is started, or the in-flight call gets delivered to the running canister and
+    // succeeds. Fixed tick counts (3, 10, then 30) all eventually lost this race under CI
+    // load, so wait on the observable condition instead: nothing queued, nothing in flight.
+    wait_for_user_event_queue_to_drain(env, user2.local_user_index);
 
     start_canister(env, user2.local_user_index, user2.user_id.into());
 
@@ -101,14 +102,11 @@ fn user_canister_notified_of_community_deleted() {
 
     env.advance_time(Duration::from_secs(2 * 60));
     // Every attempt must fully resolve (rejected, and dropped by the 10 minute check) while
-    // user3's canister is still stopped. The push job cycles CONTINUOUSLY while anything is
-    // pending (zero-delay timer, requeue on failure), so at this point there can be both an
-    // in-flight attempt and a queued one, and each takes several rounds to resolve
-    // (spawn_migratory hop, cross-subnet xnet out, reject, reply back, requeue check). Past
-    // the cutoff the cycle cannot regenerate - the first post-cutoff resolution drops the
-    // entry and the job only re-arms while something is pending - so a generous tick bound
-    // is deterministic where 3 and 10 both lost the race in CI
-    tick_many(env, 30);
+    // user3's canister is still stopped. Past the cutoff the cycle cannot regenerate - the
+    // first post-cutoff resolution drops the entry and the job only re-arms while something
+    // is pending - so waiting until nothing is queued and nothing is in flight is a stable
+    // endpoint, where every fixed tick bound eventually lost the race under CI load.
+    wait_for_user_event_queue_to_drain(env, user3.local_user_index);
     start_canister(env, user3.local_user_index, user3.user_id.into());
     env.tick();
 
@@ -152,4 +150,28 @@ struct TestData {
     user2: User,
     user3: User,
     community_id: CommunityId,
+}
+
+// Ticks until the local user index's user-event sync queue is observably idle: nothing
+// queued and no batch in flight. `user_events_queue_length` alone is insufficient - a batch
+// is removed from the queue while its call is outstanding, and a call still in flight when a
+// stopped canister restarts gets delivered to it.
+fn wait_for_user_event_queue_to_drain(env: &mut PocketIc, local_user_index: Principal) {
+    let request = HttpRequest {
+        method: "GET".to_string(),
+        url: "/metrics".to_string(),
+        headers: Vec::new(),
+        body: Vec::new(),
+    };
+    for _ in 0..200 {
+        env.tick();
+        let response = client::http_request(env, Principal::anonymous(), local_user_index, &request);
+        let metrics: serde_json::Value = serde_json::from_slice(&response.body).unwrap();
+        let queued = metrics["user_events_queue_length"].as_u64().unwrap();
+        let in_progress = metrics["user_events_queue_in_progress"].as_u64().unwrap();
+        if queued == 0 && in_progress == 0 {
+            return;
+        }
+    }
+    panic!("User event sync queue did not drain");
 }

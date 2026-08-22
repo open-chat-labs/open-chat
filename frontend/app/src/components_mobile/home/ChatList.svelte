@@ -73,6 +73,7 @@
 
     function onScopeChanged() {
         previousScope = $chatListScopeStore;
+        chatsToShow = TO_SHOW;
     }
 
     let user = $derived($allUsersStore.get($currentUserIdStore));
