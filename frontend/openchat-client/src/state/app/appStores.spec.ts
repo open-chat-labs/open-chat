@@ -609,6 +609,31 @@ describe("app state", () => {
             expect(client === server).toBe(false);
         });
 
+        test("local updates only change the membership of the client copy", () => {
+            const id: CommunityIdentifier = { kind: "community", communityId: "123456" };
+            localUpdates.updateCommunityIndex(id, 7);
+            localUpdates.updateCommunityDisplayName(id, "Mr. OpenChat");
+            localUpdates.updateCommunityRulesAccepted(id, true);
+            const server = get(serverCommunitiesStore).get(id);
+            const client = get(communitiesStore).get(id);
+            expect(client?.membership).toEqual({
+                ...server?.membership,
+                index: 7,
+                displayName: "Mr. OpenChat",
+                rulesAccepted: true,
+            });
+            expect(server?.membership.index).toEqual(1);
+            expect(server?.membership.displayName).toBeUndefined();
+            expect(server?.membership.rulesAccepted).toBe(false);
+            expect(client?.membership === server?.membership).toBe(false);
+            expect({ ...client, membership: undefined }).toEqual({
+                ...server,
+                membership: undefined,
+            });
+            // everything other than membership is shared with the server object
+            expect(client?.channels === server?.channels).toBe(true);
+        });
+
         test("community display name", () => {
             const id: CommunityIdentifier = { kind: "community", communityId: "123456" };
             expect(get(communitiesStore).get(id)?.membership.displayName).toBeUndefined();

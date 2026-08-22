@@ -549,7 +549,8 @@ export const communitiesStore = derived(
                 updates?.rulesAccepted !== undefined;
 
             if (anyChanges) {
-                const clone = structuredClone(community);
+                // only membership is modified below so that is all we need to copy
+                const clone = { ...community, membership: { ...community.membership } };
                 const index = updates?.index;
                 if (index !== undefined) {
                     clone.membership.index = index;
