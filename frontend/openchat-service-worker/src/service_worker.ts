@@ -60,6 +60,11 @@ staticResourceCache({
         new CustomCachePlugin(),
         new ExpirationPlugin({
             maxAgeSeconds: 30 * 24 * 60 * 60,
+            // This cache also holds user-uploaded chat media, so cap the number of
+            // entries (the app's own hashed js/css take ~125 of these) and let the
+            // cache be purged rather than failing silently when the origin hits quota.
+            maxEntries: 500,
+            purgeOnQuotaError: true,
         }),
     ],
 });
