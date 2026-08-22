@@ -7,7 +7,7 @@
 type Handler = (entry: IntersectionObserverEntry) => void;
 type Shared = { observer: IntersectionObserver; handlers: WeakMap<Element, Handler> };
 
-const byRoot = new WeakMap<Element, Map<string, Shared>>();
+const byRoot = new WeakMap<Node, Map<string, Shared>>();
 const rootless = new Map<string, Shared>();
 
 function configKey(init: IntersectionObserverInit): string {
@@ -16,7 +16,7 @@ function configKey(init: IntersectionObserverInit): string {
 }
 
 function sharedFor(init: IntersectionObserverInit): Shared {
-    const root = init.root instanceof Element ? init.root : undefined;
+    const root = init.root instanceof Node ? init.root : undefined;
     let pool: Map<string, Shared> | undefined;
     if (root === undefined) {
         pool = rootless;
@@ -40,7 +40,13 @@ function sharedFor(init: IntersectionObserverInit): Shared {
                 }
             }
             for (const [target, entry] of latest) {
-                handlers.get(target)?.(entry);
+                // a throwing handler must not starve the other targets in the
+                // batch, as it could not when each had its own observer
+                try {
+                    handlers.get(target)?.(entry);
+                } catch (e) {
+                    console.error("IntersectionObserver handler failed", e);
+                }
             }
         }, init);
         shared = { observer, handlers };

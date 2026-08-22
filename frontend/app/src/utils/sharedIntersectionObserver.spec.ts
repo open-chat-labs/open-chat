@@ -74,4 +74,36 @@ describe("observeIntersection", () => {
         expect(instances[1].init.rootMargin).toBe("10px 0px 10px 0px");
         expect(instances[2].init.threshold).toEqual([0.1, 0.5]);
     });
+
+    it("keys a Document root separately from a null root", () => {
+        const el = {} as Element;
+        // jsdom is not loaded here; any Node instance stands in for a Document
+        vi.stubGlobal("Node", class {});
+        const fakeDoc = new (globalThis as unknown as { Node: new () => Node }).Node();
+        const before = instances.length;
+        observeIntersection(el, () => {}, { root: null, threshold: 0.7 });
+        observeIntersection(el, () => {}, { root: fakeDoc as Document, threshold: 0.7 });
+        expect(instances.length).toBe(before + 2);
+        expect(instances[before].init.root).toBeNull();
+        expect(instances[before + 1].init.root).toBe(fakeDoc);
+    });
+
+    it("isolates a throwing handler from the other targets in the batch", () => {
+        const a = {} as Element;
+        const b = {} as Element;
+        const seen: string[] = [];
+        const err = vi.spyOn(console, "error").mockImplementation(() => {});
+        const before = instances.length;
+        observeIntersection(a, () => {
+            throw new Error("boom");
+        }, { threshold: 0.9 });
+        observeIntersection(b, () => seen.push("b"), { threshold: 0.9 });
+        instances[before].cb([
+            { target: a, time: 1, isIntersecting: true },
+            { target: b, time: 1, isIntersecting: true },
+        ] as Entry[]);
+        expect(seen).toEqual(["b"]);
+        expect(err).toHaveBeenCalledTimes(1);
+        err.mockRestore();
+    });
 });
