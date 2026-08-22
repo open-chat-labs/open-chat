@@ -10,6 +10,11 @@ export function trackedEffect(
         durationMs?: number;
     },
 ) {
+    if (!import.meta.env.DEV) {
+        $effect(fn);
+        return;
+    }
+
     const { maxCalls = 5, durationMs = 1000 } = options ?? {};
     let callTimes: number[] = [];
 
