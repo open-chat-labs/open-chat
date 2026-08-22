@@ -29,6 +29,7 @@ class VclDebug {
     #buffer: VclLogEntry[] = [];
     #head = 0;
     #enabled = false;
+    #postmortemInterval: ReturnType<typeof setInterval> | undefined;
 
     constructor() {
         try {
@@ -48,6 +49,7 @@ class VclDebug {
     // renderer locks up and the tab has to be killed, the next session can
     // print what the list was doing at the moment of death.
     #startPostmortem() {
+        if (this.#postmortemInterval !== undefined) return;
         try {
             const prev = localStorage.getItem("vcl_postmortem");
             if (prev !== null) {
@@ -61,7 +63,7 @@ class VclDebug {
         } catch {
             // ignore
         }
-        setInterval(() => {
+        this.#postmortemInterval = setInterval(() => {
             try {
                 localStorage.setItem(
                     "vcl_postmortem",
@@ -95,10 +97,13 @@ class VclDebug {
         } catch {
             // ignore
         }
+        this.#startPostmortem();
     }
 
     disable() {
         this.#enabled = false;
+        clearInterval(this.#postmortemInterval);
+        this.#postmortemInterval = undefined;
         try {
             localStorage.removeItem("vcl_debug");
         } catch {

@@ -12,4 +12,9 @@ export class Debouncer<T> {
             },
             this.delayMs);
     }
+
+    public cancel() {
+        window.clearTimeout(this.#timerId);
+        this.#timerId = undefined;
+    }
 }
