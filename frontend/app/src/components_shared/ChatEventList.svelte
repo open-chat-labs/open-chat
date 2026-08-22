@@ -129,6 +129,14 @@
     let loadPrevCooldownUntil = 0;
     let loadNewCooldownUntil = 0;
     let messageReadTimers: Record<number, number> = {};
+    // Rows whose MESSAGE_READ_THRESHOLD has elapsed, waiting to be marked read in one batch
+    let pendingReads: {
+        context: MessageContext;
+        idx: number;
+        id: bigint | undefined;
+        target: Element;
+    }[] = [];
+    let pendingReadsTimer: number | undefined;
 
     let threadSummary = $derived(threadRootEvent?.event.thread);
     let messageContext = $derived.by(
@@ -414,8 +422,10 @@
                                 entry.target.isConnected &&
                                 messageContextsEqual(context, messageContext)
                             ) {
-                                client.markMessageRead(messageContext, idx, id);
-                                messageObserver?.unobserve(entry.target);
+                                pendingReads.push({ context, idx, id, target: entry.target });
+                                // Timers for rows that came into view together are due at
+                                // the same time; flush them all with a single publish
+                                pendingReadsTimer ??= window.setTimeout(flushPendingReads, 0);
                             }
                             delete messageReadTimers[idx];
                         }, MESSAGE_READ_THRESHOLD);
@@ -453,9 +463,27 @@
                 window.clearTimeout(timer);
             }
             messageReadTimers = {};
+            window.clearTimeout(pendingReadsTimer);
+            pendingReadsTimer = undefined;
+            pendingReads = [];
             clearTimeout(scrollTimeout);
         };
     });
+
+    function flushPendingReads() {
+        pendingReadsTimer = undefined;
+        const reads = pendingReads.filter(
+            (r) => r.target.isConnected && messageContextsEqual(r.context, messageContext),
+        );
+        pendingReads = [];
+        client.markMessagesRead(
+            messageContext,
+            reads.map(({ idx, id }) => ({ messageIndex: idx, messageId: id })),
+        );
+        for (const { target } of reads) {
+            messageObserver?.unobserve(target);
+        }
+    }
 
     function chatsUpdated(ctx: MessageContext) {
         // Never start a background new-message load while a message navigation
