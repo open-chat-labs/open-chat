@@ -66,13 +66,13 @@ import { createSetStore } from "../../stores/setStore";
 import {
     getMessagePermissionsForSelectedChat,
     mergeChatMetrics,
-    mergeEventsAndLocalUpdates,
+    mergeEventsAndLocalUpdatesWithRange,
     mergePermissions,
     mergeUnconfirmedIntoSummary,
 } from "../../utils/chat";
 import { configKeys } from "../../utils/config";
 import { enumFromStringValue } from "../../utils/enums";
-import { derived, writable, type Readable, type Subscriber } from "../../utils/stores";
+import { derived, writable, type Subscriber } from "../../utils/stores";
 import { nullProfile } from "../../utils/user";
 import { chatDetailsLocalUpdates } from "../chat/detailsUpdates";
 import type { ChatDetailsState } from "../chat/serverDetails";
@@ -1211,7 +1211,9 @@ export const directAndGroupVideoCallCountsStore = derived(
     },
 );
 
-export const eventsStore = derived(
+// Merged events plus the DRange of loaded indexes computed by the same pass;
+// eventsStore / eventIndexesLoadedStore are projections of this.
+const mergedEventsStore = derived(
     [
         serverEventsStore,
         expiredServerEventRanges,
@@ -1236,13 +1238,17 @@ export const eventsStore = derived(
         recentlySentMessages,
         messageFilters,
     ]) => {
-        if (selectedChatId === undefined) return [];
+        if (selectedChatId === undefined) {
+            const range = new DRange();
+            range.add(expiredEventRanges);
+            return { events: [], range };
+        }
         const ctx = { chatId: selectedChatId };
         const failedState = failedMessages.get(ctx);
         const failed = failedState ? [...failedState.values()] : [];
         const unconfirmedState = unconfirmedMessages.get(ctx);
         const unconfirmed = unconfirmedState ? [...unconfirmedState.values()] : [];
-        return mergeEventsAndLocalUpdates(
+        return mergeEventsAndLocalUpdatesWithRange(
             serverEvents,
             [...unconfirmed, ...failed],
             expiredEventRanges,
@@ -1255,18 +1261,19 @@ export const eventsStore = derived(
     },
 );
 
-function indexesLoadedStore(eventsStore: Readable<EventWrapper<ChatEvent>[]>) {
-    return derived([eventsStore, expiredServerEventRanges], ([events, expiredEventRanges]) => {
+export const eventsStore = derived(mergedEventsStore, (merged) => merged.events);
+
+export const confirmedEventIndexesLoadedStore = derived(
+    [serverEventsStore, expiredServerEventRanges],
+    ([events, expiredEventRanges]) => {
         const ranges = new DRange();
         events.forEach((e) => ranges.add(e.index));
         ranges.add(expiredEventRanges);
         return ranges;
-    });
-}
+    },
+);
 
-export const confirmedEventIndexesLoadedStore = indexesLoadedStore(serverEventsStore);
-
-export const eventIndexesLoadedStore = indexesLoadedStore(eventsStore);
+export const eventIndexesLoadedStore = derived(mergedEventsStore, (merged) => merged.range);
 
 export const messageActivitySummaryStore = derived(
     [serverMessageActivitySummaryStore, localUpdates.messageActivityFeedReadUpTo],
@@ -1333,7 +1340,7 @@ export const globalUnreadCountStore = derived(
     },
 );
 
-export const threadEventsStore = derived(
+const mergedThreadEventsStore = derived(
     [
         serverThreadEventsStore,
         selectedThreadIdStore,
@@ -1356,13 +1363,13 @@ export const threadEventsStore = derived(
         recentlySentMessages,
         messageFilters,
     ]) => {
-        if (selectedThreadId === undefined) return [];
+        if (selectedThreadId === undefined) return { events: [], range: new DRange() };
         const ctx = selectedThreadId;
         const failedState = failedMessages.get(ctx);
         const failed = failedState ? [...failedState.values()] : [];
         const unconfirmedState = unconfirmedMessages.get(ctx);
         const unconfirmed = unconfirmedState ? [...unconfirmedState.values()] : [];
-        return mergeEventsAndLocalUpdates(
+        return mergeEventsAndLocalUpdatesWithRange(
             serverEvents,
             [...unconfirmed, ...failed],
             new DRange(),
@@ -1375,18 +1382,21 @@ export const threadEventsStore = derived(
     },
 );
 
-function threadEventsLoadedStore(eventsStore: Readable<EventWrapper<ChatEvent>[]>) {
-    return derived(eventsStore, (events) => {
+export const threadEventsStore = derived(mergedThreadEventsStore, (merged) => merged.events);
+
+export const confirmedThreadEventIndexesLoadedStore = derived(
+    serverThreadEventsStore,
+    (events) => {
         const ranges = new DRange();
         events.forEach((e) => ranges.add(e.index));
         return ranges;
-    });
-}
+    },
+);
 
-export const confirmedThreadEventIndexesLoadedStore =
-    threadEventsLoadedStore(serverThreadEventsStore);
-
-export const threadEventIndexesLoadedStore = threadEventsLoadedStore(threadEventsStore);
+export const threadEventIndexesLoadedStore = derived(
+    mergedThreadEventsStore,
+    (merged) => merged.range,
+);
 
 export const selectedThreadDraftMessageStore = derived(
     [selectedThreadIdStore, localUpdates.draftMessages],

@@ -3,7 +3,6 @@ import type {
     AttachmentContent,
     ChatEvent,
     ChatIdentifier,
-    ChatListScope,
     ChatSummary,
     CryptocurrencyDetails,
     EventsResponse,
@@ -13,7 +12,6 @@ import type {
     IndexRange,
     MemberRole,
     MessageContent,
-    MessageContext,
     MessagePermission,
     Metrics,
     MultiUserChat,
@@ -326,51 +324,7 @@ export function compareRoles(a: MemberRole, b: MemberRole): number {
     return a - b;
 }
 
-export function routeForMessage(
-    scope: ChatListScope["kind"],
-    ctx: MessageContext,
-    messageIndex: number,
-): string {
-    return ctx.threadRootMessageIndex === undefined
-        ? `${routeForMessageContext(scope, ctx)}/${messageIndex}`
-        : `${routeForMessageContext(scope, ctx)}/${messageIndex}?open=true`;
-}
-
-export function routeForMessageContext(
-    scope: ChatListScope["kind"],
-    { chatId, threadRootMessageIndex }: MessageContext,
-    open = false,
-): string {
-    return threadRootMessageIndex === undefined
-        ? routeForChatIdentifier(scope, chatId)
-        : `${routeForChatIdentifier(scope, chatId)}/${threadRootMessageIndex}${
-              open ? "?open=true" : ""
-          }`;
-}
-
-export function routeForChatIdentifier(scope: ChatListScope["kind"], id: ChatIdentifier): string {
-    switch (scope) {
-        case "favourite":
-            switch (id.kind) {
-                case "direct_chat":
-                    return `/favourite/user/${id.userId}`;
-                case "group_chat":
-                    return `/favourite/group/${id.groupId}`;
-                case "channel":
-                    return `/favourite/community/${id.communityId}/channel/${id.channelId}`;
-            }
-            break;
-        default:
-            switch (id.kind) {
-                case "direct_chat":
-                    return `/chats/user/${id.userId}`;
-                case "group_chat":
-                    return `/chats/group/${id.groupId}`;
-                case "channel":
-                    return `/community/${id.communityId}/channel/${id.channelId}`;
-            }
-    }
-}
+export { routeForChatIdentifier, routeForMessage, routeForMessageContext } from "./routes";
 
 export function chatIdentifierToString(chatId: ChatIdentifier): string {
     switch (chatId.kind) {
