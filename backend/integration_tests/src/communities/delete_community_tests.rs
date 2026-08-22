@@ -81,11 +81,9 @@ fn user_canister_notified_of_community_deleted() {
 
     env.advance_time(Duration::from_secs(9 * 60));
 
-    // The 9-minute retry to user2's stopped canister must fully resolve (rejected) before
-    // user2 is started, or the in-flight call gets delivered to the running canister and
-    // succeeds. Fixed tick counts (3, 10, then 30) all eventually lost this race under CI
-    // load, so wait on the observable condition instead: nothing queued, nothing in flight.
-    wait_for_user_event_queue_to_drain(env, user2.local_user_index);
+    // The 9-minute retry to user2's stopped canister is rejected; user2 is then started and the
+    // next attempt (still inside the 10 minute window) is delivered.
+    tick_many(env, 3);
 
     start_canister(env, user2.local_user_index, user2.user_id.into());
 
@@ -101,12 +99,12 @@ fn user_canister_notified_of_community_deleted() {
     );
 
     env.advance_time(Duration::from_secs(2 * 60));
-    // Every attempt must fully resolve (rejected, and dropped by the 10 minute check) while
-    // user3's canister is still stopped. Past the cutoff the cycle cannot regenerate - the
-    // first post-cutoff resolution drops the entry and the job only re-arms while something
-    // is pending - so waiting until nothing is queued and nothing is in flight is a stable
-    // endpoint, where every fixed tick bound eventually lost the race under CI load.
-    wait_for_user_event_queue_to_drain(env, user3.local_user_index);
+    // Now past the 10 minute cutoff, so every remaining attempt to notify user3's stopped
+    // canister must resolve (rejected) and be dropped before user3 is started - otherwise an
+    // in-flight call would be delivered to the running canister and succeed. Notifications are
+    // pushed by group_index's `push_community_deleted_notifications` job directly to the user
+    // canister, so wait on group_index's own pending count rather than a fixed tick bound.
+    wait_for_community_deleted_notifications_to_settle(env, canister_ids.group_index);
     start_canister(env, user3.local_user_index, user3.user_id.into());
     env.tick();
 
@@ -152,26 +150,32 @@ struct TestData {
     community_id: CommunityId,
 }
 
-// Ticks until the local user index's user-event sync queue is observably idle: nothing
-// queued and no batch in flight. `user_events_queue_length` alone is insufficient - a batch
-// is removed from the queue while its call is outstanding, and a call still in flight when a
-// stopped canister restarts gets delivered to it.
-fn wait_for_user_event_queue_to_drain(env: &mut PocketIc, local_user_index: Principal) {
+// Ticks until group_index has no community-deleted notifications pending, and stays that way
+// for several consecutive rounds. The push job dequeues an entry while its call is in flight
+// (so the count drops to zero mid-attempt) and re-enqueues it on failure while inside the 10
+// minute retry window, so a single zero reading is not enough; past the window a failed
+// attempt is dropped instead, after which the count cannot rise again and the job stops.
+fn wait_for_community_deleted_notifications_to_settle(env: &mut PocketIc, group_index: Principal) {
     let request = HttpRequest {
         method: "GET".to_string(),
         url: "/metrics".to_string(),
         headers: Vec::new(),
         body: Vec::new(),
     };
+    let mut consecutive_idle = 0;
     for _ in 0..200 {
         env.tick();
-        let response = client::http_request(env, Principal::anonymous(), local_user_index, &request);
+        let response = client::http_request(env, Principal::anonymous(), group_index, &request);
         let metrics: serde_json::Value = serde_json::from_slice(&response.body).unwrap();
-        let queued = metrics["user_events_queue_length"].as_u64().unwrap();
-        let in_progress = metrics["user_events_queue_in_progress"].as_u64().unwrap();
-        if queued == 0 && in_progress == 0 {
-            return;
+        let pending = metrics["community_deleted_notifications_pending"].as_u64().unwrap();
+        if pending == 0 {
+            consecutive_idle += 1;
+            if consecutive_idle >= 10 {
+                return;
+            }
+        } else {
+            consecutive_idle = 0;
         }
     }
-    panic!("User event sync queue did not drain");
+    panic!("Community deleted notifications did not settle");
 }
