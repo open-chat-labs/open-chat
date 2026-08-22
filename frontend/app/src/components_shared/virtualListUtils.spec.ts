@@ -1,5 +1,11 @@
-import { describe, expect, it } from "vitest";
-import { buildPrefixSums, computeSpacers, computeWindow, getHeight } from "./virtualListUtils";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+    buildPrefixSums,
+    computeSpacers,
+    computeWindow,
+    getHeight,
+    observeResize,
+} from "./virtualListUtils";
 
 const AVG = 100;
 const VIEWPORT = 600;
@@ -12,7 +18,7 @@ function uniformHeights(count: number, h: number): number[] {
 }
 
 // Helper: build prefix sums for tests.
-function prefix(count: number, heightMap: number[] = [], avg: number = AVG): number[] {
+function prefix(count: number, heightMap: number[] = [], avg: number = AVG): Float64Array {
     return buildPrefixSums(count, heightMap, avg);
 }
 
@@ -47,6 +53,104 @@ describe("buildPrefixSums", () => {
         expect(p[1]).toBe(100);
         expect(p[2]).toBe(200);
         expect(p[3]).toBe(300);
+    });
+
+    // Reference implementation: the original allocate-and-walk-everything
+    // version. The incremental path must be indistinguishable from it.
+    function naivePrefixSums(
+        itemCount: number,
+        heightMap: number[],
+        averageHeight: number,
+        estimates?: number[],
+    ): number[] {
+        const prefix = new Array<number>(itemCount + 1);
+        prefix[0] = 0;
+        for (let i = 0; i < itemCount; i++) {
+            const h = heightMap[i];
+            prefix[i + 1] = prefix[i] + (h > 0 ? h : (estimates?.[i] ?? averageHeight));
+        }
+        return prefix;
+    }
+
+    // Deterministic PRNG so failures are reproducible.
+    function rng(seed: number) {
+        let x = seed >>> 0;
+        return () => {
+            x ^= x << 13;
+            x ^= x >>> 17;
+            x ^= x << 5;
+            return (x >>> 0) / 0x100000000;
+        };
+    }
+
+    it("incremental rebuild matches the naive implementation across random measure sequences", () => {
+        for (let seed = 1; seed <= 50; seed++) {
+            const rand = rng(seed);
+            const heightMap: number[] = [];
+            let estimates: number[] | undefined = rand() < 0.5 ? [] : undefined;
+            let avg = 80;
+            let count = 0;
+            let prev: Float64Array | undefined;
+            let dirtyFrom = 0;
+            const steps = 1 + Math.floor(rand() * 60);
+            for (let step = 0; step < steps; step++) {
+                const op = rand();
+                if (op < 0.4 && count > 0) {
+                    // measure (or re-measure) a row
+                    const i = Math.floor(rand() * count);
+                    heightMap[i] = 1 + Math.floor(rand() * 300);
+                    dirtyFrom = Math.min(dirtyFrom, i);
+                } else if (op < 0.7) {
+                    // append older items (extendHeightMap)
+                    const from = count;
+                    count += 1 + Math.floor(rand() * 40);
+                    heightMap.length = count;
+                    for (let i = from; i < count; i++) {
+                        heightMap[i] = rand() < 0.3 ? 1 + Math.floor(rand() * 300) : 0;
+                        if (estimates) estimates[i] = 20 + Math.floor(rand() * 200);
+                    }
+                    dirtyFrom = Math.min(dirtyFrom, from);
+                } else if (op < 0.85) {
+                    // re-freeze estimates (refreshEstimateSnapshot)
+                    avg = 20 + rand() * 200;
+                    if (estimates) {
+                        for (let i = 0; i < count; i++) {
+                            estimates[i] = rand() < 0.8 ? 20 + Math.floor(rand() * 200) : NaN;
+                        }
+                        estimates = estimates.map((e) => (Number.isNaN(e) ? undefined : e)) as number[];
+                    }
+                    dirtyFrom = 0;
+                } else {
+                    // replace items, possibly shrinking (rebuildHeightMap)
+                    count = Math.floor(rand() * 60);
+                    heightMap.length = count;
+                    for (let i = 0; i < count; i++) {
+                        heightMap[i] = rand() < 0.5 ? 1 + Math.floor(rand() * 300) : 0;
+                        if (estimates) estimates[i] = 20 + Math.floor(rand() * 200);
+                    }
+                    if (estimates) estimates.length = count;
+                    dirtyFrom = 0;
+                }
+                // sometimes skip the rebuild so several dirty marks batch up
+                if (rand() < 0.3 && step < steps - 1) continue;
+                const actual = buildPrefixSums(count, heightMap, avg, estimates, prev, dirtyFrom);
+                const expected = naivePrefixSums(count, heightMap, avg, estimates);
+                expect(actual.length, `seed ${seed} step ${step}`).toBe(expected.length);
+                expect(Array.from(actual), `seed ${seed} step ${step}`).toEqual(expected);
+                prev = actual;
+                dirtyFrom = Infinity;
+            }
+        }
+    });
+
+    it("reuses the backing buffer when capacity allows", () => {
+        const first = buildPrefixSums(100, [], AVG);
+        const second = buildPrefixSums(50, [], AVG, undefined, first, 0);
+        expect(second.buffer).toBe(first.buffer);
+        expect(second.length).toBe(51);
+        const third = buildPrefixSums(100, [], AVG, undefined, second, 50);
+        expect(third.buffer).toBe(first.buffer);
+        expect(Array.from(third)).toEqual(naivePrefixSums(100, [], AVG));
     });
 });
 
@@ -184,5 +288,53 @@ describe("computeSpacers", () => {
         const totalNonVirtual = N * AVG + (N - 1) * GAP;
         const flexGaps = (e - s + 1) * GAP; // both spacers present
         expect(bh + windowHeight + th + flexGaps).toBe(totalNonVirtual);
+    });
+});
+
+describe("observeResize", () => {
+    type Cb = (entries: { target: Element }[]) => void;
+    const instances: { cb: Cb; observed: Set<Element> }[] = [];
+
+    beforeEach(() => {
+        instances.length = 0;
+        vi.stubGlobal(
+            "ResizeObserver",
+            class {
+                observed = new Set<Element>();
+                constructor(public cb: Cb) {
+                    instances.push(this);
+                }
+                observe(el: Element) {
+                    this.observed.add(el);
+                }
+                unobserve(el: Element) {
+                    this.observed.delete(el);
+                }
+                disconnect() {
+                    this.observed.clear();
+                }
+            },
+        );
+    });
+    afterEach(() => vi.unstubAllGlobals());
+
+    it("uses a single observer and dispatches each entry to its own row callback", () => {
+        const a = {} as Element;
+        const b = {} as Element;
+        const calls: string[] = [];
+        const offA = observeResize(a, () => calls.push("a"));
+        const offB = observeResize(b, () => calls.push("b"));
+        expect(instances.length).toBe(1);
+        expect(instances[0].observed.has(a) && instances[0].observed.has(b)).toBe(true);
+
+        instances[0].cb([{ target: b }, { target: a }, { target: a }]);
+        expect(calls).toEqual(["b", "a", "a"]);
+
+        offA();
+        expect(instances[0].observed.has(a)).toBe(false);
+        instances[0].cb([{ target: a }, { target: b }]);
+        expect(calls).toEqual(["b", "a", "a", "b"]);
+        offB();
+        expect(instances[0].observed.size).toBe(0);
     });
 });

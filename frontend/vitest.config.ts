@@ -29,6 +29,9 @@ export default defineConfig({
             { find: /^tauri-plugin-oc-api\/(.*)$/, replacement: src("./tauri-plugin-oc/guest-js/$1") },
             { find: /^tauri-plugin-oc-api$/, replacement: src("./tauri-plugin-oc/guest-js/index.ts") },
             { find: "usergeek-ic-js", replacement: src("./app/test-stubs/usergeek-ic-js.ts") },
+            { find: "@src", replacement: src("./app/src") },
+            { find: "@stores", replacement: src("./app/src/stores") },
+            { find: "@utils", replacement: src("./app/src/utils") },
         ],
         conditions: process.env.VITEST ? ["browser"] : undefined,
         // Prefer ESM (`module`) entry points. Otherwise svelte-i18n + its
@@ -44,6 +47,7 @@ export default defineConfig({
         environment: "jsdom",
         include: [
             "app/src/**/*.{test,spec}.ts",
+            "component-lib/src/**/*.{test,spec}.ts",
             "openchat-shared/src/**/*.{test,spec}.ts",
             "openchat-client/src/**/*.{test,spec}.ts",
             "openchat-agent/src/**/*.{test,spec}.ts",
