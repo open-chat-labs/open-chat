@@ -458,6 +458,17 @@
         panDirection = direction;
         panFactor = factor;
     }
+
+    // Memoised so the action's update() only runs when a field actually changes
+    let pan = $derived(
+        msg.deleted || disablePan || msg.content.kind === "proposal_content"
+            ? undefined
+            : {
+                  oncommit: onPanCommit,
+                  onmove: onPanMove,
+                  isScrolling: scrollStatus.isScrolling || scrollStatus.isCooldown,
+              },
+    );
 </script>
 
 {#if botProfile !== undefined}
@@ -601,13 +612,7 @@
                 gap={"sm"}
                 overflow={"visible"}
                 mainAxisAlignment={me ? "end" : "start"}
-                pan={msg.deleted || disablePan || msg.content.kind === "proposal_content"
-                    ? undefined
-                    : {
-                          oncommit: onPanCommit,
-                          onmove: onPanMove,
-                          isScrolling: scrollStatus.isScrolling || scrollStatus.isCooldown,
-                      }}>
+                {pan}>
                 {#if showAvatar}
                     <div class:first class="avatar">
                         <Avatar
