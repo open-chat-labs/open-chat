@@ -1388,6 +1388,31 @@ export function mergeEventsAndLocalUpdates(
     recentlySentMessages: MessageMap<bigint>,
     messageFilters: MessageFilter[],
 ): EventWrapper<ChatEvent>[] {
+    return mergeEventsAndLocalUpdatesWithRange(
+        events,
+        unconfirmed,
+        expiredEventRanges,
+        translations,
+        selectedChatBlockedOrSuspendedUsers,
+        messageLocalUpdates,
+        recentlySentMessages,
+        messageFilters,
+    ).events;
+}
+
+// As mergeEventsAndLocalUpdates, but also returns the DRange of loaded event
+// indexes (expired ranges + every event in the result) that the merge has to
+// compute anyway, so callers don't need to rebuild it.
+export function mergeEventsAndLocalUpdatesWithRange(
+    events: EventWrapper<ChatEvent>[],
+    unconfirmed: EventWrapper<Message>[],
+    expiredEventRanges: DRange,
+    translations: MessageMap<string>,
+    selectedChatBlockedOrSuspendedUsers: Set<string>,
+    messageLocalUpdates: MessageMap<MessageLocalUpdates>,
+    recentlySentMessages: MessageMap<bigint>,
+    messageFilters: MessageFilter[],
+): { events: EventWrapper<ChatEvent>[]; range: DRange } {
     const eventIndexes = new DRange();
     eventIndexes.add(expiredEventRanges);
     const confirmedMessageIds = new Set<bigint>();
@@ -1505,7 +1530,7 @@ export function mergeEventsAndLocalUpdates(
         }
     }
 
-    return merged;
+    return { events: merged, range: eventIndexes };
 }
 
 export function doesMessageFailFilter(

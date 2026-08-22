@@ -14,6 +14,7 @@ import { MessageLocalUpdates } from "../state/message/localUpdates";
 import {
     groupEvents,
     mergeEventsAndLocalUpdates,
+    mergeEventsAndLocalUpdatesWithRange,
     mergeServerEvents,
     updateExistingMessages,
 } from "./chat";
@@ -406,5 +407,63 @@ describe("mergeEventsAndLocalUpdates fast path", () => {
     test("fast path still tracks confirmed ids and contiguity for unconfirmed messages", () => {
         const out = run([msgEv(1), msgEv(2)], [ev(2, msg(2, "me")), msgEv(3, "me"), msgEv(9, "me")]);
         expect(indexes(out)).toEqual([1, 2, 3]);
+    });
+});
+
+describe("mergeEventsAndLocalUpdatesWithRange", () => {
+    function run(
+        events: EventWrapper<ChatEvent>[],
+        unconfirmed: EventWrapper<Message>[] = [],
+        expired = new DRange(),
+    ) {
+        return mergeEventsAndLocalUpdatesWithRange(
+            events,
+            unconfirmed,
+            expired,
+            new MessageMap<string>(),
+            new Set(),
+            new MessageMap<MessageLocalUpdates>(),
+            new MessageMap<bigint>(),
+            [],
+        );
+    }
+
+    // What indexesLoadedStore used to compute from the merged events.
+    function rebuilt(events: EventWrapper<ChatEvent>[], expired: DRange): DRange {
+        const ranges = new DRange();
+        events.forEach((e) => ranges.add(e.index));
+        ranges.add(expired);
+        return ranges;
+    }
+
+    test("events match mergeEventsAndLocalUpdates and range matches a rebuild from them", () => {
+        const events = [msgEv(1), msgEv(2), msgEv(5), msgEv(6)];
+        const unconfirmed = [msgEv(7, "me"), msgEv(20, "me")];
+        const expired = new DRange(3, 4);
+        const { events: out, range } = run(events, unconfirmed, expired);
+        const legacy = mergeEventsAndLocalUpdates(
+            events,
+            unconfirmed,
+            expired,
+            new MessageMap<string>(),
+            new Set(),
+            new MessageMap<MessageLocalUpdates>(),
+            new MessageMap<bigint>(),
+            [],
+        );
+        expect(indexes(out)).toEqual(indexes(legacy));
+        expect(range.subranges()).toEqual(rebuilt(out, expired).subranges());
+        expect(range.subranges()).toEqual([{ low: 1, high: 7, length: 7 }]);
+    });
+
+    test("range is just the expired ranges when there are no events", () => {
+        const { events, range } = run([], [], new DRange(2, 9));
+        expect(events).toEqual([]);
+        expect(range.subranges()).toEqual([{ low: 2, high: 9, length: 8 }]);
+    });
+
+    test("range excludes unconfirmed messages that were dropped", () => {
+        const { range } = run([msgEv(1)], [msgEv(10, "me")]);
+        expect(range.subranges()).toEqual([{ low: 1, high: 1, length: 1 }]);
     });
 });
