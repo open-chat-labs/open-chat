@@ -349,6 +349,28 @@ describe("groupEvents", () => {
         groupEvents(events, "me", false, new Set());
         expect(JSON.stringify(events)).toBe(snap);
     });
+
+    test("iterateBackwards produces exactly what reversing the input would", () => {
+        const events: EventWrapper<ChatEvent>[] = [
+            msgEv(1, "u1", BASE),
+            ev(2, { kind: "member_joined", userId: "a" }, BASE + 1),
+            ev(3, { kind: "member_left", userId: "b" }, BASE + 2),
+            ev(4, { kind: "message_pinned", pinnedBy: "u1", messageIndex: 1 }, BASE + 3),
+            msgEv(5, "u2", BASE + 4),
+            msgEv(6, "u2", BASE + DAY),
+            ev(7, { kind: "member_joined", userId: "c" }, BASE + DAY + 1),
+            msgEv(8, "u1", BASE + DAY + 2),
+        ];
+        for (const isPublic of [false, true]) {
+            const expected = groupEvents([...events].reverse(), "me", isPublic, new Set());
+            const actual = groupEvents(events, "me", isPublic, new Set(), undefined, true);
+            expect(actual).toEqual(expected);
+        }
+        expect(groupEvents(events, "me", false, new Set(), undefined, false)).toEqual(
+            groupEvents(events, "me", false, new Set()),
+        );
+        expect(groupEvents([], "me", false, new Set(), undefined, true)).toEqual([]);
+    });
 });
 
 describe("mergeEventsAndLocalUpdates fast path", () => {

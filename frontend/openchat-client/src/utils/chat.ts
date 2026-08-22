@@ -552,12 +552,23 @@ export function groupEvents(
     isPublicChannel: boolean,
     expandedDeletedMessages: ReadonlySet<number>,
     groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][],
+    // When true, `events` is processed from last to first, equivalent to
+    // passing `[...events].reverse()` without the extra copy.
+    iterateBackwards = false,
 ): TimelineItem<ChatEvent>[] {
+    const visible: EventWrapper<ChatEvent>[] = [];
+    if (iterateBackwards) {
+        for (let i = events.length - 1; i >= 0; i--) {
+            const e = events[i];
+            if (!isEventKindHidden(e.event.kind, isPublicChannel)) visible.push(e);
+        }
+    } else {
+        for (const e of events) {
+            if (!isEventKindHidden(e.event.kind, isPublicChannel)) visible.push(e);
+        }
+    }
     return flattenTimeline(
-        groupWhile(
-            sameDate,
-            events.filter((e) => !isEventKindHidden(e.event.kind, isPublicChannel)),
-        )
+        groupWhile(sameDate, visible)
             .map((e) => reduceJoinedOrLeft(e, myUserId, isPublicChannel, expandedDeletedMessages))
             .map(groupInner ?? groupBySender),
     );
