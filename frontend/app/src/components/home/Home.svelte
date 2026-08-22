@@ -313,8 +313,9 @@
             preferredDarkThemeName.set("halloween");
         }
         document.body.classList.add("witch");
-        scream.currentTime = 0;
-        scream.play();
+        const audio = scream();
+        audio.currentTime = 0;
+        audio.play();
         window.setTimeout(() => {
             document.body.classList.remove("witch");
         }, 2000);
