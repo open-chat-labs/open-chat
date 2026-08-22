@@ -84,10 +84,12 @@
     let events = $derived(atRoot ? [rootEvent, ...$threadEventsStore] : $threadEventsStore);
     let timeline = $derived(
         client.groupEvents(
-            [...events].reverse(),
+            events,
             $currentUserIdStore,
             chat.kind === "channel" && chat.public,
             $selectedChatExpandedDeletedMessageStore,
+            undefined,
+            true,
         ) as TimelineItem<Message>[],
     );
     let items = $derived(flattenTimeline(timeline));

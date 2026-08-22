@@ -1,4 +1,9 @@
-import { type EventWrapper, type GroupChatIdentifier, type Message } from "@shared";
+import {
+    type ChatSummary,
+    type EventWrapper,
+    type GroupChatIdentifier,
+    type Message,
+} from "@shared";
 import { SvelteMap } from "svelte/reactivity";
 import { vi } from "vitest";
 import { localUpdates } from "../localUpdates";
@@ -250,6 +255,39 @@ describe("mark messages read", () => {
                 markRead.value.serverState.set(abcId, mr);
                 expect(markRead.unreadMessageCount(abcId, 100)).toEqual(87);
             });
+        });
+    });
+
+    describe("combined unread count for chats", () => {
+        function chat(
+            groupId: string,
+            latestMessageIndex: number,
+            notificationsMuted: boolean,
+        ): ChatSummary {
+            return {
+                kind: "group_chat",
+                id: { kind: "group_chat", groupId },
+                latestMessage: { event: { messageIndex: latestMessageIndex } },
+                membership: { notificationsMuted, mentions: [], latestThreads: [] },
+            } as unknown as ChatSummary;
+        }
+
+        test("counts unread chats, split by muted, skipping unknown and undefined chats", () => {
+            const mr = new MessagesRead();
+            mr.readUpTo = 20;
+            markRead.value.serverState.set(abcId, mr);
+            markRead.value.serverState.set({ kind: "group_chat", groupId: "def" }, mr);
+            markRead.value.serverState.set({ kind: "group_chat", groupId: "ghi" }, mr);
+            const chats = [
+                chat("abc", 50, false),
+                chat("def", 50, true),
+                chat("ghi", 20, false), // fully read
+                chat("unknown", 50, false), // no server state => previewed, not counted
+                undefined,
+            ];
+            const counts = markRead.combinedUnreadCountForChats(chats);
+            expect(counts.chats).toEqual({ muted: 1, unmuted: 1, mentions: false });
+            expect(counts.threads).toEqual({ muted: 0, unmuted: 0, mentions: false });
         });
     });
 
