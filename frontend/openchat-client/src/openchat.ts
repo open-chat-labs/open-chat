@@ -1293,6 +1293,18 @@ export class OpenChat {
         }
     }
 
+    // Marks several messages read with a single publish of the messagesRead store
+    markMessagesRead(
+        context: MessageContext,
+        messages: { messageIndex: number; messageId: bigint | undefined }[],
+    ): void {
+        withPausedStores(() => {
+            for (const { messageIndex, messageId } of messages) {
+                this.markMessageRead(context, messageIndex, messageId);
+            }
+        });
+    }
+
     markPinnedMessagesRead(chatId: ChatIdentifier, dateLastPinned: bigint): void {
         messagesRead.markPinnedMessagesRead(chatId, dateLastPinned);
     }
