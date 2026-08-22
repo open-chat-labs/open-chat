@@ -23,8 +23,22 @@ export type OgData = {
     imageHeight?: number;
 };
 
+// Bounded caches: Map preserves insertion order, so deleting the first key evicts the oldest entry
+export const OG_CACHE_MAX = 300;
 const ogPromiseCache = new Map<string, Promise<OgData | null>>();
 const ogResolvedCache = new Map<string, OgData | null>();
+
+function cacheSet<V>(cache: Map<string, V>, key: string, value: V) {
+    cache.delete(key);
+    cache.set(key, value);
+    if (cache.size > OG_CACHE_MAX) {
+        cache.delete(cache.keys().next().value as string);
+    }
+}
+
+export function ogCacheSizes(): { promises: number; resolved: number } {
+    return { promises: ogPromiseCache.size, resolved: ogResolvedCache.size };
+}
 
 export function getCachedOgData(url: string): OgData | null | undefined {
     return ogResolvedCache.get(url); // undefined = not yet resolved
@@ -170,12 +184,12 @@ export function fetchOgData(url: string, proxyUrl: string): Promise<OgData | nul
         .then((data) => (data?.title ? data : null))
         .catch(() => null)
         .then((data) => {
-            if (data !== null) ogResolvedCache.set(url, data);
+            if (data !== null) cacheSet(ogResolvedCache, url, data);
             else ogPromiseCache.delete(url); // don't cache failures — let next mount retry
             return data;
         });
 
-    ogPromiseCache.set(url, promise);
+    cacheSet(ogPromiseCache, url, promise);
     return promise;
 }
 

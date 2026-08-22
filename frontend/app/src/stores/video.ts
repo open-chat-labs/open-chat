@@ -3,11 +3,12 @@
  * DailyCall object in a store
  */
 
-import {
-    type DailyCall,
-    type DailyEventObjectAppMessage,
-    type DailyParticipantUpdateOptions,
-    type DailyThemeConfig,
+// type-only so daily-js is not pulled into the initial bundle (verbatimModuleSyntax keeps `import { type X }`)
+import type {
+    DailyCall,
+    DailyEventObjectAppMessage,
+    DailyParticipantUpdateOptions,
+    DailyThemeConfig,
 } from "@daily-co/daily-js";
 import { type ChatIdentifier, type VideoCallType } from "@client";
 import { get, type Subscriber, writable } from "svelte/store";
@@ -41,6 +42,7 @@ export type RequestToSpeakMessage = DailyEventObjectAppMessage<RequestToSpeak>;
 export type RequestToSpeakMessageResponse = DailyEventObjectAppMessage<RequestToSpeakResponse>;
 export type DemoteParticipantMessage = DailyEventObjectAppMessage<DemoteParticipant>;
 
+const MAX_PREVIOUS_CALLS = 100;
 const previousCalls = new Set<bigint>();
 
 export type IncomingVideoCall = {
@@ -85,6 +87,9 @@ export const incomingVideoCall = {
             if (!previousCalls.has(call.messageId)) {
                 incomingStore.set(call);
                 previousCalls.add(call.messageId);
+                if (previousCalls.size > MAX_PREVIOUS_CALLS) {
+                    previousCalls.delete(previousCalls.values().next().value as bigint);
+                }
             }
         }
     },
