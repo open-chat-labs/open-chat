@@ -1,6 +1,6 @@
-import { SafeMap } from "@shared";
+import { ChatMap, SafeMap, type ChatIdentifier } from "@shared";
 import { vi } from "vitest";
-import { LocalMap } from "./map";
+import { LocalChatMap, LocalMap } from "./map";
 
 vi.useFakeTimers();
 
@@ -29,6 +29,19 @@ describe("SafeMap", () => {
         m.set({ key: "a" }, 1);
         m.set({ key: "b" }, 2);
         expect(m.size).toEqual(2);
+    });
+    test("LocalChatMap apply round-trips keys by value", () => {
+        const local = new LocalChatMap<string>();
+        const a: ChatIdentifier = { kind: "channel", communityId: "c1", channelId: 1 };
+        const b: ChatIdentifier = { kind: "group_chat", groupId: "g1" };
+        const original = new ChatMap<string>();
+        original.set(b, "b");
+        local.addOrUpdate(a, "a");
+        local.remove({ kind: "group_chat", groupId: "g1" });
+        const result = local.apply(original);
+        expect([...result.entries()]).toEqual([[a, "a"]]);
+        expect(result.get({ kind: "channel", communityId: "c1", channelId: 1 })).toBe("a");
+        expect(original.get(b)).toBe("b");
     });
 });
 

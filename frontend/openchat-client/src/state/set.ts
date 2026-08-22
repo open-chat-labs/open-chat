@@ -1,4 +1,6 @@
 import {
+    chatIdentifierFromKey,
+    chatIdentifierToKey,
     SafeMap,
     SafeSet,
     type ChatIdentifier,
@@ -74,8 +76,8 @@ export class LocalSet<T> {
 export class ChatLocalSet extends LocalSet<ChatIdentifier> {
     constructor() {
         super(
-            (k) => JSON.stringify(k),
-            (k) => JSON.parse(String(k)),
+            (k) => chatIdentifierToKey(k),
+            (k) => chatIdentifierFromKey(String(k)),
         );
     }
 }
