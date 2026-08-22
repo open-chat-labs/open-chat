@@ -5,7 +5,7 @@
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
-    import { emojiDatabase } from "../../utils/emojis";
+    import { getEmojiDatabase } from "../../utils/emojis";
     import Tooltip from "../tooltip/Tooltip.svelte";
     import Translatable from "../Translatable.svelte";
 
@@ -50,7 +50,7 @@
         if (customEmoji !== undefined) {
             return `:${customEmoji.code}:`;
         }
-        const emoji = (await emojiDatabase.getEmojiByUnicodeOrName(reaction)) as
+        const emoji = (await getEmojiDatabase().getEmojiByUnicodeOrName(reaction)) as
             | NativeEmoji
             | undefined;
         if (!emoji) return reaction;

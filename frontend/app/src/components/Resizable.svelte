@@ -46,7 +46,11 @@
     }
 
     function stopResize() {
-        resizing = false;
+        if (resizing) {
+            resizing = false;
+            // the width is only written to localStorage once the drag has finished
+            rightPanelWidth.persist();
+        }
         document.body.style.cursor = "";
     }
 
@@ -64,7 +68,7 @@
         if (resizing) {
             const diff = previous - ev.screenX;
             const updated = clampResize(section.offsetWidth + diff);
-            rightPanelWidth.set(updated);
+            rightPanelWidth.setTransient(updated);
             previous = ev.screenX;
         }
     }

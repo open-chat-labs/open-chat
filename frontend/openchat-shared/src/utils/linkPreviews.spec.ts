@@ -1,8 +1,14 @@
+import { vi } from "vitest";
 import {
     classifyUrl,
     extractEnabledLinks,
     extractMessagePreviews,
+    fetchOgData,
+    fetchOgPreviews,
+    getCachedOgData,
     MAX_LINK_PREVIEWS,
+    OG_CACHE_MAX,
+    ogCacheSizes,
 } from "./linkPreviews";
 
 describe("extractMessagePreviews", () => {
@@ -176,5 +182,116 @@ describe("extractEnabledLinks", () => {
     test("deduplicates URLs", () => {
         const result = extractEnabledLinks("https://example.com https://example.com");
         expect(result).toHaveLength(1);
+    });
+});
+
+describe("fetchOgPreviews", () => {
+    const proxyUrl = "https://preview.test";
+    let imagesCreated = 0;
+
+    beforeEach(() => {
+        imagesCreated = 0;
+        class FakeImage {
+            onload: (() => void) | null = null;
+            onerror: (() => void) | null = null;
+            naturalWidth = 800;
+            naturalHeight = 600;
+            constructor() {
+                imagesCreated++;
+            }
+            set src(value: string) {
+                if (value !== "") {
+                    setTimeout(() => this.onload?.(), 0);
+                }
+            }
+        }
+        vi.stubGlobal("Image", FakeImage);
+        vi.stubGlobal("fetch", (input: string) => {
+            const target = new URL(input).searchParams.get("url");
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(ogResponses[target ?? ""]),
+            });
+        });
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
+    const ogResponses: Record<string, unknown> = {
+        "https://with-dimensions.test": {
+            title: "With dimensions",
+            description: "desc",
+            image: "https://with-dimensions.test/img.png",
+            imageAlt: "alt text",
+            imageWidth: 1200,
+            imageHeight: 630,
+        },
+        "https://without-dimensions.test": {
+            title: "Without dimensions",
+            description: "desc",
+            image: "https://without-dimensions.test/img.png",
+        },
+    };
+
+    test("uses the camelCase dimensions from the service without measuring the image", async () => {
+        const [preview] = await fetchOgPreviews(["https://with-dimensions.test"], proxyUrl);
+        expect(preview.image).toEqual({
+            url: "https://with-dimensions.test/img.png",
+            width: 1200,
+            height: 630,
+        });
+        expect(imagesCreated).toBe(0);
+    });
+
+    test("falls back to measuring the image when the service sends no dimensions", async () => {
+        const [preview] = await fetchOgPreviews(["https://without-dimensions.test"], proxyUrl);
+        expect(preview.image).toEqual({
+            url: "https://without-dimensions.test/img.png",
+            width: 800,
+            height: 600,
+        });
+        expect(imagesCreated).toBe(1);
+    });
+});
+
+describe("fetchOgData cache bounds", () => {
+    const proxyUrl = "https://preview.test";
+
+    beforeEach(() => {
+        vi.stubGlobal("fetch", (input: string) => {
+            const target = new URL(input).searchParams.get("url");
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({ title: `title for ${target}` }),
+            });
+        });
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
+    test("same url is fetched once and resolved data is cached", async () => {
+        const url = "https://bounded-0.test";
+        const a = fetchOgData(url, proxyUrl);
+        const b = fetchOgData(url, proxyUrl);
+        expect(a).toBe(b);
+        const data = await a;
+        expect(data?.title).toBe(`title for ${url}`);
+        expect(getCachedOgData(url)?.title).toBe(`title for ${url}`);
+    });
+
+    test("caches never exceed OG_CACHE_MAX and evict the oldest entry", async () => {
+        const oldest = "https://bounded-0.test";
+        for (let i = 0; i <= OG_CACHE_MAX + 20; i++) {
+            await fetchOgData(`https://bounded-${i}.test`, proxyUrl);
+        }
+        const sizes = ogCacheSizes();
+        expect(sizes.promises).toBe(OG_CACHE_MAX);
+        expect(sizes.resolved).toBe(OG_CACHE_MAX);
+        expect(getCachedOgData(oldest)).toBeUndefined();
+        expect(getCachedOgData(`https://bounded-${OG_CACHE_MAX + 20}.test`)).toBeDefined();
     });
 });

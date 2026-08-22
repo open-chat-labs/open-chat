@@ -235,8 +235,13 @@
         </li>
         <li>
             <strong>Safety processors.</strong> Text classification is currently performed by OpenAI;
-            message media is not sent to OpenAI. Specialist providers, such as services which match
-            images against databases of known child sexual abuse material, may be added.
+            message media is not sent to OpenAI. Media attachments posted to public groups and to
+            public channels of public communities are checked against databases of known child sexual
+            abuse material using PhotoDNA technology licensed by Microsoft at no cost. The matching
+            service receives only a non-reversible perceptual hash of the media, never the media
+            itself, and where media does not match, nothing is retained from the check. Microsoft's
+            handling of the matching service's own records is described in the Microsoft privacy
+            statement.
         </li>
         <li>
             <strong>Feature service providers.</strong> Some features are delivered using third-party
@@ -297,6 +302,12 @@
         <li>
             Moderation records and records of reports made to authorities are kept for as long as
             needed to evidence compliance with our safety duties.
+        </li>
+        <li>
+            Content which is quarantined pending a moderation decision, or preserved in connection
+            with a report to an authority, is exempt from deletion requests while those obligations
+            require its retention (Article 17(3)(b) UK GDPR). Where media is checked against child
+            sexual abuse material databases and does not match, nothing is retained from the check.
         </li>
     </ul>
 </div>

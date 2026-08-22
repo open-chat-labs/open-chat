@@ -1227,7 +1227,7 @@
     },
     "termsUpdated": {
         "title": "Our terms have changed",
-        "info": "We have updated the OpenChat terms of service, including new rules about prohibited content and how moderation works, and published a new privacy notice. Please review the updated terms. By selecting \"I agree\" you accept the updated terms.",
+        "info": "We have updated the OpenChat terms of service and privacy notice to describe how media posted to public groups and channels is checked against databases of known child sexual abuse material: OpenChat uses PhotoDNA technology licensed by Microsoft, only a non-reversible digital fingerprint of the media is shared with the matching service, nothing is retained when media does not match, and content held for moderation review or legal reporting obligations cannot be deleted while those obligations apply. Please review the updated terms. By selecting \"I agree\" you accept the updated terms.",
         "link": "Read the updated terms",
         "privacyLink": "Read the privacy notice",
         "agree": "I agree",

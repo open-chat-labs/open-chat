@@ -1085,9 +1085,12 @@
                     Messages sent to public Groups and Channels are subject to automated
                     classification for safety purposes. Message text is classified using
                     third-party processors (currently OpenAI). Message media is not sent to
-                    general-purpose classifiers; it may be checked against databases of known
-                    child sexual abuse material maintained by specialist child-safety
-                    organisations. Private messages are never proactively scanned; the content
+                    general-purpose classifiers; it is checked against databases of known
+                    child sexual abuse material. OpenChat uses PhotoDNA technology licensed by
+                    Microsoft at no cost. Only a non-reversible perceptual hash of the media is
+                    shared with the matching service; the media itself never leaves OpenChat
+                    infrastructure, and where media does not match, nothing is retained from
+                    the check. Private messages are never proactively scanned; the content
                     of a private message is checked only if a recipient reports it.
                 </li>
                 <li>

@@ -1916,9 +1916,9 @@
     "termsUpdated": {
         "agree": "Zgadzam się",
         "failed": "Coś poszło nie tak podczas zapisywania Twojej akceptacji. Sprawdź połączenie i spróbuj ponownie.",
-        "info": "Zaktualizowaliśmy warunki korzystania z OpenChat, w tym nowe zasady dotyczące zabronionych treści oraz sposobu działania moderacji. Zapoznaj się z zaktualizowanymi warunkami. Wybierając \"Zgadzam się\", akceptujesz zaktualizowane warunki.",
         "link": "Przeczytaj zaktualizowane warunki",
-        "title": "Nasze warunki uległy zmianie"
+        "title": "Nasze warunki uległy zmianie",
+        "info": "Zaktualizowaliśmy warunki korzystania z usługi OpenChat oraz informację o prywatności, aby opisać, w jaki sposób multimedia publikowane w publicznych grupach i kanałach są porównywane z bazami danych znanych materiałów przedstawiających seksualne wykorzystywanie dzieci: OpenChat korzysta z technologii PhotoDNA licencjonowanej przez Microsoft, z usługą porównującą udostępniany jest wyłącznie nieodwracalny cyfrowy odcisk multimediów, w przypadku braku dopasowania nic nie jest przechowywane, a treści zatrzymane na potrzeby weryfikacji moderacyjnej lub prawnych obowiązków zgłoszeniowych nie mogą zostać usunięte, dopóki te obowiązki obowiązują. Prosimy o zapoznanie się ze zaktualizowanymi warunkami. Wybierając \"Zgadzam się\", akceptujesz zaktualizowane warunki."
     },
     "theInternetComputer": "Komputer internetowy",
     "theme": {

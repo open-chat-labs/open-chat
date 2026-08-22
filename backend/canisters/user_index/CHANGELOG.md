@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Bump the current terms version to 2 so users are asked to accept the updated terms naming the PhotoDNA/Microsoft media-matching processor ([#9174](https://github.com/open-chat-labs/open-chat/pull/9174))
+
 ## [[2.0.2030](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2030-user_index)] - 2026-08-20
 
 ### Added
