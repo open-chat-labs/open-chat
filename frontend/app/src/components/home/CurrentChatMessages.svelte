@@ -238,11 +238,12 @@
     let editingEvent = $derived($selectedChatDraftMessageStore?.editingEvent);
     let timeline = $derived(
         client.groupEvents(
-            [...$eventsStore].reverse(),
+            $eventsStore,
             $currentUserIdStore,
             chat.kind === "channel" && chat.public,
             $selectedChatExpandedDeletedMessageStore,
             groupInner(filteredProposals),
+            true,
         ),
     );
     let items = $derived.by<FlatChatItem[]>(() => {
