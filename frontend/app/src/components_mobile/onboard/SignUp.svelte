@@ -9,6 +9,7 @@
         Form,
         Input,
         Sheet,
+        Spinner,
         StatusCard,
         Subtitle,
         Switch,
@@ -20,7 +21,6 @@
     import { _ } from "svelte-i18n";
     import ErrorMessage from "../ErrorMessage.svelte";
     import FindUser from "../FindUser.svelte";
-    import TermsContent from "../TermsContent.svelte";
     import Translatable from "../Translatable.svelte";
     import UsernameInput from "../UsernameInput.svelte";
     import UserPill from "../UserPill.svelte";
@@ -48,9 +48,19 @@
     let passkeyCreated = $state(false);
     let termsAccepted = $state(false);
 
+    let TermsContent: typeof import("../TermsContent.svelte").default | undefined =
+        $state(undefined);
+    let termsLoadFailed = $state(false);
+
     function onShowGuidelines() {
         showGuidelines = true;
         client.gaTrack("show_guidelines_clicked", "registration");
+        if (TermsContent === undefined) {
+            termsLoadFailed = false;
+            import("../TermsContent.svelte")
+                .then((m) => (TermsContent = m.default))
+                .catch(() => (termsLoadFailed = true));
+        }
     }
     function onCloseGuidelines() {
         showGuidelines = false;
@@ -173,8 +183,16 @@
     <Sheet onDismiss={onCloseGuidelines}>
         <Container gap={"lg"} direction={"vertical"} padding={"xl"}>
             <Subtitle>OpenChat Terms</Subtitle>
-            <TermsContent />
-            <Button onClick={onCloseGuidelines}>
+            {#if TermsContent}
+                <TermsContent />
+            {:else if termsLoadFailed}
+                <ErrorMessage>Unable to load the terms. Please try again.</ErrorMessage>
+            {:else}
+                <div aria-busy="true"><Spinner /></div>
+            {/if}
+            <Button
+                onClick={onCloseGuidelines}
+                disabled={TermsContent === undefined && !termsLoadFailed}>
                 <Translatable resourceKey={i18nKey("register.agree")} />
             </Button>
         </Container>
