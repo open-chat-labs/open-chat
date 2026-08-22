@@ -235,6 +235,7 @@
     });
     let showAvatar = $derived(initialised && shouldShowAvatar(chat, $eventsStore[0]?.index));
     let messageContext = $derived({ chatId: chat?.id, threadRootMessageIndex: undefined });
+    let editingEvent = $derived($selectedChatDraftMessageStore?.editingEvent);
     let timeline = $derived(
         client.groupEvents(
             $eventsStore,
@@ -339,7 +340,7 @@
                     publicGroup={(chat.kind === "group_chat" || chat.kind === "channel") &&
                         chat.public}
                     pinned={isPinned($selectedChatPinnedMessagesStore, evt)}
-                    editing={$selectedChatDraftMessageStore?.editingEvent === evt}
+                    editing={editingEvent === evt}
                     onReplyTo={replyTo}
                     {onRemovePreview}
                     {onEditEvent}

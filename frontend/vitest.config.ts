@@ -17,7 +17,8 @@ const pkgAliases = [
 ]);
 
 export default defineConfig({
-    plugins: [svelte()],
+    // Use the app's svelte config so .svelte specs get the scss preprocessor.
+    plugins: [svelte({ configFile: src("./app/svelte.config.js") })],
     resolve: {
         alias: [
             { find: "@dfinity/agent", replacement: "@icp-sdk/core/agent" },
@@ -28,6 +29,9 @@ export default defineConfig({
             { find: /^tauri-plugin-oc-api\/(.*)$/, replacement: src("./tauri-plugin-oc/guest-js/$1") },
             { find: /^tauri-plugin-oc-api$/, replacement: src("./tauri-plugin-oc/guest-js/index.ts") },
             { find: "usergeek-ic-js", replacement: src("./app/test-stubs/usergeek-ic-js.ts") },
+            { find: "@src", replacement: src("./app/src") },
+            { find: "@stores", replacement: src("./app/src/stores") },
+            { find: "@utils", replacement: src("./app/src/utils") },
         ],
         conditions: process.env.VITEST ? ["browser"] : undefined,
         // Prefer ESM (`module`) entry points. Otherwise svelte-i18n + its
