@@ -31,7 +31,10 @@ export class CachePrimer {
     #proposalTalliesJobStarted: boolean = false;
     #inProgress: Set<string> = new Set();
     #blockedChats: Set<string> = new Set();
-    #proposalChats: Map<string, MultiUserChatIdentifier[]> = new Map();
+    // localUserIndex -> (chatId string -> chatId), keyed by string so each chat is tracked once
+    #proposalChats: Map<string, Map<string, MultiUserChatIdentifier>> = new Map();
+    #proposalTalliesTimer: ReturnType<typeof setTimeout> | undefined = undefined;
+    #stopped: boolean = false;
     #isFirstIteration: boolean = true;
 
     constructor(
@@ -54,6 +57,16 @@ export class CachePrimer {
         return this.#isFirstIteration;
     }
 
+    // Stops the background jobs so a replaced/logged-out agent is not kept alive by their timers
+    stop() {
+        this.#stopped = true;
+        clearTimeout(this.#proposalTalliesTimer);
+        this.#proposalTalliesTimer = undefined;
+        this.#pending = [];
+        this.#proposalChats.clear();
+        debug("stopped");
+    }
+
     processUpdates(
         directChats: DirectChatSummary[],
         groupChats: GroupChatSummary[],
@@ -63,6 +76,8 @@ export class CachePrimer {
         groupsRemoved?: string[],
         communitiesRemoved?: string[],
     ) {
+        if (this.#stopped) return;
+
         directChatsRemoved?.forEach((userId) =>
             this.removeFromPending((c) => c.kind === "direct_chat" && c.userId === userId),
         );
@@ -118,10 +133,10 @@ export class CachePrimer {
         if (chat.kind !== "direct_chat" && chat.subtype?.kind === "governance_proposals") {
             let proposalChatIds = this.#proposalChats.get(localUserIndex);
             if (proposalChatIds === undefined) {
-                proposalChatIds = [];
+                proposalChatIds = new Map();
                 this.#proposalChats.set(localUserIndex, proposalChatIds);
             }
-            proposalChatIds.push(chat.id);
+            proposalChatIds.set(chatIdString, chat.id);
         }
 
         const eventIndexLoadedUpTo = this.eventIndexesLoadedUpTo[chatIdString];
@@ -246,7 +261,7 @@ export class CachePrimer {
             debug(`batch of size ${batch.length} completed`);
         } finally {
             this.#inProgress.clear();
-            if (this.#pending.length === 0) {
+            if (this.#stopped || this.#pending.length === 0) {
                 debug("runner stopped");
                 this.#jobActive = false;
             } else {
@@ -373,17 +388,28 @@ export class CachePrimer {
     private async processProposalTallies() {
         try {
             for (const [localUserIndex, chatIds] of this.#proposalChats) {
-                for (const batch of chunk(chatIds, 10)) {
+                for (const batch of chunk([...chatIds.values()], 10)) {
+                    if (this.#stopped) return;
                     await this.updateProposalTallies(localUserIndex, batch);
                 }
             }
         } finally {
-            setTimeout(() => this.processProposalTallies(), ONE_MINUTE_MILLIS);
+            if (!this.#stopped) {
+                this.#proposalTalliesTimer = setTimeout(
+                    () => this.processProposalTallies(),
+                    ONE_MINUTE_MILLIS,
+                );
+            }
         }
     }
 
     private removeFromPending(excludeFn: (value: ChatIdentifier) => boolean) {
         retain(this.#pending, (c) => !excludeFn(c.chatId));
+        for (const chatIds of this.#proposalChats.values()) {
+            for (const [key, chatId] of chatIds) {
+                if (excludeFn(chatId)) chatIds.delete(key);
+            }
+        }
     }
 
     private filterDirtyEvents(
