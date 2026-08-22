@@ -907,11 +907,7 @@ export const userMetricsStore = derived(allServerChatsStore, (allServerChats) =>
 export const unreadFavouriteCountsStore = derived(
     [serverFavouritesStore, allServerChatsStore, messagesRead],
     ([serverFavourites, allServerChats, _]) => {
-        const chats = ChatMap.fromList(
-            [...serverFavourites.values()]
-                .map((id) => allServerChats.get(id))
-                .filter((chat) => chat !== undefined) as ChatSummary[],
-        );
+        const chats = [...serverFavourites.values()].map((id) => allServerChats.get(id));
         return messagesRead.combinedUnreadCountForChats(chats);
     },
 );
@@ -1310,14 +1306,14 @@ export const directChatBotsStore = derived(
 export const unreadGroupCountsStore = derived(
     [serverGroupChatsStore, messagesRead],
     ([serverGroupChats, _]) => {
-        return messagesRead.combinedUnreadCountForChats(serverGroupChats);
+        return messagesRead.combinedUnreadCountForChats(serverGroupChats.values());
     },
 );
 
 export const unreadDirectCountsStore = derived(
     [serverDirectChatsStore, messagesRead],
     ([serverDirectChats, _]) => {
-        return messagesRead.combinedUnreadCountForChats(serverDirectChats);
+        return messagesRead.combinedUnreadCountForChats(serverDirectChats.values());
     },
 );
 
@@ -1332,10 +1328,7 @@ export const unreadCommunityChannelCountsStore = derived(
     [serverCommunitiesStore, messagesRead],
     ([serverCommunities, _]) => {
         return serverCommunities.reduce((map, [id, community]) => {
-            map.set(
-                id,
-                messagesRead.combinedUnreadCountForChats(ChatMap.fromList(community.channels)),
-            );
+            map.set(id, messagesRead.combinedUnreadCountForChats(community.channels));
             return map;
         }, new CommunityMap<CombinedUnreadCounts>());
     },
