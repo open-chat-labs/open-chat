@@ -930,8 +930,15 @@ export const selectedServerChatSummaryStore = derived(
     },
 );
 
+// The updaters applied to chats in allChatsStore only ever assign top-level fields or fields
+// of membership (nested objects such as permissions are replaced, never mutated), so a shallow
+// copy plus a copy of membership is enough to keep the server chat untouched.
+function shallowCloneChat(chat: Readonly<ChatSummary>): ChatSummary {
+    return { ...chat, membership: { ...chat.membership } };
+}
+
 function applyLocalUpdatesToChat(chat: Immutable<ChatSummary>, updates?: ChatSummaryUpdates) {
-    if (updates === undefined) return;
+    if (updates === undefined || updates.isEmpty()) return;
 
     chat.update((c) => {
         c.membership.notificationsMuted =
@@ -1012,7 +1019,7 @@ export const allChatsStore = derived(
     ]) => {
         const withUpdates = localChats.apply(allServerChats);
         return [...withUpdates.entries()].reduce((result, [chatId, chat]) => {
-            const immutable = new Immutable(chat);
+            const immutable = new Immutable(chat, shallowCloneChat);
             applyLocalUpdatesToChat(immutable, localUpdates.get(chat.id));
             mergeUnconfirmedIntoSummary(
                 immutable,

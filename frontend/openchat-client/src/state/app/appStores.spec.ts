@@ -315,6 +315,61 @@ describe("app state", () => {
                     );
                 });
 
+                test("undoing a local update restores the server chat values", () => {
+                    const server = get(allServerChatsStore).get(groupId);
+                    const undo = localUpdates.updateChatProperties(groupId, "name updated");
+                    groupChatExpectation(groupId, (g) => expect(g.name).toEqual("name updated"));
+                    undo();
+                    groupChatExpectation(groupId, (g) => {
+                        expect(g.name).toEqual("group chat one");
+                        expect(g.membership).toEqual(server?.membership);
+                    });
+                    // once every local update has been undone the server chat is returned as-is
+                    expect(get(allChatsStore).get(groupId) === server).toBe(true);
+                });
+
+                test("undoing a latest message update restores the server chat values", () => {
+                    const server = get(allServerChatsStore).get(groupId);
+                    const undo = localUpdates.updateLatestMessage(groupId, chatMessage());
+                    expect(get(allChatsStore).get(groupId)?.latestMessage).not.toBeUndefined();
+                    undo();
+                    const client = get(allChatsStore).get(groupId);
+                    expect(client?.latestMessage).toBeUndefined();
+                    expect(client?.latestEventIndex).toEqual(server?.latestEventIndex);
+                    expect(client?.membership).toEqual(server?.membership);
+                    expect(client === server).toBe(true);
+                });
+
+                test("a local update does not mutate the server chat's membership", () => {
+                    const server = get(allServerChatsStore).get(groupId);
+                    localUpdates.updateNotificationsMuted(groupId, true, true);
+                    const client = get(allChatsStore).get(groupId);
+                    expect(client?.membership.notificationsMuted).toBe(true);
+                    expect(client?.membership.atEveryoneMuted).toBe(true);
+                    expect(server?.membership.notificationsMuted).toBe(false);
+                    expect(server?.membership.atEveryoneMuted).toBe(false);
+                    expect(client?.membership === server?.membership).toBe(false);
+                });
+
+                test("local updates to permissions and gate do not mutate the server chat", () => {
+                    const server = get(allServerChatsStore).get(groupId);
+                    localUpdates.updateChatProperties(
+                        groupId,
+                        undefined,
+                        undefined,
+                        { changeRoles: ROLE_OWNER },
+                        { gate: { kind: "diamond_gate" }, expiry: undefined },
+                    );
+                    const client = get(allChatsStore).get(groupId);
+                    if (client?.kind !== "group_chat" || server?.kind !== "group_chat") {
+                        fail("expected group chats");
+                    }
+                    expect(client.permissions.changeRoles).toEqual(ROLE_OWNER);
+                    expect(server.permissions.changeRoles).toEqual(ROLE_ADMIN);
+                    expect(client.gateConfig.gate.kind).toEqual("diamond_gate");
+                    expect(server.gateConfig.gate.kind).toEqual("no_gate");
+                });
+
                 test("scoping works as expected", () => {
                     setRouteParams(mockContext, {
                         kind: "home_route",
