@@ -202,6 +202,11 @@ export default defineConfig({
             },
             { find: "@dfinity/agent", replacement: "@icp-sdk/core/agent" },
             { find: "@dfinity/auth-client", replacement: "@icp-sdk/auth/client" },
+            // Keep dev in step with the prod build (see rollup.config.mjs).
+            {
+                find: "@formatjs/intl-getcanonicallocales",
+                replacement: path.resolve(__dirname, "./src/utils/intlGetCanonicalLocales.ts"),
+            },
             { find: "@src", replacement: path.resolve(__dirname, "./src") },
             { find: "@actions", replacement: path.resolve(__dirname, "./src/actions") },
             { find: "@i18n", replacement: path.resolve(__dirname, "./src/i18n") },

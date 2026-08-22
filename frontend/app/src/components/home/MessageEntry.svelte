@@ -1,6 +1,7 @@
 <script lang="ts">
     import RichTextEditor from "@shared_components/RichTextEditor.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
+    import { detectMarkdown } from "@src/utils/detectMarkdown";
     import type {
         AttachmentContent,
         BotActionScope,
@@ -149,8 +150,13 @@
         editor?.insertEmoji(emoji);
     }
 
+    // The markdown the editor last reported (or was last set to), so the effect below can compare
+    // against it without re-serialising the whole document on every keystroke
+    let lastMarkdown = "";
+
     function onInput() {
         const inputContent = editor?.getMarkdown() ?? "";
+        lastMarkdown = inputContent;
         onSetTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
         triggerCommandSelector(inputContent);
         triggerTypingTimer();
@@ -320,6 +326,7 @@
 
     function afterSendMessage() {
         editor?.clear();
+        lastMarkdown = "";
         onSetTextContent();
 
         messageActions?.close();
@@ -331,27 +338,6 @@
         tick().then(() => editor?.focus());
     }
 
-    function detectMarkdown(text: string | null) {
-        if (!text) return false;
-
-        // a few regexes to detect various block level markdown elements (possibly incomplete)
-        const headerRegex = /^(?:\#{1,6}\s+)/m;
-        const tableRegex = /(?:\|(?:[^\r\n\|\\]|\\.)*\|)+/;
-        const bulletedListRegex = /^(?:\s*[-\*+]\s+)/m;
-        const numberedListRegex = /^(?:\s*\d+\.\s+)/m;
-        const blockquoteRegex = /^(?:\s*>)/m;
-        const codeBlockRegex = /(?:^```[\s\S]*?^```)/m;
-        const regexList = [
-            headerRegex,
-            tableRegex,
-            bulletedListRegex,
-            numberedListRegex,
-            blockquoteRegex,
-            codeBlockRegex,
-        ];
-        const result = regexList.some((regex) => regex.test(text));
-        return result;
-    }
     let directChatBotId = $derived(client.directChatWithBot(chat));
     let directBot = $derived(
         directChatBotId ? botState.externalBots.get(directChatBotId) : undefined,
@@ -384,13 +370,15 @@
                     editor.setContent(editingEvent.event.content.caption ?? "");
                 }
                 previousEditingEvent = editingEvent;
-                containsMarkdown = detectMarkdown(editor.getMarkdown());
+                lastMarkdown = editor.getMarkdown();
+                containsMarkdown = detectMarkdown(lastMarkdown);
             } else {
                 const text = textContent ?? "";
                 // Only set the textbox text when required rather than every time, because doing so sets the focus back to
                 // the start of the textbox on some devices.
-                if (editor.getMarkdown() !== text) {
+                if (lastMarkdown !== text) {
                     editor.setContent(text);
+                    lastMarkdown = editor.getMarkdown();
                     containsMarkdown = detectMarkdown(text);
                 }
             }
