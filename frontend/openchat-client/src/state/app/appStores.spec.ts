@@ -37,6 +37,7 @@ import {
 import { addToWritableMap } from "../utils";
 import {
     allChatsStore,
+    cryptoBalanceStore,
     allServerChatsStore,
     chatListScopeStore,
     chatSummariesStore,
@@ -752,3 +753,20 @@ function chatMessage(): EventWrapper<Message> {
         },
     };
 }
+
+describe("cryptoBalanceStore", () => {
+    test("setBalance only publishes when the balance changes", () => {
+        let publishes = 0;
+        const unsub = cryptoBalanceStore.subscribe(() => publishes++);
+        publishes = 0;
+        cryptoBalanceStore.setBalance("ledger1", 100n);
+        expect(publishes).toBe(1);
+        cryptoBalanceStore.setBalance("ledger1", 100n);
+        expect(publishes).toBe(1);
+        cryptoBalanceStore.setBalance("ledger1", 200n);
+        expect(publishes).toBe(2);
+        expect(cryptoBalanceStore.value.get("ledger1")).toBe(200n);
+        expect(cryptoBalanceStore.valueIfUpdatedRecently("ledger1")).toBe(200n);
+        unsub();
+    });
+});
