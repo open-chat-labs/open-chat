@@ -2803,14 +2803,15 @@ export class OpenChat {
             allUserIds.add(u);
         }
         userStore.addWebhookIds([...webhooks]);
-        selectedChatUserIdsStore.update((set) => {
-            [...allUserIds].forEach((u) => {
-                if (u !== userId) {
-                    set.add(u);
-                }
+        const newChatUserIds = [...allUserIds].filter(
+            (u) => u !== userId && !selectedChatUserIdsStore.value.has(u),
+        );
+        if (newChatUserIds.length > 0) {
+            selectedChatUserIdsStore.update((set) => {
+                newChatUserIds.forEach((u) => set.add(u));
+                return set;
             });
-            return set;
-        });
+        }
         await this.getMissingUsers(allUserIds);
     }
 
