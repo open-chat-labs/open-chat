@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, VecDeque, btree_map};
 use tracing::warn;
-use types::{CanisterId, ChannelId, ClassifyMessageRequest, MessageId, MessageIndex, ModerationInput};
+use types::{CanisterId, ChannelId, ClassifyMessageRequest, MessageId, MessageIndex, ModerationInput, TimestampMillis};
 
 // Caps so that a prolonged OpenAI outage or a flood of messages cannot grow the queue
 // unboundedly; the oldest entries are dropped first so the most recent messages still get
@@ -47,6 +47,11 @@ pub struct Entry {
     pub thread_root_message_index: Option<MessageIndex>,
     pub input: ModerationInput,
     pub attempts: u8,
+    // When the message entered the queue: retryable API failures don't consume attempts, so
+    // this bounds how long a message can churn instead. 0 = queued before this field existed;
+    // backfilled on first requeue.
+    #[serde(default)]
+    pub queued_at: TimestampMillis,
 }
 
 pub struct QueueItem {
@@ -76,7 +81,7 @@ impl ModerationQueue {
 
     // Empty inputs never reach here - the caller handles them (dequeue + immediate empty
     // classification, see c2c_group_or_community_canister)
-    pub fn enqueue(&mut self, source: CanisterId, is_group: bool, request: ClassifyMessageRequest) {
+    pub fn enqueue(&mut self, source: CanisterId, is_group: bool, request: ClassifyMessageRequest, now: TimestampMillis) {
         let key = (request.channel_id, request.message_id);
         let mut input = request.input;
         if let Some(text) = input.text.as_mut()
@@ -91,6 +96,7 @@ impl ModerationQueue {
             thread_root_message_index: request.thread_root_message_index,
             input,
             attempts: 0,
+            queued_at: now,
         };
         self.insert(source, is_group, key, entry, false);
     }
@@ -109,9 +115,13 @@ impl ModerationQueue {
 
     // Returns the items to classify, plus any unclassifiable items (media-only entries queued
     // by pre-#9149 senders) for which the caller must send an empty classification
-    pub fn next_batch(&mut self, max_items: usize) -> (Vec<QueueItem>, Vec<QueueItem>) {
+    // Batches are bounded by item count and by estimated tokens (~4 chars/token), so that a
+    // deep queue drains in batches the API's tokens-per-minute limit can absorb rather than in
+    // maximal batches which bounce off it
+    pub fn next_batch(&mut self, max_items: usize, max_estimated_tokens: usize) -> (Vec<QueueItem>, Vec<QueueItem>) {
         let mut batch = Vec::new();
         let mut unclassifiable = Vec::new();
+        let mut estimated_tokens = 0;
 
         loop {
             let mut source_ids: Vec<CanisterId> = self.sources.keys().copied().collect();
@@ -126,12 +136,13 @@ impl ModerationQueue {
 
             let mut popped_any = false;
             for source in source_ids {
-                if batch.len() >= max_items {
+                if batch.len() >= max_items || (!batch.is_empty() && estimated_tokens >= max_estimated_tokens) {
                     return (batch, unclassifiable);
                 }
                 match self.pop(source) {
                     Pop::Item(item) => {
                         self.in_flight.insert((item.source, (item.channel_id, item.message_id)));
+                        estimated_tokens += item.entry.input.text.as_ref().map_or(0, |t| t.len() / 4);
                         batch.push(*item);
                         popped_any = true;
                         self.cursor = Some(source);
