@@ -7,12 +7,10 @@ export const background = readable(
             set(document.visibilityState === "hidden");
         }
 
-        document.addEventListener("visibilitychange", function () {
-            setVisibility();
-        });
+        document.addEventListener("visibilitychange", setVisibility);
 
         return function stop() {
-            window.removeEventListener("visibilitychange", setVisibility);
+            document.removeEventListener("visibilitychange", setVisibility);
         };
     }
 );

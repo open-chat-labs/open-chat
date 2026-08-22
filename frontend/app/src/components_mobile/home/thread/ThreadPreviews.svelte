@@ -21,7 +21,6 @@
 
     const client = getContext<OpenChat>("client");
 
-    let observer: IntersectionObserver = new IntersectionObserver(() => {});
     let loading = $state(true);
     let initialised = $state(false);
     let spinner = $derived(loading && !initialised);
@@ -85,7 +84,7 @@
                 keyFn={(e) => `${e.rootMessage.index}_${e.rootMessage.event.messageId}`}
                 items={threads}>
                 {#snippet children(thread)}
-                    <ThreadPreviewComponent {observer} {thread} />
+                    <ThreadPreviewComponent {thread} />
                 {/snippet}
             </VirtualList>
         {/if}

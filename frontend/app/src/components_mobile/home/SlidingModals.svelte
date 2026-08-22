@@ -1,11 +1,12 @@
 <script lang="ts">
+    import { i18nKey } from "@src/i18n/i18n";
     import { activeVideoCall } from "@src/stores/video";
     import { onPopstate, pushDummyHistoryState } from "@src/utils/history";
     import { communityPreviewState, groupPreviewState } from "@src/utils/preview.svelte";
     import { removeQueryStringParam, stripThreadFromUrl } from "@src/utils/urls";
     import { pendingShareStore } from "@stores/pendingShare";
     import { navigate, parentRoute } from "@utils/navigation";
-    import { portalState } from "component-lib";
+    import { Container, portalState } from "component-lib";
     import {
         chatListScopeStore,
         OpenChat,
@@ -46,11 +47,7 @@
     import { expectBackPress } from "../../utils/native/notification_channels";
     import { flushPendingNavigation, hasPendingNavigation } from "../../utils/navigation";
     import type { Share as ShareType } from "../../utils/share";
-    import BotBuilderModal from "../bots/BotBuilderModal.svelte";
-    import BotDetailsPage from "../bots/BotDetailsPage.svelte";
-    import CommandViewer from "../bots/CommandViewer.svelte";
-    import BotInstaller from "../bots/install/BotInstaller.svelte";
-    import WebhookModal from "../bots/WebhookModal.svelte";
+    import Translatable from "../Translatable.svelte";
     import ForwardMessageModal from "../ForwardMessageModal.svelte";
     import ShareMessageModal from "../ShareMessageModal.svelte";
     import AccessGatesEvaluator from "./access/AccessGatesEvaluator.svelte";
@@ -81,9 +78,6 @@
     import DirectChatDetails from "./groupdetails/DirectChatDetails.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
     import { UpdateGroupOrCommunityState } from "./groupOrCommunity.svelte";
-    import StreakInsuranceBuy from "./insurance/StreakInsuranceBuy.svelte";
-    import Architecture from "./landing/Architecture.svelte";
-    import BotsList from "./membership/BotsList.svelte";
     import InviteAndShare from "./membership/InviteAndShare.svelte";
     import MemberManagement from "./membership/MemberManagement.svelte";
     import NewMessage from "./NewMessage.svelte";
@@ -97,27 +91,8 @@
     import SlidingPage from "./SlidingPage.svelte";
     import Thread from "./thread/Thread.svelte";
     import ThreadPreviews from "./thread/ThreadPreviews.svelte";
-    import Upgrade from "./upgrade/Upgrade.svelte";
-    import About from "./user_profile/About.svelte";
-    import Appearance from "./user_profile/Appearance.svelte";
-    import AppSettings from "./user_profile/AppSettings.svelte";
-    import BotConfig from "./user_profile/BotConfig.svelte";
-    import ChatsAndVideo from "./user_profile/ChatsAndVideo.svelte";
-    import ChitRewards from "./user_profile/ChitRewards.svelte";
-    import ClearCache from "./user_profile/ClearCache.svelte";
-    import CommunitySettings from "./user_profile/CommunitySettings.svelte";
-    import DeleteAccount from "./user_profile/DeleteAccount.svelte";
-    import Share from "./user_profile/Share.svelte";
     import UserInformation from "./user_profile/UserInformation.svelte";
-    import Verify from "./user_profile/Verify.svelte";
     import ActiveCallParticipants from "./video/ActiveCallParticipants.svelte";
-    import EditRecipient from "./wallet/EditRecipient.svelte";
-    import ManageRecipients from "./wallet/ManageRecipients.svelte";
-    import ReceiveCrypto from "./wallet/ReceiveCrypto.svelte";
-    import SendCrypto from "./wallet/SendCrypto.svelte";
-    import SwapToken from "./wallet/SwapCrypto.svelte";
-    import TokenPage from "./wallet/TokenPage.svelte";
-    import WalletSettings from "./wallet/WalletSettings.svelte";
     import type { TokenState } from "./wallet/walletState.svelte";
     /**
      * It is tempting to think that this can completely replace the right panel on mobile but it's not quite so simple.
@@ -579,44 +554,110 @@
 
 <svelte:window onpopstate={popstate} />
 
+{#snippet loadFailed()}
+    <Container padding={"lg"}>
+        <Translatable resourceKey={i18nKey("Failed to load")} />
+    </Container>
+{/snippet}
+
 {#each modalStack as page}
     <SlidingPage speed={page.kind === "open_thread" ? 500 : 300} top={page === top}>
         {#if page.kind === "user_profile_chats_and_video"}
-            <ChatsAndVideo />
+            {#await import("./user_profile/ChatsAndVideo.svelte") then { default: ChatsAndVideo }}
+                <ChatsAndVideo />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "forward_message"}
             <ForwardMessageModal onClose={pop} msg={page.msg} />
         {:else if page.kind === "share_message"}
             <ShareMessageModal onClose={pop} onShare={shareToChosenChat} share={page.share} />
         {:else if page.kind === "register_bot"}
-            <BotBuilderModal onClose={pop} mode={"register"} />
+            {#await import("../bots/BotBuilderModal.svelte") then { default: BotBuilderModal }}
+                <BotBuilderModal onClose={pop} mode={"register"} />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "update_bot"}
-            <BotBuilderModal onClose={pop} mode={"update"} />
+            {#await import("../bots/BotBuilderModal.svelte") then { default: BotBuilderModal }}
+                <BotBuilderModal onClose={pop} mode={"update"} />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "remove_bot"}
-            <BotBuilderModal onClose={pop} mode={"remove"} />
+            {#await import("../bots/BotBuilderModal.svelte") then { default: BotBuilderModal }}
+                <BotBuilderModal onClose={pop} mode={"remove"} />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "view_bot_command"}
-            <CommandViewer command={page.command} onClose={pop} />
+            {#await import("../bots/CommandViewer.svelte") then { default: CommandViewer }}
+                <CommandViewer command={page.command} onClose={pop} />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "user_profile_share"}
-            <Share />
+            {#await import("./user_profile/Share.svelte") then { default: Share }}
+                <Share />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "user_profile_delete_account"}
-            <DeleteAccount />
+            {#await import("./user_profile/DeleteAccount.svelte") then { default: DeleteAccount }}
+                <DeleteAccount />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "user_profile_about"}
-            <About />
+            {#await import("./user_profile/About.svelte") then { default: About }}
+                <About />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "user_profile_appearance"}
-            <Appearance />
+            {#await import("./user_profile/Appearance.svelte") then { default: Appearance }}
+                <Appearance />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "user_profile_cache_management"}
-            <ClearCache />
+            {#await import("./user_profile/ClearCache.svelte") then { default: ClearCache }}
+                <ClearCache />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "user_profile_verify"}
-            <Verify />
+            {#await import("./user_profile/Verify.svelte") then { default: Verify }}
+                <Verify />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "user_profile_bot_config"}
-            <BotConfig />
+            {#await import("./user_profile/BotConfig.svelte") then { default: BotConfig }}
+                <BotConfig />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "user_profile_chit"}
-            <ChitRewards />
+            {#await import("./user_profile/ChitRewards.svelte") then { default: ChitRewards }}
+                <ChitRewards />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "user_profile_community"}
-            <CommunitySettings />
+            {#await import("./user_profile/CommunitySettings.svelte") then { default: CommunitySettings }}
+                <CommunitySettings />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "user_information"}
             <UserInformation profile={page.profile} />
         {:else if page.kind === "app_settings"}
-            <AppSettings />
+            {#await import("./user_profile/AppSettings.svelte") then { default: AppSettings }}
+                <AppSettings />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "update_group_add_members"}
             <AddGroupMembers />
         {:else if page.kind === "update_group_details"}
@@ -658,21 +699,53 @@
         {:else if page.kind === "group_chat_details"}
             <GroupDetails chat={page.chat} memberCount={$selectedChatMembersStore.size} />
         {:else if page.kind === "token_page"}
-            <TokenPage tokenState={page.tokenState} />
+            {#await import("./wallet/TokenPage.svelte") then { default: TokenPage }}
+                <TokenPage tokenState={page.tokenState} />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "receive_token"}
-            <ReceiveCrypto tokenState={page.tokenState} />
+            {#await import("./wallet/ReceiveCrypto.svelte") then { default: ReceiveCrypto }}
+                <ReceiveCrypto tokenState={page.tokenState} />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "send_token"}
-            <SendCrypto onClose={pop} tokenState={page.tokenState} />
+            {#await import("./wallet/SendCrypto.svelte") then { default: SendCrypto }}
+                <SendCrypto onClose={pop} tokenState={page.tokenState} />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "swap_token"}
-            <SwapToken onClose={pop} inToken={page.tokenState} />
+            {#await import("./wallet/SwapCrypto.svelte") then { default: SwapToken }}
+                <SwapToken onClose={pop} inToken={page.tokenState} />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "manage_recipients"}
-            <ManageRecipients />
+            {#await import("./wallet/ManageRecipients.svelte") then { default: ManageRecipients }}
+                <ManageRecipients />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "add_recipient"}
-            <EditRecipient account={page.account} onClose={page.onComplete} />
+            {#await import("./wallet/EditRecipient.svelte") then { default: EditRecipient }}
+                <EditRecipient account={page.account} onClose={page.onComplete} />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "edit_recipient"}
-            <EditRecipient account={page.account} onClose={page.onComplete} />
+            {#await import("./wallet/EditRecipient.svelte") then { default: EditRecipient }}
+                <EditRecipient account={page.account} onClose={page.onComplete} />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "wallet_settings"}
-            <WalletSettings />
+            {#await import("./wallet/WalletSettings.svelte") then { default: WalletSettings }}
+                <WalletSettings />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "show_threads"}
             <ThreadPreviews />
         {:else if page.kind === "open_thread"}
@@ -698,23 +771,47 @@
         {:else if page.kind === "invite_and_share"}
             <InviteAndShare collection={page.collection} view={page.view} />
         {:else if page.kind === "register_webhook"}
-            <WebhookModal chat={page.chat} mode={"register"} />
+            {#await import("../bots/WebhookModal.svelte") then { default: WebhookModal }}
+                <WebhookModal chat={page.chat} mode={"register"} />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "update_webhook"}
-            <WebhookModal chat={page.chat} mode={"update"} bind:webhook={page.webhook} />
+            {#await import("../bots/WebhookModal.svelte") then { default: WebhookModal }}
+                <WebhookModal chat={page.chat} mode={"update"} bind:webhook={page.webhook} />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "regenerate_webhook"}
-            <WebhookModal chat={page.chat} mode={"regenerate"} bind:webhook={page.webhook} />
+            {#await import("../bots/WebhookModal.svelte") then { default: WebhookModal }}
+                <WebhookModal chat={page.chat} mode={"regenerate"} bind:webhook={page.webhook} />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "show_bots"}
-            <BotsList collection={page.collection} />
+            {#await import("./membership/BotsList.svelte") then { default: BotsList }}
+                <BotsList collection={page.collection} />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "show_bot"}
-            <BotDetailsPage
-                bot={page.bot}
-                collection={page.collection}
-                grantedPermissions={page.grantedPermissions} />
+            {#await import("../bots/BotDetailsPage.svelte") then { default: BotDetailsPage }}
+                <BotDetailsPage
+                    bot={page.bot}
+                    collection={page.collection}
+                    grantedPermissions={page.grantedPermissions} />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "install_bot"}
-            <BotInstaller
-                bot={page.bot}
-                collection={page.collection}
-                installedWithPermissions={page.installedWithPermissions} />
+            {#await import("../bots/install/BotInstaller.svelte") then { default: BotInstaller }}
+                <BotInstaller
+                    bot={page.bot}
+                    collection={page.collection}
+                    installedWithPermissions={page.installedWithPermissions} />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "show_pinned"}
             <PinnedMessages chat={page.chat} pinned={page.pinned} />
         {:else if page.kind === "show_video_call_participants"}
@@ -725,9 +822,17 @@
         {:else if page.kind === "proposal_filters"}
             <ProposalGroupFilters selectedChat={page.chat} />
         {:else if page.kind === "upgrade_diamond"}
-            <Upgrade />
+            {#await import("./upgrade/Upgrade.svelte") then { default: Upgrade }}
+                <Upgrade />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "streak_insurance"}
-            <StreakInsuranceBuy onClose={pop} />
+            {#await import("./insurance/StreakInsuranceBuy.svelte") then { default: StreakInsuranceBuy }}
+                <StreakInsuranceBuy onClose={pop} />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {:else if page.kind === "create_poll"}
             <PollBuilder messageContext={page.messageContext} onClose={pop} />
         {:else if page.kind === "poll_public_votes"}
@@ -762,7 +867,11 @@
                     pop();
                 }} />
         {:else if page.kind === "architecture"}
-            <Architecture />
+            {#await import("./landing/Architecture.svelte") then { default: Architecture }}
+                <Architecture />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
         {/if}
     </SlidingPage>
 {/each}

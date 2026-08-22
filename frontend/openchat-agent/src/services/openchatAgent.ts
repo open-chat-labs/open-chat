@@ -130,6 +130,7 @@ import type {
     PublicGroupSummaryResponse,
     PublicProfile,
     Referral,
+    MessagePreview,
     RehydratedMessagePreview,
     RegisterPollVoteResponse,
     RegisterProposalVoteResponse,
@@ -297,6 +298,15 @@ import { AnonUserClient } from "./user/anonUser.client";
 import { UserClient } from "./user/user.client";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { StorageBucketClient } from "./storageBucket/storageBucket.client";
+
+type ResolvedMessagePreviews = {
+    messages: AsyncMessageContextMap<EventWrapper<Message>>;
+    previews: Map<bigint, MessagePreview[]>;
+};
+
+function emptyResolvedMessagePreviews(): ResolvedMessagePreviews {
+    return { messages: new AsyncMessageContextMap(), previews: new Map() };
+}
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
@@ -1086,12 +1096,19 @@ export class OpenChatAgent extends EventTarget {
         return mapped;
     }
 
+    // Extracts message previews once per text message (keyed by messageId) and builds the
+    // per-chat map of message indexes to fetch, so rehydrateEvent doesn't re-parse the text.
     private findMissingMessagePreviewsByChat<T extends ChatEvent>(
         events: EventWrapper<T>[],
-    ): AsyncMessageContextMap<number> {
-        return events.reduce<AsyncMessageContextMap<number>>((result, ev) => {
+    ): [AsyncMessageContextMap<number>, Map<bigint, MessagePreview[]>] {
+        const previews = new Map<bigint, MessagePreview[]>();
+        const contextMap = events.reduce<AsyncMessageContextMap<number>>((result, ev) => {
             if (ev.event.kind === "message" && ev.event.content.kind === "text_content") {
-                for (const preview of extractMessagePreviews(ev.event.content.text)) {
+                const extracted = extractMessagePreviews(ev.event.content.text);
+                if (extracted.length > 0) {
+                    previews.set(ev.event.messageId, extracted);
+                }
+                for (const preview of extracted) {
                     result.insert(
                         {
                             chatId: preview.chatId,
@@ -1103,16 +1120,17 @@ export class OpenChatAgent extends EventTarget {
             }
             return result;
         }, new AsyncMessageContextMap());
+        return [contextMap, previews];
     }
 
     private async resolveMissingMessagePreviews<T extends ChatEvent>(
         events: EventWrapper<T>[],
-    ): Promise<AsyncMessageContextMap<EventWrapper<Message>>> {
-        const contextMap = this.findMissingMessagePreviewsByChat(events);
+    ): Promise<ResolvedMessagePreviews> {
+        const [contextMap, previews] = this.findMissingMessagePreviewsByChat(events);
 
-        if (contextMap.length === 0) return Promise.resolve(new AsyncMessageContextMap());
+        if (contextMap.length === 0) return emptyResolvedMessagePreviews();
 
-        const mapped = await contextMap.asyncMap((ctx, idxs) => {
+        const messages = await contextMap.asyncMap((ctx, idxs) => {
             const uniqueIdxs = [...new Set(idxs)];
             return this._chatEventsReader
                 .messagesByMessageIndex(
@@ -1126,14 +1144,14 @@ export class OpenChatAgent extends EventTarget {
                 .then((resp) => this.messagesFromEventsResponse(ctx, resp));
         });
 
-        return mapped;
+        return { messages, previews };
     }
 
     private rehydrateEvent<T extends ChatEvent>(
         ev: EventWrapper<T>,
         defaultChatId: ChatIdentifier,
         missingReplies: AsyncMessageContextMap<EventWrapper<Message>>,
-        missingMessagePreviews: AsyncMessageContextMap<EventWrapper<Message>>,
+        missingMessagePreviews: ResolvedMessagePreviews,
         threadRootMessageIndex: number | undefined,
     ): EventWrapper<T> {
         if (ev.event.kind === "message") {
@@ -1178,12 +1196,13 @@ export class OpenChatAgent extends EventTarget {
             }
 
             if (ev.event.content.kind === "text_content") {
-                for (const preview of extractMessagePreviews(ev.event.content.text)) {
+                for (const preview of missingMessagePreviews.previews.get(ev.event.messageId) ??
+                    []) {
                     const context = {
                         chatId: preview.chatId,
                         threadRootMessageIndex: preview.threadRootMessageIndex,
                     };
-                    const messages = missingMessagePreviews.lookup(context);
+                    const messages = missingMessagePreviews.messages.lookup(context);
                     const msg = messages.find(
                         (me) => me.event.messageIndex === preview.messageIndex,
                     )?.event;
@@ -1983,6 +2002,11 @@ export class OpenChatAgent extends EventTarget {
             suspensionChanged,
             premiumItems: premiumItems.valueIfUpdated(),
         };
+    }
+
+    // Called when this agent instance is replaced or discarded so that background timers do not keep it alive
+    dispose() {
+        this._cachePrimer?.stop();
     }
 
     #initializeCachePrimer(userCanisterLocalUserIndex: string): Promise<CachePrimer> {
@@ -3252,7 +3276,7 @@ export class OpenChatAgent extends EventTarget {
                 r,
                 thread.chatId,
                 threadMissing,
-                new AsyncMessageContextMap(),
+                emptyResolvedMessagePreviews(),
                 thread.rootMessage.event.messageIndex,
             ),
         );
@@ -3260,7 +3284,7 @@ export class OpenChatAgent extends EventTarget {
             thread.rootMessage,
             thread.chatId,
             rootMissing,
-            new AsyncMessageContextMap(),
+            emptyResolvedMessagePreviews(),
             undefined,
         );
 

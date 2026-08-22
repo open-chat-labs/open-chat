@@ -3,6 +3,7 @@ import {
     ChatMap,
     MessageContextMap,
     bigIntMax,
+    chatIdentifierToString,
     emptyUnreadCounts,
     mergeUnreadCounts,
     type ChatIdentifier,
@@ -79,6 +80,17 @@ export type MessageReadState = {
     state: MessagesReadByChat;
 };
 
+// The unread contribution of one chat, valid while the chat object and the
+// read state version of the chat are unchanged
+type UnreadContribution = {
+    chat: ChatSummary;
+    version: number;
+    unreadMessages: number;
+    muted: boolean;
+    mentions: boolean;
+    unreadThreads: number;
+};
+
 /**
  * Let's try to leave this logic alone as much as we can
  * and just focus on converting the actual underlying state to svelte 5 runes
@@ -86,6 +98,9 @@ export type MessageReadState = {
 export class MessageReadTracker {
     #timeout: number | undefined;
     #stopped: boolean = false;
+    // Bumped whenever the read state of a chat changes, keyed by chat id string
+    #versions = new Map<string, number>();
+    #contributions = new Map<string, UnreadContribution>();
 
     #store = writable<MessageReadState>(
         {
@@ -159,6 +174,11 @@ export class MessageReadTracker {
         }
     }
 
+    #touch(chatId: ChatIdentifier): void {
+        const key = chatIdentifierToString(chatId);
+        this.#versions.set(key, (this.#versions.get(key) ?? 0) + 1);
+    }
+
     #stateForId(chatId: ChatIdentifier, state: MessagesReadByChat): MessagesRead {
         if (!state.has(chatId)) {
             state.set(chatId, new MessagesRead());
@@ -173,6 +193,7 @@ export class MessageReadTracker {
     ): void {
         const { state, waiting } = this.value;
         withPausedStores(() => {
+            this.#touch(context.chatId);
             const chatState = this.#stateForId(context.chatId, state);
             if (messageId !== undefined && localUpdates.isUnconfirmed(context, messageId)) {
                 // if a message is unconfirmed we will just tuck it away until we are told it has been confirmed
@@ -192,6 +213,7 @@ export class MessageReadTracker {
 
     markReadUpTo(context: MessageContext, index: number): void {
         const { state } = this.value;
+        this.#touch(context.chatId);
         const chatState = this.#stateForId(context.chatId, state);
         if (context.threadRootMessageIndex !== undefined) {
             chatState.updateThread(context.threadRootMessageIndex, index);
@@ -203,6 +225,7 @@ export class MessageReadTracker {
 
     markPinnedMessagesRead(chatId: ChatIdentifier, dateLastPinned: bigint): void {
         const { state } = this.value;
+        this.#touch(chatId);
         this.#stateForId(chatId, state).markReadPinned(dateLastPinned);
         this.#store.update((s) => ({ ...s, state }));
     }
@@ -224,6 +247,7 @@ export class MessageReadTracker {
         const { waiting } = this.value;
         const deleted = waiting.get(context)?.delete(messageId) ?? false;
         if (deleted) {
+            this.#touch(context.chatId);
             this.#store.update((s) => ({ ...s, waiting }));
         }
         return deleted;
@@ -355,6 +379,7 @@ export class MessageReadTracker {
         dateReadPinned: bigint | undefined,
     ): void {
         const { state } = this.value;
+        this.#touch(chatId);
         const serverState = new MessagesRead();
         serverState.readUpTo = readUpTo;
         serverState.setThreads(threads);
@@ -434,39 +459,60 @@ export class MessageReadTracker {
         return false;
     }
 
-    combinedUnreadCountForChats(chats: ChatMap<ChatSummary>): CombinedUnreadCounts {
-        return chats.reduce(
-            (counts, [id, chat]) => {
-                if (chat === undefined) return counts;
+    combinedUnreadCountForChats(chats: Iterable<ChatSummary | undefined>): CombinedUnreadCounts {
+        let counts: CombinedUnreadCounts = {
+            chats: emptyUnreadCounts(),
+            threads: emptyUnreadCounts(),
+        };
+        for (const chat of chats) {
+            if (chat === undefined) continue;
 
-                const muted = chat.membership.notificationsMuted;
-                const unreadMessages = this.unreadMessageCount(
-                    id,
-                    chat.latestMessage?.event.messageIndex,
-                );
-                const mentions = unreadMessages > 0 && this.#hasUnreadMentions(chat);
-                const unreadThreads = this.staleThreadCountForChat(
-                    id,
-                    chat.membership.latestThreads,
-                );
-                return {
-                    chats: mergeUnreadCounts(unreadMessages, muted, mentions, counts.chats),
-                    threads: mergeUnreadCounts(
-                        unreadThreads,
-                        muted,
-                        false,
-                        counts.threads,
-                        unreadThreads,
-                    ),
-                };
-            },
-            {
-                chats: emptyUnreadCounts(),
-                threads: emptyUnreadCounts(),
-            } as CombinedUnreadCounts,
-        );
+            const { unreadMessages, muted, mentions, unreadThreads } =
+                this.#unreadContribution(chat);
+            counts = {
+                chats: mergeUnreadCounts(unreadMessages, muted, mentions, counts.chats),
+                threads: mergeUnreadCounts(
+                    unreadThreads,
+                    muted,
+                    false,
+                    counts.threads,
+                    unreadThreads,
+                ),
+            };
+        }
+        return counts;
     }
 
+    // Per-chat unread work is only redone when the chat object or its read state has changed
+    #unreadContribution(chat: ChatSummary): UnreadContribution {
+        const key = chatIdentifierToString(chat.id);
+        const version = this.#versions.get(key) ?? 0;
+        let contribution = this.#contributions.get(key);
+        if (
+            contribution === undefined ||
+            contribution.chat !== chat ||
+            contribution.version !== version
+        ) {
+            const unreadMessages = this.unreadMessageCount(
+                chat.id,
+                chat.latestMessage?.event.messageIndex,
+            );
+            contribution = {
+                chat,
+                version,
+                unreadMessages,
+                muted: chat.membership.notificationsMuted,
+                mentions: unreadMessages > 0 && this.#hasUnreadMentions(chat),
+                unreadThreads: this.staleThreadCountForChat(chat.id, chat.membership.latestThreads),
+            };
+            this.#contributions.set(key, contribution);
+        }
+        return contribution;
+    }
+
+    // Assumes mentions from the server always carry confirmed message ids: isRead also consults
+    // localUpdates.isUnconfirmed/isEphemeral, which are not versioned inputs of the contribution
+    // cache. A feature that produces local (unconfirmed) mentions must bump the chat's version.
     #hasUnreadMentions(chat: ChatSummary): boolean {
         if (chat.kind === "direct_chat") return false;
         return (
