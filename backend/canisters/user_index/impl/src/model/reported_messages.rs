@@ -928,7 +928,9 @@ pub fn build_verdict_message_to_reporter(
             "The OpenChat moderation team reviewed [the message you reported]({link}) and confirmed that it broke [the platform rules](https://oc.app/guidelines?section=3). The message has been removed and the sender sanctioned. Thank you for helping to keep OpenChat safe."
         ),
         ModerationVerdict::Dismissed => format!(
-            "The OpenChat moderation team reviewed [the message you reported]({link}) and decided that it did not break [the platform rules](https://oc.app/guidelines?section=3)."
+            "The OpenChat moderation team reviewed [the message you reported]({link}) and decided that it did not break [the platform rules](https://oc.app/guidelines?section=3). \
+            It may still break the rules of the group or community it was posted in, which are set and enforced by their owners - consider raising it with them. \
+            Owners can remove messages and members from their own spaces."
         ),
     };
 
