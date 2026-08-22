@@ -1,6 +1,4 @@
 <script lang="ts">
-    import { QRCodeImage } from "svelte-qrcode-image";
-
     interface Props {
         text: string;
         size?: "default" | "smaller" | "larger";
@@ -24,7 +22,9 @@
         class:smaller={size === "smaller"}
         class:larger={size === "larger"}
         class:full-width-on-mobile={fullWidthOnMobile}>
-        <QRCodeImage {text} errorCorrectionLevel="Q" margin={2} displayClass="qr-code-image" />
+        {#await import("svelte-qrcode-image") then { QRCodeImage }}
+            <QRCodeImage {text} errorCorrectionLevel="Q" margin={2} displayClass="qr-code-image" />
+        {/await}
         {#if logo !== undefined}
             <img class="icon" src={logo} />
         {/if}
