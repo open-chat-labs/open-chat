@@ -124,6 +124,12 @@ export default {
                 },
                 { find: "@dfinity/agent", replacement: "@icp-sdk/core/agent" },
                 { find: "@dfinity/auth-client", replacement: "@icp-sdk/auth/client" },
+                // svelte-i18n pulls in a ~250 KB Intl.getCanonicalLocales polyfill;
+                // every runtime we target has it natively.
+                {
+                    find: "@formatjs/intl-getcanonicallocales",
+                    replacement: path.resolve(__dirname, "src/utils/intlGetCanonicalLocales.ts"),
+                },
                 { find: "@src", replacement: path.resolve(__dirname, "src") },
                 { find: "@actions", replacement: path.resolve(__dirname, "src/actions") },
                 { find: "@i18n", replacement: path.resolve(__dirname, "src/i18n") },
