@@ -1,4 +1,27 @@
 import { customEmojis } from "@client";
+import { sharedStyles } from "./sharedStyles";
+
+const applyStyles = sharedStyles(`
+                :host {
+                    all: initial;
+                    display: inline-block;
+                    vertical-align: middle;
+                    line-height: 1;
+                    height: 1.35rem;
+                    padding: 1px;
+                }
+
+                :host([big]) {
+                    height: 2.2rem;
+                    margin-bottom: 8px;
+                }
+
+                img {
+                    height: 100%;
+                    aspect-ratio: 1 / 1;
+                    display: block;
+                }
+            `);
 
 class CustomEmoji extends HTMLElement {
     // Called when the element is connected to the DOM
@@ -19,35 +42,12 @@ class CustomEmoji extends HTMLElement {
         if (!this.shadowRoot) {
             const shadow = this.attachShadow({ mode: "open" });
 
-            const style = document.createElement("style");
-            style.textContent = `
-                :host {
-                    all: initial;
-                    display: inline-block;
-                    vertical-align: middle;
-                    line-height: 1;
-                    height: 1.35rem;
-                    padding: 1px;
-                }
-
-                :host([big]) {
-                    height: 2.2rem;
-                    margin-bottom: 8px;
-                }
-
-                img {
-                    height: 100%;
-                    aspect-ratio: 1 / 1;
-                    display: block;
-                }
-            `;
-
             const img = document.createElement("img");
             img.src = emoji.url;
             img.alt = emoji.code;
             img.draggable = false;
 
-            shadow.appendChild(style);
+            applyStyles(shadow);
             shadow.appendChild(img);
         }
 

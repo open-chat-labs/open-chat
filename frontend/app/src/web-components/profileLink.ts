@@ -49,9 +49,8 @@ class ProfileLink extends HTMLElement {
 
     // Called when the element is connected to the DOM
     connectedCallback() {
+        // The template in index.html is empty; only its inline style is used.
         const template = document.querySelector("#profile-link-template") as HTMLTemplateElement;
-        const instance = document.importNode(template.content, true);
-        this.appendChild(instance);
         this.setAttribute("style", template.style.cssText);
         this.textContent = `@${this.text}`;
 
