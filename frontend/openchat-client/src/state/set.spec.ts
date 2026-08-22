@@ -1,7 +1,7 @@
  
-import { ChatSet, identity } from "@shared";
+import { ChatSet, identity, type ChatIdentifier } from "@shared";
 import { vi } from "vitest";
-import { LocalSet } from "./set";
+import { ChatLocalSet, LocalSet } from "./set";
 
 vi.useFakeTimers();
 
@@ -13,6 +13,41 @@ describe("ChatSet", () => {
 
         expect(set.has({ kind: "group_chat", groupId: "123" })).toBe(true);
         expect(set.has({ kind: "direct_chat", userId: "456" })).toBe(false);
+    });
+
+    test("round-trips every identifier kind by value", () => {
+        const ids: ChatIdentifier[] = [
+            { kind: "direct_chat", userId: "u1" },
+            { kind: "group_chat", groupId: "g1" },
+            { kind: "channel", communityId: "c1", channelId: 7 },
+        ];
+        const set = new ChatSet(ids);
+        set.add({ kind: "channel", communityId: "c1", channelId: 7 });
+        expect(set.size).toBe(3);
+        expect([...set]).toEqual(ids);
+        expect([...set.values()]).toEqual(ids);
+        expect([...set.keys()]).toEqual(ids);
+        expect([...set.entries()]).toEqual(ids.map((id) => [id, id]));
+        const seen: ChatIdentifier[] = [];
+        set.forEach((v) => seen.push(v));
+        expect(seen).toEqual(ids);
+        expect(set.delete({ kind: "group_chat", groupId: "g1" })).toBe(true);
+        expect(set.has({ kind: "group_chat", groupId: "g1" })).toBe(false);
+        const cloned = set.clone();
+        expect([...cloned]).toEqual([ids[0], ids[2]]);
+        expect(set.has({ kind: "group_chat", groupId: "c1" })).toBe(false);
+        expect(set.has({ kind: "direct_chat", userId: "c1" })).toBe(false);
+    });
+
+    test("ChatLocalSet apply round-trips keys", () => {
+        const local = new ChatLocalSet();
+        const a: ChatIdentifier = { kind: "channel", communityId: "c1", channelId: 1 };
+        const b: ChatIdentifier = { kind: "direct_chat", userId: "u1" };
+        local.add(a);
+        local.remove(b);
+        const result = local.apply(new ChatSet([b]));
+        expect([...result]).toEqual([a]);
+        expect(result.has({ kind: "channel", communityId: "c1", channelId: 1 })).toBe(true);
     });
 });
 
