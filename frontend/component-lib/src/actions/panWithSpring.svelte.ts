@@ -41,9 +41,10 @@ export function panWithSpring(node: HTMLElement, props?: PanProps) {
     let startX: number | undefined;
     let startY: number | undefined;
     let currentDx: number | undefined;
-
-    // Indicate that transform will be change...
-    node.style.willChange = "transform";
+    // True from the moment a pan starts until the spring has returned to rest,
+    // so that we only report moves (and hold a compositor layer) while the
+    // node is actually moving.
+    let active = false;
 
     const effectCleanup = $effect.root(() => {
         $effect(() => {
@@ -52,9 +53,19 @@ export function panWithSpring(node: HTMLElement, props?: PanProps) {
 
             // To have access to current spring factor, we call the move handler
             // at this point...
-            onmove?.(getDirection(), getThresholdFactor());
+            if (active) {
+                onmove?.(getDirection(), getThresholdFactor());
+                if (!panning && spring.current === 0) {
+                    rest();
+                }
+            }
         });
     });
+
+    function rest() {
+        active = false;
+        node.style.willChange = "auto";
+    }
 
     function actionStart(e: TouchEvent) {
         if (started || isScrolling) return;
@@ -88,7 +99,10 @@ export function panWithSpring(node: HTMLElement, props?: PanProps) {
                 // Check if we can activate panning...
                 if (activationDelta > PAN_ACTIVATION_THRESHOOLD) {
                     panning = true;
+                    active = true;
                     startX = currentX;
+                    // Indicate that transform will be change...
+                    node.style.willChange = "transform";
                 }
             }
         } else {
@@ -126,6 +140,12 @@ export function panWithSpring(node: HTMLElement, props?: PanProps) {
 
         // Always return to start position
         spring.set(0, { hard: true });
+
+        // Nothing to animate back, so the effect will not run again
+        if (active && spring.current === 0) {
+            onmove?.(getDirection(), 0);
+            rest();
+        }
     }
 
     // Figure out by how much we've moved vertically, relative to horizontal movement.

@@ -47,9 +47,10 @@
     let index = $derived(counter % brags.length);
 
     onMount(() => {
-        setInterval(() => {
+        const interval = window.setInterval(() => {
             counter = counter + 1;
         }, 6000);
+        return () => window.clearInterval(interval);
     });
 </script>
 

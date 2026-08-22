@@ -1,6 +1,6 @@
 // Characterisation tests for the worker-side summary merge that runs on every
 // getUpdates cycle. They pin down CURRENT behaviour (including the unbounded
-// mention accumulation) so performance work can be verified against them.
+// mention dedupe/cap) so performance work can be verified against them.
 import {
     emptyChatMetrics,
     ROLE_ADMIN,
@@ -8,10 +8,15 @@ import {
     type EventWrapper,
     type GroupCanisterGroupChatSummaryUpdates,
     type GroupChatSummary,
+    type Mention,
     type Message,
     type UserCanisterGroupChatSummaryUpdates,
 } from "@shared";
-import { mergeGroupChatUpdates } from "./chat";
+import { MAX_MENTIONS, mergeGroupChatUpdates, mergeMentions } from "./chat";
+
+function mention(index: number): Mention {
+    return { messageId: BigInt(index), eventIndex: index, messageIndex: index };
+}
 
 function message(index: number): EventWrapper<Message> {
     return {
@@ -155,7 +160,7 @@ describe("mergeGroupChatUpdates", () => {
         expect(out[1].name).toBe("B!");
     });
 
-    test("prepends new mentions onto existing ones (current behaviour: no dedupe, no cap)", () => {
+    test("prepends new mentions onto existing ones, deduped by messageId", () => {
         const chats = [group("a")];
         const upd = groupUpdate("a", {
             membership: {
@@ -174,7 +179,26 @@ describe("mergeGroupChatUpdates", () => {
             },
         });
         const out = mergeGroupChatUpdates(chats, [], [upd]);
-        expect(out[0].membership.mentions.map((m) => m.messageIndex)).toEqual([7, 1, 1]);
+        expect(out[0].membership.mentions.map((m) => m.messageIndex)).toEqual([7, 1]);
+    });
+
+    test("mergeMentions dedupes by messageId keeping the incoming (newest) copy first", () => {
+        const out = mergeMentions(
+            [mention(9), mention(5)],
+            [mention(5), mention(3)],
+        );
+        expect(out.map((m) => m.messageIndex)).toEqual([9, 5, 3]);
+    });
+
+    test("mergeMentions caps at MAX_MENTIONS keeping the newest", () => {
+        // incoming 110..51 (newest first), existing 10..1
+        const incoming = Array.from({ length: 60 }, (_, i) => mention(110 - i));
+        const existing = Array.from({ length: 10 }, (_, i) => mention(10 - i));
+        const out = mergeMentions(incoming, existing);
+        expect(MAX_MENTIONS).toBe(50);
+        expect(out.length).toBe(50);
+        expect(out[0].messageIndex).toBe(110);
+        expect(out[49].messageIndex).toBe(61);
     });
 
     test("group update without membership leaves mentions untouched", () => {
