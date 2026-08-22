@@ -3,7 +3,7 @@ import {
     Notification as TNotification,
     notification as toNotification,
     typeboxValidate,
-} from "@agent";
+} from "@agent/notifications";
 import type {
     AddedToChannelNotification,
     ChannelIdentifier,
@@ -19,14 +19,12 @@ import type {
     GroupReaction,
     Notification,
 } from "@shared";
-import {
-    isMessageNotification,
-    routeForChatIdentifier,
-    routeForMessage,
-    routeForMessageContext,
-    toTitleCase,
-    UnsupportedValueError,
-} from "@shared";
+// Runtime imports come from the specific modules rather than the @shared barrel so
+// the service worker does not bundle the whole shared package (rollbar, idb, ...).
+import { UnsupportedValueError } from "@shared/domain/error";
+import { isMessageNotification } from "@shared/utils/notifications";
+import { routeForChatIdentifier, routeForMessage, routeForMessageContext } from "@shared/utils/routes";
+import { toTitleCase } from "@shared/utils/string";
 import { ExpirationPlugin } from "workbox-expiration";
 import { staticResourceCache } from "workbox-recipes";
 import { registerRoute } from "workbox-routing";
