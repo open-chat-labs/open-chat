@@ -6,13 +6,14 @@ import {
     applyOptionUpdate,
     AuthProvider,
     chatIdentifiersEqual,
+    chatIdentifierToString,
     ChatListScopeMap,
     ChatMap,
     ChatSet,
     CommunityMap,
-    compareChats,
     DEFAULT_TOKENS,
     emptyChatMetrics,
+    getDisplayDate,
     Immutable,
     mergeListOfCombinedUnreadCounts,
     mergePairOfCombinedUnreadCounts,
@@ -1083,12 +1084,16 @@ export const chatSummariesListStore = derived(
             }
             return result;
         }, []);
-        const unpinned = [...chatSummaries.values()]
-            .filter(
-                (chat) => pinnedByScope.findIndex((p) => chatIdentifiersEqual(p, chat.id)) === -1,
-            )
-            .sort(compareChats);
-        return pinned.concat(unpinned);
+        const pinnedIds = new Set(pinnedByScope.map(chatIdentifierToString));
+        // compute the (bigint) display date once per chat rather than twice per comparison
+        const unpinned: [bigint, ChatSummary][] = [];
+        for (const chat of chatSummaries.values()) {
+            if (!pinnedIds.has(chatIdentifierToString(chat.id))) {
+                unpinned.push([getDisplayDate(chat), chat]);
+            }
+        }
+        unpinned.sort(([a], [b]) => (a === b ? 0 : a < b ? 1 : -1));
+        return pinned.concat(unpinned.map(([, chat]) => chat));
     },
 );
 
