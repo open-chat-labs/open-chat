@@ -22,6 +22,10 @@ export class ChatSummaryUpdates {
     gateConfig?: AccessGateConfig;
     eventsTTL?: OptionUpdate<bigint>;
     isPublic?: boolean;
+
+    isEmpty(): boolean {
+        return Object.values(this).every((v) => v === undefined);
+    }
 }
 
 export const chatSummaryLocalUpdates = writable<ChatMap<ChatSummaryUpdates>>(

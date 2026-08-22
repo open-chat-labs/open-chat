@@ -11,6 +11,8 @@ export function scrollLimits(
         onEnd?: (fromEnd: number) => void;
     },
 ) {
+    let rafId: number | undefined;
+
     function fromEnd(): number {
         return node.scrollHeight - node.clientHeight - fromStart();
     }
@@ -27,19 +29,31 @@ export function scrollLimits(
         return fromStart() < (config.threshold ?? THRESHOLD);
     };
 
-    function onScroll() {
-        if (insideStartThreshold()) {
-            config.onStart?.(fromStart());
+    function check() {
+        rafId = undefined;
+        if (config.onStart && insideStartThreshold()) {
+            config.onStart(fromStart());
         }
-        if (insideEndThreshold()) {
-            config.onEnd?.(fromEnd());
+        if (config.onEnd && insideEndThreshold()) {
+            config.onEnd(fromEnd());
         }
     }
+
+    // Coalesce scroll events to one layout read per frame
+    function onScroll() {
+        if (rafId === undefined) {
+            rafId = requestAnimationFrame(check);
+        }
+    }
+
     if (config.onEnd || config.onStart) {
-        node.addEventListener("scroll", onScroll);
+        node.addEventListener("scroll", onScroll, { passive: true });
         return {
             destroy() {
                 node.removeEventListener("scroll", onScroll);
+                if (rafId !== undefined) {
+                    cancelAnimationFrame(rafId);
+                }
             },
         };
     }
