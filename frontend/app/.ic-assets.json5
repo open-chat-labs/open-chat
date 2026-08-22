@@ -26,6 +26,12 @@
         },
     },
     {
+        // Sourcemaps are still generated (for Rollbar) but must not be uploaded
+        // to the asset canister: ~34 MB per release with full sourcesContent.
+        match: "**/*.map",
+        ignore: true,
+    },
+    {
         match: ".well-known",
         ignore: false,
     },
