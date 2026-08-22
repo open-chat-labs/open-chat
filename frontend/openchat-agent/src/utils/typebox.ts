@@ -1,7 +1,7 @@
 import { Value } from "@sinclair/typebox/value";
 import { Kind, type Static, type TSchema } from "@sinclair/typebox";
 import { deepRemoveNullishFields } from "./nullish";
-import { TypeboxValidationError } from "@shared";
+import { TypeboxValidationError } from "@shared/domain/error";
 
 // Whether a schema or anything beneath it carries a `default` annotation. Value.Default is
 // deep-identity on a subtree with no defaults, so such subtrees can be skipped entirely.
