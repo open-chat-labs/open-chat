@@ -21,7 +21,6 @@
         expectWindowInsetChange,
     } from "@utils/native/notification_channels";
     import { expectShareTarget, handleShareTarget } from "@utils/native/share_target";
-    import "@utils/scream";
     import { portalState } from "component-lib";
     import {
         type ChatIdentifier,
