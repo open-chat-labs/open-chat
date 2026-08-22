@@ -10,7 +10,7 @@ export function trackedEffect(
         durationMs?: number;
     },
 ) {
-    if (!import.meta.env.DEV) {
+    if (import.meta.env.OC_BUILD_ENV !== "development") {
         $effect(fn);
         return;
     }
