@@ -41,6 +41,7 @@ export type RequestToSpeakMessage = DailyEventObjectAppMessage<RequestToSpeak>;
 export type RequestToSpeakMessageResponse = DailyEventObjectAppMessage<RequestToSpeakResponse>;
 export type DemoteParticipantMessage = DailyEventObjectAppMessage<DemoteParticipant>;
 
+const MAX_PREVIOUS_CALLS = 100;
 const previousCalls = new Set<bigint>();
 
 export type IncomingVideoCall = {
@@ -85,6 +86,9 @@ export const incomingVideoCall = {
             if (!previousCalls.has(call.messageId)) {
                 incomingStore.set(call);
                 previousCalls.add(call.messageId);
+                if (previousCalls.size > MAX_PREVIOUS_CALLS) {
+                    previousCalls.delete(previousCalls.values().next().value as bigint);
+                }
             }
         }
     },
