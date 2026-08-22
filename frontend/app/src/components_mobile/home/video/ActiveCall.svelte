@@ -1,6 +1,5 @@
 <script lang="ts">
-    import type { DailyThemeConfig } from "@daily-co/daily-js";
-    import daily, { type DailyCall } from "@daily-co/daily-js";
+    import type { DailyCall, DailyThemeConfig } from "@daily-co/daily-js";
     import { Column, Sheet, Title } from "component-lib";
     import {
         allUsersStore,
@@ -132,6 +131,9 @@
                 await call.destroy();
                 call = undefined;
             }
+
+            // daily-js is only loaded when a call actually starts so it stays out of the initial bundle
+            const { default: daily } = await import("@daily-co/daily-js");
 
             call = daily.createFrame(iframeContainer, {
                 token,
