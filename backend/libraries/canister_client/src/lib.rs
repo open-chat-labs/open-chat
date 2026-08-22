@@ -4,7 +4,7 @@ use std::fmt::Debug;
 use tracing::Level;
 
 pub use canister_client_macros::*;
-use types::{C2CError, C2CRetryPolicy};
+use types::{C2CError, C2CRetryPolicy, Cycles};
 
 // Serializing our own args, or deserializing the callee's response, will fail the same way however
 // many times we retry - either the caller and callee disagree on the types, or one of them has a
@@ -99,5 +99,49 @@ pub async fn make_c2c_call_raw(
             );
             Err(error)
         }
+    }
+}
+
+// Makes a c2c call, attaching as much of the canister's liquid cycles balance as can safely be
+// spared. This is for canisters which are about to be deleted: deleting a canister destroys
+// whatever cycles it still holds, so it refunds them to the callee along with its final call.
+pub async fn make_c2c_call_raw_refunding_spare_cycles(
+    canister_id: Principal,
+    method_name: &str,
+    payload_bytes: &[u8],
+) -> Result<Vec<u8>, C2CError> {
+    let call_cost = ic_cdk::api::cost_call(method_name.len() as u64, payload_bytes.len() as u64);
+    let refund = refund_amount(ic_cdk::api::canister_liquid_cycle_balance(), call_cost);
+
+    make_c2c_call_raw(canister_id, method_name, payload_bytes, refund, None).await
+}
+
+// Headroom kept back beyond the cost of the call itself, for the canister to keep operating until
+// it is actually deleted - executing the response to its final call, then being stopped and
+// deleted - and to absorb any charges which fall outside the estimate (eg. storage reservations
+// on a memory-pressured subnet). The refund fails the call carrying it if the balance dips below
+// the freezing threshold at any point along the way, so this is cheap insurance relative to the
+// balance being refunded.
+const REFUND_HEADROOM: Cycles = 20_000_000_000; // 20B
+
+fn refund_amount(liquid_balance: Cycles, call_cost: Cycles) -> Cycles {
+    liquid_balance.saturating_sub(call_cost.saturating_add(REFUND_HEADROOM))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const B: Cycles = 1_000_000_000;
+
+    #[test]
+    fn refund_keeps_back_the_call_cost_plus_the_headroom() {
+        assert_eq!(refund_amount(600 * B, 3 * B), 577 * B);
+    }
+
+    #[test]
+    fn no_refund_when_the_balance_is_below_the_amount_kept_back() {
+        assert_eq!(refund_amount(20 * B, 3 * B), 0);
+        assert_eq!(refund_amount(0, 3 * B), 0);
     }
 }
