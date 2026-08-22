@@ -1,6 +1,7 @@
 import {
     chatIdentifierFromKey,
     chatIdentifierToKey,
+    SafeMap,
     SafeSet,
     type ChatIdentifier,
     type Primitive,
@@ -51,11 +52,16 @@ export class LocalSet<T> {
 
     apply(original: ReadonlySet<T>): ReadonlySet<T> {
         if (this.#queue.length === 0) return original;
+        // only the last modification for each value has any effect
+        const last = new SafeMap<T, Modification<T>>(this.serialiser, this.deserialiser);
+        for (const mod of this.#queue) {
+            last.set(mod.value, mod);
+        }
         const merged = new SafeSet<T>(this.serialiser, this.deserialiser);
         for (const v of original) {
             merged.add(v);
         }
-        for (const mod of this.#queue) {
+        for (const [, mod] of last) {
             if (mod.kind === "remove") {
                 merged.delete(mod.value);
             }
