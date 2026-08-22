@@ -14,10 +14,17 @@ export type RenderMarkdownInput = {
     userGroups: MentionedUserGroup[];
 };
 
+const htmlEscapes: Record<string, string> = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+};
+
+// Escapes for use in both text and double/single-quoted attribute positions.
 export function escapeHtml(text: string): string {
-    const div = document.createElement("div");
-    div.textContent = text;
-    return div.innerHTML;
+    return text.replace(/[&<>"']/g, (c) => htmlEscapes[c]);
 }
 
 function uniqueMatches(text: string, regex: RegExp): string[] {

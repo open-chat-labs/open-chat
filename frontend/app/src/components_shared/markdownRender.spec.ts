@@ -37,8 +37,18 @@ function input(text: string, extra: Partial<RenderMarkdownInput> = {}): RenderMa
 }
 
 describe("escapeHtml", () => {
-    test("escapes & < > (quotes currently pass through)", () => {
-        expect(escapeHtml(`a & b < c > d "e" 'f'`)).toBe(`a &amp; b &lt; c &gt; d "e" 'f'`);
+    test("escapes & < > \" '", () => {
+        expect(escapeHtml(`a & b < c > d "e" 'f'`)).toBe(
+            `a &amp; b &lt; c &gt; d &quot;e&quot; &#39;f&#39;`,
+        );
+    });
+
+    test("matches the DOM serialiser for & < > in text position", () => {
+        const div = document.createElement("div");
+        for (const s of ["a & b", "<x>", "a<b>c&d", "plain_name-1"]) {
+            div.textContent = s;
+            expect(escapeHtml(s)).toBe(div.innerHTML);
+        }
     });
 
     test("leaves plain text untouched", () => {
@@ -151,13 +161,16 @@ describe("renderMarkdown (full parse + sanitise pipeline)", () => {
         );
     });
 
-    // Names containing quotes: the unescaped `"` terminates the text attribute
-    // early and DOMPurify/the parser drop the remainder, so the link text is
-    // truncated to `bob`.
+    // Names containing quotes: with the div-based escaper the unescaped `"`
+    // terminated the text attribute early and the parser dropped the
+    // remainder (text="bob"). With quotes escaped the whole name survives as
+    // the attribute value. Real usernames cannot contain these characters so
+    // this only affects pathological input. Angle brackets are legal inside an
+    // attribute value so the serialiser emits them literally.
     test("snapshot: mention-bearing message (names with quotes/angles/ampersands)", () => {
         const out = renderMarkdown(input("hey @UserId(def-2) see @UserGroup(8)"), noop);
         expect(out).toMatchInlineSnapshot(
-            `"hey <profile-link text="bob" user-id="def-2" suppress-links="false"></profile-link> see <strong><a href="?usergroup=8">@mods &lt;b&gt;"x"&lt;/b&gt; &amp; 'y'</a></strong>"`,
+            `"hey <profile-link text="bob &quot;the&quot; <builder> &amp; 'co'" user-id="def-2" suppress-links="false"></profile-link> see <strong><a href="?usergroup=8">@mods &lt;b&gt;"x"&lt;/b&gt; &amp; 'y'</a></strong>"`,
         );
     });
 
