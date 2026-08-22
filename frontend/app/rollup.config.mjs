@@ -391,8 +391,10 @@ export default {
             : []),
 
         // We're building for production (npm run build
-        // instead of npm run dev), minify
-        terser(),
+        // instead of npm run dev), minify. console.log/debug are stripped:
+        // setMinLogLevel NOOPs them at runtime by default anyway, so this just
+        // saves evaluating their arguments. warn/error stay for Rollbar.
+        terser({ compress: { drop_console: ["log", "debug"], drop_debugger: true } }),
 
         // Pull in the worker and service worker
         copy({
