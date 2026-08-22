@@ -151,6 +151,17 @@ export function initEnv() {
 // rebuilds always start with a clean slate.
 const lazyModuleCache = new Map();
 
+// The desktop and mobile App trees are loaded from main.ts via dynamic import() so
+// that only the selected tree is fetched. For chunking purposes they are still
+// treated as roots: a node_modules package statically reachable from either tree
+// belongs in the shared, separately-cached vendor chunk, exactly as it did when the
+// trees were imported statically. Without this, every dependency would count as
+// "only dynamically reachable" and the vendor chunk would dissolve into the app chunks.
+const APP_ROOTS = ["/src/components/App.svelte", "/src/components_mobile/App.svelte"];
+function isAppRoot(id) {
+    return APP_ROOTS.some((root) => id.endsWith(root));
+}
+
 // Returns true when every path from `id` back to a bundle entry point passes through
 // at least one dynamic import(), meaning the module will never be loaded on the initial
 // page render.  Circular imports are handled by optimistically treating a module as lazy
@@ -166,7 +177,7 @@ function isOnlyDynamicallyReachable(id, getModuleInfo) {
     lazyModuleCache.set(id, true);
 
     const info = getModuleInfo(id);
-    if (!info || info.isEntry) {
+    if (!info || info.isEntry || isAppRoot(id)) {
         lazyModuleCache.set(id, false);
         return false;
     }
