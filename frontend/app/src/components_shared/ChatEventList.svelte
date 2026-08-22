@@ -210,13 +210,15 @@
             }
         }
         const seg = allItems.slice(bounds[chosen], bounds[chosen + 1]);
-        vclDebug.log("segment", {
-            segs: bounds.length - 1,
-            chosen,
-            anchor: anchorMessageIndex,
-            len: seg.length,
-            of: allItems.length,
-        });
+        if (vclDebug.enabled) {
+            vclDebug.log("segment", {
+                segs: bounds.length - 1,
+                chosen,
+                anchor: anchorMessageIndex,
+                len: seg.length,
+                of: allItems.length,
+            });
+        }
         return seg;
     });
 
