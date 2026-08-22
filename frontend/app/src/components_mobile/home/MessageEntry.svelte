@@ -2,6 +2,7 @@
     import RichTextEditor from "@shared_components/RichTextEditor.svelte";
     import { keyboard } from "@src/stores/keyboard.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
+    import { detectMarkdown } from "@src/utils/detectMarkdown";
     import {
         popHistoryStateWithAction,
         pushDummyHistoryState,
@@ -336,8 +337,13 @@
         document.execCommand("delete");
     }
 
+    // The markdown the editor last reported (or was last set to), so the effect below can compare
+    // against it without re-serialising the whole document on every keystroke
+    let lastMarkdown = "";
+
     function onInput() {
         const inputContent = editor?.getMarkdown() ?? "";
+        lastMarkdown = inputContent;
         onSetTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
         triggerCommandSelector(inputContent);
         triggerTypingTimer();
@@ -507,37 +513,18 @@
 
     function afterSendMessage() {
         editor?.clear();
+        lastMarkdown = "";
         onSetTextContent();
 
         onStopTyping();
 
         // After sending a message we must force a new textbox instance to be created, otherwise on iPhone the
         // predictive text doesn't notice the text has been cleared so the suggestions don't make sense.
+        // The {#key} only wraps the editor itself so the rest of the entry UI is not rebuilt.
         textboxId = Symbol();
         tick().then(() => editor?.focus());
     }
 
-    function detectMarkdown(text: string | null) {
-        if (!text) return false;
-
-        // a few regexes to detect various block level markdown elements (possibly incomplete)
-        const headerRegex = /^(?:\#{1,6}\s+)/m;
-        const tableRegex = /(?:\|(?:[^\r\n\|\\]|\\.)*\|)+/;
-        const bulletedListRegex = /^(?:\s*[-\*+]\s+)/m;
-        const numberedListRegex = /^(?:\s*\d+\.\s+)/m;
-        const blockquoteRegex = /^(?:\s*>)/m;
-        const codeBlockRegex = /(?:^```[\s\S]*?^```)/m;
-        const regexList = [
-            headerRegex,
-            tableRegex,
-            bulletedListRegex,
-            numberedListRegex,
-            blockquoteRegex,
-            codeBlockRegex,
-        ];
-        const result = regexList.some((regex) => regex.test(text));
-        return result;
-    }
 
     let directChatBotId = $derived(client.directChatWithBot(chat));
     let directBot = $derived(
@@ -572,13 +559,15 @@
                     editor.setContent(editingEvent.event.content.caption ?? "");
                 }
                 previousEditingEvent = editingEvent;
-                containsMarkdown = detectMarkdown(editor.getMarkdown());
+                lastMarkdown = editor.getMarkdown();
+                containsMarkdown = detectMarkdown(lastMarkdown);
             } else {
                 const text = textContent ?? "";
                 // Only set the textbox text when required rather than every time, because doing so sets the focus back to
                 // the start of the textbox on some devices.
-                if (editor.getMarkdown() !== text) {
+                if (lastMarkdown !== text) {
                     editor.setContent(text);
+                    lastMarkdown = editor.getMarkdown();
                     containsMarkdown = detectMarkdown(text);
                 }
             }
@@ -675,63 +664,63 @@
             {#if activeStream !== undefined}
                 <RecordingWaveform stream={activeStream} />
             {:else if canEnterText}
-                {#key textboxId}
-                    <div
-                        class="message_entry_wrapper"
-                        class:has_reply={!!replyingTo}
-                        class:has_attachment={!!attachment}
-                        class:is_editing={editingEvent !== undefined}>
-                        {#if replyingTo}
-                            <ReplyingTo readonly {replyingTo} {user} {onCancelReply} />
-                        {/if}
-                        {#if !editingEvent && attachment !== undefined}
-                            <DraftMediaMessage {onRemoveAttachment} content={attachment} />
-                        {/if}
-                        {#if editingEvent !== undefined}
-                            <Row
-                                height={{ size: "1rem" }}
-                                crossAxisAlignment="center"
-                                supplementalClass="editing-title">
-                                <BodySmall colour="textSecondary">
-                                    <Translatable resourceKey={i18nKey("Editing...")} />
-                                </BodySmall>
-                                <IconButton size={"sm"} padding={"md"} onclick={onCancelEdit}>
-                                    {#snippet icon()}
-                                        <Close color={ColourVars.textSecondary} />
-                                    {/snippet}
-                                </IconButton>
-                            </Row>
-                        {/if}
-                        <Container
-                            bind:ref={messageEntryElement}
-                            gap="sm"
-                            minHeight="3.5rem"
-                            maxHeight="calc(var(--vh, 1vh) * 50)"
-                            padding="xs"
-                            overflow="visible"
+                <div
+                    class="message_entry_wrapper"
+                    class:has_reply={!!replyingTo}
+                    class:has_attachment={!!attachment}
+                    class:is_editing={editingEvent !== undefined}>
+                    {#if replyingTo}
+                        <ReplyingTo readonly {replyingTo} {user} {onCancelReply} />
+                    {/if}
+                    {#if !editingEvent && attachment !== undefined}
+                        <DraftMediaMessage {onRemoveAttachment} content={attachment} />
+                    {/if}
+                    {#if editingEvent !== undefined}
+                        <Row
+                            height={{ size: "1rem" }}
                             crossAxisAlignment="center"
-                            mainAxisAlignment="spaceBetween"
-                            supplementalClass="message_entry_text_box">
-                            {#if inputTrayMode !== "emoji_gif_selection"}
-                                <IconButton
-                                    onclick={toggleEmojiPicker}
-                                    padding={["sm", "zero", "md", "sm"]}
-                                    size={"md"}>
-                                    {#snippet icon()}
-                                        <StickerEmoji color={ColourVars.textPlaceholder} />
-                                    {/snippet}
-                                </IconButton>
-                            {:else}
-                                <IconButton
-                                    onclick={showKeyboard}
-                                    padding={["sm", "zero", "md", "sm"]}
-                                    size={"md"}>
-                                    {#snippet icon()}
-                                        <Keyboard color={ColourVars.textPlaceholder} />
-                                    {/snippet}
-                                </IconButton>
-                            {/if}
+                            supplementalClass="editing-title">
+                            <BodySmall colour="textSecondary">
+                                <Translatable resourceKey={i18nKey("Editing...")} />
+                            </BodySmall>
+                            <IconButton size={"sm"} padding={"md"} onclick={onCancelEdit}>
+                                {#snippet icon()}
+                                    <Close color={ColourVars.textSecondary} />
+                                {/snippet}
+                            </IconButton>
+                        </Row>
+                    {/if}
+                    <Container
+                        bind:ref={messageEntryElement}
+                        gap="sm"
+                        minHeight="3.5rem"
+                        maxHeight="calc(var(--vh, 1vh) * 50)"
+                        padding="xs"
+                        overflow="visible"
+                        crossAxisAlignment="center"
+                        mainAxisAlignment="spaceBetween"
+                        supplementalClass="message_entry_text_box">
+                        {#if inputTrayMode !== "emoji_gif_selection"}
+                            <IconButton
+                                onclick={toggleEmojiPicker}
+                                padding={["sm", "zero", "md", "sm"]}
+                                size={"md"}>
+                                {#snippet icon()}
+                                    <StickerEmoji color={ColourVars.textPlaceholder} />
+                                {/snippet}
+                            </IconButton>
+                        {:else}
+                            <IconButton
+                                onclick={showKeyboard}
+                                padding={["sm", "zero", "md", "sm"]}
+                                size={"md"}>
+                                {#snippet icon()}
+                                    <Keyboard color={ColourVars.textPlaceholder} />
+                                {/snippet}
+                            </IconButton>
+                        {/if}
 
+                        {#key textboxId}
                             <div class="textbox">
                                 <RichTextEditor
                                     bind:this={editor}
@@ -758,46 +747,46 @@
                                     {/snippet}
                                 </RichTextEditor>
                             </div>
+                        {/key}
 
-                            {#if editingEvent === undefined}
-                                <Container
-                                    padding={["zero", "sm", "zero", "zero"]}
-                                    width={"hug"}
-                                    gap={"md"}>
-                                    <IconButton
-                                        onclick={toggleAttachments}
-                                        padding={["sm", "zero", "md", "zero"]}
-                                        size={"md"}>
-                                        {#snippet icon()}
-                                            <div
-                                                class:open={inputTrayMode === "attachments" &&
-                                                    !keyboard.visible}
-                                                class="drawer_trigger">
-                                                <PlusCircle color={ColourVars.textPlaceholder} />
-                                            </div>
+                        {#if editingEvent === undefined}
+                            <Container
+                                padding={["zero", "sm", "zero", "zero"]}
+                                width={"hug"}
+                                gap={"md"}>
+                                <IconButton
+                                    onclick={toggleAttachments}
+                                    padding={["sm", "zero", "md", "zero"]}
+                                    size={"md"}>
+                                    {#snippet icon()}
+                                        <div
+                                            class:open={inputTrayMode === "attachments" &&
+                                                !keyboard.visible}
+                                            class="drawer_trigger">
+                                            <PlusCircle color={ColourVars.textPlaceholder} />
+                                        </div>
+                                    {/snippet}
+                                </IconButton>
+
+                                {#if messageIsEmpty && canAddImageOrVideo}
+                                    <FileAttacher {onFileSelected}>
+                                        {#snippet children(onClick)}
+                                            <IconButton
+                                                onclick={onClick}
+                                                padding={["sm", "zero", "md", "zero"]}
+                                                size={"md"}>
+                                                {#snippet icon()}
+                                                    <Camera
+                                                        color={ColourVars.textPlaceholder} />
+                                                {/snippet}
+                                            </IconButton>
                                         {/snippet}
-                                    </IconButton>
-
-                                    {#if messageIsEmpty && canAddImageOrVideo}
-                                        <FileAttacher {onFileSelected}>
-                                            {#snippet children(onClick)}
-                                                <IconButton
-                                                    onclick={onClick}
-                                                    padding={["sm", "zero", "md", "zero"]}
-                                                    size={"md"}>
-                                                    {#snippet icon()}
-                                                        <Camera
-                                                            color={ColourVars.textPlaceholder} />
-                                                    {/snippet}
-                                                </IconButton>
-                                            {/snippet}
-                                        </FileAttacher>
-                                    {/if}
-                                </Container>
-                            {/if}
-                        </Container>
-                    </div>
-                {/key}
+                                    </FileAttacher>
+                                {/if}
+                            </Container>
+                        {/if}
+                    </Container>
+                </div>
             {:else}
                 <div class="textbox">
                     <Translatable resourceKey={placeholder} />
