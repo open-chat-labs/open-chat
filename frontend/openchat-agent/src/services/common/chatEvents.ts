@@ -581,17 +581,18 @@ async function chunkedChatEventsWindowFromBackend(
                 aggregatedResponse = mergeEventsResponse(aggregatedResponse, resp);
             } else {
                 // in this branch we want to concurrently expand the window in both directions and then merge in the results
-                if (lowIndex >= minIndex) {
-                    const above = await eventsFn(lowIndex, false, chunkSize);
+                const [above, below] = await Promise.all([
+                    lowIndex >= minIndex ? eventsFn(lowIndex, false, chunkSize) : undefined,
+                    highIndex <= maxIndex ? eventsFn(highIndex, true, chunkSize) : undefined,
+                ]);
 
+                if (above !== undefined) {
                     if (!isSuccessfulEventsResponse(above)) return above;
 
                     aggregatedResponse = mergeEventsResponse(above, aggregatedResponse);
                 }
 
-                if (highIndex <= maxIndex) {
-                    const below = await eventsFn(highIndex, true, chunkSize);
-
+                if (below !== undefined) {
                     if (!isSuccessfulEventsResponse(below)) return below;
 
                     aggregatedResponse = mergeEventsResponse(aggregatedResponse, below);
