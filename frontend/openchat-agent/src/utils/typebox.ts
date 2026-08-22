@@ -1,21 +1,7 @@
-import { AssertError, Value } from "@sinclair/typebox/value";
-import { TypeCompiler, type TypeCheck } from "@sinclair/typebox/compiler";
+import { Value } from "@sinclair/typebox/value";
 import { Kind, type Static, type TSchema } from "@sinclair/typebox";
 import { deepRemoveNullishFields } from "./nullish";
 import { TypeboxValidationError } from "@shared";
-
-// Compiled checkers are cached per schema object (root schemas and any union members
-// visited by applyDefaults). Compilation is a one-off few ms per schema.
-const compiled = new WeakMap<TSchema, TypeCheck<TSchema>>();
-
-function checkerFor<T extends TSchema>(schema: T): TypeCheck<T> {
-    let check = compiled.get(schema);
-    if (check === undefined) {
-        check = TypeCompiler.Compile(schema);
-        compiled.set(schema, check);
-    }
-    return check as TypeCheck<T>;
-}
 
 // Whether a schema or anything beneath it carries a `default` annotation. Value.Default is
 // deep-identity on a subtree with no defaults, so such subtrees can be skipped entirely.
@@ -124,7 +110,7 @@ function applyDefaults(schema: TSchema, value: unknown): unknown {
                 const result = hasDefaults(inner)
                     ? applyDefaults(inner, Value.Clone(defaulted))
                     : defaulted;
-                if (checkerFor(inner).Check(result)) return result;
+                if (Value.Check(inner, result)) return result;
             }
             return defaulted;
         }
@@ -133,19 +119,16 @@ function applyDefaults(schema: TSchema, value: unknown): unknown {
     }
 }
 
-// Equivalent to Value.Parse(["Default", "Convert", "Assert"], schema, value): Default and
-// Convert are the transforms (Convert is what turns msgpack numbers/strings into bigints),
-// Assert is performed by the compiled checker.
+// Equivalent to Value.Parse(["Default", "Convert", "Assert"], schema, value), with the
+// Default step replaced by applyDefaults above. Convert is kept as-is (it is what turns
+// msgpack numbers/strings into bigints) and Value.Assert is the Parse "Assert" step.
 export function typeboxValidate<T extends TSchema>(value: unknown, validator: T): Static<T> {
     try {
-        const check = checkerFor(validator);
         const converted = Value.Convert(
             validator,
             applyDefaults(validator, deepRemoveNullishFields(value)),
         );
-        if (!check.Check(converted)) {
-            throw new AssertError(check.Errors(converted));
-        }
+        Value.Assert(validator, converted);
         return converted as Static<T>;
     } catch (err) {
         console.error("Typebox validation failed: ", value, err);
