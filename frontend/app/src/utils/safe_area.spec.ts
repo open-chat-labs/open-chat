@@ -31,7 +31,7 @@ describe("setupKeyboardTracking", () => {
     });
 
     it("registers a passive scroll listener", () => {
-        const call = addEventListener.mock.calls.find(([type]) => type === "scroll");
+        const call = addEventListener.mock.calls.find(([type]: unknown[]) => type === "scroll");
         expect(call?.[2]).toEqual({ passive: true });
     });
 
