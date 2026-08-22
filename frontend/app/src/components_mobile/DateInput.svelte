@@ -20,7 +20,7 @@
 <script lang="ts">
     // TODO i18n localisation for the date picker!
 
-    import { Tooltip } from "component-lib";
+    import { Spinner, Tooltip } from "component-lib";
     import type { ResourceKey } from "@client";
     import { onMount } from "svelte";
     import { _ } from "svelte-i18n";
@@ -57,7 +57,9 @@
 </script>
 
 <div class={`input-wrapper date-time ${align} ${!dateIsValid ? "error" : ""}`}>
-    {#await import("svelty-picker") then { default: SveltyPicker }}
+    {#await import("svelty-picker")}
+        <div aria-busy="true"><Spinner /></div>
+    {:then { default: SveltyPicker }}
         <SveltyPicker
             value={localDate}
             {disabled}
@@ -80,6 +82,8 @@
                     ? onchange?.(BigInt(dateValue.getTime()))
                     : onchange?.(null);
             }} />
+    {:catch}
+        <span>Unable to load date picker</span>
     {/await}
     {#if !dateIsValid}
         <div class="error-icon">

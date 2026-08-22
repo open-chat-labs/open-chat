@@ -391,6 +391,8 @@
     {#if $snowing}
         {#await import("@shared_components/Snow.svelte") then { default: Snow }}
             <Snow />
+        {:catch}
+            <!-- snow is cosmetic; ignore a failed chunk load -->
         {/await}
     {/if}
 

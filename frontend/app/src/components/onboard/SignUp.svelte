@@ -14,6 +14,7 @@
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
+    import { Spinner } from "component-lib";
     import FindUser from "../FindUser.svelte";
     import Input from "../Input.svelte";
     import Legend from "../Legend.svelte";
@@ -47,12 +48,16 @@
 
     let TermsContent: typeof import("../landingpages/TermsContent.svelte").default | undefined =
         $state(undefined);
+    let termsLoadFailed = $state(false);
 
     function onShowGuidelines() {
         showGuidelines = true;
         client.gaTrack("show_guidelines_clicked", "registration");
         if (TermsContent === undefined) {
-            import("../landingpages/TermsContent.svelte").then((m) => (TermsContent = m.default));
+            termsLoadFailed = false;
+            import("../landingpages/TermsContent.svelte")
+                .then((m) => (TermsContent = m.default))
+                .catch(() => (termsLoadFailed = true));
         }
     }
     function onCloseGuidelines() {
@@ -184,6 +189,10 @@
                 <span class="guidelines-modal">
                     {#if TermsContent}
                         <TermsContent />
+                    {:else if termsLoadFailed}
+                        <ErrorMessage>Unable to load the terms. Please try again.</ErrorMessage>
+                    {:else}
+                        <div aria-busy="true"><Spinner /></div>
                     {/if}
                 </span>
             {/snippet}
@@ -191,7 +200,7 @@
                 <span>
                     <Button
                         onClick={() => onClose?.()}
-                        disabled={TermsContent === undefined}
+                        disabled={TermsContent === undefined && !termsLoadFailed}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}>
                         <Translatable resourceKey={i18nKey("register.agree")} />

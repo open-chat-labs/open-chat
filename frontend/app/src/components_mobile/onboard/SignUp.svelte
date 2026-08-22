@@ -9,6 +9,7 @@
         Form,
         Input,
         Sheet,
+        Spinner,
         StatusCard,
         Subtitle,
         Switch,
@@ -49,12 +50,16 @@
 
     let TermsContent: typeof import("../TermsContent.svelte").default | undefined =
         $state(undefined);
+    let termsLoadFailed = $state(false);
 
     function onShowGuidelines() {
         showGuidelines = true;
         client.gaTrack("show_guidelines_clicked", "registration");
         if (TermsContent === undefined) {
-            import("../TermsContent.svelte").then((m) => (TermsContent = m.default));
+            termsLoadFailed = false;
+            import("../TermsContent.svelte")
+                .then((m) => (TermsContent = m.default))
+                .catch(() => (termsLoadFailed = true));
         }
     }
     function onCloseGuidelines() {
@@ -180,8 +185,14 @@
             <Subtitle>OpenChat Terms</Subtitle>
             {#if TermsContent}
                 <TermsContent />
+            {:else if termsLoadFailed}
+                <ErrorMessage>Unable to load the terms. Please try again.</ErrorMessage>
+            {:else}
+                <div aria-busy="true"><Spinner /></div>
             {/if}
-            <Button onClick={onCloseGuidelines} disabled={TermsContent === undefined}>
+            <Button
+                onClick={onCloseGuidelines}
+                disabled={TermsContent === undefined && !termsLoadFailed}>
                 <Translatable resourceKey={i18nKey("register.agree")} />
             </Button>
         </Container>

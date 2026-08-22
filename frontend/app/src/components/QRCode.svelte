@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { Spinner } from "component-lib";
+
     interface Props {
         text: string;
         size?: "default" | "smaller" | "larger";
@@ -22,8 +24,12 @@
         class:smaller={size === "smaller"}
         class:larger={size === "larger"}
         class:full-width-on-mobile={fullWidthOnMobile}>
-        {#await import("svelte-qrcode-image") then { QRCodeImage }}
+        {#await import("svelte-qrcode-image")}
+            <div aria-busy="true"><Spinner size="2em" /></div>
+        {:then { QRCodeImage }}
             <QRCodeImage {text} errorCorrectionLevel="Q" margin={2} displayClass="qr-code-image" />
+        {:catch}
+            <p>Unable to load QR code</p>
         {/await}
         {#if logo !== undefined}
             <img class="icon" src={logo} />
