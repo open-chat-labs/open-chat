@@ -1207,15 +1207,11 @@ async function readAll<Name extends StoreNames<ChatSchema>>(
 ): Promise<Record<string, StoreValue<ChatSchema, Name>>> {
     const transaction = (await db).transaction([storeName]);
     const store = transaction.objectStore(storeName);
-    const cursor = await store.openCursor();
+    const [keys, vals] = await Promise.all([store.getAllKeys(), store.getAll()]);
+    await transaction.done;
     const values: Record<string, StoreValue<ChatSchema, Name>> = {};
-    while (cursor?.key !== undefined) {
-        values[cursor.key as string] = cursor.value;
-        try {
-            await cursor.continue();
-        } catch {
-            break;
-        }
+    for (let i = 0; i < keys.length; i++) {
+        values[keys[i] as string] = vals[i];
     }
     return values;
 }
