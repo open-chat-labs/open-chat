@@ -349,3 +349,62 @@ describe("groupEvents", () => {
         expect(JSON.stringify(events)).toBe(snap);
     });
 });
+
+describe("mergeEventsAndLocalUpdates fast path", () => {
+    const noFilters: MessageFilter[] = [];
+    const replyCtx = {
+        kind: "rehydrated_reply_context" as const,
+        content: { kind: "text_content" as const, text: "original" },
+        senderId: "u2",
+        messageId: 1n,
+        messageIndex: 1,
+        eventIndex: 1,
+        edited: false,
+        isThreadRoot: false,
+        sourceContext: ctx,
+    };
+
+    function run(
+        events: EventWrapper<ChatEvent>[],
+        unconfirmed: EventWrapper<Message>[] = [],
+        blocked = new Set<string>(),
+        updates = new MessageMap<MessageLocalUpdates>(),
+    ) {
+        return mergeEventsAndLocalUpdates(
+            events,
+            unconfirmed,
+            new DRange(),
+            new MessageMap<string>(),
+            blocked,
+            updates,
+            new MessageMap<bigint>(),
+            noFilters,
+        );
+    }
+
+    test("returns identical references for messages with reply contexts when nothing applies", () => {
+        const events: EventWrapper<ChatEvent>[] = [
+            msgEv(1, "u2"),
+            ev(2, msg(2, "u1", "reply", { repliesTo: replyCtx })),
+            ev(3, { kind: "member_joined", userId: "u3" }),
+        ];
+        const out = run(events);
+        expect(out).toEqual(events);
+        out.forEach((e, i) => expect(e).toBe(events[i]));
+    });
+
+    test("non-matching blocked users / updates still return identical references", () => {
+        const events: EventWrapper<ChatEvent>[] = [msgEv(1, "u2"), msgEv(2, "u1")];
+        const u = new MessageLocalUpdates();
+        u.editedContent = { kind: "text_content", text: "edited" };
+        const out = run(events, [], new Set(["nobody"]), new MessageMap([[2n, u]]));
+        expect(out[0]).toBe(events[0]);
+        expect(out[1]).not.toBe(events[1]);
+        expect((out[1].event as Message).content).toEqual({ kind: "text_content", text: "edited" });
+    });
+
+    test("fast path still tracks confirmed ids and contiguity for unconfirmed messages", () => {
+        const out = run([msgEv(1), msgEv(2)], [ev(2, msg(2, "me")), msgEv(3, "me"), msgEv(9, "me")]);
+        expect(indexes(out)).toEqual([1, 2, 3]);
+    });
+});
