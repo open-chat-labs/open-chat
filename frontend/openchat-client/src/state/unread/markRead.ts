@@ -434,37 +434,36 @@ export class MessageReadTracker {
         return false;
     }
 
-    combinedUnreadCountForChats(chats: ChatMap<ChatSummary>): CombinedUnreadCounts {
-        return chats.reduce(
-            (counts, [id, chat]) => {
-                if (chat === undefined) return counts;
+    combinedUnreadCountForChats(chats: Iterable<ChatSummary | undefined>): CombinedUnreadCounts {
+        let counts: CombinedUnreadCounts = {
+            chats: emptyUnreadCounts(),
+            threads: emptyUnreadCounts(),
+        };
+        for (const chat of chats) {
+            if (chat === undefined) continue;
 
-                const muted = chat.membership.notificationsMuted;
-                const unreadMessages = this.unreadMessageCount(
-                    id,
-                    chat.latestMessage?.event.messageIndex,
-                );
-                const mentions = unreadMessages > 0 && this.#hasUnreadMentions(chat);
-                const unreadThreads = this.staleThreadCountForChat(
-                    id,
-                    chat.membership.latestThreads,
-                );
-                return {
-                    chats: mergeUnreadCounts(unreadMessages, muted, mentions, counts.chats),
-                    threads: mergeUnreadCounts(
-                        unreadThreads,
-                        muted,
-                        false,
-                        counts.threads,
-                        unreadThreads,
-                    ),
-                };
-            },
-            {
-                chats: emptyUnreadCounts(),
-                threads: emptyUnreadCounts(),
-            } as CombinedUnreadCounts,
-        );
+            const muted = chat.membership.notificationsMuted;
+            const unreadMessages = this.unreadMessageCount(
+                chat.id,
+                chat.latestMessage?.event.messageIndex,
+            );
+            const mentions = unreadMessages > 0 && this.#hasUnreadMentions(chat);
+            const unreadThreads = this.staleThreadCountForChat(
+                chat.id,
+                chat.membership.latestThreads,
+            );
+            counts = {
+                chats: mergeUnreadCounts(unreadMessages, muted, mentions, counts.chats),
+                threads: mergeUnreadCounts(
+                    unreadThreads,
+                    muted,
+                    false,
+                    counts.threads,
+                    unreadThreads,
+                ),
+            };
+        }
+        return counts;
     }
 
     #hasUnreadMentions(chat: ChatSummary): boolean {

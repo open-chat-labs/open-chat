@@ -37,10 +37,9 @@
 
     interface Props {
         thread: ThreadPreview;
-        observer: IntersectionObserver;
     }
 
-    let { thread, observer }: Props = $props();
+    let { thread }: Props = $props();
 
     let expanded = $state(false);
     let missingMessages = $derived(thread.totalReplies - thread.latestReplies.length);
@@ -188,7 +187,6 @@
                     <ChatMessage
                         sender={$allUsersStore.get(thread.rootMessage.event.sender)}
                         focused={false}
-                        {observer}
                         accepted
                         confirmed
                         failed={false}
@@ -235,7 +233,6 @@
                             <ChatMessage
                                 sender={$allUsersStore.get(evt.event.sender)}
                                 focused={false}
-                                {observer}
                                 accepted
                                 confirmed
                                 failed={false}

@@ -10,6 +10,21 @@
     }
 
     let { children, top, speed = 300 }: Props = $props();
+
+    // Once a page has been covered by another and its slide transition has
+    // finished, stop painting it. It stays mounted (form state, scroll
+    // position, back-navigation all rely on that) but costs nothing to render.
+    // Visibility is restored synchronously when it becomes top again, before
+    // the reverse transition starts.
+    let settled = $state(false);
+    $effect(() => {
+        if (top) {
+            settled = false;
+            return;
+        }
+        const timer = setTimeout(() => (settled = true), speed);
+        return () => clearTimeout(timer);
+    });
 </script>
 
 {#if !top}
@@ -20,6 +35,7 @@
 {/if}
 <div
     class:top
+    class:settled
     transition:fly={{ duration: speed, easing: cubicInOut, x: window.innerWidth }}
     style={`--speed: ${speed}ms`}
     class="sliding_page">
@@ -50,6 +66,10 @@
         &:not(.top) {
             transform: scale(0.93);
             opacity: 0.8;
+        }
+
+        &.settled {
+            visibility: hidden;
         }
     }
 

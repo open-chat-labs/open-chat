@@ -42,15 +42,18 @@
             smooth: true,
         });
 
-        container.addEventListener("panzoomend", (_e: any) => {
+        const onPanzoomEnd = () => {
             const currentScale = panzoomInstance.getScale();
             currentScale <= DEFAULT_SCALE + SCALE_EPSILON && imageHeight <= window.innerHeight
                 ? panzoomInstance.reset({ animate: true })
                 : snapToClosestEdge(currentScale);
-        });
+        };
+        container.addEventListener("panzoomend", onPanzoomEnd);
 
         pushDummyHistoryState("zoomed_image_state");
         return () => {
+            container.removeEventListener("panzoomend", onPanzoomEnd);
+            panzoomInstance.destroy();
             // This will try and pop the history state, if it's still there!
             popHistoryStateWithAction("zoomed_image_state");
         };

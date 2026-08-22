@@ -1,6 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { emojiDatabase } from "@src/utils/emojis";
+    import { getEmojiDatabase } from "@src/utils/emojis";
     import { Body, ChatFootnote, ColourVars, Row, Tooltip, type Alignment } from "component-lib";
     import type { NativeEmoji } from "emoji-picker-element/shared";
     import type { CustomEmoji, Reaction, UserLookup } from "@client";
@@ -50,7 +50,7 @@
         if (customEmoji !== undefined) {
             return `:${customEmoji.code}:`;
         }
-        const emoji = (await emojiDatabase.getEmojiByUnicodeOrName(reaction)) as
+        const emoji = (await getEmojiDatabase().getEmojiByUnicodeOrName(reaction)) as
             | NativeEmoji
             | undefined;
         if (!emoji) return reaction;
