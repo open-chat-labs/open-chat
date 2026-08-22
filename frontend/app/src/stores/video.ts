@@ -3,11 +3,12 @@
  * DailyCall object in a store
  */
 
-import {
-    type DailyCall,
-    type DailyEventObjectAppMessage,
-    type DailyParticipantUpdateOptions,
-    type DailyThemeConfig,
+// type-only so daily-js is not pulled into the initial bundle (verbatimModuleSyntax keeps `import { type X }`)
+import type {
+    DailyCall,
+    DailyEventObjectAppMessage,
+    DailyParticipantUpdateOptions,
+    DailyThemeConfig,
 } from "@daily-co/daily-js";
 import { type ChatIdentifier, type VideoCallType } from "@client";
 import { get, type Subscriber, writable } from "svelte/store";
