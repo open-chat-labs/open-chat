@@ -606,14 +606,16 @@
         bottomSpacerHeight = Math.max(0, bottomSpacerHeight);
         [bottomSpacerHeight, topSpacerHeight] = sanitizeSpacers(bottomSpacerHeight, topSpacerHeight);
 
-        vclDebug.log("incr", {
-            s,
-            e,
-            bh: Math.round(bottomSpacerHeight),
-            th: Math.round(topSpacerHeight),
-            pend: pendingBottomCorrections.size,
-            debt: Math.round(spacerDebt),
-        });
+        if (vclDebug.enabled) {
+            vclDebug.log("incr", {
+                s,
+                e,
+                bh: Math.round(bottomSpacerHeight),
+                th: Math.round(topSpacerHeight),
+                pend: pendingBottomCorrections.size,
+                debt: Math.round(spacerDebt),
+            });
+        }
 
         start = s;
         end = e;
@@ -1310,7 +1312,7 @@
                     // the bottom in that case.
                     const atBottom = fromBottom < 10;
                     const est = pendingBottomCorrections.get(currentIdx);
-                    if (est !== undefined ? h !== est : prev > 0) {
+                    if (vclDebug.enabled && (est !== undefined ? h !== est : prev > 0)) {
                         vclDebug.log("measure", {
                             i: currentIdx,
                             key: items[currentIdx].key,
