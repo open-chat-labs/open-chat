@@ -14,7 +14,9 @@ import { MessageLocalUpdates } from "../state/message/localUpdates";
 import {
     groupEvents,
     mergeEventsAndLocalUpdates,
+    mergeEventsAndLocalUpdatesWithRange,
     mergeServerEvents,
+    subrangesCover,
     updateExistingMessages,
 } from "./chat";
 
@@ -347,5 +349,171 @@ describe("groupEvents", () => {
         const snap = JSON.stringify(events);
         groupEvents(events, "me", false, new Set());
         expect(JSON.stringify(events)).toBe(snap);
+    });
+
+    test("iterateBackwards produces exactly what reversing the input would", () => {
+        const events: EventWrapper<ChatEvent>[] = [
+            msgEv(1, "u1", BASE),
+            ev(2, { kind: "member_joined", userId: "a" }, BASE + 1),
+            ev(3, { kind: "member_left", userId: "b" }, BASE + 2),
+            ev(4, { kind: "message_pinned", pinnedBy: "u1", messageIndex: 1 }, BASE + 3),
+            msgEv(5, "u2", BASE + 4),
+            msgEv(6, "u2", BASE + DAY),
+            ev(7, { kind: "member_joined", userId: "c" }, BASE + DAY + 1),
+            msgEv(8, "u1", BASE + DAY + 2),
+        ];
+        for (const isPublic of [false, true]) {
+            const expected = groupEvents([...events].reverse(), "me", isPublic, new Set());
+            const actual = groupEvents(events, "me", isPublic, new Set(), undefined, true);
+            expect(actual).toEqual(expected);
+        }
+        expect(groupEvents(events, "me", false, new Set(), undefined, false)).toEqual(
+            groupEvents(events, "me", false, new Set()),
+        );
+        expect(groupEvents([], "me", false, new Set(), undefined, true)).toEqual([]);
+    });
+});
+
+describe("mergeEventsAndLocalUpdates fast path", () => {
+    const noFilters: MessageFilter[] = [];
+    const replyCtx = {
+        kind: "rehydrated_reply_context" as const,
+        content: { kind: "text_content" as const, text: "original" },
+        senderId: "u2",
+        messageId: 1n,
+        messageIndex: 1,
+        eventIndex: 1,
+        edited: false,
+        isThreadRoot: false,
+        sourceContext: ctx,
+    };
+
+    function run(
+        events: EventWrapper<ChatEvent>[],
+        unconfirmed: EventWrapper<Message>[] = [],
+        blocked = new Set<string>(),
+        updates = new MessageMap<MessageLocalUpdates>(),
+    ) {
+        return mergeEventsAndLocalUpdates(
+            events,
+            unconfirmed,
+            new DRange(),
+            new MessageMap<string>(),
+            blocked,
+            updates,
+            new MessageMap<bigint>(),
+            noFilters,
+        );
+    }
+
+    test("returns identical references for messages with reply contexts when nothing applies", () => {
+        const events: EventWrapper<ChatEvent>[] = [
+            msgEv(1, "u2"),
+            ev(2, msg(2, "u1", "reply", { repliesTo: replyCtx })),
+            ev(3, { kind: "member_joined", userId: "u3" }),
+        ];
+        const out = run(events);
+        expect(out).toEqual(events);
+        out.forEach((e, i) => expect(e).toBe(events[i]));
+    });
+
+    test("non-matching blocked users / updates still return identical references", () => {
+        const events: EventWrapper<ChatEvent>[] = [msgEv(1, "u2"), msgEv(2, "u1")];
+        const u = new MessageLocalUpdates();
+        u.editedContent = { kind: "text_content", text: "edited" };
+        const out = run(events, [], new Set(["nobody"]), new MessageMap([[2n, u]]));
+        expect(out[0]).toBe(events[0]);
+        expect(out[1]).not.toBe(events[1]);
+        expect((out[1].event as Message).content).toEqual({ kind: "text_content", text: "edited" });
+    });
+
+    test("fast path still tracks confirmed ids and contiguity for unconfirmed messages", () => {
+        const out = run([msgEv(1), msgEv(2)], [ev(2, msg(2, "me")), msgEv(3, "me"), msgEv(9, "me")]);
+        expect(indexes(out)).toEqual([1, 2, 3]);
+    });
+});
+
+describe("subrangesCover", () => {
+    test("matches DRange clone+intersect length check for every gap", () => {
+        const loaded = new DRange();
+        loaded.add(1, 5);
+        loaded.add(6, 8); // adjacent: merges into 1..8
+        loaded.add(12, 15);
+        loaded.add(20);
+        const subs = loaded.subranges();
+        expect(subs).toEqual([
+            { low: 1, high: 8, length: 8 },
+            { low: 12, high: 15, length: 4 },
+            { low: 20, high: 20, length: 1 },
+        ]);
+        for (let low = 0; low <= 22; low++) {
+            for (let high = low; high <= 22; high++) {
+                const legacy = loaded.clone().intersect(low, high).length === high - low + 1;
+                expect(subrangesCover(subs, low, high)).toBe(legacy);
+            }
+        }
+    });
+
+    test("empty gap is covered, empty ranges cover nothing", () => {
+        expect(subrangesCover([], 5, 4)).toBe(true);
+        expect(subrangesCover([], 5, 5)).toBe(false);
+    });
+});
+
+describe("mergeEventsAndLocalUpdatesWithRange", () => {
+    function run(
+        events: EventWrapper<ChatEvent>[],
+        unconfirmed: EventWrapper<Message>[] = [],
+        expired = new DRange(),
+    ) {
+        return mergeEventsAndLocalUpdatesWithRange(
+            events,
+            unconfirmed,
+            expired,
+            new MessageMap<string>(),
+            new Set(),
+            new MessageMap<MessageLocalUpdates>(),
+            new MessageMap<bigint>(),
+            [],
+        );
+    }
+
+    // What indexesLoadedStore used to compute from the merged events.
+    function rebuilt(events: EventWrapper<ChatEvent>[], expired: DRange): DRange {
+        const ranges = new DRange();
+        events.forEach((e) => ranges.add(e.index));
+        ranges.add(expired);
+        return ranges;
+    }
+
+    test("events match mergeEventsAndLocalUpdates and range matches a rebuild from them", () => {
+        const events = [msgEv(1), msgEv(2), msgEv(5), msgEv(6)];
+        const unconfirmed = [msgEv(7, "me"), msgEv(20, "me")];
+        const expired = new DRange(3, 4);
+        const { events: out, range } = run(events, unconfirmed, expired);
+        const legacy = mergeEventsAndLocalUpdates(
+            events,
+            unconfirmed,
+            expired,
+            new MessageMap<string>(),
+            new Set(),
+            new MessageMap<MessageLocalUpdates>(),
+            new MessageMap<bigint>(),
+            [],
+        );
+        expect(indexes(out)).toEqual(indexes(legacy));
+        expect(range.subranges()).toEqual(rebuilt(out, expired).subranges());
+        expect(range.subranges()).toEqual([{ low: 1, high: 7, length: 7 }]);
+    });
+
+    test("range is just the expired ranges when there are no events", () => {
+        const { events, range } = run([], [], new DRange(2, 9));
+        expect(events).toEqual([]);
+        expect(range.subranges()).toEqual([{ low: 2, high: 9, length: 8 }]);
+    });
+
+    test("range excludes unconfirmed messages that were dropped", () => {
+        const { range } = run([msgEv(1)], [msgEv(10, "me")]);
+        expect(range.subranges()).toEqual([{ low: 1, high: 1, length: 1 }]);
     });
 });

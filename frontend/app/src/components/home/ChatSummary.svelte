@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { trackedEffect } from "@src/utils/effects.svelte";
     import type {
         ChatSummary,
         CommunitySummary,
@@ -52,7 +51,6 @@
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import { canDeleteDirectChat, publishDeleteDirectChat } from "../../utils/directChat";
     import { rtlStore } from "../../stores/rtl";
-    import { now } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
     import { pop } from "../../utils/transition";
     import { buildDisplayName } from "../../utils/user";
@@ -90,7 +88,7 @@
     let hovering = $state(false);
     let unreadMessages = $state<number>(0);
     let unreadMentions = $state<number>(0);
-    let chat = $derived(normaliseChatSummary($now, chatSummary, $typersByContext));
+    let chat = $derived(normaliseChatSummary(chatSummary, $typersByContext));
     let lastMessage = $derived(formatLatestMessage(chatSummary, $allUsersStore));
     let displayDate = $derived(client.getDisplayDate(chatSummary));
     let community = $derived(
@@ -139,7 +137,7 @@
         });
     }
 
-    function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
+    function normaliseChatSummary(chatSummary: ChatSummary, typing: TypersByKey) {
         const fav =
             $chatListScopeStore.kind !== "favourite" && $favouritesStore.has(chatSummary.id);
         const muted = chatSummary.membership.notificationsMuted;
@@ -262,12 +260,6 @@
 
         return `${user}: ${latestMessageText}`;
     }
-
-    trackedEffect("unarchive-chat", () => {
-        if (chatSummary.membership.archived && unreadMessages > 0 && !chat.bot) {
-            unarchiveChat();
-        }
-    });
 
     function deleteEmptyChat(e: Event) {
         e.stopPropagation();
