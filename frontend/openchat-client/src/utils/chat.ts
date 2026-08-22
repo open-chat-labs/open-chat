@@ -1428,32 +1428,14 @@ export function mergeEventsAndLocalUpdatesWithRange(
     eventIndexes.add(expiredEventRanges);
     const confirmedMessageIds = new Set<bigint>();
 
-    const nothingToApply =
-        messageLocalUpdates.size === 0 &&
-        translations.size === 0 &&
-        selectedChatBlockedOrSuspendedUsers.size === 0 &&
-        messageFilters.length === 0;
+    const noBlockedOrFilters =
+        selectedChatBlockedOrSuspendedUsers.size === 0 && messageFilters.length === 0;
 
     function processEvent(e: EventWrapper<ChatEvent>): EventWrapper<ChatEvent> {
         eventIndexes.add(e.index);
 
         if (e.event.kind === "message") {
             confirmedMessageIds.add(e.event.messageId);
-
-            // Fast path: with no local state to overlay, the only thing that
-            // could change the event is restricted content, so skip the
-            // per-message lookups below.
-            if (
-                nothingToApply &&
-                !messageRestricted(e.event) &&
-                !(
-                    e.event.repliesTo?.kind === "rehydrated_reply_context" &&
-                    messageFlagsRestricted(e.event.repliesTo.moderationFlags)
-                )
-            ) {
-                return e;
-            }
-
             const updates = messageLocalUpdates.get(e.event.messageId);
             const translation = translations.get(e.event.messageId);
 
@@ -1467,6 +1449,27 @@ export function mergeEventsAndLocalUpdatesWithRange(
                     ? [messageLocalUpdates.get(repliesTo), translations.get(repliesTo)]
                     : [undefined, undefined];
 
+            const restricted = messageRestricted(e.event);
+            const repliesToRestricted =
+                e.event.repliesTo?.kind === "rehydrated_reply_context" &&
+                messageFlagsRestricted(e.event.repliesTo.moderationFlags);
+
+            // Fast path: nothing local applies to this message (or its reply
+            // context) and there are no blocked users / filters, so skip the
+            // remaining per-message checks. Output is identical to falling
+            // through, which would return `e` anyway.
+            if (
+                noBlockedOrFilters &&
+                updates === undefined &&
+                translation === undefined &&
+                replyContextUpdates === undefined &&
+                replyTranslation === undefined &&
+                !restricted &&
+                !repliesToRestricted
+            ) {
+                return e;
+            }
+
             const tallyUpdate =
                 e.event.content.kind === "proposal_content" ? updates?.proposalTally : undefined;
 
@@ -1474,10 +1477,6 @@ export function mergeEventsAndLocalUpdatesWithRange(
             const repliesToSenderBlocked =
                 e.event.repliesTo?.kind === "rehydrated_reply_context" &&
                 selectedChatBlockedOrSuspendedUsers.has(e.event.repliesTo.senderId);
-            const restricted = messageRestricted(e.event);
-            const repliesToRestricted =
-                e.event.repliesTo?.kind === "rehydrated_reply_context" &&
-                messageFlagsRestricted(e.event.repliesTo.moderationFlags);
 
             // Don't hide the sender's own messages
             const failedMessageFilter =
