@@ -1,5 +1,6 @@
 import DRange from "drange";
 import {
+    ChatMap,
     CommunityMap,
     emptyChatMetrics,
     emptyRules,
@@ -9,6 +10,7 @@ import {
     ROLE_MODERATOR,
     ROLE_NONE,
     ROLE_OWNER,
+    type ChannelSummary,
     type ChatIdentifier,
     type CommunityIdentifier,
     type CommunityPermissions,
@@ -28,6 +30,8 @@ import { ChatDetailsState } from "../chat/serverDetails";
 import { communityLocalUpdates } from "../community/detailUpdates";
 import { CommunityDetailsState } from "../community/server";
 import { localUpdates } from "../localUpdates";
+import { messagesRead } from "../unread/markRead";
+import { withPausedStores } from "../../utils/stores";
 import {
     notFoundStore,
     pathContextStore,
@@ -46,6 +50,7 @@ import {
     communitiesStore,
     directChatBotsStore,
     eventsStore,
+    globalUnreadCountStore,
     expiredServerEventRanges,
     messageFiltersStore,
     pinnedChatsStore,
@@ -60,6 +65,7 @@ import {
     selectedServerCommunityStore,
     serverCommunitiesStore,
     serverEventsStore,
+    serverGroupChatsStore,
     serverPinnedChatsStore,
     translationsStore,
 } from "./stores";
@@ -916,5 +922,79 @@ describe("cryptoBalanceStore", () => {
         expect(cryptoBalanceStore.value.get("ledger1")).toBe(200n);
         expect(cryptoBalanceStore.valueIfUpdatedRecently("ledger1")).toBe(200n);
         unsub();
+    });
+});
+
+describe("unread count stores", () => {
+    const msg = chatMessage();
+    msg.event.messageIndex = 100;
+    function channel(communityId: string, channelId: string): ChannelSummary {
+        return {
+            ...groupChat(channelId, msg),
+            kind: "channel",
+            id: { kind: "channel", communityId, channelId },
+        } as unknown as ChannelSummary;
+    }
+
+    test("marking messages read in one chat only re-evaluates that chat", () => {
+        const groups: GroupChatSummary[] = [];
+        for (let i = 0; i < 300; i++) {
+            groups.push(groupChat(`g${i}`, msg));
+        }
+        const communities: CommunitySummary[] = [];
+        for (let c = 0; c < 20; c++) {
+            const community = createCommunitySummary(`c${c}`, c);
+            for (let ch = 0; ch < 40; ch++) {
+                community.channels.push(channel(`c${c}`, `${c}_${ch}`));
+            }
+            communities.push(community);
+        }
+        const all: (GroupChatSummary | ChannelSummary)[] = [
+            ...groups,
+            ...communities.flatMap((c) => c.channels),
+        ];
+        withPausedStores(() => {
+            for (const c of all) {
+                messagesRead.syncWithServer(c.id, 0, [], undefined);
+            }
+            serverGroupChatsStore.set(ChatMap.fromList(all.slice(0, 300) as GroupChatSummary[]));
+            serverCommunitiesStore.set(
+                CommunityMap.fromList(
+                    communities.map((c, i) => ({
+                        ...c,
+                        channels: all.slice(300 + i * 40, 340 + i * 40) as ChannelSummary[],
+                    })),
+                ),
+            );
+        });
+
+        let publishes = 0;
+        const unsub = globalUnreadCountStore.subscribe(() => publishes++);
+        const before = get(globalUnreadCountStore);
+        expect(before.chats).toEqual({ muted: 0, unmuted: 1100, mentions: false });
+
+        const spy = vi.spyOn(messagesRead, "unreadMessageCount");
+        const target = all[7];
+        for (let i = 1; i <= 50; i++) {
+            if (!messagesRead.isRead({ chatId: target.id }, i, undefined)) {
+                messagesRead.markMessageRead({ chatId: target.id }, i, undefined);
+            }
+        }
+        const evaluations = spy.mock.calls.length;
+        spy.mockRestore();
+
+        const after = get(globalUnreadCountStore);
+        expect(after.chats).toEqual({ muted: 0, unmuted: 1100, mentions: false });
+        // only the changed chat is re-evaluated per publish (was 50 x 1100 before the per-chat cache)
+        expect(evaluations).toEqual(50);
+        messagesRead.markMessageRead({ chatId: target.id }, 100, undefined);
+        expect(get(globalUnreadCountStore).chats).toEqual({
+            muted: 0,
+            unmuted: 1099,
+            mentions: false,
+        });
+        unsub();
+        // initial subscription + 50 marks + the final mark
+        expect(publishes).toEqual(52);
     });
 });
