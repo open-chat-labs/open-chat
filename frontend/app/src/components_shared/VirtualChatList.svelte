@@ -123,6 +123,7 @@
         computeSpacers as _computeSpacers,
         computeWindow as _computeWindow,
         buildPrefixSums,
+        observeResize,
         OVERSCAN_PX,
         rowByKey,
     } from "./virtualListUtils";
@@ -166,10 +167,15 @@
     //   keyToHeight — keyed by item.key (stable identity). Source of truth for
     //     measured heights. Survives index shifts when messages are prepended.
     //   prefixSums — cumulative height array for O(log N) window computation.
-    //     prefix[i] = sum(height[0..i-1]). Rebuilt lazily when dirty.
+    //     prefix[i] = sum(height[0..i-1]). Rebuilt lazily when dirty —
+    //     prefixDirtyFrom is the lowest index whose height/estimate changed
+    //     (Infinity = clean); only the tail from there is recomputed.
     let heightMap: number[] = [];
-    let prefixSums: number[] = [0];
-    let prefixDirty = true;
+    let prefixSums: Float64Array = new Float64Array(1);
+    let prefixDirtyFrom = 0;
+    function markPrefixDirty(fromIdx: number) {
+        if (fromIdx < prefixDirtyFrom) prefixDirtyFrom = fromIdx;
+    }
     let keyToHeight = new Map<string, number>();
     let totalMeasuredHeight = 0;
     let measuredCount = 0;
@@ -235,7 +241,7 @@
         keyToHeight = prunedHeights;
         if (measuredCount > 0) averageHeight = totalMeasuredHeight / measuredCount;
         realignEstimates();
-        prefixDirty = true;
+        markPrefixDirty(0);
     }
 
     // Incremental extension for append-only changes (older messages loaded at
@@ -263,24 +269,26 @@
         }
         if (measuredCount > 0) averageHeight = totalMeasuredHeight / measuredCount;
         realignEstimates(fromIdx);
-        prefixDirty = true;
+        markPrefixDirty(fromIdx);
     }
 
     // Rebuild prefix sums from heightMap + spacerAvgHeight.
-    // Called lazily before computeWindow/computeSpacers when prefixDirty is set.
-    // O(N), but batches ALL height changes since the last rebuild into one pass.
+    // Called lazily before computeWindow/computeSpacers when dirty.
+    // O(N - dirtyFrom), but batches ALL height changes since the last rebuild into one pass.
     // This is strictly better than incremental O(N-i)-per-change updates during
     // burst scenarios (initial render, resize) where many items measure at once:
     // one O(N) rebuild vs O(windowSize × N) total for per-item updates.
     function ensurePrefixSums() {
-        if (!prefixDirty) return;
+        if (prefixDirtyFrom === Infinity) return;
         prefixSums = buildPrefixSums(
             items.length,
             heightMap,
             spacerAvgHeight,
             estimateClass !== undefined ? estimateMap : undefined,
+            prefixSums,
+            prefixDirtyFrom,
         );
-        prefixDirty = false;
+        prefixDirtyFrom = Infinity;
     }
 
     // Re-freeze the estimate space: the global average plus each class's
@@ -299,7 +307,7 @@
             }
             realignEstimates();
         }
-        prefixDirty = true;
+        markPrefixDirty(0);
     }
 
     // ── spacerAvgHeight (frozen estimate snapshot) ───────────────────────
@@ -606,14 +614,16 @@
         bottomSpacerHeight = Math.max(0, bottomSpacerHeight);
         [bottomSpacerHeight, topSpacerHeight] = sanitizeSpacers(bottomSpacerHeight, topSpacerHeight);
 
-        vclDebug.log("incr", {
-            s,
-            e,
-            bh: Math.round(bottomSpacerHeight),
-            th: Math.round(topSpacerHeight),
-            pend: pendingBottomCorrections.size,
-            debt: Math.round(spacerDebt),
-        });
+        if (vclDebug.enabled) {
+            vclDebug.log("incr", {
+                s,
+                e,
+                bh: Math.round(bottomSpacerHeight),
+                th: Math.round(topSpacerHeight),
+                pend: pendingBottomCorrections.size,
+                debt: Math.round(spacerDebt),
+            });
+        }
 
         start = s;
         end = e;
@@ -1288,7 +1298,7 @@
                     // measurement (which totals O(windowSize × N) for the burst).
                     // The rebuild runs lazily: it only fires when the next
                     // computeWindow/computeSpacers call actually needs prefix sums.
-                    prefixDirty = true;
+                    markPrefixDirty(currentIdx);
 
                     // ── scrollTop compensation ─────────────────────────────
                     // In column-reverse, the bottom spacer is at the scroll
@@ -1310,7 +1320,7 @@
                     // the bottom in that case.
                     const atBottom = fromBottom < 10;
                     const est = pendingBottomCorrections.get(currentIdx);
-                    if (est !== undefined ? h !== est : prev > 0) {
+                    if (vclDebug.enabled && (est !== undefined ? h !== est : prev > 0)) {
                         vclDebug.log("measure", {
                             i: currentIdx,
                             key: items[currentIdx].key,
@@ -1430,16 +1440,13 @@
         // immediately, so the scrollTop compensation happens in the same frame as
         // the item entry — preventing a visible shift during forward scroll.
         measure();
-        const ro = new ResizeObserver(measure);
-        ro.observe(node);
+        const unobserve = observeResize(node, measure);
 
         return {
             update(newIdx: number) {
                 currentIdx = newIdx;
             },
-            destroy() {
-                ro.disconnect();
-            },
+            destroy: unobserve,
         };
     }
 

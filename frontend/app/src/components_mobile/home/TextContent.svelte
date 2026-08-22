@@ -45,20 +45,25 @@
     let text = $derived(textContent?.text);
 </script>
 
-<IntersectionObserver
-    unobserveOnIntersect={false}
-    rootMarginTop={$lowBandwidth ? 0 : 1000}
-    rootMarginBottom={$lowBandwidth ? 0 : 1000}
-    contextId="scrollable-messages-div">
-    {#snippet children(intersecting)}
-        <LinkPreviews
-            {me}
-            {ogPreviews}
-            {messagePreviews}
-            {intersecting}
-            onRemove={onRemovePreview} />
-    {/snippet}
-</IntersectionObserver>
+{#if ogPreviews.length > 0 || messagePreviews.length > 0}
+    <IntersectionObserver
+        unobserveOnIntersect={false}
+        rootMarginTop={$lowBandwidth ? 0 : 1000}
+        rootMarginBottom={$lowBandwidth ? 0 : 1000}
+        contextId="scrollable-messages-div">
+        {#snippet children(intersecting)}
+            <LinkPreviews
+                {me}
+                {ogPreviews}
+                {messagePreviews}
+                {intersecting}
+                onRemove={onRemovePreview} />
+        {/snippet}
+    </IntersectionObserver>
+{:else}
+    <!-- keep the wrapper so layout is identical with and without previews -->
+    <div style="width: 100%"></div>
+{/if}
 
 <Column
     supplementalClass={`text_content ${truncate ? "truncated" : ""}`}
