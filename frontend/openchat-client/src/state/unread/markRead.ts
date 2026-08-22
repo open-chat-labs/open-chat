@@ -510,6 +510,9 @@ export class MessageReadTracker {
         return contribution;
     }
 
+    // Assumes mentions from the server always carry confirmed message ids: isRead also consults
+    // localUpdates.isUnconfirmed/isEphemeral, which are not versioned inputs of the contribution
+    // cache. A feature that produces local (unconfirmed) mentions must bump the chat's version.
     #hasUnreadMentions(chat: ChatSummary): boolean {
         if (chat.kind === "direct_chat") return false;
         return (

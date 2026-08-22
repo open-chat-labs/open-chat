@@ -975,13 +975,11 @@ describe("unread count stores", () => {
 
         const spy = vi.spyOn(messagesRead, "unreadMessageCount");
         const target = all[7];
-        const start = performance.now();
         for (let i = 1; i <= 50; i++) {
             if (!messagesRead.isRead({ chatId: target.id }, i, undefined)) {
                 messagesRead.markMessageRead({ chatId: target.id }, i, undefined);
             }
         }
-        const ms = performance.now() - start;
         const evaluations = spy.mock.calls.length;
         spy.mockRestore();
 
@@ -996,8 +994,7 @@ describe("unread count stores", () => {
             mentions: false,
         });
         unsub();
-        console.log(
-            `appStores.spec: 50 marks over 1100 chats: ${evaluations} per-chat evaluations, ${publishes} publishes, ${ms.toFixed(1)}ms`,
-        );
+        // initial subscription + 50 marks + the final mark
+        expect(publishes).toEqual(52);
     });
 });
