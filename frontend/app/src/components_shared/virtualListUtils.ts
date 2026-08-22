@@ -125,3 +125,24 @@ export function computeSpacers(
 export function rowByKey(root: HTMLElement, key: string): HTMLElement | null {
     return root.querySelector<HTMLElement>(`.vcl-row[data-key="${CSS.escape(key)}"]`);
 }
+
+// ── Shared ResizeObserver ──────────────────────────────────────────────
+// One observer for every virtual-list row (across all list instances) rather
+// than one per row. Per-row semantics are unchanged: observe() still delivers
+// the initial notification, and each row's callback runs once per delivery.
+const resizeCallbacks = new WeakMap<Element, () => void>();
+let sharedResizeObserver: ResizeObserver | undefined;
+
+export function observeResize(el: Element, callback: () => void): () => void {
+    sharedResizeObserver ??= new ResizeObserver((entries) => {
+        for (const entry of entries) {
+            resizeCallbacks.get(entry.target)?.();
+        }
+    });
+    resizeCallbacks.set(el, callback);
+    sharedResizeObserver.observe(el);
+    return () => {
+        resizeCallbacks.delete(el);
+        sharedResizeObserver?.unobserve(el);
+    };
+}

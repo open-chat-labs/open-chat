@@ -123,6 +123,7 @@
         computeSpacers as _computeSpacers,
         computeWindow as _computeWindow,
         buildPrefixSums,
+        observeResize,
         OVERSCAN_PX,
         rowByKey,
     } from "./virtualListUtils";
@@ -1439,16 +1440,13 @@
         // immediately, so the scrollTop compensation happens in the same frame as
         // the item entry — preventing a visible shift during forward scroll.
         measure();
-        const ro = new ResizeObserver(measure);
-        ro.observe(node);
+        const unobserve = observeResize(node, measure);
 
         return {
             update(newIdx: number) {
                 currentIdx = newIdx;
             },
-            destroy() {
-                ro.disconnect();
-            },
+            destroy: unobserve,
         };
     }
 

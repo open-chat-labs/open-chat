@@ -1,5 +1,11 @@
-import { describe, expect, it } from "vitest";
-import { buildPrefixSums, computeSpacers, computeWindow, getHeight } from "./virtualListUtils";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+    buildPrefixSums,
+    computeSpacers,
+    computeWindow,
+    getHeight,
+    observeResize,
+} from "./virtualListUtils";
 
 const AVG = 100;
 const VIEWPORT = 600;
@@ -12,7 +18,7 @@ function uniformHeights(count: number, h: number): number[] {
 }
 
 // Helper: build prefix sums for tests.
-function prefix(count: number, heightMap: number[] = [], avg: number = AVG): number[] {
+function prefix(count: number, heightMap: number[] = [], avg: number = AVG): Float64Array {
     return buildPrefixSums(count, heightMap, avg);
 }
 
@@ -282,5 +288,53 @@ describe("computeSpacers", () => {
         const totalNonVirtual = N * AVG + (N - 1) * GAP;
         const flexGaps = (e - s + 1) * GAP; // both spacers present
         expect(bh + windowHeight + th + flexGaps).toBe(totalNonVirtual);
+    });
+});
+
+describe("observeResize", () => {
+    type Cb = (entries: { target: Element }[]) => void;
+    const instances: { cb: Cb; observed: Set<Element> }[] = [];
+
+    beforeEach(() => {
+        instances.length = 0;
+        vi.stubGlobal(
+            "ResizeObserver",
+            class {
+                observed = new Set<Element>();
+                constructor(public cb: Cb) {
+                    instances.push(this);
+                }
+                observe(el: Element) {
+                    this.observed.add(el);
+                }
+                unobserve(el: Element) {
+                    this.observed.delete(el);
+                }
+                disconnect() {
+                    this.observed.clear();
+                }
+            },
+        );
+    });
+    afterEach(() => vi.unstubAllGlobals());
+
+    it("uses a single observer and dispatches each entry to its own row callback", () => {
+        const a = {} as Element;
+        const b = {} as Element;
+        const calls: string[] = [];
+        const offA = observeResize(a, () => calls.push("a"));
+        const offB = observeResize(b, () => calls.push("b"));
+        expect(instances.length).toBe(1);
+        expect(instances[0].observed.has(a) && instances[0].observed.has(b)).toBe(true);
+
+        instances[0].cb([{ target: b }, { target: a }, { target: a }]);
+        expect(calls).toEqual(["b", "a", "a"]);
+
+        offA();
+        expect(instances[0].observed.has(a)).toBe(false);
+        instances[0].cb([{ target: a }, { target: b }]);
+        expect(calls).toEqual(["b", "a", "a", "b"]);
+        offB();
+        expect(instances[0].observed.size).toBe(0);
     });
 });
