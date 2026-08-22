@@ -36,4 +36,14 @@ describe("msgpack", () => {
         expect(view.byteOffset).toBe(8);
         expect(deserializeFromMsgPack(view)).toEqual(deserializeFromMsgPack(packed.slice()));
     });
+
+    test("decoded bytes fields are copies, not views into the reply buffer", () => {
+        const principal = new Uint8Array([10, 11, 12, 13, 14, 15, 16, 17, 18, 19]);
+        const packed = serializeToMsgPack({ user_id: principal, text: "x".repeat(2000) });
+        const out = deserializeFromMsgPack<{ user_id: Uint8Array }>(packed);
+        expect(out.user_id).toEqual(principal);
+        expect(out.user_id.byteLength).toBe(principal.byteLength);
+        expect(out.user_id.buffer).not.toBe(packed.buffer);
+        expect(out.user_id.buffer.byteLength).toBe(principal.byteLength);
+    });
 });

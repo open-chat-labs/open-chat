@@ -226,6 +226,8 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
         responseBytes: Uint8Array,
         validator: Resp,
     ): Static<Resp> {
+        // Passed through without copying: @dfinity/cbor hands us an exact-length `.slice()`
+        // copy of the reply, so re-check this if a cbor upgrade switches to subarray views.
         const response = deserializeFromMsgPack(responseBytes);
         return typeboxValidate(response, validator);
     }
