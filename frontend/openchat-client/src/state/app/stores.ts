@@ -6,13 +6,14 @@ import {
     applyOptionUpdate,
     AuthProvider,
     chatIdentifiersEqual,
+    chatIdentifierToString,
     ChatListScopeMap,
     ChatMap,
     ChatSet,
     CommunityMap,
-    compareChats,
     DEFAULT_TOKENS,
     emptyChatMetrics,
+    getDisplayDate,
     Immutable,
     mergeListOfCombinedUnreadCounts,
     mergePairOfCombinedUnreadCounts,
@@ -548,7 +549,8 @@ export const communitiesStore = derived(
                 updates?.rulesAccepted !== undefined;
 
             if (anyChanges) {
-                const clone = structuredClone(community);
+                // only membership is modified below so that is all we need to copy
+                const clone = { ...community, membership: { ...community.membership } };
                 const index = updates?.index;
                 if (index !== undefined) {
                     clone.membership.index = index;
@@ -906,11 +908,7 @@ export const userMetricsStore = derived(allServerChatsStore, (allServerChats) =>
 export const unreadFavouriteCountsStore = derived(
     [serverFavouritesStore, allServerChatsStore, messagesRead],
     ([serverFavourites, allServerChats, _]) => {
-        const chats = ChatMap.fromList(
-            [...serverFavourites.values()]
-                .map((id) => allServerChats.get(id))
-                .filter((chat) => chat !== undefined) as ChatSummary[],
-        );
+        const chats = [...serverFavourites.values()].map((id) => allServerChats.get(id));
         return messagesRead.combinedUnreadCountForChats(chats);
     },
 );
@@ -930,8 +928,15 @@ export const selectedServerChatSummaryStore = derived(
     },
 );
 
+// The updaters applied to chats in allChatsStore only ever assign top-level fields or fields
+// of membership (nested objects such as permissions are replaced, never mutated), so a shallow
+// copy plus a copy of membership is enough to keep the server chat untouched.
+function shallowCloneChat(chat: Readonly<ChatSummary>): ChatSummary {
+    return { ...chat, membership: { ...chat.membership } };
+}
+
 function applyLocalUpdatesToChat(chat: Immutable<ChatSummary>, updates?: ChatSummaryUpdates) {
-    if (updates === undefined) return;
+    if (updates === undefined || updates.isEmpty()) return;
 
     chat.update((c) => {
         c.membership.notificationsMuted =
@@ -986,6 +991,8 @@ export const selectedChatBlockedOrSuspendedUsersStore = derived(
             ...direct,
         ]);
     },
+    // this feeds allChatsStore and eventsStore so only publish when the membership changes
+    (a, b) => a?.size === b?.size && [...a].every((u) => b.has(u)),
 );
 
 // this is all server chats (which already include previews) + local updates applied.
@@ -1012,7 +1019,7 @@ export const allChatsStore = derived(
     ]) => {
         const withUpdates = localChats.apply(allServerChats);
         return [...withUpdates.entries()].reduce((result, [chatId, chat]) => {
-            const immutable = new Immutable(chat);
+            const immutable = new Immutable(chat, shallowCloneChat);
             applyLocalUpdatesToChat(immutable, localUpdates.get(chat.id));
             mergeUnconfirmedIntoSummary(
                 immutable,
@@ -1076,12 +1083,16 @@ export const chatSummariesListStore = derived(
             }
             return result;
         }, []);
-        const unpinned = [...chatSummaries.values()]
-            .filter(
-                (chat) => pinnedByScope.findIndex((p) => chatIdentifiersEqual(p, chat.id)) === -1,
-            )
-            .sort(compareChats);
-        return pinned.concat(unpinned);
+        const pinnedIds = new Set(pinnedByScope.map(chatIdentifierToString));
+        // compute the (bigint) display date once per chat rather than twice per comparison
+        const unpinned: [bigint, ChatSummary][] = [];
+        for (const chat of chatSummaries.values()) {
+            if (!pinnedIds.has(chatIdentifierToString(chat.id))) {
+                unpinned.push([getDisplayDate(chat), chat]);
+            }
+        }
+        unpinned.sort(([a], [b]) => (a === b ? 0 : a < b ? 1 : -1));
+        return pinned.concat(unpinned.map(([, chat]) => chat));
     },
 );
 
@@ -1298,14 +1309,14 @@ export const directChatBotsStore = derived(
 export const unreadGroupCountsStore = derived(
     [serverGroupChatsStore, messagesRead],
     ([serverGroupChats, _]) => {
-        return messagesRead.combinedUnreadCountForChats(serverGroupChats);
+        return messagesRead.combinedUnreadCountForChats(serverGroupChats.values());
     },
 );
 
 export const unreadDirectCountsStore = derived(
     [serverDirectChatsStore, messagesRead],
     ([serverDirectChats, _]) => {
-        return messagesRead.combinedUnreadCountForChats(serverDirectChats);
+        return messagesRead.combinedUnreadCountForChats(serverDirectChats.values());
     },
 );
 
@@ -1320,10 +1331,7 @@ export const unreadCommunityChannelCountsStore = derived(
     [serverCommunitiesStore, messagesRead],
     ([serverCommunities, _]) => {
         return serverCommunities.reduce((map, [id, community]) => {
-            map.set(
-                id,
-                messagesRead.combinedUnreadCountForChats(ChatMap.fromList(community.channels)),
-            );
+            map.set(id, messagesRead.combinedUnreadCountForChats(community.channels));
             return map;
         }, new CommunityMap<CombinedUnreadCounts>());
     },
