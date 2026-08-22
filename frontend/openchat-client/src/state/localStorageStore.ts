@@ -20,13 +20,17 @@ export class LocalStorageStore<V> {
     update(fn: (val: V) => V) {
         this.#store.update(val => {
             const updated = fn(val);
-            if (updated === undefined) {
-                localStorage.removeItem(this.#key);
-            } else {
-                localStorage.setItem(this.#key, this.#serialise(updated));
-            }
+            this.#write(updated);
             return updated;
         });
+    }
+
+    #write(val: V) {
+        if (val === undefined) {
+            localStorage.removeItem(this.#key);
+        } else {
+            localStorage.setItem(this.#key, this.#serialise(val));
+        }
     }
 
     constructor(
@@ -48,12 +52,18 @@ export class LocalStorageStore<V> {
     }
 
     set(val: V) {
-        if (val === undefined) {
-            localStorage.removeItem(this.#key);
-        } else {
-            localStorage.setItem(this.#key, this.#serialise(val));
-        }
+        this.#write(val);
         this.#store.set(val);
+    }
+
+    // Update the in-memory value without touching localStorage. For use where a value changes
+    // rapidly (e.g. while dragging) - call `persist` once the value has settled.
+    setTransient(val: V) {
+        this.#store.set(val);
+    }
+
+    persist() {
+        this.#write(this.#store.value);
     }
 }
 

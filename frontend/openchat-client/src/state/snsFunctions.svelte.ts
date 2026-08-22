@@ -1,22 +1,19 @@
 import type { NervousSystemFunction } from "@shared";
-import { SvelteMap, SvelteSet } from "svelte/reactivity";
+import { SvelteMap } from "svelte/reactivity";
 
 const storageKeyPrefix = "sns_functions_";
 
 export class SnsFunctions {
     private _functionsMap: Map<string, Map<number, NervousSystemFunction>>;
-    private _loaded: Set<string>;
 
+    // Everything cached in localStorage is loaded up front so that `get` stays pure - it is called
+    // from within a derived store and must not read storage or write reactive state.
     constructor() {
         this._functionsMap = new SvelteMap();
-        this._loaded = new SvelteSet();
+        this.fromStorage();
     }
 
     get(snsCanisterId: string): Map<number, NervousSystemFunction> | undefined {
-        if (!this._loaded.has(snsCanisterId)) {
-            this.fromStorage(snsCanisterId);
-        }
-
         return this._functionsMap.get(snsCanisterId);
     }
 
@@ -26,19 +23,21 @@ export class SnsFunctions {
         this.toStorage(snsCanisterId);
     }
 
-    clone(): SnsFunctions {
-        const clone = new SnsFunctions();
-        clone._functionsMap = new Map(this._functionsMap);
-        clone._loaded = new Set(this._loaded);
-        return clone;
-    }
-
-    private fromStorage(snsCanisterId: string) {
-        const json = localStorage.getItem(storageKeyPrefix + snsCanisterId);
-        if (json !== null) {
-            this._functionsMap.set(snsCanisterId, new Map(JSON.parse(json)));
+    private fromStorage() {
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key === null || !key.startsWith(storageKeyPrefix)) continue;
+            const json = localStorage.getItem(key);
+            if (json === null) continue;
+            try {
+                this._functionsMap.set(
+                    key.slice(storageKeyPrefix.length),
+                    new Map(JSON.parse(json)),
+                );
+            } catch {
+                // ignore anything we can't parse - it will be refreshed from the governance canister
+            }
         }
-        this._loaded.add(snsCanisterId);
     }
 
     private toStorage(snsCanisterId: string) {
