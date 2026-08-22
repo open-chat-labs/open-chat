@@ -2085,6 +2085,19 @@ function diffMessagePermissions(
     return diff;
 }
 
+// True when every index in [low, high] is contained in the given subranges
+// (as returned by DRange.subranges(), which merges adjacent ranges). Same
+// answer as `range.clone().intersect(low, high).length === high - low + 1`
+// without the clone.
+export function subrangesCover(
+    subranges: { low: number; high: number }[],
+    low: number,
+    high: number,
+): boolean {
+    if (high < low) return true;
+    return subranges.some((s) => s.low <= low && high <= s.high);
+}
+
 export function eventIndexesLoaded(chatId: ChatIdentifier): DRange {
     const selected = selectedChatIdStore.value;
     return selected !== undefined && chatIdentifiersEqual(selected, chatId)

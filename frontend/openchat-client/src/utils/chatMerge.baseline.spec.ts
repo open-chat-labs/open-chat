@@ -16,6 +16,7 @@ import {
     mergeEventsAndLocalUpdates,
     mergeEventsAndLocalUpdatesWithRange,
     mergeServerEvents,
+    subrangesCover,
     updateExistingMessages,
 } from "./chat";
 
@@ -429,6 +430,33 @@ describe("mergeEventsAndLocalUpdates fast path", () => {
     test("fast path still tracks confirmed ids and contiguity for unconfirmed messages", () => {
         const out = run([msgEv(1), msgEv(2)], [ev(2, msg(2, "me")), msgEv(3, "me"), msgEv(9, "me")]);
         expect(indexes(out)).toEqual([1, 2, 3]);
+    });
+});
+
+describe("subrangesCover", () => {
+    test("matches DRange clone+intersect length check for every gap", () => {
+        const loaded = new DRange();
+        loaded.add(1, 5);
+        loaded.add(6, 8); // adjacent: merges into 1..8
+        loaded.add(12, 15);
+        loaded.add(20);
+        const subs = loaded.subranges();
+        expect(subs).toEqual([
+            { low: 1, high: 8, length: 8 },
+            { low: 12, high: 15, length: 4 },
+            { low: 20, high: 20, length: 1 },
+        ]);
+        for (let low = 0; low <= 22; low++) {
+            for (let high = low; high <= 22; high++) {
+                const legacy = loaded.clone().intersect(low, high).length === high - low + 1;
+                expect(subrangesCover(subs, low, high)).toBe(legacy);
+            }
+        }
+    });
+
+    test("empty gap is covered, empty ranges cover nothing", () => {
+        expect(subrangesCover([], 5, 4)).toBe(true);
+        expect(subrangesCover([], 5, 5)).toBe(false);
     });
 });
 
