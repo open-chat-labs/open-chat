@@ -62,7 +62,6 @@
     import Head from "./Head.svelte";
     import Profiler from "./Profiler.svelte";
     import Router from "./Router.svelte";
-    import Snow from "@shared_components/Snow.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import Witch from "@shared_components/Witch.svelte";
     import InstallPrompt from "./home/InstallPrompt.svelte";
@@ -723,7 +722,9 @@
     <UpgradeBanner />
 
     {#if $snowing}
-        <Snow />
+        {#await import("@shared_components/Snow.svelte") then { default: Snow }}
+            <Snow />
+        {/await}
     {/if}
 
     {#snippet failed(error, reset)}

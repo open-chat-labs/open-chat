@@ -59,7 +59,6 @@
     import IncomingCall from "./home/video/IncomingCall.svelte";
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
     import Router from "./Router.svelte";
-    import Snow from "@shared_components/Snow.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import { keyboard } from "@src/stores/keyboard.svelte";
 
@@ -391,7 +390,9 @@
     {/if}
 
     {#if $snowing}
-        <Snow />
+        {#await import("@shared_components/Snow.svelte") then { default: Snow }}
+            <Snow />
+        {/await}
     {/if}
 
     {#snippet failed(error, reset)}
