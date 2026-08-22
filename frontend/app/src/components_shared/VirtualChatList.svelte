@@ -166,10 +166,15 @@
     //   keyToHeight — keyed by item.key (stable identity). Source of truth for
     //     measured heights. Survives index shifts when messages are prepended.
     //   prefixSums — cumulative height array for O(log N) window computation.
-    //     prefix[i] = sum(height[0..i-1]). Rebuilt lazily when dirty.
+    //     prefix[i] = sum(height[0..i-1]). Rebuilt lazily when dirty —
+    //     prefixDirtyFrom is the lowest index whose height/estimate changed
+    //     (Infinity = clean); only the tail from there is recomputed.
     let heightMap: number[] = [];
-    let prefixSums: number[] = [0];
-    let prefixDirty = true;
+    let prefixSums: Float64Array = new Float64Array(1);
+    let prefixDirtyFrom = 0;
+    function markPrefixDirty(fromIdx: number) {
+        if (fromIdx < prefixDirtyFrom) prefixDirtyFrom = fromIdx;
+    }
     let keyToHeight = new Map<string, number>();
     let totalMeasuredHeight = 0;
     let measuredCount = 0;
@@ -235,7 +240,7 @@
         keyToHeight = prunedHeights;
         if (measuredCount > 0) averageHeight = totalMeasuredHeight / measuredCount;
         realignEstimates();
-        prefixDirty = true;
+        markPrefixDirty(0);
     }
 
     // Incremental extension for append-only changes (older messages loaded at
@@ -263,24 +268,26 @@
         }
         if (measuredCount > 0) averageHeight = totalMeasuredHeight / measuredCount;
         realignEstimates(fromIdx);
-        prefixDirty = true;
+        markPrefixDirty(fromIdx);
     }
 
     // Rebuild prefix sums from heightMap + spacerAvgHeight.
-    // Called lazily before computeWindow/computeSpacers when prefixDirty is set.
-    // O(N), but batches ALL height changes since the last rebuild into one pass.
+    // Called lazily before computeWindow/computeSpacers when dirty.
+    // O(N - dirtyFrom), but batches ALL height changes since the last rebuild into one pass.
     // This is strictly better than incremental O(N-i)-per-change updates during
     // burst scenarios (initial render, resize) where many items measure at once:
     // one O(N) rebuild vs O(windowSize × N) total for per-item updates.
     function ensurePrefixSums() {
-        if (!prefixDirty) return;
+        if (prefixDirtyFrom === Infinity) return;
         prefixSums = buildPrefixSums(
             items.length,
             heightMap,
             spacerAvgHeight,
             estimateClass !== undefined ? estimateMap : undefined,
+            prefixSums,
+            prefixDirtyFrom,
         );
-        prefixDirty = false;
+        prefixDirtyFrom = Infinity;
     }
 
     // Re-freeze the estimate space: the global average plus each class's
@@ -299,7 +306,7 @@
             }
             realignEstimates();
         }
-        prefixDirty = true;
+        markPrefixDirty(0);
     }
 
     // ── spacerAvgHeight (frozen estimate snapshot) ───────────────────────
@@ -1290,7 +1297,7 @@
                     // measurement (which totals O(windowSize × N) for the burst).
                     // The rebuild runs lazily: it only fires when the next
                     // computeWindow/computeSpacers call actually needs prefix sums.
-                    prefixDirty = true;
+                    markPrefixDirty(currentIdx);
 
                     // ── scrollTop compensation ─────────────────────────────
                     // In column-reverse, the bottom spacer is at the scroll

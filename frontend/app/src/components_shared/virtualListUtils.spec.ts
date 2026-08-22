@@ -48,6 +48,104 @@ describe("buildPrefixSums", () => {
         expect(p[2]).toBe(200);
         expect(p[3]).toBe(300);
     });
+
+    // Reference implementation: the original allocate-and-walk-everything
+    // version. The incremental path must be indistinguishable from it.
+    function naivePrefixSums(
+        itemCount: number,
+        heightMap: number[],
+        averageHeight: number,
+        estimates?: number[],
+    ): number[] {
+        const prefix = new Array<number>(itemCount + 1);
+        prefix[0] = 0;
+        for (let i = 0; i < itemCount; i++) {
+            const h = heightMap[i];
+            prefix[i + 1] = prefix[i] + (h > 0 ? h : (estimates?.[i] ?? averageHeight));
+        }
+        return prefix;
+    }
+
+    // Deterministic PRNG so failures are reproducible.
+    function rng(seed: number) {
+        let x = seed >>> 0;
+        return () => {
+            x ^= x << 13;
+            x ^= x >>> 17;
+            x ^= x << 5;
+            return (x >>> 0) / 0x100000000;
+        };
+    }
+
+    it("incremental rebuild matches the naive implementation across random measure sequences", () => {
+        for (let seed = 1; seed <= 50; seed++) {
+            const rand = rng(seed);
+            const heightMap: number[] = [];
+            let estimates: number[] | undefined = rand() < 0.5 ? [] : undefined;
+            let avg = 80;
+            let count = 0;
+            let prev: Float64Array | undefined;
+            let dirtyFrom = 0;
+            const steps = 1 + Math.floor(rand() * 60);
+            for (let step = 0; step < steps; step++) {
+                const op = rand();
+                if (op < 0.4 && count > 0) {
+                    // measure (or re-measure) a row
+                    const i = Math.floor(rand() * count);
+                    heightMap[i] = 1 + Math.floor(rand() * 300);
+                    dirtyFrom = Math.min(dirtyFrom, i);
+                } else if (op < 0.7) {
+                    // append older items (extendHeightMap)
+                    const from = count;
+                    count += 1 + Math.floor(rand() * 40);
+                    heightMap.length = count;
+                    for (let i = from; i < count; i++) {
+                        heightMap[i] = rand() < 0.3 ? 1 + Math.floor(rand() * 300) : 0;
+                        if (estimates) estimates[i] = 20 + Math.floor(rand() * 200);
+                    }
+                    dirtyFrom = Math.min(dirtyFrom, from);
+                } else if (op < 0.85) {
+                    // re-freeze estimates (refreshEstimateSnapshot)
+                    avg = 20 + rand() * 200;
+                    if (estimates) {
+                        for (let i = 0; i < count; i++) {
+                            estimates[i] = rand() < 0.8 ? 20 + Math.floor(rand() * 200) : NaN;
+                        }
+                        estimates = estimates.map((e) => (Number.isNaN(e) ? undefined : e)) as number[];
+                    }
+                    dirtyFrom = 0;
+                } else {
+                    // replace items, possibly shrinking (rebuildHeightMap)
+                    count = Math.floor(rand() * 60);
+                    heightMap.length = count;
+                    for (let i = 0; i < count; i++) {
+                        heightMap[i] = rand() < 0.5 ? 1 + Math.floor(rand() * 300) : 0;
+                        if (estimates) estimates[i] = 20 + Math.floor(rand() * 200);
+                    }
+                    if (estimates) estimates.length = count;
+                    dirtyFrom = 0;
+                }
+                // sometimes skip the rebuild so several dirty marks batch up
+                if (rand() < 0.3 && step < steps - 1) continue;
+                const actual = buildPrefixSums(count, heightMap, avg, estimates, prev, dirtyFrom);
+                const expected = naivePrefixSums(count, heightMap, avg, estimates);
+                expect(actual.length, `seed ${seed} step ${step}`).toBe(expected.length);
+                expect(Array.from(actual), `seed ${seed} step ${step}`).toEqual(expected);
+                prev = actual;
+                dirtyFrom = Infinity;
+            }
+        }
+    });
+
+    it("reuses the backing buffer when capacity allows", () => {
+        const first = buildPrefixSums(100, [], AVG);
+        const second = buildPrefixSums(50, [], AVG, undefined, first, 0);
+        expect(second.buffer).toBe(first.buffer);
+        expect(second.length).toBe(51);
+        const third = buildPrefixSums(100, [], AVG, undefined, second, 50);
+        expect(third.buffer).toBe(first.buffer);
+        expect(Array.from(third)).toEqual(naivePrefixSums(100, [], AVG));
+    });
 });
 
 describe("computeWindow", () => {
