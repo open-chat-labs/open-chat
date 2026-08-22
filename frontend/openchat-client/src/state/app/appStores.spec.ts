@@ -34,6 +34,7 @@ import {
     routeStore,
     selectedCommunityIdStore,
 } from "../path/stores";
+import { suspendedUsersStore } from "../users/stores";
 import { addToWritableMap } from "../utils";
 import {
     allChatsStore,
@@ -50,6 +51,7 @@ import {
     pinnedChatsStore,
     selectedChatExpandedDeletedMessageStore,
     selectedChatIdStore,
+    selectedChatBlockedOrSuspendedUsersStore,
     selectedChatMembersStore,
     selectedChatUserIdsStore,
     selectedCommunityBlockedUsersStore,
@@ -466,6 +468,34 @@ describe("app state", () => {
                         client.event.content.text === "whatever",
                 ).toBe(true);
             });
+        });
+    });
+
+    describe("blocked or suspended users", () => {
+        beforeEach(() => {
+            suspendedUsersStore.set(new Set());
+        });
+
+        test("includes suspended users", () => {
+            suspendedUsersStore.set(new Set(["s1", "s2"]));
+            const users = get(selectedChatBlockedOrSuspendedUsersStore);
+            expect(users.has("s1")).toBe(true);
+            expect(users.has("s2")).toBe(true);
+            suspendedUsersStore.set(new Set(["s1"]));
+            expect(get(selectedChatBlockedOrSuspendedUsersStore).has("s2")).toBe(false);
+        });
+
+        test("does not publish when the resulting set is unchanged", () => {
+            let publishes = 0;
+            const unsub = selectedChatBlockedOrSuspendedUsersStore.subscribe(() => publishes++);
+            const before = get(selectedChatBlockedOrSuspendedUsersStore);
+            suspendedUsersStore.set(new Set());
+            expect(publishes).toBe(1);
+            expect(get(selectedChatBlockedOrSuspendedUsersStore) === before).toBe(true);
+            suspendedUsersStore.set(new Set(["x"]));
+            expect(publishes).toBe(2);
+            expect(get(selectedChatBlockedOrSuspendedUsersStore).has("x")).toBe(true);
+            unsub();
         });
     });
 
