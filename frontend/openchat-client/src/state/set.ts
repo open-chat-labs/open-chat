@@ -1,4 +1,11 @@
-import { SafeSet, type ChatIdentifier, type Primitive, type ReadonlySet } from "@shared";
+import {
+    chatIdentifierFromKey,
+    chatIdentifierToKey,
+    SafeSet,
+    type ChatIdentifier,
+    type Primitive,
+    type ReadonlySet,
+} from "@shared";
 import { type UndoLocalUpdate } from "./undo";
 
 type Add<V> = { kind: "add"; value: V };
@@ -63,8 +70,8 @@ export class LocalSet<T> {
 export class ChatLocalSet extends LocalSet<ChatIdentifier> {
     constructor() {
         super(
-            (k) => JSON.stringify(k),
-            (k) => JSON.parse(String(k)),
+            (k) => chatIdentifierToKey(k),
+            (k) => chatIdentifierFromKey(String(k)),
         );
     }
 }
