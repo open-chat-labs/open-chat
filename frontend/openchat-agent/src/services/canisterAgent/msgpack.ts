@@ -53,7 +53,7 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
                         return Promise.resolve(
                             mapper(
                                 MsgpackCanisterAgent.deserializeResponse(
-                                    resp.reply.arg.slice().buffer,
+                                    resp.reply.arg,
                                     responseValidator,
                                 ),
                                 timestampMs,
@@ -130,7 +130,7 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
                             return Promise.resolve(
                                 mapper(
                                     MsgpackCanisterAgent.deserializeResponse(
-                                        reply.slice().buffer,
+                                        reply,
                                         responseValidator,
                                     ),
                                 ),
@@ -201,12 +201,7 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
                     requestId,
                 );
                 return Promise.resolve(
-                    mapper(
-                        MsgpackCanisterAgent.deserializeResponse(
-                            reply.slice().buffer,
-                            responseValidator,
-                        ),
-                    ),
+                    mapper(MsgpackCanisterAgent.deserializeResponse(reply, responseValidator)),
                 );
             } else {
                 throw new Error(
@@ -228,10 +223,10 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
     }
 
     private static deserializeResponse<Resp extends TSchema>(
-        responseBytes: ArrayBuffer,
+        responseBytes: Uint8Array,
         validator: Resp,
     ): Static<Resp> {
-        const response = deserializeFromMsgPack(new Uint8Array(responseBytes));
+        const response = deserializeFromMsgPack(responseBytes);
         return typeboxValidate(response, validator);
     }
 }
