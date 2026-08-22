@@ -363,9 +363,19 @@ describe("mark messages read", () => {
                 unmuted: 4,
                 mentions: false,
             });
-            // unconfirmed message read then removed
-            tracker.removeUnconfirmedMessage({ chatId: chats[4].id }, BigInt(1));
+            // reading an unconfirmed message counts it as read until it is removed
+            const unconfirmed = vi
+                .spyOn(localUpdates, "isUnconfirmed")
+                .mockImplementation((_ctx, messageId) => messageId === BigInt(1));
+            const ctx = { chatId: chats[4].id };
+            tracker.syncWithServer(ctx.chatId, 49, [], undefined);
             expect(tracker.combinedUnreadCountForChats(chats).chats.unmuted).toEqual(4);
+            tracker.markMessageRead(ctx, 50, BigInt(1));
+            expect(tracker.value.waiting.get(ctx)?.has(BigInt(1))).toBe(true);
+            expect(tracker.combinedUnreadCountForChats(chats).chats.unmuted).toEqual(3);
+            expect(tracker.removeUnconfirmedMessage(ctx, BigInt(1))).toBe(true);
+            expect(tracker.combinedUnreadCountForChats(chats).chats.unmuted).toEqual(4);
+            unconfirmed.mockRestore();
         });
     });
 
