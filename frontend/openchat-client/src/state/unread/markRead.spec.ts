@@ -6,6 +6,7 @@ import {
 } from "@shared";
 import { SvelteMap } from "svelte/reactivity";
 import { vi } from "vitest";
+import { withPausedStores } from "../../utils/stores";
 import { localUpdates } from "../localUpdates";
 import { MessageReadTracker, MessagesRead } from "./markRead";
 
@@ -288,6 +289,96 @@ describe("mark messages read", () => {
             const counts = markRead.combinedUnreadCountForChats(chats);
             expect(counts.chats).toEqual({ muted: 1, unmuted: 1, mentions: false });
             expect(counts.threads).toEqual({ muted: 0, unmuted: 0, mentions: false });
+        });
+    });
+
+    describe("incremental unread counts", () => {
+        function chat(
+            groupId: string,
+            latestMessageIndex: number,
+            notificationsMuted: boolean,
+        ): ChatSummary {
+            return {
+                kind: "group_chat",
+                id: { kind: "group_chat", groupId },
+                latestMessage: { event: { messageIndex: latestMessageIndex } },
+                membership: { notificationsMuted, mentions: [], latestThreads: [] },
+            } as unknown as ChatSummary;
+        }
+
+        function setup(n: number) {
+            const tracker = new MessageReadTracker();
+            const chats: ChatSummary[] = [];
+            for (let i = 0; i < n; i++) {
+                const c = chat(`g${i}`, 50, i % 3 === 0);
+                chats.push(c);
+                tracker.syncWithServer(c.id, i % 5 === 0 ? 50 : 10, [], undefined);
+            }
+            return { tracker, chats };
+        }
+
+        test("marking one message read gives the same counts as a full recompute", () => {
+            const { tracker, chats } = setup(300);
+            const before = tracker.combinedUnreadCountForChats(chats);
+            expect(before.chats).toEqual({ muted: 80, unmuted: 160, mentions: false });
+
+            const spy = vi.spyOn(tracker, "unreadMessageCount");
+            for (let i = 11; i <= 60; i++) {
+                tracker.markMessageRead({ chatId: chats[1].id }, i, undefined);
+                tracker.combinedUnreadCountForChats(chats);
+            }
+            tracker.markMessageRead({ chatId: chats[2].id }, 50, undefined);
+            const after = tracker.combinedUnreadCountForChats(chats);
+            const evaluations = spy.mock.calls.length;
+            spy.mockRestore();
+
+            // independent full computation with a fresh tracker
+            const fresh = setup(300);
+            fresh.tracker.markReadUpTo({ chatId: fresh.chats[1].id }, 60);
+            fresh.tracker.markReadUpTo({ chatId: fresh.chats[2].id }, 50);
+            expect(after).toEqual(fresh.tracker.combinedUnreadCountForChats(fresh.chats));
+            expect(after.chats).toEqual({ muted: 80, unmuted: 158, mentions: false });
+            console.log(`markRead.spec: per-chat evaluations for 51 marks over 300 chats: ${evaluations}`);
+        });
+
+        test("a new chat object or a server sync is re-evaluated", () => {
+            const { tracker, chats } = setup(10);
+            expect(tracker.combinedUnreadCountForChats(chats).chats.unmuted).toEqual(5);
+            // muting a chat by replacing its object
+            const replaced = chats.slice();
+            replaced[1] = chat("g1", 50, true);
+            expect(tracker.combinedUnreadCountForChats(replaced).chats).toEqual({
+                muted: 4,
+                unmuted: 4,
+                mentions: false,
+            });
+            // server sync marks g2 as fully read
+            tracker.syncWithServer(chats[2].id, 50, [], undefined);
+            expect(tracker.combinedUnreadCountForChats(chats).chats).toEqual({
+                muted: 3,
+                unmuted: 4,
+                mentions: false,
+            });
+            // unconfirmed message read then removed
+            tracker.removeUnconfirmedMessage({ chatId: chats[4].id }, BigInt(1));
+            expect(tracker.combinedUnreadCountForChats(chats).chats.unmuted).toEqual(4);
+        });
+    });
+
+    describe("batched marks", () => {
+        test("marks inside withPausedStores publish once", () => {
+            const tracker = new MessageReadTracker();
+            let publishes = 0;
+            const unsub = tracker.subscribe(() => publishes++);
+            publishes = 0;
+            withPausedStores(() => {
+                for (let i = 1; i <= 10; i++) {
+                    tracker.markMessageRead({ chatId: abcId }, i, undefined);
+                }
+            });
+            expect(publishes).toEqual(1);
+            expect(tracker.value.state.get(abcId)?.readUpTo).toEqual(10);
+            unsub();
         });
     });
 
