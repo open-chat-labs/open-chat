@@ -1,5 +1,6 @@
 <script lang="ts">
     import { getContext, onMount, type Snippet } from "svelte";
+    import { observeIntersection } from "../../utils/sharedIntersectionObserver";
 
     interface Props {
         unobserveOnIntersect?: boolean;
@@ -31,12 +32,9 @@
             // and the observer callback can fire after that
             const el = container;
             let destroyed = false;
-            const observer = new IntersectionObserver(
-                (entries) => {
-                    if (destroyed) return;
-                    entries.sort((a, b) => b.time - a.time);
-                    const entry = entries[0];
-
+            const unobserve = observeIntersection(
+                el,
+                (entry) => {
                     intersecting = entry.isIntersecting;
 
                     if (intersecting && !pending) {
@@ -54,7 +52,7 @@
                             onIntersecting?.();
 
                             if (unobserveOnIntersect) {
-                                observer.unobserve(el);
+                                unobserve();
                             }
 
                             setTimeout(() => {
@@ -72,10 +70,9 @@
                     threshold: 0,
                 },
             );
-            observer.observe(el);
             return () => {
                 destroyed = true;
-                observer.disconnect();
+                unobserve();
             };
         }
     });
