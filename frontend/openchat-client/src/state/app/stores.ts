@@ -991,6 +991,8 @@ export const selectedChatBlockedOrSuspendedUsersStore = derived(
             ...direct,
         ]);
     },
+    // this feeds allChatsStore and eventsStore so only publish when the membership changes
+    (a, b) => a?.size === b?.size && [...a].every((u) => b.has(u)),
 );
 
 // this is all server chats (which already include previews) + local updates applied.
