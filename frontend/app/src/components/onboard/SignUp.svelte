@@ -14,9 +14,9 @@
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
+    import { Spinner } from "component-lib";
     import FindUser from "../FindUser.svelte";
     import Input from "../Input.svelte";
-    import TermsContent from "../landingpages/TermsContent.svelte";
     import Legend from "../Legend.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
@@ -46,9 +46,19 @@
     let createdUser: CreatedUser | undefined = undefined;
     let passkeyCreated = $state(false);
 
+    let TermsContent: typeof import("../landingpages/TermsContent.svelte").default | undefined =
+        $state(undefined);
+    let termsLoadFailed = $state(false);
+
     function onShowGuidelines() {
         showGuidelines = true;
         client.gaTrack("show_guidelines_clicked", "registration");
+        if (TermsContent === undefined) {
+            termsLoadFailed = false;
+            import("../landingpages/TermsContent.svelte")
+                .then((m) => (TermsContent = m.default))
+                .catch(() => (termsLoadFailed = true));
+        }
     }
     function onCloseGuidelines() {
         showGuidelines = false;
@@ -177,12 +187,22 @@
             {/snippet}
             {#snippet body()}
                 <span class="guidelines-modal">
-                    <TermsContent />
+                    {#if TermsContent}
+                        <TermsContent />
+                    {:else if termsLoadFailed}
+                        <ErrorMessage>Unable to load the terms. Please try again.</ErrorMessage>
+                    {:else}
+                        <div aria-busy="true"><Spinner /></div>
+                    {/if}
                 </span>
             {/snippet}
             {#snippet footer(onClose)}
                 <span>
-                    <Button onClick={() => onClose?.()} small={!$mobileWidth} tiny={$mobileWidth}>
+                    <Button
+                        onClick={() => onClose?.()}
+                        disabled={TermsContent === undefined && !termsLoadFailed}
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}>
                         <Translatable resourceKey={i18nKey("register.agree")} />
                     </Button>
                 </span>

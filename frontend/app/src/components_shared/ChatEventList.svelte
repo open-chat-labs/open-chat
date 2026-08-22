@@ -32,6 +32,7 @@
         localUpdates,
         messageContextsEqual,
         routeStore,
+        subrangesCover,
         subscribe,
         withEqCheck,
         type ChatSummary,
@@ -154,7 +155,10 @@
 
     let items = $derived.by<FlatChatItem[]>(() => {
         if (threadRootEvent !== undefined || allItems.length === 0) return allItems;
-        const loaded = $eventIndexesLoadedStore;
+        // Subranges are computed at most once per publish, and only if there
+        // is at least one gap, rather than cloning the DRange per gap.
+        const loadedRange = $eventIndexesLoadedStore;
+        let loaded: { low: number; high: number }[] | undefined;
         // Segment boundaries: a split between adjacent event items whose gap
         // is not fully covered by the loaded ranges (expired/disappeared
         // events count as loaded). allItems is newest-first, so event
@@ -166,8 +170,8 @@
             if (item.kind !== "event") continue;
             const idx = item.event.index;
             if (prev !== undefined && prev - idx > 1) {
-                const gap = prev - idx - 1;
-                if (loaded.clone().intersect(idx + 1, prev - 1).length !== gap) {
+                loaded ??= loadedRange.subranges();
+                if (!subrangesCover(loaded, idx + 1, prev - 1)) {
                     bounds.push(i);
                 }
             }
@@ -212,10 +216,22 @@
 
     // messageIndex -> flat item index, for programmatic scrolling.
     // Failed messages are excluded (mirrors findMessageEvent).
-    let messageIndexToFlat = $derived.by(() => {
+    // Built lazily on first use and cached per (`items`, `messageContext`)
+    // identity, since most publishes never scroll programmatically. Note that
+    // `items` is also reallocated whenever failedMessages changes (it is an
+    // input of eventsStore), so the isFailed exclusions stay current.
+    let messageIndexToFlatCache:
+        | { items: FlatChatItem[]; context: MessageContext; map: Map<number, number> }
+        | undefined;
+    function messageIndexToFlat(): Map<number, number> {
+        const current = items;
+        const context = messageContext;
+        if (messageIndexToFlatCache?.items === current && messageIndexToFlatCache.context === context) {
+            return messageIndexToFlatCache.map;
+        }
         const map = new Map<number, number>();
-        for (let i = 0; i < items.length; i++) {
-            const item = items[i];
+        for (let i = 0; i < current.length; i++) {
+            const item = current[i];
             if (
                 item.kind === "event" &&
                 item.event.event.kind === "message" &&
@@ -224,8 +240,9 @@
                 map.set(item.event.event.messageIndex, i);
             }
         }
+        messageIndexToFlatCache = { items: current, context, map };
         return map;
-    });
+    }
 
     const fromTop = () => {
         if (messagesDiv) {
@@ -911,7 +928,7 @@
             anchorMessageIndex = index;
         }
 
-        let flatIndex = messageIndexToFlat.get(index);
+        let flatIndex = messageIndexToFlat().get(index);
         vclDebug.log("scroll-to-msg", {
             index,
             flatIndex,
@@ -1008,7 +1025,7 @@
                 // the event is loaded but does not appear in the flat items (e.g. it
                 // is hidden or filtered out) so we cannot scroll to it. Try the next
                 // message, or failing that, the bottom.
-                const next = messageIndexToFlat.get(index + 1);
+                const next = messageIndexToFlat().get(index + 1);
                 if (next !== undefined) {
                     return scrollToMessageIndexInternal(
                         token,
