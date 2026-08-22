@@ -64,7 +64,9 @@ class UpdateCommunityState extends UpdateGroupOrCommunityState {
     initialise(community: CommunitySummary, rules: VersionedRules) {
         this.reset();
         this.#channelNames = ["General"];
-        this.#candidateCommunity = community;
+        // the candidate is mutated in place (via the $state proxy) so it must not share any
+        // nested objects with the community held in the store
+        this.#candidateCommunity = $state.snapshot(community);
         this.#rules = { ...rules, newVersion: false };
         this.#originalCommunity = $state.snapshot(this.candidateCommunity);
         this.#originalRules = $state.snapshot(this.#rules);

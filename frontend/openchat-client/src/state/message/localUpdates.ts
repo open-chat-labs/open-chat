@@ -38,22 +38,12 @@ export class MessageLocalUpdates {
     ogPreviews?: OgPreview[];
 
     isEmpty(): boolean {
-        return (
-            this.deleted === undefined &&
-            this.editedContent === undefined &&
-            this.cancelledReminder === undefined &&
-            this.undeletedContent === undefined &&
-            this.revealedContent === undefined &&
-            this.prizeClaimed === undefined &&
-            this.p2pSwapStatus === undefined &&
-            this.reactions.length === 0 &&
-            this.pollVotes.length === 0 &&
-            this.threadSummary === undefined &&
-            this.tips.size === 0 &&
-            this.hiddenMessageRevealed === undefined &&
-            this.blockLevelMarkdown === undefined &&
-            this.proposalTally === undefined &&
-            this.ogPreviews === undefined
+        return Object.entries(this).every(
+            ([key, value]) =>
+                key === "lastUpdated" ||
+                value === undefined ||
+                (Array.isArray(value) && value.length === 0) ||
+                (value instanceof Map && value.size === 0),
         );
     }
 }

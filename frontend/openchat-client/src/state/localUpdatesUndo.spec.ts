@@ -3,7 +3,7 @@ import { vi } from "vitest";
 import { chatSummaryLocalUpdates } from "./chat/summaryUpdates";
 import { communitySummaryLocalUpdates } from "./community/summaryUpdates";
 import { localUpdates } from "./localUpdates";
-import { messageLocalUpdates } from "./message/localUpdates";
+import { messageLocalUpdates, MessageLocalUpdates } from "./message/localUpdates";
 
 vi.useFakeTimers();
 
@@ -108,6 +108,30 @@ describe("undoing local summary / message updates", () => {
             const entry = messageLocalUpdates.value.get(1n);
             expect(entry?.prizeClaimed).toBe(true);
             expect(entry?.tips.size).toBe(0);
+        });
+    });
+
+    describe("MessageLocalUpdates.isEmpty", () => {
+        test("a fresh instance is empty", () => {
+            expect(new MessageLocalUpdates().isEmpty()).toBe(true);
+        });
+
+        test("setting any field makes it non-empty", () => {
+            const keys = Object.keys(new MessageLocalUpdates()).filter(
+                (k) => k !== "lastUpdated",
+            );
+            // the class initialises every field, so the keys above are the full field list
+            expect(keys.length).toBeGreaterThan(10);
+            for (const key of keys) {
+                const upd = new MessageLocalUpdates() as unknown as Record<string, unknown>;
+                const current = upd[key];
+                upd[key] = Array.isArray(current)
+                    ? [{}]
+                    : current instanceof Map
+                      ? new Map([["k", new Map()]])
+                      : {};
+                expect((upd as unknown as MessageLocalUpdates).isEmpty(), key).toBe(false);
+            }
         });
     });
 
