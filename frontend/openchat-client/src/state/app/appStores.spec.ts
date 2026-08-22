@@ -40,6 +40,7 @@ import {
     cryptoBalanceStore,
     allServerChatsStore,
     chatListScopeStore,
+    chatSummariesListStore,
     chatSummariesStore,
     communitiesStore,
     directChatBotsStore,
@@ -382,6 +383,43 @@ describe("app state", () => {
                         scope: { kind: "favourite" },
                     });
                     expect(chatSummariesStore.value.get(groupId)).toBeUndefined();
+                });
+            });
+
+            describe("chat summaries list", () => {
+                const a: GroupChatIdentifier = { kind: "group_chat", groupId: "a" };
+                const b: GroupChatIdentifier = { kind: "group_chat", groupId: "b" };
+                const c: GroupChatIdentifier = { kind: "group_chat", groupId: "c" };
+
+                beforeEach(() => {
+                    chatDetailsLocalUpdates.clearAll();
+                    setRouteParams(mockContext, {
+                        kind: "home_route",
+                        scope: { kind: "chats" },
+                    });
+                    localUpdates.addChat({ ...groupChat("a"), eventsTtlLastUpdated: 10n });
+                    localUpdates.addChat({ ...groupChat("b"), eventsTtlLastUpdated: 30n });
+                    localUpdates.addChat({ ...groupChat("c"), eventsTtlLastUpdated: 20n });
+                });
+
+                test("unpinned chats are sorted by display date descending", () => {
+                    serverPinnedChatsStore.set(new Map());
+                    const ids = get(chatSummariesListStore).map((c) => c.id);
+                    expect(ids).toEqual([b, c, a, groupId]);
+                });
+
+                test("pinned chats come first in pinned order, then the rest by date", () => {
+                    serverPinnedChatsStore.set(
+                        new Map([["chats", [a, { kind: "group_chat", groupId: "missing" }, c]]]),
+                    );
+                    const ids = get(chatSummariesListStore).map((c) => c.id);
+                    expect(ids).toEqual([a, c, b, groupId]);
+                });
+
+                test("pins in another scope are ignored", () => {
+                    serverPinnedChatsStore.set(new Map([["favourite", [a]]]));
+                    const ids = get(chatSummariesListStore).map((c) => c.id);
+                    expect(ids).toEqual([b, c, a, groupId]);
                 });
             });
 
