@@ -473,12 +473,33 @@ export function buildUserAvatarUrl(pattern: string, userId: string, avatarId?: b
         : buildIdenticonUrl(userId);
 }
 
+// An identicon is a pure function of the userId, but generating one means md5 +
+// SVG construction + base64. We rehydrate every avatarless user on every getUsers
+// cycle (and the whole user cache at startup), so cache the results. Bounded so a
+// long-lived worker cannot grow it without limit.
+const MAX_IDENTICONS = 5000;
+const identiconCache = new Map<string, string>();
+
 export function buildIdenticonUrl(userId: string): string {
+    const cached = identiconCache.get(userId);
+    if (cached !== undefined) return cached;
+
     const identicon = new Identicon(md5(userId), {
         margin: 0,
         format: "svg",
     });
-    return `data:image/svg+xml;base64,${identicon}`;
+    const url = `data:image/svg+xml;base64,${identicon}`;
+
+    if (identiconCache.size >= MAX_IDENTICONS) {
+        // Maps iterate in insertion order, so this evicts the oldest entry.
+        const oldest = identiconCache.keys().next();
+        if (!oldest.done) {
+            identiconCache.delete(oldest.value);
+        }
+    }
+    identiconCache.set(userId, url);
+
+    return url;
 }
 
 export function emptyChatMetrics(): Metrics {
