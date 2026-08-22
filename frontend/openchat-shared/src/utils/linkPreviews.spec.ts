@@ -3,8 +3,12 @@ import {
     classifyUrl,
     extractEnabledLinks,
     extractMessagePreviews,
+    fetchOgData,
     fetchOgPreviews,
+    getCachedOgData,
     MAX_LINK_PREVIEWS,
+    OG_CACHE_MAX,
+    ogCacheSizes,
 } from "./linkPreviews";
 
 describe("extractMessagePreviews", () => {
@@ -249,5 +253,45 @@ describe("fetchOgPreviews", () => {
             height: 600,
         });
         expect(imagesCreated).toBe(1);
+    });
+});
+
+describe("fetchOgData cache bounds", () => {
+    const proxyUrl = "https://preview.test";
+
+    beforeEach(() => {
+        vi.stubGlobal("fetch", (input: string) => {
+            const target = new URL(input).searchParams.get("url");
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({ title: `title for ${target}` }),
+            });
+        });
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
+    test("same url is fetched once and resolved data is cached", async () => {
+        const url = "https://bounded-0.test";
+        const a = fetchOgData(url, proxyUrl);
+        const b = fetchOgData(url, proxyUrl);
+        expect(a).toBe(b);
+        const data = await a;
+        expect(data?.title).toBe(`title for ${url}`);
+        expect(getCachedOgData(url)?.title).toBe(`title for ${url}`);
+    });
+
+    test("caches never exceed OG_CACHE_MAX and evict the oldest entry", async () => {
+        const oldest = "https://bounded-0.test";
+        for (let i = 0; i <= OG_CACHE_MAX + 20; i++) {
+            await fetchOgData(`https://bounded-${i}.test`, proxyUrl);
+        }
+        const sizes = ogCacheSizes();
+        expect(sizes.promises).toBe(OG_CACHE_MAX);
+        expect(sizes.resolved).toBe(OG_CACHE_MAX);
+        expect(getCachedOgData(oldest)).toBeUndefined();
+        expect(getCachedOgData(`https://bounded-${OG_CACHE_MAX + 20}.test`)).toBeDefined();
     });
 });

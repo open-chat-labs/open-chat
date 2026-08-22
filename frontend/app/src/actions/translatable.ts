@@ -51,6 +51,18 @@ function isTranslatable(
     return result !== undefined;
 }
 
+// There are ~2000 `use:translatable` sites and they are churned by virtual list
+// recycling, so this is deliberately a single module level derived shared by every
+// node rather than one derived (plus three store subscriptions) per node. It yields
+// undefined unless we are actually in translation edit mode, so in the normal case
+// no node does any dictionary lookup at all and locale / dictionary churn does not
+// even notify (the store dedupes undefined -> undefined).
+const editContext = derived([locale, dictionary, editmode], ([$locale, $dictionary, $editmode]) =>
+    $editmode && !$locale?.startsWith("en")
+        ? { locale: $locale, dictionary: $dictionary as LocalesDictionary }
+        : undefined,
+);
+
 type Param = {
     key: ResourceKey | undefined;
     position?: "relative" | "absolute";
@@ -72,19 +84,15 @@ export function translatable(node: HTMLElement, param: Param) {
         }
     };
 
-    const editable = derived(
-        [locale, dictionary, editmode],
-        ([$locale, $dictionary, $editmode]) => {
-            return (
-                $editmode &&
-                !$locale?.startsWith("en") &&
-                isTranslatable($dictionary, $locale, resourceKey)
-            );
-        },
-    );
     let span: HTMLSpanElement | undefined = undefined;
-    const unsub = editable.subscribe((canEdit) => {
-        if (canEdit) {
+    let canEdit = false;
+    const unsub = editContext.subscribe((ctx) => {
+        // the shared store publishes a new object whenever the locale or the
+        // dictionary changes, so dedupe per node - only act on an actual change
+        const next = ctx !== undefined && isTranslatable(ctx.dictionary, ctx.locale, resourceKey);
+        if (next === canEdit) return;
+        canEdit = next;
+        if (next) {
             span = document.createElement("span");
             span.classList.add("is-translatable");
             span.style.position = position;
