@@ -1,6 +1,6 @@
-import { SafeMap } from "@shared";
+import { ChatMap, SafeMap, type ChatIdentifier } from "@shared";
 import { vi } from "vitest";
-import { LocalMap } from "./map";
+import { LocalChatMap, LocalMap } from "./map";
 
 vi.useFakeTimers();
 
@@ -29,6 +29,19 @@ describe("SafeMap", () => {
         m.set({ key: "a" }, 1);
         m.set({ key: "b" }, 2);
         expect(m.size).toEqual(2);
+    });
+    test("LocalChatMap apply round-trips keys by value", () => {
+        const local = new LocalChatMap<string>();
+        const a: ChatIdentifier = { kind: "channel", communityId: "c1", channelId: 1 };
+        const b: ChatIdentifier = { kind: "group_chat", groupId: "g1" };
+        const original = new ChatMap<string>();
+        original.set(b, "b");
+        local.addOrUpdate(a, "a");
+        local.remove({ kind: "group_chat", groupId: "g1" });
+        const result = local.apply(original);
+        expect([...result.entries()]).toEqual([[a, "a"]]);
+        expect(result.get({ kind: "channel", communityId: "c1", channelId: 1 })).toBe("a");
+        expect(original.get(b)).toBe("b");
     });
 });
 
@@ -59,6 +72,46 @@ describe("LocalMap", () => {
         expect(map.addedOrUpdated("a")).toBe(false);
         vi.runAllTimers();
         expect(map.addedOrUpdated("a")).toBe(false);
+    });
+
+    describe("apply", () => {
+        const original = new SafeMap<string, string>();
+        original.set("a", "1");
+        original.set("b", "2");
+
+        test("returns the original when there are no modifications", () => {
+            expect(map.apply(original) === original).toBe(true);
+        });
+
+        test("does not mutate the original", () => {
+            map.addOrUpdate("c", "3");
+            map.remove("a");
+            const result = map.apply(original);
+            expect(original.get("a")).toEqual("1");
+            expect(original.has("c")).toBe(false);
+            expect(result.get("a")).toBeUndefined();
+            expect(result.get("b")).toEqual("2");
+            expect(result.get("c")).toEqual("3");
+        });
+
+        test("last modification per key wins", () => {
+            map.addOrUpdate("a", "x");
+            map.remove("a");
+            map.addOrUpdate("a", "y");
+            map.addOrUpdate("b", "p");
+            map.remove("b");
+            expect(map.apply(original).get("a")).toEqual("y");
+            expect(map.apply(original).has("b")).toBe(false);
+        });
+
+        test("undone modifications are not applied", () => {
+            const undo = map.addOrUpdate("a", "x");
+            map.remove("b");
+            undo();
+            const result = map.apply(original);
+            expect(result.get("a")).toEqual("1");
+            expect(result.has("b")).toBe(false);
+        });
     });
 
     it("restores removed items on undo", () => {

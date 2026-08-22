@@ -17,7 +17,8 @@ const pkgAliases = [
 ]);
 
 export default defineConfig({
-    plugins: [svelte()],
+    // Use the app's svelte config so .svelte specs get the scss preprocessor.
+    plugins: [svelte({ configFile: src("./app/svelte.config.js") })],
     resolve: {
         alias: [
             { find: "@dfinity/agent", replacement: "@icp-sdk/core/agent" },

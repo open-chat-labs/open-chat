@@ -1985,6 +1985,11 @@ export class OpenChatAgent extends EventTarget {
         };
     }
 
+    // Called when this agent instance is replaced or discarded so that background timers do not keep it alive
+    dispose() {
+        this._cachePrimer?.stop();
+    }
+
     #initializeCachePrimer(userCanisterLocalUserIndex: string): Promise<CachePrimer> {
         return this._chatsDb.getCachePrimerEventIndexes().then((idx) => {
             return (this._cachePrimer = new CachePrimer(

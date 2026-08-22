@@ -21,7 +21,6 @@
         expectWindowInsetChange,
     } from "@utils/native/notification_channels";
     import { expectShareTarget, handleShareTarget } from "@utils/native/share_target";
-    import "@utils/scream";
     import { portalState } from "component-lib";
     import {
         type ChatIdentifier,
@@ -59,7 +58,6 @@
     import IncomingCall from "./home/video/IncomingCall.svelte";
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
     import Router from "./Router.svelte";
-    import Snow from "@shared_components/Snow.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import { keyboard } from "@src/stores/keyboard.svelte";
 
@@ -391,7 +389,11 @@
     {/if}
 
     {#if $snowing}
-        <Snow />
+        {#await import("@shared_components/Snow.svelte") then { default: Snow }}
+            <Snow />
+        {:catch}
+            <!-- snow is cosmetic; ignore a failed chunk load -->
+        {/await}
     {/if}
 
     {#snippet failed(error, reset)}
