@@ -20,12 +20,11 @@
 <script lang="ts">
     // TODO i18n localisation for the date picker!
 
-    import { Tooltip } from "component-lib";
+    import { Spinner, Tooltip } from "component-lib";
     import type { ResourceKey } from "@client";
     import { onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Information from "svelte-material-icons/Information.svelte";
-    import SveltyPicker from "svelty-picker";
     import { i18nKey, interpolate } from "../i18n/i18n";
     import Translatable from "./Translatable.svelte";
 
@@ -58,26 +57,34 @@
 </script>
 
 <div class={`input-wrapper date-time ${align} ${!dateIsValid ? "error" : ""}`}>
-    <SveltyPicker
-        value={localDate}
-        {disabled}
-        {endDate}
-        {format}
-        {inputId}
-        inputClasses={`date-time ${inputClasses}`}
-        {mode}
-        {pickerOnly}
-        placeholder={placeholder !== undefined ? interpolate($_, placeholder) : ""}
-        {required}
-        {startDate}
-        onDateChange={({ dateValue }) => {
-            if (futureOnly && dateValue instanceof Date && dateValue < new Date()) {
-                dateIsValid = false;
-            } else {
-                dateIsValid = true;
-            }
-            dateValue instanceof Date ? onchange?.(BigInt(dateValue.getTime())) : onchange?.(null);
-        }} />
+    {#await import("svelty-picker")}
+        <div aria-busy="true"><Spinner /></div>
+    {:then { default: SveltyPicker }}
+        <SveltyPicker
+            value={localDate}
+            {disabled}
+            {endDate}
+            {format}
+            {inputId}
+            inputClasses={`date-time ${inputClasses}`}
+            {mode}
+            {pickerOnly}
+            placeholder={placeholder !== undefined ? interpolate($_, placeholder) : ""}
+            {required}
+            {startDate}
+            onDateChange={({ dateValue }) => {
+                if (futureOnly && dateValue instanceof Date && dateValue < new Date()) {
+                    dateIsValid = false;
+                } else {
+                    dateIsValid = true;
+                }
+                dateValue instanceof Date
+                    ? onchange?.(BigInt(dateValue.getTime()))
+                    : onchange?.(null);
+            }} />
+    {:catch}
+        <span>Unable to load date picker</span>
+    {/await}
     {#if !dateIsValid}
         <div class="error-icon">
             <Tooltip position={"top"} align={"middle"}>
