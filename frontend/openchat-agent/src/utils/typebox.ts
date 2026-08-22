@@ -1,7 +1,7 @@
 import { Value } from "@sinclair/typebox/value";
 import type { Static, TSchema } from "@sinclair/typebox";
 import { deepRemoveNullishFields } from "./nullish";
-import { TypeboxValidationError } from "@shared";
+import { TypeboxValidationError } from "@shared/domain/error";
 
 export function typeboxValidate<T extends TSchema>(value: unknown, validator: T): Static<T> {
     try {
