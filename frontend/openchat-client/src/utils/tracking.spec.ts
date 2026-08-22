@@ -51,6 +51,16 @@ describe("tracking", () => {
         expect(usergeek.trackEvent).not.toHaveBeenCalled();
     });
 
+    it("passes a timeout to requestIdleCallback", async () => {
+        const ric = vi.fn((fn: () => void) => fn());
+        vi.stubGlobal("requestIdleCallback", ric);
+        const t = await load("production");
+        t.initialiseTracking(config);
+        await flush();
+        expect(ric).toHaveBeenCalledWith(expect.any(Function), { timeout: 3000 });
+        expect(usergeek.init).toHaveBeenCalledTimes(1);
+    });
+
     it("initialises usergeek with apiKey and host in production", async () => {
         const t = await load("production");
         t.initialiseTracking(config);
@@ -78,5 +88,21 @@ describe("tracking", () => {
         expect(usergeek.trackSession).toHaveBeenCalledTimes(1);
         expect(usergeek.trackEvent).toHaveBeenCalledWith("evt");
         expect(usergeek.setPrincipal).toHaveBeenNthCalledWith(2, undefined);
+    });
+
+    it("swallows a failed usergeek load and keeps later calls inert", async () => {
+        vi.resetModules();
+        vi.doMock("usergeek-ic-js", () => {
+            throw new Error("chunk failed");
+        });
+        vi.stubEnv("OC_NODE_ENV", "production");
+        const t = await import("./tracking");
+        t.initialiseTracking(config);
+        t.startTrackingSession(principal);
+        t.trackEvent("evt");
+        await flush();
+        expect(usergeek.init).not.toHaveBeenCalled();
+        expect(usergeek.trackEvent).not.toHaveBeenCalled();
+        vi.doMock("usergeek-ic-js", () => ({ Usergeek: usergeek }));
     });
 });
