@@ -324,6 +324,7 @@
         // keyboard overlaps some of the UI content.
         keyboard.disableViewportResize();
         return () => {
+            window.clearTimeout(typingTimer);
             // Enable kb resizing again if it was enabled.
             if (wasViewportResizeEnabled) keyboard.enableViewportResize();
         };

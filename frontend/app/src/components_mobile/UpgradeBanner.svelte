@@ -16,8 +16,12 @@
     let countdown = $state(30);
     let showBanner = $state(false);
     let errorCount = 0;
+    let countdownInterval: number | undefined = undefined;
 
-    onDestroy(() => poller.stop());
+    onDestroy(() => {
+        poller.stop();
+        window.clearInterval(countdownInterval);
+    });
 
     function checkVersion(): Promise<void> {
         if (import.meta.env.OC_NODE_ENV !== "production" || $activeVideoCall !== undefined)
@@ -28,10 +32,10 @@
                 poller.stop();
                 countdown = 30;
                 showBanner = true;
-                const interval = window.setInterval(() => {
+                countdownInterval = window.setInterval(() => {
                     countdown = countdown - 1;
                     if (countdown === 0) {
-                        window.clearInterval(interval);
+                        window.clearInterval(countdownInterval);
                         window.location.reload();
                     }
                 }, 1000);

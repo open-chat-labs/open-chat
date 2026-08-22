@@ -510,6 +510,7 @@ impl RuntimeState {
             recent_group_upgrades: group_upgrades_metrics.recently_competed,
             recent_community_upgrades: community_upgrades_metrics.recently_competed,
             user_events_queue_length: self.data.user_event_sync_queue.len(),
+            user_events_queue_in_progress: self.data.user_event_sync_queue.in_progress(),
             users_to_delete_queue_length: self.data.users_to_delete_queue.len(),
             referral_codes: self.data.referral_codes.metrics(now),
             event_store_client_info,
@@ -759,6 +760,9 @@ pub struct Metrics {
     pub community_upgrade_concurrency: u32,
     pub max_concurrent_community_upgrades: u32,
     pub user_events_queue_length: usize,
+    // Batches currently mid-flight: len() alone cannot distinguish an idle queue from one
+    // whose last batch is still awaiting its reply
+    pub user_events_queue_in_progress: usize,
     pub users_to_delete_queue_length: usize,
     pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
     pub event_store_client_info: EventStoreClientInfo,

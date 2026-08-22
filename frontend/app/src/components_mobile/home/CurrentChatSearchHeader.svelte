@@ -44,7 +44,10 @@
         if (searchTerm.length > 0) {
             performSearch();
         }
-        return () => clearMatches();
+        return () => {
+            window.clearTimeout(timer);
+            clearMatches();
+        };
     });
 
     function onNext() {

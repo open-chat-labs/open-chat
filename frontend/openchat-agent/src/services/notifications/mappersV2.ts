@@ -12,7 +12,7 @@ import type {
     GroupReaction,
     Notification,
 } from "@shared";
-import { toBigInt32 } from "@shared";
+import { toBigInt32 } from "@shared/utils/bigint";
 import {
     AddedToChannelNotification as TAddedToChannelNotification,
     ChannelMessageNotification as TChannelMessageNotification,
