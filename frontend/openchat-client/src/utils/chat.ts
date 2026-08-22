@@ -552,12 +552,23 @@ export function groupEvents(
     isPublicChannel: boolean,
     expandedDeletedMessages: ReadonlySet<number>,
     groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][],
+    // When true, `events` is processed from last to first, equivalent to
+    // passing `[...events].reverse()` without the extra copy.
+    iterateBackwards = false,
 ): TimelineItem<ChatEvent>[] {
+    const visible: EventWrapper<ChatEvent>[] = [];
+    if (iterateBackwards) {
+        for (let i = events.length - 1; i >= 0; i--) {
+            const e = events[i];
+            if (!isEventKindHidden(e.event.kind, isPublicChannel)) visible.push(e);
+        }
+    } else {
+        for (const e of events) {
+            if (!isEventKindHidden(e.event.kind, isPublicChannel)) visible.push(e);
+        }
+    }
     return flattenTimeline(
-        groupWhile(
-            sameDate,
-            events.filter((e) => !isEventKindHidden(e.event.kind, isPublicChannel)),
-        )
+        groupWhile(sameDate, visible)
             .map((e) => reduceJoinedOrLeft(e, myUserId, isPublicChannel, expandedDeletedMessages))
             .map(groupInner ?? groupBySender),
     );
@@ -1388,9 +1399,37 @@ export function mergeEventsAndLocalUpdates(
     recentlySentMessages: MessageMap<bigint>,
     messageFilters: MessageFilter[],
 ): EventWrapper<ChatEvent>[] {
+    return mergeEventsAndLocalUpdatesWithRange(
+        events,
+        unconfirmed,
+        expiredEventRanges,
+        translations,
+        selectedChatBlockedOrSuspendedUsers,
+        messageLocalUpdates,
+        recentlySentMessages,
+        messageFilters,
+    ).events;
+}
+
+// As mergeEventsAndLocalUpdates, but also returns the DRange of loaded event
+// indexes (expired ranges + every event in the result) that the merge has to
+// compute anyway, so callers don't need to rebuild it.
+export function mergeEventsAndLocalUpdatesWithRange(
+    events: EventWrapper<ChatEvent>[],
+    unconfirmed: EventWrapper<Message>[],
+    expiredEventRanges: DRange,
+    translations: MessageMap<string>,
+    selectedChatBlockedOrSuspendedUsers: Set<string>,
+    messageLocalUpdates: MessageMap<MessageLocalUpdates>,
+    recentlySentMessages: MessageMap<bigint>,
+    messageFilters: MessageFilter[],
+): { events: EventWrapper<ChatEvent>[]; range: DRange } {
     const eventIndexes = new DRange();
     eventIndexes.add(expiredEventRanges);
     const confirmedMessageIds = new Set<bigint>();
+
+    const noBlockedOrFilters =
+        selectedChatBlockedOrSuspendedUsers.size === 0 && messageFilters.length === 0;
 
     function processEvent(e: EventWrapper<ChatEvent>): EventWrapper<ChatEvent> {
         eventIndexes.add(e.index);
@@ -1410,6 +1449,27 @@ export function mergeEventsAndLocalUpdates(
                     ? [messageLocalUpdates.get(repliesTo), translations.get(repliesTo)]
                     : [undefined, undefined];
 
+            const restricted = messageRestricted(e.event);
+            const repliesToRestricted =
+                e.event.repliesTo?.kind === "rehydrated_reply_context" &&
+                messageFlagsRestricted(e.event.repliesTo.moderationFlags);
+
+            // Fast path: nothing local applies to this message (or its reply
+            // context) and there are no blocked users / filters, so skip the
+            // remaining per-message checks. Output is identical to falling
+            // through, which would return `e` anyway.
+            if (
+                noBlockedOrFilters &&
+                updates === undefined &&
+                translation === undefined &&
+                replyContextUpdates === undefined &&
+                replyTranslation === undefined &&
+                !restricted &&
+                !repliesToRestricted
+            ) {
+                return e;
+            }
+
             const tallyUpdate =
                 e.event.content.kind === "proposal_content" ? updates?.proposalTally : undefined;
 
@@ -1417,10 +1477,6 @@ export function mergeEventsAndLocalUpdates(
             const repliesToSenderBlocked =
                 e.event.repliesTo?.kind === "rehydrated_reply_context" &&
                 selectedChatBlockedOrSuspendedUsers.has(e.event.repliesTo.senderId);
-            const restricted = messageRestricted(e.event);
-            const repliesToRestricted =
-                e.event.repliesTo?.kind === "rehydrated_reply_context" &&
-                messageFlagsRestricted(e.event.repliesTo.moderationFlags);
 
             // Don't hide the sender's own messages
             const failedMessageFilter =
@@ -1484,7 +1540,7 @@ export function mergeEventsAndLocalUpdates(
         }
     }
 
-    return merged;
+    return { events: merged, range: eventIndexes };
 }
 
 export function doesMessageFailFilter(
@@ -2026,6 +2082,19 @@ function diffMessagePermissions(
     diff.p2pSwap = updateFromOptions(original.p2pSwap, updated.p2pSwap);
 
     return diff;
+}
+
+// True when every index in [low, high] is contained in the given subranges
+// (as returned by DRange.subranges(), which merges adjacent ranges). Same
+// answer as `range.clone().intersect(low, high).length === high - low + 1`
+// without the clone.
+export function subrangesCover(
+    subranges: { low: number; high: number }[],
+    low: number,
+    high: number,
+): boolean {
+    if (high < low) return true;
+    return subranges.some((s) => s.low <= low && high <= s.high);
 }
 
 export function eventIndexesLoaded(chatId: ChatIdentifier): DRange {
