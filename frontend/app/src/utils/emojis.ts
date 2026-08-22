@@ -13,7 +13,13 @@ const emojiSet = new Set<string>();
 const emojiRegex = /^\p{Extended_Pictographic}$/u;
 let initializing = false;
 
-export const emojiDatabase = new Database();
+let database: Database | undefined;
+
+// Constructing a Database immediately opens IndexedDB and fires an ETag request
+// at the emoji CDN, so build it lazily and share the single instance.
+export function getEmojiDatabase(): Database {
+    return (database ??= new Database());
+}
 
 const customEmojiRegex = /^!emoji\([^)]+\)$/;
 
@@ -25,10 +31,11 @@ export function summaryToSelectedEmoji(match: EmojiSummary): SelectedEmoji {
 }
 
 export function searchAllEmojis(query: string) {
-    return emojiDatabase
+    const db = getEmojiDatabase();
+    return db
         .getPreferredSkinTone()
         .then((tone) => {
-            return emojiDatabase.getEmojiBySearchQuery(query!).then((m) => {
+            return db.getEmojiBySearchQuery(query!).then((m) => {
                 const native: NativeEmojiSummary[] = (m as NativeEmoji[])
                     .filter((m) => m.version < 14)
                     .map((match) => {
@@ -69,6 +76,11 @@ export function isSingleEmoji(text: string): boolean {
     return emojiSet.has(text) || emojiRegex.test(text);
 }
 
+// Reads the whole emoji table out of IndexedDB so that multi-codepoint sequences
+// (ZWJ, skin tones, flags) can be recognised - the regex above only matches a
+// single Extended_Pictographic character. Kicked off by the first isSingleEmoji
+// call rather than at module load. TODO: replace the set with /^\p{RGI_Emoji}$/v
+// once we have confirmed support in the Tauri WebViews.
 function initEmojiSet(): void {
     if (emojiSet.size > 0 || initializing) return;
     initializing = true;
@@ -86,11 +98,9 @@ function initEmojiSet(): void {
         .finally(() => (initializing = false));
 }
 
-// Initial call to start the async process
-initEmojiSet();
-
 function getAllNativeEmojis(): Promise<NativeEmoji[]> {
-    return emojiDatabase.ready().then(
+    const emojiDb = getEmojiDatabase();
+    return emojiDb.ready().then(
         () =>
             new Promise<NativeEmoji[]>((resolve, reject) => {
                 const request = indexedDB.open("emoji-picker-element-en");
