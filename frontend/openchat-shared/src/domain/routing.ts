@@ -18,7 +18,8 @@ export type LandingPageRoute =
     | GuidelinesRoute
     | TermsRoute
     | PrivacyRoute
-    | DiamondRoute;
+    | DiamondRoute
+    | CseaReportingRoute;
 
 export type RouteType = RouteParams["kind"];
 
@@ -56,6 +57,7 @@ export type DiamondRoute = NoScope & { kind: "diamond_route" };
 export type GuidelinesRoute = NoScope & { kind: "guidelines_route" };
 export type TermsRoute = NoScope & { kind: "terms_route" };
 export type PrivacyRoute = NoScope & { kind: "privacy_route" };
+export type CseaReportingRoute = NoScope & { kind: "csea_reporting_route" };
 
 export type HomeRoute = Scoped & {
     kind: "home_route";
