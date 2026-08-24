@@ -266,10 +266,15 @@
         <section>
             <h2><span class="num">5</span> Portal — general report information</h2>
             <p>
-                Sign in to the portal, start a new report, and read the Declaration. The report has
-                five sections; this checklist follows them in order. Fields marked * on the portal
-                are mandatory — where we genuinely do not hold the data, tick the "data not held"
-                box rather than delaying or guessing.
+                Sign in to the portal at
+                <a
+                    href="https://www.uk-child-sexual-abuse-industry-reporting.gov.uk/home"
+                    target="_blank"
+                    rel="noopener noreferrer">uk-child-sexual-abuse-industry-reporting.gov.uk</a
+                >, start a new report, and read the Declaration. The report has five sections; this
+                checklist follows them in order. Fields marked * on the portal are mandatory — where
+                we genuinely do not hold the data, tick the "data not held" box rather than delaying
+                or guessing.
             </p>
             <CseaChecklistItem id="gen-prev" {ticks} onToggle={toggle}>
                 <strong>Related to a previous report?</strong> Answer Yes for supplementary reports and
