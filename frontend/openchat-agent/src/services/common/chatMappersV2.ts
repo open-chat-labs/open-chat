@@ -755,6 +755,7 @@ function moderationReportContent(value: TModerationReportContent): ModerationRep
             violations: m.violations,
             matchDistance: m.match_distance,
             matchId: m.match_id,
+            hash: m.hash,
         })),
         reportedAt: value.reported_at,
         status: moderationReportStatus(value.status),

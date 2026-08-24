@@ -2073,6 +2073,7 @@ fn media_scan_match_triggers_auto_sanction() {
                     violations: vec!["A1".to_string()],
                     match_distance: 181,
                     match_id: Some("7469692".to_string()),
+                    hash: Some("dGVzdC1waG90b2RuYS1oYXNo".to_string()),
                 })],
             }],
             up_to_job_index: job.job_index,
@@ -2422,6 +2423,7 @@ fn establish_pending_hash_match_report_from(
                     violations: vec!["A1".to_string()],
                     match_distance: 181,
                     match_id: Some("7469692".to_string()),
+                    hash: Some("dGVzdC1waG90b2RuYS1oYXNo".to_string()),
                 })],
             }],
             up_to_job_index: job.job_index,
@@ -4489,6 +4491,7 @@ fn claim_release_with_retained_pin_clears_sightings() {
                     violations: vec!["A1".to_string()],
                     match_distance: 181,
                     match_id: Some("7469692".to_string()),
+                    hash: Some("dGVzdC1waG90b2RuYS1oYXNo".to_string()),
                 })],
             }
         })

@@ -69,6 +69,10 @@ pub struct MediaScanMatch {
     pub match_distance: i64,
     // The provider's record id, tying any onward report to the matched entry
     pub match_id: Option<String>,
+    // The perceptual hash the scanner computed and matched on, exactly as sent to the
+    // provider: what lets an authority re-match the content without the file
+    #[serde(default)]
+    pub hash: Option<String>,
 }
 
 #[ts_export::ts_export]
