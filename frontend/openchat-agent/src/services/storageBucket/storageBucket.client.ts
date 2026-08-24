@@ -8,6 +8,7 @@ import {
     forwardFileResponse,
     uploadChunkResponse,
     vaultFileChunkResponse,
+    vaultFileInfoResponse,
     vaultLogResponse,
 } from "./mappers";
 import type {
@@ -17,6 +18,7 @@ import type {
     ForwardFileResponse,
     UploadChunkResponse,
     VaultFileChunkResponse,
+    VaultFileInfoResponse,
 } from "@shared";
 
 export class StorageBucketClient extends CandidCanisterAgent<StorageBucketService> {
@@ -34,6 +36,15 @@ export class StorageBucketClient extends CandidCanisterAgent<StorageBucketServic
                     file_id: fileId !== undefined ? [fileId] : [],
                 }),
             vaultLogResponse,
+        );
+    }
+
+    // Metadata (hash, mime, size) of a quarantined file, readable by designated vault
+    // reviewers without opening a logged viewing session
+    vaultFileInfo(fileId: bigint): Promise<VaultFileInfoResponse> {
+        return this.handleQueryResponse(
+            () => this.service.vault_file_info({ file_id: fileId }),
+            vaultFileInfoResponse,
         );
     }
 

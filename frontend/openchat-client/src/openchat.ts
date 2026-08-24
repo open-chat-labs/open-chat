@@ -225,6 +225,7 @@ import {
     type MessageContext,
     type ModerationVerdict,
     type VaultFileChunkResponse,
+    type VaultFileInfoResponse,
     type MessageFilter,
     type MessageFormatter,
     type MessagePermission,
@@ -6408,6 +6409,10 @@ export class OpenChat {
         chunkIndex: number,
     ): Promise<VaultFileChunkResponse> {
         return this.#worker.send({ kind: "vaultFileChunk", bucketCanisterId, fileId, chunkIndex });
+    }
+
+    vaultFileInfo(bucketCanisterId: string, fileId: bigint): Promise<VaultFileInfoResponse> {
+        return this.#worker.send({ kind: "vaultFileInfo", bucketCanisterId, fileId });
     }
 
     setCommunityModerationFlags(communityId: string, flags: number): Promise<boolean> {

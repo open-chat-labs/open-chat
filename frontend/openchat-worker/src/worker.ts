@@ -1090,6 +1090,9 @@ function getAction(
                 payload.chunkIndex,
             );
 
+        case "vaultFileInfo":
+            return agent.vaultFileInfo(payload.bucketCanisterId, payload.fileId);
+
         case "updateRegistry":
             return agent.getRegistry();
 

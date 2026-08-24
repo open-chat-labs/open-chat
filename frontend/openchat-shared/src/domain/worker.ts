@@ -140,6 +140,7 @@ import type {
 import type { ModerationConfig } from "./user/user";
 import type {
     VaultFileChunkResponse,
+    VaultFileInfoResponse,
     VaultLogResponse,
     BlobReference,
     StorageStatus,
@@ -409,6 +410,7 @@ export type WorkerRequest =
     | ResolveModerationReport
     | ContestModerationSanction
     | VaultFileChunk
+    | VaultFileInfo
     | ChangeCommunityRole
     | SetCommunityIndexes
     | UpdateRegistry
@@ -947,6 +949,12 @@ type VaultFileChunk = {
     bucketCanisterId: string;
     fileId: bigint;
     chunkIndex: number;
+};
+
+type VaultFileInfo = {
+    kind: "vaultFileInfo";
+    bucketCanisterId: string;
+    fileId: bigint;
 };
 
 type ImportGroupToCommunity = {
@@ -1884,6 +1892,7 @@ export type WorkerResponseInner =
     | OCError
     | ProposedProtectedAction
     | VaultFileChunkResponse
+    | VaultFileInfoResponse
     | void
     | bigint
     | boolean
@@ -2653,6 +2662,8 @@ export type WorkerResult<T> = T extends Init
     ? boolean
     : T extends VaultFileChunk
     ? VaultFileChunkResponse
+    : T extends VaultFileInfo
+    ? VaultFileInfoResponse
     : T extends CreateUserGroup
     ? CreateUserGroupResponse
     : T extends UpdateUserGroup

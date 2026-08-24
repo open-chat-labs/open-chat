@@ -6,6 +6,7 @@ import {
     ForwardFileResponse,
     UploadChunkResponse,
     VaultFileChunkResponse,
+    VaultFileInfoResponse,
     VaultLogResponse,
 } from "./types";
 export {
@@ -15,6 +16,7 @@ export {
     ForwardFileResponse as CandidForwardFileResponse,
     UploadChunkResponse as CandidUploadChunkResponse,
     VaultFileChunkResponse as CandidVaultFileChunkResponse,
+    VaultFileInfoResponse as CandidVaultFileInfoResponse,
     VaultLogResponse as CandidVaultLogResponse,
 };
 
