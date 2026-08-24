@@ -334,7 +334,7 @@ import {
 } from "@shared";
 import { tick } from "svelte";
 import { locale } from "svelte-i18n";
-import { get } from "svelte/store";
+import { get, type Unsubscriber } from "svelte/store";
 import { AndroidWebAuthnErrorCode } from "tauri-plugin-oc-api";
 import type { OpenChatConfig } from "./config";
 import {
@@ -661,6 +661,10 @@ export class OpenChat {
     #chatsPoller: Poller | undefined = undefined;
     #botsPoller: Poller | undefined = undefined;
     #registryPoller: Poller | undefined = undefined;
+    #onlinePoller: Poller | undefined = undefined;
+    #btcBalancePoller: Poller | undefined = undefined;
+    #btcAddressUnsub: Unsubscriber | undefined = undefined;
+    #oneSecAddressUnsub: Unsubscriber | undefined = undefined;
     #userUpdatePoller: Poller | undefined = undefined;
     #exchangeRatePoller: Poller | undefined = undefined;
     #proposalTalliesPoller: Poller | undefined = undefined;
@@ -1166,7 +1170,8 @@ export class OpenChat {
 
     #startOnlinePoller() {
         if (!anonUserStore.value) {
-            new Poller(
+            this.#onlinePoller?.stop();
+            this.#onlinePoller = new Poller(
                 () =>
                     (this.#worker.send({ kind: "markAsOnline" }) ?? Promise.resolve()).then(
                         (minutesOnline) => minutesOnlineStore.set(minutesOnline),
@@ -1291,6 +1296,18 @@ export class OpenChat {
             };
             this.#sendRtcMessage([selectedChat.id.userId], rtc);
         }
+    }
+
+    // Marks several messages read with a single publish of the messagesRead store
+    markMessagesRead(
+        context: MessageContext,
+        messages: { messageIndex: number; messageId: bigint | undefined }[],
+    ): void {
+        withPausedStores(() => {
+            for (const { messageIndex, messageId } of messages) {
+                this.markMessageRead(context, messageIndex, messageId);
+            }
+        });
     }
 
     markPinnedMessagesRead(chatId: ChatIdentifier, dateLastPinned: bigint): void {
@@ -2803,14 +2820,15 @@ export class OpenChat {
             allUserIds.add(u);
         }
         userStore.addWebhookIds([...webhooks]);
-        selectedChatUserIdsStore.update((set) => {
-            [...allUserIds].forEach((u) => {
-                if (u !== userId) {
-                    set.add(u);
-                }
+        const newChatUserIds = [...allUserIds].filter(
+            (u) => u !== userId && !selectedChatUserIdsStore.value.has(u),
+        );
+        if (newChatUserIds.length > 0) {
+            selectedChatUserIdsStore.update((set) => {
+                newChatUserIds.forEach((u) => set.add(u));
+                return set;
             });
-            return set;
-        });
+        }
         await this.getMissingUsers(allUserIds);
     }
 
@@ -8235,21 +8253,25 @@ export class OpenChat {
     }
 
     #startBtcBalanceUpdateJob() {
-        bitcoinAddress.subscribe((addr) => {
+        this.#btcAddressUnsub?.();
+        this.#btcAddressUnsub = bitcoinAddress.subscribe((addr) => {
+            // store subscribers cannot return a cleanup, so stop the previous poller explicitly
+            this.#btcBalancePoller?.stop();
+            this.#btcBalancePoller = undefined;
             if (addr !== undefined) {
-                const poller = new Poller(
+                this.#btcBalancePoller = new Poller(
                     () => this.#updateBtcBalance(addr),
                     ONE_MINUTE_MILLIS,
                     5 * ONE_MINUTE_MILLIS,
                     true,
                 );
-                return () => poller.stop();
             }
         });
     }
 
     #startOneSecBalanceUpdateJob() {
-        oneSecAddress.subscribe((addr) => {
+        this.#oneSecAddressUnsub?.();
+        this.#oneSecAddressUnsub = oneSecAddress.subscribe((addr) => {
             if (addr !== undefined) {
                 this.#oneSecEnableForwarding(currentUserIdStore.value, addr).then(() => {
                     // Check balances in case a deposit was made before the OneSecForwarder

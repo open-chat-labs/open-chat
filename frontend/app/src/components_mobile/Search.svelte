@@ -63,6 +63,7 @@
         if (autofocus) {
             inp.focus();
         }
+        return () => window.clearTimeout(timer);
     });
 </script>
 

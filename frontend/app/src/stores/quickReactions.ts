@@ -1,8 +1,7 @@
-import { Database as EmojiDatabase } from "emoji-picker-element";
 import type { Emoji } from "emoji-picker-element/shared";
+import { getEmojiDatabase } from "../utils/emojis";
 import { writable } from "svelte/store";
 
-const emojiDb = new EmojiDatabase();
 const showQuickReactionCount = 15;
 const defaultReactions = ["yes", "tears_of_joy", "pray", "wtf", "heart", "face_vomiting"];
 
@@ -22,7 +21,7 @@ function initQuickReactions() {
     }
 
     function loadQuickReactions(skintone: number) {
-        return emojiDb
+        return getEmojiDatabase()
             .getTopFavoriteEmoji(showQuickReactionCount)
             .then((fav) => {
                 const favUnicode = getUnicodeBySkintone(skintone, fav);
@@ -31,7 +30,7 @@ function initQuickReactions() {
                 // a default selection of emoji.
                 if (fav.length < showQuickReactionCount) {
                     return Promise.all(
-                        defaultReactions.map((em) => emojiDb.getEmojiByShortcode(em)),
+                        defaultReactions.map((em) => getEmojiDatabase().getEmojiByShortcode(em)),
                     )
                         .then((def) =>
                             getUnicodeBySkintone(skintone, def.filter((v) => v != null) as Emoji[]),
@@ -53,7 +52,7 @@ function initQuickReactions() {
     }
 
     function loadSkintoneAndQuickReactions() {
-        return emojiDb
+        return getEmojiDatabase()
             .getPreferredSkinTone()
             .then(loadQuickReactions)
             .catch((e) => {
@@ -70,7 +69,7 @@ function initQuickReactions() {
 
         // Increment favourites
         incrementFavourite: (unicode: string): void => {
-            emojiDb.incrementFavoriteEmojiCount(unicode);
+            getEmojiDatabase().incrementFavoriteEmojiCount(unicode);
         },
 
         // Reload reactions

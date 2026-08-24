@@ -259,3 +259,32 @@ describe("store value can be accessed", () => {
         });
     });
 });
+
+describe("writable with notEq equality check", () => {
+    const notEq = () => false;
+
+    test("publishes on every set, even with the same reference", () => {
+        const map = new Map<string, number>();
+        const w = writable(map, undefined, notEq);
+        let publishes = 0;
+        w.subscribe(() => publishes++);
+        publishes = 0;
+        w.set(map);
+        w.update((m) => m);
+        expect(publishes).toBe(2);
+    });
+
+    test("not calling set/update is the only way to skip a publish", () => {
+        const w = writable(new Map<string, number>(), undefined, notEq);
+        let publishes = 0;
+        w.subscribe(() => publishes++);
+        publishes = 0;
+        if (w.value.get("a") !== 1) {
+            w.update((m) => m.set("a", 1));
+        }
+        if (w.value.get("a") !== 1) {
+            w.update((m) => m.set("a", 1));
+        }
+        expect(publishes).toBe(1);
+    });
+});

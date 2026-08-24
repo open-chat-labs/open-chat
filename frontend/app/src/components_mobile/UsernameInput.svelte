@@ -34,6 +34,7 @@
     onMount(() => {
         username = originalUsername;
         usernameValid = originalUsername?.length > 0;
+        return () => window.clearTimeout(timer);
     });
 
     function checkUsername(value: string) {

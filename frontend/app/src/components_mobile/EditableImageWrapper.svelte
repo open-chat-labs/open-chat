@@ -100,11 +100,19 @@
                 const array = await blob.arrayBuffer();
                 const data = new Uint8Array(array);
                 image = canvas.toDataURL("image/jpg");
-                showModal = false;
+                closeModal();
                 console.log("image size: ", data.length);
                 onImageSelected({ url: image, data });
             }
         }, "image/jpg");
+    }
+
+    // Drop the full-resolution source copies once the crop sheet is gone
+    function closeModal() {
+        showModal = false;
+        selectedImage = undefined;
+        originalImage = new Image();
+        cropData = undefined;
     }
 
     function onCrop(ev: OnCropCompleteEvent): void {
@@ -118,7 +126,7 @@
 </script>
 
 {#if showModal}
-    <Sheet onDismiss={() => (showModal = false)}>
+    <Sheet onDismiss={closeModal}>
         <Column gap={"lg"} padding={"lg"}>
             <Subtitle fontWeight={"bold"}>Crop image</Subtitle>
             <Column backgroundColor={ColourVars.background1} height={{ size: "25rem" }}>

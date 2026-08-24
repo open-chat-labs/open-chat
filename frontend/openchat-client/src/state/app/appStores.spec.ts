@@ -1,5 +1,6 @@
 import DRange from "drange";
 import {
+    ChatMap,
     CommunityMap,
     emptyChatMetrics,
     emptyRules,
@@ -9,6 +10,7 @@ import {
     ROLE_MODERATOR,
     ROLE_NONE,
     ROLE_OWNER,
+    type ChannelSummary,
     type ChatIdentifier,
     type CommunityIdentifier,
     type CommunityPermissions,
@@ -28,26 +30,33 @@ import { ChatDetailsState } from "../chat/serverDetails";
 import { communityLocalUpdates } from "../community/detailUpdates";
 import { CommunityDetailsState } from "../community/server";
 import { localUpdates } from "../localUpdates";
+import { messagesRead } from "../unread/markRead";
+import { withPausedStores } from "../../utils/stores";
 import {
     notFoundStore,
     pathContextStore,
     routeStore,
     selectedCommunityIdStore,
 } from "../path/stores";
+import { suspendedUsersStore } from "../users/stores";
 import { addToWritableMap } from "../utils";
 import {
     allChatsStore,
+    cryptoBalanceStore,
     allServerChatsStore,
     chatListScopeStore,
+    chatSummariesListStore,
     chatSummariesStore,
     communitiesStore,
     directChatBotsStore,
     eventsStore,
+    globalUnreadCountStore,
     expiredServerEventRanges,
     messageFiltersStore,
     pinnedChatsStore,
     selectedChatExpandedDeletedMessageStore,
     selectedChatIdStore,
+    selectedChatBlockedOrSuspendedUsersStore,
     selectedChatMembersStore,
     selectedChatUserIdsStore,
     selectedCommunityBlockedUsersStore,
@@ -56,6 +65,7 @@ import {
     selectedServerCommunityStore,
     serverCommunitiesStore,
     serverEventsStore,
+    serverGroupChatsStore,
     serverPinnedChatsStore,
     translationsStore,
 } from "./stores";
@@ -314,6 +324,61 @@ describe("app state", () => {
                     );
                 });
 
+                test("undoing a local update restores the server chat values", () => {
+                    const server = get(allServerChatsStore).get(groupId);
+                    const undo = localUpdates.updateChatProperties(groupId, "name updated");
+                    groupChatExpectation(groupId, (g) => expect(g.name).toEqual("name updated"));
+                    undo();
+                    groupChatExpectation(groupId, (g) => {
+                        expect(g.name).toEqual("group chat one");
+                        expect(g.membership).toEqual(server?.membership);
+                    });
+                    // once every local update has been undone the server chat is returned as-is
+                    expect(get(allChatsStore).get(groupId) === server).toBe(true);
+                });
+
+                test("undoing a latest message update restores the server chat values", () => {
+                    const server = get(allServerChatsStore).get(groupId);
+                    const undo = localUpdates.updateLatestMessage(groupId, chatMessage());
+                    expect(get(allChatsStore).get(groupId)?.latestMessage).not.toBeUndefined();
+                    undo();
+                    const client = get(allChatsStore).get(groupId);
+                    expect(client?.latestMessage).toBeUndefined();
+                    expect(client?.latestEventIndex).toEqual(server?.latestEventIndex);
+                    expect(client?.membership).toEqual(server?.membership);
+                    expect(client === server).toBe(true);
+                });
+
+                test("a local update does not mutate the server chat's membership", () => {
+                    const server = get(allServerChatsStore).get(groupId);
+                    localUpdates.updateNotificationsMuted(groupId, true, true);
+                    const client = get(allChatsStore).get(groupId);
+                    expect(client?.membership.notificationsMuted).toBe(true);
+                    expect(client?.membership.atEveryoneMuted).toBe(true);
+                    expect(server?.membership.notificationsMuted).toBe(false);
+                    expect(server?.membership.atEveryoneMuted).toBe(false);
+                    expect(client?.membership === server?.membership).toBe(false);
+                });
+
+                test("local updates to permissions and gate do not mutate the server chat", () => {
+                    const server = get(allServerChatsStore).get(groupId);
+                    localUpdates.updateChatProperties(
+                        groupId,
+                        undefined,
+                        undefined,
+                        { changeRoles: ROLE_OWNER },
+                        { gate: { kind: "diamond_gate" }, expiry: undefined },
+                    );
+                    const client = get(allChatsStore).get(groupId);
+                    if (client?.kind !== "group_chat" || server?.kind !== "group_chat") {
+                        fail("expected group chats");
+                    }
+                    expect(client.permissions.changeRoles).toEqual(ROLE_OWNER);
+                    expect(server.permissions.changeRoles).toEqual(ROLE_ADMIN);
+                    expect(client.gateConfig.gate.kind).toEqual("diamond_gate");
+                    expect(server.gateConfig.gate.kind).toEqual("no_gate");
+                });
+
                 test("scoping works as expected", () => {
                     setRouteParams(mockContext, {
                         kind: "home_route",
@@ -326,6 +391,43 @@ describe("app state", () => {
                         scope: { kind: "favourite" },
                     });
                     expect(chatSummariesStore.value.get(groupId)).toBeUndefined();
+                });
+            });
+
+            describe("chat summaries list", () => {
+                const a: GroupChatIdentifier = { kind: "group_chat", groupId: "a" };
+                const b: GroupChatIdentifier = { kind: "group_chat", groupId: "b" };
+                const c: GroupChatIdentifier = { kind: "group_chat", groupId: "c" };
+
+                beforeEach(() => {
+                    chatDetailsLocalUpdates.clearAll();
+                    setRouteParams(mockContext, {
+                        kind: "home_route",
+                        scope: { kind: "chats" },
+                    });
+                    localUpdates.addChat({ ...groupChat("a"), eventsTtlLastUpdated: 10n });
+                    localUpdates.addChat({ ...groupChat("b"), eventsTtlLastUpdated: 30n });
+                    localUpdates.addChat({ ...groupChat("c"), eventsTtlLastUpdated: 20n });
+                });
+
+                test("unpinned chats are sorted by display date descending", () => {
+                    serverPinnedChatsStore.set(new Map());
+                    const ids = get(chatSummariesListStore).map((c) => c.id);
+                    expect(ids).toEqual([b, c, a, groupId]);
+                });
+
+                test("pinned chats come first in pinned order, then the rest by date", () => {
+                    serverPinnedChatsStore.set(
+                        new Map([["chats", [a, { kind: "group_chat", groupId: "missing" }, c]]]),
+                    );
+                    const ids = get(chatSummariesListStore).map((c) => c.id);
+                    expect(ids).toEqual([a, c, b, groupId]);
+                });
+
+                test("pins in another scope are ignored", () => {
+                    serverPinnedChatsStore.set(new Map([["favourite", [a]]]));
+                    const ids = get(chatSummariesListStore).map((c) => c.id);
+                    expect(ids).toEqual([b, c, a, groupId]);
                 });
             });
 
@@ -372,6 +474,34 @@ describe("app state", () => {
                         client.event.content.text === "whatever",
                 ).toBe(true);
             });
+        });
+    });
+
+    describe("blocked or suspended users", () => {
+        beforeEach(() => {
+            suspendedUsersStore.set(new Set());
+        });
+
+        test("includes suspended users", () => {
+            suspendedUsersStore.set(new Set(["s1", "s2"]));
+            const users = get(selectedChatBlockedOrSuspendedUsersStore);
+            expect(users.has("s1")).toBe(true);
+            expect(users.has("s2")).toBe(true);
+            suspendedUsersStore.set(new Set(["s1"]));
+            expect(get(selectedChatBlockedOrSuspendedUsersStore).has("s2")).toBe(false);
+        });
+
+        test("does not publish when the resulting set is unchanged", () => {
+            let publishes = 0;
+            const unsub = selectedChatBlockedOrSuspendedUsersStore.subscribe(() => publishes++);
+            const before = get(selectedChatBlockedOrSuspendedUsersStore);
+            suspendedUsersStore.set(new Set());
+            expect(publishes).toBe(1);
+            expect(get(selectedChatBlockedOrSuspendedUsersStore) === before).toBe(true);
+            suspendedUsersStore.set(new Set(["x"]));
+            expect(publishes).toBe(2);
+            expect(get(selectedChatBlockedOrSuspendedUsersStore).has("x")).toBe(true);
+            unsub();
         });
     });
 
@@ -513,6 +643,31 @@ describe("app state", () => {
             const server = get(serverCommunitiesStore).get(id);
             const client = get(communitiesStore).get(id);
             expect(client === server).toBe(false);
+        });
+
+        test("local updates only change the membership of the client copy", () => {
+            const id: CommunityIdentifier = { kind: "community", communityId: "123456" };
+            localUpdates.updateCommunityIndex(id, 7);
+            localUpdates.updateCommunityDisplayName(id, "Mr. OpenChat");
+            localUpdates.updateCommunityRulesAccepted(id, true);
+            const server = get(serverCommunitiesStore).get(id);
+            const client = get(communitiesStore).get(id);
+            expect(client?.membership).toEqual({
+                ...server?.membership,
+                index: 7,
+                displayName: "Mr. OpenChat",
+                rulesAccepted: true,
+            });
+            expect(server?.membership.index).toEqual(1);
+            expect(server?.membership.displayName).toBeUndefined();
+            expect(server?.membership.rulesAccepted).toBe(false);
+            expect(client?.membership === server?.membership).toBe(false);
+            expect({ ...client, membership: undefined }).toEqual({
+                ...server,
+                membership: undefined,
+            });
+            // everything other than membership is shared with the server object
+            expect(client?.channels === server?.channels).toBe(true);
         });
 
         test("community display name", () => {
@@ -752,3 +907,94 @@ function chatMessage(): EventWrapper<Message> {
         },
     };
 }
+
+describe("cryptoBalanceStore", () => {
+    test("setBalance only publishes when the balance changes", () => {
+        let publishes = 0;
+        const unsub = cryptoBalanceStore.subscribe(() => publishes++);
+        publishes = 0;
+        cryptoBalanceStore.setBalance("ledger1", 100n);
+        expect(publishes).toBe(1);
+        cryptoBalanceStore.setBalance("ledger1", 100n);
+        expect(publishes).toBe(1);
+        cryptoBalanceStore.setBalance("ledger1", 200n);
+        expect(publishes).toBe(2);
+        expect(cryptoBalanceStore.value.get("ledger1")).toBe(200n);
+        expect(cryptoBalanceStore.valueIfUpdatedRecently("ledger1")).toBe(200n);
+        unsub();
+    });
+});
+
+describe("unread count stores", () => {
+    const msg = chatMessage();
+    msg.event.messageIndex = 100;
+    function channel(communityId: string, channelId: string): ChannelSummary {
+        return {
+            ...groupChat(channelId, msg),
+            kind: "channel",
+            id: { kind: "channel", communityId, channelId },
+        } as unknown as ChannelSummary;
+    }
+
+    test("marking messages read in one chat only re-evaluates that chat", () => {
+        const groups: GroupChatSummary[] = [];
+        for (let i = 0; i < 300; i++) {
+            groups.push(groupChat(`g${i}`, msg));
+        }
+        const communities: CommunitySummary[] = [];
+        for (let c = 0; c < 20; c++) {
+            const community = createCommunitySummary(`c${c}`, c);
+            for (let ch = 0; ch < 40; ch++) {
+                community.channels.push(channel(`c${c}`, `${c}_${ch}`));
+            }
+            communities.push(community);
+        }
+        const all: (GroupChatSummary | ChannelSummary)[] = [
+            ...groups,
+            ...communities.flatMap((c) => c.channels),
+        ];
+        withPausedStores(() => {
+            for (const c of all) {
+                messagesRead.syncWithServer(c.id, 0, [], undefined);
+            }
+            serverGroupChatsStore.set(ChatMap.fromList(all.slice(0, 300) as GroupChatSummary[]));
+            serverCommunitiesStore.set(
+                CommunityMap.fromList(
+                    communities.map((c, i) => ({
+                        ...c,
+                        channels: all.slice(300 + i * 40, 340 + i * 40) as ChannelSummary[],
+                    })),
+                ),
+            );
+        });
+
+        let publishes = 0;
+        const unsub = globalUnreadCountStore.subscribe(() => publishes++);
+        const before = get(globalUnreadCountStore);
+        expect(before.chats).toEqual({ muted: 0, unmuted: 1100, mentions: false });
+
+        const spy = vi.spyOn(messagesRead, "unreadMessageCount");
+        const target = all[7];
+        for (let i = 1; i <= 50; i++) {
+            if (!messagesRead.isRead({ chatId: target.id }, i, undefined)) {
+                messagesRead.markMessageRead({ chatId: target.id }, i, undefined);
+            }
+        }
+        const evaluations = spy.mock.calls.length;
+        spy.mockRestore();
+
+        const after = get(globalUnreadCountStore);
+        expect(after.chats).toEqual({ muted: 0, unmuted: 1100, mentions: false });
+        // only the changed chat is re-evaluated per publish (was 50 x 1100 before the per-chat cache)
+        expect(evaluations).toEqual(50);
+        messagesRead.markMessageRead({ chatId: target.id }, 100, undefined);
+        expect(get(globalUnreadCountStore).chats).toEqual({
+            muted: 0,
+            unmuted: 1099,
+            mentions: false,
+        });
+        unsub();
+        // initial subscription + 50 marks + the final mark
+        expect(publishes).toEqual(52);
+    });
+});
