@@ -92,6 +92,12 @@
             track,
             () => (route = LandingPage),
         );
+        page(
+            "/csea-reporting",
+            parsePathParams(() => ({ kind: "csea_reporting_route", scope: { kind: "none" } })),
+            track,
+            () => (route = LandingPage),
+        );
         // this is for explore mode
         page("/communities", parsePathParams(communitesRoute), track, () => (route = Home));
         // global direct chat selected

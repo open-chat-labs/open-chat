@@ -1199,6 +1199,7 @@
         "copyHashes": "Copy hashes",
         "hashesCopied": "Copied",
         "hashesFailed": "Nothing copied",
+        "filingChecklist": "Manual filing checklist",
         "filingReference": "Portal reference (URN)",
         "filingSubmit": "Record",
         "classifierClean": "The classifier found no violation - review the reporter's complaint on its merits",
