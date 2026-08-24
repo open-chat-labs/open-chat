@@ -281,32 +281,14 @@
                 for blocked re-uploads of material we have reported before, and quote the earlier reference
                 from the filed-report register. Otherwise No.
             </CseaChecklistItem>
-            <CseaChecklistItem id="gen-police" {ticks} onToggle={toggle}>
-                <strong>Previously reported to local police?</strong> Usually No. If Yes, provide the
-                police reference and officer details if known.
-            </CseaChecklistItem>
             <CseaChecklistItem id="gen-contact" {ticks} onToggle={toggle}>
-                <strong>Platform and point of contact.</strong> Platform is OpenChat (pre-filled
-                from registration). Give <em>your own</em> name, phone number, and email — law enforcement
-                must be able to reach a person, not just the portal account.
+                <strong>Point of contact:</strong> give <em>your own</em> name, phone number, and email
+                — law enforcement must be able to reach a person, not just the portal account.
             </CseaChecklistItem>
             <CseaChecklistItem id="gen-detected-when" {ticks} onToggle={toggle}>
                 <strong>Date and time incident detected.</strong> When <em>we</em> detected it — the hash-match
                 timestamp or when the user report arrived — not when the content was posted. HH:MM:SS,
                 in UTC.
-            </CseaChecklistItem>
-            <CseaChecklistItem id="gen-detected-who" {ticks} onToggle={toggle}>
-                <strong>Who detected the content?</strong>
-                {#if origin === "hash"}
-                    "An automated detection tool" (the hash-matching service).
-                {:else if origin === "manual"}
-                    "A user of the platform" for in-app reports, "a third-party reporter" if another
-                    organisation or an outside individual told us, or "an employee moderating the
-                    platform" for moderator discovery.
-                {:else}
-                    User of the platform / third-party reporter / automated detection tool /
-                    employee moderating the platform — pick the one that matches.
-                {/if}
             </CseaChecklistItem>
             <CseaChecklistItem id="gen-reviewed" {ticks} onToggle={toggle}>
                 <strong>Has someone in your organisation reviewed the content?</strong> Answer
@@ -332,14 +314,9 @@
                 that is one report per sender, each listing the other participants as recipients. Run
                 this checklist once per sender.
             </p>
-            <CseaChecklistItem id="content-type" {ticks} onToggle={toggle}>
-                <strong>Report content type:</strong> indecent imagery of children / indecent video /
-                audio / messaging / viral-meme / URL / multiple / other.
-            </CseaChecklistItem>
             <CseaChecklistItem id="content-date" {ticks} onToggle={toggle}>
-                <strong>Date and time uploaded to the platform</strong> — from the message metadata, HH:MM:SS,
-                in UTC. "File 1" is the file we detected first; add the sender's other offending files
-                after it in any order.
+                <strong>Date and time uploaded:</strong> from the message metadata, in UTC. "File 1" is
+                the file we detected first; the sender's other offending files follow in any order.
             </CseaChecklistItem>
             <CseaChecklistItem id="content-ip" {ticks} onToggle={toggle}>
                 <strong>IP address and port of the uploading device:</strong> tick
@@ -364,23 +341,10 @@
                 Say so in the additional-information field: "URL no longer resolves — media was quarantined
                 by the platform on detection." Do not open it to check it.
             </CseaChecklistItem>
-            <CseaChecklistItem id="content-exif" {ticks} onToggle={toggle}>
-                <strong>EXIF data:</strong> confirm whether held; provide it if we have it, otherwise
-                No.
-            </CseaChecklistItem>
-            <CseaChecklistItem id="content-group" {ticks} onToggle={toggle}>
-                <strong>Group chat / chat room:</strong> give the group, channel, or community name. If
-                the reported user is an admin or moderator of it, say so in the user section's additional-information
-                field.
-            </CseaChecklistItem>
             <CseaChecklistItem id="content-chat" {ticks} onToggle={toggle}>
                 <strong>Illegal chat with no media:</strong> if the report is about messages rather than
                 media, upload a copy of the entire chat between the sender and the recipient(s) — the
                 text excerpt we hold, plus context.
-            </CseaChecklistItem>
-            <CseaChecklistItem id="content-more" {ticks} onToggle={toggle}>
-                <strong>More information:</strong> the reporter's description verbatim, message links
-                as text, and anything else not captured — with the unverified framing from section 5.
             </CseaChecklistItem>
 
             <h3>Uploading the material itself</h3>
@@ -423,10 +387,6 @@
                         no approved export route is available to you,
                         <strong>stop and escalate</strong> — do not improvise a way to copy the material.
                     </CseaChecklistItem>
-                    <CseaChecklistItem id="media-upload" {ticks} onToggle={toggle}>
-                        Upload to the portal in the original format, unedited. Supported: any file
-                        type except .exe, up to 5&nbsp;GB.
-                    </CseaChecklistItem>
                     <CseaChecklistItem id="media-purge" {ticks} onToggle={toggle}>
                         <strong>Immediately after submitting, purge every local copy:</strong>
                         the downloads folder, the browser's download history and cache, the bin/trash,
@@ -456,19 +416,9 @@
             </p>
             <CseaChecklistItem id="user-username" {ticks} onToggle={toggle}>
                 <strong>What OpenChat holds — provide it all:</strong> the username at the time of the
-                incident (plus any previous usernames and display names if known), the user's principal
-                as the unique identification number, the profile URL as text, and the profile picture
-                and bio if set.
-            </CseaChecklistItem>
-            <CseaChecklistItem id="user-closure" {ticks} onToggle={toggle}>
-                <strong>Account closure:</strong> whether we have suspended or closed the account, when,
-                and whether the user was notified. Note any suspicion the account is compromised, with
-                reasons.
-            </CseaChecklistItem>
-            <CseaChecklistItem id="user-additional" {ticks} onToggle={toggle}>
-                <strong>Additional information:</strong> admin or moderator status in the group where
-                the content appeared, ledger principals or on-chain identifiers if relevant, and anything
-                else identifying — unverified framing as always.
+                incident (plus previous usernames if known), the user's principal as the unique identification
+                number, the profile URL as text, profile picture and bio if set, admin or moderator status
+                in the group where the content appeared, and ledger principals if relevant.
             </CseaChecklistItem>
             <CseaChecklistItem id="user-dnh" {ticks} onToggle={toggle}>
                 <strong>Tick "data not held" without agonising</strong> for everything OpenChat deliberately
@@ -488,8 +438,8 @@
                 true.
             </CseaChecklistItem>
             <CseaChecklistItem id="submit-review" {ticks} onToggle={toggle}>
-                On the review page, check accuracy and check the unverified framing is intact
-                everywhere. You cannot re-open a report once submitted.
+                You <strong>cannot re-open a report once submitted</strong> — on the review page, check
+                accuracy and the unverified framing before confirming.
             </CseaChecklistItem>
             <CseaChecklistItem id="submit-reference" {ticks} onToggle={toggle}>
                 Submit, and note the <strong>report reference number</strong> immediately (it also appears
