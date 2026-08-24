@@ -325,13 +325,15 @@
                 fields.
             </CseaChecklistItem>
             <CseaChecklistItem id="content-hash" {ticks} onToggle={toggle}>
-                <strong>Original hash of the file:</strong>
+                <strong>Original hash of the file:</strong> use "Copy hashes" on the report card —
+                it copies our sha256 for each file and, for hash matches, the PhotoDNA hash that
+                matched.
                 {#if origin === "hash"}
-                    provide the original hash of the <em>known</em> image from the matched hash list (this
-                    is what lets the NCA match it without the file), plus the match provider and record
-                    details in the additional-information field.
+                    Give the PhotoDNA hash here: it is what lets the NCA match the content without
+                    the file. The provider's own record id and corpus details go in the
+                    additional-information field.
                 {:else}
-                    provide our stored hash of the blob.
+                    Give the sha256.
                 {/if}
             </CseaChecklistItem>
             <CseaChecklistItem id="content-url" {ticks} onToggle={toggle}>
