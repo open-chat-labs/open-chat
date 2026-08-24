@@ -1,4 +1,4 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{ChannelId, CommunityId, Empty, ModerationReferralConfig, UserId};
@@ -21,6 +21,10 @@ pub struct SuccessResult {
     pub moderation_referral_config: Option<ModerationReferralConfig>,
     pub vault_reviewers: Vec<UserId>,
     pub media_scan_config: types::MediaScanConfig,
+    // The registered principal of the off-chain NCA reporting service, if any
+    #[serde(default)]
+    #[ts(as = "Option::<ts_export::TSPrincipal>", optional)]
+    pub authority_reporter: Option<Principal>,
 }
 
 #[ts_export(user_index, moderation_config)]

@@ -1,6 +1,6 @@
 use crate::updates::{
-    destroy_vault_evidence, set_internal_moderation_channel, set_media_scan_config, set_openai_api_key, set_vault_legal_hold,
-    set_vault_reviewers,
+    destroy_vault_evidence, set_authority_reporter, set_internal_moderation_channel, set_media_scan_config,
+    set_openai_api_key, set_vault_legal_hold, set_vault_reviewers,
 };
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
@@ -22,6 +22,9 @@ pub enum ProtectedAction {
     // Only ever proposed for the dangerous case: clearing a hold on evidence whose release is
     // already pending performs that release, destroying it
     SetVaultLegalHold(set_vault_legal_hold::Args),
+    // The principal gains a token-gated path to vaulted CSAM, so no single operator key may
+    // grant it
+    SetAuthorityReporter(set_authority_reporter::Args),
 }
 
 impl ProtectedAction {
@@ -35,6 +38,7 @@ impl ProtectedAction {
             ProtectedAction::SetMediaScanConfig(_) => "SetMediaScanConfig",
             ProtectedAction::SetInternalModerationChannel(_) => "SetInternalModerationChannel",
             ProtectedAction::SetVaultLegalHold(_) => "SetVaultLegalHold",
+            ProtectedAction::SetAuthorityReporter(_) => "SetAuthorityReporter",
         }
     }
 
@@ -76,6 +80,10 @@ impl ProtectedAction {
             ProtectedAction::SetInternalModerationChannel(args) => match &args.channel {
                 Some(c) => format!("SetInternalModerationChannel({}/{})", c.community_id, c.channel_id),
                 None => "SetInternalModerationChannel(None)".to_string(),
+            },
+            ProtectedAction::SetAuthorityReporter(args) => match &args.principal {
+                Some(p) => format!("SetAuthorityReporter({p})"),
+                None => "SetAuthorityReporter(None)".to_string(),
             },
         }
     }

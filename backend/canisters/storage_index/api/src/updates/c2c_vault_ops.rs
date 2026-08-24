@@ -16,6 +16,15 @@ pub enum VaultOp {
     SetLegalHold(SetLegalHoldOp),
     Destroy(DestroyOp),
     SetReviewers(Vec<VaultReviewer>),
+    // The off-chain NCA reporting service's principal, broadcast to every bucket together
+    // with the OC public key the buckets need to verify vault-export tokens
+    SetAuthorityReporter(SetAuthorityReporterOp),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct SetAuthorityReporterOp {
+    pub principal: Option<Principal>,
+    pub oc_public_key_pem: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

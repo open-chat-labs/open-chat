@@ -1,21 +1,62 @@
-use crate::guards::caller_is_platform_operator;
 use crate::model::moderation;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
-use types::OCResult;
+use types::{CLAIM_TYPE_NCA_VAULT_EXPORT, NcaVaultExportClaims, OCResult};
 use user_index_canister::record_authority_report_filed::*;
 
-#[update(guard = "caller_is_platform_operator", msgpack = true)]
+#[update(guard = "caller_is_platform_operator_or_authority_reporter", msgpack = true)]
 #[trace]
 fn record_authority_report_filed(args: Args) -> Response {
     mutate_state(|state| record_authority_report_filed_impl(args, state)).into()
 }
 
+fn caller_is_platform_operator_or_authority_reporter() -> Result<(), String> {
+    read_state(|state| {
+        if state.is_caller_platform_operator() || state.is_caller_authority_reporter() {
+            Ok(())
+        } else {
+            Err("Caller is not a platform operator or the authority reporter".to_string())
+        }
+    })
+}
+
 fn record_authority_report_filed_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let now = state.env.now();
     let caller = state.data.users.get_by_principal(&state.env.caller()).map(|u| u.user_id);
+
+    // The service path: the automated filing must present the vault token whose nonce matches
+    // the open attempt marker - a filing can only be recorded by the window that performed it
+    let mut ooh_call_acknowledged = false;
+    if !state.is_caller_platform_operator() {
+        let Some(token) = args.vault_token.as_ref() else {
+            return Err(OCErrorCode::InitiatorNotAuthorized.with_message("A vault token is required"));
+        };
+        let claims = jwt::verify_and_decode::<NcaVaultExportClaims>(
+            token,
+            state.data.oc_key_pair.public_key_pem(),
+            CLAIM_TYPE_NCA_VAULT_EXPORT,
+        )
+        .map_err(|_| OCErrorCode::InitiatorNotAuthorized.with_message("Invalid vault token"))?;
+        // No expiry check, deliberately: the NCA POST can outlive the 5-minute window, and a
+        // report which WAS filed must always be recordable - the nonce match is the guard
+        let claims = claims.into_custom();
+        if claims.report_index != args.report_index {
+            return Err(OCErrorCode::InitiatorNotAuthorized.with_message("Token is for a different report"));
+        }
+        let Some(attempt) = state.data.authority_reports.attempt(args.report_index) else {
+            return Err(OCErrorCode::InvalidRequest.with_message("No filing attempt is marked in flight"));
+        };
+        if attempt.nonce != claims.nonce {
+            return Err(OCErrorCode::InitiatorNotAuthorized.with_message("Token does not match the open attempt"));
+        }
+        if args.unverified {
+            // D11: the automated path never files unverified reports, so it cannot record one
+            return Err(OCErrorCode::InvalidRequest.with_message("The automated path only files verified reports"));
+        }
+        ooh_call_acknowledged = claims.ooh_call_acknowledged;
+    }
 
     let Some(report) = state.data.reported_messages.get(args.report_index) else {
         return Err(OCErrorCode::MessageNotFound.into());
@@ -56,8 +97,10 @@ fn record_authority_report_filed_impl(args: Args, state: &mut RuntimeState) -> O
     state.data.authority_reports.record_filed(
         args.report_index,
         args.portal_reference.clone(),
+        args.portal_reference_uuid.clone(),
         args.urgent,
         args.unverified,
+        ooh_call_acknowledged,
         now,
     );
 

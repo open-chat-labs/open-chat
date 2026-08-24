@@ -1884,6 +1884,7 @@ export type VaultFileInfoResponse =
 export interface VaultFileChunkArgs {
     file_id: FileId;
     chunk_index: number;
+    vault_token: [] | [string];
 }
 export type VaultFileChunkResponse =
     | {

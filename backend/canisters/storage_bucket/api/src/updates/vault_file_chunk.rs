@@ -5,10 +5,28 @@ use ts_export::ts_export;
 use types::FileId;
 
 #[ts_export(storage_bucket, vault_file_chunk)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize)]
 pub struct Args {
     pub file_id: FileId,
     pub chunk_index: u32,
+    // Required when the caller is the NCA reporting service: the signed vault-export token
+    // (naming this file) which a moderator minted to open the filing window. Reviewers never
+    // send one.
+    #[serde(default)]
+    #[ts(optional)]
+    pub vault_token: Option<String>,
+}
+
+// Hand-written so the vault token (a live credential) is never formatted into the trace
+// buffer, which is served over http_request in test mode
+impl Debug for Args {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Args")
+            .field("file_id", &self.file_id)
+            .field("chunk_index", &self.chunk_index)
+            .field("has_vault_token", &self.vault_token.is_some())
+            .finish()
+    }
 }
 
 #[ts_export(storage_bucket, vault_file_chunk)]

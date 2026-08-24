@@ -24,6 +24,16 @@ pub enum VaultOp {
     // platform-wide: it is keyed by content hash, and without this the same content simply
     // uploads again to any other bucket and is served publicly.
     DenylistHash(DenylistHashOp),
+    // The off-chain NCA reporting service's principal plus the OC public key: the pair the
+    // bucket needs to serve a token-gated evidence export (it cannot verify a vault-export
+    // token without the key, so the two always travel together)
+    SetAuthorityReporter(SetAuthorityReporterOp),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct SetAuthorityReporterOp {
+    pub principal: Option<Principal>,
+    pub oc_public_key_pem: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

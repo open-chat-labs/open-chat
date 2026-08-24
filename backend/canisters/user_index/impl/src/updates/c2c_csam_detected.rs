@@ -35,6 +35,9 @@ fn c2c_csam_detected_impl(args: Args, state: &mut RuntimeState) {
             flags: categories.bits(),
             blob_references: args.blob_references,
             media_matches: args.media_matches.clone(),
+            // Persisted (not just shown on the alert): the message is deleted by the sanction
+            // below, and the authority filing later needs the flagged text
+            content_excerpt: args.content_excerpt.clone(),
             timestamp: now,
         })
     else {

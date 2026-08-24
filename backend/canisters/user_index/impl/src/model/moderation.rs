@@ -794,21 +794,69 @@ fn verdict_ops(
         .collect()
 }
 
+// Pushes the authority-reporter principal (the off-chain NCA reporting service), together
+// with the OC public key the buckets need to verify vault-export tokens, to every storage
+// bucket via the storage index
+pub fn sync_authority_reporter(state: &mut RuntimeState) {
+    let op = VaultOp::SetAuthorityReporter(storage_index_canister::c2c_vault_ops::SetAuthorityReporterOp {
+        principal: state.data.authority_reporter,
+        oc_public_key_pem: state.data.oc_key_pair.public_key_pem().to_string(),
+    });
+    send_vault_ops(vec![op], state);
+}
+
 // Pushes the current vault-reviewer principal set to the storage buckets (via the storage
-// index). Called on any change to the reviewer set, and on moderator-revocation cascade.
+// index). Called on any change to the reviewer set, on moderator-revocation cascade, and on
+// any suspension change touching a reviewer. A suspended reviewer is excluded: the
+// designation survives the suspension, but access to quarantined material does not.
 pub fn sync_vault_reviewers(state: &mut RuntimeState) {
     let reviewers = state
         .data
         .vault_reviewers
         .iter()
         .filter_map(|user_id| {
-            state.data.users.get_by_user_id(user_id).map(|u| VaultReviewer {
-                principal: u.principal,
-                user_id: *user_id,
-            })
+            state
+                .data
+                .users
+                .get_by_user_id(user_id)
+                .filter(|u| u.suspension_details.is_none())
+                .map(|u| VaultReviewer {
+                    principal: u.principal,
+                    user_id: *user_id,
+                })
         })
         .collect();
     send_vault_ops(vec![VaultOp::SetReviewers(reviewers)], state);
+}
+
+// A suspension must freeze EVERY privilege the account holds, not only its ordinary-user
+// abilities: without this, a suspended platform moderator kept chat-canister moderator powers
+// (deletes, joins), a suspended operator kept the dual-authorized action surfaces, and a
+// suspended vault reviewer could still export quarantined material. The role memberships
+// themselves are untouched - unsuspension restores exactly what the account still holds.
+// Called from both suspension commit paths (manual and automated) and from unsuspension.
+pub fn sync_suspended_privileges(user_id: UserId, suspended: bool, state: &mut RuntimeState) {
+    if state.data.platform_moderators.contains(&user_id) {
+        state.push_event_to_all_local_user_indexes(
+            UserIndexEvent::PlatformModeratorStatusChanged(local_user_index_canister::PlatformModeratorStatusChanged {
+                user_id,
+                is_platform_moderator: !suspended,
+            }),
+            None,
+        );
+    }
+    if state.data.platform_operators.contains(&user_id) {
+        state.push_event_to_all_local_user_indexes(
+            UserIndexEvent::PlatformOperatorStatusChanged(local_user_index_canister::PlatformOperatorStatusChanged {
+                user_id,
+                is_platform_operator: !suspended,
+            }),
+            None,
+        );
+    }
+    if state.data.vault_reviewers.contains(&user_id) {
+        sync_vault_reviewers(state);
+    }
 }
 
 // Lifts a suspension after a Dismissed verdict on an automated sanction. The sender is told

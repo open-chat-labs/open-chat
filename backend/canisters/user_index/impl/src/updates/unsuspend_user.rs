@@ -10,10 +10,9 @@ use user_index_canister::unsuspend_user::{Response::*, *};
 #[update(guard = "caller_is_platform_moderator", msgpack = true)]
 #[trace]
 async fn unsuspend_user(args: Args) -> Response {
-    // A moderator must never lift a sanction imposed on themselves. Suspension does not strip
-    // moderator status, so without this the subject of an upheld report against their own
-    // message can simply undo the sanction one call later - the resolve-time party check would
-    // stop them returning the verdict, but not reversing its effect.
+    // A moderator must never lift a sanction imposed on themselves. A suspended account no
+    // longer passes the moderator guard at all (suspension freezes every privilege), so this
+    // self-check is defence in depth for the case where the guard semantics ever regress.
     if read_state(|state| caller_is(&args.user_id, state)) {
         return Error(OCErrorCode::InitiatorNotAuthorized.with_message("Cannot unsuspend yourself"));
     }
@@ -73,4 +72,7 @@ fn commit(user_id: UserId, groups: Vec<ChatId>, communities: Vec<CommunityId>, s
     }
 
     state.data.users.unsuspend_user(user_id, now);
+
+    // Restore whatever privileged roles the account still holds
+    crate::model::moderation::sync_suspended_privileges(user_id, false, state);
 }

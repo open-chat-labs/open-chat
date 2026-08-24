@@ -17,6 +17,9 @@ import type {
     PremiumItem,
     SetDisplayNameResponse,
     ModerationVerdict,
+    NcaPriority,
+    NcaReporterContact,
+    AuthorityReportTokenResponse,
     SetUsernameResponse,
     SetUserUpgradeConcurrencyResponse,
     SubmitProofOfUniquePersonhoodResponse,
@@ -72,6 +75,8 @@ import {
     UserIndexSetModerationFlagsArgs,
     UserIndexAcceptTermsArgs,
     UserIndexAuthorityReportsResponse,
+    UserIndexAuthorityReportTokenArgs,
+    UserIndexAuthorityReportTokenResponse,
     UserIndexModerationConfigResponse,
     UserIndexRecordAuthorityReportFiledArgs,
     UserIndexSetModerationReferralConfigArgs,
@@ -298,6 +303,16 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         });
     }
 
+    proposeSetAuthorityReporter(
+        principal: string | undefined,
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.proposeProtectedAction({
+            SetAuthorityReporter: {
+                principal: principal !== undefined ? principalStringToBytes(principal) : undefined,
+            },
+        });
+    }
+
     setVaultLegalHold(
         reportIndex: bigint,
         legalHold: boolean,
@@ -418,6 +433,10 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                           mediaScanEnabled: resp.Success.media_scan_config.enabled,
                           mediaScanners:
                               resp.Success.media_scan_config.scanners.map(principalBytesToString),
+                          authorityReporter: mapOptional(
+                              resp.Success.authority_reporter,
+                              principalBytesToString,
+                          ),
                       }
                     : undefined,
             Empty,
@@ -432,6 +451,45 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             (resp) => ("Success" in resp ? resp.Success.json : undefined),
             Empty,
             UserIndexAuthorityReportsResponse,
+        );
+    }
+
+    authorityReportToken(
+        reportIndex: bigint,
+        priority: NcaPriority,
+        reporter: NcaReporterContact,
+        oohCallAcknowledged: boolean,
+    ): Promise<AuthorityReportTokenResponse> {
+        return this.update(
+            "authority_report_token",
+            {
+                report_index: reportIndex,
+                priority,
+                reporter: {
+                    first_name: reporter.firstName,
+                    last_name: reporter.lastName,
+                    phone: reporter.phone,
+                    country_calling_code: reporter.countryCallingCode,
+                    email: reporter.email,
+                },
+                ooh_call_acknowledged: oohCallAcknowledged,
+            },
+            (resp) =>
+                typeof resp === "object" && "Success" in resp
+                    ? ({
+                          kind: "success",
+                          vaultToken: resp.Success.vault_token,
+                          submitterToken: resp.Success.submitter_token,
+                      } as const)
+                    : ({
+                          kind: "error",
+                          message:
+                              typeof resp === "object" && "Error" in resp
+                                  ? (resp.Error[1] ?? `code ${resp.Error[0]}`)
+                                  : "Unknown error",
+                      } as const),
+            UserIndexAuthorityReportTokenArgs,
+            UserIndexAuthorityReportTokenResponse,
         );
     }
 

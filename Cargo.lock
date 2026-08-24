@@ -10749,6 +10749,7 @@ dependencies = [
  "ic-cdk-timers",
  "ic-stable-structures",
  "json",
+ "jwt",
  "msgpack",
  "num-traits",
  "proptest",

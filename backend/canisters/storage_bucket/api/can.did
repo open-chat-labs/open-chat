@@ -87,6 +87,7 @@ type FileInfoSuccessResult = record {
 type VaultFileChunkArgs = record {
     file_id : FileId;
     chunk_index : nat32;
+    vault_token : opt text;
 };
 
 type VaultFileChunkResponse = variant {

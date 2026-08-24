@@ -224,6 +224,9 @@ import {
     type MessageContent,
     type MessageContext,
     type ModerationVerdict,
+    type NcaPriority,
+    type NcaReporterContact,
+    type AuthorityReportTokenResponse,
     type VaultFileChunkResponse,
     type VaultFileInfoResponse,
     type MessageFilter,
@@ -7460,6 +7463,23 @@ export class OpenChat {
             .catch(() => false);
     }
 
+    authorityReportToken(
+        reportIndex: bigint,
+        priority: NcaPriority,
+        reporter: NcaReporterContact,
+        oohCallAcknowledged: boolean,
+    ): Promise<AuthorityReportTokenResponse> {
+        return this.#worker
+            .send({
+                kind: "authorityReportToken",
+                reportIndex,
+                priority,
+                reporter,
+                oohCallAcknowledged,
+            })
+            .catch((err) => ({ kind: "error", message: String(err) }) as const);
+    }
+
     proposeSetVaultLegalHold(
         reportIndex: bigint,
         legalHold: boolean,
@@ -7482,6 +7502,14 @@ export class OpenChat {
     ): Promise<ProposedProtectedAction | undefined> {
         return this.#worker
             .send({ kind: "proposeSetMediaScanConfig", enabled, scanners })
+            .catch(() => undefined);
+    }
+
+    proposeSetAuthorityReporter(
+        principal: string | undefined,
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.#worker
+            .send({ kind: "proposeSetAuthorityReporter", principal })
             .catch(() => undefined);
     }
 

@@ -837,6 +837,15 @@ pub struct ModerationReportContent {
 pub enum AuthorityReportState {
     Due { urgent: bool },
     Filed { portal_reference: String },
+    // An automated filing is in flight (an attempt marker is open). A marker much older than
+    // a filing takes means the service crashed mid-flight and a human must reconcile (check
+    // the portal's "Previously submitted reports") before anything re-files.
+    Attempting { started_at: TimestampMillis },
+    // The automated filing failed against a portal outage (5xx/timeout after retries): for
+    // P1/P2 the contingency path (email + phone) is required, P3 waits for the portal
+    ContingencyRequired { error: String },
+    // The NCA rejected the payload (400) - our defect; file via the web form and raise a bug
+    ValidationFailed { error: String },
 }
 
 #[ts_export]

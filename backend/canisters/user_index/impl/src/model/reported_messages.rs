@@ -82,6 +82,7 @@ impl ReportedMessages {
                 blob_references: Vec::new(),
                 detection: DetectionSource::UserReport,
                 media_matches: Vec::new(),
+                content_excerpt: None,
                 contested: None,
                 unverified_report_filed: None,
                 legal_hold: false,
@@ -238,6 +239,7 @@ impl ReportedMessages {
             blob_references: original.blob_references.clone(),
             detection: DetectionSource::BlockedAttempt { original_report_index },
             media_matches: original.media_matches.clone(),
+            content_excerpt: original.content_excerpt.clone(),
             csam_asserted_by: Vec::new(),
             contested: None,
             unverified_report_filed: None,
@@ -415,6 +417,9 @@ impl ReportedMessages {
                 message.outcome = Some(outcome);
                 message.blob_references = args.blob_references;
                 message.media_matches = args.media_matches;
+                if message.content_excerpt.is_none() {
+                    message.content_excerpt = args.content_excerpt;
+                }
                 self.pending_classifications.remove(&(index as u64));
                 Some((index as u64, false))
             }
@@ -434,6 +439,7 @@ impl ReportedMessages {
                 blob_references: args.blob_references,
                 detection: DetectionSource::Proactive,
                 media_matches: args.media_matches,
+                content_excerpt: args.content_excerpt,
                 contested: None,
                 unverified_report_filed: None,
                 legal_hold: false,
@@ -622,6 +628,7 @@ pub struct AddProactiveDetectionArgs {
     pub flags: u32,
     pub blob_references: Vec<BlobReference>,
     pub media_matches: Vec<types::MediaScanMatch>,
+    pub content_excerpt: Option<String>,
     pub timestamp: TimestampMillis,
 }
 
@@ -671,6 +678,11 @@ pub struct ReportedMessage {
     // retained as the audit trail and referenced by the authority report
     #[serde(default)]
     pub media_matches: Vec<types::MediaScanMatch>,
+    // The flagged text (or caption), captured at detection time: the original message is
+    // normally deleted by the auto-sanction long before an authority report is filed, so
+    // without this the filing would have no content to describe
+    #[serde(default)]
+    pub content_excerpt: Option<String>,
     // The reporters who asserted CSAM (triggering immediate quarantine + deletion): if the
     // report is later dismissed those assertions were false, and are recorded against exactly
     // the users who made them
@@ -788,6 +800,13 @@ impl ReportedMessage {
 
     pub fn suspension_applied_without_verdict(&self) -> bool {
         matches!(&self.outcome, Some(ReportOutcome::Automated(a)) if a.sanctioned && a.human_verdict.is_none())
+    }
+
+    pub fn automated_outcome_flags(&self) -> Option<u32> {
+        match &self.outcome {
+            Some(ReportOutcome::Automated(a)) => Some(a.flagged_categories),
+            _ => None,
+        }
     }
 
     pub fn automated_action(&self) -> Option<ModerationAction> {
@@ -1245,6 +1264,7 @@ mod report_status_tests {
             blob_references: Vec::new(),
             detection: DetectionSource::Proactive,
             media_matches: Vec::new(),
+            content_excerpt: None,
             contested: None,
             unverified_report_filed: None,
             legal_hold: false,

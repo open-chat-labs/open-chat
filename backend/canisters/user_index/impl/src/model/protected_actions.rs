@@ -281,6 +281,17 @@ pub(crate) fn validate(action: &ProtectedAction, actor: UserId, state: &RuntimeS
             if let Some(user_id) = args.user_ids.iter().find(|u| !state.data.platform_moderators.contains(u)) {
                 return Err(OCErrorCode::InvalidRequest.with_message(format!("{user_id} is not a platform moderator")));
             }
+            // A suspended account holds no authority: designating it would be a no-op (the
+            // reviewer sync excludes suspended users) so surface the mistake instead
+            if let Some(user_id) = args.user_ids.iter().find(|u| {
+                state
+                    .data
+                    .users
+                    .get_by_user_id(u)
+                    .is_some_and(|user| user.suspension_details.is_some())
+            }) {
+                return Err(OCErrorCode::InvalidRequest.with_message(format!("{user_id} is suspended")));
+            }
         }
         ProtectedAction::SetOpenAIApiKey(args) => {
             // Unsetting is `None`; an empty or blank string is a mistake, not an instruction
@@ -297,6 +308,11 @@ pub(crate) fn validate(action: &ProtectedAction, actor: UserId, state: &RuntimeS
             }
             if args.config.scanners.iter().any(|p| *p == Principal::anonymous()) {
                 return Err(OCErrorCode::InvalidRequest.with_message("The anonymous principal cannot be a scanner"));
+            }
+        }
+        ProtectedAction::SetAuthorityReporter(args) => {
+            if args.principal == Some(Principal::anonymous()) {
+                return Err(OCErrorCode::InvalidRequest.with_message("The anonymous principal cannot be the authority reporter"));
             }
         }
         ProtectedAction::SetInternalModerationChannel(args) => {

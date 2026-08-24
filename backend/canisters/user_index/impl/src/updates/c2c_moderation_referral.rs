@@ -38,6 +38,7 @@ fn c2c_moderation_referral_impl(args: Args, state: &mut RuntimeState) {
             flags: categories.bits(),
             blob_references: args.blob_references.clone(),
             media_matches: Vec::new(),
+            content_excerpt: args.content_excerpt.clone(),
             timestamp: now,
         })
     else {

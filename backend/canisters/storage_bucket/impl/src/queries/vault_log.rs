@@ -27,6 +27,7 @@ fn vault_log_impl(args: Args, state: &RuntimeState) -> Response {
                 prev_hash: hex::encode(e.prev_hash),
                 user_id: match &e.event {
                     VaultLogEvent::ViewedBy(_, _, user_id) => *user_id,
+                    VaultLogEvent::ExportedForAuthorityReport(_, _, moderator) => *moderator,
                     VaultLogEvent::UnquarantinedBy(_, moderator) => *moderator,
                     VaultLogEvent::VerdictAppliedBy(_, _, moderator) => *moderator,
                     VaultLogEvent::RetentionReanchoredBy(_, _, operator) => *operator,
@@ -85,6 +86,14 @@ fn vault_log_impl(args: Args, state: &RuntimeState) -> Response {
                             None => format!("Verdict applied to file {file_id}, retained until {until}"),
                         }
                     }
+                    VaultLogEvent::ExportedForAuthorityReport(file_id, report_index, moderator) => match moderator {
+                        Some(moderator) => format!(
+                            "File {file_id} exported to the authority reporting service for report {report_index}, authorized by user {moderator}"
+                        ),
+                        None => format!(
+                            "File {file_id} exported to the authority reporting service for report {report_index}"
+                        ),
+                    },
                     VaultLogEvent::RetentionReanchoredBy(file_id, retention_until, operator) => {
                         let until = format_ts(*retention_until);
                         match operator {

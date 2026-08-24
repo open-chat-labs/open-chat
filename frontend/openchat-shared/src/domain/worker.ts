@@ -73,6 +73,8 @@ import type {
     ResetInviteCodeResponse,
     SendMessageResponse,
     ModerationVerdict,
+    NcaPriority,
+    NcaReporterContact,
     SetCommunityModerationFlagsResponse,
     SetGroupModerationFlagsResponse,
     SetGroupUpgradeConcurrencyResponse,
@@ -397,6 +399,7 @@ export type WorkerRequest =
     | SetModerationReferralConfig
     | ProposeSetVaultReviewers
     | ProposeSetMediaScanConfig
+    | ProposeSetAuthorityReporter
     | ProposeSetVaultLegalHold
     | SetVaultLegalHold
     | ProposeDestroyVaultEvidence
@@ -405,6 +408,7 @@ export type WorkerRequest =
     | AuthorityReports
     | GetModerationConfig
     | RecordAuthorityReportFiled
+    | AuthorityReportToken
     | AcceptTerms
     | ProposeSetInternalModerationChannel
     | ResolveModerationReport
@@ -892,6 +896,21 @@ type RecordAuthorityReportFiled = {
     unverified: boolean;
 };
 
+export type AuthorityReportTokenResponse =
+    | { kind: "success"; vaultToken: string; submitterToken: string }
+    | { kind: "error"; message: string };
+
+// Mints the pair of signed tokens which open a filing window for the automated NCA
+// reporting service. The reporter's contact details go straight into the submitter token
+// and are never persisted.
+type AuthorityReportToken = {
+    kind: "authorityReportToken";
+    reportIndex: bigint;
+    priority: NcaPriority;
+    reporter: NcaReporterContact;
+    oohCallAcknowledged: boolean;
+};
+
 type ProposeSetVaultLegalHold = {
     kind: "proposeSetVaultLegalHold";
     reportIndex: bigint;
@@ -908,6 +927,11 @@ type ProposeSetMediaScanConfig = {
     kind: "proposeSetMediaScanConfig";
     enabled: boolean;
     scanners: string[];
+};
+
+type ProposeSetAuthorityReporter = {
+    kind: "proposeSetAuthorityReporter";
+    principal: string | undefined;
 };
 
 type SetVaultLegalHold = {
@@ -2636,6 +2660,8 @@ export type WorkerResult<T> = T extends Init
     ? ProposedProtectedAction | undefined
     : T extends ProposeSetMediaScanConfig
     ? ProposedProtectedAction | undefined
+    : T extends ProposeSetAuthorityReporter
+    ? ProposedProtectedAction | undefined
     : T extends ProposeSetVaultLegalHold
     ? ProposedProtectedAction | undefined
     : T extends SetVaultLegalHold
@@ -2652,6 +2678,8 @@ export type WorkerResult<T> = T extends Init
     ? ModerationConfig | undefined
     : T extends RecordAuthorityReportFiled
     ? boolean
+    : T extends AuthorityReportToken
+    ? AuthorityReportTokenResponse
     : T extends AcceptTerms
     ? boolean
     : T extends ProposeSetInternalModerationChannel

@@ -28,6 +28,8 @@ export OC_TRANSLATE_PROXY_URL=${OC_TRANSLATE_PROXY_URL:-https://5rabdwftr36yvlgf
 # For local development preview proxy, set OC_PREVIEW_PROXY_URL=http://localhost:5070
 export OC_VAPID_PUBLIC_KEY=BOzPIB0gN10bFIjMs10jrxzWNlZrVnZmrpK2SLEDd3uAQi0YHQ_n8zx_2zGDLpE3VHvIjels4BFIqiFWmvvAGz4
 export OC_VIDEO_BRIDGE_URL=http://localhost:5050
+# Local nca_reporter service (automated NCA filing); empty hides the automated path
+export OC_NCA_REPORTER_URL=${OC_NCA_REPORTER_URL:-http://localhost:8180}
 export OC_WALLET_CONNECT_PROJECT_ID=b9aafebed2abfaf8341afd9428c947d5
 export OC_WEBSITE_VERSION=
 export OC_BASE_ORIGIN=http://localhost:5001

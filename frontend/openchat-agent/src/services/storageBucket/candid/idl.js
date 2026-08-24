@@ -87,6 +87,7 @@ export const idlFactory = ({ IDL }) => {
     const VaultFileChunkArgs = IDL.Record({
         file_id: FileId,
         chunk_index: IDL.Nat32,
+        vault_token: IDL.Opt(IDL.Text),
     });
     const VaultFileChunkResponse = IDL.Variant({
         Success: IDL.Record({
