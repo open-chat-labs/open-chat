@@ -1,10 +1,11 @@
-import type { VaultLogResponse, VaultFileChunkResponse } from "@shared";
+import type { VaultLogResponse, VaultFileChunkResponse, VaultFileInfoResponse } from "@shared";
 import type {
     CandidDeleteFileResponse,
     CandidFileInfoResponse,
     CandidForwardFileResponse,
     CandidUploadChunkResponse,
     CandidVaultFileChunkResponse,
+    CandidVaultFileInfoResponse,
     CandidVaultLogResponse,
 } from "./candid/idl";
 import type {
@@ -154,6 +155,23 @@ export function vaultFileChunkResponse(
     if ("NotAuthorized" in candid) return { kind: "not_authorized" };
     throw new UnsupportedValueError(
         "Unknown Bucket.CandidVaultFileChunkResponse type received",
+        candid,
+    );
+}
+
+export function vaultFileInfoResponse(candid: CandidVaultFileInfoResponse): VaultFileInfoResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            hash: candid.Success.hash,
+            mimeType: candid.Success.mime_type,
+            size: candid.Success.size,
+        };
+    }
+    if ("NotFound" in candid) return { kind: "not_found" };
+    if ("NotAuthorized" in candid) return { kind: "not_authorized" };
+    throw new UnsupportedValueError(
+        "Unknown Bucket.CandidVaultFileInfoResponse type received",
         candid,
     );
 }

@@ -670,6 +670,7 @@ export const MediaScanMatch = Type.Object({
     violations: Type.Array(Type.String()),
     match_distance: Type.BigInt(),
     match_id: Type.Optional(Type.String()),
+    hash: Type.Optional(Type.String()),
 });
 
 export type ChannelId = Static<typeof ChannelId>;
@@ -3672,6 +3673,29 @@ export const StorageBucketFileInfoResponse = Type.Union([
     Type.Object({
         Success: StorageBucketFileInfoSuccessResult,
     }),
+    Type.Literal("NotFound"),
+]);
+
+export type StorageBucketVaultFileInfoArgs = Static<typeof StorageBucketVaultFileInfoArgs>;
+export const StorageBucketVaultFileInfoArgs = Type.Object({
+    file_id: Type.BigInt(),
+});
+
+export type StorageBucketVaultFileInfoSuccessResult = Static<
+    typeof StorageBucketVaultFileInfoSuccessResult
+>;
+export const StorageBucketVaultFileInfoSuccessResult = Type.Object({
+    hash: Type.String(),
+    mime_type: Type.String(),
+    size: Type.BigInt(),
+});
+
+export type StorageBucketVaultFileInfoResponse = Static<typeof StorageBucketVaultFileInfoResponse>;
+export const StorageBucketVaultFileInfoResponse = Type.Union([
+    Type.Object({
+        Success: StorageBucketVaultFileInfoSuccessResult,
+    }),
+    Type.Literal("NotAuthorized"),
     Type.Literal("NotFound"),
 ]);
 
@@ -7606,11 +7630,11 @@ export const ModerationReportContent = Type.Object({
     reporters: Type.Array(UserId),
     flagged_categories: Type.Number(),
     classification_failed: Type.Optional(Type.Boolean()),
-    is_blocked_attempt: Type.Optional(Type.Boolean()),
     auto_sanctioned: Type.Boolean(),
     content_excerpt: Type.Optional(Type.String()),
     blob_references: Type.Array(BlobReference),
     media_matches: Type.Array(MediaScanMatch),
+    is_blocked_attempt: Type.Optional(Type.Boolean()),
     reported_at: Type.BigInt(),
     status: ModerationReportStatus,
     authority_report: Type.Optional(AuthorityReportState),

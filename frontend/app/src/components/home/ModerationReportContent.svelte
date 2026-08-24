@@ -12,6 +12,7 @@
     import Markdown from "@src/components_shared/Markdown.svelte";
     import { Body, BodySmall, ColourVars, Column, Row, Subtitle } from "component-lib";
     import { getContext } from "svelte";
+        import { copyToClipboard } from "../../utils/urls";
     import Upheld from "svelte-material-icons/CheckCircleOutline.svelte";
     import Dismissed from "svelte-material-icons/CloseCircleOutline.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -125,6 +126,29 @@
             !content.isBlockedAttempt &&
             (content.status.kind === "pending" || content.status.kind === "contested"),
     );
+    // Assembles the hash lines for the NCA report: the vault sha256 per quarantined blob
+    // (reviewer-gated query) plus the scanner's perceptual hash per match
+    let hashCopyState = $state<"idle" | "copied" | "failed">("idle");
+    async function copyHashes() {
+        const lines: string[] = [];
+        for (const ref of content.blobReferences) {
+            const resp = await client.vaultFileInfo(ref.canisterId, ref.blobId);
+            if (resp.kind === "success") {
+                lines.push(
+                    `file ${ref.blobId}: sha256 ${resp.hash} (${resp.mimeType}, ${resp.size} bytes)`,
+                );
+            }
+        }
+        for (const m of mediaMatches) {
+            if (m.hash !== undefined) {
+                lines.push(`file ${m.blobId}: ${m.provider} hash ${m.hash}`);
+            }
+        }
+        const ok = lines.length > 0 && (await copyToClipboard(lines.join("\n")));
+        hashCopyState = ok ? "copied" : "failed";
+        window.setTimeout(() => (hashCopyState = "idle"), 2000);
+    }
+
     // The manual-filing checklist opens in its own tab so the moderator can keep the
     // report card open while working through it
     let checklistUrl = $derived.by(() => {
@@ -472,6 +496,19 @@
                 {#if $platformOperatorStore && content.reportIndex !== undefined}
                     <Button tiny onClick={() => (showFiling = true)}>
                         <Translatable resourceKey={i18nKey("moderationReport.recordFiling")} />
+                    </Button>
+                {/if}
+                {#if hasMedia || mediaMatches.length > 0}
+                    <Button tiny secondary disabled={hashCopyState !== "idle"} onClick={copyHashes}>
+                        <Translatable
+                            resourceKey={i18nKey(
+                                hashCopyState === "idle"
+                                    ? "moderationReport.copyHashes"
+                                    : hashCopyState === "copied"
+                                      ? "moderationReport.hashesCopied"
+                                      : "moderationReport.hashesFailed",
+                            )}
+                        />
                     </Button>
                 {/if}
                 <a class="checklist-link" href={checklistUrl} target="_blank" rel="noreferrer">

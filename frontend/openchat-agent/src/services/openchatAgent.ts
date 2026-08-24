@@ -204,6 +204,7 @@ import type {
     WithdrawBtcResponse,
     WithdrawCryptocurrencyResponse,
     VaultFileChunkResponse,
+    VaultFileInfoResponse,
     ProposedProtectedAction,
     Success,
     OCError,
@@ -2352,6 +2353,15 @@ export class OpenChatAgent extends EventTarget {
             this._storageBucketClients.set(bucketCanisterId, bucketClient);
         }
         return bucketClient.vaultFileChunk(fileId, chunkIndex);
+    }
+
+    vaultFileInfo(bucketCanisterId: string, fileId: bigint): Promise<VaultFileInfoResponse> {
+        let bucketClient = this._storageBucketClients.get(bucketCanisterId);
+        if (bucketClient === undefined) {
+            bucketClient = new StorageBucketClient(this.identity, this._agent, bucketCanisterId);
+            this._storageBucketClients.set(bucketCanisterId, bucketClient);
+        }
+        return bucketClient.vaultFileInfo(fileId);
     }
 
     setModerationFlags(flags: number): Promise<boolean> {
