@@ -541,6 +541,19 @@
                         />
                     </Button>
                 {/if}
+                {#if hasMedia || mediaMatches.length > 0}
+                    <Button tiny secondary disabled={hashCopyState !== "idle"} onClick={copyHashes}>
+                        <Translatable
+                            resourceKey={i18nKey(
+                                hashCopyState === "idle"
+                                    ? "moderationReport.copyHashes"
+                                    : hashCopyState === "copied"
+                                      ? "moderationReport.hashesCopied"
+                                      : "moderationReport.hashesFailed",
+                            )}
+                        />
+                    </Button>
+                {/if}
                 <a class="checklist-link" href={checklistUrl} target="_blank" rel="noreferrer">
                     <Translatable resourceKey={i18nKey("moderationReport.filingChecklist")} />
                 </a>

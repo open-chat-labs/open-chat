@@ -59,6 +59,8 @@ function clean() {
             }
             copyFile(".", "build", ".ic-assets.json5");
             copyFile(".", "build/.well-known", "assetlinks.json");
+            // iOS counterpart of assetlinks.json, required for native passkeys.
+            copyFile(".", "build/.well-known", "apple-app-site-association");
         },
     };
 }
