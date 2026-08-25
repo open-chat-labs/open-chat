@@ -87,12 +87,12 @@ fn clear_authority_report_attempt_impl(args: Args, state: &mut RuntimeState) -> 
         Some(AuthorityReportFailure::Contingency { error }) => {
             let urgent_note = match priority {
                 Some(NcaPriority::P1) | Some(NcaPriority::P2) => {
-                    "\n\n⚠️ Priority 1/2: the contingency path (DRB email + control-centre call) is required - open the report's manual filing checklist."
+                    "\n\n⚠️ Priority 1/2: if the portal is unavailable, the contingency path (DRB email + control-centre call) is required - open the report's manual filing checklist."
                 }
-                _ => "\n\nPriority 3 reports wait for the portal - retry from the report card once it is restored.",
+                _ => "\n\nPriority 3 reports go via the portal only - retry from the report card once the problem is resolved.",
             };
             moderation::post_moderation_notice(
-                format!("🚨 Automated NCA filing for report #{} failed - the portal appears to be down: {error}{urgent_note}", args.report_index),
+                format!("🚨 Automated NCA filing for report #{} failed: {error}{urgent_note}", args.report_index),
                 state,
             );
         }

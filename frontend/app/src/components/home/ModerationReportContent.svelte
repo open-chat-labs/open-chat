@@ -564,11 +564,13 @@
                     </a>
                 {/if}
             {:else if authorityReport.kind === "contingency_required"}
-                <Body width="hug" fontWeight="bold" colour="error">
-                    <Translatable
-                        resourceKey={i18nKey("moderationReport.ncaContingency", {
-                            error: authorityReport.error,
-                        })} />
+                <Body fontWeight="bold" colour="error">
+                    <span class="authority-error">
+                        <Translatable
+                            resourceKey={i18nKey("moderationReport.ncaContingency", {
+                                error: authorityReport.error,
+                            })} />
+                    </span>
                 </Body>
                 {#if canOpenFiling}
                     <Button tiny onClick={() => (showFiling = true)}>
@@ -579,11 +581,13 @@
                     <Translatable resourceKey={i18nKey("moderationReport.filingChecklist")} />
                 </a>
             {:else if authorityReport.kind === "validation_failed"}
-                <Body width="hug" fontWeight="bold" colour="error">
-                    <Translatable
-                        resourceKey={i18nKey("moderationReport.ncaValidationFailed", {
-                            error: authorityReport.error,
-                        })} />
+                <Body fontWeight="bold" colour="error">
+                    <span class="authority-error">
+                        <Translatable
+                            resourceKey={i18nKey("moderationReport.ncaValidationFailed", {
+                                error: authorityReport.error,
+                            })} />
+                    </span>
                 </Body>
                 <a class="checklist-link" href={checklistUrl} target="_blank" rel="noreferrer">
                     <Translatable resourceKey={i18nKey("moderationReport.filingChecklist")} />
@@ -698,6 +702,12 @@
         color: var(--secondary);
         text-decoration: underline;
         white-space: nowrap;
+    }
+    // Failure states quote raw error strings with long unbroken tokens (canister ids, urls)
+    // which would otherwise overflow the card
+    :global(.authority-error) {
+        overflow-wrap: anywhere;
+        min-width: 0;
     }
     .link {
         color: var(--secondary);

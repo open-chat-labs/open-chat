@@ -350,10 +350,12 @@
                 {/if}
             {:else if authorityReport.kind === "contingency_required"}
                 <Body fontWeight="bold" colour="error">
-                    <Translatable
-                        resourceKey={i18nKey("moderationReport.ncaContingency", {
-                            error: authorityReport.error,
-                        })} />
+                    <span class="authority-error">
+                        <Translatable
+                            resourceKey={i18nKey("moderationReport.ncaContingency", {
+                                error: authorityReport.error,
+                            })} />
+                    </span>
                 </Body>
                 {#if canOpenFiling}
                     <Row gap="sm">
@@ -367,10 +369,12 @@
                 </a>
             {:else if authorityReport.kind === "validation_failed"}
                 <Body fontWeight="bold" colour="error">
-                    <Translatable
-                        resourceKey={i18nKey("moderationReport.ncaValidationFailed", {
-                            error: authorityReport.error,
-                        })} />
+                    <span class="authority-error">
+                        <Translatable
+                            resourceKey={i18nKey("moderationReport.ncaValidationFailed", {
+                                error: authorityReport.error,
+                            })} />
+                    </span>
                 </Body>
                 <a class="checklist-link" href={checklistUrl} target="_blank" rel="noreferrer">
                     <Translatable resourceKey={i18nKey("moderationReport.filingChecklist")} />
@@ -513,6 +517,10 @@
 {/if}
 
 <style lang="scss">
+    :global(.authority-error) {
+        overflow-wrap: anywhere;
+        min-width: 0;
+    }
     .checklist-link {
         color: var(--secondary);
         text-decoration: underline;
