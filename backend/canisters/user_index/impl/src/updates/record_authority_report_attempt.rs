@@ -71,8 +71,9 @@ fn record_authority_report_attempt_impl(args: Args, state: &mut RuntimeState) ->
         .authority_reports
         .record_attempt(claims.report_index, claims.nonce, claims.user_id, now)
     {
-        return Err(OCErrorCode::InvalidRequest
-            .with_message("The report is not due, or a filing attempt is already marked in flight"));
+        return Err(
+            OCErrorCode::InvalidRequest.with_message("The report is not due, or a filing attempt is already marked in flight")
+        );
     }
 
     // Flip the alert card so moderators see the filing is in progress

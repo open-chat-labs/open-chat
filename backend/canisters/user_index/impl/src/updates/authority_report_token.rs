@@ -72,7 +72,7 @@ fn authority_report_token_impl(args: Args, state: &mut RuntimeState) -> OCResult
     // must not control its filing
     if report.sender == user_id {
         return Err(OCErrorCode::InitiatorNotAuthorized.with_message(
-            "You are recorded as the sender of the reported message, and the subject of a report              can never control its filing to the NCA - ask a different vault reviewer to file this report",
+            "You are recorded as the sender of the reported message, and the subject of a report can never control its filing to the NCA - ask a different vault reviewer to file this report",
         ));
     }
     if let DetectionSource::BlockedAttempt { original_report_index } = report.detection
@@ -83,7 +83,7 @@ fn authority_report_token_impl(args: Args, state: &mut RuntimeState) -> OCResult
             .is_some_and(|original| original.sender == user_id)
     {
         return Err(OCErrorCode::InitiatorNotAuthorized.with_message(
-            "This report records a blocked attempt to re-post content which YOU are recorded as              originally sending, and the subject of the underlying content can never control its              filing to the NCA - ask a different vault reviewer to file this report",
+            "This report records a blocked attempt to re-post content which YOU are recorded as originally sending, and the subject of the underlying content can never control its filing to the NCA - ask a different vault reviewer to file this report",
         ));
     }
 

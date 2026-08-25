@@ -408,6 +408,7 @@ export type WorkerRequest =
     | AuthorityReports
     | GetModerationConfig
     | RecordAuthorityReportFiled
+    | ClearAuthorityReportAttempt
     | AuthorityReportToken
     | AcceptTerms
     | ProposeSetInternalModerationChannel
@@ -894,6 +895,13 @@ type RecordAuthorityReportFiled = {
     portalReference: string;
     urgent: boolean;
     unverified: boolean;
+};
+
+// A platform operator reconciling an orphaned automated-filing attempt marker (service
+// crashed mid-flight) after confirming on the portal that nothing was filed
+type ClearAuthorityReportAttempt = {
+    kind: "clearAuthorityReportAttempt";
+    reportIndex: bigint;
 };
 
 export type AuthorityReportTokenResponse =
@@ -2676,6 +2684,8 @@ export type WorkerResult<T> = T extends Init
     ? string | undefined
     : T extends GetModerationConfig
     ? ModerationConfig | undefined
+    : T extends ClearAuthorityReportAttempt
+    ? boolean
     : T extends RecordAuthorityReportFiled
     ? boolean
     : T extends AuthorityReportToken

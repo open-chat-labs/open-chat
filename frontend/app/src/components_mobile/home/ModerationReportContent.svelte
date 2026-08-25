@@ -41,22 +41,60 @@
     // Set once a filing is recorded from this card, ahead of the content update round-trip
     let filedReference = $state<string | undefined>(undefined);
     // Set once an automated filing was accepted by the reporting service, ahead of the
-    // on-chain attempt marker reaching the card
-    let filingStarted = $state(false);
-    let authorityReport = $derived(
-        filedReference !== undefined
-            ? { kind: "filed" as const, portalReference: filedReference }
-            : filingStarted && content.authorityReport?.kind === "due"
-              ? { kind: "attempting" as const, startedAt: BigInt(Date.now()) }
-              : content.authorityReport,
-    );
+    // on-chain attempt marker reaching the card. The overlay lapses as soon as the on-chain
+    // state changes (whatever it changes to - the service may have failed before opening a
+    // marker) and after a bounded time regardless, so a genuine return to Due is never hidden
+    let filingStartedAt = $state<number | undefined>(undefined);
+    const OPTIMISTIC_ATTEMPT_MS = 2 * 60 * 1000;
+    // Ticks so the time-based states below re-evaluate while the card stays mounted
+    let now = $state(Date.now());
+    $effect(() => {
+        const interval = setInterval(() => (now = Date.now()), 30_000);
+        return () => clearInterval(interval);
+    });
+    $effect(() => {
+        void content.authorityReport;
+        filingStartedAt = undefined;
+        attemptCleared = false;
+    });
+    let authorityReport = $derived.by(() => {
+        if (filedReference !== undefined) {
+            return { kind: "filed" as const, portalReference: filedReference };
+        }
+        const onChain = content.authorityReport;
+        if (
+            filingStartedAt !== undefined &&
+            now - filingStartedAt < OPTIMISTIC_ATTEMPT_MS &&
+            onChain !== undefined &&
+            onChain.kind !== "filed" &&
+            onChain.kind !== "attempting"
+        ) {
+            return { kind: "attempting" as const, startedAt: BigInt(filingStartedAt) };
+        }
+        return onChain;
+    });
     // An attempt marker much older than a filing takes means the service crashed mid-flight:
     // a human must check the portal before anything re-files
     const STALE_ATTEMPT_MS = 30 * 60 * 1000;
     let attemptIsStale = $derived(
         authorityReport?.kind === "attempting" &&
-            Date.now() - Number(authorityReport.startedAt) > STALE_ATTEMPT_MS,
+            now - Number(authorityReport.startedAt) > STALE_ATTEMPT_MS,
     );
+    // Operator reconciliation of an orphaned marker: clears it on chain so the report returns
+    // to Due (the card update carries the new state)
+    let clearingAttempt = $state(false);
+    let attemptCleared = $state(false);
+    let clearAttemptFailed = $state(false);
+    function clearAttempt() {
+        if (content.reportIndex === undefined) return;
+        clearingAttempt = true;
+        clearAttemptFailed = false;
+        client.clearAuthorityReportAttempt(content.reportIndex).then((ok) => {
+            clearingAttempt = false;
+            attemptCleared = ok;
+            clearAttemptFailed = !ok;
+        });
+    }
     let canOpenFiling = $derived(
         content.reportIndex !== undefined &&
             ($platformOperatorStore || (ncaReporterUrl !== "" && $platformModeratorStore)),
@@ -344,9 +382,27 @@
                         )} />
                 </Body>
                 {#if attemptIsStale}
+                    {#if $platformOperatorStore && !attemptCleared}
+                        <Row gap="sm">
+                            <Button
+                                danger
+                                disabled={clearingAttempt}
+                                loading={clearingAttempt}
+                                onClick={clearAttempt}>
+                                <Translatable
+                                    resourceKey={i18nKey("moderationReport.clearAttempt")} />
+                            </Button>
+                        </Row>
+                    {/if}
                     <a class="checklist-link" href={checklistUrl} target="_blank" rel="noreferrer">
                         <Translatable resourceKey={i18nKey("moderationReport.filingChecklist")} />
                     </a>
+                    {#if clearAttemptFailed}
+                        <Body colour="error">
+                            <Translatable
+                                resourceKey={i18nKey("moderationReport.clearAttemptFailed")} />
+                        </Body>
+                    {/if}
                 {/if}
             {:else if authorityReport.kind === "contingency_required"}
                 <Body fontWeight="bold" colour="error">
@@ -490,12 +546,12 @@
 {#if showFiling && content.reportIndex !== undefined && authorityReport !== undefined && authorityReport.kind !== "filed" && authorityReport.kind !== "attempting"}
     <FileAuthorityReport
         reportIndex={content.reportIndex}
-        urgent={authorityReport.kind === "due" && authorityReport.urgent}
+        urgent={authorityReport.urgent}
         onFiled={(ref) => {
             filedReference = ref;
             showFiling = false;
         }}
-        onFilingStarted={() => (filingStarted = true)}
+        onFilingStarted={() => (filingStartedAt = Date.now())}
         onClose={() => (showFiling = false)}
     />
 {/if}

@@ -1222,7 +1222,9 @@
         "oohAck": "I will call the NCA control centre after filing",
         "startFiling": "File with the NCA",
         "ncaAttempting": "Automated NCA filing in progress (started {when}) - this card updates when it completes",
-        "ncaAttemptingStale": "A filing attempt has been open since {when} - the service may have crashed mid-flight. Check \"Previously submitted reports\" on the portal before re-filing (see the checklist).",
+        "ncaAttemptingStale": "A filing attempt has been open since {when} - the service may have crashed mid-flight. Check \"Previously submitted reports\" on the portal: if it was filed, a platform operator records the reference; if not, a platform operator clears the attempt so it can be re-filed (see the checklist).",
+        "clearAttempt": "Clear attempt",
+        "clearAttemptFailed": "The attempt could not be cleared - it may already have completed; refresh the card.",
         "ncaContingency": "Automated NCA filing failed: {error}. Priority 1/2: if the portal is unavailable use the contingency path in the checklist (DRB email, then phone). Priority 3: retry once the problem is resolved.",
         "ncaValidationFailed": "The NCA rejected the automated filing ({error}). This is an OpenChat defect - file via the web form (see the checklist) and raise a bug.",
         "retryFiling": "Retry"

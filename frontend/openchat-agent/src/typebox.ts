@@ -590,11 +590,13 @@ export const AuthorityReportState = Type.Union([
     Type.Object({
         ContingencyRequired: Type.Object({
             error: Type.String(),
+            urgent: Type.Optional(Type.Boolean()),
         }),
     }),
     Type.Object({
         ValidationFailed: Type.Object({
             error: Type.String(),
+            urgent: Type.Optional(Type.Boolean()),
         }),
     }),
 ]);

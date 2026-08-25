@@ -15,6 +15,16 @@ pub(crate) fn execute(args: Args, state: &mut RuntimeState) -> OCResult {
     if let Some(user_id) = args.user_ids.iter().find(|u| !state.data.platform_moderators.contains(u)) {
         return Err(OCErrorCode::InvalidRequest.with_message(format!("{user_id} is not a platform moderator")));
     }
+    // Re-checked at execution (not only at proposal): a reviewer suspended between propose and
+    // confirm must not be designated, else the unsuspension resync would grant vault access
+    // with no second dual-op review
+    if let Some(user_id) = args
+        .user_ids
+        .iter()
+        .find(|u| state.data.users.is_user_suspended(u) == Some(true))
+    {
+        return Err(OCErrorCode::InvalidRequest.with_message(format!("{user_id} is suspended")));
+    }
 
     state.data.vault_reviewers = args.user_ids.into_iter().collect();
     moderation::sync_vault_reviewers(state);

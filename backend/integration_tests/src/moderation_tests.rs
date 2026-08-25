@@ -5806,11 +5806,7 @@ struct AutomatedFilingSetup {
 
 // Designates the moderator as a vault reviewer, registers a service principal as the
 // authority reporter, and produces an UpheldAsCsam report holding vaulted evidence
-fn setup_automated_filing(
-    env: &mut PocketIc,
-    canister_ids: &CanisterIds,
-    test_data: &TestData,
-) -> AutomatedFilingSetup {
+fn setup_automated_filing(env: &mut PocketIc, canister_ids: &CanisterIds, test_data: &TestData) -> AutomatedFilingSetup {
     client::user_index::happy_path::execute_protected_action(
         env,
         test_data.moderator.principal,
@@ -6017,15 +6013,9 @@ fn automated_authority_filing_files_and_records_the_reference() {
     // The alert card shows the filing in flight
     tick_many(env, 5);
     let reports = get_moderation_reports(env, &test_data);
-    let report = reports
-        .iter()
-        .find(|r| r.report_index == Some(setup.report_index))
-        .unwrap();
+    let report = reports.iter().find(|r| r.report_index == Some(setup.report_index)).unwrap();
     assert!(
-        matches!(
-            report.authority_report,
-            Some(types::AuthorityReportState::Attempting { .. })
-        ),
+        matches!(report.authority_report, Some(types::AuthorityReportState::Attempting { .. })),
         "{:?}",
         report.authority_report
     );
@@ -6119,10 +6109,7 @@ fn automated_authority_filing_files_and_records_the_reference() {
     assert_eq!(filed_row["ooh_call_acknowledged"], true);
 
     let reports = get_moderation_reports(env, &test_data);
-    let report = reports
-        .iter()
-        .find(|r| r.report_index == Some(setup.report_index))
-        .unwrap();
+    let report = reports.iter().find(|r| r.report_index == Some(setup.report_index)).unwrap();
     assert!(
         matches!(
             &report.authority_report,
@@ -6190,17 +6177,16 @@ fn automated_filing_failure_clears_the_attempt_and_surfaces_the_contingency() {
         .iter()
         .find(|r| r["report_index"] == setup.report_index)
         .expect("the report must stay due until genuinely filed");
-    assert!(due_row["last_failure"]["failure"]["Contingency"]["error"]
-        .as_str()
-        .unwrap()
-        .contains("503"));
+    assert!(
+        due_row["last_failure"]["failure"]["Contingency"]["error"]
+            .as_str()
+            .unwrap()
+            .contains("503")
+    );
 
     // The card drives the moderator to the contingency checklist
     let reports = get_moderation_reports(env, &test_data);
-    let report = reports
-        .iter()
-        .find(|r| r.report_index == Some(setup.report_index))
-        .unwrap();
+    let report = reports.iter().find(|r| r.report_index == Some(setup.report_index)).unwrap();
     assert!(
         matches!(
             report.authority_report,
@@ -6213,7 +6199,9 @@ fn automated_filing_failure_clears_the_attempt_and_surfaces_the_contingency() {
     // ... and the portal-outage notice landed in the moderation channel
     let notices = get_moderation_notices(env, &test_data);
     assert!(
-        notices.iter().any(|n| n.contains("portal appears to be down")),
+        notices
+            .iter()
+            .any(|n| n.contains("Automated NCA filing for report #") && n.contains("failed: 503")),
         "{notices:?}"
     );
 

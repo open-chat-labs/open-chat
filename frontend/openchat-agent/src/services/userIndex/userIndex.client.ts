@@ -34,6 +34,7 @@ import type {
     OCError,
 } from "@shared";
 import {
+    ErrorCode,
     mergeUserSummaryWithUpdates,
     offline,
     Stream,
@@ -77,6 +78,7 @@ import {
     UserIndexAuthorityReportsResponse,
     UserIndexAuthorityReportTokenArgs,
     UserIndexAuthorityReportTokenResponse,
+    UserIndexClearAuthorityReportAttemptArgs,
     UserIndexModerationConfigResponse,
     UserIndexRecordAuthorityReportFiledArgs,
     UserIndexSetModerationReferralConfigArgs,
@@ -485,7 +487,9 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                           kind: "error",
                           message:
                               typeof resp === "object" && "Error" in resp
-                                  ? (resp.Error[1] ?? `code ${resp.Error[0]}`)
+                                  ? (resp.Error[1] ??
+                                    ErrorCode[resp.Error[0]] ??
+                                    `code ${resp.Error[0]}`)
                                   : "Unknown error",
                       } as const),
             UserIndexAuthorityReportTokenArgs,
@@ -509,6 +513,16 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             },
             (resp) => resp === "Success",
             UserIndexRecordAuthorityReportFiledArgs,
+            UnitResult,
+        );
+    }
+
+    clearAuthorityReportAttempt(reportIndex: bigint): Promise<boolean> {
+        return this.update(
+            "clear_authority_report_attempt",
+            { report_index: reportIndex },
+            (resp) => resp === "Success",
+            UserIndexClearAuthorityReportAttemptArgs,
             UnitResult,
         );
     }

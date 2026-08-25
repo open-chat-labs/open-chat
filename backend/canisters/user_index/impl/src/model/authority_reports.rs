@@ -108,12 +108,7 @@ impl AuthorityReports {
 
     // Clears an open attempt so the report can be retried, recording why it failed (if the
     // failure is known - an operator reconciling an orphaned marker clears without one)
-    pub fn clear_attempt(
-        &mut self,
-        report_index: u64,
-        failure: Option<AuthorityReportFailure>,
-        now: TimestampMillis,
-    ) -> bool {
+    pub fn clear_attempt(&mut self, report_index: u64, failure: Option<AuthorityReportFailure>, now: TimestampMillis) -> bool {
         let len_before = self.attempts.len();
         self.attempts.retain(|a| a.report_index != report_index);
         let cleared = self.attempts.len() != len_before;

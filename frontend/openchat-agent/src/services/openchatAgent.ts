@@ -2351,6 +2351,10 @@ export class OpenChatAgent extends EventTarget {
         );
     }
 
+    clearAuthorityReportAttempt(reportIndex: bigint): Promise<boolean> {
+        return this._userIndexClient.clearAuthorityReportAttempt(reportIndex);
+    }
+
     authorityReportToken(
         reportIndex: bigint,
         priority: NcaPriority,

@@ -127,20 +127,18 @@ impl RuntimeState {
     // inspect_message, so the rule cannot be forgotten at a call site.
     pub fn is_caller_platform_moderator(&self) -> bool {
         let caller = self.env.caller();
-        if let Some(user) = self.data.users.get_by_principal(&caller) {
-            user.suspension_details.is_none() && self.data.platform_moderators.contains(&user.user_id)
-        } else {
-            false
-        }
+        self.data
+            .users
+            .get_by_principal(&caller)
+            .is_some_and(|user| self.data.is_platform_moderator_active(&user.user_id))
     }
 
     pub fn is_caller_platform_operator(&self) -> bool {
         let caller = self.env.caller();
-        if let Some(user) = self.data.users.get_by_principal(&caller) {
-            user.suspension_details.is_none() && self.data.platform_operators.contains(&user.user_id)
-        } else {
-            false
-        }
+        self.data
+            .users
+            .get_by_principal(&caller)
+            .is_some_and(|user| self.data.is_platform_operator_active(&user.user_id))
     }
 
     pub fn can_caller_upload_wasm_chunks(&self) -> bool {
@@ -447,6 +445,17 @@ struct Data {
 }
 
 impl Data {
+    // Role membership masked by suspension: every surface which reports or syncs a user's
+    // moderator/operator status must go through these so a suspended account never shows (or
+    // is seeded elsewhere) as holding authority it cannot currently exercise
+    pub fn is_platform_moderator_active(&self, user_id: &UserId) -> bool {
+        self.platform_moderators.contains(user_id) && self.users.is_user_suspended(user_id) == Some(false)
+    }
+
+    pub fn is_platform_operator_active(&self, user_id: &UserId) -> bool {
+        self.platform_operators.contains(user_id) && self.users.is_user_suspended(user_id) == Some(false)
+    }
+
     #[expect(clippy::too_many_arguments)]
     pub fn new(
         governance_principals: Vec<Principal>,

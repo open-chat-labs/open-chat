@@ -750,8 +750,13 @@ function moderationReportContent(value: TModerationReportContent): ModerationRep
                 return {
                     kind: "contingency_required",
                     error: a.ContingencyRequired.error,
+                    urgent: a.ContingencyRequired.urgent ?? false,
                 } as const;
-            return { kind: "validation_failed", error: a.ValidationFailed.error } as const;
+            return {
+                kind: "validation_failed",
+                error: a.ValidationFailed.error,
+                urgent: a.ValidationFailed.urgent ?? false,
+            } as const;
         }),
         autoSanctioned: value.auto_sanctioned,
         contentExcerpt: value.content_excerpt,

@@ -312,7 +312,9 @@ pub(crate) fn validate(action: &ProtectedAction, actor: UserId, state: &RuntimeS
         }
         ProtectedAction::SetAuthorityReporter(args) => {
             if args.principal == Some(Principal::anonymous()) {
-                return Err(OCErrorCode::InvalidRequest.with_message("The anonymous principal cannot be the authority reporter"));
+                return Err(
+                    OCErrorCode::InvalidRequest.with_message("The anonymous principal cannot be the authority reporter")
+                );
             }
         }
         ProtectedAction::SetInternalModerationChannel(args) => {

@@ -7463,6 +7463,12 @@ export class OpenChat {
             .catch(() => false);
     }
 
+    clearAuthorityReportAttempt(reportIndex: bigint): Promise<boolean> {
+        return this.#worker
+            .send({ kind: "clearAuthorityReportAttempt", reportIndex })
+            .catch(() => false);
+    }
+
     authorityReportToken(
         reportIndex: bigint,
         priority: NcaPriority,

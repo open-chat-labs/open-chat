@@ -255,8 +255,10 @@ pub fn update_moderation_alert_authority_report(
         return;
     };
 
-    // The current status is always included (never None): a not-yet-upgraded community can
-    // then still decode the update, merely dropping the unknown authority_report field
+    // The current status is always included (never None). NB: a community which pre-dates a
+    // given AuthorityReportState variant traps on decoding it (msgpack rejects an unknown enum
+    // variant - it is not an unknown field which would simply be dropped), so the community
+    // canister must be released before the user_index whenever a variant is added
     let args = community_canister::c2c_update_moderation_report_status::Args {
         channel_id,
         message_id,

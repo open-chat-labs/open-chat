@@ -698,8 +698,8 @@ export type AuthorityReportState =
     | { kind: "due"; urgent: boolean }
     | { kind: "filed"; portalReference: string }
     | { kind: "attempting"; startedAt: bigint }
-    | { kind: "contingency_required"; error: string }
-    | { kind: "validation_failed"; error: string };
+    | { kind: "contingency_required"; error: string; urgent: boolean }
+    | { kind: "validation_failed"; error: string; urgent: boolean };
 
 // The moderator's priority assessment for an NCA filing; the NCA's own definitions
 export type NcaPriority = "P1" | "P2" | "P3";

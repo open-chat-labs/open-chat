@@ -56,7 +56,11 @@ fn clear_authority_report_attempt_impl(args: Args, state: &mut RuntimeState) -> 
         Some(claims.priority)
     };
 
-    if !state.data.authority_reports.clear_attempt(args.report_index, args.failure.clone(), now) {
+    if !state
+        .data
+        .authority_reports
+        .clear_attempt(args.report_index, args.failure.clone(), now)
+    {
         return Err(OCErrorCode::InvalidRequest.with_message("No filing attempt is marked in flight"));
     }
 
@@ -69,12 +73,14 @@ fn clear_authority_report_attempt_impl(args: Args, state: &mut RuntimeState) -> 
             .due_entry(args.report_index)
             .is_some_and(|d| d.urgent);
         let card_state = match &args.failure {
-            Some(AuthorityReportFailure::Contingency { error }) => {
-                types::AuthorityReportState::ContingencyRequired { error: error.clone() }
-            }
-            Some(AuthorityReportFailure::Validation { error }) => {
-                types::AuthorityReportState::ValidationFailed { error: error.clone() }
-            }
+            Some(AuthorityReportFailure::Contingency { error }) => types::AuthorityReportState::ContingencyRequired {
+                error: error.clone(),
+                urgent,
+            },
+            Some(AuthorityReportFailure::Validation { error }) => types::AuthorityReportState::ValidationFailed {
+                error: error.clone(),
+                urgent,
+            },
             // An auth failure is an operator problem, not a checklist state: back to Due
             Some(AuthorityReportFailure::Auth { .. }) | None => types::AuthorityReportState::Due { urgent },
         };
@@ -92,7 +98,10 @@ fn clear_authority_report_attempt_impl(args: Args, state: &mut RuntimeState) -> 
                 _ => "\n\nPriority 3 reports go via the portal only - retry from the report card once the problem is resolved.",
             };
             moderation::post_moderation_notice(
-                format!("🚨 Automated NCA filing for report #{} failed: {error}{urgent_note}", args.report_index),
+                format!(
+                    "🚨 Automated NCA filing for report #{} failed: {error}{urgent_note}",
+                    args.report_index
+                ),
                 state,
             );
         }

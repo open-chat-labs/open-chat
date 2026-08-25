@@ -94,11 +94,19 @@ fn record_authority_report_filed_impl(args: Args, state: &mut RuntimeState) -> O
             .with_message("Cannot record the authority report filing for an attempt on your own reported content"));
     }
 
+    // The urgency recorded at the verdict is the floor: a filing recorded from a failure
+    // state (whose form has no verdict context) must not demote a P1 case in the register
+    let urgent = args.urgent
+        || state
+            .data
+            .authority_reports
+            .due_entry(args.report_index)
+            .is_some_and(|d| d.urgent);
     state.data.authority_reports.record_filed(
         args.report_index,
         args.portal_reference.clone(),
         args.portal_reference_uuid.clone(),
-        args.urgent,
+        urgent,
         args.unverified,
         ooh_call_acknowledged,
         now,

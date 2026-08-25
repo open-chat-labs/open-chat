@@ -1070,6 +1070,8 @@ function getAction(
                 payload.urgent,
                 payload.unverified,
             );
+        case "clearAuthorityReportAttempt":
+            return agent.clearAuthorityReportAttempt(payload.reportIndex);
         case "authorityReportToken":
             return agent.authorityReportToken(
                 payload.reportIndex,
