@@ -56,10 +56,12 @@ fn is_allowed_url(app_handle: &AppHandle, url_str: &str) -> bool {
     // In debug the webview loads the vite dev server (and iOS invokes this
     // handler for the initial load too), so its host must be navigable.
     #[cfg(debug_assertions)]
-    if let Some(dev_url) = &app_handle.config().build.dev_url {
-        if dev_url.host_str().is_some_and(|dev_host| dev_host.eq_ignore_ascii_case(&host)) {
-            return true;
-        }
+    if let Some(dev_url) = &app_handle.config().build.dev_url
+        && dev_url
+            .host_str()
+            .is_some_and(|dev_host| dev_host.eq_ignore_ascii_case(&host))
+    {
+        return true;
     }
     #[cfg(not(debug_assertions))]
     let _ = app_handle;
