@@ -27,6 +27,7 @@ export OC_NFID_URL=https://nfid.one/authenticate/?applicationName=OpenChat
 export OC_PREVIEW_PROXY_URL=https://dy7sqxe9if6te.cloudfront.net
 export OC_VAPID_PUBLIC_KEY=BD8RU5tDBbFTDFybDoWhFzlL5+mYptojI6qqqqiit68KSt17+vt33jcqLTHKhAXdSzu6pXntfT9e4LccBv+iV3A=
 export OC_VIDEO_BRIDGE_URL=https://d7ufu5rwdb6eb.cloudfront.net
+export OC_NCA_REPORTER_URL=https://d368tfz0uea1ks.cloudfront.net
 export OC_WALLET_CONNECT_PROJECT_ID=adf8b4a7c5514a8229981aabdee2e246
 
 # override klipy api key from local environment (app only)
