@@ -564,34 +564,45 @@
                     </a>
                 {/if}
             {:else if authorityReport.kind === "contingency_required"}
-                <Body fontWeight="bold" colour="error">
-                    <span class="authority-error">
-                        <Translatable
-                            resourceKey={i18nKey("moderationReport.ncaContingency", {
-                                error: authorityReport.error,
-                            })} />
-                    </span>
-                </Body>
-                {#if canOpenFiling}
-                    <Button tiny onClick={() => (showFiling = true)}>
-                        <Translatable resourceKey={i18nKey("moderationReport.retryFiling")} />
-                    </Button>
-                {/if}
-                <a class="checklist-link" href={checklistUrl} target="_blank" rel="noreferrer">
-                    <Translatable resourceKey={i18nKey("moderationReport.filingChecklist")} />
-                </a>
+                <Column gap="md">
+                    <Body fontWeight="bold" colour="error">
+                        <span class="authority-error">
+                            <Translatable
+                                resourceKey={i18nKey("moderationReport.ncaContingency", {
+                                    error: authorityReport.error,
+                                })} />
+                        </span>
+                    </Body>
+                    <Row gap="md" crossAxisAlignment="center">
+                        {#if canOpenFiling}
+                            <Button tiny onClick={() => (showFiling = true)}>
+                                <Translatable
+                                    resourceKey={i18nKey("moderationReport.retryFiling")} />
+                            </Button>
+                        {/if}
+                        <a class="checklist-link" href={checklistUrl} target="_blank" rel="noreferrer">
+                            <Translatable
+                                resourceKey={i18nKey("moderationReport.filingChecklist")} />
+                        </a>
+                    </Row>
+                </Column>
             {:else if authorityReport.kind === "validation_failed"}
-                <Body fontWeight="bold" colour="error">
-                    <span class="authority-error">
-                        <Translatable
-                            resourceKey={i18nKey("moderationReport.ncaValidationFailed", {
-                                error: authorityReport.error,
-                            })} />
-                    </span>
-                </Body>
-                <a class="checklist-link" href={checklistUrl} target="_blank" rel="noreferrer">
-                    <Translatable resourceKey={i18nKey("moderationReport.filingChecklist")} />
-                </a>
+                <Column gap="md">
+                    <Body fontWeight="bold" colour="error">
+                        <span class="authority-error">
+                            <Translatable
+                                resourceKey={i18nKey("moderationReport.ncaValidationFailed", {
+                                    error: authorityReport.error,
+                                })} />
+                        </span>
+                    </Body>
+                    <Row gap="md" crossAxisAlignment="center">
+                        <a class="checklist-link" href={checklistUrl} target="_blank" rel="noreferrer">
+                            <Translatable
+                                resourceKey={i18nKey("moderationReport.filingChecklist")} />
+                        </a>
+                    </Row>
+                </Column>
             {:else if authorityReport.kind === "filed"}
                 <Body width="hug">
                     <Translatable resourceKey={i18nKey("moderationReport.ncaFiled")} />: {authorityReport.portalReference}
