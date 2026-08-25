@@ -680,6 +680,9 @@ export type MediaScanMatch = {
     violations: string[];
     matchDistance: bigint;
     matchId: string | undefined;
+    // The perceptual hash the scanner matched on; absent for matches recorded before the
+    // field existed
+    hash: string | undefined;
 };
 
 export type ModerationReportStatus =

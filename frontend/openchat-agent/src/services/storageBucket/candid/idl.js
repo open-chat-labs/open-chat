@@ -54,6 +54,16 @@ export const idlFactory = ({ IDL }) => {
         chunk_size: IDL.Nat32,
         file_id: FileId,
     });
+    const VaultFileInfoArgs = IDL.Record({ file_id: FileId });
+    const VaultFileInfoResponse = IDL.Variant({
+        Success: IDL.Record({
+            hash: IDL.Text,
+            mime_type: IDL.Text,
+            size: IDL.Nat64,
+        }),
+        NotAuthorized: IDL.Null,
+        NotFound: IDL.Null,
+    });
     const VaultLogArgs = IDL.Record({
         start: IDL.Nat64,
         max: IDL.Nat32,
@@ -107,6 +117,7 @@ export const idlFactory = ({ IDL }) => {
     });
     return IDL.Service({
         vault_file_chunk: IDL.Func([VaultFileChunkArgs], [VaultFileChunkResponse], []),
+        vault_file_info: IDL.Func([VaultFileInfoArgs], [VaultFileInfoResponse], ["query"]),
         vault_log: IDL.Func([VaultLogArgs], [VaultLogResponse], ["query"]),
         delete_file: IDL.Func([DeleteFileArgs], [DeleteFileResponse], []),
         delete_files: IDL.Func([DeleteFilesArgs], [DeleteFilesResponse], []),

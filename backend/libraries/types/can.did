@@ -310,6 +310,7 @@ type MediaScanMatch = record {
     violations : vec text;
     match_distance : int64;
     match_id : opt text;
+    hash : opt text;
 };
 
 type ModerationReportContent = record {

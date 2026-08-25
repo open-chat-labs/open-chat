@@ -178,6 +178,7 @@ export function parentRoute(from: RouteParams): string | null {
         case "terms_route":
         case "privacy_route":
         case "blog_route":
+        case "csea_reporting_route":
             return null;
     }
 

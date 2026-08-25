@@ -12,6 +12,7 @@
     import Markdown from "@src/components_shared/Markdown.svelte";
     import { Body, BodySmall, Button, Column, Row, Subtitle, Switch } from "component-lib";
     import { getContext } from "svelte";
+        import { copyToClipboard } from "../../utils/urls";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import FileAuthorityReport from "./FileAuthorityReport.svelte";
@@ -110,6 +111,42 @@
               ),
     );
     let needsMediaReview = $derived(content.blobReferences.length > 0 && !mediaReviewed);
+    // Assembles the hash lines for the NCA report: the vault sha256 per quarantined blob
+    // (reviewer-gated query) plus the scanner's perceptual hash per match
+    let hashCopyState = $state<"idle" | "copied" | "failed">("idle");
+    async function copyHashes() {
+        const lines: string[] = [];
+        for (const ref of content.blobReferences) {
+            const resp = await client.vaultFileInfo(ref.canisterId, ref.blobId);
+            if (resp.kind === "success") {
+                lines.push(
+                    `file ${ref.blobId}: sha256 ${resp.hash} (${resp.mimeType}, ${resp.size} bytes)`,
+                );
+            }
+        }
+        for (const m of mediaMatches) {
+            if (m.hash !== undefined) {
+                lines.push(`file ${m.blobId}: ${m.provider} hash ${m.hash}`);
+            }
+        }
+        const ok = lines.length > 0 && (await copyToClipboard(lines.join("\n")));
+        hashCopyState = ok ? "copied" : "failed";
+        window.setTimeout(() => (hashCopyState = "idle"), 2000);
+    }
+
+    // The manual-filing checklist opens in its own tab so the moderator can keep the
+    // report card open while working through it
+    let checklistUrl = $derived.by(() => {
+        const params = new URLSearchParams();
+        if (content.reportIndex !== undefined) {
+            params.set("report", content.reportIndex.toString());
+        }
+        params.set("origin", mediaMatches.length > 0 ? "hash" : "manual");
+        if (content.authorityReport?.kind === "due" && content.authorityReport.urgent) {
+            params.set("urgent", "true");
+        }
+        return `/csea-reporting?${params}`;
+    });
     let canResolve = $derived(
         $platformModeratorStore &&
             content.reportIndex !== undefined &&
@@ -245,6 +282,24 @@
                         </Button>
                     </Row>
                 {/if}
+                {#if content.blobReferences.length > 0 || mediaMatches.length > 0}
+                    <Row gap="sm">
+                        <Button secondary disabled={hashCopyState !== "idle"} onClick={copyHashes}>
+                            <Translatable
+                                resourceKey={i18nKey(
+                                    hashCopyState === "idle"
+                                        ? "moderationReport.copyHashes"
+                                        : hashCopyState === "copied"
+                                          ? "moderationReport.hashesCopied"
+                                          : "moderationReport.hashesFailed",
+                                )}
+                            />
+                        </Button>
+                    </Row>
+                {/if}
+                <a class="checklist-link" href={checklistUrl} target="_blank" rel="noreferrer">
+                    <Translatable resourceKey={i18nKey("moderationReport.filingChecklist")} />
+                </a>
             {:else}
                 <Body colour="textSecondary">
                     <Translatable resourceKey={i18nKey("moderationReport.ncaFiled")} />: {authorityReport.portalReference}
@@ -382,6 +437,11 @@
 {/if}
 
 <style lang="scss">
+    .checklist-link {
+        color: var(--secondary);
+        text-decoration: underline;
+        white-space: nowrap;
+    }
     .link {
         color: var(--secondary) !important;
     }

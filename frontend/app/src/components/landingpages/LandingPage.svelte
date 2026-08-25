@@ -118,6 +118,14 @@
                     {:then { default: DiamondPage }}
                         <DiamondPage />
                     {/await}
+                {:else if $routeStore.kind === "csea_reporting_route"}
+                    {#await import("./CseaReportingPage.svelte")}
+                        <div class="loading">
+                            <Loading />
+                        </div>
+                    {:then { default: CseaReportingPage }}
+                        <CseaReportingPage />
+                    {/await}
                 {:else}
                     <HomePage on:login={() => client.login()} />
                 {/if}

@@ -102,6 +102,20 @@ type VaultFileChunkResponse = variant {
     SessionRequired;
 };
 
+type VaultFileInfoArgs = record {
+    file_id : FileId;
+};
+
+type VaultFileInfoResponse = variant {
+    Success : record {
+        hash : text;
+        mime_type : text;
+        size : nat64;
+    };
+    NotAuthorized;
+    NotFound;
+};
+
 type VaultLogArgs = record {
     start : nat64;
     max : nat32;
@@ -126,6 +140,7 @@ type VaultLogResponse = variant {
 service : {
     upload_chunk_v2 : (UploadChunkArgs) -> (UploadChunkResponse);
     vault_file_chunk : (VaultFileChunkArgs) -> (VaultFileChunkResponse);
+    vault_file_info : (VaultFileInfoArgs) -> (VaultFileInfoResponse) query;
     vault_log : (VaultLogArgs) -> (VaultLogResponse) query;
     delete_file : (DeleteFileArgs) -> (DeleteFileResponse);
     delete_files : (DeleteFilesArgs) -> (DeleteFilesResponse);

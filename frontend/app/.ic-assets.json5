@@ -30,7 +30,7 @@
         ignore: false,
     },
     {
-        match: ".well-known/{ii-alternative-origins,webauthn}",
+        match: ".well-known/{ii-alternative-origins,webauthn,apple-app-site-association}",
         headers: {
             "Content-Type": "application/json",
         },
