@@ -1,6 +1,7 @@
 <script lang="ts">
     import { Search } from "component-lib";
     import {
+        anonUserStore,
         chatListScopeStore,
         currentUserIdStore,
         type BotMatch,
@@ -96,10 +97,13 @@
         // This location is rather hacky because we can't have a direct chat with ourselves
         // but it signals to the explore_bots endpoint that we want to see bots that are
         // available for direct chat.
-        const location = {
-            kind: "direct_chat",
-            userId: $currentUserIdStore,
-        } as DirectChatIdentifier;
+        // The anonymous user id is not a principal so cannot be used as a location.
+        const location = $anonUserStore
+            ? undefined
+            : ({
+                  kind: "direct_chat",
+                  userId: $currentUserIdStore,
+              } as DirectChatIdentifier);
 
         return client.exploreBots(term, 0, 10, location, false).then((result) => {
             return result.kind === "success" ? result.matches : [];

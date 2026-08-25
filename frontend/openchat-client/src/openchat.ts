@@ -6529,7 +6529,7 @@ export class OpenChat {
         chats.forEach((chat) => {
             if (chat.kind === "direct_chat") {
                 userIds.add(chat.them.userId);
-            } else if (chat.latestMessage !== undefined) {
+            } else if (chat.latestMessage?.event !== undefined) {
                 const sender = chat.latestMessage.event.sender;
                 if (chat.latestMessage.event.senderContext?.kind === "webhook") {
                     webhooks.add(sender);
