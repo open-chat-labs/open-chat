@@ -88,7 +88,7 @@
                 }
             });
         } else if (provider === AuthProvider.PASSKEY) {
-            if (client.isNativeAndroid()) {
+            if (client.isNativeApp()) {
                 client.signInWithAndroidWebAuthn();
             } else {
                 client.signInWithWebAuthn();

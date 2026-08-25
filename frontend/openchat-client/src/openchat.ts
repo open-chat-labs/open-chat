@@ -8589,7 +8589,7 @@ export class OpenChat {
             }));
         if (webAuthnKey === undefined) throw new Error("WebAuthnKey not set");
 
-        if (this.isNativeAndroid()) {
+        if (this.isNativeApp()) {
             // Not 100% sure that this is right
             const webAuthnIdentity = new AndroidWebAuthnPasskeyIdentity((credentialId) =>
                 this.lookupWebAuthnPubKey(credentialId),

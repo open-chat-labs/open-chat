@@ -1,6 +1,7 @@
 <script lang="ts">
     import RichTextEditor from "@shared_components/RichTextEditor.svelte";
     import { keyboard } from "@src/stores/keyboard.svelte";
+    import { isIosTauriApp } from "@shared";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { detectMarkdown } from "@src/utils/detectMarkdown";
     import {
@@ -188,8 +189,26 @@
     // Cases in which we show extended options, even when keyboard is visible,
     // since the extened options provide bottom padding for the input to rise
     // above the keyboard.
+    //
+    // iOS caveat: the "keyboard_only" tray exists purely to reserve the space
+    // the keyboard is about to cover, but unlike Android, iOS will not show
+    // the keyboard for a programmatic focus (e.g. the refocus after sending),
+    // and a hardware keyboard suppresses it entirely — either way the reserved
+    // space would sit empty. So on iOS only show it while the keyboard is
+    // genuinely visible (the native inset event arrives before the keyboard
+    // animates in, so there is no flicker).
+    const iosNative = isIosTauriApp();
+
+    // Whether the tray should really occupy space: on iOS a "keyboard_only"
+    // tray with no keyboard on screen must collapse, or it reserves a dead
+    // band where the keyboard would have been.
+    let trayOpen = $derived(
+        inputTrayMode !== "closed" &&
+            !(iosNative && inputTrayMode === "keyboard_only" && !keyboard.visible),
+    );
+
     $effect(() => {
-        inputTrayVisible = keyboard.visible || inputTrayMode !== "closed";
+        inputTrayVisible = keyboard.visible || trayOpen;
     });
 
     $effect(() => {
@@ -837,11 +856,9 @@
         onmousedown={inputTrayFocusIn}
         onfocusout={inputTrayFocusOut}
         style:height={`${
-            inputTrayMode !== "closed"
-                ? keyboard.height + (inputTrayMode === "emoji_gif_search" ? 200 : 0)
-                : 0
+            trayOpen ? keyboard.height + (inputTrayMode === "emoji_gif_search" ? 200 : 0) : 0
         }px`}
-        style:visibility={inputTrayMode !== "closed" ? "visible" : "hidden"}>
+        style:visibility={trayOpen ? "visible" : "hidden"}>
         {#if inputTrayMode === "emoji_gif_selection" || inputTrayMode === "emoji_gif_search"}
             <EmojiOrGif
                 empty={textboxEmpty}

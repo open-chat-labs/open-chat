@@ -18,6 +18,7 @@ permissions = [
     "allow-enable-viewport-resize",
     "allow-disable-viewport-resize",
     "allow-save-media",
+    "allow-export-media",
     "allow-update-chat-shortcuts",
     "allow-get-pending-deep-link",
     "allow-get-pending-notification-tap",

@@ -475,6 +475,13 @@ body.native-android {
             padding-bottom: var(--device-nav-height) !important;
         }
     }
+
+    // iOS: the home-indicator inset (--device-nav-height, 34pt) already gives
+    // the bottom bar comfortable clearance — the extra --sp-lg that Android's
+    // slimmer gesture inset needs reads as excess padding there.
+    &.native-ios.has-gesture-nav .bottom_nav_bar {
+        padding-bottom: var(--device-nav-height) !important;
+    }
 }
 
 svelte-virtual-list-viewport {

@@ -55,6 +55,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
         commands::enable_viewport_resize,
         commands::disable_viewport_resize,
         commands::save_media,
+        commands::export_media,
         commands::update_chat_shortcuts,
     ]);
 

@@ -1,4 +1,5 @@
 import { addPluginListener, invoke, PluginListener } from "@tauri-apps/api/core";
+import { isIosTauriApp } from "@shared";
 import { isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notification";
 import { openUrl, showNotification } from "tauri-plugin-oc-api";
 import { navigate } from "@utils/navigation";
@@ -296,25 +297,44 @@ export function consumePendingDeepLink(): string | null {
 }
 
 export async function expectDeepLinks(): Promise<PluginListener> {
-    const listener = await addPluginListener(TAURI_PLUGIN_NAME, DEEP_LINK_EVENT, (payload: { url: string }) => {
-        console.log("Deep link: received warm-start event", payload.url);
+    const handleDeepLink = (url: string) => {
+        console.log("Deep link: received warm-start event", url);
         try {
-            const { pathname, search } = new URL(payload.url);
+            const { pathname, search } = new URL(url);
             // Landing / marketing pages (blog, whitepaper, etc.) are not real
             // in-app destinations. The OS delivers these oc.app links to us as
             // deep links because oc.app is a verified associated domain - open
             // them in an external browser tab instead of navigating in-app.
             if (isLandingPagePath(pathname)) {
-                openUrl({ url: payload.url }).catch((e) =>
+                openUrl({ url }).catch((e) =>
                     console.error("Deep link: failed to open external URL", e),
                 );
                 return;
             }
             navigate(pathname + search, "notification");
         } catch {
-            console.error("Deep link: failed to parse URL", payload.url);
+            console.error("Deep link: failed to parse URL", url);
         }
-    });
+    };
+
+    const listener = await addPluginListener(
+        TAURI_PLUGIN_NAME,
+        DEEP_LINK_EVENT,
+        (payload: { url: string }) => handleDeepLink(payload.url),
+    );
+
+    // On Android deep links are intercepted natively (see the tao crash note
+    // above) and re-fired as the plugin event handled just here. On iOS the
+    // standard Tauri deep-link plugin works, so listen to it directly for
+    // openchat:// custom-scheme links.
+    if (isIosTauriApp()) {
+        try {
+            const { onOpenUrl } = await import("@tauri-apps/plugin-deep-link");
+            await onOpenUrl((urls) => urls.forEach(handleDeepLink));
+        } catch (e) {
+            console.error("Deep link: failed to register iOS onOpenUrl listener", e);
+        }
+    }
 
     // Pull any URL stored during cold start (before WebView was ready).
     // Store it for Router.svelte to consume instead of auto-selecting the default chat.
