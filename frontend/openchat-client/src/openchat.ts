@@ -5728,6 +5728,11 @@ export class OpenChat {
         location: BotInstallationLocation | undefined,
         excludeInstalled: boolean,
     ): Promise<ExploreBotsResponse> {
+        // Callers use their own direct chat as the location to mean "bots available for direct
+        // chat", but the anonymous user id is not a principal and cannot be encoded as one
+        if (location?.kind === "direct_chat" && anonUserStore.value) {
+            location = undefined;
+        }
         return this.#worker.send({
             kind: "exploreBots",
             searchTerm,

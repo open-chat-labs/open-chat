@@ -152,25 +152,15 @@ export function shouldReportError(error: unknown): boolean {
     );
 }
 
-// Message-level version of the same filter, for Rollbar's checkIgnore hook where only the
-// payload strings are available - i.e. errors captured by captureUncaught /
-// captureUnhandledRejections which bypass our logger entirely. Takes the exception class and
-// message as a pair so the name-dependent rules above (notably TypeError-only network matching)
-// behave identically on this path; `name` is empty for payloads that carry no exception.
+// The same filter for Rollbar's checkIgnore hook, where only the payload strings are available -
+// i.e. errors captured by captureUncaught / captureUnhandledRejections which bypass our logger
+// entirely. Rebuilds the structural shape `shouldReportError` inspects from the exception class
+// and message so both paths share one rule set; `name` is empty for payloads that carry no
+// exception. An HttpError's status only survives in its message on this path.
 export function shouldReportMessage(name: string, message: string): boolean {
-    return !(
-        name === "AbortError" ||
-        name === "QuotaExceededError" ||
-        name === "AnonymousOperationError" ||
-        name === SESSION_EXPIRY_ERROR_NAME ||
-        name === INVALID_DELEGATION_ERROR_NAME ||
-        // an HttpError's status only survives in the message on this path
-        (name === "HttpError" && /Status: 50[234]\b/.test(message)) ||
-        (name === "TypeError" && NETWORK_NOISE_PATTERN.test(message)) ||
-        REQWEST_NOISE_PATTERN.test(message) ||
-        ENVIRONMENT_NOISE_PATTERNS.some((p) => p.test(message)) ||
-        isExpectedAccessError(message)
-    );
+    const status = message.match(/Status: (\d{3})\b/);
+    const code = status != null ? Number(status[1]) : undefined;
+    return shouldReportError({ name, message, code });
 }
 
 // Decide whether a failed worker request should be reported to our error tracker. Expected

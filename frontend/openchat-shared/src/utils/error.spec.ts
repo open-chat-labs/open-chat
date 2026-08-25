@@ -6,7 +6,7 @@ import {
     INVALID_DELEGATION_ERROR_NAME,
     SESSION_EXPIRY_ERROR_NAME,
 } from "../domain";
-import { requiresLogout, shouldReportWorkerError } from "./error";
+import { requiresLogout, shouldReportMessage, shouldReportWorkerError } from "./error";
 
 // `toCanisterResponseError` copies the IC error code of the rejection onto the mapped error
 function rejection(rejectErrorCode: string): HttpError {
@@ -105,5 +105,54 @@ describe("requiresLogout", () => {
         expect(requiresLogout(undefined)).toBe(false);
         expect(requiresLogout(null)).toBe(false);
         expect(requiresLogout("SessionExpiryError")).toBe(false);
+    });
+});
+
+// Rollbar's checkIgnore path only has the exception class and message, so this must agree with
+// the object-based filter rule for rule
+describe("shouldReportMessage", () => {
+    test("silences session teardown and environment noise by name", () => {
+        expect(shouldReportMessage(SESSION_EXPIRY_ERROR_NAME, "")).toBe(false);
+        expect(shouldReportMessage(INVALID_DELEGATION_ERROR_NAME, "")).toBe(false);
+        expect(shouldReportMessage("AnonymousOperationError", "")).toBe(false);
+        expect(shouldReportMessage("AbortError", "The operation was aborted")).toBe(false);
+        expect(shouldReportMessage("QuotaExceededError", "")).toBe(false);
+    });
+
+    test("silences gateway 502-504 but keeps 500 for an HttpError", () => {
+        const http = (status: number) =>
+            `HTTP request failed:\n  Status: ${status} (Service Unavailable)`;
+        expect(shouldReportMessage("HttpError", http(502))).toBe(false);
+        expect(shouldReportMessage("HttpError", http(503))).toBe(false);
+        expect(shouldReportMessage("HttpError", http(504))).toBe(false);
+        expect(shouldReportMessage("HttpError", http(500))).toBe(true);
+        // the status is only meaningful on an HttpError
+        expect(shouldReportMessage("Error", http(503))).toBe(true);
+    });
+
+    test("silences browser network failures only for the browser's own TypeError", () => {
+        expect(shouldReportMessage("TypeError", "Failed to fetch")).toBe(false);
+        expect(shouldReportMessage("TypeError", "Load failed")).toBe(false);
+        expect(shouldReportMessage("Error", "Failed to fetch the thing")).toBe(true);
+        // Tauri's reqwest failure is not a TypeError
+        expect(shouldReportMessage("Error", "error decoding response body")).toBe(false);
+    });
+
+    test("silences environment noise and expected access races by message", () => {
+        expect(
+            shouldReportMessage("", "ResizeObserver loop completed with undelivered notifications"),
+        ).toBe(false);
+        expect(
+            shouldReportMessage(
+                "Error",
+                'Events response error: {"kind":"error","code":103,"message":null}',
+            ),
+        ).toBe(false);
+    });
+
+    test("reports everything else", () => {
+        expect(shouldReportMessage("TypeError", "Cannot read properties of undefined")).toBe(true);
+        expect(shouldReportMessage("", "something unexpected")).toBe(true);
+        expect(shouldReportMessage("Error", 'Events response error: {"code":999}')).toBe(true);
     });
 });
