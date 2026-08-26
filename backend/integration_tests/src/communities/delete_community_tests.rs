@@ -98,13 +98,16 @@ fn user_canister_notified_of_community_deleted() {
             .any(|c| c.community_id == community_id)
     );
 
+    // Inside the 10 minute window nothing can have been dropped yet, so this is a clean baseline
+    let failed_before = community_deleted_notifications_failed(env, canister_ids.group_index);
+
     env.advance_time(Duration::from_secs(2 * 60));
-    // Now past the 10 minute cutoff, so every remaining attempt to notify user3's stopped
-    // canister must resolve (rejected) and be dropped before user3 is started - otherwise an
-    // in-flight call would be delivered to the running canister and succeed. Notifications are
-    // pushed by group_index's `push_community_deleted_notifications` job directly to the user
-    // canister, so wait on group_index's own pending count rather than a fixed tick bound.
-    wait_for_community_deleted_notifications_to_settle(env, canister_ids.group_index);
+    // Now past the 10 minute cutoff, so the remaining attempt to notify user3's stopped canister
+    // must resolve (rejected) and be dropped before user3 is started - otherwise an in-flight
+    // call would be delivered to the running canister and succeed. The pending count alone
+    // cannot show this (it reads zero while the attempt is in flight), so wait for the drop
+    // itself: group_index's failed count rising is the deterministic endpoint.
+    wait_for_community_deleted_notification_dropped(env, canister_ids.group_index, failed_before);
     start_canister(env, user3.local_user_index, user3.user_id.into());
     env.tick();
 
@@ -150,32 +153,27 @@ struct TestData {
     community_id: CommunityId,
 }
 
-// Ticks until group_index has no community-deleted notifications pending, and stays that way
-// for several consecutive rounds. The push job dequeues an entry while its call is in flight
-// (so the count drops to zero mid-attempt) and re-enqueues it on failure while inside the 10
-// minute retry window, so a single zero reading is not enough; past the window a failed
-// attempt is dropped instead, after which the count cannot rise again and the job stops.
-fn wait_for_community_deleted_notifications_to_settle(env: &mut PocketIc, group_index: Principal) {
+fn community_deleted_notifications_failed(env: &mut PocketIc, group_index: Principal) -> u64 {
     let request = HttpRequest {
         method: "GET".to_string(),
         url: "/metrics".to_string(),
         headers: Vec::new(),
         body: Vec::new(),
     };
-    let mut consecutive_idle = 0;
+    let response = client::http_request(env, Principal::anonymous(), group_index, &request);
+    let metrics: serde_json::Value = serde_json::from_slice(&response.body).unwrap();
+    metrics["community_deleted_notifications_failed"].as_u64().unwrap()
+}
+
+// Ticks until group_index has dropped a community-deleted notification (an attempt which failed
+// past the 10 minute retry window). Each user has a single entry which is either queued, in
+// flight, or dropped, so once the failed count rises nothing for that user remains in flight.
+fn wait_for_community_deleted_notification_dropped(env: &mut PocketIc, group_index: Principal, failed_before: u64) {
     for _ in 0..200 {
         env.tick();
-        let response = client::http_request(env, Principal::anonymous(), group_index, &request);
-        let metrics: serde_json::Value = serde_json::from_slice(&response.body).unwrap();
-        let pending = metrics["community_deleted_notifications_pending"].as_u64().unwrap();
-        if pending == 0 {
-            consecutive_idle += 1;
-            if consecutive_idle >= 10 {
-                return;
-            }
-        } else {
-            consecutive_idle = 0;
+        if community_deleted_notifications_failed(env, group_index) > failed_before {
+            return;
         }
     }
-    panic!("Community deleted notifications did not settle");
+    panic!("Community deleted notification was not dropped");
 }

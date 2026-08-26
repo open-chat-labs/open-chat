@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Accept the new `Attempting`, `ContingencyRequired` and `ValidationFailed` authority report states pushed by the user_index ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
+
 ## [[2.0.2035](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2035-community)] - 2026-08-20
 
 ### Added

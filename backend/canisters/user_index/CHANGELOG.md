@@ -6,12 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Automated NCA (CSEA-IRP) filing path for the off-chain reporting service: `authority_report_token` mints a vault-export + submitter token pair, `record_authority_report_attempt` opens a crash-safe attempt marker and returns the certified report data, and `clear_authority_report_attempt` / `record_authority_report_filed` complete the loop, classifying failures into the new `Attempting`, `ContingencyRequired` and `ValidationFailed` report states ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
+- `SetAuthorityReporter` protected action registers the reporting service's principal and delivers the OC public key to every storage bucket via the storage_index ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
+- Expose the registered authority reporter in `moderation_config` ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
+- Persist a content excerpt on reports ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
+
 ### Changed
 
+- Suspension freezes every privilege: suspended platform moderators and operators fail the role guards (including `inspect_message`), their role flags on the local user indexes and the bucket vault-reviewer allowlist are resynced on suspend/unsuspend, and lookups mask their role flags while suspended ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
+- One-off `post_upgrade` re-sync of privileges for accounts already suspended at deploy time ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
 - When a report is dismissed, tell the reporter the message may still break the rules of its group or community and suggest raising it with the owners ([#9175](https://github.com/open-chat-labs/open-chat/pull/9175))
-
-### Changed
-
 - Bump the current terms version to 2 so users are asked to accept the updated terms naming the PhotoDNA/Microsoft media-matching processor ([#9174](https://github.com/open-chat-labs/open-chat/pull/9174))
 
 ## [[2.0.2030](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2030-user_index)] - 2026-08-20

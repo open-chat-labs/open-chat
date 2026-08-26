@@ -51,6 +51,10 @@ impl DeletedCommunities {
         self.pending_community_deleted_notifications.len()
     }
 
+    pub fn notifications_failed(&self) -> usize {
+        self.failed_notifications.len()
+    }
+
     pub fn metrics(&self) -> Metrics {
         let mut public = 0;
         let mut private = 0;
