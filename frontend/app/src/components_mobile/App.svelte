@@ -360,7 +360,13 @@
         videoCallElement?.startOrJoinVideoCall(chatId, callType, true);
     }
 
+    // The native-android class carries the shared native-webview rules (status
+    // bar padding, touch-action, gesture-nav paddings) which iOS needs too;
+    // native-ios is added on top for the few iOS-specific overrides.
     document.body.classList.add("native-android");
+    if (client.isNativeIos()) {
+        document.body.classList.add("native-ios");
+    }
     detectNeedsSafeInset();
 </script>
 

@@ -17,6 +17,7 @@
         type OpenChat,
     } from "@client";
     import {
+        exportMedia,
         loadRecentMedia,
         type MediaPermissionStatus,
         type RecentMedia,
@@ -64,7 +65,7 @@
     let media = $state<RecentMedia[]>([]);
 
     $effect(() => {
-        if (open && client.isNativeAndroid()) {
+        if (open && client.isNativeApp()) {
             loadRecentMedia().then((res: any) => {
                 mediaPermission = res.permission;
                 media = res.media;
@@ -80,17 +81,20 @@
 
     // Construct dummy file object, and provide blobUrl that will allow Tauri to
     // access the binary data associated with the file.
-    function onMediaSelected(media: RecentMedia) {
+    async function onMediaSelected(media: RecentMedia) {
         console.log(media);
         const { filename, mimeType, size } = media;
-        const assetUrl = convertFileSrc(media.filePath);
-        const lazyFile = LazyFile.fromUrl(assetUrl, filename, mimeType, size);
-        client
-            .messageContentFromFile(lazyFile)
-            .then(onFileSelected)
-            .catch((err) => {
-                toastStore.showFailureToast(i18nKey(err));
-            });
+        try {
+            // iOS photo-library items have no file path until the asset is
+            // exported to a temp file (media.uri is the PHAsset identifier).
+            const filePath = media.filePath || (await exportMedia(media.uri));
+            const assetUrl = convertFileSrc(filePath);
+            const lazyFile = LazyFile.fromUrl(assetUrl, filename, mimeType, size);
+            const content = await client.messageContentFromFile(lazyFile);
+            onFileSelected(content);
+        } catch (err) {
+            toastStore.showFailureToast(i18nKey(err as string));
+        }
     }
 </script>
 

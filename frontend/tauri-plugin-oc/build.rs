@@ -16,6 +16,7 @@ const COMMANDS: &[&str] = &[
     "enable_viewport_resize",
     "disable_viewport_resize",
     "save_media",
+    "export_media",
     "update_chat_shortcuts",
     "get_pending_deep_link",
     "get_pending_notification_tap",

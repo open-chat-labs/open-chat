@@ -11,7 +11,9 @@ set +a
 
 # I suppose we might have > web | desktop | android | ios < where desktop could be
 # further divider mac/windows/linux etc.
-export OC_APP_TYPE=android
+# Defaults to android; the iOS dev flow runs this with OC_APP_TYPE=ios
+# (see the dev:mobile:ios npm script).
+export OC_APP_TYPE=${OC_APP_TYPE:-android}
 export OC_MOBILE_LAYOUT=v2
 export OC_ALCHEMY_API_KEY=6pSBD1eOqwyGDI1xFfV-p
 export OC_BITCOIN_MAINNET_ENABLED=false
@@ -20,7 +22,9 @@ export OC_ACHIEVEMENT_URL_PATH=http://{canisterId}.localhost:8080
 export OC_BLOB_URL_PATTERN=http://{canisterId}.raw.localhost:8080/{blobType}
 export OC_BUILD_ENV=$NODE_ENV
 export OC_WEBAUTHN_ORIGIN=localhost
-export OC_DEV_PORT=5001
+# Overridable so the iOS dev flow can run alongside an Android/web dev server
+# (see the dev:mobile:ios npm script, which uses 5002).
+export OC_DEV_PORT=${OC_DEV_PORT:-5001}
 # Note: changed the port to 8081, we do expect there to be a reverse proxy
 # for the local dfx setup, since from dfx v0.28.0-beta1 we get a CORS issue
 # when querying the local deployment. Once that's fixed we'll revert to port
@@ -37,7 +41,7 @@ export OC_VAPID_PUBLIC_KEY=BD8RU5tDBbFTDFybDoWhFzlL5+mYptojI6qqqqiit68KSt17+vt33
 export OC_VIDEO_BRIDGE_URL=http://$(ipconfig getifaddr en0):5050
 export OC_WALLET_CONNECT_PROJECT_ID=b9aafebed2abfaf8341afd9428c947d5
 export OC_WEBSITE_VERSION=
-export OC_BASE_ORIGIN=http://localhost:5001
+export OC_BASE_ORIGIN=http://localhost:$OC_DEV_PORT
 
 # override klipy api key from local environment (app only)
 export OC_KLIPY_APIKEY="$OC_APP_KLIPY_APIKEY"

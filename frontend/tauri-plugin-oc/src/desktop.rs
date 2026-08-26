@@ -53,6 +53,10 @@ impl<R: Runtime> Oc<R> {
         unimplemented!("not implemented for desktop environment")
     }
 
+    pub fn export_media(&self, _payload: ExportMediaRequest) -> crate::Result<ExportMediaResponse> {
+        unimplemented!("not implemented for desktop environment")
+    }
+
     pub fn update_chat_shortcuts(
         &self,
         _payload: UpdateChatShortcutsRequest,
