@@ -604,7 +604,10 @@
         // repeatedly jumping ~a viewport up from the bottom.
         const preAtBottom = fromBottom < 10;
 
-        await client.loadNewMessages(chat.id, threadRootEvent);
+        const chatId = chat.id;
+        await client.loadNewMessages(chatId, threadRootEvent);
+        // the user may have navigated away while the load was in flight
+        if (chat === undefined) return;
 
         // In column-reverse, new messages are inserted at the visual bottom (scroll
         // origin), shifting existing content upward. Move the browser scroll

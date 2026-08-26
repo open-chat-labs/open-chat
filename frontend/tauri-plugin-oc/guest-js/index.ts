@@ -15,6 +15,7 @@ export {
     type RecentMediaResponse,
 } from "./commands/loadRecentMedia";
 export { saveMediaToDevice, type SaveMediaRequest } from "./commands/saveMedia";
+export { exportMedia } from "./commands/exportMedia";
 export { enableViewportResize } from "./commands/enableViewportResize";
 export { disableViewportResize } from "./commands/disableViewportResize";
 export {

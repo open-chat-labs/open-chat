@@ -24,8 +24,10 @@ initEnv();
 const isNativeIos = process.env.OC_APP_TYPE === "ios";
 const isNativeAndroid = process.env.OC_APP_TYPE === "android";
 const isNativeApp = isNativeIos || isNativeAndroid;
-// Dev server port — shared by web and native (Android/iOS) dev.
-const port = 5001;
+// Dev server port — shared by web and native (Android/iOS) dev. Overridable
+// (OC_DEV_PORT) so e.g. the iOS dev flow can run alongside another dev server;
+// the hmr websocket below must follow it, not just the --port CLI flag.
+const port = Number(process.env.OC_DEV_PORT ?? 5001);
 
 // The former workspace sub-packages (@shared/@client/@agent/@worker) resolve
 // directly from their TypeScript source via `ocPackageAliases` — see

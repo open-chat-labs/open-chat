@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-export-media"
+description = "Enables the export_media command without any pre-configured scope."
+commands.allow = ["export_media"]
+
+[[permission]]
+identifier = "deny-export-media"
+description = "Denies the export_media command without any pre-configured scope."
+commands.deny = ["export_media"]

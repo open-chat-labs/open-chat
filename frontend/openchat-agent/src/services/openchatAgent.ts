@@ -1585,7 +1585,8 @@ export class OpenChatAgent extends EventTarget {
             }
         };
 
-        if (current === undefined) {
+        // `== null`: a corrupt IndexedDB has been seen returning null rather than undefined
+        if (current == null) {
             totalQueryCount++;
             const userResponse = await this.userClient.getInitialState();
             anyUpdates = true;
