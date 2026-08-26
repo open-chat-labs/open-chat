@@ -118,6 +118,10 @@ struct Data {
     pub vault_event_sync_queue: GroupedTimerJobQueue<VaultEventBatch>,
     #[serde(default)]
     pub vault_reviewers: Vec<VaultReviewer>,
+    // The NCA reporting service's principal + the OC public key, held so each new bucket is
+    // seeded with them (a bucket cannot verify a vault-export token without the key)
+    #[serde(default)]
+    pub authority_reporter: Option<storage_index_canister::c2c_vault_ops::SetAuthorityReporterOp>,
     // Every hash upheld as CSAM, learned from the bucket which applied the verdict. Held here
     // so the denylist survives as platform-wide state: it is pushed to all other buckets when
     // it changes, and to each new bucket when it is created.
@@ -172,6 +176,7 @@ impl Data {
             bucket_event_sync_queue: GroupedTimerJobQueue::new(5, false),
             vault_event_sync_queue: default_vault_event_sync_queue(),
             vault_reviewers: Vec::new(),
+            authority_reporter: None,
             csam_hashes: BTreeMap::new(),
             user_index_canister_id: None,
             fire_and_forget_handler: FireAndForgetHandler::default(),
@@ -263,6 +268,17 @@ impl Data {
                             user_id: r.user_id,
                         })
                         .collect(),
+                ),
+            );
+        }
+        if let Some(op) = &self.authority_reporter {
+            self.vault_event_sync_queue.push(
+                bucket.canister_id,
+                storage_bucket_canister::c2c_vault_sync::VaultOp::SetAuthorityReporter(
+                    storage_bucket_canister::c2c_vault_sync::SetAuthorityReporterOp {
+                        principal: op.principal,
+                        oc_public_key_pem: op.oc_public_key_pem.clone(),
+                    },
                 ),
             );
         }

@@ -24,8 +24,10 @@ fn current_user_impl(state: &RuntimeState) -> Response {
             avatar_id: u.avatar_id,
             icp_account: default_ledger_account(u.user_id.into()),
             referrals: state.data.users.referrals(&u.user_id),
-            is_platform_moderator: state.data.platform_moderators.contains(&u.user_id),
-            is_platform_operator: state.data.platform_operators.contains(&u.user_id),
+            // Role flags read false while suspended: a suspended account holds no authority,
+            // and the client must not offer surfaces the canisters will refuse
+            is_platform_moderator: state.data.is_platform_moderator_active(&u.user_id),
+            is_platform_operator: state.data.is_platform_operator_active(&u.user_id),
             suspension_details,
             is_suspected_bot: state.data.users.is_suspected_bot(&u.user_id),
             diamond_membership_details: u.diamond_membership_details.hydrate(now),

@@ -740,11 +740,24 @@ function moderationReportContent(value: TModerationReportContent): ModerationRep
         flaggedCategories: value.flagged_categories,
         classificationFailed: value.classification_failed ?? false,
         isBlockedAttempt: value.is_blocked_attempt ?? false,
-        authorityReport: mapOptional(value.authority_report, (a) =>
-            "Due" in a
-                ? ({ kind: "due", urgent: a.Due.urgent } as const)
-                : ({ kind: "filed", portalReference: a.Filed.portal_reference } as const),
-        ),
+        authorityReport: mapOptional(value.authority_report, (a) => {
+            if ("Due" in a) return { kind: "due", urgent: a.Due.urgent } as const;
+            if ("Filed" in a)
+                return { kind: "filed", portalReference: a.Filed.portal_reference } as const;
+            if ("Attempting" in a)
+                return { kind: "attempting", startedAt: a.Attempting.started_at } as const;
+            if ("ContingencyRequired" in a)
+                return {
+                    kind: "contingency_required",
+                    error: a.ContingencyRequired.error,
+                    urgent: a.ContingencyRequired.urgent ?? false,
+                } as const;
+            return {
+                kind: "validation_failed",
+                error: a.ValidationFailed.error,
+                urgent: a.ValidationFailed.urgent ?? false,
+            } as const;
+        }),
         autoSanctioned: value.auto_sanctioned,
         contentExcerpt: value.content_excerpt,
         blobReferences: value.blob_references.map(blobReference),

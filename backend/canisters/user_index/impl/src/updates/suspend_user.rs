@@ -143,6 +143,10 @@ fn commit(
         .users
         .suspend_user(user_id, duration, reason.clone(), suspended_by, now);
 
+    // Freeze any privileged roles the account holds (moderator/operator/vault reviewer)
+    // everywhere they are honoured
+    moderation::sync_suspended_privileges(user_id, true, state);
+
     // If the user is only suspended for a specified duration, schedule them to be unsuspended.
     // The job carries this suspension's timestamp so that it expires only this suspension: by
     // the time it fires the user can be serving a different (eg. indefinite) one.

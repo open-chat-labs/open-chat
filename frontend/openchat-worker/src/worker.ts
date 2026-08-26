@@ -1040,6 +1040,8 @@ function getAction(
             return agent.proposeSetVaultReviewers(payload.userIds);
         case "proposeSetMediaScanConfig":
             return agent.proposeSetMediaScanConfig(payload.enabled, payload.scanners);
+        case "proposeSetAuthorityReporter":
+            return agent.proposeSetAuthorityReporter(payload.principal);
         case "setVaultLegalHold":
             return agent.setVaultLegalHold(
                 payload.reportIndex,
@@ -1067,6 +1069,15 @@ function getAction(
                 payload.portalReference,
                 payload.urgent,
                 payload.unverified,
+            );
+        case "clearAuthorityReportAttempt":
+            return agent.clearAuthorityReportAttempt(payload.reportIndex);
+        case "authorityReportToken":
+            return agent.authorityReportToken(
+                payload.reportIndex,
+                payload.priority,
+                payload.reporter,
+                payload.oohCallAcknowledged,
             );
         case "acceptTerms":
             return agent.acceptTerms(payload.version);

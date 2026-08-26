@@ -121,6 +121,10 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
             VaultOp::SetReviewers(reviewers) => {
                 state.data.vault.set_reviewers(reviewers);
             }
+            VaultOp::SetAuthorityReporter(op) => {
+                state.data.vault.set_authority_reporter(op.principal, op.oc_public_key_pem);
+                info!("Vault: authority reporter updated");
+            }
             VaultOp::DenylistHash(d) => {
                 // Propagated from the bucket which applied the verdict: blocks uploads of the
                 // same content here, and stops any copy already stored here being served

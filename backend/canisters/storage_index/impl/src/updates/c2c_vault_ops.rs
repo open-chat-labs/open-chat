@@ -94,6 +94,21 @@ fn c2c_vault_ops_impl(args: Args, state: &mut RuntimeState) -> Response {
                     push(state, bucket, bucket_vault::VaultOp::SetReviewers(bucket_reviewers.clone()));
                 }
             }
+            VaultOp::SetAuthorityReporter(op) => {
+                // Kept in index state so each NEW bucket is seeded with it too (add_bucket)
+                state.data.authority_reporter = Some(op.clone());
+                let buckets: Vec<_> = state.data.buckets.iter().map(|b| b.canister_id).collect();
+                for bucket in buckets {
+                    push(
+                        state,
+                        bucket,
+                        bucket_vault::VaultOp::SetAuthorityReporter(bucket_vault::SetAuthorityReporterOp {
+                            principal: op.principal,
+                            oc_public_key_pem: op.oc_public_key_pem.clone(),
+                        }),
+                    );
+                }
+            }
         }
     }
 

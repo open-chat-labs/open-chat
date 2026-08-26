@@ -111,27 +111,34 @@ impl RuntimeState {
         caller == self.data.storage_index_canister_id
     }
 
+    pub fn is_caller_authority_reporter(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.authority_reporter == Some(caller)
+    }
+
     pub fn is_caller_translations_canister(&self) -> bool {
         let caller = self.env.caller();
         caller == self.data.translations_canister_id
     }
 
+    // A suspended account holds NO authority while the sanction stands: the role membership
+    // survives (it comes back when the suspension lifts) but confers nothing meanwhile. These
+    // two are the single choke points for every moderator/operator-gated endpoint and for
+    // inspect_message, so the rule cannot be forgotten at a call site.
     pub fn is_caller_platform_moderator(&self) -> bool {
         let caller = self.env.caller();
-        if let Some(user) = self.data.users.get_by_principal(&caller) {
-            self.data.platform_moderators.contains(&user.user_id)
-        } else {
-            false
-        }
+        self.data
+            .users
+            .get_by_principal(&caller)
+            .is_some_and(|user| self.data.is_platform_moderator_active(&user.user_id))
     }
 
     pub fn is_caller_platform_operator(&self) -> bool {
         let caller = self.env.caller();
-        if let Some(user) = self.data.users.get_by_principal(&caller) {
-            self.data.platform_operators.contains(&user.user_id)
-        } else {
-            false
-        }
+        self.data
+            .users
+            .get_by_principal(&caller)
+            .is_some_and(|user| self.data.is_platform_operator_active(&user.user_id))
     }
 
     pub fn can_caller_upload_wasm_chunks(&self) -> bool {
@@ -397,6 +404,10 @@ struct Data {
     pub authority_reports: AuthorityReports,
     #[serde(default)]
     pub vault_reviewers: HashSet<UserId>,
+    // The principal of the off-chain NCA reporting service; set only via the dual-authorized
+    // set_authority_reporter protected action
+    #[serde(default)]
+    pub authority_reporter: Option<Principal>,
     #[serde(default)]
     pub protected_actions: ProtectedActions,
     pub fire_and_forget_handler: FireAndForgetHandler,
@@ -434,6 +445,17 @@ struct Data {
 }
 
 impl Data {
+    // Role membership masked by suspension: every surface which reports or syncs a user's
+    // moderator/operator status must go through these so a suspended account never shows (or
+    // is seeded elsewhere) as holding authority it cannot currently exercise
+    pub fn is_platform_moderator_active(&self, user_id: &UserId) -> bool {
+        self.platform_moderators.contains(user_id) && self.users.is_user_suspended(user_id) == Some(false)
+    }
+
+    pub fn is_platform_operator_active(&self, user_id: &UserId) -> bool {
+        self.platform_operators.contains(user_id) && self.users.is_user_suspended(user_id) == Some(false)
+    }
+
     #[expect(clippy::too_many_arguments)]
     pub fn new(
         governance_principals: Vec<Principal>,
@@ -498,6 +520,7 @@ impl Data {
             reported_messages: ReportedMessages::default(),
             authority_reports: AuthorityReports::default(),
             vault_reviewers: HashSet::new(),
+            authority_reporter: None,
             protected_actions: ProtectedActions::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             rng_seed: [0; 32],
@@ -618,6 +641,7 @@ impl Default for Data {
             reported_messages: ReportedMessages::default(),
             authority_reports: AuthorityReports::default(),
             vault_reviewers: HashSet::new(),
+            authority_reporter: None,
             protected_actions: ProtectedActions::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             nns_8_year_neuron: None,

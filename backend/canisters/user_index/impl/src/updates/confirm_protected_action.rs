@@ -71,6 +71,9 @@ fn confirm_protected_action_impl(args: Args, state: &mut RuntimeState) -> OCResu
         ProtectedAction::SetInternalModerationChannel(channel_args) => {
             crate::updates::set_internal_moderation_channel::execute(channel_args, state)
         }
+        ProtectedAction::SetAuthorityReporter(reporter_args) => {
+            crate::updates::set_authority_reporter::execute(reporter_args, state)
+        }
     };
 
     match &result {

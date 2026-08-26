@@ -90,6 +90,8 @@
     let mediaScanEnabled = $state(false);
     let mediaScanScanners = $state("");
     let currentMediaScan = $state("");
+    let authorityReporter = $state("");
+    let currentAuthorityReporter = $state("");
     // Current values shown alongside the proposed ones, so an operator can see what a proposal
     // would actually change
     let currentVaultReviewers = $state("");
@@ -140,6 +142,8 @@
             currentMediaScan = `${config.mediaScanEnabled ? "Enabled" : "Disabled"} (${
                 config.mediaScanners.length === 0 ? "no scanners" : config.mediaScanners.join(", ")
             })`;
+            authorityReporter = config.authorityReporter ?? "";
+            currentAuthorityReporter = config.authorityReporter ?? "";
         });
         client.diamondMembershipFees().then((fees) => {
             originalFees = client.toRecord(fees, (f) => f.token);
@@ -406,6 +410,22 @@
             .finally(() => removeBusy(13));
     }
 
+    // Registers (or clears) the off-chain NCA reporting service's principal
+    function proposeSetAuthorityReporter(): void {
+        error = undefined;
+        const principal = authorityReporter.trim();
+        if (principal !== "" && !isValidPrincipal(principal)) {
+            error = i18nKey(`"${principal}" is not a valid principal`);
+            toastStore.showFailureToast(error);
+            return;
+        }
+        addBusy(14);
+        client
+            .proposeSetAuthorityReporter(principal === "" ? undefined : principal)
+            .then((proposed) => onProposed(proposed, "authority reporter"))
+            .finally(() => removeBusy(14));
+    }
+
     // Replaces the full reviewer set: user ids must already be platform moderators
     function proposeSetVaultReviewers(): void {
         error = undefined;
@@ -604,6 +624,16 @@
 
 {#snippet currentOpenAIKey()}
     <Input disabled value={openAiKeySet ? "Set" : "Not set"} />
+{/snippet}
+
+{#snippet currentAuthorityReporterView()}
+    <Input disabled value={currentAuthorityReporter || "None"} />
+{/snippet}
+
+{#snippet proposedAuthorityReporterView()}
+    <Input
+        bind:value={authorityReporter}
+        placeholder={i18nKey("Service principal (blank to unregister)")} />
 {/snippet}
 
 {#snippet currentMediaScanView()}
@@ -965,6 +995,15 @@
             proposeSetMediaScanConfig,
             proposedMediaScanView,
             currentMediaScanView,
+        )}
+
+        {@render dualSetting(
+            "NCA reporting service (authority reporter)",
+            "Registers the principal of the off-chain service which files CSEA reports with the NCA. The principal alone exports nothing: every filing additionally needs a signed, report-scoped token from a vault reviewer. Registering also delivers the OC public key to the storage buckets. Blank unregisters and disables automated filing.",
+            14,
+            proposeSetAuthorityReporter,
+            proposedAuthorityReporterView,
+            currentAuthorityReporterView,
         )}
 
         {@render dualSetting(

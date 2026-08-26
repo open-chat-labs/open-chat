@@ -20,6 +20,7 @@
     import Checkbox from "../Checkbox.svelte";
     import Translatable from "../Translatable.svelte";
     import FileAuthorityReport from "./FileAuthorityReport.svelte";
+    import { ncaReporterUrl } from "../../utils/ncaFiling";
     import VaultAccessLog from "./VaultAccessLog.svelte";
     import VaultMediaViewer from "./VaultMediaViewer.svelte";
 
@@ -43,10 +44,64 @@
     let showFiling = $state(false);
     // Set once a filing is recorded from this card, ahead of the content update round-trip
     let filedReference = $state<string | undefined>(undefined);
-    let authorityReport = $derived(
-        filedReference !== undefined
-            ? { kind: "filed" as const, portalReference: filedReference }
-            : content.authorityReport,
+    // Set once an automated filing was accepted by the reporting service, ahead of the
+    // on-chain attempt marker reaching the card. The overlay lapses as soon as the on-chain
+    // state changes (whatever it changes to - the service may have failed before opening a
+    // marker) and after a bounded time regardless, so a genuine return to Due is never hidden
+    let filingStartedAt = $state<number | undefined>(undefined);
+    const OPTIMISTIC_ATTEMPT_MS = 2 * 60 * 1000;
+    // Ticks so the time-based states below re-evaluate while the card stays mounted
+    let now = $state(Date.now());
+    $effect(() => {
+        const interval = setInterval(() => (now = Date.now()), 30_000);
+        return () => clearInterval(interval);
+    });
+    $effect(() => {
+        void content.authorityReport;
+        filingStartedAt = undefined;
+        attemptCleared = false;
+    });
+    let authorityReport = $derived.by(() => {
+        if (filedReference !== undefined) {
+            return { kind: "filed" as const, portalReference: filedReference };
+        }
+        const onChain = content.authorityReport;
+        if (
+            filingStartedAt !== undefined &&
+            now - filingStartedAt < OPTIMISTIC_ATTEMPT_MS &&
+            onChain !== undefined &&
+            onChain.kind !== "filed" &&
+            onChain.kind !== "attempting"
+        ) {
+            return { kind: "attempting" as const, startedAt: BigInt(filingStartedAt) };
+        }
+        return onChain;
+    });
+    // An attempt marker much older than a filing takes means the service crashed mid-flight:
+    // a human must check the portal before anything re-files
+    const STALE_ATTEMPT_MS = 30 * 60 * 1000;
+    let attemptIsStale = $derived(
+        authorityReport?.kind === "attempting" &&
+            now - Number(authorityReport.startedAt) > STALE_ATTEMPT_MS,
+    );
+    // Operator reconciliation of an orphaned marker: clears it on chain so the report returns
+    // to Due (the card update carries the new state)
+    let clearingAttempt = $state(false);
+    let attemptCleared = $state(false);
+    let clearAttemptFailed = $state(false);
+    function clearAttempt() {
+        if (content.reportIndex === undefined) return;
+        clearingAttempt = true;
+        clearAttemptFailed = false;
+        client.clearAuthorityReportAttempt(content.reportIndex).then((ok) => {
+            clearingAttempt = false;
+            attemptCleared = ok;
+            clearAttemptFailed = !ok;
+        });
+    }
+    let canOpenFiling = $derived(
+        content.reportIndex !== undefined &&
+            ($platformOperatorStore || (ncaReporterUrl !== "" && $platformModeratorStore)),
     );
     // A verdict on a media report requires the media to have been reviewed first: deciding
     // without looking is exactly what this system exists to prevent. Two exceptions surface
@@ -159,6 +214,13 @@
         params.set("origin", mediaMatches.length > 0 ? "hash" : "manual");
         if (content.authorityReport?.kind === "due" && content.authorityReport.urgent) {
             params.set("urgent", "true");
+        }
+        if (content.authorityReport?.kind === "contingency_required") {
+            params.set("state", "contingency");
+        } else if (content.authorityReport?.kind === "validation_failed") {
+            params.set("state", "validation");
+        } else if (content.authorityReport?.kind === "attempting") {
+            params.set("state", "reconcile");
         }
         return `/csea-reporting?${params}`;
     });
@@ -475,9 +537,10 @@
             wrap
             padding="lg"
             borderRadius="md"
-            backgroundColor={authorityReport.kind === "due"
-                ? ColourVars.tertiaryMuted
-                : ColourVars.background1}
+            backgroundColor={authorityReport.kind === "filed" ||
+            authorityReport.kind === "attempting"
+                ? ColourVars.background1
+                : ColourVars.tertiaryMuted}
         >
             {#if authorityReport.kind === "due"}
                 <Body
@@ -493,9 +556,14 @@
                         )}
                     />
                 </Body>
-                {#if $platformOperatorStore && content.reportIndex !== undefined}
+                {#if canOpenFiling}
                     <Button tiny onClick={() => (showFiling = true)}>
-                        <Translatable resourceKey={i18nKey("moderationReport.recordFiling")} />
+                        <Translatable
+                            resourceKey={i18nKey(
+                                ncaReporterUrl !== ""
+                                    ? "moderationReport.fileWithNca"
+                                    : "moderationReport.recordFiling",
+                            )} />
                     </Button>
                 {/if}
                 {#if hasMedia || mediaMatches.length > 0}
@@ -514,7 +582,82 @@
                 <a class="checklist-link" href={checklistUrl} target="_blank" rel="noreferrer">
                     <Translatable resourceKey={i18nKey("moderationReport.filingChecklist")} />
                 </a>
-            {:else}
+            {:else if authorityReport.kind === "attempting"}
+                <Body width="hug" fontWeight="bold" colour={attemptIsStale ? "error" : undefined}>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            attemptIsStale
+                                ? "moderationReport.ncaAttemptingStale"
+                                : "moderationReport.ncaAttempting",
+                            {
+                                when: new Date(
+                                    Number(authorityReport.startedAt),
+                                ).toLocaleString(),
+                            },
+                        )} />
+                </Body>
+                {#if attemptIsStale}
+                    {#if $platformOperatorStore && !attemptCleared}
+                        <Button
+                            tiny
+                            danger
+                            disabled={clearingAttempt}
+                            loading={clearingAttempt}
+                            onClick={clearAttempt}>
+                            <Translatable resourceKey={i18nKey("moderationReport.clearAttempt")} />
+                        </Button>
+                    {/if}
+                    <a class="checklist-link" href={checklistUrl} target="_blank" rel="noreferrer">
+                        <Translatable resourceKey={i18nKey("moderationReport.filingChecklist")} />
+                    </a>
+                    {#if clearAttemptFailed}
+                        <Body colour="error">
+                            <Translatable
+                                resourceKey={i18nKey("moderationReport.clearAttemptFailed")} />
+                        </Body>
+                    {/if}
+                {/if}
+            {:else if authorityReport.kind === "contingency_required"}
+                <Column gap="md">
+                    <Body fontWeight="bold" colour="error">
+                        <span class="authority-error">
+                            <Translatable
+                                resourceKey={i18nKey("moderationReport.ncaContingency", {
+                                    error: authorityReport.error,
+                                })} />
+                        </span>
+                    </Body>
+                    <Row gap="md" crossAxisAlignment="center">
+                        {#if canOpenFiling}
+                            <Button tiny onClick={() => (showFiling = true)}>
+                                <Translatable
+                                    resourceKey={i18nKey("moderationReport.retryFiling")} />
+                            </Button>
+                        {/if}
+                        <a class="checklist-link" href={checklistUrl} target="_blank" rel="noreferrer">
+                            <Translatable
+                                resourceKey={i18nKey("moderationReport.filingChecklist")} />
+                        </a>
+                    </Row>
+                </Column>
+            {:else if authorityReport.kind === "validation_failed"}
+                <Column gap="md">
+                    <Body fontWeight="bold" colour="error">
+                        <span class="authority-error">
+                            <Translatable
+                                resourceKey={i18nKey("moderationReport.ncaValidationFailed", {
+                                    error: authorityReport.error,
+                                })} />
+                        </span>
+                    </Body>
+                    <Row gap="md" crossAxisAlignment="center">
+                        <a class="checklist-link" href={checklistUrl} target="_blank" rel="noreferrer">
+                            <Translatable
+                                resourceKey={i18nKey("moderationReport.filingChecklist")} />
+                        </a>
+                    </Row>
+                </Column>
+            {:else if authorityReport.kind === "filed"}
                 <Body width="hug">
                     <Translatable resourceKey={i18nKey("moderationReport.ncaFiled")} />: {authorityReport.portalReference}
                 </Body>
@@ -571,7 +714,7 @@
     {/if}
 </Column>
 
-{#if showFiling && content.reportIndex !== undefined && authorityReport?.kind === "due"}
+{#if showFiling && content.reportIndex !== undefined && authorityReport !== undefined && authorityReport.kind !== "filed" && authorityReport.kind !== "attempting"}
     <FileAuthorityReport
         reportIndex={content.reportIndex}
         urgent={authorityReport.urgent}
@@ -579,6 +722,7 @@
             filedReference = ref;
             showFiling = false;
         }}
+        onFilingStarted={() => (filingStartedAt = Date.now())}
         onClose={() => (showFiling = false)}
     />
 {/if}
@@ -623,6 +767,12 @@
         color: var(--secondary);
         text-decoration: underline;
         white-space: nowrap;
+    }
+    // Failure states quote raw error strings with long unbroken tokens (canister ids, urls)
+    // which would otherwise overflow the card
+    :global(.authority-error) {
+        overflow-wrap: anywhere;
+        min-width: 0;
     }
     .link {
         color: var(--secondary);

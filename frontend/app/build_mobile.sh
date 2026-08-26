@@ -39,6 +39,7 @@ export OC_PREVIEW_PROXY_URL=https://dy7sqxe9if6te.cloudfront.net
 export OC_TRANSLATE_PROXY_URL=https://5rabdwftr36yvlgf5xmr34swb40nxsgs.lambda-url.eu-west-2.on.aws
 export OC_VAPID_PUBLIC_KEY=BD8RU5tDBbFTDFybDoWhFzlL5+mYptojI6qqqqiit68KSt17+vt33jcqLTHKhAXdSzu6pXntfT9e4LccBv+iV3A=
 export OC_VIDEO_BRIDGE_URL=http://$(ipconfig getifaddr en0):5050
+export OC_NCA_REPORTER_URL=${OC_NCA_REPORTER_URL:-http://localhost:8180}
 export OC_WALLET_CONNECT_PROJECT_ID=b9aafebed2abfaf8341afd9428c947d5
 export OC_WEBSITE_VERSION=
 export OC_BASE_ORIGIN=http://localhost:$OC_DEV_PORT

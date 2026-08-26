@@ -564,4 +564,6 @@ export type ModerationConfig = {
     vaultReviewers: string[];
     mediaScanEnabled: boolean;
     mediaScanners: string[];
+    // The registered principal of the off-chain NCA reporting service, if any
+    authorityReporter: string | undefined;
 };

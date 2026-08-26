@@ -47,6 +47,14 @@ pub struct Vault {
     // never an unlogged one).
     #[serde(skip)]
     sessions: BTreeMap<(Principal, FileId), u32>,
+    // The off-chain NCA reporting service: may export quarantined bytes, but only inside a
+    // report-scoped window a moderator opened (a signed vault-export token naming the file)
+    #[serde(default)]
+    authority_reporter: Option<Principal>,
+    // The OC public key the export tokens are verified against; without it the export path
+    // simply refuses
+    #[serde(default)]
+    oc_public_key_pem: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -125,6 +133,11 @@ pub enum VaultLogEvent {
     // the chain of custody shows why the evidence was held rather than only that it was
     LegalHoldSetUnder(FileId, String),
     LegalHoldClearedUnder(FileId, String),
+    // The bytes were exported to the NCA reporting service for an authority filing,
+    // attributed to the moderator whose token authorized it. Distinct from ViewedBy because
+    // "exported to law enforcement" and "a human looked at it" are different acts in a chain
+    // of custody.
+    ExportedForAuthorityReport(FileId, u64 /* report_index */, Option<UserId> /* moderator */),
 }
 
 impl VaultLogEvent {
@@ -144,7 +157,8 @@ impl VaultLogEvent {
             | VaultLogEvent::RetentionReanchoredBy(file_id, _, _)
             | VaultLogEvent::DestroyedBy(file_id, _, _, _)
             | VaultLogEvent::LegalHoldSetUnder(file_id, _)
-            | VaultLogEvent::LegalHoldClearedUnder(file_id, _) => *file_id,
+            | VaultLogEvent::LegalHoldClearedUnder(file_id, _)
+            | VaultLogEvent::ExportedForAuthorityReport(file_id, _, _) => *file_id,
         }
     }
 }
@@ -181,6 +195,59 @@ impl Vault {
 
     pub fn is_reviewer(&self, principal: &Principal) -> bool {
         self.reviewers.contains_key(principal)
+    }
+
+    pub fn set_authority_reporter(&mut self, principal: Option<Principal>, oc_public_key_pem: String) {
+        self.authority_reporter = principal;
+        self.oc_public_key_pem = Some(oc_public_key_pem);
+    }
+
+    pub fn is_authority_reporter(&self, principal: &Principal) -> bool {
+        self.authority_reporter.as_ref() == Some(principal)
+    }
+
+    pub fn oc_public_key_pem(&self) -> Option<&str> {
+        self.oc_public_key_pem.as_deref()
+    }
+
+    // Authorizes serving a chunk to the NCA reporting service. Same sequential-session
+    // machinery as authorize_view (sessions are keyed per principal, so a service export and
+    // a human review never interfere), but chunk 0 logs ExportedForAuthorityReport - a copy
+    // leaving the platform for law enforcement, attributed to the moderator whose token
+    // authorized it - not ViewedBy.
+    #[expect(clippy::too_many_arguments)]
+    pub fn authorize_export(
+        &mut self,
+        file_id: FileId,
+        exporter: Principal,
+        chunk_index: u32,
+        chunk_count: u32,
+        report_index: u64,
+        moderator: Option<UserId>,
+        now: TimestampMillis,
+    ) -> bool {
+        let key = (exporter, file_id);
+        if chunk_index == 0 {
+            self.append_log(
+                VaultLogEvent::ExportedForAuthorityReport(file_id, report_index, moderator),
+                now,
+            );
+            if chunk_count > 1 {
+                self.sessions.insert(key, 1);
+            } else {
+                self.sessions.remove(&key);
+            }
+            true
+        } else if self.sessions.get(&key) == Some(&chunk_index) {
+            if chunk_index + 1 < chunk_count {
+                self.sessions.insert(key, chunk_index + 1);
+            } else {
+                self.sessions.remove(&key);
+            }
+            true
+        } else {
+            false
+        }
     }
 
     pub fn hash_for_file(&self, file_id: &FileId) -> Option<Hash> {

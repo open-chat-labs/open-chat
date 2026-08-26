@@ -145,6 +145,9 @@ import type {
     SendMessageResponse,
     SetBioResponse,
     ModerationVerdict,
+    NcaPriority,
+    NcaReporterContact,
+    AuthorityReportTokenResponse,
     SetCommunityModerationFlagsResponse,
     SetGroupModerationFlagsResponse,
     SetDisplayNameResponse,
@@ -2232,6 +2235,12 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.proposeSetMediaScanConfig(enabled, scanners);
     }
 
+    proposeSetAuthorityReporter(
+        principal: string | undefined,
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this._userIndexClient.proposeSetAuthorityReporter(principal);
+    }
+
     confirmProtectedAction(actionId: bigint): Promise<Success | OCError> {
         if (offline()) return Promise.resolve({ kind: "error", code: -1, message: undefined });
 
@@ -2340,6 +2349,24 @@ export class OpenChatAgent extends EventTarget {
             portalReference,
             urgent,
             unverified,
+        );
+    }
+
+    clearAuthorityReportAttempt(reportIndex: bigint): Promise<boolean> {
+        return this._userIndexClient.clearAuthorityReportAttempt(reportIndex);
+    }
+
+    authorityReportToken(
+        reportIndex: bigint,
+        priority: NcaPriority,
+        reporter: NcaReporterContact,
+        oohCallAcknowledged: boolean,
+    ): Promise<AuthorityReportTokenResponse> {
+        return this._userIndexClient.authorityReportToken(
+            reportIndex,
+            priority,
+            reporter,
+            oohCallAcknowledged,
         );
     }
 

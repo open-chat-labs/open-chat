@@ -656,10 +656,7 @@ export type ModerationReportContent = {
     reporters: string[];
     flaggedCategories: number;
     classificationFailed: boolean;
-    authorityReport:
-        | { kind: "due"; urgent: boolean }
-        | { kind: "filed"; portalReference: string }
-        | undefined;
+    authorityReport: AuthorityReportState | undefined;
     autoSanctioned: boolean;
     contentExcerpt: string | undefined;
     blobReferences: BlobReference[];
@@ -693,6 +690,27 @@ export type ModerationReportStatus =
     | { kind: "dismissed"; moderator: string; timestamp: bigint };
 
 export type ModerationVerdict = "upheld" | "upheld_as_csam" | "dismissed";
+
+// The NCA (CSEA-IRP) filing state shown on the report card. "attempting" means an automated
+// filing is in flight; one much older than a filing takes means the service crashed
+// mid-flight and a human must check the portal before anything re-files.
+export type AuthorityReportState =
+    | { kind: "due"; urgent: boolean }
+    | { kind: "filed"; portalReference: string }
+    | { kind: "attempting"; startedAt: bigint }
+    | { kind: "contingency_required"; error: string; urgent: boolean }
+    | { kind: "validation_failed"; error: string; urgent: boolean };
+
+// The moderator's priority assessment for an NCA filing; the NCA's own definitions
+export type NcaPriority = "P1" | "P2" | "P3";
+
+export type NcaReporterContact = {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    countryCallingCode: string;
+    email: string;
+};
 
 // Mirrors the category bits of `ModerationCategories` in the rust backend
 export const MODERATION_CATEGORY_NAMES: [number, string][] = [

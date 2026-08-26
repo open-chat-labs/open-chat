@@ -297,6 +297,9 @@ type Message = record {
 type AuthorityReportState = variant {
     Due : record { urgent : bool };
     Filed : record { portal_reference : text };
+    Attempting : record { started_at : TimestampMillis };
+    ContingencyRequired : record { error : text; urgent : bool };
+    ValidationFailed : record { error : text; urgent : bool };
 };
 
 type MediaScanProvider = variant {

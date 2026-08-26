@@ -53,7 +53,12 @@ export class StorageBucketClient extends CandidCanisterAgent<StorageBucketServic
     // after the first are served only in session order.
     vaultFileChunk(fileId: bigint, chunkIndex: number): Promise<VaultFileChunkResponse> {
         return this.handleResponse(
-            this.service.vault_file_chunk({ file_id: fileId, chunk_index: chunkIndex }),
+            this.service.vault_file_chunk({
+                file_id: fileId,
+                chunk_index: chunkIndex,
+                // Reviewers never send a token; only the off-chain reporting service does
+                vault_token: [],
+            }),
             vaultFileChunkResponse,
         );
     }

@@ -313,6 +313,8 @@ fn report_then_upheld_as_csam_verdict_applies_sanction() {
             portal_reference: "CSEA-IRP-TEST-0001".to_string(),
             urgent: false,
             unverified: false,
+            portal_reference_uuid: None,
+            vault_token: None,
         },
     );
     assert!(matches!(record_response, UnitResult::Success));
@@ -356,6 +358,8 @@ fn report_then_upheld_as_csam_verdict_applies_sanction() {
             portal_reference: "CSEA-IRP-TEST-0001-CORRECTED".to_string(),
             urgent: false,
             unverified: false,
+            portal_reference_uuid: None,
+            vault_token: None,
         },
     );
     assert!(matches!(refile, UnitResult::Success));
@@ -578,6 +582,7 @@ fn escalated_media_report_upheld_as_csam_vaults_evidence() {
         &storage_bucket_canister::vault_file_chunk::Args {
             file_id: blob_reference.blob_id,
             chunk_index: 0,
+            vault_token: None,
         },
     );
     let storage_bucket_canister::vault_file_chunk::Response::Success(chunk) = chunk_response else {
@@ -593,6 +598,7 @@ fn escalated_media_report_upheld_as_csam_vaults_evidence() {
         &storage_bucket_canister::vault_file_chunk::Args {
             file_id: blob_reference.blob_id,
             chunk_index: 0,
+            vault_token: None,
         },
     );
     assert!(matches!(
@@ -1021,6 +1027,7 @@ fn csam_asserted_media_report_quarantines_immediately() {
         &storage_bucket_canister::vault_file_chunk::Args {
             file_id: blob_reference.blob_id,
             chunk_index: 0,
+            vault_token: None,
         },
     );
     assert!(
@@ -1054,6 +1061,8 @@ fn csam_asserted_media_report_quarantines_immediately() {
             portal_reference: "CSEA-IRP-TEST-VALVE-0001".to_string(),
             urgent: true,
             unverified: true,
+            portal_reference_uuid: None,
+            vault_token: None,
         },
     );
     assert!(matches!(file_unverified, UnitResult::Success));
@@ -1214,6 +1223,7 @@ fn shared_blob_evidence_survives_dismissal_of_a_sibling_report() {
             &storage_bucket_canister::vault_file_chunk::Args {
                 file_id: blob_reference.blob_id,
                 chunk_index: 0,
+                vault_token: None,
             },
         )
     };
@@ -1355,6 +1365,7 @@ fn media_report_dismissal_releases_the_vault() {
             &storage_bucket_canister::vault_file_chunk::Args {
                 file_id: blob_reference.blob_id,
                 chunk_index: 0,
+                vault_token: None,
             },
         )
     };
@@ -1648,6 +1659,8 @@ fn moderator_cannot_resolve_a_report_against_their_own_message() {
             portal_reference: "SELF-FILED-1".to_string(),
             urgent: false,
             unverified: false,
+            portal_reference_uuid: None,
+            vault_token: None,
         },
     );
     assert!(matches!(filed_response, UnitResult::Error(_)), "{filed_response:?}");
@@ -1718,9 +1731,10 @@ fn a_moderator_cannot_unsuspend_themselves() {
     );
     tick_many(env, 3);
 
-    // Suspension does not strip moderator status, so a suspended moderator still passes the
-    // platform-moderator guard on unsuspend_user. Without a self-check, the subject of an
-    // upheld report could simply reverse the sanction it imposed.
+    // A suspended account holds no moderator authority at all: the self-unsuspension this
+    // test originally guarded against is now refused at ingress (inspect_message), which
+    // surfaces as a panic in the test client. The self-check in unsuspend_user remains as
+    // defence in depth.
     let suspend_response = client::user_index::suspend_user(
         env,
         test_data.operator2.principal,
@@ -1737,18 +1751,25 @@ fn a_moderator_cannot_unsuspend_themselves() {
     );
     tick_many(env, 5);
 
-    let response = client::user_index::unsuspend_user(
-        env,
-        test_data.moderator.principal,
-        canister_ids.user_index,
-        &user_index_canister::unsuspend_user::Args {
-            user_id: test_data.moderator.user_id,
-        },
-    );
-    assert!(
-        matches!(response, user_index_canister::unsuspend_user::Response::Error(_)),
-        "{response:?}"
-    );
+    {
+        let principal = test_data.moderator.principal;
+        let user_id = test_data.moderator.user_id;
+        let user_index = canister_ids.user_index;
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            client::user_index::unsuspend_user(
+                env,
+                principal,
+                user_index,
+                &user_index_canister::unsuspend_user::Args { user_id },
+            )
+        }));
+        let refused = match result {
+            Err(_) => true,
+            Ok(user_index_canister::unsuspend_user::Response::Error(_)) => true,
+            Ok(_) => false,
+        };
+        assert!(refused, "a suspended moderator must not be able to unsuspend themselves");
+    }
 
     // Another moderator can, which is what keeps a genuine mistake correctable
     let response = client::user_index::unsuspend_user(
@@ -2129,6 +2150,7 @@ fn media_scan_match_triggers_auto_sanction() {
         &storage_bucket_canister::vault_file_chunk::Args {
             file_id: blob_reference.blob_id,
             chunk_index: 0,
+            vault_token: None,
         },
     );
     assert!(
@@ -5277,6 +5299,7 @@ fn a_holds_protection_extends_to_sibling_reports_sharing_the_blob() {
             &storage_bucket_canister::vault_file_chunk::Args {
                 file_id: blob_reference.blob_id,
                 chunk_index: 0,
+                vault_token: None,
             },
         )
     };
@@ -5637,6 +5660,26 @@ fn protected_action_log_chains_and_omits_secrets() {
     }
 }
 
+// Plain-text notices (OC bot messages) posted into the internal moderation channel
+fn get_moderation_notices(env: &PocketIc, test_data: &TestData) -> Vec<String> {
+    let events = client::community::happy_path::events(
+        env,
+        &test_data.moderator,
+        test_data.moderation_community_id,
+        test_data.moderation_channel_id,
+        EventIndex::from(0),
+        true,
+        100,
+        200,
+    );
+    events
+        .events
+        .into_iter()
+        .filter_map(|e| if let ChatEvent::Message(m) = e.event { Some(*m) } else { None })
+        .filter_map(|m| if let MessageContent::Text(t) = m.content { Some(t.text) } else { None })
+        .collect()
+}
+
 fn get_authority_reports(env: &PocketIc, test_data: &TestData, canister_ids: &CanisterIds) -> Value {
     let user_index_canister::authority_reports::Response::Success(result) =
         client::user_index::authority_reports(env, test_data.moderator.principal, canister_ids.user_index, &types::Empty {});
@@ -5745,4 +5788,612 @@ struct TestData {
     group_id: ChatId,
     moderation_community_id: CommunityId,
     moderation_channel_id: ChannelId,
+}
+
+// ---------------------------------------------------------------------------------------------
+// Automated NCA filing (the nca_reporter service path): a moderator opens a report-scoped
+// filing window by minting a signed token pair; the service - authenticating with its
+// registered principal AND the moderator's token - registers the on-chain attempt marker,
+// exports the vaulted evidence, and records the filing. Here the "service" is simulated by
+// calling with its principal directly.
+// ---------------------------------------------------------------------------------------------
+
+struct AutomatedFilingSetup {
+    report_index: u64,
+    blob_reference: BlobReference,
+    service_principal: Principal,
+}
+
+// Designates the moderator as a vault reviewer, registers a service principal as the
+// authority reporter, and produces an UpheldAsCsam report holding vaulted evidence
+fn setup_automated_filing(env: &mut PocketIc, canister_ids: &CanisterIds, test_data: &TestData) -> AutomatedFilingSetup {
+    client::user_index::happy_path::execute_protected_action(
+        env,
+        test_data.moderator.principal,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        ProtectedAction::SetVaultReviewers(user_index_canister::set_vault_reviewers::Args {
+            user_ids: vec![test_data.moderator.user_id],
+        }),
+    );
+    let service_principal = random_principal();
+    client::user_index::happy_path::execute_protected_action(
+        env,
+        test_data.moderator.principal,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        ProtectedAction::SetAuthorityReporter(user_index_canister::set_authority_reporter::Args {
+            principal: Some(service_principal),
+        }),
+    );
+    // The reviewer set, the reporter principal and the OC public key all sync
+    // user_index -> storage_index -> buckets
+    tick_many(env, 10);
+
+    let file_size = 1000u32;
+    let blob_reference = client::storage_index::happy_path::upload_file(
+        env,
+        test_data.sender.principal,
+        canister_ids.storage_index,
+        file_size,
+        vec![test_data.sender.canister()],
+    );
+    let message_id = random_from_u128();
+    client::group::send_message_v2(
+        env,
+        test_data.sender.principal,
+        test_data.group_id.into(),
+        &group_canister::send_message_v2::Args {
+            thread_root_message_index: None,
+            message_id,
+            content: MessageContentInitial::File(FileContent {
+                name: random_string(),
+                caption: None,
+                mime_type: "application/octet-stream".to_string(),
+                file_size,
+                blob_reference: Some(blob_reference.clone()),
+            }),
+            sender_name: test_data.sender.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            forwarding: false,
+            block_level_markdown: false,
+            rules_accepted: None,
+            message_filter_failed: None,
+            new_achievement: false,
+            og_previews: Vec::new(),
+        },
+    );
+    tick_many(env, 3);
+    let report_response = client::group::report_message(
+        env,
+        test_data.reporter.principal,
+        test_data.group_id.into(),
+        &group_canister::report_message::Args {
+            thread_root_message_index: None,
+            message_id,
+            delete: false,
+            csam: false,
+        },
+    );
+    assert!(matches!(report_response, UnitResult::Success));
+    tick_many(env, 10);
+
+    let reports = get_moderation_reports(env, test_data);
+    let report_index = reports
+        .iter()
+        .filter_map(|r| r.report_index)
+        .max()
+        .expect("report should carry an index");
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index,
+            verdict: ModerationVerdict::UpheldAsCsam,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success));
+    tick_many(env, 15);
+
+    AutomatedFilingSetup {
+        report_index,
+        blob_reference,
+        service_principal,
+    }
+}
+
+fn mint_filing_tokens(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    test_data: &TestData,
+    report_index: u64,
+) -> user_index_canister::authority_report_token::Response {
+    client::user_index::authority_report_token(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::authority_report_token::Args {
+            report_index,
+            priority: types::NcaPriority::P2,
+            reporter: user_index_canister::authority_report_token::ReporterContact {
+                first_name: "Jo".to_string(),
+                last_name: "Bloggs".to_string(),
+                phone: "7700900000".to_string(),
+                country_calling_code: "+44".to_string(),
+                email: "jo@example.com".to_string(),
+            },
+            ooh_call_acknowledged: true,
+        },
+    )
+}
+
+#[test]
+fn automated_authority_filing_files_and_records_the_reference() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let setup = setup_automated_filing(env, canister_ids, &test_data);
+
+    // The moderator opens the filing window
+    let user_index_canister::authority_report_token::Response::Success(tokens) =
+        mint_filing_tokens(env, canister_ids, &test_data, setup.report_index)
+    else {
+        panic!("token minting should succeed");
+    };
+
+    // A random principal presenting the token is refused at ingress (inspect_message): the
+    // export needs the registered service principal AND the moderator's token, not either
+    // alone. The rejection surfaces as a panic in the test client.
+    {
+        let stranger = random_principal();
+        let vault_token = tokens.vault_token.clone();
+        let user_index = canister_ids.user_index;
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            client::user_index::record_authority_report_attempt(
+                env,
+                stranger,
+                user_index,
+                &user_index_canister::record_authority_report_attempt::Args { vault_token },
+            )
+        }));
+        assert!(result.is_err(), "a stranger's attempt should be rejected at ingress");
+    }
+
+    // The service registers the attempt marker and receives the certified report data
+    let attempt_response = client::user_index::record_authority_report_attempt(
+        env,
+        setup.service_principal,
+        canister_ids.user_index,
+        &user_index_canister::record_authority_report_attempt::Args {
+            vault_token: tokens.vault_token.clone(),
+        },
+    );
+    let user_index_canister::record_authority_report_attempt::Response::Success(data) = attempt_response else {
+        panic!("attempt should be recorded: {attempt_response:?}");
+    };
+    assert_eq!(data.report_index, setup.report_index);
+    assert_eq!(data.sender.user_id, test_data.sender.user_id);
+    assert_eq!(data.files, vec![setup.blob_reference.clone()]);
+    assert!(matches!(
+        data.verdict.verdict,
+        user_index_canister::resolve_moderation_report::ModerationVerdict::UpheldAsCsam
+    ));
+    assert!(matches!(
+        data.detection,
+        user_index_canister::record_authority_report_attempt::AuthorityReportDetection::UserReport { .. }
+    ));
+
+    // While the attempt is open: no second attempt, and no fresh token can be minted (D6)
+    let second_attempt = client::user_index::record_authority_report_attempt(
+        env,
+        setup.service_principal,
+        canister_ids.user_index,
+        &user_index_canister::record_authority_report_attempt::Args {
+            vault_token: tokens.vault_token.clone(),
+        },
+    );
+    assert!(matches!(
+        second_attempt,
+        user_index_canister::record_authority_report_attempt::Response::Error(_)
+    ));
+    assert!(matches!(
+        mint_filing_tokens(env, canister_ids, &test_data, setup.report_index),
+        user_index_canister::authority_report_token::Response::Error(_)
+    ));
+
+    // The alert card shows the filing in flight
+    tick_many(env, 5);
+    let reports = get_moderation_reports(env, &test_data);
+    let report = reports.iter().find(|r| r.report_index == Some(setup.report_index)).unwrap();
+    assert!(
+        matches!(report.authority_report, Some(types::AuthorityReportState::Attempting { .. })),
+        "{:?}",
+        report.authority_report
+    );
+
+    // The service (and only the service-with-token) can export the evidence
+    let no_token = client::storage_bucket::vault_file_chunk(
+        env,
+        setup.service_principal,
+        setup.blob_reference.canister_id,
+        &storage_bucket_canister::vault_file_chunk::Args {
+            file_id: setup.blob_reference.blob_id,
+            chunk_index: 0,
+            vault_token: None,
+        },
+    );
+    assert!(matches!(
+        no_token,
+        storage_bucket_canister::vault_file_chunk::Response::NotAuthorized
+    ));
+    let chunk_response = client::storage_bucket::vault_file_chunk(
+        env,
+        setup.service_principal,
+        setup.blob_reference.canister_id,
+        &storage_bucket_canister::vault_file_chunk::Args {
+            file_id: setup.blob_reference.blob_id,
+            chunk_index: 0,
+            vault_token: Some(tokens.vault_token.clone()),
+        },
+    );
+    let storage_bucket_canister::vault_file_chunk::Response::Success(chunk) = chunk_response else {
+        panic!("service export should succeed: {chunk_response:?}");
+    };
+    assert_eq!(chunk.total_size, 1000);
+
+    // The export is a distinct chain-of-custody act, attributed to the moderator
+    let storage_bucket_canister::vault_log::Response::Success(log) = client::storage_bucket::vault_log(
+        env,
+        test_data.moderator.principal,
+        setup.blob_reference.canister_id,
+        &storage_bucket_canister::vault_log::Args {
+            start: 0,
+            max: 100,
+            file_id: Some(setup.blob_reference.blob_id),
+        },
+    ) else {
+        panic!("reviewer should be able to read the vault log");
+    };
+    let export_entry = log
+        .entries
+        .iter()
+        .find(|e| e.event.contains("exported to the authority reporting service"))
+        .expect("export should be logged distinctly from viewing");
+    assert_eq!(export_entry.user_id, Some(test_data.moderator.user_id));
+
+    // The service records the filing (with both NCA references); the attempt marker is
+    // consumed and the register + card flip to filed
+    let filed_response = client::user_index::record_authority_report_filed(
+        env,
+        setup.service_principal,
+        canister_ids.user_index,
+        &user_index_canister::record_authority_report_filed::Args {
+            report_index: setup.report_index,
+            portal_reference: "SR-CSEAIRP-1257".to_string(),
+            portal_reference_uuid: Some("65a20929-523a-455b-b159-e484d39dc49d".to_string()),
+            urgent: false,
+            unverified: false,
+            vault_token: Some(tokens.vault_token.clone()),
+        },
+    );
+    assert!(matches!(filed_response, UnitResult::Success), "{filed_response:?}");
+    tick_many(env, 5);
+
+    let register = get_authority_reports(env, &test_data, canister_ids);
+    assert!(
+        !register["due"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|r| r["report_index"] == setup.report_index)
+    );
+    assert!(register["attempts"].as_array().unwrap().is_empty());
+    let filed_row = register["filed"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|r| r["report_index"] == setup.report_index)
+        .expect("filed row should exist");
+    assert_eq!(filed_row["portal_reference"], "SR-CSEAIRP-1257");
+    assert_eq!(filed_row["portal_reference_uuid"], "65a20929-523a-455b-b159-e484d39dc49d");
+    // The compliance record shows the out-of-hours call obligation was acknowledged
+    assert_eq!(filed_row["ooh_call_acknowledged"], true);
+
+    let reports = get_moderation_reports(env, &test_data);
+    let report = reports.iter().find(|r| r.report_index == Some(setup.report_index)).unwrap();
+    assert!(
+        matches!(
+            &report.authority_report,
+            Some(types::AuthorityReportState::Filed { portal_reference }) if portal_reference == "SR-CSEAIRP-1257"
+        ),
+        "{:?}",
+        report.authority_report
+    );
+}
+
+#[test]
+fn automated_filing_failure_clears_the_attempt_and_surfaces_the_contingency() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let setup = setup_automated_filing(env, canister_ids, &test_data);
+
+    let user_index_canister::authority_report_token::Response::Success(tokens) =
+        mint_filing_tokens(env, canister_ids, &test_data, setup.report_index)
+    else {
+        panic!("token minting should succeed");
+    };
+    let attempt_response = client::user_index::record_authority_report_attempt(
+        env,
+        setup.service_principal,
+        canister_ids.user_index,
+        &user_index_canister::record_authority_report_attempt::Args {
+            vault_token: tokens.vault_token.clone(),
+        },
+    );
+    assert!(matches!(
+        attempt_response,
+        user_index_canister::record_authority_report_attempt::Response::Success(_)
+    ));
+
+    // The portal is down: the service clears the marker, classifying the failure. The report
+    // must return to due (never silently unfiled), carrying the failure for the checklist.
+    let clear_response = client::user_index::clear_authority_report_attempt(
+        env,
+        setup.service_principal,
+        canister_ids.user_index,
+        &user_index_canister::clear_authority_report_attempt::Args {
+            report_index: setup.report_index,
+            vault_token: Some(tokens.vault_token.clone()),
+            failure: Some(
+                user_index_canister::clear_authority_report_attempt::AuthorityReportFailure::Contingency {
+                    error: "503 from the portal after 4 attempts".to_string(),
+                },
+            ),
+        },
+    );
+    assert!(matches!(clear_response, UnitResult::Success), "{clear_response:?}");
+    tick_many(env, 5);
+
+    let register = get_authority_reports(env, &test_data, canister_ids);
+    assert!(register["attempts"].as_array().unwrap().is_empty());
+    let due_row = register["due"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|r| r["report_index"] == setup.report_index)
+        .expect("the report must stay due until genuinely filed");
+    assert!(
+        due_row["last_failure"]["failure"]["Contingency"]["error"]
+            .as_str()
+            .unwrap()
+            .contains("503")
+    );
+
+    // The card drives the moderator to the contingency checklist
+    let reports = get_moderation_reports(env, &test_data);
+    let report = reports.iter().find(|r| r.report_index == Some(setup.report_index)).unwrap();
+    assert!(
+        matches!(
+            report.authority_report,
+            Some(types::AuthorityReportState::ContingencyRequired { .. })
+        ),
+        "{:?}",
+        report.authority_report
+    );
+
+    // ... and the portal-outage notice landed in the moderation channel
+    let notices = get_moderation_notices(env, &test_data);
+    assert!(
+        notices
+            .iter()
+            .any(|n| n.contains("Automated NCA filing for report #") && n.contains("failed: 503")),
+        "{notices:?}"
+    );
+
+    // A fresh filing window can now be opened for the retry
+    assert!(matches!(
+        mint_filing_tokens(env, canister_ids, &test_data, setup.report_index),
+        user_index_canister::authority_report_token::Response::Success(_)
+    ));
+}
+
+// ---------------------------------------------------------------------------------------------
+// A suspended account must hold NO authority while the sanction stands, whatever roles it has:
+// operator surfaces (dual-auth confirms), moderator surfaces (verdicts, suspensions), and the
+// vault reviewer allowlist on the storage buckets must all stop honouring it - and come back
+// when the suspension lifts.
+// ---------------------------------------------------------------------------------------------
+#[test]
+fn suspended_account_loses_all_privileged_authority() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let setup = setup_automated_filing(env, canister_ids, &test_data);
+
+    // operator2 needs the moderator role to wield suspend/unsuspend in this test
+    client::user_index::add_platform_moderator(
+        env,
+        *controller,
+        canister_ids.user_index,
+        &user_index_canister::add_platform_moderator::Args {
+            user_id: test_data.operator2.user_id,
+        },
+    );
+    tick_many(env, 3);
+
+    // Reviewer access works before the suspension (chunk 0 of the vaulted blob)
+    let chunk = client::storage_bucket::vault_file_chunk(
+        env,
+        test_data.moderator.principal,
+        setup.blob_reference.canister_id,
+        &storage_bucket_canister::vault_file_chunk::Args {
+            file_id: setup.blob_reference.blob_id,
+            chunk_index: 0,
+            vault_token: None,
+        },
+    );
+    assert!(matches!(
+        chunk,
+        storage_bucket_canister::vault_file_chunk::Response::Success(_)
+    ));
+
+    // A pending protected action proposed by operator2, awaiting the moderator's confirm
+    let response = client::user_index::propose_protected_action(
+        env,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        &user_index_canister::propose_protected_action::Args {
+            action: ProtectedAction::SetVaultReviewers(user_index_canister::set_vault_reviewers::Args {
+                user_ids: vec![test_data.moderator.user_id],
+            }),
+        },
+    );
+    let user_index_canister::propose_protected_action::Response::Success(proposed) = response else {
+        panic!("{response:?}");
+    };
+
+    // Suspend the moderator (who is also operator + vault reviewer)
+    let suspend_response = client::user_index::suspend_user(
+        env,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        &user_index_canister::suspend_user::Args {
+            user_id: test_data.moderator.user_id,
+            duration: None,
+            reason: "test".to_string(),
+        },
+    );
+    assert!(matches!(
+        suspend_response,
+        user_index_canister::suspend_user::Response::Success
+    ));
+    tick_many(env, 10);
+
+    // Operator surface: confirming a dual-auth action is refused at ingress
+    {
+        let principal = test_data.moderator.principal;
+        let user_index = canister_ids.user_index;
+        let action_id = proposed.action_id;
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            client::user_index::confirm_protected_action(
+                env,
+                principal,
+                user_index,
+                &user_index_canister::confirm_protected_action::Args { action_id },
+            )
+        }));
+        assert!(result.is_err(), "a suspended operator must not confirm protected actions");
+    }
+
+    // Moderator surface: returning verdicts is refused at ingress
+    {
+        let principal = test_data.moderator.principal;
+        let user_index = canister_ids.user_index;
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            client::user_index::resolve_moderation_report(
+                env,
+                principal,
+                user_index,
+                &user_index_canister::resolve_moderation_report::Args {
+                    report_index: setup.report_index,
+                    verdict: ModerationVerdict::Dismissed,
+                    urgent: None,
+                },
+            )
+        }));
+        assert!(result.is_err(), "a suspended moderator must not return verdicts");
+    }
+
+    // Vault surface: the bucket allowlist was resynced without the suspended reviewer
+    let chunk = client::storage_bucket::vault_file_chunk(
+        env,
+        test_data.moderator.principal,
+        setup.blob_reference.canister_id,
+        &storage_bucket_canister::vault_file_chunk::Args {
+            file_id: setup.blob_reference.blob_id,
+            chunk_index: 0,
+            vault_token: None,
+        },
+    );
+    assert!(
+        matches!(chunk, storage_bucket_canister::vault_file_chunk::Response::NotAuthorized),
+        "a suspended reviewer must not read quarantined material: {chunk:?}"
+    );
+
+    // Filing surface: no filing window can be opened by a suspended reviewer (refused at
+    // ingress by inspect_message, which surfaces as a panic in the test client)
+    {
+        let report_index = setup.report_index;
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            mint_filing_tokens(env, canister_ids, &test_data, report_index)
+        }));
+        let refused = match result {
+            Err(_) => true,
+            Ok(user_index_canister::authority_report_token::Response::Error(_)) => true,
+            Ok(_) => false,
+        };
+        assert!(refused, "a suspended reviewer must not open a filing window");
+    }
+
+    // Unsuspension restores exactly what the account still holds
+    let unsuspend_response = client::user_index::unsuspend_user(
+        env,
+        test_data.operator2.principal,
+        canister_ids.user_index,
+        &user_index_canister::unsuspend_user::Args {
+            user_id: test_data.moderator.user_id,
+        },
+    );
+    assert!(matches!(
+        unsuspend_response,
+        user_index_canister::unsuspend_user::Response::Success
+    ));
+    tick_many(env, 10);
+
+    let chunk = client::storage_bucket::vault_file_chunk(
+        env,
+        test_data.moderator.principal,
+        setup.blob_reference.canister_id,
+        &storage_bucket_canister::vault_file_chunk::Args {
+            file_id: setup.blob_reference.blob_id,
+            chunk_index: 0,
+            vault_token: None,
+        },
+    );
+    assert!(
+        matches!(chunk, storage_bucket_canister::vault_file_chunk::Response::Success(_)),
+        "unsuspension must restore reviewer access: {chunk:?}"
+    );
+    let confirm = client::user_index::confirm_protected_action(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::confirm_protected_action::Args {
+            action_id: proposed.action_id,
+        },
+    );
+    assert!(
+        matches!(confirm, user_index_canister::confirm_protected_action::Response::Success),
+        "{confirm:?}"
+    );
 }

@@ -20,9 +20,39 @@ fn vault_file_chunk(args: Args) -> Response {
 
 fn vault_file_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
-    if !state.data.vault.is_reviewer(&caller) {
+    let is_authority_reporter = state.data.vault.is_authority_reporter(&caller);
+    if !is_authority_reporter && !state.data.vault.is_reviewer(&caller) {
         return NotAuthorized;
     }
+
+    // The service's principal alone exports nothing: it must present the signed vault-export
+    // token a moderator minted, and only for a file that token names. The bucket cannot see
+    // the attempt register, so within its 5-minute validity a token is replayable by the
+    // service principal - the blast radius is re-exporting evidence the moderator already
+    // authorised (known gap #4 in the design).
+    let export_claims = if is_authority_reporter {
+        let Some(oc_public_key_pem) = state.data.vault.oc_public_key_pem() else {
+            return NotAuthorized;
+        };
+        let Some(token) = args.vault_token.as_ref() else {
+            return NotAuthorized;
+        };
+        let Ok(claims) =
+            jwt::verify_and_decode::<types::NcaVaultExportClaims>(token, oc_public_key_pem, types::CLAIM_TYPE_NCA_VAULT_EXPORT)
+        else {
+            return NotAuthorized;
+        };
+        if claims.exp_ms() < state.env.now() {
+            return NotAuthorized;
+        }
+        let claims = claims.into_custom();
+        if !claims.files.iter().any(|f| f.blob_id == args.file_id) {
+            return NotAuthorized;
+        }
+        Some(claims)
+    } else {
+        None
+    };
 
     let Some((hash, mime_type)) = state
         .data
@@ -43,11 +73,23 @@ fn vault_file_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     let now = state.env.now();
-    if !state
-        .data
-        .vault
-        .authorize_view(args.file_id, caller, args.chunk_index, chunk_count, now)
-    {
+    let authorized = if let Some(claims) = export_claims {
+        state.data.vault.authorize_export(
+            args.file_id,
+            caller,
+            args.chunk_index,
+            chunk_count,
+            claims.report_index,
+            Some(claims.user_id),
+            now,
+        )
+    } else {
+        state
+            .data
+            .vault
+            .authorize_view(args.file_id, caller, args.chunk_index, chunk_count, now)
+    };
+    if !authorized {
         return SessionRequired;
     }
 

@@ -448,6 +448,9 @@ export const UserMarkMessageActivityFeedReadArgs = Type.Object({
     read_up_to: Type.BigInt(),
 });
 
+export type NcaPriority = Static<typeof NcaPriority>;
+export const NcaPriority = Type.Union([Type.Literal("P1"), Type.Literal("P2"), Type.Literal("P3")]);
+
 export type MessageReminderContent = Static<typeof MessageReminderContent>;
 export const MessageReminderContent = Type.Object({
     reminder_id: Type.BigInt(),
@@ -577,6 +580,23 @@ export const AuthorityReportState = Type.Union([
     Type.Object({
         Filed: Type.Object({
             portal_reference: Type.String(),
+        }),
+    }),
+    Type.Object({
+        Attempting: Type.Object({
+            started_at: Type.BigInt(),
+        }),
+    }),
+    Type.Object({
+        ContingencyRequired: Type.Object({
+            error: Type.String(),
+            urgent: Type.Optional(Type.Boolean()),
+        }),
+    }),
+    Type.Object({
+        ValidationFailed: Type.Object({
+            error: Type.String(),
+            urgent: Type.Optional(Type.Boolean()),
         }),
     }),
 ]);
@@ -2176,8 +2196,37 @@ export type UserIndexRecordAuthorityReportFiledArgs = Static<
 export const UserIndexRecordAuthorityReportFiledArgs = Type.Object({
     report_index: Type.BigInt(),
     portal_reference: Type.String(),
+    portal_reference_uuid: Type.Optional(Type.String()),
     urgent: Type.Boolean(),
     unverified: Type.Boolean(),
+    vault_token: Type.Optional(Type.String()),
+});
+
+export type UserIndexAuthorityReportTokenReporterContact = Static<
+    typeof UserIndexAuthorityReportTokenReporterContact
+>;
+export const UserIndexAuthorityReportTokenReporterContact = Type.Object({
+    first_name: Type.String(),
+    last_name: Type.String(),
+    phone: Type.String(),
+    country_calling_code: Type.String(),
+    email: Type.String(),
+});
+
+export type UserIndexAuthorityReportTokenSuccessResult = Static<
+    typeof UserIndexAuthorityReportTokenSuccessResult
+>;
+export const UserIndexAuthorityReportTokenSuccessResult = Type.Object({
+    vault_token: Type.String(),
+    submitter_token: Type.String(),
+});
+
+export type UserIndexAuthorityReportTokenArgs = Static<typeof UserIndexAuthorityReportTokenArgs>;
+export const UserIndexAuthorityReportTokenArgs = Type.Object({
+    report_index: Type.BigInt(),
+    priority: NcaPriority,
+    reporter: UserIndexAuthorityReportTokenReporterContact,
+    ooh_call_acknowledged: Type.Boolean(),
 });
 
 export type UserIndexPayForDiamondMembershipSuccessResult = Static<
@@ -2337,6 +2386,32 @@ export type UserIndexSetOpenaiApiKeyArgs = Static<typeof UserIndexSetOpenaiApiKe
 export const UserIndexSetOpenaiApiKeyArgs = Type.Object({
     api_key: Type.Optional(Type.String()),
 });
+
+export type UserIndexSetAuthorityReporterArgs = Static<typeof UserIndexSetAuthorityReporterArgs>;
+export const UserIndexSetAuthorityReporterArgs = Type.Object({
+    principal: Type.Optional(TSPrincipal),
+});
+
+export type UserIndexClearAuthorityReportAttemptAuthorityReportFailure = Static<
+    typeof UserIndexClearAuthorityReportAttemptAuthorityReportFailure
+>;
+export const UserIndexClearAuthorityReportAttemptAuthorityReportFailure = Type.Union([
+    Type.Object({
+        Contingency: Type.Object({
+            error: Type.String(),
+        }),
+    }),
+    Type.Object({
+        Validation: Type.Object({
+            error: Type.String(),
+        }),
+    }),
+    Type.Object({
+        Auth: Type.Object({
+            error: Type.String(),
+        }),
+    }),
+]);
 
 export type UserIndexSubmitProofOfUniquePersonhoodResponse = Static<
     typeof UserIndexSubmitProofOfUniquePersonhoodResponse
@@ -3778,6 +3853,7 @@ export type StorageBucketVaultFileChunkArgs = Static<typeof StorageBucketVaultFi
 export const StorageBucketVaultFileChunkArgs = Type.Object({
     file_id: Type.BigInt(),
     chunk_index: Type.Number(),
+    vault_token: Type.Optional(Type.String()),
 });
 
 export type StorageBucketVaultFileChunkSuccessResult = Static<
@@ -6371,6 +6447,18 @@ export const UserIndexReferralMetricsResponse = Type.Object({
     Success: UserIndexReferralMetricsReferralMetrics,
 });
 
+export type UserIndexAuthorityReportTokenResponse = Static<
+    typeof UserIndexAuthorityReportTokenResponse
+>;
+export const UserIndexAuthorityReportTokenResponse = Type.Union([
+    Type.Object({
+        Success: UserIndexAuthorityReportTokenSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
 export type UserIndexSearchResult = Static<typeof UserIndexSearchResult>;
 export const UserIndexSearchResult = Type.Object({
     users: Type.Array(UserSummary),
@@ -6417,6 +6505,15 @@ export const UserIndexSetMediaScanConfigArgs = Type.Object({
     config: MediaScanConfig,
 });
 
+export type UserIndexClearAuthorityReportAttemptArgs = Static<
+    typeof UserIndexClearAuthorityReportAttemptArgs
+>;
+export const UserIndexClearAuthorityReportAttemptArgs = Type.Object({
+    report_index: Type.BigInt(),
+    vault_token: Type.Optional(Type.String()),
+    failure: Type.Optional(UserIndexClearAuthorityReportAttemptAuthorityReportFailure),
+});
+
 export type UserIndexChitLeaderboardSuccessResult = Static<
     typeof UserIndexChitLeaderboardSuccessResult
 >;
@@ -6449,6 +6546,7 @@ export const UserIndexModerationConfigSuccessResult = Type.Object({
     moderation_referral_config: Type.Optional(ModerationReferralConfig),
     vault_reviewers: Type.Array(UserId),
     media_scan_config: MediaScanConfig,
+    authority_reporter: Type.Optional(TSPrincipal),
 });
 
 export type UserIndexModerationConfigResponse = Static<typeof UserIndexModerationConfigResponse>;
@@ -7802,6 +7900,9 @@ export const UserIndexProposeProtectedActionProtectedAction = Type.Union([
     }),
     Type.Object({
         SetVaultLegalHold: UserIndexSetVaultLegalHoldArgs,
+    }),
+    Type.Object({
+        SetAuthorityReporter: UserIndexSetAuthorityReporterArgs,
     }),
 ]);
 

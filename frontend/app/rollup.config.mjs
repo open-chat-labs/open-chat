@@ -258,6 +258,7 @@ export default {
             ),
             "import.meta.env.OC_USERGEEK_APIKEY": JSON.stringify(process.env.OC_USERGEEK_APIKEY),
             "import.meta.env.OC_VIDEO_BRIDGE_URL": JSON.stringify(process.env.OC_VIDEO_BRIDGE_URL),
+            "import.meta.env.OC_NCA_REPORTER_URL": JSON.stringify(process.env.OC_NCA_REPORTER_URL),
             "import.meta.env.OC_PREVIEW_PROXY_URL": JSON.stringify(
                 process.env.OC_PREVIEW_PROXY_URL,
             ),
