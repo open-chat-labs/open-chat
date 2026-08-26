@@ -88,6 +88,16 @@ const ENVIRONMENT_NOISE_PATTERNS: RegExp[] = [
     // WebAuthn's blanket NotAllowedError: the user dismissed the passkey prompt or it timed out
     /operation either timed out or was not allowed/i,
     /failed to (update|register) a serviceworker/i,
+    // IndexedDB backing store failures (UnknownError) seen in storms from broken iOS installs
+    /failed to delete record from object store/i,
+    /unable to store record in object store/i,
+    /delete range from database without an in-progress transaction/i,
+    // The client's clock is wrong, so the replica certificate looks like it is from the future
+    /certificate is signed more than 5 minutes in the future/i,
+    // Safari's built-in media controls script, no frame of ours involved
+    /can't find variable: EmptyRanges/i,
+    // Benign browser warning surfaced as an error event
+    /resizeobserver loop/i,
 ];
 
 function errorName(error: unknown): string {
@@ -113,6 +123,8 @@ function isEnvironmentNoise(error: unknown): boolean {
 // requesting events until local state catches up, and the server answers with a NotAuthorized
 // code (100-106) which `assertSuccessfulEventsResponse` turns into a thrown Error embedding the
 // response JSON. Expected client state, not a defect.
+// ChatNotFound is the same race for a chat that no longer exists on the server (a deleted
+// direct chat partner, say) while the local summary still does.
 // Deliberately scoped to that one message: a NotAuthorized code reaching us from anywhere else -
 // a mutation, say - means our local view of the user's permissions is wrong, which is a defect.
 const EVENTS_RESPONSE_ERROR_PREFIX = "Events response error:";
@@ -122,7 +134,10 @@ function isExpectedAccessError(error: unknown): boolean {
     const match = message.match(/"code":(\d+)/);
     if (match == null) return false;
     const code = Number(match[1]);
-    return code >= ErrorCode.InitiatorNotFound && code <= ErrorCode.InitiatorBlocked;
+    return (
+        (code >= ErrorCode.InitiatorNotFound && code <= ErrorCode.InitiatorBlocked) ||
+        code === ErrorCode.ChatNotFound
+    );
 }
 
 // Central filter applied by the logger before anything reaches Rollbar: expected session
@@ -137,20 +152,15 @@ export function shouldReportError(error: unknown): boolean {
     );
 }
 
-// Message-level version of the same filter, for Rollbar's checkIgnore hook where only the
-// payload strings are available - i.e. errors captured by captureUncaught /
-// captureUnhandledRejections which bypass our logger entirely. Takes the exception class and
-// message as a pair so the name-dependent rules above (notably TypeError-only network matching)
-// behave identically on this path; `name` is empty for payloads that carry no exception.
+// The same filter for Rollbar's checkIgnore hook, where only the payload strings are available -
+// i.e. errors captured by captureUncaught / captureUnhandledRejections which bypass our logger
+// entirely. Rebuilds the structural shape `shouldReportError` inspects from the exception class
+// and message so both paths share one rule set; `name` is empty for payloads that carry no
+// exception. An HttpError's status only survives in its message on this path.
 export function shouldReportMessage(name: string, message: string): boolean {
-    return !(
-        name === "AbortError" ||
-        name === "QuotaExceededError" ||
-        (name === "TypeError" && NETWORK_NOISE_PATTERN.test(message)) ||
-        REQWEST_NOISE_PATTERN.test(message) ||
-        ENVIRONMENT_NOISE_PATTERNS.some((p) => p.test(message)) ||
-        isExpectedAccessError(message)
-    );
+    const status = message.match(/Status: (\d{3})\b/);
+    const code = status != null ? Number(status[1]) : undefined;
+    return shouldReportError({ name, message, code });
 }
 
 // Decide whether a failed worker request should be reported to our error tracker. Expected

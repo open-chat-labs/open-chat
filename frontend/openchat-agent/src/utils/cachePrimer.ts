@@ -393,6 +393,10 @@ export class CachePrimer {
                     await this.updateProposalTallies(localUserIndex, batch);
                 }
             }
+        } catch (err) {
+            // Background refresh: failures (session expiry, gateway 5xx) are retried on the
+            // next tick and must not surface as unhandled rejections
+            debug(`failed to refresh proposal tallies: ${err}`);
         } finally {
             if (!this.#stopped) {
                 this.#proposalTalliesTimer = setTimeout(

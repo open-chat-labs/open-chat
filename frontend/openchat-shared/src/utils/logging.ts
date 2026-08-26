@@ -32,6 +32,18 @@ function rollbarPayloadError(payload: any): { name: string; message: string } {
     };
 }
 
+// True when the innermost frame of the primary error is browser-extension code: the error was
+// thrown by an extension (CSP violations from injected wasm, wallet inpage scripts, ...), not us.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function thrownByExtension(payload: any): boolean {
+    const body = payload?.body;
+    const frames = (body?.trace_chain?.[0] ?? body?.trace)?.frames;
+    if (!Array.isArray(frames) || frames.length === 0) return false;
+    // Rollbar frames are ordered outermost first, so the throw site is last
+    const filename = frames[frames.length - 1]?.filename;
+    return typeof filename === "string" && /^(chrome|moz|safari-web)-extension:\/\//.test(filename);
+}
+
 export function inititaliseLogger(apikey: string, version: string, env: string): Logger {
     if (env === "production") {
         rollbar = Rollbar.init({
@@ -53,6 +65,7 @@ export function inititaliseLogger(apikey: string, version: string, env: string):
             // (isUncaught false) already passed shouldReportError and are not re-filtered here.
             checkIgnore: (isUncaught, _args, payload) => {
                 if (!isUncaught) return false;
+                if (thrownByExtension(payload)) return true;
                 const { name, message } = rollbarPayloadError(payload);
                 return !shouldReportMessage(name, message);
             },
