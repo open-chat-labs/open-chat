@@ -115,3 +115,17 @@ pub struct UpdateChatShortcutsRequest {
 pub struct UpdateChatShortcutsResponse {
     pub count: usize,
 }
+
+// iOS only: photo-library assets have no readable file path, so a picked item
+// is exported to a temp file first (see RecentMedia.swift).
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportMediaRequest {
+    pub uri: String,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportMediaResponse {
+    pub file_path: String,
+}

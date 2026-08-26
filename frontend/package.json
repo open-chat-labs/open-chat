@@ -6,6 +6,7 @@
     "scripts": {
         "dev": "cd app && sh ./build_dev.sh",
         "dev:mobile": "cd app && sh ./build_mobile.sh",
+        "dev:mobile:ios": "cd app && OC_APP_TYPE=ios OC_DEV_PORT=5002 sh ./build_mobile.sh",
         "build": "cd app && sh ./build_prod.sh",
         "build:prod": "cd app && sh ./build_prod.sh",
         "build:prod_test": "cd app && sh ./build_prod_test.sh",
@@ -15,6 +16,7 @@
         "deploy:prod_test": "npm i && npm run build:prod_test",
         "deploy:testnet": "npm ci && npm run build:testnet",
         "android:release": "cd app && bash ./build_android.sh",
+        "ios:release": "cd app && bash ./build_ios.sh",
         "typecheck": "svelte-check --tsconfig ./app/tsconfig.json --threshold error",
         "typecheck:agent": "tsc --noEmit -p openchat-agent/tsconfig.json",
         "typebox": "ts2typebox --input ../tsBindings/types.d.ts --output ./openchat-agent/src/typebox.ts",

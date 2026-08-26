@@ -1,8 +1,7 @@
 import XCTest
-@testable import ExamplePlugin
 
-final class ExamplePluginTests: XCTestCase {
-    func testExample() throws {
-        let plugin = ExamplePlugin()
+final class OpenChatPluginTests: XCTestCase {
+    func testPlaceholder() throws {
+        // The plugin is exercised through the app; no standalone tests yet.
     }
 }

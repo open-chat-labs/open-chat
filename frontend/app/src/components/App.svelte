@@ -216,8 +216,8 @@
             botState.messageFormatter = formatter;
         });
 
-        if (client.isNativeAndroid()) {
-            // Inform the native android app that svelte code is ready! SetTimeout
+        if (client.isNativeApp()) {
+            // Inform the native app that svelte code is ready! SetTimeout
             // delays the fn execution until the call stack is empty, just to
             // make sure anything else non-async that needs to run is done.
             //
@@ -676,6 +676,8 @@
 
     if (client.isNativeAndroid()) {
         document.body.classList.add("native-android");
+    } else if (client.isNativeIos()) {
+        document.body.classList.add("native-ios");
     }
     detectNeedsSafeInset();
 </script>

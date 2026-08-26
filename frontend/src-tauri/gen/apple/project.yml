@@ -1,0 +1,121 @@
+name: open-chat
+options:
+  # Interim dev bundle id: com.oc.app is registered to another Apple team and
+  # cannot be used; this id is registered to the interim development team and
+  # must be replaced when the production Apple Developer account exists
+  # (see IOS_PORT_STATUS.md).
+  bundleIdPrefix: com.oclabs.openchat.dev
+  deploymentTarget:
+    iOS: 16.0
+fileGroups: [../../src]
+configs:
+  debug: debug
+  release: release
+settingGroups:
+  app:
+    base:
+      PRODUCT_NAME: OpenChat
+      PRODUCT_BUNDLE_IDENTIFIER: com.oclabs.openchat.dev
+targetTemplates:
+  app:
+    type: application
+    sources:
+      - path: Sources
+    scheme:
+      environmentVariables:
+        RUST_BACKTRACE: full
+        RUST_LOG: info
+    settings:
+      groups: [app]
+targets:
+  open-chat_iOS:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      - path: Assets.xcassets
+      # Externals holds the rust static libs (Externals/<arch>/<config>/libapp.a),
+      # linked via LIBRARY_SEARCH_PATHS + the framework dependency below. It must
+      # not be a resource: xcodegen snapshots whatever files exist at generation
+      # time, and once dev builds have populated both debug and release libs the
+      # copy-resources phase gets two files named libapp.a ("multiple commands
+      # produce" build failure).
+      - path: Externals
+        buildPhase: none
+      - path: open-chat_iOS
+      - path: assets
+        buildPhase: resources
+        type: folder
+      - path: LaunchScreen.storyboard
+    info:
+      path: open-chat_iOS/Info.plist
+      properties:
+        LSRequiresIPhoneOS: true
+        UILaunchStoryboardName: LaunchScreen
+        UIRequiredDeviceCapabilities: [arm64, metal]
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        CFBundleShortVersionString: 0.1.0
+        CFBundleVersion: "0.1.0"
+        NSCameraUsageDescription: OpenChat uses the camera to capture photos and videos for messages and video calls.
+        NSMicrophoneUsageDescription: OpenChat uses the microphone for voice messages and calls.
+        NSPhotoLibraryUsageDescription: OpenChat shows your recent photos and videos so you can attach them to messages.
+        NSPhotoLibraryAddUsageDescription: OpenChat saves photos and videos you download to your photo library.
+        NSFaceIDUsageDescription: OpenChat uses Face ID to sign in with your passkey.
+        CFBundleURLTypes:
+          - CFBundleURLName: com.oclabs.openchat.dev
+            CFBundleURLSchemes: [openchat]
+        # Dev only: the app loads the vite dev server and talks to a local dfx
+        # replica over plain http on the LAN. Tighten before any release build.
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
+    entitlements:
+      path: open-chat_iOS/open-chat_iOS.entitlements
+      properties:
+        # Native passkeys (RP id oc.app). oc.app serves an
+        # apple-app-site-association file listing this app id. The
+        # ?mode=developer suffix keeps local/simulator testing working (it
+        # requires Settings > Developer > Associated Domains Development on
+        # devices); drop it for production builds (see IOS_PORT_STATUS.md).
+        com.apple.developer.associated-domains:
+          - webcredentials:oc.app?mode=developer
+    scheme:
+      environmentVariables:
+        RUST_BACKTRACE: full
+        RUST_LOG: info
+    settings:
+      base:
+        ENABLE_BITCODE: false
+        DEVELOPMENT_TEAM: A468T66XSK
+        CODE_SIGN_STYLE: Automatic
+        ARCHS: [arm64]
+        VALID_ARCHS: arm64 
+        LIBRARY_SEARCH_PATHS[arch=x86_64]: $(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)
+        LIBRARY_SEARCH_PATHS[arch=arm64]: $(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)
+        ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES: true
+        EXCLUDED_ARCHS[sdk=iphoneos*]: x86_64
+      groups: [app]
+    dependencies:
+      - framework: libapp.a
+        embed: false
+      - sdk: CoreGraphics.framework
+      - sdk: Metal.framework
+      - sdk: MetalKit.framework
+      - sdk: QuartzCore.framework
+      - sdk: Security.framework
+      - sdk: UIKit.framework
+      - sdk: WebKit.framework
+    preBuildScripts:
+      - script: npm run -- tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths "${FRAMEWORK_SEARCH_PATHS:?}" --header-search-paths "${HEADER_SEARCH_PATHS:?}" --gcc-preprocessor-definitions "${GCC_PREPROCESSOR_DEFINITIONS:-}" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}
+        name: Build Rust Code
+        basedOnDependencyAnalysis: false
+        outputFiles:
+          - $(SRCROOT)/Externals/x86_64/${CONFIGURATION}/libapp.a
+          - $(SRCROOT)/Externals/arm64/${CONFIGURATION}/libapp.a

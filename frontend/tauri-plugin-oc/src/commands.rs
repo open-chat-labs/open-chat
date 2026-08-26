@@ -108,6 +108,14 @@ pub(crate) async fn disable_viewport_resize<R: Runtime>(app: AppHandle<R>) -> Re
 }
 
 #[command]
+pub(crate) async fn export_media<R: Runtime>(
+    app: AppHandle<R>,
+    payload: ExportMediaRequest,
+) -> Result<ExportMediaResponse> {
+    app.oc().export_media(payload)
+}
+
+#[command]
 pub(crate) async fn update_chat_shortcuts<R: Runtime>(
     app: AppHandle<R>,
     payload: UpdateChatShortcutsRequest,
@@ -165,7 +173,12 @@ pub(crate) async fn save_media<R: Runtime>(
     #[cfg(target_os = "ios")]
     {
         use std::path::Path;
+        use tauri::Manager;
         use tokio::fs;
+
+        // The Photos-framework save path (which would use the mime type) is
+        // not implemented yet — files land in the app's Documents sandbox.
+        let _ = &mime_type;
 
         let safe_filename = Path::new(&filename)
             .file_name()

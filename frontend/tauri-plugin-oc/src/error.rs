@@ -8,6 +8,9 @@ pub enum Error {
     Io(#[from] std::io::Error),
 
     #[error(transparent)]
+    Tauri(#[from] tauri::Error),
+
+    #[error(transparent)]
     AndroidFs(#[from] tauri_plugin_android_fs::Error),
 
     #[error("iOS: invalid file name for download")]

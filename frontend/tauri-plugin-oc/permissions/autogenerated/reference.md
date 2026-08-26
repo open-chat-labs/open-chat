@@ -21,6 +21,7 @@ Default permissions for the plugin
 - `allow-enable-viewport-resize`
 - `allow-disable-viewport-resize`
 - `allow-save-media`
+- `allow-export-media`
 - `allow-update-chat-shortcuts`
 - `allow-get-pending-deep-link`
 - `allow-get-pending-notification-tap`
@@ -162,6 +163,32 @@ Enables the enable_viewport_resize command without any pre-configured scope.
 <td>
 
 Denies the enable_viewport_resize command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-export-media`
+
+</td>
+<td>
+
+Enables the export_media command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-export-media`
+
+</td>
+<td>
+
+Denies the export_media command without any pre-configured scope.
 
 </td>
 </tr>

@@ -52,7 +52,7 @@
     });
 
     function signIn() {
-        (client.isNativeAndroid()
+        (client.isNativeApp()
             ? client.signInWithAndroidWebAuthn()
             : client.signInWithWebAuthn()
         ).catch(async (e) => {
