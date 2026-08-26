@@ -112,14 +112,16 @@ impl AuthorityReports {
         let len_before = self.attempts.len();
         self.attempts.retain(|a| a.report_index != report_index);
         let cleared = self.attempts.len() != len_before;
-        if cleared && let Some(failure) = failure {
-            if let Some(due) = self.due.iter_mut().find(|d| d.report_index == report_index) {
-                due.last_failure = Some(AuthorityReportFailureRecord { failure, timestamp: now });
-            }
+        if cleared
+            && let Some(failure) = failure
+            && let Some(due) = self.due.iter_mut().find(|d| d.report_index == report_index)
+        {
+            due.last_failure = Some(AuthorityReportFailureRecord { failure, timestamp: now });
         }
         cleared
     }
 
+    #[expect(clippy::too_many_arguments)]
     pub fn record_filed(
         &mut self,
         report_index: u64,

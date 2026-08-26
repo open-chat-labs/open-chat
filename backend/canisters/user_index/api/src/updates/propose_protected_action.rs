@@ -1,6 +1,6 @@
 use crate::updates::{
-    destroy_vault_evidence, set_authority_reporter, set_internal_moderation_channel, set_media_scan_config,
-    set_openai_api_key, set_vault_legal_hold, set_vault_reviewers,
+    destroy_vault_evidence, set_authority_reporter, set_internal_moderation_channel, set_media_scan_config, set_openai_api_key,
+    set_vault_legal_hold, set_vault_reviewers,
 };
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};

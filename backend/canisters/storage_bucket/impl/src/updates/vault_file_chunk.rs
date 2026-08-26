@@ -37,11 +37,9 @@ fn vault_file_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
         let Some(token) = args.vault_token.as_ref() else {
             return NotAuthorized;
         };
-        let Ok(claims) = jwt::verify_and_decode::<types::NcaVaultExportClaims>(
-            token,
-            oc_public_key_pem,
-            types::CLAIM_TYPE_NCA_VAULT_EXPORT,
-        ) else {
+        let Ok(claims) =
+            jwt::verify_and_decode::<types::NcaVaultExportClaims>(token, oc_public_key_pem, types::CLAIM_TYPE_NCA_VAULT_EXPORT)
+        else {
             return NotAuthorized;
         };
         if claims.exp_ms() < state.env.now() {

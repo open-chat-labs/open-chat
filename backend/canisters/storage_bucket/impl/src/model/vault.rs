@@ -215,6 +215,7 @@ impl Vault {
     // a human review never interfere), but chunk 0 logs ExportedForAuthorityReport - a copy
     // leaving the platform for law enforcement, attributed to the moderator whose token
     // authorized it - not ViewedBy.
+    #[expect(clippy::too_many_arguments)]
     pub fn authorize_export(
         &mut self,
         file_id: FileId,
