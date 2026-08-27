@@ -68,6 +68,34 @@ const { version, production } = initEnv();
 
 const override = (key, val) => `(window.OC_CONFIG?.${key} ?? ${val})`;
 
+const transformersWebGpuSpikeEnabled =
+    process.env.OC_BUILD_ENV === "development" &&
+    process.env.OC_DFX_NETWORK === "local" &&
+    process.env.OC_TRANSFORMERS_WEBGPU_IMAGE_SPIKE === "true";
+const localOnlyTransformersWebGpuSpike = JSON.stringify(
+    transformersWebGpuSpikeEnabled ? "true" : "false",
+);
+const isNativeApp = process.env.OC_APP_TYPE === "android" || process.env.OC_APP_TYPE === "ios";
+
+const transformersWebGpuCopyTargets =
+    isNativeApp || !transformersWebGpuSpikeEnabled
+        ? []
+        : [
+              {
+                  src: "../openchat-worker/lib/transformers_webgpu_worker.js*",
+                  dest: "build",
+              },
+              {
+                  src: "../node_modules/onnxruntime-web/dist/{ort-wasm-simd-threaded.jspi.mjs,ort-wasm-simd-threaded.jspi.wasm}",
+                  dest: "build/assets/transformers-webgpu/ort-1.29.0-dev.20260723-1b1e1db7bc",
+              },
+              {
+                  src: "../node_modules/@huggingface/transformers/LICENSE",
+                  dest: "build/assets/licenses/THIRD_PARTY_LICENSES",
+                  rename: "huggingface-transformers-Apache-2.0.txt",
+              },
+          ];
+
 export default {
     input: `./src/main.ts`,
     output: {
@@ -191,6 +219,7 @@ export default {
             ),
             "import.meta.env.OC_NFID_URL": JSON.stringify(process.env.OC_NFID_URL),
             "import.meta.env.OC_DFX_NETWORK": JSON.stringify(process.env.OC_DFX_NETWORK),
+            "import.meta.env.OC_TRANSFORMERS_WEBGPU_IMAGE_SPIKE": localOnlyTransformersWebGpuSpike,
             "import.meta.env.OC_NODE_ENV": JSON.stringify(process.env.NODE_ENV ?? "production"),
             "import.meta.env.OC_WEBSITE_VERSION": JSON.stringify(process.env.OC_WEBSITE_VERSION),
             "import.meta.env.OC_ROLLBAR_ACCESS_TOKEN": JSON.stringify(
@@ -386,13 +415,16 @@ export default {
         copy({
             targets: [
                 {
-                    src: "../openchat-worker/lib/*",
+                    // The experimental model worker is copied only by the guarded target below;
+                    // an old local artifact can therefore never leak into a release build.
+                    src: "../openchat-worker/lib/worker.js*",
                     dest: "build",
                 },
                 {
                     src: "../openchat-service-worker/lib/*",
                     dest: "build",
                 },
+                ...transformersWebGpuCopyTargets,
             ],
             hook: "generateBundle",
         }),
